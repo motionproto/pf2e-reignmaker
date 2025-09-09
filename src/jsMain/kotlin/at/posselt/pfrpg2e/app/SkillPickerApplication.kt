@@ -8,9 +8,6 @@ import at.posselt.pfrpg2e.app.forms.Select
 import at.posselt.pfrpg2e.app.forms.SelectOption
 import at.posselt.pfrpg2e.app.forms.TextInput
 import at.posselt.pfrpg2e.app.forms.formContext
-import at.posselt.pfrpg2e.camping.CampingSkill
-import at.posselt.pfrpg2e.camping.DcType
-import at.posselt.pfrpg2e.camping.ParsedCampingSkill
 import at.posselt.pfrpg2e.data.actor.Lore
 import at.posselt.pfrpg2e.data.actor.Perception
 import at.posselt.pfrpg2e.data.actor.Proficiency
@@ -335,85 +332,4 @@ class SkillPickerApplication(
         }
     }
 
-}
-
-fun launchCampingSkillPicker(
-    skills: List<ParsedCampingSkill>,
-    afterSubmit: (Array<CampingSkill>) -> Unit,
-) {
-    val skillsByAttribute = skills.associateBy { it.attribute }
-    val loreAttributes = skills.filter { it.attribute is Lore }.map { it.attribute }
-    val anySkill = skills.find { it.attribute.value == "any" }?.let {
-        PickerSkill(
-            label = t("applications.any"),
-            name = "any",
-            enabled = true,
-            isLore = false,
-            proficiency = it.proficiency,
-            required = false,
-            validateOnly = false,
-            dcType = it.dcType.toCamelCase(),
-            dc = it.dc,
-        )
-    } ?: PickerSkill(
-        label = t("applications.any"),
-        name = "any",
-        enabled = false,
-        isLore = false,
-        proficiency = Proficiency.UNTRAINED,
-        required = false,
-        validateOnly = false,
-        dcType = "zone",
-        dc = null,
-    )
-    val skills = (Skill.entries + Perception + loreAttributes).map { attribute ->
-        val existingValue = skillsByAttribute[attribute]
-        if (existingValue == null) {
-            PickerSkill(
-                label = t(attribute),
-                name = attribute.value,
-                enabled = false,
-                isLore = attribute is Lore,
-                proficiency = Proficiency.UNTRAINED,
-                required = false,
-                validateOnly = false,
-                dcType = "zone",
-                dc = null,
-            )
-        } else {
-            PickerSkill(
-                label = t(existingValue.attribute),
-                name = existingValue.attribute.value,
-                enabled = true,
-                isLore = attribute is Lore,
-                proficiency = existingValue.proficiency,
-                required = existingValue.required,
-                validateOnly = existingValue.validateOnly,
-                dcType = existingValue.dcType.toCamelCase(),
-                dc = existingValue.dc,
-            )
-        }
-    }.toTypedArray()
-    SkillPickerApplication(
-        allowLores = true,
-        chooseOne = false,
-        skills = skills + anySkill,
-        dcTypes = DcType.entries.map {
-            SkillPickerDcType(value=it.value, label=t(it))
-        }.toTypedArray(),
-        afterSubmit = {
-            afterSubmit(
-                it.map {
-                    CampingSkill(
-                        name = it.name,
-                        proficiency = it.proficiency.toCamelCase(),
-                        dcType = it.dcType,
-                        dc = it.dc,
-                        validateOnly = it.validateOnly,
-                        required = it.required,
-                    )
-                }.toTypedArray()
-            )
-        }
-    ).launch()
 }

@@ -18,7 +18,7 @@ plugins {
 }
 
 group = "at.posselt"
-version = "5.7.1"
+version = "0.0.1"
 
 repositories {
     mavenCentral()
@@ -116,9 +116,7 @@ tasks {
     }
     getByName("check") {
         dependsOn(
-            "validateRecipes",
             "validateStructures",
-            "validateCampingActivities",
             "validateFeats",
             "validateFeatures",
             "validateKingdomActivities",
@@ -138,22 +136,10 @@ tasks.register<JsonSchemaValidator>("validateKingdomEvents") {
     files = layout.projectDirectory.dir("data/events")
 }
 
-tasks.register<JsonSchemaValidator>("validateRecipes") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/recipe.json")
-    files = layout.projectDirectory.dir("data/recipes")
-}
-
 tasks.register<JsonSchemaValidator>("validateStructures") {
     outputs.upToDateWhen { true } // no outputs, only depend on input files
     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/structure.json")
     files = layout.projectDirectory.dir("data/structures")
-}
-
-tasks.register<JsonSchemaValidator>("validateCampingActivities") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/camping-activity.json")
-    files = layout.projectDirectory.dir("data/camping-activities")
 }
 
 tasks.register<JsonSchemaValidator>("validateFeats") {

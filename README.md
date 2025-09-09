@@ -1,6 +1,6 @@
-# PFRPG 2e: Kingdom Building, Camping & Weather
+# PFRPG 2e: Kingdom Building
 
-This module ships all OGL licensed rules to run the Kingdom, Camping and Weather rule systems for the most popular adventure for PFRPG 2e.
+This module ships all OGL licensed rules to run the Kingdom Building rule system for the most popular adventure for PFRPG 2e.
 
 **Documentation is included in a journal inside FoundryVTT!**
 
@@ -17,7 +17,7 @@ The source code is licensed under the AGPLv3 license, except for
 the [src/jsMain/kotlin/com/foundryvtt](./src/jsMain/kotlin/com/foundryvtt) folder which is licensed
 under [Apache License 2.0](./src/jsMain/kotlin/com/foundryvtt/LICENSE).
 
-All images in the [img/structures](./img/structures),  [img/kingdom/backgrounds](./img/kingdom/backgrounds) and [img/camping/backgrounds](./img/camping/backgrounds) are
+All images in the [img/structures](./img/structures) and [img/kingdom/backgrounds](./img/kingdom/backgrounds) are
 licensed under [CC0 - Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
 by [Mark Pearce](https://github.com/MarkPearce). They
 were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-kingmaker-tools/issues/76).
@@ -34,12 +34,10 @@ The package is available through the [module registry](https://foundryvtt.com/pa
 
 ## Functionality
 
-This module ships with implementations for all the extra mechanics provided in the best sandbox PFRPG 2e adventure,
+This module ships with implementations for the Kingdom Building mechanics provided in the best sandbox PFRPG 2e adventure,
 including optional and popular homebrew from Vance & Kerenshara:
 
-* Camping Sheet
 * Kingdom Sheet
-* Weather
 * Combat Tracks
 
 ### House Rules & GM Tips
@@ -50,12 +48,10 @@ You can look up my tips and house rules [here](./docs/house-rules.md)
 
 If you've enabled the official module, the following things are automatically taken care of:
 
-* Token Mappings for all companions and structures
-* Weather Sound Effects for rain, rainstorms, blizzard and snow
+* Token Mappings for structures
 * Default and Region combat tracks
 * Rolltable integration for:
     * Kingdom Events
-    * Random Encounters
     * Cult Events
 
 ### Screenshots
@@ -63,8 +59,6 @@ If you've enabled the official module, the following things are automatically ta
 ![Kingdom Sheet](./img/kingdom/docs/kingdom-sheet.webp)
 
 ![Settlements](./img/kingdom/docs/settlement.webp)
-
-![camping sheet](./img/camping/docs/camping-activities.webp)
 
 ## Development
 
@@ -238,13 +232,6 @@ Click on the + to add a new mapping for each schema. Then add the following (see
 * **Schema file or URL**: Path to the Schema file in [./schemas/](./schemas/)
 * **Schema Version**: Always **JSON Schema version 7**
 * Then click on the **+** below and **Directory**
-
-Example:
-
-* : Recipes:
-    * **Name**: Recipes
-    * **Schema file or URL**: schemas/recipes.json
-    * **Directory**: data/recipes
 
 ## Translations
 

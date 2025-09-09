@@ -1,12 +1,13 @@
 {
-    "title": "Kingdom Building, Camping & Weather",
-    "description": "A collection of utilities to run the most popular adventure for PFRPG 2e",
-    "version": "5.7.1",
+    "id": "pf2e-kingdom-lite",
+    "title": "pf2e Kingdom-lite",
+    "description": "Kingdom Building management for Pathfinder 2e",
+    "version": "0.0.1",
     "scripts": [
         "dist/api/patches.js",
         "dist/main.js"
     ],
-    "url": "https://github.com/BernhardPosselt/pf2e-kingmaker-tools",
+    "url": "https://github.com/motionproto/pf2e-kingdom-lite",
     "license": "LICENSE",
     "styles": [
         "dist/style.css"
@@ -65,36 +66,6 @@
             "flags": {}
         },
         {
-            "name": "kingmaker-tools-meal-effects",
-            "path": "packs/kingmaker-tools-meal-effects",
-            "label": "Meal Effects",
-            "type": "Item",
-            "system": "pf2e",
-            "banner": "systems/pf2e/assets/compendium-banner/red.webp",
-            "private": false,
-            "flags": {}
-        },
-        {
-            "name": "kingmaker-tools-camping-effects",
-            "path": "packs/kingmaker-tools-camping-effects",
-            "label": "Camping Effects",
-            "type": "Item",
-            "system": "pf2e",
-            "banner": "systems/pf2e/assets/compendium-banner/red.webp",
-            "private": false,
-            "flags": {}
-        },
-        {
-            "name": "kingmaker-tools-weather-effects",
-            "path": "packs/kingmaker-tools-weather-effects",
-            "label": "Weather Effects",
-            "type": "Item",
-            "system": "pf2e",
-            "banner": "systems/pf2e/assets/compendium-banner/red.webp",
-            "private": false,
-            "flags": {}
-        },
-        {
             "name": "kingmaker-tools-journals",
             "path": "packs/kingmaker-tools-journals",
             "label": "Journals",
@@ -115,16 +86,6 @@
             "system": "pf2e"
         },
         {
-            "name": "kingmaker-tools-random-encounters",
-            "path": "packs/kingmaker-tools-random-encounters",
-            "label": "Random Encounters",
-            "type": "RollTable",
-            "private": false,
-            "flags": {},
-            "banner": "systems/pf2e/assets/compendium-banner/red.webp",
-            "system": "pf2e"
-        },
-        {
             "name": "kingmaker-tools-macros",
             "path": "packs/kingmaker-tools-macros",
             "label": "Macros",
@@ -137,27 +98,19 @@
     ],
     "packFolders": [
         {
-            "name": "Kingdom Building, Camping & Weather",
+            "name": "pf2e Kingdom-lite",
             "sorting": "a",
             "packs": [
                 "kingmaker-tools-settlements",
                 "kingmaker-tools-structures",
-                "kingmaker-tools-meal-effects",
-                "kingmaker-tools-camping-effects",
-                "kingmaker-tools-weather-effects",
                 "kingmaker-tools-journals",
-                "kingmaker-tools-custom-journals",
                 "kingmaker-tools-rolltables",
-                "kingmaker-tools-random-encounters",
-                "kingmaker-tools-custom-rolltables",
-                "kingmaker-tools-macros",
-                "kingmaker-tools-companions"
+                "kingmaker-tools-macros"
             ]
         }
     ],
-    "manifest": "https://github.com/BernhardPosselt/pf2e-kingmaker-tools/releases/latest/download/module.json",
-    "download": "https://github.com/BernhardPosselt/pf2e-kingmaker-tools/releases/download/5.7.1/release.zip",
-    "id": "pf2e-kingmaker-tools",
+    "manifest": "https://github.com/motionproto/pf2e-kingdom-lite/releases/latest/download/module.json",
+    "download": "https://github.com/motionproto/pf2e-kingdom-lite/releases/download/0.0.1/release.zip",
     "socket": true,
     "authors": [
         {

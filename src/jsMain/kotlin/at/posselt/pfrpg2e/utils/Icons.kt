@@ -1,7 +1,6 @@
 package at.posselt.pfrpg2e.utils
 
 import at.posselt.pfrpg2e.actions.ActionDispatcher
-import at.posselt.pfrpg2e.camping.createCampingIcon
 import at.posselt.pfrpg2e.data.kingdom.KingdomAbility
 import at.posselt.pfrpg2e.fromCamelCase
 import at.posselt.pfrpg2e.kingdom.createKingmakerIcon
@@ -42,7 +41,6 @@ external interface MacroData {
 }
 
 enum class SheetType {
-    CAMPING,
     KINGDOM;
 
     companion object {
@@ -99,7 +97,7 @@ fun createPartyActorIcon(
 fun registerMacroDropHooks(game: Game) {
     TypedHooks.onHotBarDrop { bar, data, slot ->
         buildPromise {
-            if (Object.hasOwn(data, "type") && (data["type"] == "camping" || data["type"] == "kingdom")) {
+            if (Object.hasOwn(data, "type") && data["type"] == "kingdom") {
                 val macroData = data.unsafeCast<MacroData>()
                 val data = recordOf(
                     "name" to macroData.name,
@@ -140,7 +138,6 @@ fun registerIcons(actionDispatcher: ActionDispatcher) {
                                 )
                             )
                         }
-                        insertAfter?.insertAdjacentElement("afterend", createCampingIcon(id, actionDispatcher))
                         insertAfter?.insertAdjacentElement("afterend", createKingmakerIcon(id, actionDispatcher))
                         if (game.settings.pfrpg2eKingdomCampingWeather.getHideBuiltinKingdomSheet()) {
                             it.querySelector(".fa-crown")

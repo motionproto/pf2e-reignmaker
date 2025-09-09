@@ -202,24 +202,6 @@ object Pfrpg2eKingdomCampingWeatherSettings {
     fun getSchemaVersion(): Int =
         game.settings.getInt("schemaVersion")
 
-    suspend fun setWeatherHazardRange(value: Int) =
-        game.settings.setInt("weatherHazardRange", value)
-
-    fun getWeatherHazardRange(): Int =
-        game.settings.getInt("weatherHazardRange")
-
-    suspend fun setWeatherRollMode(value: RollMode) =
-        game.settings.setString("weatherRollMode", value.toCamelCase())
-
-    fun getWeatherRollMode(): RollMode =
-        fromCamelCase<RollMode>(game.settings.getString("weatherRollMode"))
-            ?: throw IllegalStateException("Null value set for setting 'weatherRollMode'")
-
-    suspend fun setEnableWeatherSoundFx(value: Boolean) =
-        game.settings.setBoolean("enableWeatherSoundFx", value)
-
-    fun getEnableWeatherSoundFx(): Boolean =
-        game.settings.getBoolean("enableWeatherSoundFx")
 
     suspend fun setEnableCombatTracks(value: Boolean) =
         game.settings.setBoolean("enableCombatTracks", value)
@@ -233,23 +215,6 @@ object Pfrpg2eKingdomCampingWeatherSettings {
     fun getDisableFirstRunMessage(): Boolean =
         game.settings.getBoolean("disableFirstRunMessage")
 
-    suspend fun setEnableSheltered(value: Boolean) =
-        game.settings.setBoolean("enableSheltered", value)
-
-    fun getEnableSheltered(): Boolean =
-        game.settings.getBoolean("enableSheltered")
-
-    suspend fun setAutoRollWeather(value: Boolean) =
-        game.settings.setBoolean("autoRollWeather", value)
-
-    fun getAutoRollWeather(): Boolean =
-        game.settings.getBoolean("autoRollWeather")
-
-    suspend fun setEnableWeather(value: Boolean) =
-        game.settings.setBoolean("enableWeather", value)
-
-    fun getEnableWeather(): Boolean =
-        game.settings.getBoolean("enableWeather")
 
     fun getHideBuiltinKingdomSheet(): Boolean =
         game.settings.getBoolean("hideBuiltinKingdomSheet")
@@ -257,24 +222,10 @@ object Pfrpg2eKingdomCampingWeatherSettings {
     suspend fun setHideBuiltinKingdomSheet(value: Boolean) =
         game.settings.setBoolean("hideBuiltinKingdomSheet", value)
 
-    suspend fun setClimateSettings(settings: ClimateSettings) =
-        game.settings.setObject("climate", settings)
-
-    fun getClimateSettings(): ClimateSettings =
-        game.settings.getObject("climate")
-
-    suspend fun setCurrentWeatherFx(value: String) =
-        game.settings.setString("currentWeatherFx", value)
-
-    fun getCurrentWeatherFx(): String =
-        game.settings.getString("currentWeatherFx")
 
     private object nonUserVisibleSettings {
-        val booleans = mapOf(
-            "enableSheltered" to false,
-        )
+        val booleans = mapOf<String, Boolean>()
         val strings = mapOf(
-            "currentWeatherFx" to "none",
             "latestMigrationBackup" to "{}"
         )
     }
@@ -317,54 +268,12 @@ object Pfrpg2eKingdomCampingWeatherSettings {
             hidden = false,
             hint = t("settings.schemaVersionHelp")
         )
-        game.settings.registerDataModel<ClimateConfigurationDataModel>(
-            key = "climate",
-            name = t("settings.climateSettings"),
-        )
-        game.settings.createMenu(
-            key = "climateMenu",
-            label = t("settings.climateButton"),
-            name = t("settings.climate"),
-            restricted = true,
-            app = ClimateConfiguration::class.js,
-        )
-        game.settings.registerScalar(
-            name = t("settings.enableWeather"),
-            key = "enableWeather",
-            default = true,
-        )
         game.settings.registerScalar(
             name = t("settings.enablePartyActorIcons"),
             key = "enablePartyActorIcons",
             hint = t("settings.enablePartyActorIconsHelp"),
             default = true,
             requiresReload = true,
-        )
-        game.settings.registerScalar<Boolean>(
-            key = "enableWeatherSoundFx",
-            name = t("settings.enableWeatherSoundFx"),
-            hint = t("settings.enableWeatherSoundFxHelp"),
-            default = true,
-        )
-        game.settings.registerScalar<Boolean>(
-            key = "autoRollWeather",
-            name = t("settings.autoRollWeather"),
-            hint = t("settings.autoRollWeatherHelp"),
-            default = true,
-        )
-        game.settings.registerScalar<String>(
-            key = "weatherRollMode",
-            name = t("settings.weatherRollMode"),
-            choices = RollMode.entries.asSequence()
-                .map { it.toCamelCase() to t(it) }
-                .toMutableRecord(),
-            default = "gmroll"
-        )
-        game.settings.registerInt(
-            key = "weatherHazardRange",
-            name = t("settings.weatherHazardRange"),
-            default = 4,
-            hint = t("settings.weatherHazardRangeHelp")
         )
         game.settings.registerScalar<Boolean>(
             key = "enableCombatTracks",
@@ -397,4 +306,3 @@ private inline fun <reified T : Any> registerSimple(
         )
     }
 }
-

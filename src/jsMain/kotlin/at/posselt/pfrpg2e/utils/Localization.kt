@@ -1,8 +1,6 @@
 package at.posselt.pfrpg2e.utils
 
 import at.posselt.pfrpg2e.Config
-import at.posselt.pfrpg2e.camping.translateCampingActivities
-import at.posselt.pfrpg2e.camping.translateRecipes
 import at.posselt.pfrpg2e.kingdom.structures.translateStructureData
 import at.posselt.pfrpg2e.kingdom.translateActivities
 import at.posselt.pfrpg2e.kingdom.translateCharters
@@ -110,11 +108,9 @@ suspend fun initLocalization() {
     translateCharters()
     translateGovernments()
     translateHeartlands()
-    translateCampingActivities()
     translateFeats()
     translateKingdomFeatures()
     translateMilestones()
-    translateRecipes()
     translateStructureData()
 }
 

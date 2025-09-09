@@ -4,9 +4,6 @@ import at.posselt.pfrpg2e.app.HandlebarsRenderContext
 import at.posselt.pfrpg2e.app.confirm
 import at.posselt.pfrpg2e.app.forms.SimpleApp
 import at.posselt.pfrpg2e.app.jsonFilePicker
-import at.posselt.pfrpg2e.camping.clearCamping
-import at.posselt.pfrpg2e.camping.getCamping
-import at.posselt.pfrpg2e.camping.setCamping
 import at.posselt.pfrpg2e.kingdom.clearKingdom
 import at.posselt.pfrpg2e.kingdom.getKingdom
 import at.posselt.pfrpg2e.kingdom.setKingdom
@@ -25,7 +22,6 @@ import kotlin.js.Promise
 
 @JsPlainObject
 external interface ActorActionsContext : HandlebarsRenderContext {
-    val hasCamping: Boolean
     val hasKingdom: Boolean
 }
 
@@ -45,10 +41,6 @@ class ActorActions(
                 close()
             }
 
-            "export-camping" -> actor.getCamping()?.let {
-                downloadJson(it, "Camping-${actor.uuid}.json")
-                close()
-            }
 
             "import-kingdom" -> buildPromise {
                 val json = jsonFilePicker(title = t("kingdom.uploadKingdomJson"), t("applications.kingdom"))
@@ -56,11 +48,6 @@ class ActorActions(
                 close()
             }
 
-            "import-camping" -> buildPromise {
-                val json = jsonFilePicker(title = t("kingdom.uploadCampingJson"), t("applications.camping"))
-                actor.setCamping(JSON.parse(json))
-                close()
-            }
 
             "reset-kingdom" -> buildPromise {
                 if (confirm(t("kingdom.confirmDeleteKingdom", recordOf("actorName" to actor.name)))) {
@@ -69,12 +56,6 @@ class ActorActions(
                 }
             }
 
-            "reset-camping" -> buildPromise {
-                if (confirm(t("kingdom.confirmDeleteCamping", recordOf("actorName" to actor.name)))) {
-                    actor.clearCamping()
-                    close()
-                }
-            }
         }
     }
 
@@ -87,7 +68,6 @@ class ActorActions(
         ActorActionsContext(
             partId = parent.partId,
             hasKingdom = actor.getKingdom() != null,
-            hasCamping = actor.getCamping() != null,
         )
     }
 }

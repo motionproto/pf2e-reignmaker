@@ -1,9 +1,5 @@
 package at.posselt.pfrpg2e.migrations
 
-import at.posselt.pfrpg2e.camping.CampingActor
-import at.posselt.pfrpg2e.camping.getCamping
-import at.posselt.pfrpg2e.camping.getCampingActors
-import at.posselt.pfrpg2e.camping.setCamping
 import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.getKingdom
 import at.posselt.pfrpg2e.kingdom.getKingdomActors
@@ -22,14 +18,10 @@ import js.objects.recordOf
 private suspend fun createBackups(
     game: Game,
     kingdomActors: List<KingdomActor>,
-    campingActors: List<CampingActor>,
     currentVersion: Int
 ) {
     val backup = recordOf(
         "version" to currentVersion,
-        "camping" to campingActors.map {
-            it.id!! to it.getCamping()
-        }.toRecord(),
         "kingdoms" to kingdomActors.map {
             it.id!! to it.getKingdom()
         }.toRecord()
@@ -70,8 +62,7 @@ private suspend fun Game.migrateFrom(currentVersion: Int) {
     ui.notifications.info("${t("moduleName")}: ${t("migrations.doNotClose")}")
     // create backups
     val kingdomActors = getKingdomActors()
-    val campingActors = getCampingActors()
-    createBackups(this, kingdomActors, campingActors, currentVersion)
+    createBackups(this, kingdomActors, currentVersion)
 
     val migrationsToRun = migrations.filter { it.version > currentVersion }
 
@@ -85,12 +76,6 @@ private suspend fun Game.migrateFrom(currentVersion: Int) {
                     )
                 }"
             )
-            campingActors.forEach { actor ->
-                actor.getCamping()?.let { camping ->
-                    migration.migrateCamping(this, camping)
-                    actor.setCamping(camping)
-                }
-            }
 
             kingdomActors.forEach { actor ->
                 actor.getKingdom()?.let { kingdom ->
@@ -109,4 +94,3 @@ private suspend fun Game.migrateFrom(currentVersion: Int) {
         openJournal("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.wz1mIWMxDJVsMIUd")
     }
 }
-
