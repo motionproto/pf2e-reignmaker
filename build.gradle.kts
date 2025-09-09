@@ -127,6 +127,49 @@ tasks {
             "validateKingdomEvents",
         )
     }
+    
+    // Task to deploy to Foundry modules directory
+    register<Copy>("deployToFoundry") {
+        dependsOn("assemble")
+        
+        val foundryModulesDir = file("/Users/mark/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite")
+        
+        // Delete existing module directory first
+        doFirst {
+            if (foundryModulesDir.exists()) {
+                foundryModulesDir.deleteRecursively()
+            }
+            foundryModulesDir.mkdirs()
+        }
+        
+        // Copy all necessary files
+        from("dist") {
+            into("dist")
+        }
+        from("img") {
+            into("img")
+        }
+        from("lang") {
+            into("lang")
+        }
+        from("packs") {
+            into("packs")
+        }
+        from("module.json")
+        from("LICENSE")
+        from("README.md")
+        
+        into(foundryModulesDir)
+        
+        doLast {
+            println("Module deployed to: $foundryModulesDir")
+        }
+    }
+    
+    // Make the build task also deploy
+    named("build") {
+        finalizedBy("deployToFoundry")
+    }
 }
 
 // JSON Schema validation tasks
