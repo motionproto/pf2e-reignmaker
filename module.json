@@ -46,8 +46,8 @@
     ],
     "packs": [
         {
-            "name": "kingmaker-tools-structures",
-            "path": "packs/kingmaker-tools-structures",
+            "name": "kingdom-lite-structures",
+            "path": "packs/kingdom-lite-structures",
             "label": "Structures",
             "type": "Actor",
             "system": "pf2e",
@@ -56,8 +56,8 @@
             "flags": {}
         },
         {
-            "name": "kingmaker-tools-settlements",
-            "path": "packs/kingmaker-tools-settlements",
+            "name": "kingdom-lite-settlements",
+            "path": "packs/kingdom-lite-settlements",
             "label": "Settlement Scenes",
             "type": "Scene",
             "system": "pf2e",
@@ -66,8 +66,8 @@
             "flags": {}
         },
         {
-            "name": "kingmaker-tools-journals",
-            "path": "packs/kingmaker-tools-journals",
+            "name": "kingdom-lite-journals",
+            "path": "packs/kingdom-lite-journals",
             "label": "Journals",
             "type": "JournalEntry",
             "private": false,
@@ -76,8 +76,8 @@
             "system": "pf2e"
         },
         {
-            "name": "kingmaker-tools-rolltables",
-            "path": "packs/kingmaker-tools-rolltables",
+            "name": "kingdom-lite-rolltables",
+            "path": "packs/kingdom-lite-rolltables",
             "label": "Rolltables",
             "type": "RollTable",
             "private": false,
@@ -86,8 +86,8 @@
             "system": "pf2e"
         },
         {
-            "name": "kingmaker-tools-macros",
-            "path": "packs/kingmaker-tools-macros",
+            "name": "kingdom-lite-macros",
+            "path": "packs/kingdom-lite-macros",
             "label": "Macros",
             "type": "Macro",
             "private": false,
@@ -101,11 +101,11 @@
             "name": "pf2e Kingdom-lite",
             "sorting": "a",
             "packs": [
-                "kingmaker-tools-settlements",
-                "kingmaker-tools-structures",
-                "kingmaker-tools-journals",
-                "kingmaker-tools-rolltables",
-                "kingmaker-tools-macros"
+                "kingdom-lite-settlements",
+                "kingdom-lite-structures",
+                "kingdom-lite-journals",
+                "kingdom-lite-rolltables",
+                "kingdom-lite-macros"
             ]
         }
     ],

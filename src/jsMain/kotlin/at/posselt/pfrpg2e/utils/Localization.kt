@@ -70,7 +70,10 @@ fun t(key: String) =
 fun t(translatable: Translatable) =
     i18next.t(translatable.i18nKey)
 
-fun unfuckFoundryTranslations(obj: ReadonlyRecord<String, Any>): ReadonlyRecord<String, Any> {
+fun unfuckFoundryTranslations(obj: ReadonlyRecord<String, Any>?): ReadonlyRecord<String, Any> {
+    if (obj == null) {
+        return recordOf()
+    }
     return obj.asSequence()
         .map { (key, value) ->
             if (value is String) {
@@ -84,8 +87,12 @@ fun unfuckFoundryTranslations(obj: ReadonlyRecord<String, Any>): ReadonlyRecord<
 
 suspend fun initLocalization() {
     val lang = game.i18n.lang
-    val trans = (game.i18n.translations[Config.moduleId] ?: englishTranslations[Config.moduleId])
-        .unsafeCast<ReadonlyRecord<String, Any>>()
+    val moduleTranslations = game.i18n.translations[Config.moduleId] 
+        ?: game.i18n.translations 
+        ?: englishTranslations[Config.moduleId]
+        ?: englishTranslations
+    val trans = moduleTranslations?.unsafeCast<ReadonlyRecord<String, Any>>() 
+        ?: recordOf<String, Any>()
     val translations = unfuckFoundryTranslations(trans)
     val options = I18NextInitOptions(
         lng = lang,

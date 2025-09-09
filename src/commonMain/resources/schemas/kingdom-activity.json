@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/kingdom-activity.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/kingdom-activity.json",
   "title": "Kingdom Activity",
   "description": "A Kingdom Activity",
   "$ref": "#/$defs/Activity",

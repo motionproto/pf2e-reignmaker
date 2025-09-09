@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/recipe.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/recipe.json",
   "title": "Recipe",
   "description": "A recipe",
   "$ref": "#/$defs/Recipe",

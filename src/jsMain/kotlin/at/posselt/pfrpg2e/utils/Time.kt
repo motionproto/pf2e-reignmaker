@@ -1,7 +1,5 @@
 package at.posselt.pfrpg2e.utils
 
-import at.posselt.pfrpg2e.data.regions.Month
-import at.posselt.pfrpg2e.data.regions.getMonth
 import at.posselt.pfrpg2e.toUtcInstant
 import com.foundryvtt.core.Game
 import com.foundryvtt.core.helpers.GameTime
@@ -13,7 +11,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.format
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlin.js.Date
 import kotlin.time.Instant
@@ -23,9 +20,6 @@ fun Game.getPF2EWorldTime(): LocalDateTime {
     return Instant.fromEpochMilliseconds(ms.toLong())
         .toLocalDateTime(TimeZone.UTC)
 }
-
-fun Game.getCurrentMonth(): Month =
-    getMonth(getPF2EWorldTime().month.number - 1)
 
 fun Date.toInstant() =
     Instant.fromEpochSeconds(getSeconds().toLong())

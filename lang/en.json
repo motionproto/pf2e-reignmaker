@@ -1,5 +1,5 @@
 {
-  "pf2e-kingmaker-tools": {
+  "pf2e-kingdom-lite": {
     "moduleName": "Kingdom Building, Camping & Weather",
     "migrations": {
       "failed": "Failed to upgrade from version {version}. Please check the output of your console log (F12) and file an issue on GitHub or request support on our Discord channel.",

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/charter.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/charter.json",
   "title": "Kingdom Charter",
   "description": "A Kingdom Charter",
   "$ref": "#/$defs/Charter",

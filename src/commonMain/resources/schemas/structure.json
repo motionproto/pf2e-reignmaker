@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/structure.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/structure.json",
   "title": "Structure",
   "description": "A list of structures",
   "$ref": "#/$defs/Structure",

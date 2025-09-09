@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/heartland.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/heartland.json",
   "title": "Kingdom Heartland",
   "description": "A Kingdom Heartland",
   "$ref": "#/$defs/Heartland",
