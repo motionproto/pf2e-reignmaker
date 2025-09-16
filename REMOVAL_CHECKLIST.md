@@ -1,6 +1,6 @@
 # pf2e-kingdom-lite Removal Checklist
 
-This document tracks the transformation from pf2e-kingmaker-tools to pf2e-kingdom-lite by removing camping and weather functionality.
+This document tracks the transformation from pf2e-kingdom-lite to pf2e-kingdom-lite by removing camping and weather functionality.
 
 ## Phase 1: Setup Development Environment
 - [ ] Install JDK 21 on macOS

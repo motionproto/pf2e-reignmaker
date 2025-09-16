@@ -5,6 +5,6 @@ object Config {
     const val moduleId = "pf2e-kingdom-lite"
 
     object rollTables {
-        const val compendium = "$moduleId.kingmaker-tools-rolltables"
+        const val compendium = "$moduleId.kingdom-lite-rolltables"
     }
 }

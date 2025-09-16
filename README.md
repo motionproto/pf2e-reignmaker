@@ -20,7 +20,7 @@ under [Apache License 2.0](./src/jsMain/kotlin/com/foundryvtt/LICENSE).
 All images in the [img/structures](./img/structures) and [img/kingdom/backgrounds](./img/kingdom/backgrounds) are
 licensed under [CC0 - Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
 by [Mark Pearce](https://github.com/MarkPearce). They
-were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-kingmaker-tools/issues/76).
+were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-kingdom-lite/issues/76).
 According to their [Terms of Service](https://docs.midjourney.com/docs/terms-of-service), subscribers to MidJourney that
 are not part of a company own all the generated images.
 
@@ -30,7 +30,7 @@ by dbavirt on Discord.
 
 ## Installation
 
-The package is available through the [module registry](https://foundryvtt.com/packages/pf2e-kingmaker-tools)
+The package is available through the [module registry](https://foundryvtt.com/packages/pf2e-kingdom-lite)
 
 ## Functionality
 
@@ -97,11 +97,11 @@ Paste (right click -> paste) the following command into the Git Bash to install 
 
 Then, download the code (if you are more well versed with Windows, you can probably also clone the code somewhere else and create a symlink):
 
-    git clone https://github.com/BernhardPosselt/pf2e-kingmaker-tools.git 
+    git clone https://github.com/BernhardPosselt/pf2e-kingdom-lite.git 
 
-The folder **pf2e-kingmaker-tools** should now exist. Change into it:
+The folder **pf2e-kingdom-lite** should now exist. Change into it:
 
-    cd pf2e-kingmaker-tools
+    cd pf2e-kingdom-lite
 
 If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
 
@@ -167,17 +167,17 @@ First, create a folder to clone the repository into:
 
 Then, clone the repository:
 
-    git clone https://github.com/BernhardPosselt/pf2e-kingmaker-tools.git
+    git clone https://github.com/BernhardPosselt/pf2e-kingdom-lite.git
 
 Then link this directory to your foundry data folder:
 
 Linux:
 
-    ln -s /home/$(whoami)/dev/pf2e-kingmaker-tools/ /home/$(whoami)/.local/share/FoundryVTT/Data/modules/pf2e-kingmaker-tools/
+    ln -s /home/$(whoami)/dev/pf2e-kingdom-lite/ /home/$(whoami)/.local/share/FoundryVTT/Data/modules/pf2e-kingdom-lite/
 
 macOS:
 
-    ln -s /Users/$(whoami)/dev/pf2e-kingmaker-tools/ /Users/$(whoami)/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingmaker-tools/
+    ln -s /Users/$(whoami)/dev/pf2e-kingdom-lite/ /Users/$(whoami)/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite/
 
 If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
 
@@ -246,7 +246,7 @@ You can pull changes either by setting up the project locally (check out the rel
     ./gradlew txPull
     ./gradlew assemble
 
-or by manually downloading by clicking on your language in Transifex and choosing **Download for use** ![](docs/img/transifex-download.png) Then place the downloaded file into **Data/modules/pf2e-kingmaker-tools/dist/lang/ru.json** (adjust name depending on your translation). The location of the data folder [depends on your Operating System](https://foundryvtt.com/article/user-data/). However, make sure to only perform this **on your local dev instance and not on your hosted services due to security reasons**: translations might include malicious HTML and those strings are only stripped when building the project.
+or by manually downloading by clicking on your language in Transifex and choosing **Download for use** ![](docs/img/transifex-download.png) Then place the downloaded file into **Data/modules/pf2e-kingdom-lite/dist/lang/ru.json** (adjust name depending on your translation). The location of the data folder [depends on your Operating System](https://foundryvtt.com/article/user-data/). However, make sure to only perform this **on your local dev instance and not on your hosted services due to security reasons**: translations might include malicious HTML and those strings are only stripped when building the project.
 
 **A note on Lores**: Lores in the 2e system can currently not be translated properly and if you use translated lores, you lose automation that matches on the lore name. You can use translated lores in this module by overriding activities and lores manually. Translations will be implemented once the 2e system allows for it
 

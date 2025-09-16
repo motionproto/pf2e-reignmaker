@@ -91,6 +91,6 @@ private suspend fun Game.migrateFrom(currentVersion: Int) {
     ui.notifications.info("${t("moduleName")}: ${t("migrations.successful")}")
 
     if (migrationsToRun.any { it.showUpgradingNotices }) {
-        openJournal("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.wz1mIWMxDJVsMIUd")
+        openJournal("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.wz1mIWMxDJVsMIUd")
     }
 }

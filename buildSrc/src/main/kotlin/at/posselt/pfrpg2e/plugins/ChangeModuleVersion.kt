@@ -43,8 +43,8 @@ abstract class ChangeModuleVersion : DefaultTask() {
                 this["version"] = JsonPrimitive(version)
                 this["download"] =
                     JsonPrimitive(
-                        "https://github.com/BernhardPosselt" +
-                                "/pf2e-kingmaker-tools/releases/download/${version}/release.zip"
+                        "https://github.com/motionproto" +
+                                "/pf2e-kingdom-lite/releases/download/${version}/release.zip"
                     )
             }
         } else {

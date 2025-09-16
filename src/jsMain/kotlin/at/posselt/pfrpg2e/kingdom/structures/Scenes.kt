@@ -99,7 +99,7 @@ suspend fun Game.importSettlementScene(
     terrain: SettlementTerrain,
     waterBorders: Int,
 ): Scene? {
-    val data = packs.get("${Config.moduleId}.kingmaker-tools-settlements")
+    val data = packs.get("${Config.moduleId}.kingdom-lite-settlements")
         ?.getDocuments()
         ?.await()
         ?.asSequence()
@@ -120,7 +120,7 @@ suspend fun Game.importSettlementScene(
                 )
             } else {
                 update["background"] = recordOf(
-                    "src" to "modules/pf2e-kingmaker-tools/img/settlements/backgrounds/${terrain.value}-${waterBorders}.webp",
+                    "src" to "modules/pf2e-kingdom-lite/img/settlements/backgrounds/${terrain.value}-${waterBorders}.webp",
                 )
             }
             mergeObject(obj, update)

@@ -244,18 +244,18 @@ tasks.register<Zip>("package") {
     tasks.named("build").get().mustRunAfter("txPull")
     archiveFileName = "release.zip"
     destinationDirectory = layout.buildDirectory
-    from("dist") { into("pf2e-kingmaker-tools/dist") }
-    from("docs") { into("pf2e-kingmaker-tools/docs") }
-    from("img") { into("pf2e-kingmaker-tools/img") }
-    from("packs") { into("pf2e-kingmaker-tools/packs") }
-    from("styles") { into("pf2e-kingmaker-tools/styles") }
-    from("templates") { into("pf2e-kingmaker-tools/templates") }
-    from("CHANGELOG.md") { into("pf2e-kingmaker-tools/") }
-    from("LICENSE") { into("pf2e-kingmaker-tools/") }
-    from("OpenGameLicense.md") { into("pf2e-kingmaker-tools/") }
-    from("README.md") { into("pf2e-kingmaker-tools/") }
-    from("token-map.json") { into("pf2e-kingmaker-tools/") }
-    from("build/module.json") { into("pf2e-kingmaker-tools/") }
+    from("dist") { into("pf2e-kingdom-lite/dist") }
+    from("docs") { into("pf2e-kingdom-lite/docs") }
+    from("img") { into("pf2e-kingdom-lite/img") }
+    from("packs") { into("pf2e-kingdom-lite/packs") }
+    from("styles") { into("pf2e-kingdom-lite/styles") }
+    from("templates") { into("pf2e-kingdom-lite/templates") }
+    from("CHANGELOG.md") { into("pf2e-kingdom-lite/") }
+    from("LICENSE") { into("pf2e-kingdom-lite/") }
+    from("OpenGameLicense.md") { into("pf2e-kingdom-lite/") }
+    from("README.md") { into("pf2e-kingdom-lite/") }
+    from("token-map.json") { into("pf2e-kingdom-lite/") }
+    from("build/module.json") { into("pf2e-kingdom-lite/") }
 }
 
 tasks.register<ReleaseModule>("release") {
@@ -263,7 +263,7 @@ tasks.register<ReleaseModule>("release") {
     releaseZip = layout.buildDirectory.file("release.zip")
     releaseModuleJson = layout.buildDirectory.file("module.json")
     changelogFile = layout.projectDirectory.file("CHANGELOG.md")
-    githubRepo = "BernhardPosselt/pf2e-kingmaker-tools"
+    githubRepo = "motionproto/pf2e-kingdom-lite"
 }
 
 tasks.register<UnpackJsonFiles>("unpackJson") {

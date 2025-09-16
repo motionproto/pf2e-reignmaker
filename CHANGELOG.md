@@ -719,7 +719,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Mark Pearce [contributed CC licensed](https://github.com/BernhardPosselt/pf2e-kingmaker-tools/issues/76) images for
+* Mark Pearce [contributed CC licensed](https://github.com/BernhardPosselt/pf2e-kingdom-lite/issues/76) images for
   the missing structures. You will need to reimport these structures to make use of the new images. Keep in mind that
   you also need to replace all existing tokens after deleting their actors.
 
@@ -1525,7 +1525,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Roll from Kingmaker Cult & Kingdom events if Kingmaker module is enabled
 * Set Token paths for buildings and companions to Kingmaker module; the previous behavior is now available by installing
-  the https://github.com/BernhardPosselt/pf2e-kingmaker-tools-token-mapping module
+  the https://github.com/BernhardPosselt/pf2e-kingdom-lite-token-mapping module
 * Autoconfigure region and default combat tracks to point to Kingmaker playlists and tracks
 * Autoconfigure snow, rain, rain storm and blizzard to point to Kingmaker SFX tracks
 * Add a setting to disable weather effects
@@ -1534,7 +1534,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Pull out token mappings into the https://github.com/BernhardPosselt/pf2e-kingmaker-tools-token-mapping module
+* Pull out token mappings into the https://github.com/BernhardPosselt/pf2e-kingdom-lite-token-mapping module
   so that you can use both the Kingmaker and Kingmaker Tools module at the same time
 * Roll from Kingmaker module roll tables when Kingmaker module is enabled
 

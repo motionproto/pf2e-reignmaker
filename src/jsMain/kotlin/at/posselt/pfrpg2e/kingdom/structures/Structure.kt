@@ -214,7 +214,7 @@ suspend fun Game.importStructures(): Array<Actor> {
             "ownership" to recordOf("default" to 3),
         )
     ).await()
-    val data = packs.get("${Config.moduleId}.kingmaker-tools-structures")
+    val data = packs.get("${Config.moduleId}.kingdom-lite-structures")
         ?.getDocuments()
         ?.await()
         ?.asSequence()

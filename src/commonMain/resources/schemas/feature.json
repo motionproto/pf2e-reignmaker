@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://posselt.at/pf2e-kingmaker-tools/schemas/feature.json",
+  "$id": "https://posselt.at/pf2e-kingdom-lite/schemas/feature.json",
   "title": "Kingdom Feature",
   "description": "A Kingdom Feature",
   "$ref": "#/$defs/Feature",

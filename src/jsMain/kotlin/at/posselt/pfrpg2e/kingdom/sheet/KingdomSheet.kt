@@ -532,11 +532,11 @@ class KingdomSheet(
             }
 
             "quickstart" -> buildPromise {
-                openJournal("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.FwcyYZARAnOHlKkE")
+                openJournal("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.FwcyYZARAnOHlKkE")
             }
 
             "help" -> buildPromise {
-                openJournal("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.iAQCUYEAq4Dy8uCY.JournalEntryPage.ty6BS5eSI7ScfVBk")
+                openJournal("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.iAQCUYEAq4Dy8uCY.JournalEntryPage.ty6BS5eSI7ScfVBk")
             }
 
             "gain-xp" -> buildPromise {
@@ -661,7 +661,7 @@ class KingdomSheet(
                 val result = game.rollWithCompendiumFallback(
                     rollMode = rollMode,
                     uuid = uuid,
-                    compendiumUuid = "Compendium.pf2e-kingmaker-tools.kingmaker-tools-rolltables.RollTable.aYQXu2GwIf5gdyQa",
+                    compendiumUuid = "Compendium.pf2e-kingdom-lite.kingdom-lite-rolltables.RollTable.aYQXu2GwIf5gdyQa",
                 )
                 postAddToOngoingEvents(result, rollMode, kingdom)
             }
@@ -674,7 +674,7 @@ class KingdomSheet(
                 val result = game.rollWithCompendiumFallback(
                     rollMode = rollMode,
                     uuid = uuid,
-                    compendiumUuid = "Compendium.pf2e-kingmaker-tools.kingmaker-tools-rolltables.RollTable.ZXk2yVZH7JMswXbD",
+                    compendiumUuid = "Compendium.pf2e-kingdom-lite.kingdom-lite-rolltables.RollTable.ZXk2yVZH7JMswXbD",
                 )
                 postAddToOngoingEvents(result, rollMode, kingdom)
             }
@@ -1120,7 +1120,7 @@ class KingdomSheet(
         type: SettlementType,
     ) {
         val scene = game.importSettlementScene(
-            uuid = "Compendium.pf2e-kingmaker-tools.kingmaker-tools-settlements.Scene.XmDdx6ufrqqjhkJE",
+            uuid = "Compendium.pf2e-kingdom-lite.kingdom-lite-settlements.Scene.XmDdx6ufrqqjhkJE",
             sceneName = sceneName,
             terrain = terrain,
             waterBorders = waterBorders,
@@ -1622,7 +1622,7 @@ class KingdomSheet(
 suspend fun openOrCreateKingdomSheet(game: Game, dispatcher: ActionDispatcher, actor: KingdomActor) {
     if (actor.getKingdom() == null) {
         actor.setKingdom(createKingdomDefaults(t("kingdom.newKingdom")))
-        openJournal("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.FwcyYZARAnOHlKkE")
+        openJournal("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.FwcyYZARAnOHlKkE")
     }
     KingdomSheet(game, actor, dispatcher).launch()
 }

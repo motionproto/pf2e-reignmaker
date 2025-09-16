@@ -21,29 +21,29 @@ suspend fun showFirstRunMessage(game: Game) {
             templatePath = "chatmessages/firstrun.hbs",
             rollMode = RollMode.GMROLL,
             templateContext = recordOf(
-                "manual" to TextEditor.enrichHTML(buildUuid("Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.iAQCUYEAq4Dy8uCY"))
+                "manual" to TextEditor.enrichHTML(buildUuid("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.iAQCUYEAq4Dy8uCY"))
                     .await(),
                 "camping" to TextEditor.enrichHTML(
                     buildUuid(
-                        "Compendium.pf2e-kingmaker-tools.kingmaker-tools-macros.Macro.GXeKz3qKlsoxcaTg",
+                        "Compendium.pf2e-kingdom-lite.kingdom-lite-macros.Macro.GXeKz3qKlsoxcaTg",
                         t("applications.camping")
                     )
                 ).await(),
                 "kingdom" to TextEditor.enrichHTML(
                     buildUuid(
-                        "Compendium.pf2e-kingmaker-tools.kingmaker-tools-macros.Macro.1LmPW2OlHgJvedY8",
+                        "Compendium.pf2e-kingdom-lite.kingdom-lite-macros.Macro.1LmPW2OlHgJvedY8",
                         t("applications.kingdom")
                     )
                 ).await(),
                 "license" to TextEditor.enrichHTML(
                     buildUuid(
-                        "Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.8DyhRcPn7d8hlC1y",
+                        "Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.8DyhRcPn7d8hlC1y",
                         t("chatMessages.firstRun.licenses")
                     )
                 ).await(),
                 "upgrading" to TextEditor.enrichHTML(
                     buildUuid(
-                        "Compendium.pf2e-kingmaker-tools.kingmaker-tools-journals.JournalEntry.wz1mIWMxDJVsMIUd",
+                        "Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.wz1mIWMxDJVsMIUd",
                         t("chatMessages.firstRun.upgradeNotices")
                     )
                 ).await(),
