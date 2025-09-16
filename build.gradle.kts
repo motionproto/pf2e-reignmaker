@@ -125,6 +125,7 @@ tasks {
             "validateHeartlands",
             "validateMilestones",
             "validateKingdomEvents",
+            "validateIncidents",
         )
     }
     
@@ -225,6 +226,12 @@ tasks.register<JsonSchemaValidator>("validateMilestones") {
     outputs.upToDateWhen { true } // no outputs, only depend on input files
     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/milestone.json")
     files = layout.projectDirectory.dir("data/milestones")
+}
+
+tasks.register<JsonSchemaValidator>("validateIncidents") {
+    outputs.upToDateWhen { true } // no outputs, only depend on input files
+    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/incident.json")
+    files = layout.projectDirectory.dir("data/incidents")
 }
 
 // release tasks

@@ -1,0 +1,34 @@
+{
+  "id": "corruption-scandal",
+  "name": "Corruption Scandal",
+  "tier": "DISCONTENT",
+  "description": "Officials are caught embezzling kingdom funds.",
+  "percentileMin": 61,
+  "percentileMax": 70,
+  "skillOptions": [
+    {
+      "skill": "society",
+      "successEffect": "Scandal contained, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed)"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Cover-up successful, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed)"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "Officials purged, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed)"
+    },
+    {
+      "skill": "diplomacy",
+      "successEffect": "Public relations managed, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed)"
+    }
+  ]
+}

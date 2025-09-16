@@ -1,0 +1,34 @@
+{
+  "id": "rebellion-trade-embargo",
+  "name": "Trade Embargo",
+  "tier": "REBELLION",
+  "description": "Complete trade blockade by neighboring kingdoms.",
+  "percentileMin": 25,
+  "percentileMax": 31,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Trade continues, no effect",
+      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
+      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Loopholes exploited, no effect",
+      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
+      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Smuggling network established, no effect",
+      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
+      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "arcana",
+      "successEffect": "Teleportation network created, no effect",
+      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
+      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+    }
+  ]
+}

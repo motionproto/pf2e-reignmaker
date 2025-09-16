@@ -1,0 +1,28 @@
+{
+  "id": "assassination-attempt",
+  "name": "Assassination Attempt",
+  "tier": "TURMOIL",
+  "description": "An attempt is made on a kingdom leader's life.",
+  "percentileMin": 79,
+  "percentileMax": 87,
+  "skillOptions": [
+    {
+      "skill": "athletics",
+      "successEffect": "Assassination prevented, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+    },
+    {
+      "skill": "medicine",
+      "successEffect": "Wounds treated quickly, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+    },
+    {
+      "skill": "stealth",
+      "successEffect": "Assassin avoided, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+    }
+  ]
+}

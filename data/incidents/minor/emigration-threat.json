@@ -1,0 +1,34 @@
+{
+  "id": "emigration-threat",
+  "name": "Emigration Threat",
+  "tier": "DISCONTENT",
+  "description": "Citizens threaten to leave the kingdom for better opportunities elsewhere.",
+  "percentileMin": 41,
+  "percentileMax": 50,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Population stays, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Concerns addressed, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+    },
+    {
+      "skill": "religion",
+      "successEffect": "Faith keeps them home, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+    },
+    {
+      "skill": "nature",
+      "successEffect": "Local conditions improved, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+    }
+  ]
+}

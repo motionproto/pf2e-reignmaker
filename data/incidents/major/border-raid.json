@@ -1,0 +1,34 @@
+{
+  "id": "border-raid",
+  "name": "Border Raid",
+  "tier": "REBELLION",
+  "description": "Enemy forces raid the kingdom's borders.",
+  "percentileMin": 74,
+  "percentileMax": 80,
+  "skillOptions": [
+    {
+      "skill": "athletics",
+      "successEffect": "Raiders repelled, no effect",
+      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "Retaliation deters raiders, no effect",
+      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+    },
+    {
+      "skill": "survival",
+      "successEffect": "Raiders tracked and stopped, no effect",
+      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+    },
+    {
+      "skill": "nature",
+      "successEffect": "Terrain used defensively, no effect",
+      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+    }
+  ]
+}

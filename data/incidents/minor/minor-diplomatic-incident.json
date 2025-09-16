@@ -1,0 +1,28 @@
+{
+  "id": "minor-diplomatic-incident",
+  "name": "Minor Diplomatic Incident",
+  "tier": "DISCONTENT",
+  "description": "A diplomatic misstep strains relations with neighbors.",
+  "percentileMin": 91,
+  "percentileMax": 100,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Relations maintained, no effect",
+      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
+      "criticalFailureExtra": "Two random kingdoms' attitudes worsen by 1 step"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Formal apology accepted, no effect",
+      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
+      "criticalFailureExtra": "Two random kingdoms' attitudes worsen by 1 step"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Involvement denied, no effect",
+      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
+      "criticalFailureExtra": "Two random kingdoms' attitudes worsen by 1 step"
+    }
+  ]
+}

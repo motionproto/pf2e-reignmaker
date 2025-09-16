@@ -1,0 +1,28 @@
+{
+  "id": "prison-breaks",
+  "name": "Prison Breaks",
+  "tier": "REBELLION",
+  "description": "Mass prison break threatens public safety.",
+  "percentileMin": 46,
+  "percentileMax": 52,
+  "skillOptions": [
+    {
+      "skill": "intimidation",
+      "successEffect": "Break prevented, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, justice structure damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, justice structure destroyed"
+    },
+    {
+      "skill": "athletics",
+      "successEffect": "Prisoners pursued and caught, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, justice structure damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, justice structure destroyed"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Negotiation prevents break, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, justice structure damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, justice structure destroyed"
+    }
+  ]
+}

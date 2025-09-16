@@ -1,33 +1,34 @@
 {
   "id": "crime-wave",
-  "name": "incidents.crime-wave.name",
+  "name": "Crime Wave",
   "tier": "DISCONTENT",
-  "description": "incidents.crime-wave.description",
-  "percentileRange": [21, 30],
+  "description": "A wave of petty thefts and vandalism sweeps through the settlements.",
+  "percentileMin": 21,
+  "percentileMax": 30,
   "skillOptions": [
     {
       "skill": "intimidation",
-      "successEffect": "incidents.crime-wave.intimidation.success",
-      "failureEffect": "incidents.crime-wave.intimidation.failure",
-      "criticalFailureExtra": "incidents.crime-wave.intimidation.criticalFailure"
+      "successEffect": "Crime suppressed, no effect",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "thievery",
-      "successEffect": "incidents.crime-wave.thievery.success",
-      "failureEffect": "incidents.crime-wave.thievery.failure",
-      "criticalFailureExtra": "incidents.crime-wave.thievery.criticalFailure"
+      "successEffect": "Infiltrate gangs, crime suppressed",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "society",
-      "successEffect": "incidents.crime-wave.society.success",
-      "failureEffect": "incidents.crime-wave.society.failure",
-      "criticalFailureExtra": "incidents.crime-wave.society.criticalFailure"
+      "successEffect": "Legal reform prevents crime",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "occultism",
-      "successEffect": "incidents.crime-wave.occultism.success",
-      "failureEffect": "incidents.crime-wave.occultism.failure",
-      "criticalFailureExtra": "incidents.crime-wave.occultism.criticalFailure"
+      "successEffect": "Divine the source, crime prevented",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     }
   ]
 }

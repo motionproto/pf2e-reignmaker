@@ -1,0 +1,34 @@
+{
+  "id": "rising-tensions",
+  "name": "Rising Tensions",
+  "tier": "DISCONTENT",
+  "description": "General unease spreads throughout the kingdom.",
+  "percentileMin": 71,
+  "percentileMax": 80,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Tensions ease, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
+    },
+    {
+      "skill": "religion",
+      "successEffect": "Spiritual guidance calms, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
+    },
+    {
+      "skill": "performance",
+      "successEffect": "Entertainment distracts, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
+    },
+    {
+      "skill": "arcana",
+      "successEffect": "Magical displays impress, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
+    }
+  ]
+}

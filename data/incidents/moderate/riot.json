@@ -1,33 +1,34 @@
 {
   "id": "riot",
-  "name": "incidents.riot.name",
+  "name": "Riot",
   "tier": "TURMOIL",
-  "description": "incidents.riot.description",
-  "percentileRange": [61, 69],
+  "description": "Angry mobs riot in the streets, destroying property.",
+  "percentileMin": 61,
+  "percentileMax": 69,
   "skillOptions": [
     {
       "skill": "intimidation",
-      "successEffect": "incidents.riot.intimidation.success",
-      "failureEffect": "incidents.riot.intimidation.failure",
-      "criticalFailureExtra": "incidents.riot.intimidation.criticalFailure"
+      "successEffect": "Riot quelled, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "diplomacy",
-      "successEffect": "incidents.riot.diplomacy.success",
-      "failureEffect": "incidents.riot.diplomacy.failure",
-      "criticalFailureExtra": "incidents.riot.diplomacy.criticalFailure"
+      "successEffect": "Negotiation succeeds, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "athletics",
-      "successEffect": "incidents.riot.athletics.success",
-      "failureEffect": "incidents.riot.athletics.failure",
-      "criticalFailureExtra": "incidents.riot.athletics.criticalFailure"
+      "successEffect": "Riot contained, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "medicine",
-      "successEffect": "incidents.riot.medicine.success",
-      "failureEffect": "incidents.riot.medicine.failure",
-      "criticalFailureExtra": "incidents.riot.medicine.criticalFailure"
+      "successEffect": "Injured treated, tensions ease, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     }
   ]
 }

@@ -1,0 +1,34 @@
+{
+  "id": "production-strike",
+  "name": "Production Strike",
+  "tier": "TURMOIL",
+  "description": "Workers refuse to produce critical resources.",
+  "percentileMin": 16,
+  "percentileMax": 24,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Strike ends, no effect",
+      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Arbitration successful, no effect",
+      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+    },
+    {
+      "skill": "crafting",
+      "successEffect": "Work alongside strikers, no effect",
+      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+    },
+    {
+      "skill": "arcana",
+      "successEffect": "Production automated, no effect",
+      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+    }
+  ]
+}

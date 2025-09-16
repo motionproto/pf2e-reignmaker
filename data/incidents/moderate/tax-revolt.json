@@ -1,0 +1,34 @@
+{
+  "id": "tax-revolt",
+  "name": "Tax Revolt",
+  "tier": "TURMOIL",
+  "description": "Citizens refuse to pay taxes.",
+  "percentileMin": 34,
+  "percentileMax": 42,
+  "skillOptions": [
+    {
+      "skill": "intimidation",
+      "successEffect": "Taxes collected normally",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+    },
+    {
+      "skill": "diplomacy",
+      "successEffect": "Tax rates negotiated, no effect",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Tax reform accepted, no effect",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Creative accounting works, no effect",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+    }
+  ]
+}

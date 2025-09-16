@@ -1,33 +1,34 @@
 {
   "id": "protests",
-  "name": "incidents.protests.name",
+  "name": "Protests",
   "tier": "DISCONTENT",
-  "description": "incidents.protests.description",
-  "percentileRange": [51, 60],
+  "description": "Angry citizens take to the streets in protest.",
+  "percentileMin": 51,
+  "percentileMax": 60,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "incidents.protests.diplomacy.success",
-      "failureEffect": "incidents.protests.diplomacy.failure",
-      "criticalFailureExtra": "incidents.protests.diplomacy.criticalFailure"
+      "successEffect": "Peaceful resolution, no effect",
+      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
     },
     {
       "skill": "intimidation",
-      "successEffect": "incidents.protests.intimidation.success",
-      "failureEffect": "incidents.protests.intimidation.failure",
-      "criticalFailureExtra": "incidents.protests.intimidation.criticalFailure"
+      "successEffect": "Protests dispersed, no effect",
+      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
     },
     {
       "skill": "performance",
-      "successEffect": "incidents.protests.performance.success",
-      "failureEffect": "incidents.protests.performance.failure",
-      "criticalFailureExtra": "incidents.protests.performance.criticalFailure"
+      "successEffect": "Crowd distracted, no effect",
+      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
     },
     {
       "skill": "arcana",
-      "successEffect": "incidents.protests.arcana.success",
-      "failureEffect": "incidents.protests.arcana.failure",
-      "criticalFailureExtra": "incidents.protests.arcana.criticalFailure"
+      "successEffect": "Magical calming, no effect",
+      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
     }
   ]
 }

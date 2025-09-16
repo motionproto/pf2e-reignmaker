@@ -1,0 +1,34 @@
+{
+  "id": "international-crisis",
+  "name": "International Crisis",
+  "tier": "REBELLION",
+  "description": "Multiple kingdoms turn against you due to internal chaos.",
+  "percentileMin": 88,
+  "percentileMax": 100,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Crisis contained, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Blame shifted, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Formal reparations accepted, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+    },
+    {
+      "skill": "performance",
+      "successEffect": "Public relations campaign succeeds, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+    }
+  ]
+}

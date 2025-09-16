@@ -1,0 +1,34 @@
+{
+  "id": "turmoil-trade-embargo",
+  "name": "Trade Embargo",
+  "tier": "TURMOIL",
+  "description": "Neighboring kingdoms impose trade restrictions.",
+  "percentileMin": 88,
+  "percentileMax": 93,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Trade continues, no effect",
+      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
+      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Loopholes found, no effect",
+      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
+      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "deception",
+      "successEffect": "Smuggling routes established, no effect",
+      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
+      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+    },
+    {
+      "skill": "occultism",
+      "successEffect": "Trade routes divined, no effect",
+      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
+      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+    }
+  ]
+}

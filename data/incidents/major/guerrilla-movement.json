@@ -1,0 +1,34 @@
+{
+  "id": "guerrilla-movement",
+  "name": "Guerrilla Movement",
+  "tier": "REBELLION",
+  "description": "Armed rebels begin guerrilla warfare against the kingdom.",
+  "percentileMin": 11,
+  "percentileMax": 17,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Rebellion dispersed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "Rebellion crushed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Grievances addressed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+    },
+    {
+      "skill": "religion",
+      "successEffect": "Faith unites kingdom",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+    }
+  ]
+}

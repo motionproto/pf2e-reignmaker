@@ -1,0 +1,34 @@
+{
+  "id": "infrastructure-damage",
+  "name": "Infrastructure Damage",
+  "tier": "TURMOIL",
+  "description": "Critical infrastructure is damaged by sabotage or neglect.",
+  "percentileMin": 43,
+  "percentileMax": 51,
+  "skillOptions": [
+    {
+      "skill": "crafting",
+      "successEffect": "Damage prevented, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+    },
+    {
+      "skill": "athletics",
+      "successEffect": "Labor mobilized, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Response organized, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+    },
+    {
+      "skill": "arcana",
+      "successEffect": "Magical restoration, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+    }
+  ]
+}

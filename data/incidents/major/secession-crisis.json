@@ -1,0 +1,34 @@
+{
+  "id": "secession-crisis",
+  "name": "Secession Crisis",
+  "tier": "REBELLION",
+  "description": "A settlement declares independence from the kingdom.",
+  "percentileMin": 81,
+  "percentileMax": 87,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Independence movement quelled, no effect",
+      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
+      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "Movement suppressed, no effect",
+      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
+      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Grievances addressed, no effect",
+      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
+      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+    },
+    {
+      "skill": "performance",
+      "successEffect": "Loyalty inspired, no effect",
+      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
+      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+    }
+  ]
+}

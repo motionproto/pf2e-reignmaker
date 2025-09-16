@@ -3,7 +3,7 @@ package at.posselt.pfrpg2e.kingdom.managers
 import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.KingdomData
 import at.posselt.pfrpg2e.kingdom.data.*
-import at.posselt.pfrpg2e.kingdom.incidents.CharacterSkillIncidents
+import at.posselt.pfrpg2e.kingdom.incidents.UnrestIncidents
 import at.posselt.pfrpg2e.kingdom.getKingdom
 import at.posselt.pfrpg2e.kingdom.setKingdom
 import at.posselt.pfrpg2e.data.kingdom.settlements.SettlementType
@@ -67,7 +67,7 @@ class UnrestIncidentManager(private val game: Game) {
         }
         
         // Roll for incident
-        val incident = CharacterSkillIncidents.rollForIncident(tier)
+        val incident = UnrestIncidents.rollForIncident(tier)
         
         // Log the result
         if (incident != null) {

@@ -1,0 +1,34 @@
+{
+  "id": "bandit-activity",
+  "name": "Bandit Activity",
+  "tier": "DISCONTENT",
+  "description": "Bandits raid trade routes and settlements.",
+  "percentileMin": 81,
+  "percentileMax": 90,
+  "skillOptions": [
+    {
+      "skill": "intimidation",
+      "successEffect": "Bandits deterred, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+    },
+    {
+      "skill": "stealth",
+      "successEffect": "Bandits infiltrated, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+    },
+    {
+      "skill": "survival",
+      "successEffect": "Bandits tracked to lair, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+    },
+    {
+      "skill": "occultism",
+      "successEffect": "Bandits found by scrying, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+    }
+  ]
+}

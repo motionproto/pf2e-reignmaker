@@ -1,33 +1,34 @@
 {
   "id": "work-stoppage",
-  "name": "incidents.work-stoppage.name",
+  "name": "Work Stoppage",
   "tier": "DISCONTENT",
-  "description": "incidents.work-stoppage.description",
-  "percentileRange": [31, 40],
+  "description": "Workers refuse to continue their duties, disrupting production.",
+  "percentileMin": 31,
+  "percentileMax": 40,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "incidents.work-stoppage.diplomacy.success",
-      "failureEffect": "incidents.work-stoppage.diplomacy.failure",
-      "criticalFailureExtra": "incidents.work-stoppage.diplomacy.criticalFailure"
+      "successEffect": "Workers return, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "intimidation",
-      "successEffect": "incidents.work-stoppage.intimidation.success",
-      "failureEffect": "incidents.work-stoppage.intimidation.failure",
-      "criticalFailureExtra": "incidents.work-stoppage.intimidation.criticalFailure"
+      "successEffect": "Workers forced back, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "performance",
-      "successEffect": "incidents.work-stoppage.performance.success",
-      "failureEffect": "incidents.work-stoppage.performance.failure",
-      "criticalFailureExtra": "incidents.work-stoppage.performance.criticalFailure"
+      "successEffect": "Workers inspired, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "medicine",
-      "successEffect": "incidents.work-stoppage.medicine.success",
-      "failureEffect": "incidents.work-stoppage.medicine.failure",
-      "criticalFailureExtra": "incidents.work-stoppage.medicine.criticalFailure"
+      "successEffect": "Health concerns addressed, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     }
   ]
 }

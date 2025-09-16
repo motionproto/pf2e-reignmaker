@@ -1,0 +1,28 @@
+{
+  "id": "settlement-crisis",
+  "name": "Settlement Crisis",
+  "tier": "TURMOIL",
+  "description": "An entire settlement faces economic or social collapse.",
+  "percentileMin": 70,
+  "percentileMax": 78,
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "Settlement stabilized, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum 1), +1 unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Emergency aid effective, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum 1), +1 unrest"
+    },
+    {
+      "skill": "religion",
+      "successEffect": "Hope restored, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum 1), +1 unrest"
+    }
+  ]
+}

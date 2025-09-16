@@ -1,0 +1,34 @@
+{
+  "id": "noble-conspiracy",
+  "name": "Noble Conspiracy",
+  "tier": "REBELLION",
+  "description": "Nobles plot against the throne.",
+  "percentileMin": 53,
+  "percentileMax": 59,
+  "skillOptions": [
+    {
+      "skill": "stealth",
+      "successEffect": "Conspiracy exposed and dealt with, no effect",
+      "failureEffect": "Lose 1d4 Gold, -1 fame",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "Conspirators arrested, no effect",
+      "failureEffect": "Lose 1d4 Gold, -1 fame",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+    },
+    {
+      "skill": "society",
+      "successEffect": "Political maneuvering succeeds, no effect",
+      "failureEffect": "Lose 1d4 Gold, -1 fame",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+    },
+    {
+      "skill": "occultism",
+      "successEffect": "Truth divined, conspiracy prevented, no effect",
+      "failureEffect": "Lose 1d4 Gold, -1 fame",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+    }
+  ]
+}
