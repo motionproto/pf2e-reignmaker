@@ -15,6 +15,8 @@ import at.posselt.pfrpg2e.app.forms.OverrideType
 import at.posselt.pfrpg2e.app.forms.Select
 import at.posselt.pfrpg2e.app.forms.SelectOption
 import at.posselt.pfrpg2e.app.forms.TextInput
+import at.posselt.pfrpg2e.kingdom.managers.FameManager
+import at.posselt.pfrpg2e.kingdom.sheet.FameComponent
 import at.posselt.pfrpg2e.data.checks.RollMode
 import at.posselt.pfrpg2e.data.events.KingdomEventTrait
 import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
@@ -205,6 +207,8 @@ class KingdomSheet(
     private var currentNavEntry: MainNavEntry = if (noCharter) MainNavEntry.KINGDOM else MainNavEntry.TURN
     private var bonusFeat: String? = null
     private val openedDetails = mutableSetOf<String>()
+    private val fameManager = FameManager()
+    private val fameComponent = FameComponent()
 
     init {
         appHook.onDeleteScene { _, _, _ -> render() }
@@ -810,10 +814,24 @@ class KingdomSheet(
             }
 
             "gain-fame" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    kingdom.fame.now = (kingdom.fame.now + 1).coerceIn(0, kingdom.settings.maximumFamePoints)
-                    postChatMessage(t("kingdom.gaining1Fame"))
-                    actor.setKingdom(kingdom)
+                // This is the button players click at the start of the turn to gain 1 fame
+                fameManager.gainTurnFame(actor)
+                postChatMessage(t("kingdom.gaining1Fame"))
+            }
+            
+            "gain-fame-critical" -> buildPromise {
+                // This is for gaining bonus fame from critical successes
+                fameManager.gainFromCritical(actor)
+                postChatMessage(t("kingdom.gainedFameFromCritical"))
+            }
+            
+            "use-fame-reroll" -> buildPromise {
+                target.dataset["checkId"]?.let { checkId ->
+                    if (fameManager.useForReroll(actor, checkId)) {
+                        postChatMessage(t("kingdom.usedFameForReroll", recordOf("check" to checkId)))
+                    } else {
+                        ui.notifications.warn(t("kingdom.cannotUseFameForReroll"))
+                    }
                 }
             }
 
@@ -887,8 +905,8 @@ class KingdomSheet(
                     val storage = calculateStorage(realm = realm, settlements = settlements.allSettlements)
                     kingdom.supernaturalSolutions = 0
                     kingdom.creativeSolutions = 0
-                    kingdom.fame.now = kingdom.fame.next
-                    kingdom.fame.next = 0
+                    // Fame doesn't carry over between turns
+                    fameManager.endTurn(actor)
                     kingdom.resourcePoints = kingdom.resourcePoints.endTurn()
                     kingdom.resourceDice = kingdom.resourceDice.endTurn()
                     kingdom.consumption = kingdom.consumption.endTurn()
@@ -1359,6 +1377,10 @@ class KingdomSheet(
             value = game.getActiveLeader(),
             labelClasses = listOf("km-slim-inputs"),
         ).toContext()
+        
+        // Use the existing RawFame context method
+        val fameContext = kingdom.fame.toContext(kingdom.settings.maximumFamePoints)
+        
         KingdomSheetContext(
             partId = parent.partId,
             isFormValid = true,
@@ -1368,7 +1390,7 @@ class KingdomSheet(
             xpInput = xpInput.toContext(),
             xpThresholdInput = xpThresholdInput.toContext(),
             levelInput = levelInput.toContext(),
-            fameContext = kingdom.fame.toContext(kingdom.settings.maximumFamePoints),
+            fameContext = fameContext,
             atWarInput = atWarInput.toContext(),
             unrestInput = unrestInput.toContext(),
             controlDc = controlDc,
