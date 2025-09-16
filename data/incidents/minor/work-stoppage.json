@@ -1,0 +1,33 @@
+{
+  "id": "work-stoppage",
+  "name": "incidents.work-stoppage.name",
+  "tier": "DISCONTENT",
+  "description": "incidents.work-stoppage.description",
+  "percentileRange": [31, 40],
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "incidents.work-stoppage.diplomacy.success",
+      "failureEffect": "incidents.work-stoppage.diplomacy.failure",
+      "criticalFailureExtra": "incidents.work-stoppage.diplomacy.criticalFailure"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "incidents.work-stoppage.intimidation.success",
+      "failureEffect": "incidents.work-stoppage.intimidation.failure",
+      "criticalFailureExtra": "incidents.work-stoppage.intimidation.criticalFailure"
+    },
+    {
+      "skill": "performance",
+      "successEffect": "incidents.work-stoppage.performance.success",
+      "failureEffect": "incidents.work-stoppage.performance.failure",
+      "criticalFailureExtra": "incidents.work-stoppage.performance.criticalFailure"
+    },
+    {
+      "skill": "medicine",
+      "successEffect": "incidents.work-stoppage.medicine.success",
+      "failureEffect": "incidents.work-stoppage.medicine.failure",
+      "criticalFailureExtra": "incidents.work-stoppage.medicine.criticalFailure"
+    }
+  ]
+}

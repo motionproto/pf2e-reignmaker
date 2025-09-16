@@ -1,0 +1,33 @@
+{
+  "id": "protests",
+  "name": "incidents.protests.name",
+  "tier": "DISCONTENT",
+  "description": "incidents.protests.description",
+  "percentileRange": [51, 60],
+  "skillOptions": [
+    {
+      "skill": "diplomacy",
+      "successEffect": "incidents.protests.diplomacy.success",
+      "failureEffect": "incidents.protests.diplomacy.failure",
+      "criticalFailureExtra": "incidents.protests.diplomacy.criticalFailure"
+    },
+    {
+      "skill": "intimidation",
+      "successEffect": "incidents.protests.intimidation.success",
+      "failureEffect": "incidents.protests.intimidation.failure",
+      "criticalFailureExtra": "incidents.protests.intimidation.criticalFailure"
+    },
+    {
+      "skill": "performance",
+      "successEffect": "incidents.protests.performance.success",
+      "failureEffect": "incidents.protests.performance.failure",
+      "criticalFailureExtra": "incidents.protests.performance.criticalFailure"
+    },
+    {
+      "skill": "arcana",
+      "successEffect": "incidents.protests.arcana.success",
+      "failureEffect": "incidents.protests.arcana.failure",
+      "criticalFailureExtra": "incidents.protests.arcana.criticalFailure"
+    }
+  ]
+}

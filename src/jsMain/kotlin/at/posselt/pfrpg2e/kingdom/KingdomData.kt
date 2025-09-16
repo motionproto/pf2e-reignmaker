@@ -123,6 +123,7 @@ external interface RawLeaderSkills {
 @JsPlainObject
 external interface KingdomData {
     var name: String
+    var selectedCharacterId: String? // ID of the character selected for skill checks
     var atWar: Boolean
     var fame: RawFame
     var level: Int

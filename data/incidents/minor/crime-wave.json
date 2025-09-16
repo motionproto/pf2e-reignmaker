@@ -1,0 +1,33 @@
+{
+  "id": "crime-wave",
+  "name": "incidents.crime-wave.name",
+  "tier": "DISCONTENT",
+  "description": "incidents.crime-wave.description",
+  "percentileRange": [21, 30],
+  "skillOptions": [
+    {
+      "skill": "intimidation",
+      "successEffect": "incidents.crime-wave.intimidation.success",
+      "failureEffect": "incidents.crime-wave.intimidation.failure",
+      "criticalFailureExtra": "incidents.crime-wave.intimidation.criticalFailure"
+    },
+    {
+      "skill": "thievery",
+      "successEffect": "incidents.crime-wave.thievery.success",
+      "failureEffect": "incidents.crime-wave.thievery.failure",
+      "criticalFailureExtra": "incidents.crime-wave.thievery.criticalFailure"
+    },
+    {
+      "skill": "society",
+      "successEffect": "incidents.crime-wave.society.success",
+      "failureEffect": "incidents.crime-wave.society.failure",
+      "criticalFailureExtra": "incidents.crime-wave.society.criticalFailure"
+    },
+    {
+      "skill": "occultism",
+      "successEffect": "incidents.crime-wave.occultism.success",
+      "failureEffect": "incidents.crime-wave.occultism.failure",
+      "criticalFailureExtra": "incidents.crime-wave.occultism.criticalFailure"
+    }
+  ]
+}

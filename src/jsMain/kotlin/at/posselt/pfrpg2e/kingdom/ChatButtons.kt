@@ -4,6 +4,7 @@ import at.posselt.pfrpg2e.data.events.KingdomEventTrait
 import at.posselt.pfrpg2e.kingdom.dialogs.pickEventSettlement
 import at.posselt.pfrpg2e.kingdom.dialogs.pickLeader
 import at.posselt.pfrpg2e.kingdom.sheet.executeResourceButton
+import at.posselt.pfrpg2e.kingdom.sheet.CharacterSelector
 import at.posselt.pfrpg2e.kingdom.structures.StructureActor
 import at.posselt.pfrpg2e.kingdom.structures.validateUsingSchema
 import at.posselt.pfrpg2e.takeIfInstance
@@ -12,6 +13,7 @@ import at.posselt.pfrpg2e.utils.buildPromise
 import at.posselt.pfrpg2e.utils.deserializeB64Json
 import at.posselt.pfrpg2e.utils.postChatMessage
 import at.posselt.pfrpg2e.utils.postChatTemplate
+import at.posselt.pfrpg2e.utils.roll
 import at.posselt.pfrpg2e.utils.t
 import at.posselt.pfrpg2e.utils.typeSafeUpdate
 import com.foundryvtt.core.Game
@@ -173,6 +175,102 @@ private val buttons = listOf(
                     postChatMessage(t("kingdom.addedModifier", recordOf("name" to t(key))))
                 }
             }
+        }
+    },
+    ChatButton("resolve-incident") { game, actor, event, button ->
+        // Handle incident skill button clicks
+        val skill = button.dataset["skill"] ?: ""
+        val skillName = skill.capitalize()
+        val incidentId = button.dataset["incidentId"] ?: ""
+        
+        actor.getKingdom()?.let { kingdom ->
+            // Get the player's assigned character
+            val assignedCharacter = CharacterSelector.getPlayerAssignedCharacter(game)
+            
+            if (assignedCharacter == null) {
+                ui.notifications.warn(t("kingdom.noCharacterAssigned", recordOf("player" to game.user.name)))
+                return@let
+            }
+            
+            // Get the character's skill modifier
+            val modifier = CharacterSelector.getCharacterSkillModifier(game, assignedCharacter.id, skill)
+            
+            // Calculate DC based on kingdom level and unrest tier
+            val baseLevel = kingdom.level
+            val unrestPenalty = when {
+                kingdom.unrest >= 15 -> 5  // Rebellion
+                kingdom.unrest >= 10 -> 2  // Turmoil
+                kingdom.unrest >= 5 -> 1   // Discontent
+                else -> 0
+            }
+            val dc = 15 + baseLevel + unrestPenalty  // Base DC 15 + level + unrest penalty
+            
+            // Roll the skill check
+            val rollFormula = "1d20+$modifier"
+            val dieRoll = (1..20).random()
+            val total = dieRoll + modifier
+            
+            // Determine degree of success
+            val degree = when {
+                dieRoll == 20 || total >= dc + 10 -> "criticalSuccess"
+                total >= dc -> "success"
+                dieRoll == 1 || total <= dc - 10 -> "criticalFailure"
+                else -> "failure"
+            }
+            
+            // Create result message with proper formatting
+            val rollDisplay = "<div class='dice-roll'>" +
+                "<div class='dice-formula'>$rollFormula</div>" +
+                "<h4 class='dice-total'>$total</h4>" +
+                "<div class='dice-tooltip'>" +
+                "<section class='tooltip-part'>" +
+                "<div class='dice'>" +
+                "<span class='part-formula'>1d20: $dieRoll</span>" +
+                "</div></section></div></div>"
+            
+            val degreeText = when (degree) {
+                "criticalSuccess" -> "<span style='color: #00aa00; font-weight: bold;'>${t("kingdom.criticalSuccess")}</span>"
+                "success" -> "<span style='color: #008800;'>${t("kingdom.success")}</span>"
+                "failure" -> "<span style='color: #ff6400;'>${t("kingdom.failure")}</span>"
+                "criticalFailure" -> "<span style='color: #cc0000; font-weight: bold;'>${t("kingdom.criticalFailure")}</span>"
+                else -> ""
+            }
+            
+            val message = buildString {
+                appendLine("<div class='pf2e-incident-roll'>")
+                appendLine("<h3>${t("kingdom.incidentSkillCheck")}</h3>")
+                appendLine(rollDisplay)
+                appendLine("<hr>")
+                appendLine("<div class='roll-result'>")
+                appendLine("<strong>${t("kingdom.result")}:</strong> $degreeText (DC $dc)")
+                appendLine("</div>")
+                appendLine("<div class='roll-context'>")
+                appendLine("<small>")
+                appendLine("${t("kingdom.character")}: ${assignedCharacter.name}<br>")
+                appendLine("${t("kingdom.skill")}: $skillName (+$modifier)<br>")
+                if (unrestPenalty > 0) {
+                    appendLine("${t("kingdom.unrestPenalty")}: -$unrestPenalty<br>")
+                }
+                appendLine("</small>")
+                appendLine("</div>")
+                appendLine("</div>")
+            }
+            
+            // Post the roll result to chat
+            postChatMessage(message.toString(), isHtml = true)
+            
+            // Store the result for the incident manager to process
+            // This would be picked up by the incident manager to apply effects
+            actor.setFlag(
+                "pf2e-kingdom",
+                "lastIncidentRoll",
+                recordOf(
+                    "incidentId" to incidentId,
+                    "skill" to skill,
+                    "degree" to degree,
+                    "character" to assignedCharacter.id
+                )
+            )
         }
     }
 )

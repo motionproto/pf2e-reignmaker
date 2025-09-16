@@ -1,0 +1,33 @@
+{
+  "id": "riot",
+  "name": "incidents.riot.name",
+  "tier": "TURMOIL",
+  "description": "incidents.riot.description",
+  "percentileRange": [61, 69],
+  "skillOptions": [
+    {
+      "skill": "intimidation",
+      "successEffect": "incidents.riot.intimidation.success",
+      "failureEffect": "incidents.riot.intimidation.failure",
+      "criticalFailureExtra": "incidents.riot.intimidation.criticalFailure"
+    },
+    {
+      "skill": "diplomacy",
+      "successEffect": "incidents.riot.diplomacy.success",
+      "failureEffect": "incidents.riot.diplomacy.failure",
+      "criticalFailureExtra": "incidents.riot.diplomacy.criticalFailure"
+    },
+    {
+      "skill": "athletics",
+      "successEffect": "incidents.riot.athletics.success",
+      "failureEffect": "incidents.riot.athletics.failure",
+      "criticalFailureExtra": "incidents.riot.athletics.criticalFailure"
+    },
+    {
+      "skill": "medicine",
+      "successEffect": "incidents.riot.medicine.success",
+      "failureEffect": "incidents.riot.medicine.failure",
+      "criticalFailureExtra": "incidents.riot.medicine.criticalFailure"
+    }
+  ]
+}

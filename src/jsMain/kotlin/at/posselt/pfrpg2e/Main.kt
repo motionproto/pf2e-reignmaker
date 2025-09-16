@@ -44,6 +44,12 @@ import com.foundryvtt.core.helpers.onInit
 import com.foundryvtt.core.helpers.onReady
 import com.foundryvtt.core.helpers.onRenderChatLog
 import com.foundryvtt.core.helpers.onRenderChatMessage
+import at.posselt.pfrpg2e.kingdom.rolls.PlayerCharacterRoll
+import at.posselt.pfrpg2e.kingdom.rolls.CharacterRollType
+import com.foundryvtt.core.documents.ChatMessage
+import com.foundryvtt.core.Game
+import org.w3c.dom.HTMLElement
+import at.posselt.pfrpg2e.utils.fromUuidTypeSafe
 
 fun main() {
     TypedHooks.onInit {
@@ -162,10 +168,68 @@ fun main() {
 
         TypedHooks.onRenderChatMessage { message, html, _ ->
             fixVisibility(game, html, message)
+            
+            // Check if this is a player character roll for kingdom management
+            buildPromise {
+                processPlayerCharacterRoll(game, message, html)
+            }
         }
 
         TypedHooks.onRenderChatLog { _, _, _ ->
             // Removed camping chat event listeners
         }
+    }
+}
+
+/**
+ * Process player character rolls for kingdom management
+ */
+suspend fun processPlayerCharacterRoll(
+    game: Game,
+    message: ChatMessage,
+    html: HTMLElement
+) {
+    // Check if this message contains a player roll
+    val messageContent = message.content
+    val messageFlags = message.asDynamic()?.flags
+    val pf2e = messageFlags?.pf2e
+    
+    // Check if this is a PF2e roll
+    if (pf2e == null) return
+    
+    // Check for player-roll trait in the roll options
+    val context = pf2e.context
+    val rollOptions = context?.options as? Array<String> ?: return
+    
+    // Look for our custom metadata
+    val hasPlayerRoll = rollOptions.any { it.startsWith("player-roll") }
+    if (!hasPlayerRoll) return
+    
+    // Extract roll type
+    var rollType: CharacterRollType? = null
+    var rollId: String? = null
+    var skill: String? = null
+    
+    rollOptions.forEach { option ->
+        when {
+            option.startsWith("roll-incident") -> rollType = CharacterRollType.INCIDENT
+            option.startsWith("roll-activity") -> rollType = CharacterRollType.ACTIVITY
+            option.startsWith("roll-event") -> rollType = CharacterRollType.EVENT
+            option.startsWith("roll-skill") -> rollType = CharacterRollType.SKILL
+            option.startsWith("roll-id:") -> rollId = option.substringAfter("roll-id:")
+            option.startsWith("skill:") -> skill = option.substringAfter("skill:")
+        }
+    }
+    
+    // If we have all required data, process the roll
+    if (rollType != null && rollId != null && skill != null) {
+        // Try to find the kingdom actor
+        val kingdomActor = game.actors.contents.find { actor ->
+            actor.type == "kingdom" 
+        }?.takeIfInstance<KingdomActor>() ?: return
+        
+        // Process the roll result
+        val playerRoll = PlayerCharacterRoll(game, kingdomActor)
+        playerRoll.processRollResult(message, rollType!!, rollId!!, skill!!)
     }
 }

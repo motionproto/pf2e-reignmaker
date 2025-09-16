@@ -17,6 +17,9 @@ import at.posselt.pfrpg2e.app.forms.SelectOption
 import at.posselt.pfrpg2e.app.forms.TextInput
 import at.posselt.pfrpg2e.kingdom.managers.FameManager
 import at.posselt.pfrpg2e.kingdom.sheet.FameComponent
+import at.posselt.pfrpg2e.kingdom.sheet.KingdomStatsComponent
+import at.posselt.pfrpg2e.kingdom.managers.UnrestIncidentManager
+import at.posselt.pfrpg2e.kingdom.dialogs.showUnrestIncidentDialog
 import at.posselt.pfrpg2e.data.checks.RollMode
 import at.posselt.pfrpg2e.data.events.KingdomEventTrait
 import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
@@ -209,6 +212,8 @@ class KingdomSheet(
     private val openedDetails = mutableSetOf<String>()
     private val fameManager = FameManager()
     private val fameComponent = FameComponent()
+    private val kingdomStatsComponent = KingdomStatsComponent()
+    private val unrestIncidentManager = UnrestIncidentManager(game)
 
     init {
         appHook.onDeleteScene { _, _, _ -> render() }
@@ -272,6 +277,26 @@ class KingdomSheet(
         val kingdom = getKingdom()
         if (kingdom.hasLeaderUuid(actor.uuid)) {
             render()
+        }
+    }
+    
+    private suspend fun checkForUnrestIncident() {
+        val kingdom = getKingdom()
+        
+        // Calculate and apply passive unrest
+        val passiveUnrest = unrestIncidentManager.calculatePassiveUnrest(kingdom)
+        unrestIncidentManager.applyPassiveUnrest(actor, passiveUnrest)
+        
+        // Check for incidents
+        val incident = unrestIncidentManager.checkForIncident(actor, kingdom.unrest)
+        if (incident != null) {
+            showUnrestIncidentDialog(
+                game = game,
+                kingdomActor = actor,
+                incident = incident,
+                manager = unrestIncidentManager,
+                onComplete = { render() }
+            )
         }
     }
 
@@ -847,7 +872,14 @@ class KingdomSheet(
                         chosenFeats = chosenFeats,
                     )
                     actor.setKingdom(kingdom)
+                    
+                    // Check for unrest incidents after adjusting unrest
+                    checkForUnrestIncident()
                 }
+            }
+            
+            "check-unrest-incident" -> buildPromise {
+                checkForUnrestIncident()
             }
 
             "collect-resources" -> buildPromise {
@@ -1381,6 +1413,14 @@ class KingdomSheet(
         // Use the existing RawFame context method
         val fameContext = kingdom.fame.toContext(kingdom.settings.maximumFamePoints)
         
+        // Create kingdom stats context
+        val kingdomStatsContext = kingdomStatsComponent.createContext(
+            kingdom = kingdom,
+            settlements = settlements.allSettlements,
+            commoditiesContext = kingdom.commodities.toContext(storage),
+            fameContext = fameContext
+        )
+        
         KingdomSheetContext(
             partId = parent.partId,
             isFormValid = true,
@@ -1391,6 +1431,7 @@ class KingdomSheet(
             xpThresholdInput = xpThresholdInput.toContext(),
             levelInput = levelInput.toContext(),
             fameContext = fameContext,
+            kingdomStatsContext = kingdomStatsContext,
             atWarInput = atWarInput.toContext(),
             unrestInput = unrestInput.toContext(),
             controlDc = controlDc,

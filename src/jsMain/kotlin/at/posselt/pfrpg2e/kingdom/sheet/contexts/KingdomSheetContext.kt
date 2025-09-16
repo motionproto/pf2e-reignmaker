@@ -4,6 +4,7 @@ import at.posselt.pfrpg2e.app.ValidatedHandlebarsContext
 import at.posselt.pfrpg2e.app.forms.FormElementContext
 import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.KingdomSettings
+import at.posselt.pfrpg2e.kingdom.sheet.KingdomStatsContext
 import kotlinx.js.JsPlainObject
 
 @Suppress("unused")
@@ -15,6 +16,7 @@ external interface KingdomSheetContext : ValidatedHandlebarsContext {
     val xpThresholdInput: FormElementContext
     val levelInput: FormElementContext
     val fameContext: FameContext
+    val kingdomStatsContext: KingdomStatsContext
     val atWarInput: FormElementContext
     val sizeInput: FormElementContext
     val size: Int
