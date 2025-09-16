@@ -13,7 +13,7 @@
     },
     "tier": {
       "type": "string",
-      "enum": ["DISCONTENT", "TURMOIL", "REBELLION"],
+      "enum": ["MINOR", "MODERATE", "MAJOR"],
       "description": "Unrest tier when this incident occurs"
     },
     "description": {

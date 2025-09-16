@@ -1,7 +1,7 @@
 {
   "id": "tax-revolt",
   "name": "Tax Revolt",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Citizens refuse to pay taxes.",
   "percentileMin": 34,
   "percentileMax": 42,

@@ -1,7 +1,7 @@
 {
   "id": "corruption-scandal",
   "name": "Corruption Scandal",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "Officials are caught embezzling kingdom funds.",
   "percentileMin": 61,
   "percentileMax": 70,

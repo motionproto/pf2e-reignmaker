@@ -1,7 +1,7 @@
 {
   "id": "international-crisis",
   "name": "International Crisis",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Multiple kingdoms turn against you due to internal chaos.",
   "percentileMin": 88,
   "percentileMax": 100,

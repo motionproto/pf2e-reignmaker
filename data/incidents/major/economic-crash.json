@@ -1,7 +1,7 @@
 {
   "id": "economic-crash",
   "name": "Economic Crash",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Complete economic collapse threatens the kingdom.",
   "percentileMin": 60,
   "percentileMax": 66,

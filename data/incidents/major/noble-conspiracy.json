@@ -1,7 +1,7 @@
 {
   "id": "noble-conspiracy",
   "name": "Noble Conspiracy",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Nobles plot against the throne.",
   "percentileMin": 53,
   "percentileMax": 59,

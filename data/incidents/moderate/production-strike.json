@@ -1,7 +1,7 @@
 {
   "id": "production-strike",
   "name": "Production Strike",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Workers refuse to produce critical resources.",
   "percentileMin": 16,
   "percentileMax": 24,

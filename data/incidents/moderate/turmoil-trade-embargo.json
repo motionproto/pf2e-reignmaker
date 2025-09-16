@@ -1,7 +1,7 @@
 {
   "id": "turmoil-trade-embargo",
   "name": "Trade Embargo",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Neighboring kingdoms impose trade restrictions.",
   "percentileMin": 88,
   "percentileMax": 93,

@@ -1,7 +1,7 @@
 {
   "id": "infrastructure-damage",
   "name": "Infrastructure Damage",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Critical infrastructure is damaged by sabotage or neglect.",
   "percentileMin": 43,
   "percentileMax": 51,

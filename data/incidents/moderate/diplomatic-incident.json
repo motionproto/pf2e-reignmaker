@@ -1,7 +1,7 @@
 {
   "id": "diplomatic-incident",
   "name": "Diplomatic Incident",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "A serious diplomatic blunder threatens foreign relations.",
   "percentileMin": 25,
   "percentileMax": 33,

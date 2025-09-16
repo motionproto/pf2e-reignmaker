@@ -1,7 +1,7 @@
 {
   "id": "protests",
   "name": "Protests",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "Angry citizens take to the streets in protest.",
   "percentileMin": 51,
   "percentileMax": 60,

@@ -1,7 +1,7 @@
 {
   "id": "emigration-threat",
   "name": "Emigration Threat",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "Citizens threaten to leave the kingdom for better opportunities elsewhere.",
   "percentileMin": 41,
   "percentileMax": 50,

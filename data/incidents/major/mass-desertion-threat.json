@@ -1,7 +1,7 @@
 {
   "id": "mass-desertion-threat",
   "name": "Mass Desertion Threat",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Military forces threaten to desert or mutiny.",
   "percentileMin": 18,
   "percentileMax": 24,

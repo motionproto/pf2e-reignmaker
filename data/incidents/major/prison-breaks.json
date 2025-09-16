@@ -1,7 +1,7 @@
 {
   "id": "prison-breaks",
   "name": "Prison Breaks",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Mass prison break threatens public safety.",
   "percentileMin": 46,
   "percentileMax": 52,

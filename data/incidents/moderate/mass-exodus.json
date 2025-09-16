@@ -1,7 +1,7 @@
 {
   "id": "mass-exodus",
   "name": "Mass Exodus",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Large numbers of citizens flee the kingdom.",
   "percentileMin": 94,
   "percentileMax": 100,

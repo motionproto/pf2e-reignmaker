@@ -1,7 +1,7 @@
 {
   "id": "border-raid",
   "name": "Border Raid",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Enemy forces raid the kingdom's borders.",
   "percentileMin": 74,
   "percentileMax": 80,

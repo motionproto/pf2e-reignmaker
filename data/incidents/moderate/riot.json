@@ -1,7 +1,7 @@
 {
   "id": "riot",
   "name": "Riot",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "Angry mobs riot in the streets, destroying property.",
   "percentileMin": 61,
   "percentileMax": 69,

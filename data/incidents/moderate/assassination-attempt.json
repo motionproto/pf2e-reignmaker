@@ -1,7 +1,7 @@
 {
   "id": "assassination-attempt",
   "name": "Assassination Attempt",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "An attempt is made on a kingdom leader's life.",
   "percentileMin": 79,
   "percentileMax": 87,

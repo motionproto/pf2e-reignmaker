@@ -1,7 +1,7 @@
 {
   "id": "religious-schism",
   "name": "Religious Schism",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Religious factions threaten to split the kingdom.",
   "percentileMin": 67,
   "percentileMax": 73,

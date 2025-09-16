@@ -1,7 +1,7 @@
 {
   "id": "disease-outbreak",
   "name": "Disease Outbreak",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "A dangerous disease spreads through the kingdom.",
   "percentileMin": 52,
   "percentileMax": 60,

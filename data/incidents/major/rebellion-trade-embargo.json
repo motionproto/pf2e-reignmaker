@@ -1,7 +1,7 @@
 {
   "id": "rebellion-trade-embargo",
   "name": "Trade Embargo",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Complete trade blockade by neighboring kingdoms.",
   "percentileMin": 25,
   "percentileMax": 31,

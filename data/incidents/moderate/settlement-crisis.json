@@ -1,7 +1,7 @@
 {
   "id": "settlement-crisis",
   "name": "Settlement Crisis",
-  "tier": "TURMOIL",
+  "tier": "MODERATE",
   "description": "An entire settlement faces economic or social collapse.",
   "percentileMin": 70,
   "percentileMax": 78,

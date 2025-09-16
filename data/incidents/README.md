@@ -6,9 +6,9 @@ This folder contains all unrest incident definitions for the PF2e Kingdom Buildi
 
 ```
 data/incidents/
-├── minor/        # DISCONTENT tier incidents
-├── moderate/     # TURMOIL tier incidents  
-├── major/        # REBELLION tier incidents
+├── minor/        # MINOR tier incidents
+├── moderate/     # MODERATE tier incidents  
+├── major/        # MAJOR tier incidents
 └── README.md     # This file
 ```
 
@@ -20,7 +20,7 @@ Each incident is defined in a separate JSON file following this structure:
 {
   "id": "incident-unique-id",
   "name": "incidents.incident-name.name",
-  "tier": "DISCONTENT|TURMOIL|REBELLION",
+  "tier": "MINOR|MODERATE|MAJOR",
   "description": "incidents.incident-name.description",
   "percentileRange": [1, 20],
   "skillOptions": [
@@ -40,7 +40,7 @@ Each incident is defined in a separate JSON file following this structure:
 
 - **id**: Unique identifier for the incident
 - **name**: Localization key for the incident name
-- **tier**: Unrest tier when this incident can occur (DISCONTENT, TURMOIL, or REBELLION)
+- **tier**: Unrest tier when this incident can occur (MINOR, MODERATE, or MAJOR)
 - **description**: Localization key for the incident description
 - **percentileRange**: Array of two numbers [min, max] for percentile roll range (1-100)
 - **skillOptions**: Array of skill resolution options available to players

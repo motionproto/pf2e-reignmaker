@@ -1,7 +1,7 @@
 {
   "id": "rebellion-settlement-crisis",
   "name": "Settlement Crisis",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "A major settlement faces complete collapse.",
   "percentileMin": 32,
   "percentileMax": 38,

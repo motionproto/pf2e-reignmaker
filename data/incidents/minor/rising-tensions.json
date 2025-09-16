@@ -1,7 +1,7 @@
 {
   "id": "rising-tensions",
   "name": "Rising Tensions",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "General unease spreads throughout the kingdom.",
   "percentileMin": 71,
   "percentileMax": 80,

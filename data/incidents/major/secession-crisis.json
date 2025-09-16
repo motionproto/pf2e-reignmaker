@@ -1,7 +1,7 @@
 {
   "id": "secession-crisis",
   "name": "Secession Crisis",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "A settlement declares independence from the kingdom.",
   "percentileMin": 81,
   "percentileMax": 87,

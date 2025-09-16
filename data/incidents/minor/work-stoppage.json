@@ -1,7 +1,7 @@
 {
   "id": "work-stoppage",
   "name": "Work Stoppage",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "Workers refuse to continue their duties, disrupting production.",
   "percentileMin": 31,
   "percentileMax": 40,

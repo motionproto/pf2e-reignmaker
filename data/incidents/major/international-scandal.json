@@ -1,7 +1,7 @@
 {
   "id": "international-scandal",
   "name": "International Scandal",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "A major scandal damages the kingdom's international reputation.",
   "percentileMin": 39,
   "percentileMax": 45,

@@ -1,7 +1,7 @@
 {
   "id": "crime-wave",
   "name": "Crime Wave",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "A wave of petty thefts and vandalism sweeps through the settlements.",
   "percentileMin": 21,
   "percentileMax": 30,

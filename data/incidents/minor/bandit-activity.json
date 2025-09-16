@@ -1,7 +1,7 @@
 {
   "id": "bandit-activity",
   "name": "Bandit Activity",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "Bandits raid trade routes and settlements.",
   "percentileMin": 81,
   "percentileMax": 90,

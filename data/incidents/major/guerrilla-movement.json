@@ -1,7 +1,7 @@
 {
   "id": "guerrilla-movement",
   "name": "Guerrilla Movement",
-  "tier": "REBELLION",
+  "tier": "MAJOR",
   "description": "Armed rebels begin guerrilla warfare against the kingdom.",
   "percentileMin": 11,
   "percentileMax": 17,

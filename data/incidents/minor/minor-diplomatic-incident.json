@@ -1,7 +1,7 @@
 {
   "id": "minor-diplomatic-incident",
   "name": "Minor Diplomatic Incident",
-  "tier": "DISCONTENT",
+  "tier": "MINOR",
   "description": "A diplomatic misstep strains relations with neighbors.",
   "percentileMin": 91,
   "percentileMax": 100,
