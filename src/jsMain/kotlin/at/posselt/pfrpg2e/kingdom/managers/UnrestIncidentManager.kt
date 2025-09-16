@@ -292,7 +292,7 @@ class UnrestIncidentManager(private val game: Game) {
      */
     fun isInCrisis(unrest: Int): Boolean {
         val tier = determineUnrestTier(unrest)
-        return tier == UnrestTier.TURMOIL || tier == UnrestTier.REBELLION
+        return tier == UnrestTier.MODERATE || tier == UnrestTier.MAJOR
     }
     
     /**

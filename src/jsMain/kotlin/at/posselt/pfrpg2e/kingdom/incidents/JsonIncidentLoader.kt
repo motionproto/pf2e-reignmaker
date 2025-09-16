@@ -46,9 +46,9 @@ object JsonIncidentLoader {
         // For now, we'll create a simplified loader that would be replaced
         // with actual JSON file loading in production
         return mapOf(
-            UnrestTier.DISCONTENT to loadTierIncidents("minor"),
-            UnrestTier.TURMOIL to loadTierIncidents("moderate"),
-            UnrestTier.REBELLION to loadTierIncidents("major")
+            UnrestTier.MINOR to loadTierIncidents("minor"),
+            UnrestTier.MODERATE to loadTierIncidents("moderate"),
+            UnrestTier.MAJOR to loadTierIncidents("major")
         )
     }
     
@@ -84,7 +84,7 @@ object JsonIncidentLoader {
             path.contains("crime-wave") -> UnrestIncident(
                 id = "crime-wave",
                 name = "Crime Wave",
-                tier = "DISCONTENT",
+                tier = "MINOR",
                 description = "A wave of petty thefts and vandalism sweeps through the settlements.",
                 percentileRange = 21..30,
                 skillOptions = listOf(
@@ -117,7 +117,7 @@ object JsonIncidentLoader {
             path.contains("riot") -> UnrestIncident(
                 id = "riot",
                 name = "Riot",
-                tier = "TURMOIL",
+                tier = "MODERATE",
                 description = "Angry mobs riot in the streets, destroying property.",
                 percentileRange = 61..69,
                 skillOptions = listOf(

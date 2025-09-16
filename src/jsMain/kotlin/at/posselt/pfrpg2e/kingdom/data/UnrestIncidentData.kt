@@ -15,9 +15,9 @@ enum class UnrestTier(
     val description: String
 ) {
     STABLE(0..2, 0, "The kingdom is stable"),
-    DISCONTENT(3..5, -1, "Minor discontent spreads"),
-    TURMOIL(6..8, -2, "Significant turmoil affects the kingdom"),
-    REBELLION(9..Int.MAX_VALUE, -3, "Open rebellion threatens the realm");
+    MINOR(3..5, -1, "Minor discontent spreads"),
+    MODERATE(6..8, -2, "Significant turmoil affects the kingdom"),
+    MAJOR(9..Int.MAX_VALUE, -3, "Open rebellion threatens the realm");
 
     companion object {
         /**

@@ -9,14 +9,14 @@ import at.posselt.pfrpg2e.kingdom.data.*
 object UnrestIncidentTables {
     
     /**
-     * All discontent tier incidents (Unrest 3-5)
+     * All minor tier incidents (Unrest 3-5)
      */
-    val discontentIncidents = listOf(
+    val minorIncidents = listOf(
         // No Incident (01-20)
         UnrestIncident(
-            id = "discontent-no-incident",
+            id = "minor-no-incident",
             name = "No Incident",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Tensions simmer but nothing erupts this turn",
             skillOptions = emptyList(),
             percentileRange = 1..20
@@ -26,7 +26,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "crime-wave",
             name = "Crime Wave",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "A wave of petty thefts and vandalism sweeps through the settlements.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -61,7 +61,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "work-stoppage",
             name = "Work Stoppage",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Workers refuse to continue their duties, disrupting production.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -96,7 +96,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "emigration-threat",
             name = "Emigration Threat",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Citizens threaten to leave the kingdom for better opportunities elsewhere.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -131,7 +131,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "protests",
             name = "Protests",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Angry citizens take to the streets in protest.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -166,7 +166,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "corruption-scandal",
             name = "Corruption Scandal",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Officials are caught embezzling kingdom funds.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -201,7 +201,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "rising-tensions",
             name = "Rising Tensions",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "General unease spreads throughout the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -236,7 +236,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "bandit-activity",
             name = "Bandit Activity",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "Bandits raid trade routes and settlements.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -271,7 +271,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "minor-diplomatic-incident",
             name = "Minor Diplomatic Incident",
-            tier = UnrestTier.DISCONTENT.name,
+            tier = UnrestTier.MINOR.name,
             description = "A diplomatic misstep strains relations with neighbors.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -298,14 +298,14 @@ object UnrestIncidentTables {
     )
     
     /**
-     * All turmoil tier incidents (Unrest 6-8)
+     * All moderate tier incidents (Unrest 6-8)
      */
-    val turmoilIncidents = listOf(
+    val moderateIncidents = listOf(
         // No Incident (01-15)
         UnrestIncident(
-            id = "turmoil-no-incident",
+            id = "moderate-no-incident",
             name = "No Incident",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Close calls but the kingdom holds steady",
             skillOptions = emptyList(),
             percentileRange = 1..15
@@ -315,7 +315,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "production-strike",
             name = "Production Strike",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Workers refuse to produce critical resources.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -350,7 +350,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "diplomatic-incident",
             name = "Diplomatic Incident",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "A serious diplomatic blunder threatens foreign relations.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -379,7 +379,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "tax-revolt",
             name = "Tax Revolt",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Citizens refuse to pay taxes.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -414,7 +414,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "infrastructure-damage",
             name = "Infrastructure Damage",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Critical infrastructure is damaged by sabotage or neglect.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -449,7 +449,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "disease-outbreak",
             name = "Disease Outbreak",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "A dangerous disease spreads through the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -478,7 +478,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "riot",
             name = "Riot",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Angry mobs riot in the streets, destroying property.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -513,7 +513,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "settlement-crisis",
             name = "Settlement Crisis",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "An entire settlement faces economic or social collapse.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -542,7 +542,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "assassination-attempt",
             name = "Assassination Attempt",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "An attempt is made on a kingdom leader's life.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -569,9 +569,9 @@ object UnrestIncidentTables {
         
         // Trade Embargo (88-93)
         UnrestIncident(
-            id = "turmoil-trade-embargo",
+            id = "moderate-trade-embargo",
             name = "Trade Embargo",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Neighboring kingdoms impose trade restrictions.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -606,7 +606,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "mass-exodus",
             name = "Mass Exodus",
-            tier = UnrestTier.TURMOIL.name,
+            tier = UnrestTier.MODERATE.name,
             description = "Large numbers of citizens flee the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -633,14 +633,14 @@ object UnrestIncidentTables {
     )
     
     /**
-     * All rebellion tier incidents (Unrest 9+)
+     * All major tier incidents (Unrest 9+)
      */
-    val rebellionIncidents = listOf(
+    val majorIncidents = listOf(
         // No Incident (01-10)
         UnrestIncident(
-            id = "rebellion-no-incident",
+            id = "major-no-incident",
             name = "No Incident",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "The crisis simmers without boiling over",
             skillOptions = emptyList(),
             percentileRange = 1..10
@@ -650,7 +650,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "guerrilla-movement",
             name = "Guerrilla Movement",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Armed rebels begin guerrilla warfare against the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -685,7 +685,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "mass-desertion-threat",
             name = "Mass Desertion Threat",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Military forces threaten to desert or mutiny.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -712,9 +712,9 @@ object UnrestIncidentTables {
         
         // Trade Embargo (25-31)
         UnrestIncident(
-            id = "rebellion-trade-embargo",
+            id = "major-trade-embargo",
             name = "Trade Embargo",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Complete trade blockade by neighboring kingdoms.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -747,9 +747,9 @@ object UnrestIncidentTables {
         
         // Settlement Crisis (32-38)
         UnrestIncident(
-            id = "rebellion-settlement-crisis",
+            id = "major-settlement-crisis",
             name = "Settlement Crisis",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "A major settlement faces complete collapse.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -778,7 +778,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "international-scandal",
             name = "International Scandal",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "A major scandal damages the kingdom's international reputation.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -807,7 +807,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "prison-breaks",
             name = "Prison Breaks",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Mass prison break threatens public safety.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -836,7 +836,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "noble-conspiracy",
             name = "Noble Conspiracy",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Nobles plot against the throne.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -871,7 +871,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "economic-crash",
             name = "Economic Crash",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Complete economic collapse threatens the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -906,7 +906,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "religious-schism",
             name = "Religious Schism",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Religious factions threaten to split the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -941,7 +941,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "border-raid",
             name = "Border Raid",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Enemy forces raid the kingdom's borders.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -976,7 +976,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "secession-crisis",
             name = "Secession Crisis",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "A settlement declares independence from the kingdom.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -1011,7 +1011,7 @@ object UnrestIncidentTables {
         UnrestIncident(
             id = "international-crisis",
             name = "International Crisis",
-            tier = UnrestTier.REBELLION.name,
+            tier = UnrestTier.MAJOR.name,
             description = "Multiple kingdoms turn against you due to internal chaos.",
             skillOptions = listOf(
                 IncidentSkillOption(
@@ -1049,9 +1049,9 @@ object UnrestIncidentTables {
     fun getIncidentsForTier(tier: UnrestTier): List<UnrestIncident> {
         return when (tier) {
             UnrestTier.STABLE -> emptyList()
-            UnrestTier.DISCONTENT -> discontentIncidents
-            UnrestTier.TURMOIL -> turmoilIncidents
-            UnrestTier.REBELLION -> rebellionIncidents
+            UnrestTier.MINOR -> minorIncidents
+            UnrestTier.MODERATE -> moderateIncidents
+            UnrestTier.MAJOR -> majorIncidents
         }
     }
     

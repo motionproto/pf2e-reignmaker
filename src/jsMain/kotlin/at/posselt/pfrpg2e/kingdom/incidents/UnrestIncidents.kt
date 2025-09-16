@@ -15,9 +15,9 @@ object UnrestIncidents {
      */
     fun getIncidentById(id: String): UnrestIncident? {
         val allIncidents = listOf(
-            UnrestIncidentTables.discontentIncidents,
-            UnrestIncidentTables.turmoilIncidents,
-            UnrestIncidentTables.rebellionIncidents
+            UnrestIncidentTables.minorIncidents,
+            UnrestIncidentTables.moderateIncidents,
+            UnrestIncidentTables.majorIncidents
         ).flatten()
         
         return allIncidents.find { it.id == id }
@@ -56,9 +56,9 @@ object UnrestIncidents {
     fun getIncidentChance(tier: UnrestTier): Int {
         return when (tier) {
             UnrestTier.STABLE -> 0
-            UnrestTier.DISCONTENT -> 80  // 21-100 = 80% chance
-            UnrestTier.TURMOIL -> 85     // 16-100 = 85% chance  
-            UnrestTier.REBELLION -> 90   // 11-100 = 90% chance
+            UnrestTier.MINOR -> 80      // 21-100 = 80% chance
+            UnrestTier.MODERATE -> 85   // 16-100 = 85% chance  
+            UnrestTier.MAJOR -> 90      // 11-100 = 90% chance
         }
     }
 }
