@@ -1,0 +1,48 @@
+{
+  "id": "upgrade-settlement",
+  "name": "Upgrade a Settlement",
+  "category": "urban",
+  "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization.",
+  "skills": [
+    {
+      "skill": "crafting",
+      "description": "infrastructure expansion"
+    },
+    {
+      "skill": "society",
+      "description": "urban planning"
+    },
+    {
+      "skill": "performance",
+      "description": "inspire growth"
+    },
+    {
+      "skill": "arcana",
+      "description": "magical enhancement"
+    },
+    {
+      "skill": "medicine",
+      "description": "public health improvements"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Increase Level +1 Structure"
+    },
+    "success": {
+      "description": "Increase Level"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  },
+  "requirements": [
+    {
+      "type": "settlement",
+      "details": "Must meet level and structure prerequisites"
+    }
+  ]
+}

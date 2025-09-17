@@ -1,0 +1,47 @@
+{
+  "id": "infiltration",
+  "name": "Infiltration",
+  "category": "foreign",
+  "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats.",
+  "skills": [
+    {
+      "skill": "deception",
+      "description": "false identities"
+    },
+    {
+      "skill": "stealth",
+      "description": "covert operations"
+    },
+    {
+      "skill": "thievery",
+      "description": "steal secrets"
+    },
+    {
+      "skill": "society",
+      "description": "social infiltration"
+    },
+    {
+      "skill": "arcana",
+      "description": "magical espionage"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "daring infiltration"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Valuable intel"
+    },
+    "success": {
+      "description": "Broad intel"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "Spies are captured"
+    }
+  },
+  "failureCausesUnrest": false
+}

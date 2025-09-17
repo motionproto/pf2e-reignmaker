@@ -1,0 +1,52 @@
+{
+  "id": "arrest-dissidents",
+  "name": "Arrest Dissidents",
+  "category": "stability",
+  "description": "Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system.",
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "show of force"
+    },
+    {
+      "skill": "society",
+      "description": "legal procedures"
+    },
+    {
+      "skill": "stealth",
+      "description": "covert operations"
+    },
+    {
+      "skill": "deception",
+      "description": "infiltration tactics"
+    },
+    {
+      "skill": "athletics",
+      "description": "physical pursuit"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
+      "unrest": -4
+    },
+    "success": {
+      "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
+      "unrest": -2
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "Botched arrests cause riots; gain 1 Unrest",
+      "unrest": 1
+    }
+  },
+  "failureCausesUnrest": true,
+  "requirements": [
+    {
+      "type": "structure",
+      "details": "Justice structure with available capacity"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "id": "build-roads",
+  "name": "Build Roads",
+  "category": "borders",
+  "description": "Construct pathways between settlements to improve trade, travel, and military movement.",
+  "skills": [
+    {
+      "skill": "crafting",
+      "description": "engineering expertise"
+    },
+    {
+      "skill": "survival", 
+      "description": "pathfinding routes"
+    },
+    {
+      "skill": "athletics",
+      "description": "manual labor"
+    },
+    {
+      "skill": "nature",
+      "description": "work with terrain"
+    }
+  ],
+  "failureCausesUnrest": false,
+  "coordinatedEffort": {
+    "available": true,
+    "bonus": 1
+  },
+  "effects": {
+    "criticalSuccess": {
+      "description": "Build roads +1 hex"
+    },
+    "success": {
+      "description": "Build roads"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  }
+}

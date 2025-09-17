@@ -1,0 +1,45 @@
+{
+  "id": "recruit-unit",
+  "name": "Recruit a Unit",
+  "category": "military",
+  "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess.",
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "inspire patriotism"
+    },
+    {
+      "skill": "intimidation",
+      "description": "conscription"
+    },
+    {
+      "skill": "society",
+      "description": "civic duty"
+    },
+    {
+      "skill": "performance",
+      "description": "recruitment rallies"
+    },
+    {
+      "skill": "athletics",
+      "description": "demonstrations of prowess"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Recruit a troop equal to the party level and reduce unrest by 1",
+      "unrest": -1
+    },
+    "success": {
+      "description": "Recruit a troop equal to the party level"
+    },
+    "failure": {
+      "description": "No Recruits"
+    },
+    "criticalFailure": {
+      "description": "No Recruit; +1 Unrest",
+      "unrest": 1
+    }
+  },
+  "failureCausesUnrest": true
+}

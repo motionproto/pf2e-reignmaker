@@ -1,0 +1,47 @@
+{
+  "id": "establish-diplomatic-relations",
+  "name": "Establish Diplomatic Relations",
+  "category": "foreign",
+  "description": "Open formal channels of communication with neighboring powers to enable future cooperation.",
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "formal negotiations"
+    },
+    {
+      "skill": "society",
+      "description": "cultural exchange"
+    },
+    {
+      "skill": "performance",
+      "description": "diplomatic ceremonies"
+    },
+    {
+      "skill": "deception",
+      "description": "strategic positioning"
+    },
+    {
+      "skill": "occultism",
+      "description": "mystical bonds"
+    },
+    {
+      "skill": "religion",
+      "description": "sacred alliances"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Allies + request aid"
+    },
+    "success": {
+      "description": "Allies"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  },
+  "failureCausesUnrest": false
+}

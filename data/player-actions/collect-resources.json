@@ -1,0 +1,47 @@
+{
+  "id": "collect-resources",
+  "name": "Collect Resources",
+  "category": "economic",
+  "description": "Harvest materials from your territories, either through established worksites or direct extraction.",
+  "skills": [
+    {
+      "skill": "nature",
+      "description": "natural harvesting"
+    },
+    {
+      "skill": "survival",
+      "description": "efficient extraction"
+    },
+    {
+      "skill": "crafting",
+      "description": "process materials"
+    },
+    {
+      "skill": "athletics",
+      "description": "physical labor"
+    },
+    {
+      "skill": "occultism",
+      "description": "mystical gathering"
+    },
+    {
+      "skill": "medicine",
+      "description": "herb collection"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Gain an additional +1 Resource of the same type"
+    },
+    "success": {
+      "description": "Collect resources from hex or worksite"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  },
+  "failureCausesUnrest": false
+}

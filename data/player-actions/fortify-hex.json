@@ -1,0 +1,43 @@
+{
+  "id": "fortify-hex",
+  "name": "Fortify Hex",
+  "category": "borders",
+  "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion.",
+  "skills": [
+    {
+      "skill": "crafting",
+      "description": "build fortifications"
+    },
+    {
+      "skill": "athletics",
+      "description": "manual construction"
+    },
+    {
+      "skill": "intimidation",
+      "description": "defensive displays"
+    },
+    {
+      "skill": "thievery",
+      "description": "trap placement"
+    },
+    {
+      "skill": "warfare-lore",
+      "description": "strategic defenses"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Fortify, reduce Unrest by 1",
+      "unrest": -1
+    },
+    "success": {
+      "description": "Fortify"
+    },
+    "failure": {
+      "description": "Fail"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  }
+}

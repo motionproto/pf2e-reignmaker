@@ -1,0 +1,55 @@
+{
+  "id": "request-economic-aid",
+  "name": "Request Economic Aid",
+  "category": "foreign",
+  "description": "Appeal to allied nations for material support in times of need.",
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "formal request"
+    },
+    {
+      "skill": "society",
+      "description": "leverage connections"
+    },
+    {
+      "skill": "performance",
+      "description": "emotional appeal"
+    },
+    {
+      "skill": "thievery",
+      "description": "creative accounting"
+    },
+    {
+      "skill": "medicine",
+      "description": "humanitarian aid"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Gain 3 Resources of your choice OR 3 Gold",
+      "resources": {
+        "gold": 3
+      }
+    },
+    "success": {
+      "description": "Gain 2 Resources of your choice OR 2 Gold",
+      "resources": {
+        "gold": 2
+      }
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "Ally refuses"
+    }
+  },
+  "failureCausesUnrest": false,
+  "requirements": [
+    {
+      "type": "ally",
+      "details": "Must have established diplomatic relations"
+    }
+  ]
+}

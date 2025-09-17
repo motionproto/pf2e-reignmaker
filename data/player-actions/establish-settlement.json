@@ -1,0 +1,42 @@
+{
+  "id": "establish-settlement",
+  "name": "Establish a Settlement",
+  "category": "urban",
+  "description": "Found a new community where settlers can establish homes and begin building infrastructure.",
+  "skills": [
+    {
+      "skill": "society",
+      "description": "organized settlement"
+    },
+    {
+      "skill": "survival",
+      "description": "frontier establishment"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "attract settlers"
+    },
+    {
+      "skill": "religion",
+      "description": "blessed founding"
+    },
+    {
+      "skill": "medicine",
+      "description": "healthy community planning"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Found village +1 Structure"
+    },
+    "success": {
+      "description": "Found village"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  }
+}

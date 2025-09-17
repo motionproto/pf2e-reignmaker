@@ -1,0 +1,57 @@
+{
+  "id": "sell-surplus",
+  "name": "Sell Surplus",
+  "category": "economic",
+  "description": "Convert excess resources into gold through trade with merchants and neighboring kingdoms.",
+  "skills": [
+    {
+      "skill": "society",
+      "description": "market knowledge"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "trade negotiations"
+    },
+    {
+      "skill": "deception",
+      "description": "inflate value"
+    },
+    {
+      "skill": "performance",
+      "description": "showcase goods"
+    },
+    {
+      "skill": "thievery",
+      "description": "black market"
+    },
+    {
+      "skill": "occultism",
+      "description": "mystical trade"
+    },
+    {
+      "skill": "mercantile-lore",
+      "description": "trade expertise"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Trade 2 Resources → 2 Gold",
+      "resources": {
+        "gold": 2
+      }
+    },
+    "success": {
+      "description": "Trade 2 Resources → 1 Gold",
+      "resources": {
+        "gold": 1
+      }
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  },
+  "failureCausesUnrest": false
+}

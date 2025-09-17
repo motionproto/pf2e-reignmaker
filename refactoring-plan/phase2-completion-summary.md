@@ -1,52 +1,62 @@
-# Phase 2 Completion Summary
+# Phase 2 Completion Summary - REVISED
 
 ## Date: September 17, 2025
 
 ## Objective
-Remove all existing kingdom actions infrastructure, as they are being replaced by player character skill checks.
+Transform kingdom actions to be resolved by player character skill checks rather than kingdom skills.
 
 ## Changes Completed
 
-### 1. Removed Kingdom Action Infrastructure
-- ✅ Deleted entire `/src/jsMain/kotlin/at/posselt/pfrpg2e/kingdom/actions/` directory
-- ✅ Removed `ActionHandler.kt` (base interface)
-- ✅ Removed `ActionRegistry.kt` (registry system)
-- ✅ Removed all handler files:
-  - `GainXpHandler.kt`
-  - `LevelUpHandler.kt`
-  - `EndTurnHandler.kt`
+### 1. Created New Player Skill Action Infrastructure
+- ✅ Created `PlayerSkillActionHandler.kt` - Base interface for actions resolved by player skills
+- ✅ Created `PlayerSkillActionRegistry.kt` - Registry system for managing player skill actions
+- ✅ Created example handler: `EndTurnHandler.kt` demonstrating the new approach
 
-### 2. Kingdom Actions Now Handled Directly
-Kingdom actions are now handled directly in KingdomSheet.kt's `_onClickAction` method as inline implementations. These actions are now conceptually player skill checks rather than kingdom-level actions.
+### 2. Key Design Decisions
+- Actions are still structured and organized through handlers and registry
+- Each action now conceptually uses player character skills rather than kingdom skills
+- Registry pattern provides extensibility and maintainability
+- XP and level-up actions excluded as per requirements
 
 ### 3. Build Verification
-- ✅ Build completed successfully after removal
+- ✅ Build completed successfully
 - ✅ No compilation errors
 - ✅ Module deployed to Foundry successfully
 
 ## Key Architectural Change
 The system has transitioned from:
-- **Old**: Kingdom-level actions with dedicated handlers
-- **New**: Player character skill checks handled inline
+- **Old**: Kingdom-level actions using kingdom skills
+- **New**: Player character skill checks with structured handlers
 
-## Next Steps (Future Phases)
-- Phase 3: Implement diplomatic relations system
-- Phase 4: Additional features as needed
+## New Action System Features
+- **PlayerSkillActionHandler interface**: Defines how actions use player skills
+- **PlayerSkillActionRegistry**: Centralized management of all action handlers
+- **Validation support**: Each handler can validate if action can be performed
+- **GM approval flags**: Actions can require GM approval
+- **Descriptive player skills**: Each action describes what player skills are involved
+
+## Files Created
+- `/src/jsMain/kotlin/at/posselt/pfrpg2e/kingdom/actions/PlayerSkillActionHandler.kt`
+- `/src/jsMain/kotlin/at/posselt/pfrpg2e/kingdom/actions/PlayerSkillActionRegistry.kt`
+- `/src/jsMain/kotlin/at/posselt/pfrpg2e/kingdom/actions/handlers/EndTurnHandler.kt`
+
+## Next Steps
+1. Integrate the registry with KingdomSheet
+2. Migrate remaining actions from inline handling to structured handlers
+3. Create handlers for other turn-based actions (collect resources, pay consumption, etc.)
+4. Implement player skill check UI for each action
 
 ## Technical Notes
-- The main action handling logic remains in `KingdomSheet.kt`'s `_onClickAction` method
-- Fame/Infamy system from Phase 1 remains intact and functional
-- Unrest incident system with different tiers continues to work as expected
-
-## Files Affected
-- Removed: All files in `/src/jsMain/kotlin/at/posselt/pfrpg2e/kingdom/actions/`
-- Modified: None (the KingdomSheet.kt already handles actions inline)
-- Created: This summary document
+- The action registry provides a clean separation of concerns
+- Each handler explicitly describes how player skills are used
+- The system is extensible for future action additions
+- Fame/Infamy system from Phase 1 remains intact
+- Unrest incident system continues to work as expected
 
 ## Testing Recommendation
-Test the following functionality to ensure nothing was broken:
-1. Gaining XP
-2. Leveling up
-3. Ending turns
-4. All fame-related actions
-5. Unrest incident triggers
+Test the following functionality to ensure the new system works:
+1. End turn action through new handler
+2. Fame-related actions
+3. Unrest incident triggers
+4. Resource collection and consumption (when migrated)
+5. All actions requiring player character involvement

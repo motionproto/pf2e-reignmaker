@@ -1,0 +1,49 @@
+{
+  "id": "purchase-resources",
+  "name": "Purchase Resources",
+  "category": "economic",
+  "description": "Use the kingdom's treasury to acquire needed materials from trade partners.",
+  "skills": [
+    {
+      "skill": "society",
+      "description": "find suppliers"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "negotiate deals"
+    },
+    {
+      "skill": "intimidation",
+      "description": "demand better prices"
+    },
+    {
+      "skill": "deception",
+      "description": "misleading negotiations"
+    },
+    {
+      "skill": "mercantile-lore",
+      "description": "market expertise"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Spend 2 Gold → Gain 1 Resource, +1 free resource of the same type"
+    },
+    "success": {
+      "description": "Spend 2 Gold → Gain 1 Resource"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "Lose 2 Gold",
+      "resources": {
+        "gold": -2
+      }
+    }
+  },
+  "failureCausesUnrest": false,
+  "cost": {
+    "gold": 2
+  }
+}

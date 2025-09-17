@@ -1,0 +1,59 @@
+{
+  "id": "collect-stipend",
+  "name": "Collect Stipend",
+  "category": "economic",
+  "description": "Draw personal funds from the kingdom's treasury as compensation for your service.",
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "demand payment"
+    },
+    {
+      "skill": "deception",
+      "description": "creative accounting"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "formal request"
+    },
+    {
+      "skill": "society",
+      "description": "proper procedures"
+    },
+    {
+      "skill": "performance",
+      "description": "justify worth"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "impressive service"
+    },
+    {
+      "skill": "thievery",
+      "description": "skim the treasury"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Gain double the listed amount"
+    },
+    "success": {
+      "description": "Gain the listed amount"
+    },
+    "failure": {
+      "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
+      "unrest": 1
+    },
+    "criticalFailure": {
+      "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
+      "unrest": 2
+    }
+  },
+  "failureCausesUnrest": true,
+  "requirements": [
+    {
+      "type": "structure",
+      "details": "Counting House (T2) or higher Taxation structure"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "build-structure",
+  "name": "Build Structure",
+  "category": "urban",
+  "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities.",
+  "skills": [
+    {
+      "skill": "crafting",
+      "description": "construction expertise"
+    },
+    {
+      "skill": "society",
+      "description": "organize workforce"
+    },
+    {
+      "skill": "athletics",
+      "description": "physical labor"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "specialized construction"
+    },
+    {
+      "skill": "stealth",
+      "description": "discrete building"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Build Structures for half cost"
+    },
+    "success": {
+      "description": "Build 1 Structure"
+    },
+    "failure": {
+      "description": "No progress"
+    },
+    "criticalFailure": {
+      "description": "No progress"
+    }
+  }
+}

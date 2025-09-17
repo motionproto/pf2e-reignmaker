@@ -113,10 +113,10 @@ fun RawActivity.label(
     }
 }
 
-@JsModule("./kingdom-activities.json")
-private external val rawKingdomActivities: Array<RawActivity>
+@JsModule("./player-actions.json")
+private external val rawPlayerActions: Array<RawActivity>
 
-val disabledActivityIds = rawKingdomActivities
+val disabledActivityIds = rawPlayerActions
     .filterNot { it.enabled }
     .map { it.id }
     .toTypedArray()
@@ -145,7 +145,7 @@ private fun RawActivity.translate(): RawActivity =
     )
 
 fun translateActivities(events: Array<RawKingdomEvent>) {
-    kingdomActivities = rawKingdomActivities
+    kingdomActivities = rawPlayerActions
         .map {
             val translated = it.translate()
             RawActivity.copy(

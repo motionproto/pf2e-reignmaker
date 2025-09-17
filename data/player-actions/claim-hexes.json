@@ -1,0 +1,48 @@
+{
+  "id": "claim-hexes",
+  "name": "Claim Hexes",
+  "category": "borders",
+  "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands.",
+  "skills": [
+    {
+      "skill": "nature",
+      "description": "harmonize with the land"
+    },
+    {
+      "skill": "survival",
+      "description": "establish frontier camps"
+    },
+    {
+      "skill": "intimidation",
+      "description": "force submission"
+    },
+    {
+      "skill": "occultism",
+      "description": "mystical claiming rituals"
+    },
+    {
+      "skill": "religion",
+      "description": "divine mandate"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Claim all targeted hexes +1 extra hex"
+    },
+    "success": {
+      "description": "Claim targeted hexes (based on proficiency)"
+    },
+    "failure": {
+      "description": "No effect"
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  },
+  "proficiencyScaling": {
+    "trained": "Claim 1 hex per action",
+    "expert": "Claim 1 hex per action",
+    "master": "Claim 2 hexes per action",
+    "legendary": "Claim 3 hexes per action"
+  }
+}

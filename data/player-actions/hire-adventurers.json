@@ -1,0 +1,51 @@
+{
+  "id": "hire-adventurers",
+  "name": "Hire Adventurers",
+  "category": "foreign",
+  "description": "Contract independent heroes and mercenaries to handle dangerous tasks or resolve kingdom events.",
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "negotiate contracts"
+    },
+    {
+      "skill": "society",
+      "description": "use connections"
+    },
+    {
+      "skill": "deception",
+      "description": "exaggerate rewards"
+    },
+    {
+      "skill": "performance",
+      "description": "inspire heroes"
+    },
+    {
+      "skill": "thievery",
+      "description": "recruit rogues"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "The adventurers resolve one ongoing Event entirely"
+    },
+    "success": {
+      "description": "Roll to resolve an Event with a +2 circumstance bonus"
+    },
+    "failure": {
+      "description": "The adventurers cause trouble. Gain +1 Unrest",
+      "unrest": 1
+    },
+    "criticalFailure": {
+      "description": "The adventurers vanish or turn rogue. Gain +2 Unrest",
+      "unrest": 2
+    }
+  },
+  "failureCausesUnrest": true,
+  "cost": {
+    "gold": 2
+  },
+  "limitations": {
+    "oncePerTurn": true
+  }
+}

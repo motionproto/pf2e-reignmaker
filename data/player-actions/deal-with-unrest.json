@@ -1,0 +1,66 @@
+{
+  "id": "deal-with-unrest",
+  "name": "Deal with Unrest",
+  "category": "stability",
+  "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays.",
+  "availability": "End of Turn Only",
+  "skills": [
+    {
+      "skill": "performance",
+      "description": "entertainment and festivities"
+    },
+    {
+      "skill": "religion",
+      "description": "religious ceremonies"
+    },
+    {
+      "skill": "intimidation",
+      "description": "shows of force"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "diplomatic engagement"
+    },
+    {
+      "skill": "arcana",
+      "description": "magical persuasion"
+    },
+    {
+      "skill": "medicine",
+      "description": "public health initiatives"
+    },
+    {
+      "skill": "occultism",
+      "description": "mystical demonstrations"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "impressive physical feats"
+    }
+  ],
+  "failureCausesUnrest": false,
+  "limitations": {
+    "endOfTurnOnly": true
+  },
+  "coordinatedEffort": {
+    "available": true,
+    "bonus": 1
+  },
+  "effects": {
+    "criticalSuccess": {
+      "description": "Reduce Unrest by 3",
+      "unrest": -3
+    },
+    "success": {
+      "description": "Reduce Unrest by 2",
+      "unrest": -2
+    },
+    "failure": {
+      "description": "Reduce Unrest by 1",
+      "unrest": -1
+    },
+    "criticalFailure": {
+      "description": "No effect"
+    }
+  }
+}

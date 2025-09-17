@@ -1,0 +1,46 @@
+{
+  "id": "disband-army",
+  "name": "Disband Army",
+  "category": "military",
+  "description": "Release military units from service, returning soldiers to civilian life.",
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "stern dismissal"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "honorable discharge"
+    },
+    {
+      "skill": "society",
+      "description": "reintegration programs"
+    },
+    {
+      "skill": "performance",
+      "description": "farewell ceremony"
+    },
+    {
+      "skill": "warfare-lore",
+      "description": "military protocol"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "People welcome them home with honours!, -2 Unrest",
+      "unrest": -2
+    },
+    "success": {
+      "description": "Army disbands, -1 Unrest",
+      "unrest": -1
+    },
+    "failure": {
+      "description": "Army disbands"
+    },
+    "criticalFailure": {
+      "description": "Army disbands, +1 Unrest",
+      "unrest": 1
+    }
+  },
+  "failureCausesUnrest": true
+}

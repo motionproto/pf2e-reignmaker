@@ -1,0 +1,45 @@
+{
+  "id": "repair-structure",
+  "name": "Repair Structure",
+  "category": "urban",
+  "description": "Repair damaged structures within a settlement to restore its capabilities.",
+  "skills": [
+    {
+      "skill": "crafting",
+      "description": "construction expertise"
+    },
+    {
+      "skill": "society",
+      "description": "organize workforce"
+    },
+    {
+      "skill": "athletics",
+      "description": "physical labor"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "specialized construction"
+    },
+    {
+      "skill": "stealth",
+      "description": "discrete building"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "The structure is repaired for free"
+    },
+    "success": {
+      "description": "Pay 1d4 gold OR 1/2 the build cost for the structures tier"
+    },
+    "failure": {
+      "description": "Remains damaged"
+    },
+    "criticalFailure": {
+      "description": "Lose 1 gold",
+      "resources": {
+        "gold": -1
+      }
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "deploy-army",
+  "name": "Deploy Army",
+  "category": "military",
+  "description": "Mobilize and maneuver your military forces across the kingdom's territory using various navigation methods.",
+  "skills": [
+    {
+      "skill": "nature",
+      "description": "natural pathways"
+    },
+    {
+      "skill": "survival",
+      "description": "wilderness navigation"
+    },
+    {
+      "skill": "athletics",
+      "description": "forced march"
+    },
+    {
+      "skill": "stealth",
+      "description": "covert movement"
+    },
+    {
+      "skill": "warfare-lore",
+      "description": "military tactics"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Move, claim hex after battle"
+    },
+    "success": {
+      "description": "Move"
+    },
+    "failure": {
+      "description": "Move but -2 initiative, and troop is fatigued"
+    },
+    "criticalFailure": {
+      "description": "Troop is lost to Random hex; -2 initiative, fatigued, enfeebled 1; +1 Unrest",
+      "unrest": 1
+    }
+  },
+  "failureCausesUnrest": true
+}

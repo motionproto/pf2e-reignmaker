@@ -1,0 +1,26 @@
+{
+  "id": "coordinated-effort",
+  "name": "Coordinated Effort",
+  "category": "stability",
+  "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome.",
+  "skills": [],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Use highest roll with +1 bonus"
+    },
+    "success": {
+      "description": "Use highest roll with +1 bonus"
+    },
+    "failure": {
+      "description": "Use highest roll with +1 bonus"
+    },
+    "criticalFailure": {
+      "description": "Use highest roll with +1 bonus"
+    }
+  },
+  "limitations": {
+    "maxParticipants": 2,
+    "oncePerTurn": true
+  },
+  "availability": "Exactly TWO PCs may use this together, once per turn"
+}

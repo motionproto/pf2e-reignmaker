@@ -119,7 +119,7 @@ tasks {
             "validateStructures",
             "validateFeats",
             "validateFeatures",
-            "validateKingdomActivities",
+            "validatePlayerActions",
             "validateCharters",
             "validateGovernments",
             "validateHeartlands",
@@ -198,10 +198,10 @@ tasks.register<JsonSchemaValidator>("validateFeatures") {
     files = layout.projectDirectory.dir("data/features")
 }
 
-tasks.register<JsonSchemaValidator>("validateKingdomActivities") {
+tasks.register<JsonSchemaValidator>("validatePlayerActions") {
     outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/kingdom-activity.json")
-    files = layout.projectDirectory.dir("data/kingdom-activities")
+    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/player-action.json")
+    files = layout.projectDirectory.dir("data/player-actions")
 }
 
 tasks.register<JsonSchemaValidator>("validateCharters") {

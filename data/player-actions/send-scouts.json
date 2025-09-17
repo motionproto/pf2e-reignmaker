@@ -1,0 +1,47 @@
+{
+  "id": "send-scouts",
+  "name": "Send Scouts",
+  "category": "borders",
+  "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats.",
+  "skills": [
+    {
+      "skill": "stealth",
+      "description": "covert reconnaissance"
+    },
+    {
+      "skill": "survival",
+      "description": "wilderness expertise"
+    },
+    {
+      "skill": "nature",
+      "description": "read the land"
+    },
+    {
+      "skill": "society",
+      "description": "gather local information"
+    },
+    {
+      "skill": "athletics",
+      "description": "rapid exploration"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "navigate obstacles"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Learn about 2 hexes"
+    },
+    "success": {
+      "description": "Learn about 1 hex"
+    },
+    "failure": {
+      "description": "No report"
+    },
+    "criticalFailure": {
+      "description": "Scouts lost"
+    }
+  },
+  "failureCausesUnrest": false
+}

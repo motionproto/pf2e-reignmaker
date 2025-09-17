@@ -1,0 +1,47 @@
+{
+  "id": "recover-army",
+  "name": "Recover Army",
+  "category": "military",
+  "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses.",
+  "skills": [
+    {
+      "skill": "medicine",
+      "description": "heal the wounded"
+    },
+    {
+      "skill": "performance",
+      "description": "boost morale"
+    },
+    {
+      "skill": "religion",
+      "description": "spiritual restoration"
+    },
+    {
+      "skill": "nature",
+      "description": "natural remedies"
+    },
+    {
+      "skill": "crafting",
+      "description": "repair equipment"
+    },
+    {
+      "skill": "warfare-lore",
+      "description": "veteran experience"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Troop recovers completely"
+    },
+    "success": {
+      "description": "Troop recovers 1 segment"
+    },
+    "failure": {
+      "description": "No recovery"
+    },
+    "criticalFailure": {
+      "description": "No recovery"
+    }
+  },
+  "failureCausesUnrest": false
+}
