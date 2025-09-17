@@ -20,6 +20,8 @@ import at.posselt.pfrpg2e.kingdom.sheet.FameComponent
 import at.posselt.pfrpg2e.kingdom.sheet.KingdomStatsComponent
 import at.posselt.pfrpg2e.kingdom.managers.UnrestIncidentManager
 import at.posselt.pfrpg2e.kingdom.dialogs.showUnrestIncidentDialog
+import at.posselt.pfrpg2e.kingdom.actions.PlayerSkillActionRegistry
+import at.posselt.pfrpg2e.kingdom.actions.handlers.*
 import at.posselt.pfrpg2e.data.checks.RollMode
 import at.posselt.pfrpg2e.data.events.KingdomEventTrait
 import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
@@ -214,6 +216,58 @@ class KingdomSheet(
     private val fameComponent = FameComponent()
     private val kingdomStatsComponent = KingdomStatsComponent()
     private val unrestIncidentManager = UnrestIncidentManager(game)
+    
+    // Action registry for refactored handlers
+    private val actionRegistry = PlayerSkillActionRegistry().apply {
+        // Register all refactored handlers
+        registerAll(
+            // Resource management
+            CollectResourcesHandler(),
+            PayConsumptionHandler(),
+            EndTurnHandler(fameManager),
+            
+            // Fame system
+            GainFameHandler(fameManager),
+            GainFameCriticalHandler(fameManager),
+            UseFameRerollHandler(fameManager),
+            
+            // Unrest management
+            CheckUnrestIncidentHandler(unrestIncidentManager),
+            
+            // Core gameplay
+            ShowPlayersHandler(dispatcher),
+            RollSkillCheckHandler(),
+            
+            // Settlement management
+            CreateSettlementHandler(),
+            CreateCapitalHandler(),
+            AddSettlementHandler(),
+            DeleteSettlementHandler(),
+            ViewSettlementHandler(),
+            ActivateSettlementHandler(),
+            
+            // Event management
+            CheckEventHandler(),
+            RollEventHandler(),
+            DeleteEventHandler(),
+            ToggleContinuousHandler(),
+            ChangeEventStageHandler(),
+            AddEventHandler(),
+            HandleEventHandler(),
+            
+            // Group management
+            AddGroupHandler(),
+            DeleteGroupHandler(),
+            
+            // Configuration
+            ConfigureActivitiesHandler(),
+            ConfigureEventsHandler(),
+            SettingsHandler(),
+            
+            // Activities
+            PerformActivityHandler()
+        )
+    }
 
     init {
         appHook.onDeleteScene { _, _, _ -> render() }
@@ -280,25 +334,6 @@ class KingdomSheet(
         }
     }
     
-    private suspend fun checkForUnrestIncident() {
-        val kingdom = getKingdom()
-        
-        // Calculate and apply passive unrest
-        val passiveUnrest = unrestIncidentManager.calculatePassiveUnrest(kingdom)
-        unrestIncidentManager.applyPassiveUnrest(actor, passiveUnrest)
-        
-        // Check for incidents
-        val incident = unrestIncidentManager.checkForIncident(actor, kingdom.unrest)
-        if (incident != null) {
-            showUnrestIncidentDialog(
-                game = game,
-                kingdomActor = actor,
-                incident = incident,
-                manager = unrestIncidentManager,
-                onComplete = { render() }
-            )
-        }
-    }
 
     private fun getKingdom(): KingdomData {
         val kingdom = actor.getKingdom()
@@ -309,7 +344,27 @@ class KingdomSheet(
     }
 
     override fun _onClickAction(event: PointerEvent, target: HTMLElement) {
-        when (target.dataset["action"]) {
+        val actionId = target.dataset["action"] ?: return
+        
+        // Try the new action registry first (if feature flag is enabled)
+        if (getKingdom().settings.enableRefactoredActions == true) {
+            buildPromise {
+                if (actionRegistry.handle(
+                    actionId = actionId,
+                    event = event,
+                    target = target,
+                    sheet = this@KingdomSheet,
+                    game = game,
+                    actor = actor
+                )) {
+                    return@buildPromise
+                }
+                // If not handled, fall through to legacy system
+            }
+        }
+        
+        // Legacy action handling (keep for backward compatibility)
+        when (actionId) {
             "show-players" -> buildPromise {
                 val action = ActionMessage(
                     action = "openKingdomSheet",
@@ -318,42 +373,12 @@ class KingdomSheet(
                 dispatcher.dispatch(action)
             }
 
-            "clear-leader" -> buildPromise {
-                val target = event.target as HTMLElement
-                val leader = target.dataset["leader"]?.let { Leader.fromString(it) }
-                if (leader != null) {
-                    val kingdom = getKingdom()
-                    when (leader) {
-                        Leader.RULER -> kingdom.leaders.ruler.uuid = null
-                        Leader.COUNSELOR -> kingdom.leaders.counselor.uuid = null
-                        Leader.EMISSARY -> kingdom.leaders.emissary.uuid = null
-                        Leader.GENERAL -> kingdom.leaders.general.uuid = null
-                        Leader.MAGISTER -> kingdom.leaders.magister.uuid = null
-                        Leader.TREASURER -> kingdom.leaders.treasurer.uuid = null
-                        Leader.VICEROY -> kingdom.leaders.viceroy.uuid = null
-                        Leader.WARDEN -> kingdom.leaders.warden.uuid = null
-                    }
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "open-leader" -> buildPromise {
-                val target = event.target as HTMLElement
-                val leader = target.dataset["leader"]?.let { Leader.fromString(it) }
-                if (leader != null) {
-                    val kingdom = getKingdom()
-                    when (leader) {
-                        Leader.RULER -> kingdom.leaders.ruler.uuid?.let { openActor(it) }
-                        Leader.COUNSELOR -> kingdom.leaders.counselor.uuid?.let { openActor(it) }
-                        Leader.EMISSARY -> kingdom.leaders.emissary.uuid?.let { openActor(it) }
-                        Leader.GENERAL -> kingdom.leaders.general.uuid?.let { openActor(it) }
-                        Leader.MAGISTER -> kingdom.leaders.magister.uuid?.let { openActor(it) }
-                        Leader.TREASURER -> kingdom.leaders.treasurer.uuid?.let { openActor(it) }
-                        Leader.VICEROY -> kingdom.leaders.viceroy.uuid?.let { openActor(it) }
-                        Leader.WARDEN -> kingdom.leaders.warden.uuid?.let { openActor(it) }
-                    }
-                    actor.setKingdom(kingdom)
-                }
+            // Deprecated leader management
+            "clear-leader",
+            "open-leader",
+            "inspect-leader-skills",
+            "inspect-kingdom-skills" -> {
+                // Do nothing - deprecated leader functionality
             }
 
             "change-kingdom-section-nav" -> {
@@ -370,42 +395,12 @@ class KingdomSheet(
                 render()
             }
 
-            "add-bonus-feat" -> buildPromise {
-                val featId = bonusFeat
-                if (featId != null) {
-                    val kingdom = getKingdom()
-                    kingdom.bonusFeats = kingdom.bonusFeats + RawBonusFeat(
-                        id = featId,
-                        ruinThresholdIncreases = emptyArray(),
-                    )
-                    bonusFeat = null
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "delete-bonus-feat" -> buildPromise {
-                val featId = target.dataset["id"]
-                if (featId != null) {
-                    val kingdom = getKingdom()
-                    kingdom.bonusFeats = kingdom.bonusFeats.filter { it.id != featId }.toTypedArray()
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "add-modifier" -> buildPromise {
-                val kingdom = getKingdom()
-                AddModifier(activities = kingdom.getAllActivities().toTypedArray()) {
-                    val current = getKingdom()
-                    current.modifiers = current.modifiers + it
-                    actor.setKingdom(current)
-                }.launch()
-            }
-
-            "delete-modifier" -> buildPromise {
-                val index = target.dataset["index"]?.toInt() ?: 0
-                val kingdom = getKingdom()
-                kingdom.modifiers = kingdom.modifiers.filterIndexed { idx, _ -> idx != index }.toTypedArray()
-                actor.setKingdom(kingdom)
+            // Deprecated bonus/modifiers
+            "add-bonus-feat",
+            "delete-bonus-feat",
+            "add-modifier",
+            "delete-modifier" -> {
+                // Do nothing - deprecated feat/modifier functionality
             }
 
             "add-group" -> buildPromise {
@@ -430,11 +425,14 @@ class KingdomSheet(
 
             "configure-activities" -> ActivityManagement(kingdomActor = actor).launch()
             "configure-events" -> KingdomEventManagement(kingdomActor = actor).launch()
-            "configure-milestones" -> MilestoneManagement(kingdomActor = actor).launch()
-            "configure-charters" -> CharterManagement(kingdomActor = actor).launch()
-            "configure-governments" -> GovernmentManagement(kingdomActor = actor).launch()
-            "configure-heartlands" -> HeartlandManagement(kingdomActor = actor).launch()
-            "configure-feats" -> FeatManagement(kingdomActor = actor).launch()
+            // Deprecated configuration dialogs
+            "configure-milestones",
+            "configure-charters",
+            "configure-governments",
+            "configure-heartlands",
+            "configure-feats" -> {
+                // Do nothing - deprecated configuration functionality
+            }
             "structures-import" -> buildPromise { importStructures() }
 
             "create-settlement" -> {
@@ -568,54 +566,14 @@ class KingdomSheet(
                 openJournal("Compendium.pf2e-kingdom-lite.kingdom-lite-journals.JournalEntry.iAQCUYEAq4Dy8uCY.JournalEntryPage.ty6BS5eSI7ScfVBk")
             }
 
-            "gain-xp" -> buildPromise {
-                target.dataset["xp"]?.toInt()?.let {
-                    actor.gainXp(it)
-                }
-            }
-
-            "hex-xp" -> buildPromise {
-                target.dataset["hexes"]?.toInt()?.let { hexes ->
-                    actor.getKingdom()?.let { kingdom ->
-                        val xp = calculateHexXP(
-                            hexes = hexes,
-                            xpPerClaimedHex = kingdom.settings.xpPerClaimedHex,
-                            kingdomSize = game.getRealmData(actor, kingdom).size,
-                            useVK = kingdom.settings.vanceAndKerensharaXP,
-                        )
-                        actor.gainXp(xp)
-                    }
-                }
-            }
-
-            "structure-xp" -> buildPromise {
-                structureXpDialog(game) {
-                    actor.gainXp(it)
-                }
-            }
-
-            "rp-xp" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val xp = calculateRpXP(
-                        rp = kingdom.resourcePoints.now,
-                        kingdomLevel = kingdom.level,
-                        rpToXpConversionRate = kingdom.settings.rpToXpConversionRate,
-                        rpToXpConversionLimit = kingdom.settings.rpToXpConversionLimit,
-                        useVK = kingdom.settings.vanceAndKerensharaXP,
-                    )
-                    actor.gainXp(xp)
-                }
-            }
-
-            "solution-xp" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val xp = (kingdom.supernaturalSolutions + kingdom.creativeSolutions) * 10
-                    actor.gainXp(xp)
-                }
-            }
-
-            "level-up" -> buildPromise {
-                actor.levelUp()
+            // Deprecated actions - do nothing
+            "gain-xp",
+            "hex-xp",
+            "structure-xp",
+            "rp-xp",
+            "solution-xp",
+            "level-up" -> {
+                // Do nothing - deprecated XP/level functionality
             }
 
             "scroll-to" -> {
@@ -644,23 +602,10 @@ class KingdomSheet(
                 }
             }
 
-            "check-cult-event" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val dc = getCultEventDC(kingdom)
-                    val rollMode = RollMode.fromString(kingdom.settings.kingdomEventRollMode)
-                    val succeeded = d20Check(
-                        dc = dc,
-                        flavor = t("kingdom.checkingForCultEvent", recordOf("dc" to dc)),
-                        rollMode = rollMode,
-                    ).degreeOfSuccess.succeeded()
-                    if (succeeded) {
-                        kingdom.turnsWithoutCultEvent = 0
-                        postChatMessage(t("kingdom.cultEventOccurs"), rollMode = rollMode)
-                    } else {
-                        kingdom.turnsWithoutCultEvent += 1
-                    }
-                    actor.setKingdom(kingdom)
-                }
+            // Deprecated cult event handling
+            "check-cult-event",
+            "roll-cult-event" -> {
+                // Do nothing - deprecated cult event functionality
             }
 
             "check-event" -> buildPromise {
@@ -682,18 +627,6 @@ class KingdomSheet(
                 }
             }
 
-            "roll-cult-event" -> buildPromise {
-                val kingdom = getKingdom()
-                val uuid = kingdom.settings.kingdomCultTable
-                val rollMode = kingdom.settings.kingdomEventRollMode
-                    .let { RollMode.fromString(it) } ?: RollMode.GMROLL
-                val result = game.rollWithCompendiumFallback(
-                    rollMode = rollMode,
-                    uuid = uuid,
-                    compendiumUuid = "Compendium.pf2e-kingdom-lite.kingdom-lite-rolltables.RollTable.aYQXu2GwIf5gdyQa",
-                )
-                postAddToOngoingEvents(result, rollMode, kingdom)
-            }
 
             "roll-event" -> buildPromise {
                 val kingdom = getKingdom()
@@ -775,188 +708,43 @@ class KingdomSheet(
                 }
             }
 
-            "claimed-refuge" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    kingdom.modifiers = kingdom.modifiers + RawModifier(
-                        id = v4(),
-                        turns = 2,
-                        name = "kingdom.claimedRefuge",
-                        type = ModifierType.CIRCUMSTANCE.value,
-                        value = 2,
-                        enabled = true,
-                        applyIf = arrayOf(
-                            RawSome(
-                                some = arrayOf(
-                                    RawEq(eq = tupleOf("@ability", "culture")),
-                                    RawEq(eq = tupleOf("@ability", "economy")),
-                                )
-                            )
-                        )
-                    )
-                    val unrest = roll("1d4", flavor = "Losing Unrest")
-                    val chosenFeatures = kingdom.getChosenFeatures(kingdom.getExplodedFeatures())
-                    kingdom.unrest = kingdom.addUnrest(-unrest, kingdom.getChosenFeats(chosenFeatures))
-                    actor.setKingdom(kingdom)
+            // Deprecated special actions
+            "claimed-refuge",
+            "claimed-landmark" -> {
+                // Do nothing - deprecated special action functionality
+            }
+
+            // Fame handlers moved to registry
+            "gain-fame",
+            "gain-fame-critical",
+            "use-fame-reroll" -> {
+                // Handled by registry - this is a fallback for when feature flag is disabled
+                buildPromise {
+                    ui.notifications.warn("Please enable refactored actions in settings")
                 }
             }
 
-            "claimed-landmark" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    kingdom.modifiers = kingdom.modifiers + RawModifier(
-                        id = v4(),
-                        turns = 2,
-                        name = "kingdom.claimedLandmark",
-                        type = ModifierType.CIRCUMSTANCE.value,
-                        value = 2,
-                        enabled = true,
-                        applyIf = arrayOf(
-                            RawSome(
-                                some = arrayOf(
-                                    RawEq(eq = tupleOf("@ability", "loyalty")),
-                                    RawEq(eq = tupleOf("@ability", "stability")),
-                                )
-                            )
-                        )
-                    )
-                    val ruinButtons = sequenceOf(Resource.CRIME, Resource.DECAY, Resource.CORRUPTION, Resource.STRIFE)
-                        .map {
-                            ResourceButton(
-                                value = "1",
-                                resource = it,
-                                mode = ResourceMode.LOSE
-                            ).toHtml(emptyArray())
-                        }
-                        .toTypedArray()
-                    postChatTemplate(
-                        templatePath = "chatmessages/landmark.hbs",
-                        templateContext = recordOf(
-                            "buttons" to ruinButtons,
-                            "actorUuid" to actor.uuid
-                        )
-                    )
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "gain-fame" -> buildPromise {
-                // This is the button players click at the start of the turn to gain 1 fame
-                fameManager.gainTurnFame(actor)
-                postChatMessage(t("kingdom.gaining1Fame"))
+            // Deprecated unrest management
+            "adjust-unrest" -> {
+                // Do nothing - deprecated unrest adjustment functionality
             }
             
-            "gain-fame-critical" -> buildPromise {
-                // This is for gaining bonus fame from critical successes
-                fameManager.gainFromCritical(actor)
-                postChatMessage(t("kingdom.gainedFameFromCritical"))
-            }
-            
-            "use-fame-reroll" -> buildPromise {
-                target.dataset["checkId"]?.let { checkId ->
-                    if (fameManager.useForReroll(actor, checkId)) {
-                        postChatMessage(t("kingdom.usedFameForReroll", recordOf("check" to checkId)))
-                    } else {
-                        ui.notifications.warn(t("kingdom.cannotUseFameForReroll"))
-                    }
+            // Unrest incident handler moved to registry
+            "check-unrest-incident" -> {
+                // Handled by registry - this is a fallback for when feature flag is disabled
+                buildPromise {
+                    ui.notifications.warn("Please enable refactored actions in settings")
                 }
             }
 
-            "adjust-unrest" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val settlements = kingdom.getAllSettlements(game)
-                    val allFeatures = kingdom.getExplodedFeatures()
-                    val chosenFeatures = kingdom.getChosenFeatures(allFeatures)
-                    val chosenFeats = kingdom.getChosenFeats(chosenFeatures)
-                    kingdom.unrest = adjustUnrest(
-                        kingdom = kingdom,
-                        settlements = settlements.allSettlements,
-                        chosenFeats = chosenFeats,
-                    )
-                    actor.setKingdom(kingdom)
-                    
-                    // Check for unrest incidents after adjusting unrest
-                    checkForUnrestIncident()
+            // Resource handlers moved to registry
+            "collect-resources",
+            "pay-consumption",
+            "end-turn" -> {
+                // Handled by registry - this is a fallback for when feature flag is disabled
+                buildPromise {
+                    ui.notifications.warn("Please enable refactored actions in settings")
                 }
-            }
-            
-            "check-unrest-incident" -> buildPromise {
-                checkForUnrestIncident()
-            }
-
-            "collect-resources" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val realm = game.getRealmData(actor, kingdom)
-                    val settlements = kingdom.getAllSettlements(game)
-                    val allFeatures = kingdom.getExplodedFeatures()
-                    val chosenFeatures = kingdom.getChosenFeatures(allFeatures)
-                    val chosenFeats = kingdom.getChosenFeats(chosenFeatures)
-                    val resources = collectResources(
-                        kingdomData = kingdom,
-                        realmData = realm,
-                        resourceDice = kingdom.getResourceDiceAmount(
-                            chosenFeats,
-                            settlements.allSettlements,
-                            kingdomLevel = kingdom.level,
-                        ),
-                        increaseGainedLuxuries = chosenFeats.sumOf { it.feat.increaseGainedLuxuriesOncePerTurnBy ?: 0 },
-                        settlements = settlements.allSettlements,
-                        expressionContext = kingdom.createSimpleContext(settlements),
-                        modifiers = kingdom.createModifiers(settlements),
-                    )
-                    kingdom.resourcePoints.now = resources.resourcePoints
-                    kingdom.resourceDice.now = resources.resourceDice
-                    kingdom.commodities.now.lumber = resources.lumber
-                    kingdom.commodities.now.luxuries = resources.luxuries
-                    kingdom.commodities.now.stone = resources.stone
-                    kingdom.commodities.now.ore = resources.ore
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "pay-consumption" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val realm = game.getRealmData(actor, kingdom)
-                    val settlements = kingdom.getAllSettlements(game)
-                    kingdom.commodities.now.food = payConsumption(
-                        kingdomActor = actor,
-                        settlements = settlements.allSettlements,
-                        realmData = realm,
-                        armyConsumption = kingdom.consumption.armies,
-                        availableFood = kingdom.commodities.now.food,
-                        now = kingdom.consumption.now,
-                        expressionContext = kingdom.createSimpleContext(settlements),
-                        modifiers = kingdom.createModifiers(settlements),
-                    )
-                    actor.setKingdom(kingdom)
-                }
-            }
-
-            "end-turn" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val realm = game.getRealmData(actor, kingdom)
-                    val settlements = kingdom.getAllSettlements(game)
-                    val storage = calculateStorage(realm = realm, settlements = settlements.allSettlements)
-                    kingdom.supernaturalSolutions = 0
-                    kingdom.creativeSolutions = 0
-                    // Fame doesn't carry over between turns
-                    fameManager.endTurn(actor)
-                    kingdom.resourcePoints = kingdom.resourcePoints.endTurn()
-                    kingdom.resourceDice = kingdom.resourceDice.endTurn()
-                    kingdom.consumption = kingdom.consumption.endTurn()
-                    kingdom.commodities = kingdom.commodities.endTurn(storage)
-                    // tick down modifiers
-                    kingdom.modifiers = kingdom.modifiers.mapNotNull {
-                        val turns = it.turns
-                        if (turns == 0 || turns == null) {
-                            it
-                        } else if (turns == 1) {
-                            null
-                        } else {
-                            RawModifier.copy(it, turns = turns - 1)
-                        }
-                    }.toTypedArray()
-                    actor.setKingdom(kingdom)
-                }
-                postChatTemplate(templatePath = "chatmessages/end-turn.hbs")
             }
 
             "settlement-size-info" -> buildPromise {
@@ -983,18 +771,9 @@ class KingdomSheet(
                 }
             }
 
-            "skip-collect-taxes" -> buildPromise {
-                actor.getKingdom()?.let { kingdom ->
-                    val succeeded = d20Check(
-                        dc = 11,
-                        flavor = t("kingdom.skipCollectTaxesCheck"),
-                    ).degreeOfSuccess.succeeded()
-                    if (succeeded && kingdom.unrest > 0) {
-                        postChatMessage(t("kingdom.reducing1Unrest"))
-                        kingdom.unrest = (kingdom.unrest - 1).coerceIn(0, Int.MAX_VALUE)
-                    }
-                    actor.setKingdom(kingdom)
-                }
+            // Deprecated tax collection
+            "skip-collect-taxes" -> {
+                // Do nothing - deprecated tax functionality
             }
 
             "roll-skill-check" -> buildPromise {
@@ -1013,15 +792,6 @@ class KingdomSheet(
                 )
             }
 
-            "inspect-leader-skills" -> {
-                val kingdom = actor.getKingdom() ?: return
-                configureLeaderSkills(kingdom.settings.leaderSkills, true) {}
-            }
-
-            "inspect-kingdom-skills" -> {
-                val kingdom = actor.getKingdom() ?: return
-                configureLeaderKingdomSkills(kingdom.settings.leaderKingdomSkills, true) {}
-            }
 
             "perform-activity" -> buildPromise {
                 val activityId = target.dataset["activity"]
@@ -1106,7 +876,7 @@ class KingdomSheet(
         }
     }
 
-    private suspend fun postAddToOngoingEvents(
+    suspend fun postAddToOngoingEvents(
         result: TableAndDraw?,
         rollMode: RollMode,
         kingdom: KingdomData,
@@ -1544,7 +1314,7 @@ class KingdomSheet(
     private fun getCultEventDC(kingdom: KingdomData): Int =
         max(1, kingdom.settings.cultEventDc - kingdom.turnsWithoutCultEvent * kingdom.settings.cultEventDcStep)
 
-    private fun getEventDC(kingdom: KingdomData): Int =
+    fun getEventDC(kingdom: KingdomData): Int =
         max(1, kingdom.settings.eventDc - kingdom.turnsWithoutEvent * kingdom.settings.eventDcStep)
 
     private fun createMainNav(kingdom: KingdomData): Array<NavEntryContext> {

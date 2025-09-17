@@ -1,0 +1,33 @@
+package at.posselt.pfrpg2e.kingdom.actions.handlers
+
+import at.posselt.pfrpg2e.kingdom.actions.PlayerSkillActionHandler
+import at.posselt.pfrpg2e.kingdom.sheet.KingdomSheet
+import at.posselt.pfrpg2e.kingdom.KingdomActor
+import com.foundryvtt.core.Game
+import kotlinx.coroutines.await
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.get
+import org.w3c.dom.pointerevents.PointerEvent
+
+/**
+ * Handler for viewing a settlement scene.
+ */
+class ViewSettlementHandler : PlayerSkillActionHandler {
+    override val actionId = "view-settlement"
+    override val actionName = "View Settlement"
+    override val requiresGmApproval = false
+    
+    override suspend fun handle(
+        event: PointerEvent,
+        target: HTMLElement,
+        sheet: KingdomSheet,
+        game: Game,
+        actor: KingdomActor
+    ) {
+        val id = target.dataset["id"]
+        if (id != null) {
+            val scene = game.scenes.get(id)
+            scene?.view()?.await()
+        }
+    }
+}

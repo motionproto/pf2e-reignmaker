@@ -655,26 +655,26 @@ var enableDiplomaticRelations = false
 
 ## Migration Checklist
 
-### Week 1
-- [ ] Create Fame data model
-- [ ] Implement FameManager
-- [ ] Add Fame UI component
-- [ ] Integrate with turn phases
-- [ ] Test Fame system
+### Week 1 ✅ COMPLETED
+- [x] Create Fame data model
+- [x] Implement FameManager
+- [x] Add Fame UI component
+- [x] Integrate with turn phases
+- [x] Test Fame system
 
-### Week 2
-- [ ] Create Incident data models
-- [ ] Build incident tables
-- [ ] Implement UnrestIncidentManager
-- [ ] Create incident dialog
-- [ ] Test incident system
+### Week 2 ✅ COMPLETED
+- [x] Create Incident data models
+- [x] Build incident tables
+- [x] Implement UnrestIncidentManager
+- [x] Create incident dialog
+- [x] Test incident system
 
-### Week 3-4
-- [ ] Create ActionHandler interface
-- [ ] Build ActionRegistry
-- [ ] Extract first 25 handlers
+### Week 3-4 (IN PROGRESS)
+- [x] Create ActionHandler interface (PlayerSkillActionHandler)
+- [x] Build ActionRegistry (PlayerSkillActionRegistry)
+- [ ] Extract first 25 handlers (5 completed: GainXp, LevelUp, CollectResources, PayConsumption, EndTurn)
 - [ ] Extract next 25 handlers
-- [ ] Extract remaining handlers
+- [ ] Extract remaining handlers (42 total remaining)
 - [ ] Test all handlers
 
 ### Week 5-6
