@@ -28,6 +28,8 @@ private external interface CollectResources {
     val stone: Int
     val lumber: Int
     val luxuries: Int
+    val gold: Int
+    val food: Int
 }
 
 suspend fun collectResources(
@@ -47,6 +49,8 @@ suspend fun collectResources(
     val ore = calculateModifierResource(modifiers, expressionContext, ModifierSelector.ORE)
     val stone = calculateModifierResource(modifiers, expressionContext, ModifierSelector.STONE)
     val lumber = calculateModifierResource(modifiers, expressionContext, ModifierSelector.LUMBER)
+    val gold = calculateModifierResource(modifiers, expressionContext, ModifierSelector.GOLD)
+    val food = calculateModifierResource(modifiers, expressionContext, ModifierSelector.FOOD)
     val rolledRp = roll(income.resourcePointsFormula, flavor = t("kingdom.gainingResourcePoints"))
     postChatTemplate(
         templatePath = "chatmessages/collect-resources.hbs",
@@ -56,6 +60,8 @@ suspend fun collectResources(
             stone = income.stone + stone,
             lumber = income.lumber + lumber,
             luxuries = income.luxuries,
+            gold = gold,
+            food = food,
         ),
     )
     return income

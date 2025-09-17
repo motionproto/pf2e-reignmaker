@@ -6,6 +6,7 @@ import at.posselt.pfrpg2e.kingdom.sheet.KingdomSheet
 import at.posselt.pfrpg2e.kingdom.getKingdom
 import at.posselt.pfrpg2e.kingdom.setKingdom
 import at.posselt.pfrpg2e.kingdom.managers.FameManager
+import at.posselt.pfrpg2e.kingdom.managers.UnrestIncidentManager
 import at.posselt.pfrpg2e.kingdom.resources.calculateStorage
 import at.posselt.pfrpg2e.kingdom.getAllSettlements
 import at.posselt.pfrpg2e.kingdom.getRealmData
@@ -21,7 +22,8 @@ import org.w3c.dom.pointerevents.PointerEvent
  * This action is now resolved through player actions rather than kingdom mechanics.
  */
 class EndTurnHandler(
-    private val fameManager: FameManager
+    private val fameManager: FameManager,
+    private val unrestIncidentManager: UnrestIncidentManager? = null
 ) : PlayerSkillActionHandler {
     
     override val actionId: String = "end-turn"
@@ -41,6 +43,22 @@ class EndTurnHandler(
         val realm = game.getRealmData(actor, kingdom)
         val settlements = kingdom.getAllSettlements(game)
         val storage = calculateStorage(realm = realm, settlements = settlements.allSettlements)
+        
+        // Check for unrest incidents if enabled
+        if (kingdom.settings.enableUnrestIncidents == true && unrestIncidentManager != null) {
+            // Calculate and apply passive unrest at turn end
+            val passiveUnrest = unrestIncidentManager.calculatePassiveUnrest(kingdom)
+            unrestIncidentManager.applyPassiveUnrest(actor, passiveUnrest)
+            
+            // Check for incidents based on current unrest level
+            val updatedKingdom = actor.getKingdom() ?: return
+            val incident = unrestIncidentManager.checkForIncident(actor, updatedKingdom.unrest)
+            
+            if (incident != null) {
+                // Incident will be handled through the dialog system
+                console.log("Unrest incident triggered at turn end: ${incident.name}")
+            }
+        }
         
         // Reset per-turn resources
         kingdom.supernaturalSolutions = 0

@@ -1,0 +1,80 @@
+{
+  "id": "archaeological-find",
+  "name": "events.archaeologicalFind.name",
+  "description": "events.archaeologicalFind.description",
+  "traits": ["beneficial"],
+  "location": "events.archaeologicalFind.location",
+  "modifier": 0,
+  "resolution": "events.archaeologicalFind.resolution",
+  "resolvedOn": ["criticalSuccess", "success"],
+  "stages": [
+    {
+      "skills": ["society", "religion", "occultism"],
+      "criticalSuccess": {
+        "msg": "events.archaeologicalFind.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.criticalSuccess.gold",
+            "value": 2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.criticalSuccess.unrestReduction",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.criticalSuccess.fame",
+            "value": 1,
+            "selector": "fame",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "events.archaeologicalFind.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.success.gold",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "failure": {
+        "msg": "events.archaeologicalFind.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.failure.resource",
+            "value": 1,
+            "selector": "stone",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "events.archaeologicalFind.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.archaeologicalFind.stage-0.criticalFailure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}

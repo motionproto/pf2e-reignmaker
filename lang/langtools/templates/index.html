@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Manager - Translation Browser</title>
+    
+    <!-- JSONEditor CSS & JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.css" rel="stylesheet" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/10.1.0/jsoneditor.min.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1 .icon {
+            font-size: 1.5em;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: #f7fafc;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .stat-item strong {
+            color: #667eea;
+            display: block;
+            font-size: 0.9em;
+        }
+        
+        .stat-item span {
+            font-size: 1.2em;
+            color: #2d3748;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn.success {
+            background: #48bb78;
+        }
+        
+        .btn.success:hover {
+            background: #38a169;
+        }
+        
+        .btn.warning {
+            background: #ed8936;
+        }
+        
+        .btn.warning:hover {
+            background: #dd6b20;
+        }
+        
+        .btn.danger {
+            background: #fc8181;
+        }
+        
+        .btn.danger:hover {
+            background: #f56565;
+        }
+        
+        .btn.danger:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #fc8181;
+        }
+        
+        .btn.info {
+            background: #4299e1;
+        }
+        
+        .btn.info:hover {
+            background: #3182ce;
+        }
+        
+        
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .search-select {
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 5px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .editor-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 600px;
+        }
+        
+        #jsoneditor {
+            height: 600px;
+        }
+        
+        .mode-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #edf2f7;
+            border-radius: 5px;
+        }
+        
+        .mode-info .mode-label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+        
+        .mode-toggle {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .mode-btn {
+            padding: 5px 10px;
+            background: #cbd5e0;
+            color: #2d3748;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .status-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .status-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .status-message.success {
+            background: #48bb78;
+        }
+        
+        .status-message.error {
+            background: #fc8181;
+        }
+        
+        .status-message.info {
+            background: #4299e1;
+        }
+
+        .search-results {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .search-results.show {
+            display: block;
+        }
+
+        .search-result {
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+            margin: 2px 0;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .search-result:hover {
+            background: #e2e8f0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="icon">🌍</span>
+                Language Manager - Translation Browser
+            </h1>
+            
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <strong>Total Keys</strong>
+                    <span id="total-keys">Loading...</span>
+                </div>
+                <div class="stat-item">
+                    <strong>Namespaces</strong>
+                    <span id="namespaces">Loading...</span>
+                </div>
+                <div class="stat-item">
+                    <strong>File</strong>
+                    <span>lang/en.json</span>
+                </div>
+            </div>
+
+            <div class="mode-info">
+                <span class="mode-label">View Mode:</span>
+                <div class="mode-toggle">
+                    <button class="mode-btn active" onclick="setMode('tree')">🌳 Tree</button>
+                    <button class="mode-btn" onclick="setMode('view')">👁 View</button>
+                    <button class="mode-btn" onclick="setMode('form')">📝 Form</button>
+                    <button class="mode-btn" onclick="setMode('code')">💻 Code</button>
+                    <button class="mode-btn" onclick="setMode('text')">📄 Text</button>
+                    <button class="mode-btn" onclick="setMode('preview')">🔍 Preview</button>
+                </div>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" class="search-input" id="searchInput" placeholder="Search keys or values (regex supported)...">
+                <select class="search-select" id="searchType">
+                    <option value="keys">Search Keys</option>
+                    <option value="values">Search Values</option>
+                </select>
+                <button class="btn" onclick="performSearch()">
+                    🔍 Search
+                </button>
+            </div>
+            
+            <div class="search-results" id="searchResults"></div>
+            
+            <div class="controls">
+                <button class="btn success" onclick="saveChanges()">
+                    💾 Save Changes
+                </button>
+                <button class="btn warning" onclick="exportOriginal()">
+                    📤 Export to Original
+                </button>
+                <button class="btn danger" id="deleteBtn" onclick="deleteSelected()" disabled>
+                    🗑️ Delete Selected (<span id="selectedCount">0</span>)
+                </button>
+                <button class="btn" onclick="refreshData()">
+                    🔄 Refresh
+                </button>
+                <button class="btn" onclick="expandAll()">
+                    ➕ Expand All
+                </button>
+                <button class="btn" onclick="collapseAll()">
+                    ➖ Collapse All
+                </button>
+                <button class="btn" onclick="selectMode()">
+                    ☑️ Selection Mode
+                </button>
+            </div>
+        </div>
+        
+        <div class="editor-container">
+            <div id="jsoneditor"></div>
+        </div>
+    </div>
+    
+    <div class="status-message" id="statusMessage"></div>
+    
+    <script>
+        let editor;
+        let currentMode = 'tree';
+        let selectedKeys = new Set();
+        let isSelectionMode = false;
+        
+        // Initialize the editor
+        function initEditor(data) {
+            const container = document.getElementById('jsoneditor');
+            const options = {
+                mode: currentMode,
+                modes: ['tree', 'view', 'form', 'code', 'text', 'preview'],
+                onModeChange: function(newMode) {
+                    currentMode = newMode;
+                    updateModeButtons(newMode);
+                    if (newMode !== 'tree') {
+                        exitSelectionMode();
+                    }
+                },
+                onError: function(err) {
+                    showStatus('Error: ' + err.toString(), 'error');
+                },
+                search: true,
+                searchMode: 'tree',
+                history: true,
+                navigationBar: true,
+                statusBar: true,
+                onNodeClick: function(node) {
+                    if (isSelectionMode && currentMode === 'tree') {
+                        handleNodeSelection(node);
+                    }
+                },
+                onCreateMenu: function(items, node) {
+                    // Add custom "Copy Key Path" option to context menu
+                    if (node && node.path && node.path.length > 0) {
+                        items.push({
+                            text: '📋 Copy Key Path',
+                            title: 'Copy the full key path to clipboard',
+                            className: 'jsoneditor-copy-path',
+                            click: function() {
+                                const fullPath = 'pf2e-kingdom-lite.' + node.path.join('.');
+                                copyKeyToClipboard(fullPath);
+                            }
+                        });
+                        
+                        // Add separator
+                        items.push({
+                            type: 'separator'
+                        });
+                    }
+                    
+                    return items;
+                }
+            };
+            
+            editor = new JSONEditor(container, options, data);
+            
+            // Add custom selection handling after editor initialization
+            if (currentMode === 'tree') {
+                setupSelectionHandlers();
+            }
+        }
+        
+        // Load data from server
+        async function loadData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                initEditor(data);
+                loadStats();
+                selectedKeys.clear();
+                updateDeleteButton();
+                showStatus('Data loaded successfully', 'success');
+            } catch (error) {
+                showStatus('Failed to load data: ' + error, 'error');
+            }
+        }
+        
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                document.getElementById('total-keys').textContent = stats.total_keys;
+                document.getElementById('namespaces').textContent = stats.namespaces;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        // Save changes to temporary file
+        async function saveChanges() {
+            try {
+                const data = editor.get();
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showStatus('Changes saved to temporary file', 'success');
+                } else {
+                    showStatus('Failed to save: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to save: ' + error, 'error');
+            }
+        }
+        
+        // Export to original file
+        async function exportOriginal() {
+            if (!confirm('This will overwrite the original lang/en.json file. Are you sure?')) {
+                return;
+            }
+            
+            try {
+                const data = editor.get();
+                const response = await fetch('/api/export', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showStatus('Exported to original file successfully', 'success');
+                    loadStats();
+                } else {
+                    showStatus('Failed to export: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to export: ' + error, 'error');
+            }
+        }
+        
+        // Refresh data
+        async function refreshData() {
+            await loadData();
+        }
+        
+        // Perform search
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            const searchType = document.getElementById('searchType').value;
+            
+            if (!query) {
+                showStatus('Please enter a search query', 'info');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&type=${searchType}`);
+                const result = await response.json();
+                
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '';
+                
+                if (result.results && result.results.length > 0) {
+                    resultsDiv.classList.add('show');
+                    resultsDiv.innerHTML = `<strong>Found ${result.results.length} results:</strong><br>`;
+                    
+                    if (searchType === 'keys') {
+                        result.results.forEach(key => {
+                            const div = document.createElement('div');
+                            div.className = 'search-result';
+                            div.textContent = key;
+                            div.onclick = () => {
+                                editor.searchBox.dom.search.value = key.split('.').pop();
+                                editor.searchBox.dom.search.dispatchEvent(new Event('change'));
+                            };
+                            resultsDiv.appendChild(div);
+                        });
+                    } else {
+                        result.results.forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'search-result';
+                            div.textContent = `${item.key}: ${item.value.substring(0, 50)}...`;
+                            div.onclick = () => {
+                                editor.searchBox.dom.search.value = item.key.split('.').pop();
+                                editor.searchBox.dom.search.dispatchEvent(new Event('change'));
+                            };
+                            resultsDiv.appendChild(div);
+                        });
+                    }
+                    
+                    showStatus(`Found ${result.results.length} results`, 'info');
+                } else {
+                    resultsDiv.classList.remove('show');
+                    showStatus('No results found', 'info');
+                }
+            } catch (error) {
+                showStatus('Search failed: ' + error, 'error');
+            }
+        }
+        
+        // Set editor mode
+        function setMode(mode) {
+            editor.setMode(mode);
+            updateModeButtons(mode);
+        }
+        
+        // Update mode buttons
+        function updateModeButtons(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.mode-btn[onclick*="${mode}"]`).classList.add('active');
+        }
+        
+        // Expand all nodes
+        function expandAll() {
+            if (editor && editor.expandAll) {
+                editor.expandAll();
+                showStatus('Expanded all nodes', 'info');
+            }
+        }
+        
+        // Collapse all nodes
+        function collapseAll() {
+            if (editor && editor.collapseAll) {
+                editor.collapseAll();
+                showStatus('Collapsed all nodes', 'info');
+            }
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${type} show`;
+            
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Toggle selection mode
+        function selectMode() {
+            if (currentMode !== 'tree') {
+                showStatus('Selection mode only works in Tree view', 'info');
+                return;
+            }
+            
+            isSelectionMode = !isSelectionMode;
+            
+            if (isSelectionMode) {
+                showStatus('Selection mode enabled - click on nodes to select/deselect', 'info');
+                setupSelectionHandlers();
+            } else {
+                exitSelectionMode();
+            }
+        }
+        
+        // Exit selection mode
+        function exitSelectionMode() {
+            isSelectionMode = false;
+            selectedKeys.clear();
+            updateDeleteButton();
+            removeSelectionHighlights();
+            showStatus('Selection mode disabled', 'info');
+        }
+        
+        // Setup selection handlers for tree nodes
+        function setupSelectionHandlers() {
+            setTimeout(() => {
+                const treeNodes = document.querySelectorAll('.jsoneditor-tree .jsoneditor-field, .jsoneditor-tree .jsoneditor-value');
+                treeNodes.forEach(node => {
+                    node.style.cursor = 'pointer';
+                    node.addEventListener('click', function(e) {
+                        if (isSelectionMode) {
+                            e.stopPropagation();
+                            const field = this.closest('tr')?.querySelector('.jsoneditor-field');
+                            if (field) {
+                                const path = getNodePath(field);
+                                if (path) {
+                                    toggleSelection(path, field.closest('tr'));
+                                }
+                            }
+                        }
+                    });
+                });
+            }, 100);
+        }
+        
+        // Copy key path to clipboard
+        function copyKeyToClipboard(path) {
+            navigator.clipboard.writeText(path).then(() => {
+                showStatus(`Copied: ${path}`, 'info');
+            }).catch(err => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = path;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus(`Copied: ${path}`, 'info');
+            });
+        }
+        
+        // Get the full path of a node
+        function getNodePath(fieldElement) {
+            const paths = [];
+            let current = fieldElement.closest('tr');
+            
+            while (current) {
+                const field = current.querySelector('.jsoneditor-field');
+                if (field && field.textContent) {
+                    paths.unshift(field.textContent.replace(/^"/, '').replace(/"$/, ''));
+                }
+                
+                // Move up to parent
+                const parent = current.parentElement?.closest('tr');
+                if (!parent || parent === current) break;
+                current = parent;
+            }
+            
+            return 'pf2e-kingdom-lite.' + paths.join('.');
+        }
+        
+        // Toggle selection of a key
+        function toggleSelection(path, element) {
+            if (selectedKeys.has(path)) {
+                selectedKeys.delete(path);
+                element.style.backgroundColor = '';
+            } else {
+                selectedKeys.add(path);
+                element.style.backgroundColor = '#fef3c7';
+            }
+            updateDeleteButton();
+        }
+        
+        // Handle node selection
+        function handleNodeSelection(node) {
+            const path = node.path.join('.');
+            toggleSelection(path, node.element);
+        }
+        
+        // Remove all selection highlights
+        function removeSelectionHighlights() {
+            document.querySelectorAll('.jsoneditor-tree tr').forEach(tr => {
+                tr.style.backgroundColor = '';
+            });
+        }
+        
+        // Update delete button state
+        function updateDeleteButton() {
+            const deleteBtn = document.getElementById('deleteBtn');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = selectedKeys.size;
+            deleteBtn.disabled = selectedKeys.size === 0;
+        }
+        
+        // Delete selected keys
+        async function deleteSelected() {
+            if (selectedKeys.size === 0) {
+                showStatus('No keys selected', 'info');
+                return;
+            }
+            
+            const keysArray = Array.from(selectedKeys);
+            const confirmMsg = `Delete ${keysArray.length} selected key(s)/branch(es)?\n\n` + 
+                               keysArray.slice(0, 10).join('\n') + 
+                               (keysArray.length > 10 ? '\n...' : '');
+            
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+            
+            try {
+                // First update the editor's data
+                const currentData = editor.get();
+                
+                // Delete keys from the data
+                keysArray.forEach(keyPath => {
+                    const parts = keyPath.split('.');
+                    let current = currentData;
+                    
+                    // Skip the first part if it's 'pf2e-kingdom-lite'
+                    const startIndex = parts[0] === 'pf2e-kingdom-lite' ? 1 : 0;
+                    
+                    // Navigate to parent
+                    for (let i = startIndex; i < parts.length - 1; i++) {
+                        if (current[parts[i]]) {
+                            current = current[parts[i]];
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    // Delete the last key
+                    const lastKey = parts[parts.length - 1];
+                    if (current && typeof current === 'object' && lastKey in current) {
+                        delete current[lastKey];
+                    }
+                });
+                
+                // Update editor
+                editor.update(currentData);
+                
+                // Send to server
+                const response = await fetch('/api/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ keys: keysArray })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    selectedKeys.clear();
+                    updateDeleteButton();
+                    exitSelectionMode();
+                    loadStats();
+                    showStatus(`${result.deleted_count} keys/branches deleted successfully`, 'success');
+                } else {
+                    showStatus('Failed to delete: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showStatus('Failed to delete: ' + error, 'error');
+            }
+        }
+        
+        // Handle Enter key in search input
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            loadData();
+        });
+        
+    </script>
+</body>
+</html>

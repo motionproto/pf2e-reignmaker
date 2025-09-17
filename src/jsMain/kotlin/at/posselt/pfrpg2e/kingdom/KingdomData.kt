@@ -95,6 +95,7 @@ external interface KingdomSettings {
     var cultEventDcStep: Int
     var partialStructureConstruction: Boolean
     var enableRefactoredActions: Boolean?
+    var enableUnrestIncidents: Boolean?
 }
 
 @JsPlainObject

@@ -224,7 +224,7 @@ class KingdomSheet(
             // Resource management
             CollectResourcesHandler(),
             PayConsumptionHandler(),
-            EndTurnHandler(fameManager),
+            EndTurnHandler(fameManager, unrestIncidentManager),
             
             // Fame system
             GainFameHandler(fameManager),
@@ -245,6 +245,7 @@ class KingdomSheet(
             DeleteSettlementHandler(),
             ViewSettlementHandler(),
             ActivateSettlementHandler(),
+            InspectSettlementHandler(),
             
             // Event management
             CheckEventHandler(),
@@ -265,7 +266,18 @@ class KingdomSheet(
             SettingsHandler(),
             
             // Activities
-            PerformActivityHandler()
+            PerformActivityHandler(),
+            
+            // UI and Navigation
+            StructuresImportHandler(),
+            QuickstartHandler(),
+            HelpHandler(),
+            ChangeNavHandler(),
+            ChangeKingdomSectionNavHandler(),
+            ScrollToHandler(),
+            SettlementSizeInfoHandler(),
+            KingdomSizeInfoHandler(),
+            ConsumptionBreakdownHandler()
         )
     }
 

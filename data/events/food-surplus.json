@@ -1,0 +1,73 @@
+{
+  "id": "food-surplus",
+  "name": "events.foodSurplus.name",
+  "description": "events.foodSurplus.description",
+  "traits": ["beneficial"],
+  "location": "events.foodSurplus.location",
+  "modifier": 0,
+  "resolution": "events.foodSurplus.resolution",
+  "resolvedOn": ["criticalSuccess", "success", "failure"],
+  "stages": [
+    {
+      "skills": ["nature", "society", "crafting"],
+      "criticalSuccess": {
+        "msg": "events.foodSurplus.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.foodSurplus.stage-0.criticalSuccess.gold",
+            "value": 3,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "events.foodSurplus.stage-0.criticalSuccess.unrestReduction",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "events.foodSurplus.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.foodSurplus.stage-0.success.gold",
+            "value": 2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "failure": {
+        "msg": "events.foodSurplus.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.foodSurplus.stage-0.failure.gold",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "events.foodSurplus.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.foodSurplus.stage-0.criticalFailure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}

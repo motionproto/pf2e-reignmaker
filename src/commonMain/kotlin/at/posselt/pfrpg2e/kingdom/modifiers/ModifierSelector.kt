@@ -10,7 +10,11 @@ enum class ModifierSelector : Translatable, ValueEnum {
     ORE,
     STONE,
     LUMBER,
-    CONSUMPTION;
+    CONSUMPTION,
+    GOLD,
+    FOOD,
+    UNREST,
+    FAME;
 
     companion object {
         fun fromString(value: String) = fromCamelCase<ModifierSelector>(value)

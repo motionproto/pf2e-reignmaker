@@ -1,0 +1,80 @@
+{
+  "id": "bandit-activity",
+  "name": "events.banditActivity.name",
+  "description": "events.banditActivity.description",
+  "traits": ["dangerous", "continuous"],
+  "location": "events.banditActivity.location",
+  "modifier": 0,
+  "resolution": "events.banditActivity.resolution",
+  "resolvedOn": ["criticalSuccess", "success"],
+  "stages": [
+    {
+      "skills": ["intimidation", "diplomacy", "stealth"],
+      "criticalSuccess": {
+        "msg": "events.banditActivity.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.criticalSuccess.loot",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "success": {
+        "msg": "events.banditActivity.stage-0.success.msg",
+        "modifiers": []
+      },
+      "failure": {
+        "msg": "events.banditActivity.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.failure.resourceLoss",
+            "value": -1,
+            "selector": "ore",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "events.banditActivity.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.criticalFailure.stoneLoss",
+            "value": -1,
+            "selector": "stone",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.criticalFailure.oreLoss",
+            "value": -1,
+            "selector": "ore",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "events.banditActivity.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}
