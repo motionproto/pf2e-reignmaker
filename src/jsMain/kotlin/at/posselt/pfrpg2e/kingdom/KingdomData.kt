@@ -35,10 +35,12 @@ import at.posselt.pfrpg2e.kingdom.data.RawHeartlandChoices
 import at.posselt.pfrpg2e.kingdom.data.RawLeaderValues
 import at.posselt.pfrpg2e.kingdom.data.RawLeaders
 import at.posselt.pfrpg2e.kingdom.data.RawNotes
-import at.posselt.pfrpg2e.kingdom.data.RawResources
-import at.posselt.pfrpg2e.kingdom.data.RawRuin
 import at.posselt.pfrpg2e.kingdom.data.RawSkillRanks
-import at.posselt.pfrpg2e.kingdom.data.RawWorkSites
+import at.posselt.pfrpg2e.kingdom.data.RawGold
+import at.posselt.pfrpg2e.kingdom.data.RawWorksites
+import at.posselt.pfrpg2e.kingdom.data.RawStorageCapacity
+import at.posselt.pfrpg2e.kingdom.data.RawStorageBuildings
+import at.posselt.pfrpg2e.kingdom.data.RawConstructionProject
 import at.posselt.pfrpg2e.kingdom.data.RuinThresholdIncreases
 import at.posselt.pfrpg2e.kingdom.data.getBoosts
 import at.posselt.pfrpg2e.kingdom.data.parse
@@ -96,6 +98,7 @@ external interface KingdomSettings {
     var partialStructureConstruction: Boolean
     var enableRefactoredActions: Boolean?
     var enableUnrestIncidents: Boolean?
+    var enableKingdomEvents: Boolean?
 }
 
 @JsPlainObject
@@ -133,18 +136,27 @@ external interface KingdomData {
     var xp: Int
     var size: Int
     var unrest: Int
-    var resourcePoints: RawResources
-    var resourceDice: RawResources
-    var workSites: RawWorkSites
+    // REMOVED: resourcePoints, resourceDice (old RP/RD system)
+    // REMOVED: ruin (4-category system)
+    // REMOVED: supernaturalSolutions, creativeSolutions (per-turn resources)
+    
+    // NEW Reignmaker-lite resource system
+    var gold: RawGold                                // Persistent currency
+    var worksites: RawWorksites                      // Production sites on hexes
+    var storageCapacity: RawStorageCapacity          // Resource storage limits
+    var storageBuildings: RawStorageBuildings        // Storage structure tracking
+    var constructionQueue: RawConstructionProject?   // Current building project
+    var currentTurnPhase: String?                    // Track turn progress (phase1-6)
+    
+    // SIMPLIFIED consumption (just food now)
     var consumption: RawConsumption
-    var supernaturalSolutions: Int
-    var creativeSolutions: Int
+    var commodities: RawCurrentCommodities  // No luxuries
+    
+    // Existing fields that remain
     var settings: KingdomSettings
-    var commodities: RawCurrentCommodities
-    var ruin: RawRuin
     var activeSettlement: String?
-    var turnsWithoutCultEvent: Int // set via button
-    var turnsWithoutEvent: Int // set via button
+    var turnsWithoutCultEvent: Int
+    var turnsWithoutEvent: Int
     var notes: RawNotes
     var homebrewMilestones: Array<RawMilestone>
     var homebrewActivities: Array<RawActivity>
@@ -313,30 +325,7 @@ fun KingdomData.hasAssurance(
 ) = chosenFeats.any { it.feat.assuranceForSkill == skill.value }
 
 
-fun KingdomData.parseRuins(
-    choices: List<ChosenFeature>,
-    baseThreshold: Int,
-    government: RawGovernmentChoices?,
-): RuinValues {
-    val defaults = ruin.parse()
-    return if (settings.automateStats) {
-        val choiceIncreases = choices.map { it.choice }
-            .flatMap { listOfNotNull(it.ruinThresholdIncreases) + it.featRuinThresholdIncreases }
-        val bonusFeatIncreases = bonusFeats.flatMap { it.ruinThresholdIncreases.toList() }
-        val governmentIncreases = government?.featRuinThresholdIncreases.orEmpty()
-        val increases = (choiceIncreases + bonusFeatIncreases + governmentIncreases)
-            .map { it.parse() }
-            .fold(RuinThresholdIncreases()) { prev, curr -> prev + curr }
-        defaults.copy(
-            decay = defaults.decay.copy(threshold = increases.decay + baseThreshold),
-            strife = defaults.strife.copy(threshold = increases.strife + baseThreshold),
-            corruption = defaults.corruption.copy(threshold = increases.corruption + baseThreshold),
-            crime = defaults.crime.copy(threshold = increases.crime + baseThreshold),
-        )
-    } else {
-        defaults
-    }
-}
+// REMOVED: parseRuins function (no longer using 4-category ruin system)
 
 fun KingdomData.parseAbilityScores(
     chosenCharter: RawCharter?,

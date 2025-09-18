@@ -9,66 +9,30 @@
     {
       "skill": "intimidation",
       "description": "show force",
-      "effects": {
-        "success": "Bandits deterred, no effect",
-        "failure": "Lose 1d4 Gold to raids",
-        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "worksiteDestroyed": 1
-      }
+      "successEffect": "Bandits deterred, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
     },
     {
       "skill": "stealth",
       "description": "infiltrate bandits",
-      "effects": {
-        "success": "Bandits deterred, no effect",
-        "failure": "Lose 1d4 Gold to raids",
-        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "worksiteDestroyed": 1
-      }
+      "successEffect": "Bandits deterred, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
     },
     {
       "skill": "survival",
       "description": "track to lair",
-      "effects": {
-        "success": "Bandits deterred, no effect",
-        "failure": "Lose 1d4 Gold to raids",
-        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "worksiteDestroyed": 1
-      }
+      "successEffect": "Bandits deterred, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
     },
     {
       "skill": "occultism",
       "description": "scrying",
-      "effects": {
-        "success": "Bandits deterred, no effect",
-        "failure": "Lose 1d4 Gold to raids",
-        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "worksiteDestroyed": 1
-      }
+      "successEffect": "Bandits deterred, no effect",
+      "failureEffect": "Lose 1d4 Gold to raids",
+      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
     }
   ]
 }

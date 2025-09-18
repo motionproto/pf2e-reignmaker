@@ -507,7 +507,6 @@
         }
       }
     },
-    "activities": {},
     "activityDcType": {
       "control": "Control",
       "custom": "Custom",
@@ -3057,7 +3056,6 @@
       "all": "All",
       "random": "Random"
     },
-    "refresh": {},
     "resourceButton": {
       "multiple": "Multiple",
       "resource": {

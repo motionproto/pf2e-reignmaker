@@ -4,26 +4,22 @@ import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.actions.PlayerSkillActionHandler
 import at.posselt.pfrpg2e.kingdom.sheet.KingdomSheet
 import at.posselt.pfrpg2e.kingdom.getKingdom
-import at.posselt.pfrpg2e.kingdom.setKingdom
-import at.posselt.pfrpg2e.kingdom.managers.FameManager
-import at.posselt.pfrpg2e.kingdom.managers.UnrestIncidentManager
-import at.posselt.pfrpg2e.kingdom.resources.calculateStorage
-import at.posselt.pfrpg2e.kingdom.getAllSettlements
-import at.posselt.pfrpg2e.kingdom.getRealmData
-import at.posselt.pfrpg2e.kingdom.RawModifier
-import at.posselt.pfrpg2e.kingdom.data.endTurn
+import at.posselt.pfrpg2e.kingdom.managers.TurnManager
 import at.posselt.pfrpg2e.utils.postChatTemplate
 import com.foundryvtt.core.Game
+import com.foundryvtt.core.ui
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.pointerevents.PointerEvent
 
 /**
  * Handler for ending a kingdom turn.
- * This action is now resolved through player actions rather than kingdom mechanics.
+ * This is Phase 6 in the Reignmaker-lite turn sequence.
+ * 
+ * This action completes the turn and resets various temporary effects.
+ * The TurnManager handles the actual turn orchestration.
  */
 class EndTurnHandler(
-    private val fameManager: FameManager,
-    private val unrestIncidentManager: UnrestIncidentManager? = null
+    private val turnManager: TurnManager
 ) : PlayerSkillActionHandler {
     
     override val actionId: String = "end-turn"
@@ -39,55 +35,20 @@ class EndTurnHandler(
     ) {
         val kingdom = actor.getKingdom() ?: return
         
-        // Calculate storage for commodity management
-        val realm = game.getRealmData(actor, kingdom)
-        val settlements = kingdom.getAllSettlements(game)
-        val storage = calculateStorage(realm = realm, settlements = settlements.allSettlements)
-        
-        // Check for unrest incidents if enabled
-        if (kingdom.settings.enableUnrestIncidents == true && unrestIncidentManager != null) {
-            // Calculate and apply passive unrest at turn end
-            val passiveUnrest = unrestIncidentManager.calculatePassiveUnrest(kingdom)
-            unrestIncidentManager.applyPassiveUnrest(actor, passiveUnrest)
+        try {
+            // Execute Phase 6: End of Turn
+            turnManager.executeEndOfTurn(actor, kingdom)
             
-            // Check for incidents based on current unrest level
-            val updatedKingdom = actor.getKingdom() ?: return
-            val incident = unrestIncidentManager.checkForIncident(actor, updatedKingdom.unrest)
+            // Post a chat message about the turn ending
+            postChatTemplate(templatePath = "chatmessages/end-turn.hbs")
             
-            if (incident != null) {
-                // Incident will be handled through the dialog system
-                console.log("Unrest incident triggered at turn end: ${incident.name}")
-            }
+            ui.notifications.info("Kingdom turn ended successfully")
+        } catch (e: Throwable) {
+            console.error("Failed to end turn", e)
+            ui.notifications.error("Failed to end turn: ${e.message}")
         }
         
-        // Reset per-turn resources
-        kingdom.supernaturalSolutions = 0
-        kingdom.creativeSolutions = 0
-        
-        // Fame doesn't carry over between turns
-        fameManager.endTurn(actor)
-        
-        // Update resource tracking for end of turn
-        kingdom.resourcePoints = kingdom.resourcePoints.endTurn()
-        kingdom.resourceDice = kingdom.resourceDice.endTurn()
-        kingdom.consumption = kingdom.consumption.endTurn()
-        kingdom.commodities = kingdom.commodities.endTurn(storage)
-        
-        // Tick down temporary modifiers
-        kingdom.modifiers = kingdom.modifiers.mapNotNull { modifier ->
-            val turns = modifier.turns
-            when {
-                turns == null || turns == 0 -> modifier // Permanent modifier
-                turns == 1 -> null // Expires this turn
-                else -> RawModifier.copy(modifier, turns = turns - 1)
-            }
-        }.toTypedArray()
-        
-        // Save the updated kingdom state
-        actor.setKingdom(kingdom)
-        
-        // Post a chat message about the turn ending
-        postChatTemplate(templatePath = "chatmessages/end-turn.hbs")
+        sheet.render()
     }
     
     override fun validate(actor: KingdomActor): Boolean {
@@ -95,7 +56,9 @@ class EndTurnHandler(
         return actor.getKingdom() != null
     }
     
-    override fun getPlayerSkillsDescription(): String {
-        return "End Turn uses the collective efforts of all player characters to manage the kingdom's transition to a new period."
+    override fun getPlayerSkillsDescription(): String? {
+        return "End Turn: This is the final phase of the kingdom turn. " +
+               "It doesn't require a skill check but handles cleanup and preparation for the next turn. " +
+               "Temporary effects expire, resources are stored, and the kingdom prepares for the next period."
     }
 }

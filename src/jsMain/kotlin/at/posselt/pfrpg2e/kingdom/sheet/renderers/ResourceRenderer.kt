@@ -2,13 +2,16 @@ package at.posselt.pfrpg2e.kingdom.sheet.renderers
 
 import at.posselt.pfrpg2e.kingdom.sheet.CommodityStatsContext
 import at.posselt.pfrpg2e.kingdom.sheet.CommodityStatContext
+import at.posselt.pfrpg2e.kingdom.sheet.GoldContext
 import at.posselt.pfrpg2e.kingdom.sheet.contexts.CommoditiesContext
 import at.posselt.pfrpg2e.kingdom.sheet.contexts.CapacityContext
+import at.posselt.pfrpg2e.kingdom.data.RawGold
 import at.posselt.pfrpg2e.utils.t
 
 /**
  * Dedicated renderer for Kingdom Resources/Commodities display.
- * Handles the rendering of food, lumber, ore, stone, and luxuries.
+ * Handles the rendering of food, lumber, ore, stone, luxuries, and gold for Reignmaker-lite.
+ * Note: luxuries are kept for backward compatibility but will be hidden in Reignmaker-lite mode.
  */
 class ResourceRenderer {
     
@@ -16,7 +19,8 @@ class ResourceRenderer {
      * Creates the context object for commodities display
      */
     fun createCommoditiesContext(
-        commoditiesContext: CommoditiesContext
+        commoditiesContext: CommoditiesContext,
+        isReignmakerLite: Boolean = true
     ): CommodityStatsContext {
         return CommodityStatsContext(
             food = CommodityStatContext(
@@ -39,27 +43,82 @@ class ResourceRenderer {
                 capacity = commoditiesContext.capacity.stone,
                 label = t("kingdom.stone")
             ),
-            luxuries = CommodityStatContext(
-                current = (commoditiesContext.now.luxuries.value as? Number)?.toInt() ?: 0,
-                capacity = commoditiesContext.capacity.luxuries,
-                label = t("kingdom.luxuries")
-            )
+            luxuries = if (!isReignmakerLite) {
+                CommodityStatContext(
+                    current = (commoditiesContext.now.luxuries?.value as? Number)?.toInt() ?: 0,
+                    capacity = commoditiesContext.capacity.luxuries ?: 0,
+                    label = t("kingdom.luxuries")
+                )
+            } else null
+        )
+    }
+    
+    /**
+     * Creates the context object for gold display (Reignmaker-lite)
+     */
+    fun createGoldContext(gold: RawGold?): GoldContext {
+        return GoldContext(
+            treasury = gold?.treasury ?: 0,
+            income = gold?.income ?: 0,
+            upkeep = gold?.upkeep ?: 0,
+            netIncome = (gold?.income ?: 0) - (gold?.upkeep ?: 0),
+            label = t("kingdom.gold")
         )
     }
     
     /**
      * Generates the HTML for the Resources stat group
      */
-    fun generateResourcesHtml(commodities: CommodityStatsContext): String {
+    fun generateResourcesHtml(commodities: CommodityStatsContext, gold: GoldContext? = null): String {
+        val resourceItems = mutableListOf(
+            generateResourceHtml(commodities.food),
+            generateResourceHtml(commodities.lumber),
+            generateResourceHtml(commodities.ore),
+            generateResourceHtml(commodities.stone)
+        )
+        
+        // Only add luxuries if not in Reignmaker-lite mode
+        commodities.luxuries?.let {
+            resourceItems.add(generateResourceHtml(it))
+        }
+        
         return """
             <div class="km-stat-group">
                 <h4 class="km-stat-header">${t("kingdom.resources")}</h4>
                 <div class="km-resources-grid">
-                    ${generateResourceHtml(commodities.food)}
-                    ${generateResourceHtml(commodities.lumber)}
-                    ${generateResourceHtml(commodities.ore)}
-                    ${generateResourceHtml(commodities.stone)}
-                    ${generateResourceHtml(commodities.luxuries)}
+                    ${resourceItems.joinToString("\n")}
+                </div>
+                ${gold?.let { generateGoldHtml(it) } ?: ""}
+            </div>
+        """.trimIndent()
+    }
+    
+    /**
+     * Generates HTML for gold display (Reignmaker-lite)
+     */
+    fun generateGoldHtml(gold: GoldContext): String {
+        val netIncomeClass = when {
+            gold.netIncome > 0 -> "km-gold-positive"
+            gold.netIncome < 0 -> "km-gold-negative"
+            else -> "km-gold-neutral"
+        }
+        
+        return """
+            <div class="km-gold-display">
+                <div class="km-gold-header">
+                    <span class="km-gold-icon">💰</span>
+                    <span class="km-gold-label">${gold.label}</span>
+                </div>
+                <div class="km-gold-treasury">
+                    <span class="km-gold-treasury-label">${t("kingdom.treasury")}:</span>
+                    <span class="km-gold-treasury-value">${gold.treasury}</span>
+                </div>
+                <div class="km-gold-income-row">
+                    <span class="km-gold-income">+${gold.income}</span>
+                    <span class="km-gold-upkeep">-${gold.upkeep}</span>
+                    <span class="km-gold-net $netIncomeClass">
+                        ${if (gold.netIncome >= 0) "+" else ""}${gold.netIncome}
+                    </span>
                 </div>
             </div>
         """.trimIndent()
@@ -101,14 +160,23 @@ class ResourceRenderer {
     /**
      * Generates a summary line for all resources
      */
-    fun generateResourcesSummary(commodities: CommodityStatsContext): String {
-        return listOf(
+    fun generateResourcesSummary(commodities: CommodityStatsContext, gold: GoldContext? = null): String {
+        val items = mutableListOf(
             "${getResourceIcon(commodities.food.label)}${commodities.food.current}",
             "${getResourceIcon(commodities.lumber.label)}${commodities.lumber.current}",
             "${getResourceIcon(commodities.ore.label)}${commodities.ore.current}",
-            "${getResourceIcon(commodities.stone.label)}${commodities.stone.current}",
-            "${getResourceIcon(commodities.luxuries.label)}${commodities.luxuries.current}"
-        ).joinToString(" | ")
+            "${getResourceIcon(commodities.stone.label)}${commodities.stone.current}"
+        )
+        
+        commodities.luxuries?.let {
+            items.add("${getResourceIcon(it.label)}${it.current}")
+        }
+        
+        gold?.let {
+            items.add("${getResourceIcon("Gold")}${it.treasury}")
+        }
+        
+        return items.joinToString(" | ")
     }
     
     /**
@@ -121,6 +189,7 @@ class ResourceRenderer {
             resourceLabel.contains("ore", ignoreCase = true) -> "⚒️"
             resourceLabel.contains("stone", ignoreCase = true) -> "🪨"
             resourceLabel.contains("luxuries", ignoreCase = true) -> "💎"
+            resourceLabel.contains("gold", ignoreCase = true) -> "💰"
             else -> "📦"
         }
     }
@@ -139,7 +208,7 @@ class ResourceRenderer {
     /**
      * Generates a warning message if resources are low
      */
-    fun generateResourceWarnings(commodities: CommodityStatsContext): List<String> {
+    fun generateResourceWarnings(commodities: CommodityStatsContext, gold: GoldContext? = null): List<String> {
         val warnings = mutableListOf<String>()
         
         fun checkResource(resource: CommodityStatContext) {
@@ -153,7 +222,16 @@ class ResourceRenderer {
         checkResource(commodities.lumber)
         checkResource(commodities.ore)
         checkResource(commodities.stone)
-        checkResource(commodities.luxuries)
+        commodities.luxuries?.let { checkResource(it) }
+        
+        // Check gold warnings
+        gold?.let {
+            if (it.treasury < 0) {
+                warnings.add("Treasury is in debt! (${it.treasury} gold)")
+            } else if (it.treasury < 10 && it.netIncome < 0) {
+                warnings.add("Treasury running low with negative income (${it.treasury} gold, ${it.netIncome}/turn)")
+            }
+        }
         
         return warnings
     }

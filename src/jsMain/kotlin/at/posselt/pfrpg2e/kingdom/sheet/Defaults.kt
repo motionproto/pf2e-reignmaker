@@ -95,6 +95,7 @@ fun createKingdomDefaults(name: String) =
             partialStructureConstruction = false,
             enableRefactoredActions = true,
             enableUnrestIncidents = true, // Unrest incident system enabled
+            enableKingdomEvents = false, // Kingdom events disabled by default (Phase 4)
             kingdomEventRollMode = "gmroll",
             automateResources = "kingmaker",
             proficiencyMode = "none",

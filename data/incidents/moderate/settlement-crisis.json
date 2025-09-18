@@ -9,53 +9,23 @@
     {
       "skill": "diplomacy",
       "description": "address concerns",
-      "effects": {
-        "success": "Settlement stabilized, no effect",
-        "failure": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-        "criticalFailure": "Random settlement loses one level (minimum level 1), +1 unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4",
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "settlementLevel": -1,
-        "unrest": 1
-      }
+      "successEffect": "Settlement stabilized, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), +1 unrest"
     },
     {
       "skill": "society",
       "description": "emergency aid",
-      "effects": {
-        "success": "Settlement stabilized, no effect",
-        "failure": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-        "criticalFailure": "Random settlement loses one level (minimum level 1), +1 unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4",
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "settlementLevel": -1,
-        "unrest": 1
-      }
+      "successEffect": "Settlement stabilized, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), +1 unrest"
     },
     {
       "skill": "religion",
       "description": "provide hope",
-      "effects": {
-        "success": "Settlement stabilized, no effect",
-        "failure": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-        "criticalFailure": "Random settlement loses one level (minimum level 1), +1 unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4",
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "settlementLevel": -1,
-        "unrest": 1
-      }
+      "successEffect": "Settlement stabilized, no effect",
+      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), +1 unrest"
     }
   ]
 }

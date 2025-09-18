@@ -9,66 +9,30 @@
     {
       "skill": "intimidation",
       "description": "enforce collection",
-      "effects": {
-        "success": "Taxes collected normally",
-        "failure": "Lose 1d4 Gold (reduced tax collection)",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Taxes collected normally",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "diplomacy",
       "description": "negotiate rates",
-      "effects": {
-        "success": "Taxes collected normally",
-        "failure": "Lose 1d4 Gold (reduced tax collection)",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Taxes collected normally",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "society",
       "description": "tax reform",
-      "effects": {
-        "success": "Taxes collected normally",
-        "failure": "Lose 1d4 Gold (reduced tax collection)",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Taxes collected normally",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "deception",
       "description": "creative accounting",
-      "effects": {
-        "success": "Taxes collected normally",
-        "failure": "Lose 1d4 Gold (reduced tax collection)",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Taxes collected normally",
+      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     }
   ]
 }

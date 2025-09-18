@@ -9,56 +9,23 @@
     {
       "skill": "medicine",
       "description": "treat disease",
-      "effects": {
-        "success": "Disease contained, no effect",
-        "failure": "Lose 1d4 Food (feeding the sick), +1 Unrest",
-        "criticalFailure": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
-      },
-      "failureModifiers": {
-        "food": "-1d4",
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "food": "-2d4",
-        "structureTypeDamaged": "medicine_or_faith",
-        "unrest": 1
-      }
+      "successEffect": "Disease contained, no effect",
+      "failureEffect": "Lose 1d4 Food (feeding the sick), +1 Unrest",
+      "criticalFailureExtra": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
     },
     {
       "skill": "nature",
       "description": "natural remedies",
-      "effects": {
-        "success": "Disease contained, no effect",
-        "failure": "Lose 1d4 Food (feeding the sick), +1 Unrest",
-        "criticalFailure": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
-      },
-      "failureModifiers": {
-        "food": "-1d4",
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "food": "-2d4",
-        "structureTypeDamaged": "medicine_or_faith",
-        "unrest": 1
-      }
+      "successEffect": "Disease contained, no effect",
+      "failureEffect": "Lose 1d4 Food (feeding the sick), +1 Unrest",
+      "criticalFailureExtra": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
     },
     {
       "skill": "religion",
       "description": "divine healing",
-      "effects": {
-        "success": "Disease contained, no effect",
-        "failure": "Lose 1d4 Food (feeding the sick), +1 Unrest",
-        "criticalFailure": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
-      },
-      "failureModifiers": {
-        "food": "-1d4",
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "food": "-2d4",
-        "structureTypeDamaged": "medicine_or_faith",
-        "unrest": 1
-      }
+      "successEffect": "Disease contained, no effect",
+      "failureEffect": "Lose 1d4 Food (feeding the sick), +1 Unrest",
+      "criticalFailureExtra": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest"
     }
   ]
 }

@@ -9,66 +9,30 @@
     {
       "skill": "intimidation",
       "description": "crack down on criminals",
-      "effects": {
-        "success": "Crime suppressed, no effect",
-        "failure": "Lose 1d4 Gold",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Crime suppressed, no effect",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "thievery",
       "description": "infiltrate gangs",
-      "effects": {
-        "success": "Crime suppressed, no effect",
-        "failure": "Lose 1d4 Gold",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Crime suppressed, no effect",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "society",
       "description": "legal reform",
-      "effects": {
-        "success": "Crime suppressed, no effect",
-        "failure": "Lose 1d4 Gold",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Crime suppressed, no effect",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "occultism",
       "description": "divine the source",
-      "effects": {
-        "success": "Crime suppressed, no effect",
-        "failure": "Lose 1d4 Gold",
-        "criticalFailure": "Lose 2d4 Gold, +1 Unrest"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "unrest": 1
-      }
+      "successEffect": "Crime suppressed, no effect",
+      "failureEffect": "Lose 1d4 Gold",
+      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
     }
   ]
 }

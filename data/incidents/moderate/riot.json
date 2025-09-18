@@ -9,70 +9,30 @@
     {
       "skill": "intimidation",
       "description": "suppress riot",
-      "effects": {
-        "success": "Riot quelled, no effect",
-        "failure": "+1 Unrest, 1 structure damaged",
-        "criticalFailure": "+1 Unrest, 1 structure destroyed"
-      },
-      "failureModifiers": {
-        "unrest": 1,
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 1,
-        "structureDestroyed": 1
-      }
+      "successEffect": "Riot quelled, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "diplomacy",
       "description": "negotiate with rioters",
-      "effects": {
-        "success": "Riot quelled, no effect",
-        "failure": "+1 Unrest, 1 structure damaged",
-        "criticalFailure": "+1 Unrest, 1 structure destroyed"
-      },
-      "failureModifiers": {
-        "unrest": 1,
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 1,
-        "structureDestroyed": 1
-      }
+      "successEffect": "Riot quelled, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "athletics",
       "description": "contain riot",
-      "effects": {
-        "success": "Riot quelled, no effect",
-        "failure": "+1 Unrest, 1 structure damaged",
-        "criticalFailure": "+1 Unrest, 1 structure destroyed"
-      },
-      "failureModifiers": {
-        "unrest": 1,
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 1,
-        "structureDestroyed": 1
-      }
+      "successEffect": "Riot quelled, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     },
     {
       "skill": "medicine",
       "description": "treat injured",
-      "effects": {
-        "success": "Riot quelled, no effect",
-        "failure": "+1 Unrest, 1 structure damaged",
-        "criticalFailure": "+1 Unrest, 1 structure destroyed"
-      },
-      "failureModifiers": {
-        "unrest": 1,
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 1,
-        "structureDestroyed": 1
-      }
+      "successEffect": "Riot quelled, no effect",
+      "failureEffect": "+1 Unrest, 1 structure damaged",
+      "criticalFailureExtra": "+1 Unrest, 1 structure destroyed"
     }
   ]
 }

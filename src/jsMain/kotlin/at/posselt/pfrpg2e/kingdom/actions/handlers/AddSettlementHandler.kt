@@ -1,6 +1,8 @@
 package at.posselt.pfrpg2e.kingdom.actions.handlers
 
-import at.posselt.pfrpg2e.kingdom.actions.PlayerSkillActionHandler
+import at.posselt.pfrpg2e.kingdom.actions.BaseKingdomAction
+import at.posselt.pfrpg2e.kingdom.actions.KingdomActionCategory
+import at.posselt.pfrpg2e.kingdom.actions.PCSkill
 import at.posselt.pfrpg2e.kingdom.sheet.KingdomSheet
 import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.getKingdom
@@ -12,11 +14,28 @@ import org.w3c.dom.pointerevents.PointerEvent
 
 /**
  * Handler for adding current scene as a settlement.
+ * Alternative version of "Establish a Settlement" that uses the current scene.
+ * 
+ * Uses Crafting, Society, or Survival checks to establish a settlement.
+ * This is a utility variant that's useful for existing maps.
  */
-class AddSettlementHandler : PlayerSkillActionHandler {
+class AddSettlementHandler : BaseKingdomAction() {
     override val actionId = "add-settlement"
-    override val actionName = "Add Settlement"
+    override val actionName = "Add Settlement (Current Scene)"
     override val requiresGmApproval = false
+    
+    // Urban Planning category
+    override val category = KingdomActionCategory.URBAN_PLANNING
+    
+    // Can be resolved with Crafting, Society, or Survival
+    override val applicableSkills = listOf(
+        PCSkill.CRAFTING,
+        PCSkill.SOCIETY,
+        PCSkill.SURVIVAL
+    )
+    
+    // Base DC for establishing a settlement
+    override val baseDC = 15
     
     override suspend fun handle(
         event: PointerEvent,
@@ -38,5 +57,11 @@ class AddSettlementHandler : PlayerSkillActionHandler {
             )
             actor.setKingdom(kingdom)
         }
+    }
+    
+    override fun getPlayerSkillsDescription(): String? {
+        return "Add Settlement: Use ${applicableSkills.joinToString(", ") { it.displayName }} " +
+               "to establish a settlement at the current scene. This is a convenience action " +
+               "for adding existing map scenes as settlements."
     }
 }

@@ -9,53 +9,23 @@
     {
       "skill": "intimidation",
       "description": "lockdown prisons",
-      "effects": {
-        "success": "Break prevented, no effect",
-        "failure": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-        "criticalFailure": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
-      },
-      "failureModifiers": {
-        "imprisonedToUnrest": 0.5,
-        "structureTypeDamaged": "justice"
-      },
-      "criticalFailureModifiers": {
-        "imprisonedToUnrest": 1.0,
-        "structureTypeDestroyed": "justice"
-      }
+      "successEffect": "Break prevented, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     },
     {
       "skill": "athletics",
       "description": "pursuit",
-      "effects": {
-        "success": "Break prevented, no effect",
-        "failure": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-        "criticalFailure": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
-      },
-      "failureModifiers": {
-        "imprisonedToUnrest": 0.5,
-        "structureTypeDamaged": "justice"
-      },
-      "criticalFailureModifiers": {
-        "imprisonedToUnrest": 1.0,
-        "structureTypeDestroyed": "justice"
-      }
+      "successEffect": "Break prevented, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     },
     {
       "skill": "society",
       "description": "negotiation",
-      "effects": {
-        "success": "Break prevented, no effect",
-        "failure": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-        "criticalFailure": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
-      },
-      "failureModifiers": {
-        "imprisonedToUnrest": 0.5,
-        "structureTypeDamaged": "justice"
-      },
-      "criticalFailureModifiers": {
-        "imprisonedToUnrest": 1.0,
-        "structureTypeDestroyed": "justice"
-      }
+      "successEffect": "Break prevented, no effect",
+      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
+      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     }
   ]
 }

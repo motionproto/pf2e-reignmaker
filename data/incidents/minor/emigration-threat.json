@@ -9,66 +9,30 @@
     {
       "skill": "diplomacy",
       "description": "convince to stay",
-      "effects": {
-        "success": "Population stays, no effect",
-        "failure": "Lose 1 random worksite permanently",
-        "criticalFailure": "Lose 1 random worksite permanently, +1 unrest"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      }
+      "successEffect": "Population stays, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "society",
       "description": "address concerns",
-      "effects": {
-        "success": "Population stays, no effect",
-        "failure": "Lose 1 random worksite permanently",
-        "criticalFailure": "Lose 1 random worksite permanently, +1 unrest"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      }
+      "successEffect": "Population stays, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "religion",
       "description": "appeal to faith",
-      "effects": {
-        "success": "Population stays, no effect",
-        "failure": "Lose 1 random worksite permanently",
-        "criticalFailure": "Lose 1 random worksite permanently, +1 unrest"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      }
+      "successEffect": "Population stays, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "nature",
       "description": "improve local conditions",
-      "effects": {
-        "success": "Population stays, no effect",
-        "failure": "Lose 1 random worksite permanently",
-        "criticalFailure": "Lose 1 random worksite permanently, +1 unrest"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      }
+      "successEffect": "Population stays, no effect",
+      "failureEffect": "Lose 1 random worksite permanently",
+      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
     }
   ]
 }

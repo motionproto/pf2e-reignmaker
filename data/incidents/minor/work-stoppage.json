@@ -9,66 +9,30 @@
     {
       "skill": "diplomacy",
       "description": "negotiate with workers",
-      "effects": {
-        "success": "Workers return, no effect",
-        "failure": "One random worksite produces nothing this turn",
-        "criticalFailure": "Two worksites produce nothing, +1 Unrest"
-      },
-      "failureModifiers": {
-        "worksiteDisabled": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteDisabled": 2,
-        "unrest": 1
-      }
+      "successEffect": "Workers return, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "intimidation",
       "description": "force work",
-      "effects": {
-        "success": "Workers return, no effect",
-        "failure": "One random worksite produces nothing this turn",
-        "criticalFailure": "Two worksites produce nothing, +1 Unrest"
-      },
-      "failureModifiers": {
-        "worksiteDisabled": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteDisabled": 2,
-        "unrest": 1
-      }
+      "successEffect": "Workers return, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "performance",
       "description": "inspire workers",
-      "effects": {
-        "success": "Workers return, no effect",
-        "failure": "One random worksite produces nothing this turn",
-        "criticalFailure": "Two worksites produce nothing, +1 Unrest"
-      },
-      "failureModifiers": {
-        "worksiteDisabled": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteDisabled": 2,
-        "unrest": 1
-      }
+      "successEffect": "Workers return, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "medicine",
       "description": "address health concerns",
-      "effects": {
-        "success": "Workers return, no effect",
-        "failure": "One random worksite produces nothing this turn",
-        "criticalFailure": "Two worksites produce nothing, +1 Unrest"
-      },
-      "failureModifiers": {
-        "worksiteDisabled": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteDisabled": 2,
-        "unrest": 1
-      }
+      "successEffect": "Workers return, no effect",
+      "failureEffect": "One random worksite produces nothing this turn",
+      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
     }
   ]
 }

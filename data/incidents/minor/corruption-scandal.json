@@ -9,66 +9,30 @@
     {
       "skill": "society",
       "description": "investigation",
-      "effects": {
-        "success": "Scandal contained, no effect",
-        "failure": "Lose 1d4 Gold (embezzlement/graft discovered)",
-        "criticalFailure": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "fame": -1
-      }
+      "successEffect": "Scandal contained, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
     },
     {
       "skill": "deception",
       "description": "cover-up",
-      "effects": {
-        "success": "Scandal contained, no effect",
-        "failure": "Lose 1d4 Gold (embezzlement/graft discovered)",
-        "criticalFailure": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "fame": -1
-      }
+      "successEffect": "Scandal contained, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
     },
     {
       "skill": "intimidation",
       "description": "purge corrupt officials",
-      "effects": {
-        "success": "Scandal contained, no effect",
-        "failure": "Lose 1d4 Gold (embezzlement/graft discovered)",
-        "criticalFailure": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "fame": -1
-      }
+      "successEffect": "Scandal contained, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
     },
     {
       "skill": "diplomacy",
       "description": "manage public relations",
-      "effects": {
-        "success": "Scandal contained, no effect",
-        "failure": "Lose 1d4 Gold (embezzlement/graft discovered)",
-        "criticalFailure": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
-      },
-      "failureModifiers": {
-        "gold": "-1d4"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-2d4",
-        "fame": -1
-      }
+      "successEffect": "Scandal contained, no effect",
+      "failureEffect": "Lose 1d4 Gold (embezzlement/graft discovered)",
+      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)"
     }
   ]
 }

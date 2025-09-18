@@ -9,66 +9,30 @@
     {
       "skill": "diplomacy",
       "description": "negotiate with rebels",
-      "effects": {
-        "success": "Rebellion dispersed",
-        "failure": "Rebels seize 1d3 hexes",
-        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
-      },
-      "failureModifiers": {
-        "hexesLost": "1d3"
-      },
-      "criticalFailureModifiers": {
-        "hexesLost": "2d3",
-        "rebelArmy": 1
-      }
+      "successEffect": "Rebellion dispersed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "intimidation",
       "description": "crush rebellion",
-      "effects": {
-        "success": "Rebellion dispersed",
-        "failure": "Rebels seize 1d3 hexes",
-        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
-      },
-      "failureModifiers": {
-        "hexesLost": "1d3"
-      },
-      "criticalFailureModifiers": {
-        "hexesLost": "2d3",
-        "rebelArmy": 1
-      }
+      "successEffect": "Rebellion dispersed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "society",
       "description": "address grievances",
-      "effects": {
-        "success": "Rebellion dispersed",
-        "failure": "Rebels seize 1d3 hexes",
-        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
-      },
-      "failureModifiers": {
-        "hexesLost": "1d3"
-      },
-      "criticalFailureModifiers": {
-        "hexesLost": "2d3",
-        "rebelArmy": 1
-      }
+      "successEffect": "Rebellion dispersed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "religion",
       "description": "appeal to faith",
-      "effects": {
-        "success": "Rebellion dispersed",
-        "failure": "Rebels seize 1d3 hexes",
-        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
-      },
-      "failureModifiers": {
-        "hexesLost": "1d3"
-      },
-      "criticalFailureModifiers": {
-        "hexesLost": "2d3",
-        "rebelArmy": 1
-      }
+      "successEffect": "Rebellion dispersed",
+      "failureEffect": "Rebels seize 1d3 hexes",
+      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     }
   ]
 }

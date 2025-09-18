@@ -74,15 +74,14 @@
     "EventStage": {
       "type": "object",
       "required": [
-        "skills",
-        "leader"
+        "skills"
       ],
       "additionalProperties": false,
       "properties": {
         "skills": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/KingdomSkill"
+            "$ref": "#/$defs/CharacterSkill"
           }
         },
         "leader": {
@@ -127,8 +126,7 @@
         "type",
         "value",
         "name",
-        "enabled",
-        "buttonLabel"
+        "enabled"
       ],
       "properties": {
         "type": {
@@ -141,7 +139,8 @@
             "circumstance",
             "vacancy",
             "untyped",
-            "leadership"
+            "leadership",
+            "event"
           ]
         },
         "notes": {
@@ -187,7 +186,23 @@
         },
         "selector": {
           "type": "string",
-          "enum": ["check", "consumption", "ore", "lumber", "stone"]
+          "enum": [
+            "check",
+            "consumption",
+            "ore",
+            "lumber",
+            "stone",
+            "gold",
+            "unrest",
+            "resources",
+            "damage_structure",
+            "destroy_structure",
+            "fame",
+            "food",
+            "hex",
+            "imprisoned_unrest",
+            "luxuries"
+          ]
         },
         "value": {
           "type": "number"
@@ -217,6 +232,12 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/Predicate"
+          }
+        },
+        "choice": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
@@ -605,6 +626,28 @@
         "fortune",
         "downtime",
         "leadership"
+      ]
+    },
+    "CharacterSkill": {
+      "type": "string",
+      "enum": [
+        "acrobatics",
+        "arcana",
+        "athletics",
+        "crafting",
+        "deception",
+        "diplomacy",
+        "intimidation",
+        "lore",
+        "medicine",
+        "nature",
+        "occultism",
+        "performance",
+        "religion",
+        "society",
+        "stealth",
+        "survival",
+        "thievery"
       ]
     }
   }

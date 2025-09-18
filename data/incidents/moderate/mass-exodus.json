@@ -9,56 +9,23 @@
     {
       "skill": "diplomacy",
       "description": "convince to stay",
-      "effects": {
-        "success": "Population remains, no effect",
-        "failure": "Lose 1 worksite permanently, +1 Unrest",
-        "criticalFailure": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1,
-        "fame": -1
-      }
+      "successEffect": "Population remains, no effect",
+      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
+      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     },
     {
       "skill": "performance",
       "description": "inspire hope",
-      "effects": {
-        "success": "Population remains, no effect",
-        "failure": "Lose 1 worksite permanently, +1 Unrest",
-        "criticalFailure": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1,
-        "fame": -1
-      }
+      "successEffect": "Population remains, no effect",
+      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
+      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     },
     {
       "skill": "religion",
       "description": "spiritual guidance",
-      "effects": {
-        "success": "Population remains, no effect",
-        "failure": "Lose 1 worksite permanently, +1 Unrest",
-        "criticalFailure": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
-      },
-      "failureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "worksiteLost": 1,
-        "unrest": 1,
-        "fame": -1
-      }
+      "successEffect": "Population remains, no effect",
+      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
+      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     }
   ]
 }

@@ -9,53 +9,23 @@
     {
       "skill": "diplomacy",
       "description": "rally troops",
-      "effects": {
-        "success": "Troops remain loyal, no effect",
-        "failure": "1 army makes morale checks, highest tier military structure is damaged",
-        "criticalFailure": "2 armies make morale checks, highest tier military structure is destroyed"
-      },
-      "failureModifiers": {
-        "armyMoraleCheck": 1,
-        "structureTypeDamaged": "military"
-      },
-      "criticalFailureModifiers": {
-        "armyMoraleCheck": 2,
-        "structureTypeDestroyed": "military"
-      }
+      "successEffect": "Troops remain loyal, no effect",
+      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
+      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
     },
     {
       "skill": "intimidation",
       "description": "threaten deserters",
-      "effects": {
-        "success": "Troops remain loyal, no effect",
-        "failure": "1 army makes morale checks, highest tier military structure is damaged",
-        "criticalFailure": "2 armies make morale checks, highest tier military structure is destroyed"
-      },
-      "failureModifiers": {
-        "armyMoraleCheck": 1,
-        "structureTypeDamaged": "military"
-      },
-      "criticalFailureModifiers": {
-        "armyMoraleCheck": 2,
-        "structureTypeDestroyed": "military"
-      }
+      "successEffect": "Troops remain loyal, no effect",
+      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
+      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
     },
     {
       "skill": "performance",
       "description": "inspire loyalty",
-      "effects": {
-        "success": "Troops remain loyal, no effect",
-        "failure": "1 army makes morale checks, highest tier military structure is damaged",
-        "criticalFailure": "2 armies make morale checks, highest tier military structure is destroyed"
-      },
-      "failureModifiers": {
-        "armyMoraleCheck": 1,
-        "structureTypeDamaged": "military"
-      },
-      "criticalFailureModifiers": {
-        "armyMoraleCheck": 2,
-        "structureTypeDestroyed": "military"
-      }
+      "successEffect": "Troops remain loyal, no effect",
+      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
+      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
     }
   ]
 }

@@ -9,62 +9,30 @@
     {
       "skill": "diplomacy",
       "description": "calm populace",
-      "effects": {
-        "success": "Tensions ease, no effect",
-        "failure": "+1 Unrest",
-        "criticalFailure": "+2 Unrest"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2
-      }
+      "successEffect": "Tensions ease, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
     },
     {
       "skill": "religion",
       "description": "spiritual guidance",
-      "effects": {
-        "success": "Tensions ease, no effect",
-        "failure": "+1 Unrest",
-        "criticalFailure": "+2 Unrest"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2
-      }
+      "successEffect": "Tensions ease, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
     },
     {
       "skill": "performance",
       "description": "entertainment",
-      "effects": {
-        "success": "Tensions ease, no effect",
-        "failure": "+1 Unrest",
-        "criticalFailure": "+2 Unrest"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2
-      }
+      "successEffect": "Tensions ease, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
     },
     {
       "skill": "arcana",
       "description": "magical displays",
-      "effects": {
-        "success": "Tensions ease, no effect",
-        "failure": "+1 Unrest",
-        "criticalFailure": "+2 Unrest"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2
-      }
+      "successEffect": "Tensions ease, no effect",
+      "failureEffect": "+1 Unrest",
+      "criticalFailureExtra": "+2 Unrest"
     }
   ]
 }

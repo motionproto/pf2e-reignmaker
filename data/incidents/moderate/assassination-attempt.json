@@ -9,50 +9,23 @@
     {
       "skill": "athletics",
       "description": "protect target",
-      "effects": {
-        "success": "Assassination prevented, no effect",
-        "failure": "Leader escapes; +1 Unrest",
-        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2,
-        "leaderWounded": true
-      }
+      "successEffect": "Assassination prevented, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     },
     {
       "skill": "medicine",
       "description": "treat wounds",
-      "effects": {
-        "success": "Assassination prevented, no effect",
-        "failure": "Leader escapes; +1 Unrest",
-        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2,
-        "leaderWounded": true
-      }
+      "successEffect": "Assassination prevented, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     },
     {
       "skill": "stealth",
       "description": "avoid the assassin",
-      "effects": {
-        "success": "Assassination prevented, no effect",
-        "failure": "Leader escapes; +1 Unrest",
-        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
-      },
-      "failureModifiers": {
-        "unrest": 1
-      },
-      "criticalFailureModifiers": {
-        "unrest": 2,
-        "leaderWounded": true
-      }
+      "successEffect": "Assassination prevented, no effect",
+      "failureEffect": "Leader escapes; +1 Unrest",
+      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     }
   ]
 }

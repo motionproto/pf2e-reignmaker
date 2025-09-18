@@ -7,6 +7,7 @@ import at.posselt.pfrpg2e.kingdom.sheet.contexts.FameContext
 import at.posselt.pfrpg2e.kingdom.sheet.renderers.FameInfamyRenderer
 import at.posselt.pfrpg2e.kingdom.sheet.renderers.ResourceRenderer
 import at.posselt.pfrpg2e.kingdom.sheet.renderers.SettlementsRenderer
+import at.posselt.pfrpg2e.kingdom.data.RawGold
 import at.posselt.pfrpg2e.utils.t
 import kotlinx.js.JsPlainObject
 import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
@@ -17,6 +18,7 @@ external interface KingdomStatsContext {
     val fame: FameStatContext
     val settlements: SettlementsStatsContext
     val commodities: CommodityStatsContext
+    val gold: GoldContext?
 }
 
 @JsPlainObject
@@ -46,7 +48,16 @@ external interface CommodityStatsContext {
     val lumber: CommodityStatContext  
     val ore: CommodityStatContext
     val stone: CommodityStatContext
-    val luxuries: CommodityStatContext
+    val luxuries: CommodityStatContext?  // Optional for Reignmaker-lite compatibility
+}
+
+@JsPlainObject
+external interface GoldContext {
+    val treasury: Int
+    val income: Int
+    val upkeep: Int
+    val netIncome: Int
+    val label: String
 }
 
 @JsPlainObject
@@ -72,23 +83,34 @@ class KingdomStatsComponent {
         kingdom: KingdomData,
         settlements: List<Settlement>,
         commoditiesContext: CommoditiesContext,
-        fameContext: FameContext
+        fameContext: FameContext,
+        gold: RawGold? = null,
+        isReignmakerLite: Boolean = true
     ): KingdomStatsContext {
         
         // Process settlements using the dedicated renderer
         val settlementsStats = settlementsRenderer.createSettlementsContext(settlements)
         
         // Create commodities context using the dedicated renderer
-        val commodityStats = resourceRenderer.createCommoditiesContext(commoditiesContext)
+        val commodityStats = resourceRenderer.createCommoditiesContext(
+            commoditiesContext,
+            isReignmakerLite = isReignmakerLite
+        )
         
         // Create fame context using the dedicated renderer
         val fameStats = fameRenderer.createFameContext(fameContext)
+        
+        // Create gold context for Reignmaker-lite
+        val goldContext = if (isReignmakerLite && gold != null) {
+            resourceRenderer.createGoldContext(gold)
+        } else null
         
         return KingdomStatsContext(
             kingdomSize = kingdom.size,
             fame = fameStats,
             settlements = settlementsStats,
-            commodities = commodityStats
+            commodities = commodityStats,
+            gold = goldContext
         )
     }
     
@@ -107,8 +129,8 @@ class KingdomStatsComponent {
                 <!-- Fame -->
                 ${fameRenderer.generateFameHtml(context.fame)}
                 
-                <!-- Resources -->
-                ${resourceRenderer.generateResourcesHtml(context.commodities)}
+                <!-- Resources and Gold -->
+                ${resourceRenderer.generateResourcesHtml(context.commodities, context.gold)}
                 
                 <!-- Settlements -->
                 ${settlementsRenderer.generateSettlementsHtml(context.settlements)}

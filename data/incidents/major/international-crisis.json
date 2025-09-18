@@ -9,66 +9,30 @@
     {
       "skill": "diplomacy",
       "description": "damage control",
-      "effects": {
-        "success": "Crisis contained, no effect",
-        "failure": "One kingdom's attitude worsens by 2 steps",
-        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
-      },
-      "failureModifiers": {
-        "diplomaticRelations": -2
-      },
-      "criticalFailureModifiers": {
-        "diplomaticRelations": -4,
-        "fame": -1
-      }
+      "successEffect": "Crisis contained, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "deception",
       "description": "blame shifting",
-      "effects": {
-        "success": "Crisis contained, no effect",
-        "failure": "One kingdom's attitude worsens by 2 steps",
-        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
-      },
-      "failureModifiers": {
-        "diplomaticRelations": -2
-      },
-      "criticalFailureModifiers": {
-        "diplomaticRelations": -4,
-        "fame": -1
-      }
+      "successEffect": "Crisis contained, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "society",
       "description": "formal reparations",
-      "effects": {
-        "success": "Crisis contained, no effect",
-        "failure": "One kingdom's attitude worsens by 2 steps",
-        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
-      },
-      "failureModifiers": {
-        "diplomaticRelations": -2
-      },
-      "criticalFailureModifiers": {
-        "diplomaticRelations": -4,
-        "fame": -1
-      }
+      "successEffect": "Crisis contained, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "performance",
       "description": "public relations",
-      "effects": {
-        "success": "Crisis contained, no effect",
-        "failure": "One kingdom's attitude worsens by 2 steps",
-        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
-      },
-      "failureModifiers": {
-        "diplomaticRelations": -2
-      },
-      "criticalFailureModifiers": {
-        "diplomaticRelations": -4,
-        "fame": -1
-      }
+      "successEffect": "Crisis contained, no effect",
+      "failureEffect": "One kingdom's attitude worsens by 2 steps",
+      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     }
   ]
 }

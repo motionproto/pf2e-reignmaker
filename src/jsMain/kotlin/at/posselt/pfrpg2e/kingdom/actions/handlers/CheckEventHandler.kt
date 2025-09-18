@@ -15,11 +15,15 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.pointerevents.PointerEvent
 
 /**
- * Handler for checking if a kingdom event occurs.
+ * Handler for manually checking if a kingdom event occurs.
+ * This is a utility handler separate from the turn sequence.
+ * 
+ * In Reignmaker-lite, this handler is used for manual event checks
+ * outside of the normal turn sequence.
  */
 class CheckEventHandler : PlayerSkillActionHandler {
     override val actionId = "check-event"
-    override val actionName = "Check Event"
+    override val actionName = "Check Event (Manual)"
     override val requiresGmApproval = false
     
     override suspend fun handle(
@@ -47,5 +51,10 @@ class CheckEventHandler : PlayerSkillActionHandler {
             
             actor.setKingdom(kingdom)
         }
+    }
+    
+    override fun getPlayerSkillsDescription(): String? {
+        return "Check Event (Manual): This is a utility action for manually checking if an event occurs. " +
+               "Events that trigger are then resolved using PC skills based on the event type."
     }
 }

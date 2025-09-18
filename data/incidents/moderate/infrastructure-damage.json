@@ -9,66 +9,30 @@
     {
       "skill": "crafting",
       "description": "emergency repairs",
-      "effects": {
-        "success": "Damage prevented, no effect",
-        "failure": "One random structure in a random settlement becomes damaged",
-        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
-      },
-      "failureModifiers": {
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "structureDamaged": "1d3",
-        "unrest": 1
-      }
+      "successEffect": "Damage prevented, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "athletics",
       "description": "labor mobilization",
-      "effects": {
-        "success": "Damage prevented, no effect",
-        "failure": "One random structure in a random settlement becomes damaged",
-        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
-      },
-      "failureModifiers": {
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "structureDamaged": "1d3",
-        "unrest": 1
-      }
+      "successEffect": "Damage prevented, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "society",
       "description": "organize response",
-      "effects": {
-        "success": "Damage prevented, no effect",
-        "failure": "One random structure in a random settlement becomes damaged",
-        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
-      },
-      "failureModifiers": {
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "structureDamaged": "1d3",
-        "unrest": 1
-      }
+      "successEffect": "Damage prevented, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "arcana",
       "description": "magical restoration",
-      "effects": {
-        "success": "Damage prevented, no effect",
-        "failure": "One random structure in a random settlement becomes damaged",
-        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
-      },
-      "failureModifiers": {
-        "structureDamaged": 1
-      },
-      "criticalFailureModifiers": {
-        "structureDamaged": "1d3",
-        "unrest": 1
-      }
+      "successEffect": "Damage prevented, no effect",
+      "failureEffect": "One random structure in a random settlement becomes damaged",
+      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
     }
   ]
 }

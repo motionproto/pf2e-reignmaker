@@ -66,19 +66,44 @@ abstract class CopyAndSanitizeTranslations : DefaultTask() {
     }
 
     fun cleanTranslation(translations: JsonElement, whitelist: Safelist): JsonObject {
-        // no need to take care of numerics or arrays, we're only dealing with strings and objects
+        // Handle various JSON element types gracefully
         return if (translations is JsonObject) {
-            JsonObject(translations.toMutableMap().map { (key, elem) ->
-                if (elem is JsonPrimitive && elem.isString) {
-                    key to JsonPrimitive(Jsoup.clean(elem.content, whitelist))
-                } else if (elem is JsonObject) {
-                    key to cleanTranslation(elem, whitelist)
-                } else {
-                    throw IllegalArgumentException("Received neither a string nor object as translation")
+            JsonObject(translations.toMutableMap().mapNotNull { (key, elem) ->
+                when {
+                    elem is JsonPrimitive && elem.isString -> {
+                        // Clean HTML from string values
+                        key to JsonPrimitive(Jsoup.clean(elem.content, whitelist))
+                    }
+                    elem is JsonObject -> {
+                        // Handle empty objects - replace with a placeholder or pass through
+                        if (elem.isEmpty()) {
+                            println("Warning: Empty object at key '$key' - replacing with placeholder")
+                            // Create a minimal placeholder object to maintain structure
+                            key to JsonObject(mapOf("placeholder" to JsonPrimitive("empty")))
+                        } else {
+                            // Recursively clean nested objects
+                            key to cleanTranslation(elem, whitelist)
+                        }
+                    }
+                    elem is JsonPrimitive -> {
+                        // Pass through other primitives (numbers, booleans, null) as-is
+                        println("Warning: Non-string primitive at key '$key': $elem")
+                        key to elem
+                    }
+                    else -> {
+                        // For arrays or other types, replace with a warning string
+                        println("Warning: Unsupported type at key '$key' (${elem::class.simpleName}) - replacing with placeholder")
+                        key to JsonPrimitive("[unsupported type: ${elem::class.simpleName}]")
+                    }
                 }
-            }.toMap())
+            }.filterNotNull().toMap())
         } else {
-            throw IllegalArgumentException("Received neither a string nor object as root json element")
+            println("ERROR: Root element is not a JsonObject - type: ${translations::class.simpleName}")
+            // Return a minimal valid object instead of throwing
+            JsonObject(mapOf(
+                "error" to JsonPrimitive("Invalid root element"),
+                "type" to JsonPrimitive(translations::class.simpleName ?: "unknown")
+            ))
         }
     }
 }

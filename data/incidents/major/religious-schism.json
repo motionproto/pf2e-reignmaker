@@ -9,70 +9,30 @@
     {
       "skill": "religion",
       "description": "theological debate",
-      "effects": {
-        "success": "Schism averted, no effect",
-        "failure": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-        "criticalFailure": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
-      },
-      "failureModifiers": {
-        "gold": "-2d6",
-        "structureTypeDamaged": "religious"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-4d6",
-        "structureTypeDestroyed": "religious"
-      }
+      "successEffect": "Schism averted, no effect",
+      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+      "criticalFailureExtra": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
     },
     {
       "skill": "diplomacy",
       "description": "mediate factions",
-      "effects": {
-        "success": "Schism averted, no effect",
-        "failure": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-        "criticalFailure": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
-      },
-      "failureModifiers": {
-        "gold": "-2d6",
-        "structureTypeDamaged": "religious"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-4d6",
-        "structureTypeDestroyed": "religious"
-      }
+      "successEffect": "Schism averted, no effect",
+      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+      "criticalFailureExtra": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
     },
     {
       "skill": "occultism",
       "description": "divine intervention",
-      "effects": {
-        "success": "Schism averted, no effect",
-        "failure": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-        "criticalFailure": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
-      },
-      "failureModifiers": {
-        "gold": "-2d6",
-        "structureTypeDamaged": "religious"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-4d6",
-        "structureTypeDestroyed": "religious"
-      }
+      "successEffect": "Schism averted, no effect",
+      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+      "criticalFailureExtra": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
     },
     {
       "skill": "society",
       "description": "secular compromise",
-      "effects": {
-        "success": "Schism averted, no effect",
-        "failure": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-        "criticalFailure": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
-      },
-      "failureModifiers": {
-        "gold": "-2d6",
-        "structureTypeDamaged": "religious"
-      },
-      "criticalFailureModifiers": {
-        "gold": "-4d6",
-        "structureTypeDestroyed": "religious"
-      }
+      "successEffect": "Schism averted, no effect",
+      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+      "criticalFailureExtra": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
     }
   ]
 }
