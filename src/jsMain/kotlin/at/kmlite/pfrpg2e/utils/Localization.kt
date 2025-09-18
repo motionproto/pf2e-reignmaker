@@ -6,7 +6,6 @@ import at.kmlite.pfrpg2e.kingdom.translateActivities
 import at.kmlite.pfrpg2e.kingdom.translateCharters
 import at.kmlite.pfrpg2e.kingdom.translateFeats
 import at.kmlite.pfrpg2e.kingdom.translateGovernments
-import at.kmlite.pfrpg2e.kingdom.translateHeartlands
 import at.kmlite.pfrpg2e.kingdom.translateKingdomEvents
 import at.kmlite.pfrpg2e.kingdom.translateKingdomFeatures
 import at.kmlite.pfrpg2e.kingdom.translateMilestones
@@ -114,7 +113,6 @@ suspend fun initLocalization() {
     translateActivities(events)
     translateCharters()
     translateGovernments()
-    translateHeartlands()
     translateFeats()
     translateKingdomFeatures()
     translateMilestones()

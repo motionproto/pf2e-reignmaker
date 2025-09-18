@@ -1,7 +1,7 @@
 {
   "id": "create-worksite",
   "name": "Create Worksite",
-  "category": "economic-resources",
+  "category": "borders",
   "description": "Establish resource extraction operations to harness the natural wealth of your territories",
   "skills": [
     {

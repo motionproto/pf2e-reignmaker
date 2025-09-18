@@ -1,7 +1,7 @@
 {
   "id": "recover-army",
   "name": "Recover Army",
-  "category": "military-operations",
+  "category": "military",
   "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses",
   "skills": [
     {

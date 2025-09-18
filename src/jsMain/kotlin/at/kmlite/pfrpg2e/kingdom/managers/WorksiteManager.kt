@@ -1,20 +1,30 @@
 package at.kmlite.pfrpg2e.kingdom.managers
 
+import at.kmlite.pfrpg2e.kingdom.AutomateResources
+import at.kmlite.pfrpg2e.kingdom.KingdomData
 import at.kmlite.pfrpg2e.kingdom.data.*
+import at.kmlite.pfrpg2e.utils.t
 
 /**
  * Manages worksite-based resource production in Reignmaker-lite.
  * Handles terrain-specific production rules and special trait bonuses.
  */
 class WorksiteManager {
-    
+
+    data class WorkSiteSummary(
+        val label: String,
+        val key: String,
+        val quantity: Int,
+        val resources: Int,
+    )
+
     /**
      * Calculate total production from all worksites.
      */
     fun calculateTotalProduction(worksites: RawWorksites): RawResourceYield {
         return worksites.calculateTotalProduction()
     }
-    
+
     /**
      * Create a new worksite on a hex.
      * Validates that the worksite type is appropriate for the terrain.
@@ -239,10 +249,7 @@ class WorksiteManager {
      * Get worksites context for display in the kingdom sheet.
      * This provides formatted data for rendering worksite information.
      */
-    fun getWorksitesContext(kingdom: Any): Array<Any> {
-        // Return an empty array for now - worksites UI will be implemented later
-        return emptyArray()
-    }
+    fun summarizeWorksites(kingdom: KingdomData): List<WorkSiteSummary> = buildSummaries(kingdom)
     
     /**
      * Update worksites from sheet submission data.
@@ -303,6 +310,70 @@ class WorksiteManager {
             )
         }
     }
+}
+
+private fun buildSummaries(kingdom: KingdomData): List<WorkSiteSummary> {
+    fun aggregateWorksites(
+        worksites: RawWorksites,
+        key: String,
+        label: String,
+        matcher: (WorksiteType, RawWorksite) -> Boolean,
+        yieldSelector: (RawResourceYield) -> Int,
+    ): WorkSiteSummary {
+        val matchingSites = worksites.sites
+            .mapNotNull { site ->
+                WorksiteType.fromString(site.type)
+                    ?.takeIf { matcher(it, site) }
+                    ?.let { type -> type to site }
+            }
+        val quantity = matchingSites.size
+        val resources = matchingSites.fold(0) { acc, (_, site) -> acc + yieldSelector(site.calculateYield()) }
+
+        return WorkSiteSummary(
+            label = label,
+            key = key,
+            quantity = quantity,
+            resources = resources,
+        )
+    }
+
+    return listOf(
+        aggregateWorksites(
+            worksites = kingdom.worksites,
+            key = "farmlands",
+            label = t("kingdom.farmlands"),
+            matcher = { type, _ -> type == WorksiteType.FARMSTEAD || type == WorksiteType.OASIS_FARM },
+            yieldSelector = { yield -> yield.food },
+        ),
+        aggregateWorksites(
+            worksites = kingdom.worksites,
+            key = "lumberCamps",
+            label = t("kingdom.lumberCamps"),
+            matcher = { type, _ -> type == WorksiteType.LOGGING_CAMP },
+            yieldSelector = { yield -> yield.lumber },
+        ),
+        aggregateWorksites(
+            worksites = kingdom.worksites,
+            key = "mines",
+            label = t("kingdom.mines"),
+            matcher = { type, _ -> type == WorksiteType.MINE || type == WorksiteType.BOG_MINE },
+            yieldSelector = { yield -> yield.ore },
+        ),
+        aggregateWorksites(
+            worksites = kingdom.worksites,
+            key = "quarries",
+            label = t("kingdom.quarries"),
+            matcher = { type, _ -> type == WorksiteType.QUARRY },
+            yieldSelector = { yield -> yield.stone },
+        ),
+        aggregateWorksites(
+            worksites = kingdom.worksites,
+            key = "luxurySources",
+            label = t("kingdom.luxurySources"),
+            matcher = { type, site -> type == WorksiteType.MINE && site.specialTrait == "luxury" },
+            yieldSelector = { _ -> 0 },
+        ),
+    )
 }
 
 /**

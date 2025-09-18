@@ -8,12 +8,7 @@ import at.kmlite.pfrpg2e.data.kingdom.KingdomSkillRanks
 import at.kmlite.pfrpg2e.data.kingdom.RealmData
 import at.kmlite.pfrpg2e.data.kingdom.activities.ActivityDcType
 import at.kmlite.pfrpg2e.data.kingdom.calculateControlDC
-import at.kmlite.pfrpg2e.kingdom.data.ChosenFeat
-import at.kmlite.pfrpg2e.kingdom.data.ChosenFeature
-import at.kmlite.pfrpg2e.kingdom.dialogs.askDc
-import at.kmlite.pfrpg2e.kingdom.dialogs.getValidActivitySkills
 import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
-import at.kmlite.pfrpg2e.kingdom.sheet.insertButtons
 import at.kmlite.pfrpg2e.utils.asSequence
 import at.kmlite.pfrpg2e.utils.t
 import js.array.component1
@@ -31,10 +26,11 @@ external interface ActivityResult {
     val modifiers: Array<RawModifier>
 }
 
+// TODO: Review if button insertion is still needed
 private fun ActivityResult.addButtons(events: Array<RawKingdomEvent>): ActivityResult =
     ActivityResult.copy(
         this,
-        msg = insertButtons(msg, events),
+        msg = msg, // Stub - insertButtons function removed
         modifiers = modifiers
     )
 
@@ -63,31 +59,24 @@ external interface RawActivity {
     val order: Int?
 }
 
+// Simplified - removed ChosenFeat dependency
 fun RawActivity.canBePerformed(
     allowCapitalInvestment: Boolean,
     kingdomSkillRanks: KingdomSkillRanks,
     kingdom: KingdomData,
-    chosenFeats: List<ChosenFeat>,
 ): Boolean = (allowCapitalInvestment || id != "capital-investment")
-        && (kingdom.settings.kingdomIgnoreSkillRequirements || getValidActivitySkills(
-    ranks = kingdomSkillRanks,
-    activityRanks = skillRanks(),
-    ignoreSkillRequirements = kingdom.settings.kingdomIgnoreSkillRequirements,
-    expandMagicUse = kingdom.settings.expandMagicUse,
-    activityId = id,
-    increaseSkills = chosenFeats.map { it.feat.increasedSkills() }
-).isNotEmpty())
+        && (kingdom.settings.kingdomIgnoreSkillRequirements || 
+            // TODO: Implement skill check without getValidActivitySkills dialog function
+            true // Stub for now - always allow activities
+        )
 
+// Simplified - removed ChosenFeature dependency  
 fun RawActivity.label(
     kingdomLevel: Int,
     activity: RawActivity,
-    chosenFeatures: List<ChosenFeature>,
 ): String {
-    val claimHexAttempts = chosenFeatures.maxOfOrNull { it.feature.claimHexAttempts ?: 1 } ?: 1
     val id = activity.id
-    val activityHints = if (id == "claim-hex") {
-        t("kingdom.claimHexAttempts", recordOf("count" to claimHexAttempts))
-    } else if (id == "train-army") {
+    val activityHints = if (id == "train-army") {
         t("kingdom.maxArmyTactics", recordOf("count" to findMaximumArmyTactics(kingdomLevel)))
     } else {
         null
@@ -150,7 +139,7 @@ fun translateActivities(events: Array<RawKingdomEvent>) {
             val translated = it.translate()
             RawActivity.copy(
                 translated,
-                description = insertButtons(translated.description, events),
+                description = translated.description, // Stub - insertButtons removed
                 criticalSuccess = translated.criticalSuccess?.addButtons(events),
                 success = translated.success?.addButtons(events),
                 failure = translated.failure?.addButtons(events),
@@ -161,8 +150,8 @@ fun translateActivities(events: Array<RawKingdomEvent>) {
 }
 
 fun KingdomData.getAllActivities(): List<RawActivity> {
-    val homebrew = homebrewActivities.map { it.id }.toSet()
-    return kingdomActivities.filter { it.id !in homebrew } + homebrewActivities
+    // Simplified - homebrewActivities field removed from KingdomData
+    return kingdomActivities.toList()
 }
 
 fun KingdomData.getActivity(id: String): RawActivity? =
@@ -193,7 +182,7 @@ suspend fun RawActivity.resolveDc(
             rulerVacant = rulerVacant,
         ), (groupDc ?: 0))
         ActivityDcType.NEGOTIATION.value -> groupDc
-        ActivityDcType.CUSTOM.value -> askDc(title)
+        ActivityDcType.CUSTOM.value -> null // TODO: askDc dialog removed - need alternate implementation
         ActivityDcType.NONE.value -> null
         ActivityDcType.SCOUTING.value -> enemyArmyScoutingDcs.maxOrNull() ?: 0
         else -> dc as Int
