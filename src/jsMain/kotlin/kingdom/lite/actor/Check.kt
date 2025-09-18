@@ -1,10 +1,13 @@
 package kingdom.lite.actor
 
-import kingdom.lite.data.actor.Attribute
-import kingdom.lite.data.checks.DegreeOfSuccess
-import kingdom.lite.data.checks.RollMode
-import kingdom.lite.fromOrdinal
-import kingdom.lite.toCamelCase
+import kingdom.lite.utils.data.PF2EAbilityScore
+import kingdom.lite.utils.data.Modifier
+import kingdom.lite.utils.data.PF2EStat
+import kingdom.lite.utils.data.DegreeOfSuccess
+import kingdom.lite.utils.data.Attribute
+import kingdom.lite.utils.data.RollMode
+import kingdom.lite.utils.fromOrdinal
+import kingdom.lite.utils.toCamelCase
 import com.foundryvtt.pf2e.actions.CheckDC
 import com.foundryvtt.pf2e.actor.PF2ECharacter
 import com.foundryvtt.pf2e.actor.StatisticRollParameters
