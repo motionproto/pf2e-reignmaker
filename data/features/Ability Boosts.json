@@ -1,7 +1,0 @@
-{
-    "id": "ability-boosts",
-    "levels": [5, 10, 15, 20],
-    "name": "features.ability-boosts.name",
-    "description": "features.ability-boosts.description",
-    "abilityBoosts": 2
-}

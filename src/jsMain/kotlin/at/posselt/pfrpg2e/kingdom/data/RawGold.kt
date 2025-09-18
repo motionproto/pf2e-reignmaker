@@ -20,3 +20,16 @@ fun RawGold.endTurn(): RawGold = RawGold(
 )
 
 fun RawGold.netIncome(): Int = income - upkeep
+
+/**
+ * Convert to display context for the UI.
+ * Returns a generic context object that can be used in templates.
+ */
+fun RawGold.toContext(): Any {
+    val goldObj = js("({})")
+    goldObj.asDynamic().treasury = treasury
+    goldObj.asDynamic().income = income
+    goldObj.asDynamic().upkeep = upkeep
+    goldObj.asDynamic().netIncome = netIncome()
+    return goldObj
+}

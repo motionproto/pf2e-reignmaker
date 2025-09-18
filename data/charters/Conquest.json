@@ -1,8 +1,0 @@
-{
-    "id": "conquest",
-    "name": "charters.conquest.name",
-    "description": "charters.conquest.description",
-    "boost": "loyalty",
-    "freeBoosts": 1,
-    "flaw": "culture"
-}

@@ -1,7 +1,0 @@
-{
-    "id": "kingdom-feat",
-    "levels": [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
-    "kingdomFeat": true,
-    "name": "features.kingdom-feat.name",
-    "description": "features.kingdom-feat.description"
-}

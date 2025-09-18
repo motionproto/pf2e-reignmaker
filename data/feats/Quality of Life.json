@@ -1,9 +1,0 @@
-{
-  "id": "quality-of-life",
-  "automationNotes": "kingdomFeats.quality-of-life.automationNotes",
-  "name": "kingdomFeats.quality-of-life.name",
-  "level": 7,
-  "text": "kingdomFeats.quality-of-life.text",
-  "settlementMagicItemLevelIncrease": 1,
-  "increaseGainedLuxuriesOncePerTurnBy": 1
-}

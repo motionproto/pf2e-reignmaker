@@ -9,7 +9,6 @@ external interface RawCommodities {
     var lumber: Int
     var ore: Int
     var stone: Int
-    // REMOVED: luxuries (not in Reignmaker-lite)
 }
 
 @JsPlainObject

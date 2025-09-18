@@ -236,6 +236,26 @@ class WorksiteManager {
     }
     
     /**
+     * Get worksites context for display in the kingdom sheet.
+     * This provides formatted data for rendering worksite information.
+     */
+    fun getWorksitesContext(kingdom: Any): Array<Any> {
+        // Return an empty array for now - worksites UI will be implemented later
+        return emptyArray()
+    }
+    
+    /**
+     * Update worksites from sheet submission data.
+     * Handles converting form data back into worksite objects.
+     */
+    fun updateWorksites(worksitesData: Array<Any>): RawWorksites {
+        // For now, just return an empty worksites object
+        return object : RawWorksites {
+            override var sites = emptyArray<RawWorksite>()
+        }
+    }
+    
+    /**
      * Suggest optimal worksite placement based on terrain and current needs.
      */
     fun suggestOptimalWorksite(

@@ -1,8 +1,0 @@
-{
-    "id": "exploration",
-    "name": "charters.exploration.name",
-    "description": "charters.exploration.description",
-    "boost": "stability",
-    "freeBoosts": 1,
-    "flaw": "economy"
-}

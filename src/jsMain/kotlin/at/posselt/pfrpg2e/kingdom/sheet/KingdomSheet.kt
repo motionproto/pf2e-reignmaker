@@ -1030,22 +1030,16 @@ class KingdomSheet(
                 overrideType = OverrideType.NUMBER,
             )
         }
-        // These fields were removed in Reignmaker-lite  
-        val supernaturalSolutionsInput = NumberInput(
+        // These fields were removed in Reignmaker-lite - using hidden inputs to maintain compatibility
+        val supernaturalSolutionsInput = HiddenInput(
             name = "supernaturalSolutions",
-            value = 0,  // Default to 0 since removed
-            label = t("kingdom.supernaturalSolutions"),
-            stacked = false,
-            elementClasses = listOf("km-width-small"),
-            labelClasses = listOf("km-slim-inputs"),
+            value = "0",
+            overrideType = OverrideType.NUMBER,
         )
-        val creativeSolutionsInput = NumberInput(
+        val creativeSolutionsInput = HiddenInput(
             name = "creativeSolutions",
-            value = 0,  // Default to 0 since removed
-            label = t("kingdom.creativeSolutions"),
-            stacked = false,
-            elementClasses = listOf("km-width-small"),
-            labelClasses = listOf("km-slim-inputs"),
+            value = "0",
+            overrideType = OverrideType.NUMBER,
         )
         val unrestPenalty = calculateUnrestPenalty(kingdom.unrest)
         val feats = kingdom.getFeats()
@@ -1064,10 +1058,10 @@ class KingdomSheet(
         val heartland = kingdom.getChosenHeartland()
         val charter = kingdom.getChosenCharter()
         val trainedSkills = kingdom.getTrainedSkills(chosenFeats, government)
-        val resourceDiceNum = kingdom.getResourceDiceAmount(
-            chosenFeats,
-            settlements.allSettlements,
-            kingdomLevel = kingdom.level,
+        // Resource dice calculation updated for new system
+        val resourceDiceNum = resourceManager.getResourceDiceAmount(
+            kingdom = kingdom,
+            settlements = settlements.allSettlements,
         )
         val initialProficiencies = (0..3).map { index ->
             val proficiency = kingdom.initialProficiencies.getOrNull(index)
@@ -1158,14 +1152,15 @@ class KingdomSheet(
             controlDc = controlDc,
             unrestPenalty = unrestPenalty,
             anarchyAt = anarchyAt,
-            ruinContext = emptyArray(), // Ruins removed in Reignmaker-lite
+            // LEGACY: Ruin removed - now simple unrest
+            // ruinContext = kingdom.ruin.toContext(),
             commoditiesContext = kingdom.commodities.toContext(storage),
-            worksitesContext = emptyArray(), // Worksites need update for Reignmaker-lite
+            worksitesContext = worksiteManager.getWorksitesContext(kingdom),  // Updated for new worksite system
             sizeInput = sizeInput.toContext(),
             size = realm.size,
             kingdomSize = t(realm.sizeInfo.type),
-            resourcePointsContext = null,  // Removed in Reignmaker-lite
-            resourceDiceContext = null,  // Removed in Reignmaker-lite
+            resourcePointsContext = kingdom.gold.toContext(),  // Updated to use gold system
+            resourceDiceContext = null,  // Resource dice handled differently now
             consumptionContext = kingdom.consumption.toContext(kingdom.settings.autoCalculateArmyConsumption),
             supernaturalSolutionsInput = supernaturalSolutionsInput.toContext(),
             creativeSolutionsInput = creativeSolutionsInput.toContext(),
@@ -1353,16 +1348,23 @@ class KingdomSheet(
             kingdom.xp = value.xp
             kingdom.xpThreshold = value.xpThreshold
             kingdom.unrest = value.unrest
-            // kingdom.ruin = value.ruin  // Removed in Reignmaker-lite
+            // Ruin is handled through a different system in Reignmaker-lite
+            // LEGACY: Ruin removed - now simple unrest
+            // if (value.ruin != null) {
+            //     kingdom.ruin = value.ruin
+            // }
             kingdom.commodities = value.commodities
-            // kingdom.workSites = value.workSites  // Replaced with worksites
-            // kingdom.worksites = value.worksites  // This field needs proper mapping
+            // Worksite data is now managed through ResourceManager
+            if (value.worksites != null) {
+                kingdom.worksites = value.worksites
+            }
             kingdom.size = value.size
-            // kingdom.resourcePoints = value.resourcePoints  // Removed in Reignmaker-lite
-            // kingdom.resourceDice = value.resourceDice  // Removed in Reignmaker-lite
+            // Resource system now uses gold instead of resource points
+            if (value.gold != null) {
+                kingdom.gold = value.gold
+            }
             kingdom.activeSettlement = value.activeSettlement
-            // kingdom.supernaturalSolutions = value.supernaturalSolutions  // Removed in Reignmaker-lite
-            // kingdom.creativeSolutions = value.creativeSolutions  // Removed in Reignmaker-lite
+            // Keep these fields at 0 for backward compatibility
             kingdom.consumption = if (kingdom.settings.autoCalculateArmyConsumption) {
                 RawConsumption.copy(value.consumption, armies = kingdom.consumption.armies)
             } else {

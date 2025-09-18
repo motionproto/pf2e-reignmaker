@@ -1,7 +1,0 @@
-{
-    "id": "initial-proficiencies",
-    "levels": [1],
-    "name": "features.initial-proficiencies.name",
-    "description": "features.initial-proficiencies.description",
-    "claimHexAttempts": 1
-}

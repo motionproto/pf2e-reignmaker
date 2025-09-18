@@ -142,6 +142,32 @@ class ResourceManager(
     }
     
     /**
+     * Get the number of resource dice for collection.
+     * This calculates based on kingdom level and settlements.
+     */
+    fun getResourceDiceAmount(
+        kingdom: Any, // Using Any to avoid circular dependency
+        settlements: List<Any>
+    ): Int {
+        // Base resource dice from kingdom level
+        val kingdomData = kingdom as? at.posselt.pfrpg2e.kingdom.KingdomData
+        val level = kingdomData?.level ?: 1
+        
+        // Calculate base dice from level (simplified calculation)
+        var baseDice = when {
+            level >= 15 -> 4
+            level >= 10 -> 3
+            level >= 5 -> 2
+            else -> 1
+        }
+        
+        // Add dice from settlements
+        val settlementBonus = settlements.size / 2
+        
+        return baseDice + settlementBonus
+    }
+    
+    /**
      * Preview the results of a trade action.
      */
     fun previewTrade(

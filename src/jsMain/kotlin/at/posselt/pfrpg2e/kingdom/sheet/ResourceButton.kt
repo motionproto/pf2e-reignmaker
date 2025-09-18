@@ -312,10 +312,11 @@ data class ResourceButton(
 
             Resource.XP -> kingdom::xp
             Resource.UNREST -> kingdom::unrest
-            Resource.CRIME -> kingdom.ruin.crime::value
-            Resource.DECAY -> kingdom.ruin.decay::value
-            Resource.CORRUPTION -> kingdom.ruin.corruption::value
-            Resource.STRIFE -> kingdom.ruin.strife::value
+            // LEGACY: Individual ruin types removed - now handled as simple unrest
+            Resource.CRIME -> kingdom::unrest
+            Resource.DECAY -> kingdom::unrest
+            Resource.CORRUPTION -> kingdom::unrest
+            Resource.STRIFE -> kingdom::unrest
             Resource.FOOD -> when (turn) {
                 Turn.NOW -> kingdom.commodities.now::food
                 Turn.NEXT -> kingdom.commodities.next::food

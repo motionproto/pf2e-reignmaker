@@ -1,8 +1,0 @@
-{
-    "id": "expansion",
-    "name": "charters.expansion.name",
-    "description": "charters.expansion.description",
-    "boost": "culture",
-    "freeBoosts": 1,
-    "flaw": "stability"
-}

@@ -161,24 +161,24 @@ private fun Scene.parseRealmData(actor: KingdomActor): RealmData {
 private fun KingdomData.parseWorksites() =
     WorkSites(
         farmlands = WorkSite(
-            quantity = workSites.farmlands.quantity,
-            resources = workSites.farmlands.resources,
+            quantity = worksites.farmlands.quantity,
+            resources = worksites.farmlands.resources,
         ),
         lumberCamps = WorkSite(
-            quantity = workSites.lumberCamps.quantity,
-            resources = workSites.lumberCamps.resources,
+            quantity = worksites.lumberCamps.quantity,
+            resources = worksites.lumberCamps.resources,
         ),
         mines = WorkSite(
-            quantity = workSites.mines.quantity,
-            resources = workSites.mines.resources,
+            quantity = worksites.mines.quantity,
+            resources = worksites.mines.resources,
         ),
         quarries = WorkSite(
-            quantity = workSites.quarries.quantity,
-            resources = workSites.quarries.resources,
+            quantity = worksites.quarries.quantity,
+            resources = worksites.quarries.resources,
         ),
         luxurySources = WorkSite(
-            quantity = workSites.luxurySources.quantity,
-            resources = workSites.luxurySources.resources,
+            quantity = worksites.luxurySources.quantity,
+            resources = worksites.luxurySources.resources,
         ),
     )
 

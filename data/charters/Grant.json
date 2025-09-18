@@ -1,8 +1,0 @@
-{
-    "id": "grant",
-    "name": "charters.grant.name",
-    "description": "charters.grant.description",
-    "boost": "economy",
-    "freeBoosts": 1,
-    "flaw": "loyalty"
-}

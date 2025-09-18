@@ -1,9 +1,8 @@
 package at.posselt.pfrpg2e.kingdom.sheet
 
-import at.posselt.pfrpg2e.data.kingdom.Ruin
 import at.posselt.pfrpg2e.kingdom.KingdomData
 import at.posselt.pfrpg2e.kingdom.data.RawAbilityBoostChoices
-import at.posselt.pfrpg2e.kingdom.data.RawRuinValues
+// import at.posselt.pfrpg2e.kingdom.data.RawRuinValues  // LEGACY: Ruin system removed
 import at.posselt.pfrpg2e.kingdom.getGovernments
 import at.posselt.pfrpg2e.kingdom.getMilestones
 import at.posselt.pfrpg2e.utils.postChatTemplate
@@ -61,28 +60,30 @@ suspend fun beforeKingdomUpdate(previous: KingdomData, current: KingdomData) {
     change.toChat()
     current.xp += change.addXp
     current.level += change.addLevel
-    checkRuin(previous.ruin.corruption, current.ruin.corruption, t(Ruin.CORRUPTION))
-    checkRuin(previous.ruin.crime, current.ruin.crime, t(Ruin.CRIME))
-    checkRuin(previous.ruin.decay, current.ruin.decay, t(Ruin.DECAY))
-    checkRuin(previous.ruin.strife, current.ruin.strife, t(Ruin.STRIFE))
+    // LEGACY: Ruin system removed - now handled as simple unrest in Reignmaker-lite
+    // checkRuin(previous.ruin.corruption, current.ruin.corruption, t(Ruin.CORRUPTION))
+    // checkRuin(previous.ruin.crime, current.ruin.crime, t(Ruin.CRIME))
+    // checkRuin(previous.ruin.decay, current.ruin.decay, t(Ruin.DECAY))
+    // checkRuin(previous.ruin.strife, current.ruin.strife, t(Ruin.STRIFE))
 }
 
-private suspend fun checkRuin(
-    previous: RawRuinValues,
-    current: RawRuinValues,
-    label: String,
-) {
-    if (previous.value != current.value && current.penalty > 0 && current.value == 0) {
-        val check = enrichHtml("@Check[type:flat|dc:16]")
-        postChatTemplate(
-            templatePath = "chatmessages/reduce-ruin-penalty.hbs",
-            templateContext = recordOf(
-                "ruin" to label,
-                "check" to check
-            )
-        )
-    }
-}
+// LEGACY: Ruin checking removed - now handled as simple unrest
+// private suspend fun checkRuin(
+//     previous: RawRuinValues,
+//     current: RawRuinValues,
+//     label: String,
+// ) {
+//     if (previous.value != current.value && current.penalty > 0 && current.value == 0) {
+//         val check = enrichHtml("@Check[type:flat|dc:16]")
+//         postChatTemplate(
+//             templatePath = "chatmessages/reduce-ruin-penalty.hbs",
+//             templateContext = recordOf(
+//                 "ruin" to label,
+//                 "check" to check
+//             )
+//         )
+//     }
+// }
 
 fun resetAbilityBoosts(abilityBoosts: RawAbilityBoostChoices) {
     abilityBoosts.economy = false
