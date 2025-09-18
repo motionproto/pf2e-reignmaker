@@ -17,12 +17,11 @@ import at.posselt.pfrpg2e.kingdom.data.RawHeartlandChoices
 import at.posselt.pfrpg2e.kingdom.data.RawLeaderValues
 import at.posselt.pfrpg2e.kingdom.data.RawLeaders
 import at.posselt.pfrpg2e.kingdom.data.RawNotes
-import at.posselt.pfrpg2e.kingdom.data.RawResources
-import at.posselt.pfrpg2e.kingdom.data.RawRuin
-import at.posselt.pfrpg2e.kingdom.data.RawRuinValues
 import at.posselt.pfrpg2e.kingdom.data.RawSkillRanks
-import at.posselt.pfrpg2e.kingdom.data.RawWorkSite
-import at.posselt.pfrpg2e.kingdom.data.RawWorkSites
+import at.posselt.pfrpg2e.kingdom.data.RawGold
+import at.posselt.pfrpg2e.kingdom.data.RawWorksites
+import at.posselt.pfrpg2e.kingdom.data.RawStorageCapacity
+import at.posselt.pfrpg2e.kingdom.data.RawStorageBuildings
 import at.posselt.pfrpg2e.kingdom.disabledActivityIds
 import at.posselt.pfrpg2e.kingdom.initialMilestoneChoices
 
@@ -36,37 +35,19 @@ fun createKingdomDefaults(name: String) =
         xp = 0,
         size = 1,
         unrest = 0,
-        resourcePoints = RawResources(now = 0, next = 0),
-        resourceDice = RawResources(now = 0, next = 0),
-        workSites = RawWorkSites(
-            farmlands = RawWorkSite(
-                quantity = 0,
-                resources = 0,
-            ),
-            lumberCamps = RawWorkSite(
-                quantity = 0,
-                resources = 0,
-            ),
-            mines = RawWorkSite(
-                quantity = 0,
-                resources = 0,
-            ),
-            quarries = RawWorkSite(
-                quantity = 0,
-                resources = 0,
-            ),
-            luxurySources = RawWorkSite(
-                quantity = 0,
-                resources = 0,
-            ),
+        // NEW Reignmaker-lite resource system
+        gold = RawGold(treasury = 0, income = 0, upkeep = 0),
+        worksites = RawWorksites(sites = emptyArray()),
+        storageCapacity = RawStorageCapacity(food = 0, lumber = 0, stone = 0, ore = 0),
+        storageBuildings = RawStorageBuildings(
+            granaries = 0,
+            storehouses = 0,
+            warehouses = 0,
+            strategicReserves = 0
         ),
-        consumption = RawConsumption(
-            armies = 0,
-            now = 0,
-            next = 0,
-        ),
-        supernaturalSolutions = 0,
-        creativeSolutions = 0,
+        constructionQueue = null,
+        currentTurnPhase = null,
+        consumption = RawConsumption(armies = 0, now = 0, next = 0),
         settings = KingdomSettings(
             eventDc = 16,
             eventDcStep = 5,
@@ -202,38 +183,14 @@ fun createKingdomDefaults(name: String) =
             now = RawCommodities(
                 food = 0,
                 lumber = 0,
-                luxuries = 0,
                 ore = 0,
                 stone = 0,
             ),
             next = RawCommodities(
                 food = 0,
                 lumber = 0,
-                luxuries = 0,
                 ore = 0,
                 stone = 0,
-            ),
-        ),
-        ruin = RawRuin(
-            corruption = RawRuinValues(
-                value = 0,
-                penalty = 0,
-                threshold = 10,
-            ),
-            crime = RawRuinValues(
-                value = 0,
-                penalty = 0,
-                threshold = 10,
-            ),
-            decay = RawRuinValues(
-                value = 0,
-                penalty = 0,
-                threshold = 10,
-            ),
-            strife = RawRuinValues(
-                value = 0,
-                penalty = 0,
-                threshold = 10,
             ),
         ),
         activeSettlement = null,
@@ -356,4 +313,5 @@ fun createKingdomDefaults(name: String) =
         homebrewKingdomEvents = emptyArray(),
         kingdomEventBlacklist = emptyArray(),
         ongoingEvents = emptyArray(),
+        selectedCharacterId = null,
     )

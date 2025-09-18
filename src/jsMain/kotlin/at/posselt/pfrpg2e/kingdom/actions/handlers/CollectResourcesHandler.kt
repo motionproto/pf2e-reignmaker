@@ -6,7 +6,9 @@ import at.posselt.pfrpg2e.kingdom.actions.PCSkill
 import at.posselt.pfrpg2e.kingdom.sheet.KingdomSheet
 import at.posselt.pfrpg2e.kingdom.KingdomActor
 import at.posselt.pfrpg2e.kingdom.getKingdom
-import at.posselt.pfrpg2e.kingdom.managers.ResourceManager
+import at.posselt.pfrpg2e.kingdom.setKingdom
+import at.posselt.pfrpg2e.kingdom.managers.WorksiteManager
+import at.posselt.pfrpg2e.kingdom.data.RawResourceYield
 import com.foundryvtt.core.Game
 import com.foundryvtt.core.ui
 import org.w3c.dom.HTMLElement
@@ -21,7 +23,7 @@ import org.w3c.dom.pointerevents.PointerEvent
  * and provide bonuses to different kingdom aspects.
  */
 class CollectResourcesHandler(
-    private val resourceManager: ResourceManager
+    private val worksiteManager: WorksiteManager
 ) : BaseKingdomAction() {
     override val actionId = "collect-resources"
     override val actionName = "Collect Resources"
@@ -49,11 +51,17 @@ class CollectResourcesHandler(
     ) {
         val kingdom = actor.getKingdom() ?: return
         
-        // Collect resources from all worksites
-        val collectedResources = resourceManager.collectFromWorksites(kingdom)
+        // Calculate production from worksites
+        val collectedResources = worksiteManager.calculateTotalProduction(kingdom.worksites)
         
-        // Update the kingdom's resources
-        resourceManager.addResources(actor, collectedResources)
+        // Add resources to the kingdom
+        kingdom.commodities.now.food += collectedResources.food
+        kingdom.commodities.now.lumber += collectedResources.lumber
+        kingdom.commodities.now.stone += collectedResources.stone
+        kingdom.commodities.now.ore += collectedResources.ore
+        
+        // Save the updated kingdom
+        actor.setKingdom(kingdom)
         
         // Show notification of what was collected
         val message = buildString {
@@ -63,7 +71,7 @@ class CollectResourcesHandler(
             if (collectedResources.ore > 0) resourceList.add("${collectedResources.ore} Ore")
             if (collectedResources.stone > 0) resourceList.add("${collectedResources.stone} Stone")
             if (collectedResources.lumber > 0) resourceList.add("${collectedResources.lumber} Lumber")
-            if (collectedResources.luxuries > 0) resourceList.add("${collectedResources.luxuries} Luxuries")
+            // Luxuries removed in Reignmaker-lite
             
             if (resourceList.isEmpty()) {
                 append("No resources collected this turn.")

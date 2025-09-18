@@ -6,9 +6,7 @@ import at.posselt.pfrpg2e.kingdom.getKingdom
 import at.posselt.pfrpg2e.kingdom.setKingdom
 import at.posselt.pfrpg2e.kingdom.getAllSettlements
 import at.posselt.pfrpg2e.kingdom.data.*
-import at.posselt.pfrpg2e.kingdom.data.KingdomEventData
-import at.posselt.pfrpg2e.kingdom.events.KingdomEvent
-import at.posselt.pfrpg2e.kingdom.events.OngoingEventState
+import at.posselt.pfrpg2e.data.kingdom.settlements.SettlementType
 import com.foundryvtt.core.Game
 
 /**
@@ -83,7 +81,7 @@ class TurnManager(
         kingdom: KingdomData
     ): Phase1Result {
         // Gain 1 Fame automatically
-        kingdom.fame.current = (kingdom.fame.current ?: 0) + 1
+        kingdom.fame.now = kingdom.fame.now + 1
         
         return Phase1Result(
             kingdom = kingdom,
@@ -107,10 +105,9 @@ class TurnManager(
         kingdom.unrest = updatedUnrest
         
         // Apply structure unrest reductions
+        // Note: structure unrest reduction would need to be added when structure system is complete
         val settlements = kingdom.getAllSettlements(game)
-        val unrestReduction = settlements.allSettlements.sumOf { settlement ->
-            settlement.structures.sumOf { it.unrestReduction ?: 0 }
-        }
+        val unrestReduction = 0 // TODO: Add when structures are fully integrated
         kingdom.unrest = (kingdom.unrest - unrestReduction).coerceAtLeast(0)
         
         // Check for incidents based on unrest tier
@@ -131,7 +128,7 @@ class TurnManager(
     /**
      * Execute Phase 3: Check for Events.
      */
-    private fun executePhase3Events(
+    private suspend fun executePhase3Events(
         actor: KingdomActor,
         kingdom: KingdomData
     ): Phase3Result {
@@ -193,17 +190,25 @@ class TurnManager(
         // Get settlement and army information
         val settlements = kingdom.getAllSettlements(game)
         val settlementInfo = settlements.allSettlements.map { settlement ->
+            // Determine tier based on level/occupiedBlocks
+            val level = settlement.occupiedBlocks
+            val tier = when {
+                level >= 20 -> 4 // Metropolis
+                level >= 10 -> 3 // City
+                level >= 5 -> 2  // Town
+                else -> 1        // Village
+            }
+            val foodConsumption = when {
+                level >= 20 -> 12 // Metropolis
+                level >= 10 -> 8  // City
+                level >= 5 -> 4   // Town
+                else -> 1         // Village
+            }
             SettlementResourceInfo(
                 id = settlement.id,
                 name = settlement.name,
-                tier = settlement.type.ordinal + 1,
-                foodConsumption = when (settlement.type) {
-                    SettlementType.VILLAGE -> 1
-                    SettlementType.TOWN -> 4
-                    SettlementType.CITY -> 8
-                    SettlementType.CAPITAL,
-                    SettlementType.METROPOLIS -> 12
-                }
+                tier = tier,
+                foodConsumption = foodConsumption
             )
         }
         
@@ -266,7 +271,7 @@ class TurnManager(
         kingdom.gold = endResult.gold
         
         // Reset fame (doesn't carry over)
-        kingdom.fame.current = 0
+        kingdom.fame.now = 0
         
         // Tick down temporary modifiers
         kingdom.modifiers = kingdom.modifiers.mapNotNull { modifier ->
@@ -274,7 +279,7 @@ class TurnManager(
             when {
                 turns == null || turns == 0 -> modifier // Permanent
                 turns == 1 -> null // Expires
-                else -> RawModifier.copy(modifier, turns = turns - 1)
+                else -> RawModifier.copy(modifier, newTurns = turns - 1)
             }
         }.toTypedArray()
         
@@ -314,10 +319,10 @@ class TurnManager(
             else -> 0
         }
         
-        // Each metropolis
+        // Each metropolis (level 20+)
         val settlements = kingdom.getAllSettlements(game)
         val metropolisCount = settlements.allSettlements.count { 
-            it.type == SettlementType.METROPOLIS 
+            it.occupiedBlocks >= 20
         }
         unrest += metropolisCount
         
@@ -437,64 +442,33 @@ data class TurnEndResult(
     val resourcesLost: ResourceLoss? = null
 )
 
-/**
- * Placeholder for unrest incident data.
- * Will be properly implemented when incident system is migrated.
- */
-data class UnrestIncident(
-    val name: String,
-    val tier: UnrestTier,
-    val description: String
-)
 
-/**
- * Placeholder for Fame manager.
- * Will be replaced with actual implementation.
- */
-interface FameManager {
-    fun gainFame(actor: KingdomActor, amount: Int = 1)
-    fun spendFame(actor: KingdomActor, amount: Int = 1): Boolean
-    fun endTurn(actor: KingdomActor)
-}
-
-/**
- * Placeholder for Unrest Incident manager.
- * Will be replaced with actual implementation.
- */
-interface UnrestIncidentManager {
-    fun calculatePassiveUnrest(kingdom: KingdomData): Int
-    fun applyPassiveUnrest(actor: KingdomActor, amount: Int)
-    fun checkForIncident(actor: KingdomActor, unrestLevel: Int): UnrestIncident?
-}
 
 /**
  * Extension to copy RawModifier with updated turns.
  */
 object RawModifier {
-    fun copy(modifier: at.posselt.pfrpg2e.kingdom.RawModifier, turns: Int): at.posselt.pfrpg2e.kingdom.RawModifier {
+    fun copy(modifier: at.posselt.pfrpg2e.kingdom.RawModifier, newTurns: Int?): at.posselt.pfrpg2e.kingdom.RawModifier {
         return object : at.posselt.pfrpg2e.kingdom.RawModifier {
+            override var id = modifier.id
+            override var type = modifier.type
+            override var buttonLabel = modifier.buttonLabel
+            override var value = modifier.value
+            override var valueExpression = modifier.valueExpression
             override var name = modifier.name
             override var enabled = modifier.enabled
-            override var value = modifier.value
-            override var type = modifier.type
-            override var abilityType = modifier.abilityType
-            override var skills = modifier.skills
-            override var skillBonusType = modifier.skillBonusType
-            override var activities = modifier.activities
-            override var turns = turns // Updated value
-            override var isContinuous = modifier.isContinuous
+            override var turns = newTurns // Updated value
+            override var isConsumedAfterRoll = modifier.isConsumedAfterRoll
+            override var rollOptions = modifier.rollOptions
+            override var applyIf = modifier.applyIf
+            override var fortune = modifier.fortune
+            override var rollTwiceKeepLowest = modifier.rollTwiceKeepLowest
+            override var rollTwiceKeepHighest = modifier.rollTwiceKeepHighest
+            override var upgradeResults = modifier.upgradeResults
+            override var downgradeResults = modifier.downgradeResults
+            override var notes = modifier.notes
+            override var requiresTranslation = modifier.requiresTranslation
+            override var selector = modifier.selector
         }
     }
-}
-
-/**
- * Settlement type enumeration for resource calculation.
- * Placeholder - will use actual implementation when available.
- */
-enum class SettlementType {
-    VILLAGE,
-    TOWN,
-    CITY,
-    CAPITAL,
-    METROPOLIS
 }

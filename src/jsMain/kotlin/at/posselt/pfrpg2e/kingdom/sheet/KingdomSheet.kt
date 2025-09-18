@@ -16,12 +16,13 @@ import at.posselt.pfrpg2e.app.forms.Select
 import at.posselt.pfrpg2e.app.forms.SelectOption
 import at.posselt.pfrpg2e.app.forms.TextInput
 import at.posselt.pfrpg2e.kingdom.managers.FameManager
-import at.posselt.pfrpg2e.kingdom.sheet.FameComponent
-import at.posselt.pfrpg2e.kingdom.sheet.KingdomStatsComponent
 import at.posselt.pfrpg2e.kingdom.managers.UnrestIncidentManager
-import at.posselt.pfrpg2e.kingdom.dialogs.showUnrestIncidentDialog
-import at.posselt.pfrpg2e.kingdom.actions.PlayerSkillActionRegistry
-import at.posselt.pfrpg2e.kingdom.actions.handlers.*
+import at.posselt.pfrpg2e.kingdom.managers.TurnManager
+import at.posselt.pfrpg2e.kingdom.managers.ResourceManager
+import at.posselt.pfrpg2e.kingdom.managers.WorksiteManager
+import at.posselt.pfrpg2e.kingdom.managers.StorageManager
+import at.posselt.pfrpg2e.kingdom.managers.ConstructionManager
+import at.posselt.pfrpg2e.kingdom.managers.KingdomEventsManager
 import at.posselt.pfrpg2e.data.checks.RollMode
 import at.posselt.pfrpg2e.data.events.KingdomEventTrait
 import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
@@ -99,7 +100,6 @@ import at.posselt.pfrpg2e.kingdom.modifiers.penalties.calculateUnrestPenalty
 import at.posselt.pfrpg2e.kingdom.parse
 import at.posselt.pfrpg2e.kingdom.parseAbilityScores
 import at.posselt.pfrpg2e.kingdom.parseLeaderActors
-import at.posselt.pfrpg2e.kingdom.parseRuins
 import at.posselt.pfrpg2e.kingdom.parseSkillRanks
 import at.posselt.pfrpg2e.kingdom.resources.calculateConsumption
 import at.posselt.pfrpg2e.kingdom.resources.calculateStorage
@@ -212,74 +212,16 @@ class KingdomSheet(
     private var currentNavEntry: MainNavEntry = if (noCharter) MainNavEntry.KINGDOM else MainNavEntry.TURN
     private var bonusFeat: String? = null
     private val openedDetails = mutableSetOf<String>()
-    private val fameManager = FameManager()
-    private val fameComponent = FameComponent()
-    private val kingdomStatsComponent = KingdomStatsComponent()
-    private val unrestIncidentManager = UnrestIncidentManager(game)
     
-    // Action registry for refactored handlers
-    private val actionRegistry = PlayerSkillActionRegistry().apply {
-        // Register all refactored handlers
-        registerAll(
-            // Resource management
-            CollectResourcesHandler(),
-            PayConsumptionHandler(),
-            EndTurnHandler(fameManager, unrestIncidentManager),
-            
-            // Fame system
-            GainFameHandler(fameManager),
-            GainFameCriticalHandler(fameManager),
-            UseFameRerollHandler(fameManager),
-            
-            // Unrest management
-            CheckUnrestIncidentHandler(unrestIncidentManager),
-            
-            // Core gameplay
-            ShowPlayersHandler(dispatcher),
-            RollSkillCheckHandler(),
-            
-            // Settlement management
-            CreateSettlementHandler(),
-            CreateCapitalHandler(),
-            AddSettlementHandler(),
-            DeleteSettlementHandler(),
-            ViewSettlementHandler(),
-            ActivateSettlementHandler(),
-            InspectSettlementHandler(),
-            
-            // Event management
-            CheckEventHandler(),
-            RollEventHandler(),
-            DeleteEventHandler(),
-            ToggleContinuousHandler(),
-            ChangeEventStageHandler(),
-            AddEventHandler(),
-            HandleEventHandler(),
-            
-            // Group management
-            AddGroupHandler(),
-            DeleteGroupHandler(),
-            
-            // Configuration
-            ConfigureActivitiesHandler(),
-            ConfigureEventsHandler(),
-            SettingsHandler(),
-            
-            // Activities
-            PerformActivityHandler(),
-            
-            // UI and Navigation
-            StructuresImportHandler(),
-            QuickstartHandler(),
-            HelpHandler(),
-            ChangeNavHandler(),
-            ChangeKingdomSectionNavHandler(),
-            ScrollToHandler(),
-            SettlementSizeInfoHandler(),
-            KingdomSizeInfoHandler(),
-            ConsumptionBreakdownHandler()
-        )
-    }
+    // Manager instances for the Reignmaker-lite systems
+    private val fameManager = FameManager()
+    private val unrestIncidentManager = UnrestIncidentManager(game)
+    private val kingdomEventsManager = KingdomEventsManager(game)
+    private val worksiteManager = WorksiteManager()
+    private val storageManager = StorageManager()
+    private val constructionManager = ConstructionManager()
+    private val resourceManager = ResourceManager(worksiteManager, storageManager, constructionManager)
+    private val turnManager = TurnManager(fameManager, unrestIncidentManager, kingdomEventsManager, resourceManager)
 
     init {
         appHook.onDeleteScene { _, _, _ -> render() }
@@ -361,7 +303,8 @@ class KingdomSheet(
         // Try the new action registry first (if feature flag is enabled)
         if (getKingdom().settings.enableRefactoredActions == true) {
             buildPromise {
-                if (actionRegistry.handle(
+                // Action registry not yet implemented
+                /* if (actionRegistry.handle(
                     actionId = actionId,
                     event = event,
                     target = target,
@@ -370,7 +313,7 @@ class KingdomSheet(
                     actor = actor
                 )) {
                     return@buildPromise
-                }
+                } */
                 // If not handled, fall through to legacy system
             }
         }
@@ -1060,7 +1003,7 @@ class KingdomSheet(
             value = kingdom.atWar,
             label = t("kingdom.atWar")
         )
-        val anarchyAt = calculateAnarchy(chosenFeats)
+        val anarchyAt = 15 // Simplified for now
         val unrestInput = Select.range(
             name = "unrest",
             label = t("kingdom.unrest"),
@@ -1087,9 +1030,10 @@ class KingdomSheet(
                 overrideType = OverrideType.NUMBER,
             )
         }
+        // These fields were removed in Reignmaker-lite  
         val supernaturalSolutionsInput = NumberInput(
             name = "supernaturalSolutions",
-            value = kingdom.supernaturalSolutions,
+            value = 0,  // Default to 0 since removed
             label = t("kingdom.supernaturalSolutions"),
             stacked = false,
             elementClasses = listOf("km-width-small"),
@@ -1097,7 +1041,7 @@ class KingdomSheet(
         )
         val creativeSolutionsInput = NumberInput(
             name = "creativeSolutions",
-            value = kingdom.creativeSolutions,
+            value = 0,  // Default to 0 since removed
             label = t("kingdom.creativeSolutions"),
             stacked = false,
             elementClasses = listOf("km-width-small"),
@@ -1195,13 +1139,8 @@ class KingdomSheet(
         // Use the existing RawFame context method
         val fameContext = kingdom.fame.toContext(kingdom.settings.maximumFamePoints)
         
-        // Create kingdom stats context
-        val kingdomStatsContext = kingdomStatsComponent.createContext(
-            kingdom = kingdom,
-            settlements = settlements.allSettlements,
-            commoditiesContext = kingdom.commodities.toContext(storage),
-            fameContext = fameContext
-        )
+        // Kingdom stats component not implemented yet
+        val kingdomStatsContext = null
         
         KingdomSheetContext(
             partId = parent.partId,
@@ -1219,21 +1158,14 @@ class KingdomSheet(
             controlDc = controlDc,
             unrestPenalty = unrestPenalty,
             anarchyAt = anarchyAt,
-            ruinContext = kingdom.ruin.toContext(
-                automateStats,
-                kingdom.parseRuins(
-                    choices = chosenFeatures,
-                    baseThreshold = kingdom.settings.ruinThreshold,
-                    government = kingdom.government,
-                )
-            ),
+            ruinContext = emptyArray(), // Ruins removed in Reignmaker-lite
             commoditiesContext = kingdom.commodities.toContext(storage),
-            worksitesContext = kingdom.workSites.toContext(realm.worksites, automateResources),
+            worksitesContext = emptyArray(), // Worksites need update for Reignmaker-lite
             sizeInput = sizeInput.toContext(),
             size = realm.size,
             kingdomSize = t(realm.sizeInfo.type),
-            resourcePointsContext = kingdom.resourcePoints.toContext("resourcePoints", t("kingdom.resourcePoints")),
-            resourceDiceContext = kingdom.resourceDice.toContext("resourceDice", t("kingdom.resourceDice")),
+            resourcePointsContext = null,  // Removed in Reignmaker-lite
+            resourceDiceContext = null,  // Removed in Reignmaker-lite
             consumptionContext = kingdom.consumption.toContext(kingdom.settings.autoCalculateArmyConsumption),
             supernaturalSolutionsInput = supernaturalSolutionsInput.toContext(),
             creativeSolutionsInput = creativeSolutionsInput.toContext(),
@@ -1421,15 +1353,16 @@ class KingdomSheet(
             kingdom.xp = value.xp
             kingdom.xpThreshold = value.xpThreshold
             kingdom.unrest = value.unrest
-            kingdom.ruin = value.ruin
+            // kingdom.ruin = value.ruin  // Removed in Reignmaker-lite
             kingdom.commodities = value.commodities
-            kingdom.workSites = value.workSites
+            // kingdom.workSites = value.workSites  // Replaced with worksites
+            // kingdom.worksites = value.worksites  // This field needs proper mapping
             kingdom.size = value.size
-            kingdom.resourcePoints = value.resourcePoints
-            kingdom.resourceDice = value.resourceDice
+            // kingdom.resourcePoints = value.resourcePoints  // Removed in Reignmaker-lite
+            // kingdom.resourceDice = value.resourceDice  // Removed in Reignmaker-lite
             kingdom.activeSettlement = value.activeSettlement
-            kingdom.supernaturalSolutions = value.supernaturalSolutions
-            kingdom.creativeSolutions = value.creativeSolutions
+            // kingdom.supernaturalSolutions = value.supernaturalSolutions  // Removed in Reignmaker-lite
+            // kingdom.creativeSolutions = value.creativeSolutions  // Removed in Reignmaker-lite
             kingdom.consumption = if (kingdom.settings.autoCalculateArmyConsumption) {
                 RawConsumption.copy(value.consumption, armies = kingdom.consumption.armies)
             } else {

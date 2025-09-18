@@ -37,7 +37,7 @@ class EndTurnHandler(
         
         try {
             // Execute Phase 6: End of Turn
-            turnManager.executeEndOfTurn(actor, kingdom)
+            val result = turnManager.endTurn(actor, game)
             
             // Post a chat message about the turn ending
             postChatTemplate(templatePath = "chatmessages/end-turn.hbs")
