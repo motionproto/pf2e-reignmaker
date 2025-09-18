@@ -1,29 +1,38 @@
 {
   "id": "assassination-attempt",
-  "name": "events.assassinationAttempt.name",
-  "description": "events.assassinationAttempt.description",
-  "traits": ["dangerous"],
-  "location": "events.assassinationAttempt.location",
+  "name": "pf2e-kingdom-lite.events.assassination-attempt.name",
+  "description": "pf2e-kingdom-lite.events.assassination-attempt.description",
+  "traits": [
+    "dangerous"
+  ],
+  "location": "pf2e-kingdom-lite.events.assassination-attempt.location",
   "modifier": 0,
-  "resolution": "events.assassinationAttempt.resolution",
-  "resolvedOn": ["criticalSuccess", "success"],
+  "resolution": "pf2e-kingdom-lite.events.assassination-attempt.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
   "stages": [
     {
-      "skills": ["stealth", "intimidation", "medicine"],
+      "skills": [
+        "stealth",
+        "intimidation",
+        "medicine"
+      ],
       "criticalSuccess": {
-        "msg": "events.assassinationAttempt.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.criticalSuccess.msg",
         "modifiers": []
       },
       "success": {
-        "msg": "events.assassinationAttempt.stage-0.success.msg",
+        "msg": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.success.msg",
         "modifiers": []
       },
       "failure": {
-        "msg": "events.assassinationAttempt.stage-0.failure.msg",
+        "msg": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.assassinationAttempt.stage-0.failure.unrest",
+            "name": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -31,11 +40,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "events.assassinationAttempt.stage-0.criticalFailure.msg",
+        "msg": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.assassinationAttempt.stage-0.criticalFailure.unrest",
+            "name": "pf2e-kingdom-lite.events.assassination-attempt.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
@@ -43,5 +52,6 @@
         ]
       }
     }
-  ]
+  ],
+  "special": "pf2e-kingdom-lite.events.assassination-attempt.special"
 }

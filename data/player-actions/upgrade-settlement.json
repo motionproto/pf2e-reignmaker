@@ -1,8 +1,8 @@
 {
   "id": "upgrade-settlement",
-  "name": "Upgrade a Settlement",
-  "category": "urban",
-  "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization.",
+  "name": "Upgrade Settlement",
+  "category": "urban-planning",
+  "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization",
   "skills": [
     {
       "skill": "crafting",
@@ -27,22 +27,28 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Increase Level +1 Structure"
+      "description": "Increase Level +1 Structure",
+      "modifiers": {
+        "settlementUpgrade": true,
+        "structures": 1
+      }
     },
     "success": {
-      "description": "Increase Level"
+      "description": "Increase Level",
+      "modifiers": {
+        "settlementUpgrade": true
+      }
     },
     "failure": {
-      "description": "No effect"
+      "description": "no effect"
     },
     "criticalFailure": {
       "description": "No effect"
     }
   },
   "requirements": [
-    {
-      "type": "settlement",
-      "details": "Must meet level and structure prerequisites"
-    }
+    "Village \u2192 Town: Level 2+ and 2+ Structures",
+    "Town \u2192 City: Level 5+ and 4+ Structures",
+    "City \u2192 Metropolis: Level 10+ and 6+ Structures"
   ]
 }

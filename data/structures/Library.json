@@ -1,31 +1,26 @@
 {
   "id": "library",
   "name": "structures.library.name",
-  "skillBonusRules": [
-    {
-      "value": 1,
-      "skill": "scholarship",
-      "activity": "rest-and-relax"
-    }
+  "type": "skill",
+  "category": "knowledge-magic",
+  "tier": 2,
+  "earnIncomeLevel": "settlement+2",
+  "bonus": 1,
+  "skills": [
+    "lore",
+    "arcana"
   ],
-  "notes": "structures.library.notes",
-  "traits": [
-    "building"
-  ],
-  "affectsDowntime": true,
-  "reducesUnrest": false,
-  "level": 2,
   "construction": {
-    "rp": 6,
-    "lumber": 4,
-    "stone": 2,
-    "skills": [
-      {
-        "skill": "scholarship",
-        "proficiencyRank": 1
-      }
-    ],
-    "dc": 16
+    "resources": {
+      "lumber": 1,
+      "stone": 3
+    }
   },
-  "lots": 1
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-2"
+  ],
+  "special": null,
+  "upgradeFrom": "scholars-table"
 }

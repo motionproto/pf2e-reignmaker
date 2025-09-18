@@ -1,0 +1,73 @@
+{
+  "id": "justice-prevails",
+  "name": "pf2e-kingdom-lite.events.justice-prevails.name",
+  "description": "pf2e-kingdom-lite.events.justice-prevails.description",
+  "traits": [
+    "beneficial"
+  ],
+  "location": "pf2e-kingdom-lite.events.justice-prevails.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.justice-prevails.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "intimidation",
+        "diplomacy",
+        "society"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.justice-prevails.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.justice-prevails.stage-0.criticalSuccess.unrest",
+            "value": -2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.justice-prevails.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.justice-prevails.stage-0.success.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.justice-prevails.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.justice-prevails.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.justice-prevails.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.justice-prevails.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.justice-prevails.special"
+}

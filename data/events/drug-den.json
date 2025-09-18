@@ -1,0 +1,89 @@
+{
+  "id": "drug-den",
+  "name": "pf2e-kingdom-lite.events.drug-den.name",
+  "description": "pf2e-kingdom-lite.events.drug-den.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.drug-den.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.drug-den.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "stealth",
+        "medicine",
+        "intimidation"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.drug-den.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.criticalSuccess.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.drug-den.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.success.imprisoned",
+            "value": 1,
+            "selector": "imprisoned_unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.drug-den.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.failure.gold",
+            "value": -1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.drug-den.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.drug-den.stage-0.criticalFailure.damage",
+            "value": 1,
+            "selector": "damage_structure",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.drug-den.special"
+}

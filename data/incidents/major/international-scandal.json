@@ -2,27 +2,66 @@
   "id": "international-scandal",
   "name": "International Scandal",
   "tier": "MAJOR",
-  "description": "A major scandal damages the kingdom's international reputation.",
+  "description": "A massive scandal ruins your kingdom's reputation",
   "percentileMin": 39,
   "percentileMax": 45,
   "skillOptions": [
     {
       "skill": "performance",
-      "successEffect": "Reputation maintained, no effect",
-      "failureEffect": "Lose 1 Fame AND 1d4 gold",
-      "criticalFailureExtra": "King has zero fame this round, lose 2d4 gold, +1 Unrest"
+      "description": "grand gesture",
+      "effects": {
+        "success": "Reputation maintained, no effect",
+        "failure": "Lose 1 Fame AND 1d4 gold",
+        "criticalFailure": "King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest"
+      },
+      "failureModifiers": {
+        "fame": -1,
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "fame": 0,
+        "gold": "-2d4",
+        "unrest": 1,
+        "fameBlocked": true
+      }
     },
     {
       "skill": "diplomacy",
-      "successEffect": "Public relations managed, no effect",
-      "failureEffect": "Lose 1 Fame AND 1d4 gold",
-      "criticalFailureExtra": "King has zero fame this round, lose 2d4 gold, +1 Unrest"
+      "description": "public relations",
+      "effects": {
+        "success": "Reputation maintained, no effect",
+        "failure": "Lose 1 Fame AND 1d4 gold",
+        "criticalFailure": "King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest"
+      },
+      "failureModifiers": {
+        "fame": -1,
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "fame": 0,
+        "gold": "-2d4",
+        "unrest": 1,
+        "fameBlocked": true
+      }
     },
     {
       "skill": "deception",
-      "successEffect": "Propaganda campaign succeeds, no effect",
-      "failureEffect": "Lose 1 Fame AND 1d4 gold",
-      "criticalFailureExtra": "King has zero fame this round, lose 2d4 gold, +1 Unrest"
+      "description": "propaganda",
+      "effects": {
+        "success": "Reputation maintained, no effect",
+        "failure": "Lose 1 Fame AND 1d4 gold",
+        "criticalFailure": "King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest"
+      },
+      "failureModifiers": {
+        "fame": -1,
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "fame": 0,
+        "gold": "-2d4",
+        "unrest": 1,
+        "fameBlocked": true
+      }
     }
   ]
 }

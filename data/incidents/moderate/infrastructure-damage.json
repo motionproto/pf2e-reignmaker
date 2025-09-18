@@ -2,33 +2,73 @@
   "id": "infrastructure-damage",
   "name": "Infrastructure Damage",
   "tier": "MODERATE",
-  "description": "Critical infrastructure is damaged by sabotage or neglect.",
+  "description": "Critical infrastructure is damaged or sabotaged",
   "percentileMin": 43,
   "percentileMax": 51,
   "skillOptions": [
     {
       "skill": "crafting",
-      "successEffect": "Damage prevented, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+      "description": "emergency repairs",
+      "effects": {
+        "success": "Damage prevented, no effect",
+        "failure": "One random structure in a random settlement becomes damaged",
+        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
+      },
+      "failureModifiers": {
+        "structureDamaged": 1
+      },
+      "criticalFailureModifiers": {
+        "structureDamaged": "1d3",
+        "unrest": 1
+      }
     },
     {
       "skill": "athletics",
-      "successEffect": "Labor mobilized, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+      "description": "labor mobilization",
+      "effects": {
+        "success": "Damage prevented, no effect",
+        "failure": "One random structure in a random settlement becomes damaged",
+        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
+      },
+      "failureModifiers": {
+        "structureDamaged": 1
+      },
+      "criticalFailureModifiers": {
+        "structureDamaged": "1d3",
+        "unrest": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Response organized, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+      "description": "organize response",
+      "effects": {
+        "success": "Damage prevented, no effect",
+        "failure": "One random structure in a random settlement becomes damaged",
+        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
+      },
+      "failureModifiers": {
+        "structureDamaged": 1
+      },
+      "criticalFailureModifiers": {
+        "structureDamaged": "1d3",
+        "unrest": 1
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Magical restoration, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged, +1 unrest"
+      "description": "magical restoration",
+      "effects": {
+        "success": "Damage prevented, no effect",
+        "failure": "One random structure in a random settlement becomes damaged",
+        "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest"
+      },
+      "failureModifiers": {
+        "structureDamaged": 1
+      },
+      "criticalFailureModifiers": {
+        "structureDamaged": "1d3",
+        "unrest": 1
+      }
     }
   ]
 }

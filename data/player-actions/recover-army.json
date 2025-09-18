@@ -1,8 +1,8 @@
 {
   "id": "recover-army",
   "name": "Recover Army",
-  "category": "military",
-  "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses.",
+  "category": "military-operations",
+  "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses",
   "skills": [
     {
       "skill": "medicine",
@@ -31,10 +31,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Troop recovers completely"
+      "description": "Troop recovers completely",
+      "modifiers": {
+        "armyRecover": "complete"
+      }
     },
     "success": {
-      "description": "Troop recovers 1 segment"
+      "description": "Troop recovers 1 segment",
+      "modifiers": {
+        "armyRecover": 1
+      }
     },
     "failure": {
       "description": "No recovery"
@@ -42,6 +48,5 @@
     "criticalFailure": {
       "description": "No recovery"
     }
-  },
-  "failureCausesUnrest": false
+  }
 }

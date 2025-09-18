@@ -1,0 +1,24 @@
+{
+  "id": "workshop",
+  "name": "structures.workshop.name",
+  "type": "skill",
+  "category": "crafting-trade",
+  "tier": 1,
+  "earnIncomeLevel": "settlement",
+  "bonus": 0,
+  "skills": [
+    "crafting"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

@@ -1,8 +1,8 @@
 {
   "id": "collect-resources",
   "name": "Collect Resources",
-  "category": "economic",
-  "description": "Harvest materials from your territories, either through established worksites or direct extraction.",
+  "category": "economic-resources",
+  "description": "Harvest materials from your territories, either through established worksites or direct extraction",
   "skills": [
     {
       "skill": "nature",
@@ -31,10 +31,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain an additional +1 Resource of the same type"
+      "description": "Gain an additional +1 Resource of the same type",
+      "modifiers": {
+        "resourceBonus": 1
+      }
     },
     "success": {
-      "description": "Collect resources from hex or worksite"
+      "description": "Collect resources from hex or worksite",
+      "modifiers": {
+        "resourceCollected": true
+      }
     },
     "failure": {
       "description": "No effect"
@@ -43,5 +49,5 @@
       "description": "No effect"
     }
   },
-  "failureCausesUnrest": false
+  "special": "Choose one controlled hex. Either collect 1 resource of the appropriate type without a Worksite or collect from the worksite (once/turn)"
 }

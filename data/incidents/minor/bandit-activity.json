@@ -2,33 +2,73 @@
   "id": "bandit-activity",
   "name": "Bandit Activity",
   "tier": "MINOR",
-  "description": "Bandits raid trade routes and settlements.",
+  "description": "Bandit raids threaten your trade routes and settlements",
   "percentileMin": 81,
   "percentileMax": 90,
   "skillOptions": [
     {
       "skill": "intimidation",
-      "successEffect": "Bandits deterred, no effect",
-      "failureEffect": "Lose 1d4 Gold to raids",
-      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+      "description": "show force",
+      "effects": {
+        "success": "Bandits deterred, no effect",
+        "failure": "Lose 1d4 Gold to raids",
+        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "worksiteDestroyed": 1
+      }
     },
     {
       "skill": "stealth",
-      "successEffect": "Bandits infiltrated, no effect",
-      "failureEffect": "Lose 1d4 Gold to raids",
-      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+      "description": "infiltrate bandits",
+      "effects": {
+        "success": "Bandits deterred, no effect",
+        "failure": "Lose 1d4 Gold to raids",
+        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "worksiteDestroyed": 1
+      }
     },
     {
       "skill": "survival",
-      "successEffect": "Bandits tracked to lair, no effect",
-      "failureEffect": "Lose 1d4 Gold to raids",
-      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+      "description": "track to lair",
+      "effects": {
+        "success": "Bandits deterred, no effect",
+        "failure": "Lose 1d4 Gold to raids",
+        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "worksiteDestroyed": 1
+      }
     },
     {
       "skill": "occultism",
-      "successEffect": "Bandits found by scrying, no effect",
-      "failureEffect": "Lose 1d4 Gold to raids",
-      "criticalFailureExtra": "Lose 2d4 Gold, bandits destroy a random worksite"
+      "description": "scrying",
+      "effects": {
+        "success": "Bandits deterred, no effect",
+        "failure": "Lose 1d4 Gold to raids",
+        "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "worksiteDestroyed": 1
+      }
     }
   ]
 }

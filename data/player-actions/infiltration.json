@@ -1,8 +1,8 @@
 {
   "id": "infiltration",
   "name": "Infiltration",
-  "category": "foreign",
-  "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats.",
+  "category": "foreign-affairs",
+  "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats",
   "skills": [
     {
       "skill": "deception",
@@ -31,17 +31,22 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Valuable intel"
+      "description": "Valuable intel",
+      "modifiers": {
+        "intelligence": 2
+      }
     },
     "success": {
-      "description": "Broad intel"
+      "description": "Broad intel",
+      "modifiers": {
+        "intelligence": 1
+      }
     },
     "failure": {
-      "description": "No effect"
+      "description": "no effect"
     },
     "criticalFailure": {
       "description": "Spies are captured"
     }
-  },
-  "failureCausesUnrest": false
+  }
 }

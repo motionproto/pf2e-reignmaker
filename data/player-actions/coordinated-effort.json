@@ -1,26 +1,53 @@
 {
   "id": "coordinated-effort",
   "name": "Coordinated Effort",
-  "category": "stability",
-  "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome.",
-  "skills": [],
+  "category": "uphold-stability",
+  "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome",
+  "skills": [
+    {
+      "skill": "politics",
+      "description": "coordinate leadership"
+    },
+    {
+      "skill": "performance",
+      "description": "inspire teamwork"
+    }
+  ],
   "effects": {
     "criticalSuccess": {
-      "description": "Use highest roll with +1 bonus"
+      "description": "Both Coordinated Effort and the follow-up action gain +2 circumstance bonuses to their checks",
+      "modifiers": {
+        "meta": {
+          "selfBonus": 2,
+          "nextActionBonus": 2
+        }
+      }
     },
     "success": {
-      "description": "Use highest roll with +1 bonus"
+      "description": "The follow-up action gains a +2 circumstance bonus to its check",
+      "modifiers": {
+        "meta": {
+          "nextActionBonus": 2
+        }
+      }
     },
     "failure": {
-      "description": "Use highest roll with +1 bonus"
+      "description": "The follow-up action gains a +1 circumstance bonus to its check",
+      "modifiers": {
+        "meta": {
+          "nextActionBonus": 1
+        }
+      }
     },
     "criticalFailure": {
-      "description": "Use highest roll with +1 bonus"
+      "description": "Both actions fail automatically",
+      "modifiers": {
+        "meta": {
+          "selfFails": true,
+          "nextActionFails": true
+        }
+      }
     }
   },
-  "limitations": {
-    "maxParticipants": 2,
-    "oncePerTurn": true
-  },
-  "availability": "Exactly TWO PCs may use this together, once per turn"
+  "special": "Meta-action that modifies other actions. Exactly TWO PCs may use this together once per turn."
 }

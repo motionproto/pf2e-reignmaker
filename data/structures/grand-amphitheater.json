@@ -1,0 +1,28 @@
+{
+  "id": "grand-amphitheater",
+  "name": "structures.grand-amphitheater.name",
+  "type": "skill",
+  "category": "performance-culture",
+  "tier": 4,
+  "earnIncomeLevel": "settlement+6",
+  "bonus": 3,
+  "skills": [
+    "performance",
+    "diplomacy",
+    "lore"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 6,
+      "stone": 6,
+      "ore": 4
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-4"
+  ],
+  "special": "Reroll 1 failed skill check per turn",
+  "upgradeFrom": "performance-hall"
+}

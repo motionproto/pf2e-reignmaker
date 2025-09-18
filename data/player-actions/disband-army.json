@@ -1,8 +1,8 @@
 {
   "id": "disband-army",
   "name": "Disband Army",
-  "category": "military",
-  "description": "Release military units from service, returning soldiers to civilian life.",
+  "category": "military-operations",
+  "description": "Release military units from service, returning soldiers to civilian life",
   "skills": [
     {
       "skill": "intimidation",
@@ -28,18 +28,30 @@
   "effects": {
     "criticalSuccess": {
       "description": "People welcome them home with honours!, -2 Unrest",
-      "unrest": -2
+      "modifiers": {
+        "militaryUnits": -1,
+        "unrest": -2
+      }
     },
     "success": {
       "description": "Army disbands, -1 Unrest",
-      "unrest": -1
+      "modifiers": {
+        "militaryUnits": -1,
+        "unrest": -1
+      }
     },
     "failure": {
-      "description": "Army disbands"
+      "description": "Army disbands",
+      "modifiers": {
+        "militaryUnits": -1
+      }
     },
     "criticalFailure": {
       "description": "Army disbands, +1 Unrest",
-      "unrest": 1
+      "modifiers": {
+        "militaryUnits": -1,
+        "unrest": 1
+      }
     }
   },
   "failureCausesUnrest": true

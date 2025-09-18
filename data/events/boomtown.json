@@ -1,0 +1,68 @@
+{
+  "id": "boomtown",
+  "name": "pf2e-kingdom-lite.events.boomtown.name",
+  "description": "pf2e-kingdom-lite.events.boomtown.description",
+  "traits": [
+    "beneficial",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.boomtown.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.boomtown.resolution",
+  "resolvedOn": [
+    "failure",
+    "criticalFailure"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "society",
+        "crafting",
+        "diplomacy"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.boomtown.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.boomtown.stage-0.criticalSuccess.gold",
+            "value": 4,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.boomtown.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.boomtown.stage-0.success.gold",
+            "value": 2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.boomtown.stage-0.failure.msg",
+        "modifiers": []
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.boomtown.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.boomtown.stage-0.criticalFailure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.boomtown.special"
+}

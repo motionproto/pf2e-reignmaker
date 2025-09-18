@@ -1,60 +1,20 @@
 {
   "id": "barracks",
   "name": "structures.barracks.name",
-  "activityBonusRules": [
-    {
-      "value": 1,
-      "activity": "garrison-army"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-damaged"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-defeated"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-lost"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-mired-pinned"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-shaken"
-    },
-    {
-      "value": 1,
-      "activity": "recover-army-weary"
-    },
-    {
-      "value": 1,
-      "activity": "recruit-army"
+  "type": "support",
+  "category": "logistics",
+  "tier": 1,
+  "effect": "Increases the settlement's unit capacity by +1",
+  "construction": {
+    "resources": {
+      "stone": 2
     }
-  ],
+  },
   "traits": [
     "building",
-    "residential"
+    "support-structure",
+    "tier-1"
   ],
-  "reducesUnrest": true,
-  "reduceUnrestBy": {
-    "value": "1",
-    "moreThanOncePerTurn": true
-  },
-  "level": 3,
-  "construction": {
-    "skills": [
-      {
-        "skill": "defense"
-      }
-    ],
-    "dc": 16,
-    "rp": 6,
-    "lumber": 2,
-    "stone": 1
-  },
-  "lots": 1
+  "special": null,
+  "upgradeFrom": null
 }

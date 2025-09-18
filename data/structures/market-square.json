@@ -1,0 +1,20 @@
+{
+  "id": "market-square",
+  "name": "structures.market-square.name",
+  "type": "support",
+  "category": "commerce",
+  "tier": 1,
+  "effect": "Enables selling surplus at 2:1 (resources:gold). Purchase non-magical items up to settlement level",
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

@@ -1,8 +1,8 @@
 {
   "id": "fortify-hex",
   "name": "Fortify Hex",
-  "category": "borders",
-  "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion.",
+  "category": "expand-borders",
+  "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion",
   "skills": [
     {
       "skill": "crafting",
@@ -28,10 +28,16 @@
   "effects": {
     "criticalSuccess": {
       "description": "Fortify, reduce Unrest by 1",
-      "unrest": -1
+      "modifiers": {
+        "hexFortified": true,
+        "unrest": -1
+      }
     },
     "success": {
-      "description": "Fortify"
+      "description": "Fortify",
+      "modifiers": {
+        "hexFortified": true
+      }
     },
     "failure": {
       "description": "Fail"
@@ -39,5 +45,6 @@
     "criticalFailure": {
       "description": "No effect"
     }
-  }
+  },
+  "special": "Fortification Benefits: Troops defending in a fortified hex gain +1 armor class and +2 initiative circumstance bonus"
 }

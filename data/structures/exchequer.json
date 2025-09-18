@@ -1,0 +1,22 @@
+{
+  "id": "exchequer",
+  "name": "structures.exchequer.name",
+  "type": "support",
+  "category": "revenue",
+  "tier": 4,
+  "effect": "Each Kingdom Turn, the kingdom gains 8 Gold. PCs may attempt the Personal Income action (Income T4)",
+  "construction": {
+    "resources": {
+      "lumber": 3,
+      "stone": 9,
+      "ore": 4
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-4"
+  ],
+  "special": "Only one Taxation structure may exist in the kingdom at a time",
+  "upgradeFrom": "treasury"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "infirmary",
+  "name": "structures.infirmary.name",
+  "type": "skill",
+  "category": "medicine-healing",
+  "tier": 2,
+  "earnIncomeLevel": "settlement+2",
+  "bonus": 1,
+  "skills": [
+    "medicine",
+    "lore"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 1,
+      "stone": 3
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-2"
+  ],
+  "special": null,
+  "upgradeFrom": "healers-hut"
+}

@@ -1,8 +1,8 @@
 {
   "id": "outfit-army",
   "name": "Outfit Army",
-  "category": "military",
-  "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness.",
+  "category": "military-operations",
+  "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness",
   "skills": [
     {
       "skill": "crafting",
@@ -27,10 +27,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade"
+      "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
+      "modifiers": {
+        "armyUpgrades": 2
+      }
     },
     "success": {
-      "description": "Outfit troop"
+      "description": "Outfit troop",
+      "modifiers": {
+        "armyUpgrades": 1
+      }
     },
     "failure": {
       "description": "No gear"
@@ -39,5 +45,5 @@
       "description": "No gear"
     }
   },
-  "failureCausesUnrest": false
+  "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"
 }

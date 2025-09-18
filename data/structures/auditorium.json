@@ -1,0 +1,22 @@
+{
+  "id": "auditorium",
+  "name": "structures.auditorium.name",
+  "type": "support",
+  "category": "culture",
+  "tier": 4,
+  "effect": "+1 Fame each turn. PCs in this settlement gain +2 to checks made to reduce Unrest",
+  "construction": {
+    "resources": {
+      "lumber": 6,
+      "stone": 6,
+      "ore": 4
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-4"
+  ],
+  "special": "At the start of each Kingdom Turn, reduce Unrest by 1",
+  "upgradeFrom": "playhouse"
+}

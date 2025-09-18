@@ -1,0 +1,87 @@
+{
+  "id": "undead-uprising",
+  "name": "pf2e-kingdom-lite.events.undead-uprising.name",
+  "description": "pf2e-kingdom-lite.events.undead-uprising.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.undead-uprising.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.undead-uprising.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "religion",
+        "arcana",
+        "intimidation"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalSuccess.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.undead-uprising.stage-0.success.msg",
+        "modifiers": []
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.undead-uprising.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.failure.damage",
+            "value": 1,
+            "selector": "damage_structure",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalFailure.destroy",
+            "value": 1,
+            "selector": "destroy_structure",
+            "enabled": true
+          },
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.undead-uprising.stage-0.criticalFailure.damage",
+            "value": 1,
+            "selector": "damage_structure",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.undead-uprising.special"
+}

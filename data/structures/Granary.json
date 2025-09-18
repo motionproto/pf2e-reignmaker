@@ -1,24 +1,20 @@
 {
   "id": "granary",
   "name": "structures.granary.name",
-  "storage": {
-    "food": 1
+  "type": "support",
+  "category": "food-storage",
+  "tier": 1,
+  "effect": "+4 Food capacity",
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
   },
   "traits": [
-    "building"
+    "building",
+    "support-structure",
+    "tier-1"
   ],
-  "affectsDowntime": false,
-  "reducesUnrest": false,
-  "level": 1,
-  "construction": {
-    "rp": 12,
-    "lumber": 2,
-    "skills": [
-      {
-        "skill": "agriculture"
-      }
-    ],
-    "dc": 15
-  },
-  "lots": 1
+  "special": null,
+  "upgradeFrom": null
 }

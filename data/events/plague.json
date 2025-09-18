@@ -1,0 +1,82 @@
+{
+  "id": "plague",
+  "name": "pf2e-kingdom-lite.events.plague.name",
+  "description": "pf2e-kingdom-lite.events.plague.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.plague.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.plague.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "medicine",
+        "religion",
+        "society"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.plague.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.plague.stage-0.criticalSuccess.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.plague.stage-0.success.msg",
+        "modifiers": []
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.plague.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.plague.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.plague.stage-0.failure.gold",
+            "value": -2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.plague.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.plague.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.plague.stage-0.criticalFailure.gold",
+            "value": -2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.plague.special"
+}

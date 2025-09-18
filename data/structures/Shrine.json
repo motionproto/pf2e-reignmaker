@@ -1,40 +1,24 @@
 {
   "id": "shrine",
   "name": "structures.shrine.name",
-  "activityBonusRules": [
-    {
-      "value": 1,
-      "activity": "celebrate-holiday"
-    },
-    {
-      "value": 1,
-      "activity": "celebrate-holiday-vk"
-    }
+  "type": "skill",
+  "category": "faith-nature",
+  "tier": 1,
+  "earnIncomeLevel": "settlement",
+  "bonus": 0,
+  "skills": [
+    "religion"
   ],
-  "availableItemsRules": [
-    {
-      "value": 1,
-      "group": "divine",
-      "maximumStacks": 3
-    }
-  ],
-  "traits": [
-    "building"
-  ],
-  "affectsDowntime": false,
-  "reducesUnrest": false,
-  "level": 1,
   "construction": {
-    "rp": 8,
-    "lumber": 2,
-    "stone": 1,
-    "skills": [
-      {
-        "skill": "folklore",
-        "proficiencyRank": 1
-      }
-    ],
-    "dc": 15
+    "resources": {
+      "stone": 2
+    }
   },
-  "lots": 1
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
 }

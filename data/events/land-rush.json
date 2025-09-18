@@ -1,0 +1,73 @@
+{
+  "id": "land-rush",
+  "name": "pf2e-kingdom-lite.events.land-rush.name",
+  "description": "pf2e-kingdom-lite.events.land-rush.description",
+  "traits": [
+    "dangerous"
+  ],
+  "location": "pf2e-kingdom-lite.events.land-rush.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.land-rush.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "diplomacy",
+        "survival",
+        "intimidation"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalSuccess.hex",
+            "value": 2,
+            "selector": "hex",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.success.hex",
+            "value": 1,
+            "selector": "hex",
+            "enabled": true
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.land-rush.special"
+}

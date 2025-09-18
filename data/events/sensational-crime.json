@@ -1,0 +1,65 @@
+{
+  "id": "sensational-crime",
+  "name": "pf2e-kingdom-lite.events.sensational-crime.name",
+  "description": "pf2e-kingdom-lite.events.sensational-crime.description",
+  "traits": [
+    "dangerous"
+  ],
+  "location": "pf2e-kingdom-lite.events.sensational-crime.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.sensational-crime.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "intimidation",
+        "society",
+        "diplomacy"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.sensational-crime.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.sensational-crime.stage-0.criticalSuccess.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.sensational-crime.stage-0.success.msg",
+        "modifiers": []
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.sensational-crime.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.sensational-crime.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.sensational-crime.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.sensational-crime.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.sensational-crime.special"
+}

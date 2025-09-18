@@ -2,33 +2,73 @@
   "id": "protests",
   "name": "Protests",
   "tier": "MINOR",
-  "description": "Angry citizens take to the streets in protest.",
+  "description": "Citizens take to the streets in organized protests",
   "percentileMin": 51,
   "percentileMax": 60,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Peaceful resolution, no effect",
-      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
+      "description": "address crowd",
+      "effects": {
+        "success": "Peaceful resolution, no effect",
+        "failure": "Lose 1d4 Gold (property damage, lost productivity)",
+        "criticalFailure": "Lose 2d4 Gold, -1 Fame"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1
+      }
     },
     {
       "skill": "intimidation",
-      "successEffect": "Protests dispersed, no effect",
-      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
+      "description": "disperse crowds",
+      "effects": {
+        "success": "Peaceful resolution, no effect",
+        "failure": "Lose 1d4 Gold (property damage, lost productivity)",
+        "criticalFailure": "Lose 2d4 Gold, -1 Fame"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1
+      }
     },
     {
       "skill": "performance",
-      "successEffect": "Crowd distracted, no effect",
-      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
+      "description": "distract crowds",
+      "effects": {
+        "success": "Peaceful resolution, no effect",
+        "failure": "Lose 1d4 Gold (property damage, lost productivity)",
+        "criticalFailure": "Lose 2d4 Gold, -1 Fame"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Magical calming, no effect",
-      "failureEffect": "Lose 1d4 Gold (property damage, lost productivity)",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 Fame"
+      "description": "magical calming",
+      "effects": {
+        "success": "Peaceful resolution, no effect",
+        "failure": "Lose 1d4 Gold (property damage, lost productivity)",
+        "criticalFailure": "Lose 2d4 Gold, -1 Fame"
+      },
+      "failureModifiers": {
+        "gold": "-1d4"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1
+      }
     }
   ]
 }

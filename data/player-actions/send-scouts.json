@@ -1,8 +1,8 @@
 {
   "id": "send-scouts",
   "name": "Send Scouts",
-  "category": "borders",
-  "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats.",
+  "category": "expand-borders",
+  "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats",
   "skills": [
     {
       "skill": "stealth",
@@ -31,17 +31,22 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Learn about 2 hexes"
+      "description": "Learn about 2 hexes",
+      "modifiers": {
+        "hexesRevealed": 2
+      }
     },
     "success": {
-      "description": "Learn about 1 hex"
+      "description": "Learn about 1 hex",
+      "modifiers": {
+        "hexesRevealed": 1
+      }
     },
     "failure": {
-      "description": "No report"
+      "description": "no report"
     },
     "criticalFailure": {
       "description": "Scouts lost"
     }
-  },
-  "failureCausesUnrest": false
+  }
 }

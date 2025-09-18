@@ -2,33 +2,85 @@
   "id": "noble-conspiracy",
   "name": "Noble Conspiracy",
   "tier": "MAJOR",
-  "description": "Nobles plot against the throne.",
+  "description": "Nobles plot to overthrow the kingdom's leadership",
   "percentileMin": 53,
   "percentileMax": 59,
   "skillOptions": [
     {
       "skill": "stealth",
-      "successEffect": "Conspiracy exposed and dealt with, no effect",
-      "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+      "description": "uncover plot",
+      "effects": {
+        "success": "Conspiracy exposed and dealt with, no effect",
+        "failure": "Lose 1d4 Gold, -1 fame",
+        "criticalFailure": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "fame": -1
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1,
+        "leaderDisabled": 1,
+        "unrest": 1
+      }
     },
     {
       "skill": "intimidation",
-      "successEffect": "Conspirators arrested, no effect",
-      "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+      "description": "arrests",
+      "effects": {
+        "success": "Conspiracy exposed and dealt with, no effect",
+        "failure": "Lose 1d4 Gold, -1 fame",
+        "criticalFailure": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "fame": -1
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1,
+        "leaderDisabled": 1,
+        "unrest": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Political maneuvering succeeds, no effect",
-      "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+      "description": "political maneuvering",
+      "effects": {
+        "success": "Conspiracy exposed and dealt with, no effect",
+        "failure": "Lose 1d4 Gold, -1 fame",
+        "criticalFailure": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "fame": -1
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1,
+        "leaderDisabled": 1,
+        "unrest": 1
+      }
     },
     {
       "skill": "occultism",
-      "successEffect": "Truth divined, conspiracy prevented, no effect",
-      "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one PC loses kingdom action, +1 unrest"
+      "description": "divine truth",
+      "effects": {
+        "success": "Conspiracy exposed and dealt with, no effect",
+        "failure": "Lose 1d4 Gold, -1 fame",
+        "criticalFailure": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "fame": -1
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "fame": -1,
+        "leaderDisabled": 1,
+        "unrest": 1
+      }
     }
   ]
 }

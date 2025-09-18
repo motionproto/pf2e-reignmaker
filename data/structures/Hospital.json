@@ -1,37 +1,28 @@
 {
   "id": "hospital",
   "name": "structures.hospital.name",
-  "activityBonusRules": [
-    {
-      "value": 1,
-      "activity": "provide-care"
-    },
-    {
-      "value": 1,
-      "activity": "quell-unrest"
-    }
-  ],
-  "notes": "structures.hospital.notes",
-  "traits": [
-    "building"
-  ],
-  "affectsDowntime": true,
-  "reducesUnrest": false,
-  "level": 9,
-  "upgradeFrom": [
-    "herbalist"
+  "type": "skill",
+  "category": "medicine-healing",
+  "tier": 3,
+  "earnIncomeLevel": "settlement+4",
+  "bonus": 2,
+  "skills": [
+    "medicine",
+    "lore",
+    "arcana"
   ],
   "construction": {
-    "rp": 30,
-    "lumber": 10,
-    "stone": 6,
-    "skills": [
-      {
-        "skill": "defense",
-        "proficiencyRank": 2
-      }
-    ],
-    "dc": 26
+    "resources": {
+      "lumber": 2,
+      "stone": 4,
+      "ore": 2
+    }
   },
-  "lots": 2
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-3"
+  ],
+  "special": null,
+  "upgradeFrom": "infirmary"
 }

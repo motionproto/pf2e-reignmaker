@@ -1,0 +1,20 @@
+{
+  "id": "envoys-office",
+  "name": "structures.envoys-office.name",
+  "type": "support",
+  "category": "diplomacy",
+  "tier": 1,
+  "effect": "+1 Diplomatic capacity. Enables 'Establish Diplomatic Relations' action",
+  "construction": {
+    "resources": {
+      "stone": 2
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

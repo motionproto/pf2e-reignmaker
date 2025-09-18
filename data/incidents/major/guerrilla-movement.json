@@ -2,33 +2,73 @@
   "id": "guerrilla-movement",
   "name": "Guerrilla Movement",
   "tier": "MAJOR",
-  "description": "Armed rebels begin guerrilla warfare against the kingdom.",
+  "description": "Armed rebels seize control of kingdom territory",
   "percentileMin": 11,
   "percentileMax": 17,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Rebellion dispersed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+      "description": "negotiate with rebels",
+      "effects": {
+        "success": "Rebellion dispersed",
+        "failure": "Rebels seize 1d3 hexes",
+        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      },
+      "failureModifiers": {
+        "hexesLost": "1d3"
+      },
+      "criticalFailureModifiers": {
+        "hexesLost": "2d3",
+        "rebelArmy": 1
+      }
     },
     {
       "skill": "intimidation",
-      "successEffect": "Rebellion crushed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+      "description": "crush rebellion",
+      "effects": {
+        "success": "Rebellion dispersed",
+        "failure": "Rebels seize 1d3 hexes",
+        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      },
+      "failureModifiers": {
+        "hexesLost": "1d3"
+      },
+      "criticalFailureModifiers": {
+        "hexesLost": "2d3",
+        "rebelArmy": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Grievances addressed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+      "description": "address grievances",
+      "effects": {
+        "success": "Rebellion dispersed",
+        "failure": "Rebels seize 1d3 hexes",
+        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      },
+      "failureModifiers": {
+        "hexesLost": "1d3"
+      },
+      "criticalFailureModifiers": {
+        "hexesLost": "2d3",
+        "rebelArmy": 1
+      }
     },
     {
       "skill": "religion",
-      "successEffect": "Faith unites kingdom",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army"
+      "description": "appeal to faith",
+      "effects": {
+        "success": "Rebellion dispersed",
+        "failure": "Rebels seize 1d3 hexes",
+        "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      },
+      "failureModifiers": {
+        "hexesLost": "1d3"
+      },
+      "criticalFailureModifiers": {
+        "hexesLost": "2d3",
+        "rebelArmy": 1
+      }
     }
   ]
 }

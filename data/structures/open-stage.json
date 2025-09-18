@@ -1,0 +1,20 @@
+{
+  "id": "open-stage",
+  "name": "structures.open-stage.name",
+  "type": "support",
+  "category": "culture",
+  "tier": 1,
+  "effect": "PCs in this settlement gain +1 to checks made to reduce Unrest",
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

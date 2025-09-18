@@ -1,0 +1,89 @@
+{
+  "id": "notorious-heist",
+  "name": "pf2e-kingdom-lite.events.notorious-heist.name",
+  "description": "pf2e-kingdom-lite.events.notorious-heist.description",
+  "traits": [
+    "dangerous"
+  ],
+  "location": "pf2e-kingdom-lite.events.notorious-heist.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.notorious-heist.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "thievery",
+        "stealth",
+        "society"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.notorious-heist.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.criticalSuccess.imprisoned",
+            "value": 2,
+            "selector": "imprisoned_unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.notorious-heist.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.success.imprisoned",
+            "value": 1,
+            "selector": "imprisoned_unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.notorious-heist.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.failure.gold",
+            "value": -2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.notorious-heist.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.criticalFailure.gold",
+            "value": -3,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.notorious-heist.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.notorious-heist.special"
+}

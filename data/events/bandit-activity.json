@@ -1,21 +1,31 @@
 {
   "id": "bandit-activity",
-  "name": "events.banditActivity.name",
-  "description": "events.banditActivity.description",
-  "traits": ["dangerous", "continuous"],
-  "location": "events.banditActivity.location",
+  "name": "pf2e-kingdom-lite.events.bandit-activity.name",
+  "description": "pf2e-kingdom-lite.events.bandit-activity.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.bandit-activity.location",
   "modifier": 0,
-  "resolution": "events.banditActivity.resolution",
-  "resolvedOn": ["criticalSuccess", "success"],
+  "resolution": "pf2e-kingdom-lite.events.bandit-activity.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
   "stages": [
     {
-      "skills": ["intimidation", "diplomacy", "stealth"],
+      "skills": [
+        "intimidation",
+        "diplomacy",
+        "stealth"
+      ],
       "criticalSuccess": {
-        "msg": "events.banditActivity.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-kingdom-lite.events.bandit-activity.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.banditActivity.stage-0.criticalSuccess.loot",
+            "name": "pf2e-kingdom-lite.events.bandit-activity.stage-0.criticalSuccess.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -24,23 +34,23 @@
         ]
       },
       "success": {
-        "msg": "events.banditActivity.stage-0.success.msg",
+        "msg": "pf2e-kingdom-lite.events.bandit-activity.stage-0.success.msg",
         "modifiers": []
       },
       "failure": {
-        "msg": "events.banditActivity.stage-0.failure.msg",
+        "msg": "pf2e-kingdom-lite.events.bandit-activity.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.banditActivity.stage-0.failure.resourceLoss",
+            "name": "pf2e-kingdom-lite.events.bandit-activity.stage-0.failure.resources",
             "value": -1,
-            "selector": "ore",
+            "selector": "resources",
             "enabled": true,
             "turns": 1
           },
           {
             "type": "untyped",
-            "name": "events.banditActivity.stage-0.failure.unrest",
+            "name": "pf2e-kingdom-lite.events.bandit-activity.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -48,27 +58,19 @@
         ]
       },
       "criticalFailure": {
-        "msg": "events.banditActivity.stage-0.criticalFailure.msg",
+        "msg": "pf2e-kingdom-lite.events.bandit-activity.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.banditActivity.stage-0.criticalFailure.stoneLoss",
-            "value": -1,
-            "selector": "stone",
+            "name": "pf2e-kingdom-lite.events.bandit-activity.stage-0.criticalFailure.resources",
+            "value": -2,
+            "selector": "resources",
             "enabled": true,
             "turns": 1
           },
           {
             "type": "untyped",
-            "name": "events.banditActivity.stage-0.criticalFailure.oreLoss",
-            "value": -1,
-            "selector": "ore",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "events.banditActivity.stage-0.criticalFailure.unrest",
+            "name": "pf2e-kingdom-lite.events.bandit-activity.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
@@ -76,5 +78,6 @@
         ]
       }
     }
-  ]
+  ],
+  "special": "pf2e-kingdom-lite.events.bandit-activity.special"
 }

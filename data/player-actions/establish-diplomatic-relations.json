@@ -1,8 +1,8 @@
 {
   "id": "establish-diplomatic-relations",
   "name": "Establish Diplomatic Relations",
-  "category": "foreign",
-  "description": "Open formal channels of communication with neighboring powers to enable future cooperation.",
+  "category": "foreign-affairs",
+  "description": "Open formal channels of communication with neighboring powers to enable future cooperation",
   "skills": [
     {
       "skill": "diplomacy",
@@ -31,17 +31,23 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Allies + request aid"
+      "description": "Allies + request aid",
+      "modifiers": {
+        "diplomaticRelations": 2,
+        "canRequestAid": true
+      }
     },
     "success": {
-      "description": "Allies"
+      "description": "Allies",
+      "modifiers": {
+        "diplomaticRelations": 1
+      }
     },
     "failure": {
-      "description": "No effect"
+      "description": "no effect"
     },
     "criticalFailure": {
       "description": "No effect"
     }
-  },
-  "failureCausesUnrest": false
+  }
 }

@@ -1,8 +1,8 @@
 {
   "id": "request-military-aid",
   "name": "Request Military Aid",
-  "category": "foreign",
-  "description": "Call upon allies to provide troops or military support during conflicts.",
+  "category": "foreign-affairs",
+  "description": "Call upon allies to provide troops or military support during conflicts",
   "skills": [
     {
       "skill": "diplomacy",
@@ -27,10 +27,18 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain 2 allied troops or a powerful special detachment for 1 battle"
+      "description": "Gain 2 allied troops or a powerful special detachment for 1 battle",
+      "modifiers": {
+        "temporaryUnits": 2,
+        "duration": "1 battle"
+      }
     },
     "success": {
-      "description": "Gain 1 allied troop for 1 battle"
+      "description": "Gain 1 allied troop for 1 battle",
+      "modifiers": {
+        "temporaryUnits": 1,
+        "duration": "1 battle"
+      }
     },
     "failure": {
       "description": "No effect"
@@ -39,11 +47,7 @@
       "description": "Ally is offended"
     }
   },
-  "failureCausesUnrest": false,
   "requirements": [
-    {
-      "type": "ally",
-      "details": "Must have established diplomatic relations"
-    }
+    "Diplomatic relations"
   ]
 }

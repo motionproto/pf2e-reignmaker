@@ -1,0 +1,28 @@
+{
+  "id": "masterworks-foundry",
+  "name": "structures.masterworks-foundry.name",
+  "type": "skill",
+  "category": "crafting-trade",
+  "tier": 4,
+  "earnIncomeLevel": "settlement+6",
+  "bonus": 3,
+  "skills": [
+    "crafting",
+    "lore",
+    "society"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 4,
+      "stone": 4,
+      "ore": 8
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-4"
+  ],
+  "special": "Reroll 1 failed skill check per turn",
+  "upgradeFrom": "blacksmiths-guild"
+}

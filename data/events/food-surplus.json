@@ -1,21 +1,30 @@
 {
   "id": "food-surplus",
-  "name": "events.foodSurplus.name",
-  "description": "events.foodSurplus.description",
-  "traits": ["beneficial"],
-  "location": "events.foodSurplus.location",
+  "name": "pf2e-kingdom-lite.events.food-surplus.name",
+  "description": "pf2e-kingdom-lite.events.food-surplus.description",
+  "traits": [
+    "beneficial"
+  ],
+  "location": "pf2e-kingdom-lite.events.food-surplus.location",
   "modifier": 0,
-  "resolution": "events.foodSurplus.resolution",
-  "resolvedOn": ["criticalSuccess", "success", "failure"],
+  "resolution": "pf2e-kingdom-lite.events.food-surplus.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
   "stages": [
     {
-      "skills": ["nature", "society", "crafting"],
+      "skills": [
+        "nature",
+        "society",
+        "crafting"
+      ],
       "criticalSuccess": {
-        "msg": "events.foodSurplus.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-kingdom-lite.events.food-surplus.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.foodSurplus.stage-0.criticalSuccess.gold",
+            "name": "pf2e-kingdom-lite.events.food-surplus.stage-0.criticalSuccess.gold",
             "value": 3,
             "selector": "gold",
             "enabled": true,
@@ -23,7 +32,7 @@
           },
           {
             "type": "untyped",
-            "name": "events.foodSurplus.stage-0.criticalSuccess.unrestReduction",
+            "name": "pf2e-kingdom-lite.events.food-surplus.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -31,11 +40,11 @@
         ]
       },
       "success": {
-        "msg": "events.foodSurplus.stage-0.success.msg",
+        "msg": "pf2e-kingdom-lite.events.food-surplus.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.foodSurplus.stage-0.success.gold",
+            "name": "pf2e-kingdom-lite.events.food-surplus.stage-0.success.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -44,11 +53,11 @@
         ]
       },
       "failure": {
-        "msg": "events.foodSurplus.stage-0.failure.msg",
+        "msg": "pf2e-kingdom-lite.events.food-surplus.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.foodSurplus.stage-0.failure.gold",
+            "name": "pf2e-kingdom-lite.events.food-surplus.stage-0.failure.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -57,11 +66,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "events.foodSurplus.stage-0.criticalFailure.msg",
+        "msg": "pf2e-kingdom-lite.events.food-surplus.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.foodSurplus.stage-0.criticalFailure.unrest",
+            "name": "pf2e-kingdom-lite.events.food-surplus.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true

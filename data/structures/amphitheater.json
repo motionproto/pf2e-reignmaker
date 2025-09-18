@@ -1,0 +1,21 @@
+{
+  "id": "amphitheater",
+  "name": "structures.amphitheater.name",
+  "type": "support",
+  "category": "culture",
+  "tier": 2,
+  "effect": "PCs in this settlement gain +2 to checks made to reduce Unrest",
+  "construction": {
+    "resources": {
+      "lumber": 3,
+      "stone": 1
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-2"
+  ],
+  "special": null,
+  "upgradeFrom": "open-stage"
+}

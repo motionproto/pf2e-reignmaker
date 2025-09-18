@@ -2,33 +2,81 @@
   "id": "turmoil-trade-embargo",
   "name": "Trade Embargo",
   "tier": "MODERATE",
-  "description": "Neighboring kingdoms impose trade restrictions.",
+  "description": "Neighboring kingdoms impose trade restrictions",
   "percentileMin": 88,
   "percentileMax": 93,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
-      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "negotiate",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "resources": "-1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "resources": "-1d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Loopholes found, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
-      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "find loopholes",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "resources": "-1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "resources": "-1d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "deception",
-      "successEffect": "Smuggling routes established, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
-      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "smuggling routes",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "resources": "-1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "resources": "-1d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "occultism",
-      "successEffect": "Trade routes divined, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources",
-      "criticalFailureExtra": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "divine trade routes",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-1d4",
+        "resources": "-1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-2d4",
+        "resources": "-1d4+1",
+        "unrest": 1
+      }
     }
   ]
 }

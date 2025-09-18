@@ -1,0 +1,26 @@
+{
+  "id": "artisans-hall",
+  "name": "structures.artisans-hall.name",
+  "type": "skill",
+  "category": "crafting-trade",
+  "tier": 2,
+  "earnIncomeLevel": "settlement+2",
+  "bonus": 1,
+  "skills": [
+    "crafting",
+    "lore"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 2,
+      "stone": 2
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-2"
+  ],
+  "special": null,
+  "upgradeFrom": "workshop"
+}

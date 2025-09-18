@@ -1,8 +1,8 @@
 {
   "id": "repair-structure",
   "name": "Repair Structure",
-  "category": "urban",
-  "description": "Repair damaged structures within a settlement to restore its capabilities.",
+  "category": "urban-planning",
+  "description": "Repair damaged structures within a settlement to restore its capabilities",
   "skills": [
     {
       "skill": "crafting",
@@ -27,17 +27,24 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "The structure is repaired for free"
+      "description": "The structure is repaired for free",
+      "modifiers": {
+        "structureRepaired": true,
+        "costReduction": 1.0
+      }
     },
     "success": {
-      "description": "Pay 1d4 gold OR 1/2 the build cost for the structures tier"
+      "description": "Pay 1d4 gold OR 1/2 the build cost for the structures tier",
+      "modifiers": {
+        "structureRepaired": true
+      }
     },
     "failure": {
-      "description": "Remains damaged"
+      "description": "remains damaged"
     },
     "criticalFailure": {
       "description": "Lose 1 gold",
-      "resources": {
+      "modifiers": {
         "gold": -1
       }
     }

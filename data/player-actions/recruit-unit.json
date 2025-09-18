@@ -1,8 +1,8 @@
 {
   "id": "recruit-unit",
-  "name": "Recruit a Unit",
-  "category": "military",
-  "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess.",
+  "name": "Recruit Unit",
+  "category": "military-operations",
+  "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess",
   "skills": [
     {
       "skill": "diplomacy",
@@ -27,18 +27,26 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Recruit a troop equal to the party level and reduce unrest by 1",
-      "unrest": -1
+      "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
+      "modifiers": {
+        "militaryUnits": 1,
+        "unrest": -1
+      }
     },
     "success": {
-      "description": "Recruit a troop equal to the party level"
+      "description": "Recruit a troop equal to the party level",
+      "modifiers": {
+        "militaryUnits": 1
+      }
     },
     "failure": {
       "description": "No Recruits"
     },
     "criticalFailure": {
       "description": "No Recruit; +1 Unrest",
-      "unrest": 1
+      "modifiers": {
+        "unrest": 1
+      }
     }
   },
   "failureCausesUnrest": true

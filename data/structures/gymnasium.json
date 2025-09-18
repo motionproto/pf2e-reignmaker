@@ -1,0 +1,24 @@
+{
+  "id": "gymnasium",
+  "name": "structures.gymnasium.name",
+  "type": "skill",
+  "category": "military-training",
+  "tier": 1,
+  "earnIncomeLevel": "settlement",
+  "bonus": 0,
+  "skills": [
+    "athletics"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

@@ -1,9 +1,8 @@
 {
   "id": "deal-with-unrest",
   "name": "Deal with Unrest",
-  "category": "stability",
-  "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays.",
-  "availability": "End of Turn Only",
+  "category": "uphold-stability",
+  "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays",
   "skills": [
     {
       "skill": "performance",
@@ -38,29 +37,28 @@
       "description": "impressive physical feats"
     }
   ],
-  "failureCausesUnrest": false,
-  "limitations": {
-    "endOfTurnOnly": true
-  },
-  "coordinatedEffort": {
-    "available": true,
-    "bonus": 1
-  },
   "effects": {
     "criticalSuccess": {
       "description": "Reduce Unrest by 3",
-      "unrest": -3
+      "modifiers": {
+        "unrest": -3
+      }
     },
     "success": {
       "description": "Reduce Unrest by 2",
-      "unrest": -2
+      "modifiers": {
+        "unrest": -2
+      }
     },
     "failure": {
       "description": "Reduce Unrest by 1",
-      "unrest": -1
+      "modifiers": {
+        "unrest": -1
+      }
     },
     "criticalFailure": {
       "description": "No effect"
     }
-  }
+  },
+  "special": "End of Turn Only"
 }

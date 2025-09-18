@@ -1,8 +1,8 @@
 {
   "id": "execute-or-pardon-prisoners",
   "name": "Execute or Pardon Prisoners",
-  "category": "stability",
-  "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice.",
+  "category": "uphold-stability",
+  "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice",
   "skills": [
     {
       "skill": "intimidation",
@@ -28,24 +28,29 @@
   "effects": {
     "criticalSuccess": {
       "description": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
-      "unrest": -1
+      "modifiers": {
+        "imprisonedUnrest": "removeAll",
+        "unrest": -1
+      }
     },
     "success": {
-      "description": "Remove 1d4 imprisoned Unrest from the settlement"
+      "description": "Remove 1d4 imprisoned Unrest from the settlement",
+      "modifiers": {
+        "imprisonedUnrest": "remove1d4"
+      }
     },
     "failure": {
       "description": "Remove none"
     },
     "criticalFailure": {
       "description": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
-      "unrest": 1
+      "modifiers": {
+        "unrest": 1
+      }
     }
   },
   "failureCausesUnrest": true,
   "requirements": [
-    {
-      "type": "structure",
-      "details": "Justice structure with imprisoned Unrest"
-    }
+    "Justice structure with imprisoned unrest"
   ]
 }

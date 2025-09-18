@@ -1,0 +1,24 @@
+{
+  "id": "hunters-lodge",
+  "name": "structures.hunters-lodge.name",
+  "type": "skill",
+  "category": "exploration-wilderness",
+  "tier": 1,
+  "earnIncomeLevel": "settlement",
+  "bonus": 0,
+  "skills": [
+    "survival"
+  ],
+  "construction": {
+    "resources": {
+      "lumber": 2
+    }
+  },
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

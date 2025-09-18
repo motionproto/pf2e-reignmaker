@@ -1,8 +1,8 @@
 {
   "id": "train-army",
   "name": "Train Army",
-  "category": "military",
-  "description": "Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods.",
+  "category": "military-operations",
+  "description": "Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods",
   "skills": [
     {
       "skill": "intimidation",
@@ -27,10 +27,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Troop is promoted up to party level"
+      "description": "Troop is promoted up to party level",
+      "modifiers": {
+        "armyLevel": "partyLevel"
+      }
     },
     "success": {
-      "description": "+1 level (max party level)"
+      "description": "+1 level (max party level)",
+      "modifiers": {
+        "armyLevel": 1
+      }
     },
     "failure": {
       "description": "No change"
@@ -38,6 +44,5 @@
     "criticalFailure": {
       "description": "No change"
     }
-  },
-  "failureCausesUnrest": false
+  }
 }

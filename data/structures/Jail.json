@@ -1,34 +1,21 @@
 {
   "id": "jail",
   "name": "structures.jail.name",
-  "skillBonusRules": [
-    {
-      "value": 1,
-      "skill": "intrigue",
-      "activity": "quell-unrest"
+  "type": "support",
+  "category": "justice",
+  "tier": 2,
+  "effect": "Can hold 2 imprisoned Unrest. Allows Execute action only",
+  "construction": {
+    "resources": {
+      "lumber": 2,
+      "stone": 2
     }
-  ],
-  "reduceRuinBy": {
-    "value": "1",
-    "ruin": "crime"
   },
   "traits": [
-    "building"
+    "building",
+    "support-structure",
+    "tier-2"
   ],
-  "affectsDowntime": false,
-  "reducesRuin": true,
-  "level": 2,
-  "construction": {
-    "rp": 14,
-    "lumber": 4,
-    "stone": 4,
-    "ore": 2,
-    "skills": [
-      {
-        "skill": "defense"
-      }
-    ],
-    "dc": 16
-  },
-  "lots": 1
+  "special": null,
+  "upgradeFrom": "stocks"
 }

@@ -1,8 +1,8 @@
 {
   "id": "build-structure",
   "name": "Build Structure",
-  "category": "urban",
-  "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities.",
+  "category": "urban-planning",
+  "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities",
   "skills": [
     {
       "skill": "crafting",
@@ -27,13 +27,20 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build Structures for half cost"
+      "description": "Build Structures for half cost",
+      "modifiers": {
+        "structureBuilt": true,
+        "costReduction": 0.5
+      }
     },
     "success": {
-      "description": "Build 1 Structure"
+      "description": "Build 1 Structure",
+      "modifiers": {
+        "structureBuilt": true
+      }
     },
     "failure": {
-      "description": "No progress"
+      "description": "no progress"
     },
     "criticalFailure": {
       "description": "No progress"

@@ -1,0 +1,20 @@
+{
+  "id": "stocks",
+  "name": "structures.stocks.name",
+  "type": "support",
+  "category": "justice",
+  "tier": 1,
+  "effect": "Can hold 1 imprisoned Unrest. Allows Execute action only",
+  "construction": {
+    "resources": {
+      "stone": 2
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-1"
+  ],
+  "special": null,
+  "upgradeFrom": null
+}

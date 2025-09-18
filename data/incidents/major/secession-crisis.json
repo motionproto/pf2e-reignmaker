@@ -2,33 +2,85 @@
   "id": "secession-crisis",
   "name": "Secession Crisis",
   "tier": "MAJOR",
-  "description": "A settlement declares independence from the kingdom.",
+  "description": "A settlement declares independence from your kingdom",
   "percentileMin": 81,
   "percentileMax": 87,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Independence movement quelled, no effect",
-      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
-      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+      "description": "negotiate autonomy",
+      "effects": {
+        "success": "Independence movement quelled, no effect",
+        "failure": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+        "criticalFailure": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      },
+      "failureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "gold": "-2d4"
+      },
+      "criticalFailureModifiers": {
+        "settlementLost": true,
+        "unrest": 2,
+        "armiesDefect": true
+      }
     },
     {
       "skill": "intimidation",
-      "successEffect": "Movement suppressed, no effect",
-      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
-      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+      "description": "suppress movement",
+      "effects": {
+        "success": "Independence movement quelled, no effect",
+        "failure": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+        "criticalFailure": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      },
+      "failureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "gold": "-2d4"
+      },
+      "criticalFailureModifiers": {
+        "settlementLost": true,
+        "unrest": 2,
+        "armiesDefect": true
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Grievances addressed, no effect",
-      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
-      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+      "description": "address grievances",
+      "effects": {
+        "success": "Independence movement quelled, no effect",
+        "failure": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+        "criticalFailure": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      },
+      "failureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "gold": "-2d4"
+      },
+      "criticalFailureModifiers": {
+        "settlementLost": true,
+        "unrest": 2,
+        "armiesDefect": true
+      }
     },
     {
       "skill": "performance",
-      "successEffect": "Loyalty inspired, no effect",
-      "failureEffect": "Settlement loses one level, highest tier structure destroyed, lose 2d4 Gold",
-      "criticalFailureExtra": "Settlement declares independence with all adjacent hexes, +2 Unrest"
+      "description": "inspire loyalty",
+      "effects": {
+        "success": "Independence movement quelled, no effect",
+        "failure": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+        "criticalFailure": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      },
+      "failureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "gold": "-2d4"
+      },
+      "criticalFailureModifiers": {
+        "settlementLost": true,
+        "unrest": 2,
+        "armiesDefect": true
+      }
     }
   ]
 }

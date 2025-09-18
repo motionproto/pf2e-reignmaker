@@ -1,8 +1,8 @@
 {
   "id": "establish-settlement",
-  "name": "Establish a Settlement",
-  "category": "urban",
-  "description": "Found a new community where settlers can establish homes and begin building infrastructure.",
+  "name": "Establish Settlement",
+  "category": "urban-planning",
+  "description": "Found a new community where settlers can establish homes and begin building infrastructure",
   "skills": [
     {
       "skill": "society",
@@ -27,16 +27,24 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Found village +1 Structure"
+      "description": "Found village +1 Structure",
+      "modifiers": {
+        "settlementLevel": 1,
+        "structures": 1
+      }
     },
     "success": {
-      "description": "Found village"
+      "description": "Found village",
+      "modifiers": {
+        "settlementLevel": 1
+      }
     },
     "failure": {
-      "description": "No effect"
+      "description": "no effect"
     },
     "criticalFailure": {
       "description": "No effect"
     }
-  }
+  },
+  "special": "Villages are typically Level 1. A new settlement begins as a Village unless special circumstances apply"
 }

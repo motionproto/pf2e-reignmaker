@@ -1,0 +1,22 @@
+{
+  "id": "donjon",
+  "name": "structures.donjon.name",
+  "type": "support",
+  "category": "justice",
+  "tier": 4,
+  "effect": "Can hold 8 imprisoned Unrest. Allows Execute or Pardon actions",
+  "construction": {
+    "resources": {
+      "lumber": 4,
+      "stone": 6,
+      "ore": 6
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-4"
+  ],
+  "special": "Once per turn, can convert 1 regular Unrest to imprisoned Unrest without an action",
+  "upgradeFrom": "prison"
+}

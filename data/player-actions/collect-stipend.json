@@ -1,8 +1,8 @@
 {
   "id": "collect-stipend",
   "name": "Collect Stipend",
-  "category": "economic",
-  "description": "Draw personal funds from the kingdom's treasury as compensation for your service.",
+  "category": "economic-resources",
+  "description": "Draw personal funds from the kingdom's treasury as compensation for your service",
   "skills": [
     {
       "skill": "intimidation",
@@ -35,25 +35,35 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain double the listed amount"
+      "description": "Gain double the listed amount",
+      "modifiers": {
+        "personalGold": "double"
+      }
     },
     "success": {
-      "description": "Gain the listed amount"
+      "description": "Gain the listed amount",
+      "modifiers": {
+        "personalGold": "normal"
+      }
     },
     "failure": {
       "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
-      "unrest": 1
+      "modifiers": {
+        "personalGold": "half",
+        "unrest": 1
+      }
     },
     "criticalFailure": {
       "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
-      "unrest": 2
+      "modifiers": {
+        "personalGold": 0,
+        "unrest": "1d4"
+      }
     }
   },
   "failureCausesUnrest": true,
   "requirements": [
-    {
-      "type": "structure",
-      "details": "Counting House (T2) or higher Taxation structure"
-    }
-  ]
+    "Counting House (T2) or higher Taxation structure"
+  ],
+  "special": "The PC gains personal Gold based on the settlement's level and the highest active Taxation tier in the kingdom"
 }

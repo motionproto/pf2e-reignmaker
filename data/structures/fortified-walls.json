@@ -1,0 +1,22 @@
+{
+  "id": "fortified-walls",
+  "name": "structures.fortified-walls.name",
+  "type": "support",
+  "category": "fortifications",
+  "tier": 3,
+  "effect": "+1 Army AC, +2 Effective Level",
+  "construction": {
+    "resources": {
+      "lumber": 1,
+      "stone": 4,
+      "ore": 3
+    }
+  },
+  "traits": [
+    "building",
+    "support-structure",
+    "tier-3"
+  ],
+  "special": null,
+  "upgradeFrom": "stone-walls"
+}

@@ -1,21 +1,30 @@
 {
   "id": "archaeological-find",
-  "name": "events.archaeologicalFind.name",
-  "description": "events.archaeologicalFind.description",
-  "traits": ["beneficial"],
-  "location": "events.archaeologicalFind.location",
+  "name": "pf2e-kingdom-lite.events.archaeological-find.name",
+  "description": "pf2e-kingdom-lite.events.archaeological-find.description",
+  "traits": [
+    "beneficial"
+  ],
+  "location": "pf2e-kingdom-lite.events.archaeological-find.location",
   "modifier": 0,
-  "resolution": "events.archaeologicalFind.resolution",
-  "resolvedOn": ["criticalSuccess", "success"],
+  "resolution": "pf2e-kingdom-lite.events.archaeological-find.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
   "stages": [
     {
-      "skills": ["society", "religion", "occultism"],
+      "skills": [
+        "society",
+        "religion",
+        "occultism"
+      ],
       "criticalSuccess": {
-        "msg": "events.archaeologicalFind.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.criticalSuccess.gold",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -23,14 +32,14 @@
           },
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.criticalSuccess.unrestReduction",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.criticalSuccess.fame",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.fame",
             "value": 1,
             "selector": "fame",
             "enabled": true
@@ -38,11 +47,11 @@
         ]
       },
       "success": {
-        "msg": "events.archaeologicalFind.stage-0.success.msg",
+        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.success.gold",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.success.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -51,24 +60,31 @@
         ]
       },
       "failure": {
-        "msg": "events.archaeologicalFind.stage-0.failure.msg",
+        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.failure.resource",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.failure.resource",
             "value": 1,
-            "selector": "stone",
+            "selector": "food",
             "enabled": true,
-            "turns": 1
+            "turns": 1,
+            "choice": [
+              "food",
+              "ore",
+              "stone",
+              "lumber",
+              "luxuries"
+            ]
           }
         ]
       },
       "criticalFailure": {
-        "msg": "events.archaeologicalFind.stage-0.criticalFailure.msg",
+        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "events.archaeologicalFind.stage-0.criticalFailure.unrest",
+            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -76,5 +92,6 @@
         ]
       }
     }
-  ]
+  ],
+  "special": "pf2e-kingdom-lite.events.archaeological-find.special"
 }

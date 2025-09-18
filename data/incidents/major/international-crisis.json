@@ -2,33 +2,73 @@
   "id": "international-crisis",
   "name": "International Crisis",
   "tier": "MAJOR",
-  "description": "Multiple kingdoms turn against you due to internal chaos.",
+  "description": "Multiple kingdoms turn against you due to internal chaos",
   "percentileMin": 88,
   "percentileMax": 100,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Crisis contained, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "damage control",
+      "effects": {
+        "success": "Crisis contained, no effect",
+        "failure": "One kingdom's attitude worsens by 2 steps",
+        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      },
+      "failureModifiers": {
+        "diplomaticRelations": -2
+      },
+      "criticalFailureModifiers": {
+        "diplomaticRelations": -4,
+        "fame": -1
+      }
     },
     {
       "skill": "deception",
-      "successEffect": "Blame shifted, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "blame shifting",
+      "effects": {
+        "success": "Crisis contained, no effect",
+        "failure": "One kingdom's attitude worsens by 2 steps",
+        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      },
+      "failureModifiers": {
+        "diplomaticRelations": -2
+      },
+      "criticalFailureModifiers": {
+        "diplomaticRelations": -4,
+        "fame": -1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Formal reparations accepted, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "formal reparations",
+      "effects": {
+        "success": "Crisis contained, no effect",
+        "failure": "One kingdom's attitude worsens by 2 steps",
+        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      },
+      "failureModifiers": {
+        "diplomaticRelations": -2
+      },
+      "criticalFailureModifiers": {
+        "diplomaticRelations": -4,
+        "fame": -1
+      }
     },
     {
       "skill": "performance",
-      "successEffect": "Public relations campaign succeeds, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "public relations",
+      "effects": {
+        "success": "Crisis contained, no effect",
+        "failure": "One kingdom's attitude worsens by 2 steps",
+        "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      },
+      "failureModifiers": {
+        "diplomaticRelations": -2
+      },
+      "criticalFailureModifiers": {
+        "diplomaticRelations": -4,
+        "fame": -1
+      }
     }
   ]
 }

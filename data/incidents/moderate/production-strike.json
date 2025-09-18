@@ -2,33 +2,69 @@
   "id": "production-strike",
   "name": "Production Strike",
   "tier": "MODERATE",
-  "description": "Workers refuse to produce critical resources.",
+  "description": "Workers strike, halting resource production",
   "percentileMin": 16,
   "percentileMax": 24,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Strike ends, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+      "description": "negotiate with workers",
+      "effects": {
+        "success": "Strike ends, no effect",
+        "failure": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+        "criticalFailure": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      },
+      "failureModifiers": {
+        "resourceLoss": "1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "resourceLoss": "2d4+1"
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Arbitration successful, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+      "description": "arbitrate",
+      "effects": {
+        "success": "Strike ends, no effect",
+        "failure": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+        "criticalFailure": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      },
+      "failureModifiers": {
+        "resourceLoss": "1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "resourceLoss": "2d4+1"
+      }
     },
     {
       "skill": "crafting",
-      "successEffect": "Work alongside strikers, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+      "description": "work alongside",
+      "effects": {
+        "success": "Strike ends, no effect",
+        "failure": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+        "criticalFailure": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      },
+      "failureModifiers": {
+        "resourceLoss": "1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "resourceLoss": "2d4+1"
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Production automated, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource"
+      "description": "automate production",
+      "effects": {
+        "success": "Strike ends, no effect",
+        "failure": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+        "criticalFailure": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      },
+      "failureModifiers": {
+        "resourceLoss": "1d4+1"
+      },
+      "criticalFailureModifiers": {
+        "resourceLoss": "2d4+1"
+      }
     }
   ]
 }

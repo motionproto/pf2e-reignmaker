@@ -2,33 +2,81 @@
   "id": "rebellion-trade-embargo",
   "name": "Trade Embargo",
   "tier": "MAJOR",
-  "description": "Complete trade blockade by neighboring kingdoms.",
+  "description": "A complete trade embargo devastates your economy",
   "percentileMin": 25,
   "percentileMax": 31,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "negotiate",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "resources": "-2d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-3d4",
+        "resources": "-2d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Loopholes exploited, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "find loopholes",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "resources": "-2d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-3d4",
+        "resources": "-2d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "deception",
-      "successEffect": "Smuggling network established, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "smuggling routes",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "resources": "-2d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-3d4",
+        "resources": "-2d4+1",
+        "unrest": 1
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Teleportation network created, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "teleportation network",
+      "effects": {
+        "success": "Trade continues, no effect",
+        "failure": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+        "criticalFailure": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "resources": "-2d4+1"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-3d4",
+        "resources": "-2d4+1",
+        "unrest": 1
+      }
     }
   ]
 }

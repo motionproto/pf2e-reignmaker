@@ -2,33 +2,77 @@
   "id": "economic-crash",
   "name": "Economic Crash",
   "tier": "MAJOR",
-  "description": "Complete economic collapse threatens the kingdom.",
+  "description": "Your kingdom's economy collapses",
   "percentileMin": 60,
   "percentileMax": 66,
   "skillOptions": [
     {
       "skill": "society",
-      "successEffect": "Economy stabilized, no effect",
-      "failureEffect": "Lose 2d6 gold, highest tier commerce structure damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, highest tier commerce structure destroyed"
+      "description": "economic reform",
+      "effects": {
+        "success": "Economy stabilized, no effect",
+        "failure": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+        "criticalFailure": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      },
+      "failureModifiers": {
+        "gold": "-2d6",
+        "structureTypeDamaged": "commerce"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-4d6",
+        "structureTypeDestroyed": "commerce"
+      }
     },
     {
       "skill": "diplomacy",
-      "successEffect": "Loans secured, no effect",
-      "failureEffect": "Lose 2d6 gold, highest tier commerce structure damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, highest tier commerce structure destroyed"
+      "description": "secure loans",
+      "effects": {
+        "success": "Economy stabilized, no effect",
+        "failure": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+        "criticalFailure": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      },
+      "failureModifiers": {
+        "gold": "-2d6",
+        "structureTypeDamaged": "commerce"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-4d6",
+        "structureTypeDestroyed": "commerce"
+      }
     },
     {
       "skill": "crafting",
-      "successEffect": "Production boosted, no effect",
-      "failureEffect": "Lose 2d6 gold, highest tier commerce structure damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, highest tier commerce structure destroyed"
+      "description": "boost production",
+      "effects": {
+        "success": "Economy stabilized, no effect",
+        "failure": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+        "criticalFailure": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      },
+      "failureModifiers": {
+        "gold": "-2d6",
+        "structureTypeDamaged": "commerce"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-4d6",
+        "structureTypeDestroyed": "commerce"
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Resources transmuted, no effect",
-      "failureEffect": "Lose 2d6 gold, highest tier commerce structure damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, highest tier commerce structure destroyed"
+      "description": "transmute resources",
+      "effects": {
+        "success": "Economy stabilized, no effect",
+        "failure": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+        "criticalFailure": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      },
+      "failureModifiers": {
+        "gold": "-2d6",
+        "structureTypeDamaged": "commerce"
+      },
+      "criticalFailureModifiers": {
+        "gold": "-4d6",
+        "structureTypeDestroyed": "commerce"
+      }
     }
   ]
 }

@@ -2,33 +2,69 @@
   "id": "rising-tensions",
   "name": "Rising Tensions",
   "tier": "MINOR",
-  "description": "General unease spreads throughout the kingdom.",
+  "description": "General tensions rise throughout your kingdom",
   "percentileMin": 71,
   "percentileMax": 80,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Tensions ease, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "description": "calm populace",
+      "effects": {
+        "success": "Tensions ease, no effect",
+        "failure": "+1 Unrest",
+        "criticalFailure": "+2 Unrest"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2
+      }
     },
     {
       "skill": "religion",
-      "successEffect": "Spiritual guidance calms, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "description": "spiritual guidance",
+      "effects": {
+        "success": "Tensions ease, no effect",
+        "failure": "+1 Unrest",
+        "criticalFailure": "+2 Unrest"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2
+      }
     },
     {
       "skill": "performance",
-      "successEffect": "Entertainment distracts, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "description": "entertainment",
+      "effects": {
+        "success": "Tensions ease, no effect",
+        "failure": "+1 Unrest",
+        "criticalFailure": "+2 Unrest"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2
+      }
     },
     {
       "skill": "arcana",
-      "successEffect": "Magical displays impress, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "description": "magical displays",
+      "effects": {
+        "success": "Tensions ease, no effect",
+        "failure": "+1 Unrest",
+        "criticalFailure": "+2 Unrest"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2
+      }
     }
   ]
 }

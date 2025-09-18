@@ -2,27 +2,63 @@
   "id": "rebellion-settlement-crisis",
   "name": "Settlement Crisis",
   "tier": "MAJOR",
-  "description": "A major settlement faces complete collapse.",
+  "description": "A major settlement faces total collapse",
   "percentileMin": 32,
   "percentileMax": 38,
   "skillOptions": [
     {
       "skill": "diplomacy",
-      "successEffect": "Settlement stabilized, no effect",
-      "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum 1), 1 structure destroyed, +1 unrest"
+      "description": "address concerns",
+      "effects": {
+        "success": "Settlement stabilized, no effect",
+        "failure": "Random settlement loses 2d4 Gold OR 2 structures damaged",
+        "criticalFailure": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "structureDamaged": 2
+      },
+      "criticalFailureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "unrest": 1
+      }
     },
     {
       "skill": "society",
-      "successEffect": "Emergency aid prevents collapse, no effect",
-      "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum 1), 1 structure destroyed, +1 unrest"
+      "description": "emergency aid",
+      "effects": {
+        "success": "Settlement stabilized, no effect",
+        "failure": "Random settlement loses 2d4 Gold OR 2 structures damaged",
+        "criticalFailure": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "structureDamaged": 2
+      },
+      "criticalFailureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "unrest": 1
+      }
     },
     {
       "skill": "religion",
-      "successEffect": "Faith provides hope, no effect",
-      "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum 1), 1 structure destroyed, +1 unrest"
+      "description": "provide hope",
+      "effects": {
+        "success": "Settlement stabilized, no effect",
+        "failure": "Random settlement loses 2d4 Gold OR 2 structures damaged",
+        "criticalFailure": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      },
+      "failureModifiers": {
+        "gold": "-2d4",
+        "structureDamaged": 2
+      },
+      "criticalFailureModifiers": {
+        "settlementLevel": -1,
+        "structureDestroyed": 1,
+        "unrest": 1
+      }
     }
   ]
 }

@@ -44,6 +44,20 @@ class LanguageManager:
         # Load the full JSON structure (we'll optimize this later if needed)
         self.data = self._load_json()
     
+    def reload(self) -> None:
+        """Force reload all data from disk, clearing caches and pending changes."""
+        # Clear all internal state
+        self.cache.clear()
+        self.changes = {
+            "added": {},
+            "modified": {},
+            "deleted": set()
+        }
+        
+        # Reload data from disk
+        self.index = self._load_index()
+        self.data = self._load_json()
+    
     def _load_index(self) -> Optional[Dict]:
         """Load the index file if it exists."""
         if self.index_file.exists():

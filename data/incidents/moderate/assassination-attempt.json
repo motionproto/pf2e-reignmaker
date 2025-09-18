@@ -2,27 +2,57 @@
   "id": "assassination-attempt",
   "name": "Assassination Attempt",
   "tier": "MODERATE",
-  "description": "An attempt is made on a kingdom leader's life.",
+  "description": "An assassin targets one of your kingdom's leaders",
   "percentileMin": 79,
   "percentileMax": 87,
   "skillOptions": [
     {
       "skill": "athletics",
-      "successEffect": "Assassination prevented, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "protect target",
+      "effects": {
+        "success": "Assassination prevented, no effect",
+        "failure": "Leader escapes; +1 Unrest",
+        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2,
+        "leaderWounded": true
+      }
     },
     {
       "skill": "medicine",
-      "successEffect": "Wounds treated quickly, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "treat wounds",
+      "effects": {
+        "success": "Assassination prevented, no effect",
+        "failure": "Leader escapes; +1 Unrest",
+        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2,
+        "leaderWounded": true
+      }
     },
     {
       "skill": "stealth",
-      "successEffect": "Assassin avoided, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "avoid the assassin",
+      "effects": {
+        "success": "Assassination prevented, no effect",
+        "failure": "Leader escapes; +1 Unrest",
+        "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      },
+      "failureModifiers": {
+        "unrest": 1
+      },
+      "criticalFailureModifiers": {
+        "unrest": 2,
+        "leaderWounded": true
+      }
     }
   ]
 }

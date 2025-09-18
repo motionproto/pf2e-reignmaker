@@ -1,8 +1,8 @@
 {
   "id": "claim-hexes",
   "name": "Claim Hexes",
-  "category": "borders",
-  "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands.",
+  "category": "expand-borders",
+  "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands",
   "skills": [
     {
       "skill": "nature",
@@ -27,22 +27,29 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Claim all targeted hexes +1 extra hex"
+      "description": "Claim all targeted hexes +1 extra hex",
+      "modifiers": {
+        "hexesClaimed": "proficiency+1"
+      }
     },
     "success": {
-      "description": "Claim targeted hexes (based on proficiency)"
+      "description": "Claim targeted hexes (based on proficiency)",
+      "modifiers": {
+        "hexesClaimed": "proficiency"
+      }
     },
     "failure": {
-      "description": "No effect"
+      "description": "no effect"
     },
     "criticalFailure": {
       "description": "No effect"
     }
   },
   "proficiencyScaling": {
-    "trained": "Claim 1 hex per action",
-    "expert": "Claim 1 hex per action",
-    "master": "Claim 2 hexes per action",
-    "legendary": "Claim 3 hexes per action"
-  }
+    "trained": 1,
+    "expert": 1,
+    "master": 2,
+    "legendary": 3
+  },
+  "special": "+2 circumstance bonus when claiming hexes adjacent to 3+ controlled hexes"
 }

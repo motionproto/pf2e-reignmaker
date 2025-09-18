@@ -1,0 +1,74 @@
+{
+  "id": "festive-invitation",
+  "name": "pf2e-kingdom-lite.events.festive-invitation.name",
+  "description": "pf2e-kingdom-lite.events.festive-invitation.description",
+  "traits": [
+    "beneficial"
+  ],
+  "location": "pf2e-kingdom-lite.events.festive-invitation.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.festive-invitation.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "diplomacy",
+        "performance",
+        "society"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.festive-invitation.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.festive-invitation.stage-0.criticalSuccess.gold",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.festive-invitation.stage-0.criticalSuccess.unrest",
+            "value": -1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.festive-invitation.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.festive-invitation.stage-0.success.gold",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.festive-invitation.stage-0.failure.msg",
+        "modifiers": []
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.festive-invitation.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.festive-invitation.stage-0.criticalFailure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.festive-invitation.special"
+}

@@ -1,0 +1,106 @@
+{
+  "id": "raiders",
+  "name": "pf2e-kingdom-lite.events.raiders.name",
+  "description": "pf2e-kingdom-lite.events.raiders.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.raiders.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.raiders.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "intimidation",
+        "diplomacy",
+        "stealth"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.raiders.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.criticalSuccess.gold",
+            "value": 1,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.raiders.stage-0.success.msg",
+        "modifiers": []
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.raiders.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.failure.gold",
+            "value": -2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.failure.food",
+            "value": -2,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.raiders.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.criticalFailure.gold",
+            "value": -2,
+            "selector": "gold",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.criticalFailure.food",
+            "value": -2,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          },
+          {
+            "type": "event",
+            "name": "pf2e-kingdom-lite.events.raiders.stage-0.criticalFailure.damage",
+            "value": 1,
+            "selector": "damage_structure",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ],
+  "special": "pf2e-kingdom-lite.events.raiders.special"
+}

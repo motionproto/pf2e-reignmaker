@@ -1,36 +1,28 @@
 {
   "id": "university",
   "name": "structures.university.name",
-  "activityBonusRules": [
-    {
-      "value": 3,
-      "activity": "creative-solution"
-    }
-  ],
-  "notes": "structures.university.notes",
-  "traits": [
-    "building",
-    "edifice",
-    "famous"
-  ],
-  "affectsDowntime": true,
-  "reducesUnrest": false,
-  "level": 15,
-  "upgradeFrom": [
-    "academy"
+  "type": "skill",
+  "category": "knowledge-magic",
+  "tier": 3,
+  "earnIncomeLevel": "settlement+4",
+  "bonus": 2,
+  "skills": [
+    "lore",
+    "arcana",
+    "occultism"
   ],
   "construction": {
-    "rp": 78,
-    "lumber": 18,
-    "stone": 18,
-    "luxuries": 18,
-    "skills": [
-      {
-        "skill": "scholarship",
-        "proficiencyRank": 3
-      }
-    ],
-    "dc": 34
+    "resources": {
+      "lumber": 2,
+      "stone": 4,
+      "ore": 2
+    }
   },
-  "lots": 4
+  "traits": [
+    "building",
+    "skill-structure",
+    "tier-3"
+  ],
+  "special": null,
+  "upgradeFrom": "library"
 }

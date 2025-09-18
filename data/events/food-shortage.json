@@ -1,0 +1,91 @@
+{
+  "id": "food-shortage",
+  "name": "pf2e-kingdom-lite.events.food-shortage.name",
+  "description": "pf2e-kingdom-lite.events.food-shortage.description",
+  "traits": [
+    "dangerous",
+    "continuous"
+  ],
+  "location": "pf2e-kingdom-lite.events.food-shortage.location",
+  "modifier": 0,
+  "resolution": "pf2e-kingdom-lite.events.food-shortage.resolution",
+  "resolvedOn": [
+    "criticalSuccess",
+    "success"
+  ],
+  "stages": [
+    {
+      "skills": [
+        "nature",
+        "survival",
+        "diplomacy"
+      ],
+      "criticalSuccess": {
+        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalSuccess.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalSuccess.food",
+            "value": -2,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "success": {
+        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.success.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.success.food",
+            "value": -4,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          }
+        ]
+      },
+      "failure": {
+        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.food",
+            "value": -6,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.unrest",
+            "value": 1,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      },
+      "criticalFailure": {
+        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.msg",
+        "modifiers": [
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.food",
+            "value": -8,
+            "selector": "food",
+            "enabled": true,
+            "turns": 1
+          },
+          {
+            "type": "untyped",
+            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.unrest",
+            "value": 2,
+            "selector": "unrest",
+            "enabled": true
+          }
+        ]
+      }
+    }
+  ]
+}

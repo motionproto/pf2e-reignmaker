@@ -1,8 +1,8 @@
 {
   "id": "create-worksite",
   "name": "Create Worksite",
-  "category": "economic",
-  "description": "Establish resource extraction operations to harness the natural wealth of your territories.",
+  "category": "economic-resources",
+  "description": "Establish resource extraction operations to harness the natural wealth of your territories",
   "skills": [
     {
       "skill": "crafting",
@@ -31,10 +31,17 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Immediately gain 1 Resource of the appropriate type, the Worksite is established and produces next turn"
+      "description": "Immediately gain 1 Resource of the appropriate type, the Worksite is established and produces next turn",
+      "modifiers": {
+        "worksiteLevel": 1,
+        "resources": 1
+      }
     },
     "success": {
-      "description": "The Worksite is established and produces next turn"
+      "description": "The Worksite is established and produces next turn",
+      "modifiers": {
+        "worksiteLevel": 1
+      }
     },
     "failure": {
       "description": "No effect"
@@ -42,5 +49,6 @@
     "criticalFailure": {
       "description": "No effect"
     }
-  }
+  },
+  "special": "Choose a controlled hex. Establish a valid Worksite (Farm, Quarry, Mine, or Lumbermill)"
 }

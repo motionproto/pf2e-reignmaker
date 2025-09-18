@@ -1,0 +1,3280 @@
+{
+  "pf2e-kingdom-lite": {
+    "actions": {
+      "arrest-dissidents": {
+        "description": "Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system",
+        "effects": {
+          "criticalFailure": "Botched arrests cause riots; gain 1 Unrest",
+          "criticalSuccess": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
+          "failure": "No effect",
+          "success": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)"
+        },
+        "name": "Arrest Dissidents",
+        "requirements": "Justice structure with capacity",
+        "skills": {
+          "athletics": "physical pursuit",
+          "deception": "infiltration tactics",
+          "intimidation": "show of force",
+          "society": "legal procedures",
+          "stealth": "covert operations"
+        }
+      },
+      "build-roads": {
+        "description": "Construct pathways between settlements to improve trade, travel, and military movement",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Build roads +1 hex",
+          "failure": "no effect",
+          "success": "Build roads"
+        },
+        "name": "Build Roads",
+        "skills": {
+          "athletics": "manual labor",
+          "crafting": "engineering expertise",
+          "nature": "work with terrain",
+          "survival": "pathfinding routes"
+        }
+      },
+      "build-structure": {
+        "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities",
+        "effects": {
+          "criticalFailure": "No progress",
+          "criticalSuccess": "Build Structures for half cost",
+          "failure": "no progress",
+          "success": "Build 1 Structure"
+        },
+        "name": "Build Structure",
+        "skills": {
+          "acrobatics": "specialized construction",
+          "athletics": "physical labor",
+          "crafting": "construction expertise",
+          "society": "organize workforce",
+          "stealth": "discrete building"
+        }
+      },
+      "claim-hexes": {
+        "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Claim all targeted hexes +1 extra hex",
+          "failure": "no effect",
+          "success": "Claim targeted hexes (based on proficiency)"
+        },
+        "name": "Claim Hexes",
+        "proficiencyScaling": "Trained/Expert: 1 hex, Master: 2 hexes, Legendary: 3 hexes",
+        "skills": {
+          "intimidation": "force submission",
+          "nature": "harmonize with the land",
+          "occultism": "mystical claiming rituals",
+          "religion": "divine mandate",
+          "survival": "establish frontier camps"
+        },
+        "special": "+2 circumstance bonus when claiming hexes adjacent to 3+ controlled hexes"
+      },
+      "collect-resources": {
+        "description": "Harvest materials from your territories, either through established worksites or direct extraction",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Gain an additional +1 Resource of the same type",
+          "failure": "No effect",
+          "success": "Collect resources from hex or worksite"
+        },
+        "name": "Collect Resources",
+        "skills": {
+          "athletics": "physical labor",
+          "crafting": "process materials",
+          "medicine": "herb collection",
+          "nature": "natural harvesting",
+          "occultism": "mystical gathering",
+          "survival": "efficient extraction"
+        },
+        "special": "Choose one controlled hex. Either collect 1 resource of the appropriate type without a Worksite or collect from the worksite (once/turn)"
+      },
+      "collect-stipend": {
+        "description": "Draw personal funds from the kingdom's treasury as compensation for your service",
+        "effects": {
+          "criticalFailure": "Gain nothing, and the kingdom gains +1d4 Unrest",
+          "criticalSuccess": "Gain double the listed amount",
+          "failure": "Gain half the listed amount, and the kingdom gains +1 Unrest",
+          "success": "Gain the listed amount"
+        },
+        "name": "Collect Stipend",
+        "requirements": "Counting House (T2) or higher Taxation structure",
+        "skills": {
+          "acrobatics": "impressive service",
+          "deception": "creative accounting",
+          "diplomacy": "formal request",
+          "intimidation": "demand payment",
+          "performance": "justify worth",
+          "society": "proper procedures",
+          "thievery": "skim the treasury"
+        },
+        "special": "The PC gains personal Gold based on the settlement's level and the highest active Taxation tier in the kingdom"
+      },
+      "coordinated-effort": {
+        "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome",
+        "effects": {
+          "criticalFailure": "Both actions fail automatically",
+          "criticalSuccess": "Both Coordinated Effort and the follow-up action gain +2 circumstance bonuses to their checks",
+          "failure": "The follow-up action gains a +1 circumstance bonus to its check",
+          "success": "The follow-up action gains a +2 circumstance bonus to its check"
+        },
+        "name": "Coordinated Effort",
+        "skills": {
+          "performance": "inspire teamwork",
+          "politics": "coordinate leadership"
+        },
+        "special": "Meta-action that modifies other actions. Exactly TWO PCs may use this together once per turn."
+      },
+      "create-worksite": {
+        "description": "Establish resource extraction operations to harness the natural wealth of your territories",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Immediately gain 1 Resource of the appropriate type, the Worksite is established and produces next turn",
+          "failure": "No effect",
+          "success": "The Worksite is established and produces next turn"
+        },
+        "name": "Create Worksite",
+        "skills": {
+          "arcana": "magical extraction",
+          "athletics": "manual labor",
+          "crafting": "build infrastructure",
+          "nature": "identify resources",
+          "religion": "blessed endeavors",
+          "survival": "frontier operations"
+        },
+        "special": "Choose a controlled hex. Establish a valid Worksite (Farm, Quarry, Mine, or Lumbermill)"
+      },
+      "deal-with-unrest": {
+        "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Reduce Unrest by 3",
+          "failure": "Reduce Unrest by 1",
+          "success": "Reduce Unrest by 2"
+        },
+        "name": "Deal with Unrest",
+        "skills": {
+          "acrobatics": "impressive physical feats",
+          "arcana": "magical persuasion",
+          "diplomacy": "diplomatic engagement",
+          "intimidation": "shows of force",
+          "medicine": "public health initiatives",
+          "occultism": "mystical demonstrations",
+          "performance": "entertainment and festivities",
+          "religion": "religious ceremonies"
+        },
+        "special": "End of Turn Only"
+      },
+      "deploy-army": {
+        "description": "Mobilize and maneuver your military forces across the kingdom's territory using various navigation methods",
+        "effects": {
+          "criticalFailure": "Your troop is lost they arrive at a Random nearby hex (1d6 for direction, 1-3 for offset); troop has -2 initiative, is fatigued and enfeebled 1; +1 Unrest",
+          "criticalSuccess": "Move, claim hex after battle",
+          "failure": "Move but -2 initiative, and troop is fatigued",
+          "success": "Move"
+        },
+        "name": "Deploy Army",
+        "skills": {
+          "athletics": "forced march",
+          "nature": "natural pathways",
+          "stealth": "covert movement",
+          "survival": "wilderness navigation",
+          "warfare-lore": "military tactics"
+        }
+      },
+      "disband-army": {
+        "description": "Release military units from service, returning soldiers to civilian life",
+        "effects": {
+          "criticalFailure": "Army disbands, +1 Unrest",
+          "criticalSuccess": "People welcome them home with honours!, -2 Unrest",
+          "failure": "Army disbands",
+          "success": "Army disbands, -1 Unrest"
+        },
+        "name": "Disband Army",
+        "skills": {
+          "diplomacy": "honorable discharge",
+          "intimidation": "stern dismissal",
+          "performance": "farewell ceremony",
+          "society": "reintegration programs",
+          "warfare-lore": "military protocol"
+        }
+      },
+      "establish-diplomatic-relations": {
+        "description": "Open formal channels of communication with neighboring powers to enable future cooperation",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Allies + request aid",
+          "failure": "no effect",
+          "success": "Allies"
+        },
+        "name": "Establish Diplomatic Relations",
+        "skills": {
+          "deception": "strategic positioning",
+          "diplomacy": "formal negotiations",
+          "occultism": "mystical bonds",
+          "performance": "diplomatic ceremonies",
+          "religion": "sacred alliances",
+          "society": "cultural exchange"
+        }
+      },
+      "establish-settlement": {
+        "description": "Found a new community where settlers can establish homes and begin building infrastructure",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Found village +1 Structure",
+          "failure": "no effect",
+          "success": "Found village"
+        },
+        "name": "Establish Settlement",
+        "skills": {
+          "diplomacy": "attract settlers",
+          "medicine": "healthy community planning",
+          "religion": "blessed founding",
+          "society": "organized settlement",
+          "survival": "frontier establishment"
+        },
+        "special": "Villages are typically Level 1. A new settlement begins as a Village unless special circumstances apply"
+      },
+      "execute-or-pardon-prisoners": {
+        "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice",
+        "effects": {
+          "criticalFailure": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
+          "criticalSuccess": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
+          "failure": "Remove none",
+          "success": "Remove 1d4 imprisoned Unrest from the settlement"
+        },
+        "name": "Execute or Pardon Prisoners",
+        "requirements": "Justice structure with imprisoned unrest",
+        "skills": {
+          "diplomacy": "clemency (pardon)",
+          "intimidation": "harsh justice (execute)",
+          "performance": "public ceremony (pardon)",
+          "religion": "divine forgiveness (pardon)",
+          "society": "legal proceedings (execute)"
+        }
+      },
+      "fortify-hex": {
+        "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Fortify, reduce Unrest by 1",
+          "failure": "Fail",
+          "success": "Fortify"
+        },
+        "name": "Fortify Hex",
+        "skills": {
+          "athletics": "manual construction",
+          "crafting": "build fortifications",
+          "intimidation": "defensive displays",
+          "thievery": "trap placement",
+          "warfare-lore": "strategic defenses"
+        },
+        "special": "Fortification Benefits: Troops defending in a fortified hex gain +1 armor class and +2 initiative circumstance bonus"
+      },
+      "hire-adventurers": {
+        "costs": "2 Gold",
+        "description": "Contract independent heroes and mercenaries to handle dangerous tasks or resolve kingdom events",
+        "effects": {
+          "criticalFailure": "The adventurers vanish or turn rogue. Gain +2 Unrest",
+          "criticalSuccess": "The adventurers resolve one ongoing Event entirely",
+          "failure": "The adventurers cause trouble. Gain +1 Unrest",
+          "success": "Roll to resolve an Event with a +2 circumstance bonus"
+        },
+        "name": "Hire Adventurers",
+        "skills": {
+          "deception": "exaggerate rewards",
+          "diplomacy": "negotiate contracts",
+          "performance": "inspire heroes",
+          "society": "use connections",
+          "thievery": "recruit rogues"
+        },
+        "special": "Limit: This action may only be attempted once per Kingdom Turn"
+      },
+      "infiltration": {
+        "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats",
+        "effects": {
+          "criticalFailure": "Spies are captured",
+          "criticalSuccess": "Valuable intel",
+          "failure": "no effect",
+          "success": "Broad intel"
+        },
+        "name": "Infiltration",
+        "skills": {
+          "acrobatics": "daring infiltration",
+          "arcana": "magical espionage",
+          "deception": "false identities",
+          "society": "social infiltration",
+          "stealth": "covert operations",
+          "thievery": "steal secrets"
+        }
+      },
+      "outfit-army": {
+        "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness",
+        "effects": {
+          "criticalFailure": "No gear",
+          "criticalSuccess": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
+          "failure": "No gear",
+          "success": "Outfit troop"
+        },
+        "name": "Outfit Army",
+        "skills": {
+          "crafting": "forge equipment",
+          "intimidation": "commandeer resources",
+          "society": "requisition supplies",
+          "thievery": "acquire through subterfuge",
+          "warfare-lore": "military procurement"
+        },
+        "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"
+      },
+      "purchase-resources": {
+        "description": "Use the kingdom's treasury to acquire needed materials from trade partners",
+        "effects": {
+          "criticalFailure": "Lose 2 Gold",
+          "criticalSuccess": "Spend 2 Gold → Gain 1 Resource, +1 free resource of the same type",
+          "failure": "No effect",
+          "success": "Spend 2 Gold → Gain 1 Resource"
+        },
+        "name": "Purchase Resources",
+        "skills": {
+          "deception": "misleading negotiations",
+          "diplomacy": "negotiate deals",
+          "intimidation": "demand better prices",
+          "mercantile-lore": "market expertise",
+          "society": "find suppliers"
+        },
+        "special": "Offer gold in exchange for a single resource type"
+      },
+      "recover-army": {
+        "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses",
+        "effects": {
+          "criticalFailure": "No recovery",
+          "criticalSuccess": "Troop recovers completely",
+          "failure": "No recovery",
+          "success": "Troop recovers 1 segment"
+        },
+        "name": "Recover Army",
+        "skills": {
+          "crafting": "repair equipment",
+          "medicine": "heal the wounded",
+          "nature": "natural remedies",
+          "performance": "boost morale",
+          "religion": "spiritual restoration",
+          "warfare-lore": "veteran experience"
+        }
+      },
+      "recruit-unit": {
+        "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess",
+        "effects": {
+          "criticalFailure": "No Recruit; +1 Unrest",
+          "criticalSuccess": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
+          "failure": "No Recruits",
+          "success": "Recruit a troop equal to the party level"
+        },
+        "name": "Recruit Unit",
+        "skills": {
+          "athletics": "demonstrations of prowess",
+          "diplomacy": "inspire patriotism",
+          "intimidation": "conscription",
+          "performance": "recruitment rallies",
+          "society": "civic duty"
+        }
+      },
+      "repair-structure": {
+        "description": "Repair damaged structures within a settlement to restore its capabilities",
+        "effects": {
+          "criticalFailure": "Lose 1 gold",
+          "criticalSuccess": "The structure is repaired for free",
+          "failure": "remains damaged",
+          "success": "Pay 1d4 gold OR 1/2 the build cost for the structures tier"
+        },
+        "name": "Repair Structure",
+        "skills": {
+          "acrobatics": "specialized construction",
+          "athletics": "physical labor",
+          "crafting": "construction expertise",
+          "society": "organize workforce",
+          "stealth": "discrete building"
+        }
+      },
+      "request-economic-aid": {
+        "description": "Appeal to allied nations for material support in times of need",
+        "effects": {
+          "criticalFailure": "Ally refuses",
+          "criticalSuccess": "Gain 3 Resources of your choice OR 3 Gold",
+          "failure": "No effect",
+          "success": "Gain 2 Resources of your choice OR 2 Gold"
+        },
+        "name": "Request Economic Aid",
+        "requirements": "Diplomatic relations",
+        "skills": {
+          "diplomacy": "formal request",
+          "medicine": "humanitarian aid",
+          "performance": "emotional appeal",
+          "society": "leverage connections",
+          "thievery": "creative accounting"
+        }
+      },
+      "request-military-aid": {
+        "description": "Call upon allies to provide troops or military support during conflicts",
+        "effects": {
+          "criticalFailure": "Ally is offended",
+          "criticalSuccess": "Gain 2 allied troops or a powerful special detachment for 1 battle",
+          "failure": "No effect",
+          "success": "Gain 1 allied troop for 1 battle"
+        },
+        "name": "Request Military Aid",
+        "requirements": "Diplomatic relations",
+        "skills": {
+          "arcana": "magical pacts",
+          "diplomacy": "alliance obligations",
+          "intimidation": "pressure tactics",
+          "society": "mutual defense",
+          "warfare-lore": "strategic necessity"
+        }
+      },
+      "sell-surplus": {
+        "description": "Convert excess resources into gold through trade with merchants and neighboring kingdoms",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Trade 2 Resources → 2 Gold",
+          "failure": "No effect",
+          "success": "Trade 2 Resources → 1 Gold"
+        },
+        "name": "Sell Surplus",
+        "skills": {
+          "deception": "inflate value",
+          "diplomacy": "trade negotiations",
+          "mercantile-lore": "trade expertise",
+          "occultism": "mystical trade",
+          "performance": "showcase goods",
+          "society": "market knowledge",
+          "thievery": "black market"
+        },
+        "special": "Trade a single resource type for gold"
+      },
+      "send-scouts": {
+        "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats",
+        "effects": {
+          "criticalFailure": "Scouts lost",
+          "criticalSuccess": "Learn about 2 hexes",
+          "failure": "no report",
+          "success": "Learn about 1 hex"
+        },
+        "name": "Send Scouts",
+        "skills": {
+          "acrobatics": "navigate obstacles",
+          "athletics": "rapid exploration",
+          "nature": "read the land",
+          "society": "gather local information",
+          "stealth": "covert reconnaissance",
+          "survival": "wilderness expertise"
+        }
+      },
+      "train-army": {
+        "description": "Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods",
+        "effects": {
+          "criticalFailure": "No change",
+          "criticalSuccess": "Troop is promoted up to party level",
+          "failure": "No change",
+          "success": "+1 level (max party level)"
+        },
+        "name": "Train Army",
+        "skills": {
+          "acrobatics": "agility training",
+          "athletics": "physical conditioning",
+          "intimidation": "harsh discipline",
+          "survival": "endurance exercises",
+          "warfare-lore": "tactical doctrine"
+        }
+      },
+      "upgrade-settlement": {
+        "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization",
+        "effects": {
+          "criticalFailure": "No effect",
+          "criticalSuccess": "Increase Level +1 Structure",
+          "failure": "no effect",
+          "success": "Increase Level"
+        },
+        "name": "Upgrade Settlement",
+        "requirements": "Village → Town: Level 2+ and 2+ Structures, Town → City: Level 5+ and 4+ Structures, City → Metropolis: Level 10+ and 6+ Structures",
+        "skills": {
+          "arcana": "magical enhancement",
+          "crafting": "infrastructure expansion",
+          "medicine": "public health improvements",
+          "performance": "inspire growth",
+          "society": "urban planning"
+        }
+      }
+    },
+    "activities": {},
+    "activityDcType": {
+      "control": "Control",
+      "custom": "Custom",
+      "event": "Event",
+      "negotiation": "Negotiation",
+      "negotiationOrControl": "Negotiation or Control",
+      "none": "None",
+      "scouting": "Scouting",
+      "value": "Value"
+    },
+    "activityEffectTarget": {
+      "all": "All",
+      "allies": "Allies",
+      "self": "Self"
+    },
+    "applications": {
+      "activityEffects": {
+        "add": "Add Effect"
+      },
+      "actorActions": {
+        "deleteCamping": "Delete Camping",
+        "deleteKingdom": "Delete Kingdom",
+        "exportCamping": "Export Camping",
+        "exportKingdom": "Export Kingdom",
+        "importCamping": "Import Camping",
+        "importKingdom": "Import Kingdom",
+        "tooltip": "PFRPG2E Actor Settings"
+      },
+      "add": "Add",
+      "any": "Any",
+      "apply": "Apply",
+      "camping": "Camping",
+      "close": "Close",
+      "dc": "DC",
+      "delete": "Delete",
+      "description": "Description",
+      "dialog": {
+        "ok": "Ok",
+        "roll": "Roll"
+      },
+      "edit": "Edit",
+      "enable": "Enable",
+      "formElement": {
+        "openDocument": "Open Document"
+      },
+      "help": "Help",
+      "heroPoints": "Hero Points",
+      "id": "Id",
+      "jsonFilePicker": {
+        "file": "File",
+        "selectFile": "Please select a file!",
+        "upload": "Upload"
+      },
+      "kingdom": "Kingdom",
+      "level": "Level",
+      "name": "Name",
+      "open": "Open",
+      "quickstart": "Quickstart",
+      "save": "Save",
+      "settings": "Settings",
+      "skill": "Skill",
+      "skillCheck": "Skill Check",
+      "skillPicker": {
+        "addLore": "Add Lore",
+        "dcType": "DC Type",
+        "newLore": "New Lore",
+        "noCheck": "No check required",
+        "pickOneSkill": "Pick at Least One Skill",
+        "pickSkills": "Pick Skills",
+        "required": "Required",
+        "requiredHelp": "Actor must have this skill and proficiency regardless of alternative skills",
+        "validateOnly": "Validate Only",
+        "validateOnlyHelp": "Will not make the skill available in the skill selection"
+      },
+      "skills": "Skills",
+      "title": "Title",
+      "total": "Total",
+      "value": "Value",
+      "xp": "XP"
+    },
+    "armyType": {
+      "cavalry": "Cavalry",
+      "infantry": "Infantry",
+      "siege": "Siege",
+      "skirmisher": "Skirmisher"
+    },
+    "automateResources": {
+      "kingmaker": "Official Module",
+      "manual": "Manual",
+      "tileBased": "Tile Based"
+    },
+    "chatMessages": {
+      "endTurn": {
+        "moveValues": "Adding values from the next columns to the now columns, respecting their resource limits",
+        "reduceMods": "Reducing Modifiers' Turns by 1",
+        "resetRP": "Setting Resource Points to 0",
+        "resetSolutions": "Setting available Supernatural and Creative Solutions to 0",
+        "title": "Ending Turn"
+      },
+      "firstRun": {
+        "disabled": "Disabled Kingdom Building, Camping & Weather first run message",
+        "dontShowAgain": "Don't show this again",
+        "getStarted": "To get started, create a kingdom or camping sheet by clicking on the Party actors Tent or Fortress icon:",
+        "intro": "You've just enabled the Kingdom Building, Camping & Weather module for PFRPG 2e.",
+        "license": "This module is licensed under the OGL and AGPLv3:",
+        "licenses": "Licenses",
+        "macrosNotice": "All macros and journals can be found in the Compendium Tab!",
+        "manual": "You can view the instruction manual here or can find them in the camping and kingdom sheet menu under the Help entry:",
+        "upgradeNotices": "Upgrade Notices",
+        "upgradingNotice": "Make sure to carefully review the Upgrading Notices when updating to major releases:"
+      },
+      "unrest": {
+        "atWar": "Kingdom at War",
+        "overcrowded": "Overcrowded Settlements",
+        "rulerVacant": "Ruler Vacancy Penalty",
+        "secondaryTerritory": "At Least One Secondary Territory"
+      }
+    },
+    "commodityType": {
+      "food": "Food",
+      "lumber": "Lumber",
+      "luxury": "Luxury",
+      "ore": "Ore",
+      "stone": "Stone"
+    },
+    "currency": {
+      "cp": "cp",
+      "gp": "gp",
+      "pp": "pp",
+      "sp": "sp"
+    },
+    "degreeOfSuccess": {
+      "criticalFailure": "Critical Failure",
+      "criticalSuccess": "Critical Success",
+      "failure": "Failure",
+      "success": "Success"
+    },
+    "diceFaces": {
+      "d10": "D10",
+      "d12": "D12",
+      "d4": "D4",
+      "d6": "D6",
+      "d8": "D8"
+    },
+    "displayBars": {
+      "alwaysForEveryone": "Always for Everyone",
+      "alwaysForOwner": "Always for Owner",
+      "hoveredByAnyone": "Hovered by Anyone",
+      "hoveredByOwner": "Hovered by Owner",
+      "neverDisplayed": "Never Displayed",
+      "whenControlled": "When Controlled"
+    },
+    "enums": {
+      "activityDcType": "DC Type",
+      "currency": "Currency",
+      "degreeOfSuccess": "Degree of Success",
+      "displayBars": "Display Bars",
+      "fameType": "Fame Type",
+      "healMode": "Heal Mode",
+      "kingdomAbility": "Ability",
+      "kingdomPhase": "Phase",
+      "kingdomSkill": "Skill",
+      "leader": "Leader",
+      "leaderType": "Type",
+      "modifierSelector": "Selector",
+      "modifierType": "Type",
+      "month": "Month",
+      "proficiency": "Proficiency",
+      "rarity": "Rarity",
+      "reduceConditionMode": "Reduce Condition Mode",
+      "relations": "Relations",
+      "rollMode": "Roll Mode",
+      "season": "Season",
+      "settlementTerrain": "Map",
+      "settlementType": "Settlement Type",
+      "skill": "Skill",
+      "terrain": "Terrain",
+      "untrainedProficiencyMode": "Always Increase Untrained Skills By",
+      "weatherEffect": "Weather Effect"
+    },
+    "events": {
+      "archaeological-find": {
+        "description": "Ancient ruins or artifacts are discovered in your territory.",
+        "location": "Largest settlement",
+        "name": "Archaeological Find",
+        "resolution": "Society (historical research), Religion (divine significance), or Occultism (arcane investigation)",
+        "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to the check.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Dangerous site! The excavation disturbs something that should have remained buried.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "fame": "+1 Fame",
+            "gold": "+2 Gold",
+            "msg": "<p>Major discovery! The artifacts are of immense historical and monetary value.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Minor artifacts found. You gain 1 Resource of your choice.</p>",
+            "resource": "Choose 1 Resource"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Valuable find! The discovered artifacts benefit the kingdom's treasury.</p>"
+          }
+        }
+      },
+      "assassination-attempt": {
+        "description": "Someone attempts to kill one of your leaders.",
+        "location": "Random PC",
+        "name": "Assassination Attempt",
+        "resolution": "Stealth (avoid the assassin), Intimidation (deter through fear), or Medicine (survive wounds)",
+        "special": "If the target has a bodyguard or is in a fortified location, gain +2 to the check.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Leader wounded! They cannot take a Kingdom Action this turn.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Assassin captured! You gain valuable information about your enemies.</p>"
+          },
+          "failure": {
+            "msg": "<p>Leader escapes but the attempt shakes the kingdom's confidence.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Attempt foiled! The assassin flees empty-handed.</p>"
+          }
+        }
+      },
+      "bandit-activity": {
+        "description": "Bandits establish a camp and begin raiding travelers.",
+        "location": "Random border hex",
+        "name": "Bandit Activity",
+        "resolution": "Intimidation (crush them with force), Diplomacy (negotiate their surrender), or Stealth (infiltrate and dismantle)",
+        "special": "Once per event, you can try to recruit the bandits (Diplomacy only) - on success, gain a free Garrison.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Bandits grow bolder! They raid with impunity.</p>",
+            "resources": "-2 Resources",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Bandits defeated or recruited! You recover their loot.</p>"
+          },
+          "failure": {
+            "msg": "<p>Raids continue. Lose 1 Resource this turn.</p>",
+            "resources": "-1 Resources",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Bandits scattered! They flee your territory.</p>"
+          }
+        }
+      },
+      "boomtown": {
+        "description": "A settlement experiences sudden, dramatic growth.",
+        "location": "Random settlement",
+        "name": "Boomtown",
+        "resolution": "Society (manage growth), Crafting (expand infrastructure), or Diplomacy (maintain order)",
+        "special": "While active gain +1 untyped bonus to all Crafting and Society checks in that settlement.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Boom goes bust! The rapid collapse causes unrest.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+4 Gold",
+            "msg": "<p>Major growth! The boom brings tremendous prosperity.</p>"
+          },
+          "failure": {
+            "msg": "<p>Growth stalls. The boom has ended.</p>"
+          },
+          "success": {
+            "gold": "+2 Gold",
+            "msg": "<p>Steady expansion! The settlement prospers this turn.</p>"
+          }
+        }
+      },
+      "cult-activity": {
+        "description": "A dangerous cult begins operating in secret within your kingdom.",
+        "location": "Random settlement",
+        "name": "Cult Activity",
+        "resolution": "Stealth (infiltrate the cult), Religion (counter their beliefs), or Intimidation (root them out)",
+        "special": "Settlements with Faith & Nature structures gain tier bonus to defeat. Crime & Intrigue structures gain tier bonus to locate.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Cult grows stronger and spreads to another settlement!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Cult exposed and defeated! The threat is eliminated.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Cult continues to operate in secret.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Progress made in defeating the cult.</p>"
+          }
+        }
+      },
+      "demand-expansion": {
+        "description": "Citizens demand the kingdom claim new territory.",
+        "location": "Capital",
+        "name": "Demand Expansion",
+        "resolution": "Diplomacy (promise future growth), Survival (show expansion plans), or Intimidation (demand patience)",
+        "special": "If you expand your territory this turn (claim a new hex), automatically succeed and event ends.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Major dissatisfaction with kingdom's stagnation!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Citizens satisfied with your expansion plans!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Citizens grow impatient with lack of expansion.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Citizens accept your promises.</p>"
+          }
+        }
+      },
+      "demand-structure": {
+        "description": "Citizens demand that a specific structure be built.",
+        "location": "Largest settlement",
+        "name": "Demand Structure",
+        "resolution": "Diplomacy (negotiate a compromise), Intimidation (enforce order), or Society (understand their needs)",
+        "special": "Roll 1d6: 1-2 = Market/Commerce, 3-4 = Military/Defense, 5-6 = Cultural/Religious. If you build the demanded type, event ends.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Violence erupts over unmet demands!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Citizens convinced to be patient!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Protests continue. You must pay 1 Gold as concessions or gain unrest.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Demands are satisfied for now.</p>"
+          }
+        }
+      },
+      "diplomatic-overture": {
+        "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
+        "location": "Capital",
+        "name": "Diplomatic Overture",
+        "resolution": "Diplomacy (formal negotiations), Society (cultural exchange), or Deception (gain advantage)",
+        "special": "Civic & Governance structures provide tier bonus. Cannot reach Helpful without diplomatic capacity.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Relations worsen by one step!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Relations improve significantly! Trade benefits follow.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>No change in relations. Minor diplomatic friction.</p>"
+          },
+          "success": {
+            "msg": "<p>Relations improve by one step.</p>"
+          }
+        }
+      },
+      "drug-den": {
+        "description": "An illicit drug trade threatens to corrupt your settlement.",
+        "location": "Largest settlement",
+        "name": "Drug Den",
+        "resolution": "Stealth (undercover investigation), Medicine (treat addicts, trace source), or Intimidation (crack down hard)",
+        "special": "Crime & Intrigue structures provide tier bonus to checks.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Major drug crisis! One structure becomes damaged.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Drug ring destroyed completely!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "gold": "-1 Gold",
+            "msg": "<p>Drug trade spreads despite efforts.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "imprisoned": "Convert 1 Unrest to Imprisoned",
+            "msg": "<p>Major arrests made. Convert 1 unrest to imprisoned unrest.</p>"
+          }
+        }
+      },
+      "economic-surge": {
+        "description": "Trade and productivity boom throughout your kingdom.",
+        "location": "Capital",
+        "name": "Economic Surge",
+        "resolution": "Society (manage growth), Diplomacy (attract traders), or Crafting (increase production)",
+        "special": "Commerce structures provide untyped bonus equal to tier.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Economic bubble bursts causing unrest!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+2 Gold",
+            "msg": "<p>Trade bonanza! Massive profits this turn.</p>"
+          },
+          "failure": {
+            "msg": "<p>Economic surge slows and ends.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Steady growth in trade and commerce.</p>"
+          }
+        }
+      },
+      "festive-invitation": {
+        "description": "A neighboring kingdom invites your leaders to a grand festival.",
+        "location": "Capital",
+        "name": "Festive Invitation",
+        "resolution": "Diplomacy (formal attendance), Performance (entertain hosts), or Society (navigate customs)",
+        "special": "You may bring 0-2 Resources as gifts. If you bring at least 1, gain +2 to check.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Diplomatic faux pas causes embarrassment!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Great success at the festival! Gifts and goodwill received.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Adequate visit but gifts not reciprocated.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Pleasant visit with reciprocal gifts.</p>"
+          }
+        }
+      },
+      "feud": {
+        "description": "Rival factions from different settlements escalate their conflict.",
+        "location": "Two settlements",
+        "name": "Feud",
+        "resolution": "Diplomacy (mediate peace), Intimidation (enforce order), or Deception (manipulate resolution)",
+        "special": "If less than 2 settlements, this event has no effect.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Private war erupts! A structure is damaged in the fighting.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Feud ended! Rivals become allies and trade improves.</p>"
+          },
+          "failure": {
+            "msg": "<p>Feud disrupts trade between settlements.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Feud resolved peacefully.</p>"
+          }
+        }
+      },
+      "food-shortage": {
+        "description": "Disease, weather, or pests destroy agricultural production.",
+        "location": "Kingdom-wide",
+        "name": "Food Shortage",
+        "resolution": "Nature (agricultural expertise), Survival (emergency measures), or Diplomacy (coordinate relief)",
+        "stage-0": {
+          "criticalFailure": {
+            "food": "-8 Food",
+            "msg": "<p>Famine threatens the kingdom!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "food": "-2 Food",
+            "msg": "<p>Crisis averted with minimal losses!</p>"
+          },
+          "failure": {
+            "food": "-6 Food",
+            "msg": "<p>Severe shortage causes widespread hunger.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "food": "-4 Food",
+            "msg": "<p>Shortage controlled but significant food lost.</p>"
+          }
+        }
+      },
+      "food-surplus": {
+        "description": "Exceptional harvests provide abundant food.",
+        "location": "Kingdom-wide",
+        "name": "Food Surplus",
+        "resolution": "Nature (maximize the bounty), Society (organize distribution), or Crafting (preserve excess)",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Surplus spoils due to poor management!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+3 Gold",
+            "msg": "<p>Massive surplus! Selling excess brings great profit.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "gold": "+1 Gold",
+            "msg": "<p>Minor surplus provides small benefit.</p>"
+          },
+          "success": {
+            "gold": "+2 Gold",
+            "msg": "<p>Good harvest brings solid profits.</p>"
+          }
+        }
+      },
+      "good-weather": {
+        "description": "Perfect weather conditions boost morale and productivity.",
+        "location": "Kingdom-wide",
+        "name": "Good Weather",
+        "resolution": "Nature (predict weather patterns), Society (organize activities), or Performance (celebrate the weather)",
+        "special": "No check required first turn.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Weather turns bad suddenly!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "food": "+2 Food",
+            "msg": "<p>Weather holds perfectly! Morale and harvests excellent.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Weather changes back to normal.</p>"
+          },
+          "success": {
+            "food": "+2 Food",
+            "msg": "<p>Weather remains good for farming.</p>"
+          }
+        }
+      },
+      "grand-tournament": {
+        "description": "A martial competition draws competitors from across the realm.",
+        "location": "Largest settlement",
+        "name": "Grand Tournament",
+        "resolution": "Athletics (strength competitions), Acrobatics (agility contests), or Performance (pageantry and ceremonies)",
+        "special": "Performance & Culture or Military & Training structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Accident or scandal mars the tournament!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "fame": "+1 Fame",
+            "gold": "+2 Gold",
+            "msg": "<p>Spectacular event! The tournament brings fame and fortune.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Disappointing turnout for the tournament.</p>"
+          },
+          "success": {
+            "msg": "<p>Successful tournament entertains the masses.</p>",
+            "unrest": "-1 Unrest"
+          }
+        }
+      },
+      "immigration": {
+        "description": "New settlers arrive seeking homes in your kingdom.",
+        "location": "Kingdom-wide",
+        "name": "Immigration",
+        "resolution": "Diplomacy (welcome newcomers), Society (integrate settlers), or Survival (find them land)",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Integration problems cause social tensions!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+2 Gold",
+            "msg": "<p>Major influx! New settlers bring wealth and gain +2 to Build Structure actions this turn.</p>"
+          },
+          "failure": {
+            "msg": "<p>Few settlers choose to stay.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Steady immigration brings new workers and +1 to Build Structure actions this turn.</p>"
+          }
+        }
+      },
+      "inquisition": {
+        "description": "Zealots mobilize against a minority group or belief.",
+        "location": "Largest settlement",
+        "name": "Inquisition",
+        "resolution": "Religion (theological debate), Intimidation (suppress zealots), or Diplomacy (protect victims)",
+        "special": "Faith & Nature structures provide tier bonus to Religion checks.",
+        "stage-0": {
+          "criticalFailure": {
+            "destroy": "Structure Destroyed",
+            "msg": "<p>Violence erupts! A structure is destroyed in the chaos.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Peacefully resolved through wisdom and compassion.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Persecution spreads despite efforts.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "success": {
+            "msg": "<p>Zealots dispersed without violence.</p>"
+          }
+        }
+      },
+      "justice-prevails": {
+        "description": "Authorities catch a notorious criminal or resolve a major injustice.",
+        "location": "Capital or largest settlement",
+        "name": "Justice Prevails",
+        "resolution": "Intimidation (show of force), Diplomacy (public ceremony), or Society (legal proceedings)",
+        "special": "Civic & Governance structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Miscarriage of justice causes outrage!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Major triumph of justice inspires the kingdom!</p>",
+            "unrest": "-2 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Justice with complications causes doubt.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Justice served satisfies the citizens.</p>",
+            "unrest": "-1 Unrest"
+          }
+        }
+      },
+      "land-rush": {
+        "description": "Settlers attempt to claim wilderness at the kingdom's border.",
+        "location": "Border",
+        "name": "Land Rush",
+        "resolution": "Diplomacy (negotiate with settlers), Survival (guide their efforts), or Intimidation (assert control)",
+        "special": "Hexes are claimed without requiring the normal Claim Hex action or resources.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Violence erupts at the border!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "hex": "+2 Hex",
+            "msg": "<p>Settlers successfully expand the kingdom by 2 hexes!</p>"
+          },
+          "failure": {
+            "msg": "<p>Settlers disperse without helping.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "hex": "+1 Hex",
+            "msg": "<p>Settlers expand the kingdom by 1 hex.</p>"
+          }
+        }
+      },
+      "local-disaster": {
+        "description": "Fire, flood, or structural collapse strikes a settlement.",
+        "location": "Random settlement",
+        "name": "Local Disaster",
+        "resolution": "Crafting (emergency repairs), Survival (evacuation and rescue), or Society (organize response)",
+        "special": "Settlements with Fortifications increase the result by one degree of success.",
+        "stage-0": {
+          "criticalFailure": {
+            "destroy": "Structure Destroyed",
+            "msg": "<p>Catastrophic! One structure is destroyed.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Disaster contained with no significant damage!</p>"
+          },
+          "failure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Major damage! One structure is damaged.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Limited damage from quick response.</p>",
+            "unrest": "+1 Unrest"
+          }
+        }
+      },
+      "magical-discovery": {
+        "description": "A powerful magical site or artifact is discovered in your kingdom.",
+        "location": "Largest settlement",
+        "name": "Magical Discovery",
+        "resolution": "Arcana (understand the magic), Religion (divine its purpose), or Occultism (unlock its secrets)",
+        "special": "Knowledge & Magic structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Magical disaster! A magical structure is damaged.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Major magical boon! Gain a free Tier 1 magical structure or upgrade one.</p>"
+          },
+          "failure": {
+            "msg": "<p>Magic proves dangerous to handle.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Useful discovery reduces unrest or increases fame.</p>",
+            "unrest": "-2 Unrest"
+          }
+        }
+      },
+      "military-exercises": {
+        "description": "Your kingdom conducts large-scale military training maneuvers.",
+        "location": "Settlement with military structures",
+        "name": "Military Exercises",
+        "resolution": "Athletics (physical conditioning), Acrobatics (combat maneuvers), or Intimidation (discipline and morale)",
+        "special": "Military & Training structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Training accident damages a military structure!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Elite forces trained! +2 to military actions this turn.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Training is ineffective.</p>"
+          },
+          "success": {
+            "msg": "<p>Successful training provides +1 to military actions this turn.</p>"
+          }
+        }
+      },
+      "monster-attack": {
+        "description": "A dangerous creature attacks a settlement or travelers.",
+        "location": "Random settlement",
+        "name": "Monster Attack",
+        "resolution": "Intimidation (drive it off), Nature (understand and redirect), or Stealth (track and ambush)",
+        "special": "Settlements with Fortifications gain tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "destroy": "Structure Destroyed",
+            "msg": "<p>Monster rampages through the settlement!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+2 Gold",
+            "msg": "<p>Monster defeated! Its remains are worth a trophy.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Monster causes damage before fleeing.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Monster driven away without damage.</p>"
+          }
+        }
+      },
+      "natural-disaster": {
+        "description": "Earthquake, tornado, wildfire, or severe flooding strikes the kingdom.",
+        "location": "Random worksite and 2 adjacent hexes",
+        "name": "Natural Disaster",
+        "resolution": "Survival (evacuation and rescue), Crafting (emergency shelters), or Society (coordinate relief)",
+        "special": "Can spend 1 Gold per hex before rolling to gain +2 to that check. Check each hex separately.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Devastating! Worksites destroyed in affected hexes.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Minimal damage! Citizens impressed by response.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Major damage! All production lost from affected hexes.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Some damage but losses are limited.</p>",
+            "resources": "-1 Resources"
+          }
+        }
+      },
+      "natures-blessing": {
+        "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
+        "location": "Largest settlement",
+        "name": "Nature's Blessing",
+        "resolution": "Nature (understand the blessing), Performance (celebrate it), or Society (organize festivals)",
+        "special": "Faith & Nature or Exploration & Wilderness structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Arguments over the meaning cause tension.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Inspiring blessing brings tourism and joy!</p>",
+            "unrest": "-2 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Brief wonder has no lasting effect.</p>"
+          },
+          "success": {
+            "msg": "<p>Pleasant omen lifts spirits.</p>",
+            "unrest": "-1 Unrest"
+          }
+        }
+      },
+      "notorious-heist": {
+        "description": "A daring theft threatens your kingdom's security and reputation.",
+        "location": "Largest settlement with valuable structures",
+        "name": "Notorious Heist",
+        "resolution": "Thievery (understand criminal methods), Stealth (track the thieves), or Society (investigate connections)",
+        "special": "Crime & Intrigue structures provide tier bonus. No effect if no treasury/commerce structures.",
+        "stage-0": {
+          "criticalFailure": {
+            "gold": "-3 Gold",
+            "msg": "<p>Crime syndicate exposed! May trigger more crime events.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "imprisoned": "Convert 2 Unrest to Imprisoned",
+            "msg": "<p>Thieves captured with stolen goods! Convert 2 unrest to imprisoned.</p>"
+          },
+          "failure": {
+            "gold": "-2 Gold",
+            "msg": "<p>Thieves escape with the loot.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "imprisoned": "Convert 1 Unrest to Imprisoned",
+            "msg": "<p>Thieves arrested! Convert 1 unrest to imprisoned.</p>"
+          }
+        }
+      },
+      "pilgrimage": {
+        "description": "Religious pilgrims seek passage or sanctuary in your kingdom.",
+        "location": "Largest settlement",
+        "name": "Pilgrimage",
+        "resolution": "Religion (provide sanctuary), Diplomacy (welcome pilgrims), or Society (organize accommodations)",
+        "special": "Faith & Nature structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Religious tensions arise from the visit.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "fame": "+1 Fame",
+            "gold": "+1 Gold",
+            "msg": "<p>Major pilgrimage brings fame and donations!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Minor disruption from the pilgrims.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Peaceful passage brings modest donations.</p>"
+          }
+        }
+      },
+      "plague": {
+        "description": "Disease spreads rapidly through your settlements.",
+        "location": "Largest settlement",
+        "name": "Plague",
+        "resolution": "Medicine (treat the sick), Religion (divine healing), or Society (quarantine measures)",
+        "special": "Medicine & Healing or Faith & Nature structures provide tier bonus. Bonuses stack.",
+        "stage-0": {
+          "criticalFailure": {
+            "gold": "-2 Gold",
+            "msg": "<p>Devastating outbreak spreads to all connected settlements!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Plague cured! Your healers are heroes.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "gold": "-2 Gold",
+            "msg": "<p>Plague spreads to settlements connected by roads.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Plague contained to current settlement.</p>"
+          }
+        }
+      },
+      "public-scandal": {
+        "description": "A leader is implicated in an embarrassing or criminal situation.",
+        "location": "Random PC",
+        "name": "Public Scandal",
+        "resolution": "Deception (cover up), Diplomacy (public apology), or Intimidation (silence critics)",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Leader must lay low. Cannot take Kingdom Action this turn.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Scandal deflected without consequence!</p>"
+          },
+          "failure": {
+            "msg": "<p>Public outrage over the scandal!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "success": {
+            "msg": "<p>Damage controlled but some unrest remains.</p>",
+            "unrest": "+1 Unrest"
+          }
+        }
+      },
+      "raiders": {
+        "description": "Armed raiders threaten settlements and trade routes.",
+        "location": "Random settlement",
+        "name": "Raiders",
+        "resolution": "Intimidation (military response), Diplomacy (negotiate tribute), or Stealth (track to their base)",
+        "special": "Can pay 2 Gold tribute to immediately end event. Fortifications provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "food": "-2 Food",
+            "gold": "-2 Gold",
+            "msg": "<p>Major raid damages a structure!</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+1 Gold",
+            "msg": "<p>Raiders defeated and their loot recovered!</p>"
+          },
+          "failure": {
+            "food": "-2 Food",
+            "gold": "-2 Gold",
+            "msg": "<p>Successful raid takes gold and food.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Raiders driven off without losses.</p>"
+          }
+        }
+      },
+      "remarkable-treasure": {
+        "description": "Explorers discover valuable resources or ancient treasure.",
+        "location": "Random hex",
+        "name": "Remarkable Treasure",
+        "resolution": "Society (appraise value), Thievery (secure it safely), or Diplomacy (negotiate claims)",
+        "special": "Gain +1 to check for each mine or quarry you control.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Treasure proves cursed or false!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+4 Gold",
+            "msg": "<p>Legendary treasure of immense value!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "gold": "+1 Gold",
+            "msg": "<p>Modest value from the discovery.</p>"
+          },
+          "success": {
+            "gold": "+2 Gold",
+            "msg": "<p>Valuable find enriches the kingdom.</p>"
+          }
+        }
+      },
+      "scholarly-discovery": {
+        "description": "Researchers in your kingdom make an important academic breakthrough.",
+        "location": "Settlement with knowledge structures",
+        "name": "Scholarly Discovery",
+        "resolution": "Lore (historical research), Arcana (theoretical magic), or Society (social sciences)",
+        "special": "Knowledge & Magic structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Academic scandal embarrasses the kingdom!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "fame": "+1 Fame",
+            "gold": "+2 Gold",
+            "msg": "<p>Revolutionary discovery! May build one Knowledge structure at half cost.</p>"
+          },
+          "failure": {
+            "msg": "<p>Research proves inconclusive.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Important findings bring recognition.</p>"
+          }
+        }
+      },
+      "sensational-crime": {
+        "description": "A notorious crime captures public attention.",
+        "location": "Largest settlement",
+        "name": "Sensational Crime",
+        "resolution": "Intimidation (harsh justice), Society (investigation), or Diplomacy (calm fears)",
+        "special": "Crime & Intrigue structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Copycat crimes spread! Event may recur.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Criminal caught spectacularly! Justice prevails.</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Criminal escapes causing fear.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Crime solved without further incident.</p>"
+          }
+        }
+      },
+      "trade-agreement": {
+        "description": "Merchants propose a lucrative trade arrangement.",
+        "location": "Capital or largest settlement",
+        "name": "Trade Agreement",
+        "resolution": "Diplomacy (negotiate terms), Society (assess markets), or Deception (leverage position)",
+        "special": "Commerce structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "gold": "-1 Gold",
+            "msg": "<p>Trade dispute causes losses!</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+2 Gold",
+            "msg": "<p>Exclusive trade deal secured!</p>"
+          },
+          "failure": {
+            "msg": "<p>Poor terms provide no benefit.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Standard agreement provides steady income.</p>"
+          }
+        }
+      },
+      "undead-uprising": {
+        "description": "The dead rise from their graves to threaten the living.",
+        "location": "Random settlement",
+        "name": "Undead Uprising",
+        "resolution": "Religion (consecrate and bless), Arcana (magical containment), or Intimidation (destroy by force)",
+        "special": "Faith & Nature or Knowledge & Magic structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "damage": "Structure Damaged",
+            "destroy": "Structure Destroyed",
+            "msg": "<p>Major outbreak! Structures destroyed in the chaos.</p>",
+            "unrest": "+2 Unrest"
+          },
+          "criticalSuccess": {
+            "msg": "<p>Undead destroyed and source consecrated!</p>",
+            "unrest": "-1 Unrest"
+          },
+          "failure": {
+            "damage": "Structure Damaged",
+            "msg": "<p>Undead spread and damage structures.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "success": {
+            "msg": "<p>Undead destroyed but threat remains.</p>"
+          }
+        }
+      },
+      "visiting-celebrity": {
+        "description": "A famous person visits your kingdom, bringing attention and opportunity.",
+        "location": "Random settlement",
+        "name": "Visiting Celebrity",
+        "resolution": "Diplomacy (formal reception), Performance (entertainment), or Society (social events)",
+        "special": "Performance & Culture structures provide tier bonus.",
+        "stage-0": {
+          "criticalFailure": {
+            "msg": "<p>Celebrity offended! -2 to next celebrity event.</p>",
+            "unrest": "+1 Unrest"
+          },
+          "criticalSuccess": {
+            "gold": "+2 Gold",
+            "msg": "<p>Spectacular visit brings fame and fortune!</p>",
+            "unrest": "-2 Unrest"
+          },
+          "failure": {
+            "msg": "<p>Mediocre visit has no impact.</p>"
+          },
+          "success": {
+            "gold": "+1 Gold",
+            "msg": "<p>Pleasant visit with choice of gold or reduced unrest.</p>"
+          }
+        }
+      }
+    },
+    "extendedItemGroup": {
+      "alchemical": "Alchemical",
+      "arcane": "Arcane",
+      "arcaneLuxury": "Arcane Luxury",
+      "divine": "Divine",
+      "divineLuxury": "Divine Luxury",
+      "luxury": "Luxury",
+      "magical": "Magical",
+      "occult": "Occult",
+      "occultLuxury": "Occult Luxury",
+      "other": "Other",
+      "primal": "Primal",
+      "primalLuxury": "Primal Luxury"
+    },
+    "fameType": {
+      "famous": "Fame",
+      "infamous": "Infamy"
+    },
+    "features": {
+      "ability-boosts": {
+        "description": "Boost two different kingdom ability scores. You can use these ability boosts to increase your kingdom’s ability scores above 18. Boosting an ability score increases it by 2 if it starts out below 18, or by 1 if it’s already 18 or above.",
+        "name": "Ability Boosts"
+      },
+      "charter": {
+        "description": "Your kingdom gains the benefits of your selected charter",
+        "name": "Charter"
+      },
+      "civic-planning": {
+        "description": "During the Civic Activities step of the Activities phase of a Kingdom turn, one settlement of the party’s choice can attempt two Civic activities rather than one. The second Civic activity occurs after all other settlements have taken their individual Civic activities.",
+        "name": "Civic Planning"
+      },
+      "envy-of-the-world": {
+        "automationNotes": "Ignore ruin increase is only implemented if gained during the Upkeep Phase",
+        "description": "Your kingdom is one of the world’s prominent nations. The first time in a Kingdom turn when your kingdom would gain Unrest or Ruin, ignore that increase. You can ignore additional increases to Unrest or Ruin later in the same turn as well, but you must spend a Fame or Infamy point each time you do so. Your maximum Fame or Infamy point total increases by 1.",
+        "name": "Envy of the World"
+      },
+      "expansion-expert-1": {
+        "description": "Your kingdom is better at expanding its territory. You gain a +2 circumstance bonus to skill checks made to Claim Hex and can attempt to Claim Hex up to twice during a Kingdom turn.",
+        "modifiers": {
+          "claimHex": {
+            "buttonLabel": "+2 Circumstance to Claim Hex",
+            "name": "Expansion Expert"
+          }
+        },
+        "name": "Expansion Expert (+2)"
+      },
+      "expansion-expert-2": {
+        "description": "You can attempt to Claim Hex up to three times during a Kingdom turn.",
+        "name": "Expansion Expert (+3)"
+      },
+      "experienced-leadership-1": {
+        "description": "Invested leadership roles in your kingdom now grant a +2 status bonus to kingdom checks associated with their leadership role’s key ability.",
+        "name": "Experienced Leadership (+2)"
+      },
+      "experienced-leadership-2": {
+        "description": "Invested leadership roles in your kingdom now grant a +3 status bonus to kingdom checks associated with their leadership role’s key ability.",
+        "name": "Experienced Leadership (+3)"
+      },
+      "favored-land": {
+        "description": "Your heartland’s terrain becomes your kingdom’s favored land—the wilderness terrain that your people feel the strongest emotional ties to and to which your resource gatherers tend to flock. Once per Kingdom turn, during the Region Activities step of the Activity phase, you can attempt two Region activities simultaneously as long as both activities take place in the same hex and that hex contains the same terrain as your heartland. You take a –2 penalty to Kingdom skill checks made during these two activities.",
+        "name": "Favored Land"
+      },
+      "fine-living": {
+        "description": "Your people celebrate by indulging you with feasts and finery. All PCs associated with the kingdom enjoy a Fine standard of living at no cost whenever they’re in the kingdom. Any PCs in hostile wilderness, a monster‑filled dungeon, or otherwise cut off from their citizens must provide their own sustenance as usual even if they are within the boundaries of their kingdom. You gain a +1 circumstance bonus to all checks made to Craft or Earn Income while in your kingdom.",
+        "name": "Fine Living"
+      },
+      "government": {
+        "description": "Your kingdom gains the benefits of your selected heartland",
+        "name": "Government"
+      },
+      "heartland": {
+        "description": "The new kingdom consists of a single hex. The PCs can choose any hex (subject to GM approval) that they have Reconnoitered. Tell the players that it’s wisest to select a hex that already has a structure, since their first settlement—their capital—will be located in this initial hex. Note that terrain features can grant other benefits to the kingdom when claimed; see Terrain Features on page 41. The heartland grants an additional boost to one of the kingdom’s ability scores based on a significant terrain feature present in that hex. If the hex has more than one terrain feature, the PCs should choose only one of them to provide the boost. The choice of terrain made here influences how the Favored Land kingdom ability functions. On the kingdom sheet, record the heartland terrain the PCs chose. On a separate sheet, record which kingdom ability received a boost in this step; refer to it when finalizing ability scores in step 5.",
+        "name": "Heartland"
+      },
+      "initial-proficiencies": {
+        "description": "At 1st level, a kingdom receives the trained proficiency rank in two Kingdom skills gained from your initial choice of government and in up to four additional Kingdom skills determined by your invested leaders, giving you a proficiency bonus to checks using these skills equal to your kingdom level plus 2. Proficiencies cannot be changed, even if the kingdom’s government or leaders later change.",
+        "name": "Initial Proficiencies"
+      },
+      "kingdom-feat": {
+        "description": "The kingdom gains a Kingdom feat.",
+        "name": "Kingdom Feat"
+      },
+      "life-of-luxury": {
+        "description": "Your people lavish you with every creature comfort. This is identical to Fine Living, but all PC leaders enjoy an Extravagant standard of living at no cost whenever they’re in the kingdom. You gain a +2 circumstance bonus to all checks made to Craft or Earn Income while in your kingdom.",
+        "name": "Life of Luxury"
+      },
+      "ruin-resistance": {
+        "description": "Your kingdom becomes more resistant to Ruin. Choose one of the four Ruin categories and increase its threshold by 2. When you do so, reset that Ruin’s penalty to 0.",
+        "name": "Ruin Resistance"
+      },
+      "settlement-construction-city": {
+        "description": "You can expand towns into cities.",
+        "name": "Settlement Construction (City)"
+      },
+      "settlement-construction-metropolis": {
+        "description": "You can expand cities into metropolises.",
+        "name": "Settlement Construction (Metropolis)"
+      },
+      "settlement-construction-town": {
+        "description": "You can expand villages into towns.",
+        "name": "Settlement Construction (Town)"
+      },
+      "settlement-construction-village": {
+        "description": "You can establish villages in your kingdom immediately, but none can grow into Towns yet. As villages grow into larger settlements, you not only gain more room to build, but the maximum item bonus you can gain from that settlement’s structures increases as well.",
+        "name": "Settlement Construction (Village)"
+      },
+      "skill-increase": {
+        "description": "Your kingdom gains a skill increase. You can use this to increase your rank to trained in one skill in which your kingdom is untrained, or to increase your rank in one skill.",
+        "name": "Skill Increase"
+      }
+    },
+    "forms": {
+      "effects": "Effects"
+    },
+    "governments": {
+      "despotism": {
+        "description": "Your nation’s rule is centered around a single individual who seized or inherited command and whose authority is absolute. The ruler of this kingdom still retains advisors and assistants, but only when they obey the ruler’s whims.",
+        "name": "Despotism"
+      },
+      "feudalism": {
+        "description": "Your nation’s rule is vested in a dynastic royal family, though much of the real power is distributed among their vassals and fiefdoms.",
+        "name": "Feudalism"
+      },
+      "oligarchy": {
+        "description": "Your nation’s rule is determined by a council of influential leaders who make decisions for all others.",
+        "name": "Oligarchy"
+      },
+      "republic": {
+        "description": "Your nation draws its leadership from its own citizens. Elected representatives meet in parliamentary bodies to guide the nation.",
+        "name": "Republic"
+      },
+      "thaumocracy": {
+        "description": "Your nation is governed by those most skilled in magic, using their knowledge and power to determine the best ways to rule. While the type of magic wielded by the nation’s rulers can adjust its themes (or even its name—a thaumocracy run by divine spellcasters would be a theocracy, for example), the details below remain the same whether it’s arcane, divine, occult, primal, or any combination of the four.",
+        "name": "Thaumocracy"
+      },
+      "yeomanry": {
+        "description": "Your nation is decentralized and relies on local leaders and citizens to handle government issues, sending representatives to each other as needed to deal with issues that concern more than one locality.",
+        "name": "Yeomanry"
+      }
+    },
+    "healMode": {
+      "afterConsumption": "After Consumption",
+      "afterConsumptionAndRest": "After Consumption And Rest",
+      "afterRest": "After Rest"
+    },
+    "heartlands": {
+      "forest-or-swamp": {
+        "description": "Your nation begins in woodlands or swamplands, so there are no shortages in natural resources or wonders to bolster your citizens’ imagination and mood.",
+        "name": "Forest or Swamp"
+      },
+      "hill-or-plain": {
+        "description": "Your nation starts in an area that is easy to traverse. This is reflected in your citizens’ temperament; they appreciate that your choice makes their lives a bit easier.",
+        "name": "Hill or Plain"
+      },
+      "lake-or-river": {
+        "description": "By establishing your nation on the shores of a lake or river, you ensure a built-in mechanism for trade. Even before a road is built, merchants and travelers can reach your settlement with relative ease via boat.",
+        "name": "Lake or River"
+      },
+      "mountain-or-ruins": {
+        "description": "Your nation is founded in the mountains or includes a significant ruined location, and it uses these natural or artificial features to bolster defense. Your citizens tend to be hale and hardy, if not stubborn to a fault.",
+        "name": "Mountain or Ruins"
+      }
+    },
+    "incidents": {
+      "assassination-attempt": {
+        "description": "An assassin targets one of your kingdom's leaders",
+        "effects": {
+          "criticalFailure": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+          "failure": "Leader escapes; +1 Unrest",
+          "success": "Assassination prevented, no effect"
+        },
+        "name": "Assassination Attempt",
+        "skills": {
+          "athletics": "protect target",
+          "medicine": "treat wounds",
+          "stealth": "avoid the assassin"
+        }
+      },
+      "bandit-activity": {
+        "description": "Bandit raids threaten your trade routes and settlements",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, bandits destroy a random worksite",
+          "failure": "Lose 1d4 Gold to raids",
+          "success": "Bandits deterred, no effect"
+        },
+        "name": "Bandit Activity",
+        "skills": {
+          "intimidation": "show force",
+          "occultism": "scrying",
+          "stealth": "infiltrate bandits",
+          "survival": "track to lair"
+        }
+      },
+      "border-raid": {
+        "description": "Enemy forces raid your border territories",
+        "effects": {
+          "criticalFailure": "Lose 1d3 border hexes permanently, lose 2d4 Gold",
+          "failure": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
+          "success": "Raiders repelled, no effect"
+        },
+        "name": "Border Raid",
+        "skills": {
+          "athletics": "rapid response",
+          "intimidation": "retaliation",
+          "nature": "use terrain",
+          "survival": "tracking"
+        }
+      },
+      "corruption-scandal": {
+        "description": "Corruption among your officials is exposed",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)",
+          "failure": "Lose 1d4 Gold (embezzlement/graft discovered)",
+          "success": "Scandal contained, no effect"
+        },
+        "name": "Corruption Scandal",
+        "skills": {
+          "deception": "cover-up",
+          "diplomacy": "manage public relations",
+          "intimidation": "purge corrupt officials",
+          "society": "investigation"
+        }
+      },
+      "crime-wave": {
+        "description": "Criminal activity surges throughout your settlements",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, +1 Unrest",
+          "failure": "Lose 1d4 Gold",
+          "success": "Crime suppressed, no effect"
+        },
+        "name": "Crime Wave",
+        "skills": {
+          "intimidation": "crack down on criminals",
+          "occultism": "divine the source",
+          "society": "legal reform",
+          "thievery": "infiltrate gangs"
+        }
+      },
+      "diplomatic-incident": {
+        "description": "A serious diplomatic incident threatens relations",
+        "effects": {
+          "criticalFailure": "Two random kingdoms' attitudes worsen by 1 step",
+          "failure": "One neighbouring kingdom's attitude worsens by 1 step",
+          "success": "Relations maintained, no effect"
+        },
+        "name": "Diplomatic Incident",
+        "skills": {
+          "deception": "deny responsibility",
+          "diplomacy": "smooth over",
+          "society": "formal apology"
+        }
+      },
+      "disease-outbreak": {
+        "description": "A dangerous disease spreads through your settlements",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest",
+          "failure": "Lose 1d4 Food (feeding the sick), +1 Unrest",
+          "success": "Disease contained, no effect"
+        },
+        "name": "Disease Outbreak",
+        "skills": {
+          "medicine": "treat disease",
+          "nature": "natural remedies",
+          "religion": "divine healing"
+        }
+      },
+      "economic-crash": {
+        "description": "Your kingdom's economy collapses",
+        "effects": {
+          "criticalFailure": "Lose 4d6 gold, your highest tier commerce structure is destroyed",
+          "failure": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+          "success": "Economy stabilized, no effect"
+        },
+        "name": "Economic Crash",
+        "skills": {
+          "arcana": "transmute resources",
+          "crafting": "boost production",
+          "diplomacy": "secure loans",
+          "society": "economic reform"
+        }
+      },
+      "emigration-threat": {
+        "description": "Citizens threaten to leave your kingdom permanently",
+        "effects": {
+          "criticalFailure": "Lose 1 random worksite permanently, +1 unrest",
+          "failure": "Lose 1 random worksite permanently",
+          "success": "Population stays, no effect"
+        },
+        "name": "Emigration Threat",
+        "skills": {
+          "diplomacy": "convince to stay",
+          "nature": "improve local conditions",
+          "religion": "appeal to faith",
+          "society": "address concerns"
+        }
+      },
+      "guerrilla-movement": {
+        "description": "Armed rebels seize control of kingdom territory",
+        "effects": {
+          "criticalFailure": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)",
+          "failure": "Rebels seize 1d3 hexes",
+          "success": "Rebellion dispersed"
+        },
+        "name": "Guerrilla Movement",
+        "skills": {
+          "diplomacy": "negotiate with rebels",
+          "intimidation": "crush rebellion",
+          "religion": "appeal to faith",
+          "society": "address grievances"
+        }
+      },
+      "infrastructure-damage": {
+        "description": "Critical infrastructure is damaged or sabotaged",
+        "effects": {
+          "criticalFailure": "1d3 random structures become damaged (random settlements), +1 unrest",
+          "failure": "One random structure in a random settlement becomes damaged",
+          "success": "Damage prevented, no effect"
+        },
+        "name": "Infrastructure Damage",
+        "skills": {
+          "arcana": "magical restoration",
+          "athletics": "labor mobilization",
+          "crafting": "emergency repairs",
+          "society": "organize response"
+        }
+      },
+      "international-crisis": {
+        "description": "Multiple kingdoms turn against you due to internal chaos",
+        "effects": {
+          "criticalFailure": "Two kingdoms' attitudes worsen by 2 steps, -1 fame",
+          "failure": "One kingdom's attitude worsens by 2 steps",
+          "success": "Crisis contained, no effect"
+        },
+        "name": "International Crisis",
+        "skills": {
+          "deception": "blame shifting",
+          "diplomacy": "damage control",
+          "performance": "public relations",
+          "society": "formal reparations"
+        }
+      },
+      "international-scandal": {
+        "description": "A massive scandal ruins your kingdom's reputation",
+        "effects": {
+          "criticalFailure": "King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest",
+          "failure": "Lose 1 Fame AND 1d4 gold",
+          "success": "Reputation maintained, no effect"
+        },
+        "name": "International Scandal",
+        "skills": {
+          "deception": "propaganda",
+          "diplomacy": "public relations",
+          "performance": "grand gesture"
+        }
+      },
+      "mass-desertion-threat": {
+        "description": "Your armies threaten mass desertion",
+        "effects": {
+          "criticalFailure": "2 armies make morale checks, highest tier military structure is destroyed",
+          "failure": "1 army makes morale checks, highest tier military structure is damaged",
+          "success": "Troops remain loyal, no effect"
+        },
+        "name": "Mass Desertion Threat",
+        "skills": {
+          "diplomacy": "rally troops",
+          "intimidation": "threaten deserters",
+          "performance": "inspire loyalty"
+        }
+      },
+      "mass-exodus": {
+        "description": "Large numbers of citizens flee your kingdom",
+        "effects": {
+          "criticalFailure": "Lose 1 worksite permanently, +1 Unrest, -1 Fame",
+          "failure": "Lose 1 worksite permanently, +1 Unrest",
+          "success": "Population remains, no effect"
+        },
+        "name": "Mass Exodus",
+        "skills": {
+          "diplomacy": "convince to stay",
+          "performance": "inspire hope",
+          "religion": "spiritual guidance"
+        }
+      },
+      "minor-diplomatic-incident": {
+        "description": "A diplomatic misstep strains relations with neighbors",
+        "effects": {
+          "criticalFailure": "Two random kingdoms' attitudes worsen by 1 step",
+          "failure": "One neighbouring kingdom's attitude worsens by 1 step",
+          "success": "Relations maintained, no effect"
+        },
+        "name": "Minor Diplomatic Incident",
+        "skills": {
+          "deception": "deny involvement",
+          "diplomacy": "smooth over",
+          "society": "formal apology"
+        }
+      },
+      "noble-conspiracy": {
+        "description": "Nobles plot to overthrow the kingdom's leadership",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest",
+          "failure": "Lose 1d4 Gold, -1 fame",
+          "success": "Conspiracy exposed and dealt with, no effect"
+        },
+        "name": "Noble Conspiracy",
+        "skills": {
+          "intimidation": "arrests",
+          "occultism": "divine truth",
+          "society": "political maneuvering",
+          "stealth": "uncover plot"
+        }
+      },
+      "prison-breaks": {
+        "description": "Mass prison breaks release dangerous criminals",
+        "effects": {
+          "criticalFailure": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed",
+          "failure": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
+          "success": "Break prevented, no effect"
+        },
+        "name": "Prison Breaks",
+        "skills": {
+          "athletics": "pursuit",
+          "intimidation": "lockdown prisons",
+          "society": "negotiation"
+        }
+      },
+      "production-strike": {
+        "description": "Workers strike, halting resource production",
+        "effects": {
+          "criticalFailure": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)",
+          "failure": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+          "success": "Strike ends, no effect"
+        },
+        "name": "Production Strike",
+        "skills": {
+          "arcana": "automate production",
+          "crafting": "work alongside",
+          "diplomacy": "negotiate with workers",
+          "society": "arbitrate"
+        }
+      },
+      "protests": {
+        "description": "Citizens take to the streets in organized protests",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, -1 Fame",
+          "failure": "Lose 1d4 Gold (property damage, lost productivity)",
+          "success": "Peaceful resolution, no effect"
+        },
+        "name": "Protests",
+        "skills": {
+          "arcana": "magical calming",
+          "diplomacy": "address crowd",
+          "intimidation": "disperse crowds",
+          "performance": "distract crowds"
+        }
+      },
+      "rebellion-settlement-crisis": {
+        "description": "A major settlement faces total collapse",
+        "effects": {
+          "criticalFailure": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest",
+          "failure": "Random settlement loses 2d4 Gold OR 2 structures damaged",
+          "success": "Settlement stabilized, no effect"
+        },
+        "name": "Settlement Crisis",
+        "skills": {
+          "diplomacy": "address concerns",
+          "religion": "provide hope",
+          "society": "emergency aid"
+        }
+      },
+      "rebellion-trade-embargo": {
+        "description": "A complete trade embargo devastates your economy",
+        "effects": {
+          "criticalFailure": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest",
+          "failure": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+          "success": "Trade continues, no effect"
+        },
+        "name": "Trade Embargo",
+        "skills": {
+          "arcana": "teleportation network",
+          "deception": "smuggling routes",
+          "diplomacy": "negotiate",
+          "society": "find loopholes"
+        }
+      },
+      "religious-schism": {
+        "description": "Religious divisions tear your kingdom apart",
+        "effects": {
+          "criticalFailure": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed",
+          "failure": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+          "success": "Schism averted, no effect"
+        },
+        "name": "Religious Schism",
+        "skills": {
+          "diplomacy": "mediate factions",
+          "occultism": "divine intervention",
+          "religion": "theological debate",
+          "society": "secular compromise"
+        }
+      },
+      "riot": {
+        "description": "Violent riots break out in your settlements",
+        "effects": {
+          "criticalFailure": "+1 Unrest, 1 structure destroyed",
+          "failure": "+1 Unrest, 1 structure damaged",
+          "success": "Riot quelled, no effect"
+        },
+        "name": "Riot",
+        "skills": {
+          "athletics": "contain riot",
+          "diplomacy": "negotiate with rioters",
+          "intimidation": "suppress riot",
+          "medicine": "treat injured"
+        }
+      },
+      "rising-tensions": {
+        "description": "General tensions rise throughout your kingdom",
+        "effects": {
+          "criticalFailure": "+2 Unrest",
+          "failure": "+1 Unrest",
+          "success": "Tensions ease, no effect"
+        },
+        "name": "Rising Tensions",
+        "skills": {
+          "arcana": "magical displays",
+          "diplomacy": "calm populace",
+          "performance": "entertainment",
+          "religion": "spiritual guidance"
+        }
+      },
+      "secession-crisis": {
+        "description": "A settlement declares independence from your kingdom",
+        "effects": {
+          "criticalFailure": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect",
+          "failure": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+          "success": "Independence movement quelled, no effect"
+        },
+        "name": "Secession Crisis",
+        "skills": {
+          "diplomacy": "negotiate autonomy",
+          "intimidation": "suppress movement",
+          "performance": "inspire loyalty",
+          "society": "address grievances"
+        }
+      },
+      "settlement-crisis": {
+        "description": "One of your settlements faces a major crisis",
+        "effects": {
+          "criticalFailure": "Random settlement loses one level (minimum level 1), +1 unrest",
+          "failure": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+          "success": "Settlement stabilized, no effect"
+        },
+        "name": "Settlement Crisis",
+        "skills": {
+          "diplomacy": "address concerns",
+          "religion": "provide hope",
+          "society": "emergency aid"
+        }
+      },
+      "tax-revolt": {
+        "description": "Citizens revolt against tax collection",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold, +1 Unrest",
+          "failure": "Lose 1d4 Gold (reduced tax collection)",
+          "success": "Taxes collected normally"
+        },
+        "name": "Tax Revolt",
+        "skills": {
+          "deception": "creative accounting",
+          "diplomacy": "negotiate rates",
+          "intimidation": "enforce collection",
+          "society": "tax reform"
+        }
+      },
+      "tiers": {
+        "major": "Rebellion",
+        "minor": "Discontent",
+        "moderate": "Turmoil"
+      },
+      "turmoil-trade-embargo": {
+        "description": "Neighboring kingdoms impose trade restrictions",
+        "effects": {
+          "criticalFailure": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest",
+          "failure": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+          "success": "Trade continues, no effect"
+        },
+        "name": "Trade Embargo",
+        "skills": {
+          "deception": "smuggling routes",
+          "diplomacy": "negotiate",
+          "occultism": "divine trade routes",
+          "society": "find loopholes"
+        }
+      },
+      "work-stoppage": {
+        "description": "Workers in your kingdom refuse to continue their labor",
+        "effects": {
+          "criticalFailure": "Two worksites produce nothing, +1 Unrest",
+          "failure": "One random worksite produces nothing this turn",
+          "success": "Workers return, no effect"
+        },
+        "name": "Work Stoppage",
+        "skills": {
+          "diplomacy": "negotiate with workers",
+          "intimidation": "force work",
+          "medicine": "address health concerns",
+          "performance": "inspire workers"
+        }
+      }
+    },
+    "kingdom": {
+      "ability": "Ability",
+      "abilityBoosts": "Ability Boosts",
+      "abilityFlaws": "Ability Flaws",
+      "abilityScores": "Ability Scores",
+      "actions": "Actions",
+      "activate": "Activate",
+      "activeEvents": "Active Events",
+      "activeLeader": "Active Leader",
+      "activeSettlement": "Active Settlement",
+      "activities": "Activities",
+      "activity": "Activity",
+      "addActivity": "Add Activity",
+      "addBonusFeat": "Add Bonus Feat",
+      "addCharter": "Add Charter",
+      "addCurrentScene": "Add Current Scene",
+      "addEvent": "Add Event",
+      "addFeat": "Add Feat",
+      "addGovernment": "Add Government",
+      "addHeartland": "Add Heartland",
+      "addLore": "Add Lore",
+      "addMilestone": "Add Milestone",
+      "addModifier": "Add Modifier",
+      "addToActiveEvents": "Add to Active Events",
+      "addedModifier": "Added Modifier {name}",
+      "additionalTrainedSkills": "Additional Trained Skills (V&K)",
+      "additionalTrainedSkillsDescription": "You can add additional Skill Trainings in the Bonus tab.",
+      "adjustUnrest": "Adjust Unrest",
+      "advanceConstruction": "Spending {rp, plural, =1 {1 RP} other {# RP}} to advance construction of structure {structureName}",
+      "allowSkill": "Allow Skill",
+      "already0Unrest": "Already at 0 unrest",
+      "amount": "Amount",
+      "armies": "Armies",
+      "army": "Army",
+      "armyBrowserTitle": "Armies in 'Recruitable Armies' Folder",
+      "armyHelp": "Select an army on the scene before performing the activity to correctly apply conditions and DCs. For Offensive Gambit, select all enemy units)",
+      "armyPhaseTitle": "Army (1 per army)",
+      "armyTacticsBrowserTitle": "Learnable Tactics: {armyName}",
+      "armyType": "Type",
+      "assurance": "Assurance",
+      "atWar": "At War",
+      "autoCalculateArmyConsumption": "Automatically Calculate Army Consumption",
+      "autoCalculateArmyConsumptionHelp": "If enabled, gets all visible army tokens on all scenes and sums up their consumption",
+      "autoCalculateSettlementLevel": "Automatically Calculate Settlement Level",
+      "autoCalculateSettlementLevelHelp": "Placing structures on the shipped settlement scene blocks automatically sets the settlement's level",
+      "automateResources": "Automatically Calculate Kingdom Resources",
+      "automateResourcesHelp": "Official Module parses the Stolen Lands data, Tile Based sums up worksites, size and farmlands from special Tiles or Drawings, Manual requires you to manage it manually in the Status tab",
+      "automateStats": "Automate Kingdom Stats",
+      "automateStatsHelp": "If enabled, automatically calculates skill proficiencies, ability scores and ruin thresholds from select choices",
+      "automation": "Automation",
+      "automationNotes": "Automation Notes",
+      "availableItemLevels": "Level {itemLevel}",
+      "blocks": "Blocks",
+      "blocksWithMaximum": "Blocks (Maximum: {count})",
+      "bonus": "Bonus",
+      "bonusFeat": "Bonus Feat",
+      "bonusResourceDice": "Bonus Resource Dice",
+      "bonusTo": "{modifier} to {selector}",
+      "bonusToActivityUsingSkill": "{modifier} to {activity} using {skill}",
+      "boost": "Boost",
+      "boosts": "Boosts",
+      "bridgeOrRoad": "Bridge or Road",
+      "buildStructure": "Build",
+      "canNotAddSettlementWithoutScenes": "Can not add Settlement event without settlements",
+      "canNotFindStructureRef": "Can not find existing structure with ref {ref}",
+      "cannotBeReassigned": "These proficiency ranks cannot be reassigned later.",
+      "capitalInvestment": "Capital Investment",
+      "capitalInvestmentInCapital": "Enable Capital Investment in Capital without Bank",
+      "capitalRequirement": "The capital must be located within your Heartland's terrain. The Scene includes blocks, onto which you can place your structures to automatically calculate settlement level. Once a Village has all of its spaces filled and your kingdom has reached level 2, simply copy and paste an existing tile to add new blocks; rotating tiles is not supported, which is why both a hidden 1x4 and 4x1 tile are included on a scene. Only visible blocks are included in the calculation.",
+      "characterSkills": "Character Skills",
+      "charter": "Charter",
+      "charters": "Charters",
+      "check": "Check",
+      "checkCultEvent": "Check for Cult Event (DC {dc})",
+      "checkKingdomEvent": "Check for Kingdom Event (DC {dc})",
+      "checkingForCultEvent": "Checking for Cult Event with Flat DC {dc}",
+      "checkingForKingdomEvent": "Checking for Kingdom Event with Flat DC {dc}",
+      "choose4Skills": "Then, each of the four invested leaders chooses to apply the trained proficiency rank to a different skill.",
+      "choose4SkillsVk": "Then, choose four skills to apply the trained proficiency rank to.",
+      "chooseGovernment": "Choose a Government",
+      "chooseHeartland": "Choose a Heartland",
+      "chooseLeaders": "Choose Leaders",
+      "chooseLeadersHelp": "Assign your leaders by drag and dropping Character or NPC actors from the sidebar onto each tile.",
+      "chooseLeadersHelpVk": "Next, choose four leadership roles to invest. Investing a role provides a status bonus to Kingdom skill checks based on that role's key ability.",
+      "chooseSettlement": "Choose a Settlement",
+      "civic": "Civic (1 per settlement)",
+      "civicHelp": "First, import all structures from the Structures compendium in the Kingdom Building, Camping & Weather folder, then add the relevant scene in the Settlements tab. Then hit Build Structure and choose a building. After rolling the check, and drag the building link from chat onto the settlement scene.",
+      "civicPlanning": "During the Civic Activities step of the Activities phase of a Kingdom turn, one settlement of the party’s choice can attempt two Civic activities rather than one. The second Civic activity occurs after all other settlements have taken their individual Civic activities",
+      "claimHexAttempts": "{count, plural, =1 {Once per Turn} =2 {Twice per Turn} other {3 Times per Turn}}",
+      "claimedHexXp": "Claimed Hexes",
+      "claimedHexes": "Hexes",
+      "claimedLandmark": "Claimed Landmark",
+      "claimedRefuge": "Claimed Refuge",
+      "clearFilters": "Clear Filters",
+      "clickToClaim": "Click these buttons after successfully claiming a hex containing a refuge or landmark",
+      "collectResources": "Collect Resources ({diceFormula})",
+      "collecting": "Collecting Resources",
+      "commerce": "Commerce",
+      "commodities": "Commodities",
+      "commodityStorage": "Commodity Storage",
+      "companionGuide": "Companion Guide",
+      "completed": "Completed",
+      "configure": "Configure",
+      "configureLeaderKingdomSkills": "Leader Kingdom Skills",
+      "configureLeaderKingdomSkillsHelp": "If Leadership Modifiers are enabled, configure which leaders and kingdom skills receive the full Leadership bonus",
+      "configureLeaderSkills": "Leader Skills",
+      "configureLeaderSkillsHelp": "If Leadership Modifiers are enabled, configure which skills and lores are used to calculate Leadership bonuses",
+      "confirmDeleteCamping": "Do you really want to erase all camping data from actor {actorName}?",
+      "confirmDeleteKingdom": "Do you really want to erase all kingdom data from actor {actorName}?",
+      "constructedTerrainOrStructure": "Constructed a Terrain Feature or Structure",
+      "constructing": "Constructing {structureName}",
+      "consumed": "Consumed",
+      "consumption": "Consumption",
+      "consumptionBreakdown": "Consumption Breakdown",
+      "continuousTraitHelp": "Events that do not possess the Continuous trait can sometimes become Continuous. Use the bookmark icon to manually toggle the Continuous trait so that existing modifiers will match.",
+      "controlDc": "Control DC",
+      "controlDcModifier": "Control DC Modifier",
+      "createACapital": "Create a Capital",
+      "creation": "Creation",
+      "creativeOrSupernaturalSolution": "Supernatural/Creative Solutions",
+      "creativeSolutions": "Creative Solutions",
+      "criticalFailureMessage": "Critical Failure Message",
+      "criticalSuccessMessage": "Critical Success Message",
+      "cultEventDc": "Cult Base Event DC",
+      "cultEventDcStep": "Cult Event DC Reduction per Check",
+      "cultEventOccurs": "Cult Event occurs, roll a Cult Event",
+      "cultEvents": "Cult Events",
+      "cultHelp": "Cult events happen after completing a day of downtime researching the cult in Chapter 5. The first time one of these Cult events occurs, the PCs earn 80 Kingdom XP regardless of how successful the kingdom was in dealing with the event; they do not earn additional Kingdom XP for repeated events. This sheet tracks them as milestones.",
+      "cultOfTheBloomEvents": "Enable Cult Events",
+      "cultOfTheBloomEventsHelp": "If enabled, adds a Cult Events section in Event Phase",
+      "dcAdjustment": "DC Adjustment",
+      "deleteModifier": "Delete Modifier",
+      "details": "Details",
+      "downgradeDegree": "Downgrade Degree of Success",
+      "dragToBuild": "Drag onto scene to build",
+      "dragToBuildFailure": "Drag onto scene to build and apply Slowed",
+      "dropActorFromSidebar": "Drop Actor from Sidebar",
+      "eachTimeYouBuild": "Each time you build this structure, choose one of",
+      "editActivity": "Edit Activity",
+      "editCharter": "Edit Charter",
+      "editEvent": "Edit Event",
+      "editFeat": "Edit Feat",
+      "editGovernment": "Edit Government",
+      "editHeartland": "Edit Heartland",
+      "editMilestone": "Edit Milestone",
+      "enableLeadershipModifiers": "Use Leadership Modifiers",
+      "enableLeadershipModifiersHelp": "Replaces Invested Status Bonus with Bonuses based on PC skill ranks",
+      "endTurn": "End Turn",
+      "event": "Event",
+      "eventDc": "Base Event DC",
+      "eventDcStep": "Event DC Reduction per Check",
+      "eventLocation": "Location",
+      "eventResolution": "Resolution",
+      "events": "Events",
+      "expandMagicUse": "Expand Magic Use",
+      "expandMagicUseHelp": "When enabled, you can use Magic for the following activities: Celebrate Holiday, Craft Luxuries, Create a Masterpiece, and Rest and Relax",
+      "failedToCompleteStructure": "Failed to complete structure; it is delayed further.",
+      "failureMessage": "Failure Message",
+      "fallsIntoAnarchy": "Kingdom falls into anarchy, unless you spend all Fame/Infamy points. Only Quell Unrest leadership activities can be performed and all checks are worsened by a degree",
+      "fameOrInfamy": "Fame or Infamy?",
+      "fameOrInfamyHelp": "The choice here solely determines whether the kingdom uses Fame or Infamy points and the influence certain structures might have on the kingdom.",
+      "farmOrWorksite": "Farm or Worksite",
+      "farmlands": "Farmlands",
+      "favoredLand": "You can attempt 2 Region activities simultaneously as long as both activities take place in the same hex and the hex is a {heartland}. You take a –2 penalty to Kingdom skill checks made during these two activities.",
+      "featDisabled": "Feat disabled in Feat management!",
+      "feats": "Feats",
+      "filter": "Filter",
+      "finalizeScores": "Finalize Ability Scores",
+      "finishedConstruction": "Spent {rp, plural, =1 {1 RP} other {# RP}} and finished construction of structure {structureName}",
+      "firstImportStructures": "First, you need to import all structures",
+      "firstVillage": "First Village",
+      "flaw": "Flaw",
+      "food": "Food",
+      "fortune": "Fortune",
+      "freeBoosts": "Free Boosts",
+      "gain1Fame": "Gain 1 Fame",
+      "gain1d4Unrest": "Gain 1d4 Unrest",
+      "gainStructureXp": "Gain XP From Built Structure",
+      "gainVillageXp": "Since this is their first village, the PCs gain 40 kingdom XP as a milestone award. Check off the Establish your first village milestone in the XP section in the Turn tab.",
+      "gaining1Fame": "Gaining 1 Fame",
+      "gainingNUnrest": "Gaining {count} Unrest",
+      "gainingPointsToRuins": "Gaining points to Ruin (distribute as you wish)",
+      "gainingResourcePoints": "Gaining Resource Points",
+      "gainingUnrest": "Gaining Unrest",
+      "gainingXp": "Gaining {count} XP",
+      "gmNotes": "GM Notes",
+      "government": "Government",
+      "governments": "Governments",
+      "group": "Group",
+      "groupName": "Group Name",
+      "groups": "Groups",
+      "heartland": "Heartland",
+      "heartlandRequirement": "The PCs can choose any hex that they have Reconnoitered. Note that terrain features can grant other benefits to the kingdom when claimed. The choice of terrain made here influences how the Favored Land kingdom ability functions (see section 1 next to the Creation section).",
+      "heartlands": "Heartlands",
+      "hex": "{count, plural, =1 {1 Hex} other {# Hexes}}",
+      "hint": "Hint",
+      "hit0Ruin": "{ruinType} has hit 0. You can try to reduce its penalty by 1 with a successful check",
+      "homebrew": "Homebrew",
+      "howMany": "How Many",
+      "ignoringUnrestIncrease": "Ignoring any Unrest increase due to \"Envy of the World\" Kingdom Feature",
+      "importAllStructures": "Import Structures",
+      "importFinished": "Import Finished",
+      "importedStructures": "Imported Structures into Structures folder",
+      "importingBasicArmies": "Importing Basic Armies into {folderName} folder",
+      "includeCapitalItemModifier": "Enable Capital Item Modifier Fallback",
+      "includeCapitalItemModifierHelp": "If enabled, falls back to the item bonus of the capital if it is higher than the currently selected settlement",
+      "increaseAnarchyLimit": "Increase Anarchy Limit",
+      "increaseScorePicksBy": "Increase Ability Score Picks By",
+      "increaseScorePicksByHelp": "Whenever you gain an Ability Score increase, gain this value in addition to the default 2",
+      "indefinite": "Indefinite",
+      "influence": "Influence",
+      "invalidLore": "Not a valid lore",
+      "investedAbility": "Invested ({ability})",
+      "issues": "Issues",
+      "itemType": "Item Type",
+      "kingdomAllStructureItemBonusesStack": "All Structure Item Bonuses Stack",
+      "kingdomAllStructureItemBonusesStackHelp": "If enabled, stacks item bonuses from all structures in a settlement, regardless of building type",
+      "kingdomCultTable": "Cult Events Roll Table",
+      "kingdomCultTableHelp": "If none selected, falls back to the Random Cult Events table in this module's Roll Tables compendium",
+      "kingdomEventOccurs": "Kingdom Event occurs, roll a Kingdom Event",
+      "kingdomEventRollMode": "Kingdom Event Roll Mode",
+      "kingdomEvents": "Kingdom Events",
+      "kingdomEventsTable": "Kingdom Events Roll Table",
+      "kingdomEventsTableHelp": "If none selected, falls back to the Random Kingdom Events table in this module's Roll Tables compendium",
+      "kingdomIgnoreSkillRequirements": "Disable Activity Skill Proficiency Requirements",
+      "kingdomIgnoreSkillRequirementsHelp": "If disabled, all activities can be performed regardless of skill proficiencies",
+      "kingdomSettings": "Kingdom Settings",
+      "kingdomSize": "Kingdom Size",
+      "kingdomSkillIncreaseEveryLevel": "Kingdom Skill Increase Every Level",
+      "kingdomSkills": "Kingdom Skills",
+      "lacksBridge": "Lacks Bridge",
+      "leadership": "Leadership ({count} per player)",
+      "learn": "Learn",
+      "learnedTactic": "Learned Tactic",
+      "leaveEmptyForIndefinite": "Leave empty for indefinite",
+      "levelUp": "Level Up",
+      "leveledUpTo": "Leveled up to level {level}",
+      "lore": "Lore",
+      "loreAlreadyExists": "Lore exists already",
+      "lose5RP": "Lose 5 Resource Points per missing Commodity",
+      "loseHexOfChoice": "You lose one hex of your choice",
+      "loseRuinOfChoice": "Lose 1 ruin of your choice",
+      "losing2Rp": "Losing 2 RP",
+      "losingHexOnFlatCheck": "Losing Hex on a Flat Check 11",
+      "losingLevel": "Losing 1 Level",
+      "losingNUnrest": "Losing {count} Unrest",
+      "losingXp": "Losing {count} XP",
+      "lumber": "Lumber",
+      "lumberCamps": "Lumber Camps",
+      "luxuries": "Luxuries",
+      "luxurySources": "Luxury Sources",
+      "macroTooltip": "PFRPG2E Kingdom Sheet",
+      "manageActivities": "Manage Activities",
+      "manageCharters": "Manage Charters",
+      "manageFeats": "Manage Feats",
+      "manageGovernments": "Manage Governments",
+      "manageHeartlands": "Manage Heartlands",
+      "manageKingdomEvents": "Manage Kingdom Events",
+      "manageMilestones": "Manage Milestones",
+      "manualManagement": "Manual Management",
+      "maxArmyTactics": "max {count} per army",
+      "maxItemBonus": "Max. Item Bonus",
+      "maxItemLevel": "Maximum Item Level",
+      "maxLevel": "Max Level",
+      "maxLots": "Max Lots",
+      "maximumFamePoints": "Maximum Fame Points",
+      "milestone": "Milestone",
+      "milestones": "Milestones",
+      "minLots": "Min Lots",
+      "mines": "Mines",
+      "minimumProficiency": "Minimum Proficiency",
+      "missingFood": "Missing {count, plural, =1 {1 Food Commodity} other {# Food Commodities}}. Choose one:",
+      "modifier": "Modifier",
+      "modifierValidationFailed": "Failed to validate modifier. Check console log for exact errors.",
+      "modifiers": "Modifiers",
+      "negotiationDc": "Negotiation DC",
+      "newKingdom": "New Kingdom",
+      "newSettlement": "New Settlement",
+      "next": "Next",
+      "noArmiesFoundInFolder": "No armies found in the {folderName} folder. Let your GM open this dialog to import basic armies",
+      "noEventsAvailable": "No ongoing events available!",
+      "noGroupsAvailable": "No groups available, create one under the Trade Agreements tab first or check if they are valid ones for this activity!",
+      "notAvailable": "Not Available",
+      "notValidJsonObject": "Not a valid JSON Object",
+      "now": "Now",
+      "numActions": "{count, plural, =1 {1 Action} other {# Actions}}",
+      "numericDcHelp": "Only applies if dc type is Value",
+      "oncePerRound": "Once Per Round",
+      "openSheet": "Open Kingdom Sheet",
+      "ore": "Ore",
+      "overcrowded": "Overcrowded",
+      "overrideExistingElement": "Choose the same Id as an existing one to override it",
+      "paidStructure": "Paid Structure",
+      "partialStructureConstruction": "Partial Structure Construction",
+      "payConsumption": "Pay Consumption",
+      "payStructure": "Pay",
+      "payingConsumption": "Paying Consumption",
+      "penalty": "Penalty",
+      "perform": "Perform",
+      "phase": "Phase",
+      "pickBoosts": "Pick {count, plural, =1 {1 Boost} other {# Boosts}}",
+      "pickEvent": "Pick Event",
+      "pickGroup": "Pick Group",
+      "pickLeaderToSupport": "Pick a Leader to Support",
+      "pickRuinIncreases": "Choose {count, plural, =1 {1 Ruin} other {# Ruins}} to increase by {value}",
+      "pickSkills": "Pick Skills",
+      "placeStructures": "Finally, place any existing structures on the chosen hex onto the scene's blocks from the Structures folder in your actors directory.",
+      "population": "Population",
+      "prerequisites": "Prerequisites",
+      "preventPledgeOfFealty": "Pledge of Fealty Blocked",
+      "publicNotes": "Public Notes",
+      "quantity": "Quantity",
+      "quarries": "Quarries",
+      "readonlySkills": "readonly, change in the settings",
+      "realmSceneId": "Realm Scene",
+      "realmSceneIdHelp": "Automatically Calculate Kingdom Resources is set to tile based, use this scene to calculate it based off drawings/tiles",
+      "recruit": "Recruit",
+      "recruitableArmies": "Recruitable Armies",
+      "recruitableArmiesFolderId": "Recruitable Armies Folder",
+      "recruitableArmiesFolderIdHelp": "This folder will be used to look up armies for the Recruit Army activity and to calculate army consumption. When you first perform the Recruit Army activity, this folder will be created automatically and set if this setting is empty",
+      "recruitedArmy": "Recruited Army",
+      "reduceDCToBuildLumberStructures": "Reduce DC for building Structures made out of Lumber by 2",
+      "reducing1Unrest": "Reducing Unrest by 1",
+      "reducingCreativeSolutions": "Reduced Creative Solutions by 1",
+      "reducingFame": "Reducing {type} by 1",
+      "reducingFoodBy": "Reducing Food by {consumption}",
+      "reducingSupernaturalSolutions": "Reduced Supernatural Solutions by 1",
+      "region": "Region (3 total)",
+      "relations": "Relations",
+      "removeAfterRoll": "Remove After Roll",
+      "requirement": "Requirement",
+      "reroll": "Re-Roll",
+      "rerollKH": "Re-Roll Keep Higher",
+      "rerollKL": "Re-Roll Keep Lower",
+      "rerollUsingFame": "Re-Roll Using Fame/Infamy",
+      "rerollUsingRp": "Re-Roll using 2 RP",
+      "rerollUsingSolution": "Re-Roll Using Creative Solution",
+      "residentialLots": "Residential Lots",
+      "resolve": "Resolve",
+      "resolveEvent": "Resolve Event",
+      "resolvedEvent": "Resolved event {name}",
+      "resolvedEventXp": "Resolved Event with Modifier",
+      "resourceDice": "Resource Dice",
+      "resourceDie": "Resource Die",
+      "resourcePoints": "Resource Points",
+      "resourceSurplus": "",
+      "resources": "Resources",
+      "roll": "Roll",
+      "rollCultEvent": "Roll Cult Event",
+      "rollKingdomEvent": "Roll Kingdom Event",
+      "rollOption": "Roll Option",
+      "rollOptionHelp": "Can be matched against in modifiers when selecting eligible modifiers.",
+      "rollWithFortune": "Roll With Fortune",
+      "rp": "RP",
+      "rpPerStructure": "Max RP per Structure",
+      "rpToXpConversionLimit": "RP to XP Conversion Limit",
+      "rpToXpConversionRate": "RP to XP Conversion Rate",
+      "rpTowardsConstruction": "RP towards Construction",
+      "rubble": "Rubble",
+      "ruin": "Ruin",
+      "ruinThreshold": "Starting Ruin Threshold",
+      "ruinThresholdIncreases": "Ruin Threshold Increases",
+      "ruinThresholdIncreasesHelp": "Number of eligible Ruin Thresholds increases; only used if a value is provided as well",
+      "ruinThresholdIncreasesValue": "Ruin Threshold Increase Value",
+      "ruinThresholdIncreasesValueHelp": "Adds this value to each increased Ruin Threshold",
+      "rulerVacantGainingUnrest": "Ruler is vacant, gaining Unrest",
+      "search": "Search",
+      "secondaryTerritory": "Secondary Territory",
+      "secretLocation": "Hide Settlement from Players",
+      "selectArmy": "Please select a single army on the scene",
+      "selectAtLeastOneStructure": "Select at least one Structure token",
+      "selectCharter": "Select Charter",
+      "selectKingdomActivityDc": "{activityName}: Select DC",
+      "setEventAsContinuous": "Click to add Continuous trait",
+      "setStructureHp": "Set Structure HP to {hp}",
+      "setStructureHpHelp": "Then, select the structure token on your scene and click:",
+      "settlement": "Settlement",
+      "settlementActions": "Settlement Actions",
+      "settlementMagicItemLevelIncrease": "Increase Level of Magic Items in Settlements",
+      "settlementSceneDeleted": "Settlement Scene deleted, closing Dialog",
+      "settlementSize": "Settlement Size",
+      "settlementSurplus": "",
+      "settlements": "Settlements",
+      "settlementsGenerateRd": "Settlements Generate Resource Dice",
+      "showPlayers": "Show Players",
+      "size": "Size",
+      "skillIncrease": "Skill Increase",
+      "skillProficiencies": "Skill Proficiencies",
+      "skillTraining": "Skill Training",
+      "skipCollectTaxesCheck": "Trying to reduce unrest on a Flat Check 11",
+      "skipReduceUnrest": "Reduce Unrest",
+      "slowed": "Slowed",
+      "solutions": "Solutions",
+      "special": "Special",
+      "spendRp": "Spend RP",
+      "status": "Status",
+      "stone": "Stone",
+      "structure": "Structure",
+      "structureBrowser": "Structure Browser",
+      "structuresFailedToValidate": "The following actor structures failed to validate; Kingdom Sheet might not work as expected: {actorNames}. Check console log for exact errors",
+      "successMessage": "Success Message",
+      "supernaturalSolution": "Supernatural Solution",
+      "supernaturalSolutions": "Supernatural Solutions",
+      "supportedLeader": "Supported Leader",
+      "surplus": "Surplus",
+      "tactic": "Tactic",
+      "terrainFeature": "A hex can have at most one of these: Farmland, Freehold, Ruins, Settlement, Structure, or Work Site. A Settlement can be built in a hex that contains Ruins or a Structure. A Free Hold can be brought into your kingdom in which case it becomes a Settlement instead.",
+      "theFirstTimeYouBuild": "The first time you build this structure each turn, choose one of",
+      "thenCreateCapitalScene": "Then, create a capital scene",
+      "threshold": "Threshold",
+      "totalConsumption": "Total Consumption",
+      "traitBeneficial": "Trait: Beneficial",
+      "traitContinuous": "Trait: Continuous",
+      "traitDangerous": "Trait: Dangerous",
+      "traitHex": "Trait: Hex",
+      "traitSettlement": "Trait: Settlement",
+      "turns": "Turns",
+      "typeOfNation": "Type of Nation",
+      "unrest": "Unrest",
+      "unsetEventAsContinuous": "Click to remove Continuous trait",
+      "unusedResources": "Unused resources",
+      "upgradeDegree": "Upgrade Degree of Success",
+      "upgradedFrom": "Upgraded from {structure}",
+      "upkeep": "Upkeep",
+      "uploadCampingJson": "Upload Camping JSON File",
+      "uploadKingdomJson": "Upload Kingdom JSON File",
+      "vacancies": "Vacant Positions",
+      "vacanciesHelp": "Checked means leader position is vacant!",
+      "view": "View",
+      "villageFurther": "Further settlements can be added in the Settlements tab.",
+      "waterBorders": "Water Borders",
+      "worksitesAndResources": "Worksites & Resources",
+      "wrapTextInParagraph": "Text should be wrapped in a <p></p> element",
+      "xpPerClaimedHex": "XP per Claimed Hex",
+      "xpRules": "XP Rules",
+      "xpRulesHelp": "Adds additional milestones, gain XP buttons and increases XP for claiming hexes and converting XP based on kingdom level",
+      "xpThreshold": "XP Threshold",
+      "youCanIncreaseSkillsUpTo": "You can increase a skill up to {proficiency}"
+    },
+    "kingdomAbility": {
+      "culture": "Culture",
+      "economy": "Economy",
+      "loyalty": "Loyalty",
+      "stability": "Stability"
+    },
+    "kingdomEventTrait": {
+      "beneficial": "Beneficial",
+      "continuous": "Continuous",
+      "dangerous": "Dangerous",
+      "downtime": "Downtime",
+      "hex": "Hex",
+      "leadership": "Leadership",
+      "settlement": "Settlement"
+    },
+    "kingdomMainNav": {
+      "kingdom": "Kingdom",
+      "modifiers": "Modifiers",
+      "notes": "Notes",
+      "settlements": "Settlements",
+      "tradeAgreements": "Trade Agreements",
+      "turn": "Turn"
+    },
+    "kingdomPhase": {
+      "army": "Army",
+      "civic": "Civic",
+      "commerce": "Commerce",
+      "event": "Event",
+      "leadership": "Leadership",
+      "region": "Region",
+      "upkeep": "Upkeep"
+    },
+    "kingdomRelations": {
+      "diplomaticRelations": "Diplomatic Relations",
+      "none": "None",
+      "tradeAgreement": "Trade Agreement"
+    },
+    "kingdomSizeType": {
+      "country": "Country",
+      "dominion": "Dominion",
+      "province": "Province",
+      "state": "State",
+      "territory": "Territory"
+    },
+    "kingdomSkill": {
+      "agriculture": "Agriculture",
+      "arts": "Arts",
+      "boating": "Boating",
+      "defense": "Defense",
+      "engineering": "Engineering",
+      "exploration": "Exploration",
+      "folklore": "Folklore",
+      "industry": "Industry",
+      "intrigue": "Intrigue",
+      "magic": "Magic",
+      "politics": "Politics",
+      "scholarship": "Scholarship",
+      "statecraft": "Statecraft",
+      "trade": "Trade",
+      "warfare": "Warfare",
+      "wilderness": "Wilderness"
+    },
+    "kingdomTurnNav": {
+      "army": "Army",
+      "civic": "Civic",
+      "commerce": "Commerce",
+      "end": "End",
+      "event": "Event",
+      "leadership": "Leadership",
+      "region": "Region",
+      "upkeep": "Upkeep",
+      "xp": "XP"
+    },
+    "leader": {
+      "counselor": "Counselor",
+      "emissary": "Emissary",
+      "general": "General",
+      "magister": "Magister",
+      "ruler": "Ruler",
+      "treasurer": "Treasurer",
+      "viceroy": "Viceroy",
+      "warden": "Warden"
+    },
+    "leaderType": {
+      "highlyMotivatedNpc": "Highly Motivated NPC",
+      "nonPathfinderNpc": "Non-Pathfinder NPC",
+      "pc": "PC",
+      "regularNpc": "Regular NPC"
+    },
+    "macros": {
+      "chooseParty": "Choose Party",
+      "combatTracks": {
+        "noSceneViewed": "Can not run macro without a scene",
+        "playlist": "Playlist",
+        "title": "Set Combat Track: {sceneOrActorName}",
+        "track": "Track"
+      },
+      "combatXp": {
+        "title": "Award Combat Boons"
+      },
+      "createFood": {
+        "adding": "Adding {count, plural, =1 {1 Provision} other {# Provisions}}",
+        "amount": "Amount",
+        "title": "How Many Provisions?"
+      },
+      "createTeleporters": {
+        "color": "Region Color",
+        "description": "This macro creates two regions that are linked to each other using teleporters. After executing it, you need to select the newly created regions in the Region Controls overlay one by one and then draw a rectangle onto the map.",
+        "missingScene": "Can not create teleporters without region",
+        "name": "Region Name",
+        "targetScene": "Target Scene",
+        "title": "{sceneName}: Create Teleporter Pairs"
+      },
+      "editRealmTile": {
+        "selectDrawingOrTile": "Please select drawings or tiles",
+        "title": "Edit Selected Realm Tiles/Drawings",
+        "type": "Realm Tile/Drawing Type"
+      },
+      "editStructure": {
+        "data": "Data",
+        "dataHelp": "Leave completely empty to remove structure data",
+        "removedData": "Removed Structure Data from Actor",
+        "selectActor": "Please select an NPC actor",
+        "title": "Edit Structure Data",
+        "validationError": "Failed to validate structure {message}. Check console log for exact errors"
+      },
+      "heroPoints": {
+        "all": "All",
+        "awarded": "Awarded Hero Points",
+        "resetPointsConfirmation": "Reset Hero Points to 1?",
+        "resetPointsTo1": "Reset hero point values to 1",
+        "title": "Award Hero Points"
+      },
+      "noPartiesFound": "No parties found",
+      "noPartyChosen": "No party chosen",
+      "party": "Party",
+      "rollPartyCheck": {
+        "privateRoll": "Private GM Roll",
+        "title": "Roll Party Skill Check"
+      },
+      "sceneWeatherSettings": {
+        "syncWeather": "Sync Weather",
+        "syncWeatherHelp": "If enabled, changes weather on this scene to the current value",
+        "syncWeatherPlaylist": "Sync Weather Playlist",
+        "syncWeatherPlaylistHelp": "If enabled, plays the current weather effect playlist",
+        "title": "Scene Weather Settings"
+      },
+      "setTimeOfDay": {
+        "advance": "Advance",
+        "retract": "Retract",
+        "time": "Time",
+        "title": "Advance/Retract to Time of Day"
+      },
+      "setWeather": {
+        "title": "Set Weather"
+      },
+      "showAllNpcHpBars": {
+        "description": "This changes all token display bars across all scenes to this value (except structures). This can take a while after clicking Apply",
+        "title": "Change All NPC Token Display Bars"
+      },
+      "subsist": {
+        "gainProvisions": "Gain {count, plural, =1 {1 Provision} other {# Provisions}}",
+        "selectCharacter": "Please select a Character",
+        "title": "Subsist"
+      },
+      "xp": {
+        "amount": "Amount",
+        "gained": "Players gained {amount} XP!",
+        "party": "Party",
+        "title": "Award Party XP"
+      }
+    },
+    "migrations": {
+      "doNotClose": "Running migrations, please do not close the window",
+      "failed": "Failed to upgrade from version {version}. Please check the output of your console log (F12) and file an issue on GitHub or request support on our Discord channel.",
+      "runningMigration": "Running migration version {version}",
+      "successful": "Migration successful",
+      "unsupportedVersions": "Upgrades from versions prior to {version} are not supported anymore. Please upgrade to {version} first",
+      "upgradingFromTo": "Upgrading from {fromVersion} to {toVersion}"
+    },
+    "milestones": {
+      "achieve-your-first-successful-pledge-of-fealty": {
+        "name": "Achieve your first successful Pledge of Fealty (V&K)"
+      },
+      "all-eight-leadership-roles-are-assigned": {
+        "name": "All eight leadership roles are assigned"
+      },
+      "build-roads-for-the-first-time": {
+        "name": "Build Roads for the first time (V&K)"
+      },
+      "build-your-first-famousinfamous-structure": {
+        "name": "Build your first Famous/Infamous Structure (V&K)"
+      },
+      "build-your-first-seat-of-government-town-hall-castle-or-palace": {
+        "name": "Build your first seat of government (Town Hall, Castle, or Palace) (V&K)"
+      },
+      "build-your-first-structure-requiring-expert-in-a-kingdom-skill": {
+        "name": "Build your first Structure requiring Expert in a Kingdom Skill (V&K)"
+      },
+      "build-your-first-structure-requiring-master-in-a-kingdom-skill": {
+        "name": "Build your first Structure requiring Master in a Kingdom Skill (V&K)"
+      },
+      "celebrate-your-first-successful-holiday": {
+        "name": "Celebrate your first successful Holiday (V&K)"
+      },
+      "claim-your-first-landmark": {
+        "name": "Claim your first Landmark"
+      },
+      "claim-your-first-new-hex-2nd-hex-overall": {
+        "name": "Claim your first new Hex (2nd hex overall) (V&K)"
+      },
+      "claim-your-first-refuge": {
+        "name": "Claim your first Refuge"
+      },
+      "complete-your-first-successful-infiltration": {
+        "name": "Complete your First successful Infiltration (V&K)"
+      },
+      "create-your-first-masterpiece": {
+        "name": "Create your first Masterpiece (V&K)"
+      },
+      "cult-event-chapter-5-cult-activity": {
+        "name": "Cult Event (Chapter 5): Cult Activity"
+      },
+      "cult-event-chapter-5-public-outburst": {
+        "name": "Cult Event (Chapter 5): Public Outburst"
+      },
+      "cult-event-chapter-5-too-close-to-home": {
+        "name": "Cult Event (Chapter 5): Too Close to Home"
+      },
+      "cult-event-chapter-5-urban-outburst": {
+        "name": "Cult Event (Chapter 5): Urban Outburst"
+      },
+      "establish-diplomatic-relations-for-the-first-time": {
+        "name": "Establish diplomatic relations for the first time"
+      },
+      "establish-your-first-farmland": {
+        "name": "Establish your first Farmland (V&K)"
+      },
+      "establish-your-first-lumber-camp": {
+        "name": "Establish your first Lumber Camp (V&K)"
+      },
+      "establish-your-first-mine": {
+        "name": "Establish your first Mine (V&K)"
+      },
+      "establish-your-first-quarry": {
+        "name": "Establish your first Quarry (V&K)"
+      },
+      "establish-your-first-trade-agreement": {
+        "name": "Establish your first trade agreement"
+      },
+      "establish-your-first-village": {
+        "name": "Establish your first village"
+      },
+      "establish-your-second-village": {
+        "name": "Establish your second Village (V&K)"
+      },
+      "expand-a-city-into-your-first-metropolis": {
+        "name": "Expand a city into your first metropolis"
+      },
+      "expand-a-town-into-your-first-city": {
+        "name": "Expand a town into your first city"
+      },
+      "expand-a-village-into-your-first-town": {
+        "name": "Expand a village into your first town"
+      },
+      "fortify-your-first-hex": {
+        "name": "Fortify your first hex (V&K)"
+      },
+      "reach-kingdom-size-10": {
+        "name": "Reach kingdom Size 10"
+      },
+      "reach-kingdom-size-100": {
+        "name": "Reach kingdom Size 100"
+      },
+      "reach-kingdom-size-25": {
+        "name": "Reach kingdom Size 25"
+      },
+      "reach-kingdom-size-50": {
+        "name": "Reach kingdom Size 50"
+      },
+      "recruit-your-first-regular-army": {
+        "name": "Recruit your first regular Army (V&K)"
+      },
+      "recruit-your-first-specialized-army": {
+        "name": "Recruit your first Specialized Army (V&K)"
+      },
+      "spend-100-rp-during-a-kingdom-turn": {
+        "name": "Spend 100 RP during a Kingdom turn"
+      },
+      "successfully-resolve-a-random-kingdom-event": {
+        "name": "Successfully resolve a random Kingdom Event (V&K)"
+      },
+      "successfully-use-your-first-creative-solution": {
+        "name": "Successfully use your first Creative Solution (V&K)"
+      },
+      "successfully-use-your-first-supernatural-solution": {
+        "name": "Successfully use your first Supernatural Solution (V&K)"
+      },
+      "win-your-first-war-encounter": {
+        "name": "Win your first War Encounter (V&K)"
+      }
+    },
+    "modifierSelector": {
+      "check": "Check",
+      "consumption": "Consumption",
+      "lumber": "Lumber",
+      "ore": "Ore",
+      "stone": "Stone"
+    },
+    "modifierType": {
+      "ability": "Ability",
+      "circumstance": "Circumstance",
+      "item": "Item",
+      "leadership": "Leadership",
+      "proficiency": "Proficiency",
+      "status": "Status",
+      "untyped": "Untyped",
+      "vacancy": "Vacancy"
+    },
+    "modifiers": {
+      "bonuses": {
+        "creativeSolution": "Creative Solution",
+        "invested": "Invested",
+        "leadershipSpecialized": "Leadership (Specialized)",
+        "leadershipUnspecialized": "Leadership (Unspecialized)",
+        "listedEventLeader": "Listed, Non-Vacant Leader",
+        "repairingStructure": "Repairing Structure",
+        "rulerLeadershipBonus": "Ruler Performs Leadership Activity",
+        "structureEventBonus": "Structure Event Bonus"
+      },
+      "penalties": {
+        "anarchy": "Anarchy worsens all checks by 1 degree",
+        "favoredLand": "Favored Land",
+        "lackingBridges": "Lacking {count, plural, =1 {Bridge} other {Bridges}} in: {settlements}",
+        "mired": "{armyName} (Mired {count})",
+        "secondaryTerritory": "Check in Secondary Territory",
+        "unrest": "Unrest",
+        "weary": "{armyName} (Weary {count})"
+      }
+    },
+    "moduleName": "Kingdom Building, Camping & Weather",
+    "month": {
+      "april": "April",
+      "august": "August",
+      "december": "December",
+      "february": "February",
+      "january": "January",
+      "july": "July",
+      "june": "June",
+      "march": "March",
+      "may": "May",
+      "november": "November",
+      "october": "October",
+      "september": "September"
+    },
+    "perception": "Perception",
+    "proficiency": {
+      "expert": "Expert",
+      "legendary": "Legendary",
+      "master": "Master",
+      "trained": "Trained",
+      "untrained": "Untrained"
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "uncommon": "Uncommon",
+      "unique": "Unique"
+    },
+    "realmTileType": {
+      "claimed": "Claimed",
+      "farmland": "Farmland",
+      "food": "Food",
+      "lumber": "Lumber",
+      "lumberCamp": "Lumber Camp",
+      "luxury": "Luxury",
+      "luxuryWorksite": "Luxury Worksite",
+      "mine": "Mine",
+      "ore": "Ore",
+      "quarry": "Quarry",
+      "stone": "Stone"
+    },
+    "reduceConditionMode": {
+      "all": "All",
+      "random": "Random"
+    },
+    "refresh": {},
+    "resourceButton": {
+      "multiple": "Multiple",
+      "resource": {
+        "consumption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Consumption {turn, select, next {Next Turn} other {}}",
+        "corruption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Corruption {turn, select, next {Next Turn} other {}}",
+        "creativeSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count, plural, =1 {1 Creative Solution} other {# Creative Solutions}} {turn, select, next {Next Turn} other {}}",
+        "crime": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Crime {turn, select, next {Next Turn} other {}}",
+        "decay": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Decay {turn, select, next {Next Turn} other {}}",
+        "event": "{location, select, chat {{mode, select, gain {Experiencing} other {Resolving}}} other {{mode, select, gain {Experience} other {Resolve}}}} a {eventName} Kingdom Event",
+        "fame": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Fame {turn, select, next {Next Turn} other {}}",
+        "food": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Food {turn, select, next {Next Turn} other {}}",
+        "lumber": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Lumber {turn, select, next {Next Turn} other {}}",
+        "luxuries": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Luxuries {turn, select, next {Next Turn} other {}}",
+        "ore": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Ore {turn, select, next {Next Turn} other {}}",
+        "resourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count, plural, =1 {1 Resource Dice} other {# Resource Dice}} {turn, select, next {Next Turn} other {}}",
+        "resourcePoints": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count, plural, =1 {1 Resource Point} other {# Resource Points}} {turn, select, next {Next Turn} other {}}",
+        "rolledResourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice {turn, select, next {Next Turn} other {}}",
+        "stone": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Stone {turn, select, next {Next Turn} other {}}",
+        "strife": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Strife {turn, select, next {Next Turn} other {}}",
+        "supernaturalSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count, plural, =1 {1 Supernatural Solution} other {# Supernatural Solutions}} {turn, select, next {Next Turn} other {}}",
+        "unrest": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Unrest {turn, select, next {Next Turn} other {}}",
+        "xp": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} XP {turn, select, next {Next Turn} other {}}"
+      },
+      "resourceDice": {
+        "consumption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Consumption {turn, select, next {Next Turn} other {}}",
+        "corruption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Corruption {turn, select, next {Next Turn} other {}}",
+        "creativeSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Creative Solutions {turn, select, next {Next Turn} other {}}",
+        "crime": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Crime {turn, select, next {Next Turn} other {}}",
+        "decay": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Decay {turn, select, next {Next Turn} other {}}",
+        "fame": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Fame {turn, select, next {Next Turn} other {}}",
+        "food": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Food {turn, select, next {Next Turn} other {}}",
+        "lumber": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Lumber {turn, select, next {Next Turn} other {}}",
+        "luxuries": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Luxuries {turn, select, next {Next Turn} other {}}",
+        "ore": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Ore {turn, select, next {Next Turn} other {}}",
+        "resourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Resource Dice {turn, select, next {Next Turn} other {}}",
+        "resourcePoints": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Resource Points {turn, select, next {Next Turn} other {}}",
+        "rolledResourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Rolled Resource Dice {turn, select, next {Next Turn} other {}}",
+        "stone": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Stone {turn, select, next {Next Turn} other {}}",
+        "strife": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Strife {turn, select, next {Next Turn} other {}}",
+        "supernaturalSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Supernatural Solutions {turn, select, next {Next Turn} other {}}",
+        "unrest": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of Unrest {turn, select, next {Next Turn} other {}}",
+        "xp": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {count} Rolled Resource Dice of XP {turn, select, next {Next Turn} other {}}"
+      },
+      "resourceExpression": {
+        "consumption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Consumption {turn, select, next {Next Turn} other {}}",
+        "corruption": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Corruption {turn, select, next {Next Turn} other {}}",
+        "creativeSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Creative Solutions {turn, select, next {Next Turn} other {}}",
+        "crime": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Crime {turn, select, next {Next Turn} other {}}",
+        "decay": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Decay {turn, select, next {Next Turn} other {}}",
+        "fame": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Fame {turn, select, next {Next Turn} other {}}",
+        "food": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Food {turn, select, next {Next Turn} other {}}",
+        "lumber": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Lumber {turn, select, next {Next Turn} other {}}",
+        "luxuries": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Luxuries {turn, select, next {Next Turn} other {}}",
+        "ore": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Ore {turn, select, next {Next Turn} other {}}",
+        "resourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Resource Dice {turn, select, next {Next Turn} other {}}",
+        "resourcePoints": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Resource Points {turn, select, next {Next Turn} other {}}",
+        "rolledResourceDice": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Rolled Resource Dice {turn, select, next {Next Turn} other {}}",
+        "stone": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Stone {turn, select, next {Next Turn} other {}}",
+        "strife": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Strife {turn, select, next {Next Turn} other {}}",
+        "supernaturalSolution": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Supernatural Solutions {turn, select, next {Next Turn} other {}}",
+        "unrest": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} Unrest {turn, select, next {Next Turn} other {}}",
+        "xp": "{location, select, chat {{mode, select, gain {Gaining} other {Losing}}} other {{mode, select, gain {Gain} other {Lose}}}} {multiple, select, true {Multiple} other {}} {expression} XP {turn, select, next {Next Turn} other {}}"
+      },
+      "rolling": "Rolling Resources",
+      "turn": {
+        "next": "Next Turn",
+        "now": "This Turn"
+      },
+      "turnShort": {
+        "next": "Next",
+        "now": "Now"
+      }
+    },
+    "restRollMode": {
+      "none": "None",
+      "one": "One",
+      "oneEveryFourHours": "One Every Four Hours"
+    },
+    "rollMode": {
+      "blindroll": "Blind Roll",
+      "gmroll": "GM Roll",
+      "publicroll": "Public Roll",
+      "selfroll": "Self Roll"
+    },
+    "ruin": {
+      "corruption": "Corruption",
+      "crime": "Crime",
+      "decay": "Decay",
+      "strife": "Strife"
+    },
+    "season": {
+      "fall": "Fall",
+      "spring": "Spring",
+      "summer": "Summer",
+      "winter": "Winter"
+    },
+    "settings": {
+      "autoRollWeather": "Auto Roll Weather",
+      "autoRollWeatherHelp": "When a new day begins (00:00), automatically roll weather",
+      "climate": "Climate",
+      "climateButton": "Customize Climate",
+      "climateSettings": "Climate Settings",
+      "disableFirstRunMessage": "Disable First Run Message",
+      "disableFirstRunMessageHelp": "If checked, will hide initial setup instructions and guidelines",
+      "enableAfterCombatDialog": "Enable End Combat Dialog",
+      "enableAfterCombatDialogHelp": "If enabled, shows a popup after ending combat that allows you to award XP and hero points",
+      "enableCombatTracks": "Enable Combat Tracks",
+      "enableCombatTracksHelp": "If enabled, starts a combat track depending on the current region, actor or scene.",
+      "enablePartyActorIcons": "Enable Party Actor Icons",
+      "enablePartyActorIconsHelp": "If enabled, shows icons next to the party actor. Disable if you only use macros.",
+      "enableTokenMapping": "Enable Token Mapping",
+      "enableTokenMappingHelp": "If enabled, automatically maps token images to your bestiary browser based on the documented file structure in the manual if the official module is not enabled",
+      "enableWeather": "Enable Weather",
+      "enableWeatherSoundFx": "Enable Ambient Weather Sounds",
+      "enableWeatherSoundFxHelp": "If enabled, will play rain and snow tracks from the official module. You can override this behavior by creating playlists named like \"weather.blizzard\" or \"weather.rain\".",
+      "hideBuiltinKingdomSheet": "Hide PF2 System Kingdom Sheet Icon",
+      "hideBuiltinKingdomSheetHelp": "If enabled, hides the built in kingdom sheet icon on the party actor",
+      "kingdomActiveLeader": "Actively Filtered Kingdom Leader",
+      "schemaVersion": "Schema Version",
+      "schemaVersionHelp": "All data migrations greater than this version are run at page load. Do not edit unless you know what you are doing!",
+      "weatherHazardRange": "Weather Hazard Range",
+      "weatherHazardRangeHelp": "Roll weather events up and equal to Party Level plus this value",
+      "weatherRollMode": "Weather Roll Mode"
+    },
+    "settlementNav": {
+      "bonuses": "Bonuses",
+      "notes": "Notes",
+      "shopping": "Shopping",
+      "status": "Status",
+      "storage": "Storage",
+      "structures": "Structures"
+    },
+    "settlementSizeType": {
+      "city": "City",
+      "metropolis": "Metropolis",
+      "town": "Town",
+      "village": "Village"
+    },
+    "settlementTerrain": {
+      "forest": "Forest",
+      "mountains": "Mountains",
+      "plains": "Plains",
+      "swamp": "Swamp"
+    },
+    "settlementType": {
+      "capital": "Capital",
+      "settlement": "Settlement"
+    },
+    "skill": {
+      "acrobatics": "Acrobatics",
+      "arcana": "Arcana",
+      "athletics": "Athletics",
+      "crafting": "Crafting",
+      "deception": "Deception",
+      "diplomacy": "Diplomacy",
+      "intimidation": "Intimidation",
+      "medicine": "Medicine",
+      "nature": "Nature",
+      "occultism": "Occultism",
+      "performance": "Performance",
+      "religion": "Religion",
+      "society": "Society",
+      "stealth": "Stealth",
+      "survival": "Survival",
+      "thievery": "Thievery"
+    },
+    "structureBrowserMainFilters": {
+      "affectsEvents": "Affects Events",
+      "building": "Building",
+      "cheaperWhenUpgraded": "Cheaper when Upgraded",
+      "downtime": "Downtime",
+      "edifice": "Edifice",
+      "famous": "Famous",
+      "ignoreBuildingCost": "Ignore Building Cost",
+      "ignoreProficiency": "Ignore Proficiency",
+      "increasesCapacity": "Increases Capacity",
+      "infamous": "Infamous",
+      "infrastructure": "Infrastructure",
+      "reducesConsumption": "Reduces Consumption",
+      "reducesRuin": "Reduces Ruin",
+      "reducesUnrest": "Reduces Unrest",
+      "residential": "Residential",
+      "shopping": "Shopping",
+      "upgradeable": "Upgradeable",
+      "yard": "Yard"
+    },
+    "structureBrowserNav": {
+      "buildable": "Buildable",
+      "free": "Free",
+      "repairable": "Repairable",
+      "underConstruction": "Under Construction",
+      "upgradeable": "Upgradeable"
+    },
+    "structureTrait": {
+      "building": "Building",
+      "edifice": "Edifice",
+      "famous": "Famous",
+      "infamous": "Infamous",
+      "infrastructure": "Infrastructure",
+      "residential": "Residential",
+      "yard": "Yard"
+    },
+    "untrainedProficiencyMode": {
+      "full": "Full Level",
+      "half": "Half Level",
+      "none": "None"
+    },
+    "zoneTerrain": {
+      "aquatic": "Aquatic",
+      "desert": "Desert",
+      "dungeon": "Dungeon",
+      "forest": "Forest",
+      "hills": "Hills",
+      "mountain": "Mountain",
+      "plains": "Plains",
+      "swamp": "Swamp",
+      "urban": "Urban"
+    }
+  }
+}
