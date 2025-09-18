@@ -1,0 +1,112 @@
+package kingdom.lite.combat
+
+import kingdom.lite.settings.pfrpg2eKingdomCampingWeather
+import kingdom.lite.utils.buildPromise
+import kingdom.lite.utils.fromUuidTypeSafe
+import kingdom.lite.utils.getAppFlag
+import kingdom.lite.utils.isFirstGM
+import kingdom.lite.utils.setAppFlag
+import kingdom.lite.utils.typeSafeUpdate
+import com.foundryvtt.core.Game
+import com.foundryvtt.core.documents.Actor
+import com.foundryvtt.core.documents.Combatant
+import com.foundryvtt.core.documents.Playlist
+import com.foundryvtt.core.documents.PlaylistSound
+import com.foundryvtt.core.documents.Scene
+import com.foundryvtt.core.documents.onDeleteCombat
+import com.foundryvtt.core.documents.onPreUpdateCombat
+import com.foundryvtt.core.helpers.TypedHooks
+import com.foundryvtt.pf2e.actor.PF2EActor
+import kotlinx.coroutines.await
+
+// Extension functions for Track
+suspend fun Track.play() {
+    val playlist = fromUuidTypeSafe<Playlist>(playlistUuid)
+    val track = trackUuid?.let { fromUuidTypeSafe<PlaylistSound>(it) }
+    if (track != null) {
+        track.typeSafeUpdate { playing = true }
+    } else {
+        playlist?.playAll()?.await()
+    }
+}
+
+suspend fun Track.stop() {
+    val playlist = fromUuidTypeSafe<Playlist>(playlistUuid)
+    val track = trackUuid?.let { fromUuidTypeSafe<PlaylistSound>(it) }
+    if (track != null) {
+        track.typeSafeUpdate { playing = false }
+    } else {
+        playlist?.stopAll()?.await()
+    }
+}
+
+fun Actor.getCombatTrack(): Track? =
+    getAppFlag("combat-track")
+
+suspend fun Actor.setCombatTrack(track: Track?) {
+    setAppFlag("combat-track", track)
+}
+
+fun Scene.getCombatTrack(): Track? =
+    getAppFlag("combat-track")
+
+suspend fun Scene.setCombatTrack(track: Track?) {
+    setAppFlag("combat-track", track)
+}
+
+suspend fun Scene.stopMusic() {
+    playlistSound
+        ?.let { sound -> sound.typeSafeUpdate { playing = false } }
+        ?: playlist?.stopAll()?.await()
+}
+
+
+suspend fun Scene.startMusic() {
+    playlistSound
+        ?.let { sound -> sound.typeSafeUpdate { playing = true } }
+        ?: playlist?.playAll()?.await()
+}
+
+fun Game.findCombatTrack(combatants: Array<Combatant>, active: Scene): Track? =
+    // check for actor overrides
+    combatants.asSequence()
+        .mapNotNull(Combatant::actor)
+        .filterIsInstance<PF2EActor>()
+        .mapNotNull(PF2EActor::getCombatTrack)
+        .firstOrNull()
+        ?: active.getCombatTrack()  // or scene overrides
+
+suspend fun Game.startCombatTrack(combatants: Array<Combatant>, active: Scene) {
+    findCombatTrack(combatants, active)?.let {
+        scenes.active?.stopMusic()
+        it.play()
+    }
+}
+
+suspend fun Game.stopCombatTrack(combatants: Array<Combatant>, active: Scene) {
+    findCombatTrack(combatants, active)?.let {
+        it.stop()
+        scenes.active?.startMusic()
+    }
+}
+
+fun registerCombatTrackHooks(game: Game) {
+    TypedHooks.onPreUpdateCombat { document, changed, _, _ ->
+        if (document.round == 0 && changed["round"] == 1 && game.isFirstGM()) {
+            buildPromise {
+                val active = game.scenes.active
+                if (game.settings.pfrpg2eKingdomCampingWeather.getEnableCombatTracks() && active != null) {
+                    game.startCombatTrack(document.combatants.contents, active)
+                }
+            }
+        }
+    }
+    TypedHooks.onDeleteCombat { document, _, _ ->
+        buildPromise {
+            val active = game.scenes.active
+            if (game.settings.pfrpg2eKingdomCampingWeather.getEnableCombatTracks() && active != null && game.isFirstGM()) {
+                game.stopCombatTrack(document.combatants.contents, active)
+            }
+        }
+    }
+}

@@ -1,7 +1,7 @@
 package com.foundryvtt.core.data.dsl
 
-import at.kmlite.pfrpg2e.toCamelCase
-import at.kmlite.pfrpg2e.utils.toRecord
+import kingdom.lite.toCamelCase
+import kingdom.lite.utils.toRecord
 import com.foundryvtt.core.AnyObject
 import com.foundryvtt.core.data.fields.ArrayField
 import com.foundryvtt.core.data.fields.ArrayFieldOptions
