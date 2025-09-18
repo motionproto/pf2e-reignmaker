@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.app
+package at.kmlite.pfrpg2e.app
 
-import at.posselt.pfrpg2e.app.forms.normalizeArrays
+import at.kmlite.pfrpg2e.app.forms.normalizeArrays
 import js.objects.ReadonlyRecord
 import js.objects.recordOf
 import kotlin.test.Test

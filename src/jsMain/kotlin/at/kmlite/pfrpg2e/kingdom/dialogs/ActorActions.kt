@@ -1,0 +1,73 @@
+package at.kmlite.pfrpg2e.kingdom.dialogs
+
+import at.kmlite.pfrpg2e.app.HandlebarsRenderContext
+import at.kmlite.pfrpg2e.app.confirm
+import at.kmlite.pfrpg2e.app.forms.SimpleApp
+import at.kmlite.pfrpg2e.app.jsonFilePicker
+import at.kmlite.pfrpg2e.kingdom.clearKingdom
+import at.kmlite.pfrpg2e.kingdom.getKingdom
+import at.kmlite.pfrpg2e.kingdom.setKingdom
+import at.kmlite.pfrpg2e.utils.buildPromise
+import at.kmlite.pfrpg2e.utils.downloadJson
+import at.kmlite.pfrpg2e.utils.t
+import com.foundryvtt.core.applications.api.HandlebarsRenderOptions
+import com.foundryvtt.pf2e.actor.PF2EParty
+import js.objects.JsPlainObject
+import js.objects.recordOf
+import kotlinx.coroutines.await
+import org.w3c.dom.HTMLElement
+import org.w3c.dom.get
+import org.w3c.dom.pointerevents.PointerEvent
+import kotlin.js.Promise
+
+@JsPlainObject
+external interface ActorActionsContext : HandlebarsRenderContext {
+    val hasKingdom: Boolean
+}
+
+class ActorActions(
+    private val actor: PF2EParty,
+) : SimpleApp<ActorActionsContext>(
+    title = actor.name,
+    template = "applications/settings/actor-actions.hbs",
+    id = "kmActorActions",
+    classes = setOf("km-actor-actions"),
+) {
+
+    override fun _onClickAction(event: PointerEvent, target: HTMLElement) {
+        when (target.dataset["action"]) {
+            "export-kingdom" -> actor.getKingdom()?.let {
+                downloadJson(it, "Kingdom-${actor.uuid}.json")
+                close()
+            }
+
+
+            "import-kingdom" -> buildPromise {
+                val json = jsonFilePicker(title = t("kingdom.uploadKingdomJson"), t("applications.kingdom"))
+                actor.setKingdom(JSON.parse(json))
+                close()
+            }
+
+
+            "reset-kingdom" -> buildPromise {
+                if (confirm(t("kingdom.confirmDeleteKingdom", recordOf("actorName" to actor.name)))) {
+                    actor.clearKingdom()
+                    close()
+                }
+            }
+
+        }
+    }
+
+    override fun _preparePartContext(
+        partId: String,
+        context: HandlebarsRenderContext,
+        options: HandlebarsRenderOptions
+    ): Promise<ActorActionsContext> = buildPromise {
+        val parent = super._preparePartContext(partId, context, options).await()
+        ActorActionsContext(
+            partId = parent.partId,
+            hasKingdom = actor.getKingdom() != null,
+        )
+    }
+}

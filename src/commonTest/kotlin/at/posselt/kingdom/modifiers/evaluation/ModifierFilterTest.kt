@@ -1,13 +1,13 @@
-package at.posselt.kingdom.modifiers.evaluation
+package at.kmlite.kingdom.modifiers.evaluation
 
-import at.posselt.pfrpg2e.data.actor.Proficiency
-import at.posselt.pfrpg2e.data.kingdom.KingdomPhase
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierSelector
-import at.posselt.pfrpg2e.kingdom.modifiers.bonuses.createProficiencyModifier
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.In
+import at.kmlite.pfrpg2e.data.actor.Proficiency
+import at.kmlite.pfrpg2e.data.kingdom.KingdomPhase
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierSelector
+import at.kmlite.pfrpg2e.kingdom.modifiers.bonuses.createProficiencyModifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.In
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

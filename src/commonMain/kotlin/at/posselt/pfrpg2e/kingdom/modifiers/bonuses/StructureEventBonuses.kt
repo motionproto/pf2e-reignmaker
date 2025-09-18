@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomPhase
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.data.kingdom.KingdomPhase
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
 
 fun createStructureEventBonuses(currentSettlement: Settlement): Modifier? =
     if (currentSettlement.settlementEventBonus > 0) {

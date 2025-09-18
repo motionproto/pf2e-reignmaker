@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.data.events
+package at.kmlite.pfrpg2e.data.events
 
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
 
 data class KingdomEventOutcome(
     val msg: String,

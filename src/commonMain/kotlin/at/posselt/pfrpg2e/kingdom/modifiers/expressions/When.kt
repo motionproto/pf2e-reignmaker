@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.expressions
+package at.kmlite.pfrpg2e.kingdom.modifiers.expressions
 
 data class When(
     val cases: List<Case>,

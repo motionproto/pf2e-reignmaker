@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.utils
+package at.kmlite.pfrpg2e.utils
 
 import js.objects.unsafeJso
 import kotlin.test.Test

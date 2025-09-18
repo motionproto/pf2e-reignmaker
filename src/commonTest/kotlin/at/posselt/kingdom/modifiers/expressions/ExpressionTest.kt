@@ -1,17 +1,17 @@
-package at.posselt.kingdom.modifiers.expressions
+package at.kmlite.kingdom.modifiers.expressions
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkillRanks
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
-import at.posselt.pfrpg2e.data.kingdom.leaders.Vacancies
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.All
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.ExpressionContext
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Gte
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.HasRollOption
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Lt
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Not
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Some
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkillRanks
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Vacancies
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.All
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.ExpressionContext
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Gte
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.HasRollOption
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Lt
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Not
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Some
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

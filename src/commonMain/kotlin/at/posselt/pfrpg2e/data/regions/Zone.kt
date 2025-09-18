@@ -1,8 +1,8 @@
-package at.posselt.pfrpg2e.data.regions
+package at.kmlite.pfrpg2e.data.regions
 
-import at.posselt.pfrpg2e.data.ValueEnum
-import at.posselt.pfrpg2e.localization.Translatable
-import at.posselt.pfrpg2e.toCamelCase
+import at.kmlite.pfrpg2e.data.ValueEnum
+import at.kmlite.pfrpg2e.localization.Translatable
+import at.kmlite.pfrpg2e.toCamelCase
 
 
 enum class Terrain: ValueEnum, Translatable {

@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.data.kingdom
+package at.kmlite.pfrpg2e.data.kingdom
 
 private fun calculateAbilityModifier(score: Int) = (score - 10) / 2
 

@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.kingdom.incidents
+package at.kmlite.pfrpg2e.kingdom.incidents
 
-import at.posselt.pfrpg2e.kingdom.data.*
+import at.kmlite.pfrpg2e.kingdom.data.*
 import kotlin.test.*
 
 class UnrestIncidentTablesTest {

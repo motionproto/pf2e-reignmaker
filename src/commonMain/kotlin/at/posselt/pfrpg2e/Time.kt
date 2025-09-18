@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e
+package at.kmlite.pfrpg2e
 
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDateTime

@@ -1,7 +1,7 @@
-package at.posselt.pfrpg2e.kingdom.unrest
+package at.kmlite.pfrpg2e.kingdom.unrest
 
-import at.posselt.pfrpg2e.data.kingdom.leaders.Vacancies
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Vacancies
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
 
 fun calculateUnrest(
     atWar: Boolean,

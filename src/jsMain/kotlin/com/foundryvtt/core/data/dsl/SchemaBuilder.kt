@@ -1,7 +1,7 @@
 package com.foundryvtt.core.data.dsl
 
-import at.posselt.pfrpg2e.toCamelCase
-import at.posselt.pfrpg2e.utils.toRecord
+import at.kmlite.pfrpg2e.toCamelCase
+import at.kmlite.pfrpg2e.utils.toRecord
 import com.foundryvtt.core.AnyObject
 import com.foundryvtt.core.data.fields.ArrayField
 import com.foundryvtt.core.data.fields.ArrayFieldOptions

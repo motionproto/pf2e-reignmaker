@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e
+package at.kmlite.pfrpg2e
 
 import kotlin.enums.enumEntries
 import kotlin.math.ceil

@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.data.kingdom.leaders
+package at.kmlite.pfrpg2e.data.kingdom.leaders
 
 data class Vacancies(
     val ruler: Boolean = false,

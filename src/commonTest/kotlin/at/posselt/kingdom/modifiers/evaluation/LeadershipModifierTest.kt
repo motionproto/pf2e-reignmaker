@@ -1,17 +1,17 @@
-package at.posselt.kingdom.modifiers.evaluation
+package at.kmlite.kingdom.modifiers.evaluation
 
-import at.posselt.pfrpg2e.data.actor.Skill
-import at.posselt.pfrpg2e.data.actor.SkillRanks
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderActor
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderActors
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderKingdomSkills
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderSkills
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderType
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierSelector
-import at.posselt.pfrpg2e.kingdom.modifiers.bonuses.createLeadershipModifiers
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.evaluateModifiers
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
+import at.kmlite.pfrpg2e.data.actor.Skill
+import at.kmlite.pfrpg2e.data.actor.SkillRanks
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderActor
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderActors
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderKingdomSkills
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderSkills
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderType
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierSelector
+import at.kmlite.pfrpg2e.kingdom.modifiers.bonuses.createLeadershipModifiers
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.evaluateModifiers
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

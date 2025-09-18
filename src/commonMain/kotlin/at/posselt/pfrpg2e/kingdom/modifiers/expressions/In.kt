@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.expressions
+package at.kmlite.pfrpg2e.kingdom.modifiers.expressions
 
-import at.posselt.pfrpg2e.takeIfInstance
+import at.kmlite.pfrpg2e.takeIfInstance
 
 data class In(val needle: Any?, val haystack: Any) : Expression<Boolean> {
     override fun evaluate(context: ExpressionContext): Boolean {

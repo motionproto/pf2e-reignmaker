@@ -1,10 +1,10 @@
-import at.posselt.pfrpg2e.plugins.ChangeModuleVersion
-import at.posselt.pfrpg2e.plugins.CombineJsonFiles
-import at.posselt.pfrpg2e.plugins.CopyAndSanitizeTranslations
-import at.posselt.pfrpg2e.plugins.CreateDummyTranslations
-import at.posselt.pfrpg2e.plugins.JsonSchemaValidator
-import at.posselt.pfrpg2e.plugins.ReleaseModule
-import at.posselt.pfrpg2e.plugins.UnpackJsonFiles
+import at.kmlite.pfrpg2e.plugins.ChangeModuleVersion
+import at.kmlite.pfrpg2e.plugins.CombineJsonFiles
+import at.kmlite.pfrpg2e.plugins.CopyAndSanitizeTranslations
+import at.kmlite.pfrpg2e.plugins.CreateDummyTranslations
+import at.kmlite.pfrpg2e.plugins.JsonSchemaValidator
+import at.kmlite.pfrpg2e.plugins.ReleaseModule
+import at.kmlite.pfrpg2e.plugins.UnpackJsonFiles
 import de.undercouch.gradle.tasks.download.Download
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
@@ -17,7 +17,7 @@ plugins {
     alias(libs.plugins.download)
 }
 
-group = "at.posselt"
+group = "at.kmlite"
 version = "0.0.1"
 
 repositories {
@@ -117,13 +117,7 @@ tasks {
     getByName("check") {
         dependsOn(
             "validateStructures",
-            "validateFeats",
-            "validateFeatures",
             "validatePlayerActions",
-            "validateCharters",
-            "validateGovernments",
-            "validateHeartlands",
-            "validateMilestones",
             "validateKingdomEvents",
             "validateIncidents",
         )
@@ -186,17 +180,6 @@ tasks.register<JsonSchemaValidator>("validateStructures") {
     files = layout.projectDirectory.dir("data/structures")
 }
 
-tasks.register<JsonSchemaValidator>("validateFeats") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/feat.json")
-    files = layout.projectDirectory.dir("data/feats")
-}
-
-tasks.register<JsonSchemaValidator>("validateFeatures") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/feature.json")
-    files = layout.projectDirectory.dir("data/features")
-}
 
 tasks.register<JsonSchemaValidator>("validatePlayerActions") {
     outputs.upToDateWhen { true } // no outputs, only depend on input files
@@ -204,29 +187,6 @@ tasks.register<JsonSchemaValidator>("validatePlayerActions") {
     files = layout.projectDirectory.dir("data/player-actions")
 }
 
-tasks.register<JsonSchemaValidator>("validateCharters") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/charter.json")
-    files = layout.projectDirectory.dir("data/charters")
-}
-
-tasks.register<JsonSchemaValidator>("validateGovernments") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/government.json")
-    files = layout.projectDirectory.dir("data/governments")
-}
-
-tasks.register<JsonSchemaValidator>("validateHeartlands") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/heartland.json")
-    files = layout.projectDirectory.dir("data/heartlands")
-}
-
-tasks.register<JsonSchemaValidator>("validateMilestones") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/milestone.json")
-    files = layout.projectDirectory.dir("data/milestones")
-}
 
 tasks.register<JsonSchemaValidator>("validateIncidents") {
     outputs.upToDateWhen { true } // no outputs, only depend on input files

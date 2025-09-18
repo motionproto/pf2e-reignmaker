@@ -1,9 +1,9 @@
-package at.posselt.pfrpg2e.kingdom.resources
+package at.kmlite.pfrpg2e.kingdom.resources
 
-import at.posselt.pfrpg2e.data.kingdom.RealmData
-import at.posselt.pfrpg2e.data.kingdom.findKingdomSize
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.data.kingdom.structures.CommodityStorage
+import at.kmlite.pfrpg2e.data.kingdom.RealmData
+import at.kmlite.pfrpg2e.data.kingdom.findKingdomSize
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.data.kingdom.structures.CommodityStorage
 
 fun calculateStorage(realm: RealmData, settlements: List<Settlement>): CommodityStorage {
     val baseStorage = findKingdomSize(size = realm.size).commodityCapacity

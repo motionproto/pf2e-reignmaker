@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.data.actor
+package at.kmlite.pfrpg2e.data.actor
 
-import at.posselt.pfrpg2e.slugify
+import at.kmlite.pfrpg2e.slugify
 
 data class SkillRanks(
     val acrobatics: Int = 0,

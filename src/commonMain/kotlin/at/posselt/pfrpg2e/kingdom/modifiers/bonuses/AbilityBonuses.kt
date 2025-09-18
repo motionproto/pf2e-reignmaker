@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomAbility
-import at.posselt.pfrpg2e.data.kingdom.KingdomAbilityScores
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.data.kingdom.KingdomAbility
+import at.kmlite.pfrpg2e.data.kingdom.KingdomAbilityScores
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
 
 fun createAbilityModifiers(abilities: KingdomAbilityScores) = listOf(
     Modifier(

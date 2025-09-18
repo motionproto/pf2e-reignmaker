@@ -1,7 +1,7 @@
-package at.posselt.pfrpg2e.kingdom.modifiers
+package at.kmlite.pfrpg2e.kingdom.modifiers
 
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Expression
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.When
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Expression
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.When
 
 data class Modifier(
     val id: String,

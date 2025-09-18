@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.data
+package at.kmlite.pfrpg2e.data
 
 interface ValueEnum {
     val value: String

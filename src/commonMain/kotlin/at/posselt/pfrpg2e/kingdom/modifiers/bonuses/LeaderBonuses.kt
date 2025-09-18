@@ -1,8 +1,8 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderActors
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderSkills
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderActors
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderSkills
 
 data class LeaderBonuses (
     val ruler: Int = 0,

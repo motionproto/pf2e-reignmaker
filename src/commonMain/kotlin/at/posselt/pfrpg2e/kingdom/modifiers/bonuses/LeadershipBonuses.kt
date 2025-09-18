@@ -1,18 +1,18 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.data.actor.Attribute
-import at.posselt.pfrpg2e.data.actor.Lore
-import at.posselt.pfrpg2e.data.actor.Skill
-import at.posselt.pfrpg2e.data.actor.SkillRanks
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderActors
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderKingdomSkills
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderSkills
-import at.posselt.pfrpg2e.data.kingdom.leaders.LeaderType
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType.LEADERSHIP
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.In
+import at.kmlite.pfrpg2e.data.actor.Attribute
+import at.kmlite.pfrpg2e.data.actor.Lore
+import at.kmlite.pfrpg2e.data.actor.Skill
+import at.kmlite.pfrpg2e.data.actor.SkillRanks
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderActors
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderKingdomSkills
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderSkills
+import at.kmlite.pfrpg2e.data.kingdom.leaders.LeaderType
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType.LEADERSHIP
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.In
 
 
 fun calculateLeadershipBonus(

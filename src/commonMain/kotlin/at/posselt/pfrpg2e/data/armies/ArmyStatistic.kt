@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.data.armies
+package at.kmlite.pfrpg2e.data.armies
 
 data class ArmyStatistic(
     val level: Int,

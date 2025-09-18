@@ -1,0 +1,127 @@
+package at.kmlite.pfrpg2e.kingdom.dialogs
+
+import at.kmlite.pfrpg2e.app.CrudApplication
+import at.kmlite.pfrpg2e.app.CrudColumn
+import at.kmlite.pfrpg2e.app.CrudData
+import at.kmlite.pfrpg2e.app.CrudItem
+import at.kmlite.pfrpg2e.app.forms.CheckboxInput
+import at.kmlite.pfrpg2e.data.kingdom.KingdomAbility
+import at.kmlite.pfrpg2e.kingdom.KingdomActor
+import at.kmlite.pfrpg2e.kingdom.RawCharter
+import at.kmlite.pfrpg2e.kingdom.getCharters
+import at.kmlite.pfrpg2e.kingdom.getKingdom
+import at.kmlite.pfrpg2e.kingdom.setKingdom
+import at.kmlite.pfrpg2e.kingdom.sheet.resetAbilityBoosts
+import at.kmlite.pfrpg2e.utils.buildPromise
+import at.kmlite.pfrpg2e.utils.launch
+import at.kmlite.pfrpg2e.utils.t
+import js.core.Void
+import kotlin.js.Promise
+
+class CharterManagement(
+    private val kingdomActor: KingdomActor,
+) : CrudApplication(
+    title = t("kingdom.manageCharters"),
+    debug = true,
+    id = "kmManageCharters-${kingdomActor.uuid}"
+) {
+    override fun deleteEntry(id: String) = buildPromise {
+        kingdomActor.getKingdom()?.let { kingdom ->
+            kingdom.homebrewCharters = kingdom.homebrewCharters.filter { it.id != id }.toTypedArray()
+            if (kingdom.charter.type == id) {
+                kingdom.charter.type = null
+                resetAbilityBoosts(kingdom.charter.abilityBoosts)
+            }
+            kingdom.charterBlacklist = kingdom.charterBlacklist.filter { it == id }.toTypedArray()
+            kingdomActor.setKingdom(kingdom)
+            render()
+        }
+        undefined
+    }
+
+    override fun addEntry(): Promise<Void> = buildPromise {
+        ModifyCharter(
+            afterSubmit = {
+                kingdomActor.getKingdom()?.let { kingdom ->
+                    kingdom.homebrewCharters = kingdom.homebrewCharters + it
+                    kingdomActor.setKingdom(kingdom)
+                }
+                render()
+            },
+        ).launch()
+        undefined
+    }
+
+    override fun editEntry(id: String) = buildPromise {
+        ModifyCharter(
+            data = kingdomActor.getKingdom()?.homebrewCharters?.find { it.id == id },
+            afterSubmit = { charter ->
+                kingdomActor.getKingdom()?.let { kingdom ->
+                    kingdom.homebrewCharters = kingdom.homebrewCharters
+                        .filter { m -> m.id != charter.id }
+                        .toTypedArray() + charter
+                    if (kingdom.charter.type == charter.id) {
+                        resetAbilityBoosts(kingdom.charter.abilityBoosts)
+                    }
+                    kingdomActor.setKingdom(kingdom)
+                }
+                render()
+            },
+        ).launch()
+        undefined
+    }
+
+    override fun getItems(): Promise<Array<CrudItem>> = buildPromise {
+        kingdomActor.getKingdom()?.let { kingdom ->
+            val disabledIds = kingdom.charterBlacklist.toSet()
+            val homebrewIds = kingdom.homebrewCharters.map { it.id }.toSet()
+            kingdom.getCharters()
+                .sortedWith(compareBy(RawCharter::name))
+                .map { item ->
+                    val canBeEdited = item.id in homebrewIds
+                    CrudItem(
+                        id = item.id,
+                        name = item.name,
+                        nameIsHtml = false,
+                        additionalColumns = arrayOf(
+                            CrudColumn(
+                                escapeHtml = true,
+                                value = item.boost?.let { KingdomAbility.fromString(it) }?.let { t(it) } ?: "",
+                            ),
+                            CrudColumn(
+                                escapeHtml = true,
+                                value = item.flaw?.let { KingdomAbility.fromString(it) }?.let { t(it) } ?: "",
+                            )
+                        ),
+                        enable = CheckboxInput(
+                            value = item.id !in disabledIds,
+                            label = t("applications.enable"),
+                            hideLabel = true,
+                            name = "enabledIds.${item.id}",
+                        ).toContext(),
+                        canBeEdited = canBeEdited,
+                        canBeDeleted = canBeEdited,
+                    )
+                }.toTypedArray()
+        } ?: emptyArray()
+    }
+
+    override fun getHeadings(): Promise<Array<String>> = buildPromise {
+        arrayOf(t("kingdom.boost"), t("kingdom.flaw"))
+    }
+
+    override fun onParsedSubmit(value: CrudData): Promise<Void> = buildPromise {
+        kingdomActor.getKingdom()?.let { kingdom ->
+            val enabled = value.enabledIds.toSet()
+            kingdom.charterBlacklist = kingdom.getCharters()
+                .filter { it.id !in enabled }
+                .map { it.id }
+                .toTypedArray()
+            if (kingdom.charter.type !in enabled) {
+                kingdom.charter.type = null
+            }
+            kingdomActor.setKingdom(kingdom)
+        }
+        undefined
+    }
+}

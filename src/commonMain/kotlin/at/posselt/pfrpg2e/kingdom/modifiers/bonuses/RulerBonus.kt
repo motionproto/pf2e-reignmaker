@@ -1,11 +1,11 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomPhase
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.GlobalStructureBonuses
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.data.kingdom.KingdomPhase
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.GlobalStructureBonuses
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
 
 fun createRulerBonus(global: GlobalStructureBonuses): Modifier? =
     if (global.leaderLeadershipActivityBonus > 0) {

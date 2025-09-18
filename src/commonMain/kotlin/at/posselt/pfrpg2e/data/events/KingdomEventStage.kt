@@ -1,7 +1,7 @@
-package at.posselt.pfrpg2e.data.events
+package at.kmlite.pfrpg2e.data.events
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
 
 data class KingdomEventStage(
     val skills: Set<KingdomSkill>,

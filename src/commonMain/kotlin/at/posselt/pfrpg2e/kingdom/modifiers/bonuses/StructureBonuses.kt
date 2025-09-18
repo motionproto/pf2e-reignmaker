@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.MergedSettlement
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
-import at.posselt.pfrpg2e.slugify
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.MergedSettlement
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.slugify
 
 fun createStructureBonuses(mergedSettlement: MergedSettlement) =
     mergedSettlement.settlement.highestUniqueBonuses.map {

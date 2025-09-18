@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.kingdom.modifiers
+package at.kmlite.pfrpg2e.kingdom.modifiers
 
-import at.posselt.pfrpg2e.data.checks.DegreeOfSuccess
+import at.kmlite.pfrpg2e.data.checks.DegreeOfSuccess
 
 data class DowngradeResult(
     val downgrade: DegreeOfSuccess,

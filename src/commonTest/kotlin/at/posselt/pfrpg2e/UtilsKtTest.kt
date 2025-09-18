@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e
+package at.kmlite.pfrpg2e
 
-import at.posselt.pfrpg2e.data.checks.DegreeOfSuccess
+import at.kmlite.pfrpg2e.data.checks.DegreeOfSuccess
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

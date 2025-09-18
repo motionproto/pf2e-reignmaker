@@ -1,9 +1,9 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.evaluation
+package at.kmlite.pfrpg2e.kingdom.modifiers.evaluation
 
-import at.posselt.pfrpg2e.kingdom.modifiers.DowngradeResult
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.UpgradeResult
+import at.kmlite.pfrpg2e.kingdom.modifiers.DowngradeResult
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.UpgradeResult
 
 
 data class ModifierResult(

@@ -1,12 +1,12 @@
-package at.posselt.pfrpg2e.kingdom.resources
+package at.kmlite.pfrpg2e.kingdom.resources
 
-import at.posselt.pfrpg2e.data.kingdom.RealmData
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierSelector
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.evaluateModifiers
-import at.posselt.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.ExpressionContext
+import at.kmlite.pfrpg2e.data.kingdom.RealmData
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierSelector
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.evaluateModifiers
+import at.kmlite.pfrpg2e.kingdom.modifiers.evaluation.filterModifiersAndUpdateContext
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.ExpressionContext
 
 data class Consumption(
     val now: Int,

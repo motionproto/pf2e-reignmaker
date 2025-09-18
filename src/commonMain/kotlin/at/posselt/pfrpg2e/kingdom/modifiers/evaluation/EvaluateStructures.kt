@@ -1,13 +1,13 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.evaluation
+package at.kmlite.pfrpg2e.kingdom.modifiers.evaluation
 
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.data.kingdom.settlements.SettlementType
-import at.posselt.pfrpg2e.data.kingdom.settlements.findSettlementSize
-import at.posselt.pfrpg2e.data.kingdom.structures.AvailableItemBonuses
-import at.posselt.pfrpg2e.data.kingdom.structures.CommodityStorage
-import at.posselt.pfrpg2e.data.kingdom.structures.GroupedStructureBonus
-import at.posselt.pfrpg2e.data.kingdom.structures.ItemGroup
-import at.posselt.pfrpg2e.data.kingdom.structures.Structure
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.data.kingdom.settlements.SettlementType
+import at.kmlite.pfrpg2e.data.kingdom.settlements.findSettlementSize
+import at.kmlite.pfrpg2e.data.kingdom.structures.AvailableItemBonuses
+import at.kmlite.pfrpg2e.data.kingdom.structures.CommodityStorage
+import at.kmlite.pfrpg2e.data.kingdom.structures.GroupedStructureBonus
+import at.kmlite.pfrpg2e.data.kingdom.structures.ItemGroup
+import at.kmlite.pfrpg2e.data.kingdom.structures.Structure
 
 private data class CombinedBonuses(
     val bonuses: Set<GroupedStructureBonus>,

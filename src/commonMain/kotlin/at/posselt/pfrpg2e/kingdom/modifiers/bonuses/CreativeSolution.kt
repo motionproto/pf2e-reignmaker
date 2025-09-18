@@ -1,9 +1,9 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.bonuses
+package at.kmlite.pfrpg2e.kingdom.modifiers.bonuses
 
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.All
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.HasRollOption
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.All
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.HasRollOption
 
 fun createSupernaturalSolutionModifier() =
     Modifier(

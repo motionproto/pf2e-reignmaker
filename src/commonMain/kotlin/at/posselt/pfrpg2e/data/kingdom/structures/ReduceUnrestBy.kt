@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.data.kingdom.structures
+package at.kmlite.pfrpg2e.data.kingdom.structures
 
 data class ReduceUnrestBy(
     val value: String,

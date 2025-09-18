@@ -1,9 +1,9 @@
-package at.posselt.pfrpg2e.data.checks
+package at.kmlite.pfrpg2e.data.checks
 
-import at.posselt.pfrpg2e.data.ValueEnum
-import at.posselt.pfrpg2e.fromCamelCase
-import at.posselt.pfrpg2e.localization.Translatable
-import at.posselt.pfrpg2e.toCamelCase
+import at.kmlite.pfrpg2e.data.ValueEnum
+import at.kmlite.pfrpg2e.fromCamelCase
+import at.kmlite.pfrpg2e.localization.Translatable
+import at.kmlite.pfrpg2e.toCamelCase
 import kotlin.math.abs
 
 enum class DegreeOfSuccess: Translatable, ValueEnum {

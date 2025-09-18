@@ -1,8 +1,8 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.penalties
+package at.kmlite.pfrpg2e.kingdom.modifiers.penalties
 
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
 
 fun createSecondaryTerritoryPenalty(currentSettlement: Settlement): Modifier? =
     if(currentSettlement.isSecondaryTerritory) {

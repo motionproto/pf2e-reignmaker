@@ -1,0 +1,22 @@
+package at.kmlite.pfrpg2e.kingdom
+
+import at.kmlite.pfrpg2e.utils.getAppFlag
+import at.kmlite.pfrpg2e.utils.setAppFlag
+import at.kmlite.pfrpg2e.utils.unsetAppFlag
+import com.foundryvtt.core.utils.deepClone
+import com.foundryvtt.pf2e.actor.PF2EParty
+
+typealias KingdomActor = PF2EParty
+
+fun KingdomActor.getKingdom(): KingdomData? =
+    getAppFlag<KingdomActor, KingdomData?>("kingdom-sheet")
+        ?.let(::deepClone)
+
+suspend fun KingdomActor.setKingdom(data: KingdomData) {
+    setAppFlag("kingdom-sheet", data)
+}
+
+suspend fun KingdomActor.clearKingdom() {
+    unsetAppFlag("kingdom-sheet")
+}
+

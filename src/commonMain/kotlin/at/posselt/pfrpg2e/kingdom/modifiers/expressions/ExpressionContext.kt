@@ -1,11 +1,11 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.expressions
+package at.kmlite.pfrpg2e.kingdom.modifiers.expressions
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomPhase
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkillRanks
-import at.posselt.pfrpg2e.data.kingdom.leaders.Leader
-import at.posselt.pfrpg2e.data.kingdom.leaders.Vacancies
-import at.posselt.pfrpg2e.data.kingdom.structures.Structure
+import at.kmlite.pfrpg2e.data.kingdom.KingdomPhase
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkillRanks
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Leader
+import at.kmlite.pfrpg2e.data.kingdom.leaders.Vacancies
+import at.kmlite.pfrpg2e.data.kingdom.structures.Structure
 
 data class ExpressionContext(
     val usedSkill: KingdomSkill?,

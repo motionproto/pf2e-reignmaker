@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.data.kingdom.leaders
+package at.kmlite.pfrpg2e.data.kingdom.leaders
 
-import at.posselt.pfrpg2e.data.ValueEnum
-import at.posselt.pfrpg2e.data.kingdom.KingdomAbility
-import at.posselt.pfrpg2e.fromCamelCase
-import at.posselt.pfrpg2e.localization.Translatable
-import at.posselt.pfrpg2e.toCamelCase
+import at.kmlite.pfrpg2e.data.ValueEnum
+import at.kmlite.pfrpg2e.data.kingdom.KingdomAbility
+import at.kmlite.pfrpg2e.fromCamelCase
+import at.kmlite.pfrpg2e.localization.Translatable
+import at.kmlite.pfrpg2e.toCamelCase
 
 enum class Leader(val keyAbility: KingdomAbility): Translatable, ValueEnum {
     RULER(KingdomAbility.LOYALTY),

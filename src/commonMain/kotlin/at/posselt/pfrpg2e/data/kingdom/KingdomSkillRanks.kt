@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.data.kingdom
+package at.kmlite.pfrpg2e.data.kingdom
 
-import at.posselt.pfrpg2e.data.actor.Proficiency
+import at.kmlite.pfrpg2e.data.actor.Proficiency
 
 data class KingdomSkillRanks(
     val agriculture: Int = 0,

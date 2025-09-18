@@ -1,6 +1,6 @@
-package at.posselt.pfrpg2e.data.kingdom.leaders
+package at.kmlite.pfrpg2e.data.kingdom.leaders
 
-import at.posselt.pfrpg2e.data.actor.SkillRanks
+import at.kmlite.pfrpg2e.data.actor.SkillRanks
 
 data class LeaderActor(
     val level: Int,

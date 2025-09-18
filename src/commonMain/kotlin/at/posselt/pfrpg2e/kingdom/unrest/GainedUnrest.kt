@@ -1,4 +1,4 @@
-package at.posselt.pfrpg2e.kingdom.unrest
+package at.kmlite.pfrpg2e.kingdom.unrest
 
 data class GainedUnrest(
     val war: Int,

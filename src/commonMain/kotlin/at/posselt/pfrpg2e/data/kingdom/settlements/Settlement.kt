@@ -1,9 +1,9 @@
-package at.posselt.pfrpg2e.data.kingdom.settlements
+package at.kmlite.pfrpg2e.data.kingdom.settlements
 
-import at.posselt.pfrpg2e.data.kingdom.structures.AvailableItemBonuses
-import at.posselt.pfrpg2e.data.kingdom.structures.CommodityStorage
-import at.posselt.pfrpg2e.data.kingdom.structures.GroupedStructureBonus
-import at.posselt.pfrpg2e.data.kingdom.structures.Structure
+import at.kmlite.pfrpg2e.data.kingdom.structures.AvailableItemBonuses
+import at.kmlite.pfrpg2e.data.kingdom.structures.CommodityStorage
+import at.kmlite.pfrpg2e.data.kingdom.structures.GroupedStructureBonus
+import at.kmlite.pfrpg2e.data.kingdom.structures.Structure
 import kotlin.math.abs
 import kotlin.math.max
 

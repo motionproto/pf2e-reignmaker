@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.penalties
+package at.kmlite.pfrpg2e.kingdom.modifiers.penalties
 
-import at.posselt.pfrpg2e.data.kingdom.KingdomSkill
-import at.posselt.pfrpg2e.data.kingdom.settlements.Settlement
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Eq
+import at.kmlite.pfrpg2e.data.kingdom.KingdomSkill
+import at.kmlite.pfrpg2e.data.kingdom.settlements.Settlement
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Eq
 
 fun noBridgePenalty(settlements: List<Settlement>): Modifier? {
     val settlementsLackingBridge = settlements.filter { it.lacksBridge }

@@ -1,10 +1,10 @@
-package at.posselt.pfrpg2e.kingdom.modifiers.penalties
+package at.kmlite.pfrpg2e.kingdom.modifiers.penalties
 
-import at.posselt.pfrpg2e.data.checks.DegreeOfSuccess
-import at.posselt.pfrpg2e.kingdom.modifiers.DowngradeResult
-import at.posselt.pfrpg2e.kingdom.modifiers.Modifier
-import at.posselt.pfrpg2e.kingdom.modifiers.ModifierType
-import at.posselt.pfrpg2e.kingdom.modifiers.expressions.Gte
+import at.kmlite.pfrpg2e.data.checks.DegreeOfSuccess
+import at.kmlite.pfrpg2e.kingdom.modifiers.DowngradeResult
+import at.kmlite.pfrpg2e.kingdom.modifiers.Modifier
+import at.kmlite.pfrpg2e.kingdom.modifiers.ModifierType
+import at.kmlite.pfrpg2e.kingdom.modifiers.expressions.Gte
 
 fun createAnarchyPenalty() =
     Modifier(
