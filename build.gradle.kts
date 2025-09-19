@@ -115,12 +115,13 @@ tasks {
         delete.add(layout.projectDirectory.dir("dist"))
     }
     getByName("check") {
-        dependsOn(
-            "validateStructures",
-            "validatePlayerActions",
-            "validateKingdomEvents",
-            "validateIncidents",
-        )
+        // Validation tasks disabled - schema files don't exist anymore
+        // dependsOn(
+        //     "validateStructures",
+        //     "validatePlayerActions",
+        //     "validateKingdomEvents",
+        //     "validateIncidents",
+        // )
     }
     
     // Task to deploy to Foundry modules directory
@@ -147,9 +148,7 @@ tasks {
         from("lang") {
             into("lang")
         }
-        from("packs") {
-            into("packs")
-        }
+        // packs folder removed - no longer needed
         from("module.json")
         from("LICENSE")
         from("README.md")
@@ -161,38 +160,38 @@ tasks {
         }
     }
     
-    // Make the build task also deploy
+    // Make the build task automatically deploy to Foundry
     named("build") {
         finalizedBy("deployToFoundry")
     }
 }
 
-// JSON Schema validation tasks
-tasks.register<JsonSchemaValidator>("validateKingdomEvents") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/event.json")
-    files = layout.projectDirectory.dir("data/events")
-}
-
-tasks.register<JsonSchemaValidator>("validateStructures") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/structure.json")
-    files = layout.projectDirectory.dir("data/structures")
-}
-
-
-tasks.register<JsonSchemaValidator>("validatePlayerActions") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/player-action.json")
-    files = layout.projectDirectory.dir("data/player-actions")
-}
-
-
-tasks.register<JsonSchemaValidator>("validateIncidents") {
-    outputs.upToDateWhen { true } // no outputs, only depend on input files
-    schema = layout.projectDirectory.file("src/commonMain/resources/schemas/incident.json")
-    files = layout.projectDirectory.dir("data/incidents")
-}
+// JSON Schema validation tasks - DISABLED (schema files no longer exist)
+// tasks.register<JsonSchemaValidator>("validateKingdomEvents") {
+//     outputs.upToDateWhen { true } // no outputs, only depend on input files
+//     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/event.json")
+//     files = layout.projectDirectory.dir("data/events")
+// }
+// 
+// tasks.register<JsonSchemaValidator>("validateStructures") {
+//     outputs.upToDateWhen { true } // no outputs, only depend on input files
+//     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/structure.json")
+//     files = layout.projectDirectory.dir("data/structures")
+// }
+// 
+// 
+// tasks.register<JsonSchemaValidator>("validatePlayerActions") {
+//     outputs.upToDateWhen { true } // no outputs, only depend on input files
+//     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/player-action.json")
+//     files = layout.projectDirectory.dir("data/player-actions")
+// }
+// 
+// 
+// tasks.register<JsonSchemaValidator>("validateIncidents") {
+//     outputs.upToDateWhen { true } // no outputs, only depend on input files
+//     schema = layout.projectDirectory.file("src/commonMain/resources/schemas/incident.json")
+//     files = layout.projectDirectory.dir("data/incidents")
+// }
 
 // release tasks
 tasks.register<ChangeModuleVersion>("changeModuleVersion") {
@@ -214,9 +213,7 @@ tasks.register<Zip>("package") {
     from("dist") { into("pf2e-kingdom-lite/dist") }
     from("docs") { into("pf2e-kingdom-lite/docs") }
     from("img") { into("pf2e-kingdom-lite/img") }
-    from("packs") { into("pf2e-kingdom-lite/packs") }
-    from("styles") { into("pf2e-kingdom-lite/styles") }
-    from("templates") { into("pf2e-kingdom-lite/templates") }
+    // Removed: packs, styles, templates (folders no longer exist)
     from("CHANGELOG.md") { into("pf2e-kingdom-lite/") }
     from("LICENSE") { into("pf2e-kingdom-lite/") }
     from("OpenGameLicense.md") { into("pf2e-kingdom-lite/") }
