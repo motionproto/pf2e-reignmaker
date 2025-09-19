@@ -1,5 +1,7 @@
 package kingdom.lite.ui.components
 
+import org.w3c.dom.HTMLElement
+
 /**
  * Kingdom Statistics sidebar component
  * Displays the core kingdom statistics including Fame, Unrest, Gold, Resources, etc.
@@ -131,4 +133,10 @@ object KingdomStats {
             </div>
         </div>
     """
+    
+    fun attachListeners(container: HTMLElement) {
+        // Kingdom stats will have its own interactions here in the future
+        // For example: clicking on resources to open details, fame tracking, etc.
+        // For now, no specific listeners needed
+    }
 }

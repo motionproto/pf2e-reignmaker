@@ -1,22 +1,24 @@
 package kingdom.lite.ui.components
 
 import kingdom.lite.ui.turn.*
+import org.w3c.dom.HTMLElement
 
 /**
- * Turn tab content component
- * Manages the turn phase navigation and content display
+ * Turn content component
+ * Self-contained component that manages the turn phase navigation and content display
  */
-class ContentTurn {
+class ContentTurn : ContentComponent {
     private var activePhase = "status"
+    private var elementId = "turn-content-${kotlin.js.Date.now()}"
     
-    fun render(): String = buildString {
+    override fun render(): String = buildString {
         append("""
-            <div class="turn-content">
+            <div class="turn-content" data-content-id="$elementId">
                 <div class="phase-navigation-fixed">
                     ${renderPhaseButtons()}
                 </div>
                 <div class="phase-content-scrollable">
-                    <div class="phase-content">
+                    <div class="phase-content" id="phase-content-$elementId">
                         ${renderPhaseContent()}
                     </div>
                 </div>
@@ -24,11 +26,47 @@ class ContentTurn {
         """)
     }
     
-    fun setActivePhase(phase: String) {
+    override fun attachListeners(container: HTMLElement) {
+        // Attach phase button listeners within this component's scope
+        val turnContent = container.querySelector("[data-content-id='$elementId']") ?: return
+        val phaseButtons = turnContent.querySelectorAll(".phase-button")
+        
+        for (i in 0 until phaseButtons.length) {
+            val button = phaseButtons.item(i) as HTMLElement
+            button.addEventListener("click", { event ->
+                event.preventDefault()
+                val phase = button.dataset.asDynamic().phase as String?
+                if (phase != null) {
+                    setActivePhase(phase)
+                    updatePhaseContent(turnContent as HTMLElement)
+                }
+            })
+        }
+    }
+    
+    private fun setActivePhase(phase: String) {
         activePhase = phase
     }
     
     fun getActivePhase(): String = activePhase
+    
+    private fun updatePhaseContent(container: HTMLElement) {
+        // Update button states
+        val buttons = container.querySelectorAll(".phase-button")
+        for (i in 0 until buttons.length) {
+            val btn = buttons.item(i) as HTMLElement
+            val btnPhase = btn.dataset.asDynamic().phase as String?
+            if (btnPhase == activePhase) {
+                btn.classList.add("active")
+            } else {
+                btn.classList.remove("active")
+            }
+        }
+        
+        // Update content
+        val contentArea = container.querySelector("#phase-content-$elementId") as? HTMLElement
+        contentArea?.innerHTML = renderPhaseContent()
+    }
     
     private fun renderPhaseButtons(): String = buildString {
         val phases = listOf(

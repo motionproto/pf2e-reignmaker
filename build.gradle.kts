@@ -157,6 +157,9 @@ tasks {
     register<Copy>("deployToFoundry") {
         dependsOn("assemble", "combineDataFiles")
         
+        // Force this task to always run
+        outputs.upToDateWhen { false }
+        
         val foundryModulesDir = file("/Users/mark/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite")
         
         // Delete existing module directory first

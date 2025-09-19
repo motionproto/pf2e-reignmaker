@@ -1,19 +1,31 @@
 package kingdom.lite.ui
 
 import kingdom.lite.ui.components.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.w3c.dom.HTMLElement
 import kotlin.js.Json
 import kotlin.js.json
 
 /**
  * Main Kingdom Sheet Application
- * Provides a tabbed interface with sidebar for kingdom stats and main panel for content
+ * Simply provides the window structure - all behavior is managed by components
  */
 class KingdomSheet : Application() {
-    private var activeTab = "turn"
-    private val turnContent = ContentTurn()
+    // Components that make up the sheet
+    private val contentSelector = ContentSelector { contentId ->
+        onContentChange(contentId)
+    }
+    private val kingdomStats = KingdomStats
+    
+    // Content components - each manages its own state and listeners
+    private val contentComponents: Map<String, ContentComponent> = mapOf(
+        "turn" to ContentTurn(),
+        "settlements" to ContentSettlements,
+        "factions" to ContentFactions,
+        "modifiers" to ContentModifiers,
+        "notes" to ContentNotes
+    )
+    
+    private var currentContent: ContentComponent? = contentComponents["turn"]
     
     override val options: ApplicationOptions = object : ApplicationOptions {
         override var id: String? = "kingdom-sheet"
@@ -31,87 +43,40 @@ class KingdomSheet : Application() {
     override fun activateListeners(html: HTMLElement) {
         super.activateListeners(html)
         
-        // Tab click handlers
-        val tabNodeList = html.asDynamic().querySelectorAll(".kingdom-tab")
-        val tabCount = tabNodeList.length as Int
-        for (i in 0 until tabCount) {
-            val tab = tabNodeList[i] as HTMLElement
-            tab.addEventListener("click", {
-                val tabName = tab.asDynamic().dataset.tab as String?
-                if (tabName != null) {
-                    setActiveTab(tabName)
-                    GlobalScope.launch {
-                        render(true)
-                    }
-                }
-            })
-        }
-        
-        // Phase button handlers
-        val buttonNodeList = html.asDynamic().querySelectorAll(".phase-button")
-        val buttonCount = buttonNodeList.length as Int
-        for (i in 0 until buttonCount) {
-            val button = buttonNodeList[i] as HTMLElement
-            button.addEventListener("click", {
-                val phaseName = button.asDynamic().dataset.phase as String?
-                if (phaseName != null) {
-                    turnContent.setActivePhase(phaseName)
-                    updatePhaseContent()
-                }
-            })
-        }
+        // Let each component handle its own listeners
+        contentSelector.attachListeners(html)
+        kingdomStats.attachListeners(html)
+        currentContent?.attachListeners(html)
     }
     
-    private fun setActiveTab(tabName: String) {
-        activeTab = tabName
-    }
-    
-    private fun updatePhaseContent() {
-        // Re-render the entire turn content to update phase display
-        element?.querySelector(".kingdom-main")?.let { mainContent ->
-            (mainContent as HTMLElement).innerHTML = renderMainContent()
-        }
+    private fun onContentChange(contentId: String) {
+        // Update current content
+        currentContent = contentComponents[contentId]
         
-        // Reattach phase button listeners after re-render
-        val buttonNodeList = element?.asDynamic()?.querySelectorAll(".phase-button")
-        val buttonCount = buttonNodeList?.length as? Int ?: 0
-        for (i in 0 until buttonCount) {
-            val button = buttonNodeList[i] as HTMLElement
-            button.addEventListener("click", {
-                val phaseName = button.asDynamic().dataset.phase as String?
-                if (phaseName != null) {
-                    turnContent.setActivePhase(phaseName)
-                    updatePhaseContent()
-                }
-            })
+        // Re-render the main content area
+        element?.querySelector(".kingdom-main")?.let { mainArea ->
+            (mainArea as HTMLElement).innerHTML = currentContent?.render() ?: ""
+            // Attach listeners for the new content
+            currentContent?.attachListeners(mainArea.parentElement as HTMLElement)
         }
     }
     
     override val template: String
-        get() = renderContent()
-    
-    private fun renderContent(): String = buildString {
-        append("""
-            <div class="kingdom-container">
-                <div class="kingdom-header">
-                    ${KingdomTabs.render(activeTab)}
-                </div>
-                <div class="kingdom-body">
-                    <div class="kingdom-sidebar">
-                        ${KingdomStats.render()}
+        get() = buildString {
+            append("""
+                <div class="kingdom-container">
+                    <div class="kingdom-header">
+                        ${contentSelector.render()}
                     </div>
-                    <div class="kingdom-main">
-                        ${renderMainContent()}
+                    <div class="kingdom-body">
+                        <div class="kingdom-sidebar">
+                            ${kingdomStats.render()}
+                        </div>
+                        <div class="kingdom-main content">
+                            ${currentContent?.render() ?: ""}
+                        </div>
                     </div>
                 </div>
-            </div>
-        """)
-    }
-    
-    private fun renderMainContent(): String = when (activeTab) {
-        "turn" -> turnContent.render()
-        "factions" -> ContentFactions.render()
-        "events" -> ContentEvents.render()
-        else -> turnContent.render()
-    }
+            """)
+        }
 }

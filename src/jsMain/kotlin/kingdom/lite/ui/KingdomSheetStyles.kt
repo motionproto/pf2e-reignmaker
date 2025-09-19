@@ -43,7 +43,7 @@ object KingdomSheetStyles {
         }
         
         .kingdom-sheet .close {
-            color: #c9b37e;
+            color: #e7e7e7ff;
             text-decoration: none;
             font-size: 18px;
             line-height: 1;
@@ -54,7 +54,7 @@ object KingdomSheetStyles {
         }
         
         .kingdom-sheet .close:hover {
-            color: #ffd700;
+            color: #ffffff;
         }
         
         .kingdom-sheet .window-content {
@@ -72,45 +72,59 @@ object KingdomSheetStyles {
             background: white;
         }
         
-        /* Header with Tabs */
+        /* Header with Content Selector */
         .kingdom-header {
             background: linear-gradient(to bottom, #5e0000, #3a0000);
             border-bottom: 2px solid #b8860b;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            min-height: 40px;
+            overflow: visible;
         }
         
-        .kingdom-tabs {
+        .content-selector {
             display: flex;
-            padding: 0;
+            flex-direction: row;
+            flex-wrap: nowrap;
             margin: 0;
-            height: 40px;
+            width: 100%;
+            overflow: visible;
+            align-items: stretch;
+            justify-content: flex-start;
+            background: #3a3a3a;
         }
         
-        .kingdom-tab {
-            flex: 0 0 auto;
+        .content-button {
+            flex: 0 1 auto;
+            display: block;
             padding: 10px 20px;
-            background: transparent;
-            border: none;
-            border-right: 1px solid rgba(184, 134, 11, 0.3);
-            color: #c9b37e;
-            font-size: 16px;
+            background: linear-gradient(to bottom, #5a5958ff, #252424ff);
+            border: 1px solid #757575ff;
+            color: #b3b3b3ff;
+            font-size: 20px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
+            height: 40px;
+            line-height: 20px;
+            min-width: auto;
         }
         
-        .kingdom-tab:hover {
-            background: rgba(184, 134, 11, 0.1);
-            color: #fff;
+        .content-button:hover {
+            background: linear-gradient(to bottom, #666564ff, #3a3a3aff);
+            color: #e2e2e2ff;
+            transform: translateY(-0.5px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border-color: #9d9c9aff;
         }
         
-        .kingdom-tab.active {
-            background: linear-gradient(to bottom, rgba(184, 134, 11, 0.2), transparent);
-            color: #ffd700;
-            border-bottom: 2px solid #b8860b;
+        .content-button.active {
+            background: linear-gradient(to bottom, #8b0000, #5e0000);
+            color: #fecb21ff;
             font-weight: bold;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            border-color: #8b0000;
         }
         
         /* Body Layout */
@@ -276,6 +290,15 @@ object KingdomSheetStyles {
             padding: 0;
             overflow-y: auto;
             background: #f5f5f0;
+        }
+        
+        /* Tab Content Display Control */
+        .kingdom-main .tab {
+            display: none;
+        }
+        
+        .kingdom-main .tab.active {
+            display: block;
         }
         
         /* Turn Content */
@@ -491,21 +514,50 @@ object KingdomSheetStyles {
         
         /* Other Content Sections */
         .settlements-content, .factions-content, 
-        .structures-content, .events-content {
+        .modifiers-content, .notes-content {
             background: white;
             border: 1px solid #d4c4a0;
             border-radius: 6px;
             padding: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 10px;
+            min-height: 200px;
         }
         
         .settlements-content h3, .factions-content h3,
-        .structures-content h3, .events-content h3 {
+        .modifiers-content h3, .notes-content h3 {
             color: #5e0000;
             border-bottom: 2px solid #b8860b;
             padding-bottom: 10px;
             margin-bottom: 15px;
             font-size: 20px;
+        }
+        
+        /* Notes Section */
+        .notes-editor {
+            width: 100%;
+            height: 100%;
+            min-height: 400px;
+        }
+        
+        .notes-textarea {
+            width: 100%;
+            height: 400px;
+            padding: 12px;
+            border: 1px solid #d4c4a0;
+            border-radius: 4px;
+            background: #fffff9;
+            color: #191813;
+            font-size: 14px;
+            font-family: 'Signika', 'Palatino Linotype', serif;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        
+        .notes-textarea:focus {
+            outline: none;
+            border-color: #b8860b;
+            box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.1);
         }
         
         /* Buttons */
