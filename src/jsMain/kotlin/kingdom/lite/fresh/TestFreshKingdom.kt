@@ -1,5 +1,24 @@
 package kingdom.lite.fresh
 
+import kingdom.lite.ui.registerKingdomIconHook
+
+/**
+ * Initialize the Kingdom module
+ */
+fun initializeKingdom() {
+    console.log("Initializing PF2e Kingdom Lite")
+    
+    // Register the Kingdom icon hook for party sheets
+    registerKingdomIconHook()
+    
+    // Run tests in development
+    if (js("typeof DEV_MODE !== 'undefined' && DEV_MODE")) {
+        TestFreshKingdom.runTests()
+    }
+    
+    console.log("Kingdom Lite initialization complete")
+}
+
 /**
  * Test file to demonstrate the fresh kingdom system works
  */
