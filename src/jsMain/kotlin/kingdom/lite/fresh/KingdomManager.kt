@@ -44,10 +44,7 @@ class KingdomManager(
         food: Int = 0,
         lumber: Int = 0,
         ore: Int = 0,
-        stone: Int = 0,
-        commodities: Int = 0,
-        luxuries: Int = 0,
-        resourcePoints: Int = 0
+        stone: Int = 0
     ) {
         val currentResources = kingdom.resources
         kingdom = kingdom.copy(
@@ -55,11 +52,27 @@ class KingdomManager(
                 food = (currentResources.food + food).coerceAtLeast(0),
                 lumber = (currentResources.lumber + lumber).coerceAtLeast(0),
                 ore = (currentResources.ore + ore).coerceAtLeast(0),
-                stone = (currentResources.stone + stone).coerceAtLeast(0),
-                commodities = (currentResources.commodities + commodities).coerceAtLeast(0),
-                luxuries = (currentResources.luxuries + luxuries).coerceAtLeast(0),
-                resourcePoints = (currentResources.resourcePoints + resourcePoints).coerceAtLeast(0)
+                stone = (currentResources.stone + stone).coerceAtLeast(0)
             )
+        )
+    }
+    
+    // Kingdom status management
+    fun modifyGold(amount: Int) {
+        kingdom = kingdom.copy(
+            gold = (kingdom.gold + amount).coerceAtLeast(0)
+        )
+    }
+    
+    fun modifyUnrest(amount: Int) {
+        kingdom = kingdom.copy(
+            unrest = (kingdom.unrest + amount).coerceAtLeast(0)
+        )
+    }
+    
+    fun modifyFame(amount: Int) {
+        kingdom = kingdom.copy(
+            fame = (kingdom.fame + amount).coerceAtLeast(0)
         )
     }
     

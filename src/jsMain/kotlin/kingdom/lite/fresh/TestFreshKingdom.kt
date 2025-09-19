@@ -17,10 +17,18 @@ object TestFreshKingdom {
         manager.modifyResources(
             food = 100,
             lumber = 50,
-            resourcePoints = 1000
+            ore = 25,
+            stone = 30
         )
         val resources = manager.getKingdom().resources
-        console.log("Resources - Food: ${resources.food}, Lumber: ${resources.lumber}, RP: ${resources.resourcePoints}")
+        console.log("Resources - Food: ${resources.food}, Lumber: ${resources.lumber}, Ore: ${resources.ore}, Stone: ${resources.stone}")
+        
+        // Test 2b: Kingdom status
+        manager.modifyGold(500)
+        manager.modifyFame(10)
+        manager.modifyUnrest(2)
+        val kingdom = manager.getKingdom()
+        console.log("Kingdom Status - Gold: ${kingdom.gold}, Fame: ${kingdom.fame}, Unrest: ${kingdom.unrest}")
         
         // Test 3: Add a settlement
         val settlement = manager.addSettlement("Capital City")
@@ -48,8 +56,8 @@ object TestFreshKingdom {
         
         // Test 7: Level up
         manager.addXP(1500)
-        val kingdom = manager.getKingdom()
-        console.log("After XP gain - Level: ${kingdom.level}, XP: ${kingdom.xp}")
+        val finalKingdom = manager.getKingdom()
+        console.log("After XP gain - Level: ${finalKingdom.level}, XP: ${finalKingdom.xp}")
         
         console.log("=== All tests completed successfully! ===")
     }

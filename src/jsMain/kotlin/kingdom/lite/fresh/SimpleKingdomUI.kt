@@ -21,6 +21,16 @@ class SimpleKingdomUI {
             h2 { +"Kingdom: ${kingdom.name}" }
             p { +"Level: ${kingdom.level} | XP: ${kingdom.xp} | Turn: ${kingdom.currentTurn}" }
             
+            // Kingdom Status
+            div {
+                h3 { +"Kingdom Status" }
+                ul {
+                    li { +"Gold: ${kingdom.gold}" }
+                    li { +"Fame: ${kingdom.fame}" }
+                    li { +"Unrest: ${kingdom.unrest}" }
+                }
+            }
+            
             // Resources section
             div {
                 h3 { +"Resources" }
@@ -30,9 +40,6 @@ class SimpleKingdomUI {
                     li { +"Lumber: ${res.lumber}" }
                     li { +"Ore: ${res.ore}" }
                     li { +"Stone: ${res.stone}" }
-                    li { +"Commodities: ${res.commodities}" }
-                    li { +"Luxuries: ${res.luxuries}" }
-                    li { +"Resource Points: ${res.resourcePoints}" }
                 }
             }
             
@@ -105,8 +112,10 @@ class SimpleKingdomUI {
         manager.modifyResources(
             food = 10,
             lumber = 5,
-            resourcePoints = 100
+            ore = 3,
+            stone = 4
         )
+        manager.modifyGold(100)
     }
     
     fun advanceTurn() {
