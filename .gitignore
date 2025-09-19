@@ -45,3 +45,9 @@ bin/
 .DS_Store
 .kotlin
 .idea
+
+### Development server files (should not exist for Foundry modules) ###
+webpack-dev-server.pid
+.webpack/
+node_modules/
+*.log

@@ -6,7 +6,7 @@ import kingdom.lite.ui.turn.*
  * Turn tab content component
  * Manages the turn phase navigation and content display
  */
-class TurnContent {
+class ContentTurn {
     private var activePhase = "status"
     
     fun render(): String = buildString {
