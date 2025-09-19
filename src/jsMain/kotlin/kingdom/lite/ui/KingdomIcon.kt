@@ -2,6 +2,8 @@ package kingdom.lite.ui
 
 import kotlinx.browser.document
 import kotlinx.browser.window
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.html.a
 import kotlinx.html.classes
 import kotlinx.html.dom.create
@@ -34,65 +36,18 @@ fun createKingdomIcon(actorId: String): HTMLElement {
 }
 
 /**
- * Opens the Kingdom UI stub page using DialogV2
+ * Opens the Kingdom UI using the new KingdomSheet
  */
 fun openKingdomUI(actorId: String) {
     console.log("Opening Kingdom UI for actor: $actorId")
     
-    // Create dialog content
-    val dialogContent = """
-        <div style="padding: 20px;">
-            <h2 style="text-align: center; margin-bottom: 20px;">Kingdom Management</h2>
-            <p style="text-align: center; margin-bottom: 10px;">
-                <strong>Party Actor ID:</strong> $actorId
-            </p>
-            <p style="color: #666; text-align: center; margin-top: 20px;">
-                This is a placeholder for the Kingdom Management interface.
-            </p>
-            <p style="color: #999; text-align: center; margin-top: 10px; font-size: 0.9em;">
-                Full functionality will be implemented soon.
-            </p>
-        </div>
-    """.trimIndent()
+    // Inject styles if not already done
+    injectStyles(KingdomSheetStyles.styles)
     
-    // Use DialogV2.prompt which is a static method that creates a simple dialog
-    // Access it through window.foundry.applications.api.DialogV2
-    val foundry = window.asDynamic().foundry
-    if (foundry != undefined && 
-        foundry.applications != undefined && 
-        foundry.applications.api != undefined && 
-        foundry.applications.api.DialogV2 != undefined) {
-        
-        val DialogV2 = foundry.applications.api.DialogV2
-        
-        // Create a simple prompt dialog and handle the promise with dynamic approach
-        val promise = DialogV2.prompt(json(
-            "window" to json(
-                "title" to "Kingdom Management",
-                "icon" to "fa-solid fa-chess-rook"
-            ),
-            "content" to dialogContent,
-            "ok" to json(
-                "label" to "Close",
-                "icon" to "fa-solid fa-times"
-            ),
-            "rejectClose" to false,
-            "modal" to false
-        ))
-        
-        // Handle promise using dynamic calls
-        promise.then { _: Any? ->
-            console.log("Kingdom dialog closed")
-        }
-        promise.catch { error: Any ->
-            console.error("Error with Kingdom dialog:", error)
-        }
-    } else {
-        // Fallback to ui.notifications if DialogV2 is not available
-        val ui = window.asDynamic().ui
-        if (ui != undefined && ui.notifications != undefined) {
-            ui.notifications.info("Kingdom Management UI is being developed. Party Actor ID: $actorId")
-        }
+    // Create and render the new Kingdom Sheet
+    kotlinx.coroutines.GlobalScope.launch {
+        val sheet = KingdomSheet()
+        sheet.render(true)
     }
 }
 

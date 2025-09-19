@@ -26,6 +26,30 @@ repositories {
 
 // tasks that generate code or resources need to be registered
 // before referencing them in source sets below
+
+// Task to run Python script that combines individual JSON files into dist/
+tasks.register<Exec>("combineDataFiles") {
+    workingDir = layout.projectDirectory.dir("data").asFile
+    commandLine("python3", "combine_all_json.py")
+    
+    // Declare inputs and outputs for up-to-date checking
+    inputs.files(fileTree("data/events") { include("*.json") })
+    inputs.files(fileTree("data/incidents") { include("**/*.json") })
+    inputs.files(fileTree("data/player-actions") { include("*.json") })
+    inputs.files(fileTree("data/structures") { include("*.json") })
+    inputs.file("data/combine_all_json.py")
+    inputs.file("data/structures/combine_structures.py")
+    
+    outputs.file("dist/events.json")
+    outputs.file("dist/incidents.json") 
+    outputs.file("dist/player-actions.json")
+    outputs.file("dist/structures.json")
+    
+    doFirst {
+        println("Combining JSON data files...")
+    }
+}
+
 tasks.register<CombineJsonFiles>("combineJsonFiles") {
     sourceDirectory = layout.projectDirectory.dir("data/")
     targetDirectory = layout.buildDirectory.dir("generated/data/")
@@ -114,6 +138,11 @@ tasks {
     getByName<Delete>("clean") {
         delete.add(layout.projectDirectory.dir("dist"))
     }
+    
+    // Run combineDataFiles before js compilation
+    named("compileKotlinJs") {
+        dependsOn("combineDataFiles")
+    }
     getByName("check") {
         // Validation tasks disabled - schema files don't exist anymore
         // dependsOn(
@@ -126,7 +155,7 @@ tasks {
     
     // Task to deploy to Foundry modules directory
     register<Copy>("deployToFoundry") {
-        dependsOn("assemble")
+        dependsOn("assemble", "combineDataFiles")
         
         val foundryModulesDir = file("/Users/mark/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite")
         

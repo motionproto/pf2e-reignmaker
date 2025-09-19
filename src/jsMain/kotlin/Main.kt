@@ -1,4 +1,6 @@
-import kingdom.lite.fresh.initializeKingdom
+import kingdom.lite.ui.registerKingdomIconHook
+import kingdom.lite.ui.injectStyles
+import kingdom.lite.ui.KingdomSheetStyles
 
 external val Hooks: dynamic
 
@@ -10,12 +12,17 @@ fun init() {
     // Register init hook
     Hooks.once("init") {
         console.log("PF2e Kingdom Lite: Init hook")
-        initializeKingdom()
+        
+        // Inject the Kingdom Sheet styles
+        injectStyles(KingdomSheetStyles.styles)
     }
     
-    // Register ready hook for any final setup
+    // Register ready hook for final setup
     Hooks.once("ready") {
         console.log("PF2e Kingdom Lite: Ready hook - Module fully loaded")
+        
+        // Register the Kingdom icon hook to add icons to party actors
+        registerKingdomIconHook()
     }
 }
 

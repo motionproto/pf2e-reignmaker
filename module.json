@@ -4,14 +4,10 @@
     "description": "Kingdom Building management for Pathfinder 2e",
     "version": "0.0.1",
     "scripts": [
-        "dist/api/patches.js",
         "dist/main.js"
     ],
     "url": "https://github.com/motionproto/pf2e-kingdom-lite",
     "license": "LICENSE",
-    "styles": [
-        "dist/style.css"
-    ],
     "languages": [
         {
             "lang": "en",
@@ -24,7 +20,7 @@
     "socket": true,
     "authors": [
         {
-            "name": "Bernhard Posselt",
+            "name": "Mark Pearce & Anthropic Claude",
             "flags": {}
         }
     ],
