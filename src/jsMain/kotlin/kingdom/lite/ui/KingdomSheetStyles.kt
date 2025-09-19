@@ -6,14 +6,62 @@ package kingdom.lite.ui
  */
 object KingdomSheetStyles {
     val styles = """
+        /* Application Window Styling */
+        .app.kingdom-sheet {
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+            border: 1px solid #000;
+            border-radius: 5px;
+            background: white;
+        }
+        
         .kingdom-sheet {
             font-family: 'Signika', 'Palatino Linotype', serif;
             color: #191813;
+            background: white;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .kingdom-sheet .window-header {
+            background: linear-gradient(to bottom, #5e0000, #3a0000);
+            border-bottom: 1px solid #b8860b;
+            border-radius: 5px 5px 0 0;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .kingdom-sheet .window-title {
+            color: #ffffff;
+            margin: 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .kingdom-sheet .close {
+            color: #c9b37e;
+            text-decoration: none;
+            font-size: 18px;
+            line-height: 1;
+            padding: 2px 6px;
+            margin-left: auto;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .kingdom-sheet .close:hover {
+            color: #ffd700;
         }
         
         .kingdom-sheet .window-content {
             padding: 0;
-            background: #f5f5f0;
+            background: white;
+            overflow: hidden;
+            flex: 1;
         }
         
         /* Main Container */
@@ -21,7 +69,7 @@ object KingdomSheetStyles {
             display: flex;
             flex-direction: column;
             height: 100%;
-            background: linear-gradient(to bottom, #f5f5f0, #ebe8e0);
+            background: white;
         }
         
         /* Header with Tabs */
@@ -45,7 +93,7 @@ object KingdomSheetStyles {
             border: none;
             border-right: 1px solid rgba(184, 134, 11, 0.3);
             color: #c9b37e;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
@@ -225,7 +273,7 @@ object KingdomSheetStyles {
         /* Main Content Area */
         .kingdom-main {
             flex: 1;
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
             background: #f5f5f0;
         }
@@ -237,64 +285,75 @@ object KingdomSheetStyles {
             flex-direction: column;
         }
         
+        .phase-navigation-fixed {
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #3a3a3a;
+            padding: 0;
+        }
+        
+        .phase-content-scrollable {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            padding-top: 15px;
+        }
+        
         .phase-navigation {
             margin-bottom: 20px;
         }
         
         .phase-buttons {
             display: flex;
-            gap: 10px;
-            padding: 10px;
-            background: linear-gradient(to bottom, #3a0000, #2c0000);
-            border-radius: 6px;
-            border: 1px solid #b8860b;
+            gap: 8px;
+            padding: 8px;
+            background: #3a3a3a;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .phase-button {
             flex: 1;
-            padding: 10px 15px;
-            background: linear-gradient(to bottom, #5e4433, #3e2922);
-            border: 1px solid #b8860b;
+            padding: 6px 12px;
+            background: linear-gradient(to bottom, #5a5958ff, #252424ff);
+            border: 1px solid #757575ff;
             border-radius: 4px;
-            color: #c9b37e;
+            color: #b3b3b3ff;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 13px;
+            text-transform: none;
+            letter-spacing: 0.4px;
+            font-size: 16px;
+            min-height: 32px;
+            line-height: 1.3;
         }
         
         .phase-button:hover {
-            background: linear-gradient(to bottom, #6e5443, #4e3932);
-            color: #ffd700;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            background: linear-gradient(to bottom, #666564ff, #3a3a3aff);
+            color: #e2e2e2ff;
+            transform: translateY(-0.5px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border-color: #9d9c9aff;
         }
         
         .phase-button.active {
-            background: linear-gradient(to bottom, #b8860b, #8b6914);
-            color: #fff;
+            background: linear-gradient(to bottom, #8b0000, #5e0000);
+            color: #ffffff;
             font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+            border-color: #8b0000;
         }
         
         /* Phase Content */
         .phase-content {
-            flex: 1;
-            background: white;
-            border: 1px solid #d4c4a0;
-            border-radius: 6px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            /* Container styling moved to phase-step-container */
         }
         
         .phase-details h3 {
-            color: #5e0000;
-            border-bottom: 2px solid #b8860b;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-            font-size: 20px;
+            display: none;
         }
         
         .phase-steps {
@@ -310,6 +369,62 @@ object KingdomSheetStyles {
         .phase-steps strong {
             color: #5e0000;
             font-weight: 600;
+        }
+        
+        /* Phase Step Containers */
+        .phase-step-container {
+            background: white;
+            border: 1px solid #d4c4a0;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+            line-height: 1.6;
+            color: #191813;
+        }
+        
+        .phase-step-container:last-child {
+            margin-bottom: 0;
+        }
+        
+        .phase-step-container strong {
+            color: #5e0000;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+        
+        .phase-step-container h4 {
+            color: #5e0000;
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #b8860b;
+            padding-bottom: 5px;
+        }
+        
+        .phase-step-container .category-desc {
+            font-style: italic;
+            color: #6b4423;
+            margin: 0 0 12px 0;
+            font-size: 14px;
+        }
+        
+        .phase-step-container ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        
+        .phase-step-container li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            color: #191813;
+        }
+        
+        .phase-step-container li strong {
+            color: #5e0000;
+            font-weight: 600;
+            margin-right: 4px;
         }
         
         .activity-info, .event-info, .loot-info {
@@ -329,6 +444,49 @@ object KingdomSheetStyles {
         .activity-info strong, .event-info strong, .loot-info strong {
             color: #5e0000;
             font-weight: 600;
+        }
+        
+        /* Action Categories */
+        .action-category {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(184, 134, 11, 0.05);
+            border: 1px solid #d4c4a0;
+            border-radius: 5px;
+        }
+        
+        .action-category h4 {
+            color: #5e0000;
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #b8860b;
+            padding-bottom: 5px;
+        }
+        
+        .action-category .category-desc {
+            font-style: italic;
+            color: #6b4423;
+            margin: 0 0 12px 0;
+            font-size: 14px;
+        }
+        
+        .action-category ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        
+        .action-category li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            color: #191813;
+        }
+        
+        .action-category li strong {
+            color: #5e0000;
+            font-weight: 600;
+            margin-right: 4px;
         }
         
         /* Other Content Sections */
