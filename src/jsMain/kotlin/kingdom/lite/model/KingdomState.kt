@@ -12,6 +12,7 @@ data class KingdomState(
     
     // Resources
     var unrest: Int = 0,
+    var imprisonedUnrest: Int = 0,  // Unrest that is stored and excluded from the sum
     var fame: Int = 0,
     var resources: MutableMap<String, Int> = mutableMapOf(
         "food" to 0,

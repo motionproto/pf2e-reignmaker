@@ -4,6 +4,7 @@ import kingdom.lite.ui.turn.*
 import org.w3c.dom.HTMLElement
 import kingdom.lite.model.KingdomState
 import kingdom.lite.model.TurnManager
+import kingdom.lite.model.TurnPhase
 
 /**
  * Turn content component
@@ -121,6 +122,23 @@ class ContentTurn : ContentComponent {
     }
     
     private fun setActivePhase(phase: String) {
+        // Map string phase names to TurnPhase enum values
+        val turnPhase = when(phase) {
+            "status" -> TurnPhase.PHASE_I
+            "resources" -> TurnPhase.PHASE_II
+            "unrest" -> TurnPhase.PHASE_III
+            "events" -> TurnPhase.PHASE_IV
+            "actions" -> TurnPhase.PHASE_V
+            "resolution" -> TurnPhase.PHASE_VI
+            else -> return
+        }
+        
+        // Only allow phase change if we're currently in Phase I (Status phase)
+        if (kingdomState.currentPhase == TurnPhase.PHASE_I) {
+            kingdomState.currentPhase = turnPhase
+            turnManager.skipToPhase(turnPhase)
+        }
+        
         activePhase = phase
     }
     

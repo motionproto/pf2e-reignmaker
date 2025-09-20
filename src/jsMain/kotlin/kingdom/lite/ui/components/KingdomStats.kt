@@ -72,7 +72,6 @@ object KingdomStats {
                         ${renderUnrest()}
                         ${renderKingdomSize()}
                         ${renderResources()}
-                        ${renderQuickSummary()}
                     </div>
                 </div>
             </div>
@@ -91,11 +90,8 @@ object KingdomStats {
         
         return """
             <div class="stat-group" style="border-top: none; margin-top: 0;">
+                <h4 class="stat-group-header">Turn $currentTurn</h4>
                 <div>
-                    <div class="stat-item">
-                        <label>Turn:</label>
-                        <span class="stat-value">$currentTurn</span>
-                    </div>
                 <div class="stat-item">
                     <label>Fame:</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -113,10 +109,6 @@ object KingdomStats {
                     <span class="stat-value" id="kingdom-gold-value">$gold</span>
                 </div>
                 <div class="stat-item">
-                    <label>Event DC:</label>
-                    <span class="stat-value">14</span>
-                </div>
-                <div class="stat-item">
                     <label>War Status:</label>
                     <select id="war-status-select" class="kingdom-select">
                         <option value="peace" ${if (!isAtWar) "selected" else ""}>Peace</option>
@@ -131,6 +123,7 @@ object KingdomStats {
     private fun renderUnrest(): String {
         val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
         val currentUnrest = kingdomState?.unrest ?: 0
+        val imprisonedUnrest = kingdomState?.imprisonedUnrest ?: 0
         val isAtWar = kingdomState?.isAtWar ?: loadWarStatus()
         
         val realmData = if (isKingmakerInstalled()) getKingmakerRealmData() else null
@@ -165,6 +158,12 @@ object KingdomStats {
                     <label>Current Unrest:</label>
                     <span class="stat-value" id="kingdom-unrest-value">$currentUnrest</span>
                 </div>
+                ${if (imprisonedUnrest > 0) {
+                    """<div class="stat-item">
+                        <label>Imprisoned:</label>
+                        <span class="stat-value" style="color: #6c757d;" id="kingdom-imprisoned-unrest-value">$imprisonedUnrest</span>
+                    </div>"""
+                } else ""}
                 <div class="stat-item">
                     <label>From Size:</label>
                     <span class="stat-value" id="unrest-from-size">+$sizeUnrest</span>
@@ -202,8 +201,20 @@ object KingdomStats {
                     <span class="stat-value">${realmData?.size ?: 0}</span>
                 </div>
                 <div class="stat-item">
-                    <label>Settlements:</label>
+                    <label>Total Settlements:</label>
                     <span class="stat-value">${realmData?.settlements?.total ?: 0}</span>
+                </div>
+                <div class="stat-item">
+                    <label>Villages:</label>
+                    <span class="stat-value">${realmData?.settlements?.villages ?: 0}</span>
+                </div>
+                <div class="stat-item">
+                    <label>Towns:</label>
+                    <span class="stat-value">${realmData?.settlements?.towns ?: 0}</span>
+                </div>
+                <div class="stat-item">
+                    <label>Cities:</label>
+                    <span class="stat-value">${realmData?.settlements?.cities ?: 0}</span>
                 </div>
                 <div class="stat-item">
                     <label>Metropolises:</label>
@@ -234,6 +245,12 @@ object KingdomStats {
         val lumberProduction = worksites?.lumberCamps?.resources ?: 0  
         val stoneProduction = worksites?.quarries?.resources ?: 0
         val oreProduction = worksites?.mines?.resources ?: 0
+        
+        // Calculate total worksites (excluding luxury sources as they don't exist)
+        val totalWorksites = (worksites?.farmlands?.quantity ?: 0) +
+                           (worksites?.lumberCamps?.quantity ?: 0) +
+                           (worksites?.mines?.quantity ?: 0) +
+                           (worksites?.quarries?.quantity ?: 0)
         
         return """
             <div class="stat-group">
@@ -269,45 +286,10 @@ object KingdomStats {
                             <span id="kingdom-ore-value">$currentOre</span>
                         </div>
                     </div>
-                </div>
-            </div>
-        """
-    }
-    
-    private fun renderQuickSummary(): String {
-        val realmData = if (isKingmakerInstalled()) getKingmakerRealmData() else null
-        val worksites = realmData?.worksites
-        
-        // Calculate total worksites (excluding luxury sources as they don't exist)
-        val totalWorksites = (worksites?.farmlands?.quantity ?: 0) +
-                           (worksites?.lumberCamps?.quantity ?: 0) +
-                           (worksites?.mines?.quantity ?: 0) +
-                           (worksites?.quarries?.quantity ?: 0)
-        
-        return """
-            <div class="stat-group">
-                <h4 class="stat-group-header">Quick Summary</h4>
-                <div>
                     <div class="stat-item">
-                    <label>Worksites:</label>
-                    <span class="stat-value">$totalWorksites</span>
-                </div>
-                <div class="stat-item">
-                    <label>Villages:</label>
-                    <span class="stat-value">${realmData?.settlements?.villages ?: 0}</span>
-                </div>
-                <div class="stat-item">
-                    <label>Towns:</label>
-                    <span class="stat-value">${realmData?.settlements?.towns ?: 0}</span>
-                </div>
-                <div class="stat-item">
-                    <label>Cities:</label>
-                    <span class="stat-value">${realmData?.settlements?.cities ?: 0}</span>
-                </div>
-                <div class="stat-item">
-                    <label>Metropolises:</label>
-                    <span class="stat-value">${realmData?.settlements?.metropolises ?: 0}</span>
-                </div>
+                        <label>Total Worksites:</label>
+                        <span class="stat-value">$totalWorksites</span>
+                    </div>
                 </div>
             </div>
         """
