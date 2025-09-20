@@ -45,10 +45,16 @@ ${KingdomStatsStyles.styles}
 /* ===== Turn Controller and Phases ===== */
 ${TurnStyles.styles}
 
+/* ===== Unrest System and Incidents ===== */
+${UnrestStyles.styles}
+
 /* ===== Content Sections ===== */
 ${ContentStyles.styles}
 
 /* ===== Interactive Controls ===== */
 ${ControlStyles.styles}
+
+/* ===== Action Cards ===== */
+${ActionStyles.styles}
         """.trimIndent()
 }

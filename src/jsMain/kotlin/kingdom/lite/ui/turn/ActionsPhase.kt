@@ -1,5 +1,9 @@
 package kingdom.lite.ui.turn
 
+import kingdom.lite.ui.components.ActionCard
+import kingdom.lite.model.PlayerActionsData
+import kingdom.lite.model.PlayerAction
+
 /**
  * Actions Phase content for the Kingdom Sheet
  * Handles all kingdom actions that players can perform during their turn
@@ -11,96 +15,133 @@ object ActionsPhase {
                 <strong>Perform Kingdom Actions (4 PC actions total)</strong>
             </div>
             
-            ${renderUpholdStability()}
-            ${renderMilitaryOperations()}
-            ${renderExpandBorders()}
-            ${renderUrbanPlanning()}
-            ${renderForeignAffairs()}
-            ${renderEconomicActions()}
+            <div class="actions-phase-content">
+        """)
+        
+        // Render categories in order with their actions
+        val categories = listOf(
+            "uphold-stability",
+            "military-operations", 
+            "expand-borders",
+            "urban-planning",
+            "foreign-affairs",
+            "economic-actions"
+        )
+        
+        categories.forEach { category ->
+            val categoryActions = PlayerActionsData.getActionsByCategory(category)
+            if (categoryActions.isNotEmpty()) {
+                append(renderCategory(category, categoryActions))
+            }
+        }
+        
+        append("""
+            </div>
+            
+            <script>
+                // Setup action card handlers when the phase loads
+                if (typeof toggleActionCard === 'undefined') {
+                    ${getActionHandlerScript()}
+                }
+            </script>
         """)
     }
     
-    private fun renderUpholdStability(): String = """
-        <div class="phase-step-container">
-            <h4>Uphold Stability</h4>
-            <p class="category-desc">Maintain the kingdom's cohesion by resolving crises and quelling unrest.</p>
-            <ul>
-                <li><strong>Coordinated Effort:</strong> Two PCs work together on a single action with a bonus</li>
-                <li><strong>Resolve a Kingdom Event:</strong> Rise to meet disasters, uprisings, or opportunities</li>
-                <li><strong>Arrest Dissidents:</strong> Convert unrest into imprisoned unrest</li>
-                <li><strong>Execute or Pardon Prisoners:</strong> Deal with imprisoned unrest through justice</li>
-                <li><strong>Deal with Unrest:</strong> Directly reduce unrest by 1-3 based on success</li>
-            </ul>
-        </div>
-    """
+    private fun renderCategory(categoryId: String, actions: List<PlayerAction>): String = buildString {
+        val categoryName = PlayerActionsData.categoryNames[categoryId] ?: categoryId
+        val categoryDesc = PlayerActionsData.categoryDescriptions[categoryId] ?: ""
+        
+        append("""
+            <div class="action-category">
+                <div class="action-category-header">
+                    <div class="action-category-title">$categoryName</div>
+                    <div class="action-category-desc">$categoryDesc</div>
+                </div>
+                <div class="action-category-list">
+        """)
+        
+        // Render each action as an ActionCard
+        actions.forEach { action ->
+            val card = ActionCard(action)
+            append(card.render(false))
+        }
+        
+        append("""
+                </div>
+            </div>
+        """)
+    }
     
-    private fun renderMilitaryOperations(): String = """
-        <div class="phase-step-container">
-            <h4>Military Operations</h4>
-            <p class="category-desc">War must be waged with steel and strategy.</p>
-            <ul>
-                <li><strong>Recruit a Unit:</strong> Raise new troops for your armies</li>
-                <li><strong>Outfit Army:</strong> Equip troops with armor, weapons, runes, or equipment</li>
-                <li><strong>Deploy Army:</strong> Move troops to strategic positions</li>
-                <li><strong>Recover Army:</strong> Heal and restore damaged units</li>
-                <li><strong>Train Army:</strong> Improve unit levels up to party level</li>
-                <li><strong>Disband Army:</strong> Decommission troops and return soldiers home</li>
-            </ul>
-        </div>
-    """
-    
-    private fun renderExpandBorders(): String = """
-        <div class="phase-step-container">
-            <h4>Expand the Borders</h4>
-            <p class="category-desc">Seize new territory to grow your influence and resources.</p>
-            <ul>
-                <li><strong>Claim Hexes:</strong> Add new territory to your kingdom</li>
-                <li><strong>Build Roads:</strong> Connect your territory with infrastructure</li>
-                <li><strong>Send Scouts:</strong> Learn about unexplored hexes</li>
-                <li><strong>Fortify Hex:</strong> Strengthen defensive positions</li>
-                <li><strong>Create Worksite:</strong> Establish farms, mines, quarries, or lumber camps</li>
-            </ul>
-        </div>
-    """
-    
-    private fun renderUrbanPlanning(): String = """
-        <div class="phase-step-container">
-            <h4>Urban Planning</h4>
-            <p class="category-desc">Your people need places to live, work, trade, and worship.</p>
-            <ul>
-                <li><strong>Establish a Settlement:</strong> Found a new village</li>
-                <li><strong>Upgrade a Settlement:</strong> Advance settlement tiers</li>
-                <li><strong>Build Structure:</strong> Add markets, temples, barracks, and other structures</li>
-                <li><strong>Repair Structure:</strong> Fix damaged structures</li>
-            </ul>
-        </div>
-    """
-    
-    private fun renderForeignAffairs(): String = """
-        <div class="phase-step-container">
-            <h4>Foreign Affairs</h4>
-            <p class="category-desc">No kingdom stands alone.</p>
-            <ul>
-                <li><strong>Establish Diplomatic Relations:</strong> Form alliances with other nations</li>
-                <li><strong>Request Economic Aid:</strong> Ask allies for resources or gold</li>
-                <li><strong>Request Military Aid:</strong> Call for allied troops in battle</li>
-                <li><strong>Infiltration:</strong> Gather intelligence through espionage</li>
-                <li><strong>Hire Adventurers:</strong> Pay gold to resolve events (2 Gold cost)</li>
-            </ul>
-        </div>
-    """
-    
-    private fun renderEconomicActions(): String = """
-        <div class="phase-step-container">
-            <h4>Economic Actions</h4>
-            <p class="category-desc">Manage trade and personal wealth.</p>
-            <ul>
-                <li><strong>Sell Surplus:</strong> Trade resources for gold</li>
-                <li><strong>Purchase Resources:</strong> Spend gold for resources</li>
-                <li><strong>Create Worksite:</strong> Establish resource extraction sites</li>
-                <li><strong>Collect Resources:</strong> Gather from hexes with or without worksites</li>
-                <li><strong>Collect Stipend:</strong> Extract personal income (requires Counting House)</li>
-            </ul>
-        </div>
+    private fun getActionHandlerScript(): String = """
+        // Toggle action card expand/collapse
+        window.toggleActionCard = function(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                const isExpanded = card.classList.contains('expanded');
+                
+                if (isExpanded) {
+                    card.classList.remove('expanded');
+                    // Update chevron
+                    const chevron = card.querySelector('.action-chevron i');
+                    if (chevron) chevron.className = 'fas fa-chevron-right';
+                    // Hide details
+                    const details = card.querySelector('.action-details');
+                    if (details) details.style.display = 'none';
+                } else {
+                    card.classList.add('expanded');
+                    // Update chevron
+                    const chevron = card.querySelector('.action-chevron i');
+                    if (chevron) chevron.className = 'fas fa-chevron-down';
+                    // Show details
+                    const details = card.querySelector('.action-details');
+                    if (details) details.style.display = 'block';
+                }
+            }
+        };
+        
+        // Perform action handler
+        window.performAction = function(actionId) {
+            console.log('Performing action:', actionId);
+            
+            if (actionId === 'build-structure') {
+                // Special handling for Build Structure action
+                showBuildStructureDialog();
+            } else {
+                // TODO: Connect to actual game logic for other actions
+                const actionName = document.querySelector(`[data-action-id="${'$'}{actionId}"] .action-title`).textContent;
+                alert(`Performing: ${'$'}{actionName}\\n\\nThis will be connected to the game logic.`);
+            }
+        };
+        
+        // Show build structure dialog
+        window.showBuildStructureDialog = function() {
+            // Check if we have settlements
+            const settlementCount = window.kingdomState?.settlements?.length || 0;
+            
+            if (settlementCount === 0) {
+                alert('You need at least one settlement to build structures.');
+                return;
+            }
+            
+            if (settlementCount === 1) {
+                // Only one settlement, open picker directly
+                const settlementName = window.kingdomState.settlements[0].name;
+                const picker = document.getElementById('structure-picker-' + settlementName);
+                if (picker) {
+                    picker.style.display = 'flex';
+                } else {
+                    alert('Structure picker not available. Please ensure you are in the correct phase.');
+                }
+            } else {
+                // Multiple settlements, show selection dialog
+                showSettlementSelector();
+            }
+        };
+        
+        // Show settlement selector for multiple settlements
+        window.showSettlementSelector = function() {
+            // TODO: Implement settlement selector dialog
+            alert('Please select a settlement (UI for multiple settlements coming soon)');
+        };
     """
 }

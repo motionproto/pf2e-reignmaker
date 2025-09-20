@@ -109,7 +109,7 @@ class ContentTurn : ContentComponent {
                         Settlement(
                             name = "Village ${i + 1}",
                             tier = SettlementTier.VILLAGE,
-                            structures = mutableListOf()
+                            structureIds = mutableListOf()
                         )
                     )
                 }
@@ -119,7 +119,7 @@ class ContentTurn : ContentComponent {
                         Settlement(
                             name = "Town ${i + 1}",
                             tier = SettlementTier.TOWN,
-                            structures = mutableListOf()
+                            structureIds = mutableListOf()
                         )
                     )
                 }
@@ -129,7 +129,7 @@ class ContentTurn : ContentComponent {
                         Settlement(
                             name = "City ${i + 1}",
                             tier = SettlementTier.CITY,
-                            structures = mutableListOf()
+                            structureIds = mutableListOf()
                         )
                     )
                 }
@@ -139,7 +139,7 @@ class ContentTurn : ContentComponent {
                         Settlement(
                             name = "Metropolis ${i + 1}",
                             tier = SettlementTier.METROPOLIS,
-                            structures = mutableListOf()
+                            structureIds = mutableListOf()
                         )
                     )
                 }
@@ -392,7 +392,7 @@ class ContentTurn : ContentComponent {
         "status" -> StatusPhase(kingdomState, turnManager).render()
         "resources" -> ResourcesPhase(kingdomState, turnManager).render()
         "unrest" -> UnrestPhase.render()
-        "events" -> EventsPhase.render()
+        "events" -> EventsPhase(kingdomState, turnManager).render()
         "actions" -> ActionsPhase.render()
         "resolution" -> ResolutionPhase.render()
         else -> "<div>Select a phase</div>"

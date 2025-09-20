@@ -147,7 +147,8 @@ class TurnController : ContentComponent {
                 append(UnrestPhase.render())
             }
             TurnPhase.PHASE_IV -> {
-                append(EventsPhase.render())
+                val eventsPhase = EventsPhase(kingdomState, turnManager)
+                append(eventsPhase.render())
             }
             TurnPhase.PHASE_V -> {
                 append(ActionsPhase.render())

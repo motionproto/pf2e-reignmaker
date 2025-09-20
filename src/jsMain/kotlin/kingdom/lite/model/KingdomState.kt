@@ -53,6 +53,12 @@ data class KingdomState(
     // War status
     var isAtWar: Boolean = false,
     
+    // Event management
+    var currentEvent: KingdomEvent? = null,
+    val continuousEvents: MutableList<KingdomEvent> = mutableListOf(),
+    var eventDC: Int = 16,
+    var eventManager: EventManager = EventManager(),
+    
     // Modifiers and effects
     var ongoingModifiers: MutableList<Modifier> = mutableListOf(),
     var oncePerTurnActions: MutableSet<String> = mutableSetOf()
@@ -193,7 +199,7 @@ data class KingdomState(
 data class Settlement(
     val name: String,
     val tier: SettlementTier,
-    val structures: MutableList<String> = mutableListOf(),
+    val structureIds: MutableList<String> = mutableListOf(), // IDs of built structures
     val connectedByRoads: Boolean = false
 ) {
     val foodConsumption: Int
