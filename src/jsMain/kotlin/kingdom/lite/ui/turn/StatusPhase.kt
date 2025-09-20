@@ -19,15 +19,18 @@ class StatusPhase(
     }
     
     private fun renderFameStars(currentFame: Int): String {
+        // Clamp fame to 0-3 range for display safety
+        val safeFame = currentFame.coerceIn(0, MAX_FAME)
+        
         return buildString {
             append("""<div style="display: flex; gap: 10px; justify-content: center; align-items: center;">""")
             for (i in 1..MAX_FAME) {
-                val isFilled = i <= currentFame
+                val isFilled = i <= safeFame
                 append("""
                     <i class="${if (isFilled) "fas" else "far"} fa-star" 
                        style="font-size: 48px; 
                               color: ${if (isFilled) FAME_COLOR else "#cccccc"};
-                              ${if (isFilled) "text-shadow: 0 2px 4px rgba(0,0,0,0.2);" else ""}
+                              ${if (isFilled) "-webkit-text-stroke: 2px #3d2f00; text-shadow: 0 2px 4px rgba(0,0,0,0.3);" else ""}
                               transition: color 0.3s ease;">
                     </i>
                 """)
@@ -37,17 +40,24 @@ class StatusPhase(
     }
     
     fun render(): String = buildString {
+        val fameAtMax = kingdomState.fame >= MAX_FAME
+        
         append("""
             <div class="phase-step-container">
                 <strong>Step 1: Gain Fame</strong> - Earn recognition for kingdom achievements
                 <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
-                    <div><strong>Turn ${kingdomState.currentTurn}</strong></div>
                     <div style="margin: 15px 0;">
                         ${renderFameStars(kingdomState.fame)}
                     </div>
-                    <button class="turn-action-button" onclick="window.executePhaseI()">
-                        <i class="fas fa-star"></i>Gain 1 Fame
-                    </button>
+                    ${if (fameAtMax) {
+                        """<button class="turn-action-button" disabled style="opacity: 0.5; cursor: not-allowed;">
+                            <i class="fas fa-star"></i>Fame at Maximum
+                        </button>"""
+                    } else {
+                        """<button class="turn-action-button" onclick="window.executePhaseI()">
+                            <i class="fas fa-star"></i>Gain 1 Fame
+                        </button>"""
+                    }}
                 </div>
             </div>
             <div class="phase-step-container">

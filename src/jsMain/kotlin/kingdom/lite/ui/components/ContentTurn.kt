@@ -73,6 +73,45 @@ class ContentTurn : ContentComponent {
             }
             // Update KingdomStats sidebar
             updateKingdomStatsDisplay()
+            
+            // Update fame button states in KingdomStats
+            val fameDecreaseBtn = kotlinx.browser.document.querySelector("#fame-decrease-btn") as? HTMLElement
+            val fameIncreaseBtn = kotlinx.browser.document.querySelector("#fame-increase-btn") as? HTMLElement
+            
+            if (kingdomState.fame <= 0) {
+                fameDecreaseBtn?.setAttribute("disabled", "true")
+                fameDecreaseBtn?.style?.opacity = "0.5"
+                fameDecreaseBtn?.style?.cursor = "not-allowed"
+            } else {
+                fameDecreaseBtn?.removeAttribute("disabled")
+                fameDecreaseBtn?.style?.opacity = "1"
+                fameDecreaseBtn?.style?.cursor = "pointer"
+            }
+            
+            if (kingdomState.fame >= 3) {
+                fameIncreaseBtn?.setAttribute("disabled", "true")
+                fameIncreaseBtn?.style?.opacity = "0.5"
+                fameIncreaseBtn?.style?.cursor = "not-allowed"
+            } else {
+                fameIncreaseBtn?.removeAttribute("disabled")
+                fameIncreaseBtn?.style?.opacity = "1"
+                fameIncreaseBtn?.style?.cursor = "pointer"
+            }
+            
+            // Update resource summary in turn controller header
+            val resourceSummary = kotlinx.browser.document.querySelector(".resource-summary")
+            if (resourceSummary != null) {
+                val fameSpan = resourceSummary.querySelector(".resource-item:first-child")
+                if (fameSpan != null) {
+                    fameSpan.innerHTML = """<i class="fas fa-star"></i> Fame: ${kingdomState.fame}"""
+                }
+            }
+            
+            // Also trigger TurnController's update callback if it exists
+            val updateTurnControllerCallback = kotlinx.browser.window.asDynamic().updateTurnControllerDisplay
+            if (updateTurnControllerCallback != null) {
+                updateTurnControllerCallback()
+            }
         }
         
         // Setup update function for KingdomStats

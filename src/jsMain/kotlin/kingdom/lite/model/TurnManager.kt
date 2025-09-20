@@ -87,15 +87,19 @@ class TurnManager(private val kingdomState: KingdomState) {
     
     /**
      * Phase I: Kingdom Status
-     * - Gain 1 Fame automatically
+     * - Gain 1 Fame automatically (max 3)
      * - Apply ongoing modifiers
      */
     private fun executePhaseI() {
-        // Gain 1 Fame at start of turn
-        val fameGained = 1
-        kingdomState.fame += fameGained
-        onFameGained?.invoke(fameGained)
-        console.log("Phase I: Gained $fameGained Fame (Total: ${kingdomState.fame})")
+        // Gain 1 Fame at start of turn (max fame is 3)
+        if (kingdomState.fame < 3) {
+            val fameGained = 1
+            kingdomState.fame = (kingdomState.fame + fameGained).coerceAtMost(3)
+            onFameGained?.invoke(fameGained)
+            console.log("Phase I: Gained $fameGained Fame (Total: ${kingdomState.fame})")
+        } else {
+            console.log("Phase I: Fame already at maximum (3)")
+        }
         
         // Apply ongoing modifiers
         kingdomState.ongoingModifiers.forEach { modifier ->

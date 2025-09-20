@@ -364,11 +364,45 @@ object KingdomStats {
         val fameIncreaseBtn = container.querySelector("#fame-increase-btn") as? HTMLElement
         val fameValue = container.querySelector("#kingdom-fame-value") as? HTMLElement
         
+        // Function to update button states
+        fun updateFameButtonStates() {
+            val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
+            if (kingdomState != null) {
+                // Disable decrease button at 0
+                if (kingdomState.fame <= 0) {
+                    fameDecreaseBtn?.setAttribute("disabled", "true")
+                    fameDecreaseBtn?.style?.opacity = "0.5"
+                    fameDecreaseBtn?.style?.cursor = "not-allowed"
+                } else {
+                    fameDecreaseBtn?.removeAttribute("disabled")
+                    fameDecreaseBtn?.style?.opacity = "1"
+                    fameDecreaseBtn?.style?.cursor = "pointer"
+                }
+                
+                // Disable increase button at 3
+                if (kingdomState.fame >= 3) {
+                    fameIncreaseBtn?.setAttribute("disabled", "true")
+                    fameIncreaseBtn?.style?.opacity = "0.5"
+                    fameIncreaseBtn?.style?.cursor = "not-allowed"
+                } else {
+                    fameIncreaseBtn?.removeAttribute("disabled")
+                    fameIncreaseBtn?.style?.opacity = "1"
+                    fameIncreaseBtn?.style?.cursor = "pointer"
+                }
+            }
+        }
+        
+        // Initial button state update
+        updateFameButtonStates()
+        
         fameDecreaseBtn?.onclick = {
             val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
             if (kingdomState != null && kingdomState.fame > 0) {
                 kingdomState.fame--
                 fameValue?.textContent = kingdomState.fame.toString()
+                
+                // Update button states
+                updateFameButtonStates()
                 
                 // Update the turn controller display (including phases)
                 val updateCallback = window.asDynamic().updateKingdomStats
@@ -383,9 +417,12 @@ object KingdomStats {
         
         fameIncreaseBtn?.onclick = {
             val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
-            if (kingdomState != null) {
+            if (kingdomState != null && kingdomState.fame < 3) {  // Max fame is 3
                 kingdomState.fame++
                 fameValue?.textContent = kingdomState.fame.toString()
+                
+                // Update button states
+                updateFameButtonStates()
                 
                 // Update the turn controller display (including phases)
                 val updateCallback = window.asDynamic().updateKingdomStats
