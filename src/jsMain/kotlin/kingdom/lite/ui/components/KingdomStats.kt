@@ -227,30 +227,28 @@ object KingdomStats {
     
     private fun renderResources(): String {
         val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
-        val realmData = if (isKingmakerInstalled()) getKingmakerRealmData() else null
-        val worksites = realmData?.worksites
         
-        // Get resources from kingdom state if available
+        // Get resources from kingdom state
         val currentFood = kingdomState?.resources?.get("food") ?: 0
         val currentLumber = kingdomState?.resources?.get("lumber") ?: 0
         val currentStone = kingdomState?.resources?.get("stone") ?: 0
         val currentOre = kingdomState?.resources?.get("ore") ?: 0
         
-        // Calculate food production from worksites
-        // Plains farmlands produce 2 food, hills/swamp produce 1
-        // For now we'll assume all are plains (2 per farm) since we don't have terrain data yet
-        val farmlands = worksites?.farmlands?.quantity ?: 0
-        val foodProduction = farmlands * 2  // Default to plains production
+        // Get production from kingdom state's calculateProduction method
+        val production = kingdomState?.calculateProduction() ?: emptyMap()
+        val foodProduction = production["food"] ?: 0
+        val lumberProduction = production["lumber"] ?: 0
+        val stoneProduction = production["stone"] ?: 0
+        val oreProduction = production["ore"] ?: 0
         
-        val lumberProduction = worksites?.lumberCamps?.resources ?: 0  
-        val stoneProduction = worksites?.quarries?.resources ?: 0
-        val oreProduction = worksites?.mines?.resources ?: 0
+        // Get worksite counts from kingdom state
+        val farmlands = kingdomState?.worksiteCount?.get("farmlands") ?: 0
+        val lumberCamps = kingdomState?.worksiteCount?.get("lumberCamps") ?: 0
+        val mines = kingdomState?.worksiteCount?.get("mines") ?: 0
+        val quarries = kingdomState?.worksiteCount?.get("quarries") ?: 0
         
-        // Calculate total worksites (excluding luxury sources as they don't exist)
-        val totalWorksites = (worksites?.farmlands?.quantity ?: 0) +
-                           (worksites?.lumberCamps?.quantity ?: 0) +
-                           (worksites?.mines?.quantity ?: 0) +
-                           (worksites?.quarries?.quantity ?: 0)
+        // Calculate total worksites from kingdom state
+        val totalWorksites = farmlands + lumberCamps + mines + quarries
         
         return """
             <div class="stat-group">

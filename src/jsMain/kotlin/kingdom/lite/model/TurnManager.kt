@@ -112,48 +112,133 @@ class TurnManager(private val kingdomState: KingdomState) {
      * Phase II: Resources
      * - Collect resources from worksites
      * - Food consumption for settlements and armies
+     * - Military support checks
      * - Build queue processing
      */
     private fun executePhaseII() {
-        // This will be expanded when we implement worksites
-        // For now, just handle food consumption
+        // Phase II is now handled step-by-step through UI interactions
+        console.log("Phase II: Resources - Awaiting step-by-step execution")
+    }
+    
+    /**
+     * Execute Step 1: Collect Resources
+     */
+    fun executeResourcesStep1() {
+        if (kingdomState.isPhaseStepCompleted("resources_collect")) {
+            console.log("Step 1 already completed")
+            return
+        }
         
-        val totalFoodNeeded = kingdomState.settlements.sumOf { it.foodConsumption }
+        // Use centralized resource collection from KingdomState
+        val production = kingdomState.calculateProduction()
+        kingdomState.collectResources()
+        
+        // Log production details
+        production.forEach { (resource, amount) ->
+            console.log("Collected $amount $resource")
+        }
+        
+        // Add gold from revenue structures
+        // TODO: Calculate gold from structures when implemented
+        
+        kingdomState.markPhaseStepCompleted("resources_collect")
+        console.log("Phase II Step 1: Resources collected")
+    }
+    
+    /**
+     * Execute Step 2: Food Consumption
+     */
+    fun executeResourcesStep2() {
+        if (kingdomState.isPhaseStepCompleted("resources_consumption")) {
+            console.log("Step 2 already completed")
+            return
+        }
+        
+        val totalFoodNeeded = kingdomState.getTotalFoodConsumption()
         val currentFood = kingdomState.resources["food"] ?: 0
         
-        if (currentFood < totalFoodNeeded) {
-            val shortage = totalFoodNeeded - currentFood
-            kingdomState.unrest += shortage
-            kingdomState.resources["food"] = 0
-            console.log("Phase II: Food shortage! Need $totalFoodNeeded, have $currentFood. Unrest increased by $shortage (Total: ${kingdomState.unrest})")
+        // Use centralized food consumption processing
+        val shortage = kingdomState.processFoodConsumption()
+        
+        if (shortage > 0) {
+            console.log("Food shortage! Need $totalFoodNeeded, have $currentFood. Unrest increased by $shortage (Total: ${kingdomState.unrest})")
             onUnrestChanged?.invoke(kingdomState.unrest)
         } else {
-            kingdomState.resources["food"] = currentFood - totalFoodNeeded
-            console.log("Phase II: Consumed $totalFoodNeeded food (Remaining: ${kingdomState.resources["food"]})")
+            console.log("Consumed $totalFoodNeeded food (Remaining: ${kingdomState.resources["food"]})")
         }
         
-        // Process territory-based unrest
-        val hexes = kingdomState.size
-        val territoryUnrest = when {
-            hexes >= 32 -> 4
-            hexes >= 24 -> 3
-            hexes >= 16 -> 2
-            hexes >= 8 -> 1
-            else -> 0
+        kingdomState.markPhaseStepCompleted("resources_consumption")
+    }
+    
+    /**
+     * Execute Step 3: Military Support
+     */
+    fun executeResourcesStep3() {
+        if (kingdomState.isPhaseStepCompleted("resources_military")) {
+            console.log("Step 3 already completed")
+            return
         }
         
-        if (territoryUnrest > 0) {
-            kingdomState.unrest += territoryUnrest
-            console.log("Phase II: Territory size ($hexes hexes) causes +$territoryUnrest unrest (Total: ${kingdomState.unrest})")
+        val totalSupport = kingdomState.getTotalArmySupport()
+        val armyCount = kingdomState.armies.size
+        val unsupportedCount = kingdomState.getUnsupportedArmies()
+        
+        if (unsupportedCount > 0) {
+            // Mark unsupported armies and add unrest
+            kingdomState.armies.forEachIndexed { index, army ->
+                if (index >= totalSupport) {
+                    // For now, just add unrest. Full morale checks can be implemented later
+                    kingdomState.unrest += 1
+                    console.log("Army '${army.name}' is unsupported. +1 Unrest (Total: ${kingdomState.unrest})")
+                }
+            }
             onUnrestChanged?.invoke(kingdomState.unrest)
+        } else if (armyCount > 0) {
+            console.log("All $armyCount armies are supported")
         }
         
-        // Process war unrest
-        if (kingdomState.isAtWar) {
-            kingdomState.unrest += 1
-            console.log("Phase II: War causes +1 unrest (Total: ${kingdomState.unrest})")
-            onUnrestChanged?.invoke(kingdomState.unrest)
+        kingdomState.markPhaseStepCompleted("resources_military")
+        console.log("Phase II Step 3: Military support processed")
+    }
+    
+    /**
+     * Execute Step 4: Build Queue
+     */
+    fun executeResourcesStep4() {
+        if (kingdomState.isPhaseStepCompleted("resources_build")) {
+            console.log("Step 4 already completed")
+            return
         }
+        
+        // Apply pending allocations to projects
+        kingdomState.buildQueue.forEach { project ->
+            project.pendingAllocation.forEach { (resource, amount) ->
+                val available = kingdomState.resources[resource] ?: 0
+                val toApply = minOf(amount, available)
+                if (toApply > 0) {
+                    project.invested[resource] = (project.invested[resource] ?: 0) + toApply
+                    kingdomState.resources[resource] = available - toApply
+                    console.log("Applied $toApply $resource to ${project.structureName}")
+                }
+            }
+            project.pendingAllocation.clear()
+            
+            if (project.isComplete()) {
+                console.log("${project.structureName} construction complete!")
+            }
+        }
+        
+        // Remove completed projects
+        kingdomState.buildQueue.removeAll { it.isComplete() }
+        
+        // Clear non-storable resources
+        kingdomState.resources["lumber"] = 0
+        kingdomState.resources["stone"] = 0
+        kingdomState.resources["ore"] = 0
+        console.log("Non-storable resources cleared")
+        
+        kingdomState.markPhaseStepCompleted("resources_build")
+        console.log("Phase II Step 4: Build queue processed")
     }
     
     /**
@@ -198,10 +283,8 @@ class TurnManager(private val kingdomState: KingdomState) {
      * - End of turn cleanup
      */
     private fun executePhaseVI() {
-        // Clear non-stored resources (lumber, stone, ore)
-        kingdomState.resources["lumber"] = 0
-        kingdomState.resources["stone"] = 0
-        kingdomState.resources["ore"] = 0
+        // Use centralized method to clear non-storable resources
+        kingdomState.clearNonStorableResources()
         
         console.log("Phase VI: End of turn cleanup complete")
     }

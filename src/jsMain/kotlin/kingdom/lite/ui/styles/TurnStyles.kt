@@ -32,6 +32,22 @@ object TurnStyles {
             min-height: 0;
         }
         
+        /* Special case for resources phase - no scrolling on parent */
+        .phase-content-scrollable:has(.resources-phase-container) {
+            overflow: hidden;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Ensure the phase-content wrapper also takes full height for resources */
+        .phase-content-scrollable:has(.resources-phase-container) .phase-content {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
         .phase-navigation {
             margin-bottom: 20px;
         }

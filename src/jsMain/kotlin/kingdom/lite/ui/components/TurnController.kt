@@ -19,14 +19,14 @@ class TurnController : ContentComponent {
         // Use the global kingdom state if available, otherwise create new one
         val existingState = window.asDynamic().currentKingdomState as? KingdomState
         kingdomState = existingState ?: KingdomState(
-            // Initialize with some test data
+            // Initialize with empty/minimal data
             settlements = mutableListOf(),
             resources = mutableMapOf(
-                "food" to 5,
-                "lumber" to 2,
-                "stone" to 1,
+                "food" to 0,
+                "lumber" to 0,
+                "stone" to 0,
                 "ore" to 0,
-                "gold" to 10
+                "gold" to 0
             )
         )
         
@@ -140,7 +140,8 @@ class TurnController : ContentComponent {
                 append(statusPhase.render())
             }
             TurnPhase.PHASE_II -> {
-                append(ResourcesPhase.render())
+                val resourcesPhase = ResourcesPhase(kingdomState, turnManager)
+                append(resourcesPhase.render())
             }
             TurnPhase.PHASE_III -> {
                 append(UnrestPhase.render())
