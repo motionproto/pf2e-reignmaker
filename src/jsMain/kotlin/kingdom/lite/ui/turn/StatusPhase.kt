@@ -12,13 +12,39 @@ class StatusPhase(
     private val turnManager: TurnManager
 ) {
     
+    companion object {
+        const val MAX_FAME = 3
+        // Use the same yellow color as in the kingdom name
+        const val FAME_COLOR = "#fecb21" 
+    }
+    
+    private fun renderFameStars(currentFame: Int): String {
+        return buildString {
+            append("""<div style="display: flex; gap: 10px; justify-content: center; align-items: center;">""")
+            for (i in 1..MAX_FAME) {
+                val isFilled = i <= currentFame
+                append("""
+                    <i class="${if (isFilled) "fas" else "far"} fa-star" 
+                       style="font-size: 48px; 
+                              color: ${if (isFilled) FAME_COLOR else "#cccccc"};
+                              ${if (isFilled) "text-shadow: 0 2px 4px rgba(0,0,0,0.2);" else ""}
+                              transition: color 0.3s ease;">
+                    </i>
+                """)
+            }
+            append("""</div>""")
+        }
+    }
+    
     fun render(): String = buildString {
         append("""
             <div class="phase-step-container">
                 <strong>Step 1: Gain Fame</strong> - Earn recognition for kingdom achievements
                 <div style="margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 4px;">
                     <div><strong>Turn ${kingdomState.currentTurn}</strong></div>
-                    <div>Current Fame: <strong>${kingdomState.fame}</strong></div>
+                    <div style="margin: 15px 0;">
+                        ${renderFameStars(kingdomState.fame)}
+                    </div>
                     <button class="turn-action-button" onclick="window.executePhaseI()">
                         <i class="fas fa-star"></i>Gain 1 Fame
                     </button>

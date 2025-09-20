@@ -91,10 +91,11 @@ object KingdomStats {
         
         return """
             <div class="stat-group" style="border-top: none; margin-top: 0;">
-                <div class="stat-item">
-                    <label>Turn:</label>
-                    <span class="stat-value">$currentTurn</span>
-                </div>
+                <div>
+                    <div class="stat-item">
+                        <label>Turn:</label>
+                        <span class="stat-value">$currentTurn</span>
+                    </div>
                 <div class="stat-item">
                     <label>Fame:</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -121,6 +122,7 @@ object KingdomStats {
                         <option value="peace" ${if (!isAtWar) "selected" else ""}>Peace</option>
                         <option value="war" ${if (isAtWar) "selected" else ""}>War</option>
                     </select>
+                </div>
                 </div>
             </div>
         """
@@ -157,8 +159,9 @@ object KingdomStats {
         
         return """
             <div class="stat-group">
-                <h4>Unrest</h4>
-                <div class="stat-item">
+                <h4 class="stat-group-header">Unrest</h4>
+                <div>
+                    <div class="stat-item">
                     <label>Current Unrest:</label>
                     <span class="stat-value" id="kingdom-unrest-value">$currentUnrest</span>
                 </div>
@@ -182,6 +185,7 @@ object KingdomStats {
                         ${if (unrestPerTurn >= 0) "+$unrestPerTurn" else "$unrestPerTurn"}
                     </span>
                 </div>
+                </div>
             </div>
         """
     }
@@ -191,8 +195,9 @@ object KingdomStats {
         
         return """
             <div class="stat-group">
-                <h4>Kingdom Size</h4>
-                <div class="stat-item">
+                <h4 class="stat-group-header">Kingdom Size</h4>
+                <div>
+                    <div class="stat-item">
                     <label>Hexes Claimed:</label>
                     <span class="stat-value">${realmData?.size ?: 0}</span>
                 </div>
@@ -203,6 +208,7 @@ object KingdomStats {
                 <div class="stat-item">
                     <label>Metropolises:</label>
                     <span class="stat-value">${realmData?.settlements?.metropolises ?: 0}</span>
+                </div>
                 </div>
             </div>
         """
@@ -231,7 +237,7 @@ object KingdomStats {
         
         return """
             <div class="stat-group">
-                <h4>Resources</h4>
+                <h4 class="stat-group-header">Resources</h4>
                 <div class="resource-section">
                     <div class="resource-header">Food</div>
                     <div class="stat-item">
@@ -248,7 +254,7 @@ object KingdomStats {
                     </div>
                 </div>
                 <div class="resource-section">
-                    <div class="resource-header">Trade Resources</div>
+                    <div class="resource-header">Resource Income</div>
                     <div class="resource-grid">
                         <div class="resource-item">
                             <label>Lumber:</label>
@@ -280,12 +286,9 @@ object KingdomStats {
         
         return """
             <div class="stat-group">
-                <h4>Quick Summary</h4>
-                <div class="stat-item">
-                    <label>Settlements:</label>
-                    <span class="stat-value">${realmData?.settlements?.total ?: 0}</span>
-                </div>
-                <div class="stat-item">
+                <h4 class="stat-group-header">Quick Summary</h4>
+                <div>
+                    <div class="stat-item">
                     <label>Worksites:</label>
                     <span class="stat-value">$totalWorksites</span>
                 </div>
@@ -300,6 +303,11 @@ object KingdomStats {
                 <div class="stat-item">
                     <label>Cities:</label>
                     <span class="stat-value">${realmData?.settlements?.cities ?: 0}</span>
+                </div>
+                <div class="stat-item">
+                    <label>Metropolises:</label>
+                    <span class="stat-value">${realmData?.settlements?.metropolises ?: 0}</span>
+                </div>
                 </div>
             </div>
         """
@@ -362,11 +370,14 @@ object KingdomStats {
                 kingdomState.fame--
                 fameValue?.textContent = kingdomState.fame.toString()
                 
-                // Trigger any update callbacks if available
+                // Update the turn controller display (including phases)
                 val updateCallback = window.asDynamic().updateKingdomStats
                 if (updateCallback != null) {
                     updateCallback()
                 }
+                
+                // Also update the phase content if it's showing Status Phase
+                updatePhaseContent()
             }
         }
         
@@ -376,11 +387,14 @@ object KingdomStats {
                 kingdomState.fame++
                 fameValue?.textContent = kingdomState.fame.toString()
                 
-                // Trigger any update callbacks if available
+                // Update the turn controller display (including phases)
                 val updateCallback = window.asDynamic().updateKingdomStats
                 if (updateCallback != null) {
                     updateCallback()
                 }
+                
+                // Also update the phase content if it's showing Status Phase
+                updatePhaseContent()
             }
         }
         
@@ -447,6 +461,34 @@ object KingdomStats {
     
     private fun loadWarStatus(): Boolean {
         return window.localStorage.getItem("kingdomWarStatus") == "war"
+    }
+    
+    private fun updatePhaseContent() {
+        // Update the phase content area if it exists
+        val phaseContentArea = kotlinx.browser.document.querySelector(".phase-content-scrollable")
+        if (phaseContentArea != null) {
+            val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
+            val turnManager = window.asDynamic().currentTurnManager as? TurnManager
+            
+            // Check if we're in Status Phase (Phase I)
+            if (kingdomState?.currentPhase == kingdom.lite.model.TurnPhase.PHASE_I) {
+                // Re-render the Status Phase content
+                val statusPhase = kingdom.lite.ui.turn.StatusPhase(kingdomState, turnManager ?: return)
+                phaseContentArea.innerHTML = statusPhase.render()
+            }
+        }
+        
+        // Also update the resource summary in the turn header
+        val resourceSummary = kotlinx.browser.document.querySelector(".resource-summary")
+        if (resourceSummary != null) {
+            val kingdomState = window.asDynamic().currentKingdomState as? KingdomState
+            if (kingdomState != null) {
+                val fameSpan = resourceSummary.querySelector(".resource-item:first-child")
+                if (fameSpan != null) {
+                    fameSpan.innerHTML = """<i class="fas fa-star"></i> Fame: ${kingdomState.fame}"""
+                }
+            }
+        }
     }
     
     init {

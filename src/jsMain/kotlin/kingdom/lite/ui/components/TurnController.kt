@@ -11,25 +11,35 @@ import kotlinx.browser.window
  * Main turn controller component that manages the turn phases and UI
  */
 class TurnController : ContentComponent {
-    private val kingdomState = KingdomState(
-        // Initialize with some test data
-        settlements = mutableListOf(),
-        resources = mutableMapOf(
-            "food" to 5,
-            "lumber" to 2,
-            "stone" to 1,
-            "ore" to 0,
-            "gold" to 10
-        )
-    )
-    
-    private val turnManager = TurnManager(kingdomState)
+    private val kingdomState: KingdomState
+    private val turnManager: TurnManager
     private var elementId = "turn-controller-${kotlin.js.Date.now()}"
     
     init {
+        // Use the global kingdom state if available, otherwise create new one
+        val existingState = window.asDynamic().currentKingdomState as? KingdomState
+        kingdomState = existingState ?: KingdomState(
+            // Initialize with some test data
+            settlements = mutableListOf(),
+            resources = mutableMapOf(
+                "food" to 5,
+                "lumber" to 2,
+                "stone" to 1,
+                "ore" to 0,
+                "gold" to 10
+            )
+        )
+        
+        // Store the kingdom state globally for other components
+        window.asDynamic().currentKingdomState = kingdomState
+        
+        turnManager = TurnManager(kingdomState)
+        window.asDynamic().currentTurnManager = turnManager
+        
         // Setup turn manager callbacks
         turnManager.onTurnChanged = { turn ->
             updateDisplay()
+            updateGlobalStats()
         }
         
         turnManager.onPhaseChanged = { phase ->
@@ -41,9 +51,16 @@ class TurnController : ContentComponent {
                 showNotification("Gained $amount Fame!")
             }
             updateDisplay()
+            updateGlobalStats()
         }
         
         turnManager.onUnrestChanged = { unrest ->
+            updateDisplay()
+            updateGlobalStats()
+        }
+        
+        // Register update callback for kingdom stats
+        window.asDynamic().updateKingdomStats = {
             updateDisplay()
         }
     }
@@ -206,5 +223,14 @@ class TurnController : ContentComponent {
     private fun showNotification(message: String) {
         // Simple console log for now, can be enhanced with UI notifications
         console.log("🎉 $message")
+    }
+    
+    private fun updateGlobalStats() {
+        // Update the kingdom stats display in the sidebar
+        val statsContainer = kotlinx.browser.document.querySelector(".kingdom-stats-container")
+        if (statsContainer != null) {
+            statsContainer.innerHTML = KingdomStats.render()
+            KingdomStats.attachListeners(statsContainer as HTMLElement)
+        }
     }
 }
