@@ -44,10 +44,19 @@ fun openKingdomUI(actorId: String) {
     // Inject styles if not already done
     injectStyles(KingdomSheetStyles.styles)
     
-    // Create and render the new Kingdom Sheet
-    kotlinx.coroutines.GlobalScope.launch {
-        val sheet = KingdomSheet()
-        sheet.render(true)
+    // Check if we should use ApplicationV2 (Foundry v10+)
+    val hasApplicationV2 = js("typeof foundry !== 'undefined' && foundry.applications && foundry.applications.api && foundry.applications.api.ApplicationV2") as? Boolean ?: false
+    
+    if (hasApplicationV2) {
+        console.log("Using Foundry ApplicationV2")
+        openKingdomSheetV2()
+    } else {
+        console.log("Using custom Application implementation")
+        // Fallback to our custom implementation
+        kotlinx.coroutines.GlobalScope.launch {
+            val sheet = KingdomSheet()
+            sheet.render(true)
+        }
     }
 }
 

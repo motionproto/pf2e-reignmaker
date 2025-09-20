@@ -10,6 +10,8 @@ object KingdomColorPalette {
      * CSS custom properties definitions to be injected into the document
      */
     val cssVariables = """
+        @import url('https://fonts.googleapis.com/css2?family=Eczar:wght@400;600;700&display=swap');
+        
         :root {
             /* ===== Base Colors ===== */
             /* Primary brand colors (deep red theme) */
@@ -190,6 +192,8 @@ object KingdomColorPalette {
             background: var(--color-background-white);
             overflow: hidden;
             flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Main Container */
@@ -260,6 +264,7 @@ object KingdomColorPalette {
             display: flex;
             flex: 1;
             overflow: hidden;
+            min-height: 0;
         }
         
         /* Sidebar */
@@ -267,19 +272,54 @@ object KingdomColorPalette {
             width: 320px;
             background: var(--color-dark-bg);
             border-right: 1px solid var(--color-accent);
-            padding: var(--spacing-lg);
-            overflow-y: auto;
+            padding: 0;
+            overflow: hidden;
             color: var(--color-text-on-dark);
+            display: flex;
+            flex-direction: column;
         }
         
-        .kingdom-stats h3 {
+        /* Kingdom Stats Container */
+        .kingdom-stats-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        /* Kingdom Name Header - matches phase buttons height */
+        .kingdom-name-header {
+            flex-shrink: 0;
+            background: var(--color-dark-bg-alt);
+            padding: var(--spacing-sm);
+            border-bottom: 1px solid #252424;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            height: 48px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .kingdom-name-header h3 {
             color: var(--color-accent-light);
-            border-bottom: 1px solid var(--color-accent);
-            padding-bottom: var(--spacing-sm);
-            margin-bottom: var(--spacing-md);
+            margin: 0;
             font-size: var(--font-size-md);
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: bold;
+        }
+        
+        /* Kingdom Stats Scrollable Content */
+        .kingdom-stats-scrollable {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        
+        .kingdom-stats-content {
+            padding: var(--spacing-lg);
         }
         
         .kingdom-stats h4 {
@@ -355,18 +395,30 @@ object KingdomColorPalette {
         .kingdom-main {
             flex: 1;
             padding: 0;
-            overflow-y: auto;
+            overflow: hidden;
             background: var(--color-background);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Turn Content */
+        .turn-content {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
         
         /* Phase Navigation */
         .phase-navigation-fixed {
             flex-shrink: 0;
-            position: sticky;
-            top: 0;
-            z-index: var(--z-sticky);
             background: var(--color-dark-bg-alt);
             padding: 0;
+            border-bottom: 1px solid #252424;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            height: 48px;
+            box-sizing: border-box;
         }
         
         .phase-content-scrollable {
@@ -374,15 +426,18 @@ object KingdomColorPalette {
             overflow-y: auto;
             padding: 10px;
             padding-top: 15px;
+            min-height: 0;
         }
         
         .phase-buttons {
             display: flex;
             gap: var(--spacing-sm);
             padding: var(--spacing-sm);
-            background: var(--color-dark-bg-alt);
+            background: transparent;
             border: none;
-            box-shadow: var(--shadow-medium);
+            height: 100%;
+            box-sizing: border-box;
+            align-items: center;
         }
         
         .phase-button {
@@ -488,22 +543,22 @@ object KingdomColorPalette {
         }
         
         /* Scrollbar Styling */
-        .kingdom-sidebar::-webkit-scrollbar,
-        .kingdom-main::-webkit-scrollbar {
+        .kingdom-stats-scrollable::-webkit-scrollbar,
+        .phase-content-scrollable::-webkit-scrollbar {
             width: 8px;
         }
         
-        .kingdom-sidebar::-webkit-scrollbar-track,
-        .kingdom-main::-webkit-scrollbar-track {
+        .kingdom-stats-scrollable::-webkit-scrollbar-track,
+        .phase-content-scrollable::-webkit-scrollbar-track {
             background: var(--color-hover-dark);
         }
         
-        .kingdom-sidebar::-webkit-scrollbar-thumb {
+        .kingdom-stats-scrollable::-webkit-scrollbar-thumb {
             background: var(--color-accent);
             border-radius: var(--radius-md);
         }
         
-        .kingdom-main::-webkit-scrollbar-thumb {
+        .phase-content-scrollable::-webkit-scrollbar-thumb {
             background: var(--color-border);
             border-radius: var(--radius-md);
         }

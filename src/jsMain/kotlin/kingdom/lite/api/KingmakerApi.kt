@@ -18,6 +18,7 @@ external interface HexState {
     val camp: String? // Camps/Worksites: "quarry", "lumber", "mine"
     val features: Array<HexFeature>?
     val claimed: Boolean?
+    val terrain: String? // e.g., "plains", "forest", "hills", "mountains", "wetlands", "swamp", "lake"
 }
 
 @JsPlainObject
@@ -121,6 +122,12 @@ fun getKingmakerRealmData(): RealmData? {
         
         // Count claimed hexes
         val claimedCount = claimedHexes.size
+        
+        // Log terrain data for debugging (temporary)
+        console.log("Claimed hexes terrain data:")
+        for (hex in claimedHexes) {
+            console.log("Hex terrain: ${hex.terrain}, commodity: ${hex.commodity}, camp: ${hex.camp}")
+        }
         
         // Parse worksites
         val farmlands = parseWorksite(claimedHexes, type = null, commodity = "food", feature = "farmland")

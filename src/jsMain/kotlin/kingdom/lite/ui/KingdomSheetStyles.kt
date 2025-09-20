@@ -21,13 +21,15 @@ object KingdomSheetStyles {
 ${KingdomColorPalette.cssVariables}
 
 ${KingdomColorPalette.getThemedStyles()}
+
+$legacyStyles
         """.trimIndent()
     
     /**
      * Legacy styles (kept for reference during migration)
      * These will be gradually replaced with themed styles
      */
-    private val legacyStyles = """
+    val legacyStyles = """
         /* Application Window Styling */
         .app.kingdom-sheet {
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
@@ -84,6 +86,8 @@ ${KingdomColorPalette.getThemedStyles()}
             background: white;
             overflow: hidden;
             flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Main Container */
@@ -182,6 +186,7 @@ ${KingdomColorPalette.getThemedStyles()}
             display: flex;
             flex: 1;
             overflow: hidden;
+            min-height: 0;
         }
         
         /* Sidebar */
@@ -189,19 +194,54 @@ ${KingdomColorPalette.getThemedStyles()}
             width: 320px;
             background: #2c2c2c;
             border-right: 1px solid #b8860b;
-            padding: 15px;
-            overflow-y: auto;
+            padding: 0;
+            overflow: hidden;
             color: #c9b37e;
+            display: flex;
+            flex-direction: column;
         }
         
-        .kingdom-stats h3 {
+        /* Kingdom Stats Container */
+        .kingdom-stats-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        /* Kingdom Name Header - matches phase buttons height */
+        .kingdom-name-header {
+            flex-shrink: 0;
+            background: #3a3a3a;
+            padding: 8px;
+            border-bottom: 1px solid #252424;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            height: 48px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .kingdom-name-header h3 {
             color: #ffd700;
-            border-bottom: 1px solid #b8860b;
-            padding-bottom: 8px;
-            margin-bottom: 12px;
+            margin: 0;
             font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: bold;
+        }
+        
+        /* Kingdom Stats Scrollable Content */
+        .kingdom-stats-scrollable {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        
+        .kingdom-stats-content {
+            padding: 15px;
         }
         
         .kingdom-stats h4 {
@@ -338,8 +378,10 @@ ${KingdomColorPalette.getThemedStyles()}
         .kingdom-main {
             flex: 1;
             padding: 0;
-            overflow-y: auto;
+            overflow: hidden;
             background: #f5f5f0;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Tab Content Display Control */
@@ -351,20 +393,33 @@ ${KingdomColorPalette.getThemedStyles()}
             display: block;
         }
         
+        /* For content that needs scrolling (non-turn content) */
+        .kingdom-main > .settlements-content,
+        .kingdom-main > .factions-content,
+        .kingdom-main > .modifiers-content,
+        .kingdom-main > .notes-content,
+        .kingdom-main > .settings-content {
+            overflow-y: auto;
+            flex: 1;
+        }
+        
         /* Turn Content */
         .turn-content {
             height: 100%;
+            width: 100%;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         .phase-navigation-fixed {
             flex-shrink: 0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
             background: #3a3a3a;
             padding: 0;
+            border-bottom: 1px solid #252424;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            height: 48px;
+            box-sizing: border-box;
         }
         
         .phase-content-scrollable {
@@ -372,6 +427,7 @@ ${KingdomColorPalette.getThemedStyles()}
             overflow-y: auto;
             padding: 10px;
             padding-top: 15px;
+            min-height: 0;
         }
         
         .phase-navigation {
@@ -382,9 +438,11 @@ ${KingdomColorPalette.getThemedStyles()}
             display: flex;
             gap: 8px;
             padding: 8px;
-            background: #3a3a3a;
+            background: transparent;
             border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            height: 100%;
+            box-sizing: border-box;
+            align-items: center;
         }
         
         .phase-button {
@@ -841,6 +899,97 @@ ${KingdomColorPalette.getThemedStyles()}
             color: #fff;
             transform: translateY(-1px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        /* Turn Action Button - consistent style for all turn phase buttons */
+        .turn-action-button {
+            padding: 8px 16px;
+            background: linear-gradient(to bottom, #5e4433, #3e2922);
+            border: 1px solid #b8860b;
+            border-radius: 4px;
+            color: #ffd700;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            text-transform: none;
+            display: inline-block;
+            margin-top: 8px;
+        }
+        
+        .turn-action-button:hover {
+            background: linear-gradient(to bottom, #b8860b, #8b6914);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .turn-action-button:active {
+            transform: translateY(0);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .turn-action-button i {
+            margin-right: 6px;
+        }
+        
+        /* Stat Adjustment Buttons - small +/- buttons for stats */
+        .stat-adjust-button {
+            padding: 2px 6px;
+            background: rgba(184, 134, 11, 0.1);
+            border: 1px solid rgba(184, 134, 11, 0.3);
+            border-radius: 3px;
+            color: #b8860b;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+        }
+        
+        .stat-adjust-button:hover {
+            background: rgba(184, 134, 11, 0.2);
+            color: #ffd700;
+            border-color: #b8860b;
+        }
+        
+        .stat-adjust-button:active {
+            background: rgba(184, 134, 11, 0.3);
+            transform: scale(0.95);
+        }
+        
+        /* Kingdom Select Dropdown */
+        .kingdom-select {
+            padding: 3px 8px;
+            background: rgba(184, 134, 11, 0.1);
+            border: 1px solid rgba(184, 134, 11, 0.3);
+            border-radius: 4px;
+            color: #ffd700;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Signika', 'Palatino Linotype', serif;
+            min-width: 80px;
+        }
+        
+        .kingdom-select:hover {
+            background: rgba(184, 134, 11, 0.2);
+            border-color: #b8860b;
+        }
+        
+        .kingdom-select:focus {
+            outline: none;
+            border-color: #ffd700;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+        }
+        
+        .kingdom-select option {
+            background: #2c2c2c;
+            color: #c9b37e;
         }
         
         /* Scrollbar Styling */

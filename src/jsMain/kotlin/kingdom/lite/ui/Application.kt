@@ -71,7 +71,7 @@ abstract class Application {
                         <i class="fas fa-times"></i>
                     </a>
                 </header>
-                <section class="window-content" style="overflow: auto;">
+                <section class="window-content">
                     $template
                 </section>
                 $resizeHandle

@@ -2,6 +2,8 @@ package kingdom.lite.ui.components
 
 import kingdom.lite.ui.turn.*
 import org.w3c.dom.HTMLElement
+import kingdom.lite.model.KingdomState
+import kingdom.lite.model.TurnManager
 
 /**
  * Turn content component
@@ -10,6 +12,20 @@ import org.w3c.dom.HTMLElement
 class ContentTurn : ContentComponent {
     private var activePhase = "status"
     private var elementId = "turn-content-${kotlin.js.Date.now()}"
+    
+    // Data models for game mechanics
+    private val kingdomState = KingdomState(
+        settlements = mutableListOf(),
+        resources = mutableMapOf(
+            "food" to 5,
+            "lumber" to 2,
+            "stone" to 1,
+            "ore" to 0,
+            "gold" to 0
+        ),
+        isAtWar = kotlinx.browser.window.localStorage.getItem("kingdomWarStatus") == "war"
+    )
+    private val turnManager = TurnManager(kingdomState)
     
     override fun render(): String = buildString {
         append("""
@@ -41,6 +57,27 @@ class ContentTurn : ContentComponent {
                     updatePhaseContent(turnContent as HTMLElement)
                 }
             })
+        }
+        
+        // Store global references for phase mechanics
+        kotlinx.browser.window.asDynamic().currentKingdomState = kingdomState
+        kotlinx.browser.window.asDynamic().currentTurnManager = turnManager
+        
+        // Setup Phase I execution handler
+        kotlinx.browser.window.asDynamic().executePhaseI = {
+            turnManager.executeCurrentPhase()
+            // Refresh the display
+            val contentArea = turnContent.querySelector("#phase-content-$elementId") as? HTMLElement
+            if (contentArea != null && activePhase == "status") {
+                contentArea.innerHTML = StatusPhase(kingdomState, turnManager).render()
+            }
+            // Update KingdomStats sidebar
+            updateKingdomStatsDisplay()
+        }
+        
+        // Setup update function for KingdomStats
+        kotlinx.browser.window.asDynamic().updateKingdomStats = {
+            updateKingdomStatsDisplay()
         }
     }
     
@@ -91,12 +128,23 @@ class ContentTurn : ContentComponent {
     }
     
     private fun renderPhaseContent(): String = when (activePhase) {
-        "status" -> StatusPhase.render()
+        "status" -> StatusPhase(kingdomState, turnManager).render()
         "resources" -> ResourcesPhase.render()
         "unrest" -> UnrestPhase.render()
         "events" -> EventsPhase.render()
         "actions" -> ActionsPhase.render()
         "resolution" -> ResolutionPhase.render()
         else -> "<div>Select a phase</div>"
+    }
+    
+    private fun updateKingdomStatsDisplay() {
+        // Update specific values in the KingdomStats sidebar without re-rendering everything
+        kotlinx.browser.document.getElementById("kingdom-fame-value")?.textContent = kingdomState.fame.toString()
+        kotlinx.browser.document.getElementById("kingdom-gold-value")?.textContent = (kingdomState.resources["gold"] ?: 0).toString()
+        kotlinx.browser.document.getElementById("kingdom-unrest-value")?.textContent = kingdomState.unrest.toString()
+        kotlinx.browser.document.getElementById("kingdom-food-value")?.textContent = (kingdomState.resources["food"] ?: 0).toString()
+        kotlinx.browser.document.getElementById("kingdom-lumber-value")?.textContent = (kingdomState.resources["lumber"] ?: 0).toString()
+        kotlinx.browser.document.getElementById("kingdom-stone-value")?.textContent = (kingdomState.resources["stone"] ?: 0).toString()
+        kotlinx.browser.document.getElementById("kingdom-ore-value")?.textContent = (kingdomState.resources["ore"] ?: 0).toString()
     }
 }
