@@ -57,17 +57,24 @@ abstract class Application {
             options.width?.let { element?.style?.width = "${it}px" }
             options.height?.let { element?.style?.height = "${it}px" }
             
-            // Create window structure
+            // Create window structure with resize handle if resizable
+            val resizeHandle = if (options.resizable == true) {
+                """<div class="window-resize-handle" style="position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; z-index: 1000;">
+                    <i class="fas fa-grip-lines-vertical" style="position: absolute; bottom: 3px; right: 3px; font-size: 12px; opacity: 0.3; transform: rotate(45deg);"></i>
+                </div>"""
+            } else ""
+            
             element?.innerHTML = """
-                <header class="window-header">
+                <header class="window-header" style="cursor: move;">
                     <h4 class="window-title">${options.title}</h4>
                     <a class="header-button control close" title="Close">
                         <i class="fas fa-times"></i>
                     </a>
                 </header>
-                <section class="window-content">
+                <section class="window-content" style="overflow: auto;">
                     $template
                 </section>
+                $resizeHandle
             """
             
             // Add to document
@@ -77,6 +84,14 @@ abstract class Application {
             element?.querySelector(".close")?.addEventListener("click", {
                 close()
             })
+            
+            // Add draggable functionality
+            setupDraggable()
+            
+            // Add resizable functionality if enabled
+            if (options.resizable == true) {
+                setupResizable()
+            }
         } else if (force) {
             // Update existing element
             element?.querySelector(".window-content")?.innerHTML = template
@@ -84,6 +99,111 @@ abstract class Application {
         
         // Activate listeners
         element?.let { activateListeners(it) }
+    }
+    
+    private fun setupDraggable() {
+        val header = element?.querySelector(".window-header") as? HTMLElement ?: return
+        var isDragging = false
+        var startX = 0
+        var startY = 0
+        var initialLeft = 0
+        var initialTop = 0
+        
+        header.style.cursor = "move"
+        
+        header.onmousedown = { event ->
+            isDragging = true
+            startX = event.asDynamic().clientX as Int
+            startY = event.asDynamic().clientY as Int
+            
+            // Get current position
+            val rect = element?.asDynamic().getBoundingClientRect()
+            initialLeft = (rect?.left as? Double)?.toInt() ?: 0
+            initialTop = (rect?.top as? Double)?.toInt() ?: 0
+            
+            // Remove the centering transform when starting to drag
+            element?.style?.transform = ""
+            element?.style?.left = "${initialLeft}px"
+            element?.style?.top = "${initialTop}px"
+            
+            event.preventDefault()
+        }
+        
+        document.onmousemove = { event ->
+            if (isDragging) {
+                val currentX = event.asDynamic().clientX as Int
+                val currentY = event.asDynamic().clientY as Int
+                val deltaX = currentX - startX
+                val deltaY = currentY - startY
+                
+                element?.style?.left = "${initialLeft + deltaX}px"
+                element?.style?.top = "${initialTop + deltaY}px"
+                
+                event.preventDefault()
+            }
+        }
+        
+        document.onmouseup = {
+            isDragging = false
+        }
+    }
+    
+    private fun setupResizable() {
+        val resizeHandle = element?.querySelector(".window-resize-handle") as? HTMLElement ?: return
+        var isResizing = false
+        var startX = 0
+        var startY = 0
+        var initialWidth = 0
+        var initialHeight = 0
+        
+        // Style the resize handle to be more visible
+        resizeHandle.style.background = "transparent"
+        
+        resizeHandle.onmousedown = { event ->
+            isResizing = true
+            startX = event.asDynamic().clientX as Int
+            startY = event.asDynamic().clientY as Int
+            
+            // Get current dimensions
+            initialWidth = element?.asDynamic().offsetWidth as? Int ?: options.width ?: 800
+            initialHeight = element?.asDynamic().offsetHeight as? Int ?: options.height ?: 600
+            
+            // Add visual feedback
+            element?.style?.opacity = "0.9"
+            
+            event.stopPropagation()
+            event.preventDefault()
+        }
+        
+        val handleMouseMove = { event: dynamic ->
+            if (isResizing) {
+                val currentX = event.clientX as Int
+                val currentY = event.clientY as Int
+                val deltaX = currentX - startX
+                val deltaY = currentY - startY
+                
+                val newWidth = (initialWidth + deltaX).coerceAtLeast(400).coerceAtMost(1600)
+                val newHeight = (initialHeight + deltaY).coerceAtLeast(300).coerceAtMost(1200)
+                
+                element?.style?.width = "${newWidth}px"
+                element?.style?.height = "${newHeight}px"
+                
+                event.preventDefault()
+            }
+            Unit
+        }
+        
+        val handleMouseUp = { _: dynamic ->
+            if (isResizing) {
+                isResizing = false
+                element?.style?.opacity = "1"
+            }
+            Unit
+        }
+        
+        // Attach to document for global mouse tracking
+        document.addEventListener("mousemove", handleMouseMove)
+        document.addEventListener("mouseup", handleMouseUp)
     }
     
     fun close() {

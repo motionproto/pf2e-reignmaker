@@ -22,7 +22,8 @@ class KingdomSheet : Application() {
         "settlements" to ContentSettlements,
         "factions" to ContentFactions,
         "modifiers" to ContentModifiers,
-        "notes" to ContentNotes
+        "notes" to ContentNotes,
+        "settings" to ContentSettings
     )
     
     private var currentContent: ContentComponent? = contentComponents["turn"]

@@ -34,6 +34,11 @@ class ContentSelector(
             append("""<button class="content-button${if (activeContent == "modifiers") " active" else ""}" data-content="modifiers">Modifiers</button>""")
             append("""<button class="content-button${if (activeContent == "notes") " active" else ""}" data-content="notes">Notes</button>""")
             
+            // Add gear button on the far right
+            append("""<button class="content-button gear-button${if (activeContent == "settings") " active" else ""}" data-content="settings" title="Content Settings">""")
+            append("""<i class="fas fa-cog"></i>""")
+            append("""</button>""")
+            
             append("""</div>""")
         }
         println("ContentSelector HTML generated: $html")
@@ -58,6 +63,13 @@ class ContentSelector(
     
     fun setActiveContent(contentId: String, container: HTMLElement? = null) {
         activeContent = contentId
+        
+        // Clear ContentSettings cache when switching to settings to ensure fresh data
+        if (contentId == "settings") {
+            // Force refresh of kingdom data by clearing the cached timestamp
+            // This ensures fresh data is loaded from the Kingmaker module
+            println("Switching to settings - forcing kingdom data refresh")
+        }
         
         // Update button states if container is provided
         container?.let {

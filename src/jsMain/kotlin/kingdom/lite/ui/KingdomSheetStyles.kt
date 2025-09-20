@@ -2,10 +2,32 @@ package kingdom.lite.ui
 
 /**
  * CSS styles for the Kingdom Sheet
- * Matches the Pathfinder 2e aesthetic with dark theme and gold accents
+ * Uses semantic color palette with CSS variables for consistent theming
  */
 object KingdomSheetStyles {
-    val styles = """
+    /**
+     * Initialize and inject CSS variables into the document
+     */
+    fun initialize() {
+        KingdomColorPalette.inject()
+    }
+    
+    /**
+     * Get the complete styles with CSS variables
+     * Combines the color palette variables with the themed styles
+     */
+    val styles: String
+        get() = """
+${KingdomColorPalette.cssVariables}
+
+${KingdomColorPalette.getThemedStyles()}
+        """.trimIndent()
+    
+    /**
+     * Legacy styles (kept for reference during migration)
+     * These will be gradually replaced with themed styles
+     */
+    private val legacyStyles = """
         /* Application Window Styling */
         .app.kingdom-sheet {
             box-shadow: 0 0 20px rgba(0,0,0,0.8);
@@ -125,6 +147,34 @@ object KingdomSheetStyles {
             font-weight: bold;
             box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
             border-color: #8b0000;
+        }
+        
+        /* Gear button positioning and styling */
+        .content-button.gear-button {
+            margin-left: auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            font-size: 18px;
+            min-width: auto;
+            width: auto;
+            max-width: 100px;
+        }
+        
+        .content-button.gear-button i {
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+        
+        .content-button.gear-button:hover i {
+            transform: rotate(90deg);
+        }
+        
+        .content-button.gear-button.active {
+            color: #fecb21ff;
+        }
+        
+        .content-button.gear-button.active i {
+            transform: rotate(180deg);
         }
         
         /* Body Layout */
@@ -514,7 +564,7 @@ object KingdomSheetStyles {
         
         /* Other Content Sections */
         .settlements-content, .factions-content, 
-        .modifiers-content, .notes-content {
+        .modifiers-content, .notes-content, .settings-content {
             background: white;
             border: 1px solid #d4c4a0;
             border-radius: 6px;
@@ -525,12 +575,223 @@ object KingdomSheetStyles {
         }
         
         .settlements-content h3, .factions-content h3,
-        .modifiers-content h3, .notes-content h3 {
+        .modifiers-content h3, .notes-content h3, .settings-content h3 {
             color: #5e0000;
             border-bottom: 2px solid #b8860b;
             padding-bottom: 10px;
             margin-bottom: 15px;
             font-size: 20px;
+        }
+        
+        /* Settings Content Specific Styles */
+        .settings-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(184, 134, 11, 0.05);
+            border: 1px solid #d4c4a0;
+            border-radius: 5px;
+        }
+        
+        /* Settings Divider */
+        .settings-divider {
+            margin: 30px 0;
+            border: none;
+            border-top: 2px solid #b8860b;
+            opacity: 0.5;
+        }
+        
+        /* Refresh Container */
+        .refresh-container {
+            text-align: center;
+            margin: 15px 0;
+        }
+        
+        .btn-refresh {
+            padding: 6px 12px;
+            background: linear-gradient(to bottom, #5e4433, #3e2922);
+            border: 1px solid #b8860b;
+            border-radius: 4px;
+            color: #c9b37e;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            margin-right: 10px;
+        }
+        
+        .btn-refresh:hover {
+            background: linear-gradient(to bottom, #b8860b, #8b6914);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .btn-refresh i {
+            margin-right: 5px;
+        }
+        
+        .refresh-info {
+            display: inline-block;
+            margin-left: 10px;
+            color: #6b4423;
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        /* Kingdom Status Styles */
+        .kingdom-status {
+            margin-bottom: 25px;
+        }
+        
+        .kingdom-info {
+            padding: 15px;
+            background: #fffff9;
+            border: 1px solid #d4c4a0;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .kingdom-size {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #191813;
+        }
+        
+        .kingdom-size strong {
+            color: #5e0000;
+            font-weight: 600;
+        }
+        
+        .settlements-summary {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #191813;
+        }
+        
+        .settlements-summary strong {
+            color: #5e0000;
+            font-weight: 600;
+        }
+        
+        .worksites-info h5 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #5e0000;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .worksites-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        .worksites-table th {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 2px solid #b8860b;
+            background: rgba(184, 134, 11, 0.1);
+            color: #5e0000;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .worksites-table td {
+            padding: 8px;
+            border-bottom: 1px solid #d4c4a0;
+            color: #191813;
+        }
+        
+        .worksites-table tbody tr:hover {
+            background: rgba(184, 134, 11, 0.05);
+        }
+        
+        .no-worksites {
+            text-align: center;
+            font-style: italic;
+            color: #6b4423;
+        }
+        
+        .settings-info.warning {
+            padding: 15px;
+            background: rgba(234, 179, 8, 0.1);
+            border: 1px solid #eab308;
+            border-radius: 5px;
+        }
+        
+        .settings-info.warning p {
+            margin: 5px 0;
+            color: #8b6914;
+        }
+        
+        .no-data {
+            color: #8b0000;
+            font-style: italic;
+        }
+        
+        .settings-section h4 {
+            color: #5e0000;
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 1px solid #b8860b;
+            padding-bottom: 5px;
+        }
+        
+        .settings-description {
+            margin-bottom: 15px;
+            color: #6b4423;
+            font-style: italic;
+        }
+        
+        .settings-control {
+            margin-bottom: 15px;
+        }
+        
+        .settings-control label {
+            display: inline-block;
+            margin-right: 10px;
+            color: #5e0000;
+            font-weight: 600;
+            min-width: 120px;
+        }
+        
+        .kingdom-scene-selector {
+            padding: 6px 10px;
+            border: 1px solid #d4c4a0;
+            border-radius: 4px;
+            background: #fffff9;
+            color: #191813;
+            font-size: 14px;
+            font-family: 'Signika', 'Palatino Linotype', serif;
+            min-width: 250px;
+        }
+        
+        .kingdom-scene-selector:focus {
+            outline: none;
+            border-color: #b8860b;
+            box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.1);
+        }
+        
+        .settings-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(184, 134, 11, 0.1);
+            border-radius: 4px;
+        }
+        
+        .current-selection {
+            color: #191813;
+            margin: 0;
+        }
+        
+        .no-selection {
+            color: #8b0000;
+            margin: 0;
+            font-style: italic;
         }
         
         /* Notes Section */
