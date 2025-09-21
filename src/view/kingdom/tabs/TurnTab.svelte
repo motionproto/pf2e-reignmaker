@@ -18,34 +18,44 @@
    }
 </script>
 
-<div class="turn-management">
-   <div class="turn-header">
-      <h2>Turn {$kingdomState.currentTurn}</h2>
-      <div class="phase-info">
-         <h3>{phaseInfo.displayName}</h3>
-         <p>{phaseInfo.description}</p>
+<div class="tw-flex tw-flex-col tw-h-full tw-gap-4">
+   <!-- Turn Header -->
+   <div class="tw-card tw-bg-base-300 tw-card-compact">
+      <div class="tw-card-body">
+         <h2 class="tw-card-title tw-text-2xl">Turn {$kingdomState.currentTurn}</h2>
+         <div class="tw-divider tw-my-2"></div>
+         <div class="tw-alert tw-alert-info">
+            <div>
+               <h3 class="tw-font-bold tw-text-lg">{phaseInfo.displayName}</h3>
+               <p class="tw-text-sm tw-italic tw-mt-1">{phaseInfo.description}</p>
+            </div>
+         </div>
       </div>
    </div>
    
-   <div class="phase-content">
-      {#if $kingdomState.currentPhase === TurnPhase.PHASE_I}
-         <StatusPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_II}
-         <ResourcesPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_III}
-         <UnrestPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_IV}
-         <EventsPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_V}
-         <ActionsPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_VI}
-         <ResolutionPhase />
-      {/if}
+   <!-- Phase Content -->
+   <div class="tw-flex-1 tw-card tw-bg-base-200/50 tw-overflow-y-auto">
+      <div class="tw-card-body">
+         {#if $kingdomState.currentPhase === TurnPhase.PHASE_I}
+            <StatusPhase />
+         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_II}
+            <ResourcesPhase />
+         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_III}
+            <UnrestPhase />
+         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_IV}
+            <EventsPhase />
+         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_V}
+            <ActionsPhase />
+         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_VI}
+            <ResolutionPhase />
+         {/if}
+      </div>
    </div>
    
-   <div class="phase-controls">
+   <!-- Phase Controls -->
+   <div class="tw-flex tw-justify-end tw-gap-2">
       <button 
-         class="phase-advance-button"
+         class="tw-btn tw-btn-primary"
          on:click={handleAdvancePhase}
       >
          Advance to Next Phase
@@ -53,76 +63,3 @@
       </button>
    </div>
 </div>
-
-<style lang="scss">
-   .turn-management {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      gap: 15px;
-   }
-   
-   .turn-header {
-      background: rgba(0, 0, 0, 0.1);
-      padding: 15px;
-      border-radius: 5px;
-      
-      h2 {
-         margin: 0 0 10px 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-   }
-   
-   .phase-info {
-      h3 {
-         margin: 0 0 5px 0;
-         color: var(--color-primary, #5e0000);
-         font-size: 1.1em;
-      }
-      
-      p {
-         margin: 0;
-         color: var(--color-text-dark-secondary, #7a7971);
-         font-style: italic;
-      }
-   }
-   
-   .phase-content {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
-      border-radius: 5px;
-      overflow-y: auto;
-   }
-   
-   .phase-controls {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-   }
-   
-   .phase-advance-button {
-      padding: 10px 20px;
-      background: var(--color-primary, #5e0000);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-         background: var(--color-primary-dark, #3e0000);
-         transform: translateY(-1px);
-         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      }
-      
-      i {
-         font-size: 0.9em;
-      }
-   }
-</style>

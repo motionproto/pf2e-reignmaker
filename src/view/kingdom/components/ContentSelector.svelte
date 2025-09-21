@@ -22,50 +22,24 @@
    }
 </script>
 
-<div class="tw-flex tw-justify-between tw-items-center tw-gap-5">
-   <div class="tw-flex tw-gap-1 tw-flex-wrap tw-flex-1">
+<div data-theme="foundry" class="tw-flex tw-justify-between tw-items-center tw-gap-5">
+   <!-- Tab buttons using DaisyUI -->
+   <div class="tw-tabs tw-tabs-boxed tw-flex-1 tw-bg-base-200/50">
       {#each tabs as tab}
          <button 
-            class="
-               tw-px-4 tw-py-2 
-               tw-bg-black/20 
-               tw-border tw-border-white/10 
-               tw-rounded-foundry 
-               tw-text-white/80 
-               tw-cursor-pointer 
-               tw-transition-all tw-duration-200
-               tw-flex tw-items-center tw-gap-2
-               hover:tw-bg-black/30 
-               hover:tw-text-white 
-               hover:-tw-translate-y-px
-               {selectedTab === tab.id ? 
-                  'tw-bg-foundry-primary tw-text-white tw-border-white/30 tw-shadow-foundry' : 
-                  ''
-               }
-            "
+            class="tw-tab tw-gap-2 {selectedTab === tab.id ? 'tw-tab-active' : ''}"
             on:click={() => selectTab(tab.id)}
             title={tab.label}
          >
-            <i class="fas {tab.icon} tw-text-base"></i>
-            <span class="tw-font-medium">{tab.label}</span>
+            <i class="fas {tab.icon}"></i>
+            <span class="tw-hidden sm:tw-inline">{tab.label}</span>
          </button>
       {/each}
    </div>
    
+   <!-- Settings button using DaisyUI -->
    <button 
-      class="
-         tw-px-3 tw-py-2 
-         tw-bg-black/20 
-         tw-border tw-border-white/10 
-         tw-rounded-foundry 
-         tw-text-white/80 
-         tw-cursor-pointer 
-         tw-transition-all tw-duration-200
-         tw-flex tw-items-center tw-justify-center
-         hover:tw-bg-black/30 
-         hover:tw-text-white 
-         hover:tw-rotate-90
-      "
+      class="tw-btn tw-btn-circle tw-btn-ghost tw-btn-sm"
       on:click={openSettings}
       title="Kingdom Settings"
    >

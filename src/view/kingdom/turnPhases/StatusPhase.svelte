@@ -33,120 +33,65 @@
    }
 </script>
 
-<div class="status-phase">
-   <h3>Phase I: Kingdom Status</h3>
+<div>
+   <h3 class="tw-text-xl tw-font-bold tw-text-primary tw-mb-5">Phase I: Kingdom Status</h3>
    
-   <div class="phase-steps">
-      <div class="phase-step" class:completed={gainFameCompleted}>
-         <button 
-            on:click={gainFame} 
-            disabled={gainFameCompleted}
-            class="step-button"
-         >
-            {#if gainFameCompleted}
-               <i class="fas fa-check"></i>
-            {:else}
-               <i class="fas fa-star"></i>
-            {/if}
-            Gain 1 Fame
-         </button>
-         <p class="step-description">Your kingdom gains 1 Fame point this turn.</p>
+   <div class="tw-space-y-3 tw-mb-5">
+      <!-- Gain Fame Step -->
+      <div class="tw-card {gainFameCompleted ? 'tw-bg-success/10' : 'tw-bg-base-200'}">
+         <div class="tw-card-body tw-p-4">
+            <button 
+               on:click={gainFame} 
+               disabled={gainFameCompleted}
+               class="tw-btn {gainFameCompleted ? 'tw-btn-success' : 'tw-btn-primary'} tw-w-fit"
+            >
+               {#if gainFameCompleted}
+                  <i class="fas fa-check"></i>
+               {:else}
+                  <i class="fas fa-star"></i>
+               {/if}
+               Gain 1 Fame
+            </button>
+            <p class="tw-text-sm tw-text-base-content/60 tw-mt-2">
+               Your kingdom gains 1 Fame point this turn.
+            </p>
+         </div>
       </div>
       
-      <div class="phase-step" class:completed={applyModifiersCompleted}>
-         <button 
-            on:click={applyOngoingModifiers} 
-            disabled={applyModifiersCompleted}
-            class="step-button"
-         >
-            {#if applyModifiersCompleted}
-               <i class="fas fa-check"></i>
-            {:else}
-               <i class="fas fa-magic"></i>
-            {/if}
-            Apply Ongoing Modifiers
-         </button>
-         <p class="step-description">Apply all ongoing effects and reduce their duration.</p>
+      <!-- Apply Modifiers Step -->
+      <div class="tw-card {applyModifiersCompleted ? 'tw-bg-success/10' : 'tw-bg-base-200'}">
+         <div class="tw-card-body tw-p-4">
+            <button 
+               on:click={applyOngoingModifiers} 
+               disabled={applyModifiersCompleted}
+               class="tw-btn {applyModifiersCompleted ? 'tw-btn-success' : 'tw-btn-primary'} tw-w-fit"
+            >
+               {#if applyModifiersCompleted}
+                  <i class="fas fa-check"></i>
+               {:else}
+                  <i class="fas fa-magic"></i>
+               {/if}
+               Apply Ongoing Modifiers
+            </button>
+            <p class="tw-text-sm tw-text-base-content/60 tw-mt-2">
+               Apply all ongoing effects and reduce their duration.
+            </p>
+         </div>
       </div>
    </div>
    
-   <div class="phase-summary">
-      <h4>Current Status:</h4>
-      <p>Fame: {$kingdomState.fame}</p>
-      <p>Active Modifiers: {$kingdomState.ongoingModifiers.length}</p>
+   <!-- Phase Summary -->
+   <div class="tw-alert tw-alert-info">
+      <div>
+         <h4 class="tw-font-bold">Current Status:</h4>
+         <div class="tw-flex tw-gap-4 tw-mt-2">
+            <span class="tw-badge tw-badge-lg tw-badge-secondary">
+               Fame: {$kingdomState.fame}
+            </span>
+            <span class="tw-badge tw-badge-lg tw-badge-accent">
+               Active Modifiers: {$kingdomState.ongoingModifiers.length}
+            </span>
+         </div>
+      </div>
    </div>
 </div>
-
-<style lang="scss">
-   .status-phase {
-      h3 {
-         margin: 0 0 20px 0;
-         color: var(--color-primary, #5e0000);
-      }
-   }
-   
-   .phase-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-bottom: 20px;
-   }
-   
-   .phase-step {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 15px;
-      border-radius: 5px;
-      
-      &.completed {
-         background: rgba(0, 200, 0, 0.1);
-      }
-   }
-   
-   .step-button {
-      padding: 8px 16px;
-      background: var(--color-primary, #5e0000);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      &:hover:not(:disabled) {
-         background: var(--color-primary-dark, #3e0000);
-      }
-      
-      &:disabled {
-         opacity: 0.6;
-         cursor: default;
-      }
-      
-      i {
-         font-size: 0.9em;
-      }
-   }
-   
-   .step-description {
-      margin: 10px 0 0 0;
-      color: var(--color-text-dark-secondary, #7a7971);
-      font-size: 0.9em;
-   }
-   
-   .phase-summary {
-      background: rgba(0, 0, 0, 0.08);
-      padding: 15px;
-      border-radius: 5px;
-      
-      h4 {
-         margin: 0 0 10px 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-      
-      p {
-         margin: 5px 0;
-         color: var(--color-text-dark-secondary, #7a7971);
-      }
-   }
-</style>

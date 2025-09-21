@@ -19,8 +19,11 @@
     "svelte": "^4.2.20"
   },
   "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^7.0.2",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@tailwindcss/postcss": "^4.1.13",
     "autoprefixer": "^10.4.21",
+    "daisyui": "^5.1.13",
     "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
     "postcss": "^8.5.6",
     "svelte-check": "^4.0.9",

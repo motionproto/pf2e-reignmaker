@@ -4,6 +4,8 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx,svelte}",
   ],
+  // Optimize for production builds
+  mode: 'jit',
   theme: {
     extend: {
       colors: {
@@ -63,7 +65,93 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    require('daisyui'),
+  ],
   // Important: Prefix all Tailwind classes to avoid conflicts with other modules
   prefix: 'tw-',
+  // DaisyUI config - optimized for smaller build
+  daisyui: {
+    themes: [
+      {
+        foundry: {
+          // Main colors
+          "primary": "#5e0000",
+          "primary-content": "#f0f0e0",
+          "secondary": "#171f69",
+          "secondary-content": "#e0e7ff",
+          "accent": "#E02B6C",
+          "accent-content": "#ffffff",
+          "neutral": "#23221e",
+          "neutral-content": "#b5b3a4",
+          
+          // Base colors for dark theme
+          "base-100": "#1a1a17",
+          "base-200": "#23221e",
+          "base-300": "#2d2c28",
+          "base-content": "#b5b3a4",
+          
+          // Semantic colors
+          "info": "#004146",
+          "info-content": "#d0f8ff",
+          "success": "#18520b",
+          "success-content": "#e8ffd0",
+          "warning": "#993300",
+          "warning-content": "#fff4e6",
+          "error": "#6e0000",
+          "error-content": "#ffeded",
+        },
+      },
+      {
+        "foundry-dark": {
+          // Enhanced dark theme variant
+          "primary": "#7a1f1f",
+          "primary-content": "#f5f5f0",
+          "secondary": "#2a3b8f",
+          "secondary-content": "#e8ecff",
+          "accent": "#ff4d88",
+          "accent-content": "#ffffff",
+          "neutral": "#1a1917",
+          "neutral-content": "#c8c6b7",
+          
+          // Darker base colors
+          "base-100": "#0f0f0d",
+          "base-200": "#1a1917",
+          "base-300": "#23221e",
+          "base-content": "#c8c6b7",
+          
+          // Adjusted semantic colors for better contrast
+          "info": "#00626b",
+          "info-content": "#e0fbff",
+          "success": "#2a7a1a",
+          "success-content": "#f0ffe8",
+          "warning": "#b84a00",
+          "warning-content": "#fff8f0",
+          "error": "#8f1a1a",
+          "error-content": "#fff0f0",
+        }
+      }
+    ],
+    darkTheme: "foundry",
+    base: true,
+    styled: true,
+    utils: true,
+    logs: false,
+    prefix: "tw-", // Apply prefix to daisyUI classes too
+  },
+  // Exclude unused base styles to reduce CSS size
+  corePlugins: {
+    preflight: true, // Keep reset styles
+    // Disable unused utilities
+    backdropOpacity: false,
+    backdropSaturate: false,
+    backdropSepia: false,
+    ringOffsetColor: false,
+    ringOffsetWidth: false,
+    scrollSnapType: false,
+    scrollBehavior: false,
+    textDecorationThickness: false,
+    textUnderlineOffset: false,
+    touchAction: false,
+  },
 }

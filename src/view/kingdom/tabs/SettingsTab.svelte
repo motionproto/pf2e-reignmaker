@@ -111,497 +111,263 @@
    }
 </script>
 
-<div class="settings-container">
-   <h2>Kingdom Settings</h2>
+<div class="tw-max-w-4xl tw-mx-auto tw-p-4">
+   <h2 class="tw-text-2xl tw-font-bold tw-text-primary tw-border-b-2 tw-border-primary tw-pb-2 tw-mb-6">
+      Kingdom Settings
+   </h2>
    
    <!-- Kingdom Map Scene Selector - MOST IMPORTANT -->
-   <div class="settings-section scene-selector-section">
-      <h3>Kingdom Map Scene</h3>
-      <p class="setting-description">
-         Select the scene that represents your kingdom map. This is typically called "Stolen Lands" in the Adventure Path.
-      </p>
-      
-      <div class="scene-selector-control">
-         <label for="kingdom-scene-select">Kingdom Scene:</label>
-         <select 
-            id="kingdom-scene-select" 
-            class="kingdom-select wide-select"
-            on:change={handleSceneChange}
-            value={selectedSceneId || ''}
-         >
-            <option value="">-- Select a Scene --</option>
-            {#each allScenes as scene}
-               <option value={scene.id} selected={selectedSceneId === scene.id}>
-                  {scene.name}
-               </option>
-            {/each}
-         </select>
+   <div class="tw-card tw-bg-primary/10 tw-border tw-border-primary/20 tw-mb-4">
+      <div class="tw-card-body">
+         <h3 class="tw-card-title tw-text-lg">Kingdom Map Scene</h3>
+         <p class="tw-text-sm tw-text-base-content/70 tw-mb-4">
+            Select the scene that represents your kingdom map. This is typically called "Stolen Lands" in the Adventure Path.
+         </p>
+         
+         <div class="tw-form-control">
+            <label class="tw-label" for="kingdom-scene-select">
+               <span class="tw-label-text">Kingdom Scene:</span>
+            </label>
+            <select 
+               id="kingdom-scene-select" 
+               class="tw-select tw-select-bordered tw-w-full tw-max-w-md"
+               on:change={handleSceneChange}
+               value={selectedSceneId || ''}
+            >
+               <option value="">-- Select a Scene --</option>
+               {#each allScenes as scene}
+                  <option value={scene.id} selected={selectedSceneId === scene.id}>
+                     {scene.name}
+                  </option>
+               {/each}
+            </select>
+         </div>
+         
+         {#if currentScene}
+            <div class="tw-alert tw-alert-success tw-mt-4">
+               <i class="fas fa-check-circle"></i>
+               <span>Currently selected: <strong>{currentScene.name}</strong></span>
+            </div>
+         {:else}
+            <div class="tw-alert tw-alert-warning tw-mt-4">
+               <i class="fas fa-exclamation-triangle"></i>
+               <span>No kingdom scene selected. Please choose a scene from the dropdown above.</span>
+            </div>
+         {/if}
       </div>
-      
-      {#if currentScene}
-         <div class="scene-info">
-            <i class="fas fa-check-circle"></i>
-            Currently selected: <strong>{currentScene.name}</strong>
-         </div>
-      {:else}
-         <div class="scene-info warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            No kingdom scene selected. Please choose a scene from the dropdown above.
-         </div>
-      {/if}
    </div>
    
    <!-- Kingdom Status (if Kingmaker module is installed) -->
    {#if hasKingmaker}
-      <div class="settings-section kingdom-status-section">
-         <h3>Kingdom Status</h3>
-         {#if realmData}
-            <div class="kingdom-data">
-               <div class="data-row">
-                  <span class="data-label">Kingdom Size:</span>
-                  <span class="data-value">{realmData.size} hexes</span>
+      <div class="tw-card tw-bg-info/10 tw-border tw-border-info/20 tw-mb-4">
+         <div class="tw-card-body">
+            <h3 class="tw-card-title tw-text-lg">Kingdom Status</h3>
+            {#if realmData}
+               <div class="tw-bg-base-100 tw-rounded-lg tw-p-4">
+                  <div class="tw-flex tw-justify-between tw-py-2 tw-border-b tw-border-base-300">
+                     <span class="tw-text-sm tw-text-base-content/70">Kingdom Size:</span>
+                     <span class="tw-font-semibold">{realmData.size} hexes</span>
+                  </div>
+                  
+                  {#if realmData.settlements && realmData.settlements.total > 0}
+                     <div class="tw-flex tw-justify-between tw-py-2 tw-border-b tw-border-base-300">
+                        <span class="tw-text-sm tw-text-base-content/70">Total Settlements:</span>
+                        <span class="tw-font-semibold">{realmData.settlements.total}</span>
+                     </div>
+                     <div class="tw-pl-4 tw-space-y-1 tw-mt-2">
+                        {#if realmData.settlements.villages > 0}
+                           <div class="tw-text-sm tw-text-base-content/60">
+                              Villages: {realmData.settlements.villages}
+                           </div>
+                        {/if}
+                        {#if realmData.settlements.towns > 0}
+                           <div class="tw-text-sm tw-text-base-content/60">
+                              Towns: {realmData.settlements.towns}
+                           </div>
+                        {/if}
+                        {#if realmData.settlements.cities > 0}
+                           <div class="tw-text-sm tw-text-base-content/60">
+                              Cities: {realmData.settlements.cities}
+                           </div>
+                        {/if}
+                        {#if realmData.settlements.metropolises > 0}
+                           <div class="tw-text-sm tw-text-base-content/60">
+                              Metropolises: {realmData.settlements.metropolises}
+                           </div>
+                        {/if}
+                     </div>
+                  {/if}
+                  
+                  {#if realmData.worksites}
+                     <h4 class="tw-font-semibold tw-mt-4 tw-mb-2">Worksites & Camps</h4>
+                     <div class="tw-grid tw-grid-cols-2 tw-gap-2">
+                        {#if realmData.worksites.farmlands?.quantity > 0}
+                           <div class="tw-bg-base-200 tw-rounded tw-p-2 tw-flex tw-justify-between">
+                              <span class="tw-text-sm">Farmlands:</span>
+                              <span class="tw-font-bold">{realmData.worksites.farmlands.quantity}</span>
+                           </div>
+                        {/if}
+                        {#if realmData.worksites.lumberCamps?.quantity > 0}
+                           <div class="tw-bg-base-200 tw-rounded tw-p-2 tw-flex tw-justify-between">
+                              <span class="tw-text-sm">Lumber Camps:</span>
+                              <span class="tw-font-bold">{realmData.worksites.lumberCamps.quantity}</span>
+                           </div>
+                        {/if}
+                        {#if realmData.worksites.mines?.quantity > 0}
+                           <div class="tw-bg-base-200 tw-rounded tw-p-2 tw-flex tw-justify-between">
+                              <span class="tw-text-sm">Mines:</span>
+                              <span class="tw-font-bold">{realmData.worksites.mines.quantity}</span>
+                           </div>
+                        {/if}
+                        {#if realmData.worksites.quarries?.quantity > 0}
+                           <div class="tw-bg-base-200 tw-rounded tw-p-2 tw-flex tw-justify-between">
+                              <span class="tw-text-sm">Quarries:</span>
+                              <span class="tw-font-bold">{realmData.worksites.quarries.quantity}</span>
+                           </div>
+                        {/if}
+                     </div>
+                  {/if}
                </div>
-               
-               {#if realmData.settlements && realmData.settlements.total > 0}
-                  <div class="data-row">
-                     <span class="data-label">Total Settlements:</span>
-                     <span class="data-value">{realmData.settlements.total}</span>
-                  </div>
-                  {#if realmData.settlements.villages > 0}
-                     <div class="data-sub-row">
-                        Villages: {realmData.settlements.villages}
-                     </div>
-                  {/if}
-                  {#if realmData.settlements.towns > 0}
-                     <div class="data-sub-row">
-                        Towns: {realmData.settlements.towns}
-                     </div>
-                  {/if}
-                  {#if realmData.settlements.cities > 0}
-                     <div class="data-sub-row">
-                        Cities: {realmData.settlements.cities}
-                     </div>
-                  {/if}
-                  {#if realmData.settlements.metropolises > 0}
-                     <div class="data-sub-row">
-                        Metropolises: {realmData.settlements.metropolises}
-                     </div>
-                  {/if}
-               {/if}
-               
-               {#if realmData.worksites}
-                  <h4 class="subsection-header">Worksites & Camps</h4>
-                  <div class="worksites-grid">
-                     {#if realmData.worksites.farmlands?.quantity > 0}
-                        <div class="worksite-item">
-                           <span class="worksite-name">Farmlands:</span>
-                           <span class="worksite-qty">{realmData.worksites.farmlands.quantity}</span>
-                        </div>
-                     {/if}
-                     {#if realmData.worksites.lumberCamps?.quantity > 0}
-                        <div class="worksite-item">
-                           <span class="worksite-name">Lumber Camps:</span>
-                           <span class="worksite-qty">{realmData.worksites.lumberCamps.quantity}</span>
-                        </div>
-                     {/if}
-                     {#if realmData.worksites.mines?.quantity > 0}
-                        <div class="worksite-item">
-                           <span class="worksite-name">Mines:</span>
-                           <span class="worksite-qty">{realmData.worksites.mines.quantity}</span>
-                        </div>
-                     {/if}
-                     {#if realmData.worksites.quarries?.quantity > 0}
-                        <div class="worksite-item">
-                           <span class="worksite-name">Quarries:</span>
-                           <span class="worksite-qty">{realmData.worksites.quarries.quantity}</span>
-                        </div>
-                     {/if}
-                  </div>
-               {/if}
+            {:else}
+               <div class="tw-alert tw-alert-warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>No kingdom data available. Make sure you have claimed hexes in the Kingmaker system.</span>
+               </div>
+            {/if}
+            
+            <div class="tw-alert tw-alert-info tw-mt-4">
+               <i class="fa fa-info-circle"></i>
+               <span class="tw-text-sm">Kingdom data updates automatically when you make changes in the Kingmaker system</span>
             </div>
-         {:else}
-            <div class="scene-info warning">
-               No kingdom data available. Make sure you have claimed hexes in the Kingmaker system.
-            </div>
-         {/if}
-         
-         <div class="refresh-info">
-            <i class="fa fa-info-circle"></i>
-            Kingdom data updates automatically when you make changes in the Kingmaker system
          </div>
       </div>
    {:else}
-      <div class="settings-section">
-         <div class="scene-info warning">
-            <i class="fas fa-exclamation-triangle"></i>
-            The PF2e Kingmaker module is not installed or not active.
-            Kingdom information will be displayed here once the module is installed.
+      <div class="tw-card tw-bg-warning/10 tw-border tw-border-warning/20 tw-mb-4">
+         <div class="tw-card-body">
+            <div class="tw-alert tw-alert-warning">
+               <i class="fas fa-exclamation-triangle"></i>
+               <span>The PF2e Kingmaker module is not installed or not active. Kingdom information will be displayed here once the module is installed.</span>
+            </div>
          </div>
       </div>
    {/if}
    
-   <hr class="settings-divider" />
+   <div class="tw-divider"></div>
    
-   <div class="settings-section">
-      <h3>Gameplay Options</h3>
-      
-      <div class="setting-item">
-         <label>
-            <input 
-               type="checkbox" 
-               checked={autoAdvancePhase}
-               on:change={handleAutoAdvance}
-            />
-            <span>Auto-advance phases</span>
-         </label>
-         <p class="setting-description">
-            Automatically advance to the next phase when all steps are completed
-         </p>
-      </div>
-      
-      <div class="setting-item">
-         <label>
-            <input 
-               type="checkbox" 
-               checked={showTutorialHints}
-               on:change={handleTutorialHints}
-            />
-            <span>Show tutorial hints</span>
-         </label>
-         <p class="setting-description">
-            Display helpful tips and explanations for game mechanics
-         </p>
-      </div>
-      
-      <div class="setting-item">
-         <label>
-            <input 
-               type="checkbox" 
-               checked={confirmActions}
-               on:change={handleConfirmActions}
-            />
-            <span>Confirm important actions</span>
-         </label>
-         <p class="setting-description">
-            Ask for confirmation before performing irreversible actions
-         </p>
-      </div>
-   </div>
-   
-   <div class="settings-section">
-      <h3>Kingdom Information</h3>
-      
-      <div class="info-grid">
-         <div class="info-item">
-            <span class="info-label">Current Turn:</span>
-            <span class="info-value">{$kingdomState.currentTurn}</span>
+   <!-- Gameplay Options -->
+   <div class="tw-card tw-bg-base-200 tw-mb-4">
+      <div class="tw-card-body">
+         <h3 class="tw-card-title tw-text-lg">Gameplay Options</h3>
+         
+         <div class="tw-form-control">
+            <label class="tw-label tw-cursor-pointer">
+               <span class="tw-label-text">
+                  Auto-advance phases
+                  <span class="tw-block tw-text-xs tw-text-base-content/60">
+                     Automatically advance to the next phase when all steps are completed
+                  </span>
+               </span>
+               <input 
+                  type="checkbox" 
+                  class="tw-checkbox tw-checkbox-primary"
+                  checked={autoAdvancePhase}
+                  on:change={handleAutoAdvance}
+               />
+            </label>
          </div>
-         <div class="info-item">
-            <span class="info-label">Fame:</span>
-            <span class="info-value">{$kingdomState.fame}/3</span>
+         
+         <div class="tw-form-control">
+            <label class="tw-label tw-cursor-pointer">
+               <span class="tw-label-text">
+                  Show tutorial hints
+                  <span class="tw-block tw-text-xs tw-text-base-content/60">
+                     Display helpful tips and explanations for game mechanics
+                  </span>
+               </span>
+               <input 
+                  type="checkbox" 
+                  class="tw-checkbox tw-checkbox-primary"
+                  checked={showTutorialHints}
+                  on:change={handleTutorialHints}
+               />
+            </label>
          </div>
-         <div class="info-item">
-            <span class="info-label">Total Hexes:</span>
-            <span class="info-value">{$kingdomState.size}</span>
-         </div>
-         <div class="info-item">
-            <span class="info-label">Settlements:</span>
-            <span class="info-value">{$kingdomState.settlements.length}</span>
-         </div>
-         <div class="info-item">
-            <span class="info-label">Armies:</span>
-            <span class="info-value">{$kingdomState.armies.length}</span>
-         </div>
-         <div class="info-item">
-            <span class="info-label">War Status:</span>
-            <span class="info-value">{$kingdomState.isAtWar ? 'At War' : 'At Peace'}</span>
+         
+         <div class="tw-form-control">
+            <label class="tw-label tw-cursor-pointer">
+               <span class="tw-label-text">
+                  Confirm important actions
+                  <span class="tw-block tw-text-xs tw-text-base-content/60">
+                     Ask for confirmation before performing irreversible actions
+                  </span>
+               </span>
+               <input 
+                  type="checkbox" 
+                  class="tw-checkbox tw-checkbox-primary"
+                  checked={confirmActions}
+                  on:change={handleConfirmActions}
+               />
+            </label>
          </div>
       </div>
    </div>
    
-   <div class="settings-section danger-zone">
-      <h3>Danger Zone</h3>
-      
-      <button 
-         class="danger-button"
-         on:click={resetKingdom}
-      >
-         <i class="fas fa-exclamation-triangle"></i>
-         Reset Kingdom Data
-      </button>
-      
-      <p class="danger-warning">
-         This will permanently delete all kingdom progress and cannot be undone!
-      </p>
+   <!-- Kingdom Information -->
+   <div class="tw-card tw-bg-base-200 tw-mb-4">
+      <div class="tw-card-body">
+         <h3 class="tw-card-title tw-text-lg">Kingdom Information</h3>
+         
+         <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 tw-gap-3">
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">Current Turn</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomState.currentTurn}</div>
+            </div>
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">Fame</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomState.fame}/3</div>
+            </div>
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">Total Hexes</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomState.size}</div>
+            </div>
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">Settlements</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomState.settlements.length}</div>
+            </div>
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">Armies</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomState.armies.length}</div>
+            </div>
+            <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
+               <div class="tw-stat-title tw-text-xs">War Status</div>
+               <div class="tw-stat-value tw-text-lg">
+                  {#if $kingdomState.isAtWar}
+                     <span class="tw-text-error">At War</span>
+                  {:else}
+                     <span class="tw-text-success">At Peace</span>
+                  {/if}
+               </div>
+            </div>
+         </div>
+      </div>
+   </div>
+   
+   <!-- Danger Zone -->
+   <div class="tw-card tw-bg-error/10 tw-border tw-border-error/20">
+      <div class="tw-card-body">
+         <h3 class="tw-card-title tw-text-lg tw-text-error">Danger Zone</h3>
+         
+         <button 
+            class="tw-btn tw-btn-error"
+            on:click={resetKingdom}
+         >
+            <i class="fas fa-exclamation-triangle"></i>
+            Reset Kingdom Data
+         </button>
+         
+         <p class="tw-text-sm tw-text-error/80 tw-mt-2">
+            This will permanently delete all kingdom progress and cannot be undone!
+         </p>
+      </div>
    </div>
 </div>
-
-<style lang="scss">
-   .settings-container {
-      max-width: 800px;
-      margin: 0 auto;
-      
-      h2 {
-         margin: 0 0 20px 0;
-         color: var(--color-primary, #5e0000);
-         border-bottom: 2px solid var(--color-primary, #5e0000);
-         padding-bottom: 10px;
-      }
-   }
-   
-   .settings-section {
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 5px;
-      padding: 20px;
-      margin-bottom: 20px;
-      
-      h3 {
-         margin: 0 0 15px 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-         font-size: 1.2em;
-      }
-      
-      &.scene-selector-section {
-         background: rgba(94, 0, 0, 0.05);
-         border: 1px solid rgba(94, 0, 0, 0.2);
-      }
-      
-      &.kingdom-status-section {
-         background: rgba(0, 50, 100, 0.05);
-         border: 1px solid rgba(0, 50, 100, 0.2);
-      }
-      
-      &.danger-zone {
-         background: rgba(200, 50, 50, 0.1);
-         border: 1px solid rgba(200, 50, 50, 0.3);
-      }
-   }
-   
-   .scene-selector-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 15px 0;
-      
-      label {
-         font-weight: 500;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-   }
-   
-   .wide-select {
-      flex: 1;
-      max-width: 400px;
-   }
-   
-   .kingdom-select {
-      padding: 4px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--color-text-dark-primary, #b5b3a4);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      
-      &:focus {
-         outline: none;
-         border-color: var(--color-primary, #5e0000);
-      }
-   }
-   
-   .scene-info {
-      padding: 10px;
-      background: rgba(0, 100, 0, 0.1);
-      border-radius: 3px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--color-text-dark-primary, #b5b3a4);
-      
-      &.warning {
-         background: rgba(200, 100, 0, 0.1);
-         color: #ff9800;
-      }
-      
-      i {
-         font-size: 1.1em;
-      }
-      
-      strong {
-         color: var(--color-primary, #5e0000);
-      }
-   }
-   
-   .kingdom-data {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 4px;
-      padding: 15px;
-      margin: 15px 0;
-   }
-   
-   .data-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      
-      &:last-child {
-         border-bottom: none;
-      }
-      
-      .data-label {
-         font-weight: 500;
-         color: var(--color-text-dark-secondary, #7a7971);
-      }
-      
-      .data-value {
-         font-weight: 600;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-   }
-   
-   .data-sub-row {
-      padding: 4px 0 4px 20px;
-      color: var(--color-text-dark-secondary, #7a7971);
-      font-size: 0.9em;
-   }
-   
-   .subsection-header {
-      margin: 15px 0 10px 0;
-      color: var(--color-text-dark-primary, #b5b3a4);
-      font-size: 1em;
-      font-weight: 600;
-   }
-   
-   .worksites-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-   }
-   
-   .worksite-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 3px;
-      
-      .worksite-name {
-         color: var(--color-text-dark-secondary, #7a7971);
-      }
-      
-      .worksite-qty {
-         font-weight: 600;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-   }
-   
-   .refresh-info {
-      margin-top: 15px;
-      padding: 8px;
-      background: rgba(0, 100, 200, 0.1);
-      border-radius: 3px;
-      color: var(--color-text-dark-secondary, #7a7971);
-      font-size: 0.9em;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      i {
-         color: #2196F3;
-      }
-   }
-   
-   .settings-divider {
-      border: none;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      margin: 30px 0;
-   }
-   
-   .setting-item {
-      margin-bottom: 20px;
-      
-      label {
-         display: flex;
-         align-items: center;
-         gap: 10px;
-         cursor: pointer;
-         font-weight: 500;
-         color: var(--color-text-dark-primary, #b5b3a4);
-         
-         input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-         }
-         
-         span {
-            user-select: none;
-         }
-      }
-      
-      .setting-description {
-         margin: 5px 0 0 28px;
-         color: var(--color-text-dark-secondary, #7a7971);
-         font-size: 0.9em;
-         line-height: 1.4;
-      }
-   }
-   
-   .info-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-   }
-   
-   .info-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
-      
-      .info-label {
-         color: var(--color-text-dark-secondary, #7a7971);
-         font-weight: 500;
-      }
-      
-      .info-value {
-         color: var(--color-text-dark-primary, #b5b3a4);
-         font-weight: 600;
-      }
-   }
-   
-   .danger-button {
-      padding: 10px 20px;
-      background: rgba(200, 50, 50, 0.8);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-         background: rgba(200, 50, 50, 1);
-         transform: translateY(-1px);
-         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      }
-      
-      i {
-         font-size: 1.1em;
-      }
-   }
-   
-   .danger-warning {
-      margin: 10px 0 0 0;
-      color: rgba(200, 50, 50, 0.9);
-      font-size: 0.9em;
-      font-style: italic;
-   }
-</style>

@@ -20,7 +20,7 @@ const s_PACKAGE_ID = `modules/${moduleJSON.id}`;
 // 'pkl' is chosen by shortening 'pf2e-kingdom-lite'.
 const s_SVELTE_HASH_ID = 'pkl';
 
-const s_COMPRESS = false;  // Set to true to compress the module bundle.
+const s_COMPRESS = true;   // Set to true to compress the module bundle.
 const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
 
 export default defineConfig(({ mode }) =>
@@ -59,8 +59,8 @@ export default defineConfig(({ mode }) =>
       },
 
       css: {
-         // Creates a standard configuration for PostCSS with autoprefixer & postcss-preset-env.
-         postcss: postcssConfig({ compress: s_COMPRESS, sourceMap: s_SOURCEMAPS })
+         // Use our PostCSS configuration that includes Tailwind
+         postcss: './postcss.config.js'
       },
 
       // About server options:

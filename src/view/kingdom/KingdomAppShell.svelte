@@ -30,10 +30,7 @@
     */
    export let refreshTrigger: number = 0;
 
-   /**
-    * Show settings panel
-    */
-   export let showSettings: boolean = false;
+// Settings view state is managed internally, removed unused export
 
    // Get external context
    const { actorId, application } = getContext<KingdomApp.External>('#external');
@@ -64,9 +61,9 @@
 
 <!-- ApplicationShell provides the popOut / application shell frame, header bar, content areas -->
 <ApplicationShell bind:elementRoot>
-   <main class="kingdom-container">
+   <main class="kingdom-container" style="display: flex; flex-direction: column; height: 100%;">
       <!-- Kingdom Header with Tab Selection -->
-      <div class="kingdom-header">
+      <div class="kingdom-header" style="background: rgba(35, 34, 30, 0.5); padding: 8px;">
          <ContentSelector 
             selectedTab={showSettingsView ? 'settings' : $uiState.selectedTab} 
             on:tabChange={(e) => handleTabChange(e.detail)}
@@ -75,14 +72,14 @@
       </div>
       
       <!-- Main Content Area -->
-      <div class="kingdom-body">
-         <!-- Left Sidebar: Kingdom Stats -->
-         <div class="kingdom-sidebar">
+      <div class="kingdom-body" style="display: flex; flex: 1; min-height: 0;">
+         <!-- Left Sidebar: Kingdom Stats - Fixed 320px width -->
+         <div class="kingdom-sidebar" style="width: 320px; background: rgba(35, 34, 30, 0.5); overflow-y: auto;">
             <KingdomStats />
          </div>
          
          <!-- Main Content Area with Tab Content -->
-         <div class="kingdom-main">
+         <div class="kingdom-main" style="flex: 1; background: rgba(35, 34, 30, 0.5); padding: 12px; overflow-y: auto;">
             {#if showSettingsView}
                <SettingsTab />
             {:else if $uiState.selectedTab === 'turn'}
@@ -99,97 +96,19 @@
          </div>
       </div>
 
-      <!-- Error/Success Messages -->
+      <!-- Error/Success Messages using DaisyUI alerts -->
       {#if $uiState.errorMessage}
-         <div class="message error">
+         <div class="tw-alert tw-alert-error tw-fixed tw-bottom-5 tw-right-5 tw-w-auto tw-max-w-md tw-shadow-lg">
             <i class="fas fa-exclamation-triangle"></i>
-            {$uiState.errorMessage}
+            <span>{$uiState.errorMessage}</span>
          </div>
       {/if}
       
       {#if $uiState.successMessage}
-         <div class="message success">
+         <div class="tw-alert tw-alert-success tw-fixed tw-bottom-5 tw-right-5 tw-w-auto tw-max-w-md tw-shadow-lg">
             <i class="fas fa-check-circle"></i>
-            {$uiState.successMessage}
+            <span>{$uiState.successMessage}</span>
          </div>
       {/if}
    </main>
 </ApplicationShell>
-
-<style lang="scss">
-   .kingdom-container {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      gap: 2px;
-      padding: 2px;
-   }
-
-   .kingdom-header {
-      flex: 0 0 auto;
-      padding: 8px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
-   }
-
-   .kingdom-body {
-      flex: 1;
-      display: flex;
-      gap: 2px;
-      min-height: 0; // Important for scrolling
-   }
-
-   .kingdom-sidebar {
-      flex: 0 0 250px;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 5px;
-      padding: 8px;
-      overflow-y: auto;
-   }
-
-   .kingdom-main {
-      flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 5px;
-      padding: 10px;
-      overflow-y: auto;
-   }
-
-   .message {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 15px;
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: slideIn 0.3s ease-out;
-      z-index: 1000;
-
-      &.error {
-         background: rgba(200, 50, 50, 0.9);
-         color: white;
-      }
-
-      &.success {
-         background: rgba(50, 200, 50, 0.9);
-         color: white;
-      }
-
-      i {
-         font-size: 1.2em;
-      }
-   }
-
-   @keyframes slideIn {
-      from {
-         transform: translateX(100%);
-         opacity: 0;
-      }
-      to {
-         transform: translateX(0);
-         opacity: 1;
-      }
-   }
-</style>
