@@ -121,13 +121,13 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 2px;
-      padding: 2px;
+      gap: 10px;
+      padding: 10px;
    }
 
    .kingdom-header {
       flex: 0 0 auto;
-      padding: 8px;
+      padding: 10px;
       background: rgba(0, 0, 0, 0.1);
       border-radius: 5px;
    }
@@ -135,7 +135,7 @@
    .kingdom-body {
       flex: 1;
       display: flex;
-      gap: 2px;
+      gap: 10px;
       min-height: 0; // Important for scrolling
    }
 
@@ -143,7 +143,7 @@
       flex: 0 0 250px;
       background: rgba(0, 0, 0, 0.05);
       border-radius: 5px;
-      padding: 8px;
+      padding: 10px;
       overflow-y: auto;
    }
 
@@ -151,7 +151,7 @@
       flex: 1;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 5px;
-      padding: 10px;
+      padding: 15px;
       overflow-y: auto;
    }
 

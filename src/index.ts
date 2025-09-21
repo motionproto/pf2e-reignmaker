@@ -1,9 +1,6 @@
 // Main entry point for PF2e Kingdom Lite module
 // Using Svelte + TyphonJS Runtime Library
 
-// Import global CSS with Tailwind
-import './styles/global.css';
-
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 

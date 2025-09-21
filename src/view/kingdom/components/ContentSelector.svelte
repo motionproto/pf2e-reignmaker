@@ -22,53 +22,100 @@
    }
 </script>
 
-<div class="tw-flex tw-justify-between tw-items-center tw-gap-5">
-   <div class="tw-flex tw-gap-1 tw-flex-wrap tw-flex-1">
+<div class="content-selector-wrapper">
+   <div class="content-selector">
       {#each tabs as tab}
          <button 
-            class="
-               tw-px-4 tw-py-2 
-               tw-bg-black/20 
-               tw-border tw-border-white/10 
-               tw-rounded-foundry 
-               tw-text-white/80 
-               tw-cursor-pointer 
-               tw-transition-all tw-duration-200
-               tw-flex tw-items-center tw-gap-2
-               hover:tw-bg-black/30 
-               hover:tw-text-white 
-               hover:-tw-translate-y-px
-               {selectedTab === tab.id ? 
-                  'tw-bg-foundry-primary tw-text-white tw-border-white/30 tw-shadow-foundry' : 
-                  ''
-               }
-            "
+            class="tab-button" 
+            class:active={selectedTab === tab.id}
             on:click={() => selectTab(tab.id)}
             title={tab.label}
          >
-            <i class="fas {tab.icon} tw-text-base"></i>
-            <span class="tw-font-medium">{tab.label}</span>
+            <i class="fas {tab.icon}"></i>
+            <span>{tab.label}</span>
          </button>
       {/each}
    </div>
    
    <button 
-      class="
-         tw-px-3 tw-py-2 
-         tw-bg-black/20 
-         tw-border tw-border-white/10 
-         tw-rounded-foundry 
-         tw-text-white/80 
-         tw-cursor-pointer 
-         tw-transition-all tw-duration-200
-         tw-flex tw-items-center tw-justify-center
-         hover:tw-bg-black/30 
-         hover:tw-text-white 
-         hover:tw-rotate-90
-      "
+      class="settings-button" 
       on:click={openSettings}
       title="Kingdom Settings"
    >
-      <i class="fas fa-cog tw-text-xl"></i>
+      <i class="fas fa-cog"></i>
    </button>
 </div>
+
+<style lang="scss">
+   .content-selector-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+   }
+   
+   .content-selector {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      flex: 1;
+   }
+   
+   .tab-button {
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         color: rgba(255, 255, 255, 1);
+         transform: translateY(-1px);
+      }
+      
+      &.active {
+         background: var(--color-primary, #5e0000);
+         color: white;
+         border-color: rgba(255, 255, 255, 0.3);
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      i {
+         font-size: 1.1em;
+      }
+      
+      span {
+         font-weight: 500;
+      }
+   }
+   
+   .settings-button {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         color: rgba(255, 255, 255, 1);
+         transform: rotate(90deg);
+      }
+      
+      i {
+         font-size: 1.2em;
+      }
+   }
+</style>

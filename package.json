@@ -20,12 +20,9 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
-    "autoprefixer": "^10.4.21",
     "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
-    "postcss": "^8.5.6",
     "svelte-check": "^4.0.9",
     "svelte-preprocess": "^6.0.3",
-    "tailwindcss": "^4.1.13",
     "tslib": "^2.8.1",
     "typescript": "^5.9.2",
     "vite": "^5.4.11"
