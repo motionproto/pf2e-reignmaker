@@ -13,6 +13,7 @@
     "dev": "webpack --watch --mode development",
     "clean": "rm -rf dist",
     "migrate": "node scripts/migrate.js",
+    "deploy": "node scripts/deploy.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
