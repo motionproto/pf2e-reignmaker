@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./src-ts",
+    "baseUrl": "./src-ts",
+    "paths": {
+      "@/*": ["*"],
+      "@models/*": ["models/*"],
+      "@ui/*": ["ui/*"],
+      "@api/*": ["api/*"],
+      "@core/*": ["core/*"],
+      "@styles/*": ["styles/*"],
+      "@types/*": ["types/*"]
+    },
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["@league-of-foundry-developers/foundry-vtt-types"]
+  },
+  "include": ["src-ts/**/*"],
+  "exclude": ["node_modules", "dist", "build"]
+}
