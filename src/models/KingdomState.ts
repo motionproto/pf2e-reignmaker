@@ -2,7 +2,8 @@
 // Auto-converted and fixed from KingdomState.kt
 
 import { Hex } from './Hex';
-import { KingdomEvent, EventManager } from './Events';
+import type { KingdomEvent } from './Events';
+import { EventManager } from './Events';
 
 /**
  * Settlement tiers based on Reignmaker Lite rules
@@ -97,11 +98,7 @@ export interface Modifier {
  * Represents the current state of a kingdom
  */
 export class KingdomState {
-  // Core stats
-  economy: number = 0;
-  stability: number = 0;
-  culture: number = 0;
-  loyalty: number = 0;
+  // Core Kingdom stats (Reignmaker Lite)
   unrest: number = 0;
   imprisonedUnrest: number = 0;
   fame: number = 0;
@@ -118,8 +115,6 @@ export class KingdomState {
   // Territory and production
   hexes: Hex[] = [];
   size: number = 0; // Total number of claimed hexes
-  controlDC: number = 15;
-  consumption: number = 0;
   settlements: Settlement[] = [];
   
   // Worksite counts - always kept in sync with hexes

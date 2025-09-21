@@ -3,12 +3,12 @@
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
    
    // Phase components  
-   import StatusPhase from '../phases/StatusPhase.svelte';
-   import ResourcesPhase from '../phases/ResourcesPhase.svelte';
-   import UnrestPhase from '../phases/UnrestPhase.svelte';
-   import EventsPhase from '../phases/EventsPhase.svelte';
-   import ActionsPhase from '../phases/ActionsPhase.svelte';
-   import ResolutionPhase from '../phases/ResolutionPhase.svelte';
+   import StatusPhase from '../turnPhases/StatusPhase.svelte';
+   import ResourcesPhase from '../turnPhases/ResourcesPhase.svelte';
+   import UnrestPhase from '../turnPhases/UnrestPhase.svelte';
+   import EventsPhase from '../turnPhases/EventsPhase.svelte';
+   import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
+   import ResolutionPhase from '../turnPhases/ResolutionPhase.svelte';
    
    // Get phase info
    $: phaseInfo = TurnPhaseConfig[$kingdomState.currentPhase];

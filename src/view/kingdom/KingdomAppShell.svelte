@@ -16,6 +16,7 @@
    import FactionsTab     from './tabs/FactionsTab.svelte';
    import ModifiersTab    from './tabs/ModifiersTab.svelte';
    import NotesTab        from './tabs/NotesTab.svelte';
+   import SettingsTab     from './tabs/SettingsTab.svelte';
    
    import type { KingdomApp } from './KingdomApp';
 
@@ -43,9 +44,18 @@
       // Trigger data refresh logic here
    }
 
+   // Settings view state
+   let showSettingsView = false;
+   
    // Handle tab selection
    function handleTabChange(tab: string) {
+      showSettingsView = false;
       setSelectedTab(tab as any);
+   }
+   
+   // Handle settings button click
+   function handleOpenSettings() {
+      showSettingsView = true;
    }
 </script>
 
@@ -58,8 +68,9 @@
       <!-- Kingdom Header with Tab Selection -->
       <div class="kingdom-header">
          <ContentSelector 
-            selectedTab={$uiState.selectedTab} 
+            selectedTab={showSettingsView ? 'settings' : $uiState.selectedTab} 
             on:tabChange={(e) => handleTabChange(e.detail)}
+            on:openSettings={handleOpenSettings}
          />
       </div>
       
@@ -67,12 +78,14 @@
       <div class="kingdom-body">
          <!-- Left Sidebar: Kingdom Stats -->
          <div class="kingdom-sidebar">
-            <KingdomStats state={$kingdomState} />
+            <KingdomStats />
          </div>
          
          <!-- Main Content Area with Tab Content -->
          <div class="kingdom-main">
-            {#if $uiState.selectedTab === 'turn'}
+            {#if showSettingsView}
+               <SettingsTab />
+            {:else if $uiState.selectedTab === 'turn'}
                <TurnTab />
             {:else if $uiState.selectedTab === 'settlements'}
                <SettlementsTab />
@@ -108,13 +121,13 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 10px;
-      padding: 10px;
+      gap: 2px;
+      padding: 2px;
    }
 
    .kingdom-header {
       flex: 0 0 auto;
-      padding: 10px;
+      padding: 8px;
       background: rgba(0, 0, 0, 0.1);
       border-radius: 5px;
    }
@@ -122,7 +135,7 @@
    .kingdom-body {
       flex: 1;
       display: flex;
-      gap: 10px;
+      gap: 2px;
       min-height: 0; // Important for scrolling
    }
 
@@ -130,7 +143,7 @@
       flex: 0 0 250px;
       background: rgba(0, 0, 0, 0.05);
       border-radius: 5px;
-      padding: 10px;
+      padding: 8px;
       overflow-y: auto;
    }
 
@@ -138,7 +151,7 @@
       flex: 1;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 5px;
-      padding: 15px;
+      padding: 10px;
       overflow-y: auto;
    }
 

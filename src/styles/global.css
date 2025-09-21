@@ -1,0 +1,124 @@
+/* Tailwind CSS Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component classes using Tailwind's @apply directive */
+@layer components {
+  /* Button styles that respect Foundry's theme */
+  .tw-btn {
+    @apply tw-px-4 tw-py-2 tw-rounded-foundry tw-transition-all tw-duration-200;
+    @apply tw-bg-foundry-primary tw-text-white;
+    @apply hover:tw-bg-foundry-error hover:tw-shadow-foundry;
+  }
+  
+  .tw-btn-secondary {
+    @apply tw-px-4 tw-py-2 tw-rounded-foundry tw-transition-all tw-duration-200;
+    @apply tw-bg-foundry-secondary tw-text-white;
+    @apply hover:tw-opacity-90 hover:tw-shadow-foundry;
+  }
+  
+  .tw-btn-success {
+    @apply tw-px-4 tw-py-2 tw-rounded-foundry tw-transition-all tw-duration-200;
+    @apply tw-bg-foundry-success tw-text-white;
+    @apply hover:tw-opacity-90 hover:tw-shadow-foundry;
+  }
+  
+  /* Card/Panel styles */
+  .tw-card {
+    @apply tw-bg-black/20 tw-rounded-foundry tw-p-4;
+    @apply tw-border tw-border-foundry-border-light/20;
+  }
+  
+  .tw-card-header {
+    @apply tw-text-foundry-text-primary tw-font-semibold tw-text-lg tw-mb-3;
+    @apply tw-border-b tw-border-foundry-border-light/20 tw-pb-2;
+  }
+  
+  /* Input styles */
+  .tw-input {
+    @apply tw-px-3 tw-py-2 tw-rounded tw-bg-black/30;
+    @apply tw-border tw-border-foundry-border-light/30;
+    @apply tw-text-foundry-text-primary;
+    @apply focus:tw-outline-none focus:tw-border-foundry-primary;
+  }
+  
+  .tw-select {
+    @apply tw-px-3 tw-py-2 tw-rounded tw-bg-black/30;
+    @apply tw-border tw-border-foundry-border-light/30;
+    @apply tw-text-foundry-text-primary tw-cursor-pointer;
+    @apply focus:tw-outline-none focus:tw-border-foundry-primary;
+  }
+  
+  /* Label styles */
+  .tw-label {
+    @apply tw-text-foundry-text-secondary tw-font-medium;
+  }
+  
+  /* Stat display */
+  .tw-stat-group {
+    @apply tw-space-y-2;
+  }
+  
+  .tw-stat-item {
+    @apply tw-flex tw-justify-between tw-items-center;
+    @apply tw-py-1 tw-px-2 tw-rounded tw-bg-black/10;
+  }
+  
+  .tw-stat-label {
+    @apply tw-text-foundry-text-secondary tw-text-sm;
+  }
+  
+  .tw-stat-value {
+    @apply tw-text-foundry-text-primary tw-font-semibold;
+  }
+  
+  /* Tab styles */
+  .tw-tab {
+    @apply tw-px-4 tw-py-2 tw-rounded-t tw-transition-all tw-duration-200;
+    @apply tw-bg-black/20 tw-text-foundry-text-secondary;
+    @apply hover:tw-bg-black/30 hover:tw-text-foundry-text-primary;
+  }
+  
+  .tw-tab-active {
+    @apply tw-bg-foundry-primary tw-text-white;
+    @apply hover:tw-bg-foundry-primary;
+  }
+}
+
+/* Utility extensions */
+@layer utilities {
+  /* Text color utilities for Foundry states */
+  .tw-text-danger {
+    @apply tw-text-foundry-error;
+  }
+  
+  .tw-text-success {
+    @apply tw-text-foundry-success;
+  }
+  
+  .tw-text-warning {
+    @apply tw-text-foundry-warning;
+  }
+  
+  .tw-text-info {
+    @apply tw-text-foundry-info;
+  }
+  
+  /* Background utilities with proper opacity */
+  .tw-bg-danger-soft {
+    background-color: rgba(110, 0, 0, 0.1);
+  }
+  
+  .tw-bg-success-soft {
+    background-color: rgba(24, 82, 11, 0.1);
+  }
+  
+  .tw-bg-warning-soft {
+    background-color: rgba(153, 51, 0, 0.1);
+  }
+  
+  .tw-bg-info-soft {
+    background-color: rgba(0, 65, 70, 0.1);
+  }
+}
