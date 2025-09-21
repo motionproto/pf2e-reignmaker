@@ -3,11 +3,12 @@
 
 declare const Hooks: any;
 declare const foundry: any;
+declare const game: any;
 
 /**
  * Creates the Kingdom icon button for the party sheet
  */
-function createKingdomIcon(actorId: string): HTMLElement {
+export function createKingdomIcon(actorId: string): HTMLElement {
     const link = document.createElement('a');
     link.classList.add('create-button');
     link.setAttribute('data-tooltip', 'Open Kingdom Sheet');
@@ -62,14 +63,20 @@ export function registerKingdomIconHook(): void {
     console.log("Registering Kingdom icon hook");
     
     // Hook into the actor directory render to add our icons
-    Hooks.on("renderActorDirectory", (app: any, html: JQuery, data: any) => {
-        console.log("renderActorDirectory hook triggered");
+    Hooks.on("renderActorDirectory", (app: any, html: JQuery | HTMLElement, data: any) => {
+        console.log("renderActorDirectory hook triggered", html);
         
-        // Convert jQuery to HTMLElement
-        const htmlElement = html[0] as HTMLElement;
+        // Convert jQuery to HTMLElement if needed
+        const htmlElement = html instanceof HTMLElement ? html : html.get(0);
         
-        // Find all party actor folders in the sidebar
+        if (!htmlElement) {
+            console.log("No HTML element found in renderActorDirectory");
+            return;
+        }
+        
+        // Find party folders - exactly as the legacy code does it
         const partyFolders = htmlElement.querySelectorAll(".folder[data-party]");
+        console.log("Found party folders:", partyFolders);
         
         partyFolders.forEach((folderElement: Element) => {
             const folder = folderElement as HTMLElement;
@@ -80,7 +87,7 @@ export function registerKingdomIconHook(): void {
                 
                 // Find where to insert our icon (after the folder name)
                 const folderName = folder.querySelector(".folder-name");
-                if (folderName) {
+                if (folderName && !folder.querySelector('.fa-chess-rook')) {
                     // Insert the Kingdom icon
                     const kingdomIcon = createKingdomIcon(actorId);
                     folderName.insertAdjacentElement("afterend", kingdomIcon);
@@ -95,10 +102,11 @@ export function registerKingdomIconHook(): void {
  * Initialize the Kingdom Icon module
  */
 export function initKingdomIcon(): void {
-    // Register the hook when Foundry is ready
+    // Register hooks immediately - this is called from index.ts before the ready hook
+    console.log("Initializing Kingdom Icon module");
+    
     if (typeof Hooks !== 'undefined') {
-        Hooks.once('ready', () => {
-            registerKingdomIconHook();
-        });
+        // Register the hook to add icons when the actor directory is rendered
+        registerKingdomIconHook();
     }
 }

@@ -31,7 +31,7 @@ function init(): void {
         console.log("PF2e Kingdom Lite: Ready hook - Module fully loaded");
         
         // Register the Kingdom icon hook to add icons to party actors
-        registerKingdomIconHook();
+        // Note: initKingdomIcon() will handle this registration
         
         // Register hooks for Kingmaker updates
         registerKingmakerHooks();

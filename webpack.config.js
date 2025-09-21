@@ -10,11 +10,9 @@ module.exports = {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
     library: {
-      type: 'module'
+      name: 'pf2eKingdomLite',
+      type: 'umd'
     }
-  },
-  experiments: {
-    outputModule: true
   },
   module: {
     rules: [
