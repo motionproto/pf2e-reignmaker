@@ -1,6 +1,6 @@
 package kingdom.lite.ui.turn
 
-import kingdom.lite.ui.components.ActionCard
+import kingdom.lite.ui.components.ActionListItem
 import kingdom.lite.model.PlayerActionsData
 import kingdom.lite.model.PlayerAction
 
@@ -9,13 +9,75 @@ import kingdom.lite.model.PlayerAction
  * Handles all kingdom actions that players can perform during their turn
  */
 object ActionsPhase {
+    init {
+        // Initialize event handlers when module loads
+        js("""
+            if (typeof window !== 'undefined') {
+                window.initActionHandlers = function() {
+                    if (window.actionsPhaseListenersAttached) return;
+                    window.actionsPhaseListenersAttached = true;
+                    
+                    console.log('Initializing action handlers from Kotlin');
+                    
+                    document.addEventListener('click', function(e) {
+                        var toggleable = e.target.closest('.action-toggleable');
+                        if (toggleable) {
+                            console.log('Toggle clicked');
+                            e.preventDefault();
+                            
+                            var itemId = toggleable.getAttribute('data-item-id');
+                            if (itemId) {
+                                var item = document.getElementById(itemId);
+                                if (item) {
+                                    var expandedContent = item.querySelector('.action-expanded-content');
+                                    var chevron = item.querySelector('.fa-chevron-right, .fa-chevron-down');
+                                    
+                                    if (expandedContent) {
+                                        if (expandedContent.style.display === 'none' || expandedContent.style.display === '') {
+                                            expandedContent.style.display = 'block';
+                                            if (chevron) chevron.className = 'fas fa-chevron-down';
+                                        } else {
+                                            expandedContent.style.display = 'none';
+                                            if (chevron) chevron.className = 'fas fa-chevron-right';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        var skillBtn = e.target.closest('.skill-perform-btn');
+                        if (skillBtn) {
+                            e.preventDefault();
+                            var actionId = skillBtn.getAttribute('data-action-id');
+                            var skillName = skillBtn.getAttribute('data-skill-name');
+                            console.log('Skill button clicked:', actionId, skillName);
+                            
+                            var selector = '[data-action-id="' + actionId + '"] .action-title-line strong';
+                            var actionElement = document.querySelector(selector);
+                            if (actionElement) {
+                                alert('Performing: ' + actionElement.textContent + '\nUsing skill: ' + skillName);
+                            }
+                        }
+                    });
+                };
+                
+                // Try to init immediately and after DOM ready
+                if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                    window.initActionHandlers();
+                } else {
+                    document.addEventListener('DOMContentLoaded', window.initActionHandlers);
+                }
+            }
+        """)
+    }
+    
     fun render(): String = buildString {
         append("""
             <div class="phase-step-container">
                 <strong>Perform Kingdom Actions (4 PC actions total)</strong>
             </div>
             
-            <div class="actions-phase-content">
+            <div class="actions-phase-content" id="kingdom-actions-content">
         """)
         
         // Render categories in order with their actions
@@ -37,11 +99,10 @@ object ActionsPhase {
         
         append("""
             </div>
-            
             <script>
-                // Setup action card handlers when the phase loads
-                if (typeof toggleActionCard === 'undefined') {
-                    ${getActionHandlerScript()}
+                // Call init function if it exists
+                if (typeof window.initActionHandlers === 'function') {
+                    setTimeout(function() { window.initActionHandlers(); }, 0);
                 }
             </script>
         """)
@@ -52,96 +113,22 @@ object ActionsPhase {
         val categoryDesc = PlayerActionsData.categoryDescriptions[categoryId] ?: ""
         
         append("""
-            <div class="action-category">
-                <div class="action-category-header">
-                    <div class="action-category-title">$categoryName</div>
-                    <div class="action-category-desc">$categoryDesc</div>
-                </div>
-                <div class="action-category-list">
+            <div class="phase-step-container">
+                <h4>$categoryName</h4>
+                <p class="category-desc">$categoryDesc</p>
+                <ul>
         """)
         
-        // Render each action as an ActionCard
+        // Render each action as a list item
         actions.forEach { action ->
-            val card = ActionCard(action)
-            append(card.render(false))
+            val item = ActionListItem(action)
+            append(item.render(false))
         }
         
         append("""
-                </div>
+                </ul>
             </div>
         """)
     }
     
-    private fun getActionHandlerScript(): String = """
-        // Toggle action card expand/collapse
-        window.toggleActionCard = function(cardId) {
-            const card = document.getElementById(cardId);
-            if (card) {
-                const isExpanded = card.classList.contains('expanded');
-                
-                if (isExpanded) {
-                    card.classList.remove('expanded');
-                    // Update chevron
-                    const chevron = card.querySelector('.action-chevron i');
-                    if (chevron) chevron.className = 'fas fa-chevron-right';
-                    // Hide details
-                    const details = card.querySelector('.action-details');
-                    if (details) details.style.display = 'none';
-                } else {
-                    card.classList.add('expanded');
-                    // Update chevron
-                    const chevron = card.querySelector('.action-chevron i');
-                    if (chevron) chevron.className = 'fas fa-chevron-down';
-                    // Show details
-                    const details = card.querySelector('.action-details');
-                    if (details) details.style.display = 'block';
-                }
-            }
-        };
-        
-        // Perform action handler
-        window.performAction = function(actionId) {
-            console.log('Performing action:', actionId);
-            
-            if (actionId === 'build-structure') {
-                // Special handling for Build Structure action
-                showBuildStructureDialog();
-            } else {
-                // TODO: Connect to actual game logic for other actions
-                const actionName = document.querySelector(`[data-action-id="${'$'}{actionId}"] .action-title`).textContent;
-                alert(`Performing: ${'$'}{actionName}\\n\\nThis will be connected to the game logic.`);
-            }
-        };
-        
-        // Show build structure dialog
-        window.showBuildStructureDialog = function() {
-            // Check if we have settlements
-            const settlementCount = window.kingdomState?.settlements?.length || 0;
-            
-            if (settlementCount === 0) {
-                alert('You need at least one settlement to build structures.');
-                return;
-            }
-            
-            if (settlementCount === 1) {
-                // Only one settlement, open picker directly
-                const settlementName = window.kingdomState.settlements[0].name;
-                const picker = document.getElementById('structure-picker-' + settlementName);
-                if (picker) {
-                    picker.style.display = 'flex';
-                } else {
-                    alert('Structure picker not available. Please ensure you are in the correct phase.');
-                }
-            } else {
-                // Multiple settlements, show selection dialog
-                showSettlementSelector();
-            }
-        };
-        
-        // Show settlement selector for multiple settlements
-        window.showSettlementSelector = function() {
-            // TODO: Implement settlement selector dialog
-            alert('Please select a settlement (UI for multiple settlements coming soon)');
-        };
-    """
 }
