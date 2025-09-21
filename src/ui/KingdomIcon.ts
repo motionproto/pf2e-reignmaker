@@ -1,9 +1,11 @@
 // Kingdom Icon module for PF2e Kingdom Lite
 // Adds Kingdom buttons to party actors in the sidebar
 
-declare const Hooks: any;
-declare const foundry: any;
-declare const game: any;
+// Import PF2e types
+/// <reference path="../types/pf2e-types.d.ts" />
+
+// Import KingdomApp directly instead of dynamic import
+import { KingdomApp } from '../view/kingdom/KingdomApp';
 
 /**
  * Creates the Kingdom icon button for the party sheet
@@ -29,30 +31,21 @@ export function createKingdomIcon(actorId: string): HTMLElement {
 }
 
 /**
- * Opens the Kingdom UI using the new KingdomSheet
+ * Opens the Kingdom UI using the new Svelte KingdomApp
  */
 export function openKingdomUI(actorId: string): void {
-    console.log(`Opening Kingdom UI for actor: ${actorId}`);
+    console.log(`PF2e Kingdom Lite | Opening Kingdom UI for actor: ${actorId}`);
+    console.log('PF2e Kingdom Lite | Using TyphonJS SvelteApp');
     
-    // Check if we should use ApplicationV2 (Foundry v10+)
-    const hasApplicationV2 = typeof foundry !== 'undefined' && 
-                            foundry.applications && 
-                            foundry.applications.api && 
-                            foundry.applications.api.ApplicationV2;
-    
-    if (hasApplicationV2) {
-        console.log("Using Foundry ApplicationV2");
-        // Import and use ApplicationV2 version
-        import('./KingdomApplicationV2').then(module => {
-            module.openKingdomSheetV2();
-        });
-    } else {
-        console.log("Using custom Application implementation");
-        // Fallback to our custom implementation
-        import('./KingdomSheet').then(module => {
-            const sheet = new module.KingdomSheet();
-            sheet.render();
-        });
+    try {
+        const app = new KingdomApp({ actorId });
+        console.log('PF2e Kingdom Lite | Created KingdomApp instance:', app);
+        app.render(true, { focus: true });
+        console.log('PF2e Kingdom Lite | KingdomApp rendered');
+    } catch (error) {
+        console.error("PF2e Kingdom Lite | Failed to create KingdomApp:", error);
+        // @ts-ignore
+        ui.notifications?.error("Failed to open Kingdom management UI");
     }
 }
 
@@ -63,7 +56,7 @@ export function registerKingdomIconHook(): void {
     console.log("Registering Kingdom icon hook");
     
     // Hook into the actor directory render to add our icons
-    Hooks.on("renderActorDirectory", (app: any, html: JQuery | HTMLElement, data: any) => {
+    Hooks.on("renderActorDirectory", (app: ActorDirectory, html: JQuery | HTMLElement, data: any) => {
         console.log("renderActorDirectory hook triggered", html);
         
         // Convert jQuery to HTMLElement if needed

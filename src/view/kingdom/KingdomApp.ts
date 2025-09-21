@@ -1,0 +1,115 @@
+import { SvelteApp } from '#runtime/svelte/application';
+import { deepMerge } from '#runtime/util/object';
+
+import KingdomAppShell from './KingdomAppShell.svelte';
+
+/**
+ * Kingdom management application using TyphonJS Runtime Library
+ */
+class KingdomApp extends SvelteApp<KingdomApp.Options>
+{
+   /**
+    * @param [options] - KingdomApp options to handle.
+    */
+   constructor(options?: KingdomApp.Options)
+   {
+      super(options);
+   }
+
+   static get defaultOptions(): KingdomApp.Options
+   {
+      return deepMerge<SvelteApp.Options, KingdomApp.Options>(super.defaultOptions, {
+         id: 'pf2e-kingdom-lite',
+         resizable: true,
+         minimizable: true,
+         width: 850,
+         height: 600,
+         minWidth: 700,
+         minHeight: 500,
+         
+         title: 'Kingdom Management',
+
+         svelte: {
+            class: KingdomAppShell,
+            target: document.body,
+            context: {
+               // External context data
+               actorId: null,
+            },
+            props: {
+               // Props passed to app shell
+            }
+         }
+      });
+   }
+
+   /**
+    * Override header buttons to add custom kingdom actions
+    */
+   _getHeaderButtons(): SvelteApp.HeaderButton[]
+   {
+      const buttons: SvelteApp.HeaderButton[] = super._getHeaderButtons();
+
+      // Add refresh button
+      buttons.unshift({
+         class: 'refresh',
+         icon: 'fas fa-sync',
+         title: 'Refresh Kingdom Data',
+         onPress: (): void => {
+            // Trigger refresh in the app shell
+            this.svelte.appShell?.$set({ refreshTrigger: Date.now() });
+         }
+      });
+
+      // Add settings button
+      buttons.unshift({
+         class: 'settings',
+         icon: 'fas fa-cog',
+         title: 'Kingdom Settings',
+         onPress: (): void => {
+            // Trigger settings panel in the app shell
+            this.svelte.appShell?.$set({ showSettings: true });
+         }
+      });
+
+      return buttons;
+   }
+
+   /**
+    * Override to handle data initialization
+    */
+   async _render(force?: boolean, options?: any): Promise<void>
+   {
+      // Load kingdom data before rendering
+      const actorId = this.options.actorId || 'xxxPF2ExPARTYxxx';
+      
+      // Update context with actor ID
+      if (this.svelte.context)
+      {
+         this.svelte.context.actorId = actorId;
+      }
+
+      return super._render(force, options);
+   }
+}
+
+/**
+ * Type definitions for KingdomApp
+ */
+declare namespace KingdomApp {
+   /**
+    * Extended context for the Kingdom application
+    */
+   interface External extends SvelteApp.Context.External<KingdomApp> {
+      /** The actor ID for the party/kingdom */
+      actorId: string | null;
+   }
+
+   /** Extended options */
+   interface Options extends SvelteApp.Options<KingdomAppShell, External> {
+      /** Actor ID for the kingdom */
+      actorId?: string;
+   }
+}
+
+export { KingdomApp }

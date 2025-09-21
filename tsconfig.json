@@ -3,13 +3,13 @@
     "target": "ES2022",
     "module": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
@@ -21,12 +21,17 @@
       "@api/*": ["api/*"],
       "@core/*": ["core/*"],
       "@styles/*": ["styles/*"],
-      "@types/*": ["types/*"]
+      "@types/*": ["types/*"],
+      "#runtime/*": ["../node_modules/@typhonjs-fvtt/runtime/*"],
+      "#standard/*": ["../node_modules/@typhonjs-fvtt/standard/*"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["@league-of-foundry-developers/foundry-vtt-types"]
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "types": ["foundry-pf2e", "svelte"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "vite.config.ts"],
   "exclude": ["node_modules", "dist", "build"]
 }

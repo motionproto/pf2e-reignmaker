@@ -1,41 +1,48 @@
 {
   "name": "pf2e-kingdom-lite",
   "version": "1.0.0",
-  "description": "This module ships all OGL licensed rules to run the Kingdom Building rule system for the most popular adventure for PFRPG 2e.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
+  "description": "Kingdom Building management system for Pathfinder 2e",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "author": "Mark Pearce & Anthropic Claude",
+  "contributors": [
+    "Mark Pearce & Anthropic Claude"
+  ],
+  "imports": {
+    "#runtime/*": "@typhonjs-fvtt/runtime/*",
+    "#standard/*": "@typhonjs-fvtt/standard/*"
   },
+  "dependencies": {
+    "@typhonjs-fvtt/runtime": "^0.3.0-next.3",
+    "@typhonjs-fvtt/standard": "^0.3.0-next.3",
+    "svelte": "^4.2.20"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
+    "svelte-check": "^4.0.9",
+    "svelte-preprocess": "^6.0.3",
+    "tslib": "^2.8.1",
+    "typescript": "^5.9.2",
+    "vite": "^5.4.11"
+  },
+  "browserslist": [
+    ">5%",
+    "not IE 11"
+  ],
   "scripts": {
-    "build": "webpack",
-    "build:watch": "webpack --watch",
-    "build:prod": "webpack --mode production",
-    "dev": "webpack --watch --mode development",
+    "build": "vite build",
+    "dev": "vite",
     "clean": "rm -rf dist",
-    "deploy": "node scripts/deploy.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "deploy": "node scripts/deploy.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/motionproto/pf2e-kingdom-lite.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "bugs": {
     "url": "https://github.com/motionproto/pf2e-kingdom-lite/issues"
   },
-  "homepage": "https://github.com/motionproto/pf2e-kingdom-lite#readme",
-  "devDependencies": {
-    "@league-of-foundry-developers/foundry-vtt-types": "^13.346.0-beta.20250812191140",
-    "@types/node": "^24.5.2",
-    "clean-webpack-plugin": "^4.0.0",
-    "copy-webpack-plugin": "^13.0.1",
-    "html-webpack-plugin": "^5.6.4",
-    "ts-loader": "^9.5.4",
-    "typescript": "^5.9.2",
-    "webpack": "^5.101.3",
-    "webpack-cli": "^6.0.1"
-  }
+  "homepage": "https://github.com/motionproto/pf2e-kingdom-lite#readme"
 }

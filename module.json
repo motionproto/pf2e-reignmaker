@@ -4,7 +4,10 @@
     "description": "Kingdom Building management for Pathfinder 2e",
     "version": "0.0.1",
     "scripts": [
-        "dist/main.js"
+        "dist/pf2e-kingdom-lite.js"
+    ],
+    "styles": [
+        "dist/pf2e-kingdom-lite.css"
     ],
     "url": "https://github.com/motionproto/pf2e-kingdom-lite",
     "license": "LICENSE",

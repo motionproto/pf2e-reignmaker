@@ -1,108 +1,131 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+/**
+ * Deploy script for PF2e Kingdom Lite module
+ * Copies built files to Foundry VTT modules directory
+ */
 
-// Configuration
-const FOUNDRY_MODULES_DIR = '/Users/mark/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Colors for console output
-const colors = {
-    reset: '\x1b[0m',
-    bright: '\x1b[1m',
-    green: '\x1b[32m',
-    blue: '\x1b[34m',
-    yellow: '\x1b[33m',
-    red: '\x1b[31m'
-};
+// Get the directory of this script
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-function log(message, color = colors.reset) {
-    console.log(`${color}${message}${colors.reset}`);
+// Foundry VTT modules directory - adjust this path if needed
+const FOUNDRY_MODULES_PATH = path.join(
+    process.env.HOME || process.env.USERPROFILE,
+    'Library/Application Support/FoundryVTT/Data/modules'
+);
+
+const MODULE_NAME = 'pf2e-kingdom-lite';
+const TARGET_DIR = path.join(FOUNDRY_MODULES_PATH, MODULE_NAME);
+
+console.log('🏰 PF2e Kingdom Lite - Deploy Script');
+console.log('=====================================');
+
+// Check if Foundry modules directory exists
+if (!fs.existsSync(FOUNDRY_MODULES_PATH)) {
+    console.error('❌ Foundry modules directory not found at:', FOUNDRY_MODULES_PATH);
+    console.error('   Please update the FOUNDRY_MODULES_PATH in scripts/deploy.js');
+    process.exit(1);
 }
 
-function copyRecursive(src, dest) {
-    const exists = fs.existsSync(src);
-    const stats = exists && fs.statSync(src);
-    const isDirectory = exists && stats.isDirectory();
+// Build the module first
+console.log('📦 Building module...');
+try {
+    execSync('npm run build', { stdio: 'inherit', cwd: PROJECT_ROOT });
+    console.log('✅ Build complete');
+} catch (error) {
+    console.error('❌ Build failed:', error.message);
+    process.exit(1);
+}
+
+// Create target directory if it doesn't exist
+if (!fs.existsSync(TARGET_DIR)) {
+    console.log(`📁 Creating module directory: ${TARGET_DIR}`);
+    fs.mkdirSync(TARGET_DIR, { recursive: true });
+}
+
+// Files and directories to copy
+const filesToCopy = [
+    'module.json',
+    'LICENSE',
+    'README.md',
+    'OpenGameLicense.md'
+];
+
+const directoriesToCopy = [
+    'dist',
+    'lang',
+    'data',
+    'img'
+];
+
+console.log(`\n📋 Deploying to: ${TARGET_DIR}\n`);
+
+// Copy individual files
+filesToCopy.forEach(file => {
+    const sourcePath = path.join(PROJECT_ROOT, file);
+    const targetPath = path.join(TARGET_DIR, file);
     
-    if (isDirectory) {
-        if (!fs.existsSync(dest)) {
-            fs.mkdirSync(dest, { recursive: true });
-        }
-        fs.readdirSync(src).forEach(childItemName => {
-            copyRecursive(
-                path.join(src, childItemName),
-                path.join(dest, childItemName)
-            );
-        });
+    if (fs.existsSync(sourcePath)) {
+        console.log(`   📄 Copying ${file}...`);
+        fs.copyFileSync(sourcePath, targetPath);
     } else {
-        fs.copyFileSync(src, dest);
+        console.log(`   ⚠️  Skipping ${file} (not found)`);
     }
-}
+});
 
-async function deploy() {
-    log('\n🚀 Starting deployment to Foundry VTT...', colors.bright);
+// Copy directories
+directoriesToCopy.forEach(dir => {
+    const sourcePath = path.join(PROJECT_ROOT, dir);
+    const targetPath = path.join(TARGET_DIR, dir);
     
-    try {
-        // Step 1: Build the project
-        log('\n📦 Building project...', colors.blue);
-        execSync('npm run build', { stdio: 'inherit' });
-        
-        // Step 2: Combine data files
-        log('\n🔧 Combining data files...', colors.blue);
-        execSync('python3 data/combine_all_json.py', { 
-            stdio: 'inherit',
-            cwd: process.cwd()
-        });
-        
-        // Step 3: Clean the target directory
-        if (fs.existsSync(FOUNDRY_MODULES_DIR)) {
-            log(`\n🧹 Cleaning existing module directory...`, colors.yellow);
-            fs.rmSync(FOUNDRY_MODULES_DIR, { recursive: true, force: true });
-        }
-        
-        // Step 4: Create the module directory
-        log('\n📁 Creating module directory...', colors.blue);
-        fs.mkdirSync(FOUNDRY_MODULES_DIR, { recursive: true });
-        
-        // Step 5: Copy files to Foundry
-        log('\n📤 Copying files to Foundry...', colors.blue);
-        
-        const filesToCopy = [
-            { src: 'dist', dest: 'dist' },
-            { src: 'img', dest: 'img' },
-            { src: 'lang', dest: 'lang' },
-            { src: 'module.json', dest: 'module.json' },
-            { src: 'LICENSE', dest: 'LICENSE' },
-            { src: 'README.md', dest: 'README.md' }
-        ];
-        
-        for (const file of filesToCopy) {
-            const srcPath = path.join(process.cwd(), file.src);
-            const destPath = path.join(FOUNDRY_MODULES_DIR, file.dest);
-            
-            if (fs.existsSync(srcPath)) {
-                log(`  • Copying ${file.src}...`);
-                if (fs.statSync(srcPath).isDirectory()) {
-                    copyRecursive(srcPath, destPath);
-                } else {
-                    fs.copyFileSync(srcPath, destPath);
-                }
-            } else {
-                log(`  ⚠️  Skipping ${file.src} (not found)`, colors.yellow);
-            }
-        }
-        
-        log('\n✅ Deployment successful!', colors.green);
-        log(`📍 Module deployed to: ${FOUNDRY_MODULES_DIR}`, colors.bright);
-        log('\n💡 Reload your Foundry VTT world to see the changes.', colors.blue);
-        
-    } catch (error) {
-        log(`\n❌ Deployment failed: ${error.message}`, colors.red);
-        process.exit(1);
+    if (fs.existsSync(sourcePath)) {
+        console.log(`   📁 Copying ${dir}/...`);
+        copyDirectoryRecursive(sourcePath, targetPath);
+    } else {
+        console.log(`   ⚠️  Skipping ${dir}/ (not found)`);
     }
+});
+
+/**
+ * Recursively copy a directory
+ */
+function copyDirectoryRecursive(source, target) {
+    // Create target directory if it doesn't exist
+    if (!fs.existsSync(target)) {
+        fs.mkdirSync(target, { recursive: true });
+    }
+    
+    // Read all files/subdirectories
+    const files = fs.readdirSync(source);
+    
+    files.forEach(file => {
+        const sourcePath = path.join(source, file);
+        const targetPath = path.join(target, file);
+        
+        const stat = fs.statSync(sourcePath);
+        
+        if (stat.isDirectory()) {
+            // Recursively copy subdirectory
+            copyDirectoryRecursive(sourcePath, targetPath);
+        } else {
+            // Copy file
+            fs.copyFileSync(sourcePath, targetPath);
+        }
+    });
 }
 
-// Run deployment
-deploy();
+console.log('\n✅ Deployment complete!');
+console.log(`🎮 Module deployed to: ${TARGET_DIR}`);
+console.log('\n📌 Next steps:');
+console.log('   1. Restart Foundry VTT or reload the browser');
+console.log('   2. Enable the module in your world');
+console.log('   3. Look for the castle icon on party actors in the sidebar');
+console.log('\n🚀 For development with hot reload, run: npm run dev');
