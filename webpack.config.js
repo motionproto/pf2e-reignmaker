@@ -5,7 +5,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   mode: 'development',
   devtool: 'source-map',
-  entry: './src-ts/index.ts',
+  entry: './src/index.ts',
   output: {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
@@ -36,13 +36,13 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      '@': path.resolve(__dirname, 'src-ts'),
-      '@models': path.resolve(__dirname, 'src-ts/models'),
-      '@ui': path.resolve(__dirname, 'src-ts/ui'),
-      '@api': path.resolve(__dirname, 'src-ts/api'),
-      '@core': path.resolve(__dirname, 'src-ts/core'),
-      '@styles': path.resolve(__dirname, 'src-ts/styles'),
-      '@types': path.resolve(__dirname, 'src-ts/types'),
+      '@': path.resolve(__dirname, 'src'),
+      '@models': path.resolve(__dirname, 'src/models'),
+      '@ui': path.resolve(__dirname, 'src/ui'),
+      '@api': path.resolve(__dirname, 'src/api'),
+      '@core': path.resolve(__dirname, 'src/core'),
+      '@styles': path.resolve(__dirname, 'src/styles'),
+      '@types': path.resolve(__dirname, 'src/types'),
     },
   },
   plugins: [

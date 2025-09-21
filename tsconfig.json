@@ -12,8 +12,8 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./src-ts",
-    "baseUrl": "./src-ts",
+    "rootDir": "./src",
+    "baseUrl": "./src",
     "paths": {
       "@/*": ["*"],
       "@models/*": ["models/*"],
@@ -27,6 +27,6 @@
     "allowSyntheticDefaultImports": true,
     "types": ["@league-of-foundry-developers/foundry-vtt-types"]
   },
-  "include": ["src-ts/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "build"]
 }
