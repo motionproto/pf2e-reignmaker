@@ -1,5 +1,6 @@
 <script lang="ts">
    import { kingdomState } from '../../../stores/kingdom';
+   import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
    
    // Kingdom name state
@@ -74,6 +75,7 @@
                if (e.key === 'Escape') cancelEditName();
             }}
             on:blur={saveKingdomName}
+            aria-label="Kingdom name"
             autofocus
          />
       {/if}
@@ -84,9 +86,9 @@
          
          <!-- Core Trackers -->
          <div class="stat-group">
-            <h4 class="stat-group-header">Turn {$kingdomState.currentTurn}</h4>
+            <h4 class="stat-group-header">Turn {$gameState.currentTurn}</h4>
             <div class="stat-item">
-               <label>Fame:</label>
+               <span class="stat-label">Fame:</span>
                <div class="fame-controls">
                   <button 
                      class="stat-adjust-button" 
@@ -108,12 +110,12 @@
                </div>
             </div>
             <div class="stat-item">
-               <label>Gold:</label>
+               <span class="stat-label">Gold:</span>
                <span class="stat-value">{$kingdomState.resources.get('gold') || 0}</span>
             </div>
             <div class="stat-item">
-               <label>War Status:</label>
-               <select class="kingdom-select" on:change={toggleWarStatus} value={isAtWar ? 'war' : 'peace'}>
+               <label for="war-status-select" class="stat-label">War Status:</label>
+               <select id="war-status-select" class="kingdom-select" on:change={toggleWarStatus} value={isAtWar ? 'war' : 'peace'}>
                   <option value="peace">Peace</option>
                   <option value="war">War</option>
                </select>
@@ -124,33 +126,33 @@
          <div class="stat-group">
             <h4 class="stat-group-header">Unrest</h4>
             <div class="stat-item">
-               <label>Current Unrest:</label>
+               <span class="stat-label">Current Unrest:</span>
                <span class="stat-value" class:danger={$kingdomState.unrest > 5}>
                   {$kingdomState.unrest}
                </span>
             </div>
             {#if $kingdomState.imprisonedUnrest > 0}
                <div class="stat-item">
-                  <label>Imprisoned:</label>
+                  <span class="stat-label">Imprisoned:</span>
                   <span class="stat-value imprisoned">{$kingdomState.imprisonedUnrest}</span>
                </div>
             {/if}
             <div class="stat-item">
-               <label>From Size:</label>
+               <span class="stat-label">From Size:</span>
                <span class="stat-value">+{sizeUnrest}</span>
             </div>
             {#if isAtWar}
                <div class="stat-item">
-                  <label>From War:</label>
+                  <span class="stat-label">From War:</span>
                   <span class="stat-value danger">+{warUnrest}</span>
                </div>
             {/if}
             <div class="stat-item">
-               <label>Structure Bonus:</label>
+               <span class="stat-label">Structure Bonus:</span>
                <span class="stat-value">-{structureBonus}</span>
             </div>
             <div class="stat-item">
-               <label>Per Turn:</label>
+               <span class="stat-label">Per Turn:</span>
                <span class="stat-value" class:danger={unrestPerTurn > 0} class:positive={unrestPerTurn < 0}>
                   {unrestPerTurn >= 0 ? '+' : ''}{unrestPerTurn}
                </span>
@@ -161,27 +163,27 @@
          <div class="stat-group">
             <h4 class="stat-group-header">Kingdom Size</h4>
             <div class="stat-item">
-               <label>Hexes Claimed:</label>
+               <span class="stat-label">Hexes Claimed:</span>
                <span class="stat-value">{$kingdomState.size}</span>
             </div>
             <div class="stat-item">
-               <label>Total Settlements:</label>
+               <span class="stat-label">Total Settlements:</span>
                <span class="stat-value">{$kingdomState.settlements.length}</span>
             </div>
             <div class="stat-item">
-               <label>Villages:</label>
+               <span class="stat-label">Villages:</span>
                <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Village').length}</span>
             </div>
             <div class="stat-item">
-               <label>Towns:</label>
+               <span class="stat-label">Towns:</span>
                <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Town').length}</span>
             </div>
             <div class="stat-item">
-               <label>Cities:</label>
+               <span class="stat-label">Cities:</span>
                <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'City').length}</span>
             </div>
             <div class="stat-item">
-               <label>Metropolises:</label>
+               <span class="stat-label">Metropolises:</span>
                <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Metropolis').length}</span>
             </div>
          </div>
@@ -192,15 +194,15 @@
             <div class="resource-section">
                <div class="resource-header">Food</div>
                <div class="stat-item">
-                  <label>Current:</label>
+                  <span class="stat-label">Current:</span>
                   <span class="stat-value">{$kingdomState.resources.get('food') || 0}</span>
                </div>
                <div class="stat-item">
-                  <label>Farmlands:</label>
+                  <span class="stat-label">Farmlands:</span>
                   <span class="stat-value">{foodProduction}</span>
                </div>
                <div class="stat-item">
-                  <label>Production:</label>
+                  <span class="stat-label">Production:</span>
                   <span class="stat-value">{foodProduction * 2}/turn</span>
                </div>
             </div>
@@ -209,20 +211,20 @@
                <div class="resource-header">Resource Income</div>
                <div class="resource-grid">
                   <div class="resource-item">
-                     <label>Lumber:</label>
+                     <span class="resource-label">Lumber:</span>
                      <span>{$kingdomState.resources.get('lumber') || 0}</span>
                   </div>
                   <div class="resource-item">
-                     <label>Stone:</label>
+                     <span class="resource-label">Stone:</span>
                      <span>{$kingdomState.resources.get('stone') || 0}</span>
                   </div>
                   <div class="resource-item">
-                     <label>Ore:</label>
+                     <span class="resource-label">Ore:</span>
                      <span>{$kingdomState.resources.get('ore') || 0}</span>
                   </div>
                </div>
                <div class="stat-item">
-                  <label>Total Worksites:</label>
+                  <span class="stat-label">Total Worksites:</span>
                   <span class="stat-value">{totalWorksites}</span>
                </div>
             </div>
@@ -343,7 +345,8 @@
       border-bottom: none;
    }
    
-   .stat-item label {
+   .stat-item label,
+   .stat-label {
       font-size: 1rem;
       color: var(--text-muted);
       font-weight: 500;
@@ -418,6 +421,8 @@
       font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
+      width: auto;
+      min-width: fit-content;
    }
    
    .kingdom-select:focus {
@@ -464,7 +469,8 @@
       border-radius: 0.25rem;
    }
    
-   .resource-item label {
+   .resource-item label,
+   .resource-label {
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 0.25rem;
