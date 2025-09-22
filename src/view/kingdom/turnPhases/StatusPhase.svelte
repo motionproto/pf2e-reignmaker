@@ -34,8 +34,7 @@
 </script>
 
 <div class="status-phase">
-   <h3>Phase I: Kingdom Status</h3>
-   
+
    <div class="phase-steps">
       <div class="phase-step" class:completed={gainFameCompleted}>
          <button 

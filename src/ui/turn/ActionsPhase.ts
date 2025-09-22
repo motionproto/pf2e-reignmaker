@@ -2,7 +2,8 @@
 // TODO: Review and fix TypeScript-specific issues
 
 import { ActionListItem } from '../components/ActionListItem';
-import { PlayerActionsData, PlayerAction } from '../../models/PlayerActions';
+import { PlayerActionsData } from '../../models/PlayerActions';
+import type { PlayerAction } from '../../models/PlayerActions';
 
 /**
  * Actions Phase content for the Kingdom Sheet

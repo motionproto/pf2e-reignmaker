@@ -100,7 +100,7 @@ export interface Modifier {
 export class KingdomState {
   // Core Kingdom stats (Reignmaker Lite)
   unrest: number = 0;
-  imprisonedUnrest: number = 0;
+  imprisonedUnrest: number = 0;  // Unrest that is stored and excluded from the sum
   fame: number = 0;
   
   // Resources
@@ -112,7 +112,7 @@ export class KingdomState {
     ['ore', 0]
   ]);
   
-  // Territory and production
+  // Territory and production - always kept up to date
   hexes: Hex[] = [];
   size: number = 0; // Total number of claimed hexes
   settlements: Settlement[] = [];

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PF2E Kingdom Lite - Design System Demo</title>
+  <link rel="stylesheet" href="./index.css">
+  <style>
+    body {
+      padding: var(--space-8);
+    }
+    .demo-section {
+      margin-bottom: var(--space-12);
+    }
+    .demo-title {
+      font-size: var(--text-3xl);
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-2);
+      border-bottom: 2px solid var(--color-border-strong);
+      color: var(--color-secondary);
+    }
+    .demo-subtitle {
+      font-size: var(--text-xl);
+      margin-bottom: var(--space-4);
+      color: var(--color-primary);
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+    .color-swatch {
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+    .color-swatch:hover {
+      transform: scale(1.05);
+    }
+    .color-swatch code {
+      display: block;
+      margin-top: var(--space-2);
+      font-size: var(--text-xs);
+    }
+  </style>
+</head>
+<body>
+  <div class="kingdom-sheet">
+    <h1 class="demo-title">PF2E Kingdom Lite Design System</h1>
+    
+    <!-- Color Palette Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Color Palette</h2>
+      
+      <h3>Primary Colors</h3>
+      <div class="demo-grid">
+        <div class="color-swatch" style="background: var(--color-primary); color: white;">
+          Primary<br>
+          <code>#ef4444</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-primary-hover); color: white;">
+          Primary Hover<br>
+          <code>#f87171</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-primary-dark); color: white;">
+          Primary Dark<br>
+          <code>#b91c1c</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-primary-darker); color: white;">
+          Primary Darker<br>
+          <code>#991b1b</code>
+        </div>
+      </div>
+      
+      <h3>Secondary Colors</h3>
+      <div class="demo-grid">
+        <div class="color-swatch" style="background: var(--color-secondary); color: var(--color-text-inverse);">
+          Secondary<br>
+          <code>#fbbf24</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-secondary-hover); color: var(--color-text-inverse);">
+          Secondary Hover<br>
+          <code>#fcd34d</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-secondary-dark); color: white;">
+          Secondary Dark<br>
+          <code>#d97706</code>
+        </div>
+      </div>
+      
+      <h3>Background Colors</h3>
+      <div class="demo-grid">
+        <div class="color-swatch" style="background: var(--color-bg-base); color: var(--color-text-primary);">
+          Base Background<br>
+          <code>#0f0f11</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-surface); color: var(--color-text-primary);">
+          Surface<br>
+          <code>#18181b</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-elevated); color: var(--color-text-primary);">
+          Elevated<br>
+          <code>#1f1f23</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-overlay); color: var(--color-text-primary);">
+          Overlay<br>
+          <code>#27272a</code>
+        </div>
+      </div>
+      
+      <h3>Text Colors (Readable on Dark)</h3>
+      <div class="demo-grid">
+        <div class="color-swatch" style="background: var(--color-bg-base);">
+          <span style="color: var(--color-text-primary);">Primary Text</span><br>
+          <code style="color: var(--color-text-muted);">#fafafa</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-base);">
+          <span style="color: var(--color-text-secondary);">Secondary Text</span><br>
+          <code style="color: var(--color-text-muted);">#d4d4d8</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-base);">
+          <span style="color: var(--color-text-muted);">Muted Text</span><br>
+          <code style="color: var(--color-text-muted);">#a1a1aa</code>
+        </div>
+        <div class="color-swatch" style="background: var(--color-bg-base);">
+          <span style="color: var(--color-text-disabled);">Disabled Text</span><br>
+          <code style="color: var(--color-text-muted);">#52525b</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Typography Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Typography</h2>
+      
+      <h1>Heading 1 - Kingdom Title</h1>
+      <h2>Heading 2 - Section Title</h2>
+      <h3>Heading 3 - Subsection</h3>
+      <h4>Heading 4 - Card Title</h4>
+      <h5>Heading 5 - Small Title</h5>
+      <h6>Heading 6 - Label</h6>
+      
+      <p>This is body text with <strong>bold emphasis</strong> and <em>italic emphasis</em>. 
+      The new color system ensures excellent readability with proper contrast ratios. 
+      <a href="#">Links are clearly visible</a> and <code>inline code</code> stands out.</p>
+      
+      <blockquote>
+        This is a blockquote demonstrating how quoted text appears with the new design system.
+      </blockquote>
+    </section>
+
+    <!-- Buttons Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Buttons</h2>
+      
+      <div class="demo-grid">
+        <button class="btn btn-primary">Primary Button</button>
+        <button class="btn btn-secondary">Secondary Button</button>
+        <button class="btn btn-ghost">Ghost Button</button>
+        <button class="btn btn-outline">Outline Button</button>
+      </div>
+      
+      <h3>Button Sizes</h3>
+      <div class="demo-grid">
+        <button class="btn btn-primary btn-sm">Small</button>
+        <button class="btn btn-primary">Medium</button>
+        <button class="btn btn-primary btn-lg">Large</button>
+        <button class="btn btn-primary btn-icon">🎲</button>
+      </div>
+    </section>
+
+    <!-- Cards Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Cards</h2>
+      
+      <div class="demo-grid">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Standard Card</h3>
+          </div>
+          <div class="card-body">
+            <p>This card demonstrates the improved contrast and readability of the new design system.</p>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-primary btn-sm">Action</button>
+          </div>
+        </div>
+        
+        <div class="card card-elevated">
+          <div class="card-header">
+            <h3 class="card-title">Elevated Card</h3>
+          </div>
+          <div class="card-body">
+            <p>This elevated card has a slightly different background for hierarchy.</p>
+          </div>
+        </div>
+        
+        <div class="card card-primary">
+          <div class="card-header">
+            <h3 class="card-title">Primary Card</h3>
+          </div>
+          <div class="card-body">
+            <p>A card with primary accent coloring for important content.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Badges Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Badges</h2>
+      
+      <div class="demo-grid">
+        <div><span class="badge">Default</span></div>
+        <div><span class="badge badge-primary">Primary</span></div>
+        <div><span class="badge badge-secondary">Secondary</span></div>
+        <div><span class="badge badge-success">Success</span></div>
+        <div><span class="badge badge-warning">Warning</span></div>
+        <div><span class="badge badge-danger">Danger</span></div>
+        <div><span class="badge badge-info">Info</span></div>
+      </div>
+    </section>
+
+    <!-- Kingdom Stats Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Kingdom Stats</h2>
+      
+      <h3>Core Stats</h3>
+      <div class="demo-grid">
+        <div class="stat-block stat-fame">
+          <div class="stat-label">Fame</div>
+          <div class="stat-value">2</div>
+          <div class="stat-modifier">Max: 3</div>
+        </div>
+        
+        <div class="stat-block stat-gold">
+          <div class="stat-label">Gold</div>
+          <div class="stat-value">450</div>
+          <div class="stat-modifier positive">+50</div>
+        </div>
+        
+        <div class="stat-block stat-unrest">
+          <div class="stat-label">Unrest</div>
+          <div class="stat-value">3</div>
+          <div class="stat-modifier negative">+2/turn</div>
+        </div>
+        
+        <div class="stat-block">
+          <div class="stat-label">Hexes</div>
+          <div class="stat-value">24</div>
+          <div class="stat-modifier">Size</div>
+        </div>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="demo-grid">
+        <div class="stat-block stat-food">
+          <div class="stat-label">Food</div>
+          <div class="stat-value">12</div>
+          <div class="stat-modifier positive">+3</div>
+        </div>
+        
+        <div class="stat-block stat-lumber">
+          <div class="stat-label">Lumber</div>
+          <div class="stat-value">8</div>
+          <div class="stat-modifier positive">+2</div>
+        </div>
+        
+        <div class="stat-block stat-stone">
+          <div class="stat-label">Stone</div>
+          <div class="stat-value">6</div>
+          <div class="stat-modifier positive">+1</div>
+        </div>
+        
+        <div class="stat-block stat-ore">
+          <div class="stat-label">Ore</div>
+          <div class="stat-value">4</div>
+          <div class="stat-modifier positive">+1</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Event Card Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Event Cards</h2>
+      
+      <div class="event-card" style="max-width: 400px;">
+        <div class="event-header">
+          <h3 class="event-title">Diplomatic Overture</h3>
+          <div class="event-traits">
+            <span class="event-trait">Politics</span>
+            <span class="event-trait">Beneficial</span>
+          </div>
+        </div>
+        <div class="event-body">
+          <p class="event-description">
+            A neighboring kingdom extends an offer of alliance. Success could bring prosperity, 
+            but failure might strain relations.
+          </p>
+          <div class="event-actions">
+            <button class="btn btn-primary">Accept</button>
+            <button class="btn btn-outline">Decline</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Turn Phases Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Turn Phases</h2>
+      
+      <div class="phase-container">
+        <div class="phase-step complete">
+          <h4>Upkeep Phase</h4>
+          <p>Pay costs and handle maintenance - Completed</p>
+        </div>
+        <div class="phase-step active">
+          <h4>Edict Phase</h4>
+          <p>Issue decrees and make decisions - Current</p>
+        </div>
+        <div class="phase-step">
+          <h4>Income Phase</h4>
+          <p>Collect taxes and resources</p>
+        </div>
+        <div class="phase-step">
+          <h4>Event Phase</h4>
+          <p>Resolve kingdom events</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Unrest Indicator Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Unrest Levels</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+        <div>
+          <p>Low Unrest (25%)</p>
+          <div class="unrest-bar">
+            <div class="unrest-fill unrest-low"></div>
+          </div>
+        </div>
+        
+        <div>
+          <p>Medium Unrest (50%)</p>
+          <div class="unrest-bar">
+            <div class="unrest-fill unrest-medium"></div>
+          </div>
+        </div>
+        
+        <div>
+          <p>High Unrest (75%)</p>
+          <div class="unrest-bar">
+            <div class="unrest-fill unrest-high"></div>
+          </div>
+        </div>
+        
+        <div>
+          <p>Critical Unrest (100%)</p>
+          <div class="unrest-bar">
+            <div class="unrest-fill unrest-critical"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section class="demo-section">
+      <h2 class="demo-subtitle">Before vs After Comparison</h2>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6);">
+        <div>
+          <h3>Old (Problematic)</h3>
+          <div style="background: #000; padding: var(--space-4); border-radius: var(--radius-md);">
+            <p style="color: #5e0000;">Dark red text (#5e0000) on black - Very hard to read!</p>
+            <p style="color: #892522;">Slightly lighter red (#892522) - Still poor contrast</p>
+          </div>
+        </div>
+        
+        <div>
+          <h3>New (Improved)</h3>
+          <div style="background: var(--color-bg-base); padding: var(--space-4); border-radius: var(--radius-md);">
+            <p style="color: var(--color-primary);">Bright crimson (#ef4444) - Excellent contrast!</p>
+            <p style="color: var(--color-secondary);">Gold accent (#fbbf24) - Clear and vibrant</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

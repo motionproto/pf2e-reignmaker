@@ -1,6 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import { TurnManager } from '../models/TurnManager';
-import { PlayerAction } from '../models/PlayerActions';
+import type { PlayerAction } from '../models/PlayerActions';
 import type { TurnPhase } from '../models/KingdomState';
 
 // Turn management store

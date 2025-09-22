@@ -21,7 +21,6 @@
 </script>
 
 <div class="resources-phase">
-   <h3>Phase II: Resources</h3>
    
    <div class="phase-steps">
       <div class="phase-step" class:completed={collectCompleted}>

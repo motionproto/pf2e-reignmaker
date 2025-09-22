@@ -3,7 +3,7 @@
     "title": "pf2e Kingdom-lite",
     "description": "Kingdom Building management for Pathfinder 2e",
     "version": "0.0.1",
-    "scripts": [
+    "esmodules": [
         "dist/pf2e-kingdom-lite.js"
     ],
     "styles": [
@@ -15,7 +15,7 @@
         {
             "lang": "en",
             "name": "English",
-            "path": "dist/lang/en.json"
+            "path": "lang/en.json"
         }
     ],
     "manifest": "https://github.com/motionproto/pf2e-kingdom-lite/releases/latest/download/module.json",

@@ -232,252 +232,268 @@
    </div>
 </div>
 
-<style lang="scss">
+<style>
+   /* Import our CSS variables for consistent theming */
+   @import '../../../styles/variables.css';
+   
+   /* Standard Svelte component styling using CSS variables */
    .kingdom-stats-container {
       width: 100%;
       height: 100%;
       display: flex;
       flex-direction: column;
-      background-color: #f5f5f5;
-      border-radius: 4px;
+      background-color: var(--bg-surface);
+      border-radius: 0.5rem;
       overflow: hidden;
+      color: var(--text-primary);
    }
    
    .kingdom-name-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      background-color: #2c3e50;
-      border-bottom: 2px solid #34495e;
+      padding: 0.75rem 1rem;
+      background: var(--gradient-header);
+      border-bottom: 2px solid var(--border-primary);
       min-height: 60px;
-      
-      h3 {
-         margin: 0;
-         color: #ecf0f1;
-         font-size: 20px;
-         font-weight: 600;
-         flex: 1;
-         font-family: 'Modesto Condensed', 'Eczar', serif;
-      }
-      
-      input {
-         flex: 1;
-         font-size: 20px;
-         font-weight: 600;
-         background-color: transparent;
-         border: 1px solid #ecf0f1;
-         color: #ecf0f1;
-         padding: 4px 8px;
-         border-radius: 4px;
-         outline: none;
-         font-family: 'Modesto Condensed', 'Eczar', serif;
-      }
-      
-      .edit-btn {
-         cursor: pointer;
-         padding: 6px 8px;
-         border-radius: 4px;
-         display: flex;
-         align-items: center;
-         background: transparent;
-         border: none;
-         color: #ecf0f1;
-         font-size: 14px;
-         transition: background-color 0.2s;
-         
-         &:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-         }
-      }
+   }
+   
+   .kingdom-name-header h3 {
+      margin: 0;
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 700;
+      flex: 1;
+      font-family: 'Modesto Condensed', serif;
+      text-shadow: var(--text-shadow-sm);
+   }
+   
+   .kingdom-name-header input {
+      flex: 1;
+      font-size: 1.25rem;
+      font-weight: 700;
+      background-color: transparent;
+      border: 1px solid white;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      outline: none;
+      font-family: 'Modesto Condensed', serif;
+   }
+   
+   .kingdom-name-header .edit-btn {
+      cursor: pointer;
+      padding: 0.375rem 0.5rem;
+      border-radius: 0.25rem;
+      display: flex;
+      align-items: center;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 0.875rem;
+      transition: background-color var(--transition-fast);
+   }
+   
+   .kingdom-name-header .edit-btn:hover {
+      background-color: var(--border-default);
    }
    
    .kingdom-stats-scrollable {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 1rem;
    }
    
    .kingdom-stats-content {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 1.25rem;
    }
    
    .stat-group {
-      background: white;
-      border-radius: 8px;
-      padding: 16px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      background: var(--bg-elevated);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: var(--shadow-card);
    }
    
    .stat-group-header {
-      margin: 0 0 16px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #3498db;
-      color: #2c3e50;
-      font-size: 16px;
-      font-weight: 600;
+      margin: 0 0 1rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-primary);
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 700;
       font-family: 'Modesto Condensed', serif;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.025em;
    }
    
    .stat-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #f0f0f0;
-      
-      &:last-child {
-         border-bottom: none;
-      }
-      
-      label {
-         font-size: 14px;
-         color: #6c757d;
-         font-weight: 500;
-      }
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+   }
+   
+   .stat-item:last-child {
+      border-bottom: none;
+   }
+   
+   .stat-item label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 500;
    }
    
    .stat-value {
-      font-size: 16px;
-      font-weight: 600;
-      color: #2c3e50;
-      
-      &.danger {
-         color: #e74c3c;
-      }
-      
-      &.positive {
-         color: #27ae60;
-      }
-      
-      &.imprisoned {
-         color: #6c757d;
-      }
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+   }
+   
+   .stat-value.danger {
+      color: var(--color-danger);
+   }
+   
+   .stat-value.positive {
+      color: var(--color-success);
+   }
+   
+   .stat-value.imprisoned {
+      color: var(--color-gray-500);
    }
    
    .fame-controls {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 0.5rem;
    }
    
-   .fame-value {
+   .fame-controls .fame-value {
       min-width: 30px;
       text-align: center;
+      color: var(--color-accent);
    }
    
    .stat-adjust-button {
       width: 24px;
       height: 24px;
-      border: 1px solid #ddd;
-      background: white;
-      border-radius: 4px;
+      border: 1px solid var(--border-default);
+      background: var(--bg-surface);
+      border-radius: 0.25rem;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s;
-      
-      &:hover:not(:disabled) {
-         background: #f0f0f0;
-         border-color: #999;
-      }
-      
-      &:disabled {
-         opacity: 0.5;
-         cursor: not-allowed;
-      }
-      
-      i {
-         font-size: 12px;
-         color: #666;
-      }
+      transition: all var(--transition-fast);
+      color: var(--text-primary);
+   }
+   
+   .stat-adjust-button:hover:not(:disabled) {
+      background: var(--bg-subtle);
+      border-color: var(--border-primary);
+      transform: scale(1.1);
+   }
+   
+   .stat-adjust-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+   }
+   
+   .stat-adjust-button i {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
    }
    
    .kingdom-select {
-      padding: 4px 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      background: white;
-      color: #2c3e50;
-      font-size: 14px;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-default);
+      border-radius: 0.25rem;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
-      
-      &:focus {
-         outline: none;
-         border-color: #3498db;
-      }
+   }
+   
+   .kingdom-select:focus {
+      outline: none;
+      border-color: var(--border-primary);
+      box-shadow: var(--shadow-focus);
    }
    
    .resource-section {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #f0f0f0;
-      
-      &:first-child {
-         margin-top: 0;
-         padding-top: 0;
-         border-top: none;
-      }
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-default);
+   }
+   
+   .resource-section:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
    }
    
    .resource-header {
-      font-size: 14px;
+      font-size: 0.875rem;
       font-weight: 600;
-      color: #2c3e50;
-      margin-bottom: 8px;
+      color: var(--color-accent);
+      margin-bottom: 0.5rem;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.05em;
    }
    
    .resource-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin: 12px 0;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
    }
    
    .resource-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 8px;
-      background: #f8f9fa;
-      border-radius: 4px;
-      
-      label {
-         font-size: 12px;
-         color: #6c757d;
-         margin-bottom: 4px;
-      }
-      
-      span {
-         font-size: 16px;
-         font-weight: 600;
-         color: #2c3e50;
-      }
+      padding: 0.5rem;
+      background: var(--bg-surface);
+      border-radius: 0.25rem;
    }
    
-   /* Custom Scrollbar */
+   .resource-item label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+   }
+   
+   .resource-item span {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+   }
+   
+   /* Custom Scrollbar - Dark Theme */
+   .kingdom-stats-scrollable {
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-primary) var(--bg-surface);
+   }
+   
    .kingdom-stats-scrollable::-webkit-scrollbar {
       width: 8px;
    }
    
    .kingdom-stats-scrollable::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: var(--bg-surface);
+      border-radius: 9999px;
    }
    
    .kingdom-stats-scrollable::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
+      background: var(--color-primary);
+      border-radius: 9999px;
    }
    
    .kingdom-stats-scrollable::-webkit-scrollbar-thumb:hover {
-      background: #555;
+      background: var(--color-primary-hover);
    }
 </style>

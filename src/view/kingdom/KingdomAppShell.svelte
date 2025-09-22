@@ -116,42 +116,49 @@
    </main>
 </ApplicationShell>
 
-<style lang="scss">
+<style>
+   /* Import our CSS variables for consistent theming */
+   @import '../../styles/variables.css';
+   
+   /* Standard Svelte component styling using CSS variables */
    .kingdom-container {
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 10px;
-      padding: 10px;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
    }
 
    .kingdom-header {
       flex: 0 0 auto;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
+      padding: 0.5rem;
+      background: var(--bg-elevated);
+      border-radius: 0.375rem;
+      color: var(--text-primary);
    }
 
    .kingdom-body {
       flex: 1;
       display: flex;
-      gap: 10px;
-      min-height: 0; // Important for scrolling
+      gap: 0.5rem;
+      min-height: 0; /* Important for scrolling */
    }
 
    .kingdom-sidebar {
       flex: 0 0 250px;
-      background: rgba(0, 0, 0, 0.05);
-      border-radius: 5px;
-      padding: 10px;
+      background: var(--bg-surface);
+      border-radius: 0.375rem;
+      padding: 0.5rem;
       overflow-y: auto;
    }
 
    .kingdom-main {
       flex: 1;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 5px;
-      padding: 15px;
+      background: var(--bg-surface);
+      border-radius: 0.375rem;
+      padding: 0.75rem;
       overflow-y: auto;
    }
 
@@ -166,20 +173,22 @@
       gap: 10px;
       animation: slideIn 0.3s ease-out;
       z-index: 1000;
+   }
 
-      &.error {
-         background: rgba(200, 50, 50, 0.9);
-         color: white;
-      }
+   .message.error {
+      background: var(--color-danger);
+      opacity: 0.9;
+      color: white;
+   }
 
-      &.success {
-         background: rgba(50, 200, 50, 0.9);
-         color: white;
-      }
+   .message.success {
+      background: var(--color-success);
+      opacity: 0.9;
+      color: white;
+   }
 
-      i {
-         font-size: 1.2em;
-      }
+   .message i {
+      font-size: 1.2em;
    }
 
    @keyframes slideIn {
@@ -191,5 +200,15 @@
          transform: translateX(0);
          opacity: 1;
       }
+   }
+   
+   /* Override Foundry's window styles for our app specifically */
+   :global(.pf2e-kingdom-lite .window-content) {
+      background: var(--bg-base) !important;
+      color: var(--text-primary) !important;
+   }
+   
+   :global(.pf2e-kingdom-lite .window-header) {
+      background: var(--gradient-header) !important;
    }
 </style>

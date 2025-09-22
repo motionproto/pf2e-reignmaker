@@ -1,0 +1,36 @@
+{
+  "id": "pf2e-kingdom-lite",
+  "title": "PF2e Kingdom Lite (Dev)",
+  "description": "A lightweight kingdom management module for Pathfinder 2e in Foundry VTT",
+  "version": "0.2.0-dev",
+  "authors": [
+    {
+      "name": "Your Name",
+      "discord": "yourdiscord"
+    }
+  ],
+  "compatibility": {
+    "minimum": "11",
+    "verified": "11",
+    "maximum": "11"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf2e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "5.0.0",
+          "verified": "5.15.0"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "http://localhost:5173/src/index.ts"
+  ],
+  "styles": [],
+  "url": "https://github.com/yourusername/pf2e-kingdom-lite",
+  "manifest": "https://raw.githubusercontent.com/yourusername/pf2e-kingdom-lite/main/module.json",
+  "download": "https://github.com/yourusername/pf2e-kingdom-lite/releases/latest/download/module.zip"
+}

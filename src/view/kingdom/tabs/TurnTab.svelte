@@ -2,6 +2,9 @@
    import { kingdomState, advancePhase } from '../../../stores/kingdom';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
    
+   // Components
+   import PhaseBar from '../components/PhaseBar.svelte';
+   
    // Phase components  
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
    import ResourcesPhase from '../turnPhases/ResourcesPhase.svelte';
@@ -11,7 +14,7 @@
    import ResolutionPhase from '../turnPhases/ResolutionPhase.svelte';
    
    // Get phase info
-   $: phaseInfo = TurnPhaseConfig[$kingdomState.currentPhase];
+   $: phaseInfo = TurnPhaseConfig[$kingdomState.currentPhase as TurnPhase];
    
    function handleAdvancePhase() {
       advancePhase();
@@ -19,13 +22,14 @@
 </script>
 
 <div class="turn-management">
-   <div class="turn-header">
-      <h2>Turn {$kingdomState.currentTurn}</h2>
-      <div class="phase-info">
-         <h3>{phaseInfo.displayName}</h3>
-         <p>{phaseInfo.description}</p>
-      </div>
+   <!-- Phase title at the top of the container -->
+   <div class="phase-title">
+      <h2>{phaseInfo.displayName}</h2>
+      <p>{phaseInfo.description}</p>
    </div>
+   
+   <!-- Phase Bar underneath phase title -->
+   <PhaseBar />
    
    <div class="phase-content">
       {#if $kingdomState.currentPhase === TurnPhase.PHASE_I}
@@ -62,28 +66,23 @@
       gap: 15px;
    }
    
-   .turn-header {
-      background: rgba(0, 0, 0, 0.1);
-      padding: 15px;
-      border-radius: 5px;
+   .phase-title {
+      padding: 0;
+      margin-bottom: 10px;
       
       h2 {
-         margin: 0 0 10px 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
-   }
-   
-   .phase-info {
-      h3 {
-         margin: 0 0 5px 0;
+         margin: 0 0 8px 0;
          color: var(--color-primary, #5e0000);
-         font-size: 1.1em;
+         font-size: 1.8em;
+         font-weight: 700;
+         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
       }
       
       p {
          margin: 0;
          color: var(--color-text-dark-secondary, #7a7971);
          font-style: italic;
+         font-size: 0.95em;
       }
    }
    

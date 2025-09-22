@@ -1,7 +1,7 @@
 // Auto-converted and fixed from ActionListItem.kt
 // Simple expandable list item component for displaying player actions
 
-import { PlayerAction, SkillOption, ActionEffect } from '../../models/PlayerActions';
+import type { PlayerAction, SkillOption, ActionEffect } from '../../models/PlayerActions';
 
 /**
  * Simple expandable list item component for displaying player actions
