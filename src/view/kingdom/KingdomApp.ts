@@ -23,9 +23,9 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          resizable: true,
          minimizable: true,
          width: 1280,
-         height: 600,
-         minWidth: 700,
-         minHeight: 500,
+         height: 720,
+         minWidth: 720,
+         minHeight: 480,
          
          title: 'Kingdom Management',
 

@@ -126,7 +126,7 @@
       flex-direction: column;
       height: 100%;
       gap: 0.5rem;
-      padding: 0.5rem;
+      padding: 0rem;
       background-color: var(--bg-base);
       color: var(--text-primary);
    }
@@ -157,7 +157,7 @@
       flex: 1;
       background: var(--bg-surface);
       border-radius: 0.375rem;
-      padding: 0.75rem;
+      padding: 0.5rem;
       overflow-y: auto;
    }
 
@@ -205,6 +205,7 @@
    :global(.pf2e-kingdom-lite .window-content) {
       background: var(--bg-base) !important;
       color: var(--text-primary) !important;
+
    }
    
    :global(.pf2e-kingdom-lite .window-header) {

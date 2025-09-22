@@ -3,9 +3,6 @@
 </script>
 
 <div class="events-phase">
-   <h3>Phase IV: Events</h3>
-   <p>Resolve kingdom events for this turn.</p>
-   
    {#if $kingdomState.currentEvent}
       <div class="current-event">
          <h4>{$kingdomState.currentEvent.name}</h4>

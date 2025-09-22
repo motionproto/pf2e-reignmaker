@@ -13,8 +13,6 @@
 </script>
 
 <div class="resolution-phase">
-   <h3>Phase VI: Resolution</h3>
-   <p>End of turn cleanup and preparation for next turn.</p>
    
    <div class="phase-summary">
       <h4>Turn Summary:</h4>
