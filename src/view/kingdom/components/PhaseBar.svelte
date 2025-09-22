@@ -97,7 +97,6 @@
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
     border-radius: 6px;
     padding: 0.75rem 1rem 1rem; /* Increased bottom padding for underline space */
-    margin: 0.5rem 0 1rem;
   }
 
   .phase-bar-inner {
@@ -185,11 +184,11 @@
   /* Active indicator dot for when active but not selected */
   .active-indicator {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 10px;
-    height: 10px;
-    background: var(--color-gold-bright, #fff);
+    top: -6px;
+    right: -6px;
+    width: 12px;
+    height: 12px;
+    background: #fff;
     border: 2px solid var(--color-dark-bg, #18181b);
     border-radius: 50%;
     animation: pulse-dot 2s infinite ease-in-out;

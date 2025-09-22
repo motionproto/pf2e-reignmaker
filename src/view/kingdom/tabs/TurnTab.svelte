@@ -49,15 +49,15 @@
 </script>
 
 <div class="turn-management">
+   <!-- Phase Bar at the top -->
+   <PhaseBar />
+   
    <!-- Phase header with gradient styling -->
    <PhaseHeader 
       title={phaseInfo.displayName}
       description={phaseInfo.description}
       icon={displayPhaseIcon}
    />
-   
-   <!-- Phase Bar underneath phase title -->
-   <PhaseBar />
    
    <div class="phase-content">
       {#if displayPhase === TurnPhase.PHASE_I}
@@ -91,13 +91,13 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 15px;
+      gap: 8px;
    }
    
    .phase-content {
       flex: 1;
       background: rgba(255, 255, 255, 0.03);
-      padding: 15px;
+      padding: 12px;
       border-radius: 5px;
       overflow-y: auto;
    }
