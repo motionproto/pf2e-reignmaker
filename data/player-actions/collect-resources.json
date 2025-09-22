@@ -2,6 +2,7 @@
   "id": "collect-resources",
   "name": "Collect Resources",
   "category": "economic-resources",
+  "brief": "Gather from hexes with or without worksites",
   "description": "Harvest materials from your territories, either through established worksites or direct extraction",
   "skills": [
     {

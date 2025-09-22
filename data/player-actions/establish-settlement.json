@@ -2,6 +2,7 @@
   "id": "establish-settlement",
   "name": "Establish Settlement",
   "category": "urban-planning",
+  "brief": "Found a new village",
   "description": "Found a new community where settlers can establish homes and begin building infrastructure",
   "skills": [
     {

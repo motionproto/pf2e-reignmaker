@@ -2,6 +2,7 @@
   "id": "infiltration",
   "name": "Infiltration",
   "category": "foreign-affairs",
+  "brief": "Gather intelligence through espionage",
   "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats",
   "skills": [
     {

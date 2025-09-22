@@ -2,6 +2,7 @@
   "id": "coordinated-effort",
   "name": "Coordinated Effort",
   "category": "uphold-stability",
+  "brief": "Aid another PC's Kingdom Action",
   "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome",
   "skills": [
     {

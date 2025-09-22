@@ -2,6 +2,7 @@
   "id": "arrest-dissidents",
   "name": "Arrest Dissidents",
   "category": "uphold-stability",
+  "brief": "Convert current unrest to imprisoned unrest",
   "description": "Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system",
   "skills": [
     {

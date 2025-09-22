@@ -1,33 +1,587 @@
 <script lang="ts">
    import { kingdomState } from '../../../stores/kingdom';
+   import { IncidentManager, type Incident, type IncidentLevel } from '../../../models/Incidents';
+   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   
+   // State for incident handling
+   let currentIncident: Incident | null = null;
+   let lastRoll: number = 0;
+   let showIncidentResult = false;
+   let selectedSkill = '';
+   let isRolling = false;
+   
+   // Check if steps are completed
+   $: incidentChecked = isPhaseStepCompleted('unrest-check');
+   
+   // Calculate unrest values
+   $: currentUnrest = $kingdomState.unrest || 0;
+   $: tier = IncidentManager.getUnrestTier(currentUnrest);
+   $: tierName = IncidentManager.getUnrestTierName(tier);
+   $: penalty = IncidentManager.getUnrestPenalty(currentUnrest);
+   $: incidentLevel = IncidentManager.getIncidentLevel(tier);
+   
+   // Get tier-based styling class
+   function getTierClass(tierName: string): string {
+      const name = tierName.toLowerCase();
+      if (name === 'stable') return 'stable';
+      if (name === 'discontent') return 'discontent';
+      if (name === 'unrest') return 'unrest';
+      if (name === 'rebellion') return 'rebellion';
+      return 'stable';
+   }
+   
+   function rollForIncident() {
+      if (tier === 0) return;
+      
+      isRolling = true;
+      showIncidentResult = false;
+      
+      // Animate the roll
+      setTimeout(() => {
+         // Roll for incident
+         lastRoll = Math.floor(Math.random() * 100) + 1;
+         currentIncident = IncidentManager.rollForIncident(tier);
+         showIncidentResult = true;
+         isRolling = false;
+         
+         if (!incidentChecked) {
+            markPhaseStepCompleted('unrest-check');
+         }
+      }, 1000);
+   }
+   
+   function resolveIncident(skill: string) {
+      selectedSkill = skill;
+      // Here we would normally trigger the skill check resolution
+      // For now, we just store the selection
+      console.log(`Resolving incident with ${skill}`);
+   }
 </script>
 
 <div class="unrest-phase">
-
-   <div class="phase-summary">
-      <h4>Unrest Status:</h4>
-      <p>Current Unrest: {$kingdomState.unrest}</p>
-      <p>Imprisoned Unrest: {$kingdomState.imprisonedUnrest}</p>
-      <p class="placeholder">Full unrest calculation and incident handling will be implemented here.</p>
+   <!-- Step 1: Unrest Dashboard -->
+   <div class="unrest-dashboard">
+      <div class="unrest-header">
+         <div class="unrest-title">
+            <i class="fas fa-fire unrest-icon"></i>
+            <span>Unrest Status</span>
+         </div>
+      </div>
+      
+      <div class="unrest-value-display">
+         <div class="unrest-current">{currentUnrest}</div>
+         <div class="unrest-tier-badge tier-{getTierClass(tierName)}">
+            {tierName}
+         </div>
+      </div>
+      
+      {#if $kingdomState.imprisonedUnrest > 0}
+         <div class="imprisoned-unrest">
+            <i class="fas fa-lock"></i>
+            <span>Imprisoned Unrest:</span>
+            <span class="imprisoned-value">{$kingdomState.imprisonedUnrest}</span>
+         </div>
+      {/if}
+      
+      {#if penalty !== 0}
+         <div class="unrest-penalty">
+            <i class="fas fa-exclamation-triangle penalty-icon"></i>
+            <span class="penalty-text">Kingdom Check Penalty:</span>
+            <span class="penalty-value">{penalty}</span>
+         </div>
+      {/if}
    </div>
+   
+   <!-- Step 2: Incident Section -->
+   {#if tier > 0 && incidentLevel}
+      <div class="incident-section">
+         <div class="incident-header">
+            <div class="incident-title">
+               Step 2: Check for {incidentLevel.charAt(0) + incidentLevel.slice(1).toLowerCase()} Incidents
+            </div>
+            <button 
+               class="roll-incident-btn"
+               on:click={rollForIncident}
+               disabled={isRolling || incidentChecked}
+            >
+               <i class="fas fa-dice-d20 {isRolling ? 'spinning' : ''}"></i> 
+               {#if incidentChecked}
+                  Incident Checked
+               {:else if isRolling}
+                  Rolling...
+               {:else}
+                  Roll for Incident
+               {/if}
+            </button>
+         </div>
+         
+         {#if showIncidentResult}
+            <div class="incident-result-container">
+               {#if currentIncident}
+                  <div class="incident-display">
+                     <div class="roll-result">
+                        <div class="roll-value {isRolling ? 'rolling' : ''}">{lastRoll}</div>
+                        <div class="roll-label">d100 Roll</div>
+                     </div>
+                     
+                     <div class="incident-info">
+                        <div class="incident-name">{currentIncident.name}</div>
+                        <div class="incident-description">{currentIncident.description}</div>
+                        <div class="incident-level-badge level-{currentIncident.level.toLowerCase()}">
+                           {currentIncident.level}
+                        </div>
+                     </div>
+                     
+                     {#if currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
+                        <div class="skill-options">
+                           <div class="skill-options-title">Choose Resolution Approach:</div>
+                           <div class="skill-option-grid">
+                              {#each currentIncident.skillOptions as option}
+                                 <button 
+                                    class="skill-option-btn {selectedSkill === option.skill ? 'selected' : ''}"
+                                    on:click={() => resolveIncident(option.skill)}
+                                 >
+                                    <div class="skill-name">{option.skill}</div>
+                                    <div class="skill-description">{option.description}</div>
+                                 </button>
+                              {/each}
+                           </div>
+                        </div>
+                     {/if}
+                     
+                     <div class="incident-effects">
+                        <div class="effect-row">
+                           <span class="effect-label">Success:</span>
+                           <span class="effect-text effect-success">{currentIncident.successEffect}</span>
+                        </div>
+                        <div class="effect-row">
+                           <span class="effect-label">Failure:</span>
+                           <span class="effect-text effect-failure">{currentIncident.failureEffect}</span>
+                        </div>
+                        <div class="effect-row">
+                           <span class="effect-label">Critical Failure:</span>
+                           <span class="effect-text effect-critical">{currentIncident.criticalFailureEffect}</span>
+                        </div>
+                     </div>
+                  </div>
+               {:else}
+                  <div class="no-incident">
+                     <div class="roll-result">
+                        <div class="roll-value">{lastRoll}</div>
+                        <div class="roll-label">d100 Roll</div>
+                     </div>
+                     <i class="fas fa-shield-alt no-incident-icon"></i>
+                     <div class="no-incident-text">No Incident!</div>
+                     <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
+                  </div>
+               {/if}
+            </div>
+         {/if}
+      </div>
+   {:else}
+      <div class="no-incident">
+         <i class="fas fa-dove no-incident-icon"></i>
+         <div class="no-incident-text">Kingdom is Stable</div>
+         <div class="no-incident-desc">No incidents occur when unrest is at this level</div>
+      </div>
+   {/if}
 </div>
 
 <style lang="scss">
-
-   .phase-summary {
-      background: rgba(0, 0, 0, 0.08);
-      padding: 15px;
-      border-radius: 5px;
-      margin-top: 15px;
+   .unrest-phase {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+   }
+   
+   .unrest-dashboard {
+      background: linear-gradient(135deg,
+         rgba(31, 31, 35, 0.6),
+         rgba(15, 15, 17, 0.4));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-medium);
+      padding: 25px;
+   }
+   
+   .unrest-header {
+      margin-bottom: 20px;
+   }
+   
+   .unrest-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: var(--font-xl);
+      font-weight: 600;
+      color: var(--text-primary);
       
-      h4 {
-         margin: 0 0 10px 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
+      .unrest-icon {
+         color: var(--color-amber);
+         font-size: 24px;
+      }
+   }
+   
+   .unrest-value-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+   }
+   
+   .unrest-current {
+      font-size: 48px;
+      font-weight: bold;
+      color: var(--text-primary);
+      text-shadow: var(--text-shadow-md);
+   }
+   
+   .unrest-tier-badge {
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: var(--font-sm);
+      letter-spacing: 1px;
+      
+      &.tier-stable {
+         background: rgba(34, 197, 94, 0.2);
+         color: var(--color-green);
+         border: 1px solid var(--color-green-border);
       }
       
-      .placeholder {
-         font-style: italic;
-         opacity: 0.7;
+      &.tier-discontent {
+         background: rgba(251, 191, 36, 0.2);
+         color: var(--color-amber-light);
+         border: 1px solid var(--color-amber);
+      }
+      
+      &.tier-unrest {
+         background: rgba(249, 115, 22, 0.2);
+         color: var(--color-orange);
+         border: 1px solid var(--color-orange-border);
+      }
+      
+      &.tier-rebellion {
+         background: rgba(239, 68, 68, 0.2);
+         color: var(--color-red);
+         border: 1px solid var(--color-red);
+      }
+   }
+   
+   .imprisoned-unrest {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      margin-top: 15px;
+      color: var(--text-secondary);
+      
+      i {
+         color: var(--color-gray-500);
+      }
+      
+      .imprisoned-value {
+         color: var(--text-primary);
+         font-weight: 600;
+      }
+   }
+   
+   .unrest-penalty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--color-amber);
+      border-radius: var(--radius-md);
+      margin-top: 15px;
+      
+      .penalty-icon {
+         color: var(--color-amber);
+         font-size: 18px;
+      }
+      
+      .penalty-text {
+         color: var(--color-amber-light);
+      }
+      
+      .penalty-value {
+         color: var(--color-amber-light);
+         font-weight: bold;
+         font-size: var(--font-lg);
+      }
+   }
+   
+   .incident-section {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+   }
+   
+   .incident-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+   }
+   
+   .incident-title {
+      font-size: var(--font-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+   }
+   
+   .roll-incident-btn {
+      padding: 10px 20px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--font-md);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+         background: var(--color-primary-hover);
+         transform: translateY(-1px);
+         box-shadow: var(--shadow-md);
+      }
+      
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
+         background: var(--color-gray-700);
+      }
+      
+      i.spinning {
+         animation: spin 1s linear infinite;
+      }
+   }
+   
+   @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+   }
+   
+   .incident-result-container {
+      margin-top: 20px;
+   }
+   
+   .incident-display {
+      padding: 20px;
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.6),
+         rgba(31, 31, 35, 0.4));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-default);
+   }
+   
+   .roll-result {
+      text-align: center;
+      margin-bottom: 20px;
+      
+      .roll-value {
+         font-size: 36px;
+         font-weight: bold;
+         color: var(--color-amber-light);
+         text-shadow: var(--text-shadow-md);
+         
+         &.rolling {
+            animation: pulse 0.5s ease-in-out;
+         }
+      }
+      
+      .roll-label {
+         font-size: var(--font-sm);
+         color: var(--text-tertiary);
+         text-transform: uppercase;
+         letter-spacing: 1px;
+         margin-top: 5px;
+      }
+   }
+   
+   @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+   }
+   
+   .incident-info {
+      position: relative;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+      
+      .incident-name {
+         font-size: var(--font-2xl);
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 10px;
+      }
+      
+      .incident-description {
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+         line-height: 1.5;
+      }
+      
+      .incident-level-badge {
+         position: absolute;
+         top: 15px;
+         right: 15px;
+         padding: 5px 12px;
+         border-radius: var(--radius-full);
+         font-size: var(--font-xs);
+         font-weight: 600;
+         text-transform: uppercase;
+         letter-spacing: 1px;
+         
+         &.level-minor {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--color-amber-light);
+            border: 1px solid var(--color-amber);
+         }
+         
+         &.level-moderate {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--color-orange);
+            border: 1px solid var(--color-orange-border);
+         }
+         
+         &.level-major {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--color-red);
+            border: 1px solid var(--color-red);
+         }
+      }
+   }
+   
+   .skill-options {
+      margin: 20px 0;
+      
+      .skill-options-title {
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 15px;
+         font-size: var(--font-md);
+      }
+   }
+   
+   .skill-option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+   }
+   
+   .skill-option-btn {
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.5);
+         border-color: var(--color-amber);
+         transform: translateY(-2px);
+      }
+      
+      &.selected {
+         background: rgba(251, 191, 36, 0.2);
+         border-color: var(--color-amber);
+      }
+      
+      .skill-name {
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 5px;
+      }
+      
+      .skill-description {
+         font-size: var(--font-sm);
+         color: var(--text-tertiary);
+         line-height: 1.4;
+      }
+   }
+   
+   .incident-effects {
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: var(--radius-md);
+      
+      .effect-row {
+         display: flex;
+         gap: 10px;
+         margin-bottom: 10px;
+         
+         &:last-child {
+            margin-bottom: 0;
+         }
+      }
+      
+      .effect-label {
+         font-weight: 600;
+         color: var(--text-secondary);
+         min-width: 120px;
+      }
+      
+      .effect-text {
+         flex: 1;
+         line-height: 1.4;
+         
+         &.effect-success {
+            color: var(--color-green);
+         }
+         
+         &.effect-failure {
+            color: var(--color-orange);
+         }
+         
+         &.effect-critical {
+            color: var(--color-red);
+         }
+      }
+   }
+   
+   .no-incident {
+      padding: 40px;
+      background: linear-gradient(135deg,
+         rgba(34, 197, 94, 0.05),
+         rgba(24, 24, 27, 0.3));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-green-border);
+      text-align: center;
+      
+      .no-incident-icon {
+         font-size: 48px;
+         color: var(--color-green);
+         margin-bottom: 15px;
+      }
+      
+      .no-incident-text {
+         font-size: var(--font-xl);
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 8px;
+      }
+      
+      .no-incident-desc {
+         color: var(--text-secondary);
+         font-size: var(--font-md);
       }
    }
 </style>

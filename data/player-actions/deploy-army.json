@@ -2,6 +2,7 @@
   "id": "deploy-army",
   "name": "Deploy Army",
   "category": "military-operations",
+  "brief": "Move troops to strategic positions",
   "description": "Mobilize and maneuver your military forces across the kingdom's territory using various navigation methods",
   "skills": [
     {

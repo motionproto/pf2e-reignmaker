@@ -2,6 +2,7 @@
   "id": "execute-or-pardon-prisoners",
   "name": "Execute or Pardon Prisoners",
   "category": "uphold-stability",
+  "brief": "Deal with imprisoned unrest through justice",
   "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice",
   "skills": [
     {

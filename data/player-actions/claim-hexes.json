@@ -2,6 +2,7 @@
   "id": "claim-hexes",
   "name": "Claim Hexes",
   "category": "expand-borders",
+  "brief": "Add new territory to your kingdom",
   "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands",
   "skills": [
     {

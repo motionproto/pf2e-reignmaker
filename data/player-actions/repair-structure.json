@@ -2,6 +2,7 @@
   "id": "repair-structure",
   "name": "Repair Structure",
   "category": "urban-planning",
+  "brief": "Fix damaged buildings to restore functionality",
   "description": "Repair damaged structures within a settlement to restore its capabilities",
   "skills": [
     {

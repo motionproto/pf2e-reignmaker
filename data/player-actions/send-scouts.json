@@ -2,6 +2,7 @@
   "id": "send-scouts",
   "name": "Send Scouts",
   "category": "expand-borders",
+  "brief": "Learn about unexplored hexes",
   "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats",
   "skills": [
     {

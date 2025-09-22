@@ -2,6 +2,7 @@
   "id": "sell-surplus",
   "name": "Sell Surplus",
   "category": "economic-resources",
+  "brief": "Trade 2 resources for gold",
   "description": "Convert excess resources into gold through trade with merchants and neighboring kingdoms",
   "skills": [
     {
@@ -35,14 +36,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Trade 2 Resources \u2192 2 Gold",
+      "description": "Trade 2 Resources → 2 Gold",
       "modifiers": {
         "resourcesSpent": 2,
         "gold": 2
       }
     },
     "success": {
-      "description": "Trade 2 Resources \u2192 1 Gold",
+      "description": "Trade 2 Resources → 1 Gold",
       "modifiers": {
         "resourcesSpent": 2,
         "gold": 1
