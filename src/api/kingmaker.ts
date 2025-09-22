@@ -1,11 +1,16 @@
 // External definitions for accessing the PF2e Kingmaker module's state
 
+import { kingdomState, updateKingdomStat, addSettlement } from '../stores/kingdom';
+import { Hex, Worksite, WorksiteType } from '../models/Hex';
+import type { Settlement, SettlementTier } from '../models/KingdomState';
+import { get } from 'svelte/store';
+
 /**
  * External definitions for accessing the PF2e Kingmaker module's state
  */
 
 export interface HexFeature {
-    type: string | null; // e.g., "farmland", "refuge", "landmark"
+    type: string | null; // e.g., "farmland", "refuge", "landmark", "village", "town", "city", "metropolis"
 }
 
 export interface HexState {
@@ -289,4 +294,289 @@ export function getRealmSummary(): string {
     }
     
     return lines.join("\n");
+}
+
+/**
+ * Convert a terrain string from Kingmaker format to our format
+ */
+function normalizeTerrainName(terrain: string | null): string {
+    if (!terrain) return 'Plains';
+    
+    // Convert to title case and handle special cases
+    const normalized = terrain.toLowerCase();
+    switch (normalized) {
+        case 'plains': return 'Plains';
+        case 'forest': return 'Forest';
+        case 'hills': return 'Hills';
+        case 'mountains': return 'Mountains';
+        case 'swamp': return 'Swamp';
+        case 'wetlands': return 'Swamp';
+        case 'desert': return 'Desert';
+        case 'lake': return 'Plains'; // Lakes treated as plains for worksite purposes
+        default: return 'Plains';
+    }
+}
+
+/**
+ * Convert a camp type to worksite type
+ */
+function campToWorksiteType(camp: string | null): WorksiteType | null {
+    if (!camp) return null;
+    
+    switch (camp.toLowerCase()) {
+        case 'lumber': return WorksiteType.LOGGING_CAMP;
+        case 'mine': return WorksiteType.MINE;
+        case 'quarry': return WorksiteType.QUARRY;
+        default: return null;
+    }
+}
+
+/**
+ * Convert settlement tier from string
+ */
+function getSettlementTier(type: string): SettlementTier | null {
+    switch (type.toLowerCase()) {
+        case 'village': return 'Village' as SettlementTier;
+        case 'town': return 'Town' as SettlementTier;
+        case 'city': return 'City' as SettlementTier;
+        case 'metropolis': return 'Metropolis' as SettlementTier;
+        default: return null;
+    }
+}
+
+/**
+ * Sync Kingmaker module data to the Kingdom State store
+ * This updates the store with the current state from the Kingmaker module
+ */
+export function syncKingmakerToKingdomState(): boolean {
+    if (!isKingmakerInstalled()) {
+        console.warn("Kingmaker module not installed, cannot sync");
+        return false;
+    }
+    
+    const km = (window as any).kingmaker as KingmakerModule;
+    if (!km) return false;
+    
+    try {
+        const hexStates = km.state.hexes;
+        const hexIds = Object.keys(hexStates);
+        
+        // Build hex objects and settlements
+        const newHexes: Hex[] = [];
+        const newSettlements: Settlement[] = [];
+        const settlementMap = new Map<string, Settlement>();
+        
+        // Count worksites for updating the store
+        const worksiteCounts = new Map<string, number>([
+            ['farmlands', 0],
+            ['lumberCamps', 0],
+            ['quarries', 0],
+            ['mines', 0]
+        ]);
+        
+        let hexIndex = 0;
+        for (const hexId of hexIds) {
+            const hexState = hexStates[hexId];
+            if (!hexState?.claimed) continue;
+            
+            // Create hex object
+            const terrain = normalizeTerrainName(hexState.terrain);
+            let worksite: Worksite | null = null;
+            
+            // Check for farmland feature
+            const hasFarmland = hexState.features?.some(f => f.type === 'farmland') || false;
+            if (hasFarmland) {
+                worksite = new Worksite(WorksiteType.FARMSTEAD);
+                worksiteCounts.set('farmlands', (worksiteCounts.get('farmlands') || 0) + 1);
+            }
+            // Check for camp/worksite
+            else if (hexState.camp) {
+                const worksiteType = campToWorksiteType(hexState.camp);
+                if (worksiteType) {
+                    worksite = new Worksite(worksiteType);
+                    
+                    // Update counts
+                    switch (worksiteType) {
+                        case WorksiteType.LOGGING_CAMP:
+                            worksiteCounts.set('lumberCamps', (worksiteCounts.get('lumberCamps') || 0) + 1);
+                            break;
+                        case WorksiteType.MINE:
+                            worksiteCounts.set('mines', (worksiteCounts.get('mines') || 0) + 1);
+                            break;
+                        case WorksiteType.QUARRY:
+                            worksiteCounts.set('quarries', (worksiteCounts.get('quarries') || 0) + 1);
+                            break;
+                    }
+                }
+            }
+            
+            // Check for special commodity traits
+            const hasSpecialTrait = hexState.commodity !== null && hexState.commodity !== 'none';
+            
+            // Create hex with a unique ID
+            const hex = new Hex(
+                `hex_${hexIndex++}`,
+                terrain,
+                worksite,
+                hasSpecialTrait,
+                null // Name can be added later if needed
+            );
+            newHexes.push(hex);
+            
+            // Parse settlement features
+            hexState.features?.forEach(feature => {
+                if (feature.type) {
+                    const tier = getSettlementTier(feature.type);
+                    if (tier) {
+                        // For simplicity, create one settlement per feature
+                        // In a real game, you might want to group them
+                        const settlementName = `${feature.type}_${hexId}`;
+                        const settlement: Settlement = {
+                            name: settlementName,
+                            tier: tier,
+                            structureIds: [],
+                            connectedByRoads: false
+                        };
+                        newSettlements.push(settlement);
+                    }
+                }
+            });
+        }
+        
+        // Update the kingdom state store
+        kingdomState.update(state => {
+            // Update hexes and size
+            state.hexes = newHexes;
+            state.size = newHexes.length;
+            
+            // Update settlements
+            state.settlements = newSettlements;
+            
+            // Update worksite counts
+            state.worksiteCount = worksiteCounts;
+            
+            // Calculate and store production for quick access
+            // This will be used by the UI
+            const production = state.calculateProduction();
+            console.log("Synced Kingmaker data - Size:", state.size, "Production:", production);
+            
+            return state;
+        });
+        
+        console.log(`Successfully synced ${newHexes.length} hexes and ${newSettlements.length} settlements from Kingmaker module`);
+        return true;
+        
+    } catch (e) {
+        console.error("Failed to sync Kingmaker data to Kingdom State", e);
+        return false;
+    }
+}
+
+/**
+ * Start automatic syncing of Kingmaker data using Foundry hooks
+ * This uses event-driven updates instead of polling for better performance
+ */
+export function startKingmakerSync(): () => void {
+    // Do initial sync
+    syncKingmakerToKingdomState();
+    
+    // Define hook handlers
+    const syncHandler = () => {
+        console.log("Kingmaker state change detected, syncing...");
+        syncKingmakerToKingdomState();
+    };
+    
+    const updateActorHandler = (actor: any, changes: any, options: any, userId: string) => {
+        // Check if this is a kingdom-related update
+        if (actor.type === 'party' || changes.system?.kingdom) {
+            console.log("Kingdom actor updated, syncing...");
+            syncKingmakerToKingdomState();
+        }
+    };
+    
+    const renderHandler = (app: any, html: any, data: any) => {
+        // Sync when kingdom-related apps are rendered
+        if (app.constructor.name.includes('Kingdom') || app.id?.includes('kingdom')) {
+            syncKingmakerToKingdomState();
+        }
+    };
+    
+    // Listen to various Foundry hooks that might indicate kingdom state changes
+    // @ts-ignore - Foundry global
+    if (typeof Hooks !== 'undefined') {
+        // Hook into general updates
+        Hooks.on('updateActor', updateActorHandler);
+        Hooks.on('updateScene', syncHandler);
+        Hooks.on('canvasReady', syncHandler);
+        
+        // Hook into kingdom-specific events if they exist
+        Hooks.on('pf2e.kingmaker.hexClaimed', syncHandler);
+        Hooks.on('pf2e.kingmaker.hexUpdated', syncHandler);
+        Hooks.on('pf2e.kingmaker.settlementBuilt', syncHandler);
+        Hooks.on('pf2e.kingmaker.worksiteBuilt', syncHandler);
+        Hooks.on('pf2e.kingmaker.stateChanged', syncHandler);
+        
+        // Hook into UI updates
+        Hooks.on('renderKingdomSheet', renderHandler);
+        Hooks.on('renderKingdomHUD', renderHandler);
+        
+        console.log("Kingmaker sync hooks registered");
+    }
+    
+    // Also set up a fallback periodic sync (less frequent)
+    // This ensures we catch any changes that don't trigger hooks
+    const intervalId = setInterval(() => {
+        syncKingmakerToKingdomState();
+    }, 30000); // 30 seconds instead of 5
+    
+    // Return cleanup function
+    return () => {
+        // Remove all hook listeners
+        // @ts-ignore - Foundry global
+        if (typeof Hooks !== 'undefined') {
+            Hooks.off('updateActor', updateActorHandler);
+            Hooks.off('updateScene', syncHandler);
+            Hooks.off('canvasReady', syncHandler);
+            Hooks.off('pf2e.kingmaker.hexClaimed', syncHandler);
+            Hooks.off('pf2e.kingmaker.hexUpdated', syncHandler);
+            Hooks.off('pf2e.kingmaker.settlementBuilt', syncHandler);
+            Hooks.off('pf2e.kingmaker.worksiteBuilt', syncHandler);
+            Hooks.off('pf2e.kingmaker.stateChanged', syncHandler);
+            Hooks.off('renderKingdomSheet', renderHandler);
+            Hooks.off('renderKingdomHUD', renderHandler);
+            
+            console.log("Kingmaker sync hooks removed");
+        }
+        
+        // Clear the fallback interval
+        clearInterval(intervalId);
+    };
+}
+
+/**
+ * Initialize Kingmaker sync when Foundry is ready
+ * This should be called from the module's ready hook
+ */
+export function initializeKingmakerSync(): void {
+    // @ts-ignore - Foundry global
+    if (typeof Hooks !== 'undefined') {
+        Hooks.once('ready', () => {
+            console.log('Initializing Kingmaker sync...');
+            
+            // Check if Kingmaker is installed before starting sync
+            if (isKingmakerInstalled()) {
+                startKingmakerSync();
+                console.log('Kingmaker sync started');
+            } else {
+                console.log('Kingmaker module not detected, sync not started');
+                
+                // Set up a listener to start sync if Kingmaker gets loaded later
+                Hooks.on('setup', () => {
+                    if (isKingmakerInstalled()) {
+                        startKingmakerSync();
+                    }
+                });
+            }
+        });
+    }
 }

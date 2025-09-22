@@ -2,11 +2,13 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
+   import { tick } from 'svelte';
    
    // Kingdom name state
    let isEditingName = false;
    let kingdomName = localStorage.getItem('kingdomName') || 'Kingdom Name';
    let editNameInput = kingdomName;
+   let nameInputElement: HTMLInputElement;
    
    // Save kingdom name
    function saveKingdomName() {
@@ -62,13 +64,19 @@
          <h3>{kingdomName}</h3>
          <button 
             class="edit-btn"
-            on:click={() => isEditingName = true}
+            on:click={async () => {
+               isEditingName = true;
+               await tick();
+               nameInputElement?.focus();
+               nameInputElement?.select();
+            }}
             title="Edit kingdom name"
          >
             <i class="fa-solid fa-pen-fancy"></i>
          </button>
       {:else}
          <input
+            bind:this={nameInputElement}
             bind:value={editNameInput}
             on:keydown={(e) => {
                if (e.key === 'Enter') saveKingdomName();
@@ -76,7 +84,6 @@
             }}
             on:blur={saveKingdomName}
             aria-label="Kingdom name"
-            autofocus
          />
       {/if}
    </div>
