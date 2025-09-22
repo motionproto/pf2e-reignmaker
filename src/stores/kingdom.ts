@@ -1,10 +1,13 @@
 import { writable, derived, get } from 'svelte/store';
 import { KingdomState } from '../models/KingdomState';
 import type { KingdomEvent } from '../models/Events';
-import type { Settlement, Army, BuildProject, TurnPhase, Modifier } from '../models/KingdomState';
+import type { Settlement, Army, BuildProject, Modifier } from '../models/KingdomState';
 
-// Main kingdom state store
+// Main kingdom state store - contains only pure kingdom data
 export const kingdomState = writable(new KingdomState());
+
+// Re-export viewingPhase from gameState for backward compatibility
+export { viewingPhase } from './gameState';
 
 // Derived stores for common calculations
 export const totalProduction = derived(kingdomState, $state => 
@@ -117,33 +120,15 @@ export function removeContinuousEvent(index: number) {
     });
 }
 
-export function setCurrentPhase(phase: TurnPhase) {
-    kingdomState.update(state => {
-        state.currentPhase = phase;
-        return state;
-    });
-}
-
-export function advancePhase() {
-    kingdomState.update(state => {
-        state.advancePhase();
-        return state;
-    });
-}
-
-export function markPhaseStepCompleted(stepId: string) {
-    kingdomState.update(state => {
-        state.markPhaseStepCompleted(stepId);
-        return state;
-    });
-}
-
-export function resetPhaseSteps() {
-    kingdomState.update(state => {
-        state.resetPhaseSteps();
-        return state;
-    });
-}
+// Re-export phase management functions from gameState for backward compatibility
+export { 
+    setCurrentPhase,
+    setViewingPhase,
+    advancePhase,
+    markPhaseStepCompleted,
+    resetPhaseSteps,
+    incrementTurn
+} from './gameState';
 
 export function collectResources() {
     kingdomState.update(state => {
@@ -178,13 +163,6 @@ export function addModifier(modifier: Modifier) {
 export function removeModifier(index: number) {
     kingdomState.update(state => {
         state.ongoingModifiers.splice(index, 1);
-        return state;
-    });
-}
-
-export function incrementTurn() {
-    kingdomState.update(state => {
-        state.currentTurn++;
         return state;
     });
 }

@@ -111,11 +111,15 @@
       &:hover {
          background: rgba(0, 0, 0, 0.3);
          color: rgba(255, 255, 255, 1);
-         transform: rotate(90deg);
       }
       
       i {
          font-size: 1.2em;
+         transition: transform 0.3s ease;
+      }
+      
+      &:hover i {
+         transform: rotate(90deg);
       }
    }
 </style>

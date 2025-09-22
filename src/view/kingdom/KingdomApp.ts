@@ -22,7 +22,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          id: 'pf2e-kingdom-lite',
          resizable: true,
          minimizable: true,
-         width: 850,
+         width: 1280,
          height: 600,
          minWidth: 700,
          minHeight: 500,
@@ -61,16 +61,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          }
       });
 
-      // Add settings button
-      buttons.unshift({
-         class: 'settings',
-         icon: 'fas fa-cog',
-         title: 'Kingdom Settings',
-         onPress: (): void => {
-            // Trigger settings panel in the app shell
-            this.svelte.appShell?.$set({ showSettings: true });
-         }
-      });
+      // Settings button removed - now handled within the app content
 
       return buttons;
    }

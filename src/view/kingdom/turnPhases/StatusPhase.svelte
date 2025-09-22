@@ -1,9 +1,10 @@
 <script lang="ts">
-   import { kingdomState, markPhaseStepCompleted } from '../../../stores/kingdom';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    
    // Check if steps are completed
-   $: gainFameCompleted = $kingdomState.isPhaseStepCompleted('gain-fame');
-   $: applyModifiersCompleted = $kingdomState.isPhaseStepCompleted('apply-modifiers');
+   $: gainFameCompleted = isPhaseStepCompleted('gain-fame');
+   $: applyModifiersCompleted = isPhaseStepCompleted('apply-modifiers');
    
    function gainFame() {
       // Gain 1 Fame

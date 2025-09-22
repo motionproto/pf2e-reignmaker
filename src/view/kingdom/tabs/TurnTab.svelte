@@ -1,9 +1,12 @@
 <script lang="ts">
-   import { kingdomState, advancePhase } from '../../../stores/kingdom';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { gameState, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/gameState';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
+   import { onMount } from 'svelte';
    
    // Components
    import PhaseBar from '../components/PhaseBar.svelte';
+   import PhaseHeader from '../components/PhaseHeader.svelte';
    
    // Phase components  
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
@@ -13,36 +16,61 @@
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
    import ResolutionPhase from '../turnPhases/ResolutionPhase.svelte';
    
-   // Get phase info
-   $: phaseInfo = TurnPhaseConfig[$kingdomState.currentPhase as TurnPhase];
+   // Initialize viewing phase if not set
+   onMount(() => {
+      if (!$viewingPhase) {
+         setViewingPhase($gameState.currentPhase);
+      }
+   });
+   
+   // Get phase info based on what the user is viewing
+   $: displayPhase = $viewingPhase || $gameState.currentPhase;
+   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$gameState.currentPhase];
+   $: actualPhase = $gameState.currentPhase;
+   
+   // Define phase icons
+   const phaseIcons = {
+      [TurnPhase.PHASE_I]: 'fas fa-chart-line',
+      [TurnPhase.PHASE_II]: 'fas fa-coins',
+      [TurnPhase.PHASE_III]: 'fas fa-fire',
+      [TurnPhase.PHASE_IV]: 'fas fa-dice',
+      [TurnPhase.PHASE_V]: 'fas fa-hammer',
+      [TurnPhase.PHASE_VI]: 'fas fa-check-circle'
+   };
+   
+   $: displayPhaseIcon = phaseIcons[displayPhase as TurnPhase];
    
    function handleAdvancePhase() {
       advancePhase();
    }
+   
+   // Helper to show if we're viewing a different phase than active
+   $: isViewingDifferentPhase = displayPhase !== actualPhase;
 </script>
 
 <div class="turn-management">
-   <!-- Phase title at the top of the container -->
-   <div class="phase-title">
-      <h2>{phaseInfo.displayName}</h2>
-      <p>{phaseInfo.description}</p>
-   </div>
+   <!-- Phase header with gradient styling -->
+   <PhaseHeader 
+      title={phaseInfo.displayName}
+      description={phaseInfo.description}
+      icon={displayPhaseIcon}
+   />
    
    <!-- Phase Bar underneath phase title -->
    <PhaseBar />
    
    <div class="phase-content">
-      {#if $kingdomState.currentPhase === TurnPhase.PHASE_I}
+      {#if displayPhase === TurnPhase.PHASE_I}
          <StatusPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_II}
+      {:else if displayPhase === TurnPhase.PHASE_II}
          <ResourcesPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_III}
+      {:else if displayPhase === TurnPhase.PHASE_III}
          <UnrestPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_IV}
+      {:else if displayPhase === TurnPhase.PHASE_IV}
          <EventsPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_V}
+      {:else if displayPhase === TurnPhase.PHASE_V}
          <ActionsPhase />
-      {:else if $kingdomState.currentPhase === TurnPhase.PHASE_VI}
+      {:else if displayPhase === TurnPhase.PHASE_VI}
          <ResolutionPhase />
       {/if}
    </div>
@@ -64,26 +92,6 @@
       flex-direction: column;
       height: 100%;
       gap: 15px;
-   }
-   
-   .phase-title {
-      padding: 0;
-      margin-bottom: 10px;
-      
-      h2 {
-         margin: 0 0 8px 0;
-         color: var(--color-primary, #5e0000);
-         font-size: 1.8em;
-         font-weight: 700;
-         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-      }
-      
-      p {
-         margin: 0;
-         color: var(--color-text-dark-secondary, #7a7971);
-         font-style: italic;
-         font-size: 0.95em;
-      }
    }
    
    .phase-content {

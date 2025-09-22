@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { kingdomState, setCurrentPhase } from '../../../stores/kingdom';
+  import { gameState, setViewingPhase, viewingPhase } from '../../../stores/gameState';
   import { TurnPhase } from '../../../models/KingdomState';
+  import { onMount } from 'svelte';
 
   // Define the phases in order
   const phases = [
@@ -12,7 +13,15 @@
     { id: TurnPhase.PHASE_VI, label: 'Resolution', fullName: 'End of turn cleanup' }
   ];
 
-  $: currentPhase = $kingdomState.currentPhase;
+  $: currentPhase = $gameState.currentPhase;
+  $: selectedPhase = $viewingPhase || currentPhase;
+  
+  // Initialize viewing phase on mount
+  onMount(() => {
+    if (!$viewingPhase) {
+      setViewingPhase(currentPhase);
+    }
+  });
   
   function getPhaseIndex(phase: TurnPhase): number {
     return phases.findIndex(p => p.id === phase);
@@ -21,37 +30,64 @@
   $: currentPhaseIndex = getPhaseIndex(currentPhase);
 
   function handlePhaseClick(phase: TurnPhase) {
-    // Allow switching to any phase (you can restrict this if needed)
-    setCurrentPhase(phase);
+    // Update the viewing phase when user clicks
+    setViewingPhase(phase);
   }
 
   function isPhaseActive(phase: TurnPhase): boolean {
     return phase === currentPhase;
   }
   
+  function isPhaseSelected(phase: TurnPhase): boolean {
+    return phase === selectedPhase;
+  }
+  
   function isPhaseCompleted(phaseIndex: number): boolean {
     return phaseIndex < currentPhaseIndex;
+  }
+  
+  // Helper to build tooltip text
+  function getTooltip(phase: typeof phases[0]): string {
+    const isActive = isPhaseActive(phase.id);
+    const isSelected = isPhaseSelected(phase.id);
+    
+    let tooltip = phase.fullName;
+    if (isActive && !isSelected) {
+      tooltip += ' (Currently Active)';
+    } else if (!isActive && isSelected) {
+      tooltip += ' (Viewing)';
+    } else if (isActive && isSelected) {
+      tooltip += ' (Active & Viewing)';
+    }
+    return tooltip;
   }
 </script>
 
 <div class="phase-bar">
   <div class="phase-bar-inner">
-    {#each phases as phase, index}
+    {#each phases as phase, index (phase.id)}
       <!-- Phase connector line (before phase except for first) -->
       {#if index > 0}
         <div class="phase-connector" class:completed={isPhaseCompleted(index)}></div>
       {/if}
       
       <!-- Phase button -->
+      {#key $viewingPhase}
       <button
         class="phase-item"
-        class:active={isPhaseActive(phase.id)}
+        class:active={phase.id === currentPhase}
+        class:selected={phase.id === selectedPhase}
         class:completed={isPhaseCompleted(index)}
         on:click={() => handlePhaseClick(phase.id)}
-        title={phase.fullName}
+        title={getTooltip(phase)}
       >
+        <!-- Active indicator dot -->
+        {#if phase.id === currentPhase && phase.id !== selectedPhase}
+          <span class="active-indicator"></span>
+        {/if}
         <span class="phase-label">{phase.label}</span>
       </button>
+      {/key}
     {/each}
   </div>
 </div>
@@ -60,7 +96,7 @@
   .phase-bar {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
     border-radius: 6px;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1rem 1rem; /* Increased bottom padding for underline space */
     margin: 0.5rem 0 1rem;
   }
 
@@ -113,12 +149,62 @@
     color: var(--color-text-dark-primary, #b5b3a4);
   }
 
+  /* Active phase - the actual game state */
   .phase-item.active {
     background: var(--color-primary, #5e0000);
     color: #fff;
     border-color: var(--color-primary-dark, #3e0000);
     box-shadow: 0 4px 12px rgba(94, 0, 0, 0.4);
-    transform: scale(1.05);
+  }
+
+  /* Selected phase - what the user is viewing */
+  .phase-item.selected {
+    position: relative;
+  }
+  
+  .phase-item.selected::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 3px;
+    background: #fff;  /* Always white underline for selection */
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.4);
+    transition: all 0.3s ease;
+    z-index: 10; /* Ensure it's on top */
+  }
+  
+  /* When phase is both active AND selected */
+  .phase-item.active.selected {
+    animation: none; /* Remove pulse animation when viewing active phase */
+  }
+  
+  /* Active indicator dot for when active but not selected */
+  .active-indicator {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    background: var(--color-gold-bright, #ffd700);
+    border: 2px solid var(--color-dark-bg, #18181b);
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite ease-in-out;
+    z-index: 1;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
   }
 
   .phase-item.active .phase-label {
@@ -133,9 +219,11 @@
     text-align: center;
     line-height: 1.2;
     opacity: 0.9;
+    position: relative;
+    z-index: 2;
   }
 
-  /* Animation for active phase */
+  /* Animation for active phase when not selected */
   @keyframes pulse {
     0% {
       box-shadow: 0 4px 12px rgba(94, 0, 0, 0.4);
@@ -148,7 +236,7 @@
     }
   }
 
-  .phase-item.active {
+  .phase-item.active:not(.selected) {
     animation: pulse 2s infinite ease-in-out;
   }
 
@@ -174,6 +262,13 @@
     
     .phase-connector {
       display: none;
+    }
+    
+    .active-indicator {
+      width: 8px;
+      height: 8px;
+      top: -2px;
+      right: -2px;
     }
   }
 </style>

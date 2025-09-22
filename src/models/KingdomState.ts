@@ -3,7 +3,6 @@
 
 import { Hex } from './Hex';
 import type { KingdomEvent } from './Events';
-import { EventManager } from './Events';
 
 /**
  * Settlement tiers based on Reignmaker Lite rules
@@ -96,6 +95,8 @@ export interface Modifier {
 
 /**
  * Represents the current state of a kingdom
+ * This class contains only pure kingdom data - what defines the kingdom itself.
+ * Turn/phase management and UI state are handled separately in gameState.
  */
 export class KingdomState {
   // Core Kingdom stats (Reignmaker Lite)
@@ -133,23 +134,15 @@ export class KingdomState {
   // Construction
   buildQueue: BuildProject[] = [];
   
-  // Turn tracking
-  currentTurn: number = 1;
-  currentPhase: TurnPhase = TurnPhase.PHASE_I;
-  phaseStepsCompleted: Map<string, boolean> = new Map();
-  
   // War status
   isAtWar: boolean = false;
   
-  // Event management
+  // Event management (events affect the kingdom directly)
   currentEvent: KingdomEvent | null = null;
   continuousEvents: KingdomEvent[] = [];
-  eventDC: number = 16;
-  eventManager: EventManager = new EventManager();
   
   // Modifiers and effects
   ongoingModifiers: Modifier[] = [];
-  oncePerTurnActions: Set<string> = new Set();
   
   /**
    * Calculate total resource production from all hexes with worksites
@@ -272,55 +265,5 @@ export class KingdomState {
     this.resources.set('lumber', 0);
     this.resources.set('stone', 0);
     this.resources.set('ore', 0);
-  }
-  
-  /**
-   * Check if a phase step has been completed
-   */
-  isPhaseStepCompleted(stepId: string): boolean {
-    return this.phaseStepsCompleted.get(stepId) === true;
-  }
-  
-  /**
-   * Mark a phase step as completed
-   */
-  markPhaseStepCompleted(stepId: string): void {
-    this.phaseStepsCompleted.set(stepId, true);
-  }
-  
-  /**
-   * Reset phase steps for a new turn
-   */
-  resetPhaseSteps(): void {
-    this.phaseStepsCompleted.clear();
-  }
-  
-  /**
-   * Get the next phase in sequence
-   */
-  getNextPhase(): TurnPhase | null {
-    const phases = Object.values(TurnPhase);
-    const currentIndex = phases.indexOf(this.currentPhase);
-    
-    if (currentIndex < phases.length - 1) {
-      return phases[currentIndex + 1];
-    } else {
-      return null; // End of turn
-    }
-  }
-  
-  /**
-   * Advance to the next phase
-   */
-  advancePhase(): void {
-    const nextPhase = this.getNextPhase();
-    if (nextPhase) {
-      this.currentPhase = nextPhase;
-    } else {
-      // End of turn - advance to next turn
-      this.currentTurn++;
-      this.currentPhase = TurnPhase.PHASE_I;
-      this.resetPhaseSteps();
-    }
   }
 }
