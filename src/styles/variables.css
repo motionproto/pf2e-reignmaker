@@ -3,76 +3,76 @@
 
 :root {
   /* Base Colors */
-  --color-gray-50: #fafafa;
-  --color-gray-100: #f4f4f5;
-  --color-gray-200: #e4e4e7;
-  --color-gray-300: #d4d4d8;
-  --color-gray-400: #a1a1aa;
-  --color-gray-500: #71717a;
-  --color-gray-600: #52525b;
-  --color-gray-700: #3f3f46;
-  --color-gray-800: #27272a;
-  --color-gray-850: #1f1f23;
-  --color-gray-900: #18181b;
-  --color-gray-950: #0f0f11;
+  --color-gray-50: hsla(0, 0%, 98%, 1);
+  --color-gray-100: hsla(240, 5%, 96%, 1);
+  --color-gray-200: hsla(220, 13%, 90%, 1);
+  --color-gray-300: hsla(216, 12%, 84%, 1);
+  --color-gray-400: hsla(240, 5%, 65%, 1);
+  --color-gray-500: hsla(240, 5%, 46%, 1);
+  --color-gray-600: hsla(240, 5%, 34%, 1);
+  --color-gray-700: hsla(240, 5%, 26%, 1);
+  --color-gray-800: hsla(240, 4%, 16%, 1);
+  --color-gray-850: hsla(229, 6%, 13%, 1);
+  --color-gray-900: hsla(240, 6%, 10%, 1);
+  --color-gray-950: hsla(229, 6%, 6%, 1);
   
   /* Accent Colors */
-  --color-crimson: #872626;
-  --color-crimson-light: #ba5050;
-  --color-crimson-dark: #b91c1c;
-  --color-burgundy: #5e0000;
-  --color-burgundy-dark: #3a0000;
-  --color-burgundy-darker: #450a0a;
+  --color-crimson: hsla(0, 56%, 34%, 1);
+  --color-crimson-light: hsla(0, 40%, 52%, 1);
+  --color-crimson-dark: hsla(0, 74%, 42%, 1);
+  --color-burgundy: hsla(0, 100%, 18%, 1);
+  --color-burgundy-dark: hsla(0, 100%, 11%, 1);
+  --color-burgundy-darker: hsla(0, 75%, 15%, 1);
   
-  --color-gold: #b8860b;
-  --color-gold-light: #d4a574;
-  --color-gold-lighter: #d4c4a0;
-  --color-gold-bright: #ffd700;
-  --color-amber: #f59e0b;
-  --color-amber-light: #fbbf24;
-  --color-amber-lighter: #fcd34d;
+  --color-gold: hsla(42, 89%, 38%, 1);
+  --color-gold-light: hsla(29, 48%, 64%, 1);
+  --color-gold-lighter: hsla(42, 35%, 73%, 1);
+  --color-gold-bright: hsla(51, 100%, 50%, 1);
+  --color-amber: hsla(38, 91%, 50%, 1);
+  --color-amber-light: hsla(44, 97%, 56%, 1);
+  --color-amber-lighter: hsla(45, 97%, 64%, 1);
   
-  --color-green: #22c55e;
-  --color-green-dark: #2a5434;
-  --color-green-darker: #1e3a26;
-  --color-green-light: #4CAF50;
-  --color-green-lighter: #9BC89E;
-  --color-green-border: #3a6a44;
-  --color-green-hover: #3a6444;
+  --color-green: hsla(142, 71%, 45%, 1);
+  --color-green-dark: hsla(134, 33%, 25%, 1);
+  --color-green-darker: hsla(135, 32%, 17%, 1);
+  --color-green-light: hsla(122, 39%, 49%, 1);
+  --color-green-lighter: hsla(123, 25%, 70%, 1);
+  --color-green-border: hsla(133, 29%, 32%, 1);
+  --color-green-hover: hsla(132, 27%, 31%, 1);
   
-  --color-blue: #2196F3;
-  --color-blue-light: #4a9eff;
-  --color-blue-bg: rgba(33, 150, 243, 0.1);
+  --color-blue: hsla(207, 90%, 54%, 1);
+  --color-blue-light: hsla(217, 100%, 65%, 1);
+  --color-blue-bg: hsla(207, 90%, 54%, 0.1);
   
-  --color-orange: #ff9800;
-  --color-orange-bg: rgba(255, 193, 7, 0.1);
-  --color-orange-border: #FFC107;
+  --color-orange: hsla(36, 100%, 50%, 1);
+  --color-orange-bg: hsla(46, 100%, 51%, 0.1);
+  --color-orange-border: hsla(46, 100%, 51%, 1);
   
-  --color-red: #ae2d24;
-  --color-red-bg: rgba(244, 67, 54, 0.2);
+  --color-red: hsla(4, 66%, 41%, 1);
+  --color-red-bg: hsla(4, 90%, 59%, 0.2);
   
   /* Brown/Tan Colors */
-  --color-brown: #8b4513;
-  --color-brown-light: #d4a574;
-  --color-brown-bg: rgba(139, 69, 19, 0.1);
-  --color-brown-border: rgba(139, 69, 19, 0.3);
+  --color-brown: hsla(25, 76%, 31%, 1);
+  --color-brown-light: hsla(29, 48%, 64%, 1);
+  --color-brown-bg: hsla(25, 76%, 31%, 0.1);
+  --color-brown-border: hsla(25, 76%, 31%, 0.3);
   
   /* Beige/Off-white */
-  --color-beige: #f5f5f0;
-  --color-beige-light: #fefef9;
+  --color-beige: hsla(60, 17%, 95%, 1);
+  --color-beige-light: hsla(60, 60%, 99%, 1);
   
   /* Dark Theme Colors */
-  --color-dark-text: #191813;
+  --color-dark-text: hsla(50, 14%, 9%, 1);
   --color-dark-bg: var(--color-gray-950);
   --color-dark-surface: var(--color-gray-900);
   --color-dark-elevated: var(--color-gray-850);
   --color-dark-overlay: var(--color-gray-800);
   
   /* Light Text Colors */
-  --color-light-text: #ffffff;
-  --color-light-text-dim: #e7e7e7;
-  --color-light-text-muted: #e0e0e0;
-  --color-light-text-secondary: #a0a0a0;
+  --color-light-text: hsla(0, 0%, 100%, 1);
+  --color-light-text-dim: hsla(0, 0%, 91%, 1);
+  --color-light-text-muted: hsla(0, 0%, 88%, 1);
+  --color-light-text-secondary: hsla(0, 0%, 63%, 1);
   
   /* Legacy PF2E Theme Colors (for compatibility) */
   --pf2e-bg-dark: var(--color-gray-900);
@@ -96,7 +96,7 @@
   --text-secondary: var(--color-gray-300);
   --text-tertiary: var(--color-gray-400);
   --text-disabled: var(--color-gray-600);
-  --text-accent: var(--color-amber-light);
+  --text-accent: var(--color-amber);
   --text-muted: var(--color-gray-400);  /* Kept for backward compatibility */
   
   --color-primary: var(--color-crimson);
@@ -117,21 +117,22 @@
   --status-critical-failure: var(--color-red);
   
   /* Button Colors */
-  --btn-primary-bg: #7f1d1d;
-  --btn-primary-hover: #991b1b;
-  --btn-secondary-bg: #374151;
-  --btn-secondary-hover: #4b5563;
-  --btn-tertiary-border: #6b7280;
-  --btn-tertiary-hover-border: #9ca3af;
-  --btn-tertiary-text: #d1d5db;
+  --btn-primary-bg: hsla(0, 63%, 31%, 1);
+  --btn-primary-hover: hsla(0, 70%, 35%, 1);
+  --btn-secondary-bg: hsla(215, 19%, 27%, 1);
+  --btn-secondary-hover: hsla(215, 14%, 34%, 1);
+  --btn-tertiary-border: hsla(218, 9%, 46%, 1);
+  --btn-tertiary-hover-border: hsla(214, 14%, 65%, 1);
+  --btn-tertiary-text: hsla(214, 17%, 84%, 1);
   
   /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.05);
-  --border-default: rgba(255, 255, 255, 0.1);
-  --border-medium: rgba(255, 255, 255, 0.2);
-  --border-strong: rgba(255, 255, 255, 0.3);
+  --border-subtle: hsla(0, 0%, 100%, 0.05);
+  --border-default: hsla(0, 0%, 100%, 0.1);
+  --border-medium: hsla(0, 0%, 100%, 0.2);
+  --border-strong: hsla(0, 0%, 100%, 0.3);
   --border-primary: var(--color-crimson);
   --border-accent: var(--color-gold);
+  --border-accent-75: hsl(42, 90%,20%);
   
   /* Border Radius */
   --radius-sm: 3px;
@@ -175,20 +176,20 @@
   --gradient-progress: linear-gradient(90deg, var(--color-crimson), var(--color-gold));
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  --shadow-card: 0 4px 8px rgba(0, 0, 0, 0.2);
-  --shadow-overlay: 0 10px 40px rgba(0, 0, 0, 0.5);
-  --shadow-app: 0 0 20px rgba(0, 0, 0, 0.8);
-  --shadow-focus: 0 0 0 3px rgba(239, 68, 68, 0.1);
-  --shadow-glow-green: 0 0 5px rgba(155, 200, 158, 0.3);
+  --shadow-sm: 0 1px 2px 0 hsla(0, 0%, 0%, 0.05);
+  --shadow-md: 0 4px 6px -1px hsla(0, 0%, 0%, 0.1);
+  --shadow-lg: 0 10px 15px -3px hsla(0, 0%, 0%, 0.1);
+  --shadow-xl: 0 20px 25px -5px hsla(0, 0%, 0%, 0.1);
+  --shadow-2xl: 0 25px 50px -12px hsla(0, 0%, 0%, 0.25);
+  --shadow-card: 0 4px 8px hsla(0, 0%, 0%, 0.2);
+  --shadow-overlay: 0 10px 40px hsla(0, 0%, 0%, 0.5);
+  --shadow-app: 0 0 20px hsla(0, 0%, 0%, 0.8);
+  --shadow-focus: 0 0 0 3px hsla(0, 78%, 60%, 0.1);
+  --shadow-glow-green: 0 0 5px hsla(123, 25%, 70%, 0.3);
   
   /* Text Shadows */
-  --text-shadow-sm: 1px 1px 2px rgba(0, 0, 0, 0.5);
-  --text-shadow-md: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  --text-shadow-sm: 1px 1px 2px hsla(0, 0%, 0%, 0.5);
+  --text-shadow-md: 2px 2px 4px hsla(0, 0%, 0%, 0.3);
   
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);

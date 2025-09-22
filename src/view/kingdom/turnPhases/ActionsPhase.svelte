@@ -262,9 +262,9 @@
    }
    
    .action-category {
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--color-gray-900);
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-accent-75);
       padding: 20px;
    }
    
@@ -275,7 +275,7 @@
       align-items: start;
       
       .category-icon {
-         font-size: 24px;
+         font-size: 32px;
          color: var(--color-amber);
          margin-top: 3px;
       }
@@ -286,16 +286,15 @@
       
       .category-name {
          margin: 0 0 5px 0;
-         font-size: var(--font-lg);
+         font-size: var(--font-2xl);
          font-weight: 600;
-         color: var(--text-primary);
+         color: var(--color-amber);
       }
       
       .category-description {
          margin: 0;
          color: var(--text-secondary);
-         font-size: var(--font-sm);
-         font-style: italic;
+         font-size: var(--font-md);
       }
    }
    

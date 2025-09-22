@@ -134,14 +134,14 @@
          rgba(24, 24, 27, 0.6),
          rgba(31, 31, 35, 0.4));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-medium);
       transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
       min-height: min-content; // Allow card to be at least as tall as its content
       
       &:hover:not(.disabled) {
-         border-color: var(--border-medium);
+         border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
@@ -167,7 +167,11 @@
       background: transparent;
       border: none;
       margin: 0; // Reset any default margins
-      padding: 1em;
+      
+      padding-left: 1em;
+      padding-right: 1em;
+      padding-top: 0.75em;
+      padding-bottom: 0.75em;
       cursor: pointer;
       text-align: left;
       transition: background 0.2s ease;
