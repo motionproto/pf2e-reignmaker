@@ -97,15 +97,15 @@
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
     border-radius: 6px;
     padding: 0.75rem 1rem 1rem; /* Increased bottom padding for underline space */
+    font-family: var(--base-font);
   }
 
   .phase-bar-inner {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     gap: 0;
     max-width: 900px;
-    margin: 0 auto;
   }
   
   .phase-connector {
@@ -116,8 +116,8 @@
   }
   
   .phase-connector.completed {
-    background: var(--color-primary, #5e0000);
-    box-shadow: 0 0 4px rgba(94, 0, 0, 0.4);
+    background: var(--color-primary, #6e6e6e);
+    box-shadow: 0 0 4px rgba(85, 85, 85, 0.4);
   }
 
   .phase-item {
@@ -125,7 +125,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.6rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(206, 206, 206, 0.05);
     border: 1px solid rgba(180, 170, 150, 0.3);
     border-radius: 8px;
     cursor: pointer;
@@ -133,6 +133,7 @@
     min-width: 100px;
     position: relative;
     color: var(--color-text-dark-secondary, #7a7971);
+    font-family: var(--base-font);
   }
 
   .phase-item:hover {
@@ -143,9 +144,9 @@
   }
 
   .phase-item.completed {
-    background: rgba(94, 0, 0, 0.1);
-    border-color: rgba(94, 0, 0, 0.3);
-    color: var(--color-text-dark-primary, #b5b3a4);
+    background: rgba(59, 59, 59, 0.1);
+    border-color: rgba(70, 70, 70, 0.3);
+    color: var(-text-secondary, #b5b3a4);
   }
 
   /* Active phase - the actual game state */
@@ -212,9 +213,9 @@
   }
 
   .phase-label {
-    font-size: 0.75rem;
+    font-size: 1rem;
     font-weight: 500;
-    font-family: var(--font-primary, system-ui);
+    font-family: var(--base-font);
     text-align: center;
     line-height: 1.2;
     opacity: 0.9;
@@ -225,13 +226,13 @@
   /* Animation for active phase when not selected */
   @keyframes pulse {
     0% {
-      box-shadow: 0 4px 12px rgba(94, 0, 0, 0.4);
+      box-shadow: 0 4px 4px rgba(255, 20, 20, 0.4);
     }
     50% {
-      box-shadow: 0 4px 20px rgba(94, 0, 0, 0.6);
+      box-shadow: 0 4px 20px rgba(255, 20, 20, 0.8);
     }
     100% {
-      box-shadow: 0 4px 12px rgba(94, 0, 0, 0.4);
+      box-shadow: 0 4px 4px rgba(255, 20, 20, 0.4);
     }
   }
 

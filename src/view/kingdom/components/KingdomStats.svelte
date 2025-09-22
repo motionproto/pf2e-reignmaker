@@ -261,15 +261,16 @@
    .kingdom-name-header h3 {
       margin: 0;
       color: white;
-      font-size: 1.25rem;
+      font-size: 2rem;
       font-weight: 700;
       flex: 1;
-      font-family: 'Modesto Condensed', serif;
+      font-family: var(--header-font);
       text-shadow: var(--text-shadow-sm);
    }
    
    .kingdom-name-header input {
       flex: 1;
+      max-width: calc(100% - 1rem);
       font-size: 1.25rem;
       font-weight: 700;
       background-color: transparent;
@@ -278,7 +279,7 @@
       padding: 0.25rem 0.5rem;
       border-radius: 0.25rem;
       outline: none;
-      font-family: 'Modesto Condensed', serif;
+      font-family: var(--display-font);
    }
    
    .kingdom-name-header .edit-btn {
@@ -301,7 +302,7 @@
    .kingdom-stats-scrollable {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem;
+      padding: 1rem 0 0 0;
    }
    
    .kingdom-stats-content {
@@ -313,19 +314,20 @@
    .stat-group {
       background: var(--bg-elevated);
       border-radius: 0.5rem;
-      padding: 1rem;
+      padding: 0 0 0.5rem 0;
       box-shadow: var(--shadow-card);
    }
    
    .stat-group-header {
-      margin: 0 0 1rem 0;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid var(--border-primary);
+      margin-bottom: .5rem;
+      padding: 0.5rem 1rem;
+      background: #333333;
+      border-bottom: 1px solid var(--border-subtle);
+      border-radius: 0.5rem 0.5rem 0 0;
       color: var(--text-primary);
-      font-size: 1.125rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      font-family: 'Modesto Condensed', serif;
-      text-transform: uppercase;
+      font-family: var(--header-font);
       letter-spacing: 0.025em;
    }
    
@@ -333,7 +335,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.5rem 0;
+      padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border-subtle);
    }
    
@@ -342,7 +344,7 @@
    }
    
    .stat-item label {
-      font-size: 0.875rem;
+      font-size: 1rem;
       color: var(--text-muted);
       font-weight: 500;
    }
@@ -425,14 +427,14 @@
    }
    
    .resource-section {
-      margin-top: 0.75rem;
-      padding-top: 0.75rem;
+
+      padding: 1.5rem .75rem 1rem .75rem;
       border-top: 1px solid var(--border-default);
    }
    
    .resource-section:first-child {
       margin-top: 0;
-      padding-top: 0;
+      padding: 0.75rem 1rem;
       border-top: none;
    }
    
@@ -440,7 +442,8 @@
       font-size: 0.875rem;
       font-weight: 600;
       color: var(--color-accent);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
+      margin-top: 0;
       text-transform: uppercase;
       letter-spacing: 0.05em;
    }
@@ -462,7 +465,7 @@
    }
    
    .resource-item label {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 0.25rem;
    }

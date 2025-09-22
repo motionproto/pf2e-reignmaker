@@ -150,7 +150,6 @@
       flex: 0 0 250px;
       background: var(--bg-surface);
       border-radius: 0.375rem;
-      padding: 0.5rem;
       overflow-y: auto;
    }
 

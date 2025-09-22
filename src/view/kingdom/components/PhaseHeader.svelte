@@ -48,20 +48,20 @@
 
 <style>
   .phase-header-wrapper {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0
   }
 
   .phase-header {
-    padding: 1.25rem 1.5rem;
+    padding: 1rem 1rem;
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-card);
     display: flex;
     align-items: center;
-    gap: 1rem;
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-elevated), var(--bg-overlay));
     border: 1px solid var(--border-subtle);
+    font-family: var(--base-font);
   }
 
 
@@ -72,11 +72,10 @@
 
   @keyframes fadeIn {
     0% {
-      opacity: 0.95;
       transform: translateY(-2px);
     }
     100% {
-      opacity: 0.95;
+
       transform: translateY(0);
     }
   }
@@ -99,7 +98,7 @@
     margin: 0;
     font-size: var(--font-3xl);
     font-weight: 700;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--base-font);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-md);
     letter-spacing: 0.025em;
@@ -108,8 +107,9 @@
   .phase-text p {
     margin: var(--space-2) 0 0;
     font-size: var(--font-md);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    color: var(--text-primary);
+    font-family: var(--base-font);
+    color: var(--text-secondary
+    );
     opacity: 0.85;
   }
 

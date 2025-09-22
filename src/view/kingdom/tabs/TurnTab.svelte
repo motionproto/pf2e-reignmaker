@@ -49,15 +49,15 @@
 </script>
 
 <div class="turn-management">
-   <!-- Phase Bar at the top -->
-   <PhaseBar />
-   
    <!-- Phase header with gradient styling -->
    <PhaseHeader 
       title={phaseInfo.displayName}
       description={phaseInfo.description}
       icon={displayPhaseIcon}
    />
+   
+   <!-- Phase Bar underneath phase header -->
+   <PhaseBar />
    
    <div class="phase-content">
       {#if displayPhase === TurnPhase.PHASE_I}
