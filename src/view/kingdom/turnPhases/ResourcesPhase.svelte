@@ -1,10 +1,10 @@
 <script lang="ts">
-   import { kingdomState, collectResources, processFoodConsumption, markPhaseStepCompleted } from '../../../stores/kingdom';
-   import { totalProduction, foodConsumption } from '../../../stores/kingdom';
+   import { kingdomState, collectResources, processFoodConsumption, totalProduction, foodConsumption } from '../../../stores/kingdom';
+   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    
    // Check if steps are completed
-   $: collectCompleted = $kingdomState.isPhaseStepCompleted('collect-resources');
-   $: consumeCompleted = $kingdomState.isPhaseStepCompleted('consume-food');
+   $: collectCompleted = isPhaseStepCompleted('collect-resources');
+   $: consumeCompleted = isPhaseStepCompleted('consume-food');
    
    function handleCollectResources() {
       collectResources();

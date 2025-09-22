@@ -1,15 +1,14 @@
 <script lang="ts">
-   import { kingdomState, clearNonStorableResources, incrementTurn } from '../../../stores/kingdom';
+   import { kingdomState, clearNonStorableResources } from '../../../stores/kingdom';
+   import { gameState, incrementTurn, setCurrentPhase, resetPhaseSteps } from '../../../stores/gameState';
+   import { TurnPhase } from '../../../models/KingdomState';
    
    function endTurn() {
       clearNonStorableResources();
       incrementTurn();
       // Reset phase to Phase I for next turn
-      kingdomState.update(state => {
-         state.currentPhase = 'Phase I: Kingdom Status' as any;
-         state.resetPhaseSteps();
-         return state;
-      });
+      setCurrentPhase(TurnPhase.PHASE_I);
+      resetPhaseSteps();
    }
 </script>
 
@@ -19,7 +18,7 @@
    
    <div class="phase-summary">
       <h4>Turn Summary:</h4>
-      <p>Turn {$kingdomState.currentTurn} is complete.</p>
+      <p>Turn {$gameState.currentTurn} is complete.</p>
       <p>Non-storable resources (lumber, stone, ore) will be cleared.</p>
       <p>Gold and Food will carry over to the next turn.</p>
    </div>
@@ -27,7 +26,7 @@
    <div class="phase-actions">
       <button class="end-turn-button" on:click={endTurn}>
          <i class="fas fa-check-circle"></i>
-         End Turn and Start Turn {$kingdomState.currentTurn + 1}
+         End Turn and Start Turn {$gameState.currentTurn + 1}
       </button>
    </div>
 </div>

@@ -189,7 +189,7 @@
     right: -4px;
     width: 10px;
     height: 10px;
-    background: var(--color-gold-bright, #ffd700);
+    background: var(--color-gold-bright, #fff);
     border: 2px solid var(--color-dark-bg, #18181b);
     border-radius: 50%;
     animation: pulse-dot 2s infinite ease-in-out;
