@@ -5,10 +5,27 @@
     // Check if module is active
     const moduleId = 'pf2e-kingdom-lite';
     const module = game.modules.get(moduleId);
-    
+
     if (!module?.active) {
         ui.notifications.error("PF2e Kingdom Lite module is not active. Please enable it in Module Settings.");
         return;
+    }
+    
+    // Debug: Check Kingmaker module status
+    const kingmakerModule = game.modules.get('pf2e-kingmaker');
+    console.log("PF2e Kingdom Lite | Kingmaker module status:", {
+        installed: !!kingmakerModule,
+        active: kingmakerModule?.active,
+        globalKingmaker: typeof kingmaker !== 'undefined' ? kingmaker : null,
+        globalThisKingmaker: globalThis.kingmaker,
+        windowKingmaker: window.kingmaker
+    });
+    
+    // Debug: Try to trigger a manual sync
+    if (window.pf2eKingdomLite?.syncKingmaker) {
+        console.log("PF2e Kingdom Lite | Attempting manual sync...");
+        const syncResult = window.pf2eKingdomLite.syncKingmaker();
+        console.log("PF2e Kingdom Lite | Sync result:", syncResult);
     }
     
     // Try multiple ways to access the kingdom UI function

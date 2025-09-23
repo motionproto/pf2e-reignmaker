@@ -211,10 +211,10 @@
                   <span class="stat-label">Farmlands:</span>
                   <span class="stat-value">{foodProduction}</span>
                </div>
-               <div class="stat-item">
-                  <span class="stat-label">Production:</span>
-                  <span class="stat-value">{foodProduction * 2}/turn</span>
-               </div>
+            <div class="stat-item">
+               <span class="stat-label">Production:</span>
+               <span class="stat-value">{actualFoodIncome}</span>
+            </div>
             </div>
             
             <div class="resource-section">
@@ -222,15 +222,15 @@
                <div class="resource-grid">
                   <div class="resource-item">
                      <span class="resource-label">Lumber</span>
-                     <span>{$kingdomState.resources.get('lumber') || 0}</span>
+                     <span>{actualLumberIncome}</span>
                   </div>
                   <div class="resource-item">
                      <span class="resource-label">Stone</span>
-                     <span>{$kingdomState.resources.get('stone') || 0}</span>
+                     <span>{actualStoneIncome}</span>
                   </div>
                   <div class="resource-item">
                      <span class="resource-label">Ore</span>
-                     <span>{$kingdomState.resources.get('ore') || 0}</span>
+                     <span>{actualOreIncome}</span>
                   </div>
                </div>
                <div class="stat-item">

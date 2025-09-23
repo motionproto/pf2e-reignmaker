@@ -33,7 +33,8 @@ export interface KingmakerModule {
  * Access to the global kingmaker module instance
  * This will be available when the PF2e Kingmaker module is installed
  */
-declare const kingmaker: KingmakerModule | null;
+// @ts-ignore
+declare const game: any;
 
 /**
  * Data class representing parsed realm/kingdom data
@@ -109,7 +110,8 @@ export class WorkSite {
  * Check if the Kingmaker module is installed and available
  */
 export function isKingmakerInstalled(): boolean {
-    return typeof (window as any).kingmaker !== 'undefined' && (window as any).kingmaker !== null;
+    // @ts-ignore - Foundry global
+    return typeof game !== 'undefined' && game?.modules?.get('pf2e-kingmaker')?.active;
 }
 
 /**
@@ -118,8 +120,12 @@ export function isKingmakerInstalled(): boolean {
 export function getKingmakerRealmData(): RealmData | null {
     if (!isKingmakerInstalled()) return null;
     
-    const km = (window as any).kingmaker as KingmakerModule;
-    if (!km) return null;
+    // @ts-ignore - Kingmaker global
+    const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker) as KingmakerModule;
+    if (!km?.state?.hexes) {
+        console.warn("Kingmaker module state not available");
+        return null;
+    }
     
     try {
         const hexes = km.state.hexes;
@@ -354,8 +360,12 @@ export function syncKingmakerToKingdomState(): boolean {
         return false;
     }
     
-    const km = (window as any).kingmaker as KingmakerModule;
-    if (!km) return false;
+    // @ts-ignore - Kingmaker global
+    const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker) as KingmakerModule;
+    if (!km?.state?.hexes) {
+        console.warn("Kingmaker module state not available");
+        return false;
+    }
     
     try {
         const hexStates = km.state.hexes;
@@ -590,25 +600,23 @@ export function startKingmakerSync(): () => void {
  * This should be called from the module's ready hook
  */
 export function initializeKingmakerSync(): void {
-    // @ts-ignore - Foundry global
-    if (typeof Hooks !== 'undefined') {
-        Hooks.once('ready', () => {
-            console.log('Initializing Kingmaker sync...');
-            
-            // Check if Kingmaker is installed before starting sync
-            if (isKingmakerInstalled()) {
-                startKingmakerSync();
-                console.log('Kingmaker sync started');
-            } else {
-                console.log('Kingmaker module not detected, sync not started');
-                
-                // Set up a listener to start sync if Kingmaker gets loaded later
-                Hooks.on('setup', () => {
-                    if (isKingmakerInstalled()) {
-                        startKingmakerSync();
-                    }
-                });
-            }
-        });
+    console.log('Initializing Kingmaker sync...');
+    
+    // Check if Kingmaker is installed before starting sync
+    if (isKingmakerInstalled()) {
+        startKingmakerSync();
+        console.log('Kingmaker sync started');
+    } else {
+        console.log('Kingmaker module not detected, sync not started');
+        
+        // Set up a listener to start sync if Kingmaker gets loaded later
+        // @ts-ignore - Foundry global
+        if (typeof Hooks !== 'undefined') {
+            Hooks.on('setup', () => {
+                if (isKingmakerInstalled()) {
+                    startKingmakerSync();
+                }
+            });
+        }
     }
 }

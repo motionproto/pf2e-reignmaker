@@ -6,12 +6,14 @@
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
+import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 
 // Extend module type for our API
 declare global {
     interface Game {
         pf2eKingdomLite?: {
             openKingdomUI: (actorId?: string) => void;
+            syncKingmaker?: () => boolean;
         };
     }
     
@@ -19,6 +21,7 @@ declare global {
         openKingdomUI?: (actorId?: string) => void;
         pf2eKingdomLite?: {
             openKingdomUI: (actorId?: string) => void;
+            syncKingmaker?: () => boolean;
         };
     }
 }
@@ -100,6 +103,9 @@ Hooks.once('ready', () => {
     console.log('PF2e Kingdom Lite | Module ready');
     console.log('PF2e Kingdom Lite | Svelte Kingdom system initialized');
     
+    // Initialize Kingmaker sync if the module is present
+    initializeKingmakerSync();
+    
     // Import KingdomApp at module level to avoid dynamic import issues
     import('./view/kingdom/KingdomApp').then(({ KingdomApp }) => {
         // Create openKingdomUI function
@@ -132,12 +138,30 @@ Hooks.once('ready', () => {
             }
         };
         
+        // Create manual sync function for debugging
+        const syncKingmaker = () => {
+            console.log('PF2e Kingdom Lite | Manual sync triggered');
+            const result = syncKingmakerToKingdomState();
+            
+            // Log debug info
+            // @ts-ignore
+            const km = typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker;
+            console.log('PF2e Kingdom Lite | Sync debug:', {
+                syncResult: result,
+                kingmakerGlobal: km,
+                kingmakerState: km?.state,
+                hexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0
+            });
+            
+            return result;
+        };
+        
         // Get the module object and add the API
         // @ts-ignore
         const module = game.modules.get('pf2e-kingdom-lite') as any;
         if (module) {
             // Add API object
-            module.api = { openKingdomUI };
+            module.api = { openKingdomUI, syncKingmaker };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
             console.log('PF2e Kingdom Lite | Module API registered');
@@ -145,12 +169,12 @@ Hooks.once('ready', () => {
         
         // Register global function to open Kingdom UI
         // @ts-ignore
-        game.pf2eKingdomLite = { openKingdomUI };
+        game.pf2eKingdomLite = { openKingdomUI, syncKingmaker };
         
         // Also add to window for easy console access in dev mode
         if (import.meta.env.DEV) {
             window.openKingdomUI = openKingdomUI;
-            window.pf2eKingdomLite = { openKingdomUI };
+            window.pf2eKingdomLite = { openKingdomUI, syncKingmaker };
         }
         
         console.log('PF2e Kingdom Lite | Global functions registered:');
