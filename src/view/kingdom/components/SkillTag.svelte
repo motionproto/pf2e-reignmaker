@@ -5,22 +5,27 @@
    export let description: string = '';
    export let selected: boolean = false;
    export let disabled: boolean = false;
+   export let loading: boolean = false;
+   export let faded: boolean = false;
    
    const dispatch = createEventDispatcher();
    
    function handleClick() {
-      if (!disabled) {
-         dispatch('select', { skill });
+      if (!disabled && !loading) {
+         dispatch('execute', { skill });
       }
    }
 </script>
 
 <button 
-   class="skill-tag {selected ? 'selected' : ''} {disabled && !selected ? 'disabled' : ''}"
+   class="skill-tag {selected ? 'selected' : ''} {disabled && !selected ? 'disabled' : ''} {loading ? 'loading' : ''} {faded ? 'faded' : ''}"
    on:click={handleClick}
-   {disabled}
+   disabled={disabled || loading}
    type="button"
 >
+   {#if loading}
+      <i class="fas fa-dice-d20 fa-spin"></i>
+   {/if}
    <span class="skill-label">{skill}</span>
    {#if description}
       <span class="skill-divider">·</span>
@@ -31,17 +36,18 @@
 <style lang="scss">
    .skill-tag {
       display: inline-flex;
-      align-items: center; // Center vertically
+      align-items: center;
       gap: 6px;
-      padding: 10px 16px; // Even vertical padding
+      padding: 10px 16px;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-medium);
-      border-radius: var(--radius-sm); // Standard button radius
+      border-radius: var(--radius-sm);
       cursor: pointer;
       transition: all 0.15s ease;
       white-space: nowrap;
       font-size: var(--font-md);
-      line-height: 1; // Consistent line height
+      line-height: 1;
+      position: relative;
       
       // Remove button defaults
       font-family: inherit;
@@ -51,33 +57,52 @@
       backdrop-filter: blur(4px);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       
-      &:hover:not(:disabled) {
-         background: rgba(255, 255, 255, 0.08);
-         border-color: var(--border-strong);
+      .skill-label {
+         color: var(--text-primary);
+         font-weight: 500;
+      }
+      
+      .skill-divider {
+         color: var(--text-tertiary);
+         opacity: 0.5;
+         margin: 0 2px;
+      }
+      
+      .skill-description {
+         color: var(--text-secondary);
+         opacity: 0.8;
+      }
+      
+      &:hover:not(.disabled):not(.selected) {
          transform: translateY(-1px);
-         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      }
-      
-      &:active:not(:disabled) {
-         transform: translateY(0);
-         background: rgba(255, 255, 255, 0.03);
-      }
-      
-      &.selected {
-         background: linear-gradient(135deg, 
-            rgba(251, 191, 36, 0.15),
-            rgba(251, 191, 36, 0.1));
-         border-color: var(--color-amber);
-         box-shadow: 0 1px 4px rgba(251, 191, 36, 0.2);
+         border-color: var(--border-strong);
+         background: rgba(255, 255, 255, 0.08);
+         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
          
          .skill-label {
             color: var(--color-amber-light);
          }
+      }
+      
+      &.selected {
+         background: var(--color-amber);
+         border-color: var(--color-amber);
+         box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+         
+         .skill-label {
+            color: var(--color-black);
+            font-weight: 600;
+         }
+         
+         .skill-description,
+         .skill-divider {
+            color: var(--color-black);
+            opacity: 0.7;
+         }
          
          &:hover {
-            background: linear-gradient(135deg, 
-               rgba(251, 191, 36, 0.2),
-               rgba(251, 191, 36, 0.15));
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
          }
       }
       
@@ -92,25 +117,29 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
          }
       }
+      
+      &.loading {
+         opacity: 0.7;
+         cursor: wait;
+         
+         .fa-spin {
+            animation: spin 1s linear infinite;
+            margin-right: 4px;
+         }
+      }
+      
+      &.faded {
+         opacity: 0.3;
+         
+         &:hover {
+            transform: none;
+            background: rgba(255, 255, 255, 0.05);
+         }
+      }
    }
    
-   .skill-label {
-      font-weight: 600;
-      color: var(--text-primary);
-      text-transform: capitalize;
-      line-height: 1;
-   }
-   
-   .skill-divider {
-      color: var(--text-tertiary);
-      opacity: 0.5;
-      font-weight: 300;
-      line-height: 1;
-   }
-   
-   .skill-description {
-      color: var(--text-tertiary);
-      font-size: var(--font-md);
-      line-height: 1;
+   @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
    }
 </style>

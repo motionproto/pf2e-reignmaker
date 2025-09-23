@@ -1,16 +1,28 @@
 <script lang="ts">
    import type { PlayerAction } from '../../../models/PlayerActions';
    import SkillTag from './SkillTag.svelte';
+   import { 
+      performKingdomActionRoll, 
+      getKingdomActionDC,
+      getCurrentUserCharacter,
+      showCharacterSelectionDialog 
+   } from '../../../api/foundry-actors';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { createEventDispatcher } from 'svelte';
    
    export let action: PlayerAction;
    export let expanded: boolean = false;
    export let available: boolean = true;
-   export let selectedSkills: Set<string> = new Set();
-   export let canSelectMore: boolean = true;
+   export let resolved: boolean = false;
+   export let resolution: { outcome: string, actorName: string } | undefined = undefined;
+   export let character: any = null;
+   export let canPerformMore: boolean = true;
    
-   // Events
-   import { createEventDispatcher } from 'svelte';
    const dispatch = createEventDispatcher();
+   
+   // Track which skill was used for this action
+   let usedSkill: string = '';
+   let isRolling: boolean = false;
    
    function toggleExpanded(event: Event) {
       event.preventDefault();
@@ -20,8 +32,57 @@
       }
    }
    
-   function selectSkill(event: CustomEvent) {
-      dispatch('selectSkill', { skill: event.detail.skill });
+   async function executeSkill(event: CustomEvent) {
+      const skill = event.detail.skill;
+      
+      // If no character is provided, try to use user's assigned character or show dialog
+      let actingCharacter = character;
+      if (!actingCharacter) {
+         actingCharacter = getCurrentUserCharacter();
+         
+         if (!actingCharacter) {
+            // Show character selection dialog
+            actingCharacter = await showCharacterSelectionDialog();
+            if (!actingCharacter) {
+               return; // User cancelled selection
+            }
+            
+            // Notify parent component about the character selection
+            dispatch('characterSelected', { character: actingCharacter });
+         }
+      }
+      
+      if (resolved || isRolling) {
+         return; // Already resolved or currently rolling
+      }
+      
+      isRolling = true;
+      usedSkill = skill;
+      
+      try {
+         // Get DC based on character's level using standard level-based DCs
+         const characterLevel = actingCharacter.level || 1;
+         const dc = getKingdomActionDC(characterLevel);
+         
+         // Perform the roll with the selected character
+         await performKingdomActionRoll(
+            actingCharacter,
+            skill,
+            dc,
+            action.name,
+            action.id,
+            {
+               criticalSuccess: action.criticalSuccess,
+               success: action.success,
+               failure: action.failure,
+               criticalFailure: action.criticalFailure
+            }
+         );
+      } catch (error) {
+         console.error("Error executing skill:", error);
+      } finally {
+         isRolling = false;
+      }
    }
    
    function formatOutcome(outcome: any): string {
@@ -30,7 +91,7 @@
    }
 </script>
 
-<div class="action-card {!available ? 'disabled' : ''} {expanded ? 'expanded' : ''}">
+<div class="action-card {!available ? 'disabled' : ''} {expanded ? 'expanded' : ''} {resolved ? 'resolved' : ''}">
    <button 
       class="action-header-btn"
       on:click={toggleExpanded}
@@ -52,20 +113,66 @@
          <!-- Description -->
          <p class="action-full-description">{action.description}</p>
          
+         <!-- Resolution display if action is resolved -->
+         {#if resolved && resolution}
+            <div class="resolution-display {resolution.outcome}">
+               <div class="resolution-header">
+                  <i class="fas fa-dice-d20"></i>
+                  <span>Action Resolved</span>
+               </div>
+               <div class="resolution-details">
+                  <div class="resolution-actor">{resolution.actorName} used {usedSkill}</div>
+                  <div class="resolution-outcome">
+                     {#if resolution.outcome === 'criticalSuccess'}
+                        <i class="fas fa-star"></i> Critical Success!
+                     {:else if resolution.outcome === 'success'}
+                        <i class="fas fa-check"></i> Success
+                     {:else if resolution.outcome === 'failure'}
+                        <i class="fas fa-times"></i> Failure
+                     {:else}
+                        <i class="fas fa-skull"></i> Critical Failure
+                     {/if}
+                  </div>
+                  <div class="resolution-effect">
+                     {#if resolution.outcome === 'criticalSuccess'}
+                        {formatOutcome(action.criticalSuccess)}
+                     {:else if resolution.outcome === 'success'}
+                        {formatOutcome(action.success)}
+                     {:else if resolution.outcome === 'failure'}
+                        {formatOutcome(action.failure)}
+                     {:else}
+                        {formatOutcome(action.criticalFailure)}
+                     {/if}
+                  </div>
+               </div>
+            </div>
+         {/if}
+         
          <!-- Skills section -->
-         <div class="skills-section">
-            <h4 class="section-title">Choose Skill:</h4>
+         <div class="skills-section {resolved ? 'resolved' : ''}">
+            <h4 class="section-title">
+               {resolved ? 'Skills Available:' : 'Choose Skill:'}
+            </h4>
             <div class="skills-tags">
                {#each action.skills as skillOption}
+                  {@const isDisabled = resolved || !canPerformMore}
                   <SkillTag
                      skill={skillOption.skill}
                      description={skillOption.description}
-                     selected={selectedSkills.has(skillOption.skill)}
-                     disabled={!selectedSkills.has(skillOption.skill) && !canSelectMore}
-                     on:select={selectSkill}
+                     selected={resolved && skillOption.skill === usedSkill}
+                     disabled={isDisabled}
+                     loading={isRolling && skillOption.skill === usedSkill}
+                     faded={resolved && skillOption.skill !== usedSkill}
+                     on:execute={executeSkill}
                   />
                {/each}
             </div>
+            {#if !character && !getCurrentUserCharacter() && !resolved}
+               <div class="no-character-info">
+                  <i class="fas fa-info-circle"></i>
+                  Click a skill to select your character
+               </div>
+            {/if}
          </div>
          
          <!-- Outcomes section -->
@@ -140,7 +247,14 @@
       transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
-      min-height: min-content; // Allow card to be at least as tall as its content
+      min-height: min-content;
+      
+      &.resolved {
+         background: linear-gradient(135deg,
+            rgba(24, 24, 27, 0.4),
+            rgba(31, 31, 35, 0.3));
+         border-color: var(--border-subtle);
+      }
       
       &:hover:not(.disabled):not(.expanded) {
          border-color: var(--border-strong);
@@ -169,12 +283,11 @@
    }
    
    .action-header-btn {
-      display: flex; // Use flex to ensure proper layout
+      display: flex;
       width: 100%;
       background: transparent;
       border: none;
-      margin: 0; // Reset any default margins
-      
+      margin: 0;
       padding-left: 1em;
       padding-right: 1em;
       padding-top: 0.75em;
@@ -182,9 +295,9 @@
       cursor: pointer;
       text-align: left;
       transition: background 0.2s ease;
-      box-sizing: border-box; // Ensure padding is included in width
-      flex-shrink: 0; // Prevent button from shrinking
-      min-height: min-content; // Ensure button expands to fit content
+      box-sizing: border-box;
+      flex-shrink: 0;
+      min-height: min-content;
       
       &:hover:not(:disabled) {
          background: rgba(255, 255, 255, 0.02);
@@ -195,7 +308,6 @@
       }
    }
    
-   // Lighter header background when expanded
    .action-card.expanded .action-header-btn {
       background: rgba(255, 255, 255, 0.03);
       
@@ -217,7 +329,7 @@
          flex-direction: column;
          gap: 4px;
          text-align: left;
-         min-width: 0; // Allow text truncation if needed
+         min-width: 0;
          
          .action-name {
             color: var(--text-primary);
@@ -242,8 +354,8 @@
          transition: transform 0.3s ease;
          flex-shrink: 0;
          font-size: 14px;
-         margin-top: 4px; // Align with first line of text
-         margin-left: auto; // Push to the right
+         margin-top: 4px;
+         margin-left: auto;
       }
    }
    
@@ -269,11 +381,104 @@
       }
       to {
          opacity: 1;
-         max-height: 2000px; // Large enough for content but not infinite
+         max-height: 2000px;
       }
    }
    
-   .skills-section,
+   .resolution-display {
+      margin: 16px 0;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-strong);
+      background: rgba(0, 0, 0, 0.3);
+      
+      &.criticalSuccess {
+         background: rgba(34, 197, 94, 0.1);
+         border-color: rgba(34, 197, 94, 0.4);
+      }
+      
+      &.success {
+         background: rgba(34, 197, 94, 0.05);
+         border-color: rgba(34, 197, 94, 0.3);
+      }
+      
+      &.failure {
+         background: rgba(249, 115, 22, 0.05);
+         border-color: rgba(249, 115, 22, 0.3);
+      }
+      
+      &.criticalFailure {
+         background: rgba(239, 68, 68, 0.1);
+         border-color: rgba(239, 68, 68, 0.4);
+      }
+      
+      .resolution-header {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         margin-bottom: 12px;
+         font-weight: 600;
+         color: var(--color-amber);
+         
+         i {
+            font-size: 18px;
+         }
+      }
+      
+      .resolution-details {
+         display: flex;
+         flex-direction: column;
+         gap: 8px;
+      }
+      
+      .resolution-actor {
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+      }
+      
+      .resolution-outcome {
+         font-size: var(--font-lg);
+         font-weight: 600;
+         display: flex;
+         align-items: center;
+         gap: 6px;
+         
+         i {
+            font-size: 16px;
+         }
+      }
+      
+      .resolution-effect {
+         color: var(--text-secondary);
+         line-height: 1.5;
+         margin-top: 4px;
+      }
+   }
+   
+   .criticalSuccess .resolution-outcome {
+      color: var(--color-green);
+   }
+   
+   .success .resolution-outcome {
+      color: var(--color-green-light);
+   }
+   
+   .failure .resolution-outcome {
+      color: var(--color-orange);
+   }
+   
+   .criticalFailure .resolution-outcome {
+      color: var(--color-red);
+   }
+   
+   .skills-section {
+      margin-top: 20px;
+      
+      &.resolved {
+         opacity: 0.7;
+      }
+   }
+   
    .outcomes-section {
       margin-top: 20px;
    }
@@ -283,7 +488,6 @@
       color: var(--text-primary);
       font-size: var(--font-xl);
       font-weight: 600;
-
       letter-spacing: 0.5px;
       opacity: 0.8;
    }
@@ -294,6 +498,23 @@
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
+   }
+   
+   .no-character-info {
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--color-blue-light);
+      font-size: var(--font-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      i {
+         font-size: 14px;
+      }
    }
    
    .outcomes-grid {
