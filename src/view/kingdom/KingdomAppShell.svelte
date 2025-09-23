@@ -30,11 +30,6 @@
     */
    export let refreshTrigger: number = 0;
 
-   /**
-    * Show settings panel
-    */
-   export let showSettings: boolean = false;
-
    // Get external context
    const { actorId, application } = getContext<KingdomApp.External>('#external');
 

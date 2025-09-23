@@ -138,12 +138,10 @@
                   {$kingdomState.unrest}
                </span>
             </div>
-            {#if $kingdomState.imprisonedUnrest > 0}
-               <div class="stat-item">
-                  <span class="stat-label">Imprisoned:</span>
-                  <span class="stat-value imprisoned">{$kingdomState.imprisonedUnrest}</span>
-               </div>
-            {/if}
+            <div class="stat-item">
+               <span class="stat-label">Imprisoned:</span>
+               <span class="stat-value imprisoned">{$kingdomState.imprisonedUnrest}</span>
+            </div>
             <div class="stat-item">
                <span class="stat-label">From Size:</span>
                <span class="stat-value">+{sizeUnrest}</span>
@@ -476,7 +474,6 @@
       border-radius: 0.25rem;
    }
    
-   .resource-item label,
    .resource-label {
       font-size: 0.85rem;
       color: var(--text-muted);

@@ -56,14 +56,18 @@
       return PlayerActionsData.getActionsByCategory(categoryId);
    }
    
-   // Toggle action expansion
+   // Toggle action expansion - only one can be open at a time
    function toggleAction(actionId: string) {
       if (expandedActions.has(actionId)) {
-         expandedActions.delete(actionId);
+         // If clicking the same action, close it
+         expandedActions.clear();
       } else {
+         // Clear all expanded actions and open only this one
+         expandedActions.clear();
          expandedActions.add(actionId);
       }
-      expandedActions = expandedActions; // Trigger reactivity
+      // Force reactivity by creating a new Set
+      expandedActions = new Set(expandedActions);
    }
    
    // Check if an action is expanded
@@ -166,7 +170,6 @@
             
             <div class="actions-list">
                {#each actions as action}
-                  {@const expanded = isExpanded(action.id)}
                   {@const available = isActionAvailable(action)}
                   {@const selectedSkills = new Set(
                      Array.from(selectedActions.entries())
@@ -176,7 +179,7 @@
                   
                   <ActionCard 
                      {action}
-                     {expanded}
+                     expanded={expandedActions.has(action.id)}
                      {available}
                      {selectedSkills}
                      canSelectMore={actionsUsed < MAX_ACTIONS}

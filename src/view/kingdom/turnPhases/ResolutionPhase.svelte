@@ -31,11 +31,6 @@
 
 <style lang="scss">
    .resolution-phase {
-      h3 {
-         margin: 0 0 20px 0;
-         color: var(--color-primary, #5e0000);
-      }
-      
       p {
          margin: 5px 0;
          color: var(--color-text-dark-secondary, #7a7971);

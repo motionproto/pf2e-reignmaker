@@ -1,5 +1,6 @@
 <script lang="ts">
    import type { PlayerAction } from '../../../models/PlayerActions';
+   import SkillTag from './SkillTag.svelte';
    
    export let action: PlayerAction;
    export let expanded: boolean = false;
@@ -11,14 +12,16 @@
    import { createEventDispatcher } from 'svelte';
    const dispatch = createEventDispatcher();
    
-   function toggleExpanded() {
+   function toggleExpanded(event: Event) {
+      event.preventDefault();
+      event.stopPropagation();
       if (available) {
          dispatch('toggle');
       }
    }
    
-   function selectSkill(skill: string) {
-      dispatch('selectSkill', { skill });
+   function selectSkill(event: CustomEvent) {
+      dispatch('selectSkill', { skill: event.detail.skill });
    }
    
    function formatOutcome(outcome: any): string {
@@ -52,16 +55,15 @@
          <!-- Skills section -->
          <div class="skills-section">
             <h4 class="section-title">Choose Skill:</h4>
-            <div class="skills-list">
+            <div class="skills-tags">
                {#each action.skills as skillOption}
-                  <button 
-                     class="skill-button {selectedSkills.has(skillOption.skill) ? 'selected' : ''}"
-                     on:click={() => selectSkill(skillOption.skill)}
+                  <SkillTag
+                     skill={skillOption.skill}
+                     description={skillOption.description}
+                     selected={selectedSkills.has(skillOption.skill)}
                      disabled={!selectedSkills.has(skillOption.skill) && !canSelectMore}
-                  >
-                     <span class="skill-name">{skillOption.skill}</span>
-                     <span class="skill-desc">— {skillOption.description}</span>
-                  </button>
+                     on:select={selectSkill}
+                  />
                {/each}
             </div>
          </div>
@@ -79,14 +81,14 @@
                </div>
                <div class="outcome success">
                   <div class="outcome-header">
-                     <i class="fas fa-check"></i>
+                     <i class="fas fa-thumbs-up"></i>
                      Success
                   </div>
                   <div class="outcome-text">{formatOutcome(action.success)}</div>
                </div>
                <div class="outcome failure">
                   <div class="outcome-header">
-                     <i class="fas fa-times"></i>
+                     <i class="fas fa-thumbs-down"></i>
                      Failure
                   </div>
                   <div class="outcome-text">{formatOutcome(action.failure)}</div>
@@ -140,7 +142,7 @@
       flex-direction: column;
       min-height: min-content; // Allow card to be at least as tall as its content
       
-      &:hover:not(.disabled) {
+      &:hover:not(.disabled):not(.expanded) {
          border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -149,6 +151,11 @@
       &.expanded {
          border-color: var(--color-amber);
          box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+         
+         &:hover:not(.disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.15);
+         }
       }
       
       &.disabled {
@@ -188,6 +195,15 @@
       }
    }
    
+   // Lighter header background when expanded
+   .action-card.expanded .action-header-btn {
+      background: rgba(255, 255, 255, 0.03);
+      
+      &:hover:not(:disabled) {
+         background: rgba(255, 255, 255, 0.05);
+      }
+   }
+   
    .action-header-content {
       display: flex;
       justify-content: space-between;
@@ -205,7 +221,7 @@
          
          .action-name {
             color: var(--text-primary);
-            font-size: var(--font-lg);
+            font-size: var(--font-2xl);
             line-height: 1.3;
             text-align: left;
             display: block;
@@ -240,9 +256,8 @@
       .action-full-description {
          margin: 0 0 16px 0;
          color: var(--text-secondary);
-         font-size: var(--font-sm);
+         font-size: var(--font-md);
          line-height: 1.6;
-         font-style: italic;
          text-align: left;
       }
    }
@@ -266,71 +281,19 @@
    .section-title {
       margin: 0 0 12px 0;
       color: var(--text-primary);
-      font-size: var(--font-sm);
+      font-size: var(--font-xl);
       font-weight: 600;
-      text-transform: uppercase;
+
       letter-spacing: 0.5px;
       opacity: 0.8;
    }
    
-   .skills-list {
+   .skills-tags {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      flex-wrap: wrap;
       gap: 8px;
-   }
-   
-   .skill-button {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      padding: 10px 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      text-align: left;
-      
-      &:hover:not(:disabled) {
-         background: rgba(0, 0, 0, 0.3);
-         border-color: var(--color-amber);
-         transform: translateX(2px);
-      }
-      
-      &.selected {
-         background: rgba(251, 191, 36, 0.15);
-         border-color: var(--color-amber);
-         
-         .skill-name {
-            color: var(--color-amber-light);
-         }
-      }
-      
-      &:disabled:not(.selected) {
-         opacity: 0.5;
-         cursor: not-allowed;
-         
-         &:hover {
-            transform: none;
-            border-color: var(--border-subtle);
-         }
-      }
-      
-      .skill-name {
-         font-weight: 600;
-         color: var(--text-primary);
-         text-transform: capitalize;
-         white-space: nowrap;
-         min-width: 120px;
-      }
-      
-      .skill-desc {
-         color: var(--text-tertiary);
-         font-size: var(--font-sm);
-         font-style: italic;
-         opacity: 0.9;
-         flex: 1;
-      }
+      align-items: center;
    }
    
    .outcomes-grid {
@@ -350,19 +313,19 @@
          align-items: center;
          gap: 6px;
          font-weight: 600;
-         font-size: var(--font-xs);
+         font-size: var(--font-lg);
          text-transform: uppercase;
          letter-spacing: 0.3px;
          margin-bottom: 8px;
          
          i {
-            font-size: 10px;
-            opacity: 0.7;
+            font-size: 14px;
+            padding-bottom: 2px;
          }
       }
       
       .outcome-text {
-         font-size: var(--font-sm);
+         font-size: var(--font-md);
          color: var(--text-secondary);
          line-height: 1.5;
       }

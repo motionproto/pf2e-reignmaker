@@ -137,12 +137,6 @@
 </div>
 
 <style lang="scss">
-   .status-phase {
-      h3 {
-         margin: 0 0 20px 0;
-         color: var(--color-primary, #5e0000);
-      }
-   }
    
    .fame-step {
       text-align: center;
