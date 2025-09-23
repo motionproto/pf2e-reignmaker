@@ -47,11 +47,20 @@
    $: structureBonus = 0; // TODO: Calculate from actual structures
    $: unrestPerTurn = Math.max(0, sizeUnrest + warUnrest - structureBonus);
    
-   // Calculate production (simplified for now)
+   // Get production/income from the calculated values in kingdom state
+   $: income = ($kingdomState as any).income || new Map();
+   
+   // Calculate production from worksites - using income from sync
    $: foodProduction = $kingdomState.worksiteCount.get('farmlands') || 0;
    $: lumberProduction = $kingdomState.worksiteCount.get('lumberCamps') || 0;
    $: stoneProduction = $kingdomState.worksiteCount.get('quarries') || 0;
    $: oreProduction = $kingdomState.worksiteCount.get('mines') || 0;
+   
+   // Get actual income values from sync - these will be the real production numbers
+   $: actualFoodIncome = income.get?.('food') || (foodProduction * 2);
+   $: actualLumberIncome = income.get?.('lumber') || (lumberProduction * 2);
+   $: actualStoneIncome = income.get?.('stone') || stoneProduction;
+   $: actualOreIncome = income.get?.('ore') || oreProduction;
    
    // Total worksites
    $: totalWorksites = foodProduction + lumberProduction + stoneProduction + oreProduction;
@@ -172,10 +181,6 @@
                <span class="stat-value">{$kingdomState.size}</span>
             </div>
             <div class="stat-item">
-               <span class="stat-label">Total Settlements:</span>
-               <span class="stat-value">{$kingdomState.settlements.length}</span>
-            </div>
-            <div class="stat-item">
                <span class="stat-label">Villages:</span>
                <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Village').length}</span>
             </div>
@@ -216,15 +221,15 @@
                <div class="resource-header">Resource Income</div>
                <div class="resource-grid">
                   <div class="resource-item">
-                     <span class="resource-label">Lumber:</span>
+                     <span class="resource-label">Lumber</span>
                      <span>{$kingdomState.resources.get('lumber') || 0}</span>
                   </div>
                   <div class="resource-item">
-                     <span class="resource-label">Stone:</span>
+                     <span class="resource-label">Stone</span>
                      <span>{$kingdomState.resources.get('stone') || 0}</span>
                   </div>
                   <div class="resource-item">
-                     <span class="resource-label">Ore:</span>
+                     <span class="resource-label">Ore</span>
                      <span>{$kingdomState.resources.get('ore') || 0}</span>
                   </div>
                </div>
@@ -475,12 +480,12 @@
    }
    
    .resource-label {
-      font-size: 0.85rem;
+      font-size: 1rem;
       color: var(--text-muted);
       margin-bottom: 0.25rem;
    }
    
-   .resource-item span {
+   .resource-item > span:last-child {
       font-size: 1rem;
       font-weight: 700;
       color: var(--text-primary);

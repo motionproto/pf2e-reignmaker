@@ -10,9 +10,29 @@ export const kingdomState = writable(new KingdomState());
 export { viewingPhase } from './gameState';
 
 // Derived stores for common calculations
-export const totalProduction = derived(kingdomState, $state => 
-    $state.calculateProduction()
-);
+export const totalProduction = derived(kingdomState, $state => {
+    // If we have calculated income from the sync, use it
+    const income = ($state as any).income;
+    if (income && income instanceof Map && income.size > 0) {
+        // Convert Map to object for compatibility with existing code
+        const incomeObj: Record<string, number> = {};
+        income.forEach((value: number, key: string) => {
+            if (value > 0) {
+                incomeObj[key] = value;
+            }
+        });
+        return incomeObj;
+    }
+    // Fallback to calculated production
+    const production = $state.calculateProduction();
+    const productionObj: Record<string, number> = {};
+    production.forEach((value, key) => {
+        if (value > 0) {
+            productionObj[key] = value;
+        }
+    });
+    return productionObj;
+});
 
 export const foodConsumption = derived(kingdomState, $state => 
     $state.getTotalFoodConsumption()

@@ -374,6 +374,15 @@ export function syncKingmakerToKingdomState(): boolean {
             ['mines', 0]
         ]);
         
+        // Track calculated income for each resource
+        const calculatedIncome = new Map<string, number>([
+            ['food', 0],
+            ['lumber', 0],
+            ['stone', 0],
+            ['ore', 0],
+            ['gold', 0]
+        ]);
+        
         let hexIndex = 0;
         for (const hexId of hexIds) {
             const hexState = hexStates[hexId];
@@ -388,6 +397,11 @@ export function syncKingmakerToKingdomState(): boolean {
             if (hasFarmland) {
                 worksite = new Worksite(WorksiteType.FARMSTEAD);
                 worksiteCounts.set('farmlands', (worksiteCounts.get('farmlands') || 0) + 1);
+                
+                // Calculate food income based on terrain
+                const foodYield = terrain === 'Plains' ? 2 : terrain === 'Hills' ? 1 : 0;
+                const commodityBonus = hexState.commodity === 'food' ? 1 : 0;
+                calculatedIncome.set('food', (calculatedIncome.get('food') || 0) + foodYield + commodityBonus);
             }
             // Check for camp/worksite
             else if (hexState.camp) {
@@ -395,16 +409,28 @@ export function syncKingmakerToKingdomState(): boolean {
                 if (worksiteType) {
                     worksite = new Worksite(worksiteType);
                     
-                    // Update counts
+                    // Update counts and calculate income
                     switch (worksiteType) {
                         case WorksiteType.LOGGING_CAMP:
                             worksiteCounts.set('lumberCamps', (worksiteCounts.get('lumberCamps') || 0) + 1);
+                            // Lumber camps in forests produce 2 lumber
+                            const lumberYield = terrain === 'Forest' ? 2 : 1;
+                            const lumberBonus = hexState.commodity === 'lumber' ? 1 : 0;
+                            calculatedIncome.set('lumber', (calculatedIncome.get('lumber') || 0) + lumberYield + lumberBonus);
                             break;
                         case WorksiteType.MINE:
                             worksiteCounts.set('mines', (worksiteCounts.get('mines') || 0) + 1);
+                            // Mines in mountains produce 1 ore
+                            const oreYield = terrain === 'Mountains' ? 1 : 0;
+                            const oreBonus = hexState.commodity === 'ore' ? 1 : 0;
+                            calculatedIncome.set('ore', (calculatedIncome.get('ore') || 0) + oreYield + oreBonus);
                             break;
                         case WorksiteType.QUARRY:
                             worksiteCounts.set('quarries', (worksiteCounts.get('quarries') || 0) + 1);
+                            // Quarries in hills/mountains produce 1 stone
+                            const stoneYield = (terrain === 'Hills' || terrain === 'Mountains') ? 1 : 0;
+                            const stoneBonus = hexState.commodity === 'stone' ? 1 : 0;
+                            calculatedIncome.set('stone', (calculatedIncome.get('stone') || 0) + stoneYield + stoneBonus);
                             break;
                     }
                 }
@@ -443,6 +469,9 @@ export function syncKingmakerToKingdomState(): boolean {
             });
         }
         
+        // Add gold income from settlements (1 gold per settlement)
+        calculatedIncome.set('gold', newSettlements.length);
+        
         // Update the kingdom state store
         kingdomState.update(state => {
             // Update hexes and size
@@ -455,10 +484,13 @@ export function syncKingmakerToKingdomState(): boolean {
             // Update worksite counts
             state.worksiteCount = worksiteCounts;
             
+            // Store the calculated income on the state object
+            (state as any).income = calculatedIncome;
+            
             // Calculate and store production for quick access
             // This will be used by the UI
             const production = state.calculateProduction();
-            console.log("Synced Kingmaker data - Size:", state.size, "Production:", production);
+            console.log("Synced Kingmaker data - Size:", state.size, "Production:", production, "Income:", calculatedIncome);
             
             return state;
         });
