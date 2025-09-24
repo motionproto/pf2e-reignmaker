@@ -7,6 +7,8 @@
    let selectedSettlement: Settlement | null = null;
    let searchTerm = '';
    let filterTier = 'all';
+   let isEditingName = false;
+   let editedName = '';
    
    // Get unique tiers from settlements
    $: settlementTiers = [...new Set($kingdomState.settlements.map(s => s.tier))].sort();
@@ -66,8 +68,20 @@
    }
    
    function getMaxStructures(settlement: Settlement): number {
-      const config = SettlementTierConfig[settlement.tier];
-      return config?.maxStructures || 0;
+      // Based on Reignmaker Lite rules from Kingdom_Rules.md
+      // Structure limits are based on settlement tier
+      switch (settlement.tier) {
+         case 'Village':
+            return 2;
+         case 'Town':
+            return 4;
+         case 'City':
+            return 8;
+         case 'Metropolis':
+            return 999; // Effectively unlimited
+         default:
+            return 2;
+      }
    }
    
    function getLocationString(settlement: Settlement): string {
@@ -92,6 +106,35 @@
          'Metropolis': 'tier-metropolis'
       };
       return colors[tier] || '';
+   }
+   
+   function startEditingName() {
+      if (selectedSettlement) {
+         isEditingName = true;
+         editedName = selectedSettlement.name;
+      }
+   }
+   
+   function saveSettlementName() {
+      if (selectedSettlement && editedName.trim()) {
+         // Update the settlement name in the store
+         selectedSettlement.name = editedName.trim();
+         $kingdomState = $kingdomState; // Trigger reactivity
+         isEditingName = false;
+      }
+   }
+   
+   function cancelEditingName() {
+      isEditingName = false;
+      editedName = '';
+   }
+   
+   function handleNameKeydown(event: KeyboardEvent) {
+      if (event.key === 'Enter') {
+         saveSettlementName();
+      } else if (event.key === 'Escape') {
+         cancelEditingName();
+      }
    }
 </script>
 
@@ -194,6 +237,16 @@
                            <span class="stat-label">Structures</span>
                            <span class="stat-value">{getStructureCount(settlement)}/{getMaxStructures(settlement)}</span>
                         </div>
+                        {#if settlement.wasFedLastTurn !== undefined}
+                           <div class="stat fed-status">
+                              <span class="stat-label">Fed</span>
+                              {#if settlement.wasFedLastTurn}
+                                 <i class="fas fa-check-circle status-fed" title="Fed - Generates gold"></i>
+                              {:else}
+                                 <i class="fas fa-exclamation-triangle status-unfed" title="Not fed - No gold"></i>
+                              {/if}
+                           </div>
+                        {/if}
                         {#if settlement.connectedByRoads}
                            <div class="stat connected">
                               <i class="fas fa-road" title="Connected by roads"></i>
@@ -210,16 +263,40 @@
       <div class="settlement-details-panel">
          {#if selectedSettlement}
             <div class="panel-header">
-               <h3>{selectedSettlement.name}</h3>
-               <div class="actions">
-                  <button class="action-button" title="Build Structure">
-                     <i class="fas fa-hammer"></i>
-                     Build
-                  </button>
-                  <button class="action-button" title="Upgrade Settlement">
-                     <i class="fas fa-arrow-up"></i>
-                     Upgrade
-                  </button>
+               <div class="settlement-title">
+                  {#if isEditingName}
+                     <input 
+                        type="text" 
+                        bind:value={editedName}
+                        on:keydown={handleNameKeydown}
+                        on:blur={saveSettlementName}
+                        class="name-input"
+                        autofocus
+                     />
+                     <button 
+                        on:click={saveSettlementName}
+                        class="save-button"
+                        title="Save"
+                     >
+                        <i class="fas fa-check"></i>
+                     </button>
+                     <button 
+                        on:click={cancelEditingName}
+                        class="cancel-button"
+                        title="Cancel"
+                     >
+                        <i class="fas fa-times"></i>
+                     </button>
+                  {:else}
+                     <h3>{selectedSettlement.name}</h3>
+                     <button 
+                        on:click={startEditingName}
+                        class="edit-button"
+                        title="Edit settlement name"
+                     >
+                        <i class="fas fa-edit"></i>
+                     </button>
+                  {/if}
                </div>
             </div>
             
@@ -452,24 +529,63 @@
          }
       }
       
-      .actions {
+      .settlement-title {
          display: flex;
+         align-items: center;
          gap: 0.5rem;
          
-         .action-button {
-            padding: 0.5rem 1rem;
-            background: var(--color-primary, #5e0000);
-            color: white;
-            border: none;
+         h3 {
+            margin: 0;
+            color: var(--color-text-dark-primary, #b5b3a4);
+         }
+         
+         .name-input {
+            padding: 0.25rem 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--color-primary, #5e0000);
             border-radius: 0.25rem;
+            color: var(--color-text-dark-primary, #b5b3a4);
+            font-size: 1.25rem;
+            font-weight: 600;
+            min-width: 200px;
+            
+            &:focus {
+               outline: none;
+               border-color: var(--color-primary, #5e0000);
+               background: rgba(0, 0, 0, 0.5);
+            }
+         }
+         
+         .edit-button,
+         .save-button,
+         .cancel-button {
+            padding: 0.25rem 0.5rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 0.25rem;
+            color: var(--color-text-dark-secondary, #7a7971);
             cursor: pointer;
-            font-size: 0.875rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            transition: all 0.2s;
             
             &:hover {
-               background: rgba(94, 0, 0, 0.8);
+               background: rgba(255, 255, 255, 0.1);
+               color: var(--color-text-dark-primary, #b5b3a4);
+            }
+         }
+         
+         .save-button {
+            color: #90ee90;
+            
+            &:hover {
+               background: rgba(144, 238, 144, 0.1);
+            }
+         }
+         
+         .cancel-button {
+            color: #ff6b6b;
+            
+            &:hover {
+               background: rgba(255, 107, 107, 0.1);
             }
          }
       }
@@ -587,6 +703,16 @@
             &.connected {
                justify-content: center;
                color: #90ee90;
+            }
+            
+            &.fed-status {
+               .status-fed {
+                  color: #90ee90;
+               }
+               
+               .status-unfed {
+                  color: #ffa500;
+               }
             }
          }
       }

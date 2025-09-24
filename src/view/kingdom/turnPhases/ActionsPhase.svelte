@@ -8,7 +8,12 @@
    
    // Track expanded actions and resolved actions
    let expandedActions = new Set<string>();
-   let resolvedActions: Map<string, { outcome: string, actorName: string, skillName?: string }> = new Map();
+   let resolvedActions: Map<string, { 
+      outcome: string, 
+      actorName: string, 
+      skillName?: string,
+      stateChanges?: Record<string, any>
+   }> = new Map();
    let actionsUsed = 0;
    const MAX_ACTIONS = 4;
    
@@ -81,6 +86,124 @@
       return expandedActions.has(actionId);
    }
    
+   // Parse action outcome text to extract state changes
+   function parseActionOutcome(action: PlayerAction, outcome: string): Record<string, any> {
+      const changes: Record<string, any> = {};
+      const effect = action[outcome as keyof PlayerAction] as any;
+      
+      if (!effect || !effect.description) return changes;
+      
+      const description = effect.description.toLowerCase();
+      
+      // Parse unrest changes
+      if (description.includes('reduce unrest')) {
+         const match = description.match(/reduce unrest by (\d+)/);
+         if (match) {
+            changes.unrest = -parseInt(match[1]);
+         }
+      } else if (description.includes('+1 unrest')) {
+         changes.unrest = 1;
+      } else if (description.includes('+2 unrest')) {
+         changes.unrest = 2;
+      } else if (description.includes('+1d4 unrest')) {
+         changes.unrest = Math.floor(Math.random() * 4) + 1;
+      } else if (description.includes('gain 1 unrest')) {
+         changes.unrest = 1;
+      } else if (description.includes('gain 1 current unrest')) {
+         changes.unrest = 1;
+      }
+      
+      // Parse gold changes
+      if (description.includes('gain') && description.includes('gold')) {
+         const match = description.match(/gain (\d+) gold/);
+         if (match) {
+            changes.gold = parseInt(match[1]);
+         } else if (description.includes('gain double')) {
+            changes.gold = 'double amount';
+         }
+      } else if (description.includes('lose') && description.includes('gold')) {
+         const match = description.match(/lose (\d+) gold/);
+         if (match) {
+            changes.gold = -parseInt(match[1]);
+         }
+      } else if (description.includes('→ 1 gold')) {
+         changes.gold = 1;
+      } else if (description.includes('→ 2 gold')) {
+         changes.gold = 2;
+      }
+      
+      // Parse resource changes
+      if (description.includes('gain') && description.includes('resource')) {
+         const match = description.match(/gain (\d+) resource/);
+         if (match) {
+            changes.resources = parseInt(match[1]);
+         }
+      }
+      
+      // Parse fame changes
+      if (description.includes('-1 fame')) {
+         changes.fame = -1;
+      } else if (description.includes('+1 fame')) {
+         changes.fame = 1;
+      }
+      
+      // Parse structure changes
+      if (description.includes('+1 structure')) {
+         changes.structuresBuilt = 1;
+      } else if (description.includes('build structures for half cost')) {
+         changes.structureCostReduction = '50%';
+      } else if (description.includes('build 1 structure')) {
+         changes.structuresBuilt = 1;
+      }
+      
+      // Parse hex claiming
+      if (description.includes('claim') && description.includes('hex')) {
+         const match = description.match(/claim.*?(\d+).*?hex/);
+         if (match) {
+            changes.hexesClaimed = parseInt(match[1]);
+         } else if (description.includes('claim targeted hexes')) {
+            changes.hexesClaimed = 'varies by proficiency';
+         } else if (description.includes('+1 extra hex')) {
+            changes.hexesClaimed = '+1 extra';
+         }
+      }
+      
+      // Parse road building
+      if (description.includes('build roads')) {
+         if (description.includes('+1 hex')) {
+            changes.roadsBuilt = '+1 hex';
+         } else {
+            changes.roadsBuilt = 'standard';
+         }
+      }
+      
+      // Parse army-related changes
+      if (description.includes('recruit')) {
+         changes.armyRecruited = true;
+      }
+      
+      // Parse imprisonment changes
+      if (description.includes('imprisoned unrest')) {
+         const match = description.match(/convert (\d+) unrest to imprisoned/);
+         if (match) {
+            changes.unrest = -parseInt(match[1]);
+            changes.imprisonedUnrest = parseInt(match[1]);
+         } else if (description.includes('remove all imprisoned unrest')) {
+            changes.imprisonedUnrestRemoved = 'all';
+         } else if (description.includes('remove 1d4 imprisoned unrest')) {
+            changes.imprisonedUnrestRemoved = '1d4';
+         }
+      }
+      
+      // Special outcomes
+      if (effect.modifiers) {
+         // If the action has specific modifiers, add them
+         Object.assign(changes, effect.modifiers);
+      }
+      
+      return changes;
+   }
+   
    // Handle action resolution from roll result
    async function onActionResolved(actionId: string, outcome: string, actorName: string, checkType?: string, skillName?: string) {
       console.log(`ActionsPhase: onActionResolved called`, { actionId, outcome, actorName, checkType, skillName });
@@ -97,9 +220,23 @@
          return;
       }
       
+      // Find the action to parse its outcome
+      const action = PlayerActionsData.getAllActions().find(a => a.id === actionId);
+      let stateChanges: Record<string, any> = {};
+      
+      if (action) {
+         stateChanges = parseActionOutcome(action, outcome);
+         console.log(`Parsed state changes for ${actionId}:`, stateChanges);
+      }
+      
       // Create new Map to trigger Svelte reactivity
       const newResolvedActions = new Map(resolvedActions);
-      newResolvedActions.set(actionId, { outcome, actorName, skillName: skillName || '' });
+      newResolvedActions.set(actionId, { 
+         outcome, 
+         actorName, 
+         skillName: skillName || '',
+         stateChanges
+      });
       resolvedActions = newResolvedActions;
       actionsUsed++;
       
@@ -110,6 +247,7 @@
          actionId, 
          outcome, 
          skillName,
+         stateChanges,
          resolvedActions: Array.from(resolvedActions.entries()) 
       });
    }

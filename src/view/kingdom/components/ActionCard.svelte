@@ -15,7 +15,12 @@
    export let expanded: boolean = false;
    export let available: boolean = true;
    export let resolved: boolean = false;
-   export let resolution: { outcome: string, actorName: string, skillName?: string } | undefined = undefined;
+   export let resolution: { 
+      outcome: string, 
+      actorName: string, 
+      skillName?: string,
+      stateChanges?: Record<string, any>
+   } | undefined = undefined;
    export let character: any = null;
    export let canPerformMore: boolean = true;
    
@@ -112,6 +117,104 @@
    function formatOutcome(outcome: any): string {
       if (!outcome) return '—';
       return outcome.description || '—';
+   }
+   
+   function formatStateChangeLabel(key: string): string {
+      const labels: Record<string, string> = {
+         'gold': 'Gold',
+         'unrest': 'Unrest',
+         'fame': 'Fame',
+         'food': 'Food',
+         'wood': 'Wood',
+         'stone': 'Stone',
+         'metal': 'Metal',
+         'lumber': 'Lumber',
+         'ore': 'Ore',
+         'hexesClaimed': 'Hexes Claimed',
+         'structuresBuilt': 'Structures Built',
+         'roadsBuilt': 'Roads Built',
+         'armyRecruited': 'Army Recruited',
+         'resources': 'Resources',
+         'structureCostReduction': 'Structure Cost',
+         'imprisonedUnrest': 'Imprisoned Unrest',
+         'imprisonedUnrestRemoved': 'Prisoners Released',
+         'settlementFounded': 'Settlement Founded',
+         'armyLevel': 'Army Level',
+         'meta': 'Next Action Bonus'
+      };
+      return labels[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+   }
+   
+   function formatStateChangeValue(change: any): string {
+      if (typeof change === 'number') {
+         return change > 0 ? `+${change}` : `${change}`;
+      }
+      if (typeof change === 'boolean') {
+         return change ? 'Yes' : 'No';
+      }
+      if (typeof change === 'string') {
+         return change;
+      }
+      if (typeof change === 'object' && change !== null) {
+         // Handle meta object for coordinated action
+         if (change.nextActionBonus !== undefined) {
+            return change.nextActionBonus > 0 ? `+${change.nextActionBonus}` : `${change.nextActionBonus}`;
+         }
+         if (change.from !== undefined && change.to !== undefined) {
+            return `${change.from} → ${change.to}`;
+         }
+         if (change.added) {
+            return `+${change.added}`;
+         }
+         if (change.removed) {
+            return `-${change.removed}`;
+         }
+      }
+      return String(change);
+   }
+   
+   function getChangeClass(change: any, key?: string): string {
+      // Context-aware coloring based on the key
+      const negativeBenefitKeys = ['unrest', 'cost', 'damage', 'imprisoned'];
+      const isNegativeBenefit = key && negativeBenefitKeys.some(k => key.toLowerCase().includes(k));
+      
+      if (typeof change === 'number') {
+         if (isNegativeBenefit) {
+            // For things like unrest, negative is good
+            return change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
+         }
+         // For most resources, positive is good
+         return change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
+      }
+      
+      if (typeof change === 'boolean') {
+         return change ? 'positive' : 'neutral';
+      }
+      
+      if (typeof change === 'string') {
+         if (change.includes('+') || change.includes('extra') || change.includes('double')) {
+            return 'positive';
+         }
+         if (change.includes('half') || change.includes('50%')) {
+            return key && key.includes('Cost') ? 'positive' : 'neutral';
+         }
+         if (change === 'all' || change === '1d4') {
+            return key && key.includes('Removed') ? 'positive' : 'neutral';
+         }
+      }
+      
+      if (typeof change === 'object' && change !== null) {
+         // Handle meta object for coordinated action
+         if (change.nextActionBonus !== undefined) {
+            return change.nextActionBonus > 0 ? 'positive' : change.nextActionBonus < 0 ? 'negative' : 'neutral';
+         }
+         if (change.to > change.from) return 'positive';
+         if (change.to < change.from) return 'negative';
+         if (change.added) return 'positive';
+         if (change.removed) return 'negative';
+      }
+      
+      return 'neutral';
    }
    
    async function handleRerollWithFame() {
@@ -241,6 +344,26 @@
                         {formatOutcome(action.criticalFailure)}
                      {/if}
                   </div>
+                  
+                  <!-- State changes display -->
+                  {#if resolution.stateChanges && Object.keys(resolution.stateChanges).length > 0}
+                     <div class="state-changes">
+                        <div class="state-changes-header">
+                           <i class="fas fa-exchange-alt"></i>
+                           State Changes:
+                        </div>
+                        <div class="state-changes-list">
+                           {#each Object.entries(resolution.stateChanges) as [key, change]}
+                              <div class="state-change-item">
+                                 <span class="change-label">{formatStateChangeLabel(key)}:</span>
+                                 <span class="change-value {getChangeClass(change, key)}">
+                                    {formatStateChangeValue(change)}
+                                 </span>
+                              </div>
+                           {/each}
+                        </div>
+                     </div>
+                  {/if}
                </div>
                
                <!-- Action buttons for resolved state -->
@@ -592,6 +715,17 @@
       }
    }
    
+   @keyframes fadeInUp {
+      from {
+         opacity: 0;
+         transform: translateY(10px);
+      }
+      to {
+         opacity: 1;
+         transform: translateY(0);
+      }
+   }
+   
    .resolution-display {
       margin: 16px 0;
       padding: 16px;
@@ -660,6 +794,74 @@
          color: var(--text-secondary);
          line-height: 1.5;
          margin-top: 4px;
+         padding-bottom: 12px;
+         border-bottom: 1px solid var(--border-subtle);
+      }
+      
+      .state-changes {
+         margin-top: 12px;
+         padding: 12px;
+         background: linear-gradient(135deg, 
+            rgba(251, 191, 36, 0.05),
+            rgba(0, 0, 0, 0.2));
+         border-radius: var(--radius-sm);
+         border: 1px solid rgba(251, 191, 36, 0.2);
+         animation: fadeInUp 0.3s ease-out;
+      }
+      
+      .state-changes-header {
+         display: flex;
+         align-items: center;
+         gap: 6px;
+         font-weight: 600;
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         margin-bottom: 8px;
+         padding-bottom: 6px;
+         border-bottom: 1px solid var(--border-subtle);
+         
+         i {
+            font-size: 14px;
+            color: var(--color-amber);
+         }
+      }
+      
+      .state-changes-list {
+         display: flex;
+         flex-direction: column;
+         gap: 6px;
+      }
+      
+      .state-change-item {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         padding: 4px 8px;
+         background: rgba(0, 0, 0, 0.1);
+         border-radius: var(--radius-sm, 4px);
+         font-size: var(--font-md);
+         
+         .change-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+         }
+         
+         .change-value {
+            font-weight: 600;
+            font-family: monospace;
+            
+            &.positive {
+               color: var(--color-green);
+            }
+            
+            &.negative {
+               color: var(--color-red);
+            }
+            
+            &.neutral {
+               color: var(--text-primary);
+            }
+         }
       }
       
       .resolution-actions {
