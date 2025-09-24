@@ -1,5 +1,6 @@
 // Development entry point for hot reloading without Foundry
 import './styles/variables.css';
+import './styles/typography.css';
 import KingdomAppShell from './view/kingdom/KingdomAppShell.svelte';
 import { KingdomState } from './models/KingdomState';
 
