@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, totalProduction } from '../../../stores/kingdom';
    import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
@@ -47,20 +47,17 @@
    $: structureBonus = 0; // TODO: Calculate from actual structures
    $: unrestPerTurn = Math.max(0, sizeUnrest + warUnrest - structureBonus);
    
-   // Get production/income from the calculated values in kingdom state
-   $: income = ($kingdomState as any).income || new Map();
+   // Get production values from the totalProduction derived store
+   $: actualFoodIncome = $totalProduction.food || 0;
+   $: actualLumberIncome = $totalProduction.lumber || 0;
+   $: actualStoneIncome = $totalProduction.stone || 0;
+   $: actualOreIncome = $totalProduction.ore || 0;
    
-   // Calculate production from worksites - using income from sync
+   // Calculate worksite counts from kingdom state
    $: foodProduction = $kingdomState.worksiteCount.get('farmlands') || 0;
    $: lumberProduction = $kingdomState.worksiteCount.get('lumberCamps') || 0;
    $: stoneProduction = $kingdomState.worksiteCount.get('quarries') || 0;
    $: oreProduction = $kingdomState.worksiteCount.get('mines') || 0;
-   
-   // Get actual income values from sync - these will be the real production numbers
-   $: actualFoodIncome = income.get?.('food') || (foodProduction * 2);
-   $: actualLumberIncome = income.get?.('lumber') || (lumberProduction * 2);
-   $: actualStoneIncome = income.get?.('stone') || stoneProduction;
-   $: actualOreIncome = income.get?.('ore') || oreProduction;
    
    // Total worksites
    $: totalWorksites = foodProduction + lumberProduction + stoneProduction + oreProduction;

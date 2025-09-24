@@ -14,7 +14,7 @@
    import UnrestPhase from '../turnPhases/UnrestPhase.svelte';
    import EventsPhase from '../turnPhases/EventsPhase.svelte';
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
-   import ResolutionPhase from '../turnPhases/ResolutionPhase.svelte';
+   import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';
    
    // Initialize viewing phase if not set
    onMount(() => {
@@ -71,7 +71,7 @@
       {:else if displayPhase === TurnPhase.PHASE_V}
          <ActionsPhase />
       {:else if displayPhase === TurnPhase.PHASE_VI}
-         <ResolutionPhase />
+         <UpkeepPhase />
       {/if}
    </div>
    

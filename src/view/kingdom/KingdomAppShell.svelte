@@ -6,12 +6,16 @@
    import { kingdomState, updateKingdomStat }     from '../../stores/kingdom';
    import { uiState, setSelectedTab }             from '../../stores/ui';
    
+   // Import territory service for syncing
+   import { territoryService }                    from '../../services/territory';
+   
    // Components
    import ContentSelector from './components/ContentSelector.svelte';
    import KingdomStats    from './components/KingdomStats.svelte';
    
    // Tab components
    import TurnTab         from './tabs/TurnTab.svelte';
+   import TerritoryTab    from './tabs/TerritoryTab.svelte';
    import SettlementsTab  from './tabs/SettlementsTab.svelte';
    import FactionsTab     from './tabs/FactionsTab.svelte';
    import ModifiersTab    from './tabs/ModifiersTab.svelte';
@@ -36,7 +40,25 @@
    // Reactive statement for refresh
    $: if (refreshTrigger) {
       console.log('Refreshing kingdom data...');
-      // Trigger data refresh logic here
+      
+      // Sync territory data from Kingmaker if available
+      if (territoryService.isKingmakerAvailable()) {
+         const result = territoryService.syncFromKingmaker();
+         console.log('Kingmaker sync result:', result);
+         
+         if (result.success) {
+            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // Show success notification
+            // @ts-ignore
+            ui.notifications?.info(`Territory synced: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+         } else {
+            console.error('Failed to sync from Kingmaker:', result.error);
+            // @ts-ignore
+            ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+         }
+      } else {
+         console.log('Kingmaker module not available for sync');
+      }
    }
 
    // Settings view state
@@ -82,6 +104,8 @@
                <SettingsTab />
             {:else if $uiState.selectedTab === 'turn'}
                <TurnTab />
+            {:else if $uiState.selectedTab === 'territory'}
+               <TerritoryTab />
             {:else if $uiState.selectedTab === 'settlements'}
                <SettlementsTab />
             {:else if $uiState.selectedTab === 'factions'}

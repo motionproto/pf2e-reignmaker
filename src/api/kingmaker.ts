@@ -4,6 +4,7 @@ import { kingdomState, updateKingdomStat, addSettlement } from '../stores/kingdo
 import { Hex, Worksite, WorksiteType } from '../models/Hex';
 import type { Settlement, SettlementTier } from '../models/KingdomState';
 import { get } from 'svelte/store';
+import { territoryService } from '../services/territory';
 
 /**
  * External definitions for accessing the PF2e Kingmaker module's state
@@ -352,166 +353,18 @@ function getSettlementTier(type: string): SettlementTier | null {
 
 /**
  * Sync Kingmaker module data to the Kingdom State store
- * This updates the store with the current state from the Kingmaker module
+ * This now delegates to the Territory Service
  */
 export function syncKingmakerToKingdomState(): boolean {
-    if (!isKingmakerInstalled()) {
-        console.warn("Kingmaker module not installed, cannot sync");
-        return false;
+    const result = territoryService.syncFromKingmaker();
+    
+    if (result.success) {
+        console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements from Kingmaker module`);
+    } else {
+        console.warn("Failed to sync Kingmaker data:", result.error);
     }
     
-    // @ts-ignore - Kingmaker global
-    const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker) as KingmakerModule;
-    if (!km?.state?.hexes) {
-        console.warn("Kingmaker module state not available");
-        return false;
-    }
-    
-    try {
-        const hexStates = km.state.hexes;
-        const hexIds = Object.keys(hexStates);
-        
-        // Build hex objects and settlements
-        const newHexes: Hex[] = [];
-        const newSettlements: Settlement[] = [];
-        const settlementMap = new Map<string, Settlement>();
-        
-        // Count worksites for updating the store
-        const worksiteCounts = new Map<string, number>([
-            ['farmlands', 0],
-            ['lumberCamps', 0],
-            ['quarries', 0],
-            ['mines', 0]
-        ]);
-        
-        // Track calculated income for each resource
-        const calculatedIncome = new Map<string, number>([
-            ['food', 0],
-            ['lumber', 0],
-            ['stone', 0],
-            ['ore', 0],
-            ['gold', 0]
-        ]);
-        
-        let hexIndex = 0;
-        for (const hexId of hexIds) {
-            const hexState = hexStates[hexId];
-            if (!hexState?.claimed) continue;
-            
-            // Create hex object
-            const terrain = normalizeTerrainName(hexState.terrain);
-            let worksite: Worksite | null = null;
-            
-            // Check for farmland feature
-            const hasFarmland = hexState.features?.some(f => f.type === 'farmland') || false;
-            if (hasFarmland) {
-                worksite = new Worksite(WorksiteType.FARMSTEAD);
-                worksiteCounts.set('farmlands', (worksiteCounts.get('farmlands') || 0) + 1);
-                
-                // Calculate food income based on terrain
-                const foodYield = terrain === 'Plains' ? 2 : terrain === 'Hills' ? 1 : 0;
-                const commodityBonus = hexState.commodity === 'food' ? 1 : 0;
-                calculatedIncome.set('food', (calculatedIncome.get('food') || 0) + foodYield + commodityBonus);
-            }
-            // Check for camp/worksite
-            else if (hexState.camp) {
-                const worksiteType = campToWorksiteType(hexState.camp);
-                if (worksiteType) {
-                    worksite = new Worksite(worksiteType);
-                    
-                    // Update counts and calculate income
-                    switch (worksiteType) {
-                        case WorksiteType.LOGGING_CAMP:
-                            worksiteCounts.set('lumberCamps', (worksiteCounts.get('lumberCamps') || 0) + 1);
-                            // Lumber camps in forests produce 2 lumber
-                            const lumberYield = terrain === 'Forest' ? 2 : 1;
-                            const lumberBonus = hexState.commodity === 'lumber' ? 1 : 0;
-                            calculatedIncome.set('lumber', (calculatedIncome.get('lumber') || 0) + lumberYield + lumberBonus);
-                            break;
-                        case WorksiteType.MINE:
-                            worksiteCounts.set('mines', (worksiteCounts.get('mines') || 0) + 1);
-                            // Mines in mountains produce 1 ore
-                            const oreYield = terrain === 'Mountains' ? 1 : 0;
-                            const oreBonus = hexState.commodity === 'ore' ? 1 : 0;
-                            calculatedIncome.set('ore', (calculatedIncome.get('ore') || 0) + oreYield + oreBonus);
-                            break;
-                        case WorksiteType.QUARRY:
-                            worksiteCounts.set('quarries', (worksiteCounts.get('quarries') || 0) + 1);
-                            // Quarries in hills/mountains produce 1 stone
-                            const stoneYield = (terrain === 'Hills' || terrain === 'Mountains') ? 1 : 0;
-                            const stoneBonus = hexState.commodity === 'stone' ? 1 : 0;
-                            calculatedIncome.set('stone', (calculatedIncome.get('stone') || 0) + stoneYield + stoneBonus);
-                            break;
-                    }
-                }
-            }
-            
-            // Check for special commodity traits
-            const hasSpecialTrait = hexState.commodity !== null && hexState.commodity !== 'none';
-            
-            // Create hex with a unique ID
-            const hex = new Hex(
-                `hex_${hexIndex++}`,
-                terrain,
-                worksite,
-                hasSpecialTrait,
-                null // Name can be added later if needed
-            );
-            newHexes.push(hex);
-            
-            // Parse settlement features
-            hexState.features?.forEach(feature => {
-                if (feature.type) {
-                    const tier = getSettlementTier(feature.type);
-                    if (tier) {
-                        // For simplicity, create one settlement per feature
-                        // In a real game, you might want to group them
-                        const settlementName = `${feature.type}_${hexId}`;
-                        const settlement: Settlement = {
-                            name: settlementName,
-                            tier: tier,
-                            structureIds: [],
-                            connectedByRoads: false
-                        };
-                        newSettlements.push(settlement);
-                    }
-                }
-            });
-        }
-        
-        // Add gold income from settlements (1 gold per settlement)
-        calculatedIncome.set('gold', newSettlements.length);
-        
-        // Update the kingdom state store
-        kingdomState.update(state => {
-            // Update hexes and size
-            state.hexes = newHexes;
-            state.size = newHexes.length;
-            
-            // Update settlements
-            state.settlements = newSettlements;
-            
-            // Update worksite counts
-            state.worksiteCount = worksiteCounts;
-            
-            // Store the calculated income on the state object
-            (state as any).income = calculatedIncome;
-            
-            // Calculate and store production for quick access
-            // This will be used by the UI
-            const production = state.calculateProduction();
-            console.log("Synced Kingmaker data - Size:", state.size, "Production:", production, "Income:", calculatedIncome);
-            
-            return state;
-        });
-        
-        console.log(`Successfully synced ${newHexes.length} hexes and ${newSettlements.length} settlements from Kingmaker module`);
-        return true;
-        
-    } catch (e) {
-        console.error("Failed to sync Kingmaker data to Kingdom State", e);
-        return false;
-    }
+    return result.success;
 }
 
 /**

@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 
 // UI State for navigation and display
 export interface UIState {
-    selectedTab: 'turn' | 'settlements' | 'factions' | 'modifiers' | 'notes';
+    selectedTab: 'turn' | 'territory' | 'settlements' | 'factions' | 'modifiers' | 'notes';
     isPhasePanelExpanded: boolean;
     isResourcePanelExpanded: boolean;
     isSaving: boolean;

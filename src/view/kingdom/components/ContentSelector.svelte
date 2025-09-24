@@ -7,6 +7,7 @@
    
    const tabs = [
       { id: 'turn', label: 'Turn Management', icon: 'fa-hourglass-half' },
+      { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'settlements', label: 'Settlements', icon: 'fa-city' },
       { id: 'factions', label: 'Factions', icon: 'fa-users' },
       { id: 'modifiers', label: 'Modifiers', icon: 'fa-magic' },

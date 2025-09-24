@@ -1,22 +1,13 @@
 <script lang="ts">
-   import { kingdomState, collectResources, processFoodConsumption, totalProduction, foodConsumption, foodConsumptionBreakdown, armySupport, unsupportedArmies } from '../../../stores/kingdom';
+   import { kingdomState, modifyResource, totalProduction } from '../../../stores/kingdom';
    import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import { settlementService } from '../../../services/settlements';
+   import { get } from 'svelte/store';
    
-   // Check if steps are completed
+   // Check if step is completed
    $: collectCompleted = isPhaseStepCompleted('resources-collect');
-   $: consumeCompleted = isPhaseStepCompleted('resources-consume');
-   $: militaryCompleted = isPhaseStepCompleted('resources-military');
-   $: buildCompleted = isPhaseStepCompleted('resources-build');
    
-   // Calculate values - Fixed type issues
-   $: currentFood = $kingdomState.resources.get('food') || 0;
-   $: foodShortage = Math.max(0, $foodConsumption - currentFood);
-   $: settlementConsumption = $foodConsumptionBreakdown ? $foodConsumptionBreakdown[0] : 0;
-   $: armyConsumption = $foodConsumptionBreakdown ? $foodConsumptionBreakdown[1] : 0;
-   $: unsupportedCount = $unsupportedArmies || 0;
-   $: armyCount = $kingdomState.armies.length;
-   
-   // Resource icons and colors - Fixed type annotation
+   // Resource icons and colors
    const resourceConfig: Record<string, { icon: string; color: string }> = {
       food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
       lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
@@ -25,91 +16,42 @@
       gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
    };
    
+   // Calculate potential gold income from settlements (based on last turn's feeding)
+   $: potentialGoldIncome = settlementService.calculateSettlementGoldIncome($kingdomState.settlements);
+   $: fedSettlementsCount = $kingdomState.settlements.filter(s => s.wasFedLastTurn).length;
+   $: unfedSettlementsCount = $kingdomState.settlements.length - fedSettlementsCount;
+   
    function handleCollectResources() {
-      collectResources();
-      markPhaseStepCompleted('resources-collect');
-   }
-   
-   function handleFoodConsumption() {
-      const shortage = processFoodConsumption();
-      if (shortage > 0) {
-         console.log(`Food shortage! Added ${shortage} unrest.`);
-      }
-      markPhaseStepCompleted('resources-consume');
-   }
-   
-   function handleMilitarySupport() {
-      // Process military support logic
-      kingdomState.update(state => {
-         // Check unsupported armies (returns number not array)
-         const unsupported = state.getUnsupportedArmies();
-         if (unsupported > 0) {
-            // Handle morale checks for unsupported armies
-            console.log(`${unsupported} unsupported armies require morale checks`);
-         }
-         return state;
-      });
-      markPhaseStepCompleted('resources-military');
-   }
-   
-   function handleBuildQueue() {
-      // Process build queue
-      kingdomState.update(state => {
-         state.buildQueue.forEach(project => {
-            // Apply available resources to construction using remainingCost
-            project.remainingCost.forEach((amount, resource) => {
-               const available = state.resources.get(resource) || 0;
-               const toApply = Math.min(available, amount);
-               if (toApply > 0) {
-                  state.resources.set(resource, available - toApply);
-                  const currentRemaining = project.remainingCost.get(resource) || 0;
-                  project.remainingCost.set(resource, Math.max(0, currentRemaining - toApply));
-               }
-            });
+      try {
+         const state = get(kingdomState);
+         
+         // Use cached production from KingdomState (calculated once when hexes change)
+         const production = state.cachedProduction;
+         
+         // Log production for debugging/transparency
+         console.log('Collecting resources (from cache):', {
+            total: Object.fromEntries(production),
+            hexCount: state.cachedProductionByHex.length
          });
-         // Remove completed projects
-         state.buildQueue = state.buildQueue.filter(p => {
-            let hasRemaining = false;
-            p.remainingCost.forEach(amount => {
-               if (amount > 0) hasRemaining = true;
-            });
-            return hasRemaining;
-         });
-         return state;
-      });
-      markPhaseStepCompleted('resources-build');
-   }
-   
-   // Helper functions for BuildProject display
-   function getProjectCompletionPercentage(project: any): number {
-      if (!project.totalCost || project.totalCost.size === 0) return 100;
-      
-      let totalNeeded = 0;
-      let totalRemaining = 0;
-      
-      project.totalCost.forEach((needed: number) => {
-         totalNeeded += needed;
-      });
-      
-      project.remainingCost.forEach((amount: number) => {
-         totalRemaining += amount;
-      });
-      
-      if (totalNeeded === 0) return 100;
-      const invested = totalNeeded - totalRemaining;
-      return Math.floor((invested / totalNeeded) * 100);
-   }
-   
-   function getProjectRemainingCost(project: any): Record<string, number> {
-      const remaining: Record<string, number> = {};
-      if (project.remainingCost) {
-         project.remainingCost.forEach((amount: number, resource: string) => {
+         
+         // Update store with results (excluding gold - that comes from settlements)
+         production.forEach((amount, resource) => {
             if (amount > 0) {
-               remaining[resource] = amount;
+               modifyResource(resource, amount);
             }
          });
+         
+         // Generate gold from settlements that were fed last turn
+         if (potentialGoldIncome > 0) {
+            console.log(`Settlements generate ${potentialGoldIncome} gold (${fedSettlementsCount} fed, ${unfedSettlementsCount} unfed)`);
+            modifyResource('gold', potentialGoldIncome);
+         }
+         
+         markPhaseStepCompleted('resources-collect');
+      } catch (error) {
+         console.error('Error collecting resources:', error);
+         // Could show user-friendly error message here
       }
-      return remaining;
    }
 </script>
 
@@ -126,21 +68,22 @@
       {/each}
    </div>
    
-   <!-- Phase Steps -->
+   <!-- Phase Step -->
    <div class="phase-steps-container">
       
-      <!-- Step 1: Collect Resources -->
+      <!-- Step 1: Collect Resources and Revenue -->
       <div class="phase-step" class:completed={collectCompleted}>
          {#if collectCompleted}
             <i class="fas fa-check-circle phase-step-complete"></i>
          {/if}
          
-         <h4>Step 1: Collect Resources and Revenue</h4>
+         <h4>Collect Resources and Revenue</h4>
          
+         <!-- Resource Production -->
          {#if Object.keys($totalProduction).length > 0}
             <div class="production-summary">
                <div class="production-header">
-                  <span class="production-title">Expected Income This Turn:</span>
+                  <span class="production-title">Resource Production This Turn:</span>
                   <span class="production-total">
                      {#each Object.entries($totalProduction) as [resource, amount], i}
                         {#if i > 0} | {/if}
@@ -151,22 +94,18 @@
                   </span>
                </div>
                
-               {#if $kingdomState.hexes.some(h => h.worksite)}
+               {#if $kingdomState.cachedProductionByHex.length > 0}
                   <details class="worksite-details">
                      <summary>View Worksite Details</summary>
                      <ul class="worksite-list">
-                        {#each $kingdomState.hexes.filter(h => h.worksite) as hex}
+                        {#each $kingdomState.cachedProductionByHex as [hex, production]}
                            <li class="worksite-item">
                               <span>{hex.name || `Hex ${hex.id}`} ({hex.terrain})</span>
                               <span class="worksite-production">
-                                 {#if hex.getProduction && Object.keys(hex.getProduction()).length > 0}
-                                    {#each Object.entries(hex.getProduction()) as [resource, amount], i}
-                                       {#if i > 0}, {/if}
-                                       {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
-                                    {/each}
-                                 {:else}
-                                    No production
-                                 {/if}
+                                 {#each Array.from(production.entries()) as [resource, amount], i}
+                                    {#if i > 0}, {/if}
+                                    {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                                 {/each}
                               </span>
                            </li>
                         {/each}
@@ -180,6 +119,37 @@
             </div>
          {/if}
          
+         <!-- Gold Income from Settlements -->
+         {#if $kingdomState.settlements.length > 0}
+            <div class="gold-income-summary">
+               <div class="income-header">
+                  <i class="fas fa-coins" style="color: var(--color-amber-light);"></i>
+                  <span class="income-title">Settlement Gold Income:</span>
+                  {#if potentialGoldIncome > 0}
+                     <span class="income-amount" style="color: var(--color-amber-light);">
+                        +{potentialGoldIncome} Gold
+                     </span>
+                  {:else}
+                     <span class="income-amount" style="color: var(--text-tertiary);">
+                        No gold income
+                     </span>
+                  {/if}
+               </div>
+               
+               {#if unfedSettlementsCount > 0}
+                  <div class="income-note warning">
+                     <i class="fas fa-exclamation-triangle"></i>
+                     {unfedSettlementsCount} settlement{unfedSettlementsCount > 1 ? 's' : ''} not generating gold (unfed last turn)
+                  </div>
+               {:else if fedSettlementsCount > 0}
+                  <div class="income-note success">
+                     <i class="fas fa-check-circle"></i>
+                     All settlements were fed last turn and generate gold
+                  </div>
+               {/if}
+            </div>
+         {/if}
+         
          <button 
             on:click={handleCollectResources} 
             disabled={collectCompleted}
@@ -188,168 +158,9 @@
             {#if collectCompleted}
                <i class="fas fa-check"></i> Resources Collected
             {:else}
-               <i class="fas fa-hand-holding-usd"></i> Collect Resources
+               <i class="fas fa-hand-holding-usd"></i> Collect All Resources
             {/if}
          </button>
-      </div>
-      
-      <!-- Step 2: Food Consumption -->
-      <div class="phase-step" class:completed={consumeCompleted}>
-         {#if consumeCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 2: Food Consumption</h4>
-         
-         <div class="consumption-display">
-            <div class="consumption-stat">
-               <i class="fas fa-home"></i>
-               <div class="stat-value">{settlementConsumption}</div>
-               <div class="stat-label">Settlement Consumption</div>
-            </div>
-            
-            <div class="consumption-stat">
-               <i class="fas fa-shield-alt"></i>
-               <div class="stat-value">{armyConsumption}</div>
-               <div class="stat-label">Army Consumption</div>
-            </div>
-            
-            <div class="consumption-stat" class:danger={foodShortage > 0}>
-               <i class="fas fa-wheat-awn"></i>
-               <div class="stat-value">{currentFood} / {$foodConsumption}</div>
-               <div class="stat-label">Available / Required</div>
-            </div>
-         </div>
-         
-         {#if foodShortage > 0 && !consumeCompleted}
-            <div class="warning-box">
-               <i class="fas fa-exclamation-triangle"></i>
-               <strong>Warning:</strong> Food shortage of {foodShortage} will cause +{foodShortage} Unrest!
-            </div>
-         {/if}
-         
-         <button 
-            on:click={handleFoodConsumption} 
-            disabled={consumeCompleted}
-            class="step-button"
-         >
-            {#if consumeCompleted}
-               <i class="fas fa-check"></i> Consumption Paid
-            {:else}
-               <i class="fas fa-utensils"></i> Pay Food Consumption
-            {/if}
-         </button>
-      </div>
-      
-      <!-- Step 3: Military Support -->
-      <div class="phase-step" class:completed={militaryCompleted}>
-         {#if militaryCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 3: Military Support</h4>
-         
-         <div class="army-support-display">
-            <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === $armySupport}>
-               <i class="fas fa-shield-alt"></i>
-               <div>
-                  <div class="stat-value">{armyCount} / {$armySupport}</div>
-                  <div class="stat-label">Armies / Capacity</div>
-               </div>
-            </div>
-            
-            {#if unsupportedCount > 0}
-               <div class="support-status danger">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <div>
-                     <div class="stat-value">{unsupportedCount}</div>
-                     <div class="stat-label">Unsupported</div>
-                  </div>
-               </div>
-            {/if}
-         </div>
-         
-         {#if unsupportedCount > 0 && !militaryCompleted}
-            <div class="warning-box">
-               <i class="fas fa-exclamation-triangle"></i>
-               <strong>Warning:</strong> {unsupportedCount} unsupported {unsupportedCount === 1 ? 'army' : 'armies'} will require morale checks!
-            </div>
-         {:else if armyCount === 0}
-            <div class="info-text">No armies currently fielded</div>
-         {/if}
-         
-         {#if armyCount > 0}
-            <button 
-               on:click={handleMilitarySupport} 
-               disabled={militaryCompleted}
-               class="step-button"
-            >
-               {#if militaryCompleted}
-                  <i class="fas fa-check"></i> Support Processed
-               {:else}
-                  <i class="fas fa-flag"></i> Process Military Support
-               {/if}
-            </button>
-         {/if}
-      </div>
-      
-      <!-- Step 4: Build Queue -->
-      <div class="phase-step" class:completed={buildCompleted}>
-         {#if buildCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 4: Process Build Queue</h4>
-         
-         {#if $kingdomState.buildQueue.length > 0}
-            <div class="build-resources-available">
-               <strong>Available Resources:</strong>
-               {['lumber', 'stone', 'ore'].map(r => 
-                  `${$kingdomState.resources.get(r) || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
-               ).join(', ')}
-            </div>
-            
-            <div class="build-queue">
-               {#each $kingdomState.buildQueue as project}
-                  <div class="build-project-card">
-                     <div class="project-header">
-                        <span class="project-name">{project.structureId}</span>
-                        <span class="project-tier">In {project.settlementName}</span>
-                     </div>
-                     
-                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {getProjectCompletionPercentage(project)}%">
-                           <span class="progress-text">{getProjectCompletionPercentage(project)}%</span>
-                        </div>
-                     </div>
-                     
-                     <div class="project-needs">
-                        {#if Object.keys(getProjectRemainingCost(project)).length > 0}
-                           Needs: {Object.entries(getProjectRemainingCost(project))
-                              .map(([r, a]) => `${a} ${r}`)
-                              .join(', ')}
-                        {:else}
-                           Complete!
-                        {/if}
-                     </div>
-                  </div>
-               {/each}
-            </div>
-            
-            <button 
-               on:click={handleBuildQueue} 
-               disabled={buildCompleted}
-               class="step-button"
-            >
-               {#if buildCompleted}
-                  <i class="fas fa-check"></i> Resources Applied
-               {:else}
-                  <i class="fas fa-hammer"></i> Apply to Construction
-               {/if}
-            </button>
-         {:else}
-            <div class="info-text">No construction projects in queue</div>
-         {/if}
       </div>
       
    </div>
@@ -519,192 +330,65 @@
       font-style: italic;
    }
    
-   .consumption-display {
-      display: flex;
-      justify-content: space-around;
-      gap: 20px;
+   .gold-income-summary {
       margin: 15px 0;
-      flex-wrap: wrap;
-   }
-   
-   .consumption-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      
-      i {
-         font-size: 32px;
-         color: var(--color-amber);
-         margin-bottom: 5px;
-      }
-      
-      .stat-value {
-         font-size: 20px;
-         font-weight: bold;
-         color: var(--text-primary);
-         margin: 2px 0;
-      }
-      
-      .stat-label {
-         font-size: 11px;
-         color: var(--text-tertiary);
-         text-transform: uppercase;
-      }
-      
-      &.danger {
-         i {
-            color: var(--color-red);
-         }
-         
-         .stat-value {
-            color: var(--color-red);
-         }
-      }
-   }
-   
-   .army-support-display {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin: 15px 0;
-      flex-wrap: wrap;
-   }
-   
-   .support-status {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      padding: 12px 20px;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.5),
+         rgba(31, 31, 35, 0.3));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-default);
       
-      i {
-         font-size: 32px;
-         color: var(--color-blue);
+      .income-header {
+         display: flex;
+         align-items: center;
+         gap: 10px;
+         margin-bottom: 10px;
+         
+         i {
+            font-size: 20px;
+         }
       }
       
-      .stat-value {
-         font-size: 18px;
-         font-weight: bold;
-         color: var(--text-primary);
+      .income-title {
+         font-weight: 600;
+         font-size: var(--font-md);
+         color: var(--text-secondary);
+         flex: 1;
       }
       
-      .stat-label {
-         font-size: 12px;
-         color: var(--text-tertiary);
+      .income-amount {
+         font-weight: 600;
+         font-size: var(--font-md);
       }
+   }
+   
+   .income-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
       
       &.warning {
          background: rgba(245, 158, 11, 0.1);
-         border-color: var(--color-amber);
+         color: var(--color-amber-light);
+         border: 1px solid var(--color-amber);
          
          i {
-            color: var(--color-amber);
+            font-size: 14px;
          }
       }
       
-      &.danger {
-         background: rgba(239, 68, 68, 0.1);
-         border-color: var(--color-red);
+      &.success {
+         background: rgba(34, 197, 94, 0.1);
+         color: var(--color-green-light);
+         border: 1px solid var(--color-green);
          
          i {
-            color: var(--color-red);
+            font-size: 14px;
          }
-         
-         .stat-value {
-            color: var(--color-red);
-         }
-      }
-   }
-   
-   .warning-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--color-amber);
-      border-radius: var(--radius-md);
-      color: var(--color-amber-light);
-      margin: 15px 0;
-      
-      i {
-         font-size: 18px;
-      }
-   }
-   
-   .info-text {
-      text-align: center;
-      color: var(--text-tertiary);
-      font-style: italic;
-      padding: 10px;
-   }
-   
-   .build-resources-available {
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-      margin-bottom: 15px;
-      color: var(--text-secondary);
-   }
-   
-   .build-queue {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 15px;
-   }
-   
-   .build-project-card {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      
-      .project-header {
-         display: flex;
-         justify-content: space-between;
-         margin-bottom: 10px;
-      }
-      
-      .project-name {
-         font-weight: 600;
-         color: var(--text-primary);
-      }
-      
-      .project-tier {
-         color: var(--color-amber);
-         font-size: var(--font-sm);
-      }
-      
-      .progress-bar {
-         height: 20px;
-         background: rgba(0, 0, 0, 0.3);
-         border-radius: var(--radius-md);
-         overflow: hidden;
-         margin-bottom: 8px;
-      }
-      
-      .progress-fill {
-         height: 100%;
-         background: linear-gradient(90deg, var(--color-crimson), var(--color-amber));
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         transition: width 0.3s ease;
-      }
-      
-      .progress-text {
-         font-size: 11px;
-         color: white;
-         font-weight: bold;
-      }
-      
-      .project-needs {
-         font-size: var(--font-sm);
-         color: var(--text-tertiary);
       }
    }
    

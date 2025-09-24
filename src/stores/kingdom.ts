@@ -2,6 +2,8 @@ import { writable, derived, get } from 'svelte/store';
 import { KingdomState } from '../models/KingdomState';
 import type { KingdomEvent } from '../models/Events';
 import type { Settlement, Army, BuildProject, Modifier } from '../models/KingdomState';
+import { economicsService } from '../services/economics';
+import { territoryService } from '../services/territory';
 
 // Main kingdom state store - contains only pure kingdom data
 export const kingdomState = writable(new KingdomState());
@@ -9,24 +11,16 @@ export const kingdomState = writable(new KingdomState());
 // Re-export viewingPhase from gameState for backward compatibility
 export { viewingPhase } from './gameState';
 
-// Derived stores for common calculations
+// Territory metrics derived store
+export const territoryMetrics = derived(kingdomState, $state => {
+    return territoryService.getTerritoryMetrics($state.hexes);
+});
+
+// Derived stores for common calculations using cached values
 export const totalProduction = derived(kingdomState, $state => {
-    // If we have calculated income from the sync, use it
-    const income = ($state as any).income;
-    if (income && income instanceof Map && income.size > 0) {
-        // Convert Map to object for compatibility with existing code
-        const incomeObj: Record<string, number> = {};
-        income.forEach((value: number, key: string) => {
-            if (value > 0) {
-                incomeObj[key] = value;
-            }
-        });
-        return incomeObj;
-    }
-    // Fallback to calculated production
-    const production = $state.calculateProduction();
+    // Use cached production from KingdomState (calculated once when hexes change)
     const productionObj: Record<string, number> = {};
-    production.forEach((value, key) => {
+    $state.cachedProduction.forEach((value, key) => {
         if (value > 0) {
             productionObj[key] = value;
         }
@@ -34,25 +28,31 @@ export const totalProduction = derived(kingdomState, $state => {
     return productionObj;
 });
 
-export const foodConsumption = derived(kingdomState, $state => 
-    $state.getTotalFoodConsumption()
-);
+export const foodConsumption = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    return consumption.totalFood;
+});
 
-export const foodConsumptionBreakdown = derived(kingdomState, $state => 
-    $state.getFoodConsumptionBreakdown()
-);
+export const foodConsumptionBreakdown = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    return [consumption.settlementFood, consumption.armyFood];
+});
 
-export const armySupport = derived(kingdomState, $state => 
-    $state.getTotalArmySupport()
-);
+export const armySupport = derived(kingdomState, $state => {
+    const support = economicsService.calculateMilitarySupport($state.settlements, $state.armies);
+    return support.capacity;
+});
 
-export const unsupportedArmies = derived(kingdomState, $state => 
-    $state.getUnsupportedArmies()
-);
+export const unsupportedArmies = derived(kingdomState, $state => {
+    const support = economicsService.calculateMilitarySupport($state.settlements, $state.armies);
+    return support.unsupported;
+});
 
-export const foodShortage = derived(kingdomState, $state => 
-    $state.calculateFoodShortage()
-);
+export const foodShortage = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    const foodSupply = economicsService.checkFoodSupply($state.resources.get('food') || 0, consumption);
+    return foodSupply.shortage;
+});
 
 // Actions to modify kingdom state
 export function updateKingdomStat(stat: keyof KingdomState, value: any) {
@@ -152,7 +152,18 @@ export {
 
 export function collectResources() {
     kingdomState.update(state => {
-        state.collectResources();
+        // Use economics service to calculate production
+        const modifiers = economicsService.getActiveModifiers({
+            isAtWar: state.isAtWar,
+            unrest: state.unrest
+        });
+        const production = economicsService.calculateProduction(state.hexes, modifiers);
+        
+        // Add production to resources
+        production.totalProduction.forEach((amount, resource) => {
+            state.resources.set(resource, (state.resources.get(resource) || 0) + amount);
+        });
+        
         return state;
     });
 }
@@ -160,7 +171,18 @@ export function collectResources() {
 export function processFoodConsumption(): number {
     let shortage = 0;
     kingdomState.update(state => {
-        shortage = state.processFoodConsumption();
+        // Use economics service to calculate consumption
+        const consumption = economicsService.calculateConsumption(state.settlements, state.armies);
+        const currentFood = state.resources.get('food') || 0;
+        
+        if (currentFood < consumption.totalFood) {
+            shortage = consumption.totalFood - currentFood;
+            state.resources.set('food', 0);
+            state.unrest += shortage;
+        } else {
+            state.resources.set('food', currentFood - consumption.totalFood);
+        }
+        
         return state;
     });
     return shortage;
@@ -168,7 +190,11 @@ export function processFoodConsumption(): number {
 
 export function clearNonStorableResources() {
     kingdomState.update(state => {
-        state.clearNonStorableResources();
+        // Use economics service to determine which resources to clear
+        const nonStorable = economicsService.getNonStorableResources();
+        nonStorable.forEach(resource => {
+            state.resources.set(resource, 0);
+        });
         return state;
     });
 }

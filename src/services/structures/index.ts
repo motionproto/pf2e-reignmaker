@@ -1,0 +1,448 @@
+// Structures Service for PF2e Kingdom Lite
+// Manages structure definitions and calculations
+
+import { get } from 'svelte/store';
+import { kingdomState } from '../../stores/kingdom';
+import type { Settlement } from '../../models/Settlement';
+import type { Structure, ResourceCost } from '../../models/Structure';
+import { parseStructureFromJSON, SpecialAbility } from '../../models/Structure';
+
+export class StructuresService {
+  private structures: Map<string, Structure> = new Map();
+  private structuresLoaded: boolean = false;
+  
+  /**
+   * Load all structure definitions from data files
+   */
+  async loadStructures(): Promise<void> {
+    if (this.structuresLoaded) return;
+    
+    try {
+      // List of all structure files (from the data/structures directory)
+      const structureFiles = [
+        'granary', 'storehouses', 'warehouses', 'strategic-reserves',
+        'wooden-palisade', 'stone-walls', 'fortified-walls', 'grand-battlements',
+        'barracks', 'garrison', 'fortress', 'citadel',
+        'market-square', 'bazaar', 'merchant-guild', 'imperial-bank',
+        'open-stage', 'amphitheater', 'playhouse', 'auditorium',
+        'tax-office', 'counting-house', 'treasury', 'exchequer',
+        'stocks', 'jail', 'prison', 'donjon',
+        'envoys-office', 'embassy', 'grand-embassy', 'diplomatic-quarter-support',
+        // Skill-based structures
+        'rats-warren', 'smugglers-den', 'thieves-guild', 'shadow-network',
+        'town-hall', 'city-hall', 'diplomatic-quarter', 'grand-forum',
+        'gymnasium', 'training-yard', 'warriors-hall', 'military-academy',
+        'workshop', 'artisans-hall', 'blacksmiths-guild', 'masterworks-foundry',
+        'scholars-table', 'library', 'university', 'arcane-academy',
+        'shrine', 'temple', 'temple-district', 'grand-basilica',
+        'healers-hut', 'infirmary', 'hospital', 'medical-college',
+        'buskers-alley', 'famous-tavern', 'performance-hall', 'grand-amphitheater',
+        'hunters-lodge', 'rangers-outpost', 'druids-grove', 'wildskeepers-enclave'
+      ];
+      
+      for (const fileName of structureFiles) {
+        try {
+          const response = await fetch(`/data/structures/${fileName}.json`);
+          if (response.ok) {
+            const data = await response.json();
+            const structure = parseStructureFromJSON(data);
+            this.structures.set(structure.id, structure);
+          }
+        } catch (error) {
+          console.warn(`Failed to load structure ${fileName}:`, error);
+        }
+      }
+      
+      this.structuresLoaded = true;
+      console.log(`Loaded ${this.structures.size} structures`);
+    } catch (error) {
+      console.error('Failed to load structures:', error);
+    }
+  }
+  
+  /**
+   * Get a structure by ID
+   */
+  getStructure(id: string): Structure | undefined {
+    return this.structures.get(id);
+  }
+  
+  /**
+   * Get all structures
+   */
+  getAllStructures(): Structure[] {
+    return Array.from(this.structures.values());
+  }
+  
+  /**
+   * Get structures available for a settlement
+   */
+  getAvailableStructures(settlement: Settlement): Structure[] {
+    const settlementTier = this.getSettlementTierNumber(settlement.tier);
+    const state = get(kingdomState);
+    
+    return this.getAllStructures().filter(structure => {
+      // Check tier requirement
+      if (structure.minimumSettlementTier && structure.minimumSettlementTier > settlementTier) {
+        return false;
+      }
+      
+      // Check if already built
+      if (settlement.structureIds.includes(structure.id)) {
+        return false;
+      }
+      
+      // Check prerequisites
+      if (structure.upgradeFrom && !settlement.structureIds.includes(structure.upgradeFrom)) {
+        return false;
+      }
+      
+      // Check kingdom-wide uniqueness for revenue structures
+      if (structure.uniqueKingdomWide) {
+        const hasExisting = this.hasKingdomWideStructure(structure.id, state.settlements);
+        if (hasExisting) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  }
+  
+  /**
+   * Calculate total food storage capacity for a settlement
+   */
+  calculateFoodStorage(settlement: Settlement): number {
+    let total = 0;
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = this.getStructure(structureId);
+      if (structure?.effects.foodStorage) {
+        total += structure.effects.foodStorage;
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Calculate total imprisoned unrest capacity for a settlement
+   */
+  calculateImprisonedUnrestCapacity(settlement: Settlement): number {
+    let total = 0;
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = this.getStructure(structureId);
+      if (structure?.effects.imprisonedUnrestCapacity) {
+        total += structure.effects.imprisonedUnrestCapacity;
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Calculate gold income from structures in a settlement
+   */
+  calculateGoldIncome(settlement: Settlement): number {
+    let total = 0;
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = this.getStructure(structureId);
+      if (structure?.effects.goldPerTurn) {
+        total += structure.effects.goldPerTurn;
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Calculate army support bonus from structures in a settlement
+   */
+  calculateArmySupportBonus(settlement: Settlement): number {
+    let total = 0;
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = this.getStructure(structureId);
+      if (structure?.effects.armySupportBonus) {
+        total += structure.effects.armySupportBonus;
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Calculate unrest reduction per turn from all settlements
+   */
+  calculateTotalUnrestReduction(settlements: Settlement[]): number {
+    let total = 0;
+    
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        if (structure?.effects.unrestReductionPerTurn) {
+          total += structure.effects.unrestReductionPerTurn;
+        }
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Calculate fame per turn from all settlements
+   */
+  calculateTotalFameGeneration(settlements: Settlement[]): number {
+    let total = 0;
+    
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        if (structure?.effects.famePerTurn) {
+          total += structure.effects.famePerTurn;
+        }
+      }
+    }
+    
+    return total;
+  }
+  
+  /**
+   * Get the best trade ratios from all structures
+   */
+  getBestTradeRatios(settlements: Settlement[]): {
+    sellRatio: { resources: number; gold: number } | null;
+    buyRatio: { gold: number; resources: number } | null;
+  } {
+    let bestSellRatio: { resources: number; gold: number } | null = null;
+    let bestBuyRatio: { gold: number; resources: number } | null = null;
+    
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        
+        // Check sell ratio (lower resources per gold is better)
+        if (structure?.effects.sellRatio) {
+          if (!bestSellRatio || 
+              structure.effects.sellRatio.resources / structure.effects.sellRatio.gold <
+              bestSellRatio.resources / bestSellRatio.gold) {
+            bestSellRatio = structure.effects.sellRatio;
+          }
+        }
+        
+        // Check buy ratio (lower gold per resource is better)
+        if (structure?.effects.buyRatio) {
+          if (!bestBuyRatio ||
+              structure.effects.buyRatio.gold / structure.effects.buyRatio.resources <
+              bestBuyRatio.gold / bestBuyRatio.resources) {
+            bestBuyRatio = structure.effects.buyRatio;
+          }
+        }
+      }
+    }
+    
+    // Default ratios if no structures provide them
+    if (!bestSellRatio) {
+      bestSellRatio = { resources: 2, gold: 1 }; // Default 2:1
+    }
+    if (!bestBuyRatio) {
+      bestBuyRatio = { gold: 2, resources: 1 }; // Default 2:1
+    }
+    
+    return { sellRatio: bestSellRatio, buyRatio: bestBuyRatio };
+  }
+  
+  /**
+   * Check if any settlement has a structure allowing personal income
+   */
+  hasPersonalIncomeStructure(settlements: Settlement[]): boolean {
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        if (structure?.effects.allowsPersonalIncome) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Check if any settlement has a structure allowing pardon action
+   */
+  hasPardonCapability(settlements: Settlement[]): boolean {
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        if (structure?.effects.allowsPardonAction) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Convert settlement tier to number
+   */
+  private getSettlementTierNumber(tier: string): number {
+    switch (tier.toLowerCase()) {
+      case 'village': return 1;
+      case 'town': return 2;
+      case 'city': return 3;
+      case 'metropolis': return 4;
+      default: return 1;
+    }
+  }
+  
+  /**
+   * Calculate total construction cost for a structure
+   */
+  getConstructionCost(structureId: string): ResourceCost {
+    const structure = this.getStructure(structureId);
+    return structure?.constructionCost || {};
+  }
+  
+  /**
+   * Check if a kingdom can afford to build a structure
+   */
+  canAffordStructure(structureId: string): boolean {
+    const structure = this.getStructure(structureId);
+    if (!structure) return false;
+    
+    const state = get(kingdomState);
+    const cost = structure.constructionCost;
+    
+    for (const [resource, amount] of Object.entries(cost)) {
+      const available = state.resources.get(resource) || 0;
+      if (available < amount) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Check if a kingdom-wide unique structure exists
+   */
+  hasKingdomWideStructure(structureId: string, settlements: Settlement[]): boolean {
+    for (const settlement of settlements) {
+      if (settlement.structureIds.includes(structureId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  /**
+   * Validate that kingdom-wide unique structures aren't duplicated
+   */
+  validateKingdomWideUnique(structureId: string, excludeSettlementId?: string): boolean {
+    const structure = this.getStructure(structureId);
+    if (!structure?.uniqueKingdomWide) {
+      return true; // Not a unique structure, so valid
+    }
+    
+    const state = get(kingdomState);
+    
+    for (const settlement of state.settlements) {
+      // Skip the settlement we're checking for (in case of upgrade)
+      if (excludeSettlementId && settlement.id === excludeSettlementId) {
+        continue;
+      }
+      
+      // Check if this settlement has any revenue structure (they're all mutually exclusive)
+      for (const existingId of settlement.structureIds) {
+        const existing = this.getStructure(existingId);
+        if (existing?.uniqueKingdomWide && existing.category === structure.category) {
+          return false; // Another kingdom-wide unique structure of same category exists
+        }
+      }
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Get all active special abilities in the kingdom
+   */
+  getActiveSpecialAbilities(settlements: Settlement[]): Map<SpecialAbility, Settlement[]> {
+    const abilities = new Map<SpecialAbility, Settlement[]>();
+    
+    for (const settlement of settlements) {
+      for (const structureId of settlement.structureIds) {
+        const structure = this.getStructure(structureId);
+        if (structure?.effects.specialAbilities) {
+          for (const ability of structure.effects.specialAbilities) {
+            if (!abilities.has(ability)) {
+              abilities.set(ability, []);
+            }
+            abilities.get(ability)!.push(settlement);
+          }
+        }
+      }
+    }
+    
+    return abilities;
+  }
+  
+  /**
+   * Process automatic turn-start effects from structures
+   */
+  processAutomaticEffects(settlements: Settlement[]): {
+    unrestReduction: number,
+    fameGain: number,
+    convertedUnrest: number
+  } {
+    let unrestReduction = 0;
+    let fameGain = 0;
+    let convertedUnrest = 0;
+    
+    const abilities = this.getActiveSpecialAbilities(settlements);
+    
+    // Process auto-reduce unrest (Citadel, Auditorium)
+    if (abilities.has(SpecialAbility.AUTO_REDUCE_UNREST)) {
+      unrestReduction += abilities.get(SpecialAbility.AUTO_REDUCE_UNREST)!.length;
+    }
+    
+    // Process auto-gain fame (Auditorium)
+    if (abilities.has(SpecialAbility.AUTO_GAIN_FAME)) {
+      fameGain += abilities.get(SpecialAbility.AUTO_GAIN_FAME)!.length;
+    }
+    
+    // Process convert unrest (Donjon)
+    if (abilities.has(SpecialAbility.CONVERT_UNREST)) {
+      // Each Donjon can convert 1 unrest per turn
+      convertedUnrest += abilities.get(SpecialAbility.CONVERT_UNREST)!.length;
+    }
+    
+    return { unrestReduction, fameGain, convertedUnrest };
+  }
+  
+  /**
+   * Check if kingdom has food spoilage protection (Strategic Reserves)
+   */
+  hasFoodSpoilageProtection(settlements: Settlement[]): boolean {
+    const abilities = this.getActiveSpecialAbilities(settlements);
+    return abilities.has(SpecialAbility.NEGATE_FOOD_SPOILAGE);
+  }
+  
+  /**
+   * Check if any settlement has defender recovery (Grand Battlements)
+   */
+  getSettlementsWithDefenderRecovery(settlements: Settlement[]): Settlement[] {
+    const abilities = this.getActiveSpecialAbilities(settlements);
+    return abilities.get(SpecialAbility.DEFENDER_RECOVERY) || [];
+  }
+}
+
+// Export singleton instance
+export const structuresService = new StructuresService();
+
+// Initialize structures on module load
+if (typeof window !== 'undefined') {
+  structuresService.loadStructures().catch(console.error);
+}

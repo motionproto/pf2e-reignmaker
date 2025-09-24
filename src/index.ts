@@ -7,6 +7,7 @@
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
+import { territoryService } from './services/territory';
 
 // Extend module type for our API
 declare global {
@@ -103,8 +104,10 @@ Hooks.once('ready', () => {
     console.log('PF2e Kingdom Lite | Module ready');
     console.log('PF2e Kingdom Lite | Svelte Kingdom system initialized');
     
-    // Initialize Kingmaker sync if the module is present
-    initializeKingmakerSync();
+    // Initialize Kingmaker sync if available using Territory Service
+    if (territoryService.isKingmakerAvailable()) {
+        initializeKingmakerSync();
+    }
     
     // Import KingdomApp at module level to avoid dynamic import issues
     import('./view/kingdom/KingdomApp').then(({ KingdomApp }) => {
