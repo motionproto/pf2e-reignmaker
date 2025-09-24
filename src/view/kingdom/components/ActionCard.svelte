@@ -5,7 +5,8 @@
       performKingdomActionRoll, 
       getKingdomActionDC,
       getCurrentUserCharacter,
-      showCharacterSelectionDialog 
+      showCharacterSelectionDialog,
+      getPlayerCharacters
    } from '../../../api/foundry-actors';
    import { kingdomState } from '../../../stores/kingdom';
    import { createEventDispatcher } from 'svelte';
@@ -14,20 +15,43 @@
    export let expanded: boolean = false;
    export let available: boolean = true;
    export let resolved: boolean = false;
-   export let resolution: { outcome: string, actorName: string } | undefined = undefined;
+   export let resolution: { outcome: string, actorName: string, skillName?: string } | undefined = undefined;
    export let character: any = null;
    export let canPerformMore: boolean = true;
    
    const dispatch = createEventDispatcher();
    
    // Track which skill was used for this action
-   let usedSkill: string = '';
    let isRolling: boolean = false;
+   let localUsedSkill: string = '';
+   
+   // Get the skill that was used - either from resolution or from local tracking
+   $: usedSkill = resolution?.skillName || localUsedSkill || '';
+   
+   // Get fame from kingdom state properly
+   $: currentFame = $kingdomState?.fame || 0;
+   
+   // React to resolution prop changes
+   $: if (resolved) {
+      console.log(`ActionCard ${action.id} is now resolved:`, {
+         resolved,
+         resolution,
+         usedSkill,
+         localUsedSkill,
+         'resolution?.skillName': resolution?.skillName,
+         actionId: action.id,
+         'currentFame': currentFame,
+         'kingdomState.fame': $kingdomState?.fame,
+         'kingdomState.resources': $kingdomState?.resources
+      });
+   }
    
    function toggleExpanded(event: Event) {
       event.preventDefault();
       event.stopPropagation();
-      if (available) {
+      // Always allow toggling if not disabled, regardless of resolved state
+      // This allows users to view the resolution details
+      if (available || resolved) {
          dispatch('toggle');
       }
    }
@@ -57,7 +81,7 @@
       }
       
       isRolling = true;
-      usedSkill = skill;
+      localUsedSkill = skill;
       
       try {
          // Get DC based on character's level using standard level-based DCs
@@ -89,17 +113,88 @@
       if (!outcome) return '—';
       return outcome.description || '—';
    }
+   
+   async function handleRerollWithFame() {
+      if (currentFame > 0 && resolution) {
+         // Deduct fame
+         kingdomState.update(state => {
+            state.fame = currentFame - 1;
+            return state;
+         });
+         
+         // Reset the action first
+         dispatch('reset', { actionId: action.id });
+         
+         // Get the character that was used (or current character)
+         let actingCharacter = character || getCurrentUserCharacter();
+         if (!actingCharacter && resolution.actorName) {
+            // Try to find the character by name if we don't have it
+            const players = getPlayerCharacters();
+            const player = players.find((p: any) => p.character?.name === resolution.actorName);
+            if (player?.character) {
+               actingCharacter = player.character;
+            }
+         }
+         
+         if (!actingCharacter) {
+            // Show character selection dialog if we still don't have a character
+            actingCharacter = await showCharacterSelectionDialog();
+            if (!actingCharacter) {
+               return; // User cancelled selection
+            }
+         }
+         
+         // Use the same skill that was used before
+         const skillToUse = usedSkill || localUsedSkill;
+         if (skillToUse) {
+            // Trigger a new roll with the same skill
+            try {
+               const characterLevel = actingCharacter.level || 1;
+               const dc = getKingdomActionDC(characterLevel);
+               
+               await performKingdomActionRoll(
+                  actingCharacter,
+                  skillToUse,
+                  dc,
+                  action.name,
+                  action.id,
+                  {
+                     criticalSuccess: action.criticalSuccess,
+                     success: action.success,
+                     failure: action.failure,
+                     criticalFailure: action.criticalFailure
+                  }
+               );
+            } catch (error) {
+               console.error("Error rerolling with fame:", error);
+            }
+         }
+      }
+   }
+   
+   function handleOk() {
+      // Notify parent to reset this action for another user
+      dispatch('reset', { actionId: action.id });
+   }
 </script>
 
-<div class="action-card {!available ? 'disabled' : ''} {expanded ? 'expanded' : ''} {resolved ? 'resolved' : ''}">
+<div class="action-card {!available ? 'disabled' : ''} {expanded ? 'expanded' : ''} {resolved ? 'resolved result-state' : 'select-state'}">
    <button 
       class="action-header-btn"
       on:click={toggleExpanded}
-      disabled={!available}
+      disabled={!available && !resolved}
    >
       <div class="action-header-content">
          <div class="action-main">
-            <strong class="action-name">{action.name}</strong>
+            <strong class="action-name">
+               {action.name}
+               {#if resolved}
+                  <span class="resolved-badge">
+                     <i class="fas fa-check-circle"></i>
+                     Resolved
+                  </span>
+               {/if}
+            </strong>
             {#if action.brief}
                <span class="action-brief">{action.brief}</span>
             {/if}
@@ -121,7 +216,9 @@
                   <span>Action Resolved</span>
                </div>
                <div class="resolution-details">
-                  <div class="resolution-actor">{resolution.actorName} used {usedSkill}</div>
+                  <div class="resolution-actor">
+                     {resolution.actorName} used {#if usedSkill}{usedSkill.charAt(0).toUpperCase() + usedSkill.slice(1)}{:else}a skill{/if}
+                  </div>
                   <div class="resolution-outcome">
                      {#if resolution.outcome === 'criticalSuccess'}
                         <i class="fas fa-star"></i> Critical Success!
@@ -145,70 +242,88 @@
                      {/if}
                   </div>
                </div>
+               
+               <!-- Action buttons for resolved state -->
+               <div class="resolution-actions">
+                  <button 
+                     class="btn-reroll"
+                     on:click={handleRerollWithFame}
+                     disabled={currentFame === 0}
+                  >
+                     <i class="fas fa-dice"></i>
+                     Reroll with Fame
+                     <span class="fame-count">({currentFame} left)</span>
+                  </button>
+                  <button 
+                     class="btn-ok"
+                     on:click={handleOk}
+                  >
+                     <i class="fas fa-check"></i>
+                     OK
+                  </button>
+               </div>
+            </div>
+         {:else}
+            <!-- Skills section - only show when not resolved -->
+            <div class="skills-section">
+               <h4 class="section-title">Choose Skill:</h4>
+               <div class="skills-tags">
+                  {#each action.skills as skillOption}
+                     {@const isDisabled = !canPerformMore}
+                     <SkillTag
+                        skill={skillOption.skill}
+                        description={skillOption.description}
+                        selected={false}
+                        disabled={isDisabled}
+                        loading={isRolling && skillOption.skill === localUsedSkill}
+                        faded={false}
+                        on:execute={executeSkill}
+                     />
+                  {/each}
+               </div>
+               {#if !character && !getCurrentUserCharacter()}
+                  <div class="no-character-info">
+                     <i class="fas fa-info-circle"></i>
+                     Click a skill to select your character
+                  </div>
+               {/if}
+            </div>
+            
+            <!-- Outcomes section - only show when not resolved -->
+            <div class="outcomes-section">
+               <h4 class="section-title">Possible Outcomes:</h4>
+               <div class="outcomes-grid">
+                  <div class="outcome critical-success">
+                     <div class="outcome-header">
+                        <i class="fas fa-star"></i>
+                        Critical Success
+                     </div>
+                     <div class="outcome-text">{formatOutcome(action.criticalSuccess)}</div>
+                  </div>
+                  <div class="outcome success">
+                     <div class="outcome-header">
+                        <i class="fas fa-thumbs-up"></i>
+                        Success
+                     </div>
+                     <div class="outcome-text">{formatOutcome(action.success)}</div>
+                  </div>
+                  <div class="outcome failure">
+                     <div class="outcome-header">
+                        <i class="fas fa-thumbs-down"></i>
+                        Failure
+                     </div>
+                     <div class="outcome-text">{formatOutcome(action.failure)}</div>
+                  </div>
+                  <div class="outcome critical-failure">
+                     <div class="outcome-header">
+                        <i class="fas fa-skull"></i>
+                        Critical Failure
+                     </div>
+                     <div class="outcome-text">{formatOutcome(action.criticalFailure)}</div>
+                  </div>
+               </div>
             </div>
          {/if}
-         
-         <!-- Skills section -->
-         <div class="skills-section {resolved ? 'resolved' : ''}">
-            <h4 class="section-title">
-               {resolved ? 'Skills Available:' : 'Choose Skill:'}
-            </h4>
-            <div class="skills-tags">
-               {#each action.skills as skillOption}
-                  {@const isDisabled = resolved || !canPerformMore}
-                  <SkillTag
-                     skill={skillOption.skill}
-                     description={skillOption.description}
-                     selected={resolved && skillOption.skill === usedSkill}
-                     disabled={isDisabled}
-                     loading={isRolling && skillOption.skill === usedSkill}
-                     faded={resolved && skillOption.skill !== usedSkill}
-                     on:execute={executeSkill}
-                  />
-               {/each}
-            </div>
-            {#if !character && !getCurrentUserCharacter() && !resolved}
-               <div class="no-character-info">
-                  <i class="fas fa-info-circle"></i>
-                  Click a skill to select your character
-               </div>
-            {/if}
-         </div>
-         
-         <!-- Outcomes section -->
-         <div class="outcomes-section">
-            <h4 class="section-title">Possible Outcomes:</h4>
-            <div class="outcomes-grid">
-               <div class="outcome critical-success">
-                  <div class="outcome-header">
-                     <i class="fas fa-star"></i>
-                     Critical Success
-                  </div>
-                  <div class="outcome-text">{formatOutcome(action.criticalSuccess)}</div>
-               </div>
-               <div class="outcome success">
-                  <div class="outcome-header">
-                     <i class="fas fa-thumbs-up"></i>
-                     Success
-                  </div>
-                  <div class="outcome-text">{formatOutcome(action.success)}</div>
-               </div>
-               <div class="outcome failure">
-                  <div class="outcome-header">
-                     <i class="fas fa-thumbs-down"></i>
-                     Failure
-                  </div>
-                  <div class="outcome-text">{formatOutcome(action.failure)}</div>
-               </div>
-               <div class="outcome critical-failure">
-                  <div class="outcome-header">
-                     <i class="fas fa-skull"></i>
-                     Critical Failure
-                  </div>
-                  <div class="outcome-text">{formatOutcome(action.criticalFailure)}</div>
-               </div>
-            </div>
-         </div>
          
          <!-- Special rules or costs -->
          {#if action.special || action.cost}
@@ -248,6 +363,51 @@
       display: flex;
       flex-direction: column;
       min-height: min-content;
+      position: relative;
+      
+      // Select State (default) - Action not yet performed
+      &.select-state {
+         &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, 
+               transparent, 
+               var(--color-amber), 
+               transparent);
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+         }
+         
+         &.expanded::before {
+            opacity: 0.6;
+         }
+      }
+      
+      // Result State - Action has been performed and resolved
+      &.result-state {
+         background: linear-gradient(135deg,
+            rgba(20, 20, 23, 0.7),
+            rgba(15, 15, 17, 0.5));
+         border-color: var(--border-subtle);
+         
+         &::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-green);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+            animation: pulse 2s infinite;
+         }
+      }
       
       &.resolved {
          background: linear-gradient(135deg,
@@ -256,13 +416,14 @@
          border-color: var(--border-subtle);
       }
       
-      &:hover:not(.disabled):not(.expanded) {
+      // Hover states for select state
+      &.select-state:hover:not(.disabled):not(.expanded) {
          border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
       
-      &.expanded {
+      &.select-state.expanded {
          border-color: var(--color-amber);
          box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
          
@@ -270,6 +431,16 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(251, 191, 36, 0.15);
          }
+      }
+      
+      // Result state has different hover behavior
+      &.result-state:hover:not(.disabled) {
+         transform: none;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      
+      &.result-state.expanded {
+         border-color: rgba(34, 197, 94, 0.3);
       }
       
       &.disabled {
@@ -336,7 +507,28 @@
             font-size: var(--font-2xl);
             line-height: 1.3;
             text-align: left;
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            
+            .resolved-badge {
+               display: inline-flex;
+               align-items: center;
+               gap: 4px;
+               padding: 2px 8px;
+               background: rgba(34, 197, 94, 0.15);
+               border: 1px solid rgba(34, 197, 94, 0.3);
+               border-radius: var(--radius-sm);
+               font-size: var(--font-sm);
+               font-weight: 500;
+               color: var(--color-green);
+               text-transform: uppercase;
+               letter-spacing: 0.5px;
+               
+               i {
+                  font-size: 12px;
+               }
+            }
          }
          
          .action-brief {
@@ -385,6 +577,21 @@
       }
    }
    
+   @keyframes pulse {
+      0% {
+         opacity: 1;
+         transform: scale(1);
+      }
+      50% {
+         opacity: 0.6;
+         transform: scale(1.1);
+      }
+      100% {
+         opacity: 1;
+         transform: scale(1);
+      }
+   }
+   
    .resolution-display {
       margin: 16px 0;
       padding: 16px;
@@ -429,6 +636,7 @@
          display: flex;
          flex-direction: column;
          gap: 8px;
+         margin-bottom: 16px;
       }
       
       .resolution-actor {
@@ -453,6 +661,66 @@
          line-height: 1.5;
          margin-top: 4px;
       }
+      
+      .resolution-actions {
+         display: flex;
+         gap: 12px;
+         margin-top: 16px;
+         
+         button {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid;
+            font-size: var(--font-md);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            
+            i {
+               font-size: 14px;
+            }
+         }
+         
+         .btn-reroll {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: var(--color-amber);
+            color: var(--color-amber);
+            
+            .fame-count {
+               font-size: var(--font-sm);
+               opacity: 0.8;
+            }
+            
+            &:hover:not(:disabled) {
+               background: rgba(251, 191, 36, 0.2);
+               box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+            }
+            
+            &:disabled {
+               opacity: 0.5;
+               cursor: not-allowed;
+               background: rgba(100, 100, 100, 0.1);
+               border-color: var(--border-subtle);
+               color: var(--text-tertiary);
+            }
+         }
+         
+         .btn-ok {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--color-green);
+            color: var(--color-green);
+            
+            &:hover {
+               background: rgba(34, 197, 94, 0.2);
+               box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+            }
+         }
+      }
    }
    
    .criticalSuccess .resolution-outcome {
@@ -473,10 +741,6 @@
    
    .skills-section {
       margin-top: 20px;
-      
-      &.resolved {
-         opacity: 0.7;
-      }
    }
    
    .outcomes-section {
@@ -528,6 +792,8 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
+      position: relative;
+      transition: all 0.3s ease;
       
       .outcome-header {
          display: flex;
@@ -538,6 +804,7 @@
          text-transform: uppercase;
          letter-spacing: 0.3px;
          margin-bottom: 8px;
+         position: relative;
          
          i {
             font-size: 14px;

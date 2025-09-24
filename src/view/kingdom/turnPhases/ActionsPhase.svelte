@@ -3,13 +3,19 @@
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { PlayerActionsData, type PlayerAction } from '../../../models/PlayerActions';
    import ActionCard from '../../kingdom/components/ActionCard.svelte';
-   import { onMount } from 'svelte';
+   import { getPlayerCharacters, getCurrentUserCharacter, initializeRollResultHandler } from '../../../api/foundry-actors';
+   import { onMount, tick } from 'svelte';
    
-   // Track expanded actions and selected actions
+   // Track expanded actions and resolved actions
    let expandedActions = new Set<string>();
-   let selectedActions: Map<string, { action: PlayerAction, skill: string }> = new Map();
+   let resolvedActions: Map<string, { outcome: string, actorName: string, skillName?: string }> = new Map();
    let actionsUsed = 0;
    const MAX_ACTIONS = 4;
+   
+   // Player character selection
+   let playerCharacters: any[] = [];
+   let selectedCharacter: any = null;
+   let selectedCharacterId: string = '';
    
    // Categories with their icons and descriptions
    const categoryConfig = [
@@ -75,28 +81,47 @@
       return expandedActions.has(actionId);
    }
    
-   // Select a skill for an action
-   function selectSkill(action: PlayerAction, skill: string) {
-      if (actionsUsed >= MAX_ACTIONS) {
-         return; // Cannot select more actions
+   // Handle action resolution from roll result
+   async function onActionResolved(actionId: string, outcome: string, actorName: string, checkType?: string, skillName?: string) {
+      console.log(`ActionsPhase: onActionResolved called`, { actionId, outcome, actorName, checkType, skillName });
+      
+      // Only handle action type checks
+      if (checkType && checkType !== 'action') {
+         console.log(`ActionsPhase: Skipping non-action check type: ${checkType}`);
+         return;
       }
       
-      const key = `${action.id}-${skill}`;
-      if (selectedActions.has(key)) {
-         // Deselect
-         selectedActions.delete(key);
-         actionsUsed--;
-      } else {
-         // Select
-         selectedActions.set(key, { action, skill });
-         actionsUsed++;
+      // Check if already resolved to prevent duplicate processing
+      if (resolvedActions.has(actionId)) {
+         console.log(`ActionsPhase: Action ${actionId} already resolved, skipping`);
+         return;
       }
-      selectedActions = selectedActions; // Trigger reactivity
+      
+      // Create new Map to trigger Svelte reactivity
+      const newResolvedActions = new Map(resolvedActions);
+      newResolvedActions.set(actionId, { outcome, actorName, skillName: skillName || '' });
+      resolvedActions = newResolvedActions;
+      actionsUsed++;
+      
+      // Force Svelte to update
+      await tick();
+      
+      console.log(`ActionsPhase: Action resolved successfully`, { 
+         actionId, 
+         outcome, 
+         skillName,
+         resolvedActions: Array.from(resolvedActions.entries()) 
+      });
    }
    
-   // Check if a skill is selected
-   function isSkillSelected(actionId: string, skill: string): boolean {
-      return selectedActions.has(`${actionId}-${skill}`);
+   // Check if an action has been resolved
+   function isActionResolved(actionId: string): boolean {
+      return resolvedActions.has(actionId);
+   }
+   
+   // Get resolution info for an action
+   function getActionResolution(actionId: string) {
+      return resolvedActions.get(actionId);
    }
    
    // Check if action is available based on kingdom state
@@ -133,19 +158,67 @@
    }
    
    onMount(() => {
-      // Any initialization if needed
+      // Initialize the roll result handler
+      initializeRollResultHandler(onActionResolved);
+      
+      // Load player characters
+      playerCharacters = getPlayerCharacters();
+      
+      // Only use the dropdown if the user has an assigned character
+      const currentUserChar = getCurrentUserCharacter();
+      if (currentUserChar) {
+         // Only set the dropdown if the user actually has this character assigned
+         selectedCharacter = currentUserChar;
+         selectedCharacterId = currentUserChar.id;
+      } else {
+         // Clear the dropdown selection if user has no assigned character
+         selectedCharacter = null;
+         selectedCharacterId = '';
+      }
+      
    });
+   
+   // Update selected character when ID changes
+   $: if (selectedCharacterId) {
+      const player = playerCharacters.find(p => p.character?.id === selectedCharacterId);
+      selectedCharacter = player?.character || null;
+   }
 </script>
 
 <div class="actions-phase">
-   <!-- Header with action counter -->
+   <!-- Header with action counter and character selection -->
    <div class="actions-header">
       <div class="actions-title">
          <i class="fas fa-users"></i>
          <span>Perform Kingdom Actions</span>
       </div>
+      
+      <!-- Character Selection -->
+      <div class="character-selection">
+         <label for="character-select">Acting Character:</label>
+         <select 
+            id="character-select" 
+            bind:value={selectedCharacterId}
+            class="character-dropdown"
+            disabled={playerCharacters.length === 0}
+         >
+            {#if playerCharacters.length === 0}
+               <option value="">No characters available</option>
+            {:else}
+               <option value="">Select a character...</option>
+               {#each playerCharacters as player}
+                  {#if player.character}
+                     <option value={player.character.id}>
+                        {player.character.name} ({player.userName})
+                     </option>
+                  {/if}
+               {/each}
+            {/if}
+         </select>
+      </div>
+      
       <div class="actions-counter">
-         <span class="counter-text">PC Actions:</span>
+         <span class="counter-text">Actions Taken:</span>
          <div class="counter-dots">
             {#each Array(MAX_ACTIONS) as _, i}
                <span class="action-dot {i < actionsUsed ? 'used' : ''}"></span>
@@ -169,23 +242,34 @@
             </div>
             
             <div class="actions-list">
-               {#each actions as action}
-                  {@const available = isActionAvailable(action)}
-                  {@const selectedSkills = new Set(
-                     Array.from(selectedActions.entries())
-                        .filter(([key, value]) => value.action.id === action.id)
-                        .map(([key, value]) => value.skill)
-                  )}
-                  
-                  <ActionCard 
-                     {action}
-                     expanded={expandedActions.has(action.id)}
-                     {available}
-                     {selectedSkills}
-                     canSelectMore={actionsUsed < MAX_ACTIONS}
-                     on:toggle={() => toggleAction(action.id)}
-                     on:selectSkill={(e) => selectSkill(action, e.detail.skill)}
-                  />
+               {#each actions as action (action.id)}
+                  {#key `${action.id}-${resolvedActions.has(action.id) ? 'resolved' : 'pending'}-${resolvedActions.get(action.id)?.outcome || 'none'}`}
+                     <ActionCard 
+                        {action}
+                        expanded={expandedActions.has(action.id)}
+                        available={isActionAvailable(action)}
+                        resolved={isActionResolved(action.id)}
+                        resolution={getActionResolution(action.id)}
+                        character={null}
+                        canPerformMore={actionsUsed < MAX_ACTIONS && !isActionResolved(action.id)}
+                        on:toggle={() => toggleAction(action.id)}
+                        on:characterSelected={(e) => {
+                           // Update the dropdown when a character is selected via dialog
+                           selectedCharacter = e.detail.character;
+                           selectedCharacterId = e.detail.character?.id || '';
+                        }}
+                        on:reset={(e) => {
+                           // Reset the action - remove from resolved and decrement counter
+                           const actionId = e.detail.actionId;
+                           if (resolvedActions.has(actionId)) {
+                              const newResolvedActions = new Map(resolvedActions);
+                              newResolvedActions.delete(actionId);
+                              resolvedActions = newResolvedActions;
+                              actionsUsed = Math.max(0, actionsUsed - 1);
+                           }
+                        }}
+                     />
+                  {/key}
                {/each}
             </div>
          </div>
@@ -224,6 +308,45 @@
       
       i {
          color: var(--color-amber);
+      }
+   }
+   
+   .character-selection {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 200px;
+      
+      label {
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+         white-space: nowrap;
+      }
+      
+      .character-dropdown {
+         flex: 1;
+         padding: 6px 10px;
+         background: rgba(0, 0, 0, 0.3);
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         
+         &:hover:not(:disabled) {
+            border-color: var(--border-strong);
+         }
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-amber);
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+         }
+         
+         &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+         }
       }
    }
    

@@ -321,23 +321,41 @@ export function parseRollOutcome(roll: any, dc: number): string {
   return outcome;
 }
 
+// Store whether we've already initialized the handler
+let rollHandlerInitialized = false;
+
 /**
  * Initialize the roll result handler for all kingdom checks
  * This should be called once when the module is ready
  * @param onCheckResolved - Callback when any check is resolved
  */
 export function initializeRollResultHandler(
-  onCheckResolved: (checkId: string, outcome: string, actorName: string, checkType?: string) => void
+  onCheckResolved: (checkId: string, outcome: string, actorName: string, checkType?: string, skillName?: string) => void
 ) {
-  // Hook into chat message creation to process kingdom check results
+  // Prevent duplicate registration
+  if (rollHandlerInitialized) {
+    console.log('Roll handler already initialized, skipping duplicate registration');
+    return;
+  }
+  
+  console.log('Registering createChatMessage hook for kingdom rolls');
+  rollHandlerInitialized = true;
+  
+  // Hook into chat message creation to process kingdom check results  
   Hooks.on('createChatMessage', async (message: any) => {
+    console.log('createChatMessage hook fired, checking for pending kingdom check...');
+    
     // Check for both old and new flag names for backward compatibility
     let pendingCheck = game.user?.getFlag('pf2e-kingdom-lite', 'pendingCheck');
     let isLegacyAction = false;
     
+    console.log('pendingCheck flag:', pendingCheck);
+    
     if (!pendingCheck) {
       // Check for legacy pendingAction flag
       pendingCheck = game.user?.getFlag('pf2e-kingdom-lite', 'pendingAction');
+      console.log('pendingAction flag (legacy):', pendingCheck);
+      
       if (pendingCheck) {
         // Convert legacy action to new format
         isLegacyAction = true;
@@ -354,31 +372,49 @@ export function initializeRollResultHandler(
       }
     }
     
-    if (!pendingCheck) return;
+    if (!pendingCheck) {
+      console.log('No pending check found, returning');
+      return;
+    }
+    
+    console.log('Message speaker actor:', message.speaker?.actor, 'Expected:', pendingCheck.actorId);
     
     // Check if the message is from the correct actor
-    if (message.speaker?.actor !== pendingCheck.actorId) return;
+    if (message.speaker?.actor !== pendingCheck.actorId) {
+      console.log('Actor mismatch, returning');
+      return;
+    }
     
     // Check if this is a skill check roll
     const roll = message.rolls?.[0];
-    if (!roll || !message.flags?.pf2e?.context?.dc) return;
+    console.log('Roll found:', !!roll, 'Has DC:', !!message.flags?.pf2e?.context?.dc);
+    
+    if (!roll || !message.flags?.pf2e?.context?.dc) {
+      console.log('Not a valid skill check, returning');
+      return;
+    }
     
     const dc = message.flags.pf2e.context.dc.value;
     const outcome = parseRollOutcome(roll, dc);
+    
+    console.log(`Parsed outcome: ${outcome} for ${pendingCheck.checkId}, calling callback...`);
     
     // Notify the callback with the result
     onCheckResolved(
       pendingCheck.checkId, 
       outcome, 
       pendingCheck.actorName, 
-      pendingCheck.checkType || 'action'
+      pendingCheck.checkType || 'action',
+      pendingCheck.skillName
     );
     
     // Clear the appropriate flag
     if (isLegacyAction) {
       await game.user?.unsetFlag('pf2e-kingdom-lite', 'pendingAction');
+      console.log('Cleared legacy pendingAction flag');
     } else {
       await game.user?.unsetFlag('pf2e-kingdom-lite', 'pendingCheck');
+      console.log('Cleared pendingCheck flag');
     }
   });
 }
