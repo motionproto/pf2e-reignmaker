@@ -40,6 +40,18 @@ import {
   calculateEconomicEfficiency
 } from './bonuses';
 
+export interface ResourceCollectionResult {
+  hexProduction: Map<string, number>;
+  goldIncome: number;
+  fedSettlementsCount: number;
+  unfedSettlementsCount: number;
+  totalCollected: Map<string, number>;
+  details: {
+    hexCount: number;
+    productionByHex: Array<{ hexId: string; hexName: string; terrain: string; production: Map<string, number> }>;
+  };
+}
+
 export class EconomicsService {
   /**
    * Calculate total resource production from all sources
@@ -117,12 +129,63 @@ export class EconomicsService {
   calculateSettlementGoldIncome(settlements: Settlement[]): number {
     const tierCounts = new Map<string, number>();
     
-    settlements.forEach(settlement => {
-      const count = tierCounts.get(settlement.tier) || 0;
-      tierCounts.set(settlement.tier, count + 1);
-    });
+    // Only count settlements that were fed last turn
+    settlements
+      .filter(s => s.wasFedLastTurn)
+      .forEach(settlement => {
+        const count = tierCounts.get(settlement.tier) || 0;
+        tierCounts.set(settlement.tier, count + 1);
+      });
     
     return calculateSettlementGoldIncome(tierCounts);
+  }
+
+  /**
+   * Collect all resources for the current turn
+   * This is the main method to be called during the Resources Phase
+   */
+  collectTurnResources(
+    state: {
+      hexes: Hex[];
+      settlements: Settlement[];
+      cachedProduction: Map<string, number>;
+      cachedProductionByHex: Array<[Hex, Map<string, number>]>;
+      modifiers?: EconomicModifier[];
+    }
+  ): ResourceCollectionResult {
+    // Use cached production from KingdomState (calculated once when hexes change)
+    const hexProduction = new Map(state.cachedProduction);
+    
+    // Calculate gold income from fed settlements
+    const fedSettlements = state.settlements.filter(s => s.wasFedLastTurn);
+    const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
+    const goldIncome = this.calculateSettlementGoldIncome(state.settlements);
+    
+    // Combine all resources collected
+    const totalCollected = new Map(hexProduction);
+    if (goldIncome > 0) {
+      totalCollected.set('gold', (totalCollected.get('gold') || 0) + goldIncome);
+    }
+    
+    // Prepare detailed breakdown for UI
+    const productionByHex = state.cachedProductionByHex.map(([hex, production]) => ({
+      hexId: hex.id,
+      hexName: hex.name || `Hex ${hex.id}`,
+      terrain: hex.terrain,
+      production: new Map(production)
+    }));
+    
+    return {
+      hexProduction,
+      goldIncome,
+      fedSettlementsCount: fedSettlements.length,
+      unfedSettlementsCount: unfedSettlements.length,
+      totalCollected,
+      details: {
+        hexCount: state.cachedProductionByHex.length,
+        productionByHex
+      }
+    };
   }
   
   /**

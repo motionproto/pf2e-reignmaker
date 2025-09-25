@@ -150,55 +150,6 @@ export {
     incrementTurn
 } from './gameState';
 
-export function collectResources() {
-    kingdomState.update(state => {
-        // Use economics service to calculate production
-        const modifiers = economicsService.getActiveModifiers({
-            isAtWar: state.isAtWar,
-            unrest: state.unrest
-        });
-        const production = economicsService.calculateProduction(state.hexes, modifiers);
-        
-        // Add production to resources
-        production.totalProduction.forEach((amount, resource) => {
-            state.resources.set(resource, (state.resources.get(resource) || 0) + amount);
-        });
-        
-        return state;
-    });
-}
-
-export function processFoodConsumption(): number {
-    let shortage = 0;
-    kingdomState.update(state => {
-        // Use economics service to calculate consumption
-        const consumption = economicsService.calculateConsumption(state.settlements, state.armies);
-        const currentFood = state.resources.get('food') || 0;
-        
-        if (currentFood < consumption.totalFood) {
-            shortage = consumption.totalFood - currentFood;
-            state.resources.set('food', 0);
-            state.unrest += shortage;
-        } else {
-            state.resources.set('food', currentFood - consumption.totalFood);
-        }
-        
-        return state;
-    });
-    return shortage;
-}
-
-export function clearNonStorableResources() {
-    kingdomState.update(state => {
-        // Use economics service to determine which resources to clear
-        const nonStorable = economicsService.getNonStorableResources();
-        nonStorable.forEach(resource => {
-            state.resources.set(resource, 0);
-        });
-        return state;
-    });
-}
-
 export function addModifier(modifier: Modifier) {
     kingdomState.update(state => {
         state.ongoingModifiers.push(modifier);

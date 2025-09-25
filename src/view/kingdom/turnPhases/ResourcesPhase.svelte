@@ -1,13 +1,13 @@
 <script lang="ts">
    import { kingdomState, modifyResource, totalProduction } from '../../../stores/kingdom';
    import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
-   import { settlementService } from '../../../services/settlements';
+   import { economicsService, type ResourceCollectionResult } from '../../../services/economics';
    import { get } from 'svelte/store';
    
    // Check if step is completed
    $: collectCompleted = isPhaseStepCompleted('resources-collect');
    
-   // Resource icons and colors
+   // Resource icons and colors - this is presentation configuration, belongs in component
    const resourceConfig: Record<string, { icon: string; color: string }> = {
       food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
       lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
@@ -16,41 +16,57 @@
       gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
    };
    
-   // Calculate potential gold income from settlements (based on last turn's feeding)
-   $: potentialGoldIncome = settlementService.calculateSettlementGoldIncome($kingdomState.settlements);
-   $: fedSettlementsCount = $kingdomState.settlements.filter(s => s.wasFedLastTurn).length;
-   $: unfedSettlementsCount = $kingdomState.settlements.length - fedSettlementsCount;
+   // Store the last collection result for display purposes
+   let lastCollectionResult: ResourceCollectionResult | null = null;
+   
+   // Use the economics service to calculate what would be collected this turn
+   $: potentialCollection = economicsService.collectTurnResources({
+      hexes: $kingdomState.hexes,
+      settlements: $kingdomState.settlements,
+      cachedProduction: $kingdomState.cachedProduction,
+      cachedProductionByHex: $kingdomState.cachedProductionByHex
+   });
+   
+   // Extract display values from the service result
+   $: potentialGoldIncome = potentialCollection.goldIncome;
+   $: fedSettlementsCount = potentialCollection.fedSettlementsCount;
+   $: unfedSettlementsCount = potentialCollection.unfedSettlementsCount;
    
    function handleCollectResources() {
       try {
          const state = get(kingdomState);
          
-         // Use cached production from KingdomState (calculated once when hexes change)
-         const production = state.cachedProduction;
-         
-         // Log production for debugging/transparency
-         console.log('Collecting resources (from cache):', {
-            total: Object.fromEntries(production),
-            hexCount: state.cachedProductionByHex.length
+         // Use the economics service to calculate resources to collect
+         const collectionResult = economicsService.collectTurnResources({
+            hexes: state.hexes,
+            settlements: state.settlements,
+            cachedProduction: state.cachedProduction,
+            cachedProductionByHex: state.cachedProductionByHex
          });
          
-         // Update store with results (excluding gold - that comes from settlements)
-         production.forEach((amount, resource) => {
+         // Store result for display
+         lastCollectionResult = collectionResult;
+         
+         // Log for debugging/transparency
+         console.log('Collecting resources:', {
+            hexProduction: Object.fromEntries(collectionResult.hexProduction),
+            goldIncome: collectionResult.goldIncome,
+            totalCollected: Object.fromEntries(collectionResult.totalCollected),
+            fedSettlements: collectionResult.fedSettlementsCount,
+            unfedSettlements: collectionResult.unfedSettlementsCount
+         });
+         
+         // Apply all collected resources to the kingdom state
+         collectionResult.totalCollected.forEach((amount, resource) => {
             if (amount > 0) {
                modifyResource(resource, amount);
             }
          });
          
-         // Generate gold from settlements that were fed last turn
-         if (potentialGoldIncome > 0) {
-            console.log(`Settlements generate ${potentialGoldIncome} gold (${fedSettlementsCount} fed, ${unfedSettlementsCount} unfed)`);
-            modifyResource('gold', potentialGoldIncome);
-         }
-         
          markPhaseStepCompleted('resources-collect');
       } catch (error) {
          console.error('Error collecting resources:', error);
-         // Could show user-friendly error message here
+         // TODO: Show user-friendly error message
       }
    }
 </script>
@@ -62,8 +78,10 @@
       {#each Object.entries(resourceConfig) as [resource, config]}
          <div class="resource-card">
             <i class="fas {config.icon} resource-icon" style="color: {config.color};"></i>
-            <div class="resource-value">{$kingdomState.resources.get(resource) || 0}</div>
-            <div class="resource-label">{resource.charAt(0).toUpperCase() + resource.slice(1)}</div>
+            <div class="resource-info">
+               <div class="resource-value">{$kingdomState.resources.get(resource) || 0}</div>
+               <div class="resource-label">{resource}</div>
+            </div>
          </div>
       {/each}
    </div>
@@ -94,15 +112,15 @@
                   </span>
                </div>
                
-               {#if $kingdomState.cachedProductionByHex.length > 0}
+               {#if potentialCollection.details.hexCount > 0}
                   <details class="worksite-details">
                      <summary>View Worksite Details</summary>
                      <ul class="worksite-list">
-                        {#each $kingdomState.cachedProductionByHex as [hex, production]}
+                        {#each potentialCollection.details.productionByHex as worksite}
                            <li class="worksite-item">
-                              <span>{hex.name || `Hex ${hex.id}`} ({hex.terrain})</span>
+                              <span>{worksite.hexName} ({worksite.terrain})</span>
                               <span class="worksite-production">
-                                 {#each Array.from(production.entries()) as [resource, amount], i}
+                                 {#each Array.from(worksite.production.entries()) as [resource, amount], i}
                                     {#if i > 0}, {/if}
                                     {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
                                  {/each}
@@ -175,44 +193,39 @@
    
    .resource-dashboard {
       display: flex;
-      gap: 15px;
-      padding: 20px;
-      background: linear-gradient(135deg, 
-         rgba(15, 15, 17, 0.5),
-         rgba(24, 24, 27, 0.3));
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-medium);
-      justify-content: center;
+      gap: 1rem;
       flex-wrap: wrap;
+      justify-content: center;
    }
    
    .resource-card {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      min-width: 80px;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.75rem 1rem;
+      border-radius: 0.375rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       
       .resource-icon {
-         font-size: 28px;
-         margin-bottom: 8px;
+         font-size: 1.5rem;
+      }
+      
+      .resource-info {
+         display: flex;
+         flex-direction: column;
       }
       
       .resource-value {
-         font-size: 20px;
+         font-size: 1.25rem;
          font-weight: bold;
          color: var(--text-primary);
-         margin-bottom: 4px;
       }
       
       .resource-label {
-         font-size: 11px;
+         font-size: 0.875rem;
          color: var(--text-tertiary);
-         text-transform: uppercase;
-         letter-spacing: 0.5px;
+         text-transform: capitalize;
       }
    }
    
@@ -243,8 +256,9 @@
       h4 {
          margin: 0 0 15px 0;
          color: var(--text-primary);
-         font-size: var(--font-lg);
-         font-weight: 600;
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+         line-height: var(--type-heading-2-line);
       }
    }
    
@@ -275,8 +289,9 @@
       }
       
       .production-title {
-         font-weight: 600;
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         font-weight: var(--type-weight-semibold);
+         line-height: var(--type-body-line);
          color: var(--text-secondary);
       }
       
@@ -351,15 +366,16 @@
       }
       
       .income-title {
-         font-weight: 600;
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         font-weight: var(--type-weight-semibold);
+         line-height: var(--type-body-line);
          color: var(--text-secondary);
          flex: 1;
       }
       
       .income-amount {
-         font-weight: 600;
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         font-weight: var(--type-weight-semibold);
       }
    }
    
@@ -394,27 +410,30 @@
    
    .step-button {
       padding: 10px 16px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: var(--font-md);
-      font-weight: 500;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.2s ease;
+      transition: all var(--transition-fast);
       margin-top: 10px;
       
       &:hover:not(:disabled) {
-         background: var(--color-primary-hover);
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: var(--shadow-md);
       }
       
       &:disabled {
-         opacity: 0.5;
+         opacity: var(--opacity-disabled);
          cursor: not-allowed;
          background: var(--color-gray-700);
       }

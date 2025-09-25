@@ -54,6 +54,9 @@
       title={phaseInfo.displayName}
       description={phaseInfo.description}
       icon={displayPhaseIcon}
+      onNextPhase={handleAdvancePhase}
+      isUpkeepPhase={actualPhase === TurnPhase.PHASE_VI}
+      currentTurn={$gameState.currentTurn}
    />
    
    <!-- Phase Bar underneath phase header -->
@@ -74,16 +77,6 @@
          <UpkeepPhase />
       {/if}
    </div>
-   
-   <div class="phase-controls">
-      <button 
-         class="phase-advance-button"
-         on:click={handleAdvancePhase}
-      >
-         Advance to Next Phase
-         <i class="fas fa-arrow-right"></i>
-      </button>
-   </div>
 </div>
 
 <style lang="scss">
@@ -100,36 +93,5 @@
       padding: 12px;
       border-radius: 5px;
       overflow-y: auto;
-   }
-   
-   .phase-controls {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-   }
-   
-   .phase-advance-button {
-      padding: 10px 20px;
-      background: var(--color-primary, #5e0000);
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 1em;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      
-      &:hover {
-         background: var(--color-primary-dark, #3e0000);
-         transform: translateY(-1px);
-         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-      }
-      
-      i {
-         font-size: 0.9em;
-      }
    }
 </style>

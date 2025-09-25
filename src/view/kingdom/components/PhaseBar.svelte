@@ -116,7 +116,7 @@
   }
   
   .phase-connector.completed {
-    background: var(--color-primary, #6e6e6e);
+    background: #6e6e6e;
     box-shadow: 0 0 4px rgba(85, 85, 85, 0.4);
   }
 

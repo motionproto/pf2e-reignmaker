@@ -1,10 +1,11 @@
 <script lang="ts">
-   import { kingdomState, clearNonStorableResources, setResource, updateKingdomStat, 
+   import { kingdomState, setResource, updateKingdomStat, 
             foodConsumption, foodConsumptionBreakdown, armySupport, unsupportedArmies } from '../../../stores/kingdom';
    import { gameState, incrementTurn, setCurrentPhase, resetPhaseSteps, 
             markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    import { settlementService } from '../../../services/settlements';
+   import { economicsService } from '../../../services/economics';
    import { get } from 'svelte/store';
    
    // Check if steps are completed
@@ -112,7 +113,13 @@
    
    function handleEndTurnResolution() {
       // Clear non-storable resources (lumber, stone, ore)
-      clearNonStorableResources();
+      kingdomState.update(state => {
+         const nonStorable = economicsService.getNonStorableResources();
+         nonStorable.forEach(resource => {
+            state.resources.set(resource, 0);
+         });
+         return state;
+      });
       markPhaseStepCompleted('upkeep-resolve');
    }
    
@@ -418,12 +425,16 @@
       h3 {
          margin: 0 0 8px 0;
          color: var(--text-primary);
-         font-size: var(--font-xl);
+         font-size: var(--type-heading-1-size);
+         font-weight: var(--type-heading-1-weight);
+         line-height: var(--type-heading-1-line);
       }
       
       p {
          margin: 0;
          color: var(--text-secondary);
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
       }
    }
    
@@ -454,8 +465,9 @@
       h4 {
          margin: 0 0 15px 0;
          color: var(--text-primary);
-         font-size: var(--font-lg);
-         font-weight: 600;
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+         line-height: var(--type-heading-2-line);
       }
    }
    
@@ -495,7 +507,9 @@
       }
       
       .stat-label {
-         font-size: 11px;
+         font-size: var(--type-label-size);
+         font-weight: var(--type-label-weight);
+         letter-spacing: var(--type-label-spacing);
          color: var(--text-tertiary);
          text-transform: uppercase;
       }
@@ -540,7 +554,9 @@
       }
       
       .stat-label {
-         font-size: 12px;
+         font-size: var(--type-label-size);
+         font-weight: var(--type-label-weight);
+         letter-spacing: var(--type-label-spacing);
          color: var(--text-tertiary);
       }
       
@@ -692,27 +708,30 @@
    
    .step-button {
       padding: 10px 16px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: var(--font-md);
-      font-weight: 500;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.2s ease;
+      transition: all var(--transition-fast);
       margin-top: 10px;
       
       &:hover:not(:disabled) {
-         background: var(--color-primary-hover);
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: var(--shadow-md);
       }
       
       &:disabled {
-         opacity: 0.5;
+         opacity: var(--opacity-disabled);
          cursor: not-allowed;
          background: var(--color-gray-700);
       }
@@ -730,28 +749,32 @@
    
    .end-turn-button {
       padding: 14px 28px;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-crimson));
+      background: var(--btn-primary-bg);
       color: white;
-      border: none;
+      border: 1px solid var(--color-crimson);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: 1.1em;
-      font-weight: 600;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
       display: flex;
       align-items: center;
       gap: 10px;
-      transition: all 0.2s ease;
+      transition: all var(--transition-fast);
       box-shadow: var(--shadow-md);
       
       &:hover:not(:disabled) {
+         background: var(--btn-primary-hover);
          transform: translateY(-2px);
-         box-shadow: var(--shadow-lg);
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
       
       &:disabled {
-         opacity: 0.4;
+         opacity: var(--opacity-disabled);
          cursor: not-allowed;
          background: var(--color-gray-700);
+         border-color: var(--border-subtle);
       }
       
       i {

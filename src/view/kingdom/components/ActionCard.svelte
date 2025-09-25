@@ -627,8 +627,9 @@
          
          .action-name {
             color: var(--text-primary);
-            font-size: var(--font-2xl);
-            line-height: 1.3;
+            font-size: var(--type-heading-1-size);
+            font-weight: var(--type-heading-1-weight);
+            line-height: var(--type-heading-1-line);
             text-align: left;
             display: flex;
             align-items: center;
@@ -642,11 +643,12 @@
                background: rgba(34, 197, 94, 0.15);
                border: 1px solid rgba(34, 197, 94, 0.3);
                border-radius: var(--radius-sm);
-               font-size: var(--font-sm);
-               font-weight: 500;
+               font-size: var(--type-badge-size);
+               font-weight: var(--type-badge-weight);
+               line-height: var(--type-badge-line);
+               letter-spacing: var(--type-badge-spacing);
                color: var(--color-green);
                text-transform: uppercase;
-               letter-spacing: 0.5px;
                
                i {
                   font-size: 12px;
@@ -656,8 +658,8 @@
          
          .action-brief {
             color: var(--text-secondary);
-            font-size: var(--font-md);
-            line-height: 1.4;
+            font-size: var(--type-body-size);
+            line-height: var(--type-body-line);
             opacity: 0.8;
             text-align: left;
             display: block;
@@ -683,8 +685,8 @@
       .action-full-description {
          margin: 0 0 16px 0;
          color: var(--text-secondary);
-         font-size: var(--font-md);
-         line-height: 1.6;
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
          text-align: left;
       }
    }
@@ -775,12 +777,14 @@
       
       .resolution-actor {
          color: var(--text-secondary);
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
       }
       
       .resolution-outcome {
-         font-size: var(--font-lg);
-         font-weight: 600;
+         font-size: var(--type-heading-3-size);
+         font-weight: var(--type-heading-3-weight);
+         line-height: var(--type-heading-3-line);
          display: flex;
          align-items: center;
          gap: 6px;
@@ -813,8 +817,8 @@
          display: flex;
          align-items: center;
          gap: 6px;
-         font-weight: 600;
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         font-weight: var(--type-weight-semibold);
          color: var(--text-primary);
          margin-bottom: 8px;
          padding-bottom: 6px;
@@ -839,16 +843,16 @@
          padding: 4px 8px;
          background: rgba(0, 0, 0, 0.1);
          border-radius: var(--radius-sm, 4px);
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
          
          .change-label {
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: var(--type-weight-medium);
          }
          
          .change-value {
-            font-weight: 600;
-            font-family: monospace;
+            font-weight: var(--type-weight-semibold);
+            font-family: var(--font-code, monospace);
             
             &.positive {
                color: var(--color-green);
@@ -874,14 +878,16 @@
             padding: 8px 16px;
             border-radius: var(--radius-sm);
             border: 1px solid;
-            font-size: var(--font-md);
-            font-weight: 500;
+            font-size: var(--type-button-size);
+            font-weight: var(--type-button-weight);
+            line-height: var(--type-button-line);
+            letter-spacing: var(--type-button-spacing);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.2s ease;
+            transition: all var(--transition-fast);
             
             i {
                font-size: 14px;
@@ -894,7 +900,7 @@
             color: var(--color-amber);
             
             .fame-count {
-               font-size: var(--font-sm);
+               font-size: var(--type-small-size);
                opacity: 0.8;
             }
             
@@ -952,9 +958,9 @@
    .section-title {
       margin: 0 0 12px 0;
       color: var(--text-primary);
-      font-size: var(--font-xl);
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-size: var(--type-heading-2-size);
+      font-weight: var(--type-heading-2-weight);
+      line-height: var(--type-heading-2-line);
       opacity: 0.8;
    }
    
@@ -973,7 +979,8 @@
       border: 1px solid rgba(59, 130, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--color-blue-light);
-      font-size: var(--font-sm);
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -1001,10 +1008,11 @@
          display: flex;
          align-items: center;
          gap: 6px;
-         font-weight: 600;
-         font-size: var(--font-lg);
+         font-size: var(--type-label-size);
+         font-weight: var(--type-label-weight);
+         line-height: var(--type-label-line);
+         letter-spacing: var(--type-label-spacing);
          text-transform: uppercase;
-         letter-spacing: 0.3px;
          margin-bottom: 8px;
          position: relative;
          
@@ -1015,9 +1023,9 @@
       }
       
       .outcome-text {
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
          color: var(--text-secondary);
-         line-height: 1.5;
       }
       
       &.critical-success {
@@ -1075,8 +1083,8 @@
       }
       
       span {
-         font-size: var(--font-sm);
-         line-height: 1.5;
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
       }
       
       &.special-section {

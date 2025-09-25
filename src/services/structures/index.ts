@@ -6,55 +6,31 @@ import { kingdomState } from '../../stores/kingdom';
 import type { Settlement } from '../../models/Settlement';
 import type { Structure, ResourceCost } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility } from '../../models/Structure';
+import structuresData from '../../../dist/structures.json';
 
 export class StructuresService {
   private structures: Map<string, Structure> = new Map();
   private structuresLoaded: boolean = false;
   
   /**
-   * Load all structure definitions from data files
+   * Initialize structures from imported JSON data
    */
-  async loadStructures(): Promise<void> {
+  initializeStructures(): void {
     if (this.structuresLoaded) return;
     
     try {
-      // List of all structure files (from the data/structures directory)
-      const structureFiles = [
-        'granary', 'storehouses', 'warehouses', 'strategic-reserves',
-        'wooden-palisade', 'stone-walls', 'fortified-walls', 'grand-battlements',
-        'barracks', 'garrison', 'fortress', 'citadel',
-        'market-square', 'bazaar', 'merchant-guild', 'imperial-bank',
-        'open-stage', 'amphitheater', 'playhouse', 'auditorium',
-        'tax-office', 'counting-house', 'treasury', 'exchequer',
-        'stocks', 'jail', 'prison', 'donjon',
-        'envoys-office', 'embassy', 'grand-embassy', 'diplomatic-quarter-support',
-        // Skill-based structures
-        'rats-warren', 'smugglers-den', 'thieves-guild', 'shadow-network',
-        'town-hall', 'city-hall', 'diplomatic-quarter', 'grand-forum',
-        'gymnasium', 'training-yard', 'warriors-hall', 'military-academy',
-        'workshop', 'artisans-hall', 'blacksmiths-guild', 'masterworks-foundry',
-        'scholars-table', 'library', 'university', 'arcane-academy',
-        'shrine', 'temple', 'temple-district', 'grand-basilica',
-        'healers-hut', 'infirmary', 'hospital', 'medical-college',
-        'buskers-alley', 'famous-tavern', 'performance-hall', 'grand-amphitheater',
-        'hunters-lodge', 'rangers-outpost', 'druids-grove', 'wildskeepers-enclave'
-      ];
-      
-      for (const fileName of structureFiles) {
-        try {
-          const response = await fetch(`/data/structures/${fileName}.json`);
-          if (response.ok) {
-            const data = await response.json();
-            const structure = parseStructureFromJSON(data);
-            this.structures.set(structure.id, structure);
-          }
-        } catch (error) {
-          console.warn(`Failed to load structure ${fileName}:`, error);
+      // Load structures from the imported JSON data
+      if (structuresData.structures && Array.isArray(structuresData.structures)) {
+        for (const structureData of structuresData.structures) {
+          const structure = parseStructureFromJSON(structureData);
+          this.structures.set(structure.id, structure);
         }
+        console.log(`Loaded ${this.structures.size} structures from combined file`);
+      } else {
+        console.error('Invalid structures data format');
       }
       
       this.structuresLoaded = true;
-      console.log(`Loaded ${this.structures.size} structures`);
     } catch (error) {
       console.error('Failed to load structures:', error);
     }
@@ -444,5 +420,5 @@ export const structuresService = new StructuresService();
 
 // Initialize structures on module load
 if (typeof window !== 'undefined') {
-  structuresService.loadStructures().catch(console.error);
+  structuresService.initializeStructures();
 }

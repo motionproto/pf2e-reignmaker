@@ -2,6 +2,34 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { WorksiteConfig } from '../../../models/Hex';
    
+   // Resource icons and colors (matching ResourcesPhase)
+   const resourceConfig: Record<string, { icon: string; color: string }> = {
+      food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
+      lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
+      stone: { icon: 'fa-cube', color: 'var(--color-gray-500)' },
+      ore: { icon: 'fa-mountain', color: 'var(--color-blue)' },
+      gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
+   };
+   
+   // Map worksite types to their resource colors
+   function getWorksiteColor(worksiteType: string): string {
+      switch(worksiteType) {
+         case 'Farmstead':
+         case 'Hunting/Fishing Camp':
+         case 'Oasis Farm':
+            return resourceConfig.food.color;
+         case 'Logging Camp':
+            return resourceConfig.lumber.color;
+         case 'Quarry':
+            return resourceConfig.stone.color;
+         case 'Mine':
+         case 'Bog Mine':
+            return resourceConfig.ore.color;
+         default:
+            return 'var(--color-gray-400)';
+      }
+   }
+   
    // Sorting state
    let sortColumn: string = 'id';
    let sortDirection: 'asc' | 'desc' = 'asc';
@@ -101,34 +129,33 @@
    }
    
    function getCommodityIcon(resource: string): string {
-      const icons: Record<string, string> = {
-         'food': 'fa-wheat-awn',
-         'lumber': 'fa-tree',
-         'stone': 'fa-cube',
-         'ore': 'fa-gem',
-         'luxuries': 'fa-crown'
-      };
-      return icons[resource] || 'fa-box';
+      return resourceConfig[resource]?.icon || 'fa-box';
+   }
+   
+   function getResourceColor(resource: string): string {
+      return resourceConfig[resource]?.color || 'var(--color-gray-400)';
    }
 </script>
 
 <div class="territory-tab">
    <div class="territory-header">
       <h2>Territory Management</h2>
+      
+      <!-- Territory Summary with Production -->
       <div class="territory-summary">
          <div class="summary-card">
-            <i class="fas fa-map"></i>
+            <i class="fas fa-map" style="color: white;"></i>
             <div>
                <div class="summary-value">{$kingdomState.hexes.length}</div>
-               <div class="summary-label">Total Hexes</div>
+               <div class="summary-label">Hexes</div>
             </div>
          </div>
          
          {#each Object.entries(totalProduction) as [resource, amount]}
             <div class="summary-card">
-               <i class="fas {getCommodityIcon(resource)}"></i>
+               <i class="fas {getCommodityIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
                <div>
-                  <div class="summary-value">+{amount}</div>
+                  <div class="summary-value production-positive">+{amount}</div>
                   <div class="summary-label">{resource}</div>
                </div>
             </div>
@@ -215,8 +242,8 @@
                      </td>
                      <td class="worksite">
                         {#if hex.worksite}
-                           <span class="worksite-badge">
-                              <i class="fas {WorksiteConfig[hex.worksite.type]?.icon || 'fa-tools'}"></i>
+                           <span class="worksite-badge" style="background: {getWorksiteColor(hex.worksite.type)}20; border-color: {getWorksiteColor(hex.worksite.type)}50;">
+                              <i class="fas {WorksiteConfig[hex.worksite.type]?.icon || 'fa-tools'}" style="color: {getWorksiteColor(hex.worksite.type)};"></i>
                               {WorksiteConfig[hex.worksite.type]?.displayName || hex.worksite.type}
                            </span>
                         {:else}
@@ -238,7 +265,7 @@
                            <div class="production-list">
                               {#each Array.from(hex.getProduction().entries()) as [resource, amount]}
                                  <span class="production-item">
-                                    <i class="fas {getCommodityIcon(resource)}"></i>
+                                    <i class="fas {getCommodityIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
                                     +{amount} {resource}
                                  </span>
                               {/each}
@@ -314,6 +341,10 @@
             font-size: 1.25rem;
             font-weight: bold;
             color: var(--color-text-dark-primary, #b5b3a4);
+            
+            &.production-positive {
+               color: var(--color-green-light, #90ee90);
+            }
          }
          
          .summary-label {
@@ -482,14 +513,8 @@
                align-items: center;
                gap: 0.5rem;
                padding: 0.25rem 0.5rem;
-               background: rgba(94, 0, 0, 0.2);
-               border: 1px solid rgba(94, 0, 0, 0.3);
                border-radius: 0.25rem;
                font-size: 0.875rem;
-               
-               i {
-                  color: var(--color-primary, #5e0000);
-               }
             }
             
             .commodity-bonus {

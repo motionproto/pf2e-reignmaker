@@ -199,10 +199,11 @@
    .fame-count {
       margin: 0;
       color: var(--color-amber-light);
-      font-size: var(--font-sm);
-      font-weight: 600;
+      font-size: var(--type-label-size);
+      font-weight: var(--type-label-weight);
+      line-height: var(--type-label-line);
+      letter-spacing: var(--type-label-spacing);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
    }
    
    .phase-steps {
@@ -232,28 +233,31 @@
    
    .step-button {
       padding: 10px 16px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: var(--font-md);
-      font-weight: 500;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.2s ease;
+      transition: all var(--transition-fast);
       margin: 0 auto;
       
       &:hover:not(:disabled) {
-         background: var(--color-primary-hover);
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
          transform: translateY(-1px);
          box-shadow: var(--shadow-md);
       }
       
       &:disabled {
-         opacity: 0.5;
+         opacity: var(--opacity-disabled);
          cursor: not-allowed;
          background: var(--color-gray-700);
       }
@@ -266,8 +270,8 @@
    .step-description {
       margin: 10px 0 0 0;
       color: var(--text-tertiary);
-      font-size: var(--font-sm);
-      line-height: 1.4;
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
    }
    
    .modifiers-list {
@@ -280,8 +284,9 @@
       h5 {
          margin: 0 0 8px 0;
          color: var(--color-amber-light);
-         font-size: var(--font-md);
-         font-weight: 600;
+         font-size: var(--type-heading-3-size);
+         font-weight: var(--type-heading-3-weight);
+         line-height: var(--type-heading-3-line);
       }
       
       ul {
@@ -294,7 +299,8 @@
    .modifier-item {
       margin: 6px 0;
       color: var(--text-secondary);
-      font-size: var(--font-sm);
+      font-size: var(--type-body-size);
+      line-height: var(--type-body-line);
       position: relative;
       
       &::before {
@@ -332,17 +338,19 @@
       h4 {
          margin: 0 0 10px 0;
          color: var(--text-primary);
-         font-size: var(--font-lg);
-         font-weight: 600;
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+         line-height: var(--type-heading-2-line);
       }
       
       p {
          margin: 5px 0;
          color: var(--text-secondary);
-         font-size: var(--font-md);
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
          
          &.modifier-count {
-            font-size: var(--font-sm);
+            font-size: var(--type-body-size);
             color: var(--text-tertiary);
             font-style: italic;
          }

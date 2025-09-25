@@ -9,7 +9,7 @@ from pathlib import Path
 
 def combine_events():
     """Combine all event JSON files into dist/events.json."""
-    events_dir = Path(__file__).parent / "events"
+    events_dir = Path(__file__).parent.parent / "data" / "events"
     output_file = Path(__file__).parent.parent / "dist" / "events.json"
     
     all_events = []
@@ -46,7 +46,7 @@ def combine_events():
 
 def combine_incidents():
     """Combine all incident JSON files into dist/incidents.json, organized by severity."""
-    incidents_base_dir = Path(__file__).parent / "incidents"
+    incidents_base_dir = Path(__file__).parent.parent / "data" / "incidents"
     output_file = Path(__file__).parent.parent / "dist" / "incidents.json"
     
     all_incidents = []
@@ -104,7 +104,7 @@ def combine_incidents():
 
 def combine_player_actions():
     """Combine all player action JSON files into dist/player-actions.json, organized by category."""
-    actions_dir = Path(__file__).parent / "player-actions"
+    actions_dir = Path(__file__).parent.parent / "data" / "player-actions"
     output_file = Path(__file__).parent.parent / "dist" / "player-actions.json"
     
     all_actions = []
@@ -202,7 +202,7 @@ def main():
     print("\nAll monolithic JSON files have been created in dist/")
     
     # Also update structures if the script exists
-    structures_script = Path(__file__).parent / "structures" / "combine_structures.py"
+    structures_script = Path(__file__).parent / "combine-structures.py"
     if structures_script.exists():
         print("\n" + "=" * 60)
         print("UPDATING STRUCTURES")

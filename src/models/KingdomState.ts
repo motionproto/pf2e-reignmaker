@@ -46,12 +46,12 @@ export enum TurnPhase {
  * Turn phase configuration
  */
 export const TurnPhaseConfig = {
-  [TurnPhase.PHASE_I]: { displayName: 'Phase I: Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
-  [TurnPhase.PHASE_II]: { displayName: 'Phase II: Resources', description: 'Collect resources and revenue' },
-  [TurnPhase.PHASE_III]: { displayName: 'Phase III: Unrest & Incidents', description: 'Calculate unrest and resolve incidents' },
-  [TurnPhase.PHASE_IV]: { displayName: 'Phase IV: Events', description: 'Resolve kingdom events' },
-  [TurnPhase.PHASE_V]: { displayName: 'Phase V: Actions', description: 'Perform kingdom actions' },
-  [TurnPhase.PHASE_VI]: { displayName: 'Phase VI: Upkeep', description: 'Pay consumption, support costs, and end turn' }
+  [TurnPhase.PHASE_I]: { displayName: 'Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
+  [TurnPhase.PHASE_II]: { displayName: 'Resources', description: 'Collect resources and revenue' },
+  [TurnPhase.PHASE_III]: { displayName: 'Unrest & Incidents', description: 'Calculate unrest and resolve incidents' },
+  [TurnPhase.PHASE_IV]: { displayName: 'Events', description: 'Resolve kingdom events' },
+  [TurnPhase.PHASE_V]: { displayName: 'Actions', description: 'Perform kingdom actions' },
+  [TurnPhase.PHASE_VI]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }
 };
 
 /**

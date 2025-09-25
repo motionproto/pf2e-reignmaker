@@ -11,8 +11,8 @@ def combine_structures():
     """Read all individual structure JSON files and combine them into one."""
     
     # Paths
-    structures_dir = Path(__file__).parent  # data/structures/
-    project_root = structures_dir.parent.parent  # project root
+    structures_dir = Path(__file__).parent.parent / "data" / "structures"  # data/structures/
+    project_root = Path(__file__).parent.parent  # project root
     dist_dir = project_root / "dist"
     output_file = dist_dir / "structures.json"
     
@@ -43,9 +43,14 @@ def combine_structures():
     # This groups structures by their functional category (e.g., commerce, justice, military-training, etc.)
     all_structures.sort(key=lambda x: (x.get('category', ''), x.get('tier', 0), x.get('id', '')))
     
+    # Create the structures object with a structures array
+    structures_output = {
+        "structures": all_structures
+    }
+    
     # Write combined file
     with open(output_file, 'w') as f:
-        json.dump(all_structures, f, indent=4)
+        json.dump(structures_output, f, indent=4)
     
     print(f"\n✅ Successfully combined {len(all_structures)} structures")
     print(f"📁 Output written to: {output_file}")
