@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { getContext }         from 'svelte';
+   import { getContext, onMount } from 'svelte';
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
@@ -36,6 +36,36 @@
 
    // Get external context
    const { actorId, application } = getContext<KingdomApp.External>('#external');
+   
+   // Perform initial sync when the app opens
+   onMount(() => {
+      console.log('Kingdom UI opened - performing initial sync...');
+      
+      // Sync territory data from Kingmaker if available
+      if (territoryService.isKingmakerAvailable()) {
+         const result = territoryService.syncFromKingmaker();
+         console.log('Initial Kingmaker sync result:', result);
+         
+         if (result.success) {
+            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // Only show notification if there's actual data
+            if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
+               // @ts-ignore
+               ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+            }
+         } else if (result.error) {
+            console.error('Failed to sync from Kingmaker:', result.error);
+            // Don't show error notification on initial load unless there's a real error
+            // (not just "module not available")
+            if (!result.error.includes('not available')) {
+               // @ts-ignore
+               ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+            }
+         }
+      } else {
+         console.log('Kingmaker module not available - running without territory sync');
+      }
+   });
 
    // Reactive statement for refresh
    $: if (refreshTrigger) {
@@ -222,13 +252,13 @@
    }
    
    /* Override Foundry's window styles for our app specifically */
-   :global(.pf2e-kingdom-lite .window-content) {
+   :global(.pf2e-reignmaker .window-content) {
       background: var(--bg-base) !important;
       color: var(--text-primary) !important;
 
    }
    
-   :global(.pf2e-kingdom-lite .window-header) {
+   :global(.pf2e-reignmaker .window-header) {
       background: var(--gradient-header) !important;
    }
 </style>

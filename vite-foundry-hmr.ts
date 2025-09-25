@@ -75,7 +75,7 @@ export function createFoundryProxy(foundryUrl = 'http://localhost:30000') {
             changeOrigin: true,
             bypass: (req: any) => {
                 // Don't proxy our own module
-                if (req.url?.startsWith('/modules/pf2e-kingdom-lite/')) {
+                if (req.url?.startsWith('/modules/pf2e-reignmaker/')) {
                     return false;
                 }
                 return null;

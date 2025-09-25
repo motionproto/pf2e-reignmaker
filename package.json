@@ -1,5 +1,5 @@
 {
-  "name": "pf2e-kingdom-lite",
+  "name": "pf2e-reignmaker",
   "version": "1.0.0",
   "description": "Kingdom Building management system for Pathfinder 2e",
   "license": "MIT",
@@ -50,10 +50,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/motionproto/pf2e-kingdom-lite.git"
+    "url": "git+https://github.com/motionproto/pf2e-reignmaker.git"
   },
   "bugs": {
-    "url": "https://github.com/motionproto/pf2e-kingdom-lite/issues"
+    "url": "https://github.com/motionproto/pf2e-reignmaker/issues"
   },
-  "homepage": "https://github.com/motionproto/pf2e-kingdom-lite#readme"
+  "homepage": "https://github.com/motionproto/pf2e-reignmaker#readme"
 }

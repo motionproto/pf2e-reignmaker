@@ -1,7 +1,7 @@
 {
-  "id": "pf2e-kingdom-lite",
-  "title": "PF2e Kingdom Lite (Dev)",
-  "description": "A lightweight kingdom management module for Pathfinder 2e in Foundry VTT",
+  "id": "pf2e-reignmaker",
+  "title": "PF2E ReignMaker (Dev)",
+  "description": "Kingdom Building management for Pathfinder 2e in Foundry VTT",
   "version": "0.2.0-dev",
   "authors": [
     {
@@ -30,7 +30,7 @@
     "http://localhost:5173/src/index.ts"
   ],
   "styles": [],
-  "url": "https://github.com/yourusername/pf2e-kingdom-lite",
-  "manifest": "https://raw.githubusercontent.com/yourusername/pf2e-kingdom-lite/main/module.json",
-  "download": "https://github.com/yourusername/pf2e-kingdom-lite/releases/latest/download/module.zip"
+  "url": "https://github.com/motionproto/pf2e-reignmaker",
+  "manifest": "https://raw.githubusercontent.com/motionproto/pf2e-reignmaker/main/module.json",
+  "download": "https://github.com/motionproto/pf2e-reignmaker/releases/latest/download/module.zip"
 }

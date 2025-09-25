@@ -180,7 +180,7 @@ export async function performKingdomSkillCheck(
   const dc = getKingdomActionDC(characterLevel);
   
   // Store check info in a flag for retrieval after roll
-  await game.user?.setFlag('pf2e-kingdom-lite', 'pendingCheck', {
+  await game.user?.setFlag('pf2e-reignmaker', 'pendingCheck', {
     checkId,
     checkType,
     checkName,
@@ -211,7 +211,7 @@ export async function performKingdomSkillCheck(
   } catch (error) {
     console.error(`Failed to perform kingdom ${checkType} roll:`, error);
     ui.notifications?.error("Failed to perform skill check");
-    await game.user?.unsetFlag('pf2e-kingdom-lite', 'pendingCheck');
+    await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
     return null;
   }
 }
@@ -346,14 +346,14 @@ export function initializeRollResultHandler(
     console.log('createChatMessage hook fired, checking for pending kingdom check...');
     
     // Check for both old and new flag names for backward compatibility
-    let pendingCheck = game.user?.getFlag('pf2e-kingdom-lite', 'pendingCheck');
+    let pendingCheck = game.user?.getFlag('pf2e-reignmaker', 'pendingCheck');
     let isLegacyAction = false;
     
     console.log('pendingCheck flag:', pendingCheck);
     
     if (!pendingCheck) {
       // Check for legacy pendingAction flag
-      pendingCheck = game.user?.getFlag('pf2e-kingdom-lite', 'pendingAction');
+      pendingCheck = game.user?.getFlag('pf2e-reignmaker', 'pendingAction');
       console.log('pendingAction flag (legacy):', pendingCheck);
       
       if (pendingCheck) {
@@ -410,10 +410,10 @@ export function initializeRollResultHandler(
     
     // Clear the appropriate flag
     if (isLegacyAction) {
-      await game.user?.unsetFlag('pf2e-kingdom-lite', 'pendingAction');
+      await game.user?.unsetFlag('pf2e-reignmaker', 'pendingAction');
       console.log('Cleared legacy pendingAction flag');
     } else {
-      await game.user?.unsetFlag('pf2e-kingdom-lite', 'pendingCheck');
+      await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
       console.log('Cleared pendingCheck flag');
     }
   });

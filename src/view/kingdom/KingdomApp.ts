@@ -19,7 +19,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
    static get defaultOptions(): KingdomApp.Options
    {
       return deepMerge<SvelteApp.Options, KingdomApp.Options>(super.defaultOptions, {
-         id: 'pf2e-kingdom-lite',
+         id: 'pf2e-reignmaker',
          resizable: true,
          minimizable: true,
          width: 1280,

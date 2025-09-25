@@ -49,14 +49,13 @@ export class TerritoryService {
                 };
             }
 
-            // Get Kingmaker data structures
-            const ZONES = km.CONST?.ZONES || {};
-            const HEXES = km.CONST?.HEXES || {};
             const hexStates = km.state.hexes;
             
             // Convert and filter claimed hexes
             const hexes: Hex[] = [];
             const settlements: Settlement[] = [];
+            
+            console.log('Starting Kingmaker sync, found hexes:', Object.keys(hexStates).length);
             
             for (const hexId of Object.keys(hexStates)) {
                 const hexState = hexStates[hexId];
@@ -65,12 +64,18 @@ export class TerritoryService {
                 // Convert numeric ID to dot notation
                 const dotNotationId = this.convertHexId(hexId);
                 
-                // Get terrain from zone defaults
-                const initialHex = HEXES[dotNotationId] || {};
-                const zone = ZONES[initialHex.zone] || {};
-                const terrain = this.normalizeTerrainName(
-                    hexState.terrain || initialHex.terrain || zone.terrain || 'plains'
-                );
+                // Get terrain directly from hexState (it's provided by Kingmaker)
+                // Default to 'plains' if not specified
+                const terrain = this.normalizeTerrainName(hexState.terrain || 'plains');
+                
+                // Debug log for each claimed hex
+                console.log(`Processing hex ${dotNotationId}:`, {
+                    terrain: hexState.terrain,
+                    normalizedTerrain: terrain,
+                    camp: hexState.camp,
+                    commodity: hexState.commodity,
+                    features: hexState.features
+                });
                 
                 // Convert worksite
                 const worksite = this.convertWorksite(hexState);
@@ -93,6 +98,8 @@ export class TerritoryService {
                     settlements.push(...this.extractSettlements(hexState.features, dotNotationId));
                 }
             }
+            
+            console.log(`Synced ${hexes.length} hexes and ${settlements.length} settlements`);
             
             // Update kingdom store with territory data
             this.updateKingdomStore(hexes, settlements);
@@ -135,13 +142,31 @@ export class TerritoryService {
     }
     
     /**
-     * Convert numeric hex ID to dot notation (e.g., 9209 -> "92.9")
+     * Convert numeric hex ID to dot notation (e.g., 9209 -> "92.09", 1011 -> "1.11")
      */
     private convertHexId(numericId: string): string {
+        // If already in dot notation, return as is
+        if (numericId.includes('.')) {
+            return numericId;
+        }
+        
         const num = parseInt(numericId);
-        const row = Math.floor(num / 1000);
-        const col = num % 1000;
-        return `${row}.${col}`;
+        if (isNaN(num)) {
+            console.warn(`Invalid hex ID: ${numericId}, returning as is`);
+            return numericId;
+        }
+        
+        // Handle 4-digit format (e.g., 9209 -> 92.09, 1011 -> 1.11)
+        if (num >= 1000) {
+            const row = Math.floor(num / 100);
+            const col = num % 100;
+            return `${row}.${col.toString().padStart(2, '0')}`;
+        } else {
+            // Handle 3-digit or less (e.g., 105 -> 1.05)
+            const row = Math.floor(num / 100);
+            const col = num % 100;
+            return `${row}.${col.toString().padStart(2, '0')}`;
+        }
     }
     
     /**

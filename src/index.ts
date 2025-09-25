@@ -8,11 +8,13 @@ import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
+import { get } from 'svelte/store';
+import { kingdomState } from './stores/kingdom';
 
 // Extend module type for our API
 declare global {
     interface Game {
-        pf2eKingdomLite?: {
+        pf2eReignMaker?: {
             openKingdomUI: (actorId?: string) => void;
             syncKingmaker?: () => boolean;
         };
@@ -20,7 +22,7 @@ declare global {
     
     interface Window {
         openKingdomUI?: (actorId?: string) => void;
-        pf2eKingdomLite?: {
+        pf2eReignMaker?: {
             openKingdomUI: (actorId?: string) => void;
             syncKingmaker?: () => boolean;
         };
@@ -33,7 +35,7 @@ declare global {
 function registerModuleSettings() {
     // Register the kingdom scene ID setting
     // @ts-ignore - Foundry globals
-    game.settings.register('pf2e-kingdom-lite', 'kingdomSceneId', {
+    game.settings.register('pf2e-reignmaker', 'kingdomSceneId', {
         name: 'Kingdom Scene',
         hint: 'The scene that represents your kingdom map (typically "Stolen Lands")',
         scope: 'world',  // world-level setting (GM only)
@@ -44,7 +46,7 @@ function registerModuleSettings() {
     
     // Register kingdom name setting
     // @ts-ignore - Foundry globals
-    game.settings.register('pf2e-kingdom-lite', 'kingdomName', {
+    game.settings.register('pf2e-reignmaker', 'kingdomName', {
         name: 'Kingdom Name',
         hint: 'The name of your kingdom',
         scope: 'world',
@@ -53,14 +55,14 @@ function registerModuleSettings() {
         default: 'New Kingdom',
     });
     
-    console.log('PF2e Kingdom Lite | Settings registered');
+    console.log('PF2E ReignMaker | Settings registered');
 }
 
 /**
  * Initialize the module when Foundry is ready
  */
 Hooks.once('init', () => {
-    console.log('PF2e Kingdom Lite | Initializing module (Svelte/TRL version)');
+    console.log('PF2E ReignMaker | Initializing module (Svelte/TRL version)');
     
     // Register module settings
     registerModuleSettings();
@@ -73,7 +75,7 @@ Hooks.once('init', () => {
     
     // Register keybinding
     // @ts-ignore
-    game.keybindings?.register('pf2e-kingdom-lite', 'openKingdom', {
+    game.keybindings?.register('pf2e-reignmaker', 'openKingdom', {
         name: 'Open Kingdom UI',
         hint: 'Opens the Kingdom management interface',
         editable: [
@@ -84,9 +86,9 @@ Hooks.once('init', () => {
         ],
         onDown: () => {
             // @ts-ignore
-            if (game.pf2eKingdomLite?.openKingdomUI) {
+            if (game.pf2eReignMaker?.openKingdomUI) {
                 // @ts-ignore
-                game.pf2eKingdomLite.openKingdomUI();
+                game.pf2eReignMaker.openKingdomUI();
             }
             return true;
         },
@@ -101,8 +103,8 @@ Hooks.once('init', () => {
  * Setup module once the game is ready
  */
 Hooks.once('ready', () => {
-    console.log('PF2e Kingdom Lite | Module ready');
-    console.log('PF2e Kingdom Lite | Svelte Kingdom system initialized');
+    console.log('PF2E ReignMaker | Module ready');
+    console.log('PF2E ReignMaker | Svelte Kingdom system initialized');
     
     // Initialize Kingmaker sync if available using Territory Service
     if (territoryService.isKingmakerAvailable()) {
@@ -133,9 +135,9 @@ Hooks.once('ready', () => {
                     actorId: actorId
                 } as any);  // Type assertion to bypass TS strict checking
                 app.render(true, { focus: true });
-                console.log('PF2e Kingdom Lite | Kingdom UI opened');
+                console.log('PF2E ReignMaker | Kingdom UI opened');
             } catch (error) {
-                console.error("PF2e Kingdom Lite | Failed to open Kingdom UI:", error);
+                console.error("PF2E ReignMaker | Failed to open Kingdom UI:", error);
                 // @ts-ignore
                 ui.notifications?.error("Failed to open Kingdom UI");
             }
@@ -143,17 +145,29 @@ Hooks.once('ready', () => {
         
         // Create manual sync function for debugging
         const syncKingmaker = () => {
-            console.log('PF2e Kingdom Lite | Manual sync triggered');
+            console.log('PF2E ReignMaker | Manual sync triggered');
             const result = syncKingmakerToKingdomState();
             
             // Log debug info
             // @ts-ignore
             const km = typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker;
-            console.log('PF2e Kingdom Lite | Sync debug:', {
+            console.log('PF2E ReignMaker | Sync debug:', {
                 syncResult: result,
                 kingmakerGlobal: km,
                 kingmakerState: km?.state,
-                hexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0
+                totalHexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0,
+                claimedHexes: km?.state?.hexes ? Object.values(km.state.hexes).filter((h: any) => h.claimed).length : 0
+            });
+            
+            // Get current kingdom state to verify sync
+            const state = get(kingdomState);
+            console.log('PF2E ReignMaker | Current Kingdom State:', {
+                hexes: state.hexes.length,
+                size: state.size,
+                settlements: state.settlements.length,
+                resources: Object.fromEntries(state.resources),
+                cachedProduction: Object.fromEntries(state.cachedProduction),
+                worksiteCount: Object.fromEntries(state.worksiteCount)
             });
             
             return result;
@@ -161,39 +175,39 @@ Hooks.once('ready', () => {
         
         // Get the module object and add the API
         // @ts-ignore
-        const module = game.modules.get('pf2e-kingdom-lite') as any;
+        const module = game.modules.get('pf2e-reignmaker') as any;
         if (module) {
             // Add API object
             module.api = { openKingdomUI, syncKingmaker };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
-            console.log('PF2e Kingdom Lite | Module API registered');
+            console.log('PF2E ReignMaker | Module API registered');
         }
         
         // Register global function to open Kingdom UI
         // @ts-ignore
-        game.pf2eKingdomLite = { openKingdomUI, syncKingmaker };
+        game.pf2eReignMaker = { openKingdomUI, syncKingmaker };
         
         // Also add to window for easy console access in dev mode
         if (import.meta.env.DEV) {
             window.openKingdomUI = openKingdomUI;
-            window.pf2eKingdomLite = { openKingdomUI, syncKingmaker };
+            window.pf2eReignMaker = { openKingdomUI, syncKingmaker };
         }
         
-        console.log('PF2e Kingdom Lite | Global functions registered:');
-        console.log('  - game.modules.get("pf2e-kingdom-lite").api.openKingdomUI()');
-        console.log('  - game.modules.get("pf2e-kingdom-lite").openKingdomUI()');
-        console.log('  - game.pf2eKingdomLite.openKingdomUI()');
+        console.log('PF2E ReignMaker | Global functions registered:');
+        console.log('  - game.modules.get("pf2e-reignmaker").api.openKingdomUI()');
+        console.log('  - game.modules.get("pf2e-reignmaker").openKingdomUI()');
+        console.log('  - game.pf2eReignMaker.openKingdomUI()');
         if (import.meta.env.DEV) {
             console.log('  - window.openKingdomUI() [DEV ONLY]');
         }
     }).catch((error) => {
-        console.error('PF2e Kingdom Lite | Failed to load KingdomApp:', error);
+        console.error('PF2E ReignMaker | Failed to load KingdomApp:', error);
     });
 });
 
 // Hot Module Replacement support for development
 if (import.meta.hot) {
     import.meta.hot.accept();
-    console.log('PF2e Kingdom Lite | Hot Module Replacement enabled');
+    console.log('PF2E ReignMaker | Hot Module Replacement enabled');
 }
