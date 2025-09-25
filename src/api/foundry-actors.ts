@@ -325,20 +325,17 @@ export function parseRollOutcome(roll: any, dc: number): string {
 let rollHandlerInitialized = false;
 
 /**
- * Initialize the roll result handler for all kingdom checks
- * This should be called once when the module is ready
- * @param onCheckResolved - Callback when any check is resolved
+ * Initialize the global roll result handler for all kingdom checks
+ * This sets up a single handler that dispatches events based on check type
+ * Components can call this multiple times safely - it only initializes once
  */
-export function initializeRollResultHandler(
-  onCheckResolved: (checkId: string, outcome: string, actorName: string, checkType?: string, skillName?: string) => void
-) {
-  // Prevent duplicate registration
+export function initializeRollResultHandler() {
+  // Initialize hook only once
   if (rollHandlerInitialized) {
-    console.log('Roll handler already initialized, skipping duplicate registration');
     return;
   }
   
-  console.log('Registering createChatMessage hook for kingdom rolls');
+  console.log('Initializing createChatMessage hook for kingdom rolls');
   rollHandlerInitialized = true;
   
   // Hook into chat message creation to process kingdom check results  
@@ -397,16 +394,22 @@ export function initializeRollResultHandler(
     const dc = message.flags.pf2e.context.dc.value;
     const outcome = parseRollOutcome(roll, dc);
     
-    console.log(`Parsed outcome: ${outcome} for ${pendingCheck.checkId}, calling callback...`);
+    console.log(`Parsed outcome: ${outcome} for ${pendingCheck.checkId}, dispatching ${pendingCheck.checkType} event...`);
     
-    // Notify the callback with the result
-    onCheckResolved(
-      pendingCheck.checkId, 
-      outcome, 
-      pendingCheck.actorName, 
-      pendingCheck.checkType || 'action',
-      pendingCheck.skillName
-    );
+    // Dispatch a custom event with the roll result
+    // Components can listen for this event and filter by checkType and checkId
+    const event = new CustomEvent('kingdomRollComplete', {
+      detail: {
+        checkId: pendingCheck.checkId,
+        outcome: outcome,
+        actorName: pendingCheck.actorName,
+        checkType: pendingCheck.checkType || 'action',
+        skillName: pendingCheck.skillName
+      }
+    });
+    
+    // Dispatch to window so any component can listen
+    window.dispatchEvent(event);
     
     // Clear the appropriate flag
     if (isLegacyAction) {

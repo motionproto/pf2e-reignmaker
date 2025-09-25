@@ -11,28 +11,28 @@
       "description": "negotiate",
       "successEffect": "Trade continues, no effect",
       "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
     },
     {
       "skill": "society",
       "description": "find loopholes",
       "successEffect": "Trade continues, no effect",
       "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
     },
     {
       "skill": "deception",
       "description": "smuggling routes",
       "successEffect": "Trade continues, no effect",
       "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
     },
     {
       "skill": "arcana",
       "description": "teleportation network",
       "successEffect": "Trade continues, no effect",
       "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureExtra": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
     }
   ]
 }

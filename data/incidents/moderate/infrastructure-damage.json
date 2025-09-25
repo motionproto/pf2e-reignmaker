@@ -11,28 +11,28 @@
       "description": "emergency repairs",
       "successEffect": "Damage prevented, no effect",
       "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "athletics",
       "description": "labor mobilization",
       "successEffect": "Damage prevented, no effect",
       "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "society",
       "description": "organize response",
       "successEffect": "Damage prevented, no effect",
       "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
     },
     {
       "skill": "arcana",
       "description": "magical restoration",
       "successEffect": "Damage prevented, no effect",
       "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureExtra": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
     }
   ]
 }

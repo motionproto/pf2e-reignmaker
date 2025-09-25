@@ -11,28 +11,28 @@
       "description": "calm populace",
       "successEffect": "Tensions ease, no effect",
       "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "criticalFailureEffect": "+2 Unrest"
     },
     {
       "skill": "religion",
       "description": "spiritual guidance",
       "successEffect": "Tensions ease, no effect",
       "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "criticalFailureEffect": "+2 Unrest"
     },
     {
       "skill": "performance",
       "description": "entertainment",
       "successEffect": "Tensions ease, no effect",
       "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "criticalFailureEffect": "+2 Unrest"
     },
     {
       "skill": "arcana",
       "description": "magical displays",
       "successEffect": "Tensions ease, no effect",
       "failureEffect": "+1 Unrest",
-      "criticalFailureExtra": "+2 Unrest"
+      "criticalFailureEffect": "+2 Unrest"
     }
   ]
 }

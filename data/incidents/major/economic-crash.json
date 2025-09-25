@@ -11,28 +11,28 @@
       "description": "economic reform",
       "successEffect": "Economy stabilized, no effect",
       "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
     },
     {
       "skill": "diplomacy",
       "description": "secure loans",
       "successEffect": "Economy stabilized, no effect",
       "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
     },
     {
       "skill": "crafting",
       "description": "boost production",
       "successEffect": "Economy stabilized, no effect",
       "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
     },
     {
       "skill": "arcana",
       "description": "transmute resources",
       "successEffect": "Economy stabilized, no effect",
       "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureExtra": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
     }
   ]
 }

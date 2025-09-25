@@ -298,6 +298,62 @@ export const IncidentManager = {
       criticalFailureEffect: 'Lose 2d4+1 of a random resource',
       imagePath: 'img/incidents/mod_placeholder.webp'
     }, {
+      id: 'diplomatic_incident',
+      name: 'Diplomatic Incident',
+      description: 'A serious diplomatic incident threatens relations',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 25,
+      percentileMax: 33,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Smooth over' }, { skill: 'Deception', description: 'Deny responsibility' }, { skill: 'Society', description: 'Formal apology' }
+      ],
+      successEffect: 'Relations maintained, no effect',
+      failureEffect: "One neighbouring kingdom's attitude worsens by 1 step",
+      criticalFailureEffect: "Two random kingdoms' attitudes worsen by 1 step",
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
+      id: 'tax_revolt',
+      name: 'Tax Revolt',
+      description: 'Citizens revolt against tax collection',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 34,
+      percentileMax: 42,
+      skillOptions: [
+        { skill: 'Intimidation', description: 'Enforce collection' }, { skill: 'Diplomacy', description: 'Negotiate rates' }, { skill: 'Society', description: 'Tax reform' }, { skill: 'Deception', description: 'Creative accounting' }
+      ],
+      successEffect: 'Taxes collected normally',
+      failureEffect: 'Lose 1d4 Gold (reduced tax collection)',
+      criticalFailureEffect: 'Lose 2d4 Gold, +1 Unrest',
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
+      id: 'infrastructure_damage',
+      name: 'Infrastructure Damage',
+      description: 'Critical infrastructure is damaged or sabotaged',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 43,
+      percentileMax: 51,
+      skillOptions: [
+        { skill: 'Crafting', description: 'Emergency repairs' }, { skill: 'Athletics', description: 'Labor mobilization' }, { skill: 'Society', description: 'Organize response' }, { skill: 'Arcana', description: 'Magical restoration' }
+      ],
+      successEffect: 'Damage prevented, no effect',
+      failureEffect: 'One random structure in a random settlement becomes damaged',
+      criticalFailureEffect: '1d3 random structures become damaged (random settlements), +1 unrest',
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
+      id: 'disease_outbreak',
+      name: 'Disease Outbreak',
+      description: 'A dangerous disease spreads through your settlements',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 52,
+      percentileMax: 60,
+      skillOptions: [
+        { skill: 'Medicine', description: 'Treat disease' }, { skill: 'Nature', description: 'Natural remedies' }, { skill: 'Religion', description: 'Divine healing' }
+      ],
+      successEffect: 'Disease contained, no effect',
+      failureEffect: 'Lose 1d4 Food (feeding the sick), +1 Unrest',
+      criticalFailureEffect: 'Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest',
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
       id: 'riot',
       name: 'Riot',
       description: 'Violence erupts in your settlements',
@@ -312,6 +368,20 @@ export const IncidentManager = {
       criticalFailureEffect: '+1 Unrest, 1 structure destroyed',
       imagePath: 'img/incidents/mod_placeholder.webp'
     }, {
+      id: 'settlement_crisis',
+      name: 'Settlement Crisis',
+      description: 'One of your settlements faces a major crisis',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 70,
+      percentileMax: 78,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Address concerns' }, { skill: 'Society', description: 'Emergency aid' }, { skill: 'Religion', description: 'Provide hope' }
+      ],
+      successEffect: 'Settlement stabilized, no effect',
+      failureEffect: 'Random settlement loses 1d4 Gold OR 1 structure damaged',
+      criticalFailureEffect: 'Random settlement loses one level (minimum level 1), +1 unrest',
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
       id: 'assassination_attempt',
       name: 'Assassination Attempt',
       description: "An attempt is made on a leader's life",
@@ -324,6 +394,20 @@ export const IncidentManager = {
       successEffect: 'Assassination prevented, no effect',
       failureEffect: 'Leader escapes; +1 Unrest',
       criticalFailureEffect: 'Leader wounded; +2 Unrest, PC cannot take Kingdom Action',
+      imagePath: 'img/incidents/mod_placeholder.webp'
+    }, {
+      id: 'trade_embargo',
+      name: 'Trade Embargo',
+      description: 'Neighboring kingdoms impose trade restrictions',
+      level: IncidentLevel.MODERATE,
+      percentileMin: 88,
+      percentileMax: 93,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Negotiate' }, { skill: 'Society', description: 'Find loopholes' }, { skill: 'Deception', description: 'Smuggling routes' }, { skill: 'Occultism', description: 'Divine trade routes' }
+      ],
+      successEffect: 'Trade continues, no effect',
+      failureEffect: "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+      criticalFailureEffect: 'Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest',
       imagePath: 'img/incidents/mod_placeholder.webp'
     }, {
       id: 'mass_exodus',
@@ -356,6 +440,132 @@ export const IncidentManager = {
       successEffect: 'Rebellion dispersed',
       failureEffect: 'Rebels seize 1d3 hexes',
       criticalFailureEffect: 'Rebels seize 2d3 hexes and gain an army',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'mass_desertion_threat',
+      name: 'Mass Desertion Threat',
+      description: 'Your armies threaten mass desertion',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 18,
+      percentileMax: 24,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Rally troops' }, { skill: 'Intimidation', description: 'Threaten deserters' }, { skill: 'Performance', description: 'Inspire loyalty' }
+      ],
+      successEffect: 'Troops remain loyal, no effect',
+      failureEffect: '1 army makes morale checks, highest tier military structure is damaged',
+      criticalFailureEffect: '2 armies make morale checks, highest tier military structure is destroyed',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'trade_embargo_major',
+      name: 'Trade Embargo',
+      description: 'A complete trade embargo devastates your economy',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 25,
+      percentileMax: 31,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Negotiate' }, { skill: 'Society', description: 'Find loopholes' }, { skill: 'Deception', description: 'Smuggling routes' }, { skill: 'Arcana', description: 'Teleportation network' }
+      ],
+      successEffect: 'Trade continues, no effect',
+      failureEffect: "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+      criticalFailureEffect: 'Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'settlement_crisis_major',
+      name: 'Settlement Crisis',
+      description: 'A major settlement faces total collapse',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 32,
+      percentileMax: 38,
+      skillOptions: [
+        { skill: 'Diplomacy', description: 'Address concerns' }, { skill: 'Society', description: 'Emergency aid' }, { skill: 'Religion', description: 'Provide hope' }
+      ],
+      successEffect: 'Settlement stabilized, no effect',
+      failureEffect: 'Random settlement loses 2d4 Gold OR 2 structures damaged',
+      criticalFailureEffect: 'Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'international_scandal',
+      name: 'International Scandal',
+      description: "A massive scandal ruins your kingdom's reputation",
+      level: IncidentLevel.MAJOR,
+      percentileMin: 39,
+      percentileMax: 45,
+      skillOptions: [
+        { skill: 'Performance', description: 'Grand gesture' }, { skill: 'Diplomacy', description: 'Public relations' }, { skill: 'Deception', description: 'Propaganda' }
+      ],
+      successEffect: 'Reputation maintained, no effect',
+      failureEffect: 'Lose 1 Fame AND 1d4 gold',
+      criticalFailureEffect: 'King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'prison_breaks',
+      name: 'Prison Breaks',
+      description: 'Mass prison breaks release dangerous criminals',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 46,
+      percentileMax: 52,
+      skillOptions: [
+        { skill: 'Intimidation', description: 'Lockdown prisons' }, { skill: 'Athletics', description: 'Pursuit' }, { skill: 'Society', description: 'Negotiation' }
+      ],
+      successEffect: 'Break prevented, no effect',
+      failureEffect: 'Half imprisoned unrest becomes regular unrest, the justice structure is damaged',
+      criticalFailureEffect: 'All imprisoned unrest becomes regular unrest, the justice structure is destroyed',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'noble_conspiracy',
+      name: 'Noble Conspiracy',
+      description: "Nobles plot to overthrow the kingdom's leadership",
+      level: IncidentLevel.MAJOR,
+      percentileMin: 53,
+      percentileMax: 59,
+      skillOptions: [
+        { skill: 'Stealth', description: 'Uncover plot' }, { skill: 'Intimidation', description: 'Arrests' }, { skill: 'Society', description: 'Political maneuvering' }, { skill: 'Occultism', description: 'Divine truth' }
+      ],
+      successEffect: 'Conspiracy exposed and dealt with, no effect',
+      failureEffect: 'Lose 1d4 Gold, -1 fame',
+      criticalFailureEffect: 'Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'economic_crash',
+      name: 'Economic Crash',
+      description: "Your kingdom's economy collapses",
+      level: IncidentLevel.MAJOR,
+      percentileMin: 60,
+      percentileMax: 66,
+      skillOptions: [
+        { skill: 'Society', description: 'Economic reform' }, { skill: 'Diplomacy', description: 'Secure loans' }, { skill: 'Crafting', description: 'Boost production' }, { skill: 'Arcana', description: 'Transmute resources' }
+      ],
+      successEffect: 'Economy stabilized, no effect',
+      failureEffect: 'Lose 2d6 gold, your highest tier commerce structure is damaged',
+      criticalFailureEffect: 'Lose 4d6 gold, your highest tier commerce structure is destroyed',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'religious_schism',
+      name: 'Religious Schism',
+      description: 'Religious divisions tear your kingdom apart',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 67,
+      percentileMax: 73,
+      skillOptions: [
+        { skill: 'Religion', description: 'Theological debate' }, { skill: 'Diplomacy', description: 'Mediate factions' }, { skill: 'Occultism', description: 'Divine intervention' }, { skill: 'Society', description: 'Secular compromise' }
+      ],
+      successEffect: 'Schism averted, no effect',
+      failureEffect: 'Church factions form, lose 2d6 gold, your highest tier religious structure is damaged',
+      criticalFailureEffect: 'Church splits, lose 4d6 gold, your highest tier religious structure is destroyed',
+      imagePath: 'img/incidents/major_placeholder.webp'
+    }, {
+      id: 'border_raid',
+      name: 'Border Raid',
+      description: 'Enemy forces raid your border territories',
+      level: IncidentLevel.MAJOR,
+      percentileMin: 74,
+      percentileMax: 80,
+      skillOptions: [
+        { skill: 'Athletics', description: 'Rapid response' }, { skill: 'Intimidation', description: 'Retaliation' }, { skill: 'Survival', description: 'Tracking' }, { skill: 'Nature', description: 'Use terrain' }
+      ],
+      successEffect: 'Raiders repelled, no effect',
+      failureEffect: 'Lose 1 border hex permanently, lose 1d4 Gold (pillaging)',
+      criticalFailureEffect: 'Lose 1d3 border hexes permanently, lose 2d4 Gold',
       imagePath: 'img/incidents/major_placeholder.webp'
     }, {
       id: 'secession_crisis',

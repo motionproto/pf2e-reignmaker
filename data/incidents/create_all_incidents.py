@@ -1405,7 +1405,7 @@ INCIDENTS = {
 }
 
 def create_incident_file(incident_data, tier):
-    """Create a single incident JSON file with complete modifier structure"""
+    """Create a single incident JSON file with simple structure for TypeScript model"""
     
     # Build the complete incident structure
     incident = {
@@ -1422,31 +1422,24 @@ def create_incident_file(incident_data, tier):
     for skill_option in incident_data["skillOptions"]:
         option = {
             "skill": skill_option["skill"],
-            "description": skill_option["description"],
-            "effects": {}
+            "description": skill_option["description"]
         }
         
-        # Process effects
+        # Process effects - flatten them to match TypeScript model expectations
         if "effects" in skill_option:
             effects = skill_option["effects"]
             
             # Add success effect
             if "success" in effects:
-                option["effects"]["success"] = effects["success"]["description"]
-                if "modifiers" in effects["success"]:
-                    option["successModifiers"] = effects["success"]["modifiers"]
+                option["successEffect"] = effects["success"]["description"]
             
             # Add failure effect  
             if "failure" in effects:
-                option["effects"]["failure"] = effects["failure"]["description"]
-                if "modifiers" in effects["failure"]:
-                    option["failureModifiers"] = effects["failure"]["modifiers"]
+                option["failureEffect"] = effects["failure"]["description"]
             
-            # Add critical failure effect
+            # Add critical failure effect - use criticalFailureEffect for consistency
             if "criticalFailure" in effects:
-                option["effects"]["criticalFailure"] = effects["criticalFailure"]["description"]
-                if "modifiers" in effects["criticalFailure"]:
-                    option["criticalFailureModifiers"] = effects["criticalFailure"]["modifiers"]
+                option["criticalFailureEffect"] = effects["criticalFailure"]["description"]
         
         incident["skillOptions"].append(option)
     

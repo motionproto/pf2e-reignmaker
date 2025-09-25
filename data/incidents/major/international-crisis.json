@@ -11,28 +11,28 @@
       "description": "damage control",
       "successEffect": "Crisis contained, no effect",
       "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "deception",
       "description": "blame shifting",
       "successEffect": "Crisis contained, no effect",
       "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "society",
       "description": "formal reparations",
       "successEffect": "Crisis contained, no effect",
       "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     },
     {
       "skill": "performance",
       "description": "public relations",
       "successEffect": "Crisis contained, no effect",
       "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureExtra": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
     }
   ]
 }

@@ -11,28 +11,28 @@
       "description": "uncover plot",
       "successEffect": "Conspiracy exposed and dealt with, no effect",
       "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
     },
     {
       "skill": "intimidation",
       "description": "arrests",
       "successEffect": "Conspiracy exposed and dealt with, no effect",
       "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
     },
     {
       "skill": "society",
       "description": "political maneuvering",
       "successEffect": "Conspiracy exposed and dealt with, no effect",
       "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
     },
     {
       "skill": "occultism",
       "description": "divine truth",
       "successEffect": "Conspiracy exposed and dealt with, no effect",
       "failureEffect": "Lose 1d4 Gold, -1 fame",
-      "criticalFailureExtra": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest"
     }
   ]
 }

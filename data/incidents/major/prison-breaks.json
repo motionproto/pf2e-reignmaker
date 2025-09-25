@@ -11,21 +11,21 @@
       "description": "lockdown prisons",
       "successEffect": "Break prevented, no effect",
       "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     },
     {
       "skill": "athletics",
       "description": "pursuit",
       "successEffect": "Break prevented, no effect",
       "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     },
     {
       "skill": "society",
       "description": "negotiation",
       "successEffect": "Break prevented, no effect",
       "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureExtra": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
     }
   ]
 }

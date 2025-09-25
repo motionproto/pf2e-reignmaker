@@ -11,21 +11,21 @@
       "description": "rally troops",
       "successEffect": "Troops remain loyal, no effect",
       "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
+      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
     },
     {
       "skill": "intimidation",
       "description": "threaten deserters",
       "successEffect": "Troops remain loyal, no effect",
       "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
+      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
     },
     {
       "skill": "performance",
       "description": "inspire loyalty",
       "successEffect": "Troops remain loyal, no effect",
       "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureExtra": "2 armies make morale checks, highest tier military structure is destroyed"
+      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
     }
   ]
 }

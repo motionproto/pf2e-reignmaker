@@ -11,28 +11,28 @@
       "description": "negotiate with workers",
       "successEffect": "Strike ends, no effect",
       "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
     },
     {
       "skill": "society",
       "description": "arbitrate",
       "successEffect": "Strike ends, no effect",
       "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
     },
     {
       "skill": "crafting",
       "description": "work alongside",
       "successEffect": "Strike ends, no effect",
       "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
     },
     {
       "skill": "arcana",
       "description": "automate production",
       "successEffect": "Strike ends, no effect",
       "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureExtra": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
     }
   ]
 }

@@ -2,6 +2,9 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { IncidentManager, type Incident, type IncidentLevel } from '../../../models/Incidents';
    import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import SkillTag from '../../kingdom/components/SkillTag.svelte';
+   import { initializeRollResultHandler } from '../../../api/foundry-actors';
+   import { onMount, onDestroy } from 'svelte';
    
    // State for incident handling
    let currentIncident: Incident | null = null;
@@ -9,6 +12,8 @@
    let showIncidentResult = false;
    let selectedSkill = '';
    let isRolling = false;
+   let incidentResolved = false;
+   let rollOutcome: string = '';
    
    // Check if steps are completed
    $: incidentChecked = isPhaseStepCompleted('unrest-check');
@@ -50,11 +55,56 @@
       }, 1000);
    }
    
+   // Initialize the global roll result handler
+   initializeRollResultHandler();
+   
+   // Listen for kingdom roll completion events
+   function handleRollCompleteEvent(event: CustomEvent) {
+      const { checkId, outcome, actorName, checkType, skillName } = event.detail;
+      
+      // Only handle incident type checks for our current incident
+      if (checkType === 'incident' && currentIncident && checkId === currentIncident.id) {
+         // Handle incident resolution
+         incidentResolved = true;
+         rollOutcome = outcome;
+         selectedSkill = skillName || '';
+         
+         // Apply the incident effects based on outcome
+         handleIncidentOutcome(outcome);
+      }
+   }
+   
+   // Set up event listener when component mounts
+   onMount(() => {
+      window.addEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
+   });
+   
+   // Clean up event listener when component unmounts
+   onDestroy(() => {
+      window.removeEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
+   });
+   
    function resolveIncident(skill: string) {
       selectedSkill = skill;
-      // Here we would normally trigger the skill check resolution
-      // For now, we just store the selection
-      console.log(`Resolving incident with ${skill}`);
+      isRolling = true;
+   }
+   
+   function handleRollComplete(event: CustomEvent) {
+      isRolling = false;
+      // The actual outcome handling is done by the roll result handler
+   }
+   
+   function handleIncidentOutcome(outcome: string) {
+      if (!currentIncident) return;
+      
+      // Here you would apply the incident effects to the kingdom state
+      // based on the outcome (success, failure, criticalFailure)
+      console.log(`Incident resolved with ${outcome}:`, currentIncident);
+      
+      // Mark the incident as handled
+      if (!incidentChecked) {
+         markPhaseStepCompleted('unrest-check');
+      }
    }
 </script>
 
@@ -135,33 +185,61 @@
                      {#if currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
                         <div class="skill-options">
                            <div class="skill-options-title">Choose Resolution Approach:</div>
-                           <div class="skill-option-grid">
+                           <div class="skill-tags">
                               {#each currentIncident.skillOptions as option}
-                                 <button 
-                                    class="skill-option-btn {selectedSkill === option.skill ? 'selected' : ''}"
-                                    on:click={() => resolveIncident(option.skill)}
-                                 >
-                                    <div class="skill-name">{option.skill}</div>
-                                    <div class="skill-description">{option.description}</div>
-                                 </button>
+                                 <SkillTag
+                                    skill={option.skill}
+                                    description={option.description}
+                                    selected={selectedSkill === option.skill}
+                                    disabled={incidentResolved || isRolling}
+                                    loading={isRolling && selectedSkill === option.skill}
+                                    checkType="incident"
+                                    checkName={currentIncident.name}
+                                    checkId={currentIncident.id}
+                                    checkEffects={{
+                                       criticalSuccess: { description: "The incident is resolved favorably" },
+                                       success: currentIncident.successEffect,
+                                       failure: currentIncident.failureEffect,
+                                       criticalFailure: currentIncident.criticalFailureEffect
+                                    }}
+                                    on:execute={() => resolveIncident(option.skill)}
+                                    on:rollComplete={handleRollComplete}
+                                 />
                               {/each}
                            </div>
                         </div>
                      {/if}
                      
                      <div class="incident-effects">
-                        <div class="effect-row">
-                           <span class="effect-label">Success:</span>
-                           <span class="effect-text effect-success">{currentIncident.successEffect}</span>
-                        </div>
-                        <div class="effect-row">
-                           <span class="effect-label">Failure:</span>
-                           <span class="effect-text effect-failure">{currentIncident.failureEffect}</span>
-                        </div>
-                        <div class="effect-row">
-                           <span class="effect-label">Critical Failure:</span>
-                           <span class="effect-text effect-critical">{currentIncident.criticalFailureEffect}</span>
-                        </div>
+                        {#if incidentResolved}
+                           <div class="resolution-banner {rollOutcome}">
+                              <i class="fas fa-dice-d20"></i>
+                              <span>
+                                 {#if rollOutcome === 'criticalSuccess'}
+                                    Critical Success! The incident is resolved favorably.
+                                 {:else if rollOutcome === 'success'}
+                                    Success: {currentIncident.successEffect}
+                                 {:else if rollOutcome === 'failure'}
+                                    Failure: {currentIncident.failureEffect}
+                                 {:else}
+                                    Critical Failure: {currentIncident.criticalFailureEffect}
+                                 {/if}
+                              </span>
+                           </div>
+                        {:else}
+                           <div class="effect-row">
+                              <span class="effect-label">Success:</span>
+                              <span class="effect-text effect-success">{currentIncident.successEffect}</span>
+                           </div>
+                           <div class="effect-row">
+                              <span class="effect-label">Failure:</span>
+                              <span class="effect-text effect-failure">{currentIncident.failureEffect}</span>
+                           </div>
+                           <div class="effect-row">
+                              <span class="effect-label">Critical Failure:</span>
+                              <span class="effect-text effect-critical">{currentIncident.criticalFailureEffect}</span>
+                           </div>
+                        {/if}
                      </div>
                   </div>
                {:else}
@@ -489,42 +567,48 @@
       }
    }
    
-   .skill-option-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
+      margin-top: 10px;
    }
    
-   .skill-option-btn {
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-subtle);
+   .resolution-banner {
+      padding: 15px;
       border-radius: var(--radius-md);
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.2s ease;
+      border: 1px solid;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
       
-      &:hover {
-         background: rgba(0, 0, 0, 0.5);
-         border-color: var(--color-amber);
-         transform: translateY(-2px);
+      i {
+         font-size: 20px;
       }
       
-      &.selected {
-         background: rgba(251, 191, 36, 0.2);
-         border-color: var(--color-amber);
+      &.criticalSuccess {
+         background: rgba(34, 197, 94, 0.2);
+         border-color: var(--color-green);
+         color: var(--color-green);
       }
       
-      .skill-name {
-         font-weight: 600;
-         color: var(--text-primary);
-         margin-bottom: 5px;
+      &.success {
+         background: rgba(34, 197, 94, 0.1);
+         border-color: rgba(34, 197, 94, 0.5);
+         color: var(--color-green-light);
       }
       
-      .skill-description {
-         font-size: var(--font-sm);
-         color: var(--text-tertiary);
-         line-height: 1.4;
+      &.failure {
+         background: rgba(249, 115, 22, 0.1);
+         border-color: rgba(249, 115, 22, 0.5);
+         color: var(--color-orange);
+      }
+      
+      &.criticalFailure {
+         background: rgba(239, 68, 68, 0.2);
+         border-color: var(--color-red);
+         color: var(--color-red);
       }
    }
    

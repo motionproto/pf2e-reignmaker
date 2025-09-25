@@ -11,28 +11,28 @@
       "description": "enforce collection",
       "successEffect": "Taxes collected normally",
       "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "diplomacy",
       "description": "negotiate rates",
       "successEffect": "Taxes collected normally",
       "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "society",
       "description": "tax reform",
       "successEffect": "Taxes collected normally",
       "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
     },
     {
       "skill": "deception",
       "description": "creative accounting",
       "successEffect": "Taxes collected normally",
       "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureExtra": "Lose 2d4 Gold, +1 Unrest"
+      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
     }
   ]
 }

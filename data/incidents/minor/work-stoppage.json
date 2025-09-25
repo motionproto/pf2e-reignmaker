@@ -11,28 +11,28 @@
       "description": "negotiate with workers",
       "successEffect": "Workers return, no effect",
       "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
+      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "intimidation",
       "description": "force work",
       "successEffect": "Workers return, no effect",
       "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
+      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "performance",
       "description": "inspire workers",
       "successEffect": "Workers return, no effect",
       "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
+      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
     },
     {
       "skill": "medicine",
       "description": "address health concerns",
       "successEffect": "Workers return, no effect",
       "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureExtra": "Two worksites produce nothing, +1 Unrest"
+      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
     }
   ]
 }

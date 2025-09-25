@@ -11,28 +11,28 @@
       "description": "rapid response",
       "successEffect": "Raiders repelled, no effect",
       "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
     },
     {
       "skill": "intimidation",
       "description": "retaliation",
       "successEffect": "Raiders repelled, no effect",
       "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
     },
     {
       "skill": "survival",
       "description": "tracking",
       "successEffect": "Raiders repelled, no effect",
       "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
     },
     {
       "skill": "nature",
       "description": "use terrain",
       "successEffect": "Raiders repelled, no effect",
       "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureExtra": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
     }
   ]
 }

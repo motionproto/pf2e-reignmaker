@@ -11,21 +11,21 @@
       "description": "protect target",
       "successEffect": "Assassination prevented, no effect",
       "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     },
     {
       "skill": "medicine",
       "description": "treat wounds",
       "successEffect": "Assassination prevented, no effect",
       "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     },
     {
       "skill": "stealth",
       "description": "avoid the assassin",
       "successEffect": "Assassination prevented, no effect",
       "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureExtra": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
     }
   ]
 }

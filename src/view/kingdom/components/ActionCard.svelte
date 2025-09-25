@@ -1,6 +1,8 @@
 <script lang="ts">
    import type { PlayerAction } from '../../../models/PlayerActions';
    import SkillTag from './SkillTag.svelte';
+   import PossibleOutcomes from './PossibleOutcomes.svelte';
+   import type { PossibleOutcome } from './PossibleOutcomes.svelte';
    import { 
       performKingdomActionRoll, 
       getKingdomActionDC,
@@ -400,6 +402,15 @@
                         disabled={isDisabled}
                         loading={isRolling && skillOption.skill === localUsedSkill}
                         faded={false}
+                        checkType="action"
+                        checkName={action.name}
+                        checkId={action.id}
+                        checkEffects={{
+                           criticalSuccess: action.criticalSuccess,
+                           success: action.success,
+                           failure: action.failure,
+                           criticalFailure: action.criticalFailure
+                        }}
                         on:execute={executeSkill}
                      />
                   {/each}
@@ -414,37 +425,31 @@
             
             <!-- Outcomes section - only show when not resolved -->
             <div class="outcomes-section">
-               <h4 class="section-title">Possible Outcomes:</h4>
-               <div class="outcomes-grid">
-                  <div class="outcome critical-success">
-                     <div class="outcome-header">
-                        <i class="fas fa-star"></i>
-                        Critical Success
-                     </div>
-                     <div class="outcome-text">{formatOutcome(action.criticalSuccess)}</div>
-                  </div>
-                  <div class="outcome success">
-                     <div class="outcome-header">
-                        <i class="fas fa-thumbs-up"></i>
-                        Success
-                     </div>
-                     <div class="outcome-text">{formatOutcome(action.success)}</div>
-                  </div>
-                  <div class="outcome failure">
-                     <div class="outcome-header">
-                        <i class="fas fa-thumbs-down"></i>
-                        Failure
-                     </div>
-                     <div class="outcome-text">{formatOutcome(action.failure)}</div>
-                  </div>
-                  <div class="outcome critical-failure">
-                     <div class="outcome-header">
-                        <i class="fas fa-skull"></i>
-                        Critical Failure
-                     </div>
-                     <div class="outcome-text">{formatOutcome(action.criticalFailure)}</div>
-                  </div>
-               </div>
+               <PossibleOutcomes 
+                  outcomes={[
+                     {
+                        result: 'criticalSuccess',
+                        label: 'Critical Success',
+                        description: formatOutcome(action.criticalSuccess)
+                     },
+                     {
+                        result: 'success',
+                        label: 'Success', 
+                        description: formatOutcome(action.success)
+                     },
+                     {
+                        result: 'failure',
+                        label: 'Failure',
+                        description: formatOutcome(action.failure)
+                     },
+                     {
+                        result: 'criticalFailure',
+                        label: 'Critical Failure',
+                        description: formatOutcome(action.criticalFailure)
+                     }
+                  ]}
+                  showTitle={false}
+               />
             </div>
          {/if}
          
@@ -987,79 +992,6 @@
       
       i {
          font-size: 14px;
-      }
-   }
-   
-   .outcomes-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 10px;
-   }
-   
-   .outcome {
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
-      position: relative;
-      transition: all 0.3s ease;
-      
-      .outcome-header {
-         display: flex;
-         align-items: center;
-         gap: 6px;
-         font-size: var(--type-label-size);
-         font-weight: var(--type-label-weight);
-         line-height: var(--type-label-line);
-         letter-spacing: var(--type-label-spacing);
-         text-transform: uppercase;
-         margin-bottom: 8px;
-         position: relative;
-         
-         i {
-            font-size: 14px;
-            padding-bottom: 2px;
-         }
-      }
-      
-      .outcome-text {
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
-         color: var(--text-secondary);
-      }
-      
-      &.critical-success {
-         background: rgba(34, 197, 94, 0.05);
-         border-color: rgba(34, 197, 94, 0.3);
-         
-         .outcome-header {
-            color: var(--color-green);
-         }
-      }
-      
-      &.success {
-         background: rgba(34, 197, 94, 0.03);
-         
-         .outcome-header {
-            color: var(--color-green-light);
-         }
-      }
-      
-      &.failure {
-         background: rgba(249, 115, 22, 0.03);
-         
-         .outcome-header {
-            color: var(--color-orange);
-         }
-      }
-      
-      &.critical-failure {
-         background: rgba(239, 68, 68, 0.05);
-         border-color: rgba(239, 68, 68, 0.3);
-         
-         .outcome-header {
-            color: var(--color-red);
-         }
       }
    }
    

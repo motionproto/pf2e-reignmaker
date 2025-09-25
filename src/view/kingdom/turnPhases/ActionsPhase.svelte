@@ -4,7 +4,7 @@
    import { PlayerActionsData, type PlayerAction } from '../../../models/PlayerActions';
    import ActionCard from '../../kingdom/components/ActionCard.svelte';
    import { getPlayerCharacters, getCurrentUserCharacter, initializeRollResultHandler } from '../../../api/foundry-actors';
-   import { onMount, tick } from 'svelte';
+   import { onMount, onDestroy, tick } from 'svelte';
    
    // Track expanded actions and resolved actions
    let expandedActions = new Set<string>();
@@ -295,9 +295,22 @@
       return outcome.description || '—';
    }
    
+   // Initialize the global roll result handler
+   initializeRollResultHandler();
+   
+   // Listen for kingdom roll completion events
+   function handleRollComplete(event: CustomEvent) {
+      const { checkId, outcome, actorName, checkType, skillName } = event.detail;
+      
+      // Only handle action type checks
+      if (checkType === 'action') {
+         onActionResolved(checkId, outcome, actorName, checkType, skillName);
+      }
+   }
+   
+   // Set up event listener when component mounts
    onMount(() => {
-      // Initialize the roll result handler
-      initializeRollResultHandler(onActionResolved);
+      window.addEventListener('kingdomRollComplete', handleRollComplete as EventListener);
       
       // Load player characters
       playerCharacters = getPlayerCharacters();
@@ -313,7 +326,11 @@
          selectedCharacter = null;
          selectedCharacterId = '';
       }
-      
+   });
+   
+   // Clean up event listener when component unmounts
+   onDestroy(() => {
+      window.removeEventListener('kingdomRollComplete', handleRollComplete as EventListener);
    });
    
    // Update selected character when ID changes

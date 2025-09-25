@@ -11,21 +11,21 @@
       "description": "convince to stay",
       "successEffect": "Population remains, no effect",
       "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     },
     {
       "skill": "performance",
       "description": "inspire hope",
       "successEffect": "Population remains, no effect",
       "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     },
     {
       "skill": "religion",
       "description": "spiritual guidance",
       "successEffect": "Population remains, no effect",
       "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureExtra": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
     }
   ]
 }

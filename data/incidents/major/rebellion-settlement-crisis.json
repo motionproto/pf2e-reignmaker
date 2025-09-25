@@ -11,21 +11,21 @@
       "description": "address concerns",
       "successEffect": "Settlement stabilized, no effect",
       "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
     },
     {
       "skill": "society",
       "description": "emergency aid",
       "successEffect": "Settlement stabilized, no effect",
       "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
     },
     {
       "skill": "religion",
       "description": "provide hope",
       "successEffect": "Settlement stabilized, no effect",
       "failureEffect": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "criticalFailureExtra": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
+      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest"
     }
   ]
 }

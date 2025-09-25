@@ -11,28 +11,28 @@
       "description": "negotiate with rebels",
       "successEffect": "Rebellion dispersed",
       "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "intimidation",
       "description": "crush rebellion",
       "successEffect": "Rebellion dispersed",
       "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "society",
       "description": "address grievances",
       "successEffect": "Rebellion dispersed",
       "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     },
     {
       "skill": "religion",
       "description": "appeal to faith",
       "successEffect": "Rebellion dispersed",
       "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureExtra": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
     }
   ]
 }

@@ -11,28 +11,28 @@
       "description": "convince to stay",
       "successEffect": "Population stays, no effect",
       "failureEffect": "Lose 1 random worksite permanently",
-      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+      "criticalFailureEffect": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "society",
       "description": "address concerns",
       "successEffect": "Population stays, no effect",
       "failureEffect": "Lose 1 random worksite permanently",
-      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+      "criticalFailureEffect": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "religion",
       "description": "appeal to faith",
       "successEffect": "Population stays, no effect",
       "failureEffect": "Lose 1 random worksite permanently",
-      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+      "criticalFailureEffect": "Lose 1 random worksite permanently, +1 unrest"
     },
     {
       "skill": "nature",
       "description": "improve local conditions",
       "successEffect": "Population stays, no effect",
       "failureEffect": "Lose 1 random worksite permanently",
-      "criticalFailureExtra": "Lose 1 random worksite permanently, +1 unrest"
+      "criticalFailureEffect": "Lose 1 random worksite permanently, +1 unrest"
     }
   ]
 }
