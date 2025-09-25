@@ -48,6 +48,9 @@
 </div>
 
 <style lang="scss">
+   /* Import CSS variables to ensure they're available in this component */
+   @import '../../../styles/variables.css';
+   
    .content-selector-wrapper {
       display: flex;
       justify-content: space-between;
@@ -57,7 +60,7 @@
    
    .content-selector {
       display: flex;
-      gap: 5px;
+      gap: 1em;
       flex-wrap: wrap;
       flex: 1;
    }
@@ -81,10 +84,15 @@
       }
       
       &.active {
-         background: var(--color-primary, #5e0000);
+         background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
          color: white;
-         border-color: rgba(255, 255, 255, 0.3);
+         border-color: var(--color-primary-light);
          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+         
+         // Explicitly set white color for all child elements
+         i, span {
+            color: white;
+         }
       }
       
       i {

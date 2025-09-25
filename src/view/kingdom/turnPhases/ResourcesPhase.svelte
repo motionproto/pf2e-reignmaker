@@ -86,6 +86,21 @@
       {/each}
    </div>
    
+   <!-- Collect Resources Button (moved here for better visibility) -->
+   <div class="collect-button-container">
+      <button 
+         on:click={handleCollectResources} 
+         disabled={collectCompleted}
+         class="collect-button"
+      >
+         {#if collectCompleted}
+            <i class="fas fa-check"></i> Resources Collected
+         {:else}
+            <i class="fas fa-hand-holding-usd"></i> Collect Resources
+         {/if}
+      </button>
+   </div>
+   
    <!-- Phase Step -->
    <div class="phase-steps-container">
       
@@ -167,18 +182,6 @@
                {/if}
             </div>
          {/if}
-         
-         <button 
-            on:click={handleCollectResources} 
-            disabled={collectCompleted}
-            class="step-button"
-         >
-            {#if collectCompleted}
-               <i class="fas fa-check"></i> Resources Collected
-            {:else}
-               <i class="fas fa-hand-holding-usd"></i> Collect All Resources
-            {/if}
-         </button>
       </div>
       
    </div>
@@ -405,6 +408,46 @@
          i {
             font-size: 14px;
          }
+      }
+   }
+   
+   .collect-button-container {
+      display: flex;
+      justify-content: center;
+      padding: 0;
+   }
+   
+   .collect-button {
+      padding: 12px 24px;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+      
+      &:hover:not(:disabled) {
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
+         transform: translateY(-1px);
+         box-shadow: var(--shadow-md);
+      }
+      
+      &:disabled {
+         opacity: var(--opacity-disabled);
+         cursor: not-allowed;
+         background: var(--color-gray-700);
+      }
+      
+      i {
+         font-size: 1em;
       }
    }
    

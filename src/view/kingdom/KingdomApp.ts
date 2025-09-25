@@ -27,7 +27,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          minWidth: 720,
          minHeight: 480,
          
-         title: 'Kingdom Management',
+         title: 'ReignMaker',
 
          svelte: {
             class: KingdomAppShell,

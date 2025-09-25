@@ -85,9 +85,11 @@ export function getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
 
 export function advancePhase() {
   gameState.update(state => {
+    const oldPhase = state.currentPhase;
     const nextPhase = getNextPhase(state.currentPhase);
     
     if (nextPhase) {
+      console.log('[gameState] Phase advancing from', oldPhase, 'to', nextPhase);
       return {
         ...state,
         currentPhase: nextPhase,
@@ -95,6 +97,7 @@ export function advancePhase() {
       };
     } else {
       // End of turn - advance to next turn
+      console.log('[gameState] End of turn - advancing from turn', state.currentTurn, 'to turn', state.currentTurn + 1);
       return {
         ...state,
         currentTurn: state.currentTurn + 1,

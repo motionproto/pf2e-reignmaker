@@ -14,6 +14,7 @@
   ];
 
   $: currentPhase = $gameState.currentPhase;
+  $: currentTurn = $gameState.currentTurn;
   $: selectedPhase = $viewingPhase || currentPhase;
   
   // Initialize viewing phase on mount
@@ -28,6 +29,16 @@
   }
   
   $: currentPhaseIndex = getPhaseIndex(currentPhase);
+  
+  // Make phase completion status reactive - recalculates whenever currentPhaseIndex changes
+  $: phaseCompletions = phases.map((_, index) => index < currentPhaseIndex);
+  
+  // Debug logging to track phase changes
+  $: {
+    console.log('[PhaseBar] Current phase:', currentPhase, 'Index:', currentPhaseIndex);
+    console.log('[PhaseBar] Phase completions:', phaseCompletions);
+    console.log('[PhaseBar] Viewing phase:', selectedPhase);
+  }
 
   function handlePhaseClick(phase: TurnPhase) {
     // Update the viewing phase when user clicks
@@ -40,10 +51,6 @@
   
   function isPhaseSelected(phase: TurnPhase): boolean {
     return phase === selectedPhase;
-  }
-  
-  function isPhaseCompleted(phaseIndex: number): boolean {
-    return phaseIndex < currentPhaseIndex;
   }
   
   // Helper to build tooltip text
@@ -68,16 +75,15 @@
     {#each phases as phase, index (phase.id)}
       <!-- Phase connector line (before phase except for first) -->
       {#if index > 0}
-        <div class="phase-connector" class:completed={isPhaseCompleted(index)}></div>
+        <div class="phase-connector" class:completed={phaseCompletions[index]}></div>
       {/if}
       
       <!-- Phase button -->
-      {#key $viewingPhase}
       <button
         class="phase-item"
         class:active={phase.id === currentPhase}
         class:selected={phase.id === selectedPhase}
-        class:completed={isPhaseCompleted(index)}
+        class:completed={phaseCompletions[index]}
         on:click={() => handlePhaseClick(phase.id)}
         title={getTooltip(phase)}
       >
@@ -87,7 +93,6 @@
         {/if}
         <span class="phase-label">{phase.label}</span>
       </button>
-      {/key}
     {/each}
   </div>
 </div>
@@ -125,36 +130,35 @@
     align-items: center;
     justify-content: center;
     padding: 0.6rem 1rem;
-    background: rgba(206, 206, 206, 0.05);
+    background: var(--color-gray-600);
     border: 1px solid rgba(180, 170, 150, 0.3);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 100px;
     position: relative;
-    color: var(--color-text-dark-secondary, #7a7971);
+    color: var(--color-text-secondary);
     font-family: var(--base-font);
   }
 
   .phase-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background:  var(--color-gray-700);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-color: rgba(180, 170, 150, 0.5);
   }
 
   .phase-item.completed {
-    background: rgba(59, 59, 59, 0.1);
-    border-color: rgba(70, 70, 70, 0.3);
-    color: var(-text-secondary, #b5b3a4);
+    background: var(--color-gray-900);
+    border-color: var(--color-gray-700);
+    color: var(--text-disabled);
   }
 
   /* Active phase - the actual game state */
   .phase-item.active {
-    background: var(--color-primary, #5e0000);
+     background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
     color: #fff;
-    border-color: var(--color-primary-dark, #3e0000);
-    box-shadow: 0 4px 12px rgba(94, 0, 0, 0.4);
+    border-color: var(--color-primary-light);
   }
 
   /* Selected phase - what the user is viewing */
@@ -212,6 +216,22 @@
     font-weight: bold;
   }
 
+  .phase-item.completed .phase-label {
+    color: var(--text-disabled);
+  }
+
+  /* Selected phase should always have readable text */
+  .phase-item.selected .phase-label {
+    color: var(--text-primary);
+    opacity: 1;
+  }
+
+  /* When both active AND selected, keep white text */
+  .phase-item.active.selected .phase-label {
+    color: #fff;
+    font-weight: bold;
+  }
+
   .phase-label {
     font-size: 1rem;
     font-weight: 500;
@@ -221,6 +241,7 @@
     opacity: 0.9;
     position: relative;
     z-index: 2;
+    color: var(--text-secondary);
   }
 
   /* Animation for active phase when not selected */

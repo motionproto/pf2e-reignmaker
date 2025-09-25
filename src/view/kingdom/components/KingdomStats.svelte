@@ -387,7 +387,7 @@
    .fame-controls .fame-value {
       min-width: 30px;
       text-align: center;
-      color: var(--color-accent);
+      color: var(--text-primary);
    }
    
    .stat-adjust-button {
@@ -454,7 +454,7 @@
    .resource-header {
       font-size: 0.875rem;
       font-weight: 600;
-      color: var(--color-accent);
+      color: var(--text-primary);
       margin-bottom: 0.25rem;
       margin-top: 0;
       text-transform: uppercase;

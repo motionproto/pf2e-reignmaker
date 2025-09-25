@@ -17,16 +17,16 @@
   --color-gray-950: hsla(229, 6%, 6%, 1);
   
   /* Accent Colors */
-  --color-crimson: hsla(0, 56%, 34%, 1);
-  --color-crimson-light: hsla(0, 40%, 52%, 1);
-  --color-crimson-dark: hsla(0, 74%, 42%, 1);
+  --color-crimson: hsl(0, 64%, 35%);
+  --color-crimson-light: hsl(0, 69%, 49%);
+  --color-crimson-dark: hsla(0, 90%, 25%, 1);
   --color-burgundy: hsla(0, 100%, 18%, 1);
   --color-burgundy-dark: hsla(0, 100%, 11%, 1);
   --color-burgundy-darker: hsla(0, 75%, 15%, 1);
   
-  --color-gold: hsla(42, 89%, 38%, 1);
-  --color-gold-light: hsla(29, 48%, 64%, 1);
-  --color-gold-lighter: hsla(42, 35%, 73%, 1);
+  --color-gold: hsla(41, 100%, 40%, 1);
+  --color-gold-light: hsla(41, 85%, 80%, 1);
+  --color-gold-dark: hsla(42, 85%, 20%, 1);
   --color-gold-bright: hsla(51, 100%, 50%, 1);
   --color-amber: hsla(38, 91%, 50%, 1);
   --color-amber-light: hsla(44, 97%, 56%, 1);
@@ -48,7 +48,7 @@
   --color-orange-bg: hsla(46, 100%, 51%, 0.1);
   --color-orange-border: hsla(46, 100%, 51%, 1);
   
-  --color-red: hsla(4, 66%, 41%, 1);
+  --color-red: hsla(4, 66%, 58%, 1);
   --color-red-bg: hsla(4, 90%, 59%, 0.2);
   
   /* Brown/Tan Colors */
@@ -96,15 +96,17 @@
   --text-secondary: var(--color-gray-300);
   --text-tertiary: var(--color-gray-400);
   --text-disabled: var(--color-gray-600);
+  --text-inverted: var(--color-gray-900);  /* Dark text for light backgrounds */
   --text-accent: var(--color-amber);
   --text-muted: var(--color-gray-400);  /* Kept for backward compatibility */
   
   --color-primary: var(--color-crimson);
   --color-primary-hover: var(--color-crimson-light);
   --color-primary-dark: var(--color-crimson-dark);
+  --color-primary-light: var(--color-crimson-light);
   
-  --color-accent: var(--color-gold);
-  --color-accent-light: var(--color-gold-light);
+  --color-accent: var(--color-amber);
+  --color-accent-light: var(--color-amber);
   
   --color-success: var(--color-green-light);
   --color-danger: var(--color-crimson);
@@ -131,7 +133,7 @@
   --border-medium: hsla(0, 0%, 100%, 0.2);
   --border-strong: hsla(0, 0%, 100%, 0.3);
   --border-primary: var(--color-crimson);
-  --border-accent: var(--color-gold);
+  --border-accent: var(---color-amber);
   --border-accent-75: hsl(42, 90%,20%);
   
   /* Border Radius */
