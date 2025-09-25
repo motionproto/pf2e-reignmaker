@@ -3,6 +3,7 @@
    import SkillTag from './SkillTag.svelte';
    import PossibleOutcomes from './PossibleOutcomes.svelte';
    import type { PossibleOutcome } from './PossibleOutcomes.svelte';
+   import ResolutionDisplay from './ResolutionDisplay.svelte';
    import { 
       performKingdomActionRoll, 
       getKingdomActionDC,
@@ -31,6 +32,7 @@
    // Track which skill was used for this action
    let isRolling: boolean = false;
    let localUsedSkill: string = '';
+   let isRerolling: boolean = false;
    
    // Get the skill that was used - either from resolution or from local tracking
    $: usedSkill = resolution?.skillName || localUsedSkill || '';
@@ -83,8 +85,8 @@
          }
       }
       
-      if (resolved || isRolling) {
-         return; // Already resolved or currently rolling
+      if (resolved || isRolling || isRerolling) {
+         return; // Already resolved, currently rolling, or rerolling
       }
       
       isRolling = true;
@@ -221,15 +223,6 @@
    
    async function handleRerollWithFame() {
       if (currentFame > 0 && resolution) {
-         // Deduct fame
-         kingdomState.update(state => {
-            state.fame = currentFame - 1;
-            return state;
-         });
-         
-         // Reset the action first
-         dispatch('reset', { actionId: action.id });
-         
          // Get the character that was used (or current character)
          let actingCharacter = character || getCurrentUserCharacter();
          if (!actingCharacter && resolution.actorName) {
@@ -252,6 +245,23 @@
          // Use the same skill that was used before
          const skillToUse = usedSkill || localUsedSkill;
          if (skillToUse) {
+            // Deduct fame ONLY after we know we can proceed
+            kingdomState.update(state => {
+               state.fame = currentFame - 1;
+               return state;
+            });
+            
+            // Set rerolling flag to prevent dialog issues
+            isRerolling = true;
+            
+            // Reset the action to allow a new roll
+            // Note: This will briefly show the unresolved state, but the new roll will
+            // immediately resolve it again when the chat message is created
+            dispatch('reset', { actionId: action.id });
+            
+            // Small delay to ensure UI updates before triggering roll
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             // Trigger a new roll with the same skill
             try {
                const characterLevel = actingCharacter.level || 1;
@@ -272,6 +282,13 @@
                );
             } catch (error) {
                console.error("Error rerolling with fame:", error);
+               // Restore fame if the roll failed
+               kingdomState.update(state => {
+                  state.fame = currentFame;
+                  return state;
+               });
+            } finally {
+               isRerolling = false;
             }
          }
       }
@@ -315,79 +332,22 @@
          
          <!-- Resolution display if action is resolved -->
          {#if resolved && resolution}
-            <div class="resolution-display {resolution.outcome}">
-               <div class="resolution-header">
-                  <i class="fas fa-dice-d20"></i>
-                  <span>Action Resolved</span>
-               </div>
-               <div class="resolution-details">
-                  <div class="resolution-actor">
-                     {resolution.actorName} used {#if usedSkill}{usedSkill.charAt(0).toUpperCase() + usedSkill.slice(1)}{:else}a skill{/if}
-                  </div>
-                  <div class="resolution-outcome">
-                     {#if resolution.outcome === 'criticalSuccess'}
-                        <i class="fas fa-star"></i> Critical Success!
-                     {:else if resolution.outcome === 'success'}
-                        <i class="fas fa-check"></i> Success
-                     {:else if resolution.outcome === 'failure'}
-                        <i class="fas fa-times"></i> Failure
-                     {:else}
-                        <i class="fas fa-skull"></i> Critical Failure
-                     {/if}
-                  </div>
-                  <div class="resolution-effect">
-                     {#if resolution.outcome === 'criticalSuccess'}
-                        {formatOutcome(action.criticalSuccess)}
-                     {:else if resolution.outcome === 'success'}
-                        {formatOutcome(action.success)}
-                     {:else if resolution.outcome === 'failure'}
-                        {formatOutcome(action.failure)}
-                     {:else}
-                        {formatOutcome(action.criticalFailure)}
-                     {/if}
-                  </div>
-                  
-                  <!-- State changes display -->
-                  {#if resolution.stateChanges && Object.keys(resolution.stateChanges).length > 0}
-                     <div class="state-changes">
-                        <div class="state-changes-header">
-                           <i class="fas fa-exchange-alt"></i>
-                           State Changes:
-                        </div>
-                        <div class="state-changes-list">
-                           {#each Object.entries(resolution.stateChanges) as [key, change]}
-                              <div class="state-change-item">
-                                 <span class="change-label">{formatStateChangeLabel(key)}:</span>
-                                 <span class="change-value {getChangeClass(change, key)}">
-                                    {formatStateChangeValue(change)}
-                                 </span>
-                              </div>
-                           {/each}
-                        </div>
-                     </div>
-                  {/if}
-               </div>
-               
-               <!-- Action buttons for resolved state -->
-               <div class="resolution-actions">
-                  <button 
-                     class="btn-reroll"
-                     on:click={handleRerollWithFame}
-                     disabled={currentFame === 0}
-                  >
-                     <i class="fas fa-dice"></i>
-                     Reroll with Fame
-                     <span class="fame-count">({currentFame} left)</span>
-                  </button>
-                  <button 
-                     class="btn-ok"
-                     on:click={handleOk}
-                  >
-                     <i class="fas fa-check"></i>
-                     OK
-                  </button>
-               </div>
-            </div>
+            <ResolutionDisplay
+               outcome={resolution.outcome}
+               actorName={resolution.actorName}
+               skillName={usedSkill}
+               effect={resolution.outcome === 'criticalSuccess' ? formatOutcome(action.criticalSuccess) :
+                       resolution.outcome === 'success' ? formatOutcome(action.success) :
+                       resolution.outcome === 'failure' ? formatOutcome(action.failure) :
+                       formatOutcome(action.criticalFailure)}
+               stateChanges={resolution.stateChanges}
+               rerollEnabled={currentFame > 0}
+               rerollLabel="Reroll with Fame"
+               rerollCount={currentFame}
+               primaryButtonLabel="OK"
+               on:reroll={handleRerollWithFame}
+               on:primary={handleOk}
+            />
          {:else}
             <!-- Skills section - only show when not resolved -->
             <div class="skills-section">
@@ -734,141 +694,188 @@
    }
    
    .resolution-display {
-      margin: 16px 0;
-      padding: 16px;
+      margin: 20px 0;
+      padding: 0;
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-strong);
-      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid var(--border-strong);
+      background: linear-gradient(135deg, 
+         rgba(0, 0, 0, 0.4),
+         rgba(0, 0, 0, 0.2));
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+      
+      &::before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         height: 4px;
+         background: linear-gradient(90deg, 
+            transparent,
+            currentColor,
+            transparent);
+         opacity: 0.6;
+      }
       
       &.criticalSuccess {
-         background: rgba(34, 197, 94, 0.1);
-         border-color: rgba(34, 197, 94, 0.4);
+         background: linear-gradient(135deg,
+            rgba(34, 197, 94, 0.15),
+            rgba(34, 197, 94, 0.05));
+         border-color: rgba(34, 197, 94, 0.5);
+         
+         &::before {
+            color: var(--color-green);
+         }
       }
       
       &.success {
-         background: rgba(34, 197, 94, 0.05);
-         border-color: rgba(34, 197, 94, 0.3);
+         background: linear-gradient(135deg,
+            rgba(34, 197, 94, 0.1),
+            rgba(34, 197, 94, 0.02));
+         border-color: rgba(34, 197, 94, 0.35);
+         
+         &::before {
+            color: var(--color-green-light);
+         }
       }
       
       &.failure {
-         background: rgba(249, 115, 22, 0.05);
-         border-color: rgba(249, 115, 22, 0.3);
+         background: linear-gradient(135deg,
+            rgba(249, 115, 22, 0.1),
+            rgba(249, 115, 22, 0.02));
+         border-color: rgba(249, 115, 22, 0.35);
+         
+         &::before {
+            color: var(--color-orange);
+         }
       }
       
       &.criticalFailure {
-         background: rgba(239, 68, 68, 0.1);
-         border-color: rgba(239, 68, 68, 0.4);
+         background: linear-gradient(135deg,
+            rgba(239, 68, 68, 0.15),
+            rgba(239, 68, 68, 0.05));
+         border-color: rgba(239, 68, 68, 0.5);
+         
+         &::before {
+            color: var(--color-red);
+         }
       }
       
       .resolution-header {
          display: flex;
          align-items: center;
-         gap: 8px;
-         margin-bottom: 12px;
-         font-weight: 600;
-         color: var(--color-amber);
+         justify-content: space-between;
+         padding: 14px 18px;
+         background: rgba(0, 0, 0, 0.3);
+         border-bottom: 1px solid var(--border-subtle);
          
-         i {
-            font-size: 18px;
+         .resolution-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: var(--type-heading-3-size);
+            font-weight: var(--type-heading-3-weight);
+            
+            i {
+               font-size: 20px;
+            }
+            
+            span {
+               text-transform: capitalize;
+            }
          }
+         
+         .resolution-header-right {
+            color: var(--text-secondary);
+            font-size: var(--type-body-size);
+            font-weight: normal;
+         }
+      }
+      
+      &.criticalSuccess .resolution-header .resolution-header-left {
+         color: var(--color-green);
+      }
+      
+      &.success .resolution-header .resolution-header-left {
+         color: var(--color-green-light);
+      }
+      
+      &.failure .resolution-header .resolution-header-left {
+         color: var(--color-orange);
+      }
+      
+      &.criticalFailure .resolution-header .resolution-header-left {
+         color: var(--color-red);
       }
       
       .resolution-details {
+         padding: 18px;
          display: flex;
          flex-direction: column;
-         gap: 8px;
-         margin-bottom: 16px;
-      }
-      
-      .resolution-actor {
-         color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
-      }
-      
-      .resolution-outcome {
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
-         line-height: var(--type-heading-3-line);
-         display: flex;
-         align-items: center;
-         gap: 6px;
-         
-         i {
-            font-size: 16px;
-         }
+         gap: 14px;
       }
       
       .resolution-effect {
-         color: var(--text-secondary);
-         line-height: 1.5;
-         margin-top: 4px;
-         padding-bottom: 12px;
-         border-bottom: 1px solid var(--border-subtle);
+         color: var(--text-primary);
+         font-size: var(--type-body-size);
+         line-height: 1.6;
+         padding: 14px 16px;
+         background: rgba(255, 255, 255, 0.03);
+         border-radius: var(--radius-sm);
+         border: 1px solid var(--border-subtle);
       }
       
       .state-changes {
-         margin-top: 12px;
-         padding: 12px;
-         background: linear-gradient(135deg, 
-            rgba(251, 191, 36, 0.05),
-            rgba(0, 0, 0, 0.2));
-         border-radius: var(--radius-sm);
-         border: 1px solid rgba(251, 191, 36, 0.2);
-         animation: fadeInUp 0.3s ease-out;
-      }
-      
-      .state-changes-header {
-         display: flex;
-         align-items: center;
-         gap: 6px;
-         font-size: var(--type-body-size);
-         font-weight: var(--type-weight-semibold);
-         color: var(--text-primary);
-         margin-bottom: 8px;
-         padding-bottom: 6px;
-         border-bottom: 1px solid var(--border-subtle);
-         
-         i {
-            font-size: 14px;
-            color: var(--color-amber);
-         }
+         margin-top: 8px;
       }
       
       .state-changes-list {
-         display: flex;
-         flex-direction: column;
-         gap: 6px;
+         display: grid;
+         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+         gap: 8px;
       }
       
       .state-change-item {
          display: flex;
          align-items: center;
          justify-content: space-between;
-         padding: 4px 8px;
-         background: rgba(0, 0, 0, 0.1);
-         border-radius: var(--radius-sm, 4px);
+         padding: 8px 12px;
+         background: rgba(0, 0, 0, 0.15);
+         border: 1px solid var(--border-subtle);
+         border-radius: var(--radius-sm);
          font-size: var(--type-body-size);
          
          .change-label {
             color: var(--text-secondary);
             font-weight: var(--type-weight-medium);
+            font-size: calc(var(--type-body-size) * 0.95);
          }
          
          .change-value {
-            font-weight: var(--type-weight-semibold);
+            font-weight: var(--type-weight-bold);
             font-family: var(--font-code, monospace);
+            font-size: calc(var(--type-body-size) * 1.1);
+            padding: 2px 6px;
+            border-radius: 3px;
             
             &.positive {
                color: var(--color-green);
+               background: rgba(34, 197, 94, 0.1);
+               border: 1px solid rgba(34, 197, 94, 0.2);
             }
             
             &.negative {
                color: var(--color-red);
+               background: rgba(239, 68, 68, 0.1);
+               border: 1px solid rgba(239, 68, 68, 0.2);
             }
             
             &.neutral {
                color: var(--text-primary);
+               background: rgba(255, 255, 255, 0.05);
+               border: 1px solid var(--border-subtle);
             }
          }
       }
@@ -876,13 +883,15 @@
       .resolution-actions {
          display: flex;
          gap: 12px;
-         margin-top: 16px;
+         padding: 20px;
+         background: rgba(0, 0, 0, 0.2);
+         border-top: 1px solid var(--border-subtle);
          
          button {
             flex: 1;
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            border: 1px solid;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            border: 2px solid;
             font-size: var(--type-button-size);
             font-weight: var(--type-button-weight);
             line-height: var(--type-button-line);
@@ -891,66 +900,88 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             transition: all var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+            
+            &::before {
+               content: '';
+               position: absolute;
+               top: 0;
+               left: -100%;
+               width: 100%;
+               height: 100%;
+               background: linear-gradient(90deg,
+                  transparent,
+                  rgba(255, 255, 255, 0.1),
+                  transparent);
+               transition: left 0.5s ease;
+            }
+            
+            &:hover::before {
+               left: 100%;
+            }
             
             i {
-               font-size: 14px;
+               font-size: 16px;
             }
          }
          
          .btn-reroll {
-            background: rgba(251, 191, 36, 0.1);
-            border-color: var(--color-amber);
-            color: var(--color-amber);
+            background: rgba(100, 100, 100, 0.1);
+            border-color: var(--border-medium);
+            color: var(--text-secondary);
             
             .fame-count {
                font-size: var(--type-small-size);
-               opacity: 0.8;
+               opacity: 0.9;
+               padding: 2px 6px;
+               background: rgba(0, 0, 0, 0.3);
+               border-radius: var(--radius-sm);
             }
             
             &:hover:not(:disabled) {
-               background: rgba(251, 191, 36, 0.2);
-               box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+               background: rgba(100, 100, 100, 0.15);
+               border-color: var(--border-strong);
+               transform: translateY(-1px);
+            }
+            
+            &:active:not(:disabled) {
+               transform: translateY(0);
             }
             
             &:disabled {
-               opacity: 0.5;
+               opacity: 0.4;
                cursor: not-allowed;
-               background: rgba(100, 100, 100, 0.1);
+               background: rgba(100, 100, 100, 0.05);
                border-color: var(--border-subtle);
                color: var(--text-tertiary);
+               
+               &::before {
+                  display: none;
+               }
             }
          }
          
          .btn-ok {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: var(--color-green);
-            color: var(--color-green);
+            background: rgba(100, 100, 100, 0.1);
+            border-color: var(--border-medium);
+            color: var(--text-secondary);
             
             &:hover {
-               background: rgba(34, 197, 94, 0.2);
-               box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+               background: rgba(100, 100, 100, 0.15);
+               border-color: var(--border-strong);
+               transform: translateY(-1px);
+            }
+            
+            &:active {
+               transform: translateY(0);
             }
          }
       }
    }
    
-   .criticalSuccess .resolution-outcome {
-      color: var(--color-green);
-   }
-   
-   .success .resolution-outcome {
-      color: var(--color-green-light);
-   }
-   
-   .failure .resolution-outcome {
-      color: var(--color-orange);
-   }
-   
-   .criticalFailure .resolution-outcome {
-      color: var(--color-red);
-   }
    
    .skills-section {
       margin-top: 20px;

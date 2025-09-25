@@ -26,19 +26,22 @@
    
    async function handleClick() {
       if (!disabled && !isLoading) {
-         // Always dispatch execute first for backward compatibility
+         // For actions, only dispatch the execute event - let the parent handle the roll
+         // This prevents double-rolling
+         if (checkType === 'action') {
+            dispatch('execute', { skill });
+            return;
+         }
+         
+         // For other types (incident, event), handle the roll directly
          dispatch('execute', { skill });
          
-         // If this is configured for direct skill checks (any type including actions)
+         // If this is configured for direct skill checks (non-action types)
          if (checkType && checkName && checkId) {
-            // Only manage internal loading state for non-action checks
-            // For actions, the parent manages loading through the loading prop
-            if (checkType !== 'action') {
-               internalLoading = true;
-            }
+            internalLoading = true;
             
             try {
-               // Perform the skill check directly for ALL types
+               // Perform the skill check directly for non-action types
                const result = await performKingdomSkillCheck(
                   skill,
                   checkType,
@@ -58,9 +61,7 @@
                console.error('Failed to perform skill check:', error);
                dispatch('rollError', { skill, error });
             } finally {
-               if (checkType !== 'action') {
-                  internalLoading = false;
-               }
+               internalLoading = false;
             }
          }
       }
