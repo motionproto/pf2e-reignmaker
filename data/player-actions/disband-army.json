@@ -2,6 +2,7 @@
   "id": "disband-army",
   "name": "Disband Army",
   "category": "military-operations",
+  "brief": "Decommission troops and return soldiers home",
   "description": "Release military units from service, returning soldiers to civilian life",
   "skills": [
     {

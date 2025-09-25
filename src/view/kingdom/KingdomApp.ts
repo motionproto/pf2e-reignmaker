@@ -19,13 +19,13 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
    static get defaultOptions(): KingdomApp.Options
    {
       return deepMerge<SvelteApp.Options, KingdomApp.Options>(super.defaultOptions, {
-         id: 'pf2e-kingdom-lite',
+         id: 'pf2e-reignmaker',
          resizable: true,
          minimizable: true,
-         width: 850,
-         height: 600,
-         minWidth: 700,
-         minHeight: 500,
+         width: 1280,
+         height: 720,
+         minWidth: 720,
+         minHeight: 480,
          
          title: 'Kingdom Management',
 
@@ -61,16 +61,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          }
       });
 
-      // Add settings button
-      buttons.unshift({
-         class: 'settings',
-         icon: 'fas fa-cog',
-         title: 'Kingdom Settings',
-         onPress: (): void => {
-            // Trigger settings panel in the app shell
-            this.svelte.appShell?.$set({ showSettings: true });
-         }
-      });
+      // Settings button removed - now handled within the app content
 
       return buttons;
    }

@@ -1,11 +1,17 @@
 // External definitions for accessing the PF2e Kingmaker module's state
 
+import { kingdomState, updateKingdomStat, addSettlement } from '../stores/kingdom';
+import { Hex, Worksite, WorksiteType } from '../models/Hex';
+import type { Settlement, SettlementTier } from '../models/KingdomState';
+import { get } from 'svelte/store';
+import { territoryService } from '../services/territory';
+
 /**
  * External definitions for accessing the PF2e Kingmaker module's state
  */
 
 export interface HexFeature {
-    type: string | null; // e.g., "farmland", "refuge", "landmark"
+    type: string | null; // e.g., "farmland", "refuge", "landmark", "village", "town", "city", "metropolis"
 }
 
 export interface HexState {
@@ -28,7 +34,8 @@ export interface KingmakerModule {
  * Access to the global kingmaker module instance
  * This will be available when the PF2e Kingmaker module is installed
  */
-declare const kingmaker: KingmakerModule | null;
+// @ts-ignore
+declare const game: any;
 
 /**
  * Data class representing parsed realm/kingdom data
@@ -104,7 +111,8 @@ export class WorkSite {
  * Check if the Kingmaker module is installed and available
  */
 export function isKingmakerInstalled(): boolean {
-    return typeof (window as any).kingmaker !== 'undefined' && (window as any).kingmaker !== null;
+    // @ts-ignore - Foundry global
+    return typeof game !== 'undefined' && game?.modules?.get('pf2e-kingmaker')?.active;
 }
 
 /**
@@ -113,8 +121,12 @@ export function isKingmakerInstalled(): boolean {
 export function getKingmakerRealmData(): RealmData | null {
     if (!isKingmakerInstalled()) return null;
     
-    const km = (window as any).kingmaker as KingmakerModule;
-    if (!km) return null;
+    // @ts-ignore - Kingmaker global
+    const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker) as KingmakerModule;
+    if (!km?.state?.hexes) {
+        console.warn("Kingmaker module state not available");
+        return null;
+    }
     
     try {
         const hexes = km.state.hexes;
@@ -289,4 +301,175 @@ export function getRealmSummary(): string {
     }
     
     return lines.join("\n");
+}
+
+/**
+ * Convert a terrain string from Kingmaker format to our format
+ */
+function normalizeTerrainName(terrain: string | null): string {
+    if (!terrain) return 'Plains';
+    
+    // Convert to title case and handle special cases
+    const normalized = terrain.toLowerCase();
+    switch (normalized) {
+        case 'plains': return 'Plains';
+        case 'forest': return 'Forest';
+        case 'hills': return 'Hills';
+        case 'mountains': return 'Mountains';
+        case 'swamp': return 'Swamp';
+        case 'wetlands': return 'Swamp';
+        case 'desert': return 'Desert';
+        case 'lake': return 'Plains'; // Lakes treated as plains for worksite purposes
+        default: return 'Plains';
+    }
+}
+
+/**
+ * Convert a camp type to worksite type
+ */
+function campToWorksiteType(camp: string | null): WorksiteType | null {
+    if (!camp) return null;
+    
+    switch (camp.toLowerCase()) {
+        case 'lumber': return WorksiteType.LOGGING_CAMP;
+        case 'mine': return WorksiteType.MINE;
+        case 'quarry': return WorksiteType.QUARRY;
+        default: return null;
+    }
+}
+
+/**
+ * Convert settlement tier from string
+ */
+function getSettlementTier(type: string): SettlementTier | null {
+    switch (type.toLowerCase()) {
+        case 'village': return 'Village' as SettlementTier;
+        case 'town': return 'Town' as SettlementTier;
+        case 'city': return 'City' as SettlementTier;
+        case 'metropolis': return 'Metropolis' as SettlementTier;
+        default: return null;
+    }
+}
+
+/**
+ * Sync Kingmaker module data to the Kingdom State store
+ * This now delegates to the Territory Service
+ */
+export function syncKingmakerToKingdomState(): boolean {
+    const result = territoryService.syncFromKingmaker();
+    
+    if (result.success) {
+        console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements from Kingmaker module`);
+    } else {
+        console.warn("Failed to sync Kingmaker data:", result.error);
+    }
+    
+    return result.success;
+}
+
+/**
+ * Start automatic syncing of Kingmaker data using Foundry hooks
+ * This uses event-driven updates instead of polling for better performance
+ */
+export function startKingmakerSync(): () => void {
+    // Do initial sync
+    syncKingmakerToKingdomState();
+    
+    // Define hook handlers
+    const syncHandler = () => {
+        console.log("Kingmaker state change detected, syncing...");
+        syncKingmakerToKingdomState();
+    };
+    
+    const updateActorHandler = (actor: any, changes: any, options: any, userId: string) => {
+        // Check if this is a kingdom-related update
+        if (actor.type === 'party' || changes.system?.kingdom) {
+            console.log("Kingdom actor updated, syncing...");
+            syncKingmakerToKingdomState();
+        }
+    };
+    
+    const renderHandler = (app: any, html: any, data: any) => {
+        // Sync when kingdom-related apps are rendered
+        if (app.constructor.name.includes('Kingdom') || app.id?.includes('kingdom')) {
+            syncKingmakerToKingdomState();
+        }
+    };
+    
+    // Listen to various Foundry hooks that might indicate kingdom state changes
+    // @ts-ignore - Foundry global
+    if (typeof Hooks !== 'undefined') {
+        // Hook into general updates
+        Hooks.on('updateActor', updateActorHandler);
+        Hooks.on('updateScene', syncHandler);
+        Hooks.on('canvasReady', syncHandler);
+        
+        // Hook into kingdom-specific events if they exist
+        Hooks.on('pf2e.kingmaker.hexClaimed', syncHandler);
+        Hooks.on('pf2e.kingmaker.hexUpdated', syncHandler);
+        Hooks.on('pf2e.kingmaker.settlementBuilt', syncHandler);
+        Hooks.on('pf2e.kingmaker.worksiteBuilt', syncHandler);
+        Hooks.on('pf2e.kingmaker.stateChanged', syncHandler);
+        
+        // Hook into UI updates
+        Hooks.on('renderKingdomSheet', renderHandler);
+        Hooks.on('renderKingdomHUD', renderHandler);
+        
+        console.log("Kingmaker sync hooks registered");
+    }
+    
+    // Also set up a fallback periodic sync (less frequent)
+    // This ensures we catch any changes that don't trigger hooks
+    const intervalId = setInterval(() => {
+        syncKingmakerToKingdomState();
+    }, 30000); // 30 seconds instead of 5
+    
+    // Return cleanup function
+    return () => {
+        // Remove all hook listeners
+        // @ts-ignore - Foundry global
+        if (typeof Hooks !== 'undefined') {
+            Hooks.off('updateActor', updateActorHandler);
+            Hooks.off('updateScene', syncHandler);
+            Hooks.off('canvasReady', syncHandler);
+            Hooks.off('pf2e.kingmaker.hexClaimed', syncHandler);
+            Hooks.off('pf2e.kingmaker.hexUpdated', syncHandler);
+            Hooks.off('pf2e.kingmaker.settlementBuilt', syncHandler);
+            Hooks.off('pf2e.kingmaker.worksiteBuilt', syncHandler);
+            Hooks.off('pf2e.kingmaker.stateChanged', syncHandler);
+            Hooks.off('renderKingdomSheet', renderHandler);
+            Hooks.off('renderKingdomHUD', renderHandler);
+            
+            console.log("Kingmaker sync hooks removed");
+        }
+        
+        // Clear the fallback interval
+        clearInterval(intervalId);
+    };
+}
+
+/**
+ * Initialize Kingmaker sync when Foundry is ready
+ * This should be called from the module's ready hook
+ */
+export function initializeKingmakerSync(): void {
+    console.log('Initializing Kingmaker sync...');
+    
+    // Check if Kingmaker is installed before starting sync
+    if (isKingmakerInstalled()) {
+        startKingmakerSync();
+        console.log('Kingmaker sync started');
+    } else {
+        console.log('Kingmaker module not detected, sync not started');
+        
+        // Set up a listener to start sync if Kingmaker gets loaded later
+        // @ts-ignore - Foundry global
+        if (typeof Hooks !== 'undefined') {
+            Hooks.on('setup', () => {
+                if (isKingmakerInstalled()) {
+                    startKingmakerSync();
+                }
+            });
+        }
+    }
 }

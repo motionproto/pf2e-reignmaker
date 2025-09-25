@@ -1,10 +1,13 @@
 <script lang="ts">
-   import { getContext }         from 'svelte';
+   import { getContext, onMount } from 'svelte';
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
    import { kingdomState, updateKingdomStat }     from '../../stores/kingdom';
    import { uiState, setSelectedTab }             from '../../stores/ui';
+   
+   // Import territory service for syncing
+   import { territoryService }                    from '../../services/territory';
    
    // Components
    import ContentSelector from './components/ContentSelector.svelte';
@@ -12,6 +15,7 @@
    
    // Tab components
    import TurnTab         from './tabs/TurnTab.svelte';
+   import TerritoryTab    from './tabs/TerritoryTab.svelte';
    import SettlementsTab  from './tabs/SettlementsTab.svelte';
    import FactionsTab     from './tabs/FactionsTab.svelte';
    import ModifiersTab    from './tabs/ModifiersTab.svelte';
@@ -30,15 +34,61 @@
     */
    export let refreshTrigger: number = 0;
 
-// Settings view state is managed internally, removed unused export
-
    // Get external context
    const { actorId, application } = getContext<KingdomApp.External>('#external');
+   
+   // Perform initial sync when the app opens
+   onMount(() => {
+      console.log('Kingdom UI opened - performing initial sync...');
+      
+      // Sync territory data from Kingmaker if available
+      if (territoryService.isKingmakerAvailable()) {
+         const result = territoryService.syncFromKingmaker();
+         console.log('Initial Kingmaker sync result:', result);
+         
+         if (result.success) {
+            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // Only show notification if there's actual data
+            if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
+               // @ts-ignore
+               ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+            }
+         } else if (result.error) {
+            console.error('Failed to sync from Kingmaker:', result.error);
+            // Don't show error notification on initial load unless there's a real error
+            // (not just "module not available")
+            if (!result.error.includes('not available')) {
+               // @ts-ignore
+               ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+            }
+         }
+      } else {
+         console.log('Kingmaker module not available - running without territory sync');
+      }
+   });
 
    // Reactive statement for refresh
    $: if (refreshTrigger) {
       console.log('Refreshing kingdom data...');
-      // Trigger data refresh logic here
+      
+      // Sync territory data from Kingmaker if available
+      if (territoryService.isKingmakerAvailable()) {
+         const result = territoryService.syncFromKingmaker();
+         console.log('Kingmaker sync result:', result);
+         
+         if (result.success) {
+            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // Show success notification
+            // @ts-ignore
+            ui.notifications?.info(`Territory synced: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+         } else {
+            console.error('Failed to sync from Kingmaker:', result.error);
+            // @ts-ignore
+            ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+         }
+      } else {
+         console.log('Kingmaker module not available for sync');
+      }
    }
 
    // Settings view state
@@ -61,9 +111,9 @@
 
 <!-- ApplicationShell provides the popOut / application shell frame, header bar, content areas -->
 <ApplicationShell bind:elementRoot>
-   <main class="kingdom-container" style="display: flex; flex-direction: column; height: 100%;">
+   <main class="kingdom-container">
       <!-- Kingdom Header with Tab Selection -->
-      <div class="kingdom-header" style="background: rgba(35, 34, 30, 0.5); padding: 8px;">
+      <div class="kingdom-header">
          <ContentSelector 
             selectedTab={showSettingsView ? 'settings' : $uiState.selectedTab} 
             on:tabChange={(e) => handleTabChange(e.detail)}
@@ -72,18 +122,20 @@
       </div>
       
       <!-- Main Content Area -->
-      <div class="kingdom-body" style="display: flex; flex: 1; min-height: 0;">
-         <!-- Left Sidebar: Kingdom Stats - Fixed 320px width -->
-         <div class="kingdom-sidebar" style="width: 320px; background: rgba(35, 34, 30, 0.5); overflow-y: auto;">
+      <div class="kingdom-body">
+         <!-- Left Sidebar: Kingdom Stats -->
+         <div class="kingdom-sidebar">
             <KingdomStats />
          </div>
          
          <!-- Main Content Area with Tab Content -->
-         <div class="kingdom-main" style="flex: 1; background: rgba(35, 34, 30, 0.5); padding: 12px; overflow-y: auto;">
+         <div class="kingdom-main">
             {#if showSettingsView}
                <SettingsTab />
             {:else if $uiState.selectedTab === 'turn'}
                <TurnTab />
+            {:else if $uiState.selectedTab === 'territory'}
+               <TerritoryTab />
             {:else if $uiState.selectedTab === 'settlements'}
                <SettlementsTab />
             {:else if $uiState.selectedTab === 'factions'}
@@ -96,19 +148,117 @@
          </div>
       </div>
 
-      <!-- Error/Success Messages using DaisyUI alerts -->
+      <!-- Error/Success Messages -->
       {#if $uiState.errorMessage}
-         <div class="tw-alert tw-alert-error tw-fixed tw-bottom-5 tw-right-5 tw-w-auto tw-max-w-md tw-shadow-lg">
+         <div class="message error">
             <i class="fas fa-exclamation-triangle"></i>
-            <span>{$uiState.errorMessage}</span>
+            {$uiState.errorMessage}
          </div>
       {/if}
       
       {#if $uiState.successMessage}
-         <div class="tw-alert tw-alert-success tw-fixed tw-bottom-5 tw-right-5 tw-w-auto tw-max-w-md tw-shadow-lg">
+         <div class="message success">
             <i class="fas fa-check-circle"></i>
-            <span>{$uiState.successMessage}</span>
+            {$uiState.successMessage}
          </div>
       {/if}
    </main>
 </ApplicationShell>
+
+<style>
+   /* Import our CSS variables for consistent theming */
+   @import '../../styles/variables.css';
+   @import '../../styles/typography.css';
+   
+   /* Standard Svelte component styling using CSS variables */
+   .kingdom-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 0.5rem;
+      padding: 0rem;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+   }
+
+   .kingdom-header {
+      flex: 0 0 auto;
+      padding: 0.5rem;
+      background: var(--bg-elevated);
+      border-radius: 0.375rem;
+      color: var(--text-primary);
+   }
+
+   .kingdom-body {
+      flex: 1;
+      display: flex;
+      gap: 0.5rem;
+      min-height: 0; /* Important for scrolling */
+   }
+
+   .kingdom-sidebar {
+      flex: 0 0 250px;
+      background: var(--bg-surface);
+      border-radius: 0.375rem;
+      overflow-y: auto;
+   }
+
+   .kingdom-main {
+      flex: 1;
+      background: var(--bg-surface);
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      overflow-y: auto;
+   }
+
+   .message {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.3s ease-out;
+      z-index: 1000;
+   }
+
+   .message.error {
+      background: var(--color-danger);
+      opacity: 0.9;
+      color: white;
+   }
+
+   .message.success {
+      background: var(--color-success);
+      opacity: 0.9;
+      color: white;
+   }
+
+   .message i {
+      font-size: 1.2em;
+   }
+
+   @keyframes slideIn {
+      from {
+         transform: translateX(100%);
+         opacity: 0;
+      }
+      to {
+         transform: translateX(0);
+         opacity: 1;
+      }
+   }
+   
+   /* Override Foundry's window styles for our app specifically */
+   :global(.pf2e-reignmaker .window-content) {
+      background: var(--bg-base) !important;
+      color: var(--text-primary) !important;
+
+   }
+   
+   :global(.pf2e-reignmaker .window-header) {
+      background: var(--gradient-header) !important;
+   }
+</style>

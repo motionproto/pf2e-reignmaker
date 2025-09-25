@@ -2,6 +2,7 @@
   "id": "train-army",
   "name": "Train Army",
   "category": "military-operations",
+  "brief": "Improve unit levels up to party level",
   "description": "Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods",
   "skills": [
     {

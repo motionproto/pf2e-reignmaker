@@ -2,6 +2,7 @@
   "id": "build-structure",
   "name": "Build Structure",
   "category": "urban-planning",
+  "brief": "Add markets, temples, barracks, and other structures",
   "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities",
   "skills": [
     {

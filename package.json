@@ -1,5 +1,5 @@
 {
-  "name": "pf2e-kingdom-lite",
+  "name": "pf2e-reignmaker",
   "version": "1.0.0",
   "description": "Kingdom Building management system for Pathfinder 2e",
   "license": "MIT",
@@ -26,29 +26,37 @@
     "daisyui": "^5.1.13",
     "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
     "postcss": "^8.5.6",
+    "postcss-load-config": "^6.0.1",
     "svelte-check": "^4.0.9",
     "svelte-preprocess": "^6.0.3",
-    "tailwindcss": "^4.1.13",
     "tslib": "^2.8.1",
     "typescript": "^5.9.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vite-plugin-static-copy": "^3.1.2"
   },
   "browserslist": [
     ">5%",
     "not IE 11"
   ],
   "scripts": {
-    "build": "vite build",
+    "build": "python3 scripts/combine-data.py && vite build",
     "dev": "vite",
+    "dev:setup": "node scripts/setup-dev.js",
+    "dev:start": "npm run dev:setup && npm run dev",
+    "dev:proxy": "vite",
+    "dev:standalone": "vite --config vite.config.dev.ts",
     "clean": "rm -rf dist",
-    "deploy": "node scripts/deploy.js"
+    "deploy": "node scripts/deploy.js",
+    "deploy:dev": "npm run dev:setup",
+    "preview": "vite preview",
+    "proxy": "npm run dev"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/motionproto/pf2e-kingdom-lite.git"
+    "url": "git+https://github.com/motionproto/pf2e-reignmaker.git"
   },
   "bugs": {
-    "url": "https://github.com/motionproto/pf2e-kingdom-lite/issues"
+    "url": "https://github.com/motionproto/pf2e-reignmaker/issues"
   },
-  "homepage": "https://github.com/motionproto/pf2e-kingdom-lite#readme"
+  "homepage": "https://github.com/motionproto/pf2e-reignmaker#readme"
 }

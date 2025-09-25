@@ -42,62 +42,83 @@ export class Worksite {
    * Each hex can hold ONE worksite, and terrain determines what it can produce
    */
   getBaseProduction(terrain: string): Map<string, number> {
+    // Normalize terrain for case-insensitive comparison
+    const normalizedTerrain = terrain.toLowerCase();
+    
     switch (this.type) {
       case WorksiteType.FARMSTEAD:
-        switch (terrain) {
-          case 'Plains':
-            return new Map([['food', 2]]);
-          case 'Hills':
-            return new Map([['food', 1]]); // Alternative option for Hills
+        // Farmsteads (farmland features) produce food based on terrain
+        // According to Kingdom Rules, each terrain has specific yields
+        switch (normalizedTerrain) {
+          case 'plains':
+            return new Map([['food', 2]]); // Plains farmstead produces 2 food
+          case 'hills':
+            return new Map([['food', 1]]); // Hills farmstead produces 1 food
+          case 'forest':
+            return new Map([['food', 2]]); // Assuming cleared forest is similar to plains
+          case 'swamp':
+          case 'wetlands':
+            return new Map([['food', 1]]); // Hunting/fishing camp produces 1 food
+          case 'desert':
+            return new Map([['food', 1]]); // Oasis farm produces 1 food
           default:
-            return new Map();
+            // Any terrain with farmland should produce something
+            // This ensures farmland features always work
+            console.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
+            return new Map([['food', 1]]);
         }
         
       case WorksiteType.LOGGING_CAMP:
-        switch (terrain) {
-          case 'Forest':
+        switch (normalizedTerrain) {
+          case 'forest':
             return new Map([['lumber', 2]]);
           default:
             return new Map();
         }
         
       case WorksiteType.QUARRY:
-        switch (terrain) {
-          case 'Hills':
+        switch (normalizedTerrain) {
+          case 'hills':
             return new Map([['stone', 1]]);
-          case 'Mountains':
+          case 'mountains':
             return new Map([['stone', 1]]); // Alternative option for Mountains
           default:
             return new Map();
         }
         
       case WorksiteType.MINE:
-        switch (terrain) {
-          case 'Mountains':
+        switch (normalizedTerrain) {
+          case 'mountains':
+            return new Map([['ore', 1]]);
+          case 'swamp':
+          case 'wetlands':
+            // Bog Mine is a type of mine that works in swamps
             return new Map([['ore', 1]]);
           default:
             return new Map();
         }
         
       case WorksiteType.BOG_MINE:
-        switch (terrain) {
-          case 'Swamp':
+        switch (normalizedTerrain) {
+          case 'swamp':
+          case 'wetlands':
             return new Map([['ore', 1]]); // Alternative option for Swamp
           default:
             return new Map();
         }
         
       case WorksiteType.HUNTING_FISHING_CAMP:
-        switch (terrain) {
-          case 'Swamp':
+        switch (normalizedTerrain) {
+          case 'swamp':
+          case 'wetlands':
             return new Map([['food', 1]]);
           default:
             return new Map();
         }
         
       case WorksiteType.OASIS_FARM:
-        switch (terrain) {
-          case 'Desert':
+        switch (normalizedTerrain) {
+          case 'desert':
             return new Map([['food', 1]]); // Special case: only if Oasis trait instanceof present
           default:
             return new Map();
@@ -165,23 +186,28 @@ export class Hex {
  * Get valid worksite types for a specific terrain
  */
 export function getValidWorksitesForTerrain(terrain: string, hasOasisTrait: boolean = false): WorksiteType[] {
-  switch (terrain) {
-    case 'Plains':
+  // Normalize terrain for case-insensitive comparison
+  const normalizedTerrain = terrain.toLowerCase();
+  
+  switch (normalizedTerrain) {
+    case 'plains':
       return [WorksiteType.FARMSTEAD];
       
-    case 'Forest':
+    case 'forest':
       return [WorksiteType.LOGGING_CAMP];
       
-    case 'Hills':
+    case 'hills':
       return [WorksiteType.QUARRY, WorksiteType.FARMSTEAD];
       
-    case 'Mountains':
+    case 'mountains':
       return [WorksiteType.MINE, WorksiteType.QUARRY];
       
-    case 'Swamp':
-      return [WorksiteType.HUNTING_FISHING_CAMP, WorksiteType.BOG_MINE];
+    case 'swamp':
+    case 'wetlands':
+      // Both regular Mine and Bog Mine work in swamps (they produce the same)
+      return [WorksiteType.HUNTING_FISHING_CAMP, WorksiteType.MINE, WorksiteType.BOG_MINE];
       
-    case 'Desert':
+    case 'desert':
       return hasOasisTrait ? [WorksiteType.OASIS_FARM] : [];
       
     default:

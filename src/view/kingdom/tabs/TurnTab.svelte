@@ -1,6 +1,12 @@
 <script lang="ts">
-   import { kingdomState, advancePhase } from '../../../stores/kingdom';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { gameState, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/gameState';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
+   import { onMount } from 'svelte';
+   
+   // Components
+   import PhaseBar from '../components/PhaseBar.svelte';
+   import PhaseHeader from '../components/PhaseHeader.svelte';
    
    // Phase components  
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
@@ -8,58 +14,84 @@
    import UnrestPhase from '../turnPhases/UnrestPhase.svelte';
    import EventsPhase from '../turnPhases/EventsPhase.svelte';
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
-   import ResolutionPhase from '../turnPhases/ResolutionPhase.svelte';
+   import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';
    
-   // Get phase info
-   $: phaseInfo = TurnPhaseConfig[$kingdomState.currentPhase];
+   // Initialize viewing phase if not set
+   onMount(() => {
+      if (!$viewingPhase) {
+         setViewingPhase($gameState.currentPhase);
+      }
+   });
+   
+   // Get phase info based on what the user is viewing
+   $: displayPhase = $viewingPhase || $gameState.currentPhase;
+   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$gameState.currentPhase];
+   $: actualPhase = $gameState.currentPhase;
+   
+   // Define phase icons
+   const phaseIcons = {
+      [TurnPhase.PHASE_I]: 'fas fa-chart-line',
+      [TurnPhase.PHASE_II]: 'fas fa-coins',
+      [TurnPhase.PHASE_III]: 'fas fa-fire',
+      [TurnPhase.PHASE_IV]: 'fas fa-dice',
+      [TurnPhase.PHASE_V]: 'fas fa-hammer',
+      [TurnPhase.PHASE_VI]: 'fas fa-check-circle'
+   };
+   
+   $: displayPhaseIcon = phaseIcons[displayPhase as TurnPhase];
    
    function handleAdvancePhase() {
       advancePhase();
    }
+   
+   // Helper to show if we're viewing a different phase than active
+   $: isViewingDifferentPhase = displayPhase !== actualPhase;
 </script>
 
-<div class="tw-flex tw-flex-col tw-h-full tw-gap-4">
-   <!-- Turn Header -->
-   <div class="tw-card tw-bg-base-300 tw-card-compact">
-      <div class="tw-card-body">
-         <h2 class="tw-card-title tw-text-2xl">Turn {$kingdomState.currentTurn}</h2>
-         <div class="tw-divider tw-my-2"></div>
-         <div class="tw-alert tw-alert-info">
-            <div>
-               <h3 class="tw-font-bold tw-text-lg">{phaseInfo.displayName}</h3>
-               <p class="tw-text-sm tw-italic tw-mt-1">{phaseInfo.description}</p>
-            </div>
-         </div>
-      </div>
-   </div>
+<div class="turn-management">
+   <!-- Phase header with gradient styling -->
+   <PhaseHeader 
+      title={phaseInfo.displayName}
+      description={phaseInfo.description}
+      icon={displayPhaseIcon}
+      onNextPhase={handleAdvancePhase}
+      isUpkeepPhase={actualPhase === TurnPhase.PHASE_VI}
+      currentTurn={$gameState.currentTurn}
+   />
    
-   <!-- Phase Content -->
-   <div class="tw-flex-1 tw-card tw-bg-base-200/50 tw-overflow-y-auto">
-      <div class="tw-card-body">
-         {#if $kingdomState.currentPhase === TurnPhase.PHASE_I}
-            <StatusPhase />
-         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_II}
-            <ResourcesPhase />
-         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_III}
-            <UnrestPhase />
-         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_IV}
-            <EventsPhase />
-         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_V}
-            <ActionsPhase />
-         {:else if $kingdomState.currentPhase === TurnPhase.PHASE_VI}
-            <ResolutionPhase />
-         {/if}
-      </div>
-   </div>
+   <!-- Phase Bar underneath phase header -->
+   <PhaseBar />
    
-   <!-- Phase Controls -->
-   <div class="tw-flex tw-justify-end tw-gap-2">
-      <button 
-         class="tw-btn tw-btn-primary"
-         on:click={handleAdvancePhase}
-      >
-         Advance to Next Phase
-         <i class="fas fa-arrow-right"></i>
-      </button>
+   <div class="phase-content">
+      {#if displayPhase === TurnPhase.PHASE_I}
+         <StatusPhase />
+      {:else if displayPhase === TurnPhase.PHASE_II}
+         <ResourcesPhase />
+      {:else if displayPhase === TurnPhase.PHASE_III}
+         <UnrestPhase />
+      {:else if displayPhase === TurnPhase.PHASE_IV}
+         <EventsPhase />
+      {:else if displayPhase === TurnPhase.PHASE_V}
+         <ActionsPhase />
+      {:else if displayPhase === TurnPhase.PHASE_VI}
+         <UpkeepPhase />
+      {/if}
    </div>
 </div>
+
+<style lang="scss">
+   .turn-management {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 8px;
+   }
+   
+   .phase-content {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 12px;
+      border-radius: 5px;
+      overflow-y: auto;
+   }
+</style>

@@ -2,6 +2,7 @@
   "id": "collect-stipend",
   "name": "Collect Stipend",
   "category": "economic-resources",
+  "brief": "Extract personal income (requires Counting House)",
   "description": "Draw personal funds from the kingdom's treasury as compensation for your service",
   "skills": [
     {

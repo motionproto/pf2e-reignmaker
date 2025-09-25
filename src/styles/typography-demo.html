@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PF2E Kingdom Lite - Typography System</title>
+    <link rel="stylesheet" href="./variables.css">
+    <link rel="stylesheet" href="./typography.css">
+    <style>
+        body {
+            background: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-primary);
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-section {
+            background: var(--bg-surface);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-medium);
+        }
+        
+        .demo-title {
+            color: var(--color-amber);
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-strong);
+        }
+        
+        .demo-grid {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .demo-item {
+            padding: 1.5rem;
+            background: var(--bg-elevated);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-default);
+        }
+        
+        .demo-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            display: inline-block;
+        }
+        
+        .demo-preview {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: var(--radius-sm);
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .comparison-table th {
+            background: var(--bg-elevated);
+            font-weight: 600;
+            color: var(--color-amber);
+        }
+        
+        .color-samples {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .color-sample {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-default);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="demo-title">PF2E Kingdom Lite - Typography System</h1>
+    
+    <!-- Typography Scale -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Typography Scale</h2>
+        <div class="demo-grid">
+            <div class="demo-item">
+                <div class="demo-label">--type-heading-1 (20px / 1.43em)</div>
+                <h1 class="text-heading-primary">Primary Heading - Kingdom Actions</h1>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used for: Main phase titles, action card names, primary sections</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-heading-2 (18px / 1.29em)</div>
+                <h2 class="text-heading-secondary">Secondary Heading - Category Names</h2>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used for: Section headers, category titles, subsection headers</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-heading-3 (16px / 1.14em)</div>
+                <h3 class="text-heading-tertiary">Tertiary Heading - Outcome Headers</h3>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used for: Subsection headers, outcome headers, emphasized labels</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-body-large (16px / 1.14em)</div>
+                <p class="text-body-large">Large body text for emphasized content. This size provides better readability for important information while maintaining the minimum 1em requirement.</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-body (14px / 1em)</div>
+                <p class="text-body">Standard body text used throughout the application. This is the base size that ensures all text meets the minimum 1em requirement for accessibility and readability.</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-label (14px / 1em)</div>
+                <span class="text-label">LABEL TEXT</span>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used for: Form labels, metadata, field labels</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-button (14px / 1em)</div>
+                <button class="text-button" style="background: var(--btn-primary-bg); color: white; padding: 0.5rem 1rem; border: none; border-radius: var(--radius-sm);">
+                    Button Text
+                </button>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used for: Interactive elements, CTAs</p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-badge (12px / 0.86em) ⚠️ Below 1em</div>
+                <span class="text-badge" style="background: rgba(251, 191, 36, 0.2); padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); color: var(--color-amber);">
+                    RESOLVED
+                </span>
+                <p style="color: var(--text-tertiary); margin-top: 0.5rem;">Used sparingly for: Status badges, small indicators</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Actual Usage Examples -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Real Component Examples</h2>
+        
+        <div class="demo-item">
+            <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Action Card Header</h3>
+            <div class="demo-preview">
+                <div style="font-size: var(--type-heading-1-size); font-weight: var(--type-heading-1-weight); color: var(--text-primary);">
+                    Build Structure
+                </div>
+                <div style="font-size: var(--type-body-size); color: var(--text-secondary); margin-top: 0.5rem;">
+                    Construct a building to enhance your kingdom's capabilities
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-item">
+            <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Category Section</h3>
+            <div class="demo-preview">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span style="font-size: 2rem; color: var(--color-amber);">🛡️</span>
+                    <div>
+                        <div style="font-size: var(--type-heading-2-size); font-weight: var(--type-heading-2-weight); color: var(--color-amber);">
+                            Uphold Stability
+                        </div>
+                        <div style="font-size: var(--type-body-size); color: var(--text-secondary); margin-top: 0.25rem;">
+                            Maintain the kingdom's cohesion by resolving crises and quelling unrest.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-item">
+            <h3 style="color: var(--text-primary); margin-bottom: 1rem;">Outcome Display</h3>
+            <div class="demo-preview">
+                <div style="font-size: var(--type-heading-3-size); font-weight: var(--type-heading-3-weight); color: var(--color-green); margin-bottom: 0.5rem;">
+                    ⭐ Critical Success
+                </div>
+                <div style="font-size: var(--type-body-size); color: var(--text-secondary);">
+                    The structure is built at half cost and provides an additional bonus to the kingdom.
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Font Weights -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Font Weight Scale</h2>
+        <div class="demo-grid">
+            <div class="demo-item">
+                <p style="font-weight: var(--type-weight-normal);">Normal (400) - Body text and descriptions</p>
+                <p style="font-weight: var(--type-weight-medium);">Medium (500) - Labels and emphasis</p>
+                <p style="font-weight: var(--type-weight-semibold);">Semibold (600) - Headers and titles</p>
+                <p style="font-weight: var(--type-weight-bold);">Bold (700) - Strong emphasis</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Line Heights -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Line Height Examples</h2>
+        <div class="demo-grid">
+            <div class="demo-item">
+                <div class="demo-label">--type-leading-tight (1.2)</div>
+                <p style="line-height: var(--type-leading-tight); border-left: 3px solid var(--color-amber); padding-left: 1rem;">
+                    Tight line height used for headings and titles where vertical space is limited. Best for single-line or short multi-line headings.
+                </p>
+            </div>
+            
+            <div class="demo-item">
+                <div class="demo-label">--type-leading-relaxed (1.5)</div>
+                <p style="line-height: var(--type-leading-relaxed); border-left: 3px solid var(--color-amber); padding-left: 1rem;">
+                    Relaxed line height provides comfortable reading for body text. This spacing reduces eye strain and improves readability for longer passages of text, making it ideal for descriptions and content areas.
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Color Utilities -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Text Color Utilities</h2>
+        <div class="color-samples">
+            <div class="color-sample text-primary">.text-primary</div>
+            <div class="color-sample text-secondary">.text-secondary</div>
+            <div class="color-sample text-tertiary">.text-tertiary</div>
+            <div class="color-sample text-accent">.text-accent</div>
+            <div class="color-sample text-success">.text-success</div>
+            <div class="color-sample text-warning">.text-warning</div>
+            <div class="color-sample text-danger">.text-danger</div>
+            <div class="color-sample text-info">.text-info</div>
+        </div>
+    </section>
+    
+    <!-- Usage Guidelines -->
+    <section class="demo-section">
+        <h2 style="color: var(--color-amber); margin-bottom: 1.5rem;">Usage Guidelines</h2>
+        <div class="demo-item">
+            <h3 style="color: var(--text-primary);">✅ Best Practices</h3>
+            <ul style="color: var(--text-secondary); line-height: 1.8;">
+                <li>Always use semantic tokens (e.g., <code>--type-heading-1-size</code>) instead of raw font sizes</li>
+                <li>Maintain minimum 1em (14px) for all standard text</li>
+                <li>Use <code>--type-badge-size</code> (12px) only for small UI elements like badges</li>
+                <li>Combine size, weight, and line-height tokens for consistent typography</li>
+                <li>Use utility classes (<code>.text-heading-primary</code>) for rapid prototyping</li>
+            </ul>
+            
+            <h3 style="color: var(--text-primary); margin-top: 2rem;">📊 Component Mapping</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Token to Use</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Action Names</td>
+                        <td><code>--type-heading-1-size</code></td>
+                        <td>20px / 1.43em</td>
+                    </tr>
+                    <tr>
+                        <td>Category Headers</td>
+                        <td><code>--type-heading-2-size</code></td>
+                        <td>18px / 1.29em</td>
+                    </tr>
+                    <tr>
+                        <td>Section Titles</td>
+                        <td><code>--type-heading-2-size</code></td>
+                        <td>18px / 1.29em</td>
+                    </tr>
+                    <tr>
+                        <td>Outcome Headers</td>
+                        <td><code>--type-heading-3-size</code></td>
+                        <td>16px / 1.14em</td>
+                    </tr>
+                    <tr>
+                        <td>Descriptions</td>
+                        <td><code>--type-body-size</code></td>
+                        <td>14px / 1em</td>
+                    </tr>
+                    <tr>
+                        <td>Labels</td>
+                        <td><code>--type-label-size</code></td>
+                        <td>14px / 1em</td>
+                    </tr>
+                    <tr>
+                        <td>Buttons</td>
+                        <td><code>--type-button-size</code></td>
+                        <td>14px / 1em</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>

@@ -2,6 +2,7 @@
   "id": "upgrade-settlement",
   "name": "Upgrade Settlement",
   "category": "urban-planning",
+  "brief": "Advance tiers (requires both level and structure prerequisites)",
   "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization",
   "skills": [
     {
@@ -47,8 +48,8 @@
     }
   },
   "requirements": [
-    "Village \u2192 Town: Level 2+ and 2+ Structures",
-    "Town \u2192 City: Level 5+ and 4+ Structures",
-    "City \u2192 Metropolis: Level 10+ and 6+ Structures"
+    "Village → Town: Level 2+ and 2+ Structures",
+    "Town → City: Level 5+ and 4+ Structures",
+    "City → Metropolis: Level 10+ and 6+ Structures"
   ]
 }

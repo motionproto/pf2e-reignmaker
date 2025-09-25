@@ -2,6 +2,7 @@
   "id": "request-economic-aid",
   "name": "Request Economic Aid",
   "category": "foreign-affairs",
+  "brief": "Ask allies for resources or gold",
   "description": "Appeal to allied nations for material support in times of need",
   "skills": [
     {

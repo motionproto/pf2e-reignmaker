@@ -2,6 +2,7 @@
   "id": "establish-diplomatic-relations",
   "name": "Establish Diplomatic Relations",
   "category": "foreign-affairs",
+  "brief": "Form alliances with other nations",
   "description": "Open formal channels of communication with neighboring powers to enable future cooperation",
   "skills": [
     {

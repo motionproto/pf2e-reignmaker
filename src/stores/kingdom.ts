@@ -1,35 +1,58 @@
 import { writable, derived, get } from 'svelte/store';
 import { KingdomState } from '../models/KingdomState';
 import type { KingdomEvent } from '../models/Events';
-import type { Settlement, Army, BuildProject, TurnPhase, Modifier } from '../models/KingdomState';
+import type { Settlement, Army, BuildProject, Modifier } from '../models/KingdomState';
+import { economicsService } from '../services/economics';
+import { territoryService } from '../services/territory';
 
-// Main kingdom state store
+// Main kingdom state store - contains only pure kingdom data
 export const kingdomState = writable(new KingdomState());
 
-// Derived stores for common calculations
-export const totalProduction = derived(kingdomState, $state => 
-    $state.calculateProduction()
-);
+// Re-export viewingPhase from gameState for backward compatibility
+export { viewingPhase } from './gameState';
 
-export const foodConsumption = derived(kingdomState, $state => 
-    $state.getTotalFoodConsumption()
-);
+// Territory metrics derived store
+export const territoryMetrics = derived(kingdomState, $state => {
+    return territoryService.getTerritoryMetrics($state.hexes);
+});
 
-export const foodConsumptionBreakdown = derived(kingdomState, $state => 
-    $state.getFoodConsumptionBreakdown()
-);
+// Derived stores for common calculations using cached values
+export const totalProduction = derived(kingdomState, $state => {
+    // Use cached production from KingdomState (calculated once when hexes change)
+    const productionObj: Record<string, number> = {};
+    $state.cachedProduction.forEach((value, key) => {
+        if (value > 0) {
+            productionObj[key] = value;
+        }
+    });
+    return productionObj;
+});
 
-export const armySupport = derived(kingdomState, $state => 
-    $state.getTotalArmySupport()
-);
+export const foodConsumption = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    return consumption.totalFood;
+});
 
-export const unsupportedArmies = derived(kingdomState, $state => 
-    $state.getUnsupportedArmies()
-);
+export const foodConsumptionBreakdown = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    return [consumption.settlementFood, consumption.armyFood];
+});
 
-export const foodShortage = derived(kingdomState, $state => 
-    $state.calculateFoodShortage()
-);
+export const armySupport = derived(kingdomState, $state => {
+    const support = economicsService.calculateMilitarySupport($state.settlements, $state.armies);
+    return support.capacity;
+});
+
+export const unsupportedArmies = derived(kingdomState, $state => {
+    const support = economicsService.calculateMilitarySupport($state.settlements, $state.armies);
+    return support.unsupported;
+});
+
+export const foodShortage = derived(kingdomState, $state => {
+    const consumption = economicsService.calculateConsumption($state.settlements, $state.armies);
+    const foodSupply = economicsService.checkFoodSupply($state.resources.get('food') || 0, consumption);
+    return foodSupply.shortage;
+});
 
 // Actions to modify kingdom state
 export function updateKingdomStat(stat: keyof KingdomState, value: any) {
@@ -117,56 +140,15 @@ export function removeContinuousEvent(index: number) {
     });
 }
 
-export function setCurrentPhase(phase: TurnPhase) {
-    kingdomState.update(state => {
-        state.currentPhase = phase;
-        return state;
-    });
-}
-
-export function advancePhase() {
-    kingdomState.update(state => {
-        state.advancePhase();
-        return state;
-    });
-}
-
-export function markPhaseStepCompleted(stepId: string) {
-    kingdomState.update(state => {
-        state.markPhaseStepCompleted(stepId);
-        return state;
-    });
-}
-
-export function resetPhaseSteps() {
-    kingdomState.update(state => {
-        state.resetPhaseSteps();
-        return state;
-    });
-}
-
-export function collectResources() {
-    kingdomState.update(state => {
-        state.collectResources();
-        return state;
-    });
-}
-
-export function processFoodConsumption(): number {
-    let shortage = 0;
-    kingdomState.update(state => {
-        shortage = state.processFoodConsumption();
-        return state;
-    });
-    return shortage;
-}
-
-export function clearNonStorableResources() {
-    kingdomState.update(state => {
-        state.clearNonStorableResources();
-        return state;
-    });
-}
+// Re-export phase management functions from gameState for backward compatibility
+export { 
+    setCurrentPhase,
+    setViewingPhase,
+    advancePhase,
+    markPhaseStepCompleted,
+    resetPhaseSteps,
+    incrementTurn
+} from './gameState';
 
 export function addModifier(modifier: Modifier) {
     kingdomState.update(state => {
@@ -178,13 +160,6 @@ export function addModifier(modifier: Modifier) {
 export function removeModifier(index: number) {
     kingdomState.update(state => {
         state.ongoingModifiers.splice(index, 1);
-        return state;
-    });
-}
-
-export function incrementTurn() {
-    kingdomState.update(state => {
-        state.currentTurn++;
         return state;
     });
 }

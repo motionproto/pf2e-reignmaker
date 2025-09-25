@@ -2,6 +2,7 @@
   "id": "arrest-dissidents",
   "name": "Arrest Dissidents",
   "category": "uphold-stability",
+  "brief": "Convert current unrest to imprisoned unrest",
   "description": "Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system",
   "skills": [
     {
@@ -27,21 +28,25 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Convert 8 Unrest to imprisoned Unrest (up to structure capacity)",
+      "modifiers": {
+        "imprisonedUnrest": 8,
+        "unrest": -8
+      }
+    },
+    "success": {
       "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": {
         "imprisonedUnrest": 4,
         "unrest": -4
       }
     },
-    "success": {
+    "failure": {
       "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": {
         "imprisonedUnrest": 2,
         "unrest": -2
       }
-    },
-    "failure": {
-      "description": "No effect"
     },
     "criticalFailure": {
       "description": "Botched arrests cause riots; gain 1 Unrest",

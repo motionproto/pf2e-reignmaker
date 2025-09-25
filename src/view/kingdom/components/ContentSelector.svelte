@@ -7,6 +7,7 @@
    
    const tabs = [
       { id: 'turn', label: 'Turn Management', icon: 'fa-hourglass-half' },
+      { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'settlements', label: 'Settlements', icon: 'fa-city' },
       { id: 'factions', label: 'Factions', icon: 'fa-users' },
       { id: 'modifiers', label: 'Modifiers', icon: 'fa-magic' },
@@ -22,27 +23,104 @@
    }
 </script>
 
-<div data-theme="foundry" class="tw-flex tw-justify-between tw-items-center tw-gap-5">
-   <!-- Tab buttons using DaisyUI -->
-   <div class="tw-tabs tw-tabs-boxed tw-flex-1 tw-bg-base-200/50">
+<div class="content-selector-wrapper">
+   <div class="content-selector">
       {#each tabs as tab}
          <button 
-            class="tw-tab tw-gap-2 {selectedTab === tab.id ? 'tw-tab-active' : ''}"
+            class="tab-button" 
+            class:active={selectedTab === tab.id}
             on:click={() => selectTab(tab.id)}
             title={tab.label}
          >
             <i class="fas {tab.icon}"></i>
-            <span class="tw-hidden sm:tw-inline">{tab.label}</span>
+            <span>{tab.label}</span>
          </button>
       {/each}
    </div>
    
-   <!-- Settings button using DaisyUI -->
    <button 
-      class="tw-btn tw-btn-circle tw-btn-ghost tw-btn-sm"
+      class="settings-button" 
       on:click={openSettings}
       title="Kingdom Settings"
    >
-      <i class="fas fa-cog tw-text-xl"></i>
+      <i class="fas fa-cog"></i>
    </button>
 </div>
+
+<style lang="scss">
+   .content-selector-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+   }
+   
+   .content-selector {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+      flex: 1;
+   }
+   
+   .tab-button {
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         color: rgba(255, 255, 255, 1);
+         transform: translateY(-1px);
+      }
+      
+      &.active {
+         background: var(--color-primary, #5e0000);
+         color: white;
+         border-color: rgba(255, 255, 255, 0.3);
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      
+      i {
+         font-size: 1.1em;
+      }
+      
+      span {
+         font-weight: 500;
+      }
+   }
+   
+   .settings-button {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         color: rgba(255, 255, 255, 1);
+      }
+      
+      i {
+         font-size: 1.2em;
+         transition: transform 0.3s ease;
+      }
+      
+      &:hover i {
+         transform: rotate(90deg);
+      }
+   }
+</style>

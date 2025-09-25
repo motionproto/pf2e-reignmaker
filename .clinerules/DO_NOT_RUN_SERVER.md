@@ -4,43 +4,48 @@
 
 This project is a **Foundry VTT module**, not a standalone web application. It should NOT be run with server commands like:
 
-❌ `./gradlew jsBrowserRun`
-❌ `./gradlew jsBrowserDevelopmentRun`  
 ❌ `npm start`
-❌ Any other localhost server commands
+❌ `npm run dev` (unless using HMR for development)
+❌ `vite`
+❌ `vite preview`
+❌ Any other localhost server commands for standalone viewing
 
 ## Correct Usage
 
+### For Development with Hot Module Replacement:
+```bash
+npm run dev
+```
+This runs the Vite dev server with HMR configured specifically for Foundry VTT development.
+
 ### To Build the Module:
 ```bash
-./gradlew build
+npm run build
 ```
 
 ### To Deploy to Foundry:
-```bash
-./gradlew deployToFoundry
-```
-
-The module will be deployed to your Foundry VTT modules directory and should be loaded through Foundry VTT itself.
+The built files are output to the `dist` directory. You can:
+- Manually copy to your Foundry modules directory
+- Use the deployment scripts if configured
+- Or symlink the dist folder to your Foundry modules
 
 ## Development Workflow
 
 1. Make your code changes
-2. Run `./gradlew build` to compile
-3. Run `./gradlew deployToFoundry` to deploy to Foundry
-4. Reload your Foundry VTT world to see changes
+2. If using HMR: Changes auto-reload in Foundry
+3. Otherwise: Run `npm run build` to compile
+4. Refresh your Foundry VTT world to see changes
 
 ## Why This Matters
 
-Running browser tasks creates unnecessary server processes that:
-- Consume system resources
-- Create locked file handles that prevent cleaning builds
-- Are completely unnecessary for Foundry VTT module development
-- Can cause confusion about how the module should be used
+Running the module as a standalone web application:
+- Doesn't have access to the Foundry API
+- Won't test the actual module integration
+- Creates confusion about how the module works
+- May lead to code that works standalone but fails in Foundry
 
 ## If You Accidentally Started a Server
 
-Kill any running processes:
+Kill any running Vite processes:
 ```bash
-pkill -f "gradlew.*jsBrowser"
-pkill -f "gradle.*jsBrowser"
+pkill -f "vite"

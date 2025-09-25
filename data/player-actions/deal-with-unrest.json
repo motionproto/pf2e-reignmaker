@@ -2,6 +2,7 @@
   "id": "deal-with-unrest",
   "name": "Deal with Unrest",
   "category": "uphold-stability",
+  "brief": "Directly reduce unrest by 1-3 based on success",
   "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays",
   "skills": [
     {

@@ -1,4 +1,4 @@
-# PFRPG 2e: Kingdom Building
+# PF2E ReignMaker
 
 This module ships all OGL licensed rules to run the Kingdom Building rule system for the most popular adventure for PFRPG 2e.
 
@@ -30,7 +30,7 @@ by dbavirt on Discord.
 
 ## Installation
 
-The package is available through the [module registry](https://foundryvtt.com/packages/pf2e-kingdom-lite)
+The package is available through the [module registry](https://foundryvtt.com/packages/pf2e-reignmaker)
 
 ## Functionality
 
@@ -97,11 +97,11 @@ Paste (right click -> paste) the following command into the Git Bash to install 
 
 Then, download the code (if you are more well versed with Windows, you can probably also clone the code somewhere else and create a symlink):
 
-    git clone https://github.com/BernhardPosselt/pf2e-kingdom-lite.git 
+    git clone https://github.com/motionproto/pf2e-reignmaker.git 
 
-The folder **pf2e-kingdom-lite** should now exist. Change into it:
+The folder **pf2e-reignmaker** should now exist. Change into it:
 
-    cd pf2e-kingdom-lite
+    cd pf2e-reignmaker
 
 If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
 
@@ -167,17 +167,17 @@ First, create a folder to clone the repository into:
 
 Then, clone the repository:
 
-    git clone https://github.com/BernhardPosselt/pf2e-kingdom-lite.git
+    git clone https://github.com/motionproto/pf2e-reignmaker.git
 
 Then link this directory to your foundry data folder:
 
 Linux:
 
-    ln -s /home/$(whoami)/dev/pf2e-kingdom-lite/ /home/$(whoami)/.local/share/FoundryVTT/Data/modules/pf2e-kingdom-lite/
+    ln -s /home/$(whoami)/dev/pf2e-reignmaker/ /home/$(whoami)/.local/share/FoundryVTT/Data/modules/pf2e-reignmaker/
 
 macOS:
 
-    ln -s /Users/$(whoami)/dev/pf2e-kingdom-lite/ /Users/$(whoami)/Library/Application Support/FoundryVTT/Data/modules/pf2e-kingdom-lite/
+    ln -s /Users/$(whoami)/dev/pf2e-reignmaker/ /Users/$(whoami)/Library/Application Support/FoundryVTT/Data/modules/pf2e-reignmaker/
 
 If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
 
@@ -246,7 +246,7 @@ You can pull changes either by setting up the project locally (check out the rel
     ./gradlew txPull
     ./gradlew assemble
 
-or by manually downloading by clicking on your language in Transifex and choosing **Download for use** ![](docs/img/transifex-download.png) Then place the downloaded file into **Data/modules/pf2e-kingdom-lite/dist/lang/ru.json** (adjust name depending on your translation). The location of the data folder [depends on your Operating System](https://foundryvtt.com/article/user-data/). However, make sure to only perform this **on your local dev instance and not on your hosted services due to security reasons**: translations might include malicious HTML and those strings are only stripped when building the project.
+or by manually downloading by clicking on your language in Transifex and choosing **Download for use** ![](docs/img/transifex-download.png) Then place the downloaded file into **Data/modules/pf2e-reignmaker/dist/lang/ru.json** (adjust name depending on your translation). The location of the data folder [depends on your Operating System](https://foundryvtt.com/article/user-data/). However, make sure to only perform this **on your local dev instance and not on your hosted services due to security reasons**: translations might include malicious HTML and those strings are only stripped when building the project.
 
 **A note on Lores**: Lores in the 2e system can currently not be translated properly and if you use translated lores, you lose automation that matches on the lore name. You can use translated lores in this module by overriding activities and lores manually. Translations will be implemented once the 2e system allows for it
 

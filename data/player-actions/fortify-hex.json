@@ -2,6 +2,7 @@
   "id": "fortify-hex",
   "name": "Fortify Hex",
   "category": "expand-borders",
+  "brief": "Strengthen defensive positions",
   "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion",
   "skills": [
     {

@@ -23,7 +23,7 @@ export interface KingdomScenes {
  * Kingdom Settings helper functions
  */
 export const KingdomSettings = {
-    MODULE_ID: "pf2e-kingdom-lite",
+    MODULE_ID: "pf2e-reignmaker",
     KINGDOM_SCENE_KEY: "kingdomSceneId",
     
     /**
@@ -35,7 +35,7 @@ export const KingdomSettings = {
         }
         
         try {
-            const sceneId = game.settings.get("pf2e-kingdom-lite", this.KINGDOM_SCENE_KEY) as string;
+            const sceneId = game.settings.get("pf2e-reignmaker", this.KINGDOM_SCENE_KEY) as string;
             return (sceneId && sceneId !== "") ? sceneId : null;
         } catch (e) {
             return null; // Setting not registered yet
@@ -50,7 +50,7 @@ export const KingdomSettings = {
             return Promise.reject(new Error("Game not initialized"));
         }
         
-        return game.settings.set("pf2e-kingdom-lite", this.KINGDOM_SCENE_KEY, sceneId);
+        return game.settings.set("pf2e-reignmaker", this.KINGDOM_SCENE_KEY, sceneId);
     },
     
     /**

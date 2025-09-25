@@ -2,6 +2,7 @@
   "id": "outfit-army",
   "name": "Outfit Army",
   "category": "military-operations",
+  "brief": "Equip troops with armor, weapons, runes, or equipment",
   "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness",
   "skills": [
     {

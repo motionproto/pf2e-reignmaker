@@ -2,24 +2,28 @@
   "id": "coordinated-effort",
   "name": "Coordinated Effort",
   "category": "uphold-stability",
+  "brief": "Aid another PC's Kingdom Action",
   "description": "When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome",
   "skills": [
     {
-      "skill": "politics",
+      "skill": "diplomacy",
       "description": "coordinate leadership"
     },
     {
       "skill": "performance",
       "description": "inspire teamwork"
+    },
+      {
+      "skill": "society",
+      "description": "if you want to go far, go together"
     }
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Both Coordinated Effort and the follow-up action gain +2 circumstance bonuses to their checks",
+      "description": "Follow-up action gain +3 circumstance bonuses to their checks",
       "modifiers": {
         "meta": {
-          "selfBonus": 2,
-          "nextActionBonus": 2
+          "nextActionBonus": 3
         }
       }
     },
@@ -40,11 +44,11 @@
       }
     },
     "criticalFailure": {
-      "description": "Both actions fail automatically",
+      "description": "The follow-up action gains a -2 circumstance penalty to its check",
       "modifiers": {
         "meta": {
-          "selfFails": true,
-          "nextActionFails": true
+
+           "nextActionBonus": -2
         }
       }
     }

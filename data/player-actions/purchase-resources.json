@@ -2,6 +2,7 @@
   "id": "purchase-resources",
   "name": "Purchase Resources",
   "category": "economic-resources",
+  "brief": "Spend 2 gold for resources",
   "description": "Use the kingdom's treasury to acquire needed materials from trade partners",
   "skills": [
     {
@@ -27,14 +28,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Spend 2 Gold \u2192 Gain 1 Resource, +1 free resource of the same type",
+      "description": "Spend 2 Gold → Gain 1 Resource, +1 free resource of the same type",
       "modifiers": {
         "gold": -2,
         "resources": 2
       }
     },
     "success": {
-      "description": "Spend 2 Gold \u2192 Gain 1 Resource",
+      "description": "Spend 2 Gold → Gain 1 Resource",
       "modifiers": {
         "gold": -2,
         "resources": 1

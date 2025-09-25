@@ -17,8 +17,8 @@ const s_PACKAGE_ID = `modules/${moduleJSON.id}`;
 
 // A short additional string to add to Svelte CSS hash values to make yours unique. This reduces the amount of
 // duplicated framework CSS overlap between many TRL packages enabled on Foundry VTT at the same time.
-// 'pkl' is chosen by shortening 'pf2e-kingdom-lite'.
-const s_SVELTE_HASH_ID = 'pkl';
+// 'prm' is chosen by shortening 'pf2e-reignmaker'.
+const s_SVELTE_HASH_ID = 'prm';
 
 const s_COMPRESS = true;   // Set to true to compress the module bundle.
 const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
@@ -77,7 +77,7 @@ export default defineConfig(({ mode }) =>
          open: '/game',
          proxy: {
             // Serves static files from main Foundry server.
-            [`^(/${s_PACKAGE_ID}/(assets|data|img|lang|packs|dist/${moduleJSON.id}.css))`]: 'http://localhost:30000',
+            [`^(/${s_PACKAGE_ID}/(assets|img|lang|packs|dist/${moduleJSON.id}.css))`]: 'http://localhost:30000',
 
             // All other paths besides package ID path are served from main Foundry server.
             [`^(?!/${s_PACKAGE_ID}/)`]: 'http://localhost:30000',

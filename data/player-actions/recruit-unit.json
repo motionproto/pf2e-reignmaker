@@ -2,6 +2,7 @@
   "id": "recruit-unit",
   "name": "Recruit Unit",
   "category": "military-operations",
+  "brief": "Raise new troops for your armies",
   "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess",
   "skills": [
     {
