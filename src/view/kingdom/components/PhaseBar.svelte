@@ -33,12 +33,6 @@
   // Make phase completion status reactive - recalculates whenever currentPhaseIndex changes
   $: phaseCompletions = phases.map((_, index) => index < currentPhaseIndex);
   
-  // Debug logging to track phase changes
-  $: {
-    console.log('[PhaseBar] Current phase:', currentPhase, 'Index:', currentPhaseIndex);
-    console.log('[PhaseBar] Phase completions:', phaseCompletions);
-    console.log('[PhaseBar] Viewing phase:', selectedPhase);
-  }
 
   function handlePhaseClick(phase: TurnPhase) {
     // Update the viewing phase when user clicks
@@ -101,8 +95,10 @@
   .phase-bar {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
     border-radius: 6px;
-    padding: 0.75rem 1rem 1rem; /* Increased bottom padding for underline space */
+    padding: 0rem 1rem; /* Symmetrical top/bottom padding for even spacing */
     font-family: var(--base-font);
+    margin-top: 0;
+    margin-bottom: 0.5rem; /* Add small bottom margin for separation from content */
   }
 
   .phase-bar-inner {

@@ -16,7 +16,7 @@
    let rollOutcome: string = '';
    
    // Check if steps are completed
-   $: incidentChecked = isPhaseStepCompleted('unrest-check');
+   $: incidentChecked = isPhaseStepCompleted('calculate-unrest');
    
    // Calculate unrest values
    $: currentUnrest = $kingdomState.unrest || 0;
@@ -50,7 +50,7 @@
          isRolling = false;
          
          if (!incidentChecked) {
-            markPhaseStepCompleted('unrest-check');
+            markPhaseStepCompleted('calculate-unrest');
          }
       }, 1000);
    }
@@ -103,7 +103,7 @@
       
       // Mark the incident as handled
       if (!incidentChecked) {
-         markPhaseStepCompleted('unrest-check');
+         markPhaseStepCompleted('calculate-unrest');
       }
    }
 </script>
@@ -154,9 +154,9 @@
                on:click={rollForIncident}
                disabled={isRolling || incidentChecked}
             >
-               <i class="fas fa-dice-d20 {isRolling ? 'spinning' : ''}"></i> 
+               <i class="fas {incidentChecked ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i> 
                {#if incidentChecked}
-                  Incident Checked
+                  Unrest Calculated
                {:else if isRolling}
                   Rolling...
                {:else}

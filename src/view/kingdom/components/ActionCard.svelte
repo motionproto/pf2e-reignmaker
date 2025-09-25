@@ -341,9 +341,7 @@
                        resolution.outcome === 'failure' ? formatOutcome(action.failure) :
                        formatOutcome(action.criticalFailure)}
                stateChanges={resolution.stateChanges}
-               rerollEnabled={currentFame > 0}
-               rerollLabel="Reroll with Fame"
-               rerollCount={currentFame}
+               showFameReroll={true}
                primaryButtonLabel="OK"
                on:reroll={handleRerollWithFame}
                on:primary={handleOk}
@@ -643,7 +641,6 @@
    
    .action-details {
       padding: 16px;
-      animation: slideDown 0.3s ease-out;
       border-top: 1px solid var(--border-subtle);
       text-align: left;
       

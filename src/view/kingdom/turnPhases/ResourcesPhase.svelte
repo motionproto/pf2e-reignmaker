@@ -3,6 +3,7 @@
    import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { economicsService, type ResourceCollectionResult } from '../../../services/economics';
    import { get } from 'svelte/store';
+   import Button from '../components/baseComponents/Button.svelte';
    
    // Check if step is completed
    $: collectCompleted = isPhaseStepCompleted('resources-collect');
@@ -88,17 +89,15 @@
    
    <!-- Collect Resources Button (moved here for better visibility) -->
    <div class="collect-button-container">
-      <button 
+      <Button 
+         variant="secondary"
          on:click={handleCollectResources} 
          disabled={collectCompleted}
-         class="collect-button"
+         icon={collectCompleted ? "fas fa-check" : "fas fa-hand-holding-usd"}
+         iconPosition="left"
       >
-         {#if collectCompleted}
-            <i class="fas fa-check"></i> Resources Collected
-         {:else}
-            <i class="fas fa-hand-holding-usd"></i> Collect Resources
-         {/if}
-      </button>
+         {collectCompleted ? 'Resources Collected' : 'Collect Resources'}
+      </Button>
    </div>
    
    <!-- Phase Step -->

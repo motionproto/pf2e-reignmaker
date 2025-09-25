@@ -12,6 +12,7 @@ interface GameState {
   currentTurn: number;
   currentPhase: TurnPhase;
   phaseStepsCompleted: Map<string, boolean>;
+  phasesCompleted: Set<TurnPhase>;  // Track which phases are fully complete
   oncePerTurnActions: Set<string>;
   
   // Event management
@@ -24,11 +25,22 @@ interface GameState {
   expandedSections: Set<string>;  // Which UI sections are expanded
 }
 
+// Define required steps for each phase
+const PHASE_REQUIRED_STEPS: Map<TurnPhase, string[]> = new Map([
+  [TurnPhase.PHASE_I, ['gain-fame', 'apply-modifiers']],  // Status phase
+  [TurnPhase.PHASE_II, ['resources-collect']],  // Resources phase
+  [TurnPhase.PHASE_III, ['calculate-unrest']],  // Unrest phase
+  [TurnPhase.PHASE_IV, ['resolve-event']],  // Events phase
+  [TurnPhase.PHASE_V, []],  // Actions phase - no required steps, optional actions
+  [TurnPhase.PHASE_VI, ['upkeep-complete']],  // Resolution/Upkeep phase
+]);
+
 // Initialize game state
 const initialGameState: GameState = {
   currentTurn: 1,
   currentPhase: TurnPhase.PHASE_I,
   phaseStepsCompleted: new Map(),
+  phasesCompleted: new Set(),
   oncePerTurnActions: new Set(),
   eventDC: 16,
   eventManager: new EventManager(),
@@ -104,20 +116,91 @@ export function advancePhase() {
         currentPhase: TurnPhase.PHASE_I,
         viewingPhase: TurnPhase.PHASE_I,
         phaseStepsCompleted: new Map(),
+        phasesCompleted: new Set(),
         oncePerTurnActions: new Set()
       };
     }
   });
 }
 
+// Check if a phase is complete (all required steps done)
+export function isPhaseComplete(phase: TurnPhase): boolean {
+  const state = get(gameState);
+  const requiredSteps = PHASE_REQUIRED_STEPS.get(phase) || [];
+  
+  // If no required steps, phase is always "complete" (e.g., Actions phase)
+  if (requiredSteps.length === 0) {
+    return true;
+  }
+  
+  // Check if all required steps are completed
+  return requiredSteps.every(step => state.phaseStepsCompleted.get(step) === true);
+}
+
+// Mark a phase as complete
+export function markPhaseComplete(phase: TurnPhase) {
+  gameState.update(state => {
+    const newPhasesCompleted = new Set(state.phasesCompleted);
+    newPhasesCompleted.add(phase);
+    return {
+      ...state,
+      phasesCompleted: newPhasesCompleted
+    };
+  });
+}
+
+// Check if current phase is complete
+export function isCurrentPhaseComplete(): boolean {
+  const state = get(gameState);
+  return isPhaseComplete(state.currentPhase);
+}
+
+// Check if a phase can be operated (all previous phases must be complete)
+export function canOperatePhase(phase: TurnPhase): boolean {
+  const state = get(gameState);
+  const phases = Object.values(TurnPhase);
+  const targetIndex = phases.indexOf(phase);
+  const currentIndex = phases.indexOf(state.currentPhase);
+  
+  // Can always operate the current phase or earlier phases
+  if (targetIndex <= currentIndex) {
+    return true;
+  }
+  
+  // For future phases, check if all phases up to (but not including) the target are complete
+  for (let i = 0; i < targetIndex; i++) {
+    if (!state.phasesCompleted.has(phases[i]) && !isPhaseComplete(phases[i])) {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
 export function markPhaseStepCompleted(stepId: string) {
   gameState.update(state => {
     const newSteps = new Map(state.phaseStepsCompleted);
     newSteps.set(stepId, true);
-    return {
+    
+    // Check if this completes the current phase
+    const updatedState = {
       ...state,
       phaseStepsCompleted: newSteps
     };
+    
+    // After updating steps, check if current phase is now complete
+    const requiredSteps = PHASE_REQUIRED_STEPS.get(state.currentPhase) || [];
+    const phaseNowComplete = requiredSteps.length > 0 && 
+      requiredSteps.every(step => newSteps.get(step) === true);
+    
+    if (phaseNowComplete && !state.phasesCompleted.has(state.currentPhase)) {
+      const newPhasesCompleted = new Set(state.phasesCompleted);
+      newPhasesCompleted.add(state.currentPhase);
+      updatedState.phasesCompleted = newPhasesCompleted;
+      console.log(`[gameState] Phase ${state.currentPhase} marked as complete`);
+    }
+    
+    return updatedState;
   });
 }
 
@@ -154,6 +237,7 @@ export function incrementTurn() {
     ...state,
     currentTurn: state.currentTurn + 1,
     phaseStepsCompleted: new Map(),
+    phasesCompleted: new Set(),
     oncePerTurnActions: new Set()
   }));
 }
@@ -193,6 +277,7 @@ export function getGameStateForSave() {
     currentTurn: state.currentTurn,
     currentPhase: state.currentPhase,
     phaseStepsCompleted: Array.from(state.phaseStepsCompleted.entries()),
+    phasesCompleted: Array.from(state.phasesCompleted),
     oncePerTurnActions: Array.from(state.oncePerTurnActions),
     eventDC: state.eventDC
   };
@@ -205,6 +290,7 @@ export function loadGameState(savedState: any) {
     currentTurn: savedState.currentTurn || 1,
     currentPhase: savedState.currentPhase || TurnPhase.PHASE_I,
     phaseStepsCompleted: new Map(savedState.phaseStepsCompleted || []),
+    phasesCompleted: new Set(savedState.phasesCompleted || []),
     oncePerTurnActions: new Set(savedState.oncePerTurnActions || []),
     eventDC: savedState.eventDC || 16,
     viewingPhase: savedState.currentPhase || TurnPhase.PHASE_I  // Set viewing to match loaded phase

@@ -1,6 +1,8 @@
 <script lang="ts">
    import { kingdomState } from '../../../stores/kingdom';
-   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, canOperatePhase } from '../../../stores/gameState';
+   import { TurnPhase } from '../../../models/KingdomState';
+   import Button from '../components/baseComponents/Button.svelte';
    
    // Constants
    const MAX_FAME = 3;
@@ -9,10 +11,18 @@
    $: gainFameCompleted = isPhaseStepCompleted('gain-fame');
    $: applyModifiersCompleted = isPhaseStepCompleted('apply-modifiers');
    
+   // Check if this phase can be operated
+   $: canOperate = canOperatePhase(TurnPhase.PHASE_I);
+   
    // Check if fame is at maximum
    $: fameAtMax = $kingdomState.fame >= MAX_FAME;
    
    function gainFame() {
+      if (!canOperate) {
+         console.warn('Cannot operate Status Phase - previous phases not complete');
+         return;
+      }
+      
       // Gain 1 Fame (max 3)
       kingdomState.update(state => {
          if (state.fame < MAX_FAME) {
@@ -24,6 +34,11 @@
    }
    
    function applyOngoingModifiers() {
+      if (!canOperate) {
+         console.warn('Cannot operate Status Phase - previous phases not complete');
+         return;
+      }
+      
       // Apply ongoing modifiers
       kingdomState.update(state => {
          state.ongoingModifiers.forEach(modifier => {
@@ -60,22 +75,23 @@
                <p class="fame-count">Fame: {$kingdomState.fame} / {MAX_FAME}</p>
             </div>
             
-            <button 
-               on:click={gainFame} 
-               disabled={gainFameCompleted || fameAtMax}
-               class="step-button"
+            <Button
+               variant="secondary"
+               on:click={gainFame}
+               disabled={gainFameCompleted || fameAtMax || !canOperate}
+               icon={gainFameCompleted ? 'fas fa-check' : 'fas fa-star'}
+               tooltip={!canOperate ? 'Complete previous phases first' : undefined}
             >
                {#if gainFameCompleted}
-                  <i class="fas fa-check"></i>
                   Fame Gained
                {:else if fameAtMax}
-                  <i class="fas fa-star"></i>
                   Fame at Maximum
+               {:else if !canOperate}
+                  Complete Previous Phases
                {:else}
-                  <i class="fas fa-star"></i>
                   Gain 1 Fame
                {/if}
-            </button>
+            </Button>
             
             <p class="step-description">
                {#if fameAtMax}
@@ -88,18 +104,21 @@
       </div>
       
       <div class="phase-step" class:completed={applyModifiersCompleted}>
-         <button 
-            on:click={applyOngoingModifiers} 
-            disabled={applyModifiersCompleted}
-            class="step-button"
+         <Button
+            variant="secondary"
+            on:click={applyOngoingModifiers}
+            disabled={applyModifiersCompleted || !canOperate}
+            icon={applyModifiersCompleted ? 'fas fa-check' : 'fas fa-magic'}
+            tooltip={!canOperate ? 'Complete previous phases first' : undefined}
          >
             {#if applyModifiersCompleted}
-               <i class="fas fa-check"></i>
+               Modifiers Applied
+            {:else if !canOperate}
+               Complete Previous Phases
             {:else}
-               <i class="fas fa-magic"></i>
+               Apply Ongoing Modifiers
             {/if}
-            Apply Ongoing Modifiers
-         </button>
+         </Button>
          <p class="step-description">Apply all ongoing effects and reduce their duration.</p>
          
          {#if $kingdomState.ongoingModifiers.length > 0}
@@ -231,41 +250,6 @@
       }
    }
    
-   .step-button {
-      padding: 10px 16px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all var(--transition-fast);
-      margin: 0 auto;
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-secondary-hover);
-         border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: var(--shadow-md);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-      }
-      
-      i {
-         font-size: 1em;
-      }
-   }
    
    .step-description {
       margin: 10px 0 0 0;

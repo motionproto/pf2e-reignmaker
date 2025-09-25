@@ -2,6 +2,7 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import type { KingdomEvent, EventOutcome } from '../../../models/Events';
+   import Button from '../components/baseComponents/Button.svelte';
    
    // State for event handling
    let stabilityRoll: number = 0;
@@ -13,8 +14,8 @@
    let currentOutcome: EventOutcome | null = null;
    
    // Check if steps are completed
-   $: eventChecked = isPhaseStepCompleted('event-check');
-   $: eventResolved = isPhaseStepCompleted('event-resolve');
+   $: eventChecked = isPhaseStepCompleted('resolve-event');
+   $: eventResolved = isPhaseStepCompleted('resolve-event');
    
    // Current event from kingdom state
    $: currentEvent = $kingdomState.currentEvent;
@@ -58,7 +59,7 @@
          isRolling = false;
          
          if (!eventChecked) {
-            markPhaseStepCompleted('event-check');
+            markPhaseStepCompleted('resolve-event');
          }
       }, 1000);
    }
@@ -101,7 +102,7 @@
          showResolutionResult = true;
          
          if (!eventResolved) {
-            markPhaseStepCompleted('event-resolve');
+            markPhaseStepCompleted('resolve-event');
          }
       }, 1000);
    }
@@ -277,20 +278,21 @@
             <span class="dc-value">{eventDC}</span>
          </div>
          
-         <button 
-            class="btn-primary event-check-btn"
+         <Button 
+            variant="secondary"
             on:click={performStabilityCheck}
             disabled={isRolling || eventChecked}
+            icon={eventChecked ? 'fas fa-check' : 'fas fa-dice-d20'}
+            iconPosition="left"
          >
-            <i class="fas fa-dice-d20 {isRolling ? 'spinning' : ''}"></i> 
             {#if eventChecked}
-               Check Complete
+               Event Resolved
             {:else if isRolling}
                Rolling...
             {:else}
                Roll Stability Check
             {/if}
-         </button>
+         </Button>
          
          {#if showStabilityResult}
             <div class="check-result-display">

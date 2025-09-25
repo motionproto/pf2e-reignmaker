@@ -39,22 +39,22 @@
    
    // Perform initial sync when the app opens
    onMount(() => {
-      console.log('Kingdom UI opened - performing initial sync...');
+      // console.log('Kingdom UI opened - performing initial sync...');
       
       // Sync territory data from Kingmaker if available
       if (territoryService.isKingmakerAvailable()) {
          const result = territoryService.syncFromKingmaker();
-         console.log('Initial Kingmaker sync result:', result);
+         // console.log('Initial Kingmaker sync result:', result);
          
          if (result.success) {
-            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
             // Only show notification if there's actual data
             if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
                // @ts-ignore
                ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
             }
          } else if (result.error) {
-            console.error('Failed to sync from Kingmaker:', result.error);
+            // console.error('Failed to sync from Kingmaker:', result.error);
             // Don't show error notification on initial load unless there's a real error
             // (not just "module not available")
             if (!result.error.includes('not available')) {
@@ -63,31 +63,31 @@
             }
          }
       } else {
-         console.log('Kingmaker module not available - running without territory sync');
+         // console.log('Kingmaker module not available - running without territory sync');
       }
    });
 
    // Reactive statement for refresh
    $: if (refreshTrigger) {
-      console.log('Refreshing kingdom data...');
+      // console.log('Refreshing kingdom data...');
       
       // Sync territory data from Kingmaker if available
       if (territoryService.isKingmakerAvailable()) {
          const result = territoryService.syncFromKingmaker();
-         console.log('Kingmaker sync result:', result);
+         // console.log('Kingmaker sync result:', result);
          
          if (result.success) {
-            console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+            // console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
             // Show success notification
             // @ts-ignore
             ui.notifications?.info(`Territory synced: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
          } else {
-            console.error('Failed to sync from Kingmaker:', result.error);
+            // console.error('Failed to sync from Kingmaker:', result.error);
             // @ts-ignore
             ui.notifications?.warn(`Territory sync failed: ${result.error}`);
          }
       } else {
-         console.log('Kingmaker module not available for sync');
+         // console.log('Kingmaker module not available for sync');
       }
    }
 

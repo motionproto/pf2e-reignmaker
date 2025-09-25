@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { gameState, isCurrentPhaseComplete } from '../../../stores/gameState';
+  import Button from './baseComponents/Button.svelte';
   
   export let title: string;
   export let description: string = '';
@@ -7,6 +9,9 @@
   export let onNextPhase: (() => void) | undefined = undefined;
   export let isUpkeepPhase: boolean = false;
   export let currentTurn: number = 1;
+  
+  // Check if the current phase is complete
+  $: currentPhaseComplete = isCurrentPhaseComplete();
   
   let headerElement: HTMLElement;
   let previousTitle = '';
@@ -47,22 +52,27 @@
       {/if}
     </div>
     {#if onNextPhase}
-      <button class="next-phase-button" on:click={onNextPhase}>
+      <Button 
+        variant="primary"
+        icon={isUpkeepPhase ? 'fas fa-calendar-check' : 'fas fa-arrow-right'}
+        iconPosition="right"
+        on:click={onNextPhase}
+        disabled={!currentPhaseComplete}
+        tooltip={!currentPhaseComplete ? 'Complete all required steps in this phase first' : undefined}
+      >
         {#if isUpkeepPhase}
           End Turn {currentTurn}
-          <i class="fas fa-calendar-check"></i>
         {:else}
           Next Phase
-          <i class="fas fa-arrow-right"></i>
         {/if}
-      </button>
+      </Button>
     {/if}
   </div>
 </div>
 
 <style>
   .phase-header-wrapper {
-    margin-bottom: 0
+    margin-bottom: 0.25rem; /* Small bottom margin for compact spacing */
   }
 
   .phase-header {
@@ -74,7 +84,7 @@
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-elevated), var(--bg-overlay));
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-m);
     font-family: var(--base-font);
   }
 
@@ -104,34 +114,6 @@
     margin-right: 0rem;
   }
 
-  .next-phase-button {
-    padding: 10px 16px;
-    background: var(--btn-primary-bg, #5e0000);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    font-size: var(--type-button-size);
-    font-weight: var(--type-button-weight);
-    line-height: var(--type-button-line);
-    letter-spacing: var(--type-button-spacing);
-    font-family: var(--base-font);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all var(--transition-fast);
-    white-space: nowrap;
-  }
-
-  .next-phase-button:hover {
-    background: var(--btn-primary-hover, #3e0000);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  }
-
-  .next-phase-button i {
-    font-size: 0.85em;
-  }
 
   .phase-text {
     flex: 1;
@@ -178,9 +160,5 @@
       font-size: var(--font-sm);
     }
 
-    .next-phase-button {
-      padding: 8px 16px;
-      font-size: var(--font-sm);
-    }
   }
 </style>

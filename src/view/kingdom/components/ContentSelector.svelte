@@ -6,7 +6,7 @@
    const dispatch = createEventDispatcher();
    
    const tabs = [
-      { id: 'turn', label: 'Turn Management', icon: 'fa-hourglass-half' },
+      { id: 'turn', label: 'Turn', icon: 'fa-hourglass-half' },
       { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'settlements', label: 'Settlements', icon: 'fa-city' },
       { id: 'factions', label: 'Factions', icon: 'fa-users' },

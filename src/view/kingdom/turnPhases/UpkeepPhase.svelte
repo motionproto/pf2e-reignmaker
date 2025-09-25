@@ -12,7 +12,7 @@
    $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
    $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
    $: buildCompleted = isPhaseStepCompleted('upkeep-build');
-   $: resolveCompleted = isPhaseStepCompleted('upkeep-resolve');
+   $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
    
    // Calculate values
    $: currentFood = $kingdomState.resources.get('food') || 0;
@@ -120,7 +120,7 @@
          });
          return state;
       });
-      markPhaseStepCompleted('upkeep-resolve');
+      markPhaseStepCompleted('upkeep-complete');
    }
    
    function endTurn() {

@@ -1,5 +1,7 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
+   import { kingdomState } from '../../../stores/kingdom';
+   import Button from './baseComponents/Button.svelte';
    
    export let outcome: string;
    export let actorName: string;
@@ -11,8 +13,12 @@
    export let rerollCount: number | undefined = undefined;
    export let primaryButtonLabel: string = "OK";
    export let compact: boolean = false;
+   export let showFameReroll: boolean = true; // New prop to control fame reroll visibility
    
    const dispatch = createEventDispatcher();
+   
+   // Get fame from kingdom state
+   $: currentFame = $kingdomState?.fame || 0;
    
    // Get outcome display properties
    $: outcomeProps = getOutcomeProps(outcome);
@@ -142,7 +148,7 @@
       </div>
       {#if actorName}
          <div class="resolution-header-right">
-            {actorName}{#if skillName} used {skillName.charAt(0).toUpperCase() + skillName.slice(1)}{/if}
+            {actorName}{#if skillName} used {skillName.charAt(0).toUpperCase() +" "+ skillName.slice(1)}{/if}
          </div>
       {/if}
    </div>
@@ -171,25 +177,26 @@
    </div>
    
    <div class="resolution-actions">
-      {#if rerollEnabled}
-         <button 
-            class="btn-secondary"
+      {#if showFameReroll}
+         <Button
+            variant="secondary"
+            disabled={currentFame === 0}
             on:click={handleReroll}
+            icon="fas fa-star"
+            iconPosition="left"
          >
-            <i class="fas fa-dice"></i>
-            {rerollLabel}
-            {#if rerollCount !== undefined}
-               <span class="count">({rerollCount} left)</span>
-            {/if}
-         </button>
+            Reroll with Fame
+            <span class="fame-count">({currentFame} left)</span>
+         </Button>
       {/if}
-      <button 
-         class="btn-secondary"
+      <Button
+         variant="secondary"
          on:click={handlePrimary}
+         icon="fas fa-check"
+         iconPosition="left"
       >
-         <i class="fas fa-check"></i>
          {primaryButtonLabel}
-      </button>
+      </Button>
    </div>
 </div>
 
@@ -408,81 +415,9 @@
       background: rgba(0, 0, 0, 0.2);
       border-top: 1px solid var(--border-subtle);
       
-      button {
+      // Make buttons equal width
+      :global(.button) {
          flex: 1;
-         padding: 12px 20px;
-         border-radius: var(--radius-md);
-         border: 2px solid;
-         font-size: var(--type-button-size);
-         font-weight: var(--type-button-weight);
-         line-height: var(--type-button-line);
-         letter-spacing: var(--type-button-spacing);
-         cursor: pointer;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         gap: 10px;
-         transition: all var(--transition-fast);
-         position: relative;
-         overflow: hidden;
-         
-         &::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg,
-               transparent,
-               rgba(255, 255, 255, 0.1),
-               transparent);
-            transition: left 0.5s ease;
-         }
-         
-         &:hover::before {
-            left: 100%;
-         }
-         
-         i {
-            font-size: 16px;
-         }
-         
-         .count {
-            font-size: var(--type-small-size);
-            opacity: 0.9;
-            padding: 2px 6px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: var(--radius-sm);
-         }
-      }
-      
-      .btn-secondary {
-         background: rgba(100, 100, 100, 0.1);
-         border-color: var(--border-medium);
-         color: var(--text-secondary);
-         
-         &:hover:not(:disabled) {
-            background: rgba(100, 100, 100, 0.15);
-            border-color: var(--border-strong);
-            transform: translateY(-1px);
-         }
-         
-         &:active:not(:disabled) {
-            transform: translateY(0);
-         }
-         
-         &:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background: rgba(100, 100, 100, 0.05);
-            border-color: var(--border-subtle);
-            color: var(--text-tertiary);
-            
-            &::before {
-               display: none;
-            }
-         }
       }
    }
 </style>
