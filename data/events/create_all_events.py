@@ -12,7 +12,7 @@ def create_modifier(event_id, stage, outcome, mod_type, value, selector=None, tu
     """Create a modifier object"""
     modifier = {
         "type": "untyped",
-        "name": f"pf2e-kingdom-lite.events.{event_id}.stage-{stage}.{outcome}.{mod_type}",
+        "name": f"pf2e-reignmaker.events.{event_id}.stage-{stage}.{outcome}.{mod_type}",
         "value": value,
         "selector": selector or mod_type,
         "enabled": True
@@ -33,19 +33,19 @@ def create_event_json(event_id, name, description, traits, location, resolution,
     stages = [{
         "skills": skills,
         "criticalSuccess": {
-            "msg": f"pf2e-kingdom-lite.events.{event_id}.stage-0.criticalSuccess.msg",
+            "msg": f"pf2e-reignmaker.events.{event_id}.stage-0.criticalSuccess.msg",
             "modifiers": []
         },
         "success": {
-            "msg": f"pf2e-kingdom-lite.events.{event_id}.stage-0.success.msg",
+            "msg": f"pf2e-reignmaker.events.{event_id}.stage-0.success.msg",
             "modifiers": []
         },
         "failure": {
-            "msg": f"pf2e-kingdom-lite.events.{event_id}.stage-0.failure.msg",
+            "msg": f"pf2e-reignmaker.events.{event_id}.stage-0.failure.msg",
             "modifiers": []
         },
         "criticalFailure": {
-            "msg": f"pf2e-kingdom-lite.events.{event_id}.stage-0.criticalFailure.msg",
+            "msg": f"pf2e-reignmaker.events.{event_id}.stage-0.criticalFailure.msg",
             "modifiers": []
         }
     }]
@@ -90,7 +90,7 @@ def create_event_json(event_id, name, description, traits, location, resolution,
                 # Structure damage
                 modifiers.append({
                     "type": "event",
-                    "name": f"pf2e-kingdom-lite.events.{event_id}.stage-0.{outcome_type}.damage",
+                    "name": f"pf2e-reignmaker.events.{event_id}.stage-0.{outcome_type}.damage",
                     "value": value,
                     "selector": "damage_structure",
                     "enabled": True
@@ -99,7 +99,7 @@ def create_event_json(event_id, name, description, traits, location, resolution,
                 # Structure destruction
                 modifiers.append({
                     "type": "event",
-                    "name": f"pf2e-kingdom-lite.events.{event_id}.stage-0.{outcome_type}.destroy",
+                    "name": f"pf2e-reignmaker.events.{event_id}.stage-0.{outcome_type}.destroy",
                     "value": value,
                     "selector": "destroy_structure",
                     "enabled": True
@@ -108,7 +108,7 @@ def create_event_json(event_id, name, description, traits, location, resolution,
                 # Convert unrest to imprisoned
                 modifiers.append({
                     "type": "event",
-                    "name": f"pf2e-kingdom-lite.events.{event_id}.stage-0.{outcome_type}.imprisoned",
+                    "name": f"pf2e-reignmaker.events.{event_id}.stage-0.{outcome_type}.imprisoned",
                     "value": value,
                     "selector": "imprisoned_unrest",
                     "enabled": True
@@ -125,18 +125,18 @@ def create_event_json(event_id, name, description, traits, location, resolution,
     
     event = {
         "id": event_id,
-        "name": f"pf2e-kingdom-lite.events.{event_id}.name",
-        "description": f"pf2e-kingdom-lite.events.{event_id}.description",
+        "name": f"pf2e-reignmaker.events.{event_id}.name",
+        "description": f"pf2e-reignmaker.events.{event_id}.description",
         "traits": traits,
-        "location": f"pf2e-kingdom-lite.events.{event_id}.location",
+        "location": f"pf2e-reignmaker.events.{event_id}.location",
         "modifier": 0,
-        "resolution": f"pf2e-kingdom-lite.events.{event_id}.resolution",
+        "resolution": f"pf2e-reignmaker.events.{event_id}.resolution",
         "resolvedOn": resolvedOn,
         "stages": stages
     }
     
     if special:
-        event["special"] = f"pf2e-kingdom-lite.events.{event_id}.special"
+        event["special"] = f"pf2e-reignmaker.events.{event_id}.special"
     
     return event
 
@@ -995,7 +995,7 @@ def main():
         generated_files.append(filename)
         
         # Generate translation commands
-        base_key = f"pf2e-kingdom-lite.events.{event_id}"
+        base_key = f"pf2e-reignmaker.events.{event_id}"
         
         # Basic event info
         translation_commands.append(f'set "{base_key}.name" "{event_data["name"]}"')

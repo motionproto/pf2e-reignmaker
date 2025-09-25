@@ -472,7 +472,7 @@ def add_all_translations():
     translation_count = 0
     
     for structure_id, data in STRUCTURES.items():
-        base_key = f"pf2e-kingdom-lite.structures.{structure_id}"
+        base_key = f"pf2e-reignmaker.structures.{structure_id}"
         
         # Add each translation
         manager.set_key(f"{base_key}.name", data["name"])

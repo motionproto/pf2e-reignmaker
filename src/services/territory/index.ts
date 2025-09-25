@@ -64,14 +64,44 @@ export class TerritoryService {
                 // Convert numeric ID to dot notation
                 const dotNotationId = this.convertHexId(hexId);
                 
-                // Get terrain directly from hexState (it's provided by Kingmaker)
-                // Default to 'plains' if not specified
-                const terrain = this.normalizeTerrainName(hexState.terrain || 'plains');
+                // Get terrain from the region map only - no fallbacks
+                let terrain = 'Unknown';
+                let zoneId = null;
+                
+                try {
+                    // @ts-ignore - Kingmaker global
+                    const regionHex = km.region?.hexes?.get(parseInt(hexId));
+                    if (regionHex && regionHex.data) {
+                        // Get terrain from the hex's data (this is the source of truth)
+                        const hexData = regionHex.data;
+                        const rawTerrain = hexData.terrain;
+                        
+                        if (rawTerrain) {
+                            terrain = this.normalizeTerrainName(rawTerrain);
+                            zoneId = hexData.zone;
+                            
+                            console.log(`Got terrain from region hex ${dotNotationId}:`, {
+                                rawTerrain,
+                                normalizedTerrain: terrain,
+                                zone: zoneId
+                            });
+                        } else {
+                            console.warn(`Region hex ${dotNotationId} has no terrain data, marking as Unknown`);
+                            terrain = 'Unknown';
+                        }
+                    } else {
+                        console.warn(`Could not find region hex for ${dotNotationId}, marking as Unknown`);
+                        terrain = 'Unknown';
+                    }
+                } catch (error) {
+                    console.error(`Error accessing region hex for ${dotNotationId}:`, error);
+                    terrain = 'Unknown';
+                }
                 
                 // Debug log for each claimed hex
                 console.log(`Processing hex ${dotNotationId}:`, {
-                    terrain: hexState.terrain,
-                    normalizedTerrain: terrain,
+                    terrain: terrain,
+                    zone: zoneId,
                     camp: hexState.camp,
                     commodity: hexState.commodity,
                     features: hexState.features
@@ -173,19 +203,99 @@ export class TerritoryService {
      * Normalize terrain names to our system
      */
     private normalizeTerrainName(terrain: string | null): string {
-        if (!terrain) return 'Plains';
+        if (!terrain) {
+            return 'Unknown';
+        }
         
-        const normalized = terrain.toLowerCase();
+        // Handle object terrain (if Kingmaker provides terrain as an object)
+        let terrainString = terrain;
+        if (typeof terrain === 'object') {
+            // Try to extract terrain name from object
+            const terrainObj = terrain as any;
+            terrainString = terrainObj.type || terrainObj.name || terrainObj.value || JSON.stringify(terrain);
+            console.log('Terrain is object, extracted:', terrainString, 'from', terrain);
+        }
+        
+        const normalized = terrainString.toString().toLowerCase().trim();
+        
+        // Handle various terrain name formats from Kingmaker
         switch (normalized) {
-            case 'plains': return 'Plains';
-            case 'forest': return 'Forest';
-            case 'hills': return 'Hills';
-            case 'mountains': return 'Mountains';
-            case 'swamp': return 'Swamp';
-            case 'wetlands': return 'Swamp';
-            case 'desert': return 'Desert';
-            case 'lake': return 'Plains'; // Lakes treated as plains
-            default: return 'Plains';
+            // Plains variants
+            case 'plains':
+            case 'plain':
+            case 'grassland':
+            case 'grasslands':
+            case 'meadow':
+            case 'meadows':
+            case 'field':
+            case 'fields':
+                return 'Plains';
+                
+            // Forest variants  
+            case 'forest':
+            case 'forests':
+            case 'wood':
+            case 'woods':
+            case 'woodland':
+            case 'woodlands':
+            case 'jungle':
+            case 'grove':
+                return 'Forest';
+                
+            // Hills variants
+            case 'hill':
+            case 'hills':
+            case 'highland':
+            case 'highlands':
+            case 'foothill':
+            case 'foothills':
+                return 'Hills';
+                
+            // Mountains variants
+            case 'mountain':
+            case 'mountains':
+            case 'mount':
+            case 'peak':
+            case 'peaks':
+            case 'cliff':
+            case 'cliffs':
+                return 'Mountains';
+                
+            // Swamp/Wetlands variants
+            case 'swamp':
+            case 'swamps':
+            case 'wetland':
+            case 'wetlands':
+            case 'marsh':
+            case 'marshes':
+            case 'bog':
+            case 'bogs':
+            case 'fen':
+            case 'fens':
+                return 'Swamp';
+                
+            // Desert variants
+            case 'desert':
+            case 'deserts':
+            case 'badlands':
+            case 'wasteland':
+            case 'wastes':
+            case 'dunes':
+                return 'Desert';
+                
+            // Water/Lake (treated as plains for production)
+            case 'lake':
+            case 'lakes':
+            case 'water':
+            case 'river':
+            case 'rivers':
+            case 'ocean':
+            case 'sea':
+                return 'Plains'; // Lakes/water treated as plains
+                
+            default: 
+                console.warn(`Unknown terrain type: "${terrainString}" (original: ${JSON.stringify(terrain)}), marking as Unknown`);
+                return 'Unknown';
         }
     }
     

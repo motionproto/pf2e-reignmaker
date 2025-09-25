@@ -14,7 +14,7 @@ def clean_event_translations():
     manager = LanguageManager()
     
     # Get the current events section
-    events = manager.data.get('pf2e-kingdom-lite', {}).get('events', {})
+    events = manager.data.get('pf2e-reignmaker', {}).get('events', {})
     
     print(f"Found {len(events)} event translations to remove")
     
@@ -25,7 +25,7 @@ def clean_event_translations():
     # Remove each event and its nested keys
     for event_key in event_keys:
         # Build the full path to the event
-        base_path = f'pf2e-kingdom-lite.events.{event_key}'
+        base_path = f'pf2e-reignmaker.events.{event_key}'
         
         # Check if this event has nested keys
         event_data = events.get(event_key, {})
@@ -62,8 +62,8 @@ def clean_event_translations():
     
     # Also remove the events key itself if it's empty
     try:
-        manager.delete_key('pf2e-kingdom-lite.events')
-        print(f"  Removed: pf2e-kingdom-lite.events")
+        manager.delete_key('pf2e-reignmaker.events')
+        print(f"  Removed: pf2e-reignmaker.events")
         removed_count += 1
     except:
         pass
@@ -76,7 +76,7 @@ def clean_event_translations():
     
     # Verify removal
     manager_verify = LanguageManager()
-    remaining_events = manager_verify.data.get('pf2e-kingdom-lite', {}).get('events', {})
+    remaining_events = manager_verify.data.get('pf2e-reignmaker', {}).get('events', {})
     if remaining_events:
         print(f"\nWARNING: {len(remaining_events)} events still remain!")
         print("Remaining events:", list(remaining_events.keys())[:10])

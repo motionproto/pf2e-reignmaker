@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Deploy script for PF2e Kingdom Lite module
+ * Deploy script for PF2e ReignMaker module
  * Copies built files to Foundry VTT modules directory
  */
 
@@ -22,10 +22,10 @@ const FOUNDRY_MODULES_PATH = path.join(
     'Library/Application Support/FoundryVTT/Data/modules'
 );
 
-const MODULE_NAME = 'pf2e-kingdom-lite';
+const MODULE_NAME = 'pf2e-reignmaker';
 const TARGET_DIR = path.join(FOUNDRY_MODULES_PATH, MODULE_NAME);
 
-console.log('🏰 PF2e Kingdom Lite - Deploy Script');
+console.log('🏰 PF2e ReignMaker - Deploy Script');
 console.log('=====================================');
 
 // Check if Foundry modules directory exists

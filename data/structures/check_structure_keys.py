@@ -16,7 +16,7 @@ def check_structure_keys():
     manager = LanguageManager()
     
     # Get all structure keys
-    structures = manager.search_keys("pf2e-kingdom-lite.structures")
+    structures = manager.search_keys("pf2e-reignmaker.structures")
     
     print(f"Total structure translation keys found: {len(structures)}")
     print(f"Expected: 272 (68 structures × 4 keys each)")

@@ -1,13 +1,13 @@
 {
   "id": "natures-blessing",
-  "name": "pf2e-kingdom-lite.events.natures-blessing.name",
-  "description": "pf2e-kingdom-lite.events.natures-blessing.description",
+  "name": "pf2e-reignmaker.events.natures-blessing.name",
+  "description": "pf2e-reignmaker.events.natures-blessing.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.natures-blessing.location",
+  "location": "pf2e-reignmaker.events.natures-blessing.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.natures-blessing.resolution",
+  "resolution": "pf2e-reignmaker.events.natures-blessing.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,18 +20,18 @@
         "society"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.natures-blessing.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.natures-blessing.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.natures-blessing.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.natures-blessing.stage-0.criticalSuccess.unrest",
             "value": -2,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.natures-blessing.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.natures-blessing.stage-0.criticalSuccess.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -40,11 +40,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.natures-blessing.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.natures-blessing.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.natures-blessing.stage-0.success.unrest",
+            "name": "pf2e-reignmaker.events.natures-blessing.stage-0.success.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -52,15 +52,15 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.natures-blessing.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.natures-blessing.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.natures-blessing.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.natures-blessing.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.natures-blessing.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.natures-blessing.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -69,5 +69,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.natures-blessing.special"
+  "special": "pf2e-reignmaker.events.natures-blessing.special"
 }

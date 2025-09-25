@@ -1,13 +1,13 @@
 {
   "id": "archaeological-find",
-  "name": "pf2e-kingdom-lite.events.archaeological-find.name",
-  "description": "pf2e-kingdom-lite.events.archaeological-find.description",
+  "name": "pf2e-reignmaker.events.archaeological-find.name",
+  "description": "pf2e-reignmaker.events.archaeological-find.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.archaeological-find.location",
+  "location": "pf2e-reignmaker.events.archaeological-find.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.archaeological-find.resolution",
+  "resolution": "pf2e-reignmaker.events.archaeological-find.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "occultism"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalSuccess.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -32,14 +32,14 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalSuccess.fame",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalSuccess.fame",
             "value": 1,
             "selector": "fame",
             "enabled": true
@@ -47,11 +47,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.archaeological-find.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.success.gold",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.success.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -60,11 +60,11 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.archaeological-find.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.failure.resource",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.failure.resource",
             "value": 1,
             "selector": "food",
             "enabled": true,
@@ -80,11 +80,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.archaeological-find.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.archaeological-find.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -93,5 +93,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.archaeological-find.special"
+  "special": "pf2e-reignmaker.events.archaeological-find.special"
 }

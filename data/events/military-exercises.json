@@ -1,13 +1,13 @@
 {
   "id": "military-exercises",
-  "name": "pf2e-kingdom-lite.events.military-exercises.name",
-  "description": "pf2e-kingdom-lite.events.military-exercises.description",
+  "name": "pf2e-reignmaker.events.military-exercises.name",
+  "description": "pf2e-reignmaker.events.military-exercises.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.military-exercises.location",
+  "location": "pf2e-reignmaker.events.military-exercises.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.military-exercises.resolution",
+  "resolution": "pf2e-reignmaker.events.military-exercises.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "intimidation"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.military-exercises.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.military-exercises.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -32,26 +32,26 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.military-exercises.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
         "modifiers": []
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.military-exercises.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.military-exercises.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.military-exercises.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.military-exercises.stage-0.criticalFailure.damage",
+            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.damage",
             "value": 1,
             "selector": "damage_structure",
             "enabled": true
@@ -60,5 +60,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.military-exercises.special"
+  "special": "pf2e-reignmaker.events.military-exercises.special"
 }

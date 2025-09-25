@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Development Setup Script for PF2e Kingdom Lite
+ * Development Setup Script for PF2e ReignMaker
  * 
  * This script helps set up the development environment for hot reloading
  */
@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🚀 Setting up PF2e Kingdom Lite for development...\n');
+console.log('🚀 Setting up PF2e ReignMaker for development...\n');
 
 // Function to copy module.dev.json to Foundry modules directory
 function setupDevModule() {
@@ -41,7 +41,7 @@ function setupDevModule() {
         process.exit(1);
     }
     
-    const modulesPath = path.join(foundryDataPath, 'modules', 'pf2e-kingdom-lite');
+    const modulesPath = path.join(foundryDataPath, 'modules', 'pf2e-reignmaker');
     
     console.log(`📁 Foundry modules path: ${modulesPath}`);
     
@@ -81,13 +81,13 @@ function setupDevModule() {
     console.log('\n📝 To start development:');
     console.log('1. Run: npm run dev');
     console.log('2. Start/Restart Foundry VTT');
-    console.log('3. Enable the "PF2e Kingdom Lite (Dev)" module in your world');
+    console.log('3. Enable the "PF2e ReignMaker (Dev)" module in your world');
     console.log('4. Use the macro or keyboard shortcut (Ctrl+Shift+K) to open the Kingdom UI');
     console.log('\n🔥 Hot reloading is now enabled! Changes will update automatically.');
     console.log('\n💡 If the macro gives an error:');
     console.log('   - Make sure the dev server is running (npm run dev)');
     console.log('   - Refresh Foundry (F5) after the dev server starts');
-    console.log('   - Check the browser console for "PF2e Kingdom Lite | Setup complete"');
+    console.log('   - Check the browser console for "PF2e ReignMaker | Setup complete"');
 }
 
 function copyRecursiveSync(src, dest) {

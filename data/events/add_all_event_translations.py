@@ -23,7 +23,7 @@ def add_all_translations():
     
     for event_data in events:
         event_id = event_data['id']
-        base_key = f"pf2e-kingdom-lite.events.{event_id}"
+        base_key = f"pf2e-reignmaker.events.{event_id}"
         
         # Add basic event info
         manager.set_key(f"{base_key}.name", event_data['name'])
@@ -66,7 +66,7 @@ def add_all_translations():
     
     # Verify
     manager_verify = LanguageManager()
-    events_check = manager_verify.data.get('pf2e-kingdom-lite', {}).get('events', {})
+    events_check = manager_verify.data.get('pf2e-reignmaker', {}).get('events', {})
     print(f"\nVerification: {len(events_check)} events in translations")
     
     if events_check:

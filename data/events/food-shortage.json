@@ -1,14 +1,14 @@
 {
   "id": "food-shortage",
-  "name": "pf2e-kingdom-lite.events.food-shortage.name",
-  "description": "pf2e-kingdom-lite.events.food-shortage.description",
+  "name": "pf2e-reignmaker.events.food-shortage.name",
+  "description": "pf2e-reignmaker.events.food-shortage.description",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-kingdom-lite.events.food-shortage.location",
+  "location": "pf2e-reignmaker.events.food-shortage.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.food-shortage.resolution",
+  "resolution": "pf2e-reignmaker.events.food-shortage.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -21,11 +21,11 @@
         "diplomacy"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalSuccess.food",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalSuccess.food",
             "value": -2,
             "selector": "food",
             "enabled": true,
@@ -34,11 +34,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.success.food",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.success.food",
             "value": -4,
             "selector": "food",
             "enabled": true,
@@ -47,11 +47,11 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.food",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.failure.food",
             "value": -6,
             "selector": "food",
             "enabled": true,
@@ -59,7 +59,7 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -67,11 +67,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.food",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.food",
             "value": -8,
             "selector": "food",
             "enabled": true,
@@ -79,7 +79,7 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.food-shortage.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true

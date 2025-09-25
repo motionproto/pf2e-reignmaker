@@ -1,14 +1,14 @@
 {
   "id": "good-weather",
-  "name": "pf2e-kingdom-lite.events.good-weather.name",
-  "description": "pf2e-kingdom-lite.events.good-weather.description",
+  "name": "pf2e-reignmaker.events.good-weather.name",
+  "description": "pf2e-reignmaker.events.good-weather.description",
   "traits": [
     "beneficial",
     "continuous"
   ],
-  "location": "pf2e-kingdom-lite.events.good-weather.location",
+  "location": "pf2e-reignmaker.events.good-weather.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.good-weather.resolution",
+  "resolution": "pf2e-reignmaker.events.good-weather.resolution",
   "resolvedOn": [
     "failure",
     "criticalFailure"
@@ -21,11 +21,11 @@
         "performance"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.good-weather.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.good-weather.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.good-weather.stage-0.criticalSuccess.food",
+            "name": "pf2e-reignmaker.events.good-weather.stage-0.criticalSuccess.food",
             "value": 2,
             "selector": "food",
             "enabled": true,
@@ -33,7 +33,7 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.good-weather.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.good-weather.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -41,11 +41,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.good-weather.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.good-weather.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.good-weather.stage-0.success.food",
+            "name": "pf2e-reignmaker.events.good-weather.stage-0.success.food",
             "value": 2,
             "selector": "food",
             "enabled": true,
@@ -54,15 +54,15 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.good-weather.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.good-weather.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.good-weather.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.good-weather.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.good-weather.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.good-weather.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -71,5 +71,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.good-weather.special"
+  "special": "pf2e-reignmaker.events.good-weather.special"
 }

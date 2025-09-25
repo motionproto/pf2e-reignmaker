@@ -1,4 +1,4 @@
-// Kingdom Icon module for PF2e Kingdom Lite
+// Kingdom Icon module for PF2e ReignMaker
 // Adds Kingdom buttons to party actors in the sidebar
 
 // Import PF2e types
@@ -34,16 +34,16 @@ export function createKingdomIcon(actorId: string): HTMLElement {
  * Opens the Kingdom UI using the new Svelte KingdomApp
  */
 export function openKingdomUI(actorId: string): void {
-    console.log(`PF2e Kingdom Lite | Opening Kingdom UI for actor: ${actorId}`);
-    console.log('PF2e Kingdom Lite | Using TyphonJS SvelteApp');
+    console.log(`PF2e ReignMaker | Opening Kingdom UI for actor: ${actorId}`);
+    console.log('PF2e ReignMaker | Using TyphonJS SvelteApp');
     
     try {
-        const app = new KingdomApp({ actorId });
-        console.log('PF2e Kingdom Lite | Created KingdomApp instance:', app);
+        const app = new KingdomApp({ actorId } as any);
+        console.log('PF2e ReignMaker | Created KingdomApp instance:', app);
         app.render(true, { focus: true });
-        console.log('PF2e Kingdom Lite | KingdomApp rendered');
+        console.log('PF2e ReignMaker | KingdomApp rendered');
     } catch (error) {
-        console.error("PF2e Kingdom Lite | Failed to create KingdomApp:", error);
+        console.error("PF2e ReignMaker | Failed to create KingdomApp:", error);
         // @ts-ignore
         ui.notifications?.error("Failed to open Kingdom management UI");
     }
@@ -56,7 +56,7 @@ export function registerKingdomIconHook(): void {
     console.log("Registering Kingdom icon hook");
     
     // Hook into the actor directory render to add our icons
-    Hooks.on("renderActorDirectory", (app: ActorDirectory, html: JQuery | HTMLElement, data: any) => {
+    Hooks.on("renderActorDirectory", (app: any, html: any, data: any) => {
         console.log("renderActorDirectory hook triggered", html);
         
         // Convert jQuery to HTMLElement if needed
@@ -67,27 +67,73 @@ export function registerKingdomIconHook(): void {
             return;
         }
         
-        // Find party folders - exactly as the legacy code does it
-        const partyFolders = htmlElement.querySelectorAll(".folder[data-party]");
-        console.log("Found party folders:", partyFolders);
+        // Try multiple selectors for party actors (for compatibility with different PF2E versions)
+        const partySelectors = [
+            ".folder[data-party]",
+            "[data-folder-id] .directory-item[data-actor-type='party']",
+            ".directory-item[data-document-id]"
+        ];
         
-        partyFolders.forEach((folderElement: Element) => {
-            const folder = folderElement as HTMLElement;
-            const actorId = folder.dataset.entryId;
+        let foundPartyActors = false;
+        
+        for (const selector of partySelectors) {
+            const elements = htmlElement.querySelectorAll(selector);
             
-            if (actorId) {
-                console.log(`Found party actor folder with ID: ${actorId}`);
-                
-                // Find where to insert our icon (after the folder name)
-                const folderName = folder.querySelector(".folder-name");
-                if (folderName && !folder.querySelector('.fa-chess-rook')) {
-                    // Insert the Kingdom icon
-                    const kingdomIcon = createKingdomIcon(actorId);
-                    folderName.insertAdjacentElement("afterend", kingdomIcon);
-                    console.log(`Inserted Kingdom icon for actor: ${actorId}`);
-                }
+            if (elements.length > 0) {
+                elements.forEach((element: Element) => {
+                    const elem = element as HTMLElement;
+                    const actorId = elem.dataset.entryId || elem.dataset.documentId || elem.dataset.actorId;
+                    
+                    if (actorId) {
+                        // @ts-ignore
+                        const actor = game.actors?.get(actorId);
+                        
+                        if (actor && actor.type === 'party') {
+                            foundPartyActors = true;
+                            console.log(`Found party actor with ID: ${actorId}`);
+                            
+                            // Find where to insert our icon
+                            const nameElement = elem.querySelector(".document-name, .entity-name, .folder-name");
+                            
+                            if (nameElement && !elem.querySelector('.fa-chess-rook')) {
+                                // Insert the Kingdom icon
+                                const kingdomIcon = createKingdomIcon(actorId);
+                                nameElement.insertAdjacentElement("afterend", kingdomIcon);
+                                console.log(`Inserted Kingdom icon for actor: ${actorId}`);
+                            }
+                        }
+                    }
+                });
             }
-        });
+        }
+        
+        if (!foundPartyActors) {
+            console.log("No party actors found. Checking all actors...");
+            
+            // Fallback: check all actors for party type
+            // @ts-ignore
+            const partyActors = game.actors?.filter((a: any) => a.type === 'party');
+            if (partyActors && partyActors.length > 0) {
+                console.log(`Found ${partyActors.length} party actors in game.actors`);
+                
+                partyActors.forEach((actor: any) => {
+                    // Try to find the element for this actor
+                    const actorElem = htmlElement.querySelector(
+                        `[data-entry-id="${actor.id}"], [data-document-id="${actor.id}"], [data-actor-id="${actor.id}"]`
+                    );
+                    
+                    if (actorElem) {
+                        const nameElement = actorElem.querySelector(".document-name, .entity-name");
+                        
+                        if (nameElement && !actorElem.querySelector('.fa-chess-rook')) {
+                            const kingdomIcon = createKingdomIcon(actor.id);
+                            nameElement.insertAdjacentElement("afterend", kingdomIcon);
+                            console.log(`Inserted Kingdom icon for actor: ${actor.id}`);
+                        }
+                    }
+                });
+            }
+        }
     });
 }
 

@@ -1,13 +1,13 @@
 {
   "id": "magical-discovery",
-  "name": "pf2e-kingdom-lite.events.magical-discovery.name",
-  "description": "pf2e-kingdom-lite.events.magical-discovery.description",
+  "name": "pf2e-reignmaker.events.magical-discovery.name",
+  "description": "pf2e-reignmaker.events.magical-discovery.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.magical-discovery.location",
+  "location": "pf2e-reignmaker.events.magical-discovery.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.magical-discovery.resolution",
+  "resolution": "pf2e-reignmaker.events.magical-discovery.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,15 +20,15 @@
         "occultism"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.magical-discovery.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalSuccess.msg",
         "modifiers": []
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.magical-discovery.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.magical-discovery.stage-0.success.unrest",
+            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.success.unrest",
             "value": -2,
             "selector": "unrest",
             "enabled": true
@@ -36,11 +36,11 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.magical-discovery.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.magical-discovery.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -48,18 +48,18 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.magical-discovery.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.magical-discovery.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.magical-discovery.stage-0.criticalFailure.damage",
+            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.damage",
             "value": 1,
             "selector": "damage_structure",
             "enabled": true
@@ -68,5 +68,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.magical-discovery.special"
+  "special": "pf2e-reignmaker.events.magical-discovery.special"
 }

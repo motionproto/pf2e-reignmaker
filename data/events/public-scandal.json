@@ -1,13 +1,13 @@
 {
   "id": "public-scandal",
-  "name": "pf2e-kingdom-lite.events.public-scandal.name",
-  "description": "pf2e-kingdom-lite.events.public-scandal.description",
+  "name": "pf2e-reignmaker.events.public-scandal.name",
+  "description": "pf2e-reignmaker.events.public-scandal.description",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-kingdom-lite.events.public-scandal.location",
+  "location": "pf2e-reignmaker.events.public-scandal.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.public-scandal.resolution",
+  "resolution": "pf2e-reignmaker.events.public-scandal.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,15 +20,15 @@
         "intimidation"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.public-scandal.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.criticalSuccess.msg",
         "modifiers": []
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.public-scandal.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.public-scandal.stage-0.success.unrest",
+            "name": "pf2e-reignmaker.events.public-scandal.stage-0.success.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -36,11 +36,11 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.public-scandal.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.public-scandal.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.public-scandal.stage-0.failure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
@@ -48,11 +48,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.public-scandal.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.public-scandal.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.public-scandal.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true

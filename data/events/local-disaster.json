@@ -1,13 +1,13 @@
 {
   "id": "local-disaster",
-  "name": "pf2e-kingdom-lite.events.local-disaster.name",
-  "description": "pf2e-kingdom-lite.events.local-disaster.description",
+  "name": "pf2e-reignmaker.events.local-disaster.name",
+  "description": "pf2e-reignmaker.events.local-disaster.description",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-kingdom-lite.events.local-disaster.location",
+  "location": "pf2e-reignmaker.events.local-disaster.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.local-disaster.resolution",
+  "resolution": "pf2e-reignmaker.events.local-disaster.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,15 +20,15 @@
         "society"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.local-disaster.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.criticalSuccess.msg",
         "modifiers": []
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.local-disaster.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.local-disaster.stage-0.success.unrest",
+            "name": "pf2e-reignmaker.events.local-disaster.stage-0.success.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -36,18 +36,18 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.local-disaster.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.local-disaster.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.local-disaster.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.local-disaster.stage-0.failure.damage",
+            "name": "pf2e-reignmaker.events.local-disaster.stage-0.failure.damage",
             "value": 1,
             "selector": "damage_structure",
             "enabled": true
@@ -55,18 +55,18 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.local-disaster.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.local-disaster.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.local-disaster.stage-0.criticalFailure.destroy",
+            "name": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.destroy",
             "value": 1,
             "selector": "destroy_structure",
             "enabled": true
@@ -75,5 +75,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.local-disaster.special"
+  "special": "pf2e-reignmaker.events.local-disaster.special"
 }

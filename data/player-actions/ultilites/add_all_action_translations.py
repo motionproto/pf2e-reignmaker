@@ -526,7 +526,7 @@ ACTION_TRANSLATIONS = {
 
 def add_action_translations(manager, action_id, translations):
     """Add translations for a single action"""
-    base_key = f"pf2e-kingdom-lite.actions.{action_id}"
+    base_key = f"pf2e-reignmaker.actions.{action_id}"
     
     # Add main translations
     manager.set_key(f"{base_key}.name", translations["name"])

@@ -1,13 +1,13 @@
 {
   "id": "grand-tournament",
-  "name": "pf2e-kingdom-lite.events.grand-tournament.name",
-  "description": "pf2e-kingdom-lite.events.grand-tournament.description",
+  "name": "pf2e-reignmaker.events.grand-tournament.name",
+  "description": "pf2e-reignmaker.events.grand-tournament.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.grand-tournament.location",
+  "location": "pf2e-reignmaker.events.grand-tournament.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.grand-tournament.resolution",
+  "resolution": "pf2e-reignmaker.events.grand-tournament.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "performance"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalSuccess.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -32,14 +32,14 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalSuccess.fame",
+            "name": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalSuccess.fame",
             "value": 1,
             "selector": "fame",
             "enabled": true
@@ -47,11 +47,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.grand-tournament.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.grand-tournament.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.grand-tournament.stage-0.success.unrest",
+            "name": "pf2e-reignmaker.events.grand-tournament.stage-0.success.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -59,15 +59,15 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.grand-tournament.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.grand-tournament.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.grand-tournament.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.grand-tournament.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -76,5 +76,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.grand-tournament.special"
+  "special": "pf2e-reignmaker.events.grand-tournament.special"
 }

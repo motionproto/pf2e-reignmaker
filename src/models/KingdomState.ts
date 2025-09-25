@@ -129,14 +129,23 @@ export class KingdomState {
     this.cachedProduction.clear();
     this.cachedProductionByHex = [];
     
+    console.log('Updating production cache for', this.hexes.length, 'hexes');
+    
     // Calculate and cache production for each hex
     this.hexes.forEach(hex => {
       if (hex.worksite) {
+        console.log(`Processing hex ${hex.id}:`, {
+          terrain: hex.terrain,
+          worksite: hex.worksite.type,
+          hasSpecialTrait: hex.hasSpecialTrait
+        });
+        
         const hexProduction = hex.getProduction();
         
         // Store in by-hex cache
         if (hexProduction.size > 0) {
           this.cachedProductionByHex.push([hex, hexProduction]);
+          console.log(`  Production:`, Object.fromEntries(hexProduction));
         }
         
         // Aggregate into total production cache
@@ -151,7 +160,8 @@ export class KingdomState {
     
     console.log('Production cache updated:', {
       total: Object.fromEntries(this.cachedProduction),
-      hexCount: this.cachedProductionByHex.length
+      hexCount: this.cachedProductionByHex.length,
+      hexesWithWorksites: this.hexes.filter(h => h.worksite).length
     });
   }
   

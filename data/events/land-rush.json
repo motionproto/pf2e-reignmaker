@@ -1,13 +1,13 @@
 {
   "id": "land-rush",
-  "name": "pf2e-kingdom-lite.events.land-rush.name",
-  "description": "pf2e-kingdom-lite.events.land-rush.description",
+  "name": "pf2e-reignmaker.events.land-rush.name",
+  "description": "pf2e-reignmaker.events.land-rush.description",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-kingdom-lite.events.land-rush.location",
+  "location": "pf2e-reignmaker.events.land-rush.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.land-rush.resolution",
+  "resolution": "pf2e-reignmaker.events.land-rush.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "intimidation"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.land-rush.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalSuccess.hex",
+            "name": "pf2e-reignmaker.events.land-rush.stage-0.criticalSuccess.hex",
             "value": 2,
             "selector": "hex",
             "enabled": true
@@ -32,11 +32,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.land-rush.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.success.hex",
+            "name": "pf2e-reignmaker.events.land-rush.stage-0.success.hex",
             "value": 1,
             "selector": "hex",
             "enabled": true
@@ -44,11 +44,11 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.land-rush.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.land-rush.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -56,11 +56,11 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.land-rush.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.land-rush.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.land-rush.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
@@ -69,5 +69,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.land-rush.special"
+  "special": "pf2e-reignmaker.events.land-rush.special"
 }

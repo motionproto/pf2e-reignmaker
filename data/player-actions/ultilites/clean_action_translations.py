@@ -31,7 +31,7 @@ def main():
     # Remove old activity translations
     activities_removed = 0
     for activity_key in old_activity_keys:
-        key_pattern = f"pf2e-kingdom-lite.activities.{activity_key}"
+        key_pattern = f"pf2e-reignmaker.activities.{activity_key}"
         
         # Search for all keys starting with this pattern
         matching_keys = manager.search_keys(f"^{key_pattern}")
@@ -42,7 +42,7 @@ def main():
             activities_removed += 1
     
     # Also search for any other activity-related keys we might have missed
-    all_activity_keys = manager.search_keys("pf2e-kingdom-lite\\.activities\\.")
+    all_activity_keys = manager.search_keys("pf2e-reignmaker\\.activities\\.")
     
     for key in all_activity_keys:
         manager.delete_key(key)

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Development Proxy Server for PF2e Kingdom Lite
- * 
+ * Development Proxy Server for PF2e ReignMaker
+ *
  * This script starts a full proxy server that enables complete hot reloading
  * between Vite and Foundry VTT
  */
@@ -33,7 +33,7 @@ function log(message, color = 'reset') {
 }
 
 async function startDevProxy() {
-    log('🚀 Starting PF2e Kingdom Lite Development Proxy...', 'bright');
+    log('🚀 Starting PF2e ReignMaker Development Proxy...', 'bright');
     
     // First, run the setup to ensure module is in place
     log('\n📦 Setting up development module...', 'cyan');
@@ -62,7 +62,7 @@ async function startDevProxy() {
     log('\n📝 Instructions:', 'bright');
     log('1. The Vite dev server is running on http://localhost:5173', 'cyan');
     log('2. Start/restart Foundry VTT', 'cyan');
-    log('3. Enable the "PF2e Kingdom Lite (Dev)" module in your world', 'cyan');
+    log('3. Enable the "PF2e ReignMaker (Dev)" module in your world', 'cyan');
     log('4. Open the Kingdom UI using:', 'cyan');
     log('   - The macro in Foundry', 'blue');
     log('   - Keyboard shortcut: Ctrl+Shift+K', 'blue');

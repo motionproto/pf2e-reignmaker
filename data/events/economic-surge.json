@@ -1,14 +1,14 @@
 {
   "id": "economic-surge",
-  "name": "pf2e-kingdom-lite.events.economic-surge.name",
-  "description": "pf2e-kingdom-lite.events.economic-surge.description",
+  "name": "pf2e-reignmaker.events.economic-surge.name",
+  "description": "pf2e-reignmaker.events.economic-surge.description",
   "traits": [
     "beneficial",
     "continuous"
   ],
-  "location": "pf2e-kingdom-lite.events.economic-surge.location",
+  "location": "pf2e-reignmaker.events.economic-surge.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.economic-surge.resolution",
+  "resolution": "pf2e-reignmaker.events.economic-surge.resolution",
   "resolvedOn": [
     "failure",
     "criticalFailure"
@@ -21,11 +21,11 @@
         "crafting"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.economic-surge.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.economic-surge.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.economic-surge.stage-0.criticalSuccess.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -34,11 +34,11 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.economic-surge.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.success.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.economic-surge.stage-0.success.gold",
+            "name": "pf2e-reignmaker.events.economic-surge.stage-0.success.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -47,15 +47,15 @@
         ]
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.economic-surge.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.economic-surge.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.economic-surge.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.economic-surge.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -64,5 +64,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.economic-surge.special"
+  "special": "pf2e-reignmaker.events.economic-surge.special"
 }

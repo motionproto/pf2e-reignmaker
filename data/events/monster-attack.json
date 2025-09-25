@@ -1,13 +1,13 @@
 {
   "id": "monster-attack",
-  "name": "pf2e-kingdom-lite.events.monster-attack.name",
-  "description": "pf2e-kingdom-lite.events.monster-attack.description",
+  "name": "pf2e-reignmaker.events.monster-attack.name",
+  "description": "pf2e-reignmaker.events.monster-attack.description",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-kingdom-lite.events.monster-attack.location",
+  "location": "pf2e-reignmaker.events.monster-attack.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.monster-attack.resolution",
+  "resolution": "pf2e-reignmaker.events.monster-attack.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "stealth"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.gold",
             "value": 2,
             "selector": "gold",
             "enabled": true,
@@ -32,7 +32,7 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -40,22 +40,22 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.monster-attack.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.success.msg",
         "modifiers": []
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.monster-attack.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.failure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.failure.unrest",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.failure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.failure.damage",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.failure.damage",
             "value": 1,
             "selector": "damage_structure",
             "enabled": true
@@ -63,18 +63,18 @@
         ]
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.unrest",
             "value": 2,
             "selector": "unrest",
             "enabled": true
           },
           {
             "type": "event",
-            "name": "pf2e-kingdom-lite.events.monster-attack.stage-0.criticalFailure.destroy",
+            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.destroy",
             "value": 1,
             "selector": "destroy_structure",
             "enabled": true
@@ -83,5 +83,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.monster-attack.special"
+  "special": "pf2e-reignmaker.events.monster-attack.special"
 }

@@ -20,7 +20,7 @@ under [Apache License 2.0](./src/jsMain/kotlin/com/foundryvtt/LICENSE).
 All images in the [img/structures](./img/structures) and [img/kingdom/backgrounds](./img/kingdom/backgrounds) are
 licensed under [CC0 - Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
 by [Mark Pearce](https://github.com/MarkPearce). They
-were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-kingdom-lite/issues/76).
+were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-reignmaker/issues/76).
 According to their [Terms of Service](https://docs.midjourney.com/docs/terms-of-service), subscribers to MidJourney that
 are not part of a company own all the generated images.
 

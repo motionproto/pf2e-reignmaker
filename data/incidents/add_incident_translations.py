@@ -467,7 +467,7 @@ def add_incident_translations():
     # Add translations for each incident
     added = 0
     for incident_id, incident_data in incidents.items():
-        base_key = f"pf2e-kingdom-lite.incidents.{incident_id}"
+        base_key = f"pf2e-reignmaker.incidents.{incident_id}"
         
         # Add name
         manager.set_key(f"{base_key}.name", incident_data["name"])
@@ -486,9 +486,9 @@ def add_incident_translations():
         added += 1
     
     # Add tier descriptions
-    manager.set_key("pf2e-kingdom-lite.incidents.tiers.minor", "Discontent")
-    manager.set_key("pf2e-kingdom-lite.incidents.tiers.moderate", "Turmoil")
-    manager.set_key("pf2e-kingdom-lite.incidents.tiers.major", "Rebellion")
+    manager.set_key("pf2e-reignmaker.incidents.tiers.minor", "Discontent")
+    manager.set_key("pf2e-reignmaker.incidents.tiers.moderate", "Turmoil")
+    manager.set_key("pf2e-reignmaker.incidents.tiers.major", "Rebellion")
     
     # Export and save changes
     print(f"\nAdding translations for {added} incidents...")
@@ -497,7 +497,7 @@ def add_incident_translations():
     
     # Verify
     manager_verify = LanguageManager()
-    incidents_check = manager_verify.data.get('pf2e-kingdom-lite', {}).get('incidents', {})
+    incidents_check = manager_verify.data.get('pf2e-reignmaker', {}).get('incidents', {})
     print(f"\nVerification: {len(incidents_check)} incidents in translations")
 
 if __name__ == "__main__":

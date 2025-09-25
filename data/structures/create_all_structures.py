@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Create all structure JSON files for PF2e Kingdom Lite.
+Create all structure JSON files for PF2e ReignMaker.
 
 This script generates structure files based on the simplified structure system
 defined in the Reignmaker Lite reference documents.

@@ -1,13 +1,13 @@
 {
   "id": "diplomatic-overture",
-  "name": "pf2e-kingdom-lite.events.diplomatic-overture.name",
-  "description": "pf2e-kingdom-lite.events.diplomatic-overture.description",
+  "name": "pf2e-reignmaker.events.diplomatic-overture.name",
+  "description": "pf2e-reignmaker.events.diplomatic-overture.description",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-kingdom-lite.events.diplomatic-overture.location",
+  "location": "pf2e-reignmaker.events.diplomatic-overture.location",
   "modifier": 0,
-  "resolution": "pf2e-kingdom-lite.events.diplomatic-overture.resolution",
+  "resolution": "pf2e-reignmaker.events.diplomatic-overture.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
@@ -20,11 +20,11 @@
         "deception"
       ],
       "criticalSuccess": {
-        "msg": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.criticalSuccess.msg",
+        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.criticalSuccess.gold",
+            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.gold",
             "value": 1,
             "selector": "gold",
             "enabled": true,
@@ -32,7 +32,7 @@
           },
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.criticalSuccess.unrest",
+            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.unrest",
             "value": -1,
             "selector": "unrest",
             "enabled": true
@@ -40,19 +40,19 @@
         ]
       },
       "success": {
-        "msg": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.success.msg",
+        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.success.msg",
         "modifiers": []
       },
       "failure": {
-        "msg": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.failure.msg",
+        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.failure.msg",
         "modifiers": []
       },
       "criticalFailure": {
-        "msg": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.criticalFailure.msg",
+        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalFailure.msg",
         "modifiers": [
           {
             "type": "untyped",
-            "name": "pf2e-kingdom-lite.events.diplomatic-overture.stage-0.criticalFailure.unrest",
+            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalFailure.unrest",
             "value": 1,
             "selector": "unrest",
             "enabled": true
@@ -61,5 +61,5 @@
       }
     }
   ],
-  "special": "pf2e-kingdom-lite.events.diplomatic-overture.special"
+  "special": "pf2e-reignmaker.events.diplomatic-overture.special"
 }

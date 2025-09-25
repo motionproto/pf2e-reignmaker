@@ -38,8 +38,8 @@ if (!km?.state?.hexes) {
     console.log("Sample claimed hexes:", claimedHexes.slice(0, 3));
     
     // Try to access the kingdom store directly
-    if (window.game?.modules?.get('pf2e-kingdom-lite')) {
-        console.log("PF2e Kingdom Lite module found");
+    if (window.game?.modules?.get('pf2e-reignmaker')) {
+        console.log("PF2e ReignMaker module found");
         
         // Try to manually update the store
         // This is a hack to bypass the import issue
@@ -48,7 +48,7 @@ if (!km?.state?.hexes) {
             const result = eval(`
                 (() => {
                     // Try to access the stores from the global context
-                    const storeModule = window.__pf2e_kingdom_lite_stores;
+                    const storeModule = window.__pf2e_reignmaker_stores;
                     if (storeModule && storeModule.kingdomState) {
                         console.log("Found kingdom store via global");
                         // Update would go here
