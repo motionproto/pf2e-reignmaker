@@ -64,6 +64,8 @@
             }
          });
          
+         // Marking the step as completed automatically marks the phase as complete
+         // when all required steps are done, which enables the "Next Phase" button
          markPhaseStepCompleted('resources-collect');
       } catch (error) {
          console.error('Error collecting resources:', error);
@@ -99,6 +101,23 @@
          {collectCompleted ? 'Resources Collected' : 'Collect Resources'}
       </Button>
    </div>
+   
+   <!-- Show what was collected after clicking the button -->
+   {#if collectCompleted && lastCollectionResult}
+      <div class="collection-results">
+         <h4>Resources Collected This Turn:</h4>
+         <div class="collected-items">
+            {#each Array.from(lastCollectionResult.totalCollected.entries()) as [resource, amount]}
+               {#if amount > 0}
+                  <div class="collected-item">
+                     <i class="fas {resourceConfig[resource]?.icon}" style="color: {resourceConfig[resource]?.color};"></i>
+                     <span class="collected-amount">+{amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}</span>
+                  </div>
+               {/if}
+            {/each}
+         </div>
+      </div>
+   {/if}
    
    <!-- Phase Step -->
    <div class="phase-steps-container">
@@ -414,6 +433,50 @@
       display: flex;
       justify-content: center;
       padding: 0;
+   }
+   
+   .collection-results {
+      background: linear-gradient(135deg, 
+         rgba(34, 197, 94, 0.15),
+         rgba(24, 24, 27, 0.3));
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-green-border);
+      text-align: center;
+      
+      h4 {
+         margin: 0 0 15px 0;
+         color: var(--text-primary);
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+      }
+   }
+   
+   .collected-items {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+   }
+   
+   .collected-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      
+      i {
+         font-size: 20px;
+      }
+      
+      .collected-amount {
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         font-weight: 600;
+      }
    }
    
    .collect-button {

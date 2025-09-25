@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { gameState, isCurrentPhaseComplete } from '../../../stores/gameState';
+  import { gameState, isPhaseComplete } from '../../../stores/gameState';
+  import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   
   export let title: string;
@@ -10,8 +11,30 @@
   export let isUpkeepPhase: boolean = false;
   export let currentTurn: number = 1;
   
-  // Check if the current phase is complete
-  $: currentPhaseComplete = isCurrentPhaseComplete();
+  // Define required steps for checking phase completion
+  const PHASE_REQUIRED_STEPS = new Map([
+    [TurnPhase.PHASE_I, ['gain-fame', 'apply-modifiers']],
+    [TurnPhase.PHASE_II, ['resources-collect']],
+    [TurnPhase.PHASE_III, ['calculate-unrest']],
+    [TurnPhase.PHASE_IV, ['resolve-event']],
+    [TurnPhase.PHASE_V, []],  // No required steps
+    [TurnPhase.PHASE_VI, ['upkeep-complete']],
+  ]);
+  
+  let currentPhaseComplete = false;
+  
+  // Check if the current phase is complete - fully reactive to store changes
+  $: {
+    const requiredSteps = PHASE_REQUIRED_STEPS.get($gameState.currentPhase) || [];
+    if (requiredSteps.length === 0) {
+      currentPhaseComplete = true; // Actions phase is always "complete"
+    } else {
+      // Check if all required steps are completed
+      currentPhaseComplete = requiredSteps.every(step => 
+        $gameState.phaseStepsCompleted.get(step) === true
+      );
+    }
+  }
   
   let headerElement: HTMLElement;
   let previousTitle = '';

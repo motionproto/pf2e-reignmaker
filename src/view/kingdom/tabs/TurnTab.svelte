@@ -55,7 +55,7 @@
       description={phaseInfo.description}
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
-      isUpkeepPhase={actualPhase === TurnPhase.PHASE_VI}
+      isUpkeepPhase={displayPhase === TurnPhase.PHASE_VI}
       currentTurn={$gameState.currentTurn}
    />
    

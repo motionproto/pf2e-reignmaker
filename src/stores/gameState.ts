@@ -1,6 +1,9 @@
 import { writable, get } from 'svelte/store';
 import { TurnPhase } from '../models/KingdomState';
 import { EventManager } from '../models/Events';
+import { kingdomState } from '../stores/kingdom';
+import { IncidentManager } from '../models/Incidents';
+import type { Writable } from 'svelte/store';
 
 /**
  * Game state store for managing game flow, turn progression, and UI state
@@ -178,6 +181,9 @@ export function canOperatePhase(phase: TurnPhase): boolean {
 }
 
 export function markPhaseStepCompleted(stepId: string) {
+  // Get kingdom state (imported at module level)
+  const kingdom = get(kingdomState);
+  
   gameState.update(state => {
     const newSteps = new Map(state.phaseStepsCompleted);
     newSteps.set(stepId, true);
@@ -188,10 +194,20 @@ export function markPhaseStepCompleted(stepId: string) {
       phaseStepsCompleted: newSteps
     };
     
+    // Auto-complete related steps based on game rules (synchronous)
+    // Status Phase: If gain-fame is done and no modifiers exist, auto-complete apply-modifiers
+    if (stepId === 'gain-fame' && state.currentPhase === TurnPhase.PHASE_I) {
+      const hasModifiers = kingdom.ongoingModifiers && kingdom.ongoingModifiers.length > 0;
+      if (!hasModifiers && !updatedState.phaseStepsCompleted.get('apply-modifiers')) {
+        updatedState.phaseStepsCompleted.set('apply-modifiers', true);
+        console.log('[gameState] Auto-completed apply-modifiers (no modifiers exist)');
+      }
+    }
+    
     // After updating steps, check if current phase is now complete
     const requiredSteps = PHASE_REQUIRED_STEPS.get(state.currentPhase) || [];
     const phaseNowComplete = requiredSteps.length > 0 && 
-      requiredSteps.every(step => newSteps.get(step) === true);
+      requiredSteps.every(step => updatedState.phaseStepsCompleted.get(step) === true);
     
     if (phaseNowComplete && !state.phasesCompleted.has(state.currentPhase)) {
       const newPhasesCompleted = new Set(state.phasesCompleted);
@@ -202,6 +218,23 @@ export function markPhaseStepCompleted(stepId: string) {
     
     return updatedState;
   });
+}
+
+// Check phase-specific conditions for auto-completion
+export function checkPhaseAutoCompletions(phase: TurnPhase) {
+  const kingdom = get(kingdomState);
+  const state = get(gameState);
+  
+  // Unrest Phase: Auto-complete if kingdom is stable
+  if (phase === TurnPhase.PHASE_III) {
+    const currentUnrest = kingdom.unrest || 0;
+    const tier = IncidentManager.getUnrestTier(currentUnrest);
+    
+    if (tier === 0 && !state.phaseStepsCompleted.get('calculate-unrest')) {
+      markPhaseStepCompleted('calculate-unrest');
+      console.log('[gameState] Auto-completed calculate-unrest (kingdom is stable)');
+    }
+  }
 }
 
 export function isPhaseStepCompleted(stepId: string): boolean {

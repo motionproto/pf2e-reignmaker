@@ -1,7 +1,8 @@
 <script lang="ts">
    import { kingdomState } from '../../../stores/kingdom';
    import { IncidentManager, type Incident, type IncidentLevel } from '../../../models/Incidents';
-   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import { markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/gameState';
+   import { TurnPhase } from '../../../models/KingdomState';
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
    import { initializeRollResultHandler } from '../../../api/foundry-actors';
    import { onMount, onDestroy } from 'svelte';
@@ -24,6 +25,11 @@
    $: tierName = IncidentManager.getUnrestTierName(tier);
    $: penalty = IncidentManager.getUnrestPenalty(currentUnrest);
    $: incidentLevel = IncidentManager.getIncidentLevel(tier);
+   
+   // Check for auto-completions when component mounts or tier changes
+   $: if (tier === 0) {
+      checkPhaseAutoCompletions(TurnPhase.PHASE_III);
+   }
    
    // Get tier-based styling class
    function getTierClass(tierName: string): string {

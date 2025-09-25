@@ -17,6 +17,12 @@
    // Check if fame is at maximum
    $: fameAtMax = $kingdomState.fame >= MAX_FAME;
    
+   // Check if there are any modifiers to apply
+   $: hasModifiers = $kingdomState.ongoingModifiers && $kingdomState.ongoingModifiers.length > 0;
+   
+   // Note: Auto-completion of apply-modifiers when no modifiers exist
+   // is now handled centrally in gameState's handleAutoCompletions function
+   
    function gainFame() {
       if (!canOperate) {
          console.warn('Cannot operate Status Phase - previous phases not complete');
@@ -103,23 +109,31 @@
          </div>
       </div>
       
-      <div class="phase-step" class:completed={applyModifiersCompleted}>
+      <div class="phase-step" class:completed={applyModifiersCompleted || (!hasModifiers && gainFameCompleted)}>
          <Button
             variant="secondary"
             on:click={applyOngoingModifiers}
-            disabled={applyModifiersCompleted || !canOperate}
-            icon={applyModifiersCompleted ? 'fas fa-check' : 'fas fa-magic'}
-            tooltip={!canOperate ? 'Complete previous phases first' : undefined}
+            disabled={applyModifiersCompleted || !canOperate || !hasModifiers}
+            icon={applyModifiersCompleted && hasModifiers ? 'fas fa-check' : (!hasModifiers ? 'fas fa-ban' : 'fas fa-magic')}
+            tooltip={!canOperate ? 'Complete previous phases first' : !hasModifiers ? 'No modifiers exist to apply' : undefined}
          >
-            {#if applyModifiersCompleted}
+            {#if applyModifiersCompleted && hasModifiers}
                Modifiers Applied
+            {:else if !hasModifiers}
+               No Modifiers (Skipped)
             {:else if !canOperate}
                Complete Previous Phases
             {:else}
                Apply Ongoing Modifiers
             {/if}
          </Button>
-         <p class="step-description">Apply all ongoing effects and reduce their duration.</p>
+         <p class="step-description">
+            {#if !hasModifiers}
+               No ongoing modifiers to apply this turn.
+            {:else}
+               Apply all ongoing effects and reduce their duration.
+            {/if}
+         </p>
          
          {#if $kingdomState.ongoingModifiers.length > 0}
             <div class="modifiers-list">

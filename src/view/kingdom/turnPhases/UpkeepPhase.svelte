@@ -22,6 +22,16 @@
    $: unsupportedCount = $unsupportedArmies || 0;
    $: armyCount = $kingdomState.armies.length;
    
+   // Auto-complete military step if no armies
+   $: if (armyCount === 0 && !militaryCompleted) {
+      markPhaseStepCompleted('upkeep-military');
+   }
+   
+   // Auto-complete build step if no build queue
+   $: if ($kingdomState.buildQueue.length === 0 && !buildCompleted) {
+      markPhaseStepCompleted('upkeep-build');
+   }
+   
    function handleFoodConsumption() {
       try {
          const state = get(kingdomState);
@@ -220,7 +230,7 @@
             class="step-button"
          >
             {#if consumeCompleted}
-               <i class="fas fa-check"></i> Consumption Paid
+               <i class="fas fa-check"></i> Food Consumption Paid
             {:else}
                <i class="fas fa-utensils"></i> Pay Food Consumption
             {/if}
@@ -272,23 +282,16 @@
                class="step-button"
             >
                {#if militaryCompleted}
-                  <i class="fas fa-check"></i> Support Processed
+                  <i class="fas fa-check"></i> Military Support Processed
                {:else}
                   <i class="fas fa-flag"></i> Process Military Support
                {/if}
             </button>
          {:else}
-            <button 
-               on:click={() => markPhaseStepCompleted('upkeep-military')} 
-               disabled={militaryCompleted}
-               class="step-button"
-            >
-               {#if militaryCompleted}
-                  <i class="fas fa-check"></i> No Armies to Support
-               {:else}
-                  <i class="fas fa-flag"></i> Skip (No Armies)
-               {/if}
-            </button>
+            <div class="auto-skipped">
+               <i class="fas fa-ban"></i>
+               <span>No Armies to Support (Skipped)</span>
+            </div>
          {/if}
       </div>
       
@@ -348,17 +351,10 @@
             </button>
          {:else}
             <div class="info-text">No construction projects in queue</div>
-            <button 
-               on:click={() => markPhaseStepCompleted('upkeep-build')} 
-               disabled={buildCompleted}
-               class="step-button"
-            >
-               {#if buildCompleted}
-                  <i class="fas fa-check"></i> No Projects
-               {:else}
-                  <i class="fas fa-hammer"></i> Skip (No Projects)
-               {/if}
-            </button>
+            <div class="auto-skipped">
+               <i class="fas fa-ban"></i>
+               <span>No Construction Projects (Skipped)</span>
+            </div>
          {/if}
       </div>
       
@@ -401,8 +397,7 @@
       <button 
          class="end-turn-button" 
          on:click={endTurn}
-         disabled={!consumeCompleted || (!militaryCompleted && armyCount > 0) || 
-                   (!buildCompleted && $kingdomState.buildQueue.length > 0) || !resolveCompleted}
+         disabled={!consumeCompleted || !militaryCompleted || !buildCompleted || !resolveCompleted}
       >
          <i class="fas fa-check-circle"></i>
          End Turn {$gameState.currentTurn} and Start Turn {$gameState.currentTurn + 1}
@@ -745,6 +740,27 @@
       margin-top: 20px;
       display: flex;
       justify-content: center;
+   }
+   
+   .auto-skipped {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: var(--radius-md);
+      color: var(--text-tertiary);
+      margin-top: 10px;
+      
+      i {
+         color: var(--text-tertiary);
+         opacity: 0.7;
+      }
+      
+      span {
+         font-size: var(--type-body-size);
+      }
    }
    
    .end-turn-button {

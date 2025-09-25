@@ -22,6 +22,12 @@
    $: continuousEvents = $kingdomState.continuousEvents;
    $: eventDC = $gameState.eventDC;
    
+   // If there's no current event and we haven't rolled yet, we need to check for events
+   // But if already checked, phase is complete
+   $: if (!currentEvent && eventChecked) {
+      // Phase is already complete if we've checked and there's no event
+   }
+   
    function performStabilityCheck() {
       isRolling = true;
       showStabilityResult = false;
@@ -267,12 +273,9 @@
          </div>
       </div>
    {:else}
-      <!-- Stability Check Section -->
+      <!-- Event Check Section -->
       <div class="stability-check-section">
-         <h3>Kingdom Events Check</h3>
-         <p class="event-description">
-            The kingdom must make a Stability Check to see if an event occurs this turn.
-         </p>
+         <h3>Roll for Event</h3>
          <div class="dc-info">
             <span class="dc-label">Event DC:</span>
             <span class="dc-value">{eventDC}</span>
@@ -286,11 +289,11 @@
             iconPosition="left"
          >
             {#if eventChecked}
-               Event Resolved
+               Event Checked
             {:else if isRolling}
                Rolling...
             {:else}
-               Roll Stability Check
+               Roll for Event
             {/if}
          </Button>
          
