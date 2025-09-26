@@ -148,7 +148,7 @@
       </div>
       {#if actorName}
          <div class="resolution-header-right">
-            {actorName}{#if skillName} used {skillName}{/if}
+            {actorName}{#if skillName}&nbsp;used {skillName}{/if}
          </div>
       {/if}
    </div>
