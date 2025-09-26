@@ -53,8 +53,14 @@ export default defineConfig({
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Allow-Credentials': 'true'
+    },
+    fs: {
+      // Allow serving files from the dist folder
+      allow: ['..', 'dist']
     }
   },
+
+  publicDir: 'dist',  // Serve dist folder as static files
 
   css: {
     postcss: {

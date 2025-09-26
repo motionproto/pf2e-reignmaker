@@ -1,65 +1,77 @@
 {
   "id": "diplomatic-overture",
-  "name": "pf2e-reignmaker.events.diplomatic-overture.name",
-  "description": "pf2e-reignmaker.events.diplomatic-overture.description",
+  "name": "Diplomatic Overture",
+  "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.diplomatic-overture.location",
+  "location": "Choose or roll for a neighboring kingdom",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.diplomatic-overture.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "- If you have Civic & Governance structures, gain an untyped bonus equal to the tier to the check - Cannot establish Helpful relations without appropriate diplomatic capacity (see Diplomatic Relations rules) - If relations are already Helpful, critical success grants 2 Gold instead",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Diplomatic Overture expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "diplomacy",
-        "society",
-        "deception"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.diplomatic-overture.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "diplomacy",
+      "description": "formal negotiations"
+    },
+    {
+      "skill": "society",
+      "description": "cultural exchange"
+    },
+    {
+      "skill": "deception",
+      "description": "gain advantage"
     }
   ],
-  "special": "pf2e-reignmaker.events.diplomatic-overture.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Relations improve by one step; if now Helpful, +1 Gold and -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Relations improve by one step",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Relations improve by one step",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Relations improve by one step (max Friendly without diplomatic structures)",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "No change in relations; minor diplomatic friction",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Relations worsen by one step; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Relations worsen by one step",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

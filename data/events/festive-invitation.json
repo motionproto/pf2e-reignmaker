@@ -1,74 +1,86 @@
 {
   "id": "festive-invitation",
-  "name": "pf2e-reignmaker.events.festive-invitation.name",
-  "description": "pf2e-reignmaker.events.festive-invitation.description",
+  "name": "Festive Invitation",
+  "description": "A neighboring kingdom invites your leaders to a grand festival.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.festive-invitation.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.festive-invitation.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you bring at least 1 Resource as a gift, gain +2 to the check.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Festive Invitation expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "diplomacy",
-        "performance",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.festive-invitation.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.festive-invitation.stage-0.criticalSuccess.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.festive-invitation.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.festive-invitation.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.festive-invitation.stage-0.success.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.festive-invitation.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.festive-invitation.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.festive-invitation.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "diplomacy",
+      "description": "formal attendance"
+    },
+    {
+      "skill": "performance",
+      "description": "entertain hosts"
+    },
+    {
+      "skill": "society",
+      "description": "navigate customs"
     }
   ],
-  "special": "pf2e-reignmaker.events.festive-invitation.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Great success; Gold equal to Resources brought +1, -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Great success",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Great success",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Pleasant visit; Gold equal to Resources brought",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Pleasant visit",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Adequate visit; gifts not reciprocated",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Diplomatic faux pas; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Diplomatic faux pas",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

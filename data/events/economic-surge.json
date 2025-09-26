@@ -1,68 +1,80 @@
 {
   "id": "economic-surge",
-  "name": "pf2e-reignmaker.events.economic-surge.name",
-  "description": "pf2e-reignmaker.events.economic-surge.description",
+  "name": "Economic Surge",
+  "description": "Trade and productivity boom throughout your kingdom.",
   "traits": [
     "beneficial",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.economic-surge.location",
+  "location": "Kingdom-wide (check in capital or largest settlement)",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.economic-surge.resolution",
   "resolvedOn": [
     "failure",
     "criticalFailure"
   ],
-  "stages": [
+  "special": "Commerce structures provide an untyped bonus equal to the tier to checks.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Economic Surge expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "society",
-        "diplomacy",
-        "crafting"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.economic-surge.stage-0.criticalSuccess.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.economic-surge.stage-0.success.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.economic-surge.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.economic-surge.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "society",
+      "description": "manage growth"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "attract traders"
+    },
+    {
+      "skill": "crafting",
+      "description": "increase production"
     }
   ],
-  "special": "pf2e-reignmaker.events.economic-surge.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Trade bonanza; +2 Gold this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Trade bonanza",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Steady growth; +1 Gold this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Steady growth",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Surge slows; **event ends**",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Economic bubble bursts; +1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Economic bubble bursts",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

@@ -5,6 +5,7 @@ import { Hex } from './Hex';
 import type { KingdomEvent } from './Events';
 import type { Settlement } from './Settlement';
 import { SettlementTier, SettlementTierConfig } from './Settlement';
+import type { KingdomModifier } from './Modifiers';
 
 // Re-export for backward compatibility
 export { SettlementTier, SettlementTierConfig };
@@ -54,16 +55,6 @@ export const TurnPhaseConfig = {
   [TurnPhase.PHASE_VI]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }
 };
 
-/**
- * Represents an ongoing modifier or effect
- */
-export interface Modifier {
-  name: string;
-  description: string;
-  effect: (state: KingdomState) => void;
-  duration: number; // -1 for permanent, otherwise number of turns
-  remainingTurns: number;
-}
 
 /**
  * Represents the current state of a kingdom
@@ -117,8 +108,8 @@ export class KingdomState {
   currentEvent: KingdomEvent | null = null;
   continuousEvents: KingdomEvent[] = [];
   
-  // Modifiers and effects
-  ongoingModifiers: Modifier[] = [];
+  // Modifiers and effects (from unresolved events, trade agreements, etc.)
+  modifiers: KingdomModifier[] = [];
   
   /**
    * Update cached production values - should be called whenever hexes change

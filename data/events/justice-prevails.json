@@ -1,73 +1,86 @@
 {
   "id": "justice-prevails",
-  "name": "pf2e-reignmaker.events.justice-prevails.name",
-  "description": "pf2e-reignmaker.events.justice-prevails.description",
+  "name": "Justice Prevails",
+  "description": "Authorities catch a notorious criminal or resolve a major injustice.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.justice-prevails.location",
+  "location": "Capital or largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.justice-prevails.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you have Civic & Governance structures, gain an untyped bonus equal to the tier to the check.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Justice Prevails expires",
+      "transformsTo": "miscarriage-of-justice"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "intimidation",
-        "diplomacy",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.justice-prevails.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.justice-prevails.stage-0.criticalSuccess.unrest",
-            "value": -2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.justice-prevails.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.justice-prevails.stage-0.success.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.justice-prevails.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.justice-prevails.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.justice-prevails.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.justice-prevails.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "intimidation",
+      "description": "show of force"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "public ceremony"
+    },
+    {
+      "skill": "society",
+      "description": "legal proceedings"
     }
   ],
-  "special": "pf2e-reignmaker.events.justice-prevails.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Major triumph; -2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major triumph",
+          "value": -2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Justice served; -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Justice served",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Justice with complications; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Justice with complications",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Miscarriage of justice; +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Miscarriage of justice",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

@@ -1,64 +1,81 @@
 {
   "id": "public-scandal",
-  "name": "pf2e-reignmaker.events.public-scandal.name",
-  "description": "pf2e-reignmaker.events.public-scandal.description",
+  "name": "Public Scandal",
+  "description": "A leader is implicated in an embarrassing or criminal situation.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.public-scandal.location",
+  "location": "Random PC",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.public-scandal.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "deception",
-        "diplomacy",
-        "intimidation"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.criticalSuccess.msg",
-        "modifiers": []
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.public-scandal.stage-0.success.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.public-scandal.stage-0.failure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.public-scandal.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.public-scandal.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+  "ifUnresolved": {
+    "type": "autoResolve",
+    "autoResolve": {
+      "outcome": "failure",
+      "message": "pf2e-reignmaker.events.public-scandal.unresolved.msg"
+    },
+    "transforms": {
+      "newEventId": "ongoing-scandal",
+      "message": "pf2e-reignmaker.events.public-scandal.unresolved.transforms"
     }
-  ]
+  },
+  "skills": [
+    {
+      "skill": "deception",
+      "description": "cover up"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "public apology"
+    },
+    {
+      "skill": "intimidation",
+      "description": "silence critics"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Scandal deflected; no effect",
+      "modifiers": []
+    },
+    "success": {
+      "msg": "Damage controlled; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Damage controlled",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Public outrage; +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Public outrage",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Leader must lay low; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Leader must lay low",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

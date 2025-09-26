@@ -1,87 +1,104 @@
 {
   "id": "monster-attack",
-  "name": "pf2e-reignmaker.events.monster-attack.name",
-  "description": "pf2e-reignmaker.events.monster-attack.description",
+  "name": "Monster Attack",
+  "description": "A dangerous creature attacks a settlement or travellers.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.monster-attack.location",
+  "location": "Random settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.monster-attack.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If the settlement has Fortifications, gain an untyped bonus equal to the tier to checks.",
+  "ifUnresolved": {
+    "type": "autoResolve",
+    "autoResolve": {
+      "outcome": "failure",
+      "message": "pf2e-reignmaker.events.monster-attack.unresolved.msg"
+    },
+    "transforms": {
+      "newEventId": "monster-lair-nearby",
+      "message": "pf2e-reignmaker.events.monster-attack.unresolved.transforms"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "intimidation",
-        "nature",
-        "stealth"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.failure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.monster-attack.stage-0.criticalFailure.destroy",
-            "value": 1,
-            "selector": "destroy_structure",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "intimidation",
+      "description": "drive it off"
+    },
+    {
+      "skill": "nature",
+      "description": "understand and redirect"
+    },
+    {
+      "skill": "stealth",
+      "description": "track and ambush"
     }
   ],
-  "special": "pf2e-reignmaker.events.monster-attack.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Monster defeated; trophy worth 2 Gold, -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Monster defeated",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Monster defeated",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Monster driven away; no negative effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Monster causes damage; one structure becomes damaged, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Monster causes damage",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Monster causes damage",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Monster rampages; one structure becomes destroyed, +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Monster rampages",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Monster rampages",
+          "value": 1,
+          "selector": "destroy_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

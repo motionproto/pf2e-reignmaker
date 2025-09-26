@@ -1,74 +1,102 @@
 {
   "id": "feud",
-  "name": "pf2e-reignmaker.events.feud.name",
-  "description": "pf2e-reignmaker.events.feud.description",
+  "name": "Feud",
+  "description": "Rival factions from different settlements escalate their conflict.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.feud.location",
+  "location": "Two settlements (if less than 2, no effect)",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.feud.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "diplomacy",
-        "intimidation",
-        "deception"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.feud.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.feud.stage-0.criticalSuccess.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.feud.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.feud.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.feud.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.feud.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.feud.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.feud.stage-0.criticalFailure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
+  "special": "pf2e-reignmaker.events.feud.special",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Feud",
+        "description": "Each turn: +1 Unrest (Failure result). Feud escalates and disrupts trade between settlements.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "intimidation",
+            "deception"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "mediate peace"
+    },
+    {
+      "skill": "intimidation",
+      "description": "enforce order"
+    },
+    {
+      "skill": "deception",
+      "description": "manipulate resolution"
+    }
   ],
-  "special": "pf2e-reignmaker.events.feud.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Feud ended, rivals become allies; +1 Gold, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Feud ended, rivals become allies",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Feud resolved; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Feud disrupts trade; +1 Unrest,",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Feud disrupts trade",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Private war erupts; +2 Unrest, a random structure becomes damaged in one of the settlements",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Private war erupts",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Private war erupts",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

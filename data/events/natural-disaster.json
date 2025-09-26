@@ -1,74 +1,91 @@
 {
   "id": "natural-disaster",
-  "name": "pf2e-reignmaker.events.natural-disaster.name",
-  "description": "pf2e-reignmaker.events.natural-disaster.description",
+  "name": "Natural Disaster",
+  "description": "Earthquake, tornado, wildfire, or severe flooding strikes the kingdom.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.natural-disaster.location",
+  "location": "a random worksite and 2 adjacent hexes (roll 1d6)",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.natural-disaster.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "Can spend 1 Gold per hex before rolling to gain +2 to that check (emergency supplies). If one of the adjacent hexes has a settlement, treat it as a Local Disaster for that settlement.",
+  "ifUnresolved": {
+    "type": "autoResolve",
+    "autoResolve": {
+      "outcome": "failure",
+      "message": "pf2e-reignmaker.events.natural-disaster.unresolved.msg"
+    },
+    "transforms": {
+      "newEventId": "relief-efforts",
+      "message": "pf2e-reignmaker.events.natural-disaster.unresolved.transforms"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "survival",
-        "crafting",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.natural-disaster.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.natural-disaster.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.natural-disaster.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.natural-disaster.stage-0.success.resources",
-            "value": -1,
-            "selector": "resources",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.natural-disaster.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.natural-disaster.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.natural-disaster.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.natural-disaster.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "survival",
+      "description": "evacuation and rescue"
+    },
+    {
+      "skill": "crafting",
+      "description": "emergency shelters"
+    },
+    {
+      "skill": "society",
+      "description": "coordinate relief"
     }
   ],
-  "special": "pf2e-reignmaker.events.natural-disaster.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Minimal damage; citizens impressed by response, -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Minimal damage",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Some damage; lose 1 Resource from this hex",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Some damage",
+          "value": -1,
+          "selector": "resources",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Major damage; lose all production from the hex this turn, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major damage",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Devastating losses. Any worksites are removed from the hex, +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Devastating losses. Any worksites are removed from the hex",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

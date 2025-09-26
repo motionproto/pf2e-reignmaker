@@ -1,64 +1,76 @@
 {
   "id": "military-exercises",
-  "name": "pf2e-reignmaker.events.military-exercises.name",
-  "description": "pf2e-reignmaker.events.military-exercises.description",
+  "name": "Military Exercises",
+  "description": "Your kingdom conducts large-scale military training maneuvers.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.military-exercises.location",
+  "location": "Settlement with military structures or the largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.military-exercises.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you have Military & Training structures, gain an untyped bonus equal to their tier to the check.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Military Exercises expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "athletics",
-        "acrobatics",
-        "intimidation"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.military-exercises.stage-0.criticalFailure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "athletics",
+      "description": "physical conditioning drills"
+    },
+    {
+      "skill": "acrobatics",
+      "description": "agility and combat maneuvers"
+    },
+    {
+      "skill": "intimidation",
+      "description": "discipline and morale"
     }
   ],
-  "special": "pf2e-reignmaker.events.military-exercises.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Elite forces trained",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Training is ineffective;",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Training accident; +1 Unrest, one military structure becomes damaged",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Training accident",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Training accident",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

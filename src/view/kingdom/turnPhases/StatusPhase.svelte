@@ -18,7 +18,7 @@
    $: fameAtMax = $kingdomState.fame >= MAX_FAME;
    
    // Check if there are any modifiers to apply
-   $: hasModifiers = $kingdomState.ongoingModifiers && $kingdomState.ongoingModifiers.length > 0;
+   $: hasModifiers = $kingdomState.modifiers && $kingdomState.modifiers.length > 0;
    
    // Note: Auto-completion of apply-modifiers when no modifiers exist
    // is now handled centrally in gameState's handleAutoCompletions function
@@ -47,16 +47,25 @@
       
       // Apply ongoing modifiers
       kingdomState.update(state => {
-         state.ongoingModifiers.forEach(modifier => {
-            modifier.effect(state);
-            if (modifier.duration > 0) {
-               modifier.remainingTurns--;
-            }
-         });
-         // Remove expired modifiers
-         state.ongoingModifiers = state.ongoingModifiers.filter(
-            m => m.duration === -1 || m.remainingTurns > 0
-         );
+         if (state.modifiers && state.modifiers.length > 0) {
+            // Apply modifier effects
+            state.modifiers.forEach(modifier => {
+               // Apply turn effects if modifier has them
+               if (modifier.effects) {
+                  // Apply resource effects
+                  if (modifier.effects.gold) {
+                     const currentGold = state.resources.get('gold') || 0;
+                     state.resources.set('gold', Math.max(0, currentGold + modifier.effects.gold));
+                  }
+                  if (modifier.effects.unrest) {
+                     state.unrest = Math.max(0, state.unrest + modifier.effects.unrest);
+                  }
+                  if (modifier.effects.fame) {
+                     state.fame = Math.max(0, Math.min(3, state.fame + modifier.effects.fame));
+                  }
+               }
+            });
+         }
          return state;
       });
       markPhaseStepCompleted('apply-modifiers');
@@ -135,18 +144,22 @@
             {/if}
          </p>
          
-         {#if $kingdomState.ongoingModifiers.length > 0}
+         {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
             <div class="modifiers-list">
                <h5>Active Modifiers:</h5>
                <ul>
-                  {#each $kingdomState.ongoingModifiers as modifier}
+                  {#each $kingdomState.modifiers as modifier}
                      <li class="modifier-item">
                         <strong>{modifier.name}</strong>
                         {#if modifier.description}
                            <span class="modifier-description">: {modifier.description}</span>
                         {/if}
-                        {#if modifier.duration > 0}
-                           <span class="modifier-duration">({modifier.remainingTurns} turns remaining)</span>
+                        {#if typeof modifier.duration === 'number' && modifier.duration > 0}
+                           <span class="modifier-duration">({modifier.duration} turns remaining)</span>
+                        {:else if modifier.duration === 'until-resolved'}
+                           <span class="modifier-duration">(Until Resolved)</span>
+                        {:else if modifier.duration === 'permanent'}
+                           <span class="modifier-duration">(Permanent)</span>
                         {/if}
                      </li>
                   {/each}
@@ -159,11 +172,12 @@
    <div class="phase-summary">
       <h4>Phase Summary:</h4>
       <p>Current Fame: {$kingdomState.fame} / {MAX_FAME}</p>
-      <p>Active Modifiers: {$kingdomState.ongoingModifiers.length}</p>
-      {#if $kingdomState.ongoingModifiers.length > 0}
+      <p>Active Modifiers: {$kingdomState.modifiers ? $kingdomState.modifiers.length : 0}</p>
+      {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
          <p class="modifier-count">
-            {$kingdomState.ongoingModifiers.filter(m => m.duration > 0).length} temporary, 
-            {$kingdomState.ongoingModifiers.filter(m => m.duration === -1).length} permanent
+            {$kingdomState.modifiers.filter(m => typeof m.duration === 'number').length} temporary, 
+            {$kingdomState.modifiers.filter(m => m.duration === 'permanent').length} permanent,
+            {$kingdomState.modifiers.filter(m => m.duration === 'until-resolved').length} until resolved
          </p>
       {/if}
    </div>

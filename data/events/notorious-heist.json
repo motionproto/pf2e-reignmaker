@@ -1,89 +1,101 @@
 {
   "id": "notorious-heist",
-  "name": "pf2e-reignmaker.events.notorious-heist.name",
-  "description": "pf2e-reignmaker.events.notorious-heist.description",
+  "name": "Notorious Heist",
+  "description": "A daring theft threatens your kingdom's security and reputation.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.notorious-heist.location",
+  "location": "Largest settlement with valuable structures",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.notorious-heist.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you have Crime & Intrigue structures, gain an untyped bonus equal to their tier to the check. If you have no treasury or commerce structures, the thieves find nothing (automatic success).",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Notorious Heist expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "thievery",
-        "stealth",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.notorious-heist.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.criticalSuccess.imprisoned",
-            "value": 2,
-            "selector": "imprisoned_unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.notorious-heist.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.success.imprisoned",
-            "value": 1,
-            "selector": "imprisoned_unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.notorious-heist.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.failure.gold",
-            "value": -2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.notorious-heist.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.criticalFailure.gold",
-            "value": -3,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.notorious-heist.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "thievery",
+      "description": "understand criminal methods"
+    },
+    {
+      "skill": "stealth",
+      "description": "track the thieves"
+    },
+    {
+      "skill": "society",
+      "description": "investigate connections"
     }
   ],
-  "special": "pf2e-reignmaker.events.notorious-heist.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Thieves captured with stolen goods; recover losses, convert 2 Unrest to imprisoned unrest",
+      "modifiers": [
+        {
+          "type": "event",
+          "name": "Thieves captured with stolen goods",
+          "value": 2,
+          "selector": "imprisoned_unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Thieves arrested; convert 1 Unrest to imprisoned unrest",
+      "modifiers": [
+        {
+          "type": "event",
+          "name": "Thieves arrested",
+          "value": 1,
+          "selector": "imprisoned_unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Thieves escape; -2 Gold, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Thieves escape",
+          "value": -2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Thieves escape",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Crime syndicate exposed; -3 Gold, +2 Unrest, may trigger additional crime events",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Crime syndicate exposed",
+          "value": -3,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Crime syndicate exposed",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

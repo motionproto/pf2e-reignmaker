@@ -1,18 +1,32 @@
 <script lang="ts">
-   import { kingdomState, setResource, updateKingdomStat, 
+   import { kingdomState, setResource, updateKingdomStat, addModifier,
             foodConsumption, foodConsumptionBreakdown, armySupport, unsupportedArmies } from '../../../stores/kingdom';
    import { gameState, incrementTurn, setCurrentPhase, resetPhaseSteps, 
             markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    import { settlementService } from '../../../services/settlements';
    import { economicsService } from '../../../services/economics';
+   import { eventService, type EventData } from '../../../services/EventService';
    import { get } from 'svelte/store';
    
    // Check if steps are completed
+   $: unresolvedCompleted = isPhaseStepCompleted('upkeep-unresolved');
    $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
    $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
    $: buildCompleted = isPhaseStepCompleted('upkeep-build');
    $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
+   
+   // Check for unresolved event from Phase IV
+   let unresolvedEvent: EventData | null = null;
+   let processedModifier: string = '';
+   
+   // Check gameState for unresolved event when component mounts
+   $: {
+      const state = get(gameState);
+      if ((state as any).unresolvedEvent && !unresolvedCompleted) {
+         unresolvedEvent = (state as any).unresolvedEvent;
+      }
+   }
    
    // Calculate values
    $: currentFood = $kingdomState.resources.get('food') || 0;
@@ -22,14 +36,105 @@
    $: unsupportedCount = $unsupportedArmies || 0;
    $: armyCount = $kingdomState.armies.length;
    
-   // Auto-complete military step if no armies
-   $: if (armyCount === 0 && !militaryCompleted) {
+   // Auto-complete unresolved step if no unresolved event
+   $: if (!unresolvedEvent && !unresolvedCompleted) {
+      markPhaseStepCompleted('upkeep-unresolved');
+   }
+   
+   // Auto-complete military step if no armies (but only after unresolved is done)
+   $: if (armyCount === 0 && !militaryCompleted && unresolvedCompleted) {
       markPhaseStepCompleted('upkeep-military');
    }
    
-   // Auto-complete build step if no build queue
-   $: if ($kingdomState.buildQueue.length === 0 && !buildCompleted) {
+   // Auto-complete build step if no build queue (but only after unresolved is done)
+   $: if ($kingdomState.buildQueue.length === 0 && !buildCompleted && unresolvedCompleted) {
       markPhaseStepCompleted('upkeep-build');
+   }
+   
+   function handleUnresolvedEvent() {
+      if (!unresolvedEvent) return;
+      
+      try {
+         const state = get(kingdomState);
+         const currentTurn = get(gameState).currentTurn;
+         
+         // Process based on type
+         if (unresolvedEvent.ifUnresolved) {
+            const unresolved = unresolvedEvent.ifUnresolved;
+            
+            switch (unresolved.type) {
+               case 'continuous':
+                  // Convert to modifier
+                  const modifier = eventService.handleUnresolvedEvent(unresolvedEvent, currentTurn);
+                  if (modifier) {
+                     addModifier(modifier);
+                     processedModifier = `Event "${unresolvedEvent.name}" has become an ongoing modifier`;
+                     console.log('Created modifier from unresolved event:', modifier);
+                  }
+                  break;
+                  
+               case 'auto-resolve':
+                  // Apply failure effects automatically
+                  if (unresolved.autoResolve?.applyFailure && unresolvedEvent.onFailure) {
+                     const effects = unresolvedEvent.onFailure.effects;
+                     if (effects) {
+                        applyEventFailureEffects(effects);
+                        processedModifier = `Event "${unresolvedEvent.name}" auto-resolved with failure effects`;
+                     }
+                  }
+                  break;
+                  
+               case 'expires':
+                  // Event simply expires with no effect
+                  processedModifier = `Event "${unresolvedEvent.name}" has expired`;
+                  console.log(`Event ${unresolvedEvent.id} expires`);
+                  break;
+            }
+         }
+         
+         // Clear unresolved event from gameState
+         gameState.update(s => {
+            delete (s as any).unresolvedEvent;
+            return s;
+         });
+         
+         markPhaseStepCompleted('upkeep-unresolved');
+      } catch (error) {
+         console.error('Error processing unresolved event:', error);
+      }
+   }
+   
+   function applyEventFailureEffects(effects: any) {
+      if (!effects) return;
+      
+      kingdomState.update(state => {
+         // Apply gold change
+         if (effects.gold !== undefined) {
+            const currentGold = state.resources.get('gold') || 0;
+            state.resources.set('gold', Math.max(0, currentGold + effects.gold));
+         }
+         
+         // Apply other resource changes
+         const resources = ['food', 'lumber', 'stone', 'ore', 'luxuries'];
+         resources.forEach(resource => {
+            if (effects[resource] !== undefined) {
+               const current = state.resources.get(resource) || 0;
+               state.resources.set(resource, Math.max(0, current + effects[resource]));
+            }
+         });
+         
+         // Apply unrest change
+         if (effects.unrest !== undefined) {
+            state.unrest = Math.max(0, state.unrest + effects.unrest);
+         }
+         
+         // Apply fame change
+         if (effects.fame !== undefined) {
+            state.fame = Math.max(0, Math.min(3, state.fame + effects.fame));
+         }
+         
+         return state;
+      });
    }
    
    function handleFoodConsumption() {
@@ -139,6 +244,30 @@
          handleEndTurnResolution();
       }
       
+      // Process modifiers for turn end
+      kingdomState.update(state => {
+         const currentTurn = get(gameState).currentTurn;
+         
+         // Process turn effects for all modifiers
+         state.modifiers.forEach(modifier => {
+            // Decrement duration if numeric
+            if (typeof modifier.duration === 'number') {
+               modifier.duration--;
+            }
+         });
+         
+         // Remove expired modifiers
+         state.modifiers = state.modifiers.filter(modifier => {
+            if (typeof modifier.duration === 'number' && modifier.duration <= 0) {
+               console.log(`Modifier "${modifier.name}" has expired`);
+               return false;
+            }
+            return true;
+         });
+         
+         return state;
+      });
+      
       incrementTurn();
       // Reset phase to Phase I for next turn
       setCurrentPhase(TurnPhase.PHASE_I);
@@ -188,13 +317,74 @@
    <!-- Phase Steps -->
    <div class="phase-steps-container">
       
-      <!-- Step 1: Food Consumption -->
+      <!-- Step 1: Process Unresolved Events -->
+      <div class="phase-step" class:completed={unresolvedCompleted}>
+         {#if unresolvedCompleted}
+            <i class="fas fa-check-circle phase-step-complete"></i>
+         {/if}
+         
+         <h4>Step 1: Process Unresolved Events</h4>
+         
+         {#if unresolvedEvent}
+            <div class="unresolved-event-info">
+               <div class="event-name">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  {unresolvedEvent.name}
+               </div>
+               <div class="event-type">
+                  Type: <span class="type-badge type-{unresolvedEvent.ifUnresolved?.type}">
+                     {unresolvedEvent.ifUnresolved?.type}
+                  </span>
+               </div>
+               
+               {#if unresolvedEvent.ifUnresolved?.type === 'continuous'}
+                  <p class="event-description">
+                     This event will become an ongoing modifier affecting your kingdom.
+                  </p>
+               {:else if unresolvedEvent.ifUnresolved?.type === 'auto-resolve'}
+                  <p class="event-description">
+                     This event will automatically apply its failure effects.
+                  </p>
+               {:else if unresolvedEvent.ifUnresolved?.type === 'expires'}
+                  <p class="event-description">
+                     This event will expire with no further effects.
+                  </p>
+               {/if}
+            </div>
+            
+            {#if processedModifier}
+               <div class="processed-info">
+                  <i class="fas fa-check"></i> {processedModifier}
+               </div>
+            {/if}
+            
+            <button 
+               on:click={handleUnresolvedEvent} 
+               disabled={unresolvedCompleted}
+               class="step-button"
+            >
+               {#if unresolvedCompleted}
+                  <i class="fas fa-check"></i> Event Processed
+               {:else}
+                  <i class="fas fa-scroll"></i> Process Unresolved Event
+               {/if}
+            </button>
+         {:else}
+            <div class="info-text">No unresolved events from Phase IV</div>
+            <div class="auto-skipped">
+               <i class="fas fa-ban"></i>
+               <span>No Unresolved Events (Skipped)</span>
+            </div>
+         {/if}
+      </div>
+      
+      <!-- Step 2: Food Consumption -->
       <div class="phase-step" class:completed={consumeCompleted}>
          {#if consumeCompleted}
             <i class="fas fa-check-circle phase-step-complete"></i>
          {/if}
          
-         <h4>Step 1: Food Consumption</h4>
+         <h4>Step 2: Food Consumption</h4>
          
          <div class="consumption-display">
             <div class="consumption-stat">
@@ -237,13 +427,13 @@
          </button>
       </div>
       
-      <!-- Step 2: Military Support -->
+      <!-- Step 3: Military Support -->
       <div class="phase-step" class:completed={militaryCompleted}>
          {#if militaryCompleted}
             <i class="fas fa-check-circle phase-step-complete"></i>
          {/if}
          
-         <h4>Step 2: Military Support</h4>
+         <h4>Step 3: Military Support</h4>
          
          <div class="army-support-display">
             <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === $armySupport}>
@@ -295,13 +485,13 @@
          {/if}
       </div>
       
-      <!-- Step 3: Build Queue -->
+      <!-- Step 4: Build Queue -->
       <div class="phase-step" class:completed={buildCompleted}>
          {#if buildCompleted}
             <i class="fas fa-check-circle phase-step-complete"></i>
          {/if}
          
-         <h4>Step 3: Process Build Queue</h4>
+         <h4>Step 4: Process Build Queue</h4>
          
          {#if $kingdomState.buildQueue.length > 0}
             <div class="build-resources-available">
@@ -358,13 +548,13 @@
          {/if}
       </div>
       
-      <!-- Step 4: End of Turn Resolution -->
+      <!-- Step 5: End of Turn Resolution -->
       <div class="phase-step" class:completed={resolveCompleted}>
          {#if resolveCompleted}
             <i class="fas fa-check-circle phase-step-complete"></i>
          {/if}
          
-         <h4>Step 4: End of Turn Resolution</h4>
+         <h4>Step 5: End of Turn Resolution</h4>
          
          <div class="resolution-summary">
             <p><i class="fas fa-info-circle"></i> Non-storable resources (lumber, stone, ore) will be cleared.</p>
@@ -397,7 +587,7 @@
       <button 
          class="end-turn-button" 
          on:click={endTurn}
-         disabled={!consumeCompleted || !militaryCompleted || !buildCompleted || !resolveCompleted}
+         disabled={!unresolvedCompleted || !consumeCompleted || !militaryCompleted || !buildCompleted || !resolveCompleted}
       >
          <i class="fas fa-check-circle"></i>
          End Turn {$gameState.currentTurn} and Start Turn {$gameState.currentTurn + 1}
@@ -795,6 +985,81 @@
       
       i {
          font-size: 1.1em;
+      }
+   }
+   
+   .unresolved-event-info {
+      padding: 15px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--color-amber);
+      border-radius: var(--radius-md);
+      margin-bottom: 15px;
+      
+      .event-name {
+         font-size: var(--font-lg);
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 8px;
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         
+         i {
+            color: var(--color-amber);
+         }
+      }
+      
+      .event-type {
+         margin-bottom: 10px;
+         color: var(--text-secondary);
+      }
+      
+      .type-badge {
+         padding: 2px 8px;
+         border-radius: var(--radius-sm);
+         font-size: var(--font-sm);
+         text-transform: uppercase;
+         font-weight: 600;
+         
+         &.type-continuous {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--color-amber-light);
+            border: 1px solid var(--color-amber);
+         }
+         
+         &.type-auto-resolve {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--color-blue);
+            border: 1px solid var(--color-blue);
+         }
+         
+         &.type-expires {
+            background: rgba(100, 116, 139, 0.2);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-medium);
+         }
+      }
+      
+      .event-description {
+         margin: 0;
+         color: var(--text-secondary);
+         font-size: var(--type-body-size);
+      }
+   }
+   
+   .processed-info {
+      padding: 10px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid var(--color-green-border);
+      border-radius: var(--radius-md);
+      color: var(--color-green);
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      i {
+         color: var(--color-green);
       }
    }
 </style>

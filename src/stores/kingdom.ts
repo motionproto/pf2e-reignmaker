@@ -1,7 +1,9 @@
 import { writable, derived, get } from 'svelte/store';
 import { KingdomState } from '../models/KingdomState';
 import type { KingdomEvent } from '../models/Events';
-import type { Settlement, Army, BuildProject, Modifier } from '../models/KingdomState';
+import type { Settlement, Army, BuildProject } from '../models/KingdomState';
+import type { KingdomModifier } from '../models/Modifiers';
+import { modifierService } from '../services/ModifierService';
 import { economicsService } from '../services/economics';
 import { territoryService } from '../services/territory';
 
@@ -150,24 +152,92 @@ export {
     incrementTurn
 } from './gameState';
 
-export function addModifier(modifier: Modifier) {
+// Modifier management functions
+export function addModifier(modifier: KingdomModifier) {
     kingdomState.update(state => {
-        state.ongoingModifiers.push(modifier);
+        // Set the start turn from the current turn (would need to get from gameState)
+        if (modifier.startTurn === undefined) {
+            // This would be set properly by the phase that adds the modifier
+            modifier.startTurn = 0;
+        }
+        
+        // Add to state
+        state.modifiers.push(modifier);
+        
+        // Also add to service for management
+        modifierService.addModifier(modifier);
+        
         return state;
     });
 }
 
-export function removeModifier(index: number) {
+export function removeModifier(modifierId: string) {
     kingdomState.update(state => {
-        state.ongoingModifiers.splice(index, 1);
+        state.modifiers = state.modifiers.filter(m => m.id !== modifierId);
+        modifierService.removeModifier(modifierId);
         return state;
     });
+}
+
+export function processModifiers(currentTurn: number) {
+    const effects = modifierService.processTurnStart(currentTurn);
+    
+    kingdomState.update(state => {
+        // Apply resource effects
+        if (effects.gold) modifyResource('gold', effects.gold);
+        if (effects.food) modifyResource('food', effects.food);
+        if (effects.lumber) modifyResource('lumber', effects.lumber);
+        if (effects.stone) modifyResource('stone', effects.stone);
+        if (effects.ore) modifyResource('ore', effects.ore);
+        if (effects.luxuries) modifyResource('luxuries', effects.luxuries);
+        if (effects.resources) {
+            // Generic resource loss - distribute evenly or apply to gold
+            modifyResource('gold', effects.resources);
+        }
+        
+        // Apply stat effects
+        if (effects.unrest) state.unrest += effects.unrest;
+        if (effects.fame) state.fame += effects.fame;
+        
+        // Check for expired modifiers
+        const expiredIds = modifierService.checkExpiredModifiers(currentTurn);
+        expiredIds.forEach(id => removeModifier(id));
+        
+        // Sync service with state
+        modifierService.importModifiers(state.modifiers);
+        
+        return state;
+    });
+    
+    return effects;
+}
+
+export function getActiveModifiers(): KingdomModifier[] {
+    const state = get(kingdomState);
+    return state.modifiers;
+}
+
+export function resolveModifier(modifierId: string, skill: string, rollResult: number) {
+    const result = modifierService.resolveModifier(modifierId, skill, rollResult);
+    
+    if (result.removed) {
+        removeModifier(modifierId);
+    }
+    
+    return result;
 }
 
 // Function to load kingdom state from saved data
 export function loadKingdomState(savedState: Partial<KingdomState>) {
     kingdomState.update(state => {
-        return Object.assign(state, savedState);
+        const newState = Object.assign(state, savedState);
+        
+        // Sync modifiers with service
+        if (newState.modifiers) {
+            modifierService.importModifiers(newState.modifiers);
+        }
+        
+        return newState;
     });
 }
 

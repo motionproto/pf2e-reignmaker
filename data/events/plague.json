@@ -1,82 +1,111 @@
 {
   "id": "plague",
-  "name": "pf2e-reignmaker.events.plague.name",
-  "description": "pf2e-reignmaker.events.plague.description",
+  "name": "Plague",
+  "description": "Disease spreads rapidly through your settlements.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.plague.location",
+  "location": "Largest settlement, then spreads",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.plague.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "medicine",
-        "religion",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.plague.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.plague.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.plague.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.plague.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.plague.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.plague.stage-0.failure.gold",
-            "value": -2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.plague.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.plague.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.plague.stage-0.criticalFailure.gold",
-            "value": -2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
+  "special": "Settlements with Medicine & Healing or Faith & Nature structures gain an untyped bonus equal to the tier to checks. Bonuses from different structure types stack.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Plague",
+        "description": "Each turn: +1 Unrest, -2 Gold, spreads to connected settlements (Failure result). Disease continues unchecked.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 1,
+          "gold": -2
+        },
+        "resolution": {
+          "skills": [
+            "medicine",
+            "religion",
+            "society"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "medicine",
+      "description": "treat the sick"
+    },
+    {
+      "skill": "religion",
+      "description": "divine healing"
+    },
+    {
+      "skill": "society",
+      "description": "quarantine measures"
+    }
   ],
-  "special": "pf2e-reignmaker.events.plague.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Plague cured; -1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Plague cured",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Plague contained; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Plague spreads; +1 Unrest, -2 Gold, spreads to a settlement connected by a road",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Plague spreads",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "untyped",
+          "name": "Plague spreads",
+          "value": -2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Devastating outbreak; +2 Unrest, -2 Gold, spreads to all settlements connected by a road",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Devastating outbreak",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "untyped",
+          "name": "Devastating outbreak",
+          "value": -2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    }
+  }
 }

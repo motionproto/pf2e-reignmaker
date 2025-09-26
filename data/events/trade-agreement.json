@@ -1,75 +1,87 @@
 {
   "id": "trade-agreement",
-  "name": "pf2e-reignmaker.events.trade-agreement.name",
-  "description": "pf2e-reignmaker.events.trade-agreement.description",
+  "name": "Trade Agreement",
+  "description": "Merchants propose a lucrative trade arrangement.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.trade-agreement.location",
+  "location": "Capital or largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.trade-agreement.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "Commerce structures provide an untyped bonus equal to their tier to checks.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Trade Agreement expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "diplomacy",
-        "society",
-        "deception"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.trade-agreement.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.trade-agreement.stage-0.criticalSuccess.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.trade-agreement.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.trade-agreement.stage-0.success.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.trade-agreement.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.trade-agreement.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.trade-agreement.stage-0.criticalFailure.gold",
-            "value": -1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.trade-agreement.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "diplomacy",
+      "description": "negotiate terms"
+    },
+    {
+      "skill": "society",
+      "description": "assess markets"
+    },
+    {
+      "skill": "deception",
+      "description": "leverage position"
     }
   ],
-  "special": "pf2e-reignmaker.events.trade-agreement.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Exclusive deal; +2 Gold",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Exclusive deal",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Standard agreement; +1 Gold",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Standard agreement",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Poor terms; no significant benefit",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Trade dispute; -1 Gold, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Trade dispute",
+          "value": -1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Trade dispute",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

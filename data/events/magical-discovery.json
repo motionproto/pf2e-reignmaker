@@ -1,72 +1,84 @@
 {
   "id": "magical-discovery",
-  "name": "pf2e-reignmaker.events.magical-discovery.name",
-  "description": "pf2e-reignmaker.events.magical-discovery.description",
+  "name": "Magical Discovery",
+  "description": "A powerful magical site or artifact is discovered in your kingdom.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.magical-discovery.location",
+  "location": "Largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.magical-discovery.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to check.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Magical Discovery expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "arcana",
-        "religion",
-        "occultism"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalSuccess.msg",
-        "modifiers": []
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.success.unrest",
-            "value": -2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.magical-discovery.stage-0.criticalFailure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "arcana",
+      "description": "understand the magic"
+    },
+    {
+      "skill": "religion",
+      "description": "divine its purpose"
+    },
+    {
+      "skill": "occultism",
+      "description": "unlock its secrets"
     }
   ],
-  "special": "pf2e-reignmaker.events.magical-discovery.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Major magical boon; gain a free Tier 1 magical structure or upgrade an existing structure to the next tier",
+      "modifiers": []
+    },
+    "success": {
+      "msg": "Useful discovery; -2 Unrest OR +1 Fame",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Useful discovery",
+          "value": -2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Magic proves dangerous; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Magic proves dangerous",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Magical disaster; +2 Unrest, one random magical structure becomes damaged in an accident",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Magical disaster",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Magical disaster",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

@@ -1,91 +1,120 @@
 {
   "id": "food-shortage",
-  "name": "pf2e-reignmaker.events.food-shortage.name",
-  "description": "pf2e-reignmaker.events.food-shortage.description",
+  "name": "Food Shortage",
+  "description": "Disease, weather, or pests destroy agricultural production.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.food-shortage.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.food-shortage.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "nature",
-        "survival",
-        "diplomacy"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalSuccess.food",
-            "value": -2,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.success.food",
-            "value": -4,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.failure.food",
-            "value": -6,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.food",
-            "value": -8,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.food-shortage.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Food Shortage",
+        "description": "First turn: lose 6 Food, +1 Unrest. Subsequent turns: lose 2 Food, +1 Unrest per turn as shortage continues.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "food": -6,
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "nature",
+            "survival",
+            "diplomacy"
+          ]
+        }
       }
     }
-  ]
+  },
+  "skills": [
+    {
+      "skill": "nature",
+      "description": "agricultural expertise"
+    },
+    {
+      "skill": "survival",
+      "description": "emergency measures"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "coordinate relief"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Crisis averted; lose 2 Food this turn, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Crisis averted",
+          "value": -2,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Shortage controlled; lose 4 Food this turn, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Shortage controlled",
+          "value": -4,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Severe shortage; lose 6 Food this turn, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Severe shortage",
+          "value": -6,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Severe shortage",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Famine threatens; lose 8 Food this turn, +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Famine threatens",
+          "value": -8,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Famine threatens",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

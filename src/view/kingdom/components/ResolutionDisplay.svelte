@@ -148,7 +148,7 @@
       </div>
       {#if actorName}
          <div class="resolution-header-right">
-            {actorName}{#if skillName} used {skillName.charAt(0).toUpperCase() +" "+ skillName.slice(1)}{/if}
+            {actorName}{#if skillName} used {skillName}{/if}
          </div>
       {/if}
    </div>

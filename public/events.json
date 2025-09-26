@@ -1,0 +1,3491 @@
+[
+    {
+        "id": "archaeological-find",
+        "name": "Archaeological Find",
+        "description": "Ancient ruins or artifacts are discovered in your territory.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Archaeological Find expires",
+                "effects": {
+                    "resources": 1
+                },
+                "turnsUntilTransform": 3,
+                "transformsTo": "cursed-excavation"
+            }
+        },
+        "skills": [
+            {
+                "skill": "society",
+                "description": "historical research"
+            },
+            {
+                "skill": "religion",
+                "description": "divine significance"
+            },
+            {
+                "skill": "occultism",
+                "description": "arcane investigation"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major discovery; +2 Gold, -1 Unrest, +1 Fame",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major discovery",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major discovery",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major discovery",
+                        "value": 1,
+                        "selector": "fame",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Valuable find; +1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Valuable find",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Minor artifacts; gain 1 Resource of your choice",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Minor artifacts",
+                        "value": 1,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1,
+                        "choice": [
+                            "food",
+                            "ore",
+                            "stone",
+                            "lumber",
+                            "luxuries"
+                        ]
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Dangerous site; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Dangerous site",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "assassination-attempt",
+        "name": "Assassination Attempt",
+        "description": "Someone attempts to kill one of your leaders.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Random PC",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If the target has a bodyguard or is in a fortified location, gain +2 to the check.",
+        "ifUnresolved": {
+            "type": "autoResolve",
+            "autoResolve": {
+                "outcome": "failure",
+                "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.msg"
+            },
+            "transforms": {
+                "newEventId": "security-crisis",
+                "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.transforms"
+            }
+        },
+        "skills": [
+            {
+                "skill": "stealth",
+                "description": "avoid the assassin"
+            },
+            {
+                "skill": "intimidation",
+                "description": "deter through fear"
+            },
+            {
+                "skill": "medicine",
+                "description": "survive wounds"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Assassin captured; gain information about enemies",
+                "modifiers": []
+            },
+            "success": {
+                "msg": "Attempt foiled;",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Leader escapes; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Leader escapes",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Leader wounded",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "bandit-activity",
+        "name": "Bandit Activity",
+        "description": "Bandits establish a camp and begin raiding travelers.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Random border hex",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Once per event, you can try to recruit the bandits (Diplomacy only) - on success, gain a free Garrison.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Bandit Activity",
+                    "description": "Each turn: lose 1 Resource and +1 Unrest (Failure result). Bandits entrench themselves and grow stronger.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "resources": -1,
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "intimidation",
+                            "diplomacy",
+                            "stealth"
+                        ],
+                        "automatic": {
+                            "condition": "hire_adventurers",
+                            "description": "Automatically resolved by hiring adventurers"
+                        }
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "crush them with force"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate their surrender"
+            },
+            {
+                "skill": "stealth",
+                "description": "infiltrate and dismantle"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Bandits defeated or recruited; +1 Gold from their loot, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Bandits defeated or recruited",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Bandits scattered; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Raids continue; lose 1 Resource this turn, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Raids continue",
+                        "value": -1,
+                        "selector": "resources",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Raids continue",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Bandits grow bolder; lose 2 Resources, +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Bandits grow bolder",
+                        "value": -2,
+                        "selector": "resources",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Bandits grow bolder",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "boomtown",
+        "name": "Boomtown",
+        "description": "A settlement experiences sudden, dramatic growth.",
+        "traits": [
+            "beneficial",
+            "continuous"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "failure",
+            "criticalFailure"
+        ],
+        "special": "While active gain +1 untyped bonus to all Crafting and Society checks in that settlement",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Boomtown expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "society",
+                "description": "manage growth"
+            },
+            {
+                "skill": "crafting",
+                "description": "expand infrastructure"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "maintain order"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major growth; +4 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major growth",
+                        "value": 4,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Steady expansion; +2 Gold this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Steady expansion",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Growth stalls; **event ends**",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Boom goes bust; +1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Boom goes bust",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "cult-activity",
+        "name": "Cult Activity",
+        "description": "A dangerous cult begins operating in secret within your kingdom.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Settlements with a Faith & Nature structure gain an untyped bonus equal to the tier to defeat the cult Settlements with a Crime & Intrigue structure gain an untyped bonus equal to the tier to locate the cult",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Cult Activity",
+                    "description": "Each turn: +1 Unrest (Failure result). Cult recruits more members and spreads influence.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "stealth",
+                            "religion",
+                            "intimidation"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "stealth",
+                "description": "infiltrate the cult"
+            },
+            {
+                "skill": "religion",
+                "description": "counter their beliefs"
+            },
+            {
+                "skill": "intimidation",
+                "description": "root them out"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Cult exposed and defeated; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Cult exposed and defeated",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "If not located: cult found. If located: cult defeated, **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Cult continues; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Cult continues",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Cult grows stronger; +2 Unrest, spreads to another settlement",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Cult grows stronger",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "demand-expansion",
+        "name": "Demand Expansion",
+        "description": "Citizens demand the kingdom claim new territory.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you expand your territory this turn (claim a new hex), automatically succeed and event ends.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Demand Expansion",
+                    "description": "Each turn: +1 Unrest (Failure result). Citizens grow increasingly frustrated with lack of expansion.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "diplomacy",
+                            "survival",
+                            "intimidation"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "promise future growth"
+            },
+            {
+                "skill": "survival",
+                "description": "show expansion plans"
+            },
+            {
+                "skill": "intimidation",
+                "description": "demand patience"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Citizens satisfied; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Citizens satisfied",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Citizens satisfied; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Citizens unhappy; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Citizens unhappy",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Major dissatisfaction; +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major dissatisfaction",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "demand-structure",
+        "name": "Demand Structure",
+        "description": "Citizens demand that a specific structure be built.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you build a structure of the demanded type, the event ends (automatic success).",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Demand Structure",
+                    "description": "Each turn: +1 Unrest (or pay 1 Gold concession). Protests continue and grow more organized.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "diplomacy",
+                            "intimidation",
+                            "society"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate a compromise"
+            },
+            {
+                "skill": "intimidation",
+                "description": "enforce order"
+            },
+            {
+                "skill": "society",
+                "description": "understand their needs"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Citizens convinced; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Citizens convinced",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Demands are satisfied; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Protests continue; +1 Unrest, or pay 1 Gold as concessions",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Protests continue",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Violence erupts; +2 Unrest, event escalates",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Violence erupts",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "diplomatic-overture",
+        "name": "Diplomatic Overture",
+        "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Choose or roll for a neighboring kingdom",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "- If you have Civic & Governance structures, gain an untyped bonus equal to the tier to the check - Cannot establish Helpful relations without appropriate diplomatic capacity (see Diplomatic Relations rules) - If relations are already Helpful, critical success grants 2 Gold instead",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Diplomatic Overture expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "formal negotiations"
+            },
+            {
+                "skill": "society",
+                "description": "cultural exchange"
+            },
+            {
+                "skill": "deception",
+                "description": "gain advantage"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Relations improve by one step; if now Helpful, +1 Gold and -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Relations improve by one step",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Relations improve by one step",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Relations improve by one step (max Friendly without diplomatic structures)",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "No change in relations; minor diplomatic friction",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Relations worsen by one step; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Relations worsen by one step",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "drug-den",
+        "name": "Drug Den",
+        "description": "An illicit drug trade threatens to corrupt your settlement.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If the settlement has Crime & Intrigue structures, gain an untyped bonus equal to the tier to checks.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Drug Den",
+                    "description": "Each turn: +1 Unrest, -1 Gold (Failure result). Drug trade expands unchecked.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1,
+                        "gold": -1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "stealth",
+                            "medicine",
+                            "intimidation"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "stealth",
+                "description": "undercover investigation"
+            },
+            {
+                "skill": "medicine",
+                "description": "treat addicts, trace source"
+            },
+            {
+                "skill": "intimidation",
+                "description": "crack down hard"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Drug ring destroyed; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Drug ring destroyed",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Major arrests, convert 1 unrest to imprisoned unrest; **event ends**",
+                "modifiers": [
+                    {
+                        "type": "event",
+                        "name": "Major arrests, convert 1 unrest to imprisoned unrest",
+                        "value": 1,
+                        "selector": "imprisoned_unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Drug trade spreads; +1 Unrest, -1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Drug trade spreads",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Drug trade spreads",
+                        "value": -1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Major drug crisis; +2 Unrest, one structure becomes damaged.",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major drug crisis",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Major drug crisis",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "economic-surge",
+        "name": "Economic Surge",
+        "description": "Trade and productivity boom throughout your kingdom.",
+        "traits": [
+            "beneficial",
+            "continuous"
+        ],
+        "location": "Kingdom-wide (check in capital or largest settlement)",
+        "modifier": 0,
+        "resolvedOn": [
+            "failure",
+            "criticalFailure"
+        ],
+        "special": "Commerce structures provide an untyped bonus equal to the tier to checks.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Economic Surge expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "society",
+                "description": "manage growth"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "attract traders"
+            },
+            {
+                "skill": "crafting",
+                "description": "increase production"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Trade bonanza; +2 Gold this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Trade bonanza",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Steady growth; +1 Gold this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Steady growth",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Surge slows; **event ends**",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Economic bubble bursts; +1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Economic bubble bursts",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "festive-invitation",
+        "name": "Festive Invitation",
+        "description": "A neighboring kingdom invites your leaders to a grand festival.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you bring at least 1 Resource as a gift, gain +2 to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Festive Invitation expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "formal attendance"
+            },
+            {
+                "skill": "performance",
+                "description": "entertain hosts"
+            },
+            {
+                "skill": "society",
+                "description": "navigate customs"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Great success; Gold equal to Resources brought +1, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Great success",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Great success",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Pleasant visit; Gold equal to Resources brought",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Pleasant visit",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Adequate visit; gifts not reciprocated",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Diplomatic faux pas; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Diplomatic faux pas",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "feud",
+        "name": "Feud",
+        "description": "Rival factions from different settlements escalate their conflict.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Two settlements (if less than 2, no effect)",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "pf2e-reignmaker.events.feud.special",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Feud",
+                    "description": "Each turn: +1 Unrest (Failure result). Feud escalates and disrupts trade between settlements.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "diplomacy",
+                            "intimidation",
+                            "deception"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "mediate peace"
+            },
+            {
+                "skill": "intimidation",
+                "description": "enforce order"
+            },
+            {
+                "skill": "deception",
+                "description": "manipulate resolution"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Feud ended, rivals become allies; +1 Gold, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Feud ended, rivals become allies",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Feud resolved; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Feud disrupts trade; +1 Unrest,",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Feud disrupts trade",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Private war erupts; +2 Unrest, a random structure becomes damaged in one of the settlements",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Private war erupts",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Private war erupts",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "food-shortage",
+        "name": "Food Shortage",
+        "description": "Disease, weather, or pests destroy agricultural production.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Food Shortage",
+                    "description": "First turn: lose 6 Food, +1 Unrest. Subsequent turns: lose 2 Food, +1 Unrest per turn as shortage continues.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "food": -6,
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "nature",
+                            "survival",
+                            "diplomacy"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "agricultural expertise"
+            },
+            {
+                "skill": "survival",
+                "description": "emergency measures"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "coordinate relief"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Crisis averted; lose 2 Food this turn, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Crisis averted",
+                        "value": -2,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Shortage controlled; lose 4 Food this turn, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Shortage controlled",
+                        "value": -4,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Severe shortage; lose 6 Food this turn, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Severe shortage",
+                        "value": -6,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Severe shortage",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Famine threatens; lose 8 Food this turn, +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Famine threatens",
+                        "value": -8,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Famine threatens",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "food-surplus",
+        "name": "Food Surplus",
+        "description": "Exceptional harvests provide abundant food.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "First turn: +1 Gold (Failure result). Second turn: Spoilage begins, +1 Unrest per turn as surplus rots.",
+                "turnsUntilSpoilage": 2,
+                "spoilageEffect": {
+                    "unrest": 1
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "maximize the bounty"
+            },
+            {
+                "skill": "society",
+                "description": "organize distribution"
+            },
+            {
+                "skill": "crafting",
+                "description": "preserve excess"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Massive surplus; +3 Gold (from selling excess), -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Massive surplus",
+                        "value": 3,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Massive surplus",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Good harvest; +2 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Good harvest",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Minor surplus; +1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Minor surplus",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Surplus spoils; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Surplus spoils",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "good-weather",
+        "name": "Good Weather",
+        "description": "Perfect weather conditions boost morale and productivity.",
+        "traits": [
+            "beneficial",
+            "continuous"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "failure",
+            "criticalFailure"
+        ],
+        "special": "pf2e-reignmaker.events.good-weather.special",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "First turn: +2 Food (automatic). Second turn: Weather changes (Failure result, event ends)."
+            }
+        },
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "predict weather patterns"
+            },
+            {
+                "skill": "society",
+                "description": "organize activities"
+            },
+            {
+                "skill": "performance",
+                "description": "celebrate the weather"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Weather holds perfectly; +2 Food, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Weather holds perfectly",
+                        "value": 2,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Weather holds perfectly",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Weather remains good; +2 Food",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Weather remains good",
+                        "value": 2,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Weather changes; **event ends**",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Weather turns bad; +1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Weather turns bad",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "grand-tournament",
+        "name": "Grand Tournament",
+        "description": "A martial competition draws competitors from across the realm.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Performance & Culture or Military & Training structures, gain an untyped bonus equal to their tier to checks.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Grand Tournament expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "athletics",
+                "description": "strength competitions"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "agility contests"
+            },
+            {
+                "skill": "performance",
+                "description": "pageantry and ceremonies"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Spectacular event; +2 Gold, -1 Unrest, +1 Fame",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Spectacular event",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Spectacular event",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Spectacular event",
+                        "value": 1,
+                        "selector": "fame",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Successful tournament; -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Successful tournament",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Disappointing turnout;",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Accident or scandal; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Accident or scandal",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "immigration",
+        "name": "Immigration",
+        "description": "New settlers arrive seeking homes in your kingdom.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "First turn: Few settlers stay (Failure result). Second turn: Unintegrated immigrants cause tensions, +1 Unrest per turn.",
+                "turnsUntilTension": 2,
+                "tensionEffect": {
+                    "unrest": 1
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "welcome newcomers"
+            },
+            {
+                "skill": "society",
+                "description": "integrate settlers"
+            },
+            {
+                "skill": "survival",
+                "description": "find them land"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major influx; +2 Gold, +2 untyped bonus to Build Structure actions this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major influx",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Steady immigration; +1 Gold, +1 untyped bonus to Build Structure actions this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Steady immigration",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Few settlers stay; no significant effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Integration problems; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Integration problems",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "inquisition",
+        "name": "Inquisition",
+        "description": "Zealots mobilize against a minority group or belief.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Faith & Nature structures, gain an untyped bonus equal to the tier to Religion checks.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Inquisition",
+                    "description": "Each turn: +2 Unrest (Failure result). Zealots continue persecution unchecked.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 2
+                    },
+                    "resolution": {
+                        "skills": [
+                            "religion",
+                            "intimidation",
+                            "diplomacy"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "religion",
+                "description": "theological debate"
+            },
+            {
+                "skill": "intimidation",
+                "description": "suppress zealots"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "protect victims"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Peacefully resolved; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Peacefully resolved",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Zealots dispersed; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Persecution spreads; +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Persecution spreads",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Violence erupts; +2 Unrest, one structure destroyed",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Violence erupts",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Violence erupts",
+                        "value": 1,
+                        "selector": "destroy_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "justice-prevails",
+        "name": "Justice Prevails",
+        "description": "Authorities catch a notorious criminal or resolve a major injustice.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Capital or largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Civic & Governance structures, gain an untyped bonus equal to the tier to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Justice Prevails expires",
+                "transformsTo": "miscarriage-of-justice"
+            }
+        },
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "show of force"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "public ceremony"
+            },
+            {
+                "skill": "society",
+                "description": "legal proceedings"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major triumph; -2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major triumph",
+                        "value": -2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Justice served; -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Justice served",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Justice with complications; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Justice with complications",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Miscarriage of justice; +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Miscarriage of justice",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "land-rush",
+        "name": "Land Rush",
+        "description": "Settlers attempt to claim wilderness at the kingdom's border.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "These hexes are claimed without requiring the normal Claim Hex action or resources. Choose adjacent unclaimed hexes.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Land Rush expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate with settlers"
+            },
+            {
+                "skill": "survival",
+                "description": "guide their efforts"
+            },
+            {
+                "skill": "intimidation",
+                "description": "assert control"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Settlers successfully expand the kingdom; **gain 2 hexes**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Settlers successfully expand the kingdom",
+                        "value": 2,
+                        "selector": "hex",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Settlers expand the kingdom; **gain 1 hex**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Settlers expand the kingdom",
+                        "value": 1,
+                        "selector": "hex",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Settlers disperse without helping; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Settlers disperse without helping",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Violence erupts at border; +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Violence erupts at border",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "local-disaster",
+        "name": "Local Disaster",
+        "description": "Fire, flood, or structural collapse strikes a settlement.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Settlements with Fortifications increase the result by one degree of success.",
+        "ifUnresolved": {
+            "type": "autoResolve",
+            "autoResolve": {
+                "outcome": "failure",
+                "message": "pf2e-reignmaker.events.local-disaster.unresolved.msg"
+            },
+            "transforms": {
+                "newEventId": "disaster-recovery",
+                "message": "pf2e-reignmaker.events.local-disaster.unresolved.transforms"
+            }
+        },
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "emergency repairs"
+            },
+            {
+                "skill": "survival",
+                "description": "evacuation and rescue"
+            },
+            {
+                "skill": "society",
+                "description": "organize response"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Disaster contained; no significant damage",
+                "modifiers": []
+            },
+            "success": {
+                "msg": "Limited damage; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Limited damage",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Major damage; one structure becomes damaged, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major damage",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Major damage",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Catastrophic; one structure is destroyed, +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Catastrophic",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Catastrophic",
+                        "value": 1,
+                        "selector": "destroy_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "magical-discovery",
+        "name": "Magical Discovery",
+        "description": "A powerful magical site or artifact is discovered in your kingdom.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Magical Discovery expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "arcana",
+                "description": "understand the magic"
+            },
+            {
+                "skill": "religion",
+                "description": "divine its purpose"
+            },
+            {
+                "skill": "occultism",
+                "description": "unlock its secrets"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major magical boon; gain a free Tier 1 magical structure or upgrade an existing structure to the next tier",
+                "modifiers": []
+            },
+            "success": {
+                "msg": "Useful discovery; -2 Unrest OR +1 Fame",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Useful discovery",
+                        "value": -2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Magic proves dangerous; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Magic proves dangerous",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Magical disaster; +2 Unrest, one random magical structure becomes damaged in an accident",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Magical disaster",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Magical disaster",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "military-exercises",
+        "name": "Military Exercises",
+        "description": "Your kingdom conducts large-scale military training maneuvers.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Settlement with military structures or the largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Military & Training structures, gain an untyped bonus equal to their tier to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Military Exercises expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "athletics",
+                "description": "physical conditioning drills"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "agility and combat maneuvers"
+            },
+            {
+                "skill": "intimidation",
+                "description": "discipline and morale"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Elite forces trained",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Training is ineffective;",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Training accident; +1 Unrest, one military structure becomes damaged",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Training accident",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Training accident",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "monster-attack",
+        "name": "Monster Attack",
+        "description": "A dangerous creature attacks a settlement or travellers.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If the settlement has Fortifications, gain an untyped bonus equal to the tier to checks.",
+        "ifUnresolved": {
+            "type": "autoResolve",
+            "autoResolve": {
+                "outcome": "failure",
+                "message": "pf2e-reignmaker.events.monster-attack.unresolved.msg"
+            },
+            "transforms": {
+                "newEventId": "monster-lair-nearby",
+                "message": "pf2e-reignmaker.events.monster-attack.unresolved.transforms"
+            }
+        },
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "drive it off"
+            },
+            {
+                "skill": "nature",
+                "description": "understand and redirect"
+            },
+            {
+                "skill": "stealth",
+                "description": "track and ambush"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Monster defeated; trophy worth 2 Gold, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Monster defeated",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Monster defeated",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Monster driven away; no negative effect",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Monster causes damage; one structure becomes damaged, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Monster causes damage",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Monster causes damage",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Monster rampages; one structure becomes destroyed, +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Monster rampages",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Monster rampages",
+                        "value": 1,
+                        "selector": "destroy_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "natural-disaster",
+        "name": "Natural Disaster",
+        "description": "Earthquake, tornado, wildfire, or severe flooding strikes the kingdom.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "a random worksite and 2 adjacent hexes (roll 1d6)",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Can spend 1 Gold per hex before rolling to gain +2 to that check (emergency supplies). If one of the adjacent hexes has a settlement, treat it as a Local Disaster for that settlement.",
+        "ifUnresolved": {
+            "type": "autoResolve",
+            "autoResolve": {
+                "outcome": "failure",
+                "message": "pf2e-reignmaker.events.natural-disaster.unresolved.msg"
+            },
+            "transforms": {
+                "newEventId": "relief-efforts",
+                "message": "pf2e-reignmaker.events.natural-disaster.unresolved.transforms"
+            }
+        },
+        "skills": [
+            {
+                "skill": "survival",
+                "description": "evacuation and rescue"
+            },
+            {
+                "skill": "crafting",
+                "description": "emergency shelters"
+            },
+            {
+                "skill": "society",
+                "description": "coordinate relief"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Minimal damage; citizens impressed by response, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Minimal damage",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Some damage; lose 1 Resource from this hex",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Some damage",
+                        "value": -1,
+                        "selector": "resources",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Major damage; lose all production from the hex this turn, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major damage",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Devastating losses. Any worksites are removed from the hex, +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Devastating losses. Any worksites are removed from the hex",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "natures-blessing",
+        "name": "Nature's Blessing",
+        "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Faith & Nature or Exploration & Wilderness structures, gain an untyped bonus equal to the tier to check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Nature's Blessing expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "understand the blessing"
+            },
+            {
+                "skill": "performance",
+                "description": "celebrate it"
+            },
+            {
+                "skill": "society",
+                "description": "organize festivals"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Inspiring blessing; -2 Unrest, +1 Gold (from increased tourism)",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Inspiring blessing",
+                        "value": -2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Inspiring blessing",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Pleasant omen; -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Pleasant omen",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Brief wonder; no significant effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Arguments over meaning; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Arguments over meaning",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "notorious-heist",
+        "name": "Notorious Heist",
+        "description": "A daring theft threatens your kingdom's security and reputation.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Largest settlement with valuable structures",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Crime & Intrigue structures, gain an untyped bonus equal to their tier to the check. If you have no treasury or commerce structures, the thieves find nothing (automatic success).",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Notorious Heist expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "thievery",
+                "description": "understand criminal methods"
+            },
+            {
+                "skill": "stealth",
+                "description": "track the thieves"
+            },
+            {
+                "skill": "society",
+                "description": "investigate connections"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Thieves captured with stolen goods; recover losses, convert 2 Unrest to imprisoned unrest",
+                "modifiers": [
+                    {
+                        "type": "event",
+                        "name": "Thieves captured with stolen goods",
+                        "value": 2,
+                        "selector": "imprisoned_unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Thieves arrested; convert 1 Unrest to imprisoned unrest",
+                "modifiers": [
+                    {
+                        "type": "event",
+                        "name": "Thieves arrested",
+                        "value": 1,
+                        "selector": "imprisoned_unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Thieves escape; -2 Gold, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Thieves escape",
+                        "value": -2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Thieves escape",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Crime syndicate exposed; -3 Gold, +2 Unrest, may trigger additional crime events",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Crime syndicate exposed",
+                        "value": -3,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Crime syndicate exposed",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "pilgrimage",
+        "name": "Pilgrimage",
+        "description": "Religious pilgrims seek passage or sanctuary in your kingdom.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Faith & Nature structures, gain an untyped bonus equal to the tier to check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Pilgrimage expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "religion",
+                "description": "provide sanctuary"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "welcome pilgrims"
+            },
+            {
+                "skill": "society",
+                "description": "organize accommodations"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Major pilgrimage; +1 Gold, -1 Unrest, +1 Fame",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major pilgrimage",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major pilgrimage",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major pilgrimage",
+                        "value": 1,
+                        "selector": "fame",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Peaceful passage; +1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Peaceful passage",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Minor disruption; no significant effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Religious tensions; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Religious tensions",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "plague",
+        "name": "Plague",
+        "description": "Disease spreads rapidly through your settlements.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Largest settlement, then spreads",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Settlements with Medicine & Healing or Faith & Nature structures gain an untyped bonus equal to the tier to checks. Bonuses from different structure types stack.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Plague",
+                    "description": "Each turn: +1 Unrest, -2 Gold, spreads to connected settlements (Failure result). Disease continues unchecked.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1,
+                        "gold": -2
+                    },
+                    "resolution": {
+                        "skills": [
+                            "medicine",
+                            "religion",
+                            "society"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "medicine",
+                "description": "treat the sick"
+            },
+            {
+                "skill": "religion",
+                "description": "divine healing"
+            },
+            {
+                "skill": "society",
+                "description": "quarantine measures"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Plague cured; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Plague cured",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Plague contained; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Plague spreads; +1 Unrest, -2 Gold, spreads to a settlement connected by a road",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Plague spreads",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Plague spreads",
+                        "value": -2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Devastating outbreak; +2 Unrest, -2 Gold, spreads to all settlements connected by a road",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Devastating outbreak",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Devastating outbreak",
+                        "value": -2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "public-scandal",
+        "name": "Public Scandal",
+        "description": "A leader is implicated in an embarrassing or criminal situation.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Random PC",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "ifUnresolved": {
+            "type": "autoResolve",
+            "autoResolve": {
+                "outcome": "failure",
+                "message": "pf2e-reignmaker.events.public-scandal.unresolved.msg"
+            },
+            "transforms": {
+                "newEventId": "ongoing-scandal",
+                "message": "pf2e-reignmaker.events.public-scandal.unresolved.transforms"
+            }
+        },
+        "skills": [
+            {
+                "skill": "deception",
+                "description": "cover up"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "public apology"
+            },
+            {
+                "skill": "intimidation",
+                "description": "silence critics"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Scandal deflected; no effect",
+                "modifiers": []
+            },
+            "success": {
+                "msg": "Damage controlled; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Damage controlled",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Public outrage; +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Public outrage",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Leader must lay low; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Leader must lay low",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "raiders",
+        "name": "Raiders",
+        "description": "Armed raiders threaten settlements and trade routes.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Can pay 2 Gold tribute to immediately end the event (no check required). Fortifications provide an untyped bonus equal to the tier to checks.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Raiders",
+                    "description": "Each turn: -2 Gold, -2 Food, +1 Unrest (Failure result). Raiders continue pillaging unchecked.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "gold": -2,
+                        "food": -2,
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "intimidation",
+                            "diplomacy",
+                            "stealth"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "military response"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate tribute"
+            },
+            {
+                "skill": "stealth",
+                "description": "track to their base"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Raiders defeated; +1 Gold (loot), **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Raiders defeated",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Successful raid; -2 Gold, -2 Food, +1 Unrest",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+                        "value": -2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+                        "value": -2,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Major raid; -2 Gold, -2 Food, +2 Unrest, one structure becomes damaged",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major raid",
+                        "value": -2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major raid",
+                        "value": -2,
+                        "selector": "food",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Major raid",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Major raid",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "remarkable-treasure",
+        "name": "Remarkable Treasure",
+        "description": "Explorers discover valuable resources or ancient treasure.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Gain +1 to the check for each mine or quarry you control (prospecting experience).",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Remarkable Treasure expires",
+                "turnsUntilDispute": 2,
+                "disputeEffect": {
+                    "unrest": 1
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "society",
+                "description": "appraise value"
+            },
+            {
+                "skill": "thievery",
+                "description": "secure it safely"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate claims"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Legendary treasure; +4 Gold, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Legendary treasure",
+                        "value": 4,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Legendary treasure",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Valuable find; +2 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Valuable find",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Modest value; +1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Modest value",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Treasure cursed or false; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Treasure cursed or false",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "scholarly-discovery",
+        "name": "Scholarly Discovery",
+        "description": "Researchers in your kingdom make an important academic breakthrough.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Settlement with knowledge structures or largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to their tier to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Scholarly Discovery expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "lore",
+                "description": "historical research"
+            },
+            {
+                "skill": "arcana",
+                "description": "theoretical magic"
+            },
+            {
+                "skill": "society",
+                "description": "social sciences"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Revolutionary discovery; +2 Gold, +1 Fame, may build one Knowledge structure at half cost",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Revolutionary discovery",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Revolutionary discovery",
+                        "value": 1,
+                        "selector": "fame",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Important findings: +1 Gold OR +1 Fame",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Important findings: +1",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Research inconclusive; no benefit",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Academic scandal; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Academic scandal",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "sensational-crime",
+        "name": "Sensational Crime",
+        "description": "A notorious crime captures public attention.",
+        "traits": [
+            "dangerous"
+        ],
+        "location": "Largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Crime & Intrigue structures provide an untyped bonus equal to their tier to checks.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Sensational Crime expires",
+                "transformsTo": "crime-wave"
+            }
+        },
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "harsh justice"
+            },
+            {
+                "skill": "society",
+                "description": "investigation"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "calm fears"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Criminal caught spectacularly; -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Criminal caught spectacularly",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Crime solved; no effect",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Criminal escapes; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Criminal escapes",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Copycat crimes; +2 Unrest, event may recur",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Copycat crimes",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "trade-agreement",
+        "name": "Trade Agreement",
+        "description": "Merchants propose a lucrative trade arrangement.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Capital or largest settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Commerce structures provide an untyped bonus equal to their tier to checks.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Trade Agreement expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate terms"
+            },
+            {
+                "skill": "society",
+                "description": "assess markets"
+            },
+            {
+                "skill": "deception",
+                "description": "leverage position"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Exclusive deal; +2 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Exclusive deal",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Standard agreement; +1 Gold",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Standard agreement",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Poor terms; no significant benefit",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Trade dispute; -1 Gold, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Trade dispute",
+                        "value": -1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Trade dispute",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "undead-uprising",
+        "name": "Undead Uprising",
+        "description": "The dead rise from their graves to threaten the living.",
+        "traits": [
+            "dangerous",
+            "continuous"
+        ],
+        "location": "Random Settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "Settlements with Faith & Nature or Knowledge & Magic structures gain an untyped bonus equal to their tier to checks.",
+        "ifUnresolved": {
+            "type": "continuous",
+            "continuous": {
+                "becomesModifier": true,
+                "modifierTemplate": {
+                    "name": "Unresolved: Undead Uprising",
+                    "description": "Each turn: +1 Unrest, one structure damaged (Failure result). Undead continue spreading unchecked.",
+                    "duration": "until-resolved",
+                    "severity": "dangerous",
+                    "effects": {
+                        "unrest": 1
+                    },
+                    "resolution": {
+                        "skills": [
+                            "religion",
+                            "arcana",
+                            "intimidation"
+                        ]
+                    }
+                }
+            }
+        },
+        "skills": [
+            {
+                "skill": "religion",
+                "description": "consecrate and bless"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical containment"
+            },
+            {
+                "skill": "intimidation",
+                "description": "destroy by force"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Undead destroyed; -1 Unrest, **event ends**",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Undead destroyed",
+                        "value": -1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Undead destroyed; **event ends**",
+                "modifiers": []
+            },
+            "failure": {
+                "msg": "Undead spread; +1 Unrest, one structure becomes damaged",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Undead spread",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Undead spread",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "msg": "Major outbreak; +2 Unrest, one structure destroyed and another damaged",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Major outbreak",
+                        "value": 2,
+                        "selector": "unrest",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Major outbreak",
+                        "value": 1,
+                        "selector": "destroy_structure",
+                        "enabled": true
+                    },
+                    {
+                        "type": "event",
+                        "name": "Major outbreak",
+                        "value": 1,
+                        "selector": "damage_structure",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "visiting-celebrity",
+        "name": "Visiting Celebrity",
+        "description": "A famous person visits your kingdom, bringing attention and opportunity.",
+        "traits": [
+            "beneficial"
+        ],
+        "location": "Random settlement",
+        "modifier": 0,
+        "resolvedOn": [
+            "criticalSuccess",
+            "success"
+        ],
+        "special": "If you have Performance & Culture structures, gain an untyped bonus equal to their tier to the check.",
+        "ifUnresolved": {
+            "type": "expires",
+            "expires": {
+                "message": "Visiting Celebrity expires"
+            }
+        },
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "formal reception"
+            },
+            {
+                "skill": "performance",
+                "description": "entertainment"
+            },
+            {
+                "skill": "society",
+                "description": "social events"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "msg": "Spectacular visit; +2 Gold, -2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Spectacular visit",
+                        "value": 2,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    },
+                    {
+                        "type": "untyped",
+                        "name": "Spectacular visit",
+                        "value": -2,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            },
+            "success": {
+                "msg": "Pleasant visit; +1 Gold OR -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Pleasant visit",
+                        "value": 1,
+                        "selector": "gold",
+                        "enabled": true,
+                        "turns": 1
+                    }
+                ]
+            },
+            "failure": {
+                "msg": "Mediocre visit; no significant effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "msg": "Celebrity offended; +1 Unrest, -2 to next celebrity event",
+                "modifiers": [
+                    {
+                        "type": "untyped",
+                        "name": "Celebrity offended",
+                        "value": 1,
+                        "selector": "unrest",
+                        "enabled": true
+                    }
+                ]
+            }
+        }
+    }
+]

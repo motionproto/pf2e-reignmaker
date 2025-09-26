@@ -1,74 +1,86 @@
 {
   "id": "visiting-celebrity",
-  "name": "pf2e-reignmaker.events.visiting-celebrity.name",
-  "description": "pf2e-reignmaker.events.visiting-celebrity.description",
+  "name": "Visiting Celebrity",
+  "description": "A famous person visits your kingdom, bringing attention and opportunity.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.visiting-celebrity.location",
+  "location": "Random settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.visiting-celebrity.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If you have Performance & Culture structures, gain an untyped bonus equal to their tier to the check.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Visiting Celebrity expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "diplomacy",
-        "performance",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.visiting-celebrity.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.visiting-celebrity.stage-0.criticalSuccess.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.visiting-celebrity.stage-0.criticalSuccess.unrest",
-            "value": -2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.visiting-celebrity.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.visiting-celebrity.stage-0.success.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.visiting-celebrity.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.visiting-celebrity.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.visiting-celebrity.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "diplomacy",
+      "description": "formal reception"
+    },
+    {
+      "skill": "performance",
+      "description": "entertainment"
+    },
+    {
+      "skill": "society",
+      "description": "social events"
     }
   ],
-  "special": "pf2e-reignmaker.events.visiting-celebrity.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Spectacular visit; +2 Gold, -2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Spectacular visit",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Spectacular visit",
+          "value": -2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Pleasant visit; +1 Gold OR -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Pleasant visit",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Mediocre visit; no significant effect",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Celebrity offended; +1 Unrest, -2 to next celebrity event",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Celebrity offended",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

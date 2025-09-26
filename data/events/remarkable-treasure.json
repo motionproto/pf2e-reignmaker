@@ -1,83 +1,99 @@
 {
   "id": "remarkable-treasure",
-  "name": "pf2e-reignmaker.events.remarkable-treasure.name",
-  "description": "pf2e-reignmaker.events.remarkable-treasure.description",
+  "name": "Remarkable Treasure",
+  "description": "Explorers discover valuable resources or ancient treasure.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.remarkable-treasure.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.remarkable-treasure.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "society",
-        "thievery",
-        "diplomacy"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.remarkable-treasure.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.remarkable-treasure.stage-0.criticalSuccess.gold",
-            "value": 4,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.remarkable-treasure.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.remarkable-treasure.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.remarkable-treasure.stage-0.success.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.remarkable-treasure.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.remarkable-treasure.stage-0.failure.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.remarkable-treasure.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.remarkable-treasure.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+  "special": "Gain +1 to the check for each mine or quarry you control (prospecting experience).",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Remarkable Treasure expires",
+      "turnsUntilDispute": 2,
+      "disputeEffect": {
+        "unrest": 1
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "society",
+      "description": "appraise value"
+    },
+    {
+      "skill": "thievery",
+      "description": "secure it safely"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "negotiate claims"
+    }
   ],
-  "special": "pf2e-reignmaker.events.remarkable-treasure.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Legendary treasure; +4 Gold, -1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Legendary treasure",
+          "value": 4,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Legendary treasure",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Valuable find; +2 Gold",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Valuable find",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Modest value; +1 Gold",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Modest value",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Treasure cursed or false; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Treasure cursed or false",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

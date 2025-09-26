@@ -1,83 +1,116 @@
 {
   "id": "bandit-activity",
-  "name": "pf2e-reignmaker.events.bandit-activity.name",
-  "description": "pf2e-reignmaker.events.bandit-activity.description",
+  "name": "Bandit Activity",
+  "description": "Bandits establish a camp and begin raiding travelers.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.bandit-activity.location",
+  "location": "Random border hex",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.bandit-activity.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "intimidation",
-        "diplomacy",
-        "stealth"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.bandit-activity.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.bandit-activity.stage-0.criticalSuccess.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
+  "special": "Once per event, you can try to recruit the bandits (Diplomacy only) - on success, gain a free Garrison.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Bandit Activity",
+        "description": "Each turn: lose 1 Resource and +1 Unrest (Failure result). Bandits entrench themselves and grow stronger.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "resources": -1,
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "intimidation",
+            "diplomacy",
+            "stealth"
+          ],
+          "automatic": {
+            "condition": "hire_adventurers",
+            "description": "Automatically resolved by hiring adventurers"
           }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.bandit-activity.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.bandit-activity.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.bandit-activity.stage-0.failure.resources",
-            "value": -1,
-            "selector": "resources",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.bandit-activity.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.bandit-activity.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.bandit-activity.stage-0.criticalFailure.resources",
-            "value": -2,
-            "selector": "resources",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.bandit-activity.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "crush them with force"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "negotiate their surrender"
+    },
+    {
+      "skill": "stealth",
+      "description": "infiltrate and dismantle"
+    }
   ],
-  "special": "pf2e-reignmaker.events.bandit-activity.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Bandits defeated or recruited; +1 Gold from their loot, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Bandits defeated or recruited",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Bandits scattered; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Raids continue; lose 1 Resource this turn, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Raids continue",
+          "value": -1,
+          "selector": "resources",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Raids continue",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Bandits grow bolder; lose 2 Resources, +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Bandits grow bolder",
+          "value": -2,
+          "selector": "resources",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Bandits grow bolder",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

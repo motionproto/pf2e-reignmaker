@@ -1,66 +1,82 @@
 {
   "id": "immigration",
-  "name": "pf2e-reignmaker.events.immigration.name",
-  "description": "pf2e-reignmaker.events.immigration.description",
+  "name": "Immigration",
+  "description": "New settlers arrive seeking homes in your kingdom.",
   "traits": [
     "beneficial"
   ],
-  "location": "pf2e-reignmaker.events.immigration.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.immigration.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "diplomacy",
-        "society",
-        "survival"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.immigration.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.immigration.stage-0.criticalSuccess.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.immigration.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.immigration.stage-0.success.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.immigration.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.immigration.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.immigration.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "First turn: Few settlers stay (Failure result). Second turn: Unintegrated immigrants cause tensions, +1 Unrest per turn.",
+      "turnsUntilTension": 2,
+      "tensionEffect": {
+        "unrest": 1
       }
     }
-  ]
+  },
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "welcome newcomers"
+    },
+    {
+      "skill": "society",
+      "description": "integrate settlers"
+    },
+    {
+      "skill": "survival",
+      "description": "find them land"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Major influx; +2 Gold, +2 untyped bonus to Build Structure actions this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major influx",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Steady immigration; +1 Gold, +1 untyped bonus to Build Structure actions this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Steady immigration",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Few settlers stay; no significant effect",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Integration problems; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Integration problems",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

@@ -1,79 +1,96 @@
 {
   "id": "local-disaster",
-  "name": "pf2e-reignmaker.events.local-disaster.name",
-  "description": "pf2e-reignmaker.events.local-disaster.description",
+  "name": "Local Disaster",
+  "description": "Fire, flood, or structural collapse strikes a settlement.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.local-disaster.location",
+  "location": "Random settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.local-disaster.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "Settlements with Fortifications increase the result by one degree of success.",
+  "ifUnresolved": {
+    "type": "autoResolve",
+    "autoResolve": {
+      "outcome": "failure",
+      "message": "pf2e-reignmaker.events.local-disaster.unresolved.msg"
+    },
+    "transforms": {
+      "newEventId": "disaster-recovery",
+      "message": "pf2e-reignmaker.events.local-disaster.unresolved.transforms"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "crafting",
-        "survival",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.criticalSuccess.msg",
-        "modifiers": []
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.local-disaster.stage-0.success.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.local-disaster.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.local-disaster.stage-0.failure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.local-disaster.stage-0.criticalFailure.destroy",
-            "value": 1,
-            "selector": "destroy_structure",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "crafting",
+      "description": "emergency repairs"
+    },
+    {
+      "skill": "survival",
+      "description": "evacuation and rescue"
+    },
+    {
+      "skill": "society",
+      "description": "organize response"
     }
   ],
-  "special": "pf2e-reignmaker.events.local-disaster.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Disaster contained; no significant damage",
+      "modifiers": []
+    },
+    "success": {
+      "msg": "Limited damage; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Limited damage",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Major damage; one structure becomes damaged, +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major damage",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Major damage",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Catastrophic; one structure is destroyed, +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Catastrophic",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Catastrophic",
+          "value": 1,
+          "selector": "destroy_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

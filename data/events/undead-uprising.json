@@ -1,87 +1,115 @@
 {
   "id": "undead-uprising",
-  "name": "pf2e-reignmaker.events.undead-uprising.name",
-  "description": "pf2e-reignmaker.events.undead-uprising.description",
+  "name": "Undead Uprising",
+  "description": "The dead rise from their graves to threaten the living.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.undead-uprising.location",
+  "location": "Random Settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.undead-uprising.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "religion",
-        "arcana",
-        "intimidation"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.undead-uprising.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.undead-uprising.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.failure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalFailure.destroy",
-            "value": 1,
-            "selector": "destroy_structure",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.undead-uprising.stage-0.criticalFailure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
+  "special": "Settlements with Faith & Nature or Knowledge & Magic structures gain an untyped bonus equal to their tier to checks.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Undead Uprising",
+        "description": "Each turn: +1 Unrest, one structure damaged (Failure result). Undead continue spreading unchecked.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "religion",
+            "arcana",
+            "intimidation"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "religion",
+      "description": "consecrate and bless"
+    },
+    {
+      "skill": "arcana",
+      "description": "magical containment"
+    },
+    {
+      "skill": "intimidation",
+      "description": "destroy by force"
+    }
   ],
-  "special": "pf2e-reignmaker.events.undead-uprising.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Undead destroyed; -1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Undead destroyed",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Undead destroyed; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Undead spread; +1 Unrest, one structure becomes damaged",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Undead spread",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Undead spread",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Major outbreak; +2 Unrest, one structure destroyed and another damaged",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major outbreak",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Major outbreak",
+          "value": 1,
+          "selector": "destroy_structure",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Major outbreak",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

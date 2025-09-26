@@ -1,66 +1,94 @@
 {
   "id": "demand-structure",
-  "name": "pf2e-reignmaker.events.demand-structure.name",
-  "description": "pf2e-reignmaker.events.demand-structure.description",
+  "name": "Demand Structure",
+  "description": "Citizens demand that a specific structure be built.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.demand-structure.location",
+  "location": "Largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.demand-structure.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "diplomacy",
-        "intimidation",
-        "society"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.demand-structure.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-structure.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.demand-structure.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.demand-structure.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-structure.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.demand-structure.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-structure.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+  "special": "If you build a structure of the demanded type, the event ends (automatic success).",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Demand Structure",
+        "description": "Each turn: +1 Unrest (or pay 1 Gold concession). Protests continue and grow more organized.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "intimidation",
+            "society"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "negotiate a compromise"
+    },
+    {
+      "skill": "intimidation",
+      "description": "enforce order"
+    },
+    {
+      "skill": "society",
+      "description": "understand their needs"
+    }
   ],
-  "special": "pf2e-reignmaker.events.demand-structure.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Citizens convinced; -1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Citizens convinced",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Demands are satisfied; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Protests continue; +1 Unrest, or pay 1 Gold as concessions",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Protests continue",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Violence erupts; +2 Unrest, event escalates",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Violence erupts",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

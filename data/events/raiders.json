@@ -1,106 +1,136 @@
 {
   "id": "raiders",
-  "name": "pf2e-reignmaker.events.raiders.name",
-  "description": "pf2e-reignmaker.events.raiders.description",
+  "name": "Raiders",
+  "description": "Armed raiders threaten settlements and trade routes.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.raiders.location",
+  "location": "Random settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.raiders.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "intimidation",
-        "diplomacy",
-        "stealth"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.raiders.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.criticalSuccess.gold",
-            "value": 1,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.raiders.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.failure.gold",
-            "value": -2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.failure.food",
-            "value": -2,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.raiders.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.criticalFailure.gold",
-            "value": -2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.criticalFailure.food",
-            "value": -2,
-            "selector": "food",
-            "enabled": true,
-            "turns": 1
-          },
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.raiders.stage-0.criticalFailure.damage",
-            "value": 1,
-            "selector": "damage_structure",
-            "enabled": true
-          }
-        ]
+  "special": "Can pay 2 Gold tribute to immediately end the event (no check required). Fortifications provide an untyped bonus equal to the tier to checks.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Raiders",
+        "description": "Each turn: -2 Gold, -2 Food, +1 Unrest (Failure result). Raiders continue pillaging unchecked.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "gold": -2,
+          "food": -2,
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "intimidation",
+            "diplomacy",
+            "stealth"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "military response"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "negotiate tribute"
+    },
+    {
+      "skill": "stealth",
+      "description": "track to their base"
+    }
   ],
-  "special": "pf2e-reignmaker.events.raiders.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Raiders defeated; +1 Gold (loot), **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Raiders defeated",
+          "value": 1,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Successful raid; -2 Gold, -2 Food, +1 Unrest",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "value": -2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "value": -2,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Major raid; -2 Gold, -2 Food, +2 Unrest, one structure becomes damaged",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major raid",
+          "value": -2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Major raid",
+          "value": -2,
+          "selector": "food",
+          "enabled": true,
+          "turns": 1
+        },
+        {
+          "type": "untyped",
+          "name": "Major raid",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Major raid",
+          "value": 1,
+          "selector": "damage_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

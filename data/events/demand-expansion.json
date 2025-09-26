@@ -1,66 +1,94 @@
 {
   "id": "demand-expansion",
-  "name": "pf2e-reignmaker.events.demand-expansion.name",
-  "description": "pf2e-reignmaker.events.demand-expansion.description",
+  "name": "Demand Expansion",
+  "description": "Citizens demand the kingdom claim new territory.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.demand-expansion.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.demand-expansion.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "diplomacy",
-        "survival",
-        "intimidation"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.demand-expansion.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-expansion.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.demand-expansion.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.demand-expansion.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-expansion.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.demand-expansion.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.demand-expansion.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
+  "special": "If you expand your territory this turn (claim a new hex), automatically succeed and event ends.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Demand Expansion",
+        "description": "Each turn: +1 Unrest (Failure result). Citizens grow increasingly frustrated with lack of expansion.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "survival",
+            "intimidation"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "promise future growth"
+    },
+    {
+      "skill": "survival",
+      "description": "show expansion plans"
+    },
+    {
+      "skill": "intimidation",
+      "description": "demand patience"
+    }
   ],
-  "special": "pf2e-reignmaker.events.demand-expansion.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Citizens satisfied; -1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Citizens satisfied",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Citizens satisfied; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Citizens unhappy; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Citizens unhappy",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Major dissatisfaction; +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major dissatisfaction",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

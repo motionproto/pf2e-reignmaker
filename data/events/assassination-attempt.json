@@ -1,57 +1,74 @@
 {
   "id": "assassination-attempt",
-  "name": "pf2e-reignmaker.events.assassination-attempt.name",
-  "description": "pf2e-reignmaker.events.assassination-attempt.description",
+  "name": "Assassination Attempt",
+  "description": "Someone attempts to kill one of your leaders.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.assassination-attempt.location",
+  "location": "Random PC",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.assassination-attempt.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "If the target has a bodyguard or is in a fortified location, gain +2 to the check.",
+  "ifUnresolved": {
+    "type": "autoResolve",
+    "autoResolve": {
+      "outcome": "failure",
+      "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.msg"
+    },
+    "transforms": {
+      "newEventId": "security-crisis",
+      "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.transforms"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "stealth",
-        "intimidation",
-        "medicine"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.assassination-attempt.stage-0.criticalSuccess.msg",
-        "modifiers": []
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.assassination-attempt.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.assassination-attempt.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.assassination-attempt.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.assassination-attempt.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.assassination-attempt.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "stealth",
+      "description": "avoid the assassin"
+    },
+    {
+      "skill": "intimidation",
+      "description": "deter through fear"
+    },
+    {
+      "skill": "medicine",
+      "description": "survive wounds"
     }
   ],
-  "special": "pf2e-reignmaker.events.assassination-attempt.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Assassin captured; gain information about enemies",
+      "modifiers": []
+    },
+    "success": {
+      "msg": "Attempt foiled;",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Leader escapes; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Leader escapes",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Leader wounded",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

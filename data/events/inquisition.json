@@ -1,73 +1,101 @@
 {
   "id": "inquisition",
-  "name": "pf2e-reignmaker.events.inquisition.name",
-  "description": "pf2e-reignmaker.events.inquisition.description",
+  "name": "Inquisition",
+  "description": "Zealots mobilize against a minority group or belief.",
   "traits": [
     "dangerous",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.inquisition.location",
+  "location": "Largest settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.inquisition.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
-    {
-      "skills": [
-        "religion",
-        "intimidation",
-        "diplomacy"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.inquisition.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.inquisition.stage-0.criticalSuccess.unrest",
-            "value": -1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.inquisition.stage-0.success.msg",
-        "modifiers": []
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.inquisition.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.inquisition.stage-0.failure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.inquisition.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.inquisition.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          },
-          {
-            "type": "event",
-            "name": "pf2e-reignmaker.events.inquisition.stage-0.criticalFailure.destroy",
-            "value": 1,
-            "selector": "destroy_structure",
-            "enabled": true
-          }
-        ]
+  "special": "If you have Faith & Nature structures, gain an untyped bonus equal to the tier to Religion checks.",
+  "ifUnresolved": {
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Unresolved: Inquisition",
+        "description": "Each turn: +2 Unrest (Failure result). Zealots continue persecution unchecked.",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "effects": {
+          "unrest": 2
+        },
+        "resolution": {
+          "skills": [
+            "religion",
+            "intimidation",
+            "diplomacy"
+          ]
+        }
       }
     }
+  },
+  "skills": [
+    {
+      "skill": "religion",
+      "description": "theological debate"
+    },
+    {
+      "skill": "intimidation",
+      "description": "suppress zealots"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "protect victims"
+    }
   ],
-  "special": "pf2e-reignmaker.events.inquisition.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Peacefully resolved; -1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Peacefully resolved",
+          "value": -1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Zealots dispersed; **event ends**",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Persecution spreads; +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Persecution spreads",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Violence erupts; +2 Unrest, one structure destroyed",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Violence erupts",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        },
+        {
+          "type": "event",
+          "name": "Violence erupts",
+          "value": 1,
+          "selector": "destroy_structure",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

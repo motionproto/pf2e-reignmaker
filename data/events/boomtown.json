@@ -1,68 +1,80 @@
 {
   "id": "boomtown",
-  "name": "pf2e-reignmaker.events.boomtown.name",
-  "description": "pf2e-reignmaker.events.boomtown.description",
+  "name": "Boomtown",
+  "description": "A settlement experiences sudden, dramatic growth.",
   "traits": [
     "beneficial",
     "continuous"
   ],
-  "location": "pf2e-reignmaker.events.boomtown.location",
+  "location": "Random settlement",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.boomtown.resolution",
   "resolvedOn": [
     "failure",
     "criticalFailure"
   ],
-  "stages": [
+  "special": "While active gain +1 untyped bonus to all Crafting and Society checks in that settlement",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Boomtown expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "society",
-        "crafting",
-        "diplomacy"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.boomtown.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.boomtown.stage-0.criticalSuccess.gold",
-            "value": 4,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.boomtown.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.boomtown.stage-0.success.gold",
-            "value": 2,
-            "selector": "gold",
-            "enabled": true,
-            "turns": 1
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.boomtown.stage-0.failure.msg",
-        "modifiers": []
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.boomtown.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.boomtown.stage-0.criticalFailure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "society",
+      "description": "manage growth"
+    },
+    {
+      "skill": "crafting",
+      "description": "expand infrastructure"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "maintain order"
     }
   ],
-  "special": "pf2e-reignmaker.events.boomtown.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Major growth; +4 Gold",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Major growth",
+          "value": 4,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "success": {
+      "msg": "Steady expansion; +2 Gold this turn",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Steady expansion",
+          "value": 2,
+          "selector": "gold",
+          "enabled": true,
+          "turns": 1
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Growth stalls; **event ends**",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Boom goes bust; +1 Unrest, **event ends**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Boom goes bust",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }

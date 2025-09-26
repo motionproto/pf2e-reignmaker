@@ -1,73 +1,85 @@
 {
   "id": "land-rush",
-  "name": "pf2e-reignmaker.events.land-rush.name",
-  "description": "pf2e-reignmaker.events.land-rush.description",
+  "name": "Land Rush",
+  "description": "Settlers attempt to claim wilderness at the kingdom's border.",
   "traits": [
     "dangerous"
   ],
-  "location": "pf2e-reignmaker.events.land-rush.location",
+  "location": "",
   "modifier": 0,
-  "resolution": "pf2e-reignmaker.events.land-rush.resolution",
   "resolvedOn": [
     "criticalSuccess",
     "success"
   ],
-  "stages": [
+  "special": "These hexes are claimed without requiring the normal Claim Hex action or resources. Choose adjacent unclaimed hexes.",
+  "ifUnresolved": {
+    "type": "expires",
+    "expires": {
+      "message": "Land Rush expires"
+    }
+  },
+  "skills": [
     {
-      "skills": [
-        "diplomacy",
-        "survival",
-        "intimidation"
-      ],
-      "criticalSuccess": {
-        "msg": "pf2e-reignmaker.events.land-rush.stage-0.criticalSuccess.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.land-rush.stage-0.criticalSuccess.hex",
-            "value": 2,
-            "selector": "hex",
-            "enabled": true
-          }
-        ]
-      },
-      "success": {
-        "msg": "pf2e-reignmaker.events.land-rush.stage-0.success.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.land-rush.stage-0.success.hex",
-            "value": 1,
-            "selector": "hex",
-            "enabled": true
-          }
-        ]
-      },
-      "failure": {
-        "msg": "pf2e-reignmaker.events.land-rush.stage-0.failure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.land-rush.stage-0.failure.unrest",
-            "value": 1,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      },
-      "criticalFailure": {
-        "msg": "pf2e-reignmaker.events.land-rush.stage-0.criticalFailure.msg",
-        "modifiers": [
-          {
-            "type": "untyped",
-            "name": "pf2e-reignmaker.events.land-rush.stage-0.criticalFailure.unrest",
-            "value": 2,
-            "selector": "unrest",
-            "enabled": true
-          }
-        ]
-      }
+      "skill": "diplomacy",
+      "description": "negotiate with settlers"
+    },
+    {
+      "skill": "survival",
+      "description": "guide their efforts"
+    },
+    {
+      "skill": "intimidation",
+      "description": "assert control"
     }
   ],
-  "special": "pf2e-reignmaker.events.land-rush.special"
+  "effects": {
+    "criticalSuccess": {
+      "msg": "Settlers successfully expand the kingdom; **gain 2 hexes**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Settlers successfully expand the kingdom",
+          "value": 2,
+          "selector": "hex",
+          "enabled": true
+        }
+      ]
+    },
+    "success": {
+      "msg": "Settlers expand the kingdom; **gain 1 hex**",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Settlers expand the kingdom",
+          "value": 1,
+          "selector": "hex",
+          "enabled": true
+        }
+      ]
+    },
+    "failure": {
+      "msg": "Settlers disperse without helping; +1 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Settlers disperse without helping",
+          "value": 1,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Violence erupts at border; +2 Unrest",
+      "modifiers": [
+        {
+          "type": "untyped",
+          "name": "Violence erupts at border",
+          "value": 2,
+          "selector": "unrest",
+          "enabled": true
+        }
+      ]
+    }
+  }
 }
