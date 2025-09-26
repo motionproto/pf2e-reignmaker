@@ -111,27 +111,20 @@ export class StatusPhaseController {
     }
     
     /**
-     * Process fame gains for the phase
+     * Reset fame to 1 at the start of the phase
      */
-    async processFameGains(
+    async resetFame(
         kingdomState: KingdomState,
         currentTurn: number
-    ): Promise<{ success: boolean; fameGained: number; error?: string }> {
-        let totalFameGained = 0;
+    ): Promise<{ success: boolean; fameSet: number; error?: string }> {
+        // Always reset fame to 1 at the start of status phase
+        const targetFame = 1;
         
-        // Check for milestones
-        const milestones = this.checkMilestones(kingdomState);
-        for (const milestone of milestones) {
-            totalFameGained += milestone.fameGained;
-        }
+        // Calculate the change needed to reach 1
+        const currentFame = kingdomState.fame || 0;
+        const fameChange = targetFame - currentFame;
         
-        // Check for automatic fame gain conditions
-        if (this.shouldGainAutomaticFame(kingdomState)) {
-            totalFameGained += 1;
-        }
-        
-        // Apply fame using command
-        if (totalFameGained > 0) {
+        if (fameChange !== 0) {
             const context: CommandContext = {
                 kingdomState,
                 currentTurn,
@@ -140,25 +133,27 @@ export class StatusPhaseController {
             
             const command = new UpdateResourcesCommand([{
                 resource: 'fame',
-                amount: totalFameGained,
-                operation: 'add'
+                amount: fameChange,
+                operation: fameChange > 0 ? 'add' : 'subtract'
             }]);
             
             const result = await commandExecutor.execute(command, context);
             
             if (result.success) {
-                this.state.fameGained = totalFameGained;
-                return { success: true, fameGained: totalFameGained };
+                this.state.fameGained = targetFame;
+                return { success: true, fameSet: targetFame };
             } else {
                 return { 
                     success: false, 
-                    fameGained: 0, 
+                    fameSet: 0, 
                     error: result.error 
                 };
             }
         }
         
-        return { success: true, fameGained: 0 };
+        // Fame is already 1, no change needed
+        this.state.fameGained = targetFame;
+        return { success: true, fameSet: targetFame };
     }
     
     /**
@@ -185,18 +180,45 @@ export class StatusPhaseController {
     ): Promise<{ 
         success: boolean; 
         changes: Map<string, number>; 
+        modifierDetails: Array<{
+            name: string;
+            source: string;
+            effects: Array<{
+                resource: string;
+                amount: number;
+            }>;
+        }>;
         error?: string 
     }> {
         const changes = new Map<string, number>();
+        const modifierDetails: Array<{
+            name: string;
+            source: string;
+            effects: Array<{
+                resource: string;
+                amount: number;
+            }>;
+        }> = [];
         
         // Process each active modifier
         for (const modifier of kingdomState.modifiers) {
             if (this.isModifierActive(modifier, currentTurn)) {
                 const effects = this.getModifierEffects(modifier);
+                const effectsList: Array<{resource: string; amount: number}> = [];
                 
                 for (const [resource, amount] of effects) {
                     const current = changes.get(resource) || 0;
                     changes.set(resource, current + amount);
+                    effectsList.push({ resource, amount });
+                }
+                
+                // Track processed modifier with details
+                if (effectsList.length > 0) {
+                    modifierDetails.push({
+                        name: modifier.name,
+                        source: modifier.source.name || modifier.source.type,
+                        effects: effectsList
+                    });
                 }
                 
                 // Track processed modifier
@@ -217,17 +239,18 @@ export class StatusPhaseController {
             
             if (result.success) {
                 this.state.totalChanges = changes;
-                return { success: true, changes };
+                return { success: true, changes, modifierDetails };
             } else {
                 return { 
                     success: false, 
-                    changes: new Map(), 
+                    changes: new Map(),
+                    modifierDetails: [],
                     error: result.error 
                 };
             }
         }
         
-        return { success: true, changes: new Map() };
+        return { success: true, changes: new Map(), modifierDetails: [] };
     }
     
     /**
@@ -263,14 +286,26 @@ export class StatusPhaseController {
             if (modifier.effects.gold) {
                 effects.set('gold', modifier.effects.gold);
             }
+            if (modifier.effects.food) {
+                effects.set('food', modifier.effects.food);
+            }
+            if (modifier.effects.lumber) {
+                effects.set('lumber', modifier.effects.lumber);
+            }
+            if (modifier.effects.stone) {
+                effects.set('stone', modifier.effects.stone);
+            }
+            if (modifier.effects.ore) {
+                effects.set('ore', modifier.effects.ore);
+            }
+            if (modifier.effects.luxuries) {
+                effects.set('luxuries', modifier.effects.luxuries);
+            }
             if (modifier.effects.unrest) {
                 effects.set('unrest', modifier.effects.unrest);
             }
             if (modifier.effects.fame) {
                 effects.set('fame', modifier.effects.fame);
-            }
-            if (modifier.effects.food) {
-                effects.set('food', modifier.effects.food);
             }
         }
         

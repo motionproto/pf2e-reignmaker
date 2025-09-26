@@ -13,7 +13,7 @@
   
   // Define required steps for checking phase completion
   const PHASE_REQUIRED_STEPS = new Map([
-    [TurnPhase.PHASE_I, ['gain-fame', 'apply-modifiers']],
+    [TurnPhase.PHASE_I, []],  // Status phase is now automated - no manual steps required
     [TurnPhase.PHASE_II, ['resources-collect']],
     [TurnPhase.PHASE_III, ['calculate-unrest']],
     [TurnPhase.PHASE_IV, ['resolve-event']],

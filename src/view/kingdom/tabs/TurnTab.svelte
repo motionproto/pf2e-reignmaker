@@ -8,13 +8,13 @@
    import PhaseBar from '../components/PhaseBar.svelte';
    import PhaseHeader from '../components/PhaseHeader.svelte';
    
-   // Phase components  
-   import StatusPhase from '../turnPhases/StatusPhase.svelte';
-   import ResourcesPhase from '../turnPhases/ResourcesPhase.svelte';
+   // Phase components - Using refactored versions for clean architecture
+   import StatusPhase from '../turnPhases/StatusPhaseRefactored.svelte';
+   import ResourcesPhase from '../turnPhases/ResourcesPhaseRefactored.svelte';
    import UnrestPhase from '../turnPhases/UnrestPhaseRefactored.svelte';
-   import EventsPhase from '../turnPhases/EventsPhase.svelte';
-   import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
-   import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';
+   import EventsPhase from '../turnPhases/EventsPhaseRefactored.svelte';
+   import ActionsPhase from '../turnPhases/ActionsPhaseRefactored.svelte';
+   import UpkeepPhase from '../turnPhases/UpkeepPhaseRefactored.svelte';
    
    // Initialize viewing phase if not set
    onMount(() => {
