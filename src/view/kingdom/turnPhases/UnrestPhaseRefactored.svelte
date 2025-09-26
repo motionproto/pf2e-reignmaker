@@ -15,6 +15,7 @@
    
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
+   import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
    import { initializeRollResultHandler } from '../../../api/foundry-actors';
    
    // Controller instance
@@ -302,10 +303,18 @@
             <div class="incident-result-container">
                {#if currentIncident}
                   <div class="incident-display">
-                     <div class="roll-result">
-                        <div class="roll-value {isRolling ? 'rolling' : ''}">{lastRoll}</div>
-                        <div class="roll-label">d100 Roll</div>
-                     </div>
+            <div class="roll-result">
+              <span class="d100">d100:</span>
+              <span class="roll-value">{incidentRoll}</span>
+              <!-- Temporary re-roll button for testing -->
+              <button 
+                class="reroll-test-btn"
+                on:click={rollForIncident}
+                title="Re-roll for testing"
+              >
+                🎲
+              </button>
+            </div>
                      
                      <div class="incident-info">
                         <div class="incident-name">{currentIncident.name}</div>
@@ -342,8 +351,8 @@
                         </div>
                      {/if}
                      
-                     <div class="incident-effects">
-                        {#if incidentResolved}
+                     {#if incidentResolved}
+                        <div class="incident-effects">
                            <div class="resolution-banner {rollOutcome}">
                               <i class="fas fa-dice-d20"></i>
                               <span>
@@ -358,21 +367,17 @@
                                  {/if}
                               </span>
                            </div>
-                        {:else}
-                           <div class="effect-row">
-                              <span class="effect-label">Success:</span>
-                              <span class="effect-text effect-success">{currentIncident.successEffect}</span>
-                           </div>
-                           <div class="effect-row">
-                              <span class="effect-label">Failure:</span>
-                              <span class="effect-text effect-failure">{currentIncident.failureEffect}</span>
-                           </div>
-                           <div class="effect-row">
-                              <span class="effect-label">Critical Failure:</span>
-                              <span class="effect-text effect-critical">{currentIncident.criticalFailureEffect}</span>
-                           </div>
-                        {/if}
-                     </div>
+                        </div>
+                     {:else}
+                        <PossibleOutcomes 
+                           outcomes={[
+                              { result: 'success', label: 'Success', description: currentIncident.successEffect },
+                              { result: 'failure', label: 'Failure', description: currentIncident.failureEffect },
+                              { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.criticalFailureEffect }
+                           ]}
+                           showTitle={false}
+                        />
+                     {/if}
                   </div>
                {:else}
                   <div class="no-incident">
@@ -749,39 +754,6 @@
       padding: 15px;
       background: rgba(0, 0, 0, 0.1);
       border-radius: var(--radius-md);
-      
-      .effect-row {
-         display: flex;
-         gap: 10px;
-         margin-bottom: 10px;
-         
-         &:last-child {
-            margin-bottom: 0;
-         }
-      }
-      
-      .effect-label {
-         font-weight: 600;
-         color: var(--text-secondary);
-         min-width: 120px;
-      }
-      
-      .effect-text {
-         flex: 1;
-         line-height: 1.4;
-         
-         &.effect-success {
-            color: var(--color-green);
-         }
-         
-         &.effect-failure {
-            color: var(--color-orange);
-         }
-         
-         &.effect-critical {
-            color: var(--color-red);
-         }
-      }
    }
    
    .no-incident {

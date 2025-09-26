@@ -11,7 +11,7 @@
    // Phase components  
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
    import ResourcesPhase from '../turnPhases/ResourcesPhase.svelte';
-   import UnrestPhase from '../turnPhases/UnrestPhase.svelte';
+   import UnrestPhase from '../turnPhases/UnrestPhaseRefactored.svelte';
    import EventsPhase from '../turnPhases/EventsPhase.svelte';
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
    import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';

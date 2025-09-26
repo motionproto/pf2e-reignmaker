@@ -69,7 +69,7 @@ export const IncidentManager = {
     switch (tier) {
       case 0: return 'Stable';
       case 1: return 'Discontent';
-      case 2: return 'Turmoil';
+      case 2: return 'Unrest';  // Changed from 'Turmoil' to 'Unrest' to match UI
       case 3: return 'Rebellion';
       default: return 'Unknown';
     }
@@ -100,12 +100,15 @@ export const IncidentManager = {
   /**
    * Roll for an incident based on unrest tier
    * Returns null if no incident occurs
+   * @param tier The unrest tier (0-3)
+   * @param roll The d100 roll result (1-100) - if not provided, will generate one
    */
-  rollForIncident(tier: number): Incident | null {
+  rollForIncident(tier: number, roll?: number): Incident | null {
     const level = this.getIncidentLevel(tier);
     if (!level) return null;
     
-    const roll = Math.floor(Math.random() * 100) + 1; // 1-100
+    // Use provided roll or generate one
+    const diceRoll = roll ?? Math.floor(Math.random() * 100) + 1; // 1-100
     
     // Check for no incident
     let noIncidentThreshold: number;
@@ -121,35 +124,87 @@ export const IncidentManager = {
         break;
     }
     
-    if (roll <= noIncidentThreshold) {
+    if (diceRoll <= noIncidentThreshold) {
       return null;
     }
     
     // Get appropriate incident from the tables
-    return this.getIncidentByRoll(level, roll);
+    return this.getIncidentByRoll(level, diceRoll);
   },
   
   /**
-   * Get an incident by percentile roll
+   * Get an incident by percentile roll using optimized lookup tables
    */
   getIncidentByRoll(level: IncidentLevel, roll: number): Incident | null {
+    // Get the appropriate lookup table and incidents array
+    let lookupTable: [number, number, string][];
     let incidents: Incident[];
+    
     switch (level) {
-      case IncidentLevel.MINOR: 
-        incidents = this.minorIncidents; 
+      case IncidentLevel.MINOR:
+        lookupTable = this.minorIncidentLookup;
+        incidents = this.minorIncidents;
         break;
-      case IncidentLevel.MODERATE: 
-        incidents = this.moderateIncidents; 
+      case IncidentLevel.MODERATE:
+        lookupTable = this.moderateIncidentLookup;
+        incidents = this.moderateIncidents;
         break;
-      case IncidentLevel.MAJOR: 
-        incidents = this.majorIncidents; 
+      case IncidentLevel.MAJOR:
+        lookupTable = this.majorIncidentLookup;
+        incidents = this.majorIncidents;
         break;
     }
     
-    return incidents.find(inc => 
-      roll >= inc.percentileMin && roll <= inc.percentileMax
-    ) || null;
+    // Binary search for efficiency (though with ~10 items, linear would work too)
+    for (const [min, max, id] of lookupTable) {
+      if (roll >= min && roll <= max) {
+        return incidents.find(inc => inc.id === id) || null;
+      }
+    }
+    
+    return null;
   },
+  
+  // Optimized lookup tables - just ranges and IDs
+  // Format: [min, max, incident_id]
+  minorIncidentLookup: [
+    [21, 30, 'crime_wave'],
+    [31, 40, 'work_stoppage'],
+    [41, 50, 'emigration_threat'],
+    [51, 60, 'protests'],
+    [61, 70, 'corruption_scandal'],
+    [71, 80, 'rising_tensions'],
+    [81, 90, 'bandit_activity'],
+    [91, 100, 'minor_diplomatic_incident']
+  ] as [number, number, string][],
+  
+  moderateIncidentLookup: [
+    [16, 24, 'production_strike'],
+    [25, 33, 'diplomatic_incident'],
+    [34, 42, 'tax_revolt'],
+    [43, 51, 'infrastructure_damage'],
+    [52, 60, 'disease_outbreak'],
+    [61, 69, 'riot'],
+    [70, 78, 'settlement_crisis'],
+    [79, 87, 'assassination_attempt'],
+    [88, 93, 'trade_embargo'],
+    [94, 100, 'mass_exodus']
+  ] as [number, number, string][],
+  
+  majorIncidentLookup: [
+    [11, 17, 'guerrilla_movement'],
+    [18, 24, 'mass_desertion_threat'],
+    [25, 31, 'trade_embargo_major'],
+    [32, 38, 'settlement_crisis_major'],
+    [39, 45, 'international_scandal'],
+    [46, 52, 'prison_breaks'],
+    [53, 59, 'noble_conspiracy'],
+    [60, 66, 'economic_crash'],
+    [67, 73, 'religious_schism'],
+    [74, 80, 'border_raid'],
+    [81, 87, 'secession_crisis'],
+    [88, 100, 'international_crisis']
+  ] as [number, number, string][],
   
   /**
    * Get the placeholder image for an incident level

@@ -103,22 +103,41 @@
   }
   
   .outcomes-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+  
+  /* Ensure critical success appears first, success second, 
+     failure third, critical failure fourth */
+  .outcome-criticalSuccess {
+    order: 1;
+  }
+  
+  .outcome-success {
+    order: 2;
+  }
+  
+  .outcome-failure {
+    order: 3;
+  }
+  
+  .outcome-criticalFailure {
+    order: 4;
+  }
+  
+  /* On smaller screens, go back to single column */
+  @media (max-width: 640px) {
+    .outcomes-list {
+      grid-template-columns: 1fr;
+    }
   }
   
   .outcome-item {
     padding: 8px 6px 8px 12px;
     border-radius: var(--radius-md);
     border-left: 4px solid;
-    transition: all 0.2s ease;
     background: rgba(0, 0, 0, 0.2);
-    
-    &:hover {
-      transform: translateX(2px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
     
     &.outcome-criticalSuccess {
       background: rgba(34, 197, 94, 0.05);

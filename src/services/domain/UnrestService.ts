@@ -67,7 +67,8 @@ export class UnrestService {
         }
         
         const roll = diceService.rollD100();
-        const incident = IncidentManager.rollForIncident(tier);
+        // Pass the roll to IncidentManager to use the same roll for determination
+        const incident = IncidentManager.rollForIncident(tier, roll);
         const level = IncidentManager.getIncidentLevel(tier);
         
         return {
