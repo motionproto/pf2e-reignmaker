@@ -18,20 +18,42 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Drug Den",
-        "description": "Each turn: +1 Unrest, -1 Gold (Failure result). Drug trade expands unchecked.",
+        "name": "Drug Trade Expanding",
+        "description": "The drug trade continues to corrupt your citizens and undermine social order",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-pills",
+        "priority": 105,
         "effects": {
           "unrest": 1,
           "gold": -1
         },
         "resolution": {
           "skills": [
-            "stealth",
-            "medicine",
-            "intimidation"
-          ]
+            "intimidation",
+            "deception",
+            "society"
+          ],
+          "dc": 15,
+          "onResolution": {
+            "successMsg": "The drug trade expanding situation has been resolved!",
+            "failureMsg": "Failed to resolve the drug trade expanding situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Drug Cartel Control",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "gold": -3
+            },
+            "resolution": {
+              "dc": 18
+            }
+          }
         }
       }
     }

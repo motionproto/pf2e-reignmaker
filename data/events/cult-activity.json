@@ -1,94 +1,84 @@
 {
   "id": "cult-activity",
   "name": "Cult Activity",
-  "description": "A dangerous cult begins operating in secret within your kingdom.",
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Random settlement",
+  "description": "A dangerous cult has been discovered operating in your kingdom.",
+  "category": "danger",
+  "icon": "fas fa-skull",
+  "dc": 16,
   "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Settlements with a Faith & Nature structure gain an untyped bonus equal to the tier to defeat the cult Settlements with a Crime & Intrigue structure gain an untyped bonus equal to the tier to locate the cult",
+  "skills": ["religion", "diplomacy", "intimidation"],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "You convert the cultists to a productive faith. They become valuable citizens.",
+      "modifiers": [
+        { "selector": "unrest", "value": -2, "enabled": true },
+        { "selector": "fame", "value": 1, "enabled": true }
+      ]
+    },
+    "success": {
+      "msg": "You successfully disband the cult and arrest its leaders.",
+      "modifiers": [
+        { "selector": "unrest", "value": -1, "enabled": true }
+      ]
+    },
+    "failure": {
+      "msg": "The cult evades your forces and continues recruiting.",
+      "modifiers": [
+        { "selector": "unrest", "value": 2, "enabled": true }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "The cult's influence spreads! They gain powerful supporters.",
+      "modifiers": [
+        { "selector": "unrest", "value": 3, "enabled": true },
+        { "selector": "gold", "value": -2, "enabled": true }
+      ]
+    }
+  },
   "ifUnresolved": {
     "type": "continuous",
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Cult Activity",
-        "description": "Each turn: +1 Unrest (Failure result). Cult recruits more members and spreads influence.",
+        "name": "Cult Influence",
+        "description": "The cult continues to spread its dark influence, corrupting citizens and undermining authority",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-skull",
+        "priority": 100,
         "effects": {
-          "unrest": 1
+          "unrest": 1,
+          "gold": -1
         },
         "resolution": {
-          "skills": [
-            "stealth",
-            "religion",
-            "intimidation"
-          ]
+          "skills": ["religion", "diplomacy", "intimidation"],
+          "dc": 16,
+          "automatic": {
+            "condition": "build:temple",
+            "description": "Build a temple to counter the cult's influence"
+          },
+          "onResolution": {
+            "successMsg": "The cult has been disbanded and its members dispersed!",
+            "failureMsg": "The cult continues to operate in the shadows"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Cult Uprising",
+            "description": "The cult has grown powerful and is now actively working to overthrow the government",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "gold": -2,
+              "fame": -1
+            },
+            "resolution": {
+              "dc": 20
+            }
+          }
         }
       }
-    }
-  },
-  "skills": [
-    {
-      "skill": "stealth",
-      "description": "infiltrate the cult"
-    },
-    {
-      "skill": "religion",
-      "description": "counter their beliefs"
-    },
-    {
-      "skill": "intimidation",
-      "description": "root them out"
-    }
-  ],
-  "effects": {
-    "criticalSuccess": {
-      "msg": "Cult exposed and defeated; -1 Unrest, **event ends**",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Cult exposed and defeated",
-          "value": -1,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
-    },
-    "success": {
-      "msg": "If not located: cult found. If located: cult defeated, **event ends**",
-      "modifiers": []
-    },
-    "failure": {
-      "msg": "Cult continues; +1 Unrest",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Cult continues",
-          "value": 1,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
-    },
-    "criticalFailure": {
-      "msg": "Cult grows stronger; +2 Unrest, spreads to another settlement",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Cult grows stronger",
-          "value": 2,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
     }
   }
 }

@@ -67,11 +67,9 @@ export type EventLocation =
   | "Largest settlement, then spreads"
   | "Random PC"
   | "Random Settlement"
-  | "Random border hex"
   | "Random settlement"
   | "Settlement with knowledge structures or largest settlement"
   | "Settlement with military structures or the largest settlement"
-  | "Two settlements (if less than 2, no effect)"
   | "a random worksite and 2 adjacent hexes (roll 1d6)";
 
 /**

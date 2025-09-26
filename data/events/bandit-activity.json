@@ -1,116 +1,88 @@
 {
   "id": "bandit-activity",
   "name": "Bandit Activity",
-  "description": "Bandits establish a camp and begin raiding travelers.",
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Random border hex",
+  "description": "Bandits have been spotted raiding caravans and settlements in your territory.",
+  "category": "danger",
+  "icon": "fas fa-mask",
+  "dc": 16,
   "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Once per event, you can try to recruit the bandits (Diplomacy only) - on success, gain a free Garrison.",
+  "skills": ["intimidation", "diplomacy", "stealth"],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "You capture the bandit leaders and turn them into productive citizens. The former bandits become valuable scouts.",
+      "modifiers": [
+        { "selector": "gold", "value": 2, "enabled": true },
+        { "selector": "unrest", "value": -1, "enabled": true }
+      ]
+    },
+    "success": {
+      "msg": "You successfully drive off the bandits. Trade routes are secure once more.",
+      "modifiers": [
+        { "selector": "gold", "value": 1, "enabled": true }
+      ]
+    },
+    "failure": {
+      "msg": "The bandits evade your forces and continue their raids.",
+      "modifiers": [
+        { "selector": "gold", "value": -2, "enabled": true },
+        { "selector": "unrest", "value": 1, "enabled": true }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Your forces are ambushed! The bandits grow bolder and recruit more members.",
+      "modifiers": [
+        { "selector": "gold", "value": -3, "enabled": true },
+        { "selector": "food", "value": -2, "enabled": true },
+        { "selector": "unrest", "value": 2, "enabled": true }
+      ]
+    }
+  },
   "ifUnresolved": {
     "type": "continuous",
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Bandit Activity",
-        "description": "Each turn: lose 1 Resource and +1 Unrest (Failure result). Bandits entrench themselves and grow stronger.",
+        "name": "Ongoing Bandit Raids",
+        "description": "Bandits continue to raid your territory, disrupting trade and causing unrest",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-mask",
+        "priority": 100,
         "effects": {
-          "resources": -1,
+          "gold": -1,
+          "food": -1,
           "unrest": 1
         },
         "resolution": {
-          "skills": [
-            "intimidation",
-            "diplomacy",
-            "stealth"
-          ],
+          "skills": ["intimidation", "diplomacy", "stealth"],
+          "dc": 16,
           "automatic": {
-            "condition": "hire_adventurers",
-            "description": "Automatically resolved by hiring adventurers"
+            "condition": "action:hire_adventurers",
+            "description": "Hire adventurers to deal with the bandits"
+          },
+          "onResolution": {
+            "successMsg": "The bandit threat has been eliminated!",
+            "failureMsg": "Failed to stop the bandits - they continue their raids"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Bandit Stronghold",
+            "description": "The bandits have established a fortified base and are organizing larger raids",
+            "severity": "critical",
+            "effects": {
+              "gold": -2,
+              "food": -2,
+              "unrest": 2,
+              "luxuries": -1
+            },
+            "resolution": {
+              "dc": 20
+            }
           }
         }
       }
-    }
-  },
-  "skills": [
-    {
-      "skill": "intimidation",
-      "description": "crush them with force"
-    },
-    {
-      "skill": "diplomacy",
-      "description": "negotiate their surrender"
-    },
-    {
-      "skill": "stealth",
-      "description": "infiltrate and dismantle"
-    }
-  ],
-  "effects": {
-    "criticalSuccess": {
-      "msg": "Bandits defeated or recruited; +1 Gold from their loot, **event ends**",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Bandits defeated or recruited",
-          "value": 1,
-          "selector": "gold",
-          "enabled": true,
-          "turns": 1
-        }
-      ]
-    },
-    "success": {
-      "msg": "Bandits scattered; **event ends**",
-      "modifiers": []
-    },
-    "failure": {
-      "msg": "Raids continue; lose 1 Resource this turn, +1 Unrest",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Raids continue",
-          "value": -1,
-          "selector": "resources",
-          "enabled": true,
-          "turns": 1
-        },
-        {
-          "type": "untyped",
-          "name": "Raids continue",
-          "value": 1,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
-    },
-    "criticalFailure": {
-      "msg": "Bandits grow bolder; lose 2 Resources, +2 Unrest",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Bandits grow bolder",
-          "value": -2,
-          "selector": "resources",
-          "enabled": true,
-          "turns": 1
-        },
-        {
-          "type": "untyped",
-          "name": "Bandits grow bolder",
-          "value": 2,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
     }
   }
 }

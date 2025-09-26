@@ -18,21 +18,45 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Raiders",
-        "description": "Each turn: -2 Gold, -2 Food, +1 Unrest (Failure result). Raiders continue pillaging unchecked.",
+        "name": "Ongoing Raids",
+        "description": "Raiders continue to pillage your borderlands, stealing resources and terrorizing citizens",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-horse",
+        "priority": 95,
         "effects": {
           "gold": -2,
-          "food": -2,
+          "food": -1,
           "unrest": 1
         },
         "resolution": {
           "skills": [
             "intimidation",
             "diplomacy",
-            "stealth"
-          ]
+            "warfare"
+          ],
+          "dc": 16,
+          "onResolution": {
+            "successMsg": "The ongoing raids situation has been resolved!",
+            "failureMsg": "Failed to resolve the ongoing raids situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Raider Stronghold",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "gold": -3,
+              "food": -2,
+              "unrest": 2,
+              "luxuries": -1
+            },
+            "resolution": {
+              "dc": 19
+            }
+          }
         }
       }
     }

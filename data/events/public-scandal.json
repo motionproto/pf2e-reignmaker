@@ -12,14 +12,49 @@
     "success"
   ],
   "ifUnresolved": {
-    "type": "autoResolve",
-    "autoResolve": {
-      "outcome": "failure",
-      "message": "pf2e-reignmaker.events.public-scandal.unresolved.msg"
-    },
-    "transforms": {
-      "newEventId": "ongoing-scandal",
-      "message": "pf2e-reignmaker.events.public-scandal.unresolved.transforms"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Lingering Scandal",
+        "description": "The scandal continues to damage your kingdom's reputation and authority",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-newspaper",
+        "priority": 120,
+        "effects": {
+          "unrest": 1,
+          "fame": -1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "deception",
+            "society"
+          ],
+          "dc": 14,
+          "onResolution": {
+            "successMsg": "The lingering scandal situation has been resolved!",
+            "failureMsg": "Failed to resolve the lingering scandal situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Government Crisis",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "fame": -2,
+              "gold": -1
+            },
+            "resolution": {
+              "dc": 17
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

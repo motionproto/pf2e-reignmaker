@@ -18,19 +18,43 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Inquisition",
-        "description": "Each turn: +2 Unrest (Failure result). Zealots continue persecution unchecked.",
+        "name": "Ongoing Persecution",
+        "description": "Religious zealots continue their persecution, creating fear and division",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-fire",
+        "priority": 100,
         "effects": {
-          "unrest": 2
+          "unrest": 2,
+          "fame": -1
         },
         "resolution": {
           "skills": [
+            "diplomacy",
             "religion",
-            "intimidation",
-            "diplomacy"
-          ]
+            "intimidation"
+          ],
+          "dc": 16,
+          "onResolution": {
+            "successMsg": "The ongoing persecution situation has been resolved!",
+            "failureMsg": "Failed to resolve the ongoing persecution situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Religious Purges",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 3,
+              "fame": -2,
+              "gold": -2
+            },
+            "resolution": {
+              "dc": 19
+            }
+          }
         }
       }
     }

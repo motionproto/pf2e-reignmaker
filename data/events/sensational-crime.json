@@ -13,10 +13,49 @@
   ],
   "special": "Crime & Intrigue structures provide an untyped bonus equal to their tier to checks.",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Sensational Crime expires",
-      "transformsTo": "crime-wave"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Criminal at Large",
+        "description": "The criminal remains free, committing more crimes and mocking authority",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-user-ninja",
+        "priority": 115,
+        "effects": {
+          "unrest": 1,
+          "fame": -1
+        },
+        "resolution": {
+          "skills": [
+            "intimidation",
+            "society",
+            "diplomacy"
+          ],
+          "dc": 14,
+          "onResolution": {
+            "successMsg": "The criminal at large situation has been resolved!",
+            "failureMsg": "Failed to resolve the criminal at large situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Crime Wave",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "fame": -1,
+              "gold": -2
+            },
+            "resolution": {
+              "dc": 17
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

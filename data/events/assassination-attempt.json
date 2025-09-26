@@ -13,14 +13,49 @@
   ],
   "special": "If the target has a bodyguard or is in a fortified location, gain +2 to the check.",
   "ifUnresolved": {
-    "type": "autoResolve",
-    "autoResolve": {
-      "outcome": "failure",
-      "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.msg"
-    },
-    "transforms": {
-      "newEventId": "security-crisis",
-      "message": "pf2e-reignmaker.events.assassination-attempt.unresolved.transforms"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Assassination Plot Active",
+        "description": "The assassination attempt failed, but the conspirators remain at large and plotting",
+        "duration": "until-resolved",
+        "severity": "critical",
+        "icon": "fas fa-crosshairs",
+        "priority": 75,
+        "effects": {
+          "unrest": 2,
+          "fame": -1
+        },
+        "resolution": {
+          "skills": [
+            "intimidation",
+            "society",
+            "diplomacy"
+          ],
+          "dc": 18,
+          "onResolution": {
+            "successMsg": "The assassination plot active situation has been resolved!",
+            "failureMsg": "Failed to resolve the assassination plot active situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 2,
+          "escalatedModifier": {
+            "name": "Multiple Assassination Plots",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 3,
+              "fame": -2,
+              "gold": -2
+            },
+            "resolution": {
+              "dc": 21
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

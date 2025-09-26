@@ -13,9 +13,49 @@
   ],
   "special": "These hexes are claimed without requiring the normal Claim Hex action or resources. Choose adjacent unclaimed hexes.",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Land Rush expires"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Land Dispute Chaos",
+        "description": "The uncontrolled land rush has created ongoing territorial disputes",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-map-marked",
+        "priority": 105,
+        "effects": {
+          "unrest": 1,
+          "resources": -1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "intimidation",
+            "society"
+          ],
+          "dc": 14,
+          "onResolution": {
+            "successMsg": "The land dispute chaos situation has been resolved!",
+            "failureMsg": "Failed to resolve the land dispute chaos situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Territorial Violence",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "resources": -2,
+              "gold": -1
+            },
+            "resolution": {
+              "dc": 17
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

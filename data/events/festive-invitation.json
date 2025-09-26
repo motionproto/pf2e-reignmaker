@@ -13,9 +13,47 @@
   ],
   "special": "If you bring at least 1 Resource as a gift, gain +2 to the check.",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Festive Invitation expires"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Snubbed Nobility",
+        "description": "Your absence from the festivities has offended the nobility who continue to undermine you",
+        "duration": "until-resolved",
+        "severity": "neutral",
+        "icon": "fas fa-mask",
+        "priority": 140,
+        "effects": {
+          "fame": -1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "society",
+            "performance"
+          ],
+          "dc": 11,
+          "onResolution": {
+            "successMsg": "The snubbed nobility situation has been resolved!",
+            "failureMsg": "Failed to resolve the snubbed nobility situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 5,
+          "escalatedModifier": {
+            "name": "Noble Boycott",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "fame": -2,
+              "gold": -1
+            },
+            "resolution": {
+              "dc": 14
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

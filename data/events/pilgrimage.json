@@ -13,9 +13,49 @@
   ],
   "special": "If you have Faith & Nature structures, gain an untyped bonus equal to the tier to check.",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Pilgrimage expires"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Religious Unrest",
+        "description": "The disrupted pilgrimage has angered the faithful who grow increasingly discontent",
+        "duration": "until-resolved",
+        "severity": "neutral",
+        "icon": "fas fa-praying-hands",
+        "priority": 120,
+        "effects": {
+          "unrest": 1,
+          "fame": -1
+        },
+        "resolution": {
+          "skills": [
+            "religion",
+            "diplomacy",
+            "society"
+          ],
+          "dc": 13,
+          "onResolution": {
+            "successMsg": "The religious unrest situation has been resolved!",
+            "failureMsg": "Failed to resolve the religious unrest situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Religious Protests",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "fame": -1,
+              "gold": -1
+            },
+            "resolution": {
+              "dc": 16
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

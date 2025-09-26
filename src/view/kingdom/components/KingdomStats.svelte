@@ -3,6 +3,7 @@
    import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
+   import EditableStat from './EditableStat.svelte';
    
    // Kingdom name state
    let isEditingName = false;
@@ -124,7 +125,10 @@
             </div>
             <div class="stat-item">
                <span class="stat-label">Gold:</span>
-               <span class="stat-value">{$kingdomState.resources.get('gold') || 0}</span>
+               <EditableStat 
+                  value={$kingdomState.resources.get('gold') || 0}
+                  onChange={(newValue) => $kingdomState.resources.set('gold', newValue)}
+               />
             </div>
             <div class="stat-item">
                <label for="war-status-select" class="stat-label">War Status:</label>
@@ -140,13 +144,19 @@
             <h4 class="stat-group-header">Unrest</h4>
             <div class="stat-item">
                <span class="stat-label">Current Unrest:</span>
-               <span class="stat-value" class:danger={$kingdomState.unrest > 5}>
-                  {$kingdomState.unrest}
-               </span>
+               <EditableStat 
+                  value={$kingdomState.unrest}
+                  onChange={(newValue) => $kingdomState.unrest = newValue}
+                  className={$kingdomState.unrest > 5 ? 'danger' : ''}
+               />
             </div>
             <div class="stat-item">
                <span class="stat-label">Imprisoned:</span>
-               <span class="stat-value imprisoned">{$kingdomState.imprisonedUnrest}</span>
+               <EditableStat 
+                  value={$kingdomState.imprisonedUnrest}
+                  onChange={(newValue) => $kingdomState.imprisonedUnrest = newValue}
+                  className="imprisoned"
+               />
             </div>
             <div class="stat-item">
                <span class="stat-label">From Size:</span>
@@ -202,7 +212,10 @@
                <div class="resource-header">Food</div>
                <div class="stat-item">
                   <span class="stat-label">Current:</span>
-                  <span class="stat-value">{$kingdomState.resources.get('food') || 0}</span>
+                  <EditableStat 
+                     value={$kingdomState.resources.get('food') || 0}
+                     onChange={(newValue) => $kingdomState.resources.set('food', newValue)}
+                  />
                </div>
                <div class="stat-item">
                   <span class="stat-label">Farmlands:</span>

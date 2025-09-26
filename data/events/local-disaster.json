@@ -13,14 +13,49 @@
   ],
   "special": "Settlements with Fortifications increase the result by one degree of success.",
   "ifUnresolved": {
-    "type": "autoResolve",
-    "autoResolve": {
-      "outcome": "failure",
-      "message": "pf2e-reignmaker.events.local-disaster.unresolved.msg"
-    },
-    "transforms": {
-      "newEventId": "disaster-recovery",
-      "message": "pf2e-reignmaker.events.local-disaster.unresolved.transforms"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Disaster Recovery Needed",
+        "description": "The local disaster has left lasting damage that continues to hamper the kingdom",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-house-damage",
+        "priority": 90,
+        "effects": {
+          "gold": -2,
+          "resources": -1
+        },
+        "resolution": {
+          "skills": [
+            "crafting",
+            "society",
+            "athletics"
+          ],
+          "dc": 15,
+          "onResolution": {
+            "successMsg": "The disaster recovery needed situation has been resolved!",
+            "failureMsg": "Failed to resolve the disaster recovery needed situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Infrastructure Collapse",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "gold": -3,
+              "resources": -2,
+              "unrest": 1
+            },
+            "resolution": {
+              "dc": 18
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

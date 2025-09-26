@@ -17,20 +17,49 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Food Shortage",
-        "description": "First turn: lose 6 Food, +1 Unrest. Subsequent turns: lose 2 Food, +1 Unrest per turn as shortage continues.",
+        "name": "Ongoing Food Crisis",
+        "description": "Agricultural production remains devastated, causing continued food shortages and civil unrest",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-seedling",
+        "priority": 95,
         "effects": {
-          "food": -6,
-          "unrest": 1
+          "food": -2,
+          "unrest": 1,
+          "gold": -1
         },
         "resolution": {
           "skills": [
             "nature",
             "survival",
             "diplomacy"
-          ]
+          ],
+          "dc": 15,
+          "automatic": {
+            "condition": "action:purchase_resources",
+            "description": "Purchase food supplies to end the shortage"
+          },
+          "onResolution": {
+            "successMsg": "Food production has been restored and the crisis is over!",
+            "failureMsg": "The food shortage continues despite your efforts"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Famine",
+            "description": "The food shortage has escalated into a full famine with starvation and riots",
+            "severity": "critical",
+            "effects": {
+              "food": -4,
+              "unrest": 2,
+              "gold": -2,
+              "fame": -1
+            },
+            "resolution": {
+              "dc": 20
+            }
+          }
         }
       }
     }

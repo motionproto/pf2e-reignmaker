@@ -13,14 +13,51 @@
   ],
   "special": "Can spend 1 Gold per hex before rolling to gain +2 to that check (emergency supplies). If one of the adjacent hexes has a settlement, treat it as a Local Disaster for that settlement.",
   "ifUnresolved": {
-    "type": "autoResolve",
-    "autoResolve": {
-      "outcome": "failure",
-      "message": "pf2e-reignmaker.events.natural-disaster.unresolved.msg"
-    },
-    "transforms": {
-      "newEventId": "relief-efforts",
-      "message": "pf2e-reignmaker.events.natural-disaster.unresolved.transforms"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Natural Disaster Aftermath",
+        "description": "The natural disaster has left widespread devastation requiring ongoing recovery efforts",
+        "duration": "until-resolved",
+        "severity": "critical",
+        "icon": "fas fa-tornado",
+        "priority": 70,
+        "effects": {
+          "gold": -3,
+          "food": -2,
+          "resources": -2
+        },
+        "resolution": {
+          "skills": [
+            "survival",
+            "crafting",
+            "diplomacy"
+          ],
+          "dc": 19,
+          "onResolution": {
+            "successMsg": "The natural disaster aftermath situation has been resolved!",
+            "failureMsg": "Failed to resolve the natural disaster aftermath situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 2,
+          "escalatedModifier": {
+            "name": "Total Devastation",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "gold": -4,
+              "food": -3,
+              "resources": -3,
+              "unrest": 2
+            },
+            "resolution": {
+              "dc": 22
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

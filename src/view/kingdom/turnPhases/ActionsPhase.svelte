@@ -1,10 +1,11 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, resolveModifier } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { PlayerActionsData, type PlayerAction } from '../../../models/PlayerActions';
    import ActionCard from '../../kingdom/components/ActionCard.svelte';
-   import { getPlayerCharacters, getCurrentUserCharacter, initializeRollResultHandler } from '../../../api/foundry-actors';
+   import { getPlayerCharacters, getCurrentUserCharacter, initializeRollResultHandler, performKingdomSkillCheck } from '../../../api/foundry-actors';
    import { onMount, onDestroy, tick } from 'svelte';
+   import type { KingdomModifier } from '../../../models/Modifiers';
    
    // Track expanded actions and resolved actions
    let expandedActions = new Set<string>();
@@ -21,6 +22,11 @@
    let playerCharacters: any[] = [];
    let selectedCharacter: any = null;
    let selectedCharacterId: string = '';
+   
+   // Modifier resolution
+   let selectedModifierId: string = '';
+   let resolvableModifiers: KingdomModifier[] = [];
+   $: resolvableModifiers = ($kingdomState.modifiers || []).filter(m => m.resolution && m.resolution.skills && m.resolution.skills.length > 0);
    
    // Categories with their icons and descriptions
    const categoryConfig = [
@@ -276,6 +282,11 @@
          return $kingdomState.imprisonedUnrest > 0;
       }
       
+      if (action.id === 'resolve-event') {
+         // Needs resolvable modifiers
+         return resolvableModifiers.length > 0;
+      }
+      
       if (action.cost) {
          // Check if kingdom has resources for the cost
          for (const [resource, amount] of action.cost.entries()) {
@@ -287,6 +298,60 @@
       }
       
       return true;
+   }
+   
+   // Handle modifier selection for Resolve Event action
+   function handleModifierSelection(actionId: string) {
+      if (actionId === 'resolve-event' && selectedModifierId) {
+         const modifier = resolvableModifiers.find(m => m.id === selectedModifierId);
+         if (modifier && modifier.resolution) {
+            // Return the modifier's skills and DC for the action card
+            return {
+               skills: modifier.resolution.skills,
+               dc: modifier.resolution.dc || 16,
+               modifierName: modifier.name,
+               modifierId: modifier.id
+            };
+         }
+      }
+      return null;
+   }
+   
+   // Resolve a modifier after successful skill check
+   async function resolveSelectedModifier(outcome: string, skill: string) {
+      if (selectedModifierId) {
+         const modifier = resolvableModifiers.find(m => m.id === selectedModifierId);
+         if (modifier) {
+            // Calculate roll result based on outcome
+            let rollResult = 10; // Base
+            const dc = modifier.resolution?.dc || 16;
+            
+            switch(outcome) {
+               case 'criticalSuccess':
+                  rollResult = dc + 10;
+                  break;
+               case 'success':
+                  rollResult = dc + 1;
+                  break;
+               case 'failure':
+                  rollResult = dc - 1;
+                  break;
+               case 'criticalFailure':
+                  rollResult = 1;
+                  break;
+            }
+            
+            const result = resolveModifier(selectedModifierId, skill, rollResult);
+            
+            // If successfully resolved, clear the selection
+            if (result.removed) {
+               selectedModifierId = '';
+            }
+            
+            return result;
+         }
+      }
+      return null;
    }
    
    // Format outcome text
@@ -399,31 +464,95 @@
             <div class="actions-list">
                {#each actions as action (action.id)}
                   {#key `${action.id}-${resolvedActions.has(action.id) ? 'resolved' : 'pending'}-${resolvedActions.get(action.id)?.outcome || 'none'}`}
-                     <ActionCard 
-                        {action}
-                        expanded={expandedActions.has(action.id)}
-                        available={isActionAvailable(action)}
-                        resolved={isActionResolved(action.id)}
-                        resolution={getActionResolution(action.id)}
-                        character={null}
-                        canPerformMore={actionsUsed < MAX_ACTIONS && !isActionResolved(action.id)}
-                        on:toggle={() => toggleAction(action.id)}
-                        on:characterSelected={(e) => {
-                           // Update the dropdown when a character is selected via dialog
-                           selectedCharacter = e.detail.character;
-                           selectedCharacterId = e.detail.character?.id || '';
-                        }}
-                        on:reset={(e) => {
-                           // Reset the action - remove from resolved and decrement counter
-                           const actionId = e.detail.actionId;
-                           if (resolvedActions.has(actionId)) {
-                              const newResolvedActions = new Map(resolvedActions);
-                              newResolvedActions.delete(actionId);
-                              resolvedActions = newResolvedActions;
-                              actionsUsed = Math.max(0, actionsUsed - 1);
-                           }
-                        }}
-                     />
+                     <div class="action-wrapper">
+                        <!-- Show modifier selection for Resolve Event action -->
+                        {#if action.id === 'resolve-event' && expandedActions.has(action.id) && !isActionResolved(action.id)}
+                           <div class="modifier-selection">
+                              <label for="modifier-select">Select Event to Resolve:</label>
+                              <select 
+                                 id="modifier-select"
+                                 bind:value={selectedModifierId}
+                                 class="modifier-dropdown"
+                              >
+                                 <option value="">Choose an ongoing event...</option>
+                                 {#each resolvableModifiers as modifier}
+                                    <option value={modifier.id}>
+                                       {modifier.name} 
+                                       {#if modifier.severity}
+                                          ({modifier.severity})
+                                       {/if}
+                                    </option>
+                                 {/each}
+                              </select>
+                              
+                              {#if selectedModifierId}
+                                 {@const selectedModifier = resolvableModifiers.find(m => m.id === selectedModifierId)}
+                                 {#if selectedModifier}
+                                    <div class="modifier-details">
+                                       <p class="modifier-description">{selectedModifier.description}</p>
+                                       {#if selectedModifier.effects}
+                                          <div class="modifier-effects">
+                                             <strong>Current Effects:</strong>
+                                             {#if selectedModifier.effects.gold} Gold: {selectedModifier.effects.gold}/turn{/if}
+                                             {#if selectedModifier.effects.food} Food: {selectedModifier.effects.food}/turn{/if}
+                                             {#if selectedModifier.effects.unrest} Unrest: {selectedModifier.effects.unrest}/turn{/if}
+                                          </div>
+                                       {/if}
+                                       {#if selectedModifier.resolution}
+                                          <div class="resolution-info">
+                                             <strong>Resolution:</strong>
+                                             Skills: {selectedModifier.resolution.skills?.join(', ') || 'Any'}
+                                             {#if selectedModifier.resolution.dc}
+                                                (DC {selectedModifier.resolution.dc})
+                                             {/if}
+                                          </div>
+                                       {/if}
+                                    </div>
+                                 {/if}
+                              {/if}
+                           </div>
+                        {/if}
+                        
+                        <ActionCard 
+                           {action}
+                           expanded={expandedActions.has(action.id)}
+                           available={isActionAvailable(action)}
+                           resolved={isActionResolved(action.id)}
+                           resolution={getActionResolution(action.id)}
+                           character={null}
+                           canPerformMore={actionsUsed < MAX_ACTIONS && !isActionResolved(action.id)}
+                           on:toggle={() => toggleAction(action.id)}
+                           on:characterSelected={(e) => {
+                              // Update the dropdown when a character is selected via dialog
+                              selectedCharacter = e.detail.character;
+                              selectedCharacterId = e.detail.character?.id || '';
+                           }}
+                           on:reset={(e) => {
+                              // Reset the action - remove from resolved and decrement counter
+                              const actionId = e.detail.actionId;
+                              if (resolvedActions.has(actionId)) {
+                                 const newResolvedActions = new Map(resolvedActions);
+                                 newResolvedActions.delete(actionId);
+                                 resolvedActions = newResolvedActions;
+                                 actionsUsed = Math.max(0, actionsUsed - 1);
+                              }
+                              
+                              // Clear modifier selection if resetting resolve-event
+                              if (actionId === 'resolve-event') {
+                                 selectedModifierId = '';
+                              }
+                           }}
+                           on:resolved={async (e) => {
+                              // Handle modifier resolution for resolve-event action
+                              if (action.id === 'resolve-event' && selectedModifierId) {
+                                 const result = await resolveSelectedModifier(e.detail.outcome, e.detail.skill);
+                                 if (result) {
+                                    console.log('Modifier resolution result:', result);
+                                 }
+                              }
+                           }}
+                        />
+                     </div>
                   {/key}
                {/each}
             </div>
@@ -588,5 +717,89 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+   }
+   
+   .action-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+   }
+   
+   .modifier-selection {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 15px;
+      
+      label {
+         display: block;
+         margin-bottom: 8px;
+         color: var(--text-primary);
+         font-weight: 600;
+      }
+      
+      .modifier-dropdown {
+         width: 100%;
+         padding: 8px 12px;
+         background: rgba(0, 0, 0, 0.3);
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--type-body-size);
+         margin-bottom: 12px;
+         
+         &:hover:not(:disabled) {
+            border-color: var(--border-strong);
+         }
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-amber);
+            box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+         }
+      }
+   }
+   
+   .modifier-details {
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      border-left: 3px solid var(--color-amber);
+      
+      .modifier-description {
+         margin: 0 0 8px 0;
+         color: var(--text-secondary);
+         font-size: var(--type-body-size);
+         line-height: 1.5;
+      }
+      
+      .modifier-effects {
+         margin: 8px 0;
+         padding: 8px;
+         background: rgba(239, 68, 68, 0.1);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--font-sm);
+         
+         strong {
+            color: var(--color-amber);
+            margin-right: 8px;
+         }
+      }
+      
+      .resolution-info {
+         margin-top: 8px;
+         padding: 8px;
+         background: rgba(34, 197, 94, 0.1);
+         border-radius: var(--radius-sm);
+         color: var(--text-primary);
+         font-size: var(--font-sm);
+         
+         strong {
+            color: var(--color-green);
+            margin-right: 8px;
+         }
+      }
    }
 </style>

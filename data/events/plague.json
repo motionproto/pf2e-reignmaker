@@ -18,20 +18,48 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Plague",
-        "description": "Each turn: +1 Unrest, -2 Gold, spreads to connected settlements (Failure result). Disease continues unchecked.",
+        "name": "Plague Outbreak",
+        "description": "Disease continues to spread through your settlements, weakening the population",
         "duration": "until-resolved",
-        "severity": "dangerous",
+        "severity": "critical",
+        "icon": "fas fa-virus",
+        "priority": 90,
         "effects": {
           "unrest": 1,
-          "gold": -2
+          "gold": -2,
+          "food": -1
         },
         "resolution": {
           "skills": [
             "medicine",
             "religion",
             "society"
-          ]
+          ],
+          "dc": 18,
+          "automatic": {
+            "condition": "build:temple,hospital",
+            "description": "Build a temple or hospital to provide healing"
+          },
+          "onResolution": {
+            "successMsg": "The plague has been contained and the sick are recovering!",
+            "failureMsg": "The plague continues to ravage your settlements despite your efforts"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 2,
+          "escalatedModifier": {
+            "name": "Devastating Pandemic",
+            "description": "The plague has become a full pandemic, causing mass casualties",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "gold": -4,
+              "food": -2
+            },
+            "resolution": {
+              "dc": 22
+            }
+          }
         }
       }
     }

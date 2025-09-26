@@ -12,12 +12,48 @@
     "success"
   ],
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "First turn: Few settlers stay (Failure result). Second turn: Unintegrated immigrants cause tensions, +1 Unrest per turn.",
-      "turnsUntilTension": 2,
-      "tensionEffect": {
-        "unrest": 1
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Immigration Crisis",
+        "description": "The poorly managed immigration has created ongoing integration problems",
+        "duration": "until-resolved",
+        "severity": "neutral",
+        "icon": "fas fa-users",
+        "priority": 125,
+        "effects": {
+          "unrest": 1,
+          "food": -1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "society",
+            "intimidation"
+          ],
+          "dc": 13,
+          "onResolution": {
+            "successMsg": "The immigration crisis situation has been resolved!",
+            "failureMsg": "Failed to resolve the immigration crisis situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Ethnic Tensions",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "food": -1,
+              "gold": -1
+            },
+            "resolution": {
+              "dc": 16
+            }
+          }
+        }
       }
     }
   },

@@ -13,9 +13,49 @@
   ],
   "special": "If you have Crime & Intrigue structures, gain an untyped bonus equal to their tier to the check. If you have no treasury or commerce structures, the thieves find nothing (automatic success).",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Notorious Heist expires"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Crime Spree",
+        "description": "The successful heist has emboldened criminals who continue their crime spree",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-user-secret",
+        "priority": 110,
+        "effects": {
+          "gold": -2,
+          "unrest": 1
+        },
+        "resolution": {
+          "skills": [
+            "intimidation",
+            "society",
+            "stealth"
+          ],
+          "dc": 15,
+          "onResolution": {
+            "successMsg": "The crime spree situation has been resolved!",
+            "failureMsg": "Failed to resolve the crime spree situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Crime Syndicate",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "gold": -3,
+              "unrest": 2,
+              "luxuries": -1
+            },
+            "resolution": {
+              "dc": 18
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

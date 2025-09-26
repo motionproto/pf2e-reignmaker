@@ -13,9 +13,49 @@
   ],
   "special": "Commerce structures provide an untyped bonus equal to their tier to checks.",
   "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Trade Agreement expires"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Trade Disruption",
+        "description": "The failed trade agreement has disrupted commerce and angered merchants",
+        "duration": "until-resolved",
+        "severity": "dangerous",
+        "icon": "fas fa-balance-scale",
+        "priority": 95,
+        "effects": {
+          "gold": -2,
+          "luxuries": -1
+        },
+        "resolution": {
+          "skills": [
+            "diplomacy",
+            "society",
+            "deception"
+          ],
+          "dc": 15,
+          "onResolution": {
+            "successMsg": "The trade disruption situation has been resolved!",
+            "failureMsg": "Failed to resolve the trade disruption situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Trade War",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "gold": -3,
+              "luxuries": -2,
+              "resources": -1
+            },
+            "resolution": {
+              "dc": 18
+            }
+          }
+        }
+      }
     }
   },
   "skills": [

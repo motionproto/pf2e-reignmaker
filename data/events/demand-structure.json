@@ -18,19 +18,40 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Demand Structure",
-        "description": "Each turn: +1 Unrest (or pay 1 Gold concession). Protests continue and grow more organized.",
+        "name": "Construction Demands",
+        "description": "Citizens continue demanding specific structures be built, growing impatient",
         "duration": "until-resolved",
-        "severity": "dangerous",
+        "severity": "neutral",
+        "icon": "fas fa-building",
+        "priority": 135,
         "effects": {
           "unrest": 1
         },
         "resolution": {
           "skills": [
             "diplomacy",
-            "intimidation",
+            "crafting",
             "society"
-          ]
+          ],
+          "dc": 12,
+          "onResolution": {
+            "successMsg": "The construction demands situation has been resolved!",
+            "failureMsg": "Failed to resolve the construction demands situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 4,
+          "escalatedModifier": {
+            "name": "Construction Protests",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2
+            },
+            "resolution": {
+              "dc": 15
+            }
+          }
         }
       }
     }

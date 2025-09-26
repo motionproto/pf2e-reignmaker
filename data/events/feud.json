@@ -1,102 +1,79 @@
 {
   "id": "feud",
   "name": "Feud",
-  "description": "Rival factions from different settlements escalate their conflict.",
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Two settlements (if less than 2, no effect)",
+  "description": "Two prominent families are engaged in a bitter feud that threatens to tear the community apart.",
+  "category": "social",
+  "icon": "fas fa-fist-raised",
+  "dc": 14,
   "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "pf2e-reignmaker.events.feud.special",
+  "skills": ["diplomacy", "intimidation", "deception"],
+  "effects": {
+    "criticalSuccess": {
+      "msg": "You broker a lasting peace and the families become allies. The unity strengthens your kingdom.",
+      "modifiers": [
+        { "selector": "unrest", "value": -2, "enabled": true },
+        { "selector": "fame", "value": 1, "enabled": true }
+      ]
+    },
+    "success": {
+      "msg": "You successfully mediate the dispute and restore peace.",
+      "modifiers": [
+        { "selector": "unrest", "value": -1, "enabled": true }
+      ]
+    },
+    "failure": {
+      "msg": "Your mediation fails. The feud escalates and spreads to their supporters.",
+      "modifiers": [
+        { "selector": "unrest", "value": 2, "enabled": true }
+      ]
+    },
+    "criticalFailure": {
+      "msg": "Your intervention makes things worse! Violence erupts in the streets.",
+      "modifiers": [
+        { "selector": "unrest", "value": 3, "enabled": true },
+        { "selector": "gold", "value": -1, "enabled": true }
+      ]
+    }
+  },
   "ifUnresolved": {
     "type": "continuous",
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Feud",
-        "description": "Each turn: +1 Unrest (Failure result). Feud escalates and disrupts trade between settlements.",
+        "name": "Ongoing Feud",
+        "description": "The feuding families continue their conflict, disrupting trade and causing civil unrest",
         "duration": "until-resolved",
         "severity": "dangerous",
+        "icon": "fas fa-fist-raised",
+        "priority": 110,
         "effects": {
-          "unrest": 1
+          "unrest": 1,
+          "gold": -1
         },
         "resolution": {
-          "skills": [
-            "diplomacy",
-            "intimidation",
-            "deception"
-          ]
+          "skills": ["diplomacy", "intimidation", "deception"],
+          "dc": 14,
+          "onResolution": {
+            "successMsg": "The feud has been settled and peace restored!",
+            "failureMsg": "The families remain at each other's throats"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 3,
+          "escalatedModifier": {
+            "name": "Blood Feud",
+            "description": "The feud has turned violent with regular bloodshed in the streets",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "gold": -2
+            },
+            "resolution": {
+              "dc": 18
+            }
+          }
         }
       }
-    }
-  },
-  "skills": [
-    {
-      "skill": "diplomacy",
-      "description": "mediate peace"
-    },
-    {
-      "skill": "intimidation",
-      "description": "enforce order"
-    },
-    {
-      "skill": "deception",
-      "description": "manipulate resolution"
-    }
-  ],
-  "effects": {
-    "criticalSuccess": {
-      "msg": "Feud ended, rivals become allies; +1 Gold, **event ends**",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Feud ended, rivals become allies",
-          "value": 1,
-          "selector": "gold",
-          "enabled": true,
-          "turns": 1
-        }
-      ]
-    },
-    "success": {
-      "msg": "Feud resolved; **event ends**",
-      "modifiers": []
-    },
-    "failure": {
-      "msg": "Feud disrupts trade; +1 Unrest,",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Feud disrupts trade",
-          "value": 1,
-          "selector": "unrest",
-          "enabled": true
-        }
-      ]
-    },
-    "criticalFailure": {
-      "msg": "Private war erupts; +2 Unrest, a random structure becomes damaged in one of the settlements",
-      "modifiers": [
-        {
-          "type": "untyped",
-          "name": "Private war erupts",
-          "value": 2,
-          "selector": "unrest",
-          "enabled": true
-        },
-        {
-          "type": "event",
-          "name": "Private war erupts",
-          "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
-        }
-      ]
     }
   }
 }

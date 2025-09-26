@@ -18,19 +18,45 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Undead Uprising",
-        "description": "Each turn: +1 Unrest, one structure damaged (Failure result). Undead continue spreading unchecked.",
+        "name": "Undead Plague",
+        "description": "The undead continue to rise from graveyards and battlefields, threatening the living",
         "duration": "until-resolved",
-        "severity": "dangerous",
+        "severity": "critical",
+        "icon": "fas fa-skull-crossbones",
+        "priority": 80,
         "effects": {
-          "unrest": 1
+          "unrest": 2,
+          "food": -1,
+          "fame": -1
         },
         "resolution": {
           "skills": [
             "religion",
             "arcana",
             "intimidation"
-          ]
+          ],
+          "dc": 17,
+          "onResolution": {
+            "successMsg": "The undead plague situation has been resolved!",
+            "failureMsg": "Failed to resolve the undead plague situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 2,
+          "escalatedModifier": {
+            "name": "Necropolis Rising",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 3,
+              "food": -2,
+              "fame": -2,
+              "gold": -2
+            },
+            "resolution": {
+              "dc": 20
+            }
+          }
         }
       }
     }

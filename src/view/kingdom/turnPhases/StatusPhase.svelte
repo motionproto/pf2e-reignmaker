@@ -1,7 +1,8 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, processModifiers } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, canOperatePhase } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
+   import { modifierService } from '../../../services/ModifierService';
    import Button from '../components/baseComponents/Button.svelte';
    
    // Constants
@@ -45,29 +46,74 @@
          return;
       }
       
-      // Apply ongoing modifiers
+      const currentTurn = $gameState.currentTurn || 1;
+      
+      // Use the modifier service to process all modifiers
+      const effects = modifierService.processTurnStart(currentTurn);
+      
+      // Apply the combined effects to the kingdom state
       kingdomState.update(state => {
-         if (state.modifiers && state.modifiers.length > 0) {
-            // Apply modifier effects
-            state.modifiers.forEach(modifier => {
-               // Apply turn effects if modifier has them
-               if (modifier.effects) {
-                  // Apply resource effects
-                  if (modifier.effects.gold) {
-                     const currentGold = state.resources.get('gold') || 0;
-                     state.resources.set('gold', Math.max(0, currentGold + modifier.effects.gold));
-                  }
-                  if (modifier.effects.unrest) {
-                     state.unrest = Math.max(0, state.unrest + modifier.effects.unrest);
-                  }
-                  if (modifier.effects.fame) {
-                     state.fame = Math.max(0, Math.min(3, state.fame + modifier.effects.fame));
-                  }
-               }
-            });
+         if (effects) {
+            // Apply resource effects
+            if (effects.gold) {
+               const currentGold = state.resources.get('gold') || 0;
+               state.resources.set('gold', Math.max(0, currentGold + effects.gold));
+            }
+            if (effects.food) {
+               const currentFood = state.resources.get('food') || 0;
+               state.resources.set('food', Math.max(0, currentFood + effects.food));
+            }
+            if (effects.lumber) {
+               const currentLumber = state.resources.get('lumber') || 0;
+               state.resources.set('lumber', Math.max(0, currentLumber + effects.lumber));
+            }
+            if (effects.stone) {
+               const currentStone = state.resources.get('stone') || 0;
+               state.resources.set('stone', Math.max(0, currentStone + effects.stone));
+            }
+            if (effects.ore) {
+               const currentOre = state.resources.get('ore') || 0;
+               state.resources.set('ore', Math.max(0, currentOre + effects.ore));
+            }
+            if (effects.luxuries) {
+               const currentLuxuries = state.resources.get('luxuries') || 0;
+               state.resources.set('luxuries', Math.max(0, currentLuxuries + effects.luxuries));
+            }
+            
+            // Apply kingdom stat effects
+            if (effects.unrest) {
+               state.unrest = Math.max(0, state.unrest + effects.unrest);
+            }
+            if (effects.fame) {
+               state.fame = Math.max(0, Math.min(3, state.fame + effects.fame));
+            }
+            
+            // Note: Roll modifiers and special effects would be handled elsewhere
          }
+         
+         // Check for escalation on modifiers
+         state.modifiers.forEach((modifier, index) => {
+            if (modifier.escalation && !modifier.escalation.hasEscalated) {
+               const turnsActive = currentTurn - modifier.startTurn;
+               if (turnsActive >= modifier.escalation.turnsUntilEscalation) {
+                  // Apply escalation
+                  const escalated = {
+                     ...modifier,
+                     ...modifier.escalation.escalatedModifier,
+                     id: `${modifier.id}-escalated`,
+                     escalation: {
+                        ...modifier.escalation,
+                        hasEscalated: true
+                     }
+                  };
+                  state.modifiers[index] = escalated;
+               }
+            }
+         });
+         
          return state;
       });
+      
       markPhaseStepCompleted('apply-modifiers');
    }
 </script>

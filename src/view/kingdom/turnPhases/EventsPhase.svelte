@@ -3,6 +3,7 @@
    import { kingdomState, addModifier } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { eventService, type EventData, type EventSkill, type EventOutcome } from '../../../services/EventService';
+   import { modifierService } from '../../../services/ModifierService';
    import { get } from 'svelte/store';
    import Button from '../components/baseComponents/Button.svelte';
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
@@ -86,6 +87,8 @@
       selectedSkill = data.skillName || selectedSkill;
       
       // Get the appropriate effect based on outcome
+      // NOTE: When players attempt resolution (regardless of outcome), we apply immediate effects only
+      // Modifiers are ONLY created when the event is skipped entirely
       if (outcome === 'criticalSuccess' && currentEvent.effects?.criticalSuccess) {
          outcomeMessage = currentEvent.effects.criticalSuccess.msg;
          currentEffects = currentEvent.effects.criticalSuccess.modifiers;
@@ -98,16 +101,12 @@
          outcomeMessage = currentEvent.effects.criticalFailure.msg;
          currentEffects = currentEvent.effects.criticalFailure.modifiers;
          applyEventOutcome(currentEvent.effects.criticalFailure);
-         if (currentEvent.ifUnresolved) {
-            unresolvedEvent = currentEvent;
-         }
+         // NO LONGER create modifier here - only when skipped
       } else if (outcome === 'failure' && currentEvent.effects?.failure) {
          outcomeMessage = currentEvent.effects.failure.msg;
          currentEffects = currentEvent.effects.failure.modifiers;
          applyEventOutcome(currentEvent.effects.failure);
-         if (currentEvent.ifUnresolved) {
-            unresolvedEvent = currentEvent;
-         }
+         // NO LONGER create modifier here - only when skipped
       }
       
       showResolutionResult = true;
@@ -241,15 +240,6 @@
    }
    
    function completeEventResolution() {
-      // Store unresolved event in gameState for Upkeep phase processing
-      if (unresolvedEvent) {
-         gameState.update(state => {
-            // Store the unresolved event for processing in Phase VI
-            (state as any).unresolvedEvent = unresolvedEvent;
-            return state;
-         });
-      }
-      
       // Reset state
       currentEvent = null;
       selectedSkill = '';
@@ -260,6 +250,36 @@
       unresolvedEvent = null;
       resolvedActor = '';
       character = null;
+   }
+   
+   // NEW: Skip event and create persistent modifier
+   function skipEvent() {
+      if (!currentEvent) return;
+      
+      // Check if event can create a persistent modifier
+      if (currentEvent.ifUnresolved) {
+         const modifier = eventService.handleUnresolvedEvent(currentEvent, $gameState.currentTurn || 1);
+         if (modifier) {
+            addModifier(modifier);
+            
+            // Show notification that modifier was created
+            outcomeMessage = `You chose not to address the ${currentEvent.name}. This will have ongoing consequences...`;
+            currentEffects = null;
+            showResolutionResult = true;
+            resolutionOutcome = 'failure'; // Use failure styling for skipped events
+         }
+      } else {
+         // Event has no persistent effects, just mark as complete
+         outcomeMessage = `The ${currentEvent.name} passes without your intervention.`;
+         currentEffects = null;
+         showResolutionResult = true;
+         resolutionOutcome = 'failure';
+      }
+      
+      // Mark phase as complete
+      if (!eventResolved) {
+         markPhaseStepCompleted('resolve-event');
+      }
    }
    
    // Helper function to format effect changes
@@ -382,6 +402,27 @@
                            on:execute={(e) => resolveEventWithSkill(e.detail.skill)}
                         />
                      {/each}
+                  </div>
+                  
+                  <!-- Skip Event Option -->
+                  <div class="skip-event-section">
+                     <div class="divider-with-text">
+                        <span>OR</span>
+                     </div>
+                     <button
+                        class="skip-event-btn"
+                        on:click={skipEvent}
+                        disabled={eventResolved}
+                     >
+                        <i class="fas fa-forward"></i>
+                        Skip Event (Don't Attempt Resolution)
+                     </button>
+                     {#if currentEvent.ifUnresolved}
+                        <p class="skip-warning">
+                           <i class="fas fa-exclamation-triangle"></i>
+                           Warning: Skipping this event will create an ongoing problem for your kingdom
+                        </p>
+                     {/if}
                   </div>
                </div>
             {/if}
@@ -777,6 +818,88 @@
          
          div {
             opacity: 0.9;
+         }
+      }
+   }
+   
+   .skip-event-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      
+      .divider-with-text {
+         position: relative;
+         text-align: center;
+         margin: 20px 0;
+         
+         &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: var(--border-subtle);
+         }
+         
+         span {
+            background: rgba(31, 31, 35, 0.6);
+            padding: 0 15px;
+            position: relative;
+            color: var(--text-secondary);
+            font-size: var(--font-sm);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+         }
+      }
+      
+      .skip-event-btn {
+         width: 100%;
+         padding: 12px 20px;
+         background: rgba(239, 68, 68, 0.1);
+         border: 1px solid var(--color-red);
+         border-radius: var(--radius-md);
+         color: var(--color-red);
+         font-size: var(--type-button-size);
+         font-weight: var(--type-button-weight);
+         line-height: var(--type-button-line);
+         letter-spacing: var(--type-button-spacing);
+         cursor: pointer;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         gap: 8px;
+         transition: all var(--transition-fast);
+         
+         i {
+            font-size: 16px;
+         }
+         
+         &:hover:not(:disabled) {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--color-red-light);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+         }
+         
+         &:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
+         }
+      }
+      
+      .skip-warning {
+         margin: 10px 0 0 0;
+         padding: 10px;
+         background: rgba(251, 191, 36, 0.1);
+         border: 1px solid var(--color-amber);
+         border-radius: var(--radius-sm);
+         color: var(--color-amber-light);
+         font-size: var(--font-sm);
+         text-align: center;
+         
+         i {
+            margin-right: 5px;
          }
       }
    }

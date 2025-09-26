@@ -18,19 +18,41 @@
     "continuous": {
       "becomesModifier": true,
       "modifierTemplate": {
-        "name": "Unresolved: Demand Expansion",
-        "description": "Each turn: +1 Unrest (Failure result). Citizens grow increasingly frustrated with lack of expansion.",
+        "name": "Expansion Pressure",
+        "description": "Citizens continue demanding territorial expansion, growing increasingly frustrated",
         "duration": "until-resolved",
-        "severity": "dangerous",
+        "severity": "neutral",
+        "icon": "fas fa-expand-arrows-alt",
+        "priority": 130,
         "effects": {
           "unrest": 1
         },
         "resolution": {
           "skills": [
             "diplomacy",
-            "survival",
-            "intimidation"
-          ]
+            "deception",
+            "society"
+          ],
+          "dc": 13,
+          "onResolution": {
+            "successMsg": "The expansion pressure situation has been resolved!",
+            "failureMsg": "Failed to resolve the expansion pressure situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 5,
+          "escalatedModifier": {
+            "name": "Expansion Riots",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "fame": -1
+            },
+            "resolution": {
+              "dc": 16
+            }
+          }
         }
       }
     }

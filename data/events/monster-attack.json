@@ -13,14 +13,51 @@
   ],
   "special": "If the settlement has Fortifications, gain an untyped bonus equal to the tier to checks.",
   "ifUnresolved": {
-    "type": "autoResolve",
-    "autoResolve": {
-      "outcome": "failure",
-      "message": "pf2e-reignmaker.events.monster-attack.unresolved.msg"
-    },
-    "transforms": {
-      "newEventId": "monster-lair-nearby",
-      "message": "pf2e-reignmaker.events.monster-attack.unresolved.transforms"
+    "type": "continuous",
+    "continuous": {
+      "becomesModifier": true,
+      "modifierTemplate": {
+        "name": "Monster Lair Nearby",
+        "description": "The monster has established a lair nearby and continues to threaten your settlements",
+        "duration": "until-resolved",
+        "severity": "critical",
+        "icon": "fas fa-dragon",
+        "priority": 85,
+        "effects": {
+          "unrest": 1,
+          "food": -1,
+          "gold": -1
+        },
+        "resolution": {
+          "skills": [
+            "nature",
+            "intimidation",
+            "arcana"
+          ],
+          "dc": 18,
+          "onResolution": {
+            "successMsg": "The monster lair nearby situation has been resolved!",
+            "failureMsg": "Failed to resolve the monster lair nearby situation"
+          }
+        },
+        "escalation": {
+          "turnsUntilEscalation": 2,
+          "escalatedModifier": {
+            "name": "Monster Breeding Ground",
+            "description": "The situation has escalated dramatically",
+            "severity": "critical",
+            "effects": {
+              "unrest": 2,
+              "food": -2,
+              "gold": -2,
+              "resources": -1
+            },
+            "resolution": {
+              "dc": 21
+            }
+          }
+        }
+      }
     }
   },
   "skills": [
