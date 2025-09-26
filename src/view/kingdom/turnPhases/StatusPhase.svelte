@@ -1,417 +1,482 @@
 <script lang="ts">
-   import { kingdomState, processModifiers } from '../../../stores/kingdom';
-   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, canOperatePhase } from '../../../stores/gameState';
+   import { onMount } from 'svelte';
+   import { get } from 'svelte/store';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { gameState } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
-   import { modifierService } from '../../../services/ModifierService';
-   import Button from '../components/baseComponents/Button.svelte';
+   
+   // Import clean architecture components
+   import { createStatusPhaseController } from '../../../controllers/StatusPhaseController';
+   import type { StatusPhaseController } from '../../../controllers/StatusPhaseController';
+   
+   // Controller instance
+   let statusController: StatusPhaseController;
    
    // Constants
    const MAX_FAME = 3;
    
-   // Check if steps are completed
-   $: gainFameCompleted = isPhaseStepCompleted('gain-fame');
-   $: applyModifiersCompleted = isPhaseStepCompleted('apply-modifiers');
+   // UI State for tracking what happened
+   let fameReset = false;
+   let previousFame = 0;
+   let modifiersProcessed = false;
+   let appliedEffects: Array<{
+      name: string;
+      source: string;
+      effects: Array<{
+         resource: string;
+         amount: number;
+      }>;
+   }> = [];
    
-   // Check if this phase can be operated
-   $: canOperate = canOperatePhase(TurnPhase.PHASE_I);
-   
-   // Check if fame is at maximum
-   $: fameAtMax = $kingdomState.fame >= MAX_FAME;
-   
-   // Check if there are any modifiers to apply
-   $: hasModifiers = $kingdomState.modifiers && $kingdomState.modifiers.length > 0;
-   
-   // Note: Auto-completion of apply-modifiers when no modifiers exist
-   // is now handled centrally in gameState's handleAutoCompletions function
-   
-   function gainFame() {
-      if (!canOperate) {
-         console.warn('Cannot operate Status Phase - previous phases not complete');
-         return;
-      }
+   // Initialize controller and automatically process phase on mount
+   onMount(async () => {
+      statusController = createStatusPhaseController();
       
-      // Gain 1 Fame (max 3)
-      kingdomState.update(state => {
-         if (state.fame < MAX_FAME) {
-            state.fame = Math.min(state.fame + 1, MAX_FAME);
-         }
-         return state;
-      });
-      markPhaseStepCompleted('gain-fame');
+      // Only run automation if we're in the Status Phase
+      if ($gameState.currentPhase === TurnPhase.PHASE_I) {
+         await runAutomation();
+      }
+   });
+   
+   // Run automation when phase changes to Status Phase
+   $: if ($gameState.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
+      runAutomation();
    }
    
-   function applyOngoingModifiers() {
-      if (!canOperate) {
-         console.warn('Cannot operate Status Phase - previous phases not complete');
-         return;
+   // Automatically process fame and modifiers
+   async function runAutomation() {
+      // Store previous fame for display
+      previousFame = $kingdomState.fame;
+      
+      // Reset fame to 1
+      const fameResult = await statusController.resetFame(
+         get(kingdomState),
+         $gameState.currentTurn || 1
+      );
+      
+      if (fameResult.success) {
+         fameReset = true;
       }
       
-      const currentTurn = $gameState.currentTurn || 1;
+      // Process modifiers and get detailed effects
+      const modifierResult = await statusController.processModifiers(
+         get(kingdomState),
+         $gameState.currentTurn || 1
+      );
       
-      // Use the modifier service to process all modifiers
-      const effects = modifierService.processTurnStart(currentTurn);
+      if (modifierResult.success) {
+         appliedEffects = modifierResult.modifierDetails;
+         modifiersProcessed = true;
+      }
       
-      // Apply the combined effects to the kingdom state
-      kingdomState.update(state => {
-         if (effects) {
-            // Apply resource effects
-            if (effects.gold) {
-               const currentGold = state.resources.get('gold') || 0;
-               state.resources.set('gold', Math.max(0, currentGold + effects.gold));
-            }
-            if (effects.food) {
-               const currentFood = state.resources.get('food') || 0;
-               state.resources.set('food', Math.max(0, currentFood + effects.food));
-            }
-            if (effects.lumber) {
-               const currentLumber = state.resources.get('lumber') || 0;
-               state.resources.set('lumber', Math.max(0, currentLumber + effects.lumber));
-            }
-            if (effects.stone) {
-               const currentStone = state.resources.get('stone') || 0;
-               state.resources.set('stone', Math.max(0, currentStone + effects.stone));
-            }
-            if (effects.ore) {
-               const currentOre = state.resources.get('ore') || 0;
-               state.resources.set('ore', Math.max(0, currentOre + effects.ore));
-            }
-            if (effects.luxuries) {
-               const currentLuxuries = state.resources.get('luxuries') || 0;
-               state.resources.set('luxuries', Math.max(0, currentLuxuries + effects.luxuries));
-            }
-            
-            // Apply kingdom stat effects
-            if (effects.unrest) {
-               state.unrest = Math.max(0, state.unrest + effects.unrest);
-            }
-            if (effects.fame) {
-               state.fame = Math.max(0, Math.min(3, state.fame + effects.fame));
-            }
-            
-            // Note: Roll modifiers and special effects would be handled elsewhere
-         }
-         
-         // Check for escalation on modifiers
-         state.modifiers.forEach((modifier, index) => {
-            if (modifier.escalation && !modifier.escalation.hasEscalated) {
-               const turnsActive = currentTurn - modifier.startTurn;
-               if (turnsActive >= modifier.escalation.turnsUntilEscalation) {
-                  // Apply escalation
-                  const escalated = {
-                     ...modifier,
-                     ...modifier.escalation.escalatedModifier,
-                     id: `${modifier.id}-escalated`,
-                     escalation: {
-                        ...modifier.escalation,
-                        hasEscalated: true
-                     }
-                  };
-                  state.modifiers[index] = escalated;
-               }
-            }
-         });
-         
-         return state;
-      });
-      
-      markPhaseStepCompleted('apply-modifiers');
+      // Expire old modifiers
+      statusController.expireModifiers(get(kingdomState), $gameState.currentTurn || 1);
    }
+   
+   // Format resource name for display
+   function formatResourceName(resource: string): string {
+      const resourceNames: Record<string, string> = {
+         gold: 'Gold',
+         food: 'Food',
+         lumber: 'Lumber',
+         stone: 'Stone',
+         ore: 'Ore',
+         luxuries: 'Luxuries',
+         unrest: 'Unrest',
+         fame: 'Fame'
+      };
+      return resourceNames[resource] || resource;
+   }
+   
+   // Group effects by positive and negative
+   $: positiveEffects = appliedEffects.filter(mod => 
+      mod.effects.some(e => e.amount > 0)
+   );
+   
+   $: negativeEffects = appliedEffects.filter(mod => 
+      mod.effects.some(e => e.amount < 0)
+   );
+   
+   // Get phase summary from controller
+   $: phaseSummary = statusController?.getPhaseSummary();
 </script>
 
 <div class="status-phase">
-
-   <div class="phase-steps">
-      <div class="phase-step fame-step" class:completed={gainFameCompleted}>
-         <!-- Centered Fame Display -->
-         <div class="fame-container">
-            <div class="fame-stars-display">
-               <div class="fame-stars">
-                  {#each Array(MAX_FAME) as _, i}
-                     <i 
-                        class="{i < $kingdomState.fame ? 'fas' : 'far'} fa-star star-icon" 
-                        class:filled={i < $kingdomState.fame}
-                     ></i>
-                  {/each}
-               </div>
-               <p class="fame-count">Fame: {$kingdomState.fame} / {MAX_FAME}</p>
-            </div>
-            
-            <Button
-               variant="secondary"
-               on:click={gainFame}
-               disabled={gainFameCompleted || fameAtMax || !canOperate}
-               icon={gainFameCompleted ? 'fas fa-check' : 'fas fa-star'}
-               tooltip={!canOperate ? 'Complete previous phases first' : undefined}
-            >
-               {#if gainFameCompleted}
-                  Fame Gained
-               {:else if fameAtMax}
-                  Fame at Maximum
-               {:else if !canOperate}
-                  Complete Previous Phases
-               {:else}
-                  Gain 1 Fame
-               {/if}
-            </Button>
-            
-            <p class="step-description">
-               {#if fameAtMax}
-                  Your kingdom has achieved maximum fame!
-               {:else}
-                  Your kingdom gains 1 Fame point this turn.
-               {/if}
-            </p>
-         </div>
+   <!-- Fame Display Section -->
+   <div class="phase-section fame-section">
+      <div class="section-header">
+         <i class="fas fa-star"></i>
+         <h3>Kingdom Fame</h3>
       </div>
       
-      <div class="phase-step" class:completed={applyModifiersCompleted || (!hasModifiers && gainFameCompleted)}>
-         <Button
-            variant="secondary"
-            on:click={applyOngoingModifiers}
-            disabled={applyModifiersCompleted || !canOperate || !hasModifiers}
-            icon={applyModifiersCompleted && hasModifiers ? 'fas fa-check' : (!hasModifiers ? 'fas fa-ban' : 'fas fa-magic')}
-            tooltip={!canOperate ? 'Complete previous phases first' : !hasModifiers ? 'No modifiers exist to apply' : undefined}
-         >
-            {#if applyModifiersCompleted && hasModifiers}
-               Modifiers Applied
-            {:else if !hasModifiers}
-               No Modifiers (Skipped)
-            {:else if !canOperate}
-               Complete Previous Phases
-            {:else}
-               Apply Ongoing Modifiers
-            {/if}
-         </Button>
-         <p class="step-description">
-            {#if !hasModifiers}
-               No ongoing modifiers to apply this turn.
-            {:else}
-               Apply all ongoing effects and reduce their duration.
-            {/if}
-         </p>
+      <div class="fame-display">
+         <div class="fame-stars">
+            {#each Array(MAX_FAME) as _, i}
+               <i 
+                  class="{i < $kingdomState.fame ? 'fas' : 'far'} fa-star star-icon" 
+                  class:filled={i < $kingdomState.fame}
+               ></i>
+            {/each}
+         </div>
          
-         {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
-            <div class="modifiers-list">
-               <h5>Active Modifiers:</h5>
-               <ul>
-                  {#each $kingdomState.modifiers as modifier}
-                     <li class="modifier-item">
-                        <strong>{modifier.name}</strong>
-                        {#if modifier.description}
-                           <span class="modifier-description">: {modifier.description}</span>
-                        {/if}
-                        {#if typeof modifier.duration === 'number' && modifier.duration > 0}
-                           <span class="modifier-duration">({modifier.duration} turns remaining)</span>
-                        {:else if modifier.duration === 'until-resolved'}
-                           <span class="modifier-duration">(Until Resolved)</span>
-                        {:else if modifier.duration === 'permanent'}
-                           <span class="modifier-duration">(Permanent)</span>
-                        {/if}
-                     </li>
-                  {/each}
-               </ul>
-            </div>
-         {/if}
+         <div class="fame-info">
+            <div class="fame-value">{$kingdomState.fame} / {MAX_FAME}</div>
+            {#if fameReset && previousFame !== 1}
+               <div class="fame-change">
+                  Fame reset from {previousFame} to 1
+               </div>
+            {/if}
+         </div>
       </div>
    </div>
    
-   <div class="phase-summary">
-      <h4>Phase Summary:</h4>
-      <p>Current Fame: {$kingdomState.fame} / {MAX_FAME}</p>
-      <p>Active Modifiers: {$kingdomState.modifiers ? $kingdomState.modifiers.length : 0}</p>
-      {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
-         <p class="modifier-count">
-            {$kingdomState.modifiers.filter(m => typeof m.duration === 'number').length} temporary, 
-            {$kingdomState.modifiers.filter(m => m.duration === 'permanent').length} permanent,
-            {$kingdomState.modifiers.filter(m => m.duration === 'until-resolved').length} until resolved
-         </p>
+   <!-- Modifier Effects Section -->
+   <div class="phase-section modifiers-section">
+      <div class="section-header">
+         <i class="fas fa-magic"></i>
+         <h3>Modifier Effects Applied</h3>
+      </div>
+      
+      {#if appliedEffects.length === 0}
+         <div class="no-modifiers">
+            <i class="fas fa-check-circle"></i>
+            <p>No active modifiers this turn</p>
+         </div>
+      {:else}
+         <div class="effects-container">
+            {#if positiveEffects.length > 0}
+               <div class="effects-group positive">
+                  <h4><i class="fas fa-plus-circle"></i> Beneficial Effects</h4>
+                  <ul class="effects-list">
+                     {#each positiveEffects as modifier}
+                        {#each modifier.effects.filter(e => e.amount > 0) as effect}
+                           <li class="effect-item">
+                              <span class="effect-value">+{effect.amount}</span>
+                              <span class="effect-resource">{formatResourceName(effect.resource)}</span>
+                              <span class="effect-source">— {modifier.name}</span>
+                           </li>
+                        {/each}
+                     {/each}
+                  </ul>
+               </div>
+            {/if}
+            
+            {#if negativeEffects.length > 0}
+               <div class="effects-group negative">
+                  <h4><i class="fas fa-minus-circle"></i> Detrimental Effects</h4>
+                  <ul class="effects-list">
+                     {#each negativeEffects as modifier}
+                        {#each modifier.effects.filter(e => e.amount < 0) as effect}
+                           <li class="effect-item">
+                              <span class="effect-value">{effect.amount}</span>
+                              <span class="effect-resource">{formatResourceName(effect.resource)}</span>
+                              <span class="effect-source">— {modifier.name}</span>
+                           </li>
+                        {/each}
+                     {/each}
+                  </ul>
+               </div>
+            {/if}
+         </div>
       {/if}
+   </div>
+   
+   <!-- Active Modifiers Overview -->
+   {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
+      <div class="phase-section active-modifiers">
+         <div class="section-header">
+            <i class="fas fa-list"></i>
+            <h3>Active Modifiers</h3>
+         </div>
+         
+         <div class="modifiers-grid">
+            {#each $kingdomState.modifiers as modifier}
+               <div class="modifier-card">
+                  <div class="modifier-name">{modifier.name}</div>
+                  {#if modifier.description}
+                     <div class="modifier-desc">{modifier.description}</div>
+                  {/if}
+                  <div class="modifier-duration">
+                     {#if typeof modifier.duration === 'number' && modifier.duration > 0}
+                        <i class="far fa-clock"></i> {modifier.duration} turns remaining
+                     {:else if modifier.duration === 'until-resolved'}
+                        <i class="fas fa-exclamation-triangle"></i> Until Resolved
+                     {:else if modifier.duration === 'permanent'}
+                        <i class="fas fa-infinity"></i> Permanent
+                     {/if}
+                  </div>
+               </div>
+            {/each}
+         </div>
+      </div>
+   {/if}
+   
+   <!-- Phase Complete Indicator -->
+   <div class="phase-complete">
+      <i class="fas fa-check-circle"></i>
+      <p>Status Phase processing complete. You may advance to the next phase.</p>
    </div>
 </div>
 
 <style lang="scss">
-   
-   .fame-step {
-      text-align: center;
+   .status-phase {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
    }
    
-   .fame-container {
+   .phase-section {
+      background: linear-gradient(135deg,
+         rgba(31, 31, 35, 0.6),
+         rgba(15, 15, 17, 0.4));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-medium);
+      padding: 20px;
+   }
+   
+   .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      
+      i {
+         font-size: 20px;
+         color: var(--color-amber);
+      }
+      
+      h3 {
+         margin: 0;
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+         line-height: var(--type-heading-2-line);
+         color: var(--text-primary);
+      }
+   }
+   
+   // Fame Section Styles
+   .fame-display {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 15px;
-   }
-   
-   .fame-stars-display {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 15px 25px;
-      background: linear-gradient(135deg, 
-         rgba(15, 15, 17, 0.4), 
-         rgba(24, 24, 27, 0.3));
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
    }
    
    .fame-stars {
       display: flex;
       gap: 12px;
       justify-content: center;
-      align-items: center;
-   }
-   
-   .star-icon {
-      font-size: 48px;
-      transition: all 0.3s ease;
-      color: var(--color-gray-600);
       
-      &.filled {
-         color: var(--color-amber-light);
-         text-shadow: 
-            0 0 20px rgba(251, 191, 36, 0.4),
-            0 2px 4px rgba(0, 0, 0, 0.3);
-         transform: scale(1.05);
+      .star-icon {
+         font-size: 48px;
+         transition: all 0.3s ease;
+         color: var(--color-gray-600);
          
-         &:hover {
-            transform: scale(1.1) rotate(5deg);
-         }
-      }
-      
-      &:not(.filled) {
-         opacity: 0.3;
-         
-         &:hover {
-            opacity: 0.5;
+         &.filled {
+            color: var(--color-amber-light);
+            text-shadow: 
+               0 0 20px rgba(251, 191, 36, 0.4),
+               0 2px 4px rgba(0, 0, 0, 0.3);
             transform: scale(1.05);
          }
+         
+         &:not(.filled) {
+            opacity: 0.3;
+         }
       }
    }
    
-   .fame-count {
-      margin: 0;
-      color: var(--color-amber-light);
-      font-size: var(--type-label-size);
-      font-weight: var(--type-label-weight);
-      line-height: var(--type-label-line);
-      letter-spacing: var(--type-label-spacing);
-      text-transform: uppercase;
-   }
-   
-   .phase-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-bottom: 20px;
-   }
-   
-   .phase-step {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 15px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      transition: all 0.2s ease;
+   .fame-info {
+      text-align: center;
       
-      &.completed {
-         background: rgba(34, 197, 94, 0.1);
-         border-color: var(--color-green-border);
-      }
-      
-      &:hover:not(.completed) {
-         background: rgba(0, 0, 0, 0.08);
-         border-color: var(--border-default);
-      }
-   }
-   
-   
-   .step-description {
-      margin: 10px 0 0 0;
-      color: var(--text-tertiary);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
-   }
-   
-   .modifiers-list {
-      margin-top: 15px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-      border-left: 3px solid var(--color-amber);
-      
-      h5 {
-         margin: 0 0 8px 0;
+      .fame-value {
+         font-size: var(--type-heading-1-size);
+         font-weight: var(--type-heading-1-weight);
          color: var(--color-amber-light);
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
-         line-height: var(--type-heading-3-line);
+         text-shadow: var(--text-shadow-md);
       }
       
-      ul {
-         margin: 0;
-         padding-left: 20px;
-         list-style-type: none;
-      }
-   }
-   
-   .modifier-item {
-      margin: 6px 0;
-      color: var(--text-secondary);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
-      position: relative;
-      
-      &::before {
-         content: "▸";
-         position: absolute;
-         left: -15px;
-         color: var(--color-amber);
-      }
-      
-      strong {
-         color: var(--text-primary);
-         font-weight: 600;
-      }
-      
-      .modifier-description {
+      .fame-change {
+         margin-top: 8px;
+         font-size: var(--type-body-size);
          color: var(--text-secondary);
-      }
-      
-      .modifier-duration {
-         color: var(--color-amber);
-         font-size: var(--font-xs);
-         margin-left: 4px;
          font-style: italic;
       }
    }
    
-   .phase-summary {
-      background: linear-gradient(135deg,
-         rgba(var(--color-gray-850), 0.5),
-         rgba(var(--color-gray-800), 0.3));
-      padding: 15px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+   // Modifier Effects Styles
+   .no-modifiers {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-secondary);
       
-      h4 {
-         margin: 0 0 10px 0;
-         color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
+      i {
+         font-size: 48px;
+         color: var(--color-green);
+         margin-bottom: 10px;
       }
       
       p {
-         margin: 5px 0;
-         color: var(--text-secondary);
+         margin: 0;
          font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+      }
+   }
+   
+   .effects-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+   }
+   
+   .effects-group {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      padding: 15px;
+      
+      h4 {
+         margin: 0 0 12px 0;
+         font-size: var(--type-heading-3-size);
+         font-weight: var(--type-heading-3-weight);
+         display: flex;
+         align-items: center;
+         gap: 8px;
          
-         &.modifier-count {
-            font-size: var(--type-body-size);
-            color: var(--text-tertiary);
-            font-style: italic;
+         i {
+            font-size: 18px;
          }
+      }
+      
+      &.positive {
+         border-left: 3px solid var(--color-green);
+         
+         h4 {
+            color: var(--color-green-light);
+            
+            i {
+               color: var(--color-green);
+            }
+         }
+         
+         .effect-value {
+            color: var(--color-green-light);
+         }
+      }
+      
+      &.negative {
+         border-left: 3px solid var(--color-red);
+         
+         h4 {
+            color: var(--color-red-light);
+            
+            i {
+               color: var(--color-red);
+            }
+         }
+         
+         .effect-value {
+            color: var(--color-red-light);
+         }
+      }
+   }
+   
+   .effects-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+   }
+   
+   .effect-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: var(--type-body-size);
+      
+      &:last-child {
+         border-bottom: none;
+      }
+      
+      .effect-value {
+         font-weight: bold;
+         font-size: var(--font-lg);
+         min-width: 40px;
+      }
+      
+      .effect-resource {
+         color: var(--text-primary);
+         font-weight: 500;
+      }
+      
+      .effect-source {
+         margin-left: auto;
+         color: var(--text-tertiary);
+         font-size: var(--font-sm);
+         font-style: italic;
+      }
+   }
+   
+   // Active Modifiers Grid
+   .modifiers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+   }
+   
+   .modifier-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      padding: 15px;
+      
+      .modifier-name {
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 8px;
+      }
+      
+      .modifier-desc {
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         margin-bottom: 10px;
+      }
+      
+      .modifier-duration {
+         font-size: var(--font-xs);
+         color: var(--color-amber);
+         display: flex;
+         align-items: center;
+         gap: 5px;
+         
+         i {
+            font-size: 12px;
+         }
+      }
+   }
+   
+   // Phase Complete Indicator
+   .phase-complete {
+      background: linear-gradient(135deg,
+         rgba(34, 197, 94, 0.1),
+         rgba(34, 197, 94, 0.05));
+      border: 1px solid var(--color-green-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      text-align: center;
+      
+      i {
+         font-size: 32px;
+         color: var(--color-green);
+         margin-bottom: 10px;
+      }
+      
+      p {
+         margin: 0;
+         color: var(--color-green-light);
+         font-size: var(--type-body-size);
       }
    }
 </style>

@@ -1,12 +1,22 @@
 <script lang="ts">
-   import { kingdomState, modifyResource, totalProduction } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
-   import { economicsService, type ResourceCollectionResult } from '../../../services/economics';
+   import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
+   import { kingdomState, totalProduction } from '../../../stores/kingdom';
+   import { markPhaseStepCompleted, isPhaseStepCompleted, gameState } from '../../../stores/gameState';
    import Button from '../components/baseComponents/Button.svelte';
    
-   // Check if step is completed
-   $: collectCompleted = isPhaseStepCompleted('resources-collect');
+   // Import clean architecture components
+   import { createResourcePhaseController } from '../../../controllers/ResourcePhaseController';
+   import type { ResourcePhaseController, ResourceCollectionSummary } from '../../../controllers/ResourcePhaseController';
+   import type { ResourceCollectionResult } from '../../../services/economics';
+   
+   // Controller instance
+   let resourceController: ResourcePhaseController;
+   
+   // UI State only - no business logic
+   let collectCompleted = false;
+   let lastCollectionResult: ResourceCollectionResult | null = null;
+   let isCollecting = false;
    
    // Resource icons and colors - this is presentation configuration, belongs in component
    const resourceConfig: Record<string, { icon: string; color: string }> = {
@@ -17,61 +27,84 @@
       gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
    };
    
-   // Store the last collection result for display purposes
-   let lastCollectionResult: ResourceCollectionResult | null = null;
+   // Reactive UI state
+   $: collectCompleted = isPhaseStepCompleted('resources-collect');
    
-   // Use the economics service to calculate what would be collected this turn
-   $: potentialCollection = economicsService.collectTurnResources({
-      hexes: $kingdomState.hexes,
-      settlements: $kingdomState.settlements,
-      cachedProduction: $kingdomState.cachedProduction,
-      cachedProductionByHex: $kingdomState.cachedProductionByHex
+   // Calculate potential collection through controller
+   $: potentialCollection = resourceController 
+      ? resourceController.calculatePotentialCollection($kingdomState)
+      : null;
+   
+   // Extract display values
+   $: potentialGoldIncome = potentialCollection?.goldIncome || 0;
+   $: fedSettlementsCount = potentialCollection?.fedSettlementsCount || 0;
+   $: unfedSettlementsCount = potentialCollection?.unfedSettlementsCount || 0;
+   
+   // Initialize controller on mount
+   onMount(() => {
+      resourceController = createResourcePhaseController();
+      
+      // If resources were already collected, get the result from controller
+      if (collectCompleted) {
+         lastCollectionResult = resourceController.getLastCollectionResult();
+      }
    });
    
-   // Extract display values from the service result
-   $: potentialGoldIncome = potentialCollection.goldIncome;
-   $: fedSettlementsCount = potentialCollection.fedSettlementsCount;
-   $: unfedSettlementsCount = potentialCollection.unfedSettlementsCount;
+   // Clean up on destroy
+   onDestroy(() => {
+      if (resourceController) {
+         resourceController.resetState();
+      }
+   });
    
-   function handleCollectResources() {
+   // Handle resource collection using controller and commands
+   async function handleCollectResources() {
+      if (!resourceController || isCollecting) return;
+      
+      isCollecting = true;
+      
       try {
-         const state = get(kingdomState);
+         // Use controller to collect resources - it handles everything
+         const result = await resourceController.collectResources(
+            $kingdomState,
+            $gameState.currentTurn || 1
+         );
          
-         // Use the economics service to calculate resources to collect
-         const collectionResult = economicsService.collectTurnResources({
-            hexes: state.hexes,
-            settlements: state.settlements,
-            cachedProduction: state.cachedProduction,
-            cachedProductionByHex: state.cachedProductionByHex
-         });
-         
-         // Store result for display
-         lastCollectionResult = collectionResult;
-         
-         // Log for debugging/transparency
-         console.log('Collecting resources:', {
-            hexProduction: Object.fromEntries(collectionResult.hexProduction),
-            goldIncome: collectionResult.goldIncome,
-            totalCollected: Object.fromEntries(collectionResult.totalCollected),
-            fedSettlements: collectionResult.fedSettlementsCount,
-            unfedSettlements: collectionResult.unfedSettlementsCount
-         });
-         
-         // Apply all collected resources to the kingdom state
-         collectionResult.totalCollected.forEach((amount, resource) => {
-            if (amount > 0) {
-               modifyResource(resource, amount);
-            }
-         });
-         
-         // Marking the step as completed automatically marks the phase as complete
-         // when all required steps are done, which enables the "Next Phase" button
-         markPhaseStepCompleted('resources-collect');
+         if (result.success && result.result) {
+            // Store result for display
+            lastCollectionResult = result.result;
+            
+            // Log for transparency
+            console.log('Resources collected:', {
+               hexProduction: Object.fromEntries(result.result.hexProduction),
+               goldIncome: result.result.goldIncome,
+               totalCollected: Object.fromEntries(result.result.totalCollected),
+               fedSettlements: result.result.fedSettlementsCount,
+               unfedSettlements: result.result.unfedSettlementsCount
+            });
+            
+            // Mark step as completed - this is a UI concern
+            markPhaseStepCompleted('resources-collect');
+         } else {
+            console.error('Failed to collect resources:', result.error);
+            // TODO: Show user-friendly error message
+         }
       } catch (error) {
          console.error('Error collecting resources:', error);
          // TODO: Show user-friendly error message
+      } finally {
+         isCollecting = false;
       }
    }
+   
+   // Get worksite details from controller for display
+   $: worksiteDetails = resourceController && potentialCollection
+      ? resourceController.getWorksiteDetails($kingdomState.hexes)
+      : [];
+   
+   // Get controller state for display
+   $: controllerState = resourceController?.getState();
+   $: phaseSummary = resourceController?.getPhaseSummary();
 </script>
 
 <div class="resources-phase">
@@ -89,16 +122,22 @@
       {/each}
    </div>
    
-   <!-- Collect Resources Button (moved here for better visibility) -->
+   <!-- Collect Resources Button -->
    <div class="collect-button-container">
       <Button 
          variant="secondary"
          on:click={handleCollectResources} 
-         disabled={collectCompleted}
-         icon={collectCompleted ? "fas fa-check" : "fas fa-hand-holding-usd"}
+         disabled={collectCompleted || isCollecting}
+         icon={collectCompleted ? "fas fa-check" : isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
          iconPosition="left"
       >
-         {collectCompleted ? 'Resources Collected' : 'Collect Resources'}
+         {#if collectCompleted}
+            Resources Collected
+         {:else if isCollecting}
+            Collecting...
+         {:else}
+            Collect Resources
+         {/if}
       </Button>
    </div>
    
@@ -145,11 +184,11 @@
                   </span>
                </div>
                
-               {#if potentialCollection.details.hexCount > 0}
+               {#if worksiteDetails.length > 0}
                   <details class="worksite-details">
                      <summary>View Worksite Details</summary>
                      <ul class="worksite-list">
-                        {#each potentialCollection.details.productionByHex as worksite}
+                        {#each worksiteDetails as worksite}
                            <li class="worksite-item">
                               <span>{worksite.hexName} ({worksite.terrain})</span>
                               <span class="worksite-production">
@@ -198,6 +237,18 @@
                      All settlements were fed last turn and generate gold
                   </div>
                {/if}
+            </div>
+         {/if}
+         
+         <!-- Summary of what controller has collected this phase -->
+         {#if phaseSummary && collectCompleted}
+            <div class="phase-summary">
+               <div class="summary-title">Phase Summary:</div>
+               <div class="summary-details">
+                  <span>Hex Production: {phaseSummary.hexProduction.size} resource types</span>
+                  <span>Gold Income: {phaseSummary.goldIncome} gold</span>
+                  <span>Total Resources: {phaseSummary.totalCollected.size} types collected</span>
+               </div>
             </div>
          {/if}
       </div>
@@ -479,72 +530,31 @@
       }
    }
    
-   .collect-button {
-      padding: 12px 24px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
+   .phase-summary {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.1);
       border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all var(--transition-fast);
+      border: 1px solid var(--border-subtle);
       
-      &:hover:not(:disabled) {
-         background: var(--btn-secondary-hover);
-         border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: var(--shadow-md);
+      .summary-title {
+         font-weight: 600;
+         color: var(--text-primary);
+         margin-bottom: 8px;
       }
       
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-      }
-      
-      i {
-         font-size: 1em;
-      }
-   }
-   
-   .step-button {
-      padding: 10px 16px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all var(--transition-fast);
-      margin-top: 10px;
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-secondary-hover);
-         border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: var(--shadow-md);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-      }
-      
-      i {
-         font-size: 1em;
+      .summary-details {
+         display: flex;
+         gap: 15px;
+         flex-wrap: wrap;
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         
+         span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+         }
       }
    }
 </style>

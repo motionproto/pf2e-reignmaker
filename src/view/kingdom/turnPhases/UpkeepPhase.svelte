@@ -1,15 +1,33 @@
 <script lang="ts">
-   import { kingdomState, setResource, updateKingdomStat, addModifier,
-            foodConsumption, foodConsumptionBreakdown, armySupport, unsupportedArmies } from '../../../stores/kingdom';
+   import { onMount } from 'svelte';
+   import { get } from 'svelte/store';
+   import { kingdomState } from '../../../stores/kingdom';
    import { gameState, incrementTurn, setCurrentPhase, resetPhaseSteps, 
             markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
-   import { settlementService } from '../../../services/settlements';
-   import { economicsService } from '../../../services/economics';
-   import { eventService, type EventData } from '../../../services/EventService';
-   import { get } from 'svelte/store';
+   import type { BuildProject } from '../../../models/KingdomState';
    
-   // Check if steps are completed
+   // Import clean architecture components
+   import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
+   import type { UpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
+   import { UpdateResourcesCommand } from '../../../commands/impl/UpdateResourcesCommand';
+   import { ProcessUnrestCommand } from '../../../commands/impl/ProcessUnrestCommand';
+   import { commandExecutor } from '../../../commands/base/CommandExecutor';
+   import type { CommandContext } from '../../../commands/base/Command';
+   import { eventService } from '../../../services/EventService';
+   
+   // Controller instance
+   let upkeepController: UpkeepPhaseController;
+   
+   // UI State only - no business logic
+   let processingUnresolved = false;
+   let processingFood = false;
+   let processingMilitary = false;
+   let processingBuild = false;
+   let processingEndTurn = false;
+   let processedModifier = '';
+   
+   // Reactive UI state
    $: unresolvedCompleted = isPhaseStepCompleted('upkeep-unresolved');
    $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
    $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
@@ -17,46 +35,49 @@
    $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
    
    // Check for unresolved event from Phase IV
-   let unresolvedEvent: EventData | null = null;
-   let processedModifier: string = '';
+   $: unresolvedEvent = (get(gameState) as any).unresolvedEvent || null;
    
-   // Check gameState for unresolved event when component mounts
-   $: {
-      const state = get(gameState);
-      if ((state as any).unresolvedEvent && !unresolvedCompleted) {
-         unresolvedEvent = (state as any).unresolvedEvent;
-      }
-   }
-   
-   // Calculate values
+   // Calculate UI display values using controller when available
    $: currentFood = $kingdomState.resources.get('food') || 0;
-   $: foodShortage = Math.max(0, $foodConsumption - currentFood);
-   $: settlementConsumption = $foodConsumptionBreakdown ? $foodConsumptionBreakdown[0] : 0;
-   $: armyConsumption = $foodConsumptionBreakdown ? $foodConsumptionBreakdown[1] : 0;
-   $: unsupportedCount = $unsupportedArmies || 0;
+   $: foodConsumption = $kingdomState.getTotalFoodConsumption();
+   $: foodShortage = Math.max(0, foodConsumption - currentFood);
+   $: foodConsumptionBreakdown = $kingdomState.getFoodConsumptionBreakdown();
+   $: settlementConsumption = foodConsumptionBreakdown[0];
+   $: armyConsumption = foodConsumptionBreakdown[1];
    $: armyCount = $kingdomState.armies.length;
+   $: armySupport = $kingdomState.getTotalArmySupport();
+   $: unsupportedCount = $kingdomState.getUnsupportedArmies();
    
-   // Auto-complete unresolved step if no unresolved event
-   $: if (!unresolvedEvent && !unresolvedCompleted) {
-      markPhaseStepCompleted('upkeep-unresolved');
-   }
+   // Initialize controller on mount
+   onMount(() => {
+      upkeepController = createUpkeepPhaseController();
+      
+      // Auto-complete steps that don't need action
+      if (!unresolvedEvent && !unresolvedCompleted) {
+         markPhaseStepCompleted('upkeep-unresolved');
+      }
+      
+      if (armyCount === 0 && !militaryCompleted && unresolvedCompleted) {
+         markPhaseStepCompleted('upkeep-military');
+      }
+      
+      if ($kingdomState.buildQueue.length === 0 && !buildCompleted && unresolvedCompleted) {
+         markPhaseStepCompleted('upkeep-build');
+      }
+   });
    
-   // Auto-complete military step if no armies (but only after unresolved is done)
-   $: if (armyCount === 0 && !militaryCompleted && unresolvedCompleted) {
-      markPhaseStepCompleted('upkeep-military');
-   }
-   
-   // Auto-complete build step if no build queue (but only after unresolved is done)
-   $: if ($kingdomState.buildQueue.length === 0 && !buildCompleted && unresolvedCompleted) {
-      markPhaseStepCompleted('upkeep-build');
-   }
-   
-   function handleUnresolvedEvent() {
-      if (!unresolvedEvent) return;
+   // Handle unresolved event using controller and commands
+   async function handleUnresolvedEvent() {
+      if (!unresolvedEvent || !upkeepController) return;
+      
+      processingUnresolved = true;
       
       try {
-         const state = get(kingdomState);
-         const currentTurn = get(gameState).currentTurn;
+         const context: CommandContext = {
+            kingdomState: get(kingdomState),
+            currentTurn: $gameState.currentTurn || 1,
+            currentPhase: 'Phase VI: Upkeep'
+         };
          
          // Process based on type
          if (unresolvedEvent.ifUnresolved) {
@@ -64,30 +85,33 @@
             
             switch (unresolved.type) {
                case 'continuous':
-                  // Convert to modifier
-                  const modifier = eventService.handleUnresolvedEvent(unresolvedEvent, currentTurn);
+                  // Convert to modifier using event service
+                  const modifier = eventService.handleUnresolvedEvent(
+                     unresolvedEvent, 
+                     $gameState.currentTurn || 1
+                  );
+                  
                   if (modifier) {
-                     addModifier(modifier);
+                     // Add modifier to kingdom state (through command in future)
+                     kingdomState.update(state => {
+                        state.modifiers.push(modifier);
+                        return state;
+                     });
                      processedModifier = `Event "${unresolvedEvent.name}" has become an ongoing modifier`;
-                     console.log('Created modifier from unresolved event:', modifier);
                   }
                   break;
                   
                case 'auto-resolve':
                   // Apply failure effects automatically
-                  if (unresolved.autoResolve?.applyFailure && unresolvedEvent.onFailure) {
-                     const effects = unresolvedEvent.onFailure.effects;
-                     if (effects) {
-                        applyEventFailureEffects(effects);
-                        processedModifier = `Event "${unresolvedEvent.name}" auto-resolved with failure effects`;
-                     }
+                  if (unresolved.autoResolve?.applyFailure && unresolvedEvent.onFailure?.effects) {
+                     await applyEventFailureEffects(unresolvedEvent.onFailure.effects, context);
+                     processedModifier = `Event "${unresolvedEvent.name}" auto-resolved with failure effects`;
                   }
                   break;
                   
                case 'expires':
                   // Event simply expires with no effect
                   processedModifier = `Event "${unresolvedEvent.name}" has expired`;
-                  console.log(`Event ${unresolvedEvent.id} expires`);
                   break;
             }
          }
@@ -99,158 +123,168 @@
          });
          
          markPhaseStepCompleted('upkeep-unresolved');
-      } catch (error) {
-         console.error('Error processing unresolved event:', error);
+      } finally {
+         processingUnresolved = false;
       }
    }
    
-   function applyEventFailureEffects(effects: any) {
+   // Apply event failure effects using commands
+   async function applyEventFailureEffects(effects: any, context: CommandContext) {
       if (!effects) return;
       
-      kingdomState.update(state => {
-         // Apply gold change
-         if (effects.gold !== undefined) {
-            const currentGold = state.resources.get('gold') || 0;
-            state.resources.set('gold', Math.max(0, currentGold + effects.gold));
+      const updates: any[] = [];
+      
+      // Collect all resource changes
+      if (effects.gold !== undefined) {
+         updates.push({ resource: 'gold', amount: effects.gold, operation: effects.gold >= 0 ? 'add' : 'subtract' });
+      }
+      
+      ['food', 'lumber', 'stone', 'ore', 'luxuries'].forEach(resource => {
+         if (effects[resource] !== undefined) {
+            updates.push({ 
+               resource, 
+               amount: Math.abs(effects[resource]), 
+               operation: effects[resource] >= 0 ? 'add' : 'subtract' 
+            });
          }
-         
-         // Apply other resource changes
-         const resources = ['food', 'lumber', 'stone', 'ore', 'luxuries'];
-         resources.forEach(resource => {
-            if (effects[resource] !== undefined) {
-               const current = state.resources.get(resource) || 0;
-               state.resources.set(resource, Math.max(0, current + effects[resource]));
-            }
-         });
-         
-         // Apply unrest change
-         if (effects.unrest !== undefined) {
-            state.unrest = Math.max(0, state.unrest + effects.unrest);
-         }
-         
-         // Apply fame change
-         if (effects.fame !== undefined) {
-            state.fame = Math.max(0, Math.min(3, state.fame + effects.fame));
-         }
-         
-         return state;
       });
+      
+      // Apply resource changes
+      if (updates.length > 0) {
+         const resourceCommand = new UpdateResourcesCommand(updates);
+         await commandExecutor.execute(resourceCommand, context);
+      }
+      
+      // Apply unrest changes
+      if (effects.unrest !== undefined && effects.unrest > 0) {
+         const unrestCommand = ProcessUnrestCommand.generate(effects.unrest, 'event-failure');
+         await commandExecutor.execute(unrestCommand, context);
+      }
+      
+      // Apply fame changes
+      if (effects.fame !== undefined) {
+         const fameCommand = new UpdateResourcesCommand([{
+            resource: 'fame',
+            amount: Math.abs(effects.fame),
+            operation: effects.fame >= 0 ? 'add' : 'subtract'
+         }]);
+         await commandExecutor.execute(fameCommand, context);
+      }
    }
    
-   function handleFoodConsumption() {
+   // Handle food consumption using controller and commands
+   async function handleFoodConsumption() {
+      if (!upkeepController) return;
+      
+      processingFood = true;
+      
       try {
-         const state = get(kingdomState);
-         const currentFood = state.resources.get('food') || 0;
-         const totalNeeded = settlementConsumption + armyConsumption;
-         
-         // Process consumption and update fed status
-         const result = settlementService.processFoodConsumption(
-            state.settlements,
-            currentFood
+         const result = await upkeepController.processFoodConsumption(
+            $kingdomState,
+            $gameState.currentTurn || 1
          );
          
          if (result.shortage > 0) {
-            console.log(`Food shortage! Adding ${result.shortage} unrest.`);
-            setResource('food', 0);
-            updateKingdomStat('unrest', state.unrest + result.shortage);
-            
-            // Update settlements' fed status for next turn's gold generation
-            state.settlements.forEach(settlement => {
-               settlement.wasFedLastTurn = false;
+            // Update settlements' fed status for next turn
+            kingdomState.update(state => {
+               state.settlements.forEach(settlement => {
+                  settlement.wasFedLastTurn = false;
+               });
+               return state;
             });
-            
-            console.log(`${result.unfedSettlements.size} settlements unfed - no gold income next turn`);
          } else {
-            const remaining = currentFood - totalNeeded;
-            setResource('food', remaining);
-            
-            // Update settlements' fed status for next turn's gold generation
-            state.settlements.forEach(settlement => {
-               settlement.wasFedLastTurn = true;
+            // All settlements were fed
+            kingdomState.update(state => {
+               state.settlements.forEach(settlement => {
+                  settlement.wasFedLastTurn = true;
+               });
+               return state;
             });
-            
-            console.log('All settlements fed - will generate gold next turn');
          }
          
          markPhaseStepCompleted('upkeep-food');
-      } catch (error) {
-         console.error('Error processing food consumption:', error);
+      } finally {
+         processingFood = false;
       }
    }
    
-   function handleMilitarySupport() {
+   // Handle military support using controller and commands
+   async function handleMilitarySupport() {
+      if (!upkeepController) return;
+      
+      processingMilitary = true;
+      
       try {
-         const state = get(kingdomState);
-         
          if (unsupportedCount > 0) {
-            // For now, apply automatic unrest penalty
-            // TODO: Implement morale check system when army UI is ready
-            console.log(`${unsupportedCount} unsupported armies - adding ${unsupportedCount} unrest`);
-            updateKingdomStat('unrest', state.unrest + unsupportedCount);
+            const context: CommandContext = {
+               kingdomState: get(kingdomState),
+               currentTurn: $gameState.currentTurn || 1,
+               currentPhase: 'Phase VI: Upkeep'
+            };
+            
+            // Generate unrest for unsupported armies
+            const command = ProcessUnrestCommand.generate(unsupportedCount, 'unsupported-armies');
+            await commandExecutor.execute(command, context);
          }
          
          markPhaseStepCompleted('upkeep-military');
-      } catch (error) {
-         console.error('Error processing military support:', error);
+      } finally {
+         processingMilitary = false;
       }
    }
    
-   function handleBuildQueue() {
-      // Process build queue - apply available resources to construction
-      kingdomState.update(state => {
-         state.buildQueue.forEach(project => {
-            // Apply available resources to construction using remainingCost
-            project.remainingCost.forEach((amount, resource) => {
-               const available = state.resources.get(resource) || 0;
-               const toApply = Math.min(available, amount);
-               if (toApply > 0) {
-                  state.resources.set(resource, available - toApply);
-                  const currentRemaining = project.remainingCost.get(resource) || 0;
-                  project.remainingCost.set(resource, Math.max(0, currentRemaining - toApply));
-               }
-            });
-         });
-         
-         // Remove completed projects
-         state.buildQueue = state.buildQueue.filter(p => {
-            let hasRemaining = false;
-            p.remainingCost.forEach(amount => {
-               if (amount > 0) hasRemaining = true;
-            });
-            return hasRemaining;
-         });
-         
-         return state;
-      });
+   // Handle build queue using controller
+   async function handleBuildQueue() {
+      if (!upkeepController) return;
       
-      markPhaseStepCompleted('upkeep-build');
-   }
-   
-   function handleEndTurnResolution() {
-      // Clear non-storable resources (lumber, stone, ore)
-      kingdomState.update(state => {
-         const nonStorable = economicsService.getNonStorableResources();
-         nonStorable.forEach(resource => {
-            state.resources.set(resource, 0);
+      processingBuild = true;
+      
+      try {
+         // Process projects through controller
+         const progress = upkeepController.processProjects($kingdomState);
+         
+         // Update kingdom state to reflect completed projects
+         kingdomState.update(state => {
+            // Remove completed projects (already done by controller)
+            return state;
          });
-         return state;
-      });
-      markPhaseStepCompleted('upkeep-complete');
+         
+         markPhaseStepCompleted('upkeep-build');
+      } finally {
+         processingBuild = false;
+      }
    }
    
-   function endTurn() {
+   // Handle end turn resolution using controller and commands
+   async function handleEndTurnResolution() {
+      if (!upkeepController) return;
+      
+      processingEndTurn = true;
+      
+      try {
+         // Process resource decay
+         await upkeepController.processResourceDecay(
+            $kingdomState,
+            $gameState.currentTurn || 1
+         );
+         
+         markPhaseStepCompleted('upkeep-complete');
+      } finally {
+         processingEndTurn = false;
+      }
+   }
+   
+   // End turn and move to next
+   async function endTurn() {
       // Make sure all steps are complete
       if (!resolveCompleted) {
-         handleEndTurnResolution();
+         await handleEndTurnResolution();
       }
       
       // Process modifiers for turn end
       kingdomState.update(state => {
-         const currentTurn = get(gameState).currentTurn;
-         
-         // Process turn effects for all modifiers
+         // Decrement duration if numeric
          state.modifiers.forEach(modifier => {
-            // Decrement duration if numeric
             if (typeof modifier.duration === 'number') {
                modifier.duration--;
             }
@@ -259,7 +293,6 @@
          // Remove expired modifiers
          state.modifiers = state.modifiers.filter(modifier => {
             if (typeof modifier.duration === 'number' && modifier.duration <= 0) {
-               console.log(`Modifier "${modifier.name}" has expired`);
                return false;
             }
             return true;
@@ -269,13 +302,12 @@
       });
       
       incrementTurn();
-      // Reset phase to Phase I for next turn
       setCurrentPhase(TurnPhase.PHASE_I);
       resetPhaseSteps();
    }
    
-   // Helper functions for BuildProject display
-   function getProjectCompletionPercentage(project: any): number {
+   // Helper functions for project display
+   function getProjectCompletionPercentage(project: BuildProject): number {
       if (!project.totalCost || project.totalCost.size === 0) return 100;
       
       let totalNeeded = 0;
@@ -294,7 +326,7 @@
       return Math.floor((invested / totalNeeded) * 100);
    }
    
-   function getProjectRemainingCost(project: any): Record<string, number> {
+   function getProjectRemainingCost(project: BuildProject): Record<string, number> {
       const remaining: Record<string, number> = {};
       if (project.remainingCost) {
          project.remainingCost.forEach((amount: number, resource: string) => {
@@ -305,6 +337,10 @@
       }
       return remaining;
    }
+   
+   // Get controller state for display
+   $: controllerState = upkeepController?.getState();
+   $: phaseSummary = upkeepController?.getPhaseSummary();
 </script>
 
 <div class="upkeep-phase">
@@ -360,11 +396,13 @@
             
             <button 
                on:click={handleUnresolvedEvent} 
-               disabled={unresolvedCompleted}
+               disabled={unresolvedCompleted || processingUnresolved}
                class="step-button"
             >
                {#if unresolvedCompleted}
                   <i class="fas fa-check"></i> Event Processed
+               {:else if processingUnresolved}
+                  <i class="fas fa-spinner fa-spin"></i> Processing...
                {:else}
                   <i class="fas fa-scroll"></i> Process Unresolved Event
                {/if}
@@ -401,7 +439,7 @@
             
             <div class="consumption-stat" class:danger={foodShortage > 0}>
                <i class="fas fa-wheat-awn"></i>
-               <div class="stat-value">{currentFood} / {$foodConsumption}</div>
+               <div class="stat-value">{currentFood} / {foodConsumption}</div>
                <div class="stat-label">Available / Required</div>
             </div>
          </div>
@@ -416,11 +454,13 @@
          
          <button 
             on:click={handleFoodConsumption} 
-            disabled={consumeCompleted}
+            disabled={consumeCompleted || processingFood}
             class="step-button"
          >
             {#if consumeCompleted}
                <i class="fas fa-check"></i> Food Consumption Paid
+            {:else if processingFood}
+               <i class="fas fa-spinner fa-spin"></i> Processing...
             {:else}
                <i class="fas fa-utensils"></i> Pay Food Consumption
             {/if}
@@ -436,10 +476,10 @@
          <h4>Step 3: Military Support</h4>
          
          <div class="army-support-display">
-            <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === $armySupport}>
+            <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport}>
                <i class="fas fa-shield-alt"></i>
                <div>
-                  <div class="stat-value">{armyCount} / {$armySupport}</div>
+                  <div class="stat-value">{armyCount} / {armySupport}</div>
                   <div class="stat-label">Armies / Capacity</div>
                </div>
             </div>
@@ -468,11 +508,13 @@
          {#if armyCount > 0}
             <button 
                on:click={handleMilitarySupport} 
-               disabled={militaryCompleted}
+               disabled={militaryCompleted || processingMilitary}
                class="step-button"
             >
                {#if militaryCompleted}
                   <i class="fas fa-check"></i> Military Support Processed
+               {:else if processingMilitary}
+                  <i class="fas fa-spinner fa-spin"></i> Processing...
                {:else}
                   <i class="fas fa-flag"></i> Process Military Support
                {/if}
@@ -530,11 +572,13 @@
             
             <button 
                on:click={handleBuildQueue} 
-               disabled={buildCompleted}
+               disabled={buildCompleted || processingBuild}
                class="step-button"
             >
                {#if buildCompleted}
                   <i class="fas fa-check"></i> Resources Applied
+               {:else if processingBuild}
+                  <i class="fas fa-spinner fa-spin"></i> Processing...
                {:else}
                   <i class="fas fa-hammer"></i> Apply to Construction
                {/if}
@@ -565,15 +609,23 @@
                   {$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).
                </p>
             {/if}
+            {#if phaseSummary}
+               <p>
+                  <i class="fas fa-chart-line"></i>
+                  Summary: {phaseSummary.unrestGenerated} unrest generated, {phaseSummary.projectsCompleted} projects completed
+               </p>
+            {/if}
          </div>
          
          <button 
             on:click={handleEndTurnResolution} 
-            disabled={resolveCompleted}
+            disabled={resolveCompleted || processingEndTurn}
             class="step-button"
          >
             {#if resolveCompleted}
                <i class="fas fa-check"></i> Resources Cleared
+            {:else if processingEndTurn}
+               <i class="fas fa-spinner fa-spin"></i> Processing...
             {:else}
                <i class="fas fa-broom"></i> Clear Non-Storable Resources
             {/if}
@@ -596,6 +648,7 @@
 </div>
 
 <style lang="scss">
+   /* Styles remain exactly the same as original */
    .upkeep-phase {
       display: flex;
       flex-direction: column;
