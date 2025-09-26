@@ -29,3 +29,9 @@ export type {
     ParsedActionEffect,
     ActionOutcome
 } from './ActionExecutionService';
+
+export { ResourceManagementService, resourceManagementService } from './ResourceManagementService';
+export type {
+    ResourceConsumption,
+    ResourceDecay
+} from './ResourceManagementService';
