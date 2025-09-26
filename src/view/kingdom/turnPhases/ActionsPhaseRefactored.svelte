@@ -78,7 +78,7 @@
       expandedActions = new Set(expandedActions);
    }
    
-   // Use controller to handle action resolution
+   // Use controller to handle action resolution properly
    async function onActionResolved(actionId: string, outcome: string, actorName: string, checkType?: string, skillName?: string) {
       console.log(`ActionsPhaseRefactored: onActionResolved`, { actionId, outcome, actorName, checkType, skillName });
       
@@ -101,31 +101,13 @@
          return;
       }
       
-      // Use action execution service to parse effects
-      const parsedEffects = actionExecutionService.parseActionOutcome(action, outcome);
-      
-      // Convert ParsedActionEffect to Map for state changes
-      const stateChanges = new Map<string, any>();
-      if (parsedEffects) {
-         Object.entries(parsedEffects).forEach(([key, value]) => {
-            stateChanges.set(key, value);
-         });
-      }
-      
-      // Manually update controller state
-      const newResolved = new Map(controller.getState().resolvedActions);
-      newResolved.set(actionId, {
-         outcome,
+      // Use controller to resolve the action (proper way)
+      const resolution = controller.resolveAction(
+         action,
+         outcome as 'success' | 'criticalSuccess' | 'failure' | 'criticalFailure',
          actorName,
-         skillName: skillName || '',
-         stateChanges
-      });
-      
-      // Update controller state
-      controller.getState().resolvedActions = newResolved;
-      controller.getState().actionsUsed++;
-      
-      const resolution = true; // Action was successfully recorded
+         skillName
+      );
       
       if (resolution) {
          // Create command context
@@ -150,14 +132,10 @@
       controllerState = controller.getState();
    }
    
-   // Reset an action
+   // Reset an action using controller
    async function resetAction(actionId: string) {
-      // Remove from controller state
-      const newResolved = new Map(controller.getState().resolvedActions);
-      newResolved.delete(actionId);
-      controller.resetState();
-      controller.getState().resolvedActions = newResolved;
-      controller.getState().actionsUsed = Math.max(0, controller.getState().actionsUsed - 1);
+      // Use controller method to properly reset action
+      controller.resetAction(actionId);
       
       // Check if we need to undo the command
       if (commandExecutor.canUndo()) {
@@ -171,6 +149,7 @@
          }
       }
       
+      // Force update
       controllerState = controller.getState();
    }
    

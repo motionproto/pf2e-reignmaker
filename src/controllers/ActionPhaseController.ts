@@ -158,11 +158,57 @@ export class ActionPhaseController {
     }
     
     /**
+     * Resolve an action and update state
+     */
+    resolveAction(
+        action: PlayerAction,
+        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+        actorName: string,
+        skillName?: string
+    ): ActionResolution | null {
+        // Check if already resolved
+        if (this.state.resolvedActions.has(action.id)) {
+            return null;
+        }
+        
+        // Check action limit
+        if (this.state.actionsUsed >= this.state.maxActions) {
+            return null;
+        }
+        
+        // Parse the outcome to get state changes
+        const parsedEffects = actionExecutionService.parseActionOutcome(action, outcome);
+        
+        // Convert to Map
+        const stateChanges = new Map<string, any>();
+        if (parsedEffects) {
+            Object.entries(parsedEffects).forEach(([key, value]) => {
+                stateChanges.set(key, value);
+            });
+        }
+        
+        // Create resolution
+        const resolution: ActionResolution = {
+            outcome,
+            actorName,
+            skillName,
+            stateChanges,
+            formattedChanges: stateChangeFormatter.formatStateChanges(stateChanges)
+        };
+        
+        // Update state
+        this.state.resolvedActions.set(action.id, resolution);
+        this.state.actionsUsed++;
+        
+        return resolution;
+    }
+    
+    /**
      * Reset an action (undo resolution)
      */
     async resetAction(
         actionId: string,
-        kingdomState: KingdomState
+        kingdomState?: KingdomState
     ): Promise<boolean> {
         if (!this.state.resolvedActions.has(actionId)) {
             return false;

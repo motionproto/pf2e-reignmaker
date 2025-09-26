@@ -21,5 +21,5 @@ export { UpkeepPhaseController, createUpkeepPhaseController } from './UpkeepPhas
 export type { UpkeepPhaseState, ProjectProgress, UpkeepPhaseSummary } from './UpkeepPhaseController';
 
 // Future controllers can be added here:
-// export { ResourcePhaseController } from './ResourcePhaseController';
+export { ResourcePhaseController, createResourcePhaseController } from './ResourcePhaseController';
 // export { TurnController } from './TurnController';
