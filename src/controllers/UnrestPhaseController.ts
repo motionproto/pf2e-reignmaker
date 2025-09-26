@@ -224,46 +224,24 @@ export class UnrestPhaseController {
     }
     
     /**
-     * Apply unrest generation to kingdom state
-     * This should be called at the end of the phase
+     * Get unrest effects to apply (for use with commands)
+     * Returns the effects that need to be applied via commands
      */
-    applyUnrestGeneration(
-        kingdomState: KingdomState,
-        currentTurn: number
-    ): Promise<{ success: boolean; error?: string }> {
-        // Create a command to update unrest
-        // This would use a specific UpdateUnrestCommand
-        // For now, directly update the state (should be refactored)
-        
-        kingdomState.unrest += this.state.totalUnrestGenerated;
-        
-        // Apply incident resolution effects if any
-        if (this.state.incidentResolution) {
-            const effects = this.state.incidentResolution.effects;
-            
-            for (const [key, value] of effects) {
-                switch (key) {
-                    case 'unrest':
-                        kingdomState.unrest = Math.max(0, kingdomState.unrest + value);
-                        break;
-                    case 'gold':
-                        const currentGold = kingdomState.resources.get('gold') || 0;
-                        kingdomState.resources.set('gold', Math.max(0, currentGold + value));
-                        break;
-                    case 'fame':
-                        kingdomState.fame = Math.max(0, Math.min(3, kingdomState.fame + value));
-                        break;
-                    case 'lumber':
-                    case 'stone':
-                    case 'ore':
-                        const current = kingdomState.resources.get(key) || 0;
-                        kingdomState.resources.set(key, Math.max(0, current + value));
-                        break;
-                }
-            }
-        }
-        
-        return Promise.resolve({ success: true });
+    getUnrestEffects(): {
+        unrestChange: number;
+        incidentEffects: Map<string, any>;
+    } {
+        return {
+            unrestChange: this.state.totalUnrestGenerated,
+            incidentEffects: this.state.incidentResolution?.effects || new Map()
+        };
+    }
+    
+    /**
+     * Check if incident should be checked for this tier
+     */
+    shouldCheckForIncident(tier: number): boolean {
+        return unrestService.shouldCheckForIncidents(tier);
     }
     
     /**
