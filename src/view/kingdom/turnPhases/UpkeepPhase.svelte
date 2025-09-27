@@ -14,7 +14,6 @@
    import { ProcessUnrestCommand } from '../../../commands/impl/ProcessUnrestCommand';
    import { commandExecutor } from '../../../commands/base/CommandExecutor';
    import type { CommandContext } from '../../../commands/base/Command';
-   import { eventService } from '../../../services/EventService';
    
    // Controller instance
    let upkeepController: UpkeepPhaseController;
@@ -28,14 +27,10 @@
    let processedModifier = '';
    
    // Reactive UI state
-   $: unresolvedCompleted = isPhaseStepCompleted('upkeep-unresolved');
    $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
    $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
    $: buildCompleted = isPhaseStepCompleted('upkeep-build');
    $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
-   
-   // Check for unresolved event from Phase IV
-   $: unresolvedEvent = (get(gameState) as any).unresolvedEvent || null;
    
    // Calculate UI display values using controller when available
    $: currentFood = $kingdomState.resources.get('food') || 0;
@@ -53,126 +48,15 @@
       upkeepController = createUpkeepPhaseController();
       
       // Auto-complete steps that don't need action
-      if (!unresolvedEvent && !unresolvedCompleted) {
-         markPhaseStepCompleted('upkeep-unresolved');
-      }
-      
-      if (armyCount === 0 && !militaryCompleted && unresolvedCompleted) {
-         markPhaseStepCompleted('upkeep-military');
-      }
-      
-      if ($kingdomState.buildQueue.length === 0 && !buildCompleted && unresolvedCompleted) {
-         markPhaseStepCompleted('upkeep-build');
-      }
-   });
-   
-   // Handle unresolved event using controller and commands
-   async function handleUnresolvedEvent() {
-      if (!unresolvedEvent || !upkeepController) return;
-      
-      processingUnresolved = true;
-      
-      try {
-         const context: CommandContext = {
-            kingdomState: get(kingdomState),
-            currentTurn: $gameState.currentTurn || 1,
-            currentPhase: 'Phase VI: Upkeep'
-         };
-         
-         // Process based on type
-         if (unresolvedEvent.ifUnresolved) {
-            const unresolved = unresolvedEvent.ifUnresolved;
-            
-            switch (unresolved.type) {
-               case 'continuous':
-                  // Convert to modifier using event service
-                  const modifier = eventService.handleUnresolvedEvent(
-                     unresolvedEvent, 
-                     $gameState.currentTurn || 1
-                  );
-                  
-                  if (modifier) {
-                     // Add modifier to kingdom state (through command in future)
-                     kingdomState.update(state => {
-                        state.modifiers.push(modifier);
-                        return state;
-                     });
-                     processedModifier = `Event "${unresolvedEvent.name}" has become an ongoing modifier`;
-                  }
-                  break;
-                  
-               case 'auto-resolve':
-                  // Apply failure effects automatically
-                  if (unresolved.autoResolve?.applyFailure && unresolvedEvent.onFailure?.effects) {
-                     await applyEventFailureEffects(unresolvedEvent.onFailure.effects, context);
-                     processedModifier = `Event "${unresolvedEvent.name}" auto-resolved with failure effects`;
-                  }
-                  break;
-                  
-               case 'expires':
-                  // Event simply expires with no effect
-                  processedModifier = `Event "${unresolvedEvent.name}" has expired`;
-                  break;
-            }
-         }
-         
-         // Clear unresolved event from gameState
-         gameState.update(s => {
-            delete (s as any).unresolvedEvent;
-            return s;
-         });
-         
-         markPhaseStepCompleted('upkeep-unresolved');
-      } finally {
-         processingUnresolved = false;
-      }
-   }
-   
-   // Apply event failure effects using commands
-   async function applyEventFailureEffects(effects: any, context: CommandContext) {
-      if (!effects) return;
-      
-      const updates: any[] = [];
-      
-      // Collect all resource changes
-      if (effects.gold !== undefined) {
-         updates.push({ resource: 'gold', amount: effects.gold, operation: effects.gold >= 0 ? 'add' : 'subtract' });
-      }
-      
-      ['food', 'lumber', 'stone', 'ore', 'luxuries'].forEach(resource => {
-         if (effects[resource] !== undefined) {
-            updates.push({ 
-               resource, 
-               amount: Math.abs(effects[resource]), 
-               operation: effects[resource] >= 0 ? 'add' : 'subtract' 
-            });
+      const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomState);
+      autoCompleteSteps.forEach(step => {
+         if (!isPhaseStepCompleted(step)) {
+            markPhaseStepCompleted(step);
          }
       });
-      
-      // Apply resource changes
-      if (updates.length > 0) {
-         const resourceCommand = new UpdateResourcesCommand(updates);
-         await commandExecutor.execute(resourceCommand, context);
-      }
-      
-      // Apply unrest changes
-      if (effects.unrest !== undefined && effects.unrest > 0) {
-         const unrestCommand = ProcessUnrestCommand.generate(effects.unrest, 'event-failure');
-         await commandExecutor.execute(unrestCommand, context);
-      }
-      
-      // Apply fame changes
-      if (effects.fame !== undefined) {
-         const fameCommand = new UpdateResourcesCommand([{
-            resource: 'fame',
-            amount: Math.abs(effects.fame),
-            operation: effects.fame >= 0 ? 'add' : 'subtract'
-         }]);
-         await commandExecutor.execute(fameCommand, context);
-      }
-   }
+   });
    
-   // Handle food consumption using controller and commands
+   // Handle food consumption using controller
    async function handleFoodConsumption() {
       if (!upkeepController) return;
       
@@ -184,24 +68,7 @@
             $gameState.currentTurn || 1
          );
          
-         if (result.shortage > 0) {
-            // Update settlements' fed status for next turn
-            kingdomState.update(state => {
-               state.settlements.forEach(settlement => {
-                  settlement.wasFedLastTurn = false;
-               });
-               return state;
-            });
-         } else {
-            // All settlements were fed
-            kingdomState.update(state => {
-               state.settlements.forEach(settlement => {
-                  settlement.wasFedLastTurn = true;
-               });
-               return state;
-            });
-         }
-         
+         // Controller now handles settlement feeding status
          markPhaseStepCompleted('upkeep-food');
       } finally {
          processingFood = false;
@@ -276,28 +143,14 @@
    
    // End turn and move to next
    async function endTurn() {
-      // Make sure all steps are complete
+      // Automatically clear non-storable resources when ending turn
       if (!resolveCompleted) {
          await handleEndTurnResolution();
       }
       
-      // Process modifiers for turn end
+      // Process modifiers using controller
       kingdomState.update(state => {
-         // Decrement duration if numeric
-         state.modifiers.forEach(modifier => {
-            if (typeof modifier.duration === 'number') {
-               modifier.duration--;
-            }
-         });
-         
-         // Remove expired modifiers
-         state.modifiers = state.modifiers.filter(modifier => {
-            if (typeof modifier.duration === 'number' && modifier.duration <= 0) {
-               return false;
-            }
-            return true;
-         });
-         
+         upkeepController.processEndTurnModifiers(state);
          return state;
       });
       
@@ -306,37 +159,12 @@
       resetPhaseSteps();
    }
    
-   // Helper functions for project display
-   function getProjectCompletionPercentage(project: BuildProject): number {
-      if (!project.totalCost || project.totalCost.size === 0) return 100;
-      
-      let totalNeeded = 0;
-      let totalRemaining = 0;
-      
-      project.totalCost.forEach((needed: number) => {
-         totalNeeded += needed;
-      });
-      
-      project.remainingCost.forEach((amount: number) => {
-         totalRemaining += amount;
-      });
-      
-      if (totalNeeded === 0) return 100;
-      const invested = totalNeeded - totalRemaining;
-      return Math.floor((invested / totalNeeded) * 100);
-   }
+   // Use controller methods for project calculations
+   $: getProjectCompletionPercentage = (project: BuildProject) => 
+      upkeepController ? upkeepController.getProjectCompletionPercentage(project) : 0;
    
-   function getProjectRemainingCost(project: BuildProject): Record<string, number> {
-      const remaining: Record<string, number> = {};
-      if (project.remainingCost) {
-         project.remainingCost.forEach((amount: number, resource: string) => {
-            if (amount > 0) {
-               remaining[resource] = amount;
-            }
-         });
-      }
-      return remaining;
-   }
+   $: getProjectRemainingCost = (project: BuildProject) => 
+      upkeepController ? upkeepController.getProjectRemainingCost(project) : {};
    
    // Get controller state for display
    $: controllerState = upkeepController?.getState();
@@ -345,293 +173,267 @@
 
 <div class="upkeep-phase">
    
-   <div class="phase-intro">
-      <h3>Phase VI: Upkeep</h3>
-      <p>Pay all consumption costs and prepare for the next turn.</p>
-   </div>
    
-   <!-- Phase Steps -->
-   <div class="phase-steps-container">
+   <!-- Phase Steps Grid Container -->
+   <div class="phase-steps-grid">
       
-      <!-- Step 1: Process Unresolved Events -->
-      <div class="phase-step" class:completed={unresolvedCompleted}>
-         {#if unresolvedCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 1: Process Unresolved Events</h4>
-         
-         {#if unresolvedEvent}
-            <div class="unresolved-event-info">
-               <div class="event-name">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  {unresolvedEvent.name}
-               </div>
-               <div class="event-type">
-                  Type: <span class="type-badge type-{unresolvedEvent.ifUnresolved?.type}">
-                     {unresolvedEvent.ifUnresolved?.type}
-                  </span>
-               </div>
-               
-               {#if unresolvedEvent.ifUnresolved?.type === 'continuous'}
-                  <p class="event-description">
-                     This event will become an ongoing modifier affecting your kingdom.
-                  </p>
-               {:else if unresolvedEvent.ifUnresolved?.type === 'auto-resolve'}
-                  <p class="event-description">
-                     This event will automatically apply its failure effects.
-                  </p>
-               {:else if unresolvedEvent.ifUnresolved?.type === 'expires'}
-                  <p class="event-description">
-                     This event will expire with no further effects.
-                  </p>
-               {/if}
-            </div>
-            
-            {#if processedModifier}
-               <div class="processed-info">
-                  <i class="fas fa-check"></i> {processedModifier}
-               </div>
+      <!-- Step 1: Feed Settlements -->
+      <div class="phase-card" class:completed={consumeCompleted}>
+         <div class="card-header">
+            <h4>
+               <i class="fas fa-home step-icon"></i>
+               Step 1: Feed Settlements
+            </h4>
+            {#if consumeCompleted}
+               <i class="fas fa-check-circle phase-complete-indicator"></i>
             {/if}
-            
-            <button 
-               on:click={handleUnresolvedEvent} 
-               disabled={unresolvedCompleted || processingUnresolved}
-               class="step-button"
-            >
-               {#if unresolvedCompleted}
-                  <i class="fas fa-check"></i> Event Processed
-               {:else if processingUnresolved}
-                  <i class="fas fa-spinner fa-spin"></i> Processing...
-               {:else}
-                  <i class="fas fa-scroll"></i> Process Unresolved Event
-               {/if}
-            </button>
-         {:else}
-            <div class="info-text">No unresolved events from Phase IV</div>
-            <div class="auto-skipped">
-               <i class="fas fa-ban"></i>
-               <span>No Unresolved Events (Skipped)</span>
-            </div>
-         {/if}
-      </div>
-      
-      <!-- Step 2: Food Consumption -->
-      <div class="phase-step" class:completed={consumeCompleted}>
-         {#if consumeCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 2: Food Consumption</h4>
-         
-         <div class="consumption-display">
-            <div class="consumption-stat">
-               <i class="fas fa-home"></i>
-               <div class="stat-value">{settlementConsumption}</div>
-               <div class="stat-label">Settlement Consumption</div>
-            </div>
-            
-            <div class="consumption-stat">
-               <i class="fas fa-shield-alt"></i>
-               <div class="stat-value">{armyConsumption}</div>
-               <div class="stat-label">Army Consumption</div>
-            </div>
-            
-            <div class="consumption-stat" class:danger={foodShortage > 0}>
-               <i class="fas fa-wheat-awn"></i>
-               <div class="stat-value">{currentFood} / {foodConsumption}</div>
-               <div class="stat-label">Available / Required</div>
-            </div>
          </div>
-         
-         {#if foodShortage > 0 && !consumeCompleted}
-            <div class="warning-box">
-               <i class="fas fa-exclamation-triangle"></i>
-               <strong>Warning:</strong> Food shortage of {foodShortage} will cause +{foodShortage} Unrest!
-               <br><small>Unfed settlements will not generate gold next turn.</small>
-            </div>
-         {/if}
          
          <button 
             on:click={handleFoodConsumption} 
             disabled={consumeCompleted || processingFood}
-            class="step-button"
+            class="step-action-button"
          >
             {#if consumeCompleted}
-               <i class="fas fa-check"></i> Food Consumption Paid
+               <i class="fas fa-check"></i> Settlements Fed
             {:else if processingFood}
                <i class="fas fa-spinner fa-spin"></i> Processing...
             {:else}
-               <i class="fas fa-utensils"></i> Pay Food Consumption
+               <i class="fas fa-utensils"></i> Feed Settlements
             {/if}
          </button>
-      </div>
-      
-      <!-- Step 3: Military Support -->
-      <div class="phase-step" class:completed={militaryCompleted}>
-         {#if militaryCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
          
-         <h4>Step 3: Military Support</h4>
-         
-         <div class="army-support-display">
-            <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport}>
-               <i class="fas fa-shield-alt"></i>
-               <div>
-                  <div class="stat-value">{armyCount} / {armySupport}</div>
-                  <div class="stat-label">Armies / Capacity</div>
+         <div class="card-content">
+            <div class="consumption-display">
+               <div class="consumption-stat">
+                  <i class="fas fa-home"></i>
+                  <div class="stat-value">{settlementConsumption}</div>
+                  <div class="stat-label">Food Required</div>
+               </div>
+               
+               <div class="consumption-stat" class:danger={currentFood < settlementConsumption}>
+                  <i class="fas fa-wheat-awn"></i>
+                  <div class="stat-value">{currentFood}</div>
+                  <div class="stat-label">Food Available</div>
                </div>
             </div>
             
-            {#if unsupportedCount > 0}
-               <div class="support-status danger">
+            {#if currentFood < settlementConsumption && !consumeCompleted}
+               <div class="warning-box">
                   <i class="fas fa-exclamation-triangle"></i>
-                  <div>
-                     <div class="stat-value">{unsupportedCount}</div>
-                     <div class="stat-label">Unsupported</div>
-                  </div>
+                  <strong>Warning:</strong> Food shortage! Need {settlementConsumption - currentFood} more food.
+                  <br><small>Unfed settlements will not generate gold next turn and cause +{Math.max(0, settlementConsumption - currentFood)} Unrest.</small>
                </div>
+            {:else if !consumeCompleted}
+               <div class="info-text">Settlements require {settlementConsumption} food this turn</div>
             {/if}
          </div>
-         
-         {#if unsupportedCount > 0 && !militaryCompleted}
-            <div class="warning-box">
-               <i class="fas fa-exclamation-triangle"></i>
-               <strong>Warning:</strong> {unsupportedCount} unsupported {unsupportedCount === 1 ? 'army' : 'armies'} will cause +{unsupportedCount} Unrest!
-               <br><small>Future update: Morale checks will be required.</small>
-            </div>
-         {:else if armyCount === 0}
-            <div class="info-text">No armies currently fielded</div>
-         {/if}
-         
-         {#if armyCount > 0}
-            <button 
-               on:click={handleMilitarySupport} 
-               disabled={militaryCompleted || processingMilitary}
-               class="step-button"
-            >
-               {#if militaryCompleted}
-                  <i class="fas fa-check"></i> Military Support Processed
-               {:else if processingMilitary}
-                  <i class="fas fa-spinner fa-spin"></i> Processing...
-               {:else}
-                  <i class="fas fa-flag"></i> Process Military Support
-               {/if}
-            </button>
-         {:else}
-            <div class="auto-skipped">
-               <i class="fas fa-ban"></i>
-               <span>No Armies to Support (Skipped)</span>
-            </div>
-         {/if}
       </div>
       
-      <!-- Step 4: Build Queue -->
-      <div class="phase-step" class:completed={buildCompleted}>
-         {#if buildCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 4: Process Build Queue</h4>
-         
-         {#if $kingdomState.buildQueue.length > 0}
-            <div class="build-resources-available">
-               <strong>Available Resources:</strong>
-               {['lumber', 'stone', 'ore'].map(r => 
-                  `${$kingdomState.resources.get(r) || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
-               ).join(', ')}
-            </div>
-            
-            <div class="build-queue">
-               {#each $kingdomState.buildQueue as project}
-                  <div class="build-project-card">
-                     <div class="project-header">
-                        <span class="project-name">{project.structureId}</span>
-                        <span class="project-tier">In {project.settlementName}</span>
-                     </div>
-                     
-                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {getProjectCompletionPercentage(project)}%">
-                           <span class="progress-text">{getProjectCompletionPercentage(project)}%</span>
-                        </div>
-                     </div>
-                     
-                     <div class="project-needs">
-                        {#if Object.keys(getProjectRemainingCost(project)).length > 0}
-                           Needs: {Object.entries(getProjectRemainingCost(project))
-                              .map(([r, a]) => `${a} ${r}`)
-                              .join(', ')}
-                        {:else}
-                           Complete!
-                        {/if}
-                     </div>
-                  </div>
-               {/each}
-            </div>
-            
-            <button 
-               on:click={handleBuildQueue} 
-               disabled={buildCompleted || processingBuild}
-               class="step-button"
-            >
-               {#if buildCompleted}
-                  <i class="fas fa-check"></i> Resources Applied
-               {:else if processingBuild}
-                  <i class="fas fa-spinner fa-spin"></i> Processing...
-               {:else}
-                  <i class="fas fa-hammer"></i> Apply to Construction
-               {/if}
-            </button>
-         {:else}
-            <div class="info-text">No construction projects in queue</div>
-            <div class="auto-skipped">
-               <i class="fas fa-ban"></i>
-               <span>No Construction Projects (Skipped)</span>
-            </div>
-         {/if}
-      </div>
-      
-      <!-- Step 5: End of Turn Resolution -->
-      <div class="phase-step" class:completed={resolveCompleted}>
-         {#if resolveCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Step 5: End of Turn Resolution</h4>
-         
-         <div class="resolution-summary">
-            <p><i class="fas fa-info-circle"></i> Non-storable resources (lumber, stone, ore) will be cleared.</p>
-            <p><i class="fas fa-coins"></i> Gold and stored food will carry over to the next turn.</p>
-            {#if $kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 0}
-               <p class="warning">
-                  <i class="fas fa-exclamation-triangle"></i> 
-                  {$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).
-               </p>
-            {/if}
-            {#if phaseSummary}
-               <p>
-                  <i class="fas fa-chart-line"></i>
-                  Summary: {phaseSummary.unrestGenerated} unrest generated, {phaseSummary.projectsCompleted} projects completed
-               </p>
+      <!-- Step 2: Military Support & Food -->
+      <div class="phase-card" class:completed={militaryCompleted}>
+         <div class="card-header">
+            <h4>
+               <i class="fas fa-shield-alt step-icon"></i>
+               Step 2: Military Support
+            </h4>
+            {#if militaryCompleted}
+               <i class="fas fa-check-circle phase-complete-indicator"></i>
             {/if}
          </div>
          
          <button 
-            on:click={handleEndTurnResolution} 
-            disabled={resolveCompleted || processingEndTurn}
-            class="step-button"
+            on:click={handleMilitarySupport} 
+            disabled={militaryCompleted || processingMilitary || armyCount === 0}
+            class="step-action-button"
          >
-            {#if resolveCompleted}
-               <i class="fas fa-check"></i> Resources Cleared
-            {:else if processingEndTurn}
+            {#if militaryCompleted}
+               <i class="fas fa-check"></i> Military Support Processed
+            {:else if processingMilitary}
                <i class="fas fa-spinner fa-spin"></i> Processing...
+            {:else if armyCount === 0}
+               <i class="fas fa-ban"></i> No Armies to Support
             {:else}
-               <i class="fas fa-broom"></i> Clear Non-Storable Resources
+               <i class="fas fa-flag"></i> Support Military
             {/if}
          </button>
+         
+         <div class="card-content">
+            {#if armyCount > 0}
+               <!-- Army Food Consumption -->
+               <div class="consumption-display">
+                  <div class="consumption-stat">
+                     <i class="fas fa-utensils"></i>
+                     <div class="stat-value">{armyConsumption}</div>
+                     <div class="stat-label">Food Required</div>
+                  </div>
+                  
+                  <div class="consumption-stat" class:danger={(currentFood - settlementConsumption) < armyConsumption}>
+                     <i class="fas fa-wheat-awn"></i>
+                     <div class="stat-value">{Math.max(0, currentFood - settlementConsumption)}</div>
+                     <div class="stat-label">Food Remaining</div>
+                  </div>
+               </div>
+               
+               {#if (currentFood - settlementConsumption) < armyConsumption && !militaryCompleted}
+                  <div class="warning-box">
+                     <i class="fas fa-exclamation-triangle"></i>
+                     <strong>Warning:</strong> Not enough food for armies! Short by {armyConsumption - Math.max(0, currentFood - settlementConsumption)} food.
+                     <br><small>This will cause +{armyConsumption - Math.max(0, currentFood - settlementConsumption)} Unrest.</small>
+                  </div>
+               {/if}
+               
+               <!-- Army Support Capacity -->
+               <div class="army-support-display">
+                  <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport}>
+                     <i class="fas fa-shield-alt"></i>
+                     <div>
+                        <div class="stat-value">{armyCount} / {armySupport}</div>
+                        <div class="stat-label">Armies / Capacity</div>
+                     </div>
+                  </div>
+                  
+                  {#if unsupportedCount > 0}
+                     <div class="support-status danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                           <div class="stat-value">{unsupportedCount}</div>
+                           <div class="stat-label">Unsupported</div>
+                        </div>
+                     </div>
+                  {/if}
+               </div>
+               
+               {#if unsupportedCount > 0 && !militaryCompleted}
+                  <div class="warning-box">
+                     <i class="fas fa-exclamation-triangle"></i>
+                     <strong>Warning:</strong> {unsupportedCount} unsupported {unsupportedCount === 1 ? 'army' : 'armies'} will cause +{unsupportedCount} Unrest!
+                     <br><small>Future update: Morale checks will be required.</small>
+                  </div>
+               {/if}
+            {:else}
+               <div class="info-text">No armies currently fielded</div>
+               <div class="auto-skipped">
+                  <i class="fas fa-ban"></i>
+                  <span>No Armies to Support (Skipped)</span>
+               </div>
+            {/if}
+         </div>
       </div>
       
+      <!-- Step 3: Build Queue -->
+      <div class="phase-card" class:completed={buildCompleted}>
+         <div class="card-header">
+            <h4>
+               <i class="fas fa-hammer step-icon"></i>
+               Step 3: Build Queue
+            </h4>
+            {#if buildCompleted}
+               <i class="fas fa-check-circle phase-complete-indicator"></i>
+            {/if}
+         </div>
+         
+         <button 
+            on:click={handleBuildQueue} 
+            disabled={buildCompleted || processingBuild || $kingdomState.buildQueue.length === 0}
+            class="step-action-button"
+         >
+            {#if buildCompleted}
+               <i class="fas fa-check"></i> Resources Applied
+            {:else if processingBuild}
+               <i class="fas fa-spinner fa-spin"></i> Processing...
+            {:else if $kingdomState.buildQueue.length === 0}
+               <i class="fas fa-ban"></i> No Projects in Queue
+            {:else}
+               <i class="fas fa-hammer"></i> Apply to Construction
+            {/if}
+         </button>
+         
+         <div class="card-content">
+            {#if $kingdomState.buildQueue.length > 0}
+               <div class="build-resources-available">
+                  <strong>Available:</strong>
+                  {['lumber', 'stone', 'ore'].map(r => 
+                     `${$kingdomState.resources.get(r) || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
+                  ).join(', ')}
+               </div>
+               
+               <div class="build-queue">
+                  {#each $kingdomState.buildQueue as project}
+                     <div class="build-project-card">
+                        <div class="project-header">
+                           <span class="project-name">{project.structureId}</span>
+                           <span class="project-tier">In {project.settlementName}</span>
+                        </div>
+                        
+                        <div class="progress-bar">
+                           <div class="progress-fill" style="width: {getProjectCompletionPercentage(project)}%">
+                              <span class="progress-text">{getProjectCompletionPercentage(project)}%</span>
+                           </div>
+                        </div>
+                        
+                        <div class="project-needs">
+                           {#if Object.keys(getProjectRemainingCost(project)).length > 0}
+                              Needs: {Object.entries(getProjectRemainingCost(project))
+                                 .map(([r, a]) => `${a} ${r}`)
+                                 .join(', ')}
+                           {:else}
+                              Complete!
+                           {/if}
+                        </div>
+                     </div>
+                  {/each}
+               </div>
+            {:else}
+               <div class="info-text">No construction projects in queue</div>
+               <div class="auto-skipped">
+                  <i class="fas fa-ban"></i>
+                  <span>No Construction Projects (Skipped)</span>
+               </div>
+            {/if}
+         </div>
+      </div>
+   </div>
+   
+   <!-- End of Turn Summary Section -->
+   <div class="end-turn-summary" class:completed={resolveCompleted}>
+      <div class="summary-header">
+         <h4>
+            <i class="fas fa-scroll"></i>
+            End of Turn Summary
+         </h4>
+         {#if resolveCompleted}
+            <i class="fas fa-check-circle phase-complete-indicator"></i>
+         {/if}
+      </div>
+      
+      <div class="summary-content">
+         <div class="summary-grid">
+            <div class="summary-item">
+               <i class="fas fa-info-circle"></i>
+               <p>Non-storable resources (lumber, stone, ore) will be automatically cleared when you end the turn.</p>
+            </div>
+            
+            <div class="summary-item">
+               <i class="fas fa-coins"></i>
+               <p>Gold and stored food will carry over to the next turn.</p>
+            </div>
+            
+            {#if $kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 0}
+               <div class="summary-item warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p>{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
+               </div>
+            {/if}
+            
+            {#if phaseSummary}
+               <div class="summary-item">
+                  <i class="fas fa-chart-line"></i>
+                  <p>Turn summary: {phaseSummary.unrestGenerated} unrest generated, {phaseSummary.projectsCompleted} projects completed</p>
+               </div>
+            {/if}
+         </div>
+      </div>
    </div>
    
    <!-- End Turn Button -->
@@ -639,16 +441,15 @@
       <button 
          class="end-turn-button" 
          on:click={endTurn}
-         disabled={!unresolvedCompleted || !consumeCompleted || !militaryCompleted || !buildCompleted || !resolveCompleted}
+         disabled={!consumeCompleted || !militaryCompleted || !buildCompleted}
       >
          <i class="fas fa-check-circle"></i>
-         End Turn {$gameState.currentTurn} and Start Turn {$gameState.currentTurn + 1}
+         End Turn {$gameState.currentTurn} and Clear Resources
       </button>
    </div>
 </div>
 
 <style lang="scss">
-   /* Styles remain exactly the same as original */
    .upkeep-phase {
       display: flex;
       flex-direction: column;
@@ -676,53 +477,272 @@
       }
    }
    
-   .phase-steps-container {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+   // New grid container for responsive columns
+   .phase-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+      
+      @media (max-width: 767px) {
+         grid-template-columns: 1fr;
+      }
+      
+      @media (min-width: 768px) and (max-width: 1023px) {
+         grid-template-columns: repeat(3, 1fr);
+      }
+      
+      @media (min-width: 1024px) {
+         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
    }
    
-   .phase-step {
-      position: relative;
-      background: rgba(0, 0, 0, 0.05);
-      padding: 20px;
+   // ActionCard-like styling for each phase step
+   .phase-card {
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.6),
+         rgba(31, 31, 35, 0.4));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      transition: all 0.2s ease;
+      border: 1px solid var(--border-medium);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-height: auto;
       
-      &.completed {
-         background: rgba(34, 197, 94, 0.1);
-         border-color: var(--color-green-border);
+      // Top accent line
+      &::before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: 0;
+         right: 0;
+         height: 3px;
+         background: linear-gradient(90deg, 
+            transparent, 
+            var(--color-amber), 
+            transparent);
+         border-radius: var(--radius-md) var(--radius-md) 0 0;
+         opacity: 0;
+         transition: opacity 0.3s ease;
       }
       
       &:hover:not(.completed) {
-         background: rgba(0, 0, 0, 0.08);
-         border-color: var(--border-default);
+         border-color: var(--border-strong);
+         transform: translateY(-2px);
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+         
+         &::before {
+            opacity: 0.6;
+         }
       }
       
+      &.completed {
+         background: linear-gradient(135deg,
+            rgba(35, 35, 40, 0.4),
+            rgba(40, 40, 45, 0.3));
+         border-color: var(--border-subtle);
+         opacity: 0.9;
+         
+         &::after {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-green);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+            animation: pulse 2s infinite;
+         }
+      }
+   }
+   
+   .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      
       h4 {
-         margin: 0 0 15px 0;
+         margin: 0;
          color: var(--text-primary);
          font-size: var(--type-heading-2-size);
          font-weight: var(--type-heading-2-weight);
          line-height: var(--type-heading-2-line);
+         display: flex;
+         align-items: center;
+         gap: 10px;
+         
+         .step-icon {
+            color: var(--color-amber);
+            font-size: 20px;
+         }
       }
    }
    
-   .phase-step-complete {
+   .phase-complete-indicator {
       position: absolute;
-      top: 15px;
-      right: 15px;
+      top: 18px;
+      right: 20px;
       color: var(--color-green);
       font-size: 20px;
+   }
+   
+   // Action button at the top of each card
+   .step-action-button {
+      margin: 0 20px 16px 20px;
+      padding: 10px 16px;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--type-button-size);
+      font-weight: var(--type-button-weight);
+      line-height: var(--type-button-line);
+      letter-spacing: var(--type-button-spacing);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+      
+      &:hover:not(:disabled) {
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
+         transform: translateY(-1px);
+         box-shadow: var(--shadow-md);
+      }
+      
+      &:disabled {
+         opacity: var(--opacity-disabled);
+         cursor: not-allowed;
+         background: var(--color-gray-700);
+      }
+      
+      i {
+         font-size: 1em;
+      }
+   }
+   
+   .card-content {
+      padding: 0 20px 12px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+   }
+   
+   @keyframes pulse {
+      0% {
+         opacity: 1;
+         transform: scale(1);
+      }
+      50% {
+         opacity: 0.6;
+         transform: scale(1.1);
+      }
+      100% {
+         opacity: 1;
+         transform: scale(1);
+      }
+   }
+   
+   // End of Turn Summary Section
+   .end-turn-summary {
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.5),
+         rgba(31, 31, 35, 0.3));
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-medium);
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+      
+      &.completed {
+         background: linear-gradient(135deg,
+            rgba(35, 35, 40, 0.3),
+            rgba(40, 40, 45, 0.2));
+         border-color: var(--border-subtle);
+      }
+   }
+   
+   .summary-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      position: relative;
+      
+      h4 {
+         margin: 0;
+         color: var(--text-primary);
+         font-size: var(--type-heading-2-size);
+         font-weight: var(--type-heading-2-weight);
+         line-height: var(--type-heading-2-line);
+         display: flex;
+         align-items: center;
+         gap: 10px;
+         
+         i {
+            color: var(--color-amber);
+            font-size: 20px;
+         }
+      }
+   }
+   
+   .summary-content {
+      padding: 20px;
+   }
+   
+   .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+   }
+   
+   .summary-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      
+      i {
+         font-size: 18px;
+         color: var(--color-blue);
+         margin-top: 2px;
+         flex-shrink: 0;
+      }
+      
+      p {
+         margin: 0;
+         color: var(--text-secondary);
+         font-size: var(--type-body-size);
+         line-height: var(--type-body-line);
+      }
+      
+      &.warning {
+         background: rgba(245, 158, 11, 0.1);
+         border: 1px solid rgba(245, 158, 11, 0.3);
+         
+         i {
+            color: var(--color-amber);
+         }
+         
+         p {
+            color: var(--color-amber-light);
+         }
+      }
    }
    
    .consumption-display {
       display: flex;
       justify-content: space-around;
-      gap: 20px;
-      margin: 15px 0;
+      gap: 15px;
       flex-wrap: wrap;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 12px;
    }
    
    .consumption-stat {
@@ -730,22 +750,24 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
+      flex: 1;
+      min-width: 80px;
       
       i {
-         font-size: 32px;
+         font-size: 24px;
          color: var(--color-amber);
-         margin-bottom: 5px;
+         margin-bottom: 4px;
       }
       
       .stat-value {
-         font-size: 20px;
+         font-size: 18px;
          font-weight: bold;
          color: var(--text-primary);
          margin: 2px 0;
       }
       
       .stat-label {
-         font-size: var(--type-label-size);
+         font-size: 11px;
          font-weight: var(--type-label-weight);
          letter-spacing: var(--type-label-spacing);
          color: var(--text-tertiary);
@@ -766,22 +788,23 @@
    .army-support-display {
       display: flex;
       justify-content: center;
-      gap: 30px;
-      margin: 15px 0;
+      gap: 15px;
       flex-wrap: wrap;
    }
    
    .support-status {
       display: flex;
       align-items: center;
-      gap: 15px;
-      padding: 12px 20px;
+      gap: 12px;
+      padding: 10px 15px;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
+      flex: 1;
+      justify-content: center;
       
       i {
-         font-size: 32px;
+         font-size: 24px;
          color: var(--color-blue);
       }
       
@@ -825,16 +848,17 @@
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      padding: 12px;
+      padding: 10px 12px;
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid var(--color-amber);
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-sm);
       color: var(--color-amber-light);
-      margin: 15px 0;
+      font-size: var(--font-sm);
       
       i {
-         font-size: 18px;
+         font-size: 16px;
          margin-top: 2px;
+         flex-shrink: 0;
       }
       
       small {
@@ -852,30 +876,32 @@
    }
    
    .build-resources-available {
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-      margin-bottom: 15px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
       color: var(--text-secondary);
+      font-size: var(--font-sm);
    }
    
    .build-queue {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 15px;
+      gap: 10px;
+      max-height: 200px;
+      overflow-y: auto;
    }
    
    .build-project-card {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
       
       .project-header {
          display: flex;
          justify-content: space-between;
-         margin-bottom: 10px;
+         margin-bottom: 8px;
+         font-size: var(--font-sm);
       }
       
       .project-name {
@@ -885,15 +911,15 @@
       
       .project-tier {
          color: var(--color-amber);
-         font-size: var(--font-sm);
+         opacity: 0.8;
       }
       
       .progress-bar {
-         height: 20px;
+         height: 16px;
          background: rgba(0, 0, 0, 0.3);
-         border-radius: var(--radius-md);
+         border-radius: var(--radius-sm);
          overflow: hidden;
-         margin-bottom: 8px;
+         margin-bottom: 6px;
       }
       
       .progress-fill {
@@ -917,67 +943,8 @@
       }
    }
    
-   .resolution-summary {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-      
-      p {
-         margin: 8px 0;
-         color: var(--text-secondary);
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         
-         i {
-            font-size: 16px;
-            color: var(--color-blue);
-         }
-         
-         &.warning {
-            color: var(--color-amber-light);
-            
-            i {
-               color: var(--color-amber);
-            }
-         }
-      }
-   }
    
-   .step-button {
-      padding: 10px 16px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all var(--transition-fast);
-      margin-top: 10px;
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-secondary-hover);
-         border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: var(--shadow-md);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-      }
-      
-      i {
-         font-size: 1em;
-      }
-   }
+   // Remove the .step-button styles as we replaced it with .step-action-button
    
    .phase-actions {
       margin-top: 20px;
@@ -990,19 +957,15 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
       color: var(--text-tertiary);
-      margin-top: 10px;
+      font-size: var(--font-sm);
       
       i {
          color: var(--text-tertiary);
          opacity: 0.7;
-      }
-      
-      span {
-         font-size: var(--type-body-size);
       }
    }
    
@@ -1041,78 +1004,4 @@
       }
    }
    
-   .unresolved-event-info {
-      padding: 15px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--color-amber);
-      border-radius: var(--radius-md);
-      margin-bottom: 15px;
-      
-      .event-name {
-         font-size: var(--font-lg);
-         font-weight: 600;
-         color: var(--text-primary);
-         margin-bottom: 8px;
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         
-         i {
-            color: var(--color-amber);
-         }
-      }
-      
-      .event-type {
-         margin-bottom: 10px;
-         color: var(--text-secondary);
-      }
-      
-      .type-badge {
-         padding: 2px 8px;
-         border-radius: var(--radius-sm);
-         font-size: var(--font-sm);
-         text-transform: uppercase;
-         font-weight: 600;
-         
-         &.type-continuous {
-            background: rgba(251, 191, 36, 0.2);
-            color: var(--color-amber-light);
-            border: 1px solid var(--color-amber);
-         }
-         
-         &.type-auto-resolve {
-            background: rgba(59, 130, 246, 0.2);
-            color: var(--color-blue);
-            border: 1px solid var(--color-blue);
-         }
-         
-         &.type-expires {
-            background: rgba(100, 116, 139, 0.2);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-medium);
-         }
-      }
-      
-      .event-description {
-         margin: 0;
-         color: var(--text-secondary);
-         font-size: var(--type-body-size);
-      }
-   }
-   
-   .processed-info {
-      padding: 10px;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid var(--color-green-border);
-      border-radius: var(--radius-md);
-      color: var(--color-green);
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      i {
-         color: var(--color-green);
-      }
-   }
 </style>

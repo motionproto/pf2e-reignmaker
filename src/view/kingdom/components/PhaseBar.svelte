@@ -10,7 +10,7 @@
     { id: TurnPhase.PHASE_III, label: 'Unrest', fullName: 'Calculate unrest and resolve incidents' },
     { id: TurnPhase.PHASE_IV, label: 'Events', fullName: 'Resolve kingdom events' },
     { id: TurnPhase.PHASE_V, label: 'Actions', fullName: 'Perform kingdom actions' },
-    { id: TurnPhase.PHASE_VI, label: 'Resolution', fullName: 'End of turn cleanup' }
+    { id: TurnPhase.PHASE_VI, label: 'Upkeep', fullName: 'End of turn' }
   ];
 
   $: currentPhase = $gameState.currentPhase;
@@ -97,7 +97,7 @@
     border-radius: 6px;
     padding: 0rem 1rem; /* Symmetrical top/bottom padding for even spacing */
     font-family: var(--base-font);
-    margin-top: 0;
+    margin-top: -0.4rem;
     margin-bottom: 0.5rem; /* Add small bottom margin for separation from content */
   }
 

@@ -59,6 +59,9 @@ export class UpkeepPhaseController {
         const consumption = resourceManagementService.calculateFoodConsumption(kingdomState);
         
         if (consumption.shortage > 0) {
+            // Update feeding status - settlements not fed
+            this.updateSettlementFeedingStatus(kingdomState, false);
+            
             // Generate unrest for food shortage
             const context: CommandContext = {
                 kingdomState,
@@ -90,6 +93,9 @@ export class UpkeepPhaseController {
                 };
             }
         } else {
+            // Update feeding status - all settlements fed
+            this.updateSettlementFeedingStatus(kingdomState, true);
+            
             // Deduct food normally
             const context: CommandContext = {
                 kingdomState,
@@ -220,6 +226,91 @@ export class UpkeepPhaseController {
         
         this.state.projectsProcessed = progress;
         return progress;
+    }
+    
+    /**
+     * Calculate project completion percentage
+     */
+    getProjectCompletionPercentage(project: BuildProject): number {
+        if (!project.totalCost || project.totalCost.size === 0) return 100;
+        
+        let totalNeeded = 0;
+        let totalRemaining = 0;
+        
+        project.totalCost.forEach((needed: number) => {
+            totalNeeded += needed;
+        });
+        
+        project.remainingCost.forEach((amount: number) => {
+            totalRemaining += amount;
+        });
+        
+        if (totalNeeded === 0) return 100;
+        const invested = totalNeeded - totalRemaining;
+        return Math.floor((invested / totalNeeded) * 100);
+    }
+    
+    /**
+     * Get remaining cost for a project as a record
+     */
+    getProjectRemainingCost(project: BuildProject): Record<string, number> {
+        const remaining: Record<string, number> = {};
+        if (project.remainingCost) {
+            project.remainingCost.forEach((amount: number, resource: string) => {
+                if (amount > 0) {
+                    remaining[resource] = amount;
+                }
+            });
+        }
+        return remaining;
+    }
+    
+    /**
+     * Process turn-end modifiers
+     */
+    processEndTurnModifiers(kingdomState: KingdomState): void {
+        // Decrement duration if numeric
+        kingdomState.modifiers.forEach(modifier => {
+            if (typeof modifier.duration === 'number') {
+                modifier.duration--;
+            }
+        });
+        
+        // Remove expired modifiers
+        kingdomState.modifiers = kingdomState.modifiers.filter(modifier => {
+            if (typeof modifier.duration === 'number' && modifier.duration <= 0) {
+                return false;
+            }
+            return true;
+        });
+    }
+    
+    /**
+     * Update settlement feeding status
+     */
+    updateSettlementFeedingStatus(kingdomState: KingdomState, allFed: boolean): void {
+        kingdomState.settlements.forEach(settlement => {
+            settlement.wasFedLastTurn = allFed;
+        });
+    }
+    
+    /**
+     * Check if steps should be auto-completed
+     */
+    getAutoCompleteSteps(kingdomState: KingdomState): string[] {
+        const steps: string[] = [];
+        
+        // Auto-complete military if no armies
+        if (kingdomState.armies.length === 0) {
+            steps.push('upkeep-military');
+        }
+        
+        // Auto-complete build if no projects
+        if (kingdomState.buildQueue.length === 0) {
+            steps.push('upkeep-build');
+        }
+        
+        return steps;
     }
     
     /**

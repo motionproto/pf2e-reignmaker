@@ -43,6 +43,7 @@
    let unresolvedEvent: EventData | null = null;
    let resolvedActor: string = '';
    let character: any = null;
+   let isIgnoringEvent = false;
    
    // Computed UI state
    $: eventChecked = isPhaseStepCompleted('resolve-event');
@@ -123,11 +124,6 @@
          // Update UI with formatted results
          outcomeMessage = currentEvent.effects?.[outcome]?.msg || '';
          currentEffects = Object.fromEntries(result.data?.appliedChanges || new Map());
-         
-         // Check for unresolved event
-         if ((outcome === 'failure' || outcome === 'criticalFailure') && currentEvent.ifUnresolved) {
-            unresolvedEvent = currentEvent;
-         }
          
          showResolutionResult = true;
          isRolling = false;
@@ -210,15 +206,53 @@
       }
    }
    
-   function completeEventResolution() {
-      // Store unresolved event in gameState for Upkeep phase processing
-      if (unresolvedEvent) {
-         gameState.update(state => {
-            (state as any).unresolvedEvent = unresolvedEvent;
-            return state;
-         });
-      }
+   async function ignoreEvent() {
+      if (!currentEvent || !eventResolutionService || isIgnoringEvent) return;
       
+      isIgnoringEvent = true;
+      
+      try {
+         const context: CommandContext = {
+            kingdomState: get(kingdomState),
+            currentTurn: $gameState.currentTurn || 1,
+            currentPhase: 'Phase IV: Events'
+         };
+         
+         // Always apply failure effects when ignoring an event
+         if (currentEvent.effects?.failure) {
+            const command = new ApplyEventOutcomeCommand(
+               currentEvent,
+               'failure',
+               eventResolutionService
+            );
+            
+            const result = await commandExecutor.execute(command, context, {
+               skipValidation: false
+            });
+            
+            if (result.success) {
+               currentEffects = Object.fromEntries(result.data?.appliedChanges || new Map());
+               outcomeMessage = currentEvent.effects.failure.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
+            }
+         } else {
+            // No failure effects defined
+            outcomeMessage = `Event "${currentEvent.name}" was ignored`;
+         }
+         
+         // Show resolution result
+         resolutionOutcome = 'failure';
+         showResolutionResult = true;
+         
+         // Mark phase as complete
+         if (!eventResolved) {
+            markPhaseStepCompleted('resolve-event');
+         }
+      } finally {
+         isIgnoringEvent = false;
+      }
+   }
+   
+   function completeEventResolution() {
       // Reset UI state
       currentEvent = null;
       selectedSkill = '';
@@ -281,13 +315,6 @@
       <div class="event-card">
          <div class="event-header">
             <h3 class="event-title">{currentEvent.name}</h3>
-            {#if currentEvent.ifUnresolved?.type}
-               <div class="event-traits">
-                  <span class="event-trait trait-{currentEvent.ifUnresolved.type}">
-                     {currentEvent.ifUnresolved.type}
-                  </span>
-               </div>
-            {/if}
          </div>
          
          <div class="event-body">
@@ -318,6 +345,26 @@
                            on:execute={(e) => resolveEventWithSkill(e.detail.skill)}
                         />
                      {/each}
+                  </div>
+                  
+                  <div class="ignore-event-section">
+                     <div class="divider-text">or</div>
+                     <Button 
+                        variant="secondary"
+                        on:click={ignoreEvent}
+                        disabled={isIgnoringEvent || eventResolved}
+                        icon="fas fa-times-circle"
+                        iconPosition="left"
+                     >
+                        {#if isIgnoringEvent}
+                           Ignoring Event...
+                        {:else}
+                           Ignore Event
+                        {/if}
+                     </Button>
+                     {#if currentEvent.effects?.failure}
+                        <p class="ignore-warning">Failure effects will be applied</p>
+                     {/if}
                   </div>
                </div>
             {/if}
@@ -500,6 +547,30 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
+   }
+   
+   .ignore-event-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+      
+      .divider-text {
+         position: relative;
+         margin-bottom: 15px;
+         color: var(--text-tertiary);
+         font-size: var(--font-sm);
+         font-style: italic;
+      }
+      
+      .ignore-warning {
+         margin-top: 10px;
+         margin-bottom: 0;
+         font-size: var(--font-sm);
+         color: var(--color-amber);
+         font-style: italic;
+         opacity: 0.8;
+      }
    }
    
    .event-result-display {
