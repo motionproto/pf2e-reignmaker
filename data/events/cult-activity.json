@@ -6,7 +6,20 @@
   "icon": "fas fa-skull",
   "dc": 16,
   "modifier": 0,
-  "skills": ["religion", "diplomacy", "intimidation"],
+  "skills": [
+    {
+      "skill": "religion",
+      "description": "counter with true faith"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "reason with cultists"
+    },
+    {
+      "skill": "intimidation",
+      "description": "forcibly disband them"
+    }
+  ],
   "effects": {
     "criticalSuccess": {
       "msg": "You convert the cultists to a productive faith. They become valuable citizens.",

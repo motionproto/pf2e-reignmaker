@@ -14,6 +14,7 @@
    export let primaryButtonLabel: string = "OK";
    export let compact: boolean = false;
    export let showFameReroll: boolean = true; // New prop to control fame reroll visibility
+   export let showCancel: boolean = true; // New prop to control cancel button visibility
    
    const dispatch = createEventDispatcher();
    
@@ -138,6 +139,10 @@
    function handlePrimary() {
       dispatch('primary');
    }
+   
+   function handleCancel() {
+      dispatch('cancel');
+   }
 </script>
 
 <div class="resolution-display {outcomeProps.colorClass} {compact ? 'compact' : ''}">
@@ -177,26 +182,38 @@
    </div>
    
    <div class="resolution-actions">
-      {#if showFameReroll}
+      {#if showCancel}
          <Button
-            variant="secondary"
-            disabled={currentFame === 0}
-            on:click={handleReroll}
-            icon="fas fa-star"
+            variant="outline"
+            on:click={handleCancel}
+            icon="fas fa-times"
             iconPosition="left"
          >
-            Reroll with Fame
-            <span class="fame-count">({currentFame} left)</span>
+            Cancel
          </Button>
       {/if}
-      <Button
-         variant="secondary"
-         on:click={handlePrimary}
-         icon="fas fa-check"
-         iconPosition="left"
-      >
-         {primaryButtonLabel}
-      </Button>
+      <div class="resolution-actions-main">
+         {#if showFameReroll}
+            <Button
+               variant="secondary"
+               disabled={currentFame === 0}
+               on:click={handleReroll}
+               icon="fas fa-star"
+               iconPosition="left"
+            >
+               Reroll with Fame
+               <span class="fame-count">({currentFame} left)</span>
+            </Button>
+         {/if}
+         <Button
+            variant="secondary"
+            on:click={handlePrimary}
+            icon="fas fa-check"
+            iconPosition="left"
+         >
+            {primaryButtonLabel}
+         </Button>
+      </div>
    </div>
 </div>
 
@@ -410,14 +427,35 @@
    
    .resolution-actions {
       display: flex;
+      justify-content: space-between;
       gap: 12px;
       padding: 20px;
       background: rgba(0, 0, 0, 0.2);
       border-top: 1px solid var(--border-subtle);
       
-      // Make buttons equal width
-      :global(.button) {
+      // Cancel button stays on the left
+      > :global(.button.outline) {
+         flex: 0 0 auto;
+         margin-right: auto;
+         opacity: 0.7;
+         
+         &:hover {
+            opacity: 1;
+         }
+      }
+      
+      // Main action buttons group on the right
+      .resolution-actions-main {
+         display: flex;
+         gap: 12px;
          flex: 1;
+         justify-content: flex-end;
+         
+         // Main buttons can expand to equal width
+         :global(.button) {
+            flex: 0 1 auto;
+            min-width: 120px;
+         }
       }
    }
 </style>

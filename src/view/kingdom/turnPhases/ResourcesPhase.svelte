@@ -1,22 +1,20 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState, totalProduction } from '../../../stores/kingdom';
+   import { kingdomState } from '../../../stores/kingdom';
    import { markPhaseStepCompleted, isPhaseStepCompleted, gameState } from '../../../stores/gameState';
    import Button from '../components/baseComponents/Button.svelte';
    
    // Import clean architecture components
    import { createResourcePhaseController } from '../../../controllers/ResourcePhaseController';
-   import type { ResourcePhaseController, ResourceCollectionSummary } from '../../../controllers/ResourcePhaseController';
-   import type { ResourceCollectionResult } from '../../../services/economics';
+   import type { ResourcePhaseController, ResourcePhaseDisplayData } from '../../../controllers/ResourcePhaseController';
    
    // Controller instance
    let resourceController: ResourcePhaseController;
    
-   // UI State only - no business logic
-   let collectCompleted = false;
-   let lastCollectionResult: ResourceCollectionResult | null = null;
+   // UI State only
    let isCollecting = false;
+   let displayData: ResourcePhaseDisplayData | null = null;
    
    // Resource icons and colors - this is presentation configuration, belongs in component
    const resourceConfig: Record<string, { icon: string; color: string }> = {
@@ -27,27 +25,26 @@
       gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
    };
    
-   // Reactive UI state
-   $: collectCompleted = isPhaseStepCompleted('resources-collect');
+   // Reactive: Get all display data from controller in one call
+   $: if (resourceController && $kingdomState) {
+      displayData = resourceController.getDisplayData($kingdomState);
+   }
    
-   // Calculate potential collection through controller
-   $: potentialCollection = resourceController 
-      ? resourceController.calculatePotentialCollection($kingdomState)
-      : null;
-   
-   // Extract display values
-   $: potentialGoldIncome = potentialCollection?.goldIncome || 0;
-   $: fedSettlementsCount = potentialCollection?.fedSettlementsCount || 0;
-   $: unfedSettlementsCount = potentialCollection?.unfedSettlementsCount || 0;
+   // Extract commonly used values from display data for template convenience
+   $: collectCompleted = displayData?.collectionCompleted || isPhaseStepCompleted('resources-collect');
+   $: currentResources = displayData?.currentResources || new Map();
+   $: totalProduction = displayData?.totalProduction || new Map();
+   $: worksiteDetails = displayData?.worksiteDetails || [];
+   $: potentialGoldIncome = displayData?.potentialGoldIncome || 0;
+   $: fedSettlementsCount = displayData?.fedSettlementsCount || 0;
+   $: unfedSettlementsCount = displayData?.unfedSettlementsCount || 0;
+   $: settlementCount = displayData?.settlementCount || 0;
+   $: lastCollectionResult = displayData?.lastCollectionResult || null;
+   $: phaseSummary = displayData?.phaseSummary || null;
    
    // Initialize controller on mount
    onMount(() => {
       resourceController = createResourcePhaseController();
-      
-      // If resources were already collected, get the result from controller
-      if (collectCompleted) {
-         lastCollectionResult = resourceController.getLastCollectionResult();
-      }
    });
    
    // Clean up on destroy
@@ -71,9 +68,6 @@
          );
          
          if (result.success && result.result) {
-            // Store result for display
-            lastCollectionResult = result.result;
-            
             // Log for transparency
             console.log('Resources collected:', {
                hexProduction: Object.fromEntries(result.result.hexProduction),
@@ -85,6 +79,9 @@
             
             // Mark step as completed - this is a UI concern
             markPhaseStepCompleted('resources-collect');
+            
+            // Update display data after successful collection
+            displayData = resourceController.getDisplayData($kingdomState);
          } else {
             console.error('Failed to collect resources:', result.error);
             // TODO: Show user-friendly error message
@@ -96,15 +93,6 @@
          isCollecting = false;
       }
    }
-   
-   // Get worksite details from controller for display
-   $: worksiteDetails = resourceController && potentialCollection
-      ? resourceController.getWorksiteDetails($kingdomState.hexes)
-      : [];
-   
-   // Get controller state for display
-   $: controllerState = resourceController?.getState();
-   $: phaseSummary = resourceController?.getPhaseSummary();
 </script>
 
 <div class="resources-phase">
@@ -115,7 +103,7 @@
          <div class="resource-card">
             <i class="fas {config.icon} resource-icon" style="color: {config.color};"></i>
             <div class="resource-info">
-               <div class="resource-value">{$kingdomState.resources.get(resource) || 0}</div>
+               <div class="resource-value">{currentResources.get(resource) || 0}</div>
                <div class="resource-label">{resource}</div>
             </div>
          </div>
@@ -138,47 +126,27 @@
          {:else}
             Collect Resources
          {/if}
-      </Button>
+   </Button>
    </div>
    
-   <!-- Show what was collected after clicking the button -->
-   {#if collectCompleted && lastCollectionResult}
-      <div class="collection-results">
-         <h4>Resources Collected This Turn:</h4>
-         <div class="collected-items">
-            {#each Array.from(lastCollectionResult.totalCollected.entries()) as [resource, amount]}
-               {#if amount > 0}
-                  <div class="collected-item">
-                     <i class="fas {resourceConfig[resource]?.icon}" style="color: {resourceConfig[resource]?.color};"></i>
-                     <span class="collected-amount">+{amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}</span>
-                  </div>
-               {/if}
-            {/each}
-         </div>
-      </div>
-   {/if}
-   
-   <!-- Phase Step -->
+   <!-- Phase Steps -->
    <div class="phase-steps-container">
       
       <!-- Step 1: Collect Resources and Revenue -->
       <div class="phase-step" class:completed={collectCompleted}>
-         {#if collectCompleted}
-            <i class="fas fa-check-circle phase-step-complete"></i>
-         {/if}
-         
-         <h4>Collect Resources and Revenue</h4>
-         
          <!-- Resource Production -->
-         {#if Object.keys($totalProduction).length > 0}
+         {#if totalProduction.size > 0}
+            {@const productionList = Object.keys(resourceConfig)
+               .filter(resource => (totalProduction.get(resource) || 0) > 0)
+               .map(resource => ({resource, amount: totalProduction.get(resource)}))}
             <div class="production-summary">
                <div class="production-header">
                   <span class="production-title">Resource Production This Turn:</span>
                   <span class="production-total">
-                     {#each Object.entries($totalProduction) as [resource, amount], i}
+                     {#each productionList as item, i}
                         {#if i > 0} | {/if}
-                        <span style="color: {resourceConfig[resource]?.color || 'var(--text-primary)'}">
-                           +{amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
+                        <span style="color: {resourceConfig[item.resource]?.color || 'var(--text-primary)'}">
+                           +{item.amount} {item.resource.charAt(0).toUpperCase() + item.resource.slice(1)}
                         </span>
                      {/each}
                   </span>
@@ -210,7 +178,7 @@
          {/if}
          
          <!-- Gold Income from Settlements -->
-         {#if $kingdomState.settlements.length > 0}
+         {#if settlementCount > 0}
             <div class="gold-income-summary">
                <div class="income-header">
                   <i class="fas fa-coins" style="color: var(--color-amber-light);"></i>
@@ -289,13 +257,13 @@
       }
       
       .resource-value {
-         font-size: 1.25rem;
+         font-size: var(--font-2xl);;
          font-weight: bold;
          color: var(--text-primary);
       }
       
       .resource-label {
-         font-size: 0.875rem;
+          font-size: var(--font-sm);;
          color: var(--text-tertiary);
          text-transform: capitalize;
       }
@@ -328,9 +296,9 @@
       h4 {
          margin: 0 0 15px 0;
          color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
+         font-size: var(--font-xl);  /* 20px */
+         font-weight: var(--type-weight-semibold);
+         line-height: var(--type-leading-snug);
       }
    }
    
@@ -361,13 +329,14 @@
       }
       
       .production-title {
-         font-size: var(--type-body-size);
+         font-size: var(--font-2xl);
          font-weight: var(--type-weight-semibold);
-         line-height: var(--type-body-line);
-         color: var(--text-secondary);
+         line-height: var(--type-leading-relaxed);
+         color: var(--text-primary);
       }
       
       .production-total {
+         font-size: var(--font-2xl);  /* 18px */
          font-weight: 600;
          color: var(--color-green);
       }
@@ -379,7 +348,7 @@
       summary {
          cursor: pointer;
          color: var(--text-tertiary);
-         font-size: var(--font-sm);
+         font-size: var(--font-lg);
          
          &:hover {
             color: var(--text-secondary);
@@ -400,7 +369,7 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       margin-bottom: 5px;
-      font-size: var(--font-sm);
+      font-size: var(--font-m);
       color: var(--text-secondary);
       
       .worksite-production {
@@ -438,15 +407,15 @@
       }
       
       .income-title {
-         font-size: var(--type-body-size);
+         font-size: var(--font-xl);
          font-weight: var(--type-weight-semibold);
-         line-height: var(--type-body-line);
-         color: var(--text-secondary);
+         line-height: var(--type-leading-relaxed);
+         color: var(--text-primary);
          flex: 1;
       }
       
       .income-amount {
-         font-size: var(--type-body-size);
+         font-size: var(--font-2xl);
          font-weight: var(--type-weight-semibold);
       }
    }
@@ -457,7 +426,7 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: var(--radius-sm);
-      font-size: var(--font-sm);
+      font-size: var(--font-m);
       
       &.warning {
          background: rgba(245, 158, 11, 0.1);
@@ -484,50 +453,6 @@
       display: flex;
       justify-content: center;
       padding: 0;
-   }
-   
-   .collection-results {
-      background: linear-gradient(135deg, 
-         rgba(34, 197, 94, 0.15),
-         rgba(24, 24, 27, 0.3));
-      padding: 20px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--color-green-border);
-      text-align: center;
-      
-      h4 {
-         margin: 0 0 15px 0;
-         color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-      }
-   }
-   
-   .collected-items {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
-   }
-   
-   .collected-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      
-      i {
-         font-size: 20px;
-      }
-      
-      .collected-amount {
-         color: var(--text-primary);
-         font-size: var(--font-md);
-         font-weight: 600;
-      }
    }
    
    .phase-summary {

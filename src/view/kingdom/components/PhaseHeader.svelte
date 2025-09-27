@@ -18,7 +18,7 @@
     [TurnPhase.PHASE_III, ['calculate-unrest']],
     [TurnPhase.PHASE_IV, ['resolve-event']],
     [TurnPhase.PHASE_V, []],  // No required steps
-    [TurnPhase.PHASE_VI, ['upkeep-complete']],
+    [TurnPhase.PHASE_VI, ['upkeep-food', 'upkeep-military', 'upkeep-build']],  // Main upkeep steps
   ]);
   
   let currentPhaseComplete = false;

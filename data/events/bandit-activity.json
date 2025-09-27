@@ -6,7 +6,20 @@
   "icon": "fas fa-mask",
   "dc": 16,
   "modifier": 0,
-  "skills": ["intimidation", "diplomacy", "stealth"],
+  "skills": [
+    {
+      "skill": "intimidation",
+      "description": "drive them off with force"
+    },
+    {
+      "skill": "diplomacy",
+      "description": "negotiate safe passage"
+    },
+    {
+      "skill": "stealth",
+      "description": "track them to their hideout"
+    }
+  ],
   "effects": {
     "criticalSuccess": {
       "msg": "You capture the bandit leaders and turn them into productive citizens. The former bandits become valuable scouts.",

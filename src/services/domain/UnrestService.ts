@@ -57,8 +57,9 @@ export class UnrestService {
     /**
      * Roll for incidents based on current unrest tier
      */
-    rollForIncident(tier: number): IncidentCheckResult {
-        if (tier === 0) {
+    rollForIncident(tier?: number): IncidentCheckResult {
+        // If no tier is provided, return no incident
+        if (!tier || tier === 0) {
             return {
                 roll: 0,
                 incident: null,
@@ -66,13 +67,14 @@ export class UnrestService {
             };
         }
         
-        const roll = diceService.rollD100();
-        // Pass the roll to IncidentManager to use the same roll for determination
-        const incident = IncidentManager.rollForIncident(tier, roll);
+        // Use the simplified IncidentManager logic
+        const incident = IncidentManager.rollForIncident(tier);
         const level = IncidentManager.getIncidentLevel(tier);
         
+        // We don't need to track the actual roll value anymore
+        // Just return whether we got an incident or not
         return {
-            roll,
+            roll: incident ? 1 : 0, // Simplified: 1 if incident, 0 if no incident
             incident,
             level
         };
@@ -172,7 +174,7 @@ export class UnrestService {
         
         // War status
         if (state.isAtWar) {
-            sources.set('atWar', 2); // Being at war adds 2 unrest per turn
+            sources.set('atWar', 1); // Being at war adds 1 unrest per turn
         }
         
         return sources;

@@ -101,110 +101,78 @@ export const IncidentManager = {
    * Roll for an incident based on unrest tier
    * Returns null if no incident occurs
    * @param tier The unrest tier (0-3)
-   * @param roll The d100 roll result (1-100) - if not provided, will generate one
    */
-  rollForIncident(tier: number, roll?: number): Incident | null {
+  rollForIncident(tier: number): Incident | null {
+    if (tier === 0) return null; // Stable - no incidents
+    
+    console.log('Rolling for incident. Tier:', tier);
+    
+    // Determine chance of no incident based on tier
+    let noIncidentChance: number;
+    switch (tier) {
+      case 1: // Discontent
+        noIncidentChance = 0.20; // 20% chance of no incident
+        break;
+      case 2: // Turmoil
+        noIncidentChance = 0.15; // 15% chance of no incident
+        break;
+      case 3: // Rebellion
+        noIncidentChance = 0.10; // 10% chance of no incident
+        break;
+      default:
+        return null;
+    }
+    
+    // Roll to see if incident occurs
+    const roll = Math.random();
+    console.log('Roll:', roll, 'vs no-incident chance:', noIncidentChance);
+    
+    if (roll < noIncidentChance) {
+      console.log('No incident (rolled under threshold)');
+      return null; // No incident
+    }
+    
+    // An incident occurs - randomly select one from the appropriate array
     const level = this.getIncidentLevel(tier);
+    console.log('Incident level:', level);
     if (!level) return null;
     
-    // Use provided roll or generate one
-    const diceRoll = roll ?? Math.floor(Math.random() * 100) + 1; // 1-100
-    
-    // Check for no incident
-    let noIncidentThreshold: number;
-    switch (level) {
-      case IncidentLevel.MINOR: 
-        noIncidentThreshold = 20; 
-        break;
-      case IncidentLevel.MODERATE: 
-        noIncidentThreshold = 15; 
-        break;
-      case IncidentLevel.MAJOR: 
-        noIncidentThreshold = 10; 
-        break;
-    }
-    
-    if (diceRoll <= noIncidentThreshold) {
-      return null;
-    }
-    
-    // Get appropriate incident from the tables
-    return this.getIncidentByRoll(level, diceRoll);
+    return this.getRandomIncident(level);
   },
   
   /**
-   * Get an incident by percentile roll using optimized lookup tables
+   * Get a random incident from the appropriate level array
    */
-  getIncidentByRoll(level: IncidentLevel, roll: number): Incident | null {
-    // Get the appropriate lookup table and incidents array
-    let lookupTable: [number, number, string][];
+  getRandomIncident(level: IncidentLevel): Incident | null {
     let incidents: Incident[];
     
     switch (level) {
       case IncidentLevel.MINOR:
-        lookupTable = this.minorIncidentLookup;
-        incidents = this.minorIncidents;
+        incidents = IncidentManager.minorIncidents;
         break;
       case IncidentLevel.MODERATE:
-        lookupTable = this.moderateIncidentLookup;
-        incidents = this.moderateIncidents;
+        incidents = IncidentManager.moderateIncidents;
         break;
       case IncidentLevel.MAJOR:
-        lookupTable = this.majorIncidentLookup;
-        incidents = this.majorIncidents;
+        incidents = IncidentManager.majorIncidents;
         break;
+      default:
+        return null;
     }
     
-    // Binary search for efficiency (though with ~10 items, linear would work too)
-    for (const [min, max, id] of lookupTable) {
-      if (roll >= min && roll <= max) {
-        return incidents.find(inc => inc.id === id) || null;
-      }
+    console.log('Getting random incident from level:', level, 'Array length:', incidents?.length || 0);
+    
+    if (!incidents || incidents.length === 0) {
+      console.error('No incidents found for level:', level);
+      return null;
     }
     
-    return null;
+    // Pick a random incident from the array
+    const randomIndex = Math.floor(Math.random() * incidents.length);
+    const incident = incidents[randomIndex];
+    console.log('Selected incident:', incident?.name || 'none');
+    return incident;
   },
-  
-  // Optimized lookup tables - just ranges and IDs
-  // Format: [min, max, incident_id]
-  minorIncidentLookup: [
-    [21, 30, 'crime_wave'],
-    [31, 40, 'work_stoppage'],
-    [41, 50, 'emigration_threat'],
-    [51, 60, 'protests'],
-    [61, 70, 'corruption_scandal'],
-    [71, 80, 'rising_tensions'],
-    [81, 90, 'bandit_activity'],
-    [91, 100, 'minor_diplomatic_incident']
-  ] as [number, number, string][],
-  
-  moderateIncidentLookup: [
-    [16, 24, 'production_strike'],
-    [25, 33, 'diplomatic_incident'],
-    [34, 42, 'tax_revolt'],
-    [43, 51, 'infrastructure_damage'],
-    [52, 60, 'disease_outbreak'],
-    [61, 69, 'riot'],
-    [70, 78, 'settlement_crisis'],
-    [79, 87, 'assassination_attempt'],
-    [88, 93, 'trade_embargo'],
-    [94, 100, 'mass_exodus']
-  ] as [number, number, string][],
-  
-  majorIncidentLookup: [
-    [11, 17, 'guerrilla_movement'],
-    [18, 24, 'mass_desertion_threat'],
-    [25, 31, 'trade_embargo_major'],
-    [32, 38, 'settlement_crisis_major'],
-    [39, 45, 'international_scandal'],
-    [46, 52, 'prison_breaks'],
-    [53, 59, 'noble_conspiracy'],
-    [60, 66, 'economic_crash'],
-    [67, 73, 'religious_schism'],
-    [74, 80, 'border_raid'],
-    [81, 87, 'secession_crisis'],
-    [88, 100, 'international_crisis']
-  ] as [number, number, string][],
   
   /**
    * Get the placeholder image for an incident level

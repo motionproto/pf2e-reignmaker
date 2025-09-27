@@ -27,7 +27,6 @@
    let isRolling = false;
    let incidentResolved = false;
    let rollOutcome: string = '';
-   let lastRoll: number = 0;
    
    // Reactive UI state
    $: incidentChecked = isPhaseStepCompleted('calculate-unrest');
@@ -87,23 +86,21 @@
       isRolling = true;
       showIncidentResult = false;
       
-      // Animate the roll
+      // Animate the check
       setTimeout(async () => {
          // Use controller to roll for incident
          const result = unrestController.rollForIncident(unrestStatus.tier);
          
-         lastRoll = result.roll;
          showIncidentResult = true;
          isRolling = false;
          
-         // If an incident occurred, it's now stored in the controller
+         // Mark that we've checked for incidents, but don't apply unrest generation
+         // Unrest generation should only be applied during the actual phase processing,
+         // not when rolling for incidents
          if (!incidentChecked) {
             markPhaseStepCompleted('calculate-unrest');
          }
-         
-         // Apply unrest generation at this point
-         await applyUnrestGeneration();
-      }, 1000);
+      }, 800);
    }
    
    // Apply unrest generation using command pattern
@@ -303,19 +300,6 @@
             <div class="incident-result-container">
                {#if currentIncident}
                   <div class="incident-display">
-            <div class="roll-result">
-              <span class="d100">d100:</span>
-              <span class="roll-value">{lastRoll}</span>
-              <!-- Temporary re-roll button for testing -->
-              <button 
-                class="reroll-test-btn"
-                on:click={rollForIncident}
-                title="Re-roll for testing"
-              >
-                🎲
-              </button>
-            </div>
-                     
                      <div class="incident-info">
                         <div class="incident-name">{currentIncident.name}</div>
                         <div class="incident-description">{currentIncident.description}</div>
@@ -381,12 +365,8 @@
                   </div>
                {:else}
                   <div class="no-incident">
-                     <div class="roll-result">
-                        <div class="roll-value">{lastRoll}</div>
-                        <div class="roll-label">d100 Roll</div>
-                     </div>
                      <i class="fas fa-shield-alt no-incident-icon"></i>
-                     <div class="no-incident-text">No Incident!</div>
+                     <div class="no-incident-text">No Incident</div>
                      <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
                   </div>
                {/if}

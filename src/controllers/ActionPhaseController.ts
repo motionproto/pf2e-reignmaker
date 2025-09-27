@@ -1,10 +1,12 @@
 /**
- * ActionPhaseController - Orchestrates action phase operations
+ * ActionPhaseController - Stateless orchestrator for action phase operations
  * 
  * This controller coordinates between services, commands, and stores
- * to handle all action phase business logic without UI concerns.
+ * to handle all action phase business logic without maintaining its own state.
+ * All state is managed in the gameState store.
  */
 
+import { get } from 'svelte/store';
 import { actionExecutionService } from '../services/domain/ActionExecutionService';
 import { ExecuteActionCommand } from '../commands/impl/ExecuteActionCommand';
 import { commandExecutor } from '../commands/base/CommandExecutor';
@@ -12,36 +14,27 @@ import type { CommandContext } from '../commands/base/Command';
 import type { PlayerAction } from '../models/PlayerActions';
 import type { KingdomState } from '../models/KingdomState';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
+import { 
+    gameState, 
+    resolveAction as storeResolveAction,
+    unresolveAction,
+    isActionResolved,
+    getActionResolution,
+    getAllResolvedActions,
+    clearResolvedActions,
+    getAllPlayerActions,
+    type ActionResolution 
+} from '../stores/gameState';
 
-export interface ActionResolution {
-    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-    actorName: string;
-    skillName?: string;
-    stateChanges: Map<string, any>;
-    formattedChanges?: any[];
-}
-
-export interface ActionPhaseState {
-    resolvedActions: Map<string, ActionResolution>;
-    actionsUsed: number;
-    maxActions: number;
-    expandedActionId: string | null;
-}
+// Re-export ActionResolution type from gameState
+export type { ActionResolution } from '../stores/gameState';
 
 export class ActionPhaseController {
-    private state: ActionPhaseState;
+    // Remove internal state - this is now a stateless controller
+    private readonly maxActions: number;
     
     constructor(maxActions: number = 4) {
-        this.state = this.createInitialState(maxActions);
-    }
-    
-    private createInitialState(maxActions: number): ActionPhaseState {
-        return {
-            resolvedActions: new Map(),
-            actionsUsed: 0,
-            maxActions,
-            expandedActionId: null
-        };
+        this.maxActions = maxActions;
     }
     
     /**
@@ -63,6 +56,14 @@ export class ActionPhaseController {
     }
     
     /**
+     * Get the number of actions used (from gameState)
+     */
+    getActionsUsed(): number {
+        const playerActions = getAllPlayerActions();
+        return playerActions.filter(pa => pa.actionSpent).length;
+    }
+    
+    /**
      * Execute an action using the command pattern
      */
     async executeAction(
@@ -78,19 +79,20 @@ export class ActionPhaseController {
         resolution?: ActionResolution;
         error?: string;
     }> {
-        // Check if action has already been resolved
-        if (this.state.resolvedActions.has(action.id)) {
+        // Check if action has already been resolved (from store)
+        if (isActionResolved(action.id)) {
             return {
                 success: false,
                 error: 'Action has already been resolved'
             };
         }
         
-        // Check if we've reached the action limit
-        if (this.state.actionsUsed >= this.state.maxActions) {
+        // Check if we've reached the action limit (from store)
+        const actionsUsed = this.getActionsUsed();
+        if (actionsUsed >= this.maxActions) {
             return {
                 success: false,
-                error: `Maximum actions (${this.state.maxActions}) already taken`
+                error: `Maximum actions (${this.maxActions}) already taken`
             };
         }
         
@@ -107,34 +109,29 @@ export class ActionPhaseController {
         const result = await commandExecutor.execute(command, context);
         
         if (result.success) {
-            // Format the changes for display
-            const formattedChanges = stateChangeFormatter.formatStateChanges(
+            // Store the resolution in gameState
+            storeResolveAction(
+                action.id,
+                outcome,
+                actorName || 'The Kingdom',
+                skillName,
                 result.data?.appliedChanges || new Map()
             );
             
-            // Create resolution record
-            const resolution: ActionResolution = {
-                outcome,
-                actorName: actorName || 'The Kingdom',
-                skillName,
-                stateChanges: result.data?.appliedChanges || new Map(),
-                formattedChanges
-            };
-            
-            // Update state
-            this.state.resolvedActions.set(action.id, resolution);
-            this.state.actionsUsed++;
-            
-            return {
-                success: true,
-                resolution
-            };
-        } else {
-            return {
-                success: false,
-                error: result.error
-            };
+            // Return the resolution
+            const resolution = getActionResolution(action.id);
+            if (resolution) {
+                return {
+                    success: true,
+                    resolution
+                };
+            }
         }
+        
+        return {
+            success: false,
+            error: result.error
+        };
     }
     
     /**
@@ -158,7 +155,7 @@ export class ActionPhaseController {
     }
     
     /**
-     * Resolve an action and update state
+     * Resolve an action and update state in the store
      */
     resolveAction(
         action: PlayerAction,
@@ -166,13 +163,14 @@ export class ActionPhaseController {
         actorName: string,
         skillName?: string
     ): ActionResolution | null {
-        // Check if already resolved
-        if (this.state.resolvedActions.has(action.id)) {
+        // Check if already resolved (from store)
+        if (isActionResolved(action.id)) {
             return null;
         }
         
-        // Check action limit
-        if (this.state.actionsUsed >= this.state.maxActions) {
+        // Check action limit (from store)
+        const actionsUsed = this.getActionsUsed();
+        if (actionsUsed >= this.maxActions) {
             return null;
         }
         
@@ -187,20 +185,16 @@ export class ActionPhaseController {
             });
         }
         
-        // Create resolution
-        const resolution: ActionResolution = {
+        // Store the resolution in gameState
+        storeResolveAction(
+            action.id,
             outcome,
             actorName,
             skillName,
-            stateChanges,
-            formattedChanges: stateChangeFormatter.formatStateChanges(stateChanges)
-        };
+            stateChanges
+        );
         
-        // Update state
-        this.state.resolvedActions.set(action.id, resolution);
-        this.state.actionsUsed++;
-        
-        return resolution;
+        return getActionResolution(action.id) || null;
     }
     
     /**
@@ -210,7 +204,7 @@ export class ActionPhaseController {
         actionId: string,
         kingdomState?: KingdomState
     ): Promise<boolean> {
-        if (!this.state.resolvedActions.has(actionId)) {
+        if (!isActionResolved(actionId)) {
             return false;
         }
         
@@ -219,70 +213,52 @@ export class ActionPhaseController {
         if (canUndo) {
             const result = await commandExecutor.undo();
             if (result.success) {
-                this.state.resolvedActions.delete(actionId);
-                this.state.actionsUsed = Math.max(0, this.state.actionsUsed - 1);
+                unresolveAction(actionId);
                 return true;
             }
         }
         
         // If undo isn't available, just remove from resolved
         // (This won't revert state changes but allows re-rolling)
-        this.state.resolvedActions.delete(actionId);
-        this.state.actionsUsed = Math.max(0, this.state.actionsUsed - 1);
+        unresolveAction(actionId);
         return true;
     }
     
     /**
-     * Check if an action has been resolved
+     * Check if an action has been resolved (delegates to store)
      */
     isActionResolved(actionId: string): boolean {
-        return this.state.resolvedActions.has(actionId);
+        return isActionResolved(actionId);
     }
     
     /**
-     * Get resolution details for an action
+     * Get resolution details for an action (delegates to store)
      */
     getActionResolution(actionId: string): ActionResolution | undefined {
-        return this.state.resolvedActions.get(actionId);
+        return getActionResolution(actionId);
     }
     
     /**
-     * Get all resolved actions
+     * Get all resolved actions (delegates to store)
      */
     getAllResolvedActions(): Map<string, ActionResolution> {
-        return new Map(this.state.resolvedActions);
+        return getAllResolvedActions();
     }
     
     /**
      * Check if more actions can be taken
      */
     canPerformMoreActions(): boolean {
-        return this.state.actionsUsed < this.state.maxActions;
+        const actionsUsed = this.getActionsUsed();
+        return actionsUsed < this.maxActions;
     }
     
     /**
      * Get the number of actions remaining
      */
     getActionsRemaining(): number {
-        return Math.max(0, this.state.maxActions - this.state.actionsUsed);
-    }
-    
-    /**
-     * Toggle action expansion (UI state)
-     */
-    toggleActionExpanded(actionId: string): void {
-        if (this.state.expandedActionId === actionId) {
-            this.state.expandedActionId = null;
-        } else {
-            this.state.expandedActionId = actionId;
-        }
-    }
-    
-    /**
-     * Check if an action is expanded
-     */
-    isActionExpanded(actionId: string): boolean {
-        return this.state.expandedActionId === actionId;
+        const actionsUsed = this.getActionsUsed();
+        return Math.max(0, this.maxActions - actionsUsed);
     }
     
     /**
@@ -311,33 +287,28 @@ export class ActionPhaseController {
      * Reset controller state for next phase
      */
     resetState(): void {
-        this.state = this.createInitialState(this.state.maxActions);
+        // Clear resolved actions in the store
+        clearResolvedActions();
         // Clear command history for actions
         commandExecutor.clearHistory();
     }
     
     /**
-     * Get current controller state
+     * Get current state (reads from store, not internal state)
      */
-    getState(): ActionPhaseState {
+    getState() {
         return {
-            ...this.state,
-            resolvedActions: new Map(this.state.resolvedActions)
+            resolvedActions: getAllResolvedActions(),
+            actionsUsed: this.getActionsUsed(),
+            maxActions: this.maxActions
         };
-    }
-    
-    /**
-     * Get actions used count
-     */
-    getActionsUsed(): number {
-        return this.state.actionsUsed;
     }
     
     /**
      * Get max actions
      */
     getMaxActions(): number {
-        return this.state.maxActions;
+        return this.maxActions;
     }
 }
 

@@ -30,6 +30,20 @@ export interface UpkeepPhaseState {
     totalChanges: Map<string, number>;
 }
 
+export interface UpkeepDisplayData {
+    currentFood: number;
+    foodConsumption: number;
+    foodShortage: number;
+    settlementConsumption: number;
+    armyConsumption: number;
+    armyCount: number;
+    armySupport: number;
+    unsupportedCount: number;
+    foodRemainingForArmies: number;
+    armyFoodShortage: number;
+    settlementFoodShortage: number;
+}
+
 export class UpkeepPhaseController {
     private state: UpkeepPhaseState;
     
@@ -283,6 +297,94 @@ export class UpkeepPhaseController {
             }
             return true;
         });
+    }
+    
+    /**
+     * Calculate all display data for the UI
+     */
+    getDisplayData(kingdomState: KingdomState): UpkeepDisplayData {
+        const currentFood = kingdomState.resources.get('food') || 0;
+        const foodConsumption = kingdomState.getTotalFoodConsumption();
+        const foodShortage = Math.max(0, foodConsumption - currentFood);
+        const foodBreakdown = kingdomState.getFoodConsumptionBreakdown();
+        const settlementConsumption = foodBreakdown[0];
+        const armyConsumption = foodBreakdown[1];
+        const armyCount = kingdomState.armies.length;
+        const armySupport = kingdomState.getTotalArmySupport();
+        const unsupportedCount = kingdomState.getUnsupportedArmies();
+        const foodRemainingForArmies = Math.max(0, currentFood - settlementConsumption);
+        const armyFoodShortage = Math.max(0, armyConsumption - foodRemainingForArmies);
+        const settlementFoodShortage = Math.max(0, settlementConsumption - currentFood);
+        
+        return {
+            currentFood,
+            foodConsumption,
+            foodShortage,
+            settlementConsumption,
+            armyConsumption,
+            armyCount,
+            armySupport,
+            unsupportedCount,
+            foodRemainingForArmies,
+            armyFoodShortage,
+            settlementFoodShortage
+        };
+    }
+    
+    /**
+     * Process military support and generate unrest if needed
+     */
+    async processMilitarySupport(
+        kingdomState: KingdomState,
+        currentTurn: number
+    ): Promise<{ success: boolean; unrestGenerated: number; error?: string }> {
+        const displayData = this.getDisplayData(kingdomState);
+        let totalUnrest = 0;
+        
+        const context: CommandContext = {
+            kingdomState,
+            currentTurn,
+            currentPhase: 'Phase VI: Upkeep'
+        };
+        
+        // Generate unrest for unsupported armies
+        if (displayData.unsupportedCount > 0) {
+            const command = new UpdateResourcesCommand([{
+                resource: 'unrest',
+                amount: displayData.unsupportedCount,
+                operation: 'add'
+            }]);
+            
+            const result = await commandExecutor.execute(command, context);
+            if (result.success) {
+                totalUnrest += displayData.unsupportedCount;
+            } else {
+                return { success: false, unrestGenerated: 0, error: result.error };
+            }
+        }
+        
+        // Generate unrest for unfed armies
+        if (displayData.armyFoodShortage > 0) {
+            const command = new UpdateResourcesCommand([{
+                resource: 'unrest',
+                amount: displayData.armyFoodShortage,
+                operation: 'add'
+            }]);
+            
+            const result = await commandExecutor.execute(command, context);
+            if (result.success) {
+                totalUnrest += displayData.armyFoodShortage;
+            } else {
+                return { 
+                    success: false, 
+                    unrestGenerated: totalUnrest, 
+                    error: result.error 
+                };
+            }
+        }
+        
+        this.state.unrestGenerated += totalUnrest;
+        return { success: true, unrestGenerated: totalUnrest };
     }
     
     /**

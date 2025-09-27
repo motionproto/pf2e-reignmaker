@@ -1,12 +1,27 @@
 <script lang="ts">
   import { kingdomState } from "../../../stores/kingdom";
-  import { gameState } from "../../../stores/gameState";
+  import { 
+    gameState, 
+    spendPlayerAction,
+    resolveAction,
+    unresolveAction,
+    isActionResolved,
+    getActionResolution,
+    resetPlayerAction,
+    getPlayerAction
+  } from "../../../stores/gameState";
+  import { TurnPhase } from "../../../models/KingdomState";
   import { PlayerActionsData } from "../../../models/PlayerActions";
-  import ActionCard from "../../kingdom/components/ActionCard.svelte";
+  import CheckCard from "../../kingdom/components/CheckCard.svelte";
+  import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
+  import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import {
     getPlayerCharacters,
     getCurrentUserCharacter,
     initializeRollResultHandler,
+    performKingdomActionRoll,
+    getKingdomActionDC,
+    showCharacterSelectionDialog
   } from "../../../api/foundry-actors";
   import { onMount, onDestroy, tick } from "svelte";
 
@@ -24,12 +39,16 @@
   let selectedCharacterId: string = "";
   let playerCharacters: any[] = [];
   let selectedCharacter: any = null;
+  let showActionConfirm: boolean = false;
+  let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
 
-  // Use controller state
-  $: controllerState = controller.getState();
-  $: actionsUsed = controllerState.actionsUsed;
-  $: resolvedActions = controllerState.resolvedActions;
+  // Use gameState directly for all action tracking
+  $: resolvedActions = $gameState.resolvedActions;
+  $: actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
   const MAX_ACTIONS = 4;
+  
+  // Force UI update when resolvedActions changes
+  $: resolvedActionsSize = resolvedActions.size;
 
   // Categories configuration (UI concern, stays here)
   const categoryConfig = [
@@ -97,7 +116,7 @@
     }
 
     // Check if already resolved
-    if (controller.isActionResolved(actionId)) {
+    if (isActionResolved(actionId)) {
       return;
     }
 
@@ -109,6 +128,8 @@
       return;
     }
 
+    // NOTE: We don't spend the action here anymore - it's spent when the user initially clicks the skill
+
     // Always mark the action as resolved to show the roll result
     const outcomeType = outcome as
       | "success"
@@ -116,43 +137,67 @@
       | "failure"
       | "criticalFailure";
     
-    const resolution = controller.resolveAction(
-      action,
-      outcomeType,
-      actorName,
-      skillName
-    );
+    // Parse the outcome to get state changes (temporary for preview)
+    const parsedEffects = actionExecutionService.parseActionOutcome(action, outcomeType);
+    const stateChanges = new Map<string, any>();
+    if (parsedEffects) {
+      Object.entries(parsedEffects).forEach(([key, value]) => {
+        stateChanges.set(key, value);
+      });
+    }
+    
+    // Make sure the action is expanded FIRST
+    // This ensures the card is already expanded when the resolution is displayed
+    if (!expandedActions.has(actionId)) {
+      expandedActions.clear();
+      expandedActions.add(actionId);
+      expandedActions = new Set(expandedActions);
+    }
+    
+    // Mark as resolved in gameState with preview state changes
+    // Don't execute the command yet - wait for user confirmation
+    resolveAction(action.id, outcomeType, actorName, skillName, stateChanges);
 
-    // Then try to execute the command for state changes
+    // Force Svelte to update
+    await tick();
+  }
+
+  // Apply the actual state changes when user confirms the resolution
+  async function applyActionEffects(actionId: string) {
+    const action = PlayerActionsData.getAllActions().find(
+      (a) => a.id === actionId
+    );
+    if (!action) {
+      return;
+    }
+
+    const resolution = getActionResolution(actionId);
+    if (!resolution) {
+      return;
+    }
+
+    // Execute the command for actual state changes
     const context: CommandContext = {
       kingdomState: $kingdomState,
       currentTurn: $gameState.currentTurn,
       currentPhase: "Phase V: Actions",
     };
 
-    const command = new ExecuteActionCommand(action, outcomeType);
+    const command = new ExecuteActionCommand(action, resolution.outcome);
     const result = await commandExecutor.execute(command, context);
 
     if (!result.success) {
       // Show error to user about requirements not being met
-      ui.notifications?.warn(`${action.name} rolled successfully but requirements not met: ${result.error}`);
+      ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
     }
-
-    // Force Svelte update
-    await tick();
-    // Force reassignment to trigger reactivity
-    controllerState = { ...controller.getState() };
-    // Also force re-evaluation of the actions
-    actionsUsed = controllerState.actionsUsed;
-    resolvedActions = new Map(controllerState.resolvedActions);
   }
 
-  // Reset an action using controller
-  async function resetAction(actionId: string) {
-    // Use controller method to properly reset action
-    controller.resetAction(actionId);
+  // Reset an action
+  async function resetAction(actionId: string, skipPlayerActionReset: boolean = false) {
+    // Remove from resolved actions
+    unresolveAction(actionId);
 
-    // Check if we need to undo the command
+    // Check if we need to undo the command (only if effects were actually applied)
     if (commandExecutor.canUndo()) {
       const history = commandExecutor.getHistory();
       const lastCommand = history[history.length - 1];
@@ -164,8 +209,13 @@
       }
     }
 
-    // Force update
-    controllerState = controller.getState();
+    // Also reset the player action in gameState (unless it's a reroll)
+    if (!skipPlayerActionReset) {
+      const game = (window as any).game;
+      if (game?.user?.id) {
+        resetPlayerAction(game.user.id);
+      }
+    }
   }
 
   // Listen for roll completion events
@@ -195,7 +245,27 @@
       selectedCharacterId = currentUserChar.id;
     }
 
-    // Controller doesn't need initialization, it uses the store directly
+    // Ensure player actions are initialized if not already
+    const game = (window as any).game;
+    if (game?.user?.id) {
+      const playerAction = getPlayerAction(game.user.id);
+      if (!playerAction) {
+        // Initialize just this player
+        gameState.update(s => {
+          const newPlayerActions = new Map(s.playerActions);
+          newPlayerActions.set(game.user.id, {
+            playerId: game.user.id,
+            playerName: game.user.name,
+            playerColor: game.user.color || '#ffffff',
+            actionSpent: false
+          });
+          return {
+            ...s,
+            playerActions: newPlayerActions
+          };
+        });
+      }
+    }
   });
 
   onDestroy(() => {
@@ -203,7 +273,7 @@
       "kingdomRollComplete",
       handleRollComplete as EventListener
     );
-    controller.resetState();
+    // Controller no longer has state to reset
   });
 
   // Update selected character when ID changes
@@ -214,39 +284,43 @@
     selectedCharacter = player?.character || null;
   }
 
-  // Helper functions using controller
+  // Helper functions delegating to controller
   function getActionsByCategory(categoryId: string) {
     return PlayerActionsData.getActionsByCategory(categoryId);
   }
 
   function isActionAvailable(action: any): boolean {
-    // Check resource costs directly
-    if (action.cost) {
-      for (const [resource, amount] of action.cost.entries()) {
-        const available = $kingdomState.resources.get(resource) || 0;
-        if (available < amount) {
-          return false;
-        }
-      }
+    // Delegate to controller for business logic
+    return controller.canPerformAction(action, $kingdomState);
+  }
+  
+  function getMissingRequirements(action: any): string[] {
+    // Delegate to controller for business logic
+    const requirements = controller.getActionRequirements(action, $kingdomState);
+    const missing: string[] = [];
+    
+    // Add general reason if present
+    if (!requirements.met && requirements.reason) {
+      missing.push(requirements.reason);
     }
-
-    // Check special requirements
-    if (
-      action.id === "execute-pardon-prisoners" &&
-      $kingdomState.imprisonedUnrest <= 0
-    ) {
-      return false;
+    
+    // Add specific missing resources
+    if (requirements.missingResources) {
+      requirements.missingResources.forEach((amount, resource) => {
+        const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
+        missing.push(`${amount} more ${resourceName}`);
+      });
     }
-
-    return true;
+    
+    return missing;
   }
 
-  function isActionResolved(actionId: string): boolean {
-    return controller.isActionResolved(actionId);
+  function isActionResolvedHelper(actionId: string): boolean {
+    return isActionResolved(actionId);
   }
 
-  function getActionResolution(actionId: string) {
-    const resolution = controller.getActionResolution(actionId);
+  function getActionResolutionHelper(actionId: string) {
+    const resolution = getActionResolution(actionId);
     if (!resolution) return undefined;
     
     // Convert Map to plain object for the component
@@ -266,9 +340,200 @@
     
     return formattedResolution;
   }
+
+  // Handle skill execution from CheckCard (decoupled from component)
+  async function handleExecuteSkill(event: CustomEvent, action: any) {
+    // Check if ANY player has already performed an action (kingdom has used actions)
+    if (actionsUsed > 0 && !isActionResolved(action.id)) {
+      // At least one action has been performed - show confirmation dialog
+      pendingSkillExecution = { event, action };
+      showActionConfirm = true;
+      return;
+    }
+    
+    // Proceed with the skill execution and spend the action
+    await executeSkillAction(event, action);
+  }
+  
+  // Separated skill execution logic
+  async function executeSkillAction(event: CustomEvent, action: any) {
+    const { skill, checkId, checkName } = event.detail;
+    
+    // Spend the player's action when they start a roll (not when it completes)
+    const game = (window as any).game;
+    if (game?.user?.id && !isActionResolved(action.id)) {
+      // Ensure player exists before spending
+      let playerAction = getPlayerAction(game.user.id);
+      if (!playerAction) {
+        // Initialize just this player if not found
+        gameState.update(s => {
+          const newPlayerActions = new Map(s.playerActions);
+          newPlayerActions.set(game.user.id, {
+            playerId: game.user.id,
+            playerName: game.user.name,
+            playerColor: game.user.color || '#ffffff',
+            actionSpent: false
+          });
+          return {
+            ...s,
+            playerActions: newPlayerActions
+          };
+        });
+      }
+      
+      const success = spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
+      
+      // Manually update actionsUsed since reactive statement isn't updating immediately
+      actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
+    }
+    
+    // Get character for roll
+    let actingCharacter = selectedCharacter;
+    if (!actingCharacter) {
+      actingCharacter = getCurrentUserCharacter();
+      
+      if (!actingCharacter) {
+        // Show character selection dialog
+        actingCharacter = await showCharacterSelectionDialog();
+        if (!actingCharacter) {
+          return; // User cancelled selection
+        }
+        
+        // Update selected character
+        selectedCharacter = actingCharacter;
+        selectedCharacterId = actingCharacter.id;
+      }
+    }
+    
+    try {
+      // Get DC based on character's level using controller
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      // Perform the roll with the selected character
+      await performKingdomActionRoll(
+        actingCharacter,
+        skill,
+        dc,
+        checkName,
+        checkId,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+    } catch (error) {
+      console.error("Error executing skill:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+    }
+  }
+
+  // Handle fame reroll from CheckCard (decoupled from component)
+  async function handleRerollWithFame(event: CustomEvent, action: any) {
+    const { checkId, skill } = event.detail;
+    
+    // Check fame and get character
+    const currentFame = $kingdomState?.fame || 0;
+    if (currentFame <= 0) {
+      ui.notifications?.warn("Not enough fame to reroll");
+      return;
+    }
+    
+    let actingCharacter = selectedCharacter;
+    if (!actingCharacter) {
+      const resolution = getActionResolution(checkId);
+      if (resolution?.actorName) {
+        // Try to find the character by name
+        const players = getPlayerCharacters();
+        const player = players.find((p: any) => p.character?.name === resolution.actorName);
+        if (player?.character) {
+          actingCharacter = player.character;
+        }
+      }
+      
+      if (!actingCharacter) {
+        // Show character selection dialog
+        actingCharacter = await showCharacterSelectionDialog();
+        if (!actingCharacter) {
+          return; // User cancelled selection
+        }
+      }
+    }
+    
+    // Deduct fame and reset action for reroll
+    kingdomState.update(state => {
+      state.fame = currentFame - 1;
+      return state;
+    });
+    
+    // Reset the action (skip player action reset for reroll)
+    await resetAction(checkId, true);
+    
+    // Small delay to ensure UI updates
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Trigger new roll
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      await performKingdomActionRoll(
+        actingCharacter,
+        skill,
+        dc,
+        action.name,
+        checkId,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+    } catch (error) {
+      console.error("Error rerolling with fame:", error);
+      // Restore fame if the roll failed
+      kingdomState.update(state => {
+        state.fame = currentFame;
+        return state;
+      });
+      ui.notifications?.error(`Failed to reroll: ${error}`);
+    }
+  }
+  
+  // Handle confirmation dialog results
+  function handleActionConfirm() {
+    if (pendingSkillExecution) {
+      const { event, action } = pendingSkillExecution;
+      // User confirmed they want to use another action - execute (action will be spent in executeSkillAction)
+      executeSkillAction(event, action);
+      pendingSkillExecution = null;
+    }
+  }
+  
+  function handleActionCancel() {
+    pendingSkillExecution = null;
+  }
+  
+  // Handle canceling an action result
+  function handleActionResultCancel(actionId: string) {
+    // Reset the action without applying effects
+    unresolveAction(actionId);
+    
+    // Restore the player's action since they're canceling
+    const game = (window as any).game;
+    if (game?.user?.id) {
+      resetPlayerAction(game.user.id);
+    }
+  }
 </script>
 
 <div class="actions-phase">
+  <!-- Player Action Tracker -->
+  <PlayerActionTracker compact={false} />
+  
   <!-- Fixed Header with action counter and character selection -->
   <div class="actions-header-fixed">
     <div class="actions-header">
@@ -302,7 +567,7 @@
       </div>
 
       <div class="actions-counter">
-        <span class="counter-text">Actions Taken:</span>
+        <span class="counter-text">Kingdom Actions Taken:</span>
         <div class="counter-dots">
           {#each Array(MAX_ACTIONS) as _, i}
             <span class="action-dot {i < actionsUsed ? 'used' : ''}"></span>
@@ -330,25 +595,63 @@
 
           <div class="actions-list">
             {#each actions as action (action.id)}
-              {@const isResolved = resolvedActions.has(action.id)}
-              {@const resolution = isResolved ? getActionResolution(action.id) : undefined}
-              {#key `${action.id}-${actionsUsed}-${isResolved}`}
-                <ActionCard
-                  {action}
+              {@const isResolved = isActionResolvedHelper(action.id)}
+              {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
+              {@const isAvailable = isActionAvailable(action)}
+              {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
+              {#key `${action.id}-${resolvedActionsSize}`}
+                <CheckCard
+                  id={action.id}
+                  name={action.name}
+                  description={action.description}
+                  brief={action.brief || ''}
+                  skills={action.skills}
+                  outcomes={[
+                    {
+                      type: 'criticalSuccess',
+                      description: action.criticalSuccess?.description || '—'
+                    },
+                    {
+                      type: 'success',
+                      description: action.success?.description || '—'
+                    },
+                    {
+                      type: 'failure',
+                      description: action.failure?.description || '—'
+                    },
+                    {
+                      type: 'criticalFailure',
+                      description: action.criticalFailure?.description || '—'
+                    }
+                  ]}
+                  checkType="action"
+                  special={action.special}
+                  cost={action.cost}
                   expanded={expandedActions.has(action.id)}
-                  available={isActionAvailable(action)}
+                  available={isAvailable}
+                  {missingRequirements}
                   resolved={isResolved}
                   {resolution}
-                  character={null}
+                  character={selectedCharacter}
                   canPerformMore={actionsUsed < MAX_ACTIONS && !isResolved}
+                  currentFame={$kingdomState?.fame || 0}
+                  showFameReroll={true}
+                  resolvedBadgeText="Resolved"
+                  primaryButtonLabel="OK"
+                  skillSectionTitle="Choose Skill:"
+                  hideCharacterHint={false}
                   on:toggle={() => toggleAction(action.id)}
-                  on:characterSelected={(e) => {
-                    selectedCharacter = e.detail.character;
-                    selectedCharacterId = e.detail.character?.id || "";
+                  on:executeSkill={(e) => handleExecuteSkill(e, action)}
+                  on:rerollWithFame={(e) => handleRerollWithFame(e, action)}
+                  on:primaryAction={(e) => {
+                    // Apply the effects and clear the resolved state
+                    applyActionEffects(e.detail.checkId);
+                    // Clear the resolved state so other players can use this action
+                    unresolveAction(e.detail.checkId);
+                    // Collapse the card
+                    toggleAction('');
                   }}
-                  on:reset={(e) => {
-                    resetAction(e.detail.actionId);
-                  }}
+                  on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
                 />
               {/key}
             {/each}
@@ -358,6 +661,13 @@
     {/each}
   </div>
 </div>
+
+<!-- Action Confirmation Dialog -->
+<ActionConfirmDialog
+  bind:show={showActionConfirm}
+  on:confirm={handleActionConfirm}
+  on:cancel={handleActionCancel}
+/>
 
 <style lang="scss">
   .actions-phase {

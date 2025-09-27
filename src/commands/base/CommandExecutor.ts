@@ -7,6 +7,7 @@
 
 import type { Command, CommandContext, CommandResult } from './Command';
 import { CommandHistory } from './CommandHistory';
+import { kingdomState as kingdomStore } from '../../stores/kingdom';
 
 export interface ExecutionOptions {
     skipValidation?: boolean;
@@ -69,6 +70,12 @@ export class CommandExecutor {
             // Add to history if successful and not skipped
             if (result.success && !options.skipHistory) {
                 this.history.add(command);
+            }
+            
+            // If the command was successful and modified kingdom state,
+            // trigger Svelte store update to ensure reactivity
+            if (result.success && context.kingdomState) {
+                kingdomStore.update(state => state);
             }
             
             // Notify listeners

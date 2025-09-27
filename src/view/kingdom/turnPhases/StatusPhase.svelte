@@ -9,6 +9,9 @@
    import { createStatusPhaseController } from '../../../controllers/StatusPhaseController';
    import type { StatusPhaseController } from '../../../controllers/StatusPhaseController';
    
+   // Import the ModifierCard component
+   import ModifierCard from '../components/ModifierCard.svelte';
+   
    // Controller instance
    let statusController: StatusPhaseController;
    
@@ -130,57 +133,6 @@
       </div>
    </div>
    
-   <!-- Modifier Effects Section -->
-   <div class="phase-section modifiers-section">
-      <div class="section-header">
-         <i class="fas fa-magic"></i>
-         <h3>Modifier Effects Applied</h3>
-      </div>
-      
-      {#if appliedEffects.length === 0}
-         <div class="no-modifiers">
-            <i class="fas fa-check-circle"></i>
-            <p>No active modifiers this turn</p>
-         </div>
-      {:else}
-         <div class="effects-container">
-            {#if positiveEffects.length > 0}
-               <div class="effects-group positive">
-                  <h4><i class="fas fa-plus-circle"></i> Beneficial Effects</h4>
-                  <ul class="effects-list">
-                     {#each positiveEffects as modifier}
-                        {#each modifier.effects.filter(e => e.amount > 0) as effect}
-                           <li class="effect-item">
-                              <span class="effect-value">+{effect.amount}</span>
-                              <span class="effect-resource">{formatResourceName(effect.resource)}</span>
-                              <span class="effect-source">— {modifier.name}</span>
-                           </li>
-                        {/each}
-                     {/each}
-                  </ul>
-               </div>
-            {/if}
-            
-            {#if negativeEffects.length > 0}
-               <div class="effects-group negative">
-                  <h4><i class="fas fa-minus-circle"></i> Detrimental Effects</h4>
-                  <ul class="effects-list">
-                     {#each negativeEffects as modifier}
-                        {#each modifier.effects.filter(e => e.amount < 0) as effect}
-                           <li class="effect-item">
-                              <span class="effect-value">{effect.amount}</span>
-                              <span class="effect-resource">{formatResourceName(effect.resource)}</span>
-                              <span class="effect-source">— {modifier.name}</span>
-                           </li>
-                        {/each}
-                     {/each}
-                  </ul>
-               </div>
-            {/if}
-         </div>
-      {/if}
-   </div>
-   
    <!-- Active Modifiers Overview -->
    {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
       <div class="phase-section active-modifiers">
@@ -191,31 +143,12 @@
          
          <div class="modifiers-grid">
             {#each $kingdomState.modifiers as modifier}
-               <div class="modifier-card">
-                  <div class="modifier-name">{modifier.name}</div>
-                  {#if modifier.description}
-                     <div class="modifier-desc">{modifier.description}</div>
-                  {/if}
-                  <div class="modifier-duration">
-                     {#if typeof modifier.duration === 'number' && modifier.duration > 0}
-                        <i class="far fa-clock"></i> {modifier.duration} turns remaining
-                     {:else if modifier.duration === 'until-resolved'}
-                        <i class="fas fa-exclamation-triangle"></i> Until Resolved
-                     {:else if modifier.duration === 'permanent'}
-                        <i class="fas fa-infinity"></i> Permanent
-                     {/if}
-                  </div>
-               </div>
+               <ModifierCard {modifier} />
             {/each}
          </div>
       </div>
    {/if}
    
-   <!-- Phase Complete Indicator -->
-   <div class="phase-complete">
-      <i class="fas fa-check-circle"></i>
-      <p>Status Phase processing complete. You may advance to the next phase.</p>
-   </div>
 </div>
 
 <style lang="scss">
@@ -424,37 +357,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
-   }
-   
-   .modifier-card {
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      padding: 15px;
-      
-      .modifier-name {
-         font-weight: 600;
-         color: var(--text-primary);
-         margin-bottom: 8px;
-      }
-      
-      .modifier-desc {
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-         margin-bottom: 10px;
-      }
-      
-      .modifier-duration {
-         font-size: var(--font-xs);
-         color: var(--color-amber);
-         display: flex;
-         align-items: center;
-         gap: 5px;
-         
-         i {
-            font-size: 12px;
-         }
-      }
    }
    
    // Phase Complete Indicator

@@ -1,14 +1,43 @@
 <script lang="ts">
-   import type { PlayerAction } from '../../../models/PlayerActions';
+   /**
+    * CheckCard - A reusable component for any check-based card
+    * (actions, events, incidents)
+    * 
+    * This component handles the common UI pattern of:
+    * - Title and description
+    * - Skill selection
+    * - Possible outcomes display
+    * - Result display after resolution
+    * 
+    * The parent component handles all business logic through events
+    */
+   
+   import { createEventDispatcher } from 'svelte';
    import SkillTag from './SkillTag.svelte';
    import PossibleOutcomes from './PossibleOutcomes.svelte';
    import type { PossibleOutcome } from './PossibleOutcomes.svelte';
    import OutcomeDisplay from './OutcomeDisplay.svelte';
-   import { createEventDispatcher } from 'svelte';
    
-   export let action: PlayerAction;
+   // Required props
+   export let id: string;
+   export let name: string;
+   export let description: string;
+   export let skills: Array<{ skill: string; description?: string }> = [];
+   export let outcomes: Array<{
+      type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      description: string;
+   }>;
+   
+   // Optional props for different check types
+   export let checkType: 'action' | 'event' | 'incident' = 'action';
+   export let brief: string = '';
+   export let special: string | null = '';
+   export let cost: Map<string, number> | null = null;
+   
+   // State props
    export let expanded: boolean = false;
    export let available: boolean = true;
+   export let missingRequirements: string[] = [];
    export let resolved: boolean = false;
    export let resolution: { 
       outcome: string, 
@@ -18,39 +47,44 @@
    } | undefined = undefined;
    export let character: any = null;
    export let canPerformMore: boolean = true;
-   export let currentFame: number = 0;  // Passed from parent instead of direct store access
+   export let currentFame: number = 0;
+   
+   // UI customization props
+   export let showFameReroll: boolean = checkType === 'action';
+   export let resolvedBadgeText: string = 'Resolved';
+   export let primaryButtonLabel: string = 'OK';
+   export let skillSectionTitle: string = 'Choose Skill:';
+   export let hideCharacterHint: boolean = false;
    
    const dispatch = createEventDispatcher();
    
-   // UI state only - no business logic
+   // UI state only
    let isRolling: boolean = false;
    let localUsedSkill: string = '';
    
-   // Get the skill that was used - either from resolution or from local tracking
+   // Get the skill that was used
    $: usedSkill = resolution?.skillName || localUsedSkill || '';
    
+   // UI handlers
    function toggleExpanded(event: Event) {
       event.preventDefault();
       event.stopPropagation();
-      // Always allow toggling if not disabled, regardless of resolved state
-      // This allows users to view the resolution details
       if (available || resolved) {
          dispatch('toggle');
       }
    }
    
-   async function executeSkill(event: CustomEvent) {
+   function handleSkillExecute(event: CustomEvent) {
       const skill = event.detail.skill;
       
       if (resolved || isRolling) {
-         return; // Already resolved or currently rolling
+         return;
       }
       
       isRolling = true;
       localUsedSkill = skill;
       
       // Ensure the card stays expanded when rolling
-      // This provides better UX by showing the action is in progress
       if (!expanded) {
          dispatch('toggle');
       }
@@ -58,156 +92,78 @@
       // Delegate all roll logic to the parent
       dispatch('executeSkill', { 
          skill,
-         actionId: action.id,
-         actionName: action.name
+         checkId: id,
+         checkName: name,
+         checkType
       });
       
-      // Parent will handle the actual roll
       isRolling = false;
    }
    
-   function formatOutcome(outcome: any): string {
-      if (!outcome) return '—';
-      return outcome.description || '—';
-   }
-   
-   function formatStateChangeLabel(key: string): string {
-      const labels: Record<string, string> = {
-         'gold': 'Gold',
-         'unrest': 'Unrest',
-         'fame': 'Fame',
-         'food': 'Food',
-         'wood': 'Wood',
-         'stone': 'Stone',
-         'metal': 'Metal',
-         'lumber': 'Lumber',
-         'ore': 'Ore',
-         'hexesClaimed': 'Hexes Claimed',
-         'structuresBuilt': 'Structures Built',
-         'roadsBuilt': 'Roads Built',
-         'armyRecruited': 'Army Recruited',
-         'resources': 'Resources',
-         'structureCostReduction': 'Structure Cost',
-         'imprisonedUnrest': 'Imprisoned Unrest',
-         'imprisonedUnrestRemoved': 'Prisoners Released',
-         'settlementFounded': 'Settlement Founded',
-         'armyLevel': 'Army Level',
-         'meta': 'Next Action Bonus'
-      };
-      return labels[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
-   }
-   
-   function formatStateChangeValue(change: any): string {
-      if (typeof change === 'number') {
-         return change > 0 ? `+${change}` : `${change}`;
-      }
-      if (typeof change === 'boolean') {
-         return change ? 'Yes' : 'No';
-      }
-      if (typeof change === 'string') {
-         return change;
-      }
-      if (typeof change === 'object' && change !== null) {
-         // Handle meta object for coordinated action
-         if (change.nextActionBonus !== undefined) {
-            return change.nextActionBonus > 0 ? `+${change.nextActionBonus}` : `${change.nextActionBonus}`;
-         }
-         if (change.from !== undefined && change.to !== undefined) {
-            return `${change.from} → ${change.to}`;
-         }
-         if (change.added) {
-            return `+${change.added}`;
-         }
-         if (change.removed) {
-            return `-${change.removed}`;
-         }
-      }
-      return String(change);
-   }
-   
-   function getChangeClass(change: any, key?: string): string {
-      // Context-aware coloring based on the key
-      const negativeBenefitKeys = ['unrest', 'cost', 'damage', 'imprisoned'];
-      const isNegativeBenefit = key && negativeBenefitKeys.some(k => key.toLowerCase().includes(k));
-      
-      if (typeof change === 'number') {
-         if (isNegativeBenefit) {
-            // For things like unrest, negative is good
-            return change < 0 ? 'positive' : change > 0 ? 'negative' : 'neutral';
-         }
-         // For most resources, positive is good
-         return change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral';
-      }
-      
-      if (typeof change === 'boolean') {
-         return change ? 'positive' : 'neutral';
-      }
-      
-      if (typeof change === 'string') {
-         if (change.includes('+') || change.includes('extra') || change.includes('double')) {
-            return 'positive';
-         }
-         if (change.includes('half') || change.includes('50%')) {
-            return key && key.includes('Cost') ? 'positive' : 'neutral';
-         }
-         if (change === 'all' || change === '1d4') {
-            return key && key.includes('Removed') ? 'positive' : 'neutral';
-         }
-      }
-      
-      if (typeof change === 'object' && change !== null) {
-         // Handle meta object for coordinated action
-         if (change.nextActionBonus !== undefined) {
-            return change.nextActionBonus > 0 ? 'positive' : change.nextActionBonus < 0 ? 'negative' : 'neutral';
-         }
-         if (change.to > change.from) return 'positive';
-         if (change.to < change.from) return 'negative';
-         if (change.added) return 'positive';
-         if (change.removed) return 'negative';
-      }
-      
-      return 'neutral';
+   function formatOutcome(outcomeType: string): string {
+      const outcome = outcomes.find(o => o.type === outcomeType);
+      return outcome?.description || '—';
    }
    
    function handleRerollWithFame() {
-      if (currentFame > 0 && resolution) {
+      if (currentFame > 0 && resolution && showFameReroll) {
          const skillToUse = usedSkill || localUsedSkill;
          if (skillToUse) {
-            // Delegate fame reroll to parent
             dispatch('rerollWithFame', { 
-               actionId: action.id,
-               skill: skillToUse
+               checkId: id,
+               skill: skillToUse,
+               checkType
             });
          }
       }
    }
    
-   function handleOk() {
-      // Apply the effects and then reset for another user
-      dispatch('applyEffects', { actionId: action.id });
-      dispatch('reset', { actionId: action.id });
+   function handlePrimaryAction() {
+      dispatch('primaryAction', { checkId: id, checkType });
    }
+   
+   function handleCancel() {
+      dispatch('cancel', { checkId: id, checkType });
+   }
+   
+   // Format possible outcomes for display
+   $: possibleOutcomes = outcomes.map(o => ({
+      result: o.type,
+      label: o.type === 'criticalSuccess' ? 'Critical Success' :
+             o.type === 'success' ? 'Success' :
+             o.type === 'failure' ? 'Failure' : 'Critical Failure',
+      description: o.description
+   }));
+   
+   // Get card state class
+   $: cardStateClass = resolved ? 'resolved result-state' : 'select-state';
 </script>
 
-<div class="action-card {!available ? 'disabled' : ''} {expanded ? 'expanded' : ''} {resolved ? 'resolved result-state' : 'select-state'}">
+<div class="check-card {checkType}-card {!available ? 'not-available' : ''} {expanded ? 'expanded' : ''} {cardStateClass}">
    <button 
-      class="action-header-btn"
+      class="card-header-btn"
       on:click={toggleExpanded}
       disabled={!available && !resolved}
    >
-      <div class="action-header-content">
-         <div class="action-main">
-            <strong class="action-name">
-               {action.name}
+      <div class="card-header-content">
+         <div class="card-main">
+            <strong class="card-name">
+               {name}
                {#if resolved}
                   <span class="resolved-badge">
                      <i class="fas fa-check-circle"></i>
-                     Resolved
+                     {resolvedBadgeText}
+                  </span>
+               {/if}
+               {#if !available && missingRequirements.length > 0}
+                  <span class="requirements-badge">
+                     <i class="fas fa-exclamation-triangle"></i>
+                     Requires: {missingRequirements.join(', ')}
                   </span>
                {/if}
             </strong>
-            {#if action.brief}
-               <span class="action-brief">{action.brief}</span>
+            {#if brief}
+               <span class="card-brief">{brief}</span>
             {/if}
          </div>
          <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
@@ -215,97 +171,69 @@
    </button>
    
    {#if expanded}
-      <div class="action-details">
+      <div class="card-details">
          <!-- Description -->
-         <p class="action-full-description">{action.description}</p>
+         <p class="card-full-description">{description}</p>
          
-         <!-- Outcome display if action is resolved -->
+         <!-- Outcome display if resolved -->
          {#if resolved && resolution}
             <OutcomeDisplay
                outcome={resolution.outcome}
                actorName={resolution.actorName}
                skillName={usedSkill}
-               effect={resolution.outcome === 'criticalSuccess' ? formatOutcome(action.criticalSuccess) :
-                       resolution.outcome === 'success' ? formatOutcome(action.success) :
-                       resolution.outcome === 'failure' ? formatOutcome(action.failure) :
-                       formatOutcome(action.criticalFailure)}
+               effect={formatOutcome(resolution.outcome)}
                stateChanges={resolution.stateChanges}
-               showFameReroll={true}
-               primaryButtonLabel="OK"
+               {showFameReroll}
+               {primaryButtonLabel}
                on:reroll={handleRerollWithFame}
-               on:primary={handleOk}
+               on:primary={handlePrimaryAction}
+               on:cancel={handleCancel}
             />
          {:else}
             <!-- Skills section - only show when not resolved -->
             <div class="skills-section">
-               <h4 class="section-title">Choose Skill:</h4>
+               <h4 class="section-title">{skillSectionTitle}</h4>
                <div class="skills-tags">
-                  {#each action.skills as skillOption}
+                  {#each skills as skillOption}
                      {@const isDisabled = !canPerformMore || resolved}
                      <SkillTag
                         skill={skillOption.skill}
-                        description={skillOption.description}
+                        description={skillOption.description || ''}
                         selected={false}
                         disabled={isDisabled}
                         loading={isRolling && skillOption.skill === localUsedSkill}
                         faded={false}
-                        on:execute={executeSkill}
+                        on:execute={handleSkillExecute}
                      />
                   {/each}
                </div>
-               {#if !character}
-                  <div class="no-character-info">
-                     <i class="fas fa-info-circle"></i>
-                     Click a skill to select your character
-                  </div>
-               {/if}
+      
             </div>
             
             <!-- Outcomes section - only show when not resolved -->
             <div class="outcomes-section">
                <PossibleOutcomes 
-                  outcomes={[
-                     {
-                        result: 'criticalSuccess',
-                        label: 'Critical Success',
-                        description: formatOutcome(action.criticalSuccess)
-                     },
-                     {
-                        result: 'success',
-                        label: 'Success', 
-                        description: formatOutcome(action.success)
-                     },
-                     {
-                        result: 'failure',
-                        label: 'Failure',
-                        description: formatOutcome(action.failure)
-                     },
-                     {
-                        result: 'criticalFailure',
-                        label: 'Critical Failure',
-                        description: formatOutcome(action.criticalFailure)
-                     }
-                  ]}
+                  outcomes={possibleOutcomes}
                   showTitle={false}
                />
             </div>
          {/if}
          
-         <!-- Special rules or costs -->
-         {#if action.special || action.cost}
+         <!-- Special rules or costs (primarily for actions) -->
+         {#if special || cost}
             <div class="additional-info">
-               {#if action.special}
+               {#if special}
                   <div class="info-box special-section">
                      <i class="fas fa-info-circle"></i>
-                     <span>{action.special}</span>
+                     <span>{special}</span>
                   </div>
                {/if}
                
-               {#if action.cost}
+               {#if cost}
                   <div class="info-box cost-section">
                      <i class="fas fa-tag"></i>
                      <span>Cost: 
-                        {#each Array.from(action.cost.entries()) as [resource, amount], i}
+                        {#each Array.from(cost.entries()) as [resource, amount], i}
                            {#if i > 0}, {/if}
                            {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
                         {/each}
@@ -314,12 +242,15 @@
                {/if}
             </div>
          {/if}
+         
+         <!-- Slot for additional content specific to check type -->
+         <slot name="additional-content"></slot>
       </div>
    {/if}
 </div>
 
 <style lang="scss">
-   .action-card {
+   .check-card {
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.6),
          rgba(31, 31, 35, 0.4));
@@ -331,7 +262,23 @@
       min-height: min-content;
       position: relative;
       
-      // Select State (default) - Action not yet performed
+      // Type-specific theming
+      &.action-card {
+         --accent-color: var(--color-amber);
+         --accent-color-light: var(--color-amber-light);
+      }
+      
+      &.event-card {
+         --accent-color: var(--color-blue);
+         --accent-color-light: var(--color-blue-light);
+      }
+      
+      &.incident-card {
+         --accent-color: var(--color-purple);
+         --accent-color-light: var(--color-purple-light);
+      }
+      
+      // Select State (default) - Check not yet performed
       &.select-state {
          &::before {
             content: '';
@@ -342,7 +289,7 @@
             height: 3px;
             background: linear-gradient(90deg, 
                transparent, 
-               var(--color-amber), 
+               var(--accent-color), 
                transparent);
             border-radius: var(--radius-md) var(--radius-md) 0 0;
             opacity: 0;
@@ -354,7 +301,7 @@
          }
       }
       
-      // Result State - Action has been performed and resolved
+      // Result State - Check has been performed and resolved
       &.result-state {
          background: linear-gradient(135deg,
             rgba(20, 20, 23, 0.7),
@@ -390,12 +337,12 @@
       }
       
       &.select-state.expanded {
-         border-color: var(--color-amber);
-         box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+         border-color: var(--accent-color);
+         box-shadow: 0 4px 12px rgba(var(--accent-color), 0.1);
          
          &:hover:not(.disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(251, 191, 36, 0.15);
+            box-shadow: 0 6px 16px rgba(var(--accent-color), 0.15);
          }
       }
       
@@ -413,22 +360,35 @@
          opacity: 0.5;
          cursor: not-allowed;
          
-         .action-header-btn {
+         .card-header-btn {
             cursor: not-allowed;
+         }
+      }
+      
+      // Style for unavailable actions
+      &.not-available {
+         opacity: 0.6;
+         background: linear-gradient(135deg,
+            rgba(24, 24, 27, 0.4),
+            rgba(31, 31, 35, 0.3));
+         
+         .card-name {
+            color: var(--text-secondary);
+         }
+         
+         .card-brief {
+            color: var(--text-tertiary);
          }
       }
    }
    
-   .action-header-btn {
+   .card-header-btn {
       display: flex;
       width: 100%;
       background: transparent;
       border: none;
       margin: 0;
-      padding-left: 1em;
-      padding-right: 1em;
-      padding-top: 0.75em;
-      padding-bottom: 0.75em;
+      padding: 0.75em 1em;
       cursor: pointer;
       text-align: left;
       transition: background 0.2s ease;
@@ -445,7 +405,7 @@
       }
    }
    
-   .action-card.expanded .action-header-btn {
+   .check-card.expanded .card-header-btn {
       background: rgba(255, 255, 255, 0.03);
       
       &:hover:not(:disabled) {
@@ -453,14 +413,14 @@
       }
    }
    
-   .action-header-content {
+   .card-header-content {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 16px;
       width: 100%;
       
-      .action-main {
+      .card-main {
          flex: 1;
          display: flex;
          flex-direction: column;
@@ -468,7 +428,7 @@
          text-align: left;
          min-width: 0;
          
-         .action-name {
+         .card-name {
             color: var(--text-primary);
             font-size: var(--type-heading-1-size);
             font-weight: var(--type-heading-1-weight);
@@ -497,9 +457,29 @@
                   font-size: 12px;
                }
             }
+            
+            .requirements-badge {
+               display: inline-flex;
+               align-items: center;
+               gap: 4px;
+               padding: 2px 8px;
+               background: rgba(251, 191, 36, 0.15);
+               border: 1px solid rgba(251, 191, 36, 0.3);
+               border-radius: var(--radius-sm);
+               font-size: var(--type-badge-size);
+               font-weight: var(--type-badge-weight);
+               line-height: var(--type-badge-line);
+               letter-spacing: var(--type-badge-spacing);
+               color: var(--color-amber);
+               text-transform: none;
+               
+               i {
+                  font-size: 12px;
+               }
+            }
          }
          
-         .action-brief {
+         .card-brief {
             color: var(--text-secondary);
             font-size: var(--type-body-size);
             line-height: var(--type-body-line);
@@ -519,28 +499,17 @@
       }
    }
    
-   .action-details {
+   .card-details {
       padding: 16px;
       border-top: 1px solid var(--border-subtle);
       text-align: left;
       
-      .action-full-description {
+      .card-full-description {
          margin: 0 0 16px 0;
          color: var(--text-secondary);
          font-size: var(--type-body-size);
          line-height: var(--type-body-line);
          text-align: left;
-      }
-   }
-   
-   @keyframes slideDown {
-      from {
-         opacity: 0;
-         max-height: 0;
-      }
-      to {
-         opacity: 1;
-         max-height: 2000px;
       }
    }
    
@@ -556,17 +525,6 @@
       100% {
          opacity: 1;
          transform: scale(1);
-      }
-   }
-   
-   @keyframes fadeInUp {
-      from {
-         opacity: 0;
-         transform: translateY(10px);
-      }
-      to {
-         opacity: 1;
-         transform: translateY(0);
       }
    }
    

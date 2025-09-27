@@ -1,7 +1,8 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { kingdomState } from '../../../stores/kingdom';
-   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, spendPlayerAction } from '../../../stores/gameState';
+   import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
    
    // Import our new services and commands
@@ -18,7 +19,8 @@
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
    import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
    import SkillTag from '../components/SkillTag.svelte';
-   import ResolutionDisplay from '../components/ResolutionDisplay.svelte';
+   import OutcomeDisplay from '../components/OutcomeDisplay.svelte';
+   import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import { 
       performKingdomSkillCheck,
       getCurrentUserCharacter,
@@ -85,7 +87,10 @@
       };
    });
    
-   // Use command pattern for state mutations
+   // Store pending changes without applying them
+   let pendingEventChanges: Map<string, number> | null = null;
+   
+   // Handle roll result but DON'T apply changes yet
    async function handleRollResult(data: { outcome: string, actorName: string, skillName: string }) {
       if (!currentEvent || !eventResolutionService) return;
       
@@ -96,44 +101,22 @@
       resolvedActor = data.actorName || resolvedActor;
       selectedSkill = data.skillName || selectedSkill;
       
-      // Create command context
-      const context: CommandContext = {
-         kingdomState: get(kingdomState),
-         currentTurn: $gameState.currentTurn || 1,
-         currentPhase: 'Phase IV: Events',
-         actorId: data.actorName
-      };
-      
-      // Create and execute command for applying event outcome
-      const command = new ApplyEventOutcomeCommand(
-         currentEvent,
-         outcome,
-         eventResolutionService
-      );
-      
-      const result = await commandExecutor.execute(command, context, {
-         skipValidation: false
-      });
-      
-      if (result.success) {
-         // Format the state changes for display
-         const formattedChanges = stateChangeFormatter.formatStateChanges(
-            result.data?.appliedChanges || new Map()
-         );
-         
-         // Update UI with formatted results
-         outcomeMessage = currentEvent.effects?.[outcome]?.msg || '';
-         currentEffects = Object.fromEntries(result.data?.appliedChanges || new Map());
-         
-         showResolutionResult = true;
-         isRolling = false;
-         
-         if (!eventResolved) {
-            markPhaseStepCompleted('resolve-event');
-         }
-      } else {
-         console.error('Failed to apply event outcome:', result.error);
+      // Spend the player's action
+      const game = (window as any).game;
+      if (game?.user?.id) {
+         spendPlayerAction(game.user.id, TurnPhase.PHASE_IV);
       }
+      
+      // Calculate what the changes WOULD be, but don't apply them yet
+      const eventApplication = eventResolutionService.applyEventOutcome(currentEvent, outcome);
+      pendingEventChanges = eventApplication.resourceChanges;
+      
+      // Update UI with the pending changes for preview
+      outcomeMessage = currentEvent.effects?.[outcome]?.msg || '';
+      currentEffects = Object.fromEntries(pendingEventChanges);
+      
+      showResolutionResult = true;
+      isRolling = false;
    }
    
    // Use service for stability check logic
@@ -193,11 +176,7 @@
             outcomes
          );
          
-         setTimeout(() => {
-            if (!eventResolved) {
-               markPhaseStepCompleted('resolve-event');
-            }
-         }, 1000);
+         // Don't mark as complete here - wait for the OK button
          
       } catch (error) {
          console.error("Error resolving event with skill:", error);
@@ -211,48 +190,66 @@
       
       isIgnoringEvent = true;
       
+      // Spend the player's action for ignoring the event
+      const game = (window as any).game;
+      if (game?.user?.id) {
+         spendPlayerAction(game.user.id, TurnPhase.PHASE_IV);
+      }
+      
       try {
-         const context: CommandContext = {
-            kingdomState: get(kingdomState),
-            currentTurn: $gameState.currentTurn || 1,
-            currentPhase: 'Phase IV: Events'
-         };
-         
-         // Always apply failure effects when ignoring an event
+         // Calculate what the changes WOULD be for failure, but don't apply them yet
          if (currentEvent.effects?.failure) {
-            const command = new ApplyEventOutcomeCommand(
-               currentEvent,
-               'failure',
-               eventResolutionService
-            );
+            const eventApplication = eventResolutionService.applyEventOutcome(currentEvent, 'failure');
+            pendingEventChanges = eventApplication.resourceChanges;
             
-            const result = await commandExecutor.execute(command, context, {
-               skipValidation: false
-            });
-            
-            if (result.success) {
-               currentEffects = Object.fromEntries(result.data?.appliedChanges || new Map());
-               outcomeMessage = currentEvent.effects.failure.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
-            }
+            currentEffects = Object.fromEntries(pendingEventChanges);
+            outcomeMessage = currentEvent.effects.failure.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
          } else {
             // No failure effects defined
+            pendingEventChanges = new Map();
+            currentEffects = {};
             outcomeMessage = `Event "${currentEvent.name}" was ignored`;
          }
          
          // Show resolution result
          resolutionOutcome = 'failure';
          showResolutionResult = true;
-         
-         // Mark phase as complete
-         if (!eventResolved) {
-            markPhaseStepCompleted('resolve-event');
-         }
       } finally {
          isIgnoringEvent = false;
       }
    }
    
-   function completeEventResolution() {
+   // Apply the pending changes when user clicks OK
+   async function completeEventResolution() {
+      // Apply the pending changes if they exist
+      if (pendingEventChanges && currentEvent && resolutionOutcome) {
+         const context: CommandContext = {
+            kingdomState: get(kingdomState),
+            currentTurn: $gameState.currentTurn || 1,
+            currentPhase: 'Phase IV: Events',
+            actorId: resolvedActor
+         };
+         
+         const command = new ApplyEventOutcomeCommand(
+            currentEvent,
+            resolutionOutcome,
+            eventResolutionService
+         );
+         
+         const result = await commandExecutor.execute(command, context, {
+            skipValidation: false
+         });
+         
+         if (result.success) {
+            // Mark phase as complete after successfully applying changes
+            if (!eventResolved) {
+               markPhaseStepCompleted('resolve-event');
+            }
+         } else {
+            console.error('Failed to apply event outcome:', result.error);
+         }
+      }
+      
       // Reset UI state
       currentEvent = null;
       selectedSkill = '';
@@ -263,10 +260,12 @@
       unresolvedEvent = null;
       resolvedActor = '';
       character = null;
+      pendingEventChanges = null;
    }
    
    // Helper functions that only format data for display
    function getEventSkills(event: EventData): EventSkill[] {
+      // All events now use the consistent new format with skill objects
       return event.skills || [];
    }
    
@@ -310,6 +309,9 @@
 </script>
 
 <div class="events-phase">
+   <!-- Player Action Tracker -->
+   <PlayerActionTracker compact={true} />
+   
    {#if currentEvent}
       <!-- Active Event Card -->
       <div class="event-card">
@@ -371,7 +373,7 @@
             
             {#if showResolutionResult && resolutionOutcome}
                <div class="event-result-display">
-                  <ResolutionDisplay
+                  <OutcomeDisplay
                      outcome={resolutionOutcome}
                      actorName={resolvedActor || "The Kingdom"}
                      skillName={selectedSkill}
@@ -413,12 +415,12 @@
             <div class="check-result-display">
                {#if currentEvent}
                   <div class="roll-result success">
-                     <strong>Event Triggered!</strong> (Rolled {stabilityRoll} vs DC {eventDC})
+                     <strong>Event Triggered!</strong> (Rolled {stabilityRoll} &ge; DC {eventDC})
                      <div>Drawing event card...</div>
                   </div>
                {:else}
                   <div class="roll-result failure">
-                     <strong>No Event</strong> (Rolled {stabilityRoll} vs DC {eventDC})
+                     <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {eventDC})
                      <div>DC reduced to {$gameState.eventDC} for next turn.</div>
                   </div>
                {/if}

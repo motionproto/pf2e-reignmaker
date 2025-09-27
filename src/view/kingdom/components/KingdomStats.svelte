@@ -46,7 +46,20 @@
    $: sizeUnrest = Math.floor($kingdomState.size / 8);
    $: warUnrest = isAtWar ? 1 : 0;
    $: structureBonus = 0; // TODO: Calculate from actual structures
-   $: unrestPerTurn = Math.max(0, sizeUnrest + warUnrest - structureBonus);
+   
+   // Calculate event-based unrest from modifiers
+   $: eventUnrest = (() => {
+      let unrest = 0;
+      for (const modifier of $kingdomState.modifiers) {
+         if (modifier.effects?.unrest) {
+            unrest += modifier.effects.unrest;
+         }
+      }
+      return unrest;
+   })();
+   
+   // Total unrest per turn
+   $: totalUnrestPerTurn = sizeUnrest + warUnrest + eventUnrest - structureBonus;
    
    // Get production values from the totalProduction derived store
    $: actualFoodIncome = $totalProduction.food || 0;
@@ -168,14 +181,22 @@
                   <span class="stat-value danger">+{warUnrest}</span>
                </div>
             {/if}
+            {#if eventUnrest > 0}
+               <div class="stat-item">
+                  <span class="stat-label">From Events:</span>
+                  <span class="stat-value danger">+{eventUnrest}</span>
+               </div>
+            {/if}
+            {#if structureBonus > 0}
+               <div class="stat-item">
+                  <span class="stat-label">Structure Bonus:</span>
+                  <span class="stat-value positive">-{structureBonus}</span>
+               </div>
+            {/if}
             <div class="stat-item">
-               <span class="stat-label">Structure Bonus:</span>
-               <span class="stat-value">-{structureBonus}</span>
-            </div>
-            <div class="stat-item">
-               <span class="stat-label">Per Turn:</span>
-               <span class="stat-value" class:danger={unrestPerTurn > 0} class:positive={unrestPerTurn < 0}>
-                  {unrestPerTurn >= 0 ? '+' : ''}{unrestPerTurn}
+               <span class="stat-label">Total Per Turn:</span>
+               <span class="stat-value" class:danger={totalUnrestPerTurn > 0} class:positive={totalUnrestPerTurn < 0}>
+                  {totalUnrestPerTurn >= 0 ? '+' : ''}{totalUnrestPerTurn}
                </span>
             </div>
          </div>

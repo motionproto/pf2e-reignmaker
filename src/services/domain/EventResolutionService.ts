@@ -37,6 +37,10 @@ export class EventResolutionService {
 
     /**
      * Perform stability check to determine if an event occurs
+     * 
+     * Rules: 
+     * - If roll >= DC: Event occurs, DC resets to 15
+     * - If roll < DC: No event occurs, DC reduced for next turn
      */
     performStabilityCheck(currentDC: number): StabilityCheckResult {
         const roll = diceService.rollD20();
@@ -46,11 +50,12 @@ export class EventResolutionService {
         let event: EventData | undefined;
         
         if (success) {
-            // Event triggered - reset DC to 16
-            newDC = 16;
-            event = this.eventService.getRandomEvent();
+            // Successful roll - event occurs, reset DC to 15
+            newDC = 15;
+            const randomEvent = this.eventService.getRandomEvent();
+            event = randomEvent || undefined;
         } else {
-            // No event - reduce DC by 5 (minimum 6)
+            // Failed roll - no event, reduce DC by 5 (minimum 6)
             newDC = Math.max(6, currentDC - 5);
         }
         

@@ -10,38 +10,49 @@
    // Import clean architecture components
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    import type { UpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
-   import { UpdateResourcesCommand } from '../../../commands/impl/UpdateResourcesCommand';
-   import { ProcessUnrestCommand } from '../../../commands/impl/ProcessUnrestCommand';
-   import { commandExecutor } from '../../../commands/base/CommandExecutor';
-   import type { CommandContext } from '../../../commands/base/Command';
    
    // Controller instance
    let upkeepController: UpkeepPhaseController;
    
    // UI State only - no business logic
-   let processingUnresolved = false;
    let processingFood = false;
    let processingMilitary = false;
    let processingBuild = false;
    let processingEndTurn = false;
-   let processedModifier = '';
    
-   // Reactive UI state
-   $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
-   $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
-   $: buildCompleted = isPhaseStepCompleted('upkeep-build');
-   $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
+   // Reactive UI state - use $gameState to ensure reactivity
+   $: consumeCompleted = $gameState.phaseStepsCompleted.get('upkeep-food') === true;
+   $: militaryCompleted = $gameState.phaseStepsCompleted.get('upkeep-military') === true;
+   $: buildCompleted = $gameState.phaseStepsCompleted.get('upkeep-build') === true;
+   $: resolveCompleted = $gameState.phaseStepsCompleted.get('upkeep-complete') === true;
    
-   // Calculate UI display values using controller when available
-   $: currentFood = $kingdomState.resources.get('food') || 0;
-   $: foodConsumption = $kingdomState.getTotalFoodConsumption();
-   $: foodShortage = Math.max(0, foodConsumption - currentFood);
-   $: foodConsumptionBreakdown = $kingdomState.getFoodConsumptionBreakdown();
-   $: settlementConsumption = foodConsumptionBreakdown[0];
-   $: armyConsumption = foodConsumptionBreakdown[1];
-   $: armyCount = $kingdomState.armies.length;
-   $: armySupport = $kingdomState.getTotalArmySupport();
-   $: unsupportedCount = $kingdomState.getUnsupportedArmies();
+   // Get all display data from controller
+   $: displayData = upkeepController?.getDisplayData($kingdomState) || {
+      currentFood: 0,
+      foodConsumption: 0,
+      foodShortage: 0,
+      settlementConsumption: 0,
+      armyConsumption: 0,
+      armyCount: 0,
+      armySupport: 0,
+      unsupportedCount: 0,
+      foodRemainingForArmies: 0,
+      armyFoodShortage: 0,
+      settlementFoodShortage: 0
+   };
+   
+   // Destructure for easier template access
+   $: ({
+      currentFood,
+      settlementConsumption,
+      armyConsumption,
+      armyCount,
+      armySupport,
+      unsupportedCount,
+      foodRemainingForArmies,
+      armyFoodShortage,
+      settlementFoodShortage
+   } = displayData);
    
    // Initialize controller on mount
    onMount(() => {
@@ -49,8 +60,9 @@
       
       // Auto-complete steps that don't need action
       const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomState);
+      const currentGameState = get(gameState);
       autoCompleteSteps.forEach(step => {
-         if (!isPhaseStepCompleted(step)) {
+         if (!currentGameState.phaseStepsCompleted.get(step)) {
             markPhaseStepCompleted(step);
          }
       });
@@ -75,26 +87,22 @@
       }
    }
    
-   // Handle military support using controller and commands
+   // Handle military support using controller
    async function handleMilitarySupport() {
       if (!upkeepController) return;
       
       processingMilitary = true;
       
       try {
-         if (unsupportedCount > 0) {
-            const context: CommandContext = {
-               kingdomState: get(kingdomState),
-               currentTurn: $gameState.currentTurn || 1,
-               currentPhase: 'Phase VI: Upkeep'
-            };
-            
-            // Generate unrest for unsupported armies
-            const command = ProcessUnrestCommand.generate(unsupportedCount, 'unsupported-armies');
-            await commandExecutor.execute(command, context);
-         }
+         // Controller handles all military support logic
+         const result = await upkeepController.processMilitarySupport(
+            $kingdomState,
+            $gameState.currentTurn || 1
+         );
          
-         markPhaseStepCompleted('upkeep-military');
+         if (result.success) {
+            markPhaseStepCompleted('upkeep-military');
+         }
       } finally {
          processingMilitary = false;
       }
@@ -180,9 +188,9 @@
       <!-- Step 1: Feed Settlements -->
       <div class="phase-card" class:completed={consumeCompleted}>
          <div class="card-header">
-            <h4>
+            <h4 class="text-heading-secondary">
                <i class="fas fa-home step-icon"></i>
-               Step 1: Feed Settlements
+               1. Feed Settlements
             </h4>
             {#if consumeCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -192,7 +200,7 @@
          <button 
             on:click={handleFoodConsumption} 
             disabled={consumeCompleted || processingFood}
-            class="step-action-button"
+            class="btn btn-secondary"
          >
             {#if consumeCompleted}
                <i class="fas fa-check"></i> Settlements Fed
@@ -218,11 +226,11 @@
                </div>
             </div>
             
-            {#if currentFood < settlementConsumption && !consumeCompleted}
-               <div class="warning-box">
+            {#if settlementFoodShortage > 0 && !consumeCompleted}
+               <div class="warning-box warning-stacked">
                   <i class="fas fa-exclamation-triangle"></i>
-                  <strong>Warning:</strong> Food shortage! Need {settlementConsumption - currentFood} more food.
-                  <br><small>Unfed settlements will not generate gold next turn and cause +{Math.max(0, settlementConsumption - currentFood)} Unrest.</small>
+                  <div class="warning-title">Food shortage: Need {settlementFoodShortage} more food</div>
+                  <div class="warning-message">Unfed settlements will not generate gold next turn and cause +{settlementFoodShortage} Unrest.</div>
                </div>
             {:else if !consumeCompleted}
                <div class="info-text">Settlements require {settlementConsumption} food this turn</div>
@@ -233,9 +241,9 @@
       <!-- Step 2: Military Support & Food -->
       <div class="phase-card" class:completed={militaryCompleted}>
          <div class="card-header">
-            <h4>
+            <h4 class="text-heading-secondary">
                <i class="fas fa-shield-alt step-icon"></i>
-               Step 2: Military Support
+               2. Military Support
             </h4>
             {#if militaryCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -245,7 +253,7 @@
          <button 
             on:click={handleMilitarySupport} 
             disabled={militaryCompleted || processingMilitary || armyCount === 0}
-            class="step-action-button"
+            class="btn btn-secondary"
          >
             {#if militaryCompleted}
                <i class="fas fa-check"></i> Military Support Processed
@@ -268,18 +276,18 @@
                      <div class="stat-label">Food Required</div>
                   </div>
                   
-                  <div class="consumption-stat" class:danger={(currentFood - settlementConsumption) < armyConsumption}>
+                  <div class="consumption-stat" class:danger={armyFoodShortage > 0}>
                      <i class="fas fa-wheat-awn"></i>
-                     <div class="stat-value">{Math.max(0, currentFood - settlementConsumption)}</div>
+                     <div class="stat-value">{foodRemainingForArmies}</div>
                      <div class="stat-label">Food Remaining</div>
                   </div>
                </div>
                
-               {#if (currentFood - settlementConsumption) < armyConsumption && !militaryCompleted}
+               {#if armyFoodShortage > 0 && !militaryCompleted}
                   <div class="warning-box">
                      <i class="fas fa-exclamation-triangle"></i>
-                     <strong>Warning:</strong> Not enough food for armies! Short by {armyConsumption - Math.max(0, currentFood - settlementConsumption)} food.
-                     <br><small>This will cause +{armyConsumption - Math.max(0, currentFood - settlementConsumption)} Unrest.</small>
+                     <strong>Warning:</strong> Not enough food for armies! Short by {armyFoodShortage} food.
+                     <br><small>This will cause +{armyFoodShortage} Unrest.</small>
                   </div>
                {/if}
                
@@ -324,9 +332,9 @@
       <!-- Step 3: Build Queue -->
       <div class="phase-card" class:completed={buildCompleted}>
          <div class="card-header">
-            <h4>
+            <h4 class="text-heading-secondary">
                <i class="fas fa-hammer step-icon"></i>
-               Step 3: Build Queue
+               3. Build Queue
             </h4>
             {#if buildCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -336,7 +344,7 @@
          <button 
             on:click={handleBuildQueue} 
             disabled={buildCompleted || processingBuild || $kingdomState.buildQueue.length === 0}
-            class="step-action-button"
+            class="btn btn-secondary"
          >
             {#if buildCompleted}
                <i class="fas fa-check"></i> Resources Applied
@@ -398,7 +406,7 @@
    <!-- End of Turn Summary Section -->
    <div class="end-turn-summary" class:completed={resolveCompleted}>
       <div class="summary-header">
-         <h4>
+         <h4 class="text-heading-secondary">
             <i class="fas fa-scroll"></i>
             End of Turn Summary
          </h4>
@@ -436,45 +444,16 @@
       </div>
    </div>
    
-   <!-- End Turn Button -->
-   <div class="phase-actions">
-      <button 
-         class="end-turn-button" 
-         on:click={endTurn}
-         disabled={!consumeCompleted || !militaryCompleted || !buildCompleted}
-      >
-         <i class="fas fa-check-circle"></i>
-         End Turn {$gameState.currentTurn} and Clear Resources
-      </button>
-   </div>
+   <!-- End Turn Button removed - using the one in top right navigation instead -->
 </div>
 
 <style lang="scss">
+   @import '../../../styles/typography.css';
+   
    .upkeep-phase {
       display: flex;
       flex-direction: column;
       gap: 20px;
-   }
-   
-   .phase-intro {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.08);
-      border-radius: var(--radius-md);
-      
-      h3 {
-         margin: 0 0 8px 0;
-         color: var(--text-primary);
-         font-size: var(--type-heading-1-size);
-         font-weight: var(--type-heading-1-weight);
-         line-height: var(--type-heading-1-line);
-      }
-      
-      p {
-         margin: 0;
-         color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
-      }
    }
    
    // New grid container for responsive columns
@@ -566,13 +545,10 @@
       
       h4 {
          margin: 0;
-         color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
          display: flex;
          align-items: center;
          gap: 10px;
+         font-family: var(--base-font);  // Use Signika font
          
          .step-icon {
             color: var(--color-amber);
@@ -589,41 +565,10 @@
       font-size: 20px;
    }
    
-   // Action button at the top of each card
-   .step-action-button {
+   // Override margins for buttons in the cards
+   .phase-card .btn {
       margin: 0 20px 16px 20px;
-      padding: 10px 16px;
-      background: var(--btn-secondary-bg);
-      color: var(--text-primary);
-      border: 1px solid var(--border-medium);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all var(--transition-fast);
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-secondary-hover);
-         border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: var(--shadow-md);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-      }
-      
-      i {
-         font-size: 1em;
-      }
+      width: calc(100% - 40px); // Full width minus margins
    }
    
    .card-content {
@@ -674,13 +619,10 @@
       
       h4 {
          margin: 0;
-         color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
          display: flex;
          align-items: center;
          gap: 10px;
+         font-family: var(--base-font);  // Use Signika font
          
          i {
             color: var(--color-amber);
@@ -855,10 +797,27 @@
       color: var(--color-amber-light);
       font-size: var(--font-sm);
       
+      &.warning-stacked {
+         flex-direction: column;
+         align-items: flex-start;
+         gap: 6px;
+      }
+      
       i {
          font-size: 16px;
          margin-top: 2px;
          flex-shrink: 0;
+      }
+      
+      .warning-title {
+         font-weight: 600;
+         color: var(--color-amber-light);
+      }
+      
+      .warning-message {
+         opacity: 0.9;
+         font-size: var(--font-xs);
+         line-height: 1.4;
       }
       
       small {
@@ -946,12 +905,6 @@
    
    // Remove the .step-button styles as we replaced it with .step-action-button
    
-   .phase-actions {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-   }
-   
    .auto-skipped {
       display: flex;
       align-items: center;
@@ -966,41 +919,6 @@
       i {
          color: var(--text-tertiary);
          opacity: 0.7;
-      }
-   }
-   
-   .end-turn-button {
-      padding: 14px 28px;
-      background: var(--btn-primary-bg);
-      color: white;
-      border: 1px solid var(--color-crimson);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all var(--transition-fast);
-      box-shadow: var(--shadow-md);
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-primary-hover);
-         transform: translateY(-2px);
-         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-         background: var(--color-gray-700);
-         border-color: var(--border-subtle);
-      }
-      
-      i {
-         font-size: 1.1em;
       }
    }
    

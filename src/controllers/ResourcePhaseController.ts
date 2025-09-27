@@ -29,6 +29,33 @@ export interface ResourceCollectionSummary {
     unfedSettlementsCount: number;
 }
 
+export interface ResourcePhaseDisplayData {
+    // Current resources
+    currentResources: Map<string, number>;
+    
+    // Production data
+    totalProduction: Map<string, number>;
+    productionByHex: Map<string, Map<string, number>>;
+    worksiteDetails: Array<{
+        hexName: string;
+        terrain: string;
+        production: Map<string, number>;
+    }>;
+    
+    // Gold income data
+    potentialGoldIncome: number;
+    fedSettlementsCount: number;
+    unfedSettlementsCount: number;
+    settlementCount: number;
+    
+    // Collection status
+    collectionCompleted: boolean;
+    lastCollectionResult: ResourceCollectionResult | null;
+    
+    // Phase summary (if collection completed)
+    phaseSummary: ResourceCollectionSummary | null;
+}
+
 export class ResourcePhaseController {
     private state: ResourcePhaseState;
     
@@ -300,6 +327,52 @@ export class ResourcePhaseController {
             totalCollected: result.totalCollected,
             fedSettlementsCount: result.fedSettlementsCount,
             unfedSettlementsCount: result.unfedSettlementsCount
+        };
+    }
+    
+    /**
+     * Get all display data for the UI in one call
+     * This consolidates all business logic and calculations
+     */
+    getDisplayData(kingdomState: KingdomState): ResourcePhaseDisplayData {
+        // Calculate potential collection if not already done
+        const potentialCollection = this.state.potentialCollection || 
+            this.calculatePotentialCollection(kingdomState);
+        
+        // Get worksite details
+        const worksiteDetails = this.getWorksiteDetails(kingdomState.hexes);
+        
+        // Get total production
+        const totalProduction = this.getTotalProduction(kingdomState);
+        
+        // Get production by hex
+        const productionByHex = this.getProductionByHex(kingdomState);
+        
+        // Get phase summary if collection is completed
+        const phaseSummary = this.state.collectionCompleted ? 
+            this.getPhaseSummary() : null;
+        
+        return {
+            // Current resources
+            currentResources: new Map(kingdomState.resources),
+            
+            // Production data
+            totalProduction,
+            productionByHex,
+            worksiteDetails,
+            
+            // Gold income data  
+            potentialGoldIncome: potentialCollection?.goldIncome || 0,
+            fedSettlementsCount: potentialCollection?.fedSettlementsCount || 0,
+            unfedSettlementsCount: potentialCollection?.unfedSettlementsCount || 0,
+            settlementCount: kingdomState.settlements.length,
+            
+            // Collection status
+            collectionCompleted: this.state.collectionCompleted,
+            lastCollectionResult: this.state.lastCollectionResult,
+            
+            // Phase summary
+            phaseSummary
         };
     }
 }

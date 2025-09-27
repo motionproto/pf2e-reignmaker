@@ -1,6 +1,5 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
-   import { performKingdomSkillCheck } from '../../../api/foundry-actors';
    
    export let skill: string;
    export let description: string = '';
@@ -9,72 +8,23 @@
    export let loading: boolean = false;
    export let faded: boolean = false;
    
-   // New props for handling different check types
-   export let checkType: 'action' | 'incident' | 'event' | null = null;
-   export let checkName: string = '';
-   export let checkId: string = '';
-   export let checkEffects: any = null;
-   export let onRollComplete: ((outcome: string) => void) | null = null;
-   
    const dispatch = createEventDispatcher();
    
-   // Internal loading state for direct skill checks
-   let internalLoading = false;
-   
-   // Use external loading prop if provided, otherwise use internal state
-   $: isLoading = loading || internalLoading;
-   
-   async function handleClick() {
-      if (!disabled && !isLoading) {
-         // For actions, only dispatch the execute event - let the parent handle the roll
-         // This prevents double-rolling
-         if (checkType === 'action') {
-            dispatch('execute', { skill });
-            return;
-         }
-         
-         // For other types (incident, event), handle the roll directly
+   // Simple UI component - just dispatches events
+   function handleClick() {
+      if (!disabled && !loading) {
          dispatch('execute', { skill });
-         
-         // If this is configured for direct skill checks (non-action types)
-         if (checkType && checkName && checkId) {
-            internalLoading = true;
-            
-            try {
-               // Perform the skill check directly for non-action types
-               const result = await performKingdomSkillCheck(
-                  skill,
-                  checkType,
-                  checkName,
-                  checkId,
-                  checkEffects
-               );
-               
-               // If we have a callback, call it with the result
-               if (onRollComplete && result) {
-                  onRollComplete(result);
-               }
-               
-               // Dispatch rollComplete event with the result
-               dispatch('rollComplete', { skill, result });
-            } catch (error) {
-               console.error('Failed to perform skill check:', error);
-               dispatch('rollError', { skill, error });
-            } finally {
-               internalLoading = false;
-            }
-         }
       }
    }
 </script>
 
-<button 
-   class="skill-tag {selected ? 'selected' : ''} {disabled && !selected ? 'disabled' : ''} {isLoading ? 'loading' : ''} {faded ? 'faded' : ''}"
+<button
+   class="skill-tag {selected ? 'selected' : ''} {disabled && !selected ? 'disabled' : ''} {loading ? 'loading' : ''} {faded ? 'faded' : ''}"
    on:click={handleClick}
-   disabled={disabled || isLoading}
+   disabled={disabled || loading}
    type="button"
 >
-   {#if isLoading}
+   {#if loading}
       <i class="fas fa-dice-d20 fa-spin"></i>
    {/if}
    <span class="skill-label">{skill}</span>

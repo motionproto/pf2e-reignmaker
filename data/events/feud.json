@@ -6,7 +6,20 @@
   "icon": "fas fa-fist-raised",
   "dc": 14,
   "modifier": 0,
-  "skills": ["diplomacy", "intimidation", "deception"],
+  "skills": [
+    {
+      "skill": "diplomacy",
+      "description": "mediate between families"
+    },
+    {
+      "skill": "intimidation",
+      "description": "force them to stop"
+    },
+    {
+      "skill": "deception",
+      "description": "manipulate resolution"
+    }
+  ],
   "effects": {
     "criticalSuccess": {
       "msg": "You broker a lasting peace and the families become allies. The unity strengthens your kingdom.",

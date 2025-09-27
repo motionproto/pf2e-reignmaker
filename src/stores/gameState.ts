@@ -10,6 +10,22 @@ import type { Writable } from 'svelte/store';
  * This is separate from kingdom state which holds pure kingdom data
  */
 
+interface PlayerAction {
+  playerId: string;
+  playerName: string;
+  playerColor: string;
+  actionSpent: boolean;
+  spentInPhase?: TurnPhase;
+}
+
+// Action resolution tracking
+interface ActionResolution {
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+  actorName: string;
+  skillName?: string;
+  stateChanges: Map<string, any>;
+}
+
 interface GameState {
   // Turn and phase management
   currentTurn: number;
@@ -17,6 +33,10 @@ interface GameState {
   phaseStepsCompleted: Map<string, boolean>;
   phasesCompleted: Set<TurnPhase>;  // Track which phases are fully complete
   oncePerTurnActions: Set<string>;
+  
+  // Player actions tracking
+  playerActions: Map<string, PlayerAction>;  // Map of playerId to PlayerAction
+  resolvedActions: Map<string, ActionResolution>;  // Map of actionId to resolution details
   
   // Event management
   eventDC: number;
@@ -35,7 +55,7 @@ const PHASE_REQUIRED_STEPS: Map<TurnPhase, string[]> = new Map([
   [TurnPhase.PHASE_III, ['calculate-unrest']],  // Unrest phase
   [TurnPhase.PHASE_IV, ['resolve-event']],  // Events phase
   [TurnPhase.PHASE_V, []],  // Actions phase - no required steps, optional actions
-  [TurnPhase.PHASE_VI, ['upkeep-complete']],  // Resolution/Upkeep phase
+  [TurnPhase.PHASE_VI, ['upkeep-food', 'upkeep-military', 'upkeep-build']],  // Resolution/Upkeep phase
 ]);
 
 // Initialize game state
@@ -45,7 +65,9 @@ const initialGameState: GameState = {
   phaseStepsCompleted: new Map(),
   phasesCompleted: new Set(),
   oncePerTurnActions: new Set(),
-  eventDC: 16,
+  playerActions: new Map(),
+  resolvedActions: new Map(),
+  eventDC: 15,
   eventManager: new EventManager(),
   viewingPhase: null,
   selectedSettlement: null,
@@ -111,8 +133,28 @@ export function advancePhase() {
         viewingPhase: nextPhase
       };
     } else {
-      // End of turn - advance to next turn
+      // End of turn - clear resources and advance to next turn
       console.log('[gameState] End of turn - advancing from turn', state.currentTurn, 'to turn', state.currentTurn + 1);
+      
+      // Clear non-storable resources before ending turn
+      kingdomState.update(k => {
+        // Clear non-storable resources
+        k.resources.set('lumber', 0);
+        k.resources.set('stone', 0);
+        k.resources.set('ore', 0);
+        
+        // Process end turn modifiers if any
+        // Filter out modifiers that have a duration of 1 (ends this turn)
+        k.modifiers = k.modifiers.filter(modifier => 
+          modifier.duration !== 1
+        );
+        
+        return k;
+      });
+      
+      // Initialize player actions for the new turn
+      const newPlayerActions = initializePlayerActions();
+      
       return {
         ...state,
         currentTurn: state.currentTurn + 1,
@@ -120,7 +162,9 @@ export function advancePhase() {
         viewingPhase: TurnPhase.PHASE_I,
         phaseStepsCompleted: new Map(),
         phasesCompleted: new Set(),
-        oncePerTurnActions: new Set()
+        oncePerTurnActions: new Set(),
+        playerActions: newPlayerActions,
+        resolvedActions: new Map()  // Clear resolved actions for new turn
       };
     }
   });
@@ -197,7 +241,7 @@ export function markPhaseStepCompleted(stepId: string) {
     // Auto-complete related steps based on game rules (synchronous)
     // Status Phase: If gain-fame is done and no modifiers exist, auto-complete apply-modifiers
     if (stepId === 'gain-fame' && state.currentPhase === TurnPhase.PHASE_I) {
-      const hasModifiers = kingdom.ongoingModifiers && kingdom.ongoingModifiers.length > 0;
+      const hasModifiers = kingdom.modifiers && kingdom.modifiers.length > 0;
       if (!hasModifiers && !updatedState.phaseStepsCompleted.get('apply-modifiers')) {
         updatedState.phaseStepsCompleted.set('apply-modifiers', true);
         console.log('[gameState] Auto-completed apply-modifiers (no modifiers exist)');
@@ -303,6 +347,93 @@ export function isSectionExpanded(sectionId: string): boolean {
   return state.expandedSections.has(sectionId);
 }
 
+// Player action management functions
+export function initializePlayerActions(): Map<string, PlayerAction> {
+  const playerActions = new Map<string, PlayerAction>();
+  
+  // Get Foundry game data if available
+  if (typeof (window as any).game !== 'undefined') {
+    const game = (window as any).game;
+    
+    // Get all users that have characters assigned
+    game.users?.contents?.forEach((user: any) => {
+      if (user.character) {
+        const playerColor = user.color || '#ffffff';
+        playerActions.set(user.id, {
+          playerId: user.id,
+          playerName: user.name,
+          playerColor: playerColor,
+          actionSpent: false
+        });
+      }
+    });
+    
+    // If no players with characters, at least add the current user
+    if (playerActions.size === 0 && game.user) {
+      playerActions.set(game.user.id, {
+        playerId: game.user.id,
+        playerName: game.user.name,
+        playerColor: game.user.color || '#ffffff',
+        actionSpent: false
+      });
+    }
+  }
+  
+  return playerActions;
+}
+
+export function spendPlayerAction(playerId: string, phase: TurnPhase): boolean {
+  const state = get(gameState);
+  const playerAction = state.playerActions.get(playerId);
+  
+  if (!playerAction || playerAction.actionSpent) {
+    return false; // Action already spent or player not found
+  }
+  
+  gameState.update(s => {
+    const newPlayerActions = new Map(s.playerActions);
+    const updatedAction = newPlayerActions.get(playerId);
+    if (updatedAction) {
+      updatedAction.actionSpent = true;
+      updatedAction.spentInPhase = phase;
+      newPlayerActions.set(playerId, updatedAction);
+    }
+    
+    return {
+      ...s,
+      playerActions: newPlayerActions
+    };
+  });
+  
+  return true;
+}
+
+export function getPlayerAction(playerId: string): PlayerAction | undefined {
+  const state = get(gameState);
+  return state.playerActions.get(playerId);
+}
+
+export function getAllPlayerActions(): PlayerAction[] {
+  const state = get(gameState);
+  return Array.from(state.playerActions.values());
+}
+
+export function resetPlayerAction(playerId: string) {
+  gameState.update(state => {
+    const newPlayerActions = new Map(state.playerActions);
+    const playerAction = newPlayerActions.get(playerId);
+    if (playerAction) {
+      playerAction.actionSpent = false;
+      playerAction.spentInPhase = undefined;
+      newPlayerActions.set(playerId, playerAction);
+    }
+    return {
+      ...state,
+      playerActions: newPlayerActions
+    };
+  });
+}
+
 // Get current game state for saving (exclude pure UI state)
 export function getGameStateForSave() {
   const state = get(gameState);
@@ -312,6 +443,7 @@ export function getGameStateForSave() {
     phaseStepsCompleted: Array.from(state.phaseStepsCompleted.entries()),
     phasesCompleted: Array.from(state.phasesCompleted),
     oncePerTurnActions: Array.from(state.oncePerTurnActions),
+    playerActions: Array.from(state.playerActions.entries()),
     eventDC: state.eventDC
   };
 }
@@ -325,7 +457,75 @@ export function loadGameState(savedState: any) {
     phaseStepsCompleted: new Map(savedState.phaseStepsCompleted || []),
     phasesCompleted: new Set(savedState.phasesCompleted || []),
     oncePerTurnActions: new Set(savedState.oncePerTurnActions || []),
-    eventDC: savedState.eventDC || 16,
+    playerActions: savedState.playerActions ? new Map(savedState.playerActions) : initializePlayerActions(),
+    eventDC: savedState.eventDC || 15,
     viewingPhase: savedState.currentPhase || TurnPhase.PHASE_I  // Set viewing to match loaded phase
   }));
 }
+
+// Initialize player actions on module load
+gameState.update(state => ({
+  ...state,
+  playerActions: initializePlayerActions()
+}));
+
+// Action resolution management functions
+export function resolveAction(
+  actionId: string,
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  actorName: string,
+  skillName?: string,
+  stateChanges?: Map<string, any>
+): void {
+  gameState.update(state => {
+    const newResolvedActions = new Map(state.resolvedActions);
+    newResolvedActions.set(actionId, {
+      outcome,
+      actorName,
+      skillName,
+      stateChanges: stateChanges || new Map()
+    });
+    
+    return {
+      ...state,
+      resolvedActions: newResolvedActions
+    };
+  });
+}
+
+export function unresolveAction(actionId: string): void {
+  gameState.update(state => {
+    const newResolvedActions = new Map(state.resolvedActions);
+    newResolvedActions.delete(actionId);
+    
+    return {
+      ...state,
+      resolvedActions: newResolvedActions
+    };
+  });
+}
+
+export function isActionResolved(actionId: string): boolean {
+  const state = get(gameState);
+  return state.resolvedActions.has(actionId);
+}
+
+export function getActionResolution(actionId: string): ActionResolution | undefined {
+  const state = get(gameState);
+  return state.resolvedActions.get(actionId);
+}
+
+export function getAllResolvedActions(): Map<string, ActionResolution> {
+  const state = get(gameState);
+  return new Map(state.resolvedActions);
+}
+
+export function clearResolvedActions(): void {
+  gameState.update(state => ({
+    ...state,
+    resolvedActions: new Map()
+  }));
+}
+
+// Export interface for use in other modules
+export type { PlayerAction, ActionResolution };
