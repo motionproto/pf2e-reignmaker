@@ -6,6 +6,7 @@ import type { KingdomEvent } from './Events';
 import type { Settlement } from './Settlement';
 import { SettlementTier, SettlementTierConfig } from './Settlement';
 import type { KingdomModifier } from './Modifiers';
+import type { BuildProject as BuildProjectType } from './BuildProject';
 
 // Re-export for backward compatibility
 export { SettlementTier, SettlementTierConfig };
@@ -21,15 +22,9 @@ export interface Army {
 }
 
 /**
- * Build project in queue
+ * Use the full BuildProject type from BuildProject module
  */
-export interface BuildProject {
-  structureId: string;
-  settlementName: string;
-  progress: number;
-  totalCost: Map<string, number>;
-  remainingCost: Map<string, number>;
-}
+export type BuildProject = BuildProjectType;
 
 /**
  * Turn phases based on Reignmaker Lite rules

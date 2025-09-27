@@ -3,16 +3,20 @@
 
 /**
  * Represents a construction project in the build queue
+ * This interface extends the KingdomState BuildProject for compatibility
  */
 export interface BuildProject {
   id: string;
+  structureId: string; // ID of the structure being built
   structureName: string;
-  tier: number;
-  category: string;
+  settlementName: string;
+  progress: number; // 0-100 percentage complete
   totalCost: Map<string, number>;
+  remainingCost: Map<string, number>;
   invested: Map<string, number>; // Resources already applied
   pendingAllocation: Map<string, number>; // This turn's allocation
-  settlementName: string;
+  tier: number; // Structure tier requirement
+  category: string; // Structure category
 }
 
 /**
@@ -88,14 +92,29 @@ export class BuildProjectManager {
     project.pendingAllocation.forEach((amount, resource) => {
       const current = project.invested.get(resource) || 0;
       project.invested.set(resource, current + amount);
+      
+      // Update remaining cost
+      const totalNeeded = project.totalCost.get(resource) || 0;
+      const newInvested = current + amount;
+      const remaining = Math.max(0, totalNeeded - newInvested);
+      
+      if (remaining > 0) {
+        project.remainingCost.set(resource, remaining);
+      } else {
+        project.remainingCost.delete(resource);
+      }
     });
     project.pendingAllocation.clear();
+    
+    // Update progress
+    project.progress = BuildProjectManager.getCompletionPercentage(project);
   }
   
   /**
    * Create a new build project
    */
   static createProject(
+    structureId: string,
     structureName: string,
     tier: number,
     category: string,
@@ -103,14 +122,17 @@ export class BuildProjectManager {
     settlementName: string
   ): BuildProject {
     return {
-      id: `${settlementName}-${structureName}-${Date.now()}`,
+      id: `${structureId}-${settlementName}-${Date.now()}`,
+      structureId,
       structureName,
-      tier,
-      category,
+      settlementName,
+      progress: 0,
       totalCost: new Map(cost),
+      remainingCost: new Map(cost),
       invested: new Map(),
       pendingAllocation: new Map(),
-      settlementName
+      tier,
+      category
     };
   }
   

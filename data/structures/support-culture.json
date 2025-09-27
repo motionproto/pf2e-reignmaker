@@ -1,0 +1,92 @@
+{
+  "type": "support",
+  "family": "Culture",
+  "description": "Morale and unrest management",
+  "tiers": [
+    {
+      "id": "open-stage",
+      "name": "Open Stage",
+      "type": "support",
+      "category": "culture",
+      "tier": 1,
+      "effect": "PCs in this settlement gain +1 to checks made to reduce Unrest",
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "amphitheater",
+      "name": "Amphitheater",
+      "type": "support",
+      "category": "culture",
+      "tier": 2,
+      "effect": "PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "construction": {
+        "resources": {
+          "lumber": 3,
+          "stone": 1
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "open-stage"
+    },
+    {
+      "id": "playhouse",
+      "name": "Playhouse",
+      "type": "support",
+      "category": "culture",
+      "tier": 3,
+      "effect": "PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 3,
+          "ore": 1
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "amphitheater"
+    },
+    {
+      "id": "auditorium",
+      "name": "Auditorium",
+      "type": "support",
+      "category": "culture",
+      "tier": 4,
+      "effect": "+1 Fame each turn. PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "construction": {
+        "resources": {
+          "lumber": 6,
+          "stone": 6,
+          "ore": 4
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-4"
+      ],
+      "special": "At the start of each Kingdom Turn, reduce Unrest by 1",
+      "upgradeFrom": "playhouse"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "type": "skill",
+  "family": "Crafting & Trade",
+  "description": "Tier progression for Crafting & Trade",
+  "tiers": [
+    {
+      "id": "workshop",
+      "name": "Workshop",
+      "type": "skill",
+      "category": "crafting-trade",
+      "tier": 1,
+      "earnIncomeLevel": "settlement",
+      "bonus": 0,
+      "skills": [
+        "crafting"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "artisans-hall",
+      "name": "Artisan's Hall",
+      "type": "skill",
+      "category": "crafting-trade",
+      "tier": 2,
+      "earnIncomeLevel": "settlement+2",
+      "bonus": 1,
+      "skills": [
+        "crafting",
+        "lore"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "workshop"
+    },
+    {
+      "id": "blacksmiths-guild",
+      "name": "Blacksmiths' Guild",
+      "type": "skill",
+      "category": "crafting-trade",
+      "tier": 3,
+      "earnIncomeLevel": "settlement+4",
+      "bonus": 2,
+      "skills": [
+        "crafting",
+        "lore",
+        "society"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2,
+          "ore": 4
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "artisans-hall"
+    },
+    {
+      "id": "masterworks-foundry",
+      "name": "Masterworks Foundry",
+      "type": "skill",
+      "category": "crafting-trade",
+      "tier": 4,
+      "earnIncomeLevel": "settlement+6",
+      "bonus": 3,
+      "skills": [
+        "crafting",
+        "lore",
+        "society"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 4,
+          "ore": 8
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-4"
+      ],
+      "special": "Reroll 1 failed skill check per turn",
+      "upgradeFrom": "blacksmiths-guild"
+    }
+  ],
+  "skills": [
+    "Crafting",
+    "Lore",
+    "Society"
+  ]
+}

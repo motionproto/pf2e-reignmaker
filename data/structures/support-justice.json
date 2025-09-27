@@ -1,0 +1,92 @@
+{
+  "type": "support",
+  "family": "Justice",
+  "description": "Law enforcement and prisoner management",
+  "tiers": [
+    {
+      "id": "stocks",
+      "name": "Stocks",
+      "type": "support",
+      "category": "justice",
+      "tier": 1,
+      "effect": "Can hold 1 imprisoned Unrest. Allows Execute action only",
+      "construction": {
+        "resources": {
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "jail",
+      "name": "Jail",
+      "type": "support",
+      "category": "justice",
+      "tier": 2,
+      "effect": "Can hold 2 imprisoned Unrest. Allows Execute action only",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "stocks"
+    },
+    {
+      "id": "prison",
+      "name": "Prison",
+      "type": "support",
+      "category": "justice",
+      "tier": 3,
+      "effect": "Can hold 4 imprisoned Unrest. Allows Execute or Pardon actions",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 4,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "jail"
+    },
+    {
+      "id": "donjon",
+      "name": "Donjon",
+      "type": "support",
+      "category": "justice",
+      "tier": 4,
+      "effect": "Can hold 8 imprisoned Unrest. Allows Execute or Pardon actions",
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 6,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-4"
+      ],
+      "special": "Once per turn, can convert 1 regular Unrest to imprisoned Unrest without an action",
+      "upgradeFrom": "prison"
+    }
+  ]
+}

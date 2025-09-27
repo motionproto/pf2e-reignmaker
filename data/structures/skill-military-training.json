@@ -1,0 +1,118 @@
+{
+  "type": "skill",
+  "family": "Military & Training",
+  "description": "Tier progression for Military & Training",
+  "tiers": [
+    {
+      "id": "gymnasium",
+      "name": "Gymnasium",
+      "type": "skill",
+      "category": "military-training",
+      "tier": 1,
+      "earnIncomeLevel": "settlement",
+      "bonus": 0,
+      "skills": [
+        "athletics"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "training-yard",
+      "name": "Training Yard",
+      "type": "skill",
+      "category": "military-training",
+      "tier": 2,
+      "earnIncomeLevel": "settlement+2",
+      "bonus": 1,
+      "skills": [
+        "athletics",
+        "acrobatics"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "gymnasium"
+    },
+    {
+      "id": "warriors-hall",
+      "name": "Warrior's Hall",
+      "type": "skill",
+      "category": "military-training",
+      "tier": 3,
+      "earnIncomeLevel": "settlement+4",
+      "bonus": 2,
+      "skills": [
+        "athletics",
+        "acrobatics",
+        "intimidation"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 3,
+          "ore": 3
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "training-yard"
+    },
+    {
+      "id": "military-academy",
+      "name": "Military Academy",
+      "type": "skill",
+      "category": "military-training",
+      "tier": 4,
+      "earnIncomeLevel": "settlement+6",
+      "bonus": 3,
+      "skills": [
+        "athletics",
+        "acrobatics",
+        "intimidation"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 6,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-4"
+      ],
+      "special": "Reroll 1 failed skill check per turn",
+      "upgradeFrom": "warriors-hall"
+    }
+  ],
+  "skills": [
+    "Athletics",
+    "Acrobatics",
+    "Intimidation"
+  ]
+}

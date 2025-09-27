@@ -33,9 +33,25 @@ def combine_structures():
             
         try:
             with open(json_file, 'r') as f:
-                structure_data = json.load(f)
-                all_structures.append(structure_data)
-                print(f"  ✓ Loaded: {json_file.name}")
+                data = json.load(f)
+                
+                # Check if this is a consolidated file with tiers
+                if 'tiers' in data:
+                    # Handle the new consolidated format - tiers is a list
+                    if isinstance(data['tiers'], list):
+                        # Extract individual structures from tier list
+                        for structure in data['tiers']:
+                            all_structures.append(structure)
+                        print(f"  ✓ Loaded {len(data['tiers'])} structures from: {json_file.name}")
+                    elif isinstance(data['tiers'], dict):
+                        # Old format compatibility (if any)
+                        for tier_key, structure in data['tiers'].items():
+                            all_structures.append(structure)
+                        print(f"  ✓ Loaded {len(data['tiers'])} structures from: {json_file.name}")
+                else:
+                    # Regular standalone structure (shouldn't exist anymore)
+                    all_structures.append(data)
+                    print(f"  ✓ Loaded: {json_file.name}")
         except Exception as e:
             print(f"  ✗ Error loading {json_file.name}: {e}")
     

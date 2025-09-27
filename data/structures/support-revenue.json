@@ -1,0 +1,92 @@
+{
+  "type": "support",
+  "family": "Revenue",
+  "description": "Tax collection and treasury",
+  "tiers": [
+    {
+      "id": "tax-office",
+      "name": "Tax Office",
+      "type": "support",
+      "category": "revenue",
+      "tier": 1,
+      "effect": "Each Kingdom Turn, the kingdom gains 1 Gold",
+      "construction": {
+        "resources": {
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-1"
+      ],
+      "special": "Only one Taxation structure may exist in the kingdom at a time",
+      "upgradeFrom": null
+    },
+    {
+      "id": "counting-house",
+      "name": "Counting House",
+      "type": "support",
+      "category": "revenue",
+      "tier": 2,
+      "effect": "Each Kingdom Turn, the kingdom gains 2 Gold. PCs may attempt the Personal Income kingdom action",
+      "construction": {
+        "resources": {
+          "lumber": 1,
+          "stone": 3
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-2"
+      ],
+      "special": "Only one Taxation structure may exist in the kingdom at a time",
+      "upgradeFrom": "tax-office"
+    },
+    {
+      "id": "treasury",
+      "name": "Treasury",
+      "type": "support",
+      "category": "revenue",
+      "tier": 3,
+      "effect": "Each Kingdom Turn, the kingdom gains 4 Gold. PCs may attempt the Personal Income action (Income T3)",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 5,
+          "ore": 1
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-3"
+      ],
+      "special": "Only one Taxation structure may exist in the kingdom at a time",
+      "upgradeFrom": "counting-house"
+    },
+    {
+      "id": "exchequer",
+      "name": "Exchequer",
+      "type": "support",
+      "category": "revenue",
+      "tier": 4,
+      "effect": "Each Kingdom Turn, the kingdom gains 8 Gold. PCs may attempt the Personal Income action (Income T4)",
+      "construction": {
+        "resources": {
+          "lumber": 3,
+          "stone": 9,
+          "ore": 4
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-4"
+      ],
+      "special": "Only one Taxation structure may exist in the kingdom at a time",
+      "upgradeFrom": "treasury"
+    }
+  ]
+}

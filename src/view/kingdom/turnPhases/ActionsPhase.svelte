@@ -15,6 +15,7 @@
   import CheckCard from "../../kingdom/components/CheckCard.svelte";
   import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
+  import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog.svelte";
   import {
     getPlayerCharacters,
     getCurrentUserCharacter,
@@ -41,6 +42,7 @@
   let selectedCharacter: any = null;
   let showActionConfirm: boolean = false;
   let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
+  let showBuildStructureDialog: boolean = false;
 
   // Use gameState directly for all action tracking
   $: resolvedActions = $gameState.resolvedActions;
@@ -343,6 +345,13 @@
 
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
+    // Special handling for build-structure action
+    if (action.id === 'build-structure') {
+      // Show the build structure dialog instead of rolling
+      showBuildStructureDialog = true;
+      return;
+    }
+    
     // Check if ANY player has already performed an action (kingdom has used actions)
     if (actionsUsed > 0 && !isActionResolved(action.id)) {
       // At least one action has been performed - show confirmation dialog
@@ -528,6 +537,21 @@
       resetPlayerAction(game.user.id);
     }
   }
+  
+  // Handle when a structure is successfully queued
+  function handleStructureQueued(event: CustomEvent) {
+    const { structureId, settlementId, project } = event.detail;
+    
+    // Mark the build-structure action as used for this player
+    const game = (window as any).game;
+    if (game?.user?.id) {
+      spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
+      actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
+    }
+    
+    // Show success notification
+    ui.notifications?.info(`Structure queued successfully!`);
+  }
 </script>
 
 <div class="actions-phase">
@@ -667,6 +691,12 @@
   bind:show={showActionConfirm}
   on:confirm={handleActionConfirm}
   on:cancel={handleActionCancel}
+/>
+
+<!-- Build Structure Dialog -->
+<BuildStructureDialog
+  bind:show={showBuildStructureDialog}
+  on:structureQueued={handleStructureQueued}
 />
 
 <style lang="scss">

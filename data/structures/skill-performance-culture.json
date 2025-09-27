@@ -1,0 +1,118 @@
+{
+  "type": "skill",
+  "family": "Performance & Culture",
+  "description": "Tier progression for Performance & Culture",
+  "tiers": [
+    {
+      "id": "buskers-alley",
+      "name": "Busker's Alley",
+      "type": "skill",
+      "category": "performance-culture",
+      "tier": 1,
+      "earnIncomeLevel": "settlement",
+      "bonus": 0,
+      "skills": [
+        "performance"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "famous-tavern",
+      "name": "Famous Tavern",
+      "type": "skill",
+      "category": "performance-culture",
+      "tier": 2,
+      "earnIncomeLevel": "settlement+2",
+      "bonus": 1,
+      "skills": [
+        "performance",
+        "diplomacy"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "buskers-alley"
+    },
+    {
+      "id": "performance-hall",
+      "name": "Performance Hall",
+      "type": "skill",
+      "category": "performance-culture",
+      "tier": 3,
+      "earnIncomeLevel": "settlement+4",
+      "bonus": 2,
+      "skills": [
+        "performance",
+        "diplomacy",
+        "lore"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 2,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "famous-tavern"
+    },
+    {
+      "id": "grand-amphitheater",
+      "name": "Grand Amphitheater",
+      "type": "skill",
+      "category": "performance-culture",
+      "tier": 4,
+      "earnIncomeLevel": "settlement+6",
+      "bonus": 3,
+      "skills": [
+        "performance",
+        "diplomacy",
+        "lore"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 6,
+          "stone": 6,
+          "ore": 4
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-4"
+      ],
+      "special": "Reroll 1 failed skill check per turn",
+      "upgradeFrom": "performance-hall"
+    }
+  ],
+  "skills": [
+    "Performance",
+    "Diplomacy",
+    "Lore"
+  ]
+}

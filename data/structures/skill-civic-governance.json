@@ -1,0 +1,118 @@
+{
+  "type": "skill",
+  "family": "Civic & Governance",
+  "description": "Tier progression for Civic & Governance",
+  "tiers": [
+    {
+      "id": "town-hall",
+      "name": "Town Hall",
+      "type": "skill",
+      "category": "civic-governance",
+      "tier": 1,
+      "earnIncomeLevel": "settlement",
+      "bonus": 0,
+      "skills": [
+        "society"
+      ],
+      "construction": {
+        "resources": {
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "city-hall",
+      "name": "City Hall",
+      "type": "skill",
+      "category": "civic-governance",
+      "tier": 2,
+      "earnIncomeLevel": "settlement+2",
+      "bonus": 1,
+      "skills": [
+        "society",
+        "diplomacy"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "town-hall"
+    },
+    {
+      "id": "diplomatic-quarter",
+      "name": "Diplomatic Quarter",
+      "type": "skill",
+      "category": "civic-governance",
+      "tier": 3,
+      "earnIncomeLevel": "settlement+4",
+      "bonus": 2,
+      "skills": [
+        "society",
+        "diplomacy",
+        "deception"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 4,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "city-hall"
+    },
+    {
+      "id": "grand-forum",
+      "name": "Grand Forum",
+      "type": "skill",
+      "category": "civic-governance",
+      "tier": 4,
+      "earnIncomeLevel": "settlement+6",
+      "bonus": 3,
+      "skills": [
+        "society",
+        "diplomacy",
+        "deception"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 6,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-4"
+      ],
+      "special": "Reroll 1 failed skill check per turn",
+      "upgradeFrom": "diplomatic-quarter"
+    }
+  ],
+  "skills": [
+    "Society",
+    "Diplomacy",
+    "Deception"
+  ]
+}

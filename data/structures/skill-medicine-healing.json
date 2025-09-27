@@ -1,0 +1,118 @@
+{
+  "type": "skill",
+  "family": "Medicine & Healing",
+  "description": "Tier progression for Medicine & Healing",
+  "tiers": [
+    {
+      "id": "healers-hut",
+      "name": "Healer's Hut",
+      "type": "skill",
+      "category": "medicine-healing",
+      "tier": 1,
+      "earnIncomeLevel": "settlement",
+      "bonus": 0,
+      "skills": [
+        "medicine"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "infirmary",
+      "name": "Infirmary",
+      "type": "skill",
+      "category": "medicine-healing",
+      "tier": 2,
+      "earnIncomeLevel": "settlement+2",
+      "bonus": 1,
+      "skills": [
+        "medicine",
+        "lore"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 1,
+          "stone": 3
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "healers-hut"
+    },
+    {
+      "id": "hospital",
+      "name": "Hospital",
+      "type": "skill",
+      "category": "medicine-healing",
+      "tier": 3,
+      "earnIncomeLevel": "settlement+4",
+      "bonus": 2,
+      "skills": [
+        "medicine",
+        "lore",
+        "arcana"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 4,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "infirmary"
+    },
+    {
+      "id": "medical-college",
+      "name": "Medical College",
+      "type": "skill",
+      "category": "medicine-healing",
+      "tier": 4,
+      "earnIncomeLevel": "settlement+6",
+      "bonus": 3,
+      "skills": [
+        "medicine",
+        "lore",
+        "arcana"
+      ],
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 6,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "skill-structure",
+        "tier-4"
+      ],
+      "special": "Reroll 1 failed skill check per turn",
+      "upgradeFrom": "hospital"
+    }
+  ],
+  "skills": [
+    "Medicine",
+    "Lore",
+    "Arcana"
+  ]
+}

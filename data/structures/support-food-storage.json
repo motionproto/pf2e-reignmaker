@@ -1,0 +1,92 @@
+{
+  "type": "support",
+  "family": "Food Storage",
+  "description": "Preserve agricultural surplus",
+  "tiers": [
+    {
+      "id": "granary",
+      "name": "Granary",
+      "type": "support",
+      "category": "food-storage",
+      "tier": 1,
+      "effect": "+4 Food capacity",
+      "construction": {
+        "resources": {
+          "lumber": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "storehouses",
+      "name": "Storehouses",
+      "type": "support",
+      "category": "food-storage",
+      "tier": 2,
+      "effect": "+8 Food capacity",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "granary"
+    },
+    {
+      "id": "warehouses",
+      "name": "Warehouses",
+      "type": "support",
+      "category": "food-storage",
+      "tier": 3,
+      "effect": "+16 Food capacity",
+      "construction": {
+        "resources": {
+          "lumber": 3,
+          "stone": 3,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "storehouses"
+    },
+    {
+      "id": "strategic-reserves",
+      "name": "Strategic Reserves",
+      "type": "support",
+      "category": "food-storage",
+      "tier": 4,
+      "effect": "+36 Food capacity",
+      "construction": {
+        "resources": {
+          "lumber": 4,
+          "stone": 6,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-4"
+      ],
+      "special": "Once per Kingdom Turn, roll flat check DC 15; on success, negate a spoilage/loss event affecting Food.",
+      "upgradeFrom": "warehouses"
+    }
+  ]
+}

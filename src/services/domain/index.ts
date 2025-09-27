@@ -35,3 +35,9 @@ export type {
     ResourceConsumption,
     ResourceDecay
 } from './ResourceManagementService';
+
+export { BuildQueueService, buildQueueService } from './BuildQueueService';
+export type {
+    BuildQueueItem,
+    ResourceAllocation
+} from './BuildQueueService';

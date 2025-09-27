@@ -1,0 +1,92 @@
+{
+  "type": "support",
+  "family": "Logistics",
+  "description": "Military housing and support",
+  "tiers": [
+    {
+      "id": "barracks",
+      "name": "Barracks",
+      "type": "support",
+      "category": "logistics",
+      "tier": 1,
+      "effect": "Increases the settlement's unit capacity by +1",
+      "construction": {
+        "resources": {
+          "stone": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-1"
+      ],
+      "special": null,
+      "upgradeFrom": null
+    },
+    {
+      "id": "garrison",
+      "name": "Garrison",
+      "type": "support",
+      "category": "logistics",
+      "tier": 2,
+      "effect": "Increases the settlement's unit capacity by +2",
+      "construction": {
+        "resources": {
+          "lumber": 1,
+          "stone": 3
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-2"
+      ],
+      "special": null,
+      "upgradeFrom": "barracks"
+    },
+    {
+      "id": "fortress",
+      "name": "Fortress",
+      "type": "support",
+      "category": "logistics",
+      "tier": 3,
+      "effect": "Increases the settlement's unit capacity by +3",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 4,
+          "ore": 2
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-3"
+      ],
+      "special": null,
+      "upgradeFrom": "garrison"
+    },
+    {
+      "id": "citadel",
+      "name": "Citadel",
+      "type": "support",
+      "category": "logistics",
+      "tier": 4,
+      "effect": "Increases the settlement's unit capacity by +4",
+      "construction": {
+        "resources": {
+          "lumber": 2,
+          "stone": 8,
+          "ore": 6
+        }
+      },
+      "traits": [
+        "building",
+        "support-structure",
+        "tier-4"
+      ],
+      "special": "At the start of each Kingdom Turn, reduce the kingdom's Unrest by 1",
+      "upgradeFrom": "fortress"
+    }
+  ]
+}
