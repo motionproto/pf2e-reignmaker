@@ -180,9 +180,9 @@
       
       h3 {
          margin: 0;
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
+         font-size: var(--font-2xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
          color: var(--text-primary);
       }
    }
@@ -226,15 +226,15 @@
       text-align: center;
       
       .fame-value {
-         font-size: var(--type-heading-1-size);
-         font-weight: var(--type-heading-1-weight);
+         font-size: var(--font-3xl);
+         font-weight: var(--font-weight-semibold);
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
       }
       
       .fame-change {
          margin-top: 8px;
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
          color: var(--text-secondary);
          font-style: italic;
       }
@@ -254,7 +254,7 @@
       
       p {
          margin: 0;
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
       }
    }
    
@@ -271,8 +271,8 @@
       
       h4 {
          margin: 0 0 12px 0;
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-semibold);
          display: flex;
          align-items: center;
          gap: 8px;
@@ -327,7 +327,7 @@
       gap: 10px;
       padding: 8px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: var(--type-body-size);
+      font-size: var(--font-md);
       
       &:last-child {
          border-bottom: none;
@@ -378,7 +378,7 @@
       p {
          margin: 0;
          color: var(--color-green-light);
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
       }
    }
 </style>

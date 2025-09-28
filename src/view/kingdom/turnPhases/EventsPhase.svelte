@@ -479,9 +479,9 @@
    
    .event-title {
       margin: 0 0 10px 0;
-      font-size: var(--type-heading-1-size);
-      font-weight: var(--type-heading-1-weight);
-      line-height: var(--type-heading-1-line);
+      font-size: var(--font-3xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
       color: var(--text-primary);
    }
    
@@ -494,10 +494,10 @@
    .event-trait {
       padding: 4px 10px;
       border-radius: var(--radius-full);
-      font-size: var(--type-badge-size);
-      font-weight: var(--type-badge-weight);
-      line-height: var(--type-badge-line);
-      letter-spacing: var(--type-badge-spacing);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
       background: rgba(0, 0, 0, 0.3);
       color: var(--text-secondary);
@@ -527,8 +527,8 @@
    }
    
    .event-description {
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
+      font-size: var(--font-md);
+      line-height: 1.5;
       color: var(--text-secondary);
       margin-bottom: 15px;
    }
@@ -539,9 +539,9 @@
       h4 {
          margin: 0 0 15px 0;
          color: var(--text-primary);
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
-         line-height: var(--type-heading-3-line);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.4;
       }
    }
    
@@ -589,9 +589,9 @@
       h3 {
          margin: 0 0 15px 0;
          color: var(--text-primary);
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
+         font-size: var(--font-2xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
       }
    }
    

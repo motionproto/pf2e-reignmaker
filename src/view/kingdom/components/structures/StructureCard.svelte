@@ -61,7 +61,7 @@
       align-items: center;
       justify-content: center;
       color: var(--text-tertiary);
-      font-size: var(--font-xs);
+      font-size: var(--font-s);
     }
   }
   

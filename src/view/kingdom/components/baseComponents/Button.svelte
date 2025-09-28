@@ -40,10 +40,10 @@
       padding: 10px 16px;
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.025em;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -258,7 +258,7 @@
       
       // Support for slotted content with special styles
       :global(.badge), :global(.count), :global(.fame-count) {
-         font-size: var(--type-small-size);
+         font-size: var(--font-sm);
          opacity: 0.9;
          padding: 2px 6px;
          background: rgba(0, 0, 0, 0.2);

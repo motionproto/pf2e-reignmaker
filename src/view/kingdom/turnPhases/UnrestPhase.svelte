@@ -407,9 +407,9 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-size: var(--type-heading-1-size);
-      font-weight: var(--type-heading-1-weight);
-      line-height: var(--type-heading-1-line);
+      font-size: var(--font-3xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
       color: var(--text-primary);
       
       .unrest-icon {
@@ -436,10 +436,10 @@
    .unrest-tier-badge {
       padding: 8px 16px;
       border-radius: var(--radius-full);
-      font-size: var(--type-badge-size);
-      font-weight: var(--type-badge-weight);
-      line-height: var(--type-badge-line);
-      letter-spacing: var(--type-badge-spacing);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
       
       &.tier-stable {
@@ -532,9 +532,9 @@
    }
    
    .incident-title {
-      font-size: var(--type-heading-2-size);
-      font-weight: var(--type-heading-2-weight);
-      line-height: var(--type-heading-2-line);
+      font-size: var(--font-2xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
       color: var(--text-primary);
    }
    
@@ -545,10 +545,10 @@
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       cursor: pointer;
-      font-size: var(--type-button-size);
-      font-weight: var(--type-button-weight);
-      line-height: var(--type-button-line);
-      letter-spacing: var(--type-button-spacing);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.025em;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -606,9 +606,9 @@
       }
       
       .roll-label {
-         font-size: var(--type-label-size);
-         font-weight: var(--type-label-weight);
-         letter-spacing: var(--type-label-spacing);
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-medium);
+         letter-spacing: 0.025em;
          color: var(--text-tertiary);
          text-transform: uppercase;
          margin-top: 5px;
@@ -628,17 +628,17 @@
       margin-bottom: 20px;
       
       .incident-name {
-         font-size: var(--type-heading-1-size);
-         font-weight: var(--type-heading-1-weight);
-         line-height: var(--type-heading-1-line);
+         font-size: var(--font-3xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
          color: var(--text-primary);
          margin-bottom: 10px;
       }
       
       .incident-description {
          color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+         font-size: var(--font-md);
+         line-height: 1.5;
       }
       
       .incident-level-badge {
@@ -647,10 +647,10 @@
          right: 15px;
          padding: 5px 12px;
          border-radius: var(--radius-full);
-         font-size: var(--type-badge-size);
-         font-weight: var(--type-badge-weight);
-         line-height: var(--type-badge-line);
-         letter-spacing: var(--type-badge-spacing);
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-medium);
+         line-height: 1.2;
+         letter-spacing: 0.05em;
          text-transform: uppercase;
          
          &.level-minor {
@@ -677,9 +677,9 @@
       margin: 20px 0;
       
       .skill-options-title {
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
-         line-height: var(--type-heading-3-line);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.4;
          color: var(--text-primary);
          margin-bottom: 15px;
       }
@@ -752,17 +752,17 @@
       }
       
       .no-incident-text {
-         font-size: var(--type-heading-2-size);
-         font-weight: var(--type-heading-2-weight);
-         line-height: var(--type-heading-2-line);
+         font-size: var(--font-2xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
          color: var(--text-primary);
          margin-bottom: 8px;
       }
       
       .no-incident-desc {
          color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+         font-size: var(--font-md);
+         line-height: 1.5;
       }
    }
 </style>

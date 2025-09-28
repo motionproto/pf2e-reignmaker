@@ -430,9 +430,9 @@
          
          .card-name {
             color: var(--text-primary);
-            font-size: var(--type-heading-1-size);
-            font-weight: var(--type-heading-1-weight);
-            line-height: var(--type-heading-1-line);
+            font-size: var(--font-3xl);
+            font-weight: var(--font-weight-semibold);
+            line-height: 1.3;
             text-align: left;
             display: flex;
             align-items: center;
@@ -446,10 +446,10 @@
                background: rgba(34, 197, 94, 0.15);
                border: 1px solid rgba(34, 197, 94, 0.3);
                border-radius: var(--radius-sm);
-               font-size: var(--type-badge-size);
-               font-weight: var(--type-badge-weight);
-               line-height: var(--type-badge-line);
-               letter-spacing: var(--type-badge-spacing);
+               font-size: var(--font-xs);
+               font-weight: var(--font-weight-medium);
+               line-height: 1.2;
+               letter-spacing: 0.05em;
                color: var(--color-green);
                text-transform: uppercase;
                
@@ -466,10 +466,10 @@
                background: rgba(251, 191, 36, 0.15);
                border: 1px solid rgba(251, 191, 36, 0.3);
                border-radius: var(--radius-sm);
-               font-size: var(--type-badge-size);
-               font-weight: var(--type-badge-weight);
-               line-height: var(--type-badge-line);
-               letter-spacing: var(--type-badge-spacing);
+               font-size: var(--font-xs);
+               font-weight: var(--font-weight-medium);
+               line-height: 1.2;
+               letter-spacing: 0.05em;
                color: var(--color-amber);
                text-transform: none;
                
@@ -481,8 +481,8 @@
          
          .card-brief {
             color: var(--text-secondary);
-            font-size: var(--type-body-size);
-            line-height: var(--type-body-line);
+            font-size: var(--font-md);
+            line-height: 1.5;
             opacity: 0.8;
             text-align: left;
             display: block;
@@ -507,8 +507,8 @@
       .card-full-description {
          margin: 0 0 16px 0;
          color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+         font-size: var(--font-md);
+         line-height: 1.5;
          text-align: left;
       }
    }
@@ -539,9 +539,9 @@
    .section-title {
       margin: 0 0 12px 0;
       color: var(--text-primary);
-      font-size: var(--type-heading-2-size);
-      font-weight: var(--type-heading-2-weight);
-      line-height: var(--type-heading-2-line);
+      font-size: var(--font-2xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
       opacity: 0.8;
    }
    
@@ -560,8 +560,8 @@
       border: 1px solid rgba(59, 130, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--color-blue-light);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
+      font-size: var(--font-md);
+      line-height: 1.5;
       display: flex;
       align-items: center;
       gap: 8px;
@@ -591,8 +591,8 @@
       }
       
       span {
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+         font-size: var(--font-md);
+         line-height: 1.5;
       }
       
       &.special-section {

@@ -42,16 +42,16 @@
 <style lang="scss">
   .structure-card-effects {
     .effect-label {
-      font-size: var(--font-xs);
+      font-size: var(--font-s);
       font-weight: 600;
       color: var(--text-secondary);
       margin-bottom: 0.25rem;
-      text-transform: uppercase;
+
     }
     
     .effect-text {
       margin: 0.25rem 0 0.5rem 0;
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       color: var(--text-primary);
       line-height: 1.4;
     }

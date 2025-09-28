@@ -92,9 +92,9 @@
   }
   
   .outcomes-title {
-    font-size: var(--type-heading-2-size);
-    font-weight: var(--type-heading-2-weight);
-    line-height: var(--type-heading-2-line);
+    font-size: var(--font-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.3;
     color: var(--text-primary);
     margin-bottom: 12px;
     display: flex;
@@ -210,17 +210,17 @@
   }
   
   .outcome-label {
-    font-size: var(--type-label-size);
-    font-weight: var(--type-label-weight);
-    line-height: var(--type-label-line);
-    letter-spacing: var(--type-label-spacing);
+    font-size: var(--font-xs);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.4;
+    letter-spacing: 0.025em;
     text-transform: uppercase;
     margin-bottom: 2px;
   }
   
   .outcome-description {
     color: var(--text-secondary);
-    font-size: var(--type-body-size);
-    line-height: var(--type-body-line);
+    font-size: var(--font-md);
+    line-height: 1.5;
   }
 </style>

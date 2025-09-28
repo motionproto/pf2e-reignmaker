@@ -448,8 +448,6 @@
 </div>
 
 <style lang="scss">
-   @import '../../../styles/typography.css';
-   
    .upkeep-phase {
       display: flex;
       flex-direction: column;
@@ -565,10 +563,41 @@
       font-size: 20px;
    }
    
-   // Override margins for buttons in the cards
+   // Button styles (replacing typography.css btn classes)
    .phase-card .btn {
       margin: 0 20px 16px 20px;
       width: calc(100% - 40px); // Full width minus margins
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.025em;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      
+      // Secondary button styles
+      &.btn-secondary {
+         background: var(--btn-secondary-bg);
+         border-color: var(--border-medium);
+         color: var(--text-primary);
+         
+         &:hover:not(:disabled) {
+            background: var(--btn-secondary-hover);
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+         }
+         
+         &:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
+         }
+      }
    }
    
    .card-content {
@@ -659,8 +688,8 @@
       p {
          margin: 0;
          color: var(--text-secondary);
-         font-size: var(--type-body-size);
-         line-height: var(--type-body-line);
+         font-size: var(--font-md);
+         line-height: 1.5;
       }
       
       &.warning {
@@ -710,8 +739,8 @@
       
       .stat-label {
          font-size: var(--font-xs);
-         font-weight: var(--type-label-weight);
-         letter-spacing: var(--type-label-spacing);
+         font-weight: var(--font-weight-medium);
+         letter-spacing: 0.025em;
          color: var(--text-tertiary);
          text-transform: uppercase;
       }
@@ -757,9 +786,9 @@
       }
       
       .stat-label {
-         font-size: var(--type-label-size);
-         font-weight: var(--type-label-weight);
-         letter-spacing: var(--type-label-spacing);
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-medium);
+         letter-spacing: 0.025em;
          color: var(--text-tertiary);
       }
       

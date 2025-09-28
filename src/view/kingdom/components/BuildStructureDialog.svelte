@@ -466,7 +466,7 @@
     h2 {
       margin: 0;
       color: var(--color-amber);
-      font-size: var(--type-heading-2-size);
+      font-size: var(--font-2xl);
     }
     
     .header-controls {
@@ -482,7 +482,7 @@
       
       label {
         color: var(--text-secondary);
-        font-size: var(--type-body-size);
+        font-size: var(--font-md);
       }
       
       .settlement-dropdown {
@@ -491,7 +491,7 @@
         border: 1px solid var(--border-default);
         border-radius: var(--radius-sm);
         color: var(--text-primary);
-        font-size: var(--type-body-size);
+        font-size: var(--font-md);
         cursor: pointer;
         
         &:hover {
@@ -565,7 +565,7 @@
     h3 {
       margin: 0 0 15px 0;
       color: var(--text-primary);
-      font-size: var(--type-heading-2-size);
+      font-size: var(--font-2xl);
     }
   }
   
@@ -595,20 +595,20 @@
     }
     
     .settlement-name {
-      font-size: var(--type-body-size);
-      font-weight: var(--type-weight-semibold);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin-bottom: 5px;
     }
     
     .settlement-tier {
-      font-size: var(--type-small-size);
+      font-size: var(--font-sm);
       color: var(--color-amber);
       margin-bottom: 5px;
     }
     
     .settlement-structures {
-      font-size: var(--type-small-size);
+      font-size: var(--font-sm);
       color: var(--text-secondary);
     }
   }
@@ -629,10 +629,10 @@
     
     p {
       margin: 0 0 10px 0;
-      font-size: var(--type-body-size);
+      font-size: var(--font-md);
       
       &.hint {
-        font-size: var(--type-small-size);
+        font-size: var(--font-sm);
         color: var(--text-tertiary);
       }
     }
@@ -674,7 +674,7 @@
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
-      font-size: var(--type-body-size);
+      font-size: var(--font-md);
       
       &::placeholder {
         color: var(--text-tertiary);
@@ -720,7 +720,7 @@
       margin: 0 0 8px 0;
       
       &.hint {
-        font-size: var(--type-small-size);
+        font-size: var(--font-sm);
         color: var(--text-tertiary);
       }
     }
@@ -743,7 +743,7 @@
     border: none;
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: var(--type-body-size);
+    font-size: var(--font-md);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -762,12 +762,12 @@
     .category-name {
       flex: 1;
       text-align: left;
-      font-weight: var(--type-weight-semibold);
+      font-weight: var(--font-weight-semibold);
     }
     
     .category-count {
       color: var(--text-secondary);
-      font-size: var(--type-small-size);
+      font-size: var(--font-sm);
     }
   }
   
@@ -800,7 +800,7 @@
     }
     
     .structure-item-name {
-      font-size: var(--type-small-size);
+      font-size: var(--font-sm);
     }
     
     .structure-item-tier {
@@ -835,7 +835,7 @@
     
     p {
       margin: 0;
-      font-size: var(--type-body-size);
+      font-size: var(--font-md);
     }
   }
   
@@ -865,8 +865,8 @@
   .structure-title {
     margin: 0 0 20px 0;
     color: var(--color-amber);
-    font-size: var(--type-heading-1-size);
-    font-weight: var(--type-heading-1-weight);
+    font-size: var(--font-3xl);
+    font-weight: var(--font-weight-semibold);
   }
   
   .cost-section,
@@ -879,8 +879,8 @@
     h3 {
       margin: 0 0 15px 0;
       color: var(--text-primary);
-      font-size: var(--type-body-size);
-      font-weight: var(--type-weight-semibold);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       font-size: 12px;
@@ -907,7 +907,7 @@
       
       .resource-status {
         color: var(--color-red);
-        font-size: var(--type-small-size);
+        font-size: var(--font-sm);
       }
     }
     
@@ -929,7 +929,7 @@
     }
     
     .resource-cost {
-      font-weight: var(--type-weight-semibold);
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
     }
   }
@@ -958,7 +958,7 @@
     padding-top: 10px;
     border-top: 1px solid var(--border-default);
     color: var(--text-secondary);
-    font-size: var(--type-small-size);
+    font-size: var(--font-sm);
     line-height: 1.5;
   }
   
@@ -973,7 +973,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 15px;
-    font-size: var(--type-small-size);
+    font-size: var(--font-sm);
     
     &.ready {
       background: rgba(34, 197, 94, 0.1);
@@ -999,8 +999,8 @@
     border: 1px solid var(--color-amber);
     border-radius: var(--radius-md);
     color: var(--color-gray-900);
-    font-size: var(--type-body-size);
-    font-weight: var(--type-weight-semibold);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
     transition: all 0.2s ease;
     

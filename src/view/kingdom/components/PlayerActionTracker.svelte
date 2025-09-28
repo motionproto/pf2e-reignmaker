@@ -92,7 +92,7 @@
   
   .player-name {
     color: var(--text-secondary);
-    font-size: var(--type-body-size);
+    font-size: var(--font-md);
     min-width: 100px;
   }
   

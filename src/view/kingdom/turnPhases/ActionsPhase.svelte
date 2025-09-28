@@ -750,9 +750,9 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: var(--type-heading-2-size);
-    font-weight: var(--type-heading-2-weight);
-    line-height: var(--type-heading-2-line);
+    font-size: var(--font-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.3;
     color: var(--text-primary);
 
     i {
@@ -769,8 +769,8 @@
 
     label {
       color: var(--text-secondary);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
+      font-size: var(--font-md);
+      line-height: 1.5;
       white-space: nowrap;
     }
 
@@ -781,7 +781,7 @@
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
-      font-size: var(--type-body-size);
+      font-size: var(--font-md);
 
       &:hover:not(:disabled) {
         border-color: var(--border-strong);
@@ -807,8 +807,8 @@
 
     .counter-text {
       color: var(--text-secondary);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
+      font-size: var(--font-md);
+      line-height: 1.5;
     }
 
     .counter-dots {
@@ -833,8 +833,8 @@
 
     .counter-remaining {
       color: var(--text-primary);
-      font-size: var(--type-body-size);
-      font-weight: var(--type-weight-semibold);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
     }
   }
 
@@ -863,17 +863,17 @@
 
     .category-name {
       margin: 0 0 5px 0;
-      font-size: var(--type-heading-1-size);
-      font-weight: var(--type-heading-1-weight);
-      line-height: var(--type-heading-1-line);
+      font-size: var(--font-3xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
       color: var(--color-amber);
     }
 
     .category-description {
       margin: 0;
       color: var(--text-secondary);
-      font-size: var(--type-body-size);
-      line-height: var(--type-body-line);
+      font-size: var(--font-md);
+      line-height: 1.5;
     }
   }
 

@@ -336,8 +336,8 @@
          display: flex;
          align-items: center;
          gap: 10px;
-         font-size: var(--type-heading-3-size);
-         font-weight: var(--type-heading-3-weight);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-semibold);
          
          i {
             font-size: 20px;
@@ -350,7 +350,7 @@
       
       .resolution-header-right {
          color: var(--text-secondary);
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
          font-weight: normal;
       }
    }
@@ -363,7 +363,7 @@
       
       .resolution-effect {
          color: var(--text-primary);
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
          line-height: 1.6;
          padding: 14px 16px;
          background: rgba(255, 255, 255, 0.03);
@@ -389,18 +389,18 @@
          background: rgba(0, 0, 0, 0.15);
          border: 1px solid var(--border-subtle);
          border-radius: var(--radius-sm);
-         font-size: var(--type-body-size);
+         font-size: var(--font-md);
          
          .change-label {
             color: var(--text-secondary);
-            font-weight: var(--type-weight-medium);
-            font-size: calc(var(--type-body-size) * 0.95);
+            font-weight: var(--font-weight-medium);
+            font-size: calc(var(--font-md) * 0.95);
          }
          
          .change-value {
-            font-weight: var(--type-weight-bold);
+            font-weight: var(--font-weight-bold);
             font-family: var(--font-code, monospace);
-            font-size: calc(var(--type-body-size) * 1.1);
+            font-size: calc(var(--font-md) * 1.1);
             padding: 2px 6px;
             border-radius: 3px;
             

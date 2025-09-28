@@ -297,8 +297,8 @@
          margin: 0 0 15px 0;
          color: var(--text-primary);
          font-size: var(--font-xl);  /* 20px */
-         font-weight: var(--type-weight-semibold);
-         line-height: var(--type-leading-snug);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
       }
    }
    
@@ -330,8 +330,8 @@
       
       .production-title {
          font-size: var(--font-2xl);
-         font-weight: var(--type-weight-semibold);
-         line-height: var(--type-leading-relaxed);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.5;
          color: var(--text-primary);
       }
       
@@ -408,15 +408,15 @@
       
       .income-title {
          font-size: var(--font-xl);
-         font-weight: var(--type-weight-semibold);
-         line-height: var(--type-leading-relaxed);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.5;
          color: var(--text-primary);
          flex: 1;
       }
       
       .income-amount {
          font-size: var(--font-2xl);
-         font-weight: var(--type-weight-semibold);
+         font-weight: var(--font-weight-semibold);
       }
    }
    
