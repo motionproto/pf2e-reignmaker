@@ -208,6 +208,7 @@
       color: var(--text-primary);
       font-weight: var(--font-weight-medium);
       line-height: 1.4;
+      white-space: pre-line;
     }
     
     .effect-item {
@@ -230,15 +231,15 @@
       padding: 0.5rem;
       background: rgba(251, 191, 36, 0.05);
       border-left: 2px solid var(--color-amber);
-      font-size: var(--font-xs);
-      color: var(--text-secondary);
+      font-size: var(--font-md);
+      color: var(--text-accent);
       display: flex;
       align-items: flex-start;
-      gap: 0.5rem;
+      gap: 0.75rem;
       
       i {
         color: var(--color-amber);
-        font-size: var(--font-xs);
+        font-size: var(--font-md);
         margin-top: 0.125rem;
       }
     }

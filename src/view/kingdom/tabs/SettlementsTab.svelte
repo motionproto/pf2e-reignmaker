@@ -2,6 +2,7 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import type { Settlement } from '../../../models/Settlement';
+   import TabHeader from '../components/TabHeader.svelte';
    
    // Selected settlement for details view
    let selectedSettlement: Settlement | null = null;
@@ -139,8 +140,7 @@
 </script>
 
 <div class="settlements-tab">
-   <div class="settlements-header">
-      <h2>Settlement Management</h2>
+   <TabHeader title="Settlement Management">
       <div class="settlements-summary">
          <div class="summary-card">
             <i class="fas fa-city"></i>
@@ -174,7 +174,7 @@
             </div>
          </div>
       </div>
-   </div>
+   </TabHeader>
    
    <div class="settlements-container">
       <!-- Left Panel: Settlement List -->
@@ -431,13 +431,6 @@
       flex-direction: column;
       gap: 1rem;
       height: 100%;
-   }
-   
-   .settlements-header {
-      h2 {
-         margin: 0 0 1rem 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
    }
    
    .settlements-summary {

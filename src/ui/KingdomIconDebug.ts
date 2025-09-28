@@ -162,8 +162,8 @@ function createKingdomIconElement(actorId: string): HTMLElement {
     const link = document.createElement('a');
     link.classList.add('kingdom-icon-debug');
     link.style.cssText = 'margin-left: 8px; color: #4a90e2; cursor: pointer;';
-    link.setAttribute('data-tooltip', 'Open Kingdom Sheet');
-    link.title = 'Open Kingdom Sheet';
+    link.setAttribute('data-tooltip', 'ReignMaker');
+    link.title = 'ReignMaker';
     
     const icon = document.createElement('i');
     icon.classList.add('fa-solid', 'fa-chess-rook');

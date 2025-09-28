@@ -13,7 +13,7 @@ import { KingdomApp } from '../view/kingdom/KingdomApp';
 export function createKingdomIcon(actorId: string): HTMLElement {
     const link = document.createElement('a');
     link.classList.add('create-button');
-    link.setAttribute('data-tooltip', 'Open Kingdom Sheet');
+    link.setAttribute('data-tooltip', 'ReignMaker');
     
     const icon = document.createElement('i');
     icon.classList.add('fa-solid', 'fa-chess-rook');

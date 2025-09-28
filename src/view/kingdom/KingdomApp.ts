@@ -54,7 +54,7 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       buttons.unshift({
          class: 'refresh',
          icon: 'fas fa-sync',
-         title: 'Refresh Kingdom Data',
+         title: 'Refresh Kingdom',
          onPress: (): void => {
             // Trigger refresh in the app shell
             this.svelte.appShell?.$set({ refreshTrigger: Date.now() });

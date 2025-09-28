@@ -84,7 +84,7 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: px;
+    
    }
    
    .phase-content {

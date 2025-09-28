@@ -7,6 +7,15 @@
   import { getCategoryDisplayName } from '../../../models/Structure';
   import type { Settlement } from '../../../models/Settlement';
   import type { ResourceAllocation } from '../../../services/domain';
+  import CategoryItem from './structures/CategoryItem.svelte';
+  import StructureCard from './structures/StructureCard.svelte';
+  import {
+    getCategoryIcon,
+    extractCategorySkills,
+    groupStructuresByTier,
+    separateStructuresByType,
+    getUniqueCategories
+  } from '../utils/structure-presentation';
   
   export let show: boolean = false;
   
@@ -15,6 +24,7 @@
   // State
   let selectedStructureId: string = '';
   let selectedSettlementId: string = '';
+  let selectedCategory: string = '';
   let availableStructures: Structure[] = [];
   let settlements: Settlement[] = [];
   let selectedStructure: Structure | undefined;
@@ -23,8 +33,6 @@
   let errorMessage: string = '';
   let successMessage: string = '';
   let addToQueueOnly: boolean = false;
-  let searchQuery: string = '';
-  let expandedCategories: Set<string> = new Set();
   
   // Initialize structures service
   onMount(() => {
@@ -41,17 +49,70 @@
     errorMessage = '';
     successMessage = '';
     addToQueueOnly = false;
-    searchQuery = '';
-    // Expand all categories by default
-    expandedCategories = new Set();
+    selectedCategory = '';
   }
   
   // When settlement is selected, update available structures
   $: if (selectedSettlementId) {
     availableStructures = buildQueueService.getAvailableStructuresForSettlement(selectedSettlementId);
+    
+    // Auto-select first category
+    if (availableStructures.length > 0 && !selectedCategory) {
+      const firstCategory = getUniqueCategories(availableStructures)[0];
+      if (firstCategory) {
+        selectedCategory = firstCategory;
+      }
+    }
   } else {
     availableStructures = [];
   }
+  
+  // Separate structures by type
+  $: ({ skill: skillStructures, support: supportStructures } = separateStructuresByType(availableStructures));
+  
+  // Get categories for each type
+  $: skillCategories = getUniqueCategories(skillStructures);
+  $: supportCategories = getUniqueCategories(supportStructures);
+  
+  // Get all structures for selected category (both built and available)
+  $: categoryStructures = (() => {
+    if (!selectedCategory || !selectedSettlementId) return [];
+    
+    const settlement = settlements.find(s => s.id === selectedSettlementId);
+    if (!settlement) return [];
+    
+    // Get all structures in this category
+    const allInCategory = structuresService.getAllStructures()
+      .filter(s => {
+        if (!s.category) return false;
+        const displayName = getCategoryDisplayName(s.category);
+        return displayName === selectedCategory;
+      })
+      .sort((a, b) => (a.tier || 0) - (b.tier || 0));
+    
+    return allInCategory;
+  })();
+  
+  // Separate built and available structures
+  $: builtAndAvailable = (() => {
+    if (!selectedSettlementId) return { built: [], available: [] };
+    
+    const settlement = settlements.find(s => s.id === selectedSettlementId);
+    if (!settlement) return { built: [], available: [] };
+    
+    const built = categoryStructures.filter(s => 
+      settlement.structureIds.includes(s.id)
+    );
+    
+    const available = categoryStructures.filter(s => 
+      availableStructures.some(av => av.id === s.id)
+    );
+    
+    return { built, available };
+  })();
+  
+  // Group structures by tier
+  $: structuresByTier = groupStructuresByTier(categoryStructures);
   
   // When structure is selected, check affordability
   $: if (selectedStructureId) {
@@ -68,6 +129,21 @@
     selectedStructure = undefined;
     canAfford = false;
     missingResources = new Map();
+  }
+  
+  // Helper function to get skills for a category
+  function getSkillsForCategory(category: string): string[] {
+    const categoryStructures = availableStructures.filter(s => {
+      if (!s.category) return false;
+      const displayName = getCategoryDisplayName(s.category);
+      return displayName === category;
+    });
+    return extractCategorySkills(categoryStructures);
+  }
+  
+  // Check if a category is a skill structure category
+  function isSkillCategory(category: string): boolean {
+    return skillCategories.includes(category);
   }
   
   function handleClose() {
@@ -126,62 +202,25 @@
     }
   }
   
-  function formatResourceCost(cost: ResourceCost): string {
-    return Object.entries(cost)
-      .filter(([_, amount]) => amount && amount > 0)
-      .map(([resource, amount]) => {
-        const available = $kingdomState.resources.get(resource) || 0;
-        const missing = missingResources.get(resource) || 0;
-        const displayName = resource.charAt(0).toUpperCase() + resource.slice(1);
-        
-        if (missing > 0) {
-          return `<span class="missing-resource">${amount} ${displayName} (need ${missing} more)</span>`;
-        } else {
-          return `${amount} ${displayName}`;
-        }
-      })
-      .join(', ');
-  }
-  
-  // Group structures by category for better display
-  function groupStructuresByCategory(structures: Structure[]): Map<string, Structure[]> {
-    const grouped = new Map<string, Structure[]>();
-    
-    structures.forEach(structure => {
-      const category = structure.category || 'Other';
-      if (!grouped.has(category)) {
-        grouped.set(category, []);
-      }
-      grouped.get(category)!.push(structure);
-    });
-    
-    return grouped;
-  }
-  
-  // Filter structures based on search query
-  $: filteredStructures = searchQuery.trim() 
-    ? availableStructures.filter(s => 
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.effect?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : availableStructures;
-  
-  $: groupedStructures = groupStructuresByCategory(filteredStructures);
-  
-  // Toggle category expansion
-  function toggleCategory(category: string) {
-    if (expandedCategories.has(category)) {
-      expandedCategories.delete(category);
-    } else {
-      expandedCategories.add(category);
-    }
-    expandedCategories = new Set(expandedCategories);
+  // Handle build button click from structure card
+  function handleBuildStructure(structureId: string) {
+    selectedStructureId = structureId;
+    selectedStructure = structuresService.getStructure(structureId);
+    handleConfirm();
   }
   
   // Select a structure
   function selectStructure(structureId: string) {
     selectedStructureId = structureId;
     selectedStructure = structuresService.getStructure(structureId);
+  }
+  
+  // Select category
+  function selectCategory(category: string) {
+    selectedCategory = category;
+    // Clear structure selection when changing category
+    selectedStructureId = '';
+    selectedStructure = undefined;
   }
   
   // Get resource icon
@@ -201,7 +240,7 @@
   <div class="dialog-overlay" on:click={handleClose}>
     <div class="dialog-container" on:click|stopPropagation>
       <div class="dialog-header">
-        <h2>Build Structure</h2>
+        <h2><i class="fas fa-hammer"></i> Build Structure</h2>
         <div class="header-controls">
           <!-- Settlement Selector -->
           <div class="settlement-selector">
@@ -213,7 +252,7 @@
             >
               {#each settlements as settlement}
                 <option value={settlement.id}>
-                  {settlement.name} ({settlement.tier})
+                  {settlement.name} (Tier {settlement.tier})
                 </option>
               {/each}
             </select>
@@ -246,180 +285,147 @@
             <p class="hint">Establish a settlement first to build structures</p>
           </div>
         {:else if selectedSettlementId}
-          <div class="split-panel">
-            <!-- Left Panel: Structure List -->
-            <div class="structures-panel">
-              <div class="search-container">
-                <i class="fas fa-search search-icon"></i>
-                <input 
-                  type="text" 
-                  placeholder="Search structures..." 
-                  bind:value={searchQuery}
-                  class="search-input"
-                />
-                {#if searchQuery}
-                  <button 
-                    class="clear-search" 
-                    on:click={() => searchQuery = ''}
-                  >
-                    <i class="fas fa-times"></i>
-                  </button>
-                {/if}
-              </div>
-              
-              {#if filteredStructures.length === 0}
-                {#if searchQuery}
-                  <div class="no-results">
-                    No structures matching "{searchQuery}"
-                  </div>
-                {:else if availableStructures.length === 0}
-                  <div class="no-structures-message">
+          <div class="structures-container">
+            <!-- Left Panel: Category List -->
+            <div class="categories-panel">
+              <div class="categories-list">
+                {#if availableStructures.length === 0}
+                  <div class="no-structures-available">
                     <i class="fas fa-exclamation-circle"></i>
                     <p>No structures available</p>
                     <p class="hint">This settlement may have reached capacity or doesn't meet tier requirements</p>
                   </div>
-                {/if}
-              {:else}
-                <div class="structures-list">
-                  {#each Array.from(groupedStructures.entries()) as [category, structures]}
-                    <div class="category-section">
-                      <button 
-                        class="category-header" 
-                        on:click={() => toggleCategory(category)}
-                      >
-                        <i class="fas {expandedCategories.has(category) ? 'fa-chevron-down' : 'fa-chevron-right'} category-toggle"></i>
-                        <span class="category-name">{category}</span>
-                        <span class="category-count">({structures.length})</span>
-                      </button>
+                {:else}
+                  <!-- Skill Categories -->
+                  {#if skillCategories.length > 0}
+                    <div class="category-type-section">
+                      <h3 class="section-title">Skill Structures</h3>
                       
-                      {#if expandedCategories.has(category)}
-                        <div class="category-structures">
-                          {#each structures as structure}
-                            <button
-                              class="structure-item {selectedStructureId === structure.id ? 'selected' : ''}"
-                              on:click={() => selectStructure(structure.id)}
-                            >
-                              <div class="structure-item-name">{structure.name}</div>
-                              {#if structure.tier}
-                                <div class="structure-item-tier">T{structure.tier}</div>
-                              {/if}
-                            </button>
-                          {/each}
-                        </div>
-                      {/if}
-                    </div>
-                  {/each}
-                </div>
-              {/if}
-            </div>
-            
-            <!-- Right Panel: Structure Details -->
-            <div class="details-panel">
-              {#if selectedStructure}
-                <div class="structure-details">
-                  <!-- Thumbnail placeholder -->
-                  <div class="structure-thumbnail">
-                    <i class="fas fa-building"></i>
-                  </div>
-                  
-                  <h2 class="structure-title">{selectedStructure.name}</h2>
-                  
-                  <!-- Cost Breakdown -->
-                  <div class="cost-section">
-                    <h3>Construction Cost</h3>
-                    <div class="resource-list">
-                      {#each Object.entries(selectedStructure.constructionCost) as [resource, amount]}
-                        {#if amount && amount > 0}
-                          {@const available = $kingdomState.resources.get(resource) || 0}
-                          {@const missing = missingResources.get(resource) || 0}
-                          <div class="resource-item {missing > 0 ? 'insufficient' : 'sufficient'}">
-                            <i class="fas {getResourceIcon(resource)}"></i>
-                            <span class="resource-name">{resource.charAt(0).toUpperCase() + resource.slice(1)}</span>
-                            <span class="resource-cost">{amount}</span>
-                            {#if missing > 0}
-                              <span class="resource-status">(need {missing} more)</span>
-                            {:else}
-                              <span class="resource-status">✓</span>
-                            {/if}
-                          </div>
-                        {/if}
+                      {#each skillCategories as category}
+                        {@const skills = getSkillsForCategory(category)}
+                        <CategoryItem 
+                          {category}
+                          {skills}
+                          isSelected={selectedCategory === category}
+                          on:click={() => selectCategory(category)}
+                        />
                       {/each}
                     </div>
-                  </div>
+                  {/if}
                   
-                  <!-- Benefits -->
-                  <div class="benefits-section">
-                    <h3>Benefits</h3>
-                    <div class="benefits-list">
-                      {#if selectedStructure.effects.goldPerTurn}
-                        <div class="benefit-item">
-                          <i class="fas fa-coins"></i>
-                          <span>+{selectedStructure.effects.goldPerTurn} Gold per turn</span>
-                        </div>
-                      {/if}
-                      {#if selectedStructure.effects.unrestReductionPerTurn}
-                        <div class="benefit-item">
-                          <i class="fas fa-dove"></i>
-                          <span>-{selectedStructure.effects.unrestReductionPerTurn} Unrest per turn</span>
-                        </div>
-                      {/if}
-                      {#if selectedStructure.effects.famePerTurn}
-                        <div class="benefit-item">
-                          <i class="fas fa-star"></i>
-                          <span>+{selectedStructure.effects.famePerTurn} Fame per turn</span>
-                        </div>
-                      {/if}
-                      {#if selectedStructure.effects.foodStorage}
-                        <div class="benefit-item">
-                          <i class="fas fa-warehouse"></i>
-                          <span>+{selectedStructure.effects.foodStorage} Food Storage</span>
-                        </div>
-                      {/if}
-                      {#if selectedStructure.effects.armySupportBonus}
-                        <div class="benefit-item">
-                          <i class="fas fa-shield-alt"></i>
-                          <span>+{selectedStructure.effects.armySupportBonus} Army Support</span>
-                        </div>
-                      {/if}
-                      {#if selectedStructure.effect}
-                        <div class="benefit-description">
-                          {selectedStructure.effect}
-                        </div>
-                      {/if}
+                  <!-- Support Categories -->
+                  {#if supportCategories.length > 0}
+                    <div class="category-type-section">
+                      <h3 class="section-title">Support Structures</h3>
+                      
+                      {#each supportCategories as category}
+                        <CategoryItem 
+                          {category}
+                          isSelected={selectedCategory === category}
+                          showSkills={false}
+                          on:click={() => selectCategory(category)}
+                        />
+                      {/each}
                     </div>
+                  {/if}
+                {/if}
+              </div>
+            </div>
+            
+            <!-- Right Panel: Structure Selection and Details -->
+            <div class="selection-panel">
+              {#if selectedCategory && categoryStructures.length > 0}
+                <div class="selection-content">
+                  <div class="selection-header">
+                    <h2>
+                      <i class="fas {getCategoryIcon(selectedCategory)}"></i>
+                      {selectedCategory}
+                    </h2>
+                    {#if isSkillCategory(selectedCategory)}
+                      {@const skills = getSkillsForCategory(selectedCategory)}
+                      {#if skills.length > 0}
+                        <p class="category-skills-label">
+                          {skills.join(', ')}
+                        </p>
+                      {/if}
+                    {/if}
                   </div>
                   
-                  <!-- Build Button -->
-                  <div class="action-section">
-                    {#if canAfford}
-                      <div class="build-status ready">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Resources available - ready to build</span>
+                  <div class="structures-grid">
+                    <!-- Show built structures as simple headers -->
+                    {#each builtAndAvailable.built as structure}
+                      <div class="structure-built">
+                        <span class="structure-built-name">{structure.name}</span>
+                        <span class="structure-built-status">
+                          <i class="fas fa-check"></i>
+                          Built
+                        </span>
                       </div>
-                    {:else}
-                      <div class="build-status queue">
-                        <i class="fas fa-hourglass-half"></i>
-                        <span>Will be added to build queue</span>
-                      </div>
-                    {/if}
+                    {/each}
                     
-                    <button 
-                      class="build-button" 
-                      on:click={handleConfirm}
-                      disabled={!!successMessage}
-                    >
-                      {#if addToQueueOnly && !canAfford}
-                        Add to Build Queue
-                      {:else}
-                        Begin Construction
-                      {/if}
-                    </button>
+                    <!-- Show available structures as full cards with build buttons -->
+                    {#each builtAndAvailable.available as structure}
+                      {@const structureMissing = new Map()}
+                      {@const available = $kingdomState.resources}
+                      {#each Object.entries(structure.constructionCost) as [resource, needed]}
+                        {#if needed && needed > 0}
+                          {@const avail = available.get(resource) || 0}
+                          {#if avail < needed}
+                            {@const _ = structureMissing.set(resource, needed - avail)}
+                          {/if}
+                        {/if}
+                      {/each}
+                      {@const structureCanAfford = structureMissing.size === 0}
+                      
+                      <div class="structure-card-with-build">
+                        <div 
+                          class="structure-card-wrapper {selectedStructureId === structure.id ? 'selected' : ''}"
+                          on:click={() => selectStructure(structure.id)}
+                        >
+                          <StructureCard 
+                            {structure} 
+                            tier={structure.tier}
+                          />
+                        </div>
+                        
+                        <!-- Build Button in Card -->
+                        <div class="card-build-section">
+                          {#if !structureCanAfford}
+                            <span class="build-queue">
+                              <i class="fas fa-hourglass-half"></i>
+                              Queue
+                            </span>
+                          {/if}
+                          
+                          <button 
+                            class="card-cancel-button"
+                            on:click={handleClose}
+                          >
+                            Cancel
+                          </button>
+                          
+                          <button 
+                            class="card-build-button" 
+                            on:click={() => handleBuildStructure(structure.id)}
+                            disabled={!!successMessage}
+                          >
+                            <i class="fas fa-hammer"></i>
+                            Build
+                          </button>
+                        </div>
+                      </div>
+                    {/each}
                   </div>
                 </div>
+              {:else if selectedCategory}
+                <div class="empty-selection">
+                  <i class="fas fa-building"></i>
+                  <p>No structures available in this category</p>
+                </div>
               {:else}
-                <div class="no-selection">
+                <div class="empty-selection">
                   <i class="fas fa-hand-pointer"></i>
-                  <p>Select a structure to view details</p>
+                  <p>Select a category to view structures</p>
                 </div>
               {/if}
             </div>
@@ -450,7 +456,7 @@
     border: 1px solid var(--border-strong);
     max-width: 1200px;
     width: 90%;
-    max-height: 80vh;
+    height: 80vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -462,11 +468,19 @@
     align-items: center;
     padding: 15px 20px;
     border-bottom: 1px solid var(--border-medium);
+    background: linear-gradient(135deg, rgba(31, 31, 35, 0.8), rgba(15, 15, 17, 0.6));
     
     h2 {
       margin: 0;
       color: var(--color-amber);
       font-size: var(--font-2xl);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      
+      i {
+        font-size: var(--font-xl);
+      }
     }
     
     .header-controls {
@@ -483,24 +497,28 @@
       label {
         color: var(--text-secondary);
         font-size: var(--font-md);
+        white-space: nowrap;
       }
       
       .settlement-dropdown {
-        padding: 6px 10px;
-        background: rgba(0, 0, 0, 0.3);
+        padding: 6px 12px;
+        background: rgba(0, 0, 0, 0.4);
         border: 1px solid var(--border-default);
         border-radius: var(--radius-sm);
         color: var(--text-primary);
         font-size: var(--font-md);
         cursor: pointer;
+        min-width: 200px;
         
         &:hover {
           border-color: var(--border-strong);
+          background: rgba(0, 0, 0, 0.5);
         }
         
         &:focus {
           outline: none;
           border-color: var(--color-amber);
+          box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
         }
       }
     }
@@ -531,13 +549,15 @@
     flex: 1;
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
   }
   
   .error-message,
   .success-message {
     padding: 12px;
     border-radius: var(--radius-md);
-    margin-bottom: 20px;
+    margin: 15px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -559,72 +579,19 @@
     color: var(--color-green);
   }
   
-  .selection-step {
-    margin-bottom: 30px;
-    
-    h3 {
-      margin: 0 0 15px 0;
-      color: var(--text-primary);
-      font-size: var(--font-2xl);
-    }
-  }
-  
-  .settlement-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-  }
-  
-  .settlement-card {
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    padding: 15px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.5);
-      border-color: var(--border-strong);
-    }
-    
-    &.selected {
-      background: rgba(251, 191, 36, 0.1);
-      border-color: var(--color-amber);
-    }
-    
-    .settlement-name {
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
-      margin-bottom: 5px;
-    }
-    
-    .settlement-tier {
-      font-size: var(--font-sm);
-      color: var(--color-amber);
-      margin-bottom: 5px;
-    }
-    
-    .settlement-structures {
-      font-size: var(--font-sm);
-      color: var(--text-secondary);
-    }
-  }
-  
   .no-settlements {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    height: 100%;
     color: var(--text-secondary);
     
     i {
       font-size: 48px;
       color: var(--color-amber);
       margin-bottom: 20px;
+      opacity: 0.5;
     }
     
     p {
@@ -638,82 +605,41 @@
     }
   }
   
-  // Split panel layout
-  .split-panel {
+  // Main container with left/right split
+  .structures-container {
     display: flex;
-    height: calc(80vh - 120px); // Subtract header height
-    gap: 0;
+    flex: 1;
+    min-height: 0;
   }
   
-  // Left panel - Structure list
-  .structures-panel {
-    width: 350px;
+  // Left panel - Categories
+  .categories-panel {
+    flex: 0 0 340px;
+    background: rgba(0, 0, 0, 0.2);
     border-right: 1px solid var(--border-default);
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .categories-list {
     display: flex;
     flex-direction: column;
+    gap: 1rem;
   }
   
-  .search-container {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-default);
-    position: relative;
-    
-    .search-icon {
-      position: absolute;
-      left: 25px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-secondary);
-      pointer-events: none;
-    }
-    
-    .search-input {
-      width: 100%;
-      padding: 8px 35px 8px 35px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-size: var(--font-md);
-      
-      &::placeholder {
-        color: var(--text-tertiary);
-      }
-      
-      &:focus {
-        outline: none;
-        border-color: var(--color-amber);
-        background: rgba(0, 0, 0, 0.5);
-      }
-    }
-    
-    .clear-search {
-      position: absolute;
-      right: 25px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 5px;
-      
-      &:hover {
-        color: var(--text-primary);
-      }
-    }
-  }
-  
-  .no-results,
-  .no-structures-message {
-    padding: 40px 20px;
+  .no-structures-available {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+    padding: 2rem 1rem;
     color: var(--text-secondary);
     
     i {
       font-size: 32px;
       color: var(--text-tertiary);
       margin-bottom: 15px;
+      opacity: 0.5;
     }
     
     p {
@@ -726,253 +652,265 @@
     }
   }
   
-  .structures-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
-  
-  .category-section {
-    margin-bottom: 5px;
-  }
-  
-  .category-header {
-    width: 100%;
-    padding: 10px 15px;
-    background: rgba(0, 0, 0, 0.3);
-    border: none;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: var(--font-md);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      background: rgba(0, 0, 0, 0.4);
-    }
-    
-    .category-toggle {
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    
-    .category-name {
-      flex: 1;
-      text-align: left;
+  .category-type-section {
+    .section-title {
+      margin: 0 0 0.75rem 0;
+      color: var(--color-amber);
+      font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.8;
+    }
+  }
+  
+  // Right panel - Structure selection
+  .selection-panel {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  .selection-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .selection-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-default);
+    
+    h2 {
+      margin: 0 0 0.5rem 0;
+      color: var(--color-amber);
+      font-size: var(--font-2xl);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
     
-    .category-count {
+    .category-skills-label {
+      margin: 0;
       color: var(--text-secondary);
       font-size: var(--font-sm);
     }
   }
   
-  .category-structures {
-    padding: 5px 0 5px 20px;
+  .structures-grid {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
-  .structure-item {
-    width: calc(100% - 10px);
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
+  // Removed tier-section styles as we're not using tier grouping
+  
+  // Structure card wrapper for selection
+  .structure-card-wrapper {
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 3px;
-    transition: all 0.15s ease;
+    position: relative;
+    transition: all 0.2s ease;
+    
+    &.selected {
+      ::v-deep(.structure-card) {
+        border-color: var(--color-amber);
+        background: rgba(251, 191, 36, 0.1);
+        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+      }
+    }
+    
+    &:hover:not(.selected) {
+      transform: translateY(-2px);
+      
+      ::v-deep(.structure-card) {
+        border-color: var(--border-strong);
+      }
+    }
+  }
+  
+  .structure-tile {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
     
     &:hover {
-      background: rgba(0, 0, 0, 0.4);
-      border-color: var(--border-default);
+      background: rgba(0, 0, 0, 0.5);
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
     }
     
     &.selected {
       background: rgba(251, 191, 36, 0.15);
       border-color: var(--color-amber);
+      box-shadow: 0 0 0 1px var(--color-amber) inset;
     }
     
-    .structure-item-name {
-      font-size: var(--font-sm);
-    }
-    
-    .structure-item-tier {
-      font-size: var(--font-xs);
-      color: var(--text-secondary);
-      background: rgba(255, 255, 255, 0.1);
-      padding: 2px 5px;
-      border-radius: 3px;
-    }
-  }
-  
-  // Right panel - Details
-  .details-panel {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-  }
-  
-  .no-selection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--text-tertiary);
-    
-    i {
-      font-size: 48px;
-      margin-bottom: 20px;
-      opacity: 0.5;
-    }
-    
-    p {
-      margin: 0;
+    .structure-name {
       font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
     }
-  }
-  
-  .structure-details {
-    max-width: 600px;
-    margin: 0 auto;
-  }
-  
-  .structure-thumbnail {
-    width: 120px;
-    height: 120px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px solid var(--border-default);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
     
-    i {
-      font-size: 48px;
-      color: var(--color-amber);
-      opacity: 0.5;
+    .structure-cost {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      
+      .cost-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-sm);
+        font-size: var(--font-sm);
+        color: var(--text-secondary);
+        
+        &.insufficient {
+          background: rgba(239, 68, 68, 0.1);
+          color: var(--color-red);
+        }
+        
+        i {
+          font-size: var(--font-xs);
+          opacity: 0.8;
+        }
+      }
     }
   }
   
-  .structure-title {
-    margin: 0 0 20px 0;
-    color: var(--color-amber);
-    font-size: var(--font-3xl);
-    font-weight: var(--font-weight-semibold);
-  }
-  
-  .cost-section,
-  .benefits-section {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-md);
-    padding: 15px;
-    margin-bottom: 20px;
+  // Structure details (when selected)
+  .structure-details {
+    background: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid var(--border-default);
+    padding: 1.5rem;
     
     h3 {
-      margin: 0 0 15px 0;
-      color: var(--text-primary);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-semibold);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      font-size: 12px;
+      margin: 0 0 1rem 0;
+      color: var(--color-amber);
+      font-size: var(--font-xl);
     }
-  }
-  
-  .resource-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .resource-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: var(--radius-sm);
     
-    &.insufficient {
-      background: rgba(239, 68, 68, 0.05);
-      border: 1px solid rgba(239, 68, 68, 0.2);
+    .detail-section {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
       
-      .resource-status {
-        color: var(--color-red);
+      h4 {
+        margin: 0 0 0.75rem 0;
+        color: var(--text-primary);
+        font-size: var(--font-sm);
+        font-weight: var(--font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+    
+    .resource-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .resource-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-sm);
+      
+      &.insufficient {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        
+        .resource-status {
+          color: var(--color-red);
+        }
+      }
+      
+      &.sufficient {
+        .resource-status {
+          color: var(--color-green);
+        }
+      }
+      
+      i {
+        color: var(--color-amber);
+        width: 16px;
+        text-align: center;
+      }
+      
+      .resource-name {
+        flex: 1;
+        color: var(--text-primary);
         font-size: var(--font-sm);
       }
-    }
-    
-    &.sufficient {
+      
+      .resource-cost {
+        font-weight: var(--font-weight-semibold);
+        color: var(--text-primary);
+      }
+      
       .resource-status {
-        color: var(--color-green);
+        font-size: var(--font-xs);
       }
     }
     
-    i {
-      color: var(--color-amber);
-      width: 20px;
-      text-align: center;
+    .benefits-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
     
-    .resource-name {
-      flex: 1;
-      color: var(--text-primary);
+    .benefit-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      
+      i {
+        color: var(--color-green);
+        width: 16px;
+        text-align: center;
+      }
     }
     
-    .resource-cost {
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
+    .benefit-description {
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      line-height: 1.5;
     }
-  }
-  
-  .benefits-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .benefit-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--text-secondary);
-    
-    i {
-      color: var(--color-green);
-      width: 20px;
-      text-align: center;
-    }
-  }
-  
-  .benefit-description {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-default);
-    color: var(--text-secondary);
-    font-size: var(--font-sm);
-    line-height: 1.5;
   }
   
   .action-section {
-    margin-top: 30px;
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
   .build-status {
-    padding: 10px;
+    padding: 0.75rem;
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 0.5rem;
     font-size: var(--font-sm);
     
     &.ready {
@@ -988,13 +926,12 @@
     }
     
     i {
-      font-size: 16px;
+      font-size: 14px;
     }
   }
   
   .build-button {
-    width: 100%;
-    padding: 12px 20px;
+    padding: 0.75rem 1.5rem;
     background: var(--color-amber);
     border: 1px solid var(--color-amber);
     border-radius: var(--radius-md);
@@ -1013,6 +950,144 @@
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+  }
+  
+  .empty-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    color: var(--text-tertiary);
+    
+    i {
+      font-size: 48px;
+      margin-bottom: 1rem;
+      opacity: 0.3;
+    }
+    
+    p {
+      margin: 0;
+      font-size: var(--font-md);
+    }
+  }
+  
+  // Built structures - simple display
+  .structure-built {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    opacity: 0.7;
+    
+    .structure-built-name {
+      font-size: var(--font-md);
+      color: var(--text-secondary);
+    }
+    
+    .structure-built-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: var(--font-sm);
+      color: var(--color-green);
+      opacity: 0.8;
+      
+      i {
+        font-size: var(--font-sm);
+      }
+    }
+  }
+  
+  // Available structures with build button
+  .structure-card-with-build {
+    position: relative;
+    
+    .card-build-section {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-default);
+      
+      .build-ready,
+      .build-queue {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: var(--font-sm);
+        
+        i {
+          font-size: var(--font-sm);
+        }
+      }
+      
+      .build-ready {
+        color: var(--color-green);
+      }
+      
+      .build-queue {
+        color: var(--color-amber);
+      }
+      
+      .card-cancel-button {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        font-size: var(--font-sm);
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: var(--border-strong);
+          color: var(--text-primary);
+          transform: translateY(-1px);
+        }
+      }
+      
+      .card-build-button {
+        padding: 0.5rem 1rem;
+        background: var(--color-amber);
+        border: 1px solid var(--color-amber);
+        border-radius: var(--radius-sm);
+        color: var(--color-gray-900);
+        font-size: var(--font-sm);
+        font-weight: var(--font-weight-semibold);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        i {
+          font-size: var(--font-sm);
+        }
+        
+        &:hover:not(:disabled) {
+          background: var(--color-amber-light);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+        
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+      }
     }
   }
 </style>

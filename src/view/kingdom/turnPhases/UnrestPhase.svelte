@@ -242,148 +242,164 @@
 <div class="unrest-phase">
    <!-- Step 1: Unrest Dashboard -->
    <div class="unrest-dashboard">
-      <div class="unrest-header">
-         <div class="unrest-title">
-            <i class="fas fa-fire unrest-icon"></i>
-            <span>Unrest Status</span>
-         </div>
-      </div>
-      
-      <div class="unrest-value-display">
-         <div class="unrest-current">{unrestStatus.currentUnrest}</div>
-         <div class="unrest-tier-badge tier-{tierClass}">
-            {unrestStatus.tierName}
-         </div>
-      </div>
-      
-      {#if $kingdomState.imprisonedUnrest > 0}
-         <div class="imprisoned-unrest">
-            <i class="fas fa-lock"></i>
-            <span>Imprisoned Unrest:</span>
-            <span class="imprisoned-value">{$kingdomState.imprisonedUnrest}</span>
-         </div>
-      {/if}
-      
-      {#if unrestStatus.penalty !== 0}
-         <div class="unrest-penalty">
-            <i class="fas fa-exclamation-triangle penalty-icon"></i>
-            <span class="penalty-text">Kingdom Check Penalty:</span>
-            <span class="penalty-value">{unrestStatus.penalty}</span>
-         </div>
-      {/if}
-   </div>
-   
-   <!-- Step 2: Incident Section -->
-   {#if unrestStatus.tier > 0}
-      <div class="incident-section">
-         <div class="incident-header">
-            <div class="incident-title">
-               Step 2: Check for {incidentLevel ? incidentLevel.charAt(0) + incidentLevel.slice(1).toLowerCase() : ''} Incidents
-            </div>
-            <button 
-               class="roll-incident-btn"
-               on:click={rollForIncident}
-               disabled={isRolling || incidentChecked}
-            >
-               <i class="fas {incidentChecked ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i> 
-               {#if incidentChecked}
-                  Unrest Calculated
-               {:else if isRolling}
-                  Rolling...
-               {:else}
-                  Roll for Incident
+      <div class="unrest-split-view">
+         <!-- Left Side: Status and Actions -->
+         <div class="unrest-left">
+            <div class="status-display tier-{tierClass}">
+               {#if unrestStatus.tierName === 'Stable'}
+                  <i class="fas fa-dove"></i>
+               {:else if unrestStatus.tierName === 'Discontent'}
+                  <i class="fas fa-fist-raised"></i>
+               {:else if unrestStatus.tierName === 'Unrest'}
+                  <i class="fas fa-fire"></i>
+               {:else if unrestStatus.tierName === 'Rebellion'}
+                  <i class="fas fa-house-fire"></i>
                {/if}
-            </button>
+               <span>Kingdom is {unrestStatus.tierName}</span>
+            </div>
+            
+            <div class="status-subtitle">
+               {#if unrestStatus.tier === 0}
+                  No incidents occur at this level
+               {:else if unrestStatus.tier === 1}
+                  Minor incidents possible
+               {:else if unrestStatus.tier === 2}
+                  Moderate incidents possible
+               {:else}
+                  Major incidents possible
+               {/if}
+            </div>
+            
+            {#if unrestStatus.penalty !== 0}
+               <div class="penalty-indicator">
+                  <span>Penalty: {unrestStatus.penalty}</span>
+               </div>
+            {/if}
+            
+            {#if unrestStatus.tier > 0}
+               <button 
+                  class="roll-incident-btn"
+                  on:click={rollForIncident}
+                  disabled={isRolling || incidentChecked}
+               >
+                  <i class="fas {incidentChecked ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i> 
+                  {#if incidentChecked}
+                     Checked
+                  {:else if isRolling}
+                     Rolling...
+                  {:else}
+                     Roll for Incident
+                  {/if}
+               </button>
+            {/if}
          </div>
          
-         {#if showIncidentResult}
-            <div class="incident-result-container">
-               {#if currentIncident}
-                  <div class="incident-display">
-                     <div class="incident-info">
-                        <div class="incident-name">{currentIncident.name}</div>
-                        <div class="incident-description">{currentIncident.description}</div>
-                        <div class="incident-level-badge level-{currentIncident.level.toLowerCase()}">
-                           {currentIncident.level}
-                        </div>
+         <!-- Right Side: Unrest Values -->
+         <div class="unrest-right">
+            <div class="unrest-container">
+               <!-- Main Unrest -->
+               <div class="main-unrest">
+                  <div class="unrest-value">{unrestStatus.currentUnrest}</div>
+                  <div class="unrest-label">Unrest</div>
+               </div>
+               
+               <!-- Imprisoned Unrest -->
+               {#if $kingdomState.imprisonedUnrest > 0}
+                  <div class="imprisoned-unrest">
+                     <div class="imprisoned-value">
+                        <i class="fas fa-dungeon"></i>
+                        <span>{$kingdomState.imprisonedUnrest}</span>
                      </div>
-                     
-                     {#if currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
-                        <div class="skill-options">
-                           <div class="skill-options-title">Choose Resolution Approach:</div>
-                           <div class="skill-tags">
-                              {#each currentIncident.skillOptions as option}
-                                 <SkillTag
-                                    skill={option.skill}
-                                    description={option.description}
-                                    selected={selectedSkill === option.skill}
-                                    disabled={incidentResolved || isRolling}
-                                    loading={isRolling && selectedSkill === option.skill}
-                                    checkType="incident"
-                                    checkName={currentIncident.name}
-                                    checkId={currentIncident.id}
-                                    checkEffects={{
-                                       criticalSuccess: { description: "The incident is resolved favorably" },
-                                       success: currentIncident.successEffect,
-                                       failure: currentIncident.failureEffect,
-                                       criticalFailure: currentIncident.criticalFailureEffect
-                                    }}
-                                    on:execute={() => resolveIncident(option.skill)}
-                                 />
-                              {/each}
-                           </div>
-                        </div>
-                     {/if}
-                     
-                     {#if incidentResolved}
-                        <div class="incident-effects">
-                           <div class="resolution-banner {rollOutcome}">
-                              <i class="fas fa-dice-d20"></i>
-                              <span>
-                                 {#if rollOutcome === 'criticalSuccess'}
-                                    Critical Success! The incident is resolved favorably.
-                                 {:else if rollOutcome === 'success'}
-                                    Success: {currentIncident.successEffect}
-                                 {:else if rollOutcome === 'failure'}
-                                    Failure: {currentIncident.failureEffect}
-                                 {:else}
-                                    Critical Failure: {currentIncident.criticalFailureEffect}
-                                 {/if}
-                              </span>
-                           </div>
-                        </div>
-                     {:else}
-                        <PossibleOutcomes 
-                           outcomes={[
-                              { result: 'success', label: 'Success', description: currentIncident.successEffect },
-                              { result: 'failure', label: 'Failure', description: currentIncident.failureEffect },
-                              { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.criticalFailureEffect }
-                           ]}
-                           showTitle={false}
-                        />
-                     {/if}
-                  </div>
-               {:else}
-                  <div class="no-incident">
-                     <i class="fas fa-shield-alt no-incident-icon"></i>
-                     <div class="no-incident-text">No Incident</div>
-                     <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
+                     <div class="imprisoned-label">Imprisoned</div>
                   </div>
                {/if}
             </div>
-         {/if}
+         </div>
       </div>
-   {:else}
-      <div class="no-incident">
-         <i class="fas fa-dove no-incident-icon"></i>
-         <div class="no-incident-text">Kingdom is Stable</div>
-         <div class="no-incident-desc">No incidents occur when unrest is at this level</div>
+   </div>
+   
+   <!-- Step 2: Incident Results -->
+   {#if unrestStatus.tier > 0 && showIncidentResult}
+      <div class="incident-section">
+         <div class="incident-result-container">
+            {#if currentIncident}
+               <div class="incident-display">
+                  <div class="incident-info">
+                     <div class="incident-name">{currentIncident.name}</div>
+                     <div class="incident-description">{currentIncident.description}</div>
+                     <div class="incident-level-badge level-{currentIncident.level.toLowerCase()}">
+                        {currentIncident.level}
+                     </div>
+                  </div>
+                  
+                  {#if currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
+                     <div class="skill-options">
+                        <div class="skill-options-title">Choose Resolution Approach:</div>
+                        <div class="skill-tags">
+                           {#each currentIncident.skillOptions as option}
+                              <SkillTag
+                                 skill={option.skill}
+                                 description={option.description}
+                                 selected={selectedSkill === option.skill}
+                                 disabled={incidentResolved || isRolling}
+                                 loading={isRolling && selectedSkill === option.skill}
+                                 checkType="incident"
+                                 checkName={currentIncident.name}
+                                 checkId={currentIncident.id}
+                                 checkEffects={{
+                                    criticalSuccess: { description: "The incident is resolved favorably" },
+                                    success: currentIncident.successEffect,
+                                    failure: currentIncident.failureEffect,
+                                    criticalFailure: currentIncident.criticalFailureEffect
+                                 }}
+                                 on:execute={() => resolveIncident(option.skill)}
+                              />
+                           {/each}
+                        </div>
+                     </div>
+                  {/if}
+                  
+                  {#if incidentResolved}
+                     <div class="incident-effects">
+                        <div class="resolution-banner {rollOutcome}">
+                           <i class="fas fa-dice-d20"></i>
+                           <span>
+                              {#if rollOutcome === 'criticalSuccess'}
+                                 Critical Success! The incident is resolved favorably.
+                              {:else if rollOutcome === 'success'}
+                                 Success: {currentIncident.successEffect}
+                              {:else if rollOutcome === 'failure'}
+                                 Failure: {currentIncident.failureEffect}
+                              {:else}
+                                 Critical Failure: {currentIncident.criticalFailureEffect}
+                              {/if}
+                           </span>
+                        </div>
+                     </div>
+                  {:else}
+                     <PossibleOutcomes 
+                        outcomes={[
+                           { result: 'success', label: 'Success', description: currentIncident.successEffect },
+                           { result: 'failure', label: 'Failure', description: currentIncident.failureEffect },
+                           { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.criticalFailureEffect }
+                        ]}
+                        showTitle={false}
+                     />
+                  {/if}
+               </div>
+            {:else}
+               <div class="no-incident">
+                  <i class="fas fa-shield-alt no-incident-icon"></i>
+                  <div class="no-incident-text">No Incident</div>
+                  <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
+               </div>
+            {/if}
+         </div>
       </div>
    {/if}
 </div>
 
 <style lang="scss">
-   /* Styles remain exactly the same as original */
    .unrest-phase {
       display: flex;
       flex-direction: column;
@@ -396,123 +412,198 @@
          rgba(15, 15, 17, 0.4));
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-medium);
-      padding: 25px;
+      padding: 20px;
    }
    
-   .unrest-header {
-      margin-bottom: 20px;
-   }
-   
-   .unrest-title {
-      display: flex;
+   // Split view layout - Two equal columns
+   .unrest-split-view {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
       align-items: center;
-      gap: 10px;
-      font-size: var(--font-3xl);
-      font-weight: var(--font-weight-semibold);
-      line-height: 1.3;
-      color: var(--text-primary);
-      
-      .unrest-icon {
-         color: var(--color-amber);
-         font-size: var(--font-3xl);
-      }
    }
    
-   .unrest-value-display {
+   // Left side - Status display and actions
+   .unrest-left {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      margin: 20px 0;
-   }
-   
-   .unrest-current {
-      font-size: 48px;
-      font-weight: var(--font-weight-bold);
-      color: var(--text-primary);
-      text-shadow: var(--text-shadow-md);
-   }
-   
-   .unrest-tier-badge {
-      padding: 8px 16px;
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.2;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
+      gap: 1rem;
       
-      &.tier-stable {
-         background: rgba(34, 197, 94, 0.2);
-         color: var(--color-green);
-         border: 1px solid var(--color-green-border);
-      }
-      
-      &.tier-discontent {
-         background: rgba(251, 191, 36, 0.2);
-         color: var(--color-amber-light);
-         border: 1px solid var(--color-amber);
-      }
-      
-      &.tier-unrest {
-         background: rgba(249, 115, 22, 0.2);
-         color: var(--color-orange);
-         border: 1px solid var(--color-orange-border);
-      }
-      
-      &.tier-rebellion {
-         background: rgba(239, 68, 68, 0.2);
-         color: var(--color-red);
-         border: 1px solid var(--color-red);
-      }
-   }
-   
-   .imprisoned-unrest {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
-      margin-top: 15px;
-      color: var(--text-secondary);
-      
-      i {
-         color: var(--color-gray-500);
-      }
-      
-      .imprisoned-value {
-         color: var(--text-primary);
+      .status-display {
+         display: flex;
+         align-items: center;
+         gap: 1rem;
+         font-size: var(--font-4xl);
          font-weight: var(--font-weight-semibold);
+      
+         
+         i {
+            font-size: 2.5rem;
+         }
+         
+         &.tier-stable {
+            color: var(--color-green);
+            
+            i {
+               color: var(--color-green);
+            }
+         }
+         
+         &.tier-discontent {
+            color: var(--color-amber-light);
+            
+            i {
+               color: var(--color-amber);
+            }
+         }
+         
+         &.tier-unrest {
+            color: var(--color-orange);
+            
+            i {
+               color: var(--color-orange);
+            }
+         }
+         
+         &.tier-rebellion {
+            color: var(--color-red);
+            
+            i {
+               color: var(--color-red);
+            }
+         }
+      }
+      
+      .status-subtitle {
+         font-size: var(--font-md);
+         color: var(--text-secondary);
+         line-height: 1.3;
+      }
+      
+      .penalty-indicator {
+         display: inline-flex;
+         align-items: center;
+         padding: 4px 8px;
+         background: rgba(245, 158, 11, 0.1);
+         border: 1px solid rgba(245, 158, 11, 0.3);
+         border-radius: var(--radius-sm);
+         color: var(--color-amber-light);
+         font-size: var(--font-lg);
+         font-weight: var(--font-weight-medium);
+         width: fit-content;
+      }
+      
+      .roll-incident-btn {
+         padding: 8px 16px;
+         background: var(--btn-secondary-bg);
+         color: var(--text-primary);
+         border: 1px solid var(--border-medium);
+         border-radius: var(--radius-md);
+         cursor: pointer;
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-medium);
+         line-height: 1.2;
+         letter-spacing: 0.025em;
+         display: inline-flex;
+         align-items: center;
+         gap: 8px;
+         transition: all var(--transition-fast);
+         width: fit-content;
+         
+         &:hover:not(:disabled) {
+            background: var(--btn-secondary-hover);
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+         }
+         
+         &:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
+            background: var(--color-gray-700);
+         }
+         
+         i.spinning {
+            animation: spin 1s linear infinite;
+         }
       }
    }
    
-   .unrest-penalty {
+   // Right side - Unrest value display
+   .unrest-right {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 12px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--color-amber);
-      border-radius: var(--radius-md);
-      margin-top: 15px;
       
-      .penalty-icon {
-         color: var(--color-amber);
-         font-size: 18px;
+      .unrest-container {
+         display: flex;
+         align-items: flex-end;
+         gap: 30px;
       }
       
-      .penalty-text {
-         color: var(--color-amber-light);
+      .main-unrest {
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         text-align: center;
+         
+         .unrest-value {
+            font-size: 56px;
+            font-weight: var(--font-weight-bold);
+            line-height: 1;
+            color: var(--text-primary);
+            text-shadow: var(--text-shadow-md);
+         }
+         
+         .unrest-label {
+            font-size: var(--font-md);
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+            margin-top: 8px;
+         }
       }
       
-      .penalty-value {
-         color: var(--color-amber-light);
-         font-weight: var(--font-weight-bold);
-         font-size: var(--font-lg);
+      .imprisoned-unrest {
+         display: flex;
+         flex-direction: column;
+         
+         .imprisoned-value {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            font-size: var(--font-2xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-secondary);
+            
+            i {
+               font-size: var(--font-4xl);
+               line-height: 1;
+            }
+            
+            span {
+               font-weight: var(--font-weight-bold);
+               line-height: 1;
+            }
+         }
+         
+         .imprisoned-label {
+            font-size: var(--font-md);
+            font-weight: var(--font-weight-medium);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-tertiary);
+            margin-top: 1rem;
+         }
       }
+   }
+   
+   @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
    }
    
    .incident-section {

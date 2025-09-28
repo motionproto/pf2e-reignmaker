@@ -6,6 +6,7 @@
   import { structureSelection, setStructureCategory } from '../../../stores/ui';
   import CategoryItem from '../components/structures/CategoryItem.svelte';
   import StructureCard from '../components/structures/StructureCard.svelte';
+  import TabHeader from '../components/TabHeader.svelte';
   import {
     getCategoryIcon,
     extractCategorySkills,
@@ -82,9 +83,7 @@
 </script>
 
 <div class="structures-tab">
-  <div class="structures-header">
-    <h2>Structures Library</h2>
-  </div>
+  <TabHeader title="Structures Library" />
   
   <div class="structures-container">
     <!-- Left Panel: Category List -->
@@ -93,7 +92,6 @@
         <!-- Skill Categories -->
         <div class="category-type-section">
           <h3 class="section-title">
-            <i class="fas fa-graduation-cap"></i>
             Skill Structures
           </h3>
           
@@ -111,7 +109,6 @@
         <!-- Support Categories -->
         <div class="category-type-section">
           <h3 class="section-title">
-            <i class="fas fa-toolbox"></i>
             Support Structures
           </h3>
           
@@ -140,7 +137,7 @@
               {@const skills = getSkillsForCategory($structureSelection.selectedCategory)}
               {#if skills.length > 0}
                 <p class="progression-description">
-                  Affects: {skills.join(', ')}
+                  {skills.join(', ')}
                 </p>
               {/if}
             {/if}
@@ -187,17 +184,8 @@
   .structures-tab {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+
     height: 100%;
-  }
-  
-  .structures-header {
-    h2 {
-      padding: 1rem;
-      color: var(--white);
-       font-size: var(--font-4xl);
-      font-family: var(--base-font);
-    }
   }
   
   .structures-container {
@@ -207,17 +195,17 @@
   }
   
   .categories-panel {
-    flex: 0 0 350px;
+    flex: 0 0 340px;
     background: rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: .75rem;
     overflow-y: auto;
   }
   
   .categories-list {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1rem;
   }
   
   .category-type-section {
@@ -236,7 +224,6 @@
     }
   }
   
-  
   .progression-panel {
     flex: 1;
     background: rgba(0, 0, 0, 0.1);
@@ -246,17 +233,19 @@
   }
   
   .progression-content {
-    padding-top: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
   
   .progression-header {
-    position: sticky;
-    top: 0;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
     padding: 1.5rem;
     margin-bottom: 0;
-    z-index: 10;
+    align-items: center;
     border-bottom: 1px solid var(--border-default);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     
     h2 {
       margin: 0 0 0.5rem 0;
@@ -264,10 +253,10 @@
       font-size: var(--font-3xl);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      
+      gap: .75rem;
+      font-family: var(--base-font);
       i {
-        opacity: 0.6;
+        opacity: 1;
       }
     }
     
@@ -285,6 +274,8 @@
     padding: 1.5rem;
     padding-top: 2rem;
     padding-bottom: 1rem;
+    flex: 1;
+    overflow-y: auto;
   }
   
   .tier-column {

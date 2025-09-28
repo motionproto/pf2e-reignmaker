@@ -1,6 +1,7 @@
 <script lang="ts">
    import { kingdomState } from '../../../stores/kingdom';
    import { WorksiteConfig } from '../../../models/Hex';
+   import TabHeader from '../components/TabHeader.svelte';
    
    // Resource icons and colors (matching ResourcesPhase)
    const resourceConfig: Record<string, { icon: string; color: string }> = {
@@ -138,9 +139,7 @@
 </script>
 
 <div class="territory-tab">
-   <div class="territory-header">
-      <h2>Territory Management</h2>
-      
+   <TabHeader title="Territory Management">
       <!-- Territory Summary with Production -->
       <div class="territory-summary">
          <div class="summary-card">
@@ -161,7 +160,7 @@
             </div>
          {/each}
       </div>
-   </div>
+   </TabHeader>
    
    <!-- Filters -->
    <div class="territory-filters">
@@ -309,13 +308,6 @@
       flex-direction: column;
       gap: 1rem;
       height: 100%;
-   }
-   
-   .territory-header {
-      h2 {
-         margin: 0 0 1rem 0;
-         color: var(--color-text-dark-primary, #b5b3a4);
-      }
    }
    
    .territory-summary {

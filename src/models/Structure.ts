@@ -160,7 +160,14 @@ export function parseStructureFromJSON(data: any): Structure {
   // Handle skill structures vs support structures
   if (data.type === 'skill') {
     // Skill structures provide skill check bonuses
-    structure.effect = `Provides +${data.bonus || 0} to ${data.skills?.join(', ') || 'skill'} checks. Earn Income Level: ${data.earnIncomeLevel || 'Settlement'}`;
+    // For tier 1 structures (bonus = 0), use simplified text
+    if (data.tier === 1 || data.bonus === 0) {
+      structure.effect = `Enables Earn Income with listed skills at settlement level.`;
+    } else {
+      const earnLevel = data.earnIncomeLevel || 'settlement level';
+      structure.effect = `Provides +${data.bonus || 0} to listed skills in this settlement.\nEnables Earn Income with listed skills at ${earnLevel}`;
+    }
+    
     structure.effects.skillBonus = data.bonus || 0;
     structure.effects.skillsSupported = data.skills || [];
     structure.effects.earnIncomeLevel = data.earnIncomeLevel || 'settlement';

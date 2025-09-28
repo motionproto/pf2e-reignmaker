@@ -134,7 +134,7 @@
     z-index: 1;
     position: relative;
     padding-top: .2rem;
-    margin-right: 0rem;
+    margin-right: .75rem;
   }
 
 
