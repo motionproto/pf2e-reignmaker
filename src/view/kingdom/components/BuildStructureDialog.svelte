@@ -146,6 +146,20 @@
     return skillCategories.includes(category);
   }
   
+  // Helper function to capitalize each word in skills
+  function capitalizeSkills(skills: string[]): string[] {
+    return skills.map(skill => 
+      skill.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ')
+    );
+  }
+  
+  // Helper function to format skills as string
+  function formatSkillsString(skills: string[]): string {
+    return capitalizeSkills(skills).join(', ');
+  }
+  
   function handleClose() {
     show = false;
     dispatch('close');
@@ -302,7 +316,7 @@
                       <h3 class="section-title">Skill Structures</h3>
                       
                       {#each skillCategories as category}
-                        {@const skills = getSkillsForCategory(category)}
+                        {@const skills = capitalizeSkills(getSkillsForCategory(category))}
                         <CategoryItem 
                           {category}
                           {skills}
@@ -337,18 +351,20 @@
               {#if selectedCategory && categoryStructures.length > 0}
                 <div class="selection-content">
                   <div class="selection-header">
-                    <h2>
+                    <div class="header-content">
                       <i class="fas {getCategoryIcon(selectedCategory)}"></i>
-                      {selectedCategory}
-                    </h2>
-                    {#if isSkillCategory(selectedCategory)}
-                      {@const skills = getSkillsForCategory(selectedCategory)}
-                      {#if skills.length > 0}
-                        <p class="category-skills-label">
-                          {skills.join(', ')}
-                        </p>
-                      {/if}
-                    {/if}
+                      <div class="text-container">
+                        <h2>{selectedCategory}</h2>
+                        {#if isSkillCategory(selectedCategory)}
+                          {@const skills = getSkillsForCategory(selectedCategory)}
+                          {#if skills.length > 0}
+                            <p class="category-skills-label">
+                              {formatSkillsString(skills)}
+                            </p>
+                          {/if}
+                        {/if}
+                      </div>
+                    </div>
                   </div>
                   
                   <div class="structures-grid">
@@ -679,23 +695,49 @@
   }
   
   .selection-header {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
+    padding: 1.5rem;
     border-bottom: 1px solid var(--border-default);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-height: 90px; // Fixed minimum height to maintain consistent layout
+    display: flex;
+    align-items: center;
     
-    h2 {
-      margin: 0 0 0.5rem 0;
-      color: var(--color-amber);
-      font-size: var(--font-2xl);
+    .header-content {
       display: flex;
       align-items: center;
       gap: 0.75rem;
-    }
-    
-    .category-skills-label {
-      margin: 0;
-      color: var(--text-secondary);
-      font-size: var(--font-sm);
+      
+      > i {
+        font-size: var(--font-3xl);
+        color: var(--color-amber);
+        opacity: 1;
+        flex-shrink: 0;
+      }
+      
+      .text-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-height: 3.5rem; // Fixed height to prevent layout shift
+        justify-content: center;
+        
+        h2 {
+          margin: 0;
+          color: var(--color-amber);
+          font-size: var(--font-3xl);
+          font-family: var(--base-font);
+          line-height: 1.2;
+        }
+        
+        .category-skills-label {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: var(--font-sm);
+          line-height: 1.4;
+        }
+      }
     }
   }
   
