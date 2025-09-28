@@ -278,7 +278,6 @@
 <style>
    /* Import our CSS variables for consistent theming */
    @import '../../../styles/variables.css';
-   @import '../../../styles/typography.css';
    
    /* Standard Svelte component styling using CSS variables */
    .kingdom-stats-container {

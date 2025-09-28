@@ -418,12 +418,6 @@ export function startKingmakerSync(): () => void {
         console.log("Kingmaker sync hooks registered");
     }
     
-    // Also set up a fallback periodic sync (less frequent)
-    // This ensures we catch any changes that don't trigger hooks
-    const intervalId = setInterval(() => {
-        syncKingmakerToKingdomState();
-    }, 30000); // 30 seconds instead of 5
-    
     // Return cleanup function
     return () => {
         // Remove all hook listeners
@@ -442,9 +436,6 @@ export function startKingmakerSync(): () => void {
             
             console.log("Kingmaker sync hooks removed");
         }
-        
-        // Clear the fallback interval
-        clearInterval(intervalId);
     };
 }
 
