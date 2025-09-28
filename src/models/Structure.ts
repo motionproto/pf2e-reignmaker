@@ -2,12 +2,20 @@
 // Based on Reignmaker Lite rules
 
 /**
- * Structure types
+ * Structure family representation for consolidated JSON format
  */
-export enum StructureType {
-  SKILL_BASED = 'skill-based',
-  SUPPORT = 'support'
+export interface StructureFamily {
+  type: 'skill' | 'support';
+  family: string;
+  description: string;
+  skills?: string[];  // Only for skill structures
+  tiers: Structure[]; // Array of 4 structures (T1-T4)
 }
+
+/**
+ * Structure types - matches JSON data
+ */
+export type StructureType = 'skill' | 'support';
 
 /**
  * Structure categories
@@ -109,7 +117,7 @@ export interface StructureEffects {
 export interface Structure {
   id: string;
   name: string;
-  type: StructureType;
+  type: StructureType;  // 'skill' or 'support'
   category: StructureCategory;
   tier: number; // 1-4
   
@@ -143,14 +151,26 @@ export function parseStructureFromJSON(data: any): Structure {
     tier: data.tier,
     constructionCost: data.construction?.resources || {},
     effects: {},
-    effect: data.effect,
+    effect: '',
     special: data.special,
     traits: data.traits,
     upgradeFrom: data.upgradeFrom
   };
   
-  // Parse effects from the effect string
-  const effectStr = data.effect?.toLowerCase() || '';
+  // Handle skill structures vs support structures
+  if (data.type === 'skill') {
+    // Skill structures provide skill check bonuses
+    structure.effect = `Provides +${data.bonus || 0} to ${data.skills?.join(', ') || 'skill'} checks. Earn Income Level: ${data.earnIncomeLevel || 'Settlement'}`;
+    structure.effects.skillBonus = data.bonus || 0;
+    structure.effects.skillsSupported = data.skills || [];
+    structure.effects.earnIncomeLevel = data.earnIncomeLevel || 'settlement';
+  } else {
+    // Support structures have various effects described in the effect field
+    structure.effect = data.effect || '';
+  }
+  
+  // Parse effects from the effect string (for support structures)
+  const effectStr = (data.effect?.toLowerCase() || '') + ' ' + (data.special?.toLowerCase() || '');
   
   // Food storage
   const foodMatch = effectStr.match(/\+(\d+) food/);
@@ -249,7 +269,7 @@ export function parseStructureFromJSON(data: any): Structure {
   }
   
   // Set minimum settlement tier based on structure tier for support structures
-  if (structure.type === StructureType.SUPPORT) {
+  if (structure.type === 'support') {
     structure.minimumSettlementTier = structure.tier;
   }
   

@@ -9,6 +9,7 @@
       { id: 'turn', label: 'Turn', icon: 'fa-hourglass-half' },
       { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'settlements', label: 'Settlements', icon: 'fa-city' },
+      { id: 'structures', label: 'Structures', icon: 'fa-hammer' },
       { id: 'factions', label: 'Factions', icon: 'fa-users' },
       { id: 'modifiers', label: 'Modifiers', icon: 'fa-magic' },
       { id: 'notes', label: 'Notes', icon: 'fa-book' }

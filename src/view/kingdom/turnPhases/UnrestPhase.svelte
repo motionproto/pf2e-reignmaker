@@ -414,7 +414,7 @@
       
       .unrest-icon {
          color: var(--color-amber);
-         font-size: 24px;
+         font-size: var(--font-3xl);
       }
    }
    
@@ -595,7 +595,7 @@
       margin-bottom: 20px;
       
       .roll-value {
-         font-size: 36px;
+         font-size: var(--font-5xl);
          font-weight: bold;
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);

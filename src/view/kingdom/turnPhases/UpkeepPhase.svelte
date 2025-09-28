@@ -696,7 +696,7 @@
       min-width: 80px;
       
       i {
-         font-size: 24px;
+         font-size: var(--font-3xl);
          color: var(--color-amber);
          margin-bottom: 4px;
       }
@@ -709,7 +709,7 @@
       }
       
       .stat-label {
-         font-size: 11px;
+         font-size: var(--font-xs);
          font-weight: var(--type-label-weight);
          letter-spacing: var(--type-label-spacing);
          color: var(--text-tertiary);

@@ -804,7 +804,7 @@
     }
     
     .structure-item-tier {
-      font-size: 11px;
+      font-size: var(--font-xs);
       color: var(--text-secondary);
       background: rgba(255, 255, 255, 0.1);
       padding: 2px 5px;

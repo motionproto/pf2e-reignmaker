@@ -1,14 +1,24 @@
 import { writable } from 'svelte/store';
+import type { Settlement } from '../models/Settlement';
 
 // UI State for navigation and display
 export interface UIState {
-    selectedTab: 'turn' | 'territory' | 'settlements' | 'factions' | 'modifiers' | 'notes';
+    selectedTab: 'turn' | 'territory' | 'settlements' | 'structures' | 'factions' | 'modifiers' | 'notes';
     isPhasePanelExpanded: boolean;
     isResourcePanelExpanded: boolean;
     isSaving: boolean;
     isLoading: boolean;
     errorMessage: string | null;
     successMessage: string | null;
+}
+
+// Structure selection state
+export interface StructureSelectionState {
+    selectedStructureId: string | null;
+    selectedCategory: string | null;
+    viewMode: 'view' | 'select' | 'preview';
+    targetSettlement: Settlement | null;
+    searchQuery: string;
 }
 
 const initialUIState: UIState = {
@@ -102,4 +112,58 @@ export function clearMessages() {
 
 export function resetUIState() {
     uiState.set(initialUIState);
+}
+
+// Structure selection store and helpers
+export const structureSelection = writable<StructureSelectionState>({
+    selectedStructureId: null,
+    selectedCategory: null,
+    viewMode: 'view',
+    targetSettlement: null,
+    searchQuery: ''
+});
+
+export function setStructureViewMode(mode: 'view' | 'select' | 'preview') {
+    structureSelection.update(state => ({
+        ...state,
+        viewMode: mode
+    }));
+}
+
+export function selectStructure(structureId: string | null) {
+    structureSelection.update(state => ({
+        ...state,
+        selectedStructureId: structureId
+    }));
+}
+
+export function setTargetSettlement(settlement: Settlement | null) {
+    structureSelection.update(state => ({
+        ...state,
+        targetSettlement: settlement
+    }));
+}
+
+export function setStructureCategory(category: string | null) {
+    structureSelection.update(state => ({
+        ...state,
+        selectedCategory: category
+    }));
+}
+
+export function setStructureSearchQuery(query: string) {
+    structureSelection.update(state => ({
+        ...state,
+        searchQuery: query
+    }));
+}
+
+export function resetStructureSelection() {
+    structureSelection.set({
+        selectedStructureId: null,
+        selectedCategory: null,
+        viewMode: 'view',
+        targetSettlement: null,
+        searchQuery: ''
+    });
 }

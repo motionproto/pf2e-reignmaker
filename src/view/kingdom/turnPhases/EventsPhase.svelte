@@ -46,6 +46,7 @@
    let resolvedActor: string = '';
    let character: any = null;
    let isIgnoringEvent = false;
+   let rolledAgainstDC: number = 0; // Store the DC that was actually rolled against
    
    // Computed UI state
    $: eventChecked = isPhaseStepCompleted('resolve-event');
@@ -126,10 +127,13 @@
       isRolling = true;
       showStabilityResult = false;
       
+      // Save the current DC before it changes
+      rolledAgainstDC = eventDC;
+      
       // Animate the roll
       setTimeout(() => {
          // Use the service to perform the stability check
-         const checkResult = eventResolutionService.performStabilityCheck(eventDC);
+         const checkResult = eventResolutionService.performStabilityCheck(rolledAgainstDC);
          
          stabilityRoll = checkResult.roll;
          
@@ -340,10 +344,6 @@
                            description={skillOption.description}
                            selected={selectedSkill === skillOption.skill}
                            disabled={eventResolved}
-                           checkType="event"
-                           checkName={currentEvent.name}
-                           checkId={currentEvent.id}
-                           checkEffects={currentEvent.effects}
                            on:execute={(e) => resolveEventWithSkill(e.detail.skill)}
                         />
                      {/each}
@@ -415,12 +415,12 @@
             <div class="check-result-display">
                {#if currentEvent}
                   <div class="roll-result success">
-                     <strong>Event Triggered!</strong> (Rolled {stabilityRoll} &ge; DC {eventDC})
+                     <strong>Event Triggered!</strong> (Rolled {stabilityRoll} &ge; DC {rolledAgainstDC})
                      <div>Drawing event card...</div>
                   </div>
                {:else}
                   <div class="roll-result failure">
-                     <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {eventDC})
+                     <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
                      <div>DC reduced to {$gameState.eventDC} for next turn.</div>
                   </div>
                {/if}

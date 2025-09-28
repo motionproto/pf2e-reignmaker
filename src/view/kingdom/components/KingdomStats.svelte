@@ -305,7 +305,7 @@
    .kingdom-name-header h3 {
       margin: 0;
       color: white;
-      font-size: 2rem;
+      font-size: var(--font-4xl);
       font-weight: 700;
       flex: 1;
       font-family: var(--header-font);
@@ -315,7 +315,7 @@
    .kingdom-name-header input {
       flex: 1;
       max-width: calc(100% - 1rem);
-      font-size: 1.25rem;
+      font-size: var(--font-xl);
       font-weight: 700;
       background-color: transparent;
       border: 1px solid white;
@@ -335,7 +335,7 @@
       background: transparent;
       border: none;
       color: white;
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       transition: background-color var(--transition-fast);
    }
    
@@ -369,7 +369,7 @@
       border-bottom: 1px solid var(--border-subtle);
       border-radius: 0.5rem 0.5rem 0 0;
       color: var(--text-primary);
-      font-size: 1.5rem;
+      font-size: var(--font-3xl);
       font-weight: 700;
       font-family: var(--header-font);
       letter-spacing: 0.025em;
@@ -389,13 +389,13 @@
    
    .stat-item label,
    .stat-label {
-      font-size: 1rem;
+      font-size: var(--font-md);
       color: var(--text-muted);
       font-weight: 500;
    }
    
    .stat-value {
-      font-size: 1rem;
+      font-size: var(--font-md);
       font-weight: 700;
       color: var(--text-primary);
    }
@@ -450,7 +450,7 @@
    }
    
    .stat-adjust-button i {
-      font-size: 0.75rem;
+      font-size: var(--font-xs);
       color: var(--text-secondary);
    }
    
@@ -460,7 +460,7 @@
       border-radius: 0.25rem;
       background: var(--bg-surface);
       color: var(--text-primary);
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       font-weight: 500;
       cursor: pointer;
       width: auto;
@@ -486,7 +486,7 @@
    }
    
    .resource-header {
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       font-weight: 600;
       color: var(--text-primary);
       margin-bottom: 0.25rem;
@@ -512,13 +512,13 @@
    }
    
    .resource-label {
-      font-size: 1rem;
+      font-size: var(--font-md);
       color: var(--text-muted);
       margin-bottom: 0.25rem;
    }
    
    .resource-item > span:last-child {
-      font-size: 1rem;
+      font-size: var(--font-md);
       font-weight: 700;
       color: var(--text-primary);
    }

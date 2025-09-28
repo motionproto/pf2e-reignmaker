@@ -4,8 +4,8 @@
 import { get } from 'svelte/store';
 import { kingdomState } from '../../stores/kingdom';
 import type { Settlement } from '../../models/Settlement';
-import type { Structure, ResourceCost } from '../../models/Structure';
-import { parseStructureFromJSON, SpecialAbility } from '../../models/Structure';
+import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
+import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
 import structuresData from '../../../dist/structures.json';
 
 export class StructuresService {
@@ -48,6 +48,122 @@ export class StructuresService {
    */
   getAllStructures(): Structure[] {
     return Array.from(this.structures.values());
+  }
+  
+  /**
+   * Get structures by category
+   */
+  getStructuresByCategory(category: StructureCategory): Structure[] {
+    return this.getAllStructures().filter(s => s.category === category);
+  }
+  
+  /**
+   * Get structures grouped by category as families
+   */
+  getStructureFamilies(): Map<string, Structure[]> {
+    const families = new Map<string, Structure[]>();
+    
+    for (const structure of this.getAllStructures()) {
+      const category = structure.category;
+      if (!families.has(category)) {
+        families.set(category, []);
+      }
+      families.get(category)!.push(structure);
+    }
+    
+    // Sort each family by tier
+    for (const [category, structures] of families) {
+      structures.sort((a, b) => a.tier - b.tier);
+    }
+    
+    return families;
+  }
+  
+  /**
+   * Get structures grouped by type (skill vs support)
+   */
+  getStructuresByType(): { skill: Structure[], support: Structure[] } {
+    const structures = this.getAllStructures();
+    return {
+      skill: structures.filter(s => s.type === 'skill'),
+      support: structures.filter(s => s.type === 'support')
+    };
+  }
+  
+  /**
+   * Get the upgrade path for a structure
+   */
+  getUpgradePath(structureId: string): Structure[] {
+    const path: Structure[] = [];
+    let current = this.getStructure(structureId);
+    
+    // First, trace backwards to find the root
+    while (current && current.upgradeFrom) {
+      const previous = this.getStructure(current.upgradeFrom);
+      if (previous) {
+        path.unshift(previous);
+        current = previous;
+      } else {
+        break;
+      }
+    }
+    
+    // Add the requested structure
+    const requestedStructure = this.getStructure(structureId);
+    if (requestedStructure) {
+      path.push(requestedStructure);
+    }
+    
+    // Then trace forward to find upgrades
+    current = requestedStructure;
+    while (current) {
+      const upgrade = this.getAllStructures().find(s => s.upgradeFrom === current!.id);
+      if (upgrade) {
+        path.push(upgrade);
+        current = upgrade;
+      } else {
+        break;
+      }
+    }
+    
+    return path;
+  }
+  
+  /**
+   * Get the next upgrade for a structure
+   */
+  getNextUpgrade(structureId: string): Structure | null {
+    return this.getAllStructures().find(s => s.upgradeFrom === structureId) || null;
+  }
+  
+  /**
+   * Get all tier 1 structures (base structures)
+   */
+  getBaseStructures(): Structure[] {
+    return this.getAllStructures().filter(s => s.tier === 1);
+  }
+  
+  /**
+   * Get structures available at a specific tier
+   */
+  getStructuresByTier(tier: number): Structure[] {
+    return this.getAllStructures().filter(s => s.tier === tier);
+  }
+  
+  /**
+   * Check if a structure is part of a skill-based family
+   */
+  isSkillStructure(structureId: string): boolean {
+    const structure = this.getStructure(structureId);
+    return structure ? structure.type === 'skill' : false;
+  }
+  
+  /**
+   * Check if a structure is part of a support family
+   */
+  isSupportStructure(structureId: string): boolean {
+    const structure = this.getStructure(structureId);
+    return structure ? structure.type === 'support' : false;
   }
   
   /**
@@ -422,3 +538,7 @@ export const structuresService = new StructuresService();
 if (typeof window !== 'undefined') {
   structuresService.initializeStructures();
 }
+
+// Re-export selection service for convenience
+export { structureSelectionService } from './selection';
+export type { StructureAvailability, CategoryAvailability } from './selection';

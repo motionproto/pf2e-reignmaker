@@ -174,6 +174,9 @@
   --font-xl: 20px;
   --font-2xl: 22px;
   --font-3xl: 26px;
+  --font-4xl: 32px;
+  --font-5xl: 40px;
+  --font-6xl: 48px;
   
   /* Gradients */
   --gradient-header: linear-gradient(to bottom, var(--color-burgundy), var(--color-burgundy-dark));
