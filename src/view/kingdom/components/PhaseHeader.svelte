@@ -147,7 +147,7 @@
   .phase-text h2 {
     margin: 0;
     font-size: var(--font-3xl);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     font-family: var(--base-font);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-md);

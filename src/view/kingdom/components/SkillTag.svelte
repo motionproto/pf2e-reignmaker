@@ -60,7 +60,7 @@
       
       .skill-label {
          color: var(--text-primary);
-         font-weight: 500;
+         font-weight: var(--font-weight-medium);
       }
       
       .skill-divider {
@@ -92,7 +92,7 @@
          
          .skill-label {
             color: var(--color-black);
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
          }
          
          .skill-description,

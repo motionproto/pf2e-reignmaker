@@ -91,7 +91,7 @@
    
    .stat-value {
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       color: var(--text-primary);
    }
    
@@ -139,7 +139,7 @@
       background: var(--bg-surface);
       color: var(--text-primary);
       font-size: 1rem;
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
    }
    
    .stat-edit-input:focus {

@@ -339,7 +339,7 @@
          
          .summary-value {
             font-size: 1.25rem;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
             color: var(--color-text-dark-primary, #b5b3a4);
             
             &.production-positive {
@@ -411,7 +411,7 @@
             padding: 0.75rem;
             text-align: left;
             color: var(--color-text-dark-primary, #b5b3a4);
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
             border-bottom: 2px solid var(--color-primary, #5e0000);
             
             &.sortable {
@@ -451,7 +451,7 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             
             &.hex-id {
-               font-weight: 600;
+               font-weight: var(--font-weight-semibold);
                color: var(--color-text-dark-primary, #b5b3a4);
                
                i {
@@ -465,7 +465,7 @@
                padding: 0.25rem 0.5rem;
                border-radius: 0.25rem;
                font-size: 0.875rem;
-               font-weight: 500;
+               font-weight: var(--font-weight-medium);
                
                &.terrain-plains {
                   // Food color (brown-light)
@@ -546,7 +546,7 @@
             
             .feature-name {
                color: #ffd700;
-               font-weight: 500;
+               font-weight: var(--font-weight-medium);
                
                i {
                   margin-right: 0.25rem;

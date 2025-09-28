@@ -75,7 +75,7 @@
     margin: 0 0 12px 0;
     color: var(--text-primary);
     font-size: var(--font-md);
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
   }
   
   .player-actions-list {

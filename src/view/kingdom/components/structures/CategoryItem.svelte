@@ -66,9 +66,9 @@
       min-width: 0;
       
       .category-name {
-        font-weight: 600;
+        font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
-        font-weight: 600;
+        font-weight: var(--font-weight-semibold);
         font-family: var(--base-font);
         color: var(--text-primary);
         margin-bottom: 0.25rem;

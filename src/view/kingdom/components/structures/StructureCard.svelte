@@ -1,15 +1,21 @@
 <script lang="ts">
-  import type { Structure } from '../../../../models/Structure';
-  import StructureCardHeader from './StructureCardHeader.svelte';
-  import StructureCardCost from './StructureCardCost.svelte';
-  import StructureCardEffects from './StructureCardEffects.svelte';
+  import type { Structure, ResourceCost } from '../../../../models/Structure';
+  import { 
+    getTierLabel, 
+    getResourceIcon, 
+    getResourceColor 
+  } from '../../utils/structure-presentation';
   
   export let structure: Structure;
   export let tier: number;
 </script>
 
 <div class="structure-card">
-  <StructureCardHeader {structure} {tier} />
+  <!-- Header -->
+  <div class="structure-card-header">
+    <h4>{structure.name}</h4>
+    <span class="tier-badge">Tier {structure.tier || tier}</span>
+  </div>
   
   <!-- Split Layout: Thumbnail | Info -->
   <div class="structure-details">
@@ -22,8 +28,59 @@
     
     <!-- Info Section -->
     <div class="structure-info">
-      <StructureCardCost constructionCost={structure.constructionCost} />
-      <StructureCardEffects {structure} />
+      <!-- Cost Section -->
+      <div class="structure-card-cost">
+        <div class="cost-label">Cost</div>
+        <div class="resource-list">
+          {#each Object.entries(structure.constructionCost) as [resource, amount]}
+            {#if amount && amount > 0}
+              <div class="resource-item">
+                <i class="fas {getResourceIcon(resource)} resource-icon" style="color: {getResourceColor(resource)}"></i>
+                <span>{amount} {resource}</span>
+              </div>
+            {/if}
+          {/each}
+          {#if Object.values(structure.constructionCost).every(v => !v || v === 0)}
+            <span class="no-cost">Free</span>
+          {/if}
+        </div>
+      </div>
+      
+      <!-- Effects Section -->
+      <div class="structure-card-effects">
+        <div class="effect-label">Effect</div>
+        {#if structure.effect}
+          <p class="effect-text">{structure.effect}</p>
+        {/if}
+        
+        {#if structure.effects.goldPerTurn}
+          <div class="effect-item">
+            <i class="fas fa-coins" style="color: #ffd700;"></i>
+            <span>+{structure.effects.goldPerTurn} Gold/turn</span>
+          </div>
+        {/if}
+        
+        {#if structure.effects.unrestReductionPerTurn}
+          <div class="effect-item">
+            <i class="fas fa-dove" style="color: #87ceeb;"></i>
+            <span>-{structure.effects.unrestReductionPerTurn} Unrest/turn</span>
+          </div>
+        {/if}
+        
+        {#if structure.effects.foodStorage}
+          <div class="effect-item">
+            <i class="fas fa-boxes-stacked" style="color: #cd853f;"></i>
+            <span>+{structure.effects.foodStorage} Food Storage</span>
+          </div>
+        {/if}
+        
+        {#if structure.special}
+          <div class="special-note">
+            <i class="fas fa-sparkles"></i>
+            {structure.special}
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 </div>
@@ -42,6 +99,36 @@
     }
   }
   
+  /* Header Styles */
+  .structure-card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.5rem;
+    
+    .tier-badge {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      background: rgba(251, 191, 36, 0.1);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+    
+    h4 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--base-font);
+      flex: 1;
+    }
+  }
+  
+  /* Details Layout */
   .structure-details {
     display: flex;
     gap: 1rem;
@@ -69,6 +156,91 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
+  }
+  
+  /* Cost Section */
+  .structure-card-cost {
+    .cost-label {
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+    
+    .resource-list {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      
+      .resource-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: var(--font-md);
+        color: var(--text-primary);
+        
+        .resource-icon {
+          font-size: var(--font-md);
+        }
+      }
+    }
+    
+    .no-cost {
+      color: var(--text-tertiary);
+      font-style: italic;
+      font-size: var(--font-m);
+    }
+  }
+  
+  /* Effects Section */
+  .structure-card-effects {
+    .effect-label {
+      font-size: var(--font-s);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+    
+    .effect-text {
+      margin: 0.25rem 0 0.5rem 0;
+      font-size: var(--font-md);
+      color: var(--text-primary);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.4;
+    }
+    
+    .effect-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.25rem 0;
+      font-size: var(--font-sm);
+      color: var(--text-primary);
+      
+      i {
+        width: 1rem;
+        text-align: center;
+        font-size: var(--font-sm);
+      }
+    }
+    
+    .special-note {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(251, 191, 36, 0.05);
+      border-left: 2px solid var(--color-amber);
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      
+      i {
+        color: var(--color-amber);
+        font-size: var(--font-xs);
+        margin-top: 0.125rem;
+      }
+    }
   }
 </style>

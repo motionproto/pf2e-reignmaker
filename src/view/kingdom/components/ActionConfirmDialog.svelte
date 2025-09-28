@@ -116,7 +116,7 @@
     .dialog-title {
         margin: 0;
         font-size: 1.2rem;
-        font-weight: 600;
+        font-weight: var(--font-weight-semibold);
         color: var(--text-primary, #ffffff);
     }
     
@@ -143,7 +143,7 @@
         border: 1px solid var(--border-default, #3a3a3d);
         border-radius: var(--radius-sm, 4px);
         font-size: 0.9rem;
-        font-weight: 500;
+        font-weight: var(--font-weight-medium);
         cursor: pointer;
         transition: all 0.2s ease;
         min-width: 80px;

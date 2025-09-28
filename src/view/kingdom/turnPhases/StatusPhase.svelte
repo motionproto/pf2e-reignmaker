@@ -334,14 +334,14 @@
       }
       
       .effect-value {
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          font-size: var(--font-lg);
          min-width: 40px;
       }
       
       .effect-resource {
          color: var(--text-primary);
-         font-weight: 500;
+         font-weight: var(--font-weight-medium);
       }
       
       .effect-source {

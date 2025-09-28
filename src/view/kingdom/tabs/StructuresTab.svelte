@@ -225,7 +225,7 @@
       margin: 0 0 1rem 0;
       color: var(--color-amber);
       font-size: var(--font-lg);
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
       gap: 0.5rem;

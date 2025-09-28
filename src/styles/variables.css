@@ -51,44 +51,10 @@
   --color-red: hsla(4, 66%, 58%, 1);
   --color-red-bg: hsla(4, 90%, 59%, 0.2);
   
-  --color-purple: hsla(271, 51%, 53%, 1);
-  --color-purple-light: hsla(271, 76%, 68%, 1);
-  --color-purple-bg: hsla(271, 51%, 53%, 0.1);
-  
-  /* Brown/Tan Colors */
-  --color-brown: hsla(25, 76%, 31%, 1);
+  /* Brown/Tan Colors - Used for resource icons */
   --color-brown-light: hsla(29, 48%, 64%, 1);
-  --color-brown-bg: hsla(25, 76%, 31%, 0.1);
-  --color-brown-border: hsla(25, 76%, 31%, 0.3);
   
-  /* Beige/Off-white */
-  --color-beige: hsla(60, 17%, 95%, 1);
-  --color-beige-light: hsla(60, 60%, 99%, 1);
-  
-  /* Dark Theme Colors */
-  --color-dark-text: hsla(50, 14%, 9%, 1);
-  --color-dark-bg: var(--color-gray-950);
-  --color-dark-surface: var(--color-gray-900);
-  --color-dark-elevated: var(--color-gray-850);
-  --color-dark-overlay: var(--color-gray-800);
-  
-  /* Light Text Colors */
-  --color-light-text: hsla(0, 0%, 100%, 1);
-  --color-light-text-dim: hsla(0, 0%, 91%, 1);
-  --color-light-text-muted: hsla(0, 0%, 88%, 1);
-  --color-light-text-secondary: hsla(0, 0%, 63%, 1);
-  
-  /* Legacy PF2E Theme Colors (for compatibility) */
-  --pf2e-bg-dark: var(--color-gray-900);
-  --pf2e-bg-medium: var(--color-gray-850);
-  --pf2e-bg-light: var(--color-gray-800);
-  --pf2e-border: var(--border-default);
-  --pf2e-primary: var(--color-crimson);
-  --pf2e-primary-dark: var(--color-crimson-dark);
-  --pf2e-accent: var(--color-gold);
-  --pf2e-text: var(--text-primary);
-  --pf2e-text-light: var(--text-secondary);
-  
+
   /* Semantic Colors */
   --bg-base: var(--color-gray-950);
   --bg-surface: var(--color-gray-900);
@@ -102,15 +68,12 @@
   --text-disabled: var(--color-gray-600);
   --text-inverted: var(--color-gray-900);  /* Dark text for light backgrounds */
   --text-accent: var(--color-amber);
-  --text-muted: var(--color-gray-400);  /* Kept for backward compatibility */
   
   --color-primary: var(--color-crimson);
   --color-primary-hover: var(--color-crimson-light);
   --color-primary-dark: var(--color-crimson-dark);
-  --color-primary-light: var(--color-crimson-light);
   
   --color-accent: var(--color-amber);
-  --color-accent-light: var(--color-amber);
   
   --color-success: var(--color-green-light);
   --color-danger: var(--color-crimson-light);
@@ -137,8 +100,7 @@
   --border-medium: hsla(240, 5%, 38%, 1);   /* More prominent borders */
   --border-strong: hsla(240, 5%, 48%, 1);   /* High contrast borders */
   --border-primary: var(--color-crimson);
-  --border-accent: var(--color-amber);      /* Fixed typo: was ---color-amber */
-  --border-accent-75: hsl(42, 90%, 20%);
+  --border-accent: var(--color-amber);
   
   /* Border Radius */
   --radius-sm: 3px;
@@ -179,11 +141,11 @@
   --font-6xl: 48px;
   
   /* Font Weights */
-  --font-weight-light: 300;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
+  --font-weight-thin: 100;
+  --font-weight-light: 200;
+  --font-weight-medium: 300;
+  --font-weight-semibold: 500;
+  --font-weight-bold: 800;
   
   /* Gradients */
   --gradient-header: linear-gradient(to bottom, var(--color-burgundy), var(--color-burgundy-dark));

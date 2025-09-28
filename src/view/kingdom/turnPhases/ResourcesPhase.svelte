@@ -258,7 +258,7 @@
       
       .resource-value {
          font-size: var(--font-2xl);;
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          color: var(--text-primary);
       }
       
@@ -337,7 +337,7 @@
       
       .production-total {
          font-size: var(--font-2xl);  /* 18px */
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
          color: var(--color-green);
       }
    }
@@ -463,7 +463,7 @@
       border: 1px solid var(--border-subtle);
       
       .summary-title {
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
          color: var(--text-primary);
          margin-bottom: 8px;
       }

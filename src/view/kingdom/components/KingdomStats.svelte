@@ -305,7 +305,7 @@
       margin: 0;
       color: white;
       font-size: var(--font-4xl);
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       flex: 1;
       font-family: var(--header-font);
       text-shadow: var(--text-shadow-sm);
@@ -315,7 +315,7 @@
       flex: 1;
       max-width: calc(100% - 1rem);
       font-size: var(--font-xl);
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       background-color: transparent;
       border: 1px solid white;
       color: white;
@@ -369,7 +369,7 @@
       border-radius: 0.5rem 0.5rem 0 0;
       color: var(--text-primary);
       font-size: var(--font-3xl);
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       font-family: var(--header-font);
       letter-spacing: 0.025em;
    }
@@ -390,12 +390,12 @@
    .stat-label {
       font-size: var(--font-md);
       color: var(--text-muted);
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
    }
    
    .stat-value {
       font-size: var(--font-md);
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       color: var(--text-primary);
    }
    
@@ -460,7 +460,7 @@
       background: var(--bg-surface);
       color: var(--text-primary);
       font-size: var(--font-sm);
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
       cursor: pointer;
       width: auto;
       min-width: fit-content;
@@ -486,7 +486,7 @@
    
    .resource-header {
       font-size: var(--font-sm);
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin-bottom: 0.25rem;
       margin-top: 0;
@@ -518,7 +518,7 @@
    
    .resource-item > span:last-child {
       font-size: var(--font-md);
-      font-weight: 700;
+      font-weight: var(--font-weight-bold);
       color: var(--text-primary);
    }
    

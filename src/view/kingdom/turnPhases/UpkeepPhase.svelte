@@ -732,7 +732,7 @@
       
       .stat-value {
          font-size: 18px;
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          color: var(--text-primary);
          margin: 2px 0;
       }
@@ -781,7 +781,7 @@
       
       .stat-value {
          font-size: 18px;
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          color: var(--text-primary);
       }
       
@@ -839,7 +839,7 @@
       }
       
       .warning-title {
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
          color: var(--color-amber-light);
       }
       
@@ -893,7 +893,7 @@
       }
       
       .project-name {
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
          color: var(--text-primary);
       }
       
@@ -922,7 +922,7 @@
       .progress-text {
          font-size: 11px;
          color: white;
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
       }
       
       .project-needs {

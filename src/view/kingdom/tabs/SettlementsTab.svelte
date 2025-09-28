@@ -461,7 +461,7 @@
          
          .summary-value {
             font-size: 1.25rem;
-            font-weight: bold;
+            font-weight: var(--font-weight-bold);
             color: var(--color-text-dark-primary, #b5b3a4);
          }
          
@@ -546,7 +546,7 @@
             border-radius: 0.25rem;
             color: var(--color-text-dark-primary, #b5b3a4);
             font-size: 1.25rem;
-            font-weight: 600;
+            font-weight: var(--font-weight-semibold);
             min-width: 200px;
             
             &:focus {
@@ -634,7 +634,7 @@
             flex: 1;
             
             .settlement-name {
-               font-weight: 600;
+               font-weight: var(--font-weight-semibold);
                color: var(--color-text-dark-primary, #b5b3a4);
                margin-bottom: 0.25rem;
             }
@@ -649,7 +649,7 @@
                   padding: 0.125rem 0.375rem;
                   border-radius: 0.25rem;
                   font-size: 0.75rem;
-                  font-weight: 500;
+                  font-weight: var(--font-weight-medium);
                   
                   &.tier-village { 
                      background: rgba(139, 115, 85, 0.2); 
@@ -696,7 +696,7 @@
             }
             
             .stat-value {
-               font-weight: 500;
+               font-weight: var(--font-weight-medium);
                color: var(--color-text-dark-primary, #b5b3a4);
             }
             

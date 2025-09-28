@@ -209,7 +209,7 @@
 
   .phase-item.active .phase-label {
     color: #fff;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
   }
 
   .phase-item.completed .phase-label {
@@ -225,12 +225,12 @@
   /* When both active AND selected, keep white text */
   .phase-item.active.selected .phase-label {
     color: #fff;
-    font-weight: bold;
+    font-weight: var(--font-weight-bold);
   }
 
   .phase-label {
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     font-family: var(--base-font);
     text-align: center;
     line-height: 1.2;

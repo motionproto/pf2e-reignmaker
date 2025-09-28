@@ -615,7 +615,7 @@
       
       .dc-value {
          font-size: var(--font-2xl);
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          color: var(--color-amber-light);
       }
    }
@@ -702,7 +702,7 @@
       
       .modifier-name {
          color: var(--text-primary);
-         font-weight: 500;
+         font-weight: var(--font-weight-medium);
       }
       
       .modifier-duration {

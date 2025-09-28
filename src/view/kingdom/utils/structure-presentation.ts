@@ -36,7 +36,7 @@ export const categoryIcons: Record<string, string> = {
   'Exploration & Wilderness': 'fa-compass',
   'Food Storage': 'fa-wheat-awn',
   'Fortifications': 'fa-castle',
-  'Logistics': 'fa-truck',
+  'Logistics': 'fa-boxes-stacked',
   'Commerce': 'fa-coins',
   'Culture': 'fa-theater-masks',
   'Revenue': 'fa-sack-dollar',

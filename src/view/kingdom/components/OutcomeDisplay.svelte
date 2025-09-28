@@ -351,7 +351,7 @@
       .resolution-header-right {
          color: var(--text-secondary);
          font-size: var(--font-md);
-         font-weight: normal;
+         font-weight: var(--font-weight-medium);
       }
    }
    

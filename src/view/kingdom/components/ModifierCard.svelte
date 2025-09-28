@@ -36,7 +36,7 @@
       }
       
       .modifier-name {
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
          color: var(--text-primary);
          margin-bottom: 8px;
          font-size: var(--font-lg);

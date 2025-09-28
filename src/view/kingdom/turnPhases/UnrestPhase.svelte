@@ -428,7 +428,7 @@
    
    .unrest-current {
       font-size: 48px;
-      font-weight: bold;
+      font-weight: var(--font-weight-bold);
       color: var(--text-primary);
       text-shadow: var(--text-shadow-md);
    }
@@ -484,7 +484,7 @@
       
       .imprisoned-value {
          color: var(--text-primary);
-         font-weight: 600;
+         font-weight: var(--font-weight-semibold);
       }
    }
    
@@ -510,7 +510,7 @@
       
       .penalty-value {
          color: var(--color-amber-light);
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          font-size: var(--font-lg);
       }
    }
@@ -596,7 +596,7 @@
       
       .roll-value {
          font-size: var(--font-5xl);
-         font-weight: bold;
+         font-weight: var(--font-weight-bold);
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
          
@@ -699,7 +699,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
       
       i {
          font-size: 20px;
