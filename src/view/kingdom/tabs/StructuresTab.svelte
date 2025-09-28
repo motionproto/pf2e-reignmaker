@@ -6,7 +6,6 @@
   import { structureSelection, setStructureCategory } from '../../../stores/ui';
   import CategoryItem from '../components/structures/CategoryItem.svelte';
   import StructureCard from '../components/structures/StructureCard.svelte';
-  import TabHeader from '../components/TabHeader.svelte';
   import {
     getCategoryIcon,
     extractCategorySkills,
@@ -80,11 +79,23 @@
   function isSkillCategory(category: string): boolean {
     return skillCategories.includes(category);
   }
+  
+  // Helper function to capitalize each word in skills
+  function capitalizeSkills(skills: string[]): string[] {
+    return skills.map(skill => 
+      skill.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ')
+    );
+  }
+  
+  // Helper function to format skills as string
+  function formatSkillsString(skills: string[]): string {
+    return capitalizeSkills(skills).join(', ');
+  }
 </script>
 
 <div class="structures-tab">
-  <TabHeader title="Structures Library" />
-  
   <div class="structures-container">
     <!-- Left Panel: Category List -->
     <div class="categories-panel">
@@ -96,7 +107,7 @@
           </h3>
           
           {#each skillCategories as category}
-            {@const skills = getSkillsForCategory(category)}
+            {@const skills = capitalizeSkills(getSkillsForCategory(category))}
             <CategoryItem 
               {category}
               {skills}
@@ -129,18 +140,20 @@
       {#if $structureSelection.selectedCategory}
         <div class="progression-content">
           <div class="progression-header">
-            <h2>
+            <div class="header-content">
               <i class="fas {getCategoryIcon($structureSelection.selectedCategory)}"></i>
-              {$structureSelection.selectedCategory}
-            </h2>
-            {#if isSkillCategory($structureSelection.selectedCategory)}
-              {@const skills = getSkillsForCategory($structureSelection.selectedCategory)}
-              {#if skills.length > 0}
-                <p class="progression-description">
-                  {skills.join(', ')}
-                </p>
-              {/if}
-            {/if}
+              <div class="text-container">
+                <h2>{$structureSelection.selectedCategory}</h2>
+                {#if isSkillCategory($structureSelection.selectedCategory)}
+                  {@const skills = getSkillsForCategory($structureSelection.selectedCategory)}
+                  {#if skills.length > 0}
+                    <p class="progression-description">
+                      {formatSkillsString(skills)}
+                    </p>
+                  {/if}
+                {/if}
+              </div>
+            </div>
           </div>
           
           <div class="tier-progression">
@@ -243,27 +256,46 @@
     backdrop-filter: blur(8px);
     padding: 1.5rem;
     margin-bottom: 0;
-    align-items: center;
     border-bottom: 1px solid var(--border-default);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    min-height: 90px; // Fixed minimum height to maintain consistent layout
+    display: flex;
+    align-items: center;
     
-    h2 {
-      margin: 0 0 0.5rem 0;
-      color: var(--color-amber);
-      font-size: var(--font-3xl);
+    .header-content {
       display: flex;
       align-items: center;
-      gap: .75rem;
-      font-family: var(--base-font);
-      i {
+      gap: 0.75rem;
+      
+      > i {
+        font-size: var(--font-3xl);
+        color: var(--color-amber);
         opacity: 1;
+        flex-shrink: 0;
       }
-    }
-    
-    .progression-description {
-      margin: 0;
-      color: var(--text-secondary);
-      font-size: var(--font-sm);
+      
+      .text-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-height: 3.5rem; // Fixed height to prevent layout shift
+        justify-content: center;
+        
+        h2 {
+          margin: 0;
+          color: var(--color-amber);
+          font-size: var(--font-3xl);
+          font-family: var(--base-font);
+          line-height: 1.2;
+        }
+        
+        .progression-description {
+          margin: 0;
+          color: var(--text-secondary);
+          font-size: var(--font-sm);
+          line-height: 1.4;
+        }
+      }
     }
   }
   

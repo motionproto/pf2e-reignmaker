@@ -2,7 +2,6 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import type { Settlement } from '../../../models/Settlement';
-   import TabHeader from '../components/TabHeader.svelte';
    
    // Selected settlement for details view
    let selectedSettlement: Settlement | null = null;
@@ -140,42 +139,6 @@
 </script>
 
 <div class="settlements-tab">
-   <TabHeader title="Settlement Management">
-      <div class="settlements-summary">
-         <div class="summary-card">
-            <i class="fas fa-city"></i>
-            <div>
-               <div class="summary-value">{$kingdomState.settlements.length}</div>
-               <div class="summary-label">Settlements</div>
-            </div>
-         </div>
-         
-         <div class="summary-card">
-            <i class="fas fa-building"></i>
-            <div>
-               <div class="summary-value">{totalStructures}</div>
-               <div class="summary-label">Total Structures</div>
-            </div>
-         </div>
-         
-         <div class="summary-card">
-            <i class="fas fa-shield-alt"></i>
-            <div>
-               <div class="summary-value">{totalArmySupport}</div>
-               <div class="summary-label">Army Support</div>
-            </div>
-         </div>
-         
-         <div class="summary-card">
-            <i class="fas fa-wheat-awn"></i>
-            <div>
-               <div class="summary-value">-{totalFoodConsumption}</div>
-               <div class="summary-label">Food/Turn</div>
-            </div>
-         </div>
-      </div>
-   </TabHeader>
-   
    <div class="settlements-container">
       <!-- Left Panel: Settlement List -->
       <div class="settlements-list-panel">
