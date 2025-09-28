@@ -24,8 +24,8 @@
 <style lang="scss">
   .category-item {
     width: 100%;
-    padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     margin-bottom: 0.5rem;
@@ -36,6 +36,7 @@
     gap: 0.75rem;
     text-align: left;
     min-height: fit-content;
+    border-color: var(--border-subtle);
     
     &:hover {
       background: rgba(0, 0, 0, 0.3);
@@ -54,8 +55,8 @@
     .category-icon {
       font-size: var(--font-xl);
       color: var(--color-amber);
-      opacity: 0.7;
-      width: 1.5rem;
+      opacity: 1;
+      width: 1 rem;
       text-align: center;
       flex-shrink: 0;
     }

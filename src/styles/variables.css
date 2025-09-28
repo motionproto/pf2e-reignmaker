@@ -2,19 +2,19 @@
 /* Simple CSS variables for consistent theming */
 
 :root {
-  /* Base Colors */
-  --color-gray-50: hsla(0, 0%, 98%, 1);
-  --color-gray-100: hsla(240, 5%, 96%, 1);
-  --color-gray-200: hsla(220, 13%, 90%, 1);
-  --color-gray-300: hsla(216, 12%, 84%, 1);
-  --color-gray-400: hsla(240, 5%, 65%, 1);
-  --color-gray-500: hsla(240, 5%, 46%, 1);
-  --color-gray-600: hsla(240, 5%, 34%, 1);
-  --color-gray-700: hsla(240, 5%, 26%, 1);
-  --color-gray-800: hsla(240, 4%, 16%, 1);
-  --color-gray-850: hsla(229, 6%, 13%, 1);
-  --color-gray-900: hsla(240, 6%, 10%, 1);
-  --color-gray-950: hsla(229, 6%, 6%, 1);
+  /* Base Colors - Improved Contrast Distribution */
+  --color-gray-50: hsla(0, 0%, 98%, 1);     /* Lightest - unchanged */
+  --color-gray-100: hsla(240, 5%, 93%, 1);  /* Was 96%, now 93% for better step */
+  --color-gray-200: hsla(220, 13%, 86%, 1); /* Was 90%, now 86% for consistency */
+  --color-gray-300: hsla(216, 12%, 78%, 1); /* Was 84%, now 78% - fixes large gap */
+  --color-gray-400: hsla(240, 5%, 68%, 1);  /* Was 65%, now 68% - smoother transition */
+  --color-gray-500: hsla(240, 5%, 56%, 1);  /* Was 46%, now 56% - better mid-tone */
+  --color-gray-600: hsla(240, 5%, 44%, 1);  /* Was 34%, now 44% - consistent steps */
+  --color-gray-700: hsla(240, 5%, 32%, 1);  /* Was 26%, now 32% - smoother dark range */
+  --color-gray-800: hsla(240, 4%, 22%, 1);  /* Was 16%, now 22% - better contrast */
+  --color-gray-850: hsla(229, 6%, 16%, 1);  /* Was 13%, now 16% - maintains step */
+  --color-gray-900: hsla(240, 6%, 10%, 1);  /* Unchanged - good anchor */
+  --color-gray-950: hsla(229, 6%, 6%, 1);   /* Darkest - unchanged */
   
   /* Accent Colors */
   --color-crimson: hsl(0, 64%, 35%);
@@ -131,14 +131,14 @@
   --btn-tertiary-hover-border: hsla(214, 14%, 65%, 1);
   --btn-tertiary-text: hsla(214, 17%, 84%, 1);
   
-  /* Borders */
-  --border-subtle: hsla(0, 0%, 100%, 0.05);
-  --border-default: hsla(0, 0%, 100%, 0.1);
-  --border-medium: hsla(0, 0%, 100%, 0.2);
-  --border-strong: hsla(0, 0%, 100%, 0.3);
+  /* Borders - Luminance-based for better contrast */
+  --border-subtle: hsla(240, 5%, 22%, 1);   /* Very subtle, barely visible */
+  --border-default: hsla(240, 5%, 28%, 1);  /* Standard border visibility */
+  --border-medium: hsla(240, 5%, 38%, 1);   /* More prominent borders */
+  --border-strong: hsla(240, 5%, 48%, 1);   /* High contrast borders */
   --border-primary: var(--color-crimson);
-  --border-accent: var(---color-amber);
-  --border-accent-75: hsl(42, 90%,20%);
+  --border-accent: var(--color-amber);      /* Fixed typo: was ---color-amber */
+  --border-accent-75: hsl(42, 90%, 20%);
   
   /* Border Radius */
   --radius-sm: 3px;
