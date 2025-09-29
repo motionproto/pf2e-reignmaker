@@ -18,12 +18,21 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
 
    static get defaultOptions(): KingdomApp.Options
    {
+      // Calculate optimal height based on available screen space
+      const availableHeight = window.screen.availHeight || window.innerHeight;
+      
+      // Use 85% of available height to leave room for taskbar and title bars
+      const calculatedHeight = Math.floor(availableHeight * 0.85);
+      
+      // Ensure the height is at least the minimum
+      const optimalHeight = Math.max(calculatedHeight, 480);
+
       return deepMerge<SvelteApp.Options, KingdomApp.Options>(super.defaultOptions, {
          id: 'pf2e-reignmaker',
          resizable: true,
          minimizable: true,
          width: 1280,
-         height: 720,
+         height: optimalHeight,
          minWidth: 720,
          minHeight: 480,
          

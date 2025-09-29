@@ -2,7 +2,8 @@
    import { kingdomState } from '../../../stores/kingdom';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import type { Settlement } from '../../../models/Settlement';
-   
+   import { updateSettlementName } from '../../../stores/kingdom';
+
    // Selected settlement for details view
    let selectedSettlement: Settlement | null = null;
    let searchTerm = '';
@@ -42,6 +43,14 @@
    // Deselect if filtered out
    $: if (selectedSettlement && !filteredSettlements.find(s => s.id === selectedSettlement?.id)) {
       selectedSettlement = null;
+   }
+   
+   // Keep selectedSettlement synchronized with store updates
+   $: if (selectedSettlement) {
+      const updated = $kingdomState.settlements.find(s => s.id === selectedSettlement?.id);
+      if (updated) {
+         selectedSettlement = updated;
+      }
    }
    
    // Calculate settlement statistics
@@ -117,9 +126,8 @@
    
    function saveSettlementName() {
       if (selectedSettlement && editedName.trim()) {
-         // Update the settlement name in the store
-         selectedSettlement.name = editedName.trim();
-         $kingdomState = $kingdomState; // Trigger reactivity
+         // Use the store's update method to ensure proper state management and persistence
+         updateSettlementName(selectedSettlement.id, editedName.trim());
          isEditingName = false;
       }
    }

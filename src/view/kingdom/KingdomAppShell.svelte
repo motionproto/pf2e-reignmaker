@@ -8,6 +8,8 @@
    
    // Import territory service for syncing
    import { territoryService }                    from '../../services/territory';
+   // Import persistence service to ensure data is loaded
+   import { persistenceService }                  from '../../services/persistence';
    
    // Components
    import ContentSelector from './components/ContentSelector.svelte';
@@ -39,10 +41,18 @@
    const { actorId, application } = getContext<KingdomApp.External>('#external');
    
    // Perform initial sync when the app opens
-   onMount(() => {
+   onMount(async () => {
       // console.log('Kingdom UI opened - performing initial sync...');
       
-      // Sync territory data from Kingmaker if available
+      // First, ensure persisted data is loaded
+      try {
+         await persistenceService.loadData();
+         console.log('[KingdomAppShell] Loaded persisted kingdom data');
+      } catch (error) {
+         console.error('[KingdomAppShell] Failed to load persisted data:', error);
+      }
+      
+      // Then sync territory data from Kingmaker if available
       if (territoryService.isKingmakerAvailable()) {
          const result = territoryService.syncFromKingmaker();
          // console.log('Initial Kingmaker sync result:', result);

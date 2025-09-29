@@ -56,89 +56,191 @@ export const foodShortage = derived(kingdomState, $state => {
     return foodSupply.shortage;
 });
 
-// Actions to modify kingdom state
+// Actions to modify kingdom state - all ensure immutability for proper change detection
+// Helper function to create a new KingdomState with updated properties
+function cloneKingdomState(state: KingdomState): KingdomState {
+    const newState = Object.create(Object.getPrototypeOf(state));
+    return Object.assign(newState, state);
+}
+
 export function updateKingdomStat(stat: keyof KingdomState, value: any) {
+    console.log(`[Store Update] Setting ${stat} to ${value}`);
     kingdomState.update(state => {
-        (state as any)[stat] = value;
-        return state;
+        const newState = cloneKingdomState(state);
+        (newState as any)[stat] = value;
+        return newState;
     });
 }
 
 export function modifyResource(resource: string, amount: number) {
     kingdomState.update(state => {
+        const newState = cloneKingdomState(state);
         const currentAmount = state.resources.get(resource) || 0;
-        state.resources.set(resource, currentAmount + amount);
-        return state;
+        newState.resources = new Map(state.resources);
+        newState.resources.set(resource, currentAmount + amount);
+        return newState;
     });
 }
 
 export function setResource(resource: string, amount: number) {
+    console.log(`[Store Update] Setting resource '${resource}' to ${amount}`);
     kingdomState.update(state => {
-        state.resources.set(resource, amount);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.resources = new Map(state.resources);
+        newState.resources.set(resource, amount);
+        return newState;
     });
 }
 
 export function addSettlement(settlement: Settlement) {
     kingdomState.update(state => {
-        state.settlements.push(settlement);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.settlements = [...state.settlements, settlement];
+        return newState;
     });
 }
 
 export function removeSettlement(name: string) {
     kingdomState.update(state => {
-        state.settlements = state.settlements.filter(s => s.name !== name);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.settlements = state.settlements.filter(s => s.name !== name);
+        return newState;
+    });
+}
+
+// Settlement update functions for better component usage
+export function updateSettlement(settlementId: string, updates: Partial<Settlement>) {
+    kingdomState.update(state => {
+        const index = state.settlements.findIndex(s => s.id === settlementId);
+        
+        if (index === -1) {
+            return state; // Settlement not found, return unchanged
+        }
+        
+        const newState = cloneKingdomState(state);
+        // Create new settlements array with updated settlement
+        newState.settlements = [...state.settlements];
+        newState.settlements[index] = { ...newState.settlements[index], ...updates };
+        
+        return newState;
+    });
+}
+
+export function updateSettlementName(settlementId: string, name: string) {
+    updateSettlement(settlementId, { name });
+}
+
+export function updateSettlementStructures(settlementId: string, structureIds: string[]) {
+    updateSettlement(settlementId, { structureIds });
+}
+
+export function addStructureToSettlement(settlementId: string, structureId: string) {
+    kingdomState.update(state => {
+        const index = state.settlements.findIndex(s => s.id === settlementId);
+        
+        if (index === -1) {
+            return state;
+        }
+        
+        const newState = cloneKingdomState(state);
+        newState.settlements = [...state.settlements];
+        const settlement = { ...newState.settlements[index] };
+        settlement.structureIds = [...settlement.structureIds, structureId];
+        newState.settlements[index] = settlement;
+        
+        return newState;
+    });
+}
+
+export function removeStructureFromSettlement(settlementId: string, structureId: string) {
+    kingdomState.update(state => {
+        const index = state.settlements.findIndex(s => s.id === settlementId);
+        
+        if (index === -1) {
+            return state;
+        }
+        
+        const newState = cloneKingdomState(state);
+        newState.settlements = [...state.settlements];
+        const settlement = { ...newState.settlements[index] };
+        settlement.structureIds = settlement.structureIds.filter(id => id !== structureId);
+        newState.settlements[index] = settlement;
+        
+        return newState;
     });
 }
 
 export function addArmy(army: Army) {
     kingdomState.update(state => {
-        state.armies.push(army);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.armies = [...state.armies, army];
+        return newState;
     });
 }
 
 export function removeArmy(id: string) {
     kingdomState.update(state => {
-        state.armies = state.armies.filter(a => a.id !== id);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.armies = state.armies.filter(a => a.id !== id);
+        return newState;
+    });
+}
+
+export function updateArmy(armyId: string, updates: Partial<Army>) {
+    kingdomState.update(state => {
+        const index = state.armies.findIndex(a => a.id === armyId);
+        
+        if (index === -1) {
+            return state;
+        }
+        
+        const newState = cloneKingdomState(state);
+        newState.armies = [...state.armies];
+        newState.armies[index] = { ...newState.armies[index], ...updates };
+        
+        return newState;
     });
 }
 
 export function addBuildProject(project: BuildProject) {
     kingdomState.update(state => {
-        state.buildQueue.push(project);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.buildQueue = [...state.buildQueue, project];
+        return newState;
     });
 }
 
 export function removeBuildProject(index: number) {
     kingdomState.update(state => {
-        state.buildQueue.splice(index, 1);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.buildQueue = [...state.buildQueue];
+        newState.buildQueue.splice(index, 1);
+        return newState;
     });
 }
 
 export function setCurrentEvent(event: KingdomEvent | null) {
     kingdomState.update(state => {
-        state.currentEvent = event;
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.currentEvent = event;
+        return newState;
     });
 }
 
 export function addContinuousEvent(event: KingdomEvent) {
     kingdomState.update(state => {
-        state.continuousEvents.push(event);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.continuousEvents = [...state.continuousEvents, event];
+        return newState;
     });
 }
 
 export function removeContinuousEvent(index: number) {
     kingdomState.update(state => {
-        state.continuousEvents.splice(index, 1);
-        return state;
+        const newState = cloneKingdomState(state);
+        newState.continuousEvents = [...state.continuousEvents];
+        newState.continuousEvents.splice(index, 1);
+        return newState;
     });
 }
 
@@ -155,27 +257,30 @@ export {
 // Modifier management functions
 export function addModifier(modifier: KingdomModifier) {
     kingdomState.update(state => {
+        const newState = cloneKingdomState(state);
+        
         // Set the start turn from the current turn (would need to get from gameState)
         if (modifier.startTurn === undefined) {
             // This would be set properly by the phase that adds the modifier
             modifier.startTurn = 0;
         }
         
-        // Add to state
-        state.modifiers.push(modifier);
-        
         // Also add to service for management
         modifierService.addModifier(modifier);
         
-        return state;
+        // Add to state immutably
+        newState.modifiers = [...state.modifiers, modifier];
+        
+        return newState;
     });
 }
 
 export function removeModifier(modifierId: string) {
     kingdomState.update(state => {
-        state.modifiers = state.modifiers.filter(m => m.id !== modifierId);
+        const newState = cloneKingdomState(state);
+        newState.modifiers = state.modifiers.filter(m => m.id !== modifierId);
         modifierService.removeModifier(modifierId);
-        return state;
+        return newState;
     });
 }
 
@@ -230,7 +335,11 @@ export function resolveModifier(modifierId: string, skill: string, rollResult: n
 // Function to load kingdom state from saved data
 export function loadKingdomState(savedState: Partial<KingdomState>) {
     kingdomState.update(state => {
-        const newState = Object.assign(state, savedState);
+        // Create a new state object to ensure proper reactivity
+        const newState = cloneKingdomState(state);
+        
+        // Merge the saved state into the new state
+        Object.assign(newState, savedState);
         
         // Sync modifiers with service
         if (newState.modifiers) {
@@ -244,4 +353,9 @@ export function loadKingdomState(savedState: Partial<KingdomState>) {
 // Function to get current kingdom state for saving
 export function getCurrentKingdomState(): KingdomState {
     return get(kingdomState);
+}
+
+// Function to reset kingdom state to initial values
+export function resetKingdomState() {
+    kingdomState.set(new KingdomState());
 }

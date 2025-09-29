@@ -255,7 +255,7 @@
                {:else if unrestStatus.tierName === 'Rebellion'}
                   <i class="fas fa-house-fire"></i>
                {/if}
-               <span>Kingdom is {unrestStatus.tierName}</span>
+               <span>{unrestStatus.tierName}</span>
             </div>
             
             <div class="status-subtitle">
@@ -343,15 +343,6 @@
                                  selected={selectedSkill === option.skill}
                                  disabled={incidentResolved || isRolling}
                                  loading={isRolling && selectedSkill === option.skill}
-                                 checkType="incident"
-                                 checkName={currentIncident.name}
-                                 checkId={currentIncident.id}
-                                 checkEffects={{
-                                    criticalSuccess: { description: "The incident is resolved favorably" },
-                                    success: currentIncident.successEffect,
-                                    failure: currentIncident.failureEffect,
-                                    criticalFailure: currentIncident.criticalFailureEffect
-                                 }}
                                  on:execute={() => resolveIncident(option.skill)}
                               />
                            {/each}

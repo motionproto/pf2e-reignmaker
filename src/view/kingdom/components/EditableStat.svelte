@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { tick } from 'svelte';
+   import { tick, onMount } from 'svelte';
    
    export let value: number = 0;
    export let onChange: (newValue: number) => void;
@@ -7,21 +7,47 @@
    export let min: number = 0;
    export let max: number | undefined = undefined;
    
-   let isEditing = false;
+   // External control props (optional - for parent-controlled editing)
+   export let isExternallyControlled: boolean = false;
+   export let isEditing: boolean = false;
+   export let onStartEdit: (() => void) | undefined = undefined;
+   export let onStopEdit: (() => void) | undefined = undefined;
+   
+   // Internal state (used when not externally controlled)
+   let internalIsEditing = false;
    let editValue = value;
    let inputElement: HTMLInputElement;
    
+   // Determine which editing state to use
+   $: actualIsEditing = isExternallyControlled ? isEditing : internalIsEditing;
+   
    // Update edit value when prop changes
-   $: if (!isEditing) {
+   $: if (!actualIsEditing) {
       editValue = value;
    }
    
-   async function startEditing() {
+   // Watch for external editing state changes to focus input
+   $: if (isExternallyControlled && isEditing) {
+      handleEditStart();
+   }
+   
+   async function handleEditStart() {
       editValue = value;
-      isEditing = true;
       await tick();
       inputElement?.focus();
       inputElement?.select();
+   }
+   
+   async function startEditing() {
+      if (isExternallyControlled && onStartEdit) {
+         onStartEdit();
+      } else {
+         editValue = value;
+         internalIsEditing = true;
+         await tick();
+         inputElement?.focus();
+         inputElement?.select();
+      }
    }
    
    function save() {
@@ -31,12 +57,21 @@
          newValue = Math.min(max, newValue);
       }
       onChange(newValue);
-      isEditing = false;
+      
+      if (isExternallyControlled && onStopEdit) {
+         onStopEdit();
+      } else {
+         internalIsEditing = false;
+      }
    }
    
    function cancel() {
       editValue = value;
-      isEditing = false;
+      if (isExternallyControlled && onStopEdit) {
+         onStopEdit();
+      } else {
+         internalIsEditing = false;
+      }
    }
    
    function handleKeydown(e: KeyboardEvent) {
@@ -48,13 +83,13 @@
    }
 </script>
 
-{#if !isEditing}
+{#if !actualIsEditing}
    <div class="editable-value-container">
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <!-- svelte-ignore a11y-no-static-element-interactions -->
       <span 
          class="stat-value editable {className}" 
-         on:click={startEditing}
+         on:click|stopPropagation={startEditing}
          role="button"
          tabindex="0"
          on:keydown={(e) => e.key === 'Enter' && startEditing()}
@@ -74,10 +109,10 @@
          {min}
          {max}
       />
-      <button class="save-btn" on:click={save} aria-label="Save">
+      <button class="save-btn" on:click|stopPropagation={save} aria-label="Save">
          <i class="fas fa-check"></i>
       </button>
-      <button class="cancel-btn" on:click={cancel} aria-label="Cancel">
+      <button class="cancel-btn" on:click|stopPropagation={cancel} aria-label="Cancel">
          <i class="fas fa-times"></i>
       </button>
    </div>

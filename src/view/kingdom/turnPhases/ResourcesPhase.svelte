@@ -1,9 +1,10 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, setResource } from '../../../stores/kingdom';
    import { markPhaseStepCompleted, isPhaseStepCompleted, gameState } from '../../../stores/gameState';
    import Button from '../components/baseComponents/Button.svelte';
+   import { tick } from 'svelte';
    
    // Import clean architecture components
    import { createResourcePhaseController } from '../../../controllers/ResourcePhaseController';
@@ -24,6 +25,41 @@
       ore: { icon: 'fa-mountain', color: 'var(--color-blue)' },
       gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
    };
+   
+   // Edit state management
+   let editingResource: string | null = null;
+   let editValue: number = 0;
+   let editInputElement: HTMLInputElement | undefined;
+   
+   async function startEditing(resource: string) {
+      editingResource = resource;
+      editValue = currentResources.get(resource) || 0;
+      await tick();
+      if (editInputElement) {
+         editInputElement.focus();
+         editInputElement.select();
+      }
+   }
+   
+   function saveEdit() {
+      if (editingResource) {
+         setResource(editingResource, Math.max(0, Math.floor(editValue)));
+         editingResource = null;
+      }
+   }
+   
+   function cancelEdit() {
+      editingResource = null;
+      editValue = 0;
+   }
+   
+   function handleKeydown(e: KeyboardEvent) {
+      if (e.key === 'Enter') {
+         saveEdit();
+      } else if (e.key === 'Escape') {
+         cancelEdit();
+      }
+   }
    
    // Reactive: Get all display data from controller in one call
    $: if (resourceController && $kingdomState) {
@@ -100,11 +136,48 @@
    <!-- Resource Dashboard -->
    <div class="resource-dashboard">
       {#each Object.entries(resourceConfig) as [resource, config]}
-         <div class="resource-card">
+         <!-- svelte-ignore a11y-click-events-have-key-events -->
+         <!-- svelte-ignore a11y-no-static-element-interactions -->
+         <div 
+            class="resource-card" 
+            class:editing={editingResource === resource}
+            style="--resource-color: {config.color};"
+            on:click={() => startEditing(resource)}
+         >
             <i class="fas {config.icon} resource-icon" style="color: {config.color};"></i>
             <div class="resource-info">
-               <div class="resource-value">{currentResources.get(resource) || 0}</div>
-               <div class="resource-label">{resource}</div>
+               {#if editingResource === resource}
+                  <input
+                     bind:this={editInputElement}
+                     type="number"
+                     bind:value={editValue}
+                     on:keydown={handleKeydown}
+                     on:click|stopPropagation
+                     class="resource-edit-input"
+                     min="0"
+                  />
+                  <div class="edit-buttons">
+                     <button 
+                        class="save-btn" 
+                        on:click|stopPropagation={saveEdit} 
+                        aria-label="Save"
+                        title="Save"
+                     >
+                        <i class="fas fa-check"></i>
+                     </button>
+                     <button 
+                        class="cancel-btn" 
+                        on:click|stopPropagation={cancelEdit} 
+                        aria-label="Cancel"
+                        title="Cancel"
+                     >
+                        <i class="fas fa-times"></i>
+                     </button>
+                  </div>
+               {:else}
+                  <div class="resource-value">{currentResources.get(resource) || 0}</div>
+                  <div class="resource-label">{resource}</div>
+               {/if}
             </div>
          </div>
       {/each}
@@ -246,6 +319,25 @@
       padding: 0.75rem 1rem;
       border-radius: 0.375rem;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      transition: all 0.2s ease;
+      position: relative;
+      
+      &:hover:not(.editing) {
+         outline-color: var(--resource-color);
+         background: rgba(0, 0, 0, 0.3);
+      }
+      
+      &.editing {
+         outline-width: 3px;
+         outline-color: var(--resource-color);
+         background: linear-gradient(135deg, 
+            rgba(0, 0, 0, 0.3),
+            color-mix(in srgb, var(--resource-color) 10%, transparent)
+         );
+      }
       
       .resource-icon {
          font-size: 1.5rem;
@@ -254,18 +346,90 @@
       .resource-info {
          display: flex;
          flex-direction: column;
+         min-width: 80px;
       }
       
       .resource-value {
-         font-size: var(--font-2xl);;
+         font-size: var(--font-2xl);
          font-weight: var(--font-weight-bold);
          color: var(--text-primary);
       }
       
       .resource-label {
-          font-size: var(--font-sm);;
+         font-size: var(--font-sm);
          color: var(--text-tertiary);
          text-transform: capitalize;
+      }
+      
+      .resource-edit-input {
+         width: 80px;
+         padding: 0.25rem 0.5rem;
+         border: 2px solid var(--resource-color);
+         border-radius: 0.25rem;
+         background: var(--bg-surface);
+         color: var(--text-primary);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-bold);
+         text-align: center;
+         
+         &:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--resource-color) 20%, transparent);
+         }
+      }
+      
+      /* Remove number input arrows for cleaner look */
+      .resource-edit-input::-webkit-inner-spin-button,
+      .resource-edit-input::-webkit-outer-spin-button {
+         -webkit-appearance: none;
+         margin: 0;
+      }
+      
+      .resource-edit-input[type="number"] {
+         -moz-appearance: textfield;
+      }
+      
+      .edit-buttons {
+         display: flex;
+         gap: 0.25rem;
+         margin-top: 0.25rem;
+      }
+      
+      .save-btn,
+      .cancel-btn {
+         flex: 1;
+         padding: 0.25rem;
+         border: 1px solid var(--border-default);
+         background: var(--bg-surface);
+         border-radius: 0.25rem;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         cursor: pointer;
+         transition: all var(--transition-fast);
+         color: var(--text-primary);
+         font-size: 0.75rem;
+         
+         i {
+            font-size: 0.75rem;
+         }
+      }
+      
+      .save-btn:hover {
+         background: var(--color-success);
+         border-color: var(--color-success);
+         color: white;
+      }
+      
+      .cancel-btn:hover {
+         background: var(--color-danger);
+         border-color: var(--color-danger);
+         color: white;
+      }
+      
+      .save-btn:active,
+      .cancel-btn:active {
+         transform: scale(0.95);
       }
    }
    

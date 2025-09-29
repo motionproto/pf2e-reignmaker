@@ -154,12 +154,15 @@ export class TerritoryService {
     /**
      * Update the Kingdom store with territory data
      */
-    private updateKingdomStore(hexes: Hex[], settlements: Settlement[]): void {
+    private updateKingdomStore(hexes: Hex[], kingmakerSettlements: Settlement[]): void {
         kingdomState.update(state => {
             // Update territory data
             state.hexes = hexes;
             state.size = hexes.length;
-            state.settlements = settlements;
+            
+            // Merge settlements - preserve existing data
+            const mergedSettlements = this.mergeSettlements(state.settlements, kingmakerSettlements);
+            state.settlements = mergedSettlements;
             
             // Update worksite counts for UI display
             state.worksiteCount = this.countWorksites(hexes);
@@ -168,6 +171,47 @@ export class TerritoryService {
             state.updateCachedProduction();
             
             return state;
+        });
+    }
+    
+    /**
+     * Merge existing settlements with Kingmaker settlement locations
+     * Preserves user-edited data while ensuring settlements exist at Kingmaker locations
+     */
+    private mergeSettlements(existing: Settlement[], fromKingmaker: Settlement[]): Settlement[] {
+        const result: Settlement[] = [...existing];
+        
+        for (const kmSettlement of fromKingmaker) {
+            // Check if we already have a settlement at this location
+            const existingAtLocation = existing.find(s => 
+                s.location.x === kmSettlement.location.x && 
+                s.location.y === kmSettlement.location.y
+            );
+            
+            if (!existingAtLocation) {
+                // Only add if we don't have a settlement at this location
+                console.log(`Adding new settlement at ${kmSettlement.location.x},${kmSettlement.location.y} from Kingmaker`);
+                result.push(kmSettlement);
+            } else {
+                // Keep our existing settlement data
+                console.log(`Preserving existing settlement "${existingAtLocation.name}" at ${existingAtLocation.location.x},${existingAtLocation.location.y}`);
+            }
+        }
+        
+        // Remove settlements that no longer exist in Kingmaker
+        // (only if they're at locations Kingmaker knows about)
+        const kmLocations = fromKingmaker.map(s => `${s.location.x},${s.location.y}`);
+        return result.filter(settlement => {
+            const locationKey = `${settlement.location.x},${settlement.location.y}`;
+            // Keep if: Kingmaker has it OR it's a user-created settlement at a non-Kingmaker location
+            const shouldKeep = kmLocations.includes(locationKey) || 
+                              !fromKingmaker.some(km => km.location.x === settlement.location.x && km.location.y === settlement.location.y);
+            
+            if (!shouldKeep) {
+                console.log(`Removing settlement "${settlement.name}" at ${locationKey} - no longer in Kingmaker`);
+            }
+            
+            return shouldKeep;
         });
     }
     

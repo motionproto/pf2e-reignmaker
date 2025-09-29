@@ -8,6 +8,7 @@ import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
+import { persistenceService } from './services/persistence';
 import { get } from 'svelte/store';
 import { kingdomState } from './stores/kingdom';
 
@@ -17,6 +18,11 @@ declare global {
         pf2eReignMaker?: {
             openKingdomUI: (actorId?: string) => void;
             syncKingmaker?: () => boolean;
+            saveKingdom?: () => Promise<void>;
+            loadKingdom?: () => Promise<void>;
+            exportKingdom?: () => Promise<void>;
+            importKingdom?: () => Promise<void>;
+            resetKingdom?: () => Promise<void>;
         };
     }
     
@@ -25,6 +31,11 @@ declare global {
         pf2eReignMaker?: {
             openKingdomUI: (actorId?: string) => void;
             syncKingmaker?: () => boolean;
+            saveKingdom?: () => Promise<void>;
+            loadKingdom?: () => Promise<void>;
+            exportKingdom?: () => Promise<void>;
+            importKingdom?: () => Promise<void>;
+            resetKingdom?: () => Promise<void>;
         };
     }
 }
@@ -102,9 +113,13 @@ Hooks.once('init', () => {
 /**
  * Setup module once the game is ready
  */
-Hooks.once('ready', () => {
+Hooks.once('ready', async () => {
     console.log('PF2E ReignMaker | Module ready');
     console.log('PF2E ReignMaker | Svelte Kingdom system initialized');
+    
+    // Initialize persistence service
+    await persistenceService.initialize();
+    console.log('PF2E ReignMaker | Persistence service initialized');
     
     // Initialize Kingmaker sync if available using Territory Service
     if (territoryService.isKingmakerAvailable()) {
@@ -173,12 +188,62 @@ Hooks.once('ready', () => {
             return result;
         };
         
+        // Data persistence API functions
+        const saveKingdom = async () => {
+            await persistenceService.saveData();
+        };
+        
+        const loadKingdom = async () => {
+            await persistenceService.loadData();
+        };
+        
+        const exportKingdom = async () => {
+            const jsonData = await persistenceService.exportData();
+            // Create a download link
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kingdom-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            // @ts-ignore
+            ui?.notifications?.info('Kingdom data exported successfully');
+        };
+        
+        const importKingdom = async () => {
+            // Create file input
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e: any) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    await persistenceService.importData(text);
+                }
+            };
+            input.click();
+        };
+        
+        const resetKingdom = async () => {
+            await persistenceService.resetKingdom();
+        };
+        
         // Get the module object and add the API
         // @ts-ignore
         const module = game.modules.get('pf2e-reignmaker') as any;
         if (module) {
-            // Add API object
-            module.api = { openKingdomUI, syncKingmaker };
+            // Add API object with all functions
+            module.api = { 
+                openKingdomUI, 
+                syncKingmaker,
+                saveKingdom,
+                loadKingdom,
+                exportKingdom,
+                importKingdom,
+                resetKingdom
+            };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
             console.log('PF2E ReignMaker | Module API registered');
@@ -186,20 +251,47 @@ Hooks.once('ready', () => {
         
         // Register global function to open Kingdom UI
         // @ts-ignore
-        game.pf2eReignMaker = { openKingdomUI, syncKingmaker };
+        game.pf2eReignMaker = { 
+            openKingdomUI, 
+            syncKingmaker,
+            saveKingdom,
+            loadKingdom,
+            exportKingdom,
+            importKingdom,
+            resetKingdom
+        };
         
         // Also add to window for easy console access in dev mode
         if (import.meta.env.DEV) {
             window.openKingdomUI = openKingdomUI;
-            window.pf2eReignMaker = { openKingdomUI, syncKingmaker };
+            window.pf2eReignMaker = { 
+                openKingdomUI, 
+                syncKingmaker,
+                saveKingdom,
+                loadKingdom,
+                exportKingdom,
+                importKingdom,
+                resetKingdom
+            };
         }
         
         console.log('PF2E ReignMaker | Global functions registered:');
-        console.log('  - game.modules.get("pf2e-reignmaker").api.openKingdomUI()');
-        console.log('  - game.modules.get("pf2e-reignmaker").openKingdomUI()');
+        console.log('Kingdom UI:');
         console.log('  - game.pf2eReignMaker.openKingdomUI()');
+        console.log('Data Persistence:');
+        console.log('  - game.pf2eReignMaker.saveKingdom() - Save to Foundry settings');
+        console.log('  - game.pf2eReignMaker.loadKingdom() - Load from Foundry settings');
+        console.log('  - game.pf2eReignMaker.exportKingdom() - Export to JSON file');
+        console.log('  - game.pf2eReignMaker.importKingdom() - Import from JSON file');
+        console.log('  - game.pf2eReignMaker.resetKingdom() - Reset to initial state');
+        if (territoryService.isKingmakerAvailable()) {
+            console.log('Kingmaker Integration:');
+            console.log('  - game.pf2eReignMaker.syncKingmaker() - Sync with Kingmaker module');
+        }
         if (import.meta.env.DEV) {
+            console.log('Development:');
             console.log('  - window.openKingdomUI() [DEV ONLY]');
+            console.log('  - All functions also available on window.pf2eReignMaker [DEV ONLY]');
         }
     }).catch((error) => {
         console.error('PF2E ReignMaker | Failed to load KingdomApp:', error);

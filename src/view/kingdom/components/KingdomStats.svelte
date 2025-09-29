@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomState, totalProduction } from '../../../stores/kingdom';
+   import { kingdomState, totalProduction, updateKingdomStat, setResource } from '../../../stores/kingdom';
    import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
@@ -30,7 +30,7 @@
    function adjustFame(delta: number) {
       const newFame = $kingdomState.fame + delta;
       if (newFame >= 0 && newFame <= 3) {
-         $kingdomState.fame = newFame;
+         updateKingdomStat('fame', newFame);
       }
    }
    
@@ -38,8 +38,9 @@
    $: isAtWar = $kingdomState.isAtWar || false;
    
    function toggleWarStatus() {
-      $kingdomState.isAtWar = !$kingdomState.isAtWar;
-      localStorage.setItem('kingdomWarStatus', $kingdomState.isAtWar ? 'war' : 'peace');
+      const newWarStatus = !$kingdomState.isAtWar;
+      updateKingdomStat('isAtWar', newWarStatus);
+      localStorage.setItem('kingdomWarStatus', newWarStatus ? 'war' : 'peace');
    }
    
    // Calculate unrest sources
@@ -75,6 +76,17 @@
    
    // Total worksites
    $: totalWorksites = foodProduction + lumberProduction + stoneProduction + oreProduction;
+   
+   // Track which field is being edited
+   let editingField: string | null = null;
+   
+   function startEditing(field: string) {
+      editingField = field;
+   }
+   
+   function stopEditing() {
+      editingField = null;
+   }
 </script>
 
 <div class="kingdom-stats-container">
@@ -136,11 +148,21 @@
                   </button>
                </div>
             </div>
-            <div class="stat-item">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div 
+               class="stat-item editable" 
+               class:editing={editingField === 'gold'}
+               on:click={() => startEditing('gold')}
+            >
                <span class="stat-label">Gold:</span>
                <EditableStat 
                   value={$kingdomState.resources.get('gold') || 0}
-                  onChange={(newValue) => $kingdomState.resources.set('gold', newValue)}
+                  onChange={(newValue) => setResource('gold', newValue)}
+                  isExternallyControlled={true}
+                  isEditing={editingField === 'gold'}
+                  onStartEdit={() => startEditing('gold')}
+                  onStopEdit={stopEditing}
                />
             </div>
             <div class="stat-item">
@@ -155,20 +177,40 @@
          <!-- Unrest -->
          <div class="stat-group">
             <h4 class="stat-group-header">Unrest</h4>
-            <div class="stat-item">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div 
+               class="stat-item editable"
+               class:editing={editingField === 'unrest'}
+               on:click={() => startEditing('unrest')}
+            >
                <span class="stat-label">Current Unrest:</span>
                <EditableStat 
                   value={$kingdomState.unrest}
-                  onChange={(newValue) => $kingdomState.unrest = newValue}
+                  onChange={(newValue) => updateKingdomStat('unrest', newValue)}
                   className={$kingdomState.unrest > 5 ? 'danger' : ''}
+                  isExternallyControlled={true}
+                  isEditing={editingField === 'unrest'}
+                  onStartEdit={() => startEditing('unrest')}
+                  onStopEdit={stopEditing}
                />
             </div>
-            <div class="stat-item">
+            <!-- svelte-ignore a11y-click-events-have-key-events -->
+            <!-- svelte-ignore a11y-no-static-element-interactions -->
+            <div 
+               class="stat-item editable"
+               class:editing={editingField === 'imprisoned'}
+               on:click={() => startEditing('imprisoned')}
+            >
                <span class="stat-label">Imprisoned:</span>
                <EditableStat 
                   value={$kingdomState.imprisonedUnrest}
-                  onChange={(newValue) => $kingdomState.imprisonedUnrest = newValue}
+                  onChange={(newValue) => updateKingdomStat('imprisonedUnrest', newValue)}
                   className="imprisoned"
+                  isExternallyControlled={true}
+                  isEditing={editingField === 'imprisoned'}
+                  onStartEdit={() => startEditing('imprisoned')}
+                  onStopEdit={stopEditing}
                />
             </div>
             <div class="stat-item">
@@ -231,11 +273,21 @@
             <h4 class="stat-group-header">Resources</h4>
             <div class="resource-section">
                <div class="resource-header">Food</div>
-               <div class="stat-item">
+               <!-- svelte-ignore a11y-click-events-have-key-events -->
+               <!-- svelte-ignore a11y-no-static-element-interactions -->
+               <div 
+                  class="stat-item editable"
+                  class:editing={editingField === 'food'}
+                  on:click={() => startEditing('food')}
+               >
                   <span class="stat-label">Current:</span>
                   <EditableStat 
                      value={$kingdomState.resources.get('food') || 0}
-                     onChange={(newValue) => $kingdomState.resources.set('food', newValue)}
+                     onChange={(newValue) => setResource('food', newValue)}
+                     isExternallyControlled={true}
+                     isEditing={editingField === 'food'}
+                     onStartEdit={() => startEditing('food')}
+                     onStopEdit={stopEditing}
                   />
                </div>
                <div class="stat-item">
@@ -384,6 +436,28 @@
    
    .stat-item:last-child {
       border-bottom: none;
+   }
+   
+   /* Styles for editable rows */
+   .stat-item.editable {
+      cursor: pointer;
+      transition: background-color var(--transition-fast);
+      position: relative;
+   }
+   
+   .stat-item.editable:hover {
+      background: rgba(255, 255, 255, 0.05);
+   }
+   
+   .stat-item.editable.editing {
+      background: rgba(94, 0, 0, 0.1);
+      border-color: var(--color-primary);
+   }
+   
+   /* When editing, hide the value's hover effect */
+   .stat-item.editable.editing :global(.stat-value.editable:hover) {
+      background: transparent !important;
+      padding: 0.125rem 0 !important;
    }
    
    .stat-item label,
