@@ -353,10 +353,11 @@ export class ActionExecutionService {
         stateChanges: Map<string, any>,
         sideEffects: string[]
     ): void {
-        // Coordinated Effort provides a bonus to the next action
-        if (action.id === 'coordinated-effort' && (outcome === 'success' || outcome === 'criticalSuccess')) {
-            stateChanges.set('meta', { nextActionBonus: outcome === 'criticalSuccess' ? 2 : 1 });
-            sideEffects.push('Next kingdom action gains a bonus');
+        // Aid Another provides a bonus to the aided action
+        if (action.id === 'aid-another' && (outcome === 'success' || outcome === 'criticalSuccess')) {
+            const bonusValue = outcome === 'criticalSuccess' ? 'proficiency+reroll' : 'proficiency';
+            stateChanges.set('meta', { aidBonus: bonusValue });
+            sideEffects.push('Aided action gains a bonus based on your proficiency');
         }
         
         // Hire Adventurers might resolve events

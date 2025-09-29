@@ -8,7 +8,7 @@
 import { Command } from '../base/Command';
 import type { CommandContext, CommandResult } from '../base/Command';
 import { EventResolutionService } from '../../services/domain/EventResolutionService';
-import type { EventData } from '../../services/EventService';
+import type { EventData } from '../../services/domain/events/EventService';
 import type { KingdomState } from '../../models/KingdomState';
 
 export interface EventOutcomeData {

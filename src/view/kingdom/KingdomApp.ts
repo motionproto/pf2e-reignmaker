@@ -1,5 +1,6 @@
 import { SvelteApp } from '#runtime/svelte/application';
 import { deepMerge } from '#runtime/util/object';
+import { persistenceService } from '../../services/persistence';
 
 import KingdomAppShell from './KingdomAppShell.svelte';
 
@@ -90,6 +91,24 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       }
 
       return super._render(force, options);
+   }
+   
+   /**
+    * Override close to save data before closing
+    */
+   async close(options?: { force?: boolean }): Promise<void>
+   {
+      console.log('[KingdomApp] Closing window - triggering save...');
+      
+      // Save kingdom data before closing
+      try {
+         await persistenceService.saveData(false);
+         console.log('[KingdomApp] Save completed before close');
+      } catch (error) {
+         console.error('[KingdomApp] Failed to save on close:', error);
+      }
+      
+      return super.close(options);
    }
 }
 

@@ -7,7 +7,7 @@
 
 import { economicsService, type ResourceCollectionResult } from '../services/economics';
 import { resourceManagementService } from '../services/domain/ResourceManagementService';
-import { UpdateResourcesCommand } from '../commands/impl/UpdateResourcesCommand';
+import { UpdateResourcesCommand } from '../commands/kingdom/UpdateResourcesCommand';
 import { commandExecutor } from '../commands/base/CommandExecutor';
 import type { CommandContext } from '../commands/base/Command';
 import type { KingdomState } from '../models/KingdomState';

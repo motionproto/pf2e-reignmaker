@@ -6,10 +6,10 @@
  */
 
 import { EventResolutionService } from '../services/domain/EventResolutionService';
-import { ApplyEventOutcomeCommand } from '../commands/impl/ApplyEventOutcomeCommand';
+import { ApplyEventOutcomeCommand } from '../commands/event/ApplyEventOutcomeCommand';
 import { commandExecutor } from '../commands/base/CommandExecutor';
 import type { CommandContext } from '../commands/base/Command';
-import type { EventData } from '../services/EventService';
+import type { EventData } from '../services/domain/events/EventService';
 import type { KingdomState } from '../models/KingdomState';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
 

@@ -1,6 +1,6 @@
-import type { KingdomModifier } from '../models/Modifiers';
-import { ModifierUtils } from '../models/Modifiers';
-import eventsData from '../../dist/events.json';
+import type { KingdomModifier } from '../../../models/Modifiers';
+import { ModifierUtils } from '../../../models/Modifiers';
+import eventsData from '../../../../dist/events.json';
 
 /**
  * Skill with description (aligned with player actions)

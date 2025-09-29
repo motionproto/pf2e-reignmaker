@@ -5,18 +5,19 @@
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    
-   // Import clean architecture components
+   // Import controller instead of commands/services directly
    import { createUnrestPhaseController } from '../../../controllers/UnrestPhaseController';
    import type { UnrestPhaseController } from '../../../controllers/UnrestPhaseController';
-   import { ProcessUnrestCommand } from '../../../commands/impl/ProcessUnrestCommand';
-   import { commandExecutor } from '../../../commands/base/CommandExecutor';
-   import type { CommandContext } from '../../../commands/base/Command';
-   import { diceService } from '../../../services/domain/DiceService';
    
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
    import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
-   import { initializeRollResultHandler } from '../../../api/foundry-actors';
+   import { 
+      performKingdomSkillCheck,
+      getCurrentUserCharacter,
+      showCharacterSelectionDialog,
+      initializeRollResultHandler
+   } from '../../../api/pf2e-integration';
    
    // Controller instance
    let unrestController: UnrestPhaseController;
@@ -42,15 +43,6 @@
       checkPhaseAutoCompletions(TurnPhase.PHASE_III);
    }
    
-   // Initialize controller and roll handler on mount
-   onMount(() => {
-      unrestController = createUnrestPhaseController();
-      initializeRollResultHandler();
-      
-      // Calculate initial unrest generation
-      calculateUnrestGeneration();
-   });
-   
    // Listen for kingdom roll completion events
    function handleRollCompleteEvent(event: CustomEvent) {
       const { checkId, outcome, actorName, checkType, skillName } = event.detail;
@@ -62,12 +54,23 @@
       }
    }
    
-   // Set up event listener when component mounts
+   // Initialize controller and set up event listeners
    onMount(() => {
+      unrestController = createUnrestPhaseController();
+      initializeRollResultHandler();
+      
+      // Calculate initial unrest generation
+      calculateUnrestGeneration();
+      
+      // Set up event listener
       window.addEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
       
       return () => {
          window.removeEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
+         // Reset controller state
+         if (unrestController) {
+            unrestController.resetState();
+         }
       };
    });
    
@@ -103,36 +106,50 @@
       }, 800);
    }
    
-   // Apply unrest generation using command pattern
+   // Apply unrest generation using controller
    async function applyUnrestGeneration() {
       if (!unrestController) return;
       
       const generation = unrestController.calculateUnrestGeneration($kingdomState);
       if (generation.total === 0) return;
       
-      // Create command context
-      const context: CommandContext = {
-         kingdomState: get(kingdomState),
-         currentTurn: $gameState.currentTurn || 1,
-         currentPhase: 'Phase III: Unrest'
-      };
-      
-      // Create command for unrest generation
-      const command = ProcessUnrestCommand.generate(generation.total, 'phase-generation');
-      
-      // Execute command
-      const result = await commandExecutor.execute(command, context);
-      
-      if (!result.success) {
-         console.error('Failed to apply unrest generation:', result.error);
-      }
+      // Update kingdom state with generated unrest
+      kingdomState.update(state => {
+         state.unrest = Math.max(0, state.unrest + generation.total);
+         return state;
+      });
    }
    
    // Start incident resolution with selected skill
-   function resolveIncident(skill: string) {
+   async function resolveIncident(skill: string) {
+      if (!currentIncident) return;
+      
       selectedSkill = skill;
       isRolling = true;
-      // The actual roll will be handled by the Foundry integration
+      
+      try {
+         // Prepare outcomes for the skill check
+         const outcomes = {
+            criticalSuccess: { msg: `Critical Success! ${currentIncident.successEffect}` },
+            success: { msg: currentIncident.successEffect },
+            failure: { msg: currentIncident.failureEffect },
+            criticalFailure: { msg: currentIncident.criticalFailureEffect }
+         };
+         
+         // Use PF2e integration for the roll
+         await performKingdomSkillCheck(
+            skill,
+            'incident',
+            currentIncident.name,
+            currentIncident.id,
+            outcomes
+         );
+         
+         // The result will be handled by the roll complete event listener
+      } catch (error) {
+         console.error("Error resolving incident with skill:", error);
+         isRolling = false;
+      }
    }
    
    // Handle incident resolution outcome
@@ -186,25 +203,29 @@
       isRolling = false;
    }
    
-   // Apply incident effects using command pattern
+   // Apply incident effects using controller
    async function applyIncidentEffects(effects: Map<string, any>) {
-      const context: CommandContext = {
-         kingdomState: get(kingdomState),
-         currentTurn: $gameState.currentTurn || 1,
-         currentPhase: 'Phase III: Unrest'
-      };
-      
-      for (const [key, value] of effects) {
-         switch (key) {
-            case 'unrest':
-               const unrestCommand = value > 0 
-                  ? ProcessUnrestCommand.generate(value, 'incident')
-                  : ProcessUnrestCommand.reduce(Math.abs(value), 'incident');
-               await commandExecutor.execute(unrestCommand, context);
-               break;
-            // Other effects would be handled with appropriate commands
+      // Apply effects directly to kingdom state
+      kingdomState.update(state => {
+         for (const [key, value] of effects) {
+            switch (key) {
+               case 'unrest':
+                  state.unrest = Math.max(0, state.unrest + value);
+                  break;
+               case 'fame':
+                  state.fame = Math.max(0, Math.min(3, state.fame + value));
+                  break;
+               // Handle resource effects
+               default:
+                  if (state.resources.has(key)) {
+                     const currentValue = state.resources.get(key) || 0;
+                     state.resources.set(key, Math.max(0, currentValue + value));
+                  }
+                  break;
+            }
          }
-      }
+         return state;
+      });
    }
    
    // Process imprisoned unrest actions
@@ -214,20 +235,20 @@
       const currentImprisoned = $kingdomState.imprisonedUnrest || 0;
       const result = unrestController.processImprisonedUnrest(currentImprisoned, action, amount);
       
-      // Apply changes using commands
-      const context: CommandContext = {
-         kingdomState: get(kingdomState),
-         currentTurn: $gameState.currentTurn || 1,
-         currentPhase: 'Phase III: Unrest'
-      };
-      
-      if (action === 'execute' && result.imprisonedChange < 0) {
-         const command = ProcessUnrestCommand.release(Math.abs(result.imprisonedChange));
-         await commandExecutor.execute(command, context);
-      } else if (action === 'pardon' && result.unrestChange < 0) {
-         const command = ProcessUnrestCommand.imprison(Math.abs(result.unrestChange));
-         await commandExecutor.execute(command, context);
-      }
+      // Apply changes directly to kingdom state
+      kingdomState.update(state => {
+         if (action === 'execute' && result.imprisonedChange < 0) {
+            // Release imprisoned unrest
+            const released = Math.abs(result.imprisonedChange);
+            state.imprisonedUnrest = Math.max(0, state.imprisonedUnrest - released);
+         } else if (action === 'pardon' && result.unrestChange > 0) {
+            // Convert regular unrest to imprisoned
+            const converted = result.unrestChange;
+            state.unrest = Math.max(0, state.unrest - converted);
+            state.imprisonedUnrest = (state.imprisonedUnrest || 0) + converted;
+         }
+         return state;
+      });
    }
    
    // Get controller state for display

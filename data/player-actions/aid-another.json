@@ -1,0 +1,101 @@
+{
+  "id": "aid-another",
+  "name": "Aid Another",
+  "category": "uphold-stability",
+  "brief": "Support an ally's kingdom action through preparation and assistance",
+  "description": "Support an ally's kingdom action through preparation and assistance, improving their chances of success. You must declare you are preparing to Aid a specific PC's action at the start of the Kingdom Turn, and this counts as your Kingdom Action for the turn.",
+  "skills": [
+    {
+      "skill": "Acrobatics"
+    },
+    {
+      "skill": "Arcana"
+    },
+    {
+      "skill": "Athletics"
+    },
+    {
+      "skill": "Crafting"
+    },
+    {
+      "skill": "Deception"
+    },
+    {
+      "skill": "Diplomacy"
+    },
+    {
+      "skill": "Intimidation"
+    },
+    {
+      "skill": "Lore"
+    },
+    {
+      "skill": "Medicine"
+    },
+    {
+      "skill": "Nature"
+    },
+    {
+      "skill": "Occultism"
+    },
+    {
+      "skill": "Performance"
+    },
+    {
+      "skill": "Religion"
+    },
+    {
+      "skill": "Society"
+    },
+    {
+      "skill": "Stealth"
+    },
+    {
+      "skill": "Survival"
+    },
+    {
+      "skill": "Thievery"
+    }
+  ],
+  "effects": {
+    "criticalSuccess": {
+      "description": "Aided PC gains +2/+3/+4 circumstance bonus (based on your proficiency: Trained/Expert +2, Master +3, Legendary +4) and may reroll if they fail",
+      "modifiers": {
+        "meta": {
+          "aidBonus": "proficiency",
+          "rerollOnFailure": true
+        }
+      }
+    },
+    "success": {
+      "description": "Aided PC gains +2/+3/+4 circumstance bonus (based on your proficiency: Trained/Expert +2, Master +3, Legendary +4)",
+      "modifiers": {
+        "meta": {
+          "aidBonus": "proficiency"
+        }
+      }
+    },
+    "failure": {
+      "description": "Aided PC gains +1 circumstance bonus",
+      "modifiers": {
+        "meta": {
+          "aidBonus": 1
+        }
+      }
+    },
+    "criticalFailure": {
+      "description": "Aided PC suffers -1 circumstance penalty",
+      "modifiers": {
+        "meta": {
+          "aidBonus": -1
+        }
+      }
+    }
+  },
+  "special": "Must declare at the start of the Kingdom Turn which PC you are aiding and their intended action. You must be working in the same region or settlement. This uses your Kingdom Action for the turn.",
+  "requirements": {
+    "declaration": "start-of-turn",
+    "proximity": "same-region-or-settlement",
+    "actionCost": "full-action"
+  }
+}

@@ -11,30 +11,10 @@
   export let isUpkeepPhase: boolean = false;
   export let currentTurn: number = 1;
   
-  // Define required steps for checking phase completion
-  const PHASE_REQUIRED_STEPS = new Map([
-    [TurnPhase.PHASE_I, []],  // Status phase is now automated - no manual steps required
-    [TurnPhase.PHASE_II, ['resources-collect']],
-    [TurnPhase.PHASE_III, ['calculate-unrest']],
-    [TurnPhase.PHASE_IV, ['resolve-event']],
-    [TurnPhase.PHASE_V, []],  // No required steps
-    [TurnPhase.PHASE_VI, ['upkeep-food', 'upkeep-military', 'upkeep-build']],  // Main upkeep steps
-  ]);
-  
   let currentPhaseComplete = false;
   
-  // Check if the current phase is complete - fully reactive to store changes
-  $: {
-    const requiredSteps = PHASE_REQUIRED_STEPS.get($gameState.currentPhase) || [];
-    if (requiredSteps.length === 0) {
-      currentPhaseComplete = true; // Actions phase is always "complete"
-    } else {
-      // Check if all required steps are completed
-      currentPhaseComplete = requiredSteps.every(step => 
-        $gameState.phaseStepsCompleted.get(step) === true
-      );
-    }
-  }
+  // Check if the current phase is complete - use the centralized check from gameState
+  $: currentPhaseComplete = isPhaseComplete($gameState.currentPhase);
   
   let headerElement: HTMLElement;
   let previousTitle = '';

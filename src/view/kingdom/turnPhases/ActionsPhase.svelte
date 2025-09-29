@@ -16,6 +16,8 @@
   import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog.svelte";
+  import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
+  import { clientContextService } from "../../../services/ClientContextService";
   import {
     getPlayerCharacters,
     getCurrentUserCharacter,
@@ -23,17 +25,17 @@
     performKingdomActionRoll,
     getKingdomActionDC,
     showCharacterSelectionDialog
-  } from "../../../api/foundry-actors";
+  } from "../../../api/pf2e-integration";
   import { onMount, onDestroy, tick } from "svelte";
 
-  // Import our clean architecture components
-  import { createActionPhaseController } from "../../../controllers";
-  import { commandExecutor, ExecuteActionCommand } from "../../../commands";
-  import type { CommandContext } from "../../../commands";
-  import { actionExecutionService } from "../../../services/domain";
+  // Import controller instead of services/commands directly
+  import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
 
   // Initialize controller
-  const controller = createActionPhaseController();
+  let controller = createActionPhaseController();
+  
+  // Track other players' actions
+  let otherPlayersActions = new Map<string, any>();
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -51,6 +53,9 @@
   
   // Force UI update when resolvedActions changes
   $: resolvedActionsSize = resolvedActions.size;
+  
+  // Track current user ID
+  let currentUserId: string | null = null;
 
   // Categories configuration (UI concern, stays here)
   const categoryConfig = [
@@ -110,14 +115,15 @@
     outcome: string,
     actorName: string,
     checkType?: string,
-    skillName?: string
+    skillName?: string,
+    proficiencyRank?: number
   ) {
     // Only handle action type checks
     if (checkType && checkType !== "action") {
       return;
     }
 
-    // Check if already resolved
+    // Check if already resolved by current player
     if (isActionResolved(actionId)) {
       return;
     }
@@ -139,13 +145,33 @@
       | "failure"
       | "criticalFailure";
     
-    // Parse the outcome to get state changes (temporary for preview)
-    const parsedEffects = actionExecutionService.parseActionOutcome(action, outcomeType);
-    const stateChanges = new Map<string, any>();
-    if (parsedEffects) {
-      Object.entries(parsedEffects).forEach(([key, value]) => {
-        stateChanges.set(key, value);
-      });
+    // Use controller to parse the outcome for preview
+    const stateChanges = controller.parseActionOutcome(action, outcomeType);
+    
+    // Special handling for Aid Another action - calculate actual bonus
+    if (action.id === 'aid-another' && stateChanges.get('meta')) {
+      const meta = stateChanges.get('meta');
+      if (meta.aidBonus === 'proficiency' || meta.aidBonus === 'proficiency+reroll') {
+        // Calculate actual bonus based on proficiency rank
+        // PF2e ranks: 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
+        let bonus = 1; // Default to +1 for untrained
+        if (proficiencyRank !== undefined) {
+          if (proficiencyRank >= 1 && proficiencyRank <= 2) {
+            bonus = 2; // Trained/Expert = +2
+          } else if (proficiencyRank === 3) {
+            bonus = 3; // Master = +3
+          } else if (proficiencyRank >= 4) {
+            bonus = 4; // Legendary = +4
+          }
+        }
+        
+        // Update the meta with calculated bonus
+        const updatedMeta = {
+          aidBonus: bonus,
+          rerollOnFailure: meta.aidBonus === 'proficiency+reroll' || meta.rerollOnFailure
+        };
+        stateChanges.set('meta', updatedMeta);
+      }
     }
     
     // Make sure the action is expanded FIRST
@@ -164,6 +190,18 @@
     await tick();
   }
 
+  // Broadcast action resolved to other players
+  function broadcastActionResolved(action: any, resolution: any) {
+    clientContextService.broadcastActionEvent('resolved', {
+      actionId: action.id,
+      actionName: action.name,
+      outcome: resolution.outcome,
+      actorName: resolution.actorName,
+      skillName: resolution.skillName,
+      stateChanges: resolution.stateChanges
+    });
+  }
+
   // Apply the actual state changes when user confirms the resolution
   async function applyActionEffects(actionId: string) {
     const action = PlayerActionsData.getAllActions().find(
@@ -178,38 +216,31 @@
       return;
     }
 
-    // Execute the command for actual state changes
-    const context: CommandContext = {
-      kingdomState: $kingdomState,
-      currentTurn: $gameState.currentTurn,
-      currentPhase: "Phase V: Actions",
-    };
-
-    const command = new ExecuteActionCommand(action, resolution.outcome);
-    const result = await commandExecutor.execute(command, context);
+    // Use the controller to execute the action
+    const result = await controller.executeAction(
+      action,
+      resolution.outcome,
+      $kingdomState,
+      $gameState.currentTurn || 1,
+      undefined, // rollTotal - not tracked in current UI
+      resolution.actorName,
+      resolution.skillName,
+      currentUserId || undefined
+    );
 
     if (!result.success) {
       // Show error to user about requirements not being met
       ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
+    } else {
+      // Broadcast the action was resolved
+      broadcastActionResolved(action, resolution);
     }
   }
 
   // Reset an action
   async function resetAction(actionId: string, skipPlayerActionReset: boolean = false) {
-    // Remove from resolved actions
-    unresolveAction(actionId);
-
-    // Check if we need to undo the command (only if effects were actually applied)
-    if (commandExecutor.canUndo()) {
-      const history = commandExecutor.getHistory();
-      const lastCommand = history[history.length - 1];
-
-      // Check if the last command was for this action
-      const lastCommandName = lastCommand.getName ? lastCommand.getName() : "";
-      if (lastCommandName.includes(actionId)) {
-        await commandExecutor.undo();
-      }
-    }
+    // Use the controller to reset the action
+    await controller.resetAction(actionId, $kingdomState, currentUserId || undefined);
 
     // Also reset the player action in gameState (unless it's a reroll)
     if (!skipPlayerActionReset) {
@@ -222,15 +253,65 @@
 
   // Listen for roll completion events
   function handleRollComplete(event: CustomEvent) {
-    const { checkId, outcome, actorName, checkType, skillName } = event.detail;
+    const { checkId, outcome, actorName, checkType, skillName, proficiencyRank } = event.detail;
 
     if (checkType === "action") {
-      onActionResolved(checkId, outcome, actorName, checkType, skillName);
+      onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank);
     }
   }
 
   // Component lifecycle
   onMount(() => {
+    // Initialize controller
+    controller = createActionPhaseController();
+    
+    // Initialize client context service
+    clientContextService.initialize();
+    
+    // Store current user ID
+    const game = (window as any).game;
+    currentUserId = game?.user?.id || null;
+    
+    // Register socket listeners for other players' actions
+    const Hooks = (window as any).Hooks;
+    if (Hooks) {
+      // Listen for other players starting actions
+      Hooks.on('pf2e-reignmaker.actionStarted', (message: any) => {
+        if (message.userId !== currentUserId) {
+          otherPlayersActions.set(message.actionId, message);
+          // Force re-render
+          otherPlayersActions = otherPlayersActions;
+        }
+      });
+      
+      // Listen for other players resolving actions
+      Hooks.on('pf2e-reignmaker.actionResolved', (message: any) => {
+        if (message.userId !== currentUserId) {
+          // Update the resolved actions store for this player's resolution
+          resolveAction(
+            message.actionId,
+            message.outcome,
+            message.actorName,
+            message.skillName,
+            message.stateChanges,
+            message.userId
+          );
+          
+          // Remove from in-progress
+          otherPlayersActions.delete(message.actionId);
+          otherPlayersActions = otherPlayersActions;
+        }
+      });
+      
+      // Listen for action cancellations
+      Hooks.on('pf2e-reignmaker.actionCancelled', (message: any) => {
+        if (message.userId !== currentUserId) {
+          otherPlayersActions.delete(message.actionId);
+          otherPlayersActions = otherPlayersActions;
+        }
+      });
+    }
+    
     window.addEventListener(
       "kingdomRollComplete",
       handleRollComplete as EventListener
@@ -248,7 +329,6 @@
     }
 
     // Ensure player actions are initialized if not already
-    const game = (window as any).game;
     if (game?.user?.id) {
       const playerAction = getPlayerAction(game.user.id);
       if (!playerAction) {
@@ -275,7 +355,19 @@
       "kingdomRollComplete",
       handleRollComplete as EventListener
     );
-    // Controller no longer has state to reset
+    
+    // Clean up Hooks listeners
+    const Hooks = (window as any).Hooks;
+    if (Hooks) {
+      Hooks.off('pf2e-reignmaker.actionStarted');
+      Hooks.off('pf2e-reignmaker.actionResolved');
+      Hooks.off('pf2e-reignmaker.actionCancelled');
+    }
+    
+    // Reset controller state for next phase
+    if (controller) {
+      controller.resetState();
+    }
   });
 
   // Update selected character when ID changes
@@ -318,11 +410,16 @@
   }
 
   function isActionResolvedHelper(actionId: string): boolean {
-    return isActionResolved(actionId);
+    return controller.isActionResolved(actionId, currentUserId || undefined);
+  }
+  
+  // Check if any player has resolved this action
+  function isActionResolvedByAnyHelper(actionId: string): boolean {
+    return controller.isActionResolvedByAny(actionId);
   }
 
   function getActionResolutionHelper(actionId: string) {
-    const resolution = getActionResolution(actionId);
+    const resolution = controller.getActionResolution(actionId, currentUserId || undefined);
     if (!resolution) return undefined;
     
     // Convert Map to plain object for the component
@@ -351,6 +448,12 @@
       showBuildStructureDialog = true;
       return;
     }
+    
+    // Broadcast that we're starting an action
+    clientContextService.broadcastActionEvent('started', {
+      actionId: action.id,
+      actionName: action.name
+    });
     
     // Check if ANY player has already performed an action (kingdom has used actions)
     if (actionsUsed > 0 && !isActionResolved(action.id)) {
@@ -536,6 +639,17 @@
     if (game?.user?.id) {
       resetPlayerAction(game.user.id);
     }
+    
+    // Broadcast cancellation
+    const action = PlayerActionsData.getAllActions().find(
+      (a) => a.id === actionId
+    );
+    if (action) {
+      clientContextService.broadcastActionEvent('cancelled', {
+        actionId: actionId,
+        actionName: action.name
+      });
+    }
   }
   
   // Handle when a structure is successfully queued
@@ -620,7 +734,9 @@
           <div class="actions-list">
             {#each actions as action (action.id)}
               {@const isResolved = isActionResolvedHelper(action.id)}
+              {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
               {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
+              {@const otherPlayersResolutions = controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId)}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}`}
@@ -677,6 +793,9 @@
                   }}
                   on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
                 />
+                {#if otherPlayersResolutions.length > 0}
+                  <OtherPlayersActions resolutions={otherPlayersResolutions} compact={true} />
+                {/if}
               {/key}
             {/each}
           </div>

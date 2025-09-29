@@ -172,19 +172,19 @@ export const PlayerActionsData = {
     return [
       // Uphold Stability actions
       {
-        id: 'coordinated-effort',
-        name: 'Provide Support',
+        id: 'aid-another',
+        name: 'Aid Another',
         category: 'uphold-stability',
-        brief: 'Aid another PC\'s Kingdom Action',
-        description: 'When two leaders form a partnership on a single action, their combined expertise ensures the best possible outcome',
+        brief: 'Support an ally\'s kingdom action through preparation and assistance',
+        description: 'Support an ally\'s kingdom action through preparation and assistance, improving their chances of success',
         skills: [
-          { skill: 'varies', description: 'uses skill of the coordinated action' }
+          { skill: 'varies', description: 'uses an appropriate skill for the action being aided' }
         ],
-        criticalSuccess: { description: 'No risk of failure for coordination itself' },
-        success: { description: 'Both PCs roll with +1 bonus, take highest result' },
-        failure: { description: 'No effect' },
-        criticalFailure: { description: 'No effect' },
-        special: 'Exactly TWO PCs may use this together, once per Kingdom Turn. Other PCs may take any action independently.'
+        criticalSuccess: { description: 'Aided PC gains +2/+3/+4 circumstance bonus (based on proficiency) and may reroll if they fail' },
+        success: { description: 'Aided PC gains +2/+3/+4 circumstance bonus (based on proficiency)' },
+        failure: { description: 'Aided PC gains +1 circumstance bonus' },
+        criticalFailure: { description: 'Aided PC suffers -1 circumstance penalty' },
+        special: 'Must declare at the start of the Kingdom Turn which PC you are aiding. You must be working in the same region or settlement.'
       },
       {
         id: 'resolve-kingdom-event',

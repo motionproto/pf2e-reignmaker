@@ -5,16 +5,12 @@
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
    
-   // Import our new services and commands
-   import { EventResolutionService } from '../../../services/domain/EventResolutionService';
-   import { diceService } from '../../../services/domain/DiceService';
+   // Import controller instead of services/commands directly
+   import { EventPhaseController, createEventPhaseController } from '../../../controllers/EventPhaseController';
    import { stateChangeFormatter } from '../../../services/formatters/StateChangeFormatter';
-   import { ApplyEventOutcomeCommand } from '../../../commands/impl/ApplyEventOutcomeCommand';
-   import { commandExecutor } from '../../../commands/base/CommandExecutor';
-   import type { CommandContext } from '../../../commands/base/Command';
    
    // Import existing services and components
-   import { eventService, type EventData, type EventSkill, type EventOutcome } from '../../../services/EventService';
+   import { eventService, type EventData, type EventSkill, type EventOutcome } from '../../../services/domain/events/EventService';
    import Button from '../components/baseComponents/Button.svelte';
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
    import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
@@ -26,14 +22,12 @@
       getCurrentUserCharacter,
       showCharacterSelectionDialog,
       initializeRollResultHandler
-   } from '../../../api/foundry-actors';
+   } from '../../../api/pf2e-integration';
    
-   // Initialize services
-   let eventResolutionService: EventResolutionService;
+   // Initialize controller
+   let eventPhaseController: EventPhaseController;
    
    // UI State (no business logic)
-   let stabilityRoll: number = 0;
-   let showStabilityResult = false;
    let isRolling = false;
    let selectedSkill = '';
    let resolutionRoll: number = 0;
@@ -47,19 +41,27 @@
    let character: any = null;
    let isIgnoringEvent = false;
    let rolledAgainstDC: number = 0; // Store the DC that was actually rolled against
+   let pendingEventOutcome: {
+      event: EventData;
+      outcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
+      effects: Map<string, any>;
+   } | null = null;
    
    // Computed UI state
    $: eventChecked = isPhaseStepCompleted('resolve-event');
    $: eventResolved = isPhaseStepCompleted('resolve-event');
    $: eventDC = $gameState.eventDC;
    $: activeModifiers = $kingdomState.modifiers || [];
+   $: stabilityRoll = $gameState.eventStabilityRoll || 0;
+   $: showStabilityResult = $gameState.eventStabilityRoll !== null;
+   $: rolledAgainstDC = $gameState.eventRollDC || eventDC;
    
    onMount(() => {
       const initAsync = async () => {
          await eventService.loadEvents();
          
-         // Initialize the event resolution service
-         eventResolutionService = new EventResolutionService(eventService);
+         // Initialize the controller
+         eventPhaseController = createEventPhaseController(eventService);
          
          if (typeof (window as any).game !== 'undefined') {
             initializeRollResultHandler();
@@ -88,12 +90,9 @@
       };
    });
    
-   // Store pending changes without applying them
-   let pendingEventChanges: Map<string, number> | null = null;
-   
    // Handle roll result but DON'T apply changes yet
    async function handleRollResult(data: { outcome: string, actorName: string, skillName: string }) {
-      if (!currentEvent || !eventResolutionService) return;
+      if (!currentEvent || !eventPhaseController) return;
       
       const outcome = data.outcome as 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
       
@@ -108,38 +107,54 @@
          spendPlayerAction(game.user.id, TurnPhase.PHASE_IV);
       }
       
-      // Calculate what the changes WOULD be, but don't apply them yet
-      const eventApplication = eventResolutionService.applyEventOutcome(currentEvent, outcome);
-      pendingEventChanges = eventApplication.resourceChanges;
+      // Calculate preview of effects without applying
+      const effects = currentEvent.effects?.[outcome];
+      const previewEffects = new Map<string, any>();
+      
+      if (effects && effects.modifiers) {
+         // Parse modifiers array to extract resource changes
+         for (const modifier of effects.modifiers) {
+            if (modifier.enabled && modifier.selector) {
+               previewEffects.set(modifier.selector, (previewEffects.get(modifier.selector) || 0) + modifier.value);
+            }
+         }
+      }
+      
+      // Store pending outcome for later application
+      pendingEventOutcome = {
+         event: currentEvent,
+         outcome,
+         effects: previewEffects
+      };
       
       // Update UI with the pending changes for preview
       outcomeMessage = currentEvent.effects?.[outcome]?.msg || '';
-      currentEffects = Object.fromEntries(pendingEventChanges);
+      currentEffects = Object.fromEntries(previewEffects);
       
       showResolutionResult = true;
       isRolling = false;
    }
    
-   // Use service for stability check logic
+   // Use controller for stability check logic
    async function performStabilityCheck() {
-      if (!eventResolutionService) return;
+      if (!eventPhaseController) return;
       
       isRolling = true;
-      showStabilityResult = false;
       
       // Save the current DC before it changes
-      rolledAgainstDC = eventDC;
+      const currentDC = eventDC;
       
       // Animate the roll
-      setTimeout(() => {
-         // Use the service to perform the stability check
-         const checkResult = eventResolutionService.performStabilityCheck(rolledAgainstDC);
+      setTimeout(async () => {
+         // Use the controller to perform the stability check
+         const checkResult = await eventPhaseController.performStabilityCheck(currentDC);
          
-         stabilityRoll = checkResult.roll;
-         
-         // Update game state with new DC
+         // Update game state with roll results and new DC - this will sync to all players
          gameState.update(state => {
             state.eventDC = checkResult.newDC;
+            state.eventStabilityRoll = checkResult.roll;
+            state.eventRollDC = currentDC;
+            state.eventTriggered = checkResult.triggered;
             return state;
          });
          
@@ -152,7 +167,6 @@
             }
          }
          
-         showStabilityResult = true;
          isRolling = false;
       }, 1000);
    }
@@ -190,7 +204,7 @@
    }
    
    async function ignoreEvent() {
-      if (!currentEvent || !eventResolutionService || isIgnoringEvent) return;
+      if (!currentEvent || !eventPhaseController || isIgnoringEvent) return;
       
       isIgnoringEvent = true;
       
@@ -201,19 +215,28 @@
       }
       
       try {
-         // Calculate what the changes WOULD be for failure, but don't apply them yet
-         if (currentEvent.effects?.failure) {
-            const eventApplication = eventResolutionService.applyEventOutcome(currentEvent, 'failure');
-            pendingEventChanges = eventApplication.resourceChanges;
-            
-            currentEffects = Object.fromEntries(pendingEventChanges);
-            outcomeMessage = currentEvent.effects.failure.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
-         } else {
-            // No failure effects defined
-            pendingEventChanges = new Map();
-            currentEffects = {};
-            outcomeMessage = `Event "${currentEvent.name}" was ignored`;
+         // Calculate preview effects for failure outcome
+         const effects = currentEvent.effects?.failure;
+         const previewEffects = new Map<string, any>();
+         
+         if (effects && effects.modifiers) {
+            // Parse modifiers array to extract resource changes
+            for (const modifier of effects.modifiers) {
+               if (modifier.enabled && modifier.selector) {
+                  previewEffects.set(modifier.selector, (previewEffects.get(modifier.selector) || 0) + modifier.value);
+               }
+            }
          }
+         
+         // Store pending outcome for later application
+         pendingEventOutcome = {
+            event: currentEvent,
+            outcome: 'failure',
+            effects: previewEffects
+         };
+         
+         currentEffects = Object.fromEntries(previewEffects);
+         outcomeMessage = currentEvent.effects?.failure?.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
          
          // Show resolution result
          resolutionOutcome = 'failure';
@@ -226,28 +249,26 @@
    // Apply the pending changes when user clicks OK
    async function completeEventResolution() {
       // Apply the pending changes if they exist
-      if (pendingEventChanges && currentEvent && resolutionOutcome) {
-         const context: CommandContext = {
-            kingdomState: get(kingdomState),
-            currentTurn: $gameState.currentTurn || 1,
-            currentPhase: 'Phase IV: Events',
-            actorId: resolvedActor
-         };
-         
-         const command = new ApplyEventOutcomeCommand(
-            currentEvent,
-            resolutionOutcome,
-            eventResolutionService
+      if (pendingEventOutcome && eventPhaseController) {
+         const result = await eventPhaseController.applyEventOutcome(
+            pendingEventOutcome.event,
+            pendingEventOutcome.outcome,
+            get(kingdomState),
+            $gameState.currentTurn || 1
          );
          
-         const result = await commandExecutor.execute(command, context, {
-            skipValidation: false
-         });
-         
          if (result.success) {
+            // Update kingdom state with applied effects
+            kingdomState.update(state => state);
+            
             // Mark phase as complete after successfully applying changes
             if (!eventResolved) {
                markPhaseStepCompleted('resolve-event');
+            }
+            
+            // Handle unresolved event if any
+            if (result.unresolvedEvent) {
+               unresolvedEvent = result.unresolvedEvent;
             }
          } else {
             console.error('Failed to apply event outcome:', result.error);
@@ -264,7 +285,20 @@
       unresolvedEvent = null;
       resolvedActor = '';
       character = null;
-      pendingEventChanges = null;
+      pendingEventOutcome = null;
+      
+      // Clear event roll state for next turn
+      gameState.update(state => {
+         state.eventStabilityRoll = null;
+         state.eventRollDC = null;
+         state.eventTriggered = null;
+         return state;
+      });
+      
+      // Reset controller state for next phase
+      if (eventPhaseController) {
+         eventPhaseController.resetState();
+      }
    }
    
    // Helper functions that only format data for display

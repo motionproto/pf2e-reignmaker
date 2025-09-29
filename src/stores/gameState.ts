@@ -20,10 +20,15 @@ interface PlayerAction {
 
 // Action resolution tracking
 interface ActionResolution {
+  playerId: string;      // User ID who performed the action
+  playerName: string;    // User display name
+  playerColor: string;   // User color for visual differentiation
+  actionId: string;      // The action that was performed
   outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   actorName: string;
   skillName?: string;
   stateChanges: Map<string, any>;
+  timestamp: number;     // When action was performed
 }
 
 interface GameState {
@@ -41,6 +46,9 @@ interface GameState {
   // Event management
   eventDC: number;
   eventManager: EventManager;
+  eventStabilityRoll: number | null;  // Result of stability check roll
+  eventRollDC: number | null;  // DC that was rolled against
+  eventTriggered: boolean | null;  // Whether an event was triggered
   
   // UI State
   viewingPhase: TurnPhase | null;  // Which phase the user is currently viewing
@@ -69,7 +77,10 @@ const initialGameState: GameState = {
   resolvedActions: new Map(),
   eventDC: 15,
   eventManager: new EventManager(),
-  viewingPhase: null,
+  eventStabilityRoll: null,
+  eventRollDC: null,
+  eventTriggered: null,
+  viewingPhase: TurnPhase.PHASE_I,  // Initialize to first phase instead of null
   selectedSettlement: null,
   expandedSections: new Set()
 };
@@ -77,20 +88,32 @@ const initialGameState: GameState = {
 // Main game state store
 export const gameState = writable<GameState>(initialGameState);
 
-// Separate store for viewingPhase for backward compatibility (will deprecate later)
-export const viewingPhase = writable<TurnPhase | null>(null);
+// Separate writable store for viewingPhase for backward compatibility
+export const viewingPhase = writable<TurnPhase | null>(TurnPhase.PHASE_I);  // Initialize to first phase
 
-// Subscribe to keep viewingPhase in sync with gameState
+// Track last known values to prevent circular updates
+let lastKnownViewingPhase: TurnPhase | null = TurnPhase.PHASE_I;
+let lastKnownGameStateViewingPhase: TurnPhase | null = TurnPhase.PHASE_I;
+
+// Sync gameState -> viewingPhase (when gameState.viewingPhase changes)
 gameState.subscribe($state => {
-  viewingPhase.set($state.viewingPhase);
+  if ($state.viewingPhase !== lastKnownGameStateViewingPhase) {
+    lastKnownGameStateViewingPhase = $state.viewingPhase;
+    lastKnownViewingPhase = $state.viewingPhase;
+    viewingPhase.set($state.viewingPhase);
+  }
 });
 
-// Also update gameState when viewingPhase changes
+// Sync viewingPhase -> gameState (when viewingPhase changes from UI)
 viewingPhase.subscribe($phase => {
-  gameState.update(state => ({
-    ...state,
-    viewingPhase: $phase
-  }));
+  if ($phase !== lastKnownViewingPhase) {
+    lastKnownViewingPhase = $phase;
+    lastKnownGameStateViewingPhase = $phase;
+    gameState.update(state => ({
+      ...state,
+      viewingPhase: $phase
+    }));
+  }
 });
 
 // Phase management functions
@@ -164,7 +187,10 @@ export function advancePhase() {
         phasesCompleted: new Set(),
         oncePerTurnActions: new Set(),
         playerActions: newPlayerActions,
-        resolvedActions: new Map()  // Clear resolved actions for new turn
+        resolvedActions: new Map(),  // Clear resolved actions for new turn
+        eventStabilityRoll: null,  // Clear event roll result
+        eventRollDC: null,
+        eventTriggered: null
       };
     }
   });
@@ -444,7 +470,10 @@ export function getGameStateForSave() {
     phasesCompleted: Array.from(state.phasesCompleted),
     oncePerTurnActions: Array.from(state.oncePerTurnActions),
     playerActions: Array.from(state.playerActions.entries()),
-    eventDC: state.eventDC
+    eventDC: state.eventDC,
+    eventStabilityRoll: state.eventStabilityRoll,
+    eventRollDC: state.eventRollDC,
+    eventTriggered: state.eventTriggered
   };
 }
 
@@ -459,6 +488,9 @@ export function loadGameState(savedState: any) {
     oncePerTurnActions: new Set(savedState.oncePerTurnActions || []),
     playerActions: savedState.playerActions ? new Map(savedState.playerActions) : initializePlayerActions(),
     eventDC: savedState.eventDC || 15,
+    eventStabilityRoll: savedState.eventStabilityRoll ?? null,
+    eventRollDC: savedState.eventRollDC ?? null,
+    eventTriggered: savedState.eventTriggered ?? null,
     viewingPhase: savedState.currentPhase || TurnPhase.PHASE_I  // Set viewing to match loaded phase
   }));
 }
@@ -475,15 +507,35 @@ export function resolveAction(
   outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
   actorName: string,
   skillName?: string,
-  stateChanges?: Map<string, any>
+  stateChanges?: Map<string, any>,
+  playerId?: string
 ): void {
+  const game = (window as any).game;
+  const userId = playerId || game?.user?.id;
+  if (!userId) {
+    console.warn('[gameState] Cannot resolve action without user ID');
+    return;
+  }
+  
+  const user = game?.users?.get(userId);
+  const playerName = user?.name || 'Unknown Player';
+  const playerColor = user?.color || '#ffffff';
+  
+  // Generate composite key for player-specific resolution
+  const resolutionKey = `${userId}:${actionId}`;
+  
   gameState.update(state => {
     const newResolvedActions = new Map(state.resolvedActions);
-    newResolvedActions.set(actionId, {
+    newResolvedActions.set(resolutionKey, {
+      playerId: userId,
+      playerName,
+      playerColor,
+      actionId,
       outcome,
       actorName,
       skillName,
-      stateChanges: stateChanges || new Map()
+      stateChanges: stateChanges || new Map(),
+      timestamp: Date.now()
     });
     
     return {
@@ -493,10 +545,19 @@ export function resolveAction(
   });
 }
 
-export function unresolveAction(actionId: string): void {
+export function unresolveAction(actionId: string, playerId?: string): void {
+  const game = (window as any).game;
+  const userId = playerId || game?.user?.id;
+  if (!userId) {
+    console.warn('[gameState] Cannot unresolve action without user ID');
+    return;
+  }
+  
+  const resolutionKey = `${userId}:${actionId}`;
+  
   gameState.update(state => {
     const newResolvedActions = new Map(state.resolvedActions);
-    newResolvedActions.delete(actionId);
+    newResolvedActions.delete(resolutionKey);
     
     return {
       ...state,
@@ -505,19 +566,72 @@ export function unresolveAction(actionId: string): void {
   });
 }
 
-export function isActionResolved(actionId: string): boolean {
+export function isActionResolved(actionId: string, playerId?: string): boolean {
+  const game = (window as any).game;
+  const userId = playerId || game?.user?.id;
+  if (!userId) return false;
+  
+  const resolutionKey = `${userId}:${actionId}`;
   const state = get(gameState);
-  return state.resolvedActions.has(actionId);
+  return state.resolvedActions.has(resolutionKey);
 }
 
-export function getActionResolution(actionId: string): ActionResolution | undefined {
+// Check if any player has resolved this action
+export function isActionResolvedByAny(actionId: string): boolean {
   const state = get(gameState);
-  return state.resolvedActions.get(actionId);
+  for (const [key, resolution] of state.resolvedActions.entries()) {
+    if (resolution.actionId === actionId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+export function getActionResolution(actionId: string, playerId?: string): ActionResolution | undefined {
+  const game = (window as any).game;
+  const userId = playerId || game?.user?.id;
+  if (!userId) return undefined;
+  
+  const resolutionKey = `${userId}:${actionId}`;
+  const state = get(gameState);
+  return state.resolvedActions.get(resolutionKey);
+}
+
+// Get resolutions for an action from all players
+export function getAllPlayersActionResolutions(actionId: string): ActionResolution[] {
+  const state = get(gameState);
+  const resolutions: ActionResolution[] = [];
+  
+  for (const [key, resolution] of state.resolvedActions.entries()) {
+    if (resolution.actionId === actionId) {
+      resolutions.push(resolution);
+    }
+  }
+  
+  return resolutions;
 }
 
 export function getAllResolvedActions(): Map<string, ActionResolution> {
   const state = get(gameState);
   return new Map(state.resolvedActions);
+}
+
+// Get resolved actions for current player only
+export function getCurrentPlayerResolvedActions(): Map<string, ActionResolution> {
+  const game = (window as any).game;
+  const userId = game?.user?.id;
+  if (!userId) return new Map();
+  
+  const state = get(gameState);
+  const playerActions = new Map<string, ActionResolution>();
+  
+  for (const [key, resolution] of state.resolvedActions.entries()) {
+    if (resolution.playerId === userId) {
+      playerActions.set(key, resolution);
+    }
+  }
+  
+  return playerActions;
 }
 
 export function clearResolvedActions(): void {

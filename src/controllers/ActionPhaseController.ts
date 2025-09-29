@@ -8,7 +8,7 @@
 
 import { get } from 'svelte/store';
 import { actionExecutionService } from '../services/domain/ActionExecutionService';
-import { ExecuteActionCommand } from '../commands/impl/ExecuteActionCommand';
+import { ExecuteActionCommand } from '../commands/action/ExecuteActionCommand';
 import { commandExecutor } from '../commands/base/CommandExecutor';
 import type { CommandContext } from '../commands/base/Command';
 import type { PlayerAction } from '../models/PlayerActions';
@@ -23,8 +23,12 @@ import {
     getAllResolvedActions,
     clearResolvedActions,
     getAllPlayerActions,
+    isActionResolvedByAny,
+    getAllPlayersActionResolutions,
+    getCurrentPlayerResolvedActions,
     type ActionResolution 
 } from '../stores/gameState';
+import { clientContextService } from '../services/ClientContextService';
 
 // Re-export ActionResolution type from gameState
 export type { ActionResolution } from '../stores/gameState';
@@ -73,17 +77,18 @@ export class ActionPhaseController {
         currentTurn: number,
         rollTotal?: number,
         actorName?: string,
-        skillName?: string
+        skillName?: string,
+        playerId?: string
     ): Promise<{
         success: boolean;
         resolution?: ActionResolution;
         error?: string;
     }> {
-        // Check if action has already been resolved (from store)
-        if (isActionResolved(action.id)) {
+        // Check if action has already been resolved by this player
+        if (isActionResolved(action.id, playerId)) {
             return {
                 success: false,
-                error: 'Action has already been resolved'
+                error: 'You have already resolved this action'
             };
         }
         
@@ -115,11 +120,12 @@ export class ActionPhaseController {
                 outcome,
                 actorName || 'The Kingdom',
                 skillName,
-                result.data?.appliedChanges || new Map()
+                result.data?.appliedChanges || new Map(),
+                playerId
             );
             
             // Return the resolution
-            const resolution = getActionResolution(action.id);
+            const resolution = getActionResolution(action.id, playerId);
             if (resolution) {
                 return {
                     success: true,
@@ -161,10 +167,11 @@ export class ActionPhaseController {
         action: PlayerAction,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
         actorName: string,
-        skillName?: string
+        skillName?: string,
+        playerId?: string
     ): ActionResolution | null {
-        // Check if already resolved (from store)
-        if (isActionResolved(action.id)) {
+        // Check if already resolved by this player
+        if (isActionResolved(action.id, playerId)) {
             return null;
         }
         
@@ -191,10 +198,11 @@ export class ActionPhaseController {
             outcome,
             actorName,
             skillName,
-            stateChanges
+            stateChanges,
+            playerId
         );
         
-        return getActionResolution(action.id) || null;
+        return getActionResolution(action.id, playerId) || null;
     }
     
     /**
@@ -202,9 +210,10 @@ export class ActionPhaseController {
      */
     async resetAction(
         actionId: string,
-        kingdomState?: KingdomState
+        kingdomState?: KingdomState,
+        playerId?: string
     ): Promise<boolean> {
-        if (!isActionResolved(actionId)) {
+        if (!isActionResolved(actionId, playerId)) {
             return false;
         }
         
@@ -213,29 +222,43 @@ export class ActionPhaseController {
         if (canUndo) {
             const result = await commandExecutor.undo();
             if (result.success) {
-                unresolveAction(actionId);
+                unresolveAction(actionId, playerId);
                 return true;
             }
         }
         
         // If undo isn't available, just remove from resolved
         // (This won't revert state changes but allows re-rolling)
-        unresolveAction(actionId);
+        unresolveAction(actionId, playerId);
         return true;
     }
     
     /**
-     * Check if an action has been resolved (delegates to store)
+     * Check if an action has been resolved by the current player
      */
-    isActionResolved(actionId: string): boolean {
-        return isActionResolved(actionId);
+    isActionResolved(actionId: string, playerId?: string): boolean {
+        return isActionResolved(actionId, playerId);
     }
     
     /**
-     * Get resolution details for an action (delegates to store)
+     * Check if an action has been resolved by any player
      */
-    getActionResolution(actionId: string): ActionResolution | undefined {
-        return getActionResolution(actionId);
+    isActionResolvedByAny(actionId: string): boolean {
+        return isActionResolvedByAny(actionId);
+    }
+    
+    /**
+     * Get resolution details for an action by current player
+     */
+    getActionResolution(actionId: string, playerId?: string): ActionResolution | undefined {
+        return getActionResolution(actionId, playerId);
+    }
+    
+    /**
+     * Get all player resolutions for an action
+     */
+    getAllPlayersResolutions(actionId: string): ActionResolution[] {
+        return getAllPlayersActionResolutions(actionId);
     }
     
     /**

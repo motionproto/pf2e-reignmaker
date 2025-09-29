@@ -1,9 +1,9 @@
 {
-  "id": "collect-resources",
-  "name": "Collect Resources",
+  "id": "harvest-resources",
+  "name": "Harvest Resources",
   "category": "economic-resources",
-  "brief": "Gather from hexes with or without worksites",
-  "description": "Harvest materials from your territories, either through established worksites or direct extraction",
+  "brief": "Harvest materials from controlled hexes",
+  "description": "Harvest materials from your territories through direct extraction from the land",
   "skills": [
     {
       "skill": "nature",
@@ -32,23 +32,27 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain an additional +1 Resource of the same type",
+      "description": "Gain 1 resource from the hex + identify ideal location (+2 untyped bonus to Create Worksite in this hex)",
       "modifiers": {
-        "resourceBonus": 1
+        "resourceCollected": 1,
+        "worksiteBonus": 2
       }
     },
     "success": {
-      "description": "Collect resources from hex or worksite",
+      "description": "Gain 1 resource from the hex",
       "modifiers": {
-        "resourceCollected": true
+        "resourceCollected": 1
       }
     },
     "failure": {
       "description": "No effect"
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "The hex is depleted; it cannot be harvested again next turn",
+      "modifiers": {
+        "hexDepleted": true
+      }
     }
   },
-  "special": "Choose one controlled hex. Either collect 1 resource of the appropriate type without a Worksite or collect from the worksite (once/turn)"
+  "special": "May harvest from any controlled hex. Each hex can only be harvested once per turn. Resource type depends on terrain."
 }

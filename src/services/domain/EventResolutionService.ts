@@ -6,7 +6,7 @@
  */
 
 import { diceService, type D20Result } from './DiceService';
-import type { EventService, EventData, EventOutcome as EventEffect } from '../../services/EventService';
+import type { EventService, EventData, EventOutcome as EventEffect } from './events/EventService';
 import type { KingdomState } from '../../models/KingdomState';
 import type { KingdomModifier, ModifierEffects } from '../../models/Modifiers';
 

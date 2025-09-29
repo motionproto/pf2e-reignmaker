@@ -1,14 +1,32 @@
-import type { KingdomModifier, ModifierEffects, ResolutionResult } from '../models/Modifiers';
-import { ModifierUtils } from '../models/Modifiers';
+import type { KingdomModifier, ModifierEffects, ResolutionResult } from '../../../models/Modifiers';
+import { ModifierUtils } from '../../../models/Modifiers';
+import type { KingdomState } from '../../../models/KingdomState';
+import { structuresService } from '../../structures';
+
+/**
+ * Roll modifier that can be applied to a skill check
+ */
+export interface RollModifier {
+    name: string;
+    label?: string;
+    value: number;
+    modifier?: number;
+    type?: 'circumstance' | 'status' | 'item' | 'untyped';
+    enabled?: boolean;
+    source?: string;
+}
 
 /**
  * Service for managing kingdom modifiers from unresolved events, trade agreements, etc.
+ * Also tracks temporary modifiers and aggregates from Kingdom state
  */
 export class ModifierService {
     private modifiers: KingdomModifier[] = [];
+    private temporaryModifiers: Map<string, RollModifier[]> = new Map();
 
     constructor() {
         this.modifiers = [];
+        this.temporaryModifiers = new Map();
     }
 
     /**
@@ -264,6 +282,183 @@ export class ModifierService {
      */
     importModifiers(modifiers: KingdomModifier[]): void {
         this.modifiers = [...modifiers];
+    }
+
+    /**
+     * Add a temporary modifier (e.g., from Aid Another)
+     * These are not persisted and cleared after use
+     */
+    addTemporaryModifier(skill: string, modifier: RollModifier): void {
+        if (!this.temporaryModifiers.has(skill)) {
+            this.temporaryModifiers.set(skill, []);
+        }
+        this.temporaryModifiers.get(skill)!.push(modifier);
+    }
+
+    /**
+     * Clear temporary modifiers for a skill or all skills
+     */
+    clearTemporaryModifiers(skill?: string): void {
+        if (skill) {
+            this.temporaryModifiers.delete(skill);
+        } else {
+            this.temporaryModifiers.clear();
+        }
+    }
+
+    /**
+     * Get all modifiers that apply to a specific check
+     * Aggregates from Kingdom State (structures, long-term modifiers) and temporary modifiers
+     */
+    getModifiersForCheck(
+        checkType: string,
+        skill: string,
+        kingdomState: KingdomState,
+        currentTurn: number
+    ): RollModifier[] {
+        const modifiers: RollModifier[] = [];
+        
+        // 1. Get structure bonuses from settlements
+        const structureModifiers = this.getStructureModifiers(kingdomState, skill);
+        modifiers.push(...structureModifiers);
+        
+        // 2. Get applicable long-term modifiers from kingdom state
+        const activeKingdomModifiers = this.getActiveModifiers(currentTurn)
+            .filter(m => this.modifierAppliesTo(m, checkType, skill))
+            .map(m => this.convertToRollModifier(m));
+        modifiers.push(...activeKingdomModifiers);
+        
+        // 3. Add temporary modifiers for this skill
+        const tempMods = this.temporaryModifiers.get(skill) || [];
+        modifiers.push(...tempMods);
+        
+        // 4. Add unrest penalties if applicable
+        const unrestModifier = this.getUnrestModifier(kingdomState);
+        if (unrestModifier) {
+            modifiers.push(unrestModifier);
+        }
+        
+        return modifiers;
+    }
+
+    /**
+     * Get modifiers from structures in settlements
+     */
+    private getStructureModifiers(kingdomState: KingdomState, skill: string): RollModifier[] {
+        const modifiers: RollModifier[] = [];
+        
+        if (!kingdomState.settlements) return modifiers;
+        
+        // Go through all settlements and their structures
+        for (const settlement of kingdomState.settlements) {
+            if (!settlement.structureIds) continue;
+            
+            for (const structureId of settlement.structureIds) {
+                // Get structure from service
+                const structure = structuresService.getStructure(structureId);
+                if (!structure) continue;
+                
+                // Check if structure provides a bonus to this skill
+                const skillBonus = this.getStructureSkillBonus(structure, skill);
+                if (skillBonus) {
+                    modifiers.push({
+                        name: `${structure.name} (${settlement.name})`,
+                        value: skillBonus,
+                        type: 'item',
+                        source: 'structure',
+                        enabled: true
+                    });
+                }
+            }
+        }
+        
+        return modifiers;
+    }
+
+    /**
+     * Check if a structure provides a bonus to a specific skill
+     */
+    private getStructureSkillBonus(structure: any, skill: string): number {
+        // Check the structure's effects for skill bonuses
+        // This would need to be expanded based on actual structure data
+        
+        // Example mappings (would be data-driven in practice)
+        const skillBonuses: Record<string, Record<string, number>> = {
+            'embassy': { 'diplomacy': 2 },
+            'barracks': { 'intimidation': 1, 'warfare lore': 1 },
+            'library': { 'arcana': 1, 'society': 1 },
+            'marketplace': { 'mercantile lore': 1, 'society': 1 },
+            'temple': { 'religion': 2 },
+            'thieves-guild': { 'thievery': 2, 'stealth': 1 },
+            'academy': { 'arcana': 2, 'occultism': 1 },
+            'garrison': { 'warfare lore': 2, 'intimidation': 1 }
+        };
+        
+        const structureBonuses = skillBonuses[structure.id] || {};
+        return structureBonuses[skill.toLowerCase()] || 0;
+    }
+
+    /**
+     * Check if a modifier applies to a specific check type and skill
+     */
+    private modifierAppliesTo(modifier: KingdomModifier, checkType: string, skill: string): boolean {
+        // Check if modifier has roll modifiers that apply
+        if (!modifier.effects?.rollModifiers) return false;
+        
+        for (const rollMod of modifier.effects.rollModifiers) {
+            // Check if it applies to this check type
+            if (rollMod.type === checkType || rollMod.type === 'all') {
+                // Check if it applies to this skill
+                if (!rollMod.skills || rollMod.skills.includes(skill.toLowerCase())) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Convert a kingdom modifier to a roll modifier
+     */
+    private convertToRollModifier(modifier: KingdomModifier): RollModifier {
+        // Extract the first applicable roll modifier
+        const rollMod = modifier.effects?.rollModifiers?.[0];
+        
+        return {
+            name: modifier.name,
+            value: rollMod?.value || 0,
+            type: 'circumstance',
+            source: modifier.source.type,
+            enabled: true
+        };
+    }
+
+    /**
+     * Get unrest penalty as a modifier
+     */
+    private getUnrestModifier(kingdomState: KingdomState): RollModifier | null {
+        const unrest = kingdomState.unrest || 0;
+        
+        // Calculate penalty based on unrest tier
+        let penalty = 0;
+        if (unrest >= 15) {
+            penalty = -4; // Rebellion
+        } else if (unrest >= 10) {
+            penalty = -2; // Unrest
+        } else if (unrest >= 5) {
+            penalty = -1; // Discontent
+        }
+        
+        if (penalty === 0) return null;
+        
+        return {
+            name: 'Unrest Penalty',
+            value: penalty,
+            type: 'circumstance',
+            source: 'unrest',
+            enabled: true
+        };
     }
 }
 

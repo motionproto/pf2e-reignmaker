@@ -3,7 +3,7 @@ import { KingdomState } from '../models/KingdomState';
 import type { KingdomEvent } from '../models/Events';
 import type { Settlement, Army, BuildProject } from '../models/KingdomState';
 import type { KingdomModifier } from '../models/Modifiers';
-import { modifierService } from '../services/ModifierService';
+import { modifierService } from '../services/domain/modifiers/ModifierService';
 import { economicsService } from '../services/economics';
 import { territoryService } from '../services/territory';
 
@@ -59,12 +59,37 @@ export const foodShortage = derived(kingdomState, $state => {
 // Actions to modify kingdom state - all ensure immutability for proper change detection
 // Helper function to create a new KingdomState with updated properties
 function cloneKingdomState(state: KingdomState): KingdomState {
-    const newState = Object.create(Object.getPrototypeOf(state));
-    return Object.assign(newState, state);
+    // Create a completely new KingdomState instance
+    const newState = new KingdomState();
+    
+    // Copy all properties, ensuring new references for collections
+    newState.unrest = state.unrest;
+    newState.imprisonedUnrest = state.imprisonedUnrest;
+    newState.fame = state.fame;
+    newState.size = state.size;
+    newState.isAtWar = state.isAtWar;
+    
+    // Create new Map instances
+    newState.resources = new Map(state.resources);
+    newState.worksiteCount = new Map(state.worksiteCount);
+    newState.cachedProduction = new Map(state.cachedProduction);
+    
+    // Create new array instances with spread
+    newState.hexes = [...state.hexes];
+    newState.settlements = [...state.settlements];
+    newState.armies = [...state.armies];
+    newState.buildQueue = [...state.buildQueue];
+    newState.continuousEvents = [...state.continuousEvents];
+    newState.modifiers = [...state.modifiers];
+    newState.cachedProductionByHex = [...state.cachedProductionByHex];
+    
+    // Copy object references (these should be replaced when modified)
+    newState.currentEvent = state.currentEvent;
+    
+    return newState;
 }
 
 export function updateKingdomStat(stat: keyof KingdomState, value: any) {
-    console.log(`[Store Update] Setting ${stat} to ${value}`);
     kingdomState.update(state => {
         const newState = cloneKingdomState(state);
         (newState as any)[stat] = value;
@@ -83,7 +108,6 @@ export function modifyResource(resource: string, amount: number) {
 }
 
 export function setResource(resource: string, amount: number) {
-    console.log(`[Store Update] Setting resource '${resource}' to ${amount}`);
     kingdomState.update(state => {
         const newState = cloneKingdomState(state);
         newState.resources = new Map(state.resources);

@@ -48,6 +48,9 @@
    
    // Automatically process fame and modifiers
    async function runAutomation() {
+      // Import the function we need
+      const { markPhaseStepCompleted } = await import('../../../stores/gameState');
+      
       // Store previous fame for display
       previousFame = $kingdomState.fame;
       
@@ -59,6 +62,8 @@
       
       if (fameResult.success) {
          fameReset = true;
+         // Mark the gain-fame step as completed
+         markPhaseStepCompleted('gain-fame');
       }
       
       // Process modifiers and get detailed effects
@@ -70,6 +75,8 @@
       if (modifierResult.success) {
          appliedEffects = modifierResult.modifierDetails;
          modifiersProcessed = true;
+         // Mark the apply-modifiers step as completed
+         markPhaseStepCompleted('apply-modifiers');
       }
       
       // Expire old modifiers

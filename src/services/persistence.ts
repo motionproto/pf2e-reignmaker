@@ -1,6 +1,6 @@
 /**
  * Data Persistence Service for PF2e Reignmaker
- * Handles saving and loading kingdom state data to/from Foundry VTT settings
+ * Handles saving and loading kingdom state data using actor flags
  * and synchronizing between different player clients
  */
 
@@ -33,13 +33,15 @@ export class PersistenceService {
     
     // Constants
     private readonly MODULE_ID = 'pf2e-reignmaker';
-    private readonly KINGDOM_DATA_KEY = 'kingdomData';
+    private readonly KINGDOM_DATA_KEY = 'kingdom-data';
+    private readonly PARTY_ACTOR_ID = 'xxxPF2ExPARTYxxx';
     private readonly SAVE_VERSION = 1;
     
     // Flags
     private isInitialized = false;
     private isSaving = false;
     private saveDebounceTimer: number | null = null;
+    private debugLogging = false; // Set to true for troubleshooting
     
     private constructor() {}
     
@@ -58,58 +60,58 @@ export class PersistenceService {
         if (this.isInitialized) return;
         
         // Check if we're in Foundry environment
-        if (typeof game === 'undefined' || !game?.settings) {
+        if (typeof game === 'undefined' || !game?.actors) {
             console.warn('[PersistenceService] Not in Foundry environment, using localStorage fallback');
             return;
         }
         
         try {
-            // Register settings for kingdom data storage
-            await this.registerSettings();
+            // Ensure party actor exists
+            await this.ensurePartyActor();
             
             // Load saved data
             await this.loadData();
             
-            // Set up save-on-change listeners instead of interval-based saving
+            // Set up save-on-change listeners
             this.setupSaveOnChange();
             
             // Set up hooks for synchronization
             this.setupSyncHooks();
             
             this.isInitialized = true;
-            console.log('[PersistenceService] Initialized successfully with save-on-change');
+            if (this.debugLogging) {
+                console.log('[PersistenceService] Initialized successfully with actor flag storage');
+            }
         } catch (error) {
             console.error('[PersistenceService] Failed to initialize:', error);
         }
     }
     
     /**
-     * Register Foundry settings for data storage
+     * Ensure the party actor exists for storing kingdom data
      */
-    private async registerSettings(): Promise<void> {
-        if (!game?.settings?.register) return;
+    private async ensurePartyActor(): Promise<any> {
+        let partyActor = game.actors?.get(this.PARTY_ACTOR_ID);
         
-        // Register kingdom data storage
-        game.settings.register(this.MODULE_ID, this.KINGDOM_DATA_KEY, {
-            name: 'Kingdom Save Data',
-            hint: 'Stores the current state of the kingdom',
-            scope: 'world',
-            config: false,
-            type: Object,
-            default: {},
-            onChange: (value: any) => {
-                // Handle remote changes from other clients
-                if (!this.isSaving) {
-                    this.handleRemoteUpdate(value);
+        if (!partyActor) {
+            // Look for any party actor
+            partyActor = game.actors?.find((a: any) => a.type === 'party');
+            
+            if (!partyActor) {
+                // Only warn once, don't spam console
+                if (this.debugLogging) {
+                    console.warn('[PersistenceService] No party actor found in world');
                 }
+                throw new Error('No party actor found. Please create a party actor first.');
             }
-        });
+        }
         
-        // No longer registering auto-save setting as we now save on changes
+        return partyActor;
     }
     
+    
     /**
-     * Save current kingdom state to persistent storage
+     * Save current kingdom state to persistent storage using actor flags
      */
     async saveData(showNotification = true): Promise<void> {
         if (!this.isFoundryReady()) {
@@ -118,6 +120,12 @@ export class PersistenceService {
         
         try {
             this.isSaving = true;
+            
+            // Get party actor
+            const partyActor = await this.ensurePartyActor();
+            if (!partyActor) {
+                throw new Error('No party actor available for saving kingdom data');
+            }
             
             // Get current state from stores
             const kingdomStateData = getCurrentKingdomState();
@@ -137,18 +145,17 @@ export class PersistenceService {
                 }
             };
             
-            // Save to Foundry settings
-            await game.settings.set(this.MODULE_ID, this.KINGDOM_DATA_KEY, saveData);
+            // Save to actor flag
+            await partyActor.setFlag(this.MODULE_ID, this.KINGDOM_DATA_KEY, saveData);
             
-            // Show notification
-            if (showNotification && game.user?.isGM) {
-                (window as any).ui?.notifications?.info('Kingdom state saved successfully');
+            // No longer show save notifications
+            
+            if (this.debugLogging) {
+                console.log('[PersistenceService] Data saved to actor flag', saveData.metadata);
             }
-            
-            console.log('[PersistenceService] Data saved successfully', saveData.metadata);
         } catch (error) {
             console.error('[PersistenceService] Failed to save data:', error);
-            (window as any).ui?.notifications?.error('Failed to save kingdom state');
+            (window as any).ui?.notifications?.error('Failed to save kingdom state: ' + error);
         } finally {
             this.isSaving = false;
         }
@@ -163,10 +170,20 @@ export class PersistenceService {
         }
         
         try {
-            const savedData = game.settings.get(this.MODULE_ID, this.KINGDOM_DATA_KEY) as SavedKingdomData;
+            // Get party actor
+            const partyActor = await this.ensurePartyActor();
+            if (!partyActor) {
+                console.log('[PersistenceService] No party actor available for loading kingdom data');
+                return;
+            }
+            
+            // Load from actor flag
+            const savedData = partyActor.getFlag(this.MODULE_ID, this.KINGDOM_DATA_KEY) as SavedKingdomData;
             
             if (!savedData || Object.keys(savedData).length === 0) {
-                console.log('[PersistenceService] No saved data found');
+                if (this.debugLogging) {
+                    console.log('[PersistenceService] No saved data found on party actor');
+                }
                 return;
             }
             
@@ -187,16 +204,19 @@ export class PersistenceService {
                 loadGameState(savedData.gameState);
             }
             
-            console.log('[PersistenceService] Data loaded successfully', savedData.metadata);
+            console.log('[PersistenceService] Data loaded successfully from actor flag', savedData.metadata);
             
-            // Show notification
-            if (game.user?.isGM) {
+            // No longer show load notifications
+            if (this.debugLogging) {
                 const lastSaved = new Date(savedData.timestamp).toLocaleString();
-                (window as any).ui?.notifications?.info(`Kingdom state loaded (last saved: ${lastSaved})`);
+                console.log(`[PersistenceService] Kingdom state loaded (last saved: ${lastSaved})`);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('[PersistenceService] Failed to load data:', error);
-            (window as any).ui?.notifications?.error('Failed to load kingdom state');
+            // Don't show error notification if just no data exists
+            if (error?.message !== 'No party actor found. Please create a party actor first.') {
+                (window as any).ui?.notifications?.error('Failed to load kingdom state');
+            }
         }
     }
     
@@ -261,7 +281,11 @@ export class PersistenceService {
         try {
             // Clear saved data
             if (this.isFoundryReady()) {
-                await game.settings.set(this.MODULE_ID, this.KINGDOM_DATA_KEY, {});
+                const partyActor = await this.ensurePartyActor();
+                if (partyActor) {
+                    await partyActor.unsetFlag(this.MODULE_ID, this.KINGDOM_DATA_KEY);
+                    console.log('[PersistenceService] Kingdom data cleared from party actor');
+                }
             } else {
                 localStorage.removeItem(`${this.MODULE_ID}-${this.KINGDOM_DATA_KEY}`);
             }
@@ -291,11 +315,9 @@ export class PersistenceService {
             loadGameState(data.gameState);
         }
         
-        // Notify user of remote update
-        if (data.metadata?.lastSavedBy && data.metadata.lastSavedBy !== game?.user?.name) {
-            (window as any).ui?.notifications?.info(
-                `Kingdom updated by ${data.metadata.lastSavedBy}`
-            );
+        // No longer notify of remote updates - just log for debugging if needed
+        if (this.debugLogging && data.metadata?.lastSavedBy && data.metadata.lastSavedBy !== game?.user?.name) {
+            console.log(`[PersistenceService] Kingdom updated by ${data.metadata.lastSavedBy}`);
         }
     }
     
@@ -305,10 +327,19 @@ export class PersistenceService {
     private setupSyncHooks(): void {
         if (typeof Hooks === 'undefined') return;
         
-        // Listen for socket messages for real-time sync
-        Hooks.on('updateSetting', (setting: any, value: any) => {
-            if (setting.key === `${this.MODULE_ID}.${this.KINGDOM_DATA_KEY}` && !this.isSaving) {
-                console.log('[PersistenceService] Setting updated via socket');
+        // Listen for actor updates for real-time sync
+        Hooks.on('updateActor', (actor: any, changes: any, options: any, userId: string) => {
+            // Check if this is our party actor and the update contains kingdom data
+            if ((actor.id === this.PARTY_ACTOR_ID || actor.type === 'party') && 
+                changes.flags?.[this.MODULE_ID]?.[this.KINGDOM_DATA_KEY] && 
+                !this.isSaving &&
+                userId !== game.user?.id) {
+                
+                console.log('[PersistenceService] Party actor updated remotely by', userId);
+                const savedData = actor.getFlag(this.MODULE_ID, this.KINGDOM_DATA_KEY) as SavedKingdomData;
+                if (savedData) {
+                    this.handleRemoteUpdate(savedData);
+                }
             }
         });
         
@@ -328,17 +359,30 @@ export class PersistenceService {
      * Automatically saves when kingdom or game state changes
      */
     private setupSaveOnChange(): void {
+        let lastKingdomState = JSON.stringify(this.serializeKingdomState(get(kingdomState)));
+        let lastGameState = JSON.stringify(getGameStateForSave());
+        
         // Subscribe to kingdom state changes
-        kingdomState.subscribe(() => {
-            this.debouncedSave();
+        kingdomState.subscribe((state) => {
+            // Serialize and compare only meaningful data
+            const serialized = this.serializeKingdomState(state);
+            const currentState = JSON.stringify(serialized);
+            
+            if (currentState !== lastKingdomState) {
+                lastKingdomState = currentState;
+                this.debouncedSave();
+            }
         });
         
         // Subscribe to game state changes
         gameState.subscribe(() => {
-            this.debouncedSave();
+            // Only save meaningful game state changes, not UI state
+            const currentState = JSON.stringify(getGameStateForSave());
+            if (currentState !== lastGameState) {
+                lastGameState = currentState;
+                this.debouncedSave();
+            }
         });
-        
-        console.log('[PersistenceService] Save-on-change listeners established');
     }
     
     /**
@@ -346,8 +390,15 @@ export class PersistenceService {
      * Waits 500ms after last change before saving
      */
     private debouncedSave(): void {
-        // Skip if not initialized or already saving
-        if (!this.isInitialized || this.isSaving) return;
+        // Skip if not initialized
+        if (!this.isInitialized) return;
+        
+        // If already saving, queue another save after current one completes
+        if (this.isSaving) {
+            // Queue a save to happen after the current one
+            setTimeout(() => this.debouncedSave(), 100);
+            return;
+        }
         
         // Clear existing timer
         if (this.saveDebounceTimer) {
@@ -355,9 +406,24 @@ export class PersistenceService {
         }
         
         // Set new timer for save
-        this.saveDebounceTimer = window.setTimeout(() => {
-            this.saveData(false);
+        this.saveDebounceTimer = window.setTimeout(async () => {
+            await this.saveData(false);
         }, 500);
+    }
+    
+    /**
+     * Force an immediate save (bypasses debouncing)
+     * Useful for critical updates that need to be persisted immediately
+     */
+    async forceSave(): Promise<void> {
+        // Cancel any pending debounced saves
+        if (this.saveDebounceTimer) {
+            clearTimeout(this.saveDebounceTimer);
+            this.saveDebounceTimer = null;
+        }
+        
+        // Save immediately
+        await this.saveData(false);
     }
     
     /**
@@ -400,9 +466,36 @@ export class PersistenceService {
                 name: hex.name
             })),
             
-            settlements: state.settlements,
-            armies: state.armies,
-            buildQueue: state.buildQueue
+            // Explicitly serialize settlements for proper change detection
+            settlements: state.settlements.map(settlement => ({
+                ...settlement
+            })),
+            
+            // Explicitly serialize armies
+            armies: state.armies.map(army => ({
+                ...army
+            })),
+            
+            // Convert buildQueue Maps to objects for serialization
+            buildQueue: state.buildQueue.map(project => ({
+                ...project,
+                totalCost: project.totalCost ? Object.fromEntries(project.totalCost) : {},
+                remainingCost: project.remainingCost ? Object.fromEntries(project.remainingCost) : {},
+                invested: project.invested ? Object.fromEntries(project.invested) : {},
+                pendingAllocation: project.pendingAllocation ? Object.fromEntries(project.pendingAllocation) : {}
+            })),
+            
+            // Handle cachedProductionByHex with nested Maps
+            cachedProductionByHex: state.cachedProductionByHex ? state.cachedProductionByHex.map(([hex, production]) => ({
+                hex: {
+                    id: hex.id,
+                    terrain: hex.terrain,
+                    worksite: hex.worksite ? { type: hex.worksite.type } : null,
+                    hasSpecialTrait: hex.hasSpecialTrait,
+                    name: hex.name
+                },
+                production: Object.fromEntries(production)
+            })) : []
         };
         
         return serialized;
@@ -433,6 +526,33 @@ export class PersistenceService {
                     hexData.hasSpecialTrait,
                     hexData.name
                 );
+            }) : [],
+            
+            // Reconstruct buildQueue with Maps
+            buildQueue: data.buildQueue ? data.buildQueue.map((project: any) => ({
+                ...project,
+                totalCost: new Map(Object.entries(project.totalCost || {})),
+                remainingCost: new Map(Object.entries(project.remainingCost || {})),
+                invested: new Map(Object.entries(project.invested || {})),
+                pendingAllocation: new Map(Object.entries(project.pendingAllocation || {}))
+            })) : [],
+            
+            // Reconstruct cachedProductionByHex with nested Maps
+            cachedProductionByHex: data.cachedProductionByHex ? data.cachedProductionByHex.map((item: any) => {
+                const worksite = item.hex.worksite ? 
+                    new Worksite(item.hex.worksite.type) : null;
+                
+                const hex = new Hex(
+                    item.hex.id,
+                    item.hex.terrain,
+                    worksite,
+                    item.hex.hasSpecialTrait,
+                    item.hex.name
+                );
+                
+                const production = new Map(Object.entries(item.production || {}));
+                
+                return [hex, production];
             }) : []
         };
         

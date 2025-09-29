@@ -76,6 +76,21 @@
          return change;
       }
       if (typeof change === 'object' && change !== null) {
+         // Handle aid bonus from aid-another action
+         if (change.aidBonus !== undefined) {
+            let bonusText = '';
+            if (typeof change.aidBonus === 'number') {
+               bonusText = change.aidBonus > 0 ? `+${change.aidBonus} circumstance bonus` : `${change.aidBonus} circumstance penalty`;
+            } else {
+               bonusText = String(change.aidBonus);
+            }
+            
+            if (change.rerollOnFailure) {
+               bonusText += ' (can reroll on failure)';
+            }
+            
+            return bonusText;
+         }
          if (change.nextActionBonus !== undefined) {
             return change.nextActionBonus > 0 ? `+${change.nextActionBonus}` : `${change.nextActionBonus}`;
          }
@@ -120,6 +135,15 @@
       }
       
       if (typeof change === 'object' && change !== null) {
+         // Handle aid bonus from aid-another action
+         if (change.aidBonus !== undefined) {
+            if (typeof change.aidBonus === 'number' && change.aidBonus > 0) {
+               return 'positive';
+            } else if (typeof change.aidBonus === 'number' && change.aidBonus < 0) {
+               return 'negative';
+            }
+            return 'neutral';
+         }
          if (change.nextActionBonus !== undefined) {
             return change.nextActionBonus > 0 ? 'positive' : change.nextActionBonus < 0 ? 'negative' : 'neutral';
          }
