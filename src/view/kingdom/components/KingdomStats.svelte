@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomState, totalProduction, updateKingdomStat, setResource } from '../../../stores/kingdom';
+   import { kingdomState, totalProduction, updateKingdom, setResource } from '../../../stores/kingdom';
    import { gameState } from '../../../stores/gameState';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
@@ -30,7 +30,7 @@
    function adjustFame(delta: number) {
       const newFame = $kingdomState.fame + delta;
       if (newFame >= 0 && newFame <= 3) {
-         updateKingdomStat('fame', newFame);
+         updateKingdom(k => { k.fame = newFame; });
       }
    }
    
@@ -39,7 +39,7 @@
    
    function toggleWarStatus() {
       const newWarStatus = !$kingdomState.isAtWar;
-      updateKingdomStat('isAtWar', newWarStatus);
+      updateKingdom(k => { k.isAtWar = newWarStatus; });
       localStorage.setItem('kingdomWarStatus', newWarStatus ? 'war' : 'peace');
    }
    
@@ -187,7 +187,7 @@
                <span class="stat-label">Current Unrest:</span>
                <EditableStat 
                   value={$kingdomState.unrest}
-                  onChange={(newValue) => updateKingdomStat('unrest', newValue)}
+                  onChange={(newValue) => updateKingdom(k => { k.unrest = newValue; })}
                   className={$kingdomState.unrest > 5 ? 'danger' : ''}
                   isExternallyControlled={true}
                   isEditing={editingField === 'unrest'}
@@ -205,7 +205,7 @@
                <span class="stat-label">Imprisoned:</span>
                <EditableStat 
                   value={$kingdomState.imprisonedUnrest}
-                  onChange={(newValue) => updateKingdomStat('imprisonedUnrest', newValue)}
+                  onChange={(newValue) => updateKingdom(k => { k.imprisonedUnrest = newValue; })}
                   className="imprisoned"
                   isExternallyControlled={true}
                   isEditing={editingField === 'imprisoned'}

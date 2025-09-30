@@ -3,7 +3,7 @@
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
-   import { kingdomState, updateKingdomStat }     from '../../stores/kingdom';
+   import { kingdomState }                        from '../../stores/kingdom';
    import { uiState, setSelectedTab }             from '../../stores/ui';
    
    // Import territory service for syncing
@@ -42,39 +42,26 @@
    
    // Perform initial sync when the app opens
    onMount(async () => {
-      // console.log('Kingdom UI opened - performing initial sync...');
+      // Note: persistenceService.loadData() is already called in KingdomApp.ts
+      // No need to call it again here to avoid race conditions
       
-      // First, ensure persisted data is loaded
-      try {
-         await persistenceService.loadData();
-         console.log('[KingdomAppShell] Loaded persisted kingdom data');
-      } catch (error) {
-         console.error('[KingdomAppShell] Failed to load persisted data:', error);
-      }
-      
-      // Then sync territory data from Kingmaker if available
+      // Sync territory data from Kingmaker if available
       if (territoryService.isKingmakerAvailable()) {
          const result = territoryService.syncFromKingmaker();
-         // console.log('Initial Kingmaker sync result:', result);
          
          if (result.success) {
-            // console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
             // Only show notification if there's actual data
             if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
                // @ts-ignore
                ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
             }
          } else if (result.error) {
-            // console.error('Failed to sync from Kingmaker:', result.error);
             // Don't show error notification on initial load unless there's a real error
-            // (not just "module not available")
             if (!result.error.includes('not available')) {
                // @ts-ignore
                ui.notifications?.warn(`Territory sync failed: ${result.error}`);
             }
          }
-      } else {
-         // console.log('Kingmaker module not available - running without territory sync');
       }
    });
 

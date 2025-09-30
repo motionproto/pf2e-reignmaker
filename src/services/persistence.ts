@@ -41,7 +41,7 @@ export class PersistenceService {
     private isInitialized = false;
     private isSaving = false;
     private saveDebounceTimer: number | null = null;
-    private debugLogging = false; // Set to true for troubleshooting
+    private debugLogging = true; // Set to true for troubleshooting
     
     private constructor() {}
     
@@ -109,6 +109,62 @@ export class PersistenceService {
         return partyActor;
     }
     
+    
+    /**
+     * Save current kingdom state with specific phase information from hook data
+     * This prevents race conditions where the phase change hasn't fully propagated to the store yet
+     */
+    async saveDataWithPhaseInfo(showNotification = true, phaseData?: any): Promise<void> {
+        if (!this.isFoundryReady()) {
+            return this.saveToLocalStorage();
+        }
+        
+        try {
+            this.isSaving = true;
+            
+            // Get party actor
+            const partyActor = await this.ensurePartyActor();
+            if (!partyActor) {
+                throw new Error('No party actor available for saving kingdom data');
+            }
+            
+            // Get current state from stores
+            const kingdomStateData = getCurrentKingdomState();
+            const gameStateData = getGameStateForSave();
+            
+            // Use phase data from hook if available to avoid race conditions
+            const currentPhase = phaseData?.newPhase || kingdomStateData.currentPhase;
+            const currentTurn = phaseData?.turn || kingdomStateData.currentTurn;
+            
+            console.log('[PersistenceService] Saving with phase info - hook phase:', phaseData?.newPhase, 'store phase:', kingdomStateData.currentPhase, 'using:', currentPhase);
+            
+            // Prepare save data
+            const saveData: SavedKingdomData = {
+                version: this.SAVE_VERSION,
+                timestamp: Date.now(),
+                kingdomState: this.serializeKingdomState(kingdomStateData),
+                gameState: gameStateData,
+                metadata: {
+                    worldId: game.world?.id,
+                    lastSavedBy: game.user?.name,
+                    turnNumber: currentTurn,
+                    phaseName: currentPhase
+                }
+            };
+            
+            // Save to actor flag
+            await partyActor.setFlag(this.MODULE_ID, this.KINGDOM_DATA_KEY, saveData);
+            
+            if (this.debugLogging) {
+                console.log('[PersistenceService] Data saved to actor flag with correct phase', saveData.metadata);
+            }
+        } catch (error) {
+            console.error('[PersistenceService] Failed to save data:', error);
+            (window as any).ui?.notifications?.error('Failed to save kingdom state: ' + error);
+        } finally {
+            this.isSaving = false;
+        }
+    }
     
     /**
      * Save current kingdom state to persistent storage using actor flags
@@ -196,7 +252,48 @@ export class PersistenceService {
             // Load kingdom state
             if (savedData.kingdomState) {
                 const deserializedState = this.deserializeKingdomState(savedData.kingdomState);
-                loadKingdomState(deserializedState);
+                
+                // Get current state to check if we have fresh territorial data (e.g., from Kingmaker sync)
+                const currentState = get(kingdomState);
+                const hasFreshTerritorialData = currentState.hexes.length > 0 || currentState.settlements.length > 0;
+                
+                if (hasFreshTerritorialData) {
+                    console.log(`[PersistenceService] Fresh territorial data exists (${currentState.hexes.length} hexes, ${currentState.settlements.length} settlements), preserving it and only loading game progression data`);
+                    
+                    // Only update game progression data - use kingdomState.update to preserve territorial data
+                    kingdomState.update(state => {
+                        // FORCE override game progression fields - no fallbacks to local state
+                        if (deserializedState.currentTurn !== undefined) {
+                            state.currentTurn = deserializedState.currentTurn;
+                        }
+                        if (deserializedState.currentPhase !== undefined) {
+                            state.currentPhase = deserializedState.currentPhase;
+                            console.log('[PersistenceService] FORCE updated currentPhase to:', deserializedState.currentPhase);
+                        }
+                        if (deserializedState.phaseStepsCompleted) {
+                            state.phaseStepsCompleted = deserializedState.phaseStepsCompleted;
+                        }
+                        if (deserializedState.phasesCompleted) {
+                            state.phasesCompleted = deserializedState.phasesCompleted;
+                        }
+                        if (deserializedState.oncePerTurnActions) {
+                            state.oncePerTurnActions = deserializedState.oncePerTurnActions;
+                        }
+                        
+                        // Only load resources if current resources are at default (0 gold)
+                        if (state.resources.get('gold') === 0 && deserializedState.resources) {
+                            state.resources = deserializedState.resources;
+                        }
+                        
+                        // Preserve all territorial data: hexes, settlements, size, worksiteCount, cachedProduction, etc.
+                        // These remain unchanged from the Kingmaker sync
+                        
+                        return state;
+                    });
+                } else {
+                    console.log('[PersistenceService] No current territorial data, loading full saved state');
+                    loadKingdomState(deserializedState);
+                }
             }
             
             // Load game state
@@ -344,13 +441,16 @@ export class PersistenceService {
         });
         
         // Hook into turn advancement
-        Hooks.on('pf2e-reignmaker.turnAdvanced', () => {
+        Hooks.on('pf2e-reignmaker.turnAdvanced', (data: any) => {
+            console.log('[PersistenceService] Turn advancement hook received', data);
             this.saveData(false);
         });
         
         // Hook into phase changes
-        Hooks.on('pf2e-reignmaker.phaseChanged', () => {
-            this.saveData(false);
+        Hooks.on('pf2e-reignmaker.phaseChanged', (data: any) => {
+            console.log('[PersistenceService] Phase change hook received', data);
+            console.log('[PersistenceService] Triggering saveData with phase data...');
+            this.saveDataWithPhaseInfo(false, data);
         });
     }
     

@@ -2,9 +2,13 @@
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
    import { kingdomState, setResource } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted, gameState } from '../../../stores/gameState';
+   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdom';
+   import { gameState } from '../../../stores/gameState';
    import Button from '../components/baseComponents/Button.svelte';
    import { tick } from 'svelte';
+   
+   // Props
+   export let isViewingCurrentPhase: boolean = true;
    
    // Import clean architecture components
    import { createResourcePhaseController } from '../../../controllers/ResourcePhaseController';
@@ -185,21 +189,21 @@
    
    <!-- Collect Resources Button -->
    <div class="collect-button-container">
-      <Button 
-         variant="secondary"
-         on:click={handleCollectResources} 
-         disabled={collectCompleted || isCollecting}
-         icon={collectCompleted ? "fas fa-check" : isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
-         iconPosition="left"
-      >
-         {#if collectCompleted}
-            Resources Collected
-         {:else if isCollecting}
-            Collecting...
-         {:else}
-            Collect Resources
-         {/if}
-   </Button>
+   <Button 
+      variant="secondary"
+      on:click={handleCollectResources} 
+      disabled={!isViewingCurrentPhase || collectCompleted || isCollecting}
+      icon={collectCompleted ? "fas fa-check" : isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
+      iconPosition="left"
+   >
+      {#if collectCompleted}
+         Resources Collected
+      {:else if isCollecting}
+         Collecting...
+      {:else}
+         Collect Resources
+      {/if}
+</Button>
    </div>
    
    <!-- Phase Steps -->

@@ -45,7 +45,7 @@
       skillName?: string,
       stateChanges?: Record<string, any>
    } | undefined = undefined;
-   export let character: any = null;
+   export const character: any = null; // Unused - marked as const
    export let canPerformMore: boolean = true;
    export let currentFame: number = 0;
    
@@ -54,7 +54,7 @@
    export let resolvedBadgeText: string = 'Resolved';
    export let primaryButtonLabel: string = 'OK';
    export let skillSectionTitle: string = 'Choose Skill:';
-   export let hideCharacterHint: boolean = false;
+   export const hideCharacterHint: boolean = false; // Unused - marked as const
    
    const dispatch = createEventDispatcher();
    

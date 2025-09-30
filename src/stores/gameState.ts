@@ -41,15 +41,6 @@ interface GameState {
   expandedSections: Set<string>;  // Which UI sections are expanded
 }
 
-// Define required steps for each phase
-const PHASE_REQUIRED_STEPS: Map<TurnPhase, string[]> = new Map([
-  [TurnPhase.PHASE_I, ['gain-fame', 'apply-modifiers']],  // Status phase
-  [TurnPhase.PHASE_II, ['resources-collect']],  // Resources phase
-  [TurnPhase.PHASE_III, ['calculate-unrest']],  // Unrest phase
-  [TurnPhase.PHASE_IV, ['resolve-event']],  // Events phase
-  [TurnPhase.PHASE_V, []],  // Actions phase - no required steps, optional actions
-  [TurnPhase.PHASE_VI, ['upkeep-food', 'upkeep-military', 'upkeep-build']],  // Resolution/Upkeep phase
-]);
 
 // Initialize game state
 const initialGameState: GameState = {
@@ -90,16 +81,8 @@ viewingPhase.subscribe($phase => {
   }
 });
 
-// Phase management functions
-export function setCurrentPhase(phase: TurnPhase) {
-  updateKingdom(k => {
-    k.currentPhase = phase;
-  });
-  gameState.update(state => ({
-    ...state,
-    viewingPhase: phase  // Also update viewing phase to match
-  }));
-}
+// Phase management functions - DEPRECATED: Phase advancement moved to kingdom.ts
+// These functions remain for backward compatibility but should not be used for new code
 
 export function setViewingPhase(phase: TurnPhase) {
   gameState.update(state => ({
@@ -108,185 +91,6 @@ export function setViewingPhase(phase: TurnPhase) {
   }));
 }
 
-export function getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
-  const phases = Object.values(TurnPhase);
-  const currentIndex = phases.indexOf(currentPhase);
-  
-  if (currentIndex < phases.length - 1) {
-    return phases[currentIndex + 1];
-  } else {
-    return null; // End of turn
-  }
-}
-
-export function advancePhase() {
-  const kingdom = get(kingdomState);
-  const oldPhase = kingdom.currentPhase;
-  const nextPhase = getNextPhase(kingdom.currentPhase);
-  
-  if (nextPhase) {
-    console.log('[gameState] Phase advancing from', oldPhase, 'to', nextPhase);
-    updateKingdom(k => {
-      k.currentPhase = nextPhase;
-    });
-    gameState.update(state => ({
-      ...state,
-      viewingPhase: nextPhase
-    }));
-  } else {
-    // End of turn - clear resources and advance to next turn
-    console.log('[gameState] End of turn - advancing from turn', kingdom.currentTurn, 'to turn', kingdom.currentTurn + 1);
-    
-    // Clear non-storable resources and event tracking before ending turn
-    updateKingdom(k => {
-      // Advance turn
-      k.currentTurn = k.currentTurn + 1;
-      k.currentPhase = TurnPhase.PHASE_I;
-      k.phaseStepsCompleted = new Map();
-      k.phasesCompleted = new Set();
-      k.oncePerTurnActions = new Set();
-      
-      // Clear non-storable resources
-      k.resources.set('lumber', 0);
-      k.resources.set('stone', 0);
-      k.resources.set('ore', 0);
-      
-      // Process end turn modifiers if any
-      // Filter out modifiers that have a duration of 1 (ends this turn)
-      k.modifiers = k.modifiers.filter(modifier => 
-        modifier.duration !== 1
-      );
-      
-      // Clear event/incident tracking for new turn
-      k.currentEventId = null;
-      k.currentIncidentId = null;
-      k.incidentRoll = null;
-      k.eventStabilityRoll = null;
-      k.eventRollDC = null;
-      k.eventTriggered = null;
-      
-      // Reset player actions for the new turn
-      k.playerActions = initializePlayerActions();
-    });
-    
-    gameState.update(state => ({
-      ...state,
-      viewingPhase: TurnPhase.PHASE_I,
-      resolvedActions: new Map()  // Clear resolved actions for new turn
-    }));
-  }
-}
-
-// Check if a phase is complete (all required steps done)
-export function isPhaseComplete(phase: TurnPhase): boolean {
-  const kingdom = get(kingdomState);
-  const requiredSteps = PHASE_REQUIRED_STEPS.get(phase) || [];
-  
-  // If no required steps, phase is always "complete" (e.g., Actions phase)
-  if (requiredSteps.length === 0) {
-    return true;
-  }
-  
-  // Check if all required steps are completed
-  return requiredSteps.every(step => kingdom.phaseStepsCompleted.get(step) === true);
-}
-
-// Mark a phase as complete
-export function markPhaseComplete(phase: TurnPhase) {
-  updateKingdom(k => {
-    const newPhasesCompleted = new Set(k.phasesCompleted);
-    newPhasesCompleted.add(phase);
-    k.phasesCompleted = newPhasesCompleted;
-  });
-}
-
-// Check if current phase is complete
-export function isCurrentPhaseComplete(): boolean {
-  const kingdom = get(kingdomState);
-  return isPhaseComplete(kingdom.currentPhase);
-}
-
-// Check if a phase can be operated (all previous phases must be complete)
-export function canOperatePhase(phase: TurnPhase): boolean {
-  const kingdom = get(kingdomState);
-  const phases = Object.values(TurnPhase);
-  const targetIndex = phases.indexOf(phase);
-  const currentIndex = phases.indexOf(kingdom.currentPhase);
-  
-  // Can always operate the current phase or earlier phases
-  if (targetIndex <= currentIndex) {
-    return true;
-  }
-  
-  // For future phases, check if all phases up to (but not including) the target are complete
-  for (let i = 0; i < targetIndex; i++) {
-    if (!kingdom.phasesCompleted.has(phases[i]) && !isPhaseComplete(phases[i])) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-export function markPhaseStepCompleted(stepId: string) {
-  // Get kingdom state (imported at module level)
-  const kingdom = get(kingdomState);
-  
-  updateKingdom(k => {
-    const newSteps = new Map(k.phaseStepsCompleted);
-    newSteps.set(stepId, true);
-    k.phaseStepsCompleted = newSteps;
-    
-    // Auto-complete related steps based on game rules (synchronous)
-    // Status Phase: If gain-fame is done and no modifiers exist, auto-complete apply-modifiers
-    if (stepId === 'gain-fame' && k.currentPhase === TurnPhase.PHASE_I) {
-      const hasModifiers = k.modifiers && k.modifiers.length > 0;
-      if (!hasModifiers && !k.phaseStepsCompleted.get('apply-modifiers')) {
-        k.phaseStepsCompleted.set('apply-modifiers', true);
-        console.log('[gameState] Auto-completed apply-modifiers (no modifiers exist)');
-      }
-    }
-    
-    // After updating steps, check if current phase is now complete
-    const requiredSteps = PHASE_REQUIRED_STEPS.get(k.currentPhase) || [];
-    const phaseNowComplete = requiredSteps.length > 0 && 
-      requiredSteps.every(step => k.phaseStepsCompleted.get(step) === true);
-    
-    if (phaseNowComplete && !k.phasesCompleted.has(k.currentPhase)) {
-      const newPhasesCompleted = new Set(k.phasesCompleted);
-      newPhasesCompleted.add(k.currentPhase);
-      k.phasesCompleted = newPhasesCompleted;
-      console.log(`[gameState] Phase ${k.currentPhase} marked as complete`);
-    }
-  });
-}
-
-// Check phase-specific conditions for auto-completion
-export function checkPhaseAutoCompletions(phase: TurnPhase) {
-  const kingdom = get(kingdomState);
-  
-  // Unrest Phase: Auto-complete if kingdom is stable
-  if (phase === TurnPhase.PHASE_III) {
-    const currentUnrest = kingdom.unrest || 0;
-    const tier = IncidentManager.getUnrestTier(currentUnrest);
-    
-    if (tier === 0 && !kingdom.phaseStepsCompleted.get('calculate-unrest')) {
-      markPhaseStepCompleted('calculate-unrest');
-      console.log('[gameState] Auto-completed calculate-unrest (kingdom is stable)');
-    }
-  }
-}
-
-export function isPhaseStepCompleted(stepId: string): boolean {
-  const kingdom = get(kingdomState);
-  return kingdom.phaseStepsCompleted.get(stepId) === true;
-}
-
-export function resetPhaseSteps() {
-  updateKingdom(k => {
-    k.phaseStepsCompleted = new Map();
-  });
-}
 
 export function markActionUsed(actionId: string) {
   updateKingdom(k => {
@@ -433,10 +237,21 @@ export function getGameStateForSave() {
 // Note: Most game state is now in kingdomState and loaded via persistence service
 export function loadGameState(savedState: any) {
   const kingdom = get(kingdomState);
-  gameState.update(state => ({
-    ...state,
-    viewingPhase: savedState.viewingPhase || kingdom.currentPhase || TurnPhase.PHASE_I
-  }));
+  
+  // Only override viewingPhase if there's a valid saved value
+  // Otherwise, let it sync with the current phase
+  if (savedState?.viewingPhase) {
+    gameState.update(state => ({
+      ...state,
+      viewingPhase: savedState.viewingPhase
+    }));
+  } else {
+    // No saved viewing phase, sync with current phase
+    gameState.update(state => ({
+      ...state,
+      viewingPhase: kingdom.currentPhase || TurnPhase.PHASE_I
+    }));
+  }
 }
 
 // Action resolution management functions

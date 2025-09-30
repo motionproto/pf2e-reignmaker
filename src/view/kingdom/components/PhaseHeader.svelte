@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { gameState, isPhaseComplete } from '../../../stores/gameState';
-  import { kingdomState } from '../../../stores/kingdom';
+  import { gameState } from '../../../stores/gameState';
+  import { kingdomState, isPhaseComplete } from '../../../stores/kingdom';
   import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   

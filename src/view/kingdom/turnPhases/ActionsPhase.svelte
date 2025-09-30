@@ -28,6 +28,9 @@
   } from "../../../api/pf2e-integration";
   import { onMount, onDestroy, tick } from "svelte";
 
+  // Props
+  export let isViewingCurrentPhase: boolean = true;
+
   // Import controller instead of services/commands directly
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
 

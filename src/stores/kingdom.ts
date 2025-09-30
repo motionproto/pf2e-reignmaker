@@ -7,12 +7,20 @@ import { modifierService } from '../services/domain/modifiers/ModifierService';
 import { economicsService } from '../services/economics';
 import { territoryService } from '../services/territory';
 import { initializePlayerActions } from './gameState';
+import { TurnPhase } from '../models/KingdomState';
+
+// Define required steps for each phase
+const PHASE_REQUIRED_STEPS: Map<TurnPhase, string[]> = new Map([
+  [TurnPhase.PHASE_I, ['gain-fame', 'apply-modifiers']],  // Status phase
+  [TurnPhase.PHASE_II, ['resources-collect']],  // Resources phase
+  [TurnPhase.PHASE_III, ['calculate-unrest']],  // Unrest phase
+  [TurnPhase.PHASE_IV, ['resolve-event']],  // Events phase
+  [TurnPhase.PHASE_V, []],  // Actions phase - no required steps, optional actions
+  [TurnPhase.PHASE_VI, ['upkeep-food', 'upkeep-military', 'upkeep-build']],  // Resolution/Upkeep phase
+]);
 
 // Main kingdom state store - contains only pure kingdom data
 export const kingdomState = writable(new KingdomState());
-
-// Re-export viewingPhase from gameState for backward compatibility
-export { viewingPhase } from './gameState';
 
 // Territory metrics derived store
 export const territoryMetrics = derived(kingdomState, $state => {
@@ -75,6 +83,7 @@ function cloneKingdomState(state: KingdomState): KingdomState {
     newState.worksiteCount = new Map(state.worksiteCount);
     newState.cachedProduction = new Map(state.cachedProduction);
     newState.playerActions = new Map(state.playerActions);
+    newState.phaseStepsCompleted = new Map(state.phaseStepsCompleted);  // FIX: Copy phase steps
     
     // Create new array instances with spread
     newState.hexes = [...state.hexes];
@@ -88,10 +97,20 @@ function cloneKingdomState(state: KingdomState): KingdomState {
     // Copy object references (these should be replaced when modified)
     newState.currentEvent = state.currentEvent;
     
+    // Copy turn and phase management properties
+    newState.currentTurn = state.currentTurn;
+    newState.currentPhase = state.currentPhase;
+    newState.phasesCompleted = new Set(state.phasesCompleted);  // FIX: Copy phases completed
+    newState.oncePerTurnActions = new Set(state.oncePerTurnActions);
+    newState.eventDC = state.eventDC;
+    
     // Copy event/incident tracking
     newState.currentEventId = state.currentEventId;
     newState.currentIncidentId = state.currentIncidentId;
     newState.incidentRoll = state.incidentRoll;
+    newState.eventStabilityRoll = state.eventStabilityRoll;
+    newState.eventRollDC = state.eventRollDC;
+    newState.eventTriggered = state.eventTriggered;
     
     return newState;
 }
@@ -102,13 +121,6 @@ export function updateKingdom(updater: (state: KingdomState) => void) {
         const newState = cloneKingdomState(state);
         updater(newState);
         return newState;
-    });
-}
-
-// Legacy helper - kept for backward compatibility, but prefer updateKingdom()
-export function updateKingdomStat(stat: keyof KingdomState, value: any) {
-    updateKingdom(state => {
-        (state as any)[stat] = value;
     });
 }
 
@@ -283,16 +295,6 @@ export function removeContinuousEvent(index: number) {
     });
 }
 
-// Re-export phase management functions from gameState for backward compatibility
-export { 
-    setCurrentPhase,
-    setViewingPhase,
-    advancePhase,
-    markPhaseStepCompleted,
-    resetPhaseSteps,
-    incrementTurn
-} from './gameState';
-
 // Modifier management functions
 export function addModifier(modifier: KingdomModifier) {
     kingdomState.update(state => {
@@ -377,8 +379,18 @@ export function loadKingdomState(savedState: Partial<KingdomState>) {
         // Create a new state object to ensure proper reactivity
         const newState = cloneKingdomState(state);
         
-        // Merge the saved state into the new state
-        Object.assign(newState, savedState);
+        // FORCE override specific fields from savedState to ensure proper synchronization
+        // This prevents local state from persisting when it should be overridden by remote changes
+        for (const [key, value] of Object.entries(savedState)) {
+            if (value !== undefined && value !== null) {
+                (newState as any)[key] = value;
+                
+                // Special logging for phase changes to track synchronization
+                if (key === 'currentPhase') {
+                    console.log('[loadKingdomState] FORCE updated currentPhase from', state.currentPhase, 'to', value);
+                }
+            }
+        }
         
         // Sync modifiers with service
         if (newState.modifiers) {
@@ -402,4 +414,189 @@ export function getCurrentKingdomState(): KingdomState {
 // Function to reset kingdom state to initial values
 export function resetKingdomState() {
     kingdomState.set(new KingdomState());
+}
+
+// Phase management functions - moved from gameState
+export function isPhaseComplete(phase: TurnPhase): boolean {
+  const kingdom = get(kingdomState);
+  const requiredSteps = PHASE_REQUIRED_STEPS.get(phase) || [];
+  
+  // If no required steps, phase is always "complete" (e.g., Actions phase)
+  if (requiredSteps.length === 0) {
+    return true;
+  }
+  
+  // Check if all required steps are completed
+  return requiredSteps.every(step => kingdom.phaseStepsCompleted.get(step) === true);
+}
+
+export function markPhaseStepCompleted(stepId: string) {
+  const kingdom = get(kingdomState);
+  
+  updateKingdom(k => {
+    const newSteps = new Map(k.phaseStepsCompleted);
+    newSteps.set(stepId, true);
+    k.phaseStepsCompleted = newSteps;
+    
+    // Auto-complete related steps based on game rules (synchronous)
+    // Status Phase: If gain-fame is done and no modifiers exist, auto-complete apply-modifiers
+    if (stepId === 'gain-fame' && k.currentPhase === TurnPhase.PHASE_I) {
+      const hasModifiers = k.modifiers && k.modifiers.length > 0;
+      if (!hasModifiers && !k.phaseStepsCompleted.get('apply-modifiers')) {
+        k.phaseStepsCompleted.set('apply-modifiers', true);
+        console.log('[kingdom] Auto-completed apply-modifiers (no modifiers exist)');
+      }
+    }
+    
+    // After updating steps, check if current phase is now complete
+    const requiredSteps = PHASE_REQUIRED_STEPS.get(k.currentPhase) || [];
+    const phaseNowComplete = requiredSteps.length > 0 && 
+      requiredSteps.every(step => k.phaseStepsCompleted.get(step) === true);
+    
+    if (phaseNowComplete && !k.phasesCompleted.has(k.currentPhase)) {
+      const newPhasesCompleted = new Set(k.phasesCompleted);
+      newPhasesCompleted.add(k.currentPhase);
+      k.phasesCompleted = newPhasesCompleted;
+      console.log(`[kingdom] Phase ${k.currentPhase} marked as complete`);
+    }
+  });
+}
+
+export function isPhaseStepCompleted(stepId: string): boolean {
+  const kingdom = get(kingdomState);
+  return kingdom.phaseStepsCompleted.get(stepId) === true;
+}
+
+export function isCurrentPhaseComplete(): boolean {
+  const kingdom = get(kingdomState);
+  return isPhaseComplete(kingdom.currentPhase);
+}
+
+// Phase auto-completion checks
+export function checkPhaseAutoCompletions(phase: TurnPhase) {
+  const kingdom = get(kingdomState);
+  
+  // Unrest Phase: Auto-complete if kingdom is stable
+  if (phase === TurnPhase.PHASE_III) {
+    const currentUnrest = kingdom.unrest || 0;
+    // Simple tier calculation (could be moved to IncidentManager if needed)
+    const tier = currentUnrest >= 10 ? 3 : currentUnrest >= 5 ? 2 : currentUnrest >= 1 ? 1 : 0;
+    
+    if (tier === 0 && !kingdom.phaseStepsCompleted.get('calculate-unrest')) {
+      markPhaseStepCompleted('calculate-unrest');
+      console.log('[kingdom] Auto-completed calculate-unrest (kingdom is stable)');
+    }
+  }
+}
+
+export function resetPhaseSteps() {
+  updateKingdom(k => {
+    k.phaseStepsCompleted = new Map();
+  });
+}
+
+// Phase advancement functions - moved from gameState for proper synchronization
+export function getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
+  const phases = Object.values(TurnPhase);
+  const currentIndex = phases.indexOf(currentPhase);
+  
+  if (currentIndex < phases.length - 1) {
+    return phases[currentIndex + 1];
+  } else {
+    return null; // End of turn
+  }
+}
+
+export function advancePhase() {
+  const kingdom = get(kingdomState);
+  const oldPhase = kingdom.currentPhase;
+  const nextPhase = getNextPhase(kingdom.currentPhase);
+  
+  if (nextPhase) {
+    console.log('[kingdom] Phase advancing from', oldPhase, 'to', nextPhase);
+    updateKingdom(k => {
+      k.currentPhase = nextPhase;
+    });
+    
+    // DEBUGGING: Check the state after update
+    const updatedKingdom = get(kingdomState);
+    console.log('[kingdom] Phase updated in store. New phase:', updatedKingdom.currentPhase);
+    
+    // Emit Foundry hook for phase change to trigger persistence
+    console.log('[kingdom] About to emit hook. Hooks available?', typeof Hooks !== 'undefined');
+    if (typeof Hooks !== 'undefined') {
+      console.log('[kingdom] Emitting pf2e-reignmaker.phaseChanged hook');
+      Hooks.call('pf2e-reignmaker.phaseChanged', {
+        oldPhase,
+        newPhase: nextPhase,
+        turn: kingdom.currentTurn
+      });
+      console.log('[kingdom] Hook emitted successfully');
+    } else {
+      console.error('[kingdom] Hooks not available! Cannot emit phase change hook');
+    }
+  } else {
+    // End of turn - clear resources and advance to next turn
+    console.log('[kingdom] End of turn - advancing from turn', kingdom.currentTurn, 'to turn', kingdom.currentTurn + 1);
+    
+    const newTurn = kingdom.currentTurn + 1;
+    
+    // Clear non-storable resources and event tracking before ending turn
+    updateKingdom(k => {
+      // Advance turn
+      k.currentTurn = newTurn;
+      k.currentPhase = TurnPhase.PHASE_I;
+      k.phaseStepsCompleted = new Map();
+      k.phasesCompleted = new Set();
+      k.oncePerTurnActions = new Set();
+      
+      // Clear non-storable resources
+      k.resources.set('lumber', 0);
+      k.resources.set('stone', 0);
+      k.resources.set('ore', 0);
+      
+      // Process end turn modifiers if any
+      k.modifiers = k.modifiers.filter(modifier => 
+        modifier.duration !== 1
+      );
+      
+      // Clear event/incident tracking for new turn
+      k.currentEventId = null;
+      k.currentIncidentId = null;
+      k.incidentRoll = null;
+      k.eventStabilityRoll = null;
+      k.eventRollDC = null;
+      k.eventTriggered = null;
+      
+      // Reset player actions for the new turn
+      k.playerActions = initializePlayerActions();
+    });
+    
+    // Emit Foundry hook for turn advancement to trigger persistence
+    if (typeof Hooks !== 'undefined') {
+      Hooks.call('pf2e-reignmaker.turnAdvanced', {
+        oldTurn: kingdom.currentTurn,
+        newTurn: newTurn,
+        phase: TurnPhase.PHASE_I
+      });
+    }
+  }
+}
+
+export function setCurrentPhase(phase: TurnPhase) {
+  const kingdom = get(kingdomState);
+  const oldPhase = kingdom.currentPhase;
+  
+  updateKingdom(k => {
+    k.currentPhase = phase;
+  });
+  
+  // Emit Foundry hook for phase change to trigger persistence
+  if (typeof Hooks !== 'undefined' && oldPhase !== phase) {
+    Hooks.call('pf2e-reignmaker.phaseChanged', {
+      oldPhase,
+      newPhase: phase,
+      turn: kingdom.currentTurn
+    });
+  }
 }

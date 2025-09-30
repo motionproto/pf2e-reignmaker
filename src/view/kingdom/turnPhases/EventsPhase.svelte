@@ -1,9 +1,13 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomState, updateKingdomStat } from '../../../stores/kingdom';
-   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, spendPlayerAction } from '../../../stores/gameState';
+   import { kingdomState } from '../../../stores/kingdom';
+   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdom';
+   import { gameState, spendPlayerAction } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
+   
+   // Props
+   export let isViewingCurrentPhase: boolean = true;
    
    // Import controller instead of services/commands directly
    import { EventPhaseController, createEventPhaseController } from '../../../controllers/EventPhaseController';
@@ -418,7 +422,7 @@
                            skill={skillOption.skill}
                            description={skillOption.description}
                            selected={selectedSkill === skillOption.skill}
-                           disabled={eventResolved}
+                           disabled={!isViewingCurrentPhase || eventResolved}
                            on:execute={(e) => resolveEventWithSkill(e.detail.skill)}
                         />
                      {/each}
@@ -429,7 +433,7 @@
                      <Button 
                         variant="secondary"
                         on:click={ignoreEvent}
-                        disabled={isIgnoringEvent || eventResolved}
+                        disabled={!isViewingCurrentPhase || isIgnoringEvent || eventResolved}
                         icon="fas fa-times-circle"
                         iconPosition="left"
                      >
@@ -473,7 +477,7 @@
          <Button 
             variant="secondary"
             on:click={performStabilityCheck}
-            disabled={isRolling || eventChecked}
+            disabled={!isViewingCurrentPhase || isRolling || eventChecked}
             icon={eventChecked ? 'fas fa-check' : 'fas fa-dice-d20'}
             iconPosition="left"
          >

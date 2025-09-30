@@ -8,9 +8,9 @@
    export let skillName: string | undefined = undefined;
    export let effect: string;
    export let stateChanges: Record<string, any> | undefined = undefined;
-   export let rerollEnabled: boolean = false;
-   export let rerollLabel: string = "Reroll";
-   export let rerollCount: number | undefined = undefined;
+   export const rerollEnabled: boolean = false; // Unused - marked as const
+   export const rerollLabel: string = "Reroll"; // Unused - marked as const
+   export const rerollCount: number | undefined = undefined; // Unused - marked as const
    export let primaryButtonLabel: string = "OK";
    export let compact: boolean = false;
    export let showFameReroll: boolean = true; // New prop to control fame reroll visibility

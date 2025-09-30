@@ -1,6 +1,6 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
-   import { gameState, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/gameState';
+   import { kingdomState, advancePhase } from '../../../stores/kingdom';
+   import { gameState, viewingPhase, setViewingPhase } from '../../../stores/gameState';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
    import { onMount } from 'svelte';
    
@@ -16,12 +16,24 @@
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
    import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';
    
-   // Initialize viewing phase if not set
+   // Track the last known current phase to detect when it changes
+   let lastCurrentPhase: TurnPhase | null = null;
+   
+   // Always sync viewing phase with current phase on mount
+   // This ensures proper initialization even when kingdomState loads asynchronously
    onMount(() => {
-      if (!$viewingPhase) {
+      setViewingPhase($kingdomState.currentPhase);
+      lastCurrentPhase = $kingdomState.currentPhase;
+   });
+   
+   // When current phase changes, auto-sync viewing phase if user was viewing the old current phase
+   $: if ($kingdomState.currentPhase !== lastCurrentPhase) {
+      // Phase has changed - if user was viewing the old current phase, update to new current phase
+      if ($viewingPhase === lastCurrentPhase || !$viewingPhase) {
          setViewingPhase($kingdomState.currentPhase);
       }
-   });
+      lastCurrentPhase = $kingdomState.currentPhase;
+   }
    
    // Get phase info based on what the user is viewing
    $: displayPhase = $viewingPhase || $kingdomState.currentPhase;
@@ -64,17 +76,17 @@
    
    <div class="phase-content">
       {#if displayPhase === TurnPhase.PHASE_I}
-         <StatusPhase />
+         <StatusPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {:else if displayPhase === TurnPhase.PHASE_II}
-         <ResourcesPhase />
+         <ResourcesPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {:else if displayPhase === TurnPhase.PHASE_III}
-         <UnrestPhase />
+         <UnrestPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {:else if displayPhase === TurnPhase.PHASE_IV}
-         <EventsPhase />
+         <EventsPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {:else if displayPhase === TurnPhase.PHASE_V}
-         <ActionsPhase />
+         <ActionsPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {:else if displayPhase === TurnPhase.PHASE_VI}
-         <UpkeepPhase />
+         <UpkeepPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
       {/if}
    </div>
 </div>

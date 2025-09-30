@@ -1,9 +1,12 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, markPhaseStepCompleted } from '../../../stores/kingdom';
    import { gameState } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
+   
+   // Props
+   export let isViewingCurrentPhase: boolean = true;
    
    // Import clean architecture components
    import { createStatusPhaseController } from '../../../controllers/StatusPhaseController';
@@ -48,39 +51,46 @@
    
    // Automatically process fame and modifiers
    async function runAutomation() {
-      // Import the function we need
-      const { markPhaseStepCompleted } = await import('../../../stores/gameState');
-      
-      // Store previous fame for display
-      previousFame = $kingdomState.fame;
-      
-      // Reset fame to 1
-      const fameResult = await statusController.resetFame(
-         get(kingdomState),
-         $kingdomState.currentTurn || 1
-      );
-      
-      if (fameResult.success) {
-         fameReset = true;
-         // Mark the gain-fame step as completed
-         markPhaseStepCompleted('gain-fame');
+      try {
+         // Store previous fame for display
+         previousFame = $kingdomState.fame;
+         
+         // Reset fame to 1
+         const fameResult = await statusController.resetFame(
+            get(kingdomState),
+            $kingdomState.currentTurn || 1
+         );
+         
+         if (fameResult.success) {
+            fameReset = true;
+            // Mark the gain-fame step as completed
+            markPhaseStepCompleted('gain-fame');
+            console.log('[StatusPhase] Marked gain-fame as completed');
+         } else {
+            console.error('[StatusPhase] Failed to reset fame:', fameResult.error);
+         }
+         
+         // Process modifiers and get detailed effects
+         const modifierResult = await statusController.processModifiers(
+            get(kingdomState),
+            $kingdomState.currentTurn || 1
+         );
+         
+         if (modifierResult.success) {
+            appliedEffects = modifierResult.modifierDetails;
+            modifiersProcessed = true;
+            // Mark the apply-modifiers step as completed
+            markPhaseStepCompleted('apply-modifiers');
+            console.log('[StatusPhase] Marked apply-modifiers as completed');
+         } else {
+            console.error('[StatusPhase] Failed to process modifiers:', modifierResult.error);
+         }
+         
+         // Expire old modifiers
+         statusController.expireModifiers(get(kingdomState), $kingdomState.currentTurn || 1);
+      } catch (error) {
+         console.error('[StatusPhase] Error in runAutomation:', error);
       }
-      
-      // Process modifiers and get detailed effects
-      const modifierResult = await statusController.processModifiers(
-         get(kingdomState),
-         $kingdomState.currentTurn || 1
-      );
-      
-      if (modifierResult.success) {
-         appliedEffects = modifierResult.modifierDetails;
-         modifiersProcessed = true;
-         // Mark the apply-modifiers step as completed
-         markPhaseStepCompleted('apply-modifiers');
-      }
-      
-      // Expire old modifiers
-      statusController.expireModifiers(get(kingdomState), $kingdomState.currentTurn || 1);
    }
    
    // Format resource name for display

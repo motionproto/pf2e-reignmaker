@@ -1,9 +1,13 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState, updateKingdomStat } from '../../../stores/kingdom';
-   import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/gameState';
+   import { kingdomState, updateKingdom } from '../../../stores/kingdom';
+   import { markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/kingdom';
+   import { gameState } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
+   
+   // Props
+   export let isViewingCurrentPhase: boolean = true;
    
    // Import controller instead of commands/services directly
    import { createUnrestPhaseController } from '../../../controllers/UnrestPhaseController';
@@ -180,8 +184,10 @@
          const result = unrestController.rollForIncident(unrestStatus.tier);
          
          // Store incident ID and roll in kingdomState for multiplayer sync
-         updateKingdomStat('currentIncidentId', result.incident?.id || null);
-         updateKingdomStat('incidentRoll', result.roll);
+         updateKingdom(k => {
+            k.currentIncidentId = result.incident?.id || null;
+            k.incidentRoll = result.roll;
+         });
          
          showIncidentResult = true;
          isRolling = false;
@@ -409,7 +415,7 @@
                <button 
                   class="roll-incident-btn"
                   on:click={rollForIncident}
-                  disabled={isRolling || incidentChecked}
+                  disabled={!isViewingCurrentPhase || isRolling || incidentChecked}
                >
                   <i class="fas {incidentChecked ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i> 
                   {#if incidentChecked}

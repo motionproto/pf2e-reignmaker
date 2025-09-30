@@ -1,4 +1,4 @@
-import { SvelteApp } from '#runtime/svelte/application';
+I mean, we should always be showing the `kingdomState` in the UI. So I would guess that the `kingdomState` is not being correctly shown, correctly said. import { SvelteApp } from '#runtime/svelte/application';
 import { deepMerge } from '#runtime/util/object';
 import { persistenceService } from '../../services/persistence';
 
@@ -88,6 +88,28 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       if (this.svelte.context)
       {
          this.svelte.context.actorId = actorId;
+      }
+
+      // First sync from Kingmaker if available, then load persisted data
+      try {
+         // Import territory service for Kingmaker sync
+         const { territoryService } = await import('../../services/territory');
+         
+         // Sync territory data from Kingmaker FIRST (before loading saved data)
+         if (territoryService.isKingmakerAvailable()) {
+            console.log('[KingdomApp] Syncing from Kingmaker before loading persistence...');
+            const result = territoryService.syncFromKingmaker();
+            if (result.success) {
+               console.log(`[KingdomApp] Kingmaker sync: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+            }
+         }
+         
+         // Then load persisted data (which won't overwrite the fresh Kingmaker data)
+         console.log('[KingdomApp] Loading kingdom data from persistence...');
+         await persistenceService.loadData();
+         console.log('[KingdomApp] Kingdom data loaded successfully');
+      } catch (error) {
+         console.error('[KingdomApp] Failed to load kingdom data:', error);
       }
 
       return super._render(force, options);

@@ -2,8 +2,9 @@
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
    import { kingdomState } from '../../../stores/kingdom';
-   import { gameState, incrementTurn, setCurrentPhase, resetPhaseSteps, 
-            markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/gameState';
+   import { markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps } from '../../../stores/kingdom';
+   import { gameState, incrementTurn } from '../../../stores/gameState';
+   import { setCurrentPhase } from '../../../stores/kingdom';
    import { TurnPhase } from '../../../models/KingdomState';
    import type { BuildProject } from '../../../models/KingdomState';
    
@@ -60,9 +61,8 @@
       
       // Auto-complete steps that don't need action
       const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomState);
-      const currentGameState = get(gameState);
       autoCompleteSteps.forEach(step => {
-         if (!currentGameState.phaseStepsCompleted.get(step)) {
+         if (!$kingdomState.phaseStepsCompleted.get(step)) {
             markPhaseStepCompleted(step);
          }
       });
