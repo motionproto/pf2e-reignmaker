@@ -203,10 +203,15 @@ export class KingdomActor extends Actor {
   async markPhaseStepCompleted(stepId: string): Promise<void> {
     await this.updateKingdom((kingdom) => {
       kingdom.phaseStepsCompleted[stepId] = true;
+      console.log(`[KingdomActor] Marked step '${stepId}' as completed`);
       
       // Check if phase should be marked as complete
       const requiredSteps = this.getRequiredStepsForPhase(kingdom.currentPhase);
+      console.log(`[KingdomActor] Required steps for ${kingdom.currentPhase}:`, requiredSteps);
+      console.log(`[KingdomActor] Completed steps:`, kingdom.phaseStepsCompleted);
+      
       const allCompleted = requiredSteps.every(step => kingdom.phaseStepsCompleted[step] === true);
+      console.log(`[KingdomActor] All steps completed: ${allCompleted}`);
       
       if (allCompleted && !kingdom.phasesCompleted.includes(kingdom.currentPhase)) {
         kingdom.phasesCompleted.push(kingdom.currentPhase);
@@ -222,7 +227,16 @@ export class KingdomActor extends Actor {
     const kingdom = this.getKingdom();
     if (!kingdom) return false;
     
-    return kingdom.phasesCompleted.includes(kingdom.currentPhase);
+    // Only check if phase is in completed list - no fallbacks
+    const phaseCompleted = kingdom.phasesCompleted.includes(kingdom.currentPhase);
+    
+    console.log(`[KingdomActor] Phase ${kingdom.currentPhase} completion check:`, {
+      phaseCompleted,
+      completedPhases: kingdom.phasesCompleted,
+      completedSteps: kingdom.phaseStepsCompleted
+    });
+    
+    return phaseCompleted;
   }
   
   /**

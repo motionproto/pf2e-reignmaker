@@ -6,7 +6,8 @@
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
-import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
+// Removed old Kingmaker sync - now handled by new architecture
+// import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
 import { initializeKingdomSystem, getKingdomActor } from './main.kingdom';
 import { get } from 'svelte/store';
@@ -127,9 +128,10 @@ Hooks.once('ready', async () => {
     }
     
     // Initialize Kingmaker sync if available using Territory Service
-    if (territoryService.isKingmakerAvailable()) {
-        initializeKingmakerSync();
-    }
+    // Old Kingmaker sync removed - now handled by src/hooks/kingdomSync.ts
+    // if (territoryService.isKingmakerAvailable()) {
+    //     initializeKingmakerSync();
+    // }
     
     // Create openKingdomUI function using static import
     const openKingdomUI = (actorId?: string) => {
@@ -162,22 +164,19 @@ Hooks.once('ready', async () => {
         };
         
         // Create manual sync function for debugging
-        const syncKingmaker = async () => {
+        const syncKingmaker = () => {
             console.log('PF2E ReignMaker | Manual sync triggered');
             
             try {
                 // Use the new manual sync function
-                const { manualTerritorySync } = await import('./hooks/kingdomSync');
-                await manualTerritorySync();
-                
-                // Also try the old method as fallback
-                const result = syncKingmakerToKingdomState();
+                import('./hooks/kingdomSync').then(({ manualTerritorySync }) => {
+                    manualTerritorySync();
+                });
                 
                 // Log debug info
                 // @ts-ignore
                 const km = typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker;
                 console.log('PF2E ReignMaker | Sync debug:', {
-                    syncResult: result,
                     kingmakerGlobal: km,
                     kingmakerState: km?.state,
                     totalHexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0,
@@ -195,7 +194,7 @@ Hooks.once('ready', async () => {
                     unrest: state.unrest || 0
                 });
                 
-                return result;
+                return true;
             } catch (error) {
                 console.error('PF2E ReignMaker | Sync error:', error);
                 return false;

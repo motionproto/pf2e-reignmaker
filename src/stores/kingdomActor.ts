@@ -66,11 +66,26 @@ export function getKingdomData(): KingdomData {
 export async function updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
   const actor = get(kingdomActor);
   if (!actor) {
-    console.warn('[KingdomActor Store] No actor available for update');
-    return;
+    console.warn('[KingdomActor Store] No actor available for update - likely during initialization, queuing update');
+    // Don't fail silently - instead, wait for actor to be available
+    return new Promise((resolve) => {
+      const unsubscribe = kingdomActor.subscribe((newActor) => {
+        if (newActor) {
+          unsubscribe();
+          newActor.updateKingdom(updater).then(resolve).catch(error => {
+            console.error('[KingdomActor Store] Failed to update kingdom:', error);
+            resolve();
+          });
+        }
+      });
+    });
   }
   
-  await actor.updateKingdom(updater);
+  try {
+    await actor.updateKingdom(updater);
+  } catch (error) {
+    console.error('[KingdomActor Store] Failed to update kingdom:', error);
+  }
 }
 
 /**
@@ -92,7 +107,10 @@ export async function advancePhase(): Promise<void> {
 
 export async function markPhaseStepCompleted(stepId: string): Promise<void> {
   const actor = get(kingdomActor);
-  if (!actor) return;
+  if (!actor) {
+    console.warn(`[KingdomActor Store] Cannot mark step '${stepId}' complete - no actor available yet`);
+    return;
+  }
   
   await actor.markPhaseStepCompleted(stepId);
 }

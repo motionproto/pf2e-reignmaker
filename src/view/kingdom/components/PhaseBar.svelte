@@ -16,6 +16,7 @@
   $: currentPhase = $kingdomData.currentPhase;
   $: currentTurn = $kingdomData.currentTurn;
   $: selectedPhase = $viewingPhase || currentPhase;
+  $: phasesCompleted = $kingdomData.phasesCompleted || [];
   
   // Initialize viewing phase on mount
   onMount(() => {
@@ -52,13 +53,12 @@
   }
   
   function isPhaseClickable(phase: TurnPhase): boolean {
-    // Only the current phase is clickable
-    return phase === currentPhase;
+    // Allow clicking on current phase and any completed phases
+    return phase === currentPhase || phasesCompleted.includes(phase);
   }
   
   function isPhaseCompleted(phase: TurnPhase): boolean {
-    const phaseIndex = getPhaseIndex(phase);
-    return phaseIndex < currentPhaseIndex;
+    return phasesCompleted.includes(phase);
   }
   
   function isPhaseFuture(phase: TurnPhase): boolean {
@@ -78,7 +78,7 @@
     if (isActive) {
       tooltip += ' (Currently Active - Click to view)';
     } else if (isCompleted) {
-      tooltip += ' (Completed - Complete current phase to advance)';
+      tooltip += ' (Completed - Click to review)';
     } else if (isFuture) {
       tooltip += ' (Future phase - Complete current phase to advance)';
     }
@@ -92,20 +92,20 @@
     {#each phases as phase, index (phase.id)}
       <!-- Phase connector line (before phase except for first) -->
       {#if index > 0}
-        <div class="phase-connector" class:completed={phaseCompletions[index]}></div>
+        <div class="phase-connector" class:completed={isPhaseCompleted(phase.id)}></div>
       {/if}
       
       <!-- Phase button -->
-      <button
-        class="phase-item"
-        class:active={phase.id === currentPhase}
-        class:selected={phase.id === selectedPhase}
-        class:completed={phaseCompletions[index]}
-        class:disabled={!isPhaseClickable(phase.id)}
-        disabled={!isPhaseClickable(phase.id)}
-        on:click={() => handlePhaseClick(phase.id)}
-        title={getTooltip(phase)}
-      >
+        <button
+          class="phase-item"
+          class:active={phase.id === currentPhase}
+          class:selected={phase.id === selectedPhase}
+          class:completed={isPhaseCompleted(phase.id)}
+          class:disabled={!isPhaseClickable(phase.id)}
+          disabled={!isPhaseClickable(phase.id)}
+          on:click={() => handlePhaseClick(phase.id)}
+          title={getTooltip(phase)}
+        >
         <!-- Active indicator dot -->
         {#if phase.id === currentPhase && phase.id !== selectedPhase}
           <span class="active-indicator"></span>
