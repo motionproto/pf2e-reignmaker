@@ -162,33 +162,44 @@ Hooks.once('ready', async () => {
         };
         
         // Create manual sync function for debugging
-        const syncKingmaker = () => {
+        const syncKingmaker = async () => {
             console.log('PF2E ReignMaker | Manual sync triggered');
-            const result = syncKingmakerToKingdomState();
             
-            // Log debug info
-            // @ts-ignore
-            const km = typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker;
-            console.log('PF2E ReignMaker | Sync debug:', {
-                syncResult: result,
-                kingmakerGlobal: km,
-                kingmakerState: km?.state,
-                totalHexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0,
-                claimedHexes: km?.state?.hexes ? Object.values(km.state.hexes).filter((h: any) => h.claimed).length : 0
-            });
-            
-            // Get current kingdom state to verify sync
-            const state = get(kingdomData);
-            console.log('PF2E ReignMaker | Current Kingdom State:', {
-                hexes: state.hexes?.length || 0,
-                size: state.size || 0,
-                settlements: state.settlements?.length || 0,
-                resources: state.resources || {},
-                fame: state.fame || 0,
-                unrest: state.unrest || 0
-            });
-            
-            return result;
+            try {
+                // Use the new manual sync function
+                const { manualTerritorySync } = await import('./hooks/kingdomSync');
+                await manualTerritorySync();
+                
+                // Also try the old method as fallback
+                const result = syncKingmakerToKingdomState();
+                
+                // Log debug info
+                // @ts-ignore
+                const km = typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker;
+                console.log('PF2E ReignMaker | Sync debug:', {
+                    syncResult: result,
+                    kingmakerGlobal: km,
+                    kingmakerState: km?.state,
+                    totalHexes: km?.state?.hexes ? Object.keys(km.state.hexes).length : 0,
+                    claimedHexes: km?.state?.hexes ? Object.values(km.state.hexes).filter((h: any) => h.claimed).length : 0
+                });
+                
+                // Get current kingdom state to verify sync
+                const state = get(kingdomData);
+                console.log('PF2E ReignMaker | Current Kingdom State:', {
+                    hexes: state.hexes?.length || 0,
+                    size: state.size || 0,
+                    settlements: state.settlements?.length || 0,
+                    resources: state.resources || {},
+                    fame: state.fame || 0,
+                    unrest: state.unrest || 0
+                });
+                
+                return result;
+            } catch (error) {
+                console.error('PF2E ReignMaker | Sync error:', error);
+                return false;
+            }
         };
         
         // Data persistence API functions - now handled by KingdomActor

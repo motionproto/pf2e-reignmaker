@@ -75,6 +75,9 @@ async function initializeKingdomActor(): Promise<void> {
   const { initializeKingdomActor } = await import('../stores/kingdomActor');
   initializeKingdomActor(kingdomActor);
   
+  // Load territory data from Kingmaker module if available
+  await loadTerritoryData();
+  
   console.log(`[Kingdom Sync] Kingdom actor initialized: ${kingdomActor.name}`);
 }
 
@@ -130,6 +133,53 @@ async function createKingdomActor(): Promise<any> {
  */
 export function getCurrentKingdomActor(): any | null {
   return findKingdomActor();
+}
+
+/**
+ * Load territory data from Kingmaker module
+ */
+async function loadTerritoryData(): Promise<void> {
+  try {
+    const { territoryService } = await import('../services/territory');
+    
+    if (territoryService.isKingmakerAvailable()) {
+      console.log('[Kingdom Sync] Loading territory data from Kingmaker module...');
+      
+      // Add a delay to ensure the kingdom actor is fully initialized
+      setTimeout(async () => {
+        const result = territoryService.syncFromKingmaker();
+        
+        if (result.success) {
+          console.log(`[Kingdom Sync] Successfully loaded ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+        } else {
+          console.warn('[Kingdom Sync] Failed to load territory data:', result.error);
+        }
+      }, 500); // Longer delay to ensure actor is ready
+    } else {
+      console.log('[Kingdom Sync] Kingmaker module not available, skipping territory load');
+    }
+  } catch (error) {
+    console.error('[Kingdom Sync] Error loading territory data:', error);
+  }
+}
+
+/**
+ * Manual sync function that can be called from console for debugging
+ */
+export async function manualTerritorySync(): Promise<void> {
+  try {
+    const { territoryService } = await import('../services/territory');
+    console.log('[Manual Sync] Starting manual territory sync...');
+    
+    if (territoryService.isKingmakerAvailable()) {
+      const result = territoryService.syncFromKingmaker();
+      console.log('[Manual Sync] Result:', result);
+    } else {
+      console.log('[Manual Sync] Kingmaker module not available');
+    }
+  } catch (error) {
+    console.error('[Manual Sync] Error:', error);
+  }
 }
 
 /**

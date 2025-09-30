@@ -67,7 +67,6 @@
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
       isUpkeepPhase={displayPhase === TurnPhase.PHASE_VI}
-      currentTurn={$kingdomData.currentTurn}
    />
    
    <!-- Phase Bar underneath phase header -->

@@ -158,9 +158,27 @@ export class TerritoryService {
      * Update the Kingdom store with territory data
      */
     private updateKingdomStore(hexes: Hex[], kingmakerSettlements: Settlement[]): void {
+        // Check if kingdom actor store is available before updating
+        try {
+            const actor = get(kingdomData);
+            if (!actor || Object.keys(actor).length === 0) {
+                console.warn('[Territory Service] No kingdom data available, skipping store update');
+                return;
+            }
+        } catch (error) {
+            console.warn('[Territory Service] Error checking kingdom data:', error);
+            return;
+        }
+        
         updateKingdom(state => {
-            // Update territory data
-            state.hexes = hexes;
+            // Convert Hex instances to plain objects for storage
+            state.hexes = hexes.map(hex => ({
+                id: hex.id,
+                terrain: hex.terrain,
+                worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
+                hasSpecialTrait: hex.hasSpecialTrait || false,
+                name: hex.name || undefined
+            }));
             state.size = hexes.length;
             
             // Merge settlements - preserve existing data
@@ -168,7 +186,18 @@ export class TerritoryService {
             state.settlements = mergedSettlements;
             
             // Update worksite counts for UI display
-            state.worksiteCount = this.countWorksites(hexes);
+            const worksiteCount: Record<string, number> = {};
+            const counts = this.countWorksites(hexes);
+            counts.forEach((count, type) => {
+                worksiteCount[type] = count;
+            });
+            state.worksiteCount = worksiteCount;
+            
+            console.log('[Territory Service] Updated kingdom store with:', {
+                hexes: state.hexes.length,
+                settlements: state.settlements.length,
+                worksiteCount: state.worksiteCount
+            });
             
             return state;
         });

@@ -89,25 +89,8 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
          this.svelte.context.actorId = actorId;
       }
 
-      // First sync from Kingmaker if available, then load persisted data
-      try {
-         // Import territory service for Kingmaker sync
-         const { territoryService } = await import('../../services/territory');
-         
-         // Sync territory data from Kingmaker FIRST (before loading saved data)
-         if (territoryService.isKingmakerAvailable()) {
-            console.log('[KingdomApp] Syncing from Kingmaker before loading persistence...');
-            const result = territoryService.syncFromKingmaker();
-            if (result.success) {
-               console.log(`[KingdomApp] Kingmaker sync: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
-            }
-         }
-         
-         // Data is now automatically managed by the KingdomActor system
-         console.log('[KingdomApp] Kingdom data loaded via Foundry actor system');
-      } catch (error) {
-         console.error('[KingdomApp] Failed to load kingdom data:', error);
-      }
+      // Data initialization is now handled by KingdomAppShell to ensure proper timing
+      console.log('[KingdomApp] Data initialization delegated to KingdomAppShell');
 
       return super._render(force, options);
    }

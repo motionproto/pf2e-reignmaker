@@ -40,26 +40,111 @@
    
    // Perform initial sync when the app opens
    onMount(async () => {
-      // Note: persistenceService.loadData() is already called in KingdomApp.ts
-      // No need to call it again here to avoid race conditions
-      
-      // Sync territory data from Kingmaker if available
-      if (territoryService.isKingmakerAvailable()) {
-         const result = territoryService.syncFromKingmaker();
+      // First ensure we have a kingdom actor
+      try {
+         const { ensureKingdomActor } = await import('../../hooks/kingdomSync');
+         const { initializeKingdomActor } = await import('../../stores/kingdomActor');
+         const { KingdomActor } = await import('../../actors/KingdomActor');
          
-         if (result.success) {
-            // Only show notification if there's actual data
-            if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
-               // @ts-ignore
-               ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+         console.log('[KingdomAppShell] Ensuring kingdom actor exists...');
+         let foundryActor = await ensureKingdomActor();
+         
+         if (foundryActor) {
+            console.log('[KingdomAppShell] Initializing kingdom actor store...');
+            
+            // Create a kingdom actor wrapper that adds our methods to the foundry actor
+            const kingdomActor = Object.assign(foundryActor, {
+               getKingdom: function() {
+                  return this.getFlag('pf2e-reignmaker', 'kingdom-data') || null;
+               },
+               setKingdom: async function(kingdom) {
+                  await this.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
+               },
+               updateKingdom: async function(updater) {
+                  const kingdom = this.getKingdom();
+                  if (!kingdom) {
+                     console.warn('[KingdomActor] No kingdom data found, cannot update');
+                     return;
+                  }
+                  updater(kingdom);
+                  await this.setKingdom(kingdom);
+               },
+               initializeKingdom: async function(name = 'New Kingdom') {
+                  const { createDefaultKingdom } = await import('../../actors/KingdomActor');
+                  const defaultKingdom = createDefaultKingdom(name);
+                  await this.setKingdom(defaultKingdom);
+               },
+               isCurrentPhaseComplete: function() {
+                  const kingdom = this.getKingdom();
+                  if (!kingdom) return false;
+                  return kingdom.phasesCompleted?.includes(kingdom.currentPhase) || false;
+               },
+               advancePhase: async function() {
+                  await this.updateKingdom((kingdom) => {
+                     const { TurnPhase } = require('../../models/KingdomState');
+                     const phases = [
+                        TurnPhase.PHASE_I, 
+                        TurnPhase.PHASE_II, 
+                        TurnPhase.PHASE_III, 
+                        TurnPhase.PHASE_IV, 
+                        TurnPhase.PHASE_V, 
+                        TurnPhase.PHASE_VI
+                     ];
+                     const currentIndex = phases.indexOf(kingdom.currentPhase);
+                     
+                     if (currentIndex < phases.length - 1) {
+                        kingdom.currentPhase = phases[currentIndex + 1];
+                     } else {
+                        kingdom.currentTurn = (kingdom.currentTurn || 1) + 1;
+                        kingdom.currentPhase = TurnPhase.PHASE_I;
+                        kingdom.phaseStepsCompleted = {};
+                        kingdom.phasesCompleted = [];
+                     }
+                  });
+               },
+               markPhaseStepCompleted: async function(stepId) {
+                  await this.updateKingdom((kingdom) => {
+                     if (!kingdom.phaseStepsCompleted) kingdom.phaseStepsCompleted = {};
+                     kingdom.phaseStepsCompleted[stepId] = true;
+                  });
+               }
+            });
+            
+            // Initialize the kingdom data if it doesn't exist
+            if (!kingdomActor.getKingdom()) {
+               await kingdomActor.initializeKingdom('New Kingdom');
             }
-         } else if (result.error) {
-            // Don't show error notification on initial load unless there's a real error
-            if (!result.error.includes('not available')) {
-               // @ts-ignore
-               ui.notifications?.warn(`Territory sync failed: ${result.error}`);
-            }
+            
+            // Initialize the store
+            initializeKingdomActor(kingdomActor);
+            
+            // Wait a bit for the store to be ready
+            setTimeout(() => {
+               // Now sync territory data from Kingmaker if available
+               if (territoryService.isKingmakerAvailable()) {
+                  console.log('[KingdomAppShell] Syncing territory data...');
+                  const result = territoryService.syncFromKingmaker();
+                  
+                  if (result.success) {
+                     // Only show notification if there's actual data
+                     if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
+                        // @ts-ignore
+                        ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+                     }
+                  } else if (result.error) {
+                     // Don't show error notification on initial load unless there's a real error
+                     if (!result.error.includes('not available')) {
+                        // @ts-ignore
+                        ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+                     }
+                  }
+               }
+            }, 200);
+         } else {
+            console.warn('[KingdomAppShell] No kingdom actor available');
          }
+      } catch (error) {
+         console.error('[KingdomAppShell] Error during initialization:', error);
       }
    });
 

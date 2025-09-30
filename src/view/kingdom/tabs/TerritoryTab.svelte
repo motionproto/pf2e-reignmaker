@@ -100,8 +100,10 @@
    }, {} as Record<string, number>);
    
    $: totalProduction = ($kingdomData.hexes || []).reduce((acc, hex) => {
-      const production = hex.getProduction?.() || new Map();
-      production.forEach((amount, resource) => {
+      const production = hex.getProduction && typeof hex.getProduction === 'function' 
+         ? hex.getProduction() 
+         : calculateHexProduction(hex);
+      production.forEach((amount: number, resource: string) => {
          acc[resource] = (acc[resource] || 0) + amount;
       });
       return acc;
@@ -118,7 +120,15 @@
    }
    
    function getProductionString(hex: any): string {
-      const production = hex.getProduction();
+      // Handle both Hex class instances and plain objects from stored data
+      let production;
+      if (hex.getProduction && typeof hex.getProduction === 'function') {
+         production = hex.getProduction();
+      } else {
+         // For plain objects, manually calculate production
+         production = calculateHexProduction(hex);
+      }
+      
       if (production.size === 0) return '-';
       
       const items: string[] = [];
@@ -126,6 +136,48 @@
          items.push(`${amount} ${resource}`);
       });
       return items.join(', ');
+   }
+   
+   function calculateHexProduction(hex: any): Map<string, number> {
+      const production = new Map<string, number>();
+      
+      if (!hex.worksite) return production;
+      
+      // Basic production based on worksite type and terrain
+      const terrain = hex.terrain.toLowerCase();
+      const worksiteType = hex.worksite.type;
+      
+      switch (worksiteType) {
+         case 'Farmstead':
+            if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
+            else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
+            break;
+         case 'Logging Camp':
+            if (terrain === 'forest') production.set('lumber', 2);
+            break;
+         case 'Quarry':
+            if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
+            break;
+         case 'Mine':
+         case 'Bog Mine':
+            if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
+            break;
+         case 'Hunting/Fishing Camp':
+            if (terrain === 'swamp') production.set('food', 1);
+            break;
+         case 'Oasis Farm':
+            if (terrain === 'desert') production.set('food', 1);
+            break;
+      }
+      
+      // Apply special trait bonus
+      if (hex.hasSpecialTrait) {
+         production.forEach((amount, resource) => {
+            production.set(resource, amount + 1);
+         });
+      }
+      
+      return production;
    }
    
    function getCommodityIcon(resource: string): string {
@@ -236,9 +288,9 @@
                         {/if}
                      </td>
                      <td class="production">
-                        {#if hex.getProduction().size > 0}
+                        {#if getProductionString(hex) !== '-'}
                            <div class="production-list">
-                              {#each Array.from(hex.getProduction().entries()) as [resource, amount]}
+                              {#each Array.from((hex.getProduction && typeof hex.getProduction === 'function' ? hex.getProduction() : calculateHexProduction(hex)).entries()) as [resource, amount]}
                                  <span class="production-item">
                                     <i class="fas {getCommodityIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
                                     +{amount} {resource}
