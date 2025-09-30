@@ -100,7 +100,7 @@
          // Use controller to collect resources - it handles everything
          const result = await resourceController.collectResources(
             $kingdomState,
-            $gameState.currentTurn || 1
+            $kingdomState.currentTurn || 1
          );
          
          if (result.success && result.result) {

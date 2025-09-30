@@ -6,6 +6,7 @@ import type { KingdomModifier } from '../models/Modifiers';
 import { modifierService } from '../services/domain/modifiers/ModifierService';
 import { economicsService } from '../services/economics';
 import { territoryService } from '../services/territory';
+import { initializePlayerActions } from './gameState';
 
 // Main kingdom state store - contains only pure kingdom data
 export const kingdomState = writable(new KingdomState());
@@ -73,6 +74,7 @@ function cloneKingdomState(state: KingdomState): KingdomState {
     newState.resources = new Map(state.resources);
     newState.worksiteCount = new Map(state.worksiteCount);
     newState.cachedProduction = new Map(state.cachedProduction);
+    newState.playerActions = new Map(state.playerActions);
     
     // Create new array instances with spread
     newState.hexes = [...state.hexes];
@@ -86,14 +88,27 @@ function cloneKingdomState(state: KingdomState): KingdomState {
     // Copy object references (these should be replaced when modified)
     newState.currentEvent = state.currentEvent;
     
+    // Copy event/incident tracking
+    newState.currentEventId = state.currentEventId;
+    newState.currentIncidentId = state.currentIncidentId;
+    newState.incidentRoll = state.incidentRoll;
+    
     return newState;
 }
 
-export function updateKingdomStat(stat: keyof KingdomState, value: any) {
+// General-purpose update function that handles all update patterns
+export function updateKingdom(updater: (state: KingdomState) => void) {
     kingdomState.update(state => {
         const newState = cloneKingdomState(state);
-        (newState as any)[stat] = value;
+        updater(newState);
         return newState;
+    });
+}
+
+// Legacy helper - kept for backward compatibility, but prefer updateKingdom()
+export function updateKingdomStat(stat: keyof KingdomState, value: any) {
+    updateKingdom(state => {
+        (state as any)[stat] = value;
     });
 }
 
@@ -368,6 +383,11 @@ export function loadKingdomState(savedState: Partial<KingdomState>) {
         // Sync modifiers with service
         if (newState.modifiers) {
             modifierService.importModifiers(newState.modifiers);
+        }
+        
+        // Initialize player actions if not present or empty
+        if (!newState.playerActions || newState.playerActions.size === 0) {
+            newState.playerActions = initializePlayerActions();
         }
         
         return newState;

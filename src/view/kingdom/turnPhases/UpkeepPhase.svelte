@@ -21,10 +21,10 @@
    let processingEndTurn = false;
    
    // Reactive UI state - use $gameState to ensure reactivity
-   $: consumeCompleted = $gameState.phaseStepsCompleted.get('upkeep-food') === true;
-   $: militaryCompleted = $gameState.phaseStepsCompleted.get('upkeep-military') === true;
-   $: buildCompleted = $gameState.phaseStepsCompleted.get('upkeep-build') === true;
-   $: resolveCompleted = $gameState.phaseStepsCompleted.get('upkeep-complete') === true;
+   $: consumeCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-food') === true;
+   $: militaryCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-military') === true;
+   $: buildCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-build') === true;
+   $: resolveCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-complete') === true;
    
    // Get all display data from controller
    $: displayData = upkeepController?.getDisplayData($kingdomState) || {
@@ -77,7 +77,7 @@
       try {
          const result = await upkeepController.processFoodConsumption(
             $kingdomState,
-            $gameState.currentTurn || 1
+            $kingdomState.currentTurn || 1
          );
          
          // Controller now handles settlement feeding status
@@ -97,7 +97,7 @@
          // Controller handles all military support logic
          const result = await upkeepController.processMilitarySupport(
             $kingdomState,
-            $gameState.currentTurn || 1
+            $kingdomState.currentTurn || 1
          );
          
          if (result.success) {
@@ -140,7 +140,7 @@
          // Process resource decay
          await upkeepController.processResourceDecay(
             $kingdomState,
-            $gameState.currentTurn || 1
+            $kingdomState.currentTurn || 1
          );
          
          markPhaseStepCompleted('upkeep-complete');

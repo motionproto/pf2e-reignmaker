@@ -48,7 +48,7 @@
 
   // Use gameState directly for all action tracking
   $: resolvedActions = $gameState.resolvedActions;
-  $: actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
+  $: actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
   const MAX_ACTIONS = 4;
   
   // Force UI update when resolvedActions changes
@@ -184,7 +184,9 @@
     
     // Mark as resolved in gameState with preview state changes
     // Don't execute the command yet - wait for user confirmation
-    resolveAction(action.id, outcomeType, actorName, skillName, stateChanges);
+    // IMPORTANT: Pass currentUserId so the resolution is attributed to the correct player
+    console.log('[ActionsPhase] Resolving action for player:', currentUserId, 'action:', action.id);
+    resolveAction(action.id, outcomeType, actorName, skillName, stateChanges, currentUserId || undefined);
 
     // Force Svelte to update
     await tick();
@@ -221,7 +223,7 @@
       action,
       resolution.outcome,
       $kingdomState,
-      $gameState.currentTurn || 1,
+      $kingdomState.currentTurn || 1,
       undefined, // rollTotal - not tracked in current UI
       resolution.actorName,
       resolution.skillName,
@@ -271,6 +273,7 @@
     // Store current user ID
     const game = (window as any).game;
     currentUserId = game?.user?.id || null;
+    console.log('[ActionsPhase] Initialized with currentUserId:', currentUserId, 'userName:', game?.user?.name);
     
     // Register socket listeners for other players' actions
     const Hooks = (window as any).Hooks;
@@ -286,8 +289,10 @@
       
       // Listen for other players resolving actions
       Hooks.on('pf2e-reignmaker.actionResolved', (message: any) => {
+        console.log('[ActionsPhase] Received action resolved from:', message.userId, message.userName, 'action:', message.actionId);
         if (message.userId !== currentUserId) {
           // Update the resolved actions store for this player's resolution
+          console.log('[ActionsPhase] Storing resolution for other player:', message.userId);
           resolveAction(
             message.actionId,
             message.outcome,
@@ -332,19 +337,17 @@
     if (game?.user?.id) {
       const playerAction = getPlayerAction(game.user.id);
       if (!playerAction) {
-        // Initialize just this player
-        gameState.update(s => {
-          const newPlayerActions = new Map(s.playerActions);
+        // Initialize just this player in kingdomState
+        kingdomState.update(state => {
+          const newPlayerActions = new Map(state.playerActions);
           newPlayerActions.set(game.user.id, {
             playerId: game.user.id,
             playerName: game.user.name,
             playerColor: game.user.color || '#ffffff',
             actionSpent: false
           });
-          return {
-            ...s,
-            playerActions: newPlayerActions
-          };
+          state.playerActions = newPlayerActions;
+          return state;
         });
       }
     }
@@ -477,26 +480,24 @@
       // Ensure player exists before spending
       let playerAction = getPlayerAction(game.user.id);
       if (!playerAction) {
-        // Initialize just this player if not found
-        gameState.update(s => {
-          const newPlayerActions = new Map(s.playerActions);
+        // Initialize just this player if not found in kingdomState
+        kingdomState.update(state => {
+          const newPlayerActions = new Map(state.playerActions);
           newPlayerActions.set(game.user.id, {
             playerId: game.user.id,
             playerName: game.user.name,
             playerColor: game.user.color || '#ffffff',
             actionSpent: false
           });
-          return {
-            ...s,
-            playerActions: newPlayerActions
-          };
+          state.playerActions = newPlayerActions;
+          return state;
         });
       }
       
       const success = spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
       
       // Manually update actionsUsed since reactive statement isn't updating immediately
-      actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
     }
     
     // Get character for roll
@@ -660,7 +661,7 @@
     const game = (window as any).game;
     if (game?.user?.id) {
       spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
-      actionsUsed = Array.from($gameState.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
     }
     
     // Show success notification

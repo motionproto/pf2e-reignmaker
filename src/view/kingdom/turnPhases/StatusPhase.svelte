@@ -36,13 +36,13 @@
       statusController = createStatusPhaseController();
       
       // Only run automation if we're in the Status Phase
-      if ($gameState.currentPhase === TurnPhase.PHASE_I) {
+      if ($kingdomState.currentPhase === TurnPhase.PHASE_I) {
          await runAutomation();
       }
    });
    
    // Run automation when phase changes to Status Phase
-   $: if ($gameState.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
+   $: if ($kingdomState.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
       runAutomation();
    }
    
@@ -57,7 +57,7 @@
       // Reset fame to 1
       const fameResult = await statusController.resetFame(
          get(kingdomState),
-         $gameState.currentTurn || 1
+         $kingdomState.currentTurn || 1
       );
       
       if (fameResult.success) {
@@ -69,7 +69,7 @@
       // Process modifiers and get detailed effects
       const modifierResult = await statusController.processModifiers(
          get(kingdomState),
-         $gameState.currentTurn || 1
+         $kingdomState.currentTurn || 1
       );
       
       if (modifierResult.success) {
@@ -80,7 +80,7 @@
       }
       
       // Expire old modifiers
-      statusController.expireModifiers(get(kingdomState), $gameState.currentTurn || 1);
+      statusController.expireModifiers(get(kingdomState), $kingdomState.currentTurn || 1);
    }
    
    // Format resource name for display

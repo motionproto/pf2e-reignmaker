@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { gameState, isPhaseComplete } from '../../../stores/gameState';
+  import { kingdomState } from '../../../stores/kingdom';
   import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   
@@ -14,7 +15,7 @@
   let currentPhaseComplete = false;
   
   // Check if the current phase is complete - use the centralized check from gameState
-  $: currentPhaseComplete = isPhaseComplete($gameState.currentPhase);
+  $: currentPhaseComplete = isPhaseComplete($kingdomState.currentPhase);
   
   let headerElement: HTMLElement;
   let previousTitle = '';

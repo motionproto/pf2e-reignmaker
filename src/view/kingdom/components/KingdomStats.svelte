@@ -125,7 +125,7 @@
          
          <!-- Core Trackers -->
          <div class="stat-group">
-            <h4 class="stat-group-header">Turn {$gameState.currentTurn}</h4>
+            <h4 class="stat-group-header">Turn {$kingdomState.currentTurn}</h4>
             <div class="stat-item">
                <span class="stat-label">Fame:</span>
                <div class="fame-controls">

@@ -27,6 +27,26 @@ export interface ActionSocketMessage {
   characterLevel?: number;
 }
 
+export interface IncidentSocketMessage {
+  type: 'incident-rolled' | 'incident-resolved';
+  userId: string;
+  userName: string;
+  userColor: string;
+  timestamp: number;
+  
+  // Incident-specific fields
+  incidentRoll: number;
+  incidentName: string | null;
+  incidentLevel: string | null;
+  hasIncident: boolean;
+  incidentId?: string;
+  
+  // For resolved incidents
+  outcome?: string;
+  skillUsed?: string;
+  actorName?: string;
+}
+
 export class ClientContextService {
   private static instance: ClientContextService;
   private readonly MODULE_ID = 'pf2e-reignmaker';
@@ -126,6 +146,39 @@ export class ClientContextService {
   }
   
   /**
+   * Broadcast an incident event to all other clients
+   */
+  broadcastIncidentEvent(eventType: 'rolled' | 'resolved', data: {
+    incidentRoll: number;
+    incidentName: string | null;
+    incidentLevel: string | null;
+    hasIncident: boolean;
+    incidentId?: string;
+    outcome?: string;
+    skillUsed?: string;
+    actorName?: string;
+  }): void {
+    if (!game?.socket) return;
+    
+    const user = this.getCurrentUser();
+    if (!user) return;
+    
+    const message: IncidentSocketMessage = {
+      type: `incident-${eventType}` as IncidentSocketMessage['type'],
+      userId: user.id,
+      userName: user.name,
+      userColor: user.color || '#ffffff',
+      timestamp: Date.now(),
+      ...data
+    };
+    
+    // Emit socket message to other clients
+    game.socket.emit(`module.${this.MODULE_ID}`, message);
+    
+    console.log('[ClientContextService] Broadcasting incident event:', eventType, message);
+  }
+  
+  /**
    * Register socket listeners for incoming action events
    */
   private registerSocketListeners(): void {
@@ -133,9 +186,13 @@ export class ClientContextService {
     
     // Register socket listener
     game.socket.on(`module.${this.MODULE_ID}`, (data: any) => {
-      // Only process action-related messages
+      // Handle action-related messages
       if (data.type?.startsWith('action-')) {
         this.handleIncomingActionEvent(data);
+      }
+      // Handle incident-related messages
+      else if (data.type?.startsWith('incident-')) {
+        this.handleIncomingIncidentEvent(data);
       }
     });
   }
@@ -166,6 +223,29 @@ export class ClientContextService {
       case 'action-reroll':
         Hooks.callAll(`${this.MODULE_ID}.actionReroll`, message);
         this.showActionNotification(message, 'rerolling');
+        break;
+    }
+  }
+  
+  /**
+   * Handle incoming incident events from other clients
+   */
+  private handleIncomingIncidentEvent(message: IncidentSocketMessage): void {
+    // Don't process our own messages
+    if (this.isCurrentUser(message.userId)) return;
+    
+    console.log('[ClientContextService] Received incident event:', message.type, message);
+    
+    // Trigger hooks for different message types
+    switch (message.type) {
+      case 'incident-rolled':
+        Hooks.callAll(`${this.MODULE_ID}.incidentRolled`, message);
+        this.showIncidentNotification(message, 'rolled');
+        break;
+        
+      case 'incident-resolved':
+        Hooks.callAll(`${this.MODULE_ID}.incidentResolved`, message);
+        this.showIncidentNotification(message, 'resolved');
         break;
     }
   }
@@ -206,6 +286,42 @@ export class ClientContextService {
         
       case 'rerolling':
         notificationText = `${playerName} is using Fame to reroll ${message.actionName}`;
+        break;
+    }
+    
+    // Use Foundry's notification system with HTML support
+    ui.notifications.info(notificationText, { permanent: false });
+  }
+  
+  /**
+   * Show a notification for incident events
+   */
+  private showIncidentNotification(message: IncidentSocketMessage, action: 'rolled' | 'resolved'): void {
+    if (!ui?.notifications) return;
+    
+    let notificationText = '';
+    const playerName = `<span style="color: ${message.userColor}; font-weight: bold;">${message.userName}</span>`;
+    
+    switch (action) {
+      case 'rolled':
+        if (message.hasIncident && message.incidentName) {
+          const levelColor = message.incidentLevel === 'MAJOR' ? '#ff4444' : 
+                            message.incidentLevel === 'MODERATE' ? '#ff8888' : '#ffaa44';
+          notificationText = `${playerName} rolled for incident: <span style="color: ${levelColor}; font-weight: bold;">${message.incidentName}</span>`;
+        } else {
+          notificationText = `${playerName} rolled for incident: <span style="color: #44ff44; font-weight: bold;">No Incident</span>`;
+        }
+        break;
+        
+      case 'resolved':
+        const outcomeColor = this.getOutcomeColor(message.outcome);
+        const outcomeText = message.outcome ? 
+          `<span style="color: ${outcomeColor}; font-weight: bold;">${this.formatOutcome(message.outcome)}</span>` : 
+          'resolved';
+        notificationText = `${playerName} ${outcomeText} incident: ${message.incidentName}`;
+        if (message.actorName && message.skillUsed) {
+          notificationText += ` (${message.actorName} - ${message.skillUsed})`;
+        }
         break;
     }
     

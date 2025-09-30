@@ -1,5 +1,6 @@
 <script lang="ts">
    import { gameState, isPhaseComplete, canOperatePhase, getNextPhase, advancePhase, markPhaseStepCompleted } from '../../../stores/gameState';
+   import { kingdomState } from '../../../stores/kingdom';
    import { TurnPhase } from '../../../models/KingdomState';
    
    const phaseNames: Record<TurnPhase, string> = {
@@ -20,10 +21,10 @@
       [TurnPhase.PHASE_VI]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
    };
    
-   $: currentPhase = $gameState.currentPhase;
+   $: currentPhase = $kingdomState.currentPhase;
    $: viewingPhase = $gameState.viewingPhase;
-   $: phaseStepsCompleted = $gameState.phaseStepsCompleted;
-   $: phasesCompleted = $gameState.phasesCompleted;
+   $: phaseStepsCompleted = $kingdomState.phaseStepsCompleted;
+   $: phasesCompleted = $kingdomState.phasesCompleted;
    $: nextPhase = getNextPhase(currentPhase);
    $: currentPhaseComplete = isPhaseComplete(currentPhase);
    $: canAdvance = currentPhaseComplete;
@@ -57,7 +58,7 @@
          <div class="status-grid">
             <div class="status-item">
                <span class="label">Turn:</span>
-               <span class="value">{$gameState.currentTurn}</span>
+               <span class="value">{$kingdomState.currentTurn}</span>
             </div>
             <div class="status-item">
                <span class="label">Current Phase:</span>

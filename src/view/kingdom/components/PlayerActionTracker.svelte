@@ -1,11 +1,12 @@
 <script lang="ts">
   import { getAllPlayerActions, type PlayerAction } from '../../../stores/gameState';
   import { gameState } from '../../../stores/gameState';
+  import { kingdomState } from '../../../stores/kingdom';
   
   export let compact: boolean = false;
   
   $: playerActions = getAllPlayerActions();
-  $: currentPhase = $gameState.currentPhase;
+  $: currentPhase = $kingdomState.currentPhase;
 </script>
 
 <div class="player-action-tracker {compact ? 'compact' : ''}">

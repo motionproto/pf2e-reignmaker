@@ -54,7 +54,7 @@
       return result;
    }
    
-   $: currentTurn = $gameState.currentTurn || 1;
+   $: currentTurn = $kingdomState.currentTurn || 1;
 </script>
 
 <div class="tw-h-full tw-flex tw-flex-col">

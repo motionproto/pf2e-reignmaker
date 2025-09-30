@@ -140,8 +140,8 @@ export class PersistenceService {
                 metadata: {
                     worldId: game.world?.id,
                     lastSavedBy: game.user?.name,
-                    turnNumber: gameStateData.currentTurn,
-                    phaseName: gameStateData.currentPhase
+                    turnNumber: kingdomStateData.currentTurn,
+                    phaseName: kingdomStateData.currentPhase
                 }
             };
             
@@ -235,8 +235,8 @@ export class PersistenceService {
             metadata: {
                 worldId: game?.world?.id,
                 lastSavedBy: game?.user?.name,
-                turnNumber: gameStateData.currentTurn,
-                phaseName: gameStateData.currentPhase
+                turnNumber: kingdomStateData.currentTurn,
+                phaseName: kingdomStateData.currentPhase
             }
         };
         
@@ -438,22 +438,18 @@ export class PersistenceService {
     /**
      * Serialize kingdom state for storage
      * Converts Maps and complex objects to plain objects
+     * Uses spread operator to automatically include all primitive fields
      */
     private serializeKingdomState(state: KingdomState): any {
         const serialized: any = {
-            unrest: state.unrest,
-            imprisonedUnrest: state.imprisonedUnrest,
-            fame: state.fame,
-            size: state.size,
-            isAtWar: state.isAtWar,
-            currentEvent: state.currentEvent,
-            continuousEvents: state.continuousEvents,
-            modifiers: state.modifiers,
+            // Spread all primitive fields automatically (includes currentEventId, currentIncidentId, incidentRoll, etc.)
+            ...state,
             
-            // Convert Maps to objects
+            // Override Maps and complex objects with serialized versions
             resources: Object.fromEntries(state.resources),
             worksiteCount: Object.fromEntries(state.worksiteCount),
             cachedProduction: Object.fromEntries(state.cachedProduction),
+            playerActions: Object.fromEntries(state.playerActions),
             
             // Complex arrays
             hexes: state.hexes.map(hex => ({
@@ -495,7 +491,12 @@ export class PersistenceService {
                     name: hex.name
                 },
                 production: Object.fromEntries(production)
-            })) : []
+            })) : [],
+            
+            // Serialize turn/phase management
+            phaseStepsCompleted: Object.fromEntries(state.phaseStepsCompleted),
+            phasesCompleted: Array.from(state.phasesCompleted),
+            oncePerTurnActions: Array.from(state.oncePerTurnActions)
         };
         
         return serialized;
@@ -513,6 +514,16 @@ export class PersistenceService {
             resources: new Map(Object.entries(data.resources || {})),
             worksiteCount: new Map(Object.entries(data.worksiteCount || {})),
             cachedProduction: new Map(Object.entries(data.cachedProduction || {})),
+            playerActions: new Map(Object.entries(data.playerActions || {}).map(([key, value]: [string, any]) => {
+                // Ensure the value is a proper object with all required fields
+                return [key, {
+                    playerId: value.playerId || key,
+                    playerName: value.playerName || 'Unknown',
+                    playerColor: value.playerColor || '#ffffff',
+                    actionSpent: value.actionSpent || false,
+                    spentInPhase: value.spentInPhase
+                }];
+            })),
             
             // Reconstruct Hex objects
             hexes: data.hexes ? data.hexes.map((hexData: any) => {
@@ -553,7 +564,12 @@ export class PersistenceService {
                 const production = new Map(Object.entries(item.production || {}));
                 
                 return [hex, production];
-            }) : []
+            }) : [],
+            
+            // Deserialize turn/phase management
+            phaseStepsCompleted: new Map(Object.entries(data.phaseStepsCompleted || {})),
+            phasesCompleted: new Set(data.phasesCompleted || []),
+            oncePerTurnActions: new Set(data.oncePerTurnActions || [])
         };
         
         return deserialized;

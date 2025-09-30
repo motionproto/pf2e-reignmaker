@@ -1,5 +1,6 @@
 <script lang="ts">
   import { gameState, setViewingPhase, viewingPhase } from '../../../stores/gameState';
+  import { kingdomState } from '../../../stores/kingdom';
   import { TurnPhase } from '../../../models/KingdomState';
   import { onMount } from 'svelte';
 
@@ -13,8 +14,8 @@
     { id: TurnPhase.PHASE_VI, label: 'Upkeep', fullName: 'End of turn' }
   ];
 
-  $: currentPhase = $gameState.currentPhase;
-  $: currentTurn = $gameState.currentTurn;
+  $: currentPhase = $kingdomState.currentPhase;
+  $: currentTurn = $kingdomState.currentTurn;
   $: selectedPhase = $viewingPhase || currentPhase;
   
   // Initialize viewing phase on mount

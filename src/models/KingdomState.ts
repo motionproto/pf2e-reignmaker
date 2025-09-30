@@ -106,6 +106,34 @@ export class KingdomState {
   // Modifiers and effects (from unresolved events, trade agreements, etc.)
   modifiers: KingdomModifier[] = [];
   
+  // Event and incident tracking (for multiplayer sync)
+  currentEventId: string | null = null;
+  currentIncidentId: string | null = null;
+  incidentRoll: number | null = null;
+  
+  // Event roll tracking (for multiplayer sync)
+  eventStabilityRoll: number | null = null;
+  eventRollDC: number | null = null;
+  eventTriggered: boolean | null = null;
+  
+  // Turn and phase management (for multiplayer sync)
+  currentTurn: number = 1;
+  currentPhase: TurnPhase = TurnPhase.PHASE_I;
+  phaseStepsCompleted: Map<string, boolean> = new Map();
+  phasesCompleted: Set<TurnPhase> = new Set();
+  oncePerTurnActions: Set<string> = new Set();
+  eventDC: number = 15;
+  
+  // Player actions tracking (for multiplayer sync)
+  // Map of playerId to action state
+  playerActions: Map<string, {
+    playerId: string;
+    playerName: string;
+    playerColor: string;
+    actionSpent: boolean;
+    spentInPhase?: TurnPhase;
+  }> = new Map();
+  
   /**
    * Update cached production values - should be called whenever hexes change
    * This calculates production once and stores it for reuse

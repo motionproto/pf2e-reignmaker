@@ -19,14 +19,14 @@
    // Initialize viewing phase if not set
    onMount(() => {
       if (!$viewingPhase) {
-         setViewingPhase($gameState.currentPhase);
+         setViewingPhase($kingdomState.currentPhase);
       }
    });
    
    // Get phase info based on what the user is viewing
-   $: displayPhase = $viewingPhase || $gameState.currentPhase;
-   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$gameState.currentPhase];
-   $: actualPhase = $gameState.currentPhase;
+   $: displayPhase = $viewingPhase || $kingdomState.currentPhase;
+   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomState.currentPhase];
+   $: actualPhase = $kingdomState.currentPhase;
    
    // Define phase icons
    const phaseIcons = {
@@ -56,7 +56,7 @@
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
       isUpkeepPhase={displayPhase === TurnPhase.PHASE_VI}
-      currentTurn={$gameState.currentTurn}
+      currentTurn={$kingdomState.currentTurn}
    />
    
    <!-- Phase Bar underneath phase header -->

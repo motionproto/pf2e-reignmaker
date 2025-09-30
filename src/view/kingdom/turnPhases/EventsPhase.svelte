@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, updateKingdomStat } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, spendPlayerAction } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
@@ -50,11 +50,11 @@
    // Computed UI state
    $: eventChecked = isPhaseStepCompleted('resolve-event');
    $: eventResolved = isPhaseStepCompleted('resolve-event');
-   $: eventDC = $gameState.eventDC;
+   $: eventDC = $kingdomState.eventDC;
    $: activeModifiers = $kingdomState.modifiers || [];
-   $: stabilityRoll = $gameState.eventStabilityRoll || 0;
-   $: showStabilityResult = $gameState.eventStabilityRoll !== null;
-   $: rolledAgainstDC = $gameState.eventRollDC || eventDC;
+   $: stabilityRoll = $kingdomState.eventStabilityRoll || 0;
+   $: showStabilityResult = $kingdomState.eventStabilityRoll !== null;
+   $: rolledAgainstDC = $kingdomState.eventRollDC || eventDC;
    
    onMount(() => {
       const initAsync = async () => {
@@ -62,6 +62,23 @@
          
          // Initialize the controller
          eventPhaseController = createEventPhaseController(eventService);
+         
+         // Check if an event was already rolled by another client
+         if ($kingdomState.currentEventId) {
+            console.log('[EventsPhase] Loading existing event from kingdomState:', $kingdomState.currentEventId);
+            const event = eventService.getEventById($kingdomState.currentEventId);
+            if (event) {
+               currentEvent = event;
+               // Also mark that we've checked for events so the button shows correctly
+               if (!eventChecked) {
+                  markPhaseStepCompleted('resolve-event');
+               }
+            }
+         } else if ($kingdomState.currentEventId === null && eventChecked) {
+            // Another client rolled and got no event - we should show that
+            console.log('[EventsPhase] No event was rolled by another client');
+            // The gameState values should be synced via persistence
+         }
          
          if (typeof (window as any).game !== 'undefined') {
             initializeRollResultHandler();
@@ -139,6 +156,17 @@
    async function performStabilityCheck() {
       if (!eventPhaseController) return;
       
+      // Check if another client already rolled for an event
+      if ($kingdomState.currentEventId) {
+         console.log('[EventsPhase] Event already rolled by another client, loading existing event');
+         // Load the event by ID
+         const event = eventService.getEventById($kingdomState.currentEventId);
+         if (event) {
+            currentEvent = event;
+         }
+         return;
+      }
+      
       isRolling = true;
       
       // Save the current DC before it changes
@@ -149,22 +177,29 @@
          // Use the controller to perform the stability check
          const checkResult = await eventPhaseController.performStabilityCheck(currentDC);
          
-         // Update game state with roll results and new DC - this will sync to all players
-         gameState.update(state => {
+         // Update kingdom state with roll results and new DC for multiplayer sync
+         kingdomState.update(state => {
             state.eventDC = checkResult.newDC;
             state.eventStabilityRoll = checkResult.roll;
             state.eventRollDC = currentDC;
             state.eventTriggered = checkResult.triggered;
+            
+            if (checkResult.event) {
+               state.currentEventId = checkResult.event.id;
+            } else {
+               state.currentEventId = null;
+            }
+            
             return state;
          });
          
          if (checkResult.event) {
             currentEvent = checkResult.event;
-         } else {
-            // Mark phase as complete if no event
-            if (!eventChecked) {
-               markPhaseStepCompleted('resolve-event');
-            }
+         }
+         
+         // Always mark phase as complete after rolling (whether event or not)
+         if (!eventChecked) {
+            markPhaseStepCompleted('resolve-event');
          }
          
          isRolling = false;
@@ -254,7 +289,7 @@
             pendingEventOutcome.event,
             pendingEventOutcome.outcome,
             get(kingdomState),
-            $gameState.currentTurn || 1
+            $kingdomState.currentTurn || 1
          );
          
          if (result.success) {
@@ -287,8 +322,8 @@
       character = null;
       pendingEventOutcome = null;
       
-      // Clear event roll state for next turn
-      gameState.update(state => {
+      // Clear event roll state in kingdomState for next turn
+      kingdomState.update(state => {
          state.eventStabilityRoll = null;
          state.eventRollDC = null;
          state.eventTriggered = null;
@@ -353,6 +388,12 @@
    {#if currentEvent}
       <!-- Active Event Card -->
       <div class="event-card">
+         {#if showStabilityResult}
+            <div class="event-rolled-banner">
+               <i class="fas fa-dice-d20"></i>
+               <span>Event Triggered! (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})</span>
+            </div>
+         {/if}
          <div class="event-header">
             <h3 class="event-title">{currentEvent.name}</h3>
          </div>
@@ -445,19 +486,12 @@
             {/if}
          </Button>
          
-         {#if showStabilityResult}
+         {#if showStabilityResult && eventChecked}
             <div class="check-result-display">
-               {#if currentEvent}
-                  <div class="roll-result success">
-                     <strong>Event Triggered!</strong> (Rolled {stabilityRoll} &ge; DC {rolledAgainstDC})
-                     <div>Drawing event card...</div>
-                  </div>
-               {:else}
-                  <div class="roll-result failure">
-                     <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
-                     <div>DC reduced to {$gameState.eventDC} for next turn.</div>
-                  </div>
-               {/if}
+               <div class="roll-result failure">
+                  <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
+                  <div>DC reduced to {$kingdomState.eventDC} for next turn.</div>
+               </div>
             </div>
          {/if}
       </div>

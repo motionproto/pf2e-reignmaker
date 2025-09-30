@@ -168,7 +168,12 @@ export class TerritoryService {
             state.worksiteCount = this.countWorksites(hexes);
             
             // Update cached production values - calculate once when hexes change
-            state.updateCachedProduction();
+            // Call the method on the state instance (which is a KingdomState class instance)
+            if (typeof state.updateCachedProduction === 'function') {
+                state.updateCachedProduction();
+            } else {
+                console.warn('[TerritoryService] updateCachedProduction method not available on state');
+            }
             
             return state;
         });

@@ -1,13 +1,16 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomState, updateKingdomStat } from '../../../stores/kingdom';
    import { gameState, markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/gameState';
    import { TurnPhase } from '../../../models/KingdomState';
    
    // Import controller instead of commands/services directly
    import { createUnrestPhaseController } from '../../../controllers/UnrestPhaseController';
    import type { UnrestPhaseController } from '../../../controllers/UnrestPhaseController';
+   
+   // Import client context service for multiplayer
+   import { clientContextService } from '../../../services/ClientContextService';
    
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
@@ -28,6 +31,9 @@
    let isRolling = false;
    let incidentResolved = false;
    let rollOutcome: string = '';
+   
+   // Track current user ID for multiplayer
+   let currentUserId: string | null = null;
    
    // Reactive UI state
    $: incidentChecked = isPhaseStepCompleted('calculate-unrest');
@@ -59,14 +65,42 @@
       unrestController = createUnrestPhaseController();
       initializeRollResultHandler();
       
+      // Initialize client context service for multiplayer
+      clientContextService.initialize();
+      
+      // Store current user ID
+      const game = (window as any).game;
+      currentUserId = game?.user?.id || null;
+      console.log('[UnrestPhase] Initialized with currentUserId:', currentUserId);
+      
       // Calculate initial unrest generation
       calculateUnrestGeneration();
+      
+      // Check if an incident was already rolled by another client
+      if ($kingdomState.currentIncidentId && unrestStatus.tier > 0) {
+         console.log('[UnrestPhase] Loading existing incident from kingdomState:', $kingdomState.currentIncidentId);
+         // Load the incident by ID using the controller
+         const result = unrestController.rollForIncident(unrestStatus.tier);
+         // The controller will deterministically get the same incident based on the tier
+         showIncidentResult = true;
+      }
       
       // Set up event listener
       window.addEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
       
+      // Set up Hook listeners for multiplayer incident events
+      setupIncidentHooks();
+      
       return () => {
          window.removeEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
+         
+         // Clean up Hooks listeners
+         const Hooks = (window as any).Hooks;
+         if (Hooks) {
+            Hooks.off('pf2e-reignmaker.incidentRolled');
+            Hooks.off('pf2e-reignmaker.incidentResolved');
+         }
+         
          // Reset controller state
          if (unrestController) {
             unrestController.resetState();
@@ -82,9 +116,60 @@
       // Generation is calculated and stored in controller state
    }
    
+   // Set up Hook listeners for multiplayer incident events
+   function setupIncidentHooks() {
+      const Hooks = (window as any).Hooks;
+      if (!Hooks) return;
+      
+      // Listen for incident rolls from other players
+      Hooks.on('pf2e-reignmaker.incidentRolled', (message: any) => {
+         if (message.userId !== currentUserId) {
+            console.log('[UnrestPhase] Received incident roll from:', message.userName);
+            handleRemoteIncidentRoll(message);
+         }
+      });
+      
+      // Listen for incident resolutions from other players
+      Hooks.on('pf2e-reignmaker.incidentResolved', (message: any) => {
+         if (message.userId !== currentUserId) {
+            console.log('[UnrestPhase] Received incident resolution from:', message.userName);
+            handleRemoteIncidentResolution(message);
+         }
+      });
+   }
+   
+   // Handle incident roll from another player
+   function handleRemoteIncidentRoll(message: any) {
+      // Update local UI to show the incident result
+      showIncidentResult = true;
+      
+      // Mark step as completed for all clients
+      if (!incidentChecked) {
+         markPhaseStepCompleted('calculate-unrest');
+      }
+      
+      // Note: The incident data should already be synced through the controller
+      // since the roll is deterministic based on the tier
+   }
+   
+   // Handle incident resolution from another player
+   function handleRemoteIncidentResolution(message: any) {
+      // Update UI to show resolution
+      incidentResolved = true;
+      rollOutcome = message.outcome || '';
+      selectedSkill = message.skillUsed || '';
+   }
+   
    // Roll for incident using controller
    async function rollForIncident() {
       if (!unrestController || unrestStatus.tier === 0) return;
+      
+      // Check if another client already rolled for an incident
+      if ($kingdomState.currentIncidentId) {
+         console.log('[UnrestPhase] Incident already rolled by another client, loading existing incident');
+         showIncidentResult = true;
+         return;
+      }
       
       isRolling = true;
       showIncidentResult = false;
@@ -94,12 +179,23 @@
          // Use controller to roll for incident
          const result = unrestController.rollForIncident(unrestStatus.tier);
          
+         // Store incident ID and roll in kingdomState for multiplayer sync
+         updateKingdomStat('currentIncidentId', result.incident?.id || null);
+         updateKingdomStat('incidentRoll', result.roll);
+         
          showIncidentResult = true;
          isRolling = false;
          
-         // Mark that we've checked for incidents, but don't apply unrest generation
-         // Unrest generation should only be applied during the actual phase processing,
-         // not when rolling for incidents
+         // Broadcast the incident roll to all clients for real-time notification
+         clientContextService.broadcastIncidentEvent('rolled', {
+            incidentRoll: result.roll,
+            incidentName: result.incident?.name || null,
+            incidentLevel: result.level,
+            hasIncident: result.incident !== null,
+            incidentId: result.incident?.id
+         });
+         
+         // Mark that we've checked for incidents
          if (!incidentChecked) {
             markPhaseStepCompleted('calculate-unrest');
          }
@@ -191,6 +287,18 @@
          incidentResolved = true;
          rollOutcome = outcome;
          selectedSkill = skill;
+         
+         // Broadcast the incident resolution to all clients
+         clientContextService.broadcastIncidentEvent('resolved', {
+            incidentRoll: 0, // Not needed for resolution
+            incidentName: currentIncident.name,
+            incidentLevel: currentIncident.level,
+            hasIncident: true,
+            incidentId: currentIncident.id,
+            outcome: outcome,
+            skillUsed: skill,
+            actorName: actorName
+         });
          
          // Apply incident effects using commands
          await applyIncidentEffects(resolution.resolution.effects);
