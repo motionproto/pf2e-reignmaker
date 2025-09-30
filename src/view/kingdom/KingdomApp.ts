@@ -1,6 +1,5 @@
-I mean, we should always be showing the `kingdomState` in the UI. So I would guess that the `kingdomState` is not being correctly shown, correctly said. import { SvelteApp } from '#runtime/svelte/application';
+import { SvelteApp } from '#runtime/svelte/application';
 import { deepMerge } from '#runtime/util/object';
-import { persistenceService } from '../../services/persistence';
 
 import KingdomAppShell from './KingdomAppShell.svelte';
 
@@ -104,10 +103,8 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
             }
          }
          
-         // Then load persisted data (which won't overwrite the fresh Kingmaker data)
-         console.log('[KingdomApp] Loading kingdom data from persistence...');
-         await persistenceService.loadData();
-         console.log('[KingdomApp] Kingdom data loaded successfully');
+         // Data is now automatically managed by the KingdomActor system
+         console.log('[KingdomApp] Kingdom data loaded via Foundry actor system');
       } catch (error) {
          console.error('[KingdomApp] Failed to load kingdom data:', error);
       }
@@ -120,15 +117,10 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
     */
    async close(options?: { force?: boolean }): Promise<void>
    {
-      console.log('[KingdomApp] Closing window - triggering save...');
+      console.log('[KingdomApp] Closing window...');
       
-      // Save kingdom data before closing
-      try {
-         await persistenceService.saveData(false);
-         console.log('[KingdomApp] Save completed before close');
-      } catch (error) {
-         console.error('[KingdomApp] Failed to save on close:', error);
-      }
+      // Data is now automatically saved via KingdomActor system
+      console.log('[KingdomApp] Data automatically managed by Foundry actor system');
       
       return super.close(options);
    }

@@ -1,6 +1,5 @@
 <script lang="ts">
-   import { kingdomState, totalProduction, updateKingdom, setResource } from '../../../stores/kingdom';
-   import { gameState } from '../../../stores/gameState';
+   import { kingdomData, resources, updateKingdom, modifyResource } from '../../../stores/kingdomActor';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
    import EditableStat from './EditableStat.svelte';
@@ -28,30 +27,30 @@
    
    // Fame adjustment
    function adjustFame(delta: number) {
-      const newFame = $kingdomState.fame + delta;
+      const newFame = $kingdomData.fame + delta;
       if (newFame >= 0 && newFame <= 3) {
          updateKingdom(k => { k.fame = newFame; });
       }
    }
    
    // War status
-   $: isAtWar = $kingdomState.isAtWar || false;
+   $: isAtWar = $kingdomData.isAtWar || false;
    
    function toggleWarStatus() {
-      const newWarStatus = !$kingdomState.isAtWar;
+      const newWarStatus = !$kingdomData.isAtWar;
       updateKingdom(k => { k.isAtWar = newWarStatus; });
       localStorage.setItem('kingdomWarStatus', newWarStatus ? 'war' : 'peace');
    }
    
    // Calculate unrest sources
-   $: sizeUnrest = Math.floor($kingdomState.size / 8);
+   $: sizeUnrest = Math.floor($kingdomData.size / 8);
    $: warUnrest = isAtWar ? 1 : 0;
    $: structureBonus = 0; // TODO: Calculate from actual structures
    
    // Calculate event-based unrest from modifiers
    $: eventUnrest = (() => {
       let unrest = 0;
-      for (const modifier of $kingdomState.modifiers) {
+      for (const modifier of $kingdomData.modifiers) {
          if (modifier.effects?.unrest) {
             unrest += modifier.effects.unrest;
          }
@@ -62,17 +61,17 @@
    // Total unrest per turn
    $: totalUnrestPerTurn = sizeUnrest + warUnrest + eventUnrest - structureBonus;
    
-   // Get production values from the totalProduction derived store
-   $: actualFoodIncome = $totalProduction.food || 0;
-   $: actualLumberIncome = $totalProduction.lumber || 0;
-   $: actualStoneIncome = $totalProduction.stone || 0;
-   $: actualOreIncome = $totalProduction.ore || 0;
+   // Get production values from the kingdom data
+   $: actualFoodIncome = $kingdomData.cachedProduction.food || 0;
+   $: actualLumberIncome = $kingdomData.cachedProduction.lumber || 0;
+   $: actualStoneIncome = $kingdomData.cachedProduction.stone || 0;
+   $: actualOreIncome = $kingdomData.cachedProduction.ore || 0;
    
    // Calculate worksite counts from kingdom state
-   $: foodProduction = $kingdomState.worksiteCount.get('farmlands') || 0;
-   $: lumberProduction = $kingdomState.worksiteCount.get('lumberCamps') || 0;
-   $: stoneProduction = $kingdomState.worksiteCount.get('quarries') || 0;
-   $: oreProduction = $kingdomState.worksiteCount.get('mines') || 0;
+   $: foodProduction = $kingdomData.worksiteCount.farmlands || 0;
+   $: lumberProduction = $kingdomData.worksiteCount.lumberCamps || 0;
+   $: stoneProduction = $kingdomData.worksiteCount.quarries || 0;
+   $: oreProduction = $kingdomData.worksiteCount.mines || 0;
    
    // Total worksites
    $: totalWorksites = foodProduction + lumberProduction + stoneProduction + oreProduction;
@@ -125,23 +124,23 @@
          
          <!-- Core Trackers -->
          <div class="stat-group">
-            <h4 class="stat-group-header">Turn {$kingdomState.currentTurn}</h4>
+            <h4 class="stat-group-header">Turn {$kingdomData.currentTurn}</h4>
             <div class="stat-item">
                <span class="stat-label">Fame:</span>
                <div class="fame-controls">
                   <button 
                      class="stat-adjust-button" 
                      on:click={() => adjustFame(-1)}
-                     disabled={$kingdomState.fame <= 0}
+                     disabled={$kingdomData.fame <= 0}
                      title="Decrease Fame"
                   >
                      <i class="fas fa-minus"></i>
                   </button>
-                  <span class="stat-value fame-value">{$kingdomState.fame}</span>
+                  <span class="stat-value fame-value">{$kingdomData.fame}</span>
                   <button 
                      class="stat-adjust-button" 
                      on:click={() => adjustFame(1)}
-                     disabled={$kingdomState.fame >= 3}
+                     disabled={$kingdomData.fame >= 3}
                      title="Increase Fame"
                   >
                      <i class="fas fa-plus"></i>
@@ -157,8 +156,8 @@
             >
                <span class="stat-label">Gold:</span>
                <EditableStat 
-                  value={$kingdomState.resources.get('gold') || 0}
-                  onChange={(newValue) => setResource('gold', newValue)}
+                  value={$resources.gold || 0}
+                  onChange={(newValue) => modifyResource('gold', newValue)}
                   isExternallyControlled={true}
                   isEditing={editingField === 'gold'}
                   onStartEdit={() => startEditing('gold')}
@@ -186,9 +185,9 @@
             >
                <span class="stat-label">Current Unrest:</span>
                <EditableStat 
-                  value={$kingdomState.unrest}
+                  value={$kingdomData.unrest}
                   onChange={(newValue) => updateKingdom(k => { k.unrest = newValue; })}
-                  className={$kingdomState.unrest > 5 ? 'danger' : ''}
+                  className={$kingdomData.unrest > 5 ? 'danger' : ''}
                   isExternallyControlled={true}
                   isEditing={editingField === 'unrest'}
                   onStartEdit={() => startEditing('unrest')}
@@ -204,7 +203,7 @@
             >
                <span class="stat-label">Imprisoned:</span>
                <EditableStat 
-                  value={$kingdomState.imprisonedUnrest}
+                  value={$kingdomData.imprisonedUnrest}
                   onChange={(newValue) => updateKingdom(k => { k.imprisonedUnrest = newValue; })}
                   className="imprisoned"
                   isExternallyControlled={true}
@@ -248,23 +247,23 @@
             <h4 class="stat-group-header">Kingdom Size</h4>
             <div class="stat-item">
                <span class="stat-label">Hexes Claimed:</span>
-               <span class="stat-value">{$kingdomState.size}</span>
+               <span class="stat-value">{$kingdomData.size}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Villages:</span>
-               <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Village').length}</span>
+               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Village').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Towns:</span>
-               <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Town').length}</span>
+               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Town').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Cities:</span>
-               <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'City').length}</span>
+               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'City').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Metropolises:</span>
-               <span class="stat-value">{$kingdomState.settlements.filter(s => s.tier === 'Metropolis').length}</span>
+               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Metropolis').length}</span>
             </div>
          </div>
          
@@ -282,8 +281,8 @@
                >
                   <span class="stat-label">Current:</span>
                   <EditableStat 
-                     value={$kingdomState.resources.get('food') || 0}
-                     onChange={(newValue) => setResource('food', newValue)}
+                     value={$resources.food || 0}
+                     onChange={(newValue) => modifyResource('food', newValue)}
                      isExternallyControlled={true}
                      isEditing={editingField === 'food'}
                      onStartEdit={() => startEditing('food')}

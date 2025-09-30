@@ -1,10 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps } from '../../../stores/kingdom';
-   import { gameState, incrementTurn } from '../../../stores/gameState';
-   import { setCurrentPhase } from '../../../stores/kingdom';
+   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    import type { BuildProject } from '../../../models/KingdomState';
    
@@ -21,14 +18,14 @@
    let processingBuild = false;
    let processingEndTurn = false;
    
-   // Reactive UI state - use $gameState to ensure reactivity
-   $: consumeCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-food') === true;
-   $: militaryCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-military') === true;
-   $: buildCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-build') === true;
-   $: resolveCompleted = $kingdomState.phaseStepsCompleted.get('upkeep-complete') === true;
+   // Reactive UI state - use new kingdomData store
+   $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
+   $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
+   $: buildCompleted = isPhaseStepCompleted('upkeep-build');
+   $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
    
    // Get all display data from controller
-   $: displayData = upkeepController?.getDisplayData($kingdomState) || {
+   $: displayData = upkeepController?.getDisplayData($kingdomData) || {
       currentFood: 0,
       foodConsumption: 0,
       foodShortage: 0,
@@ -60,9 +57,9 @@
       upkeepController = createUpkeepPhaseController();
       
       // Auto-complete steps that don't need action
-      const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomState);
+      const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomData);
       autoCompleteSteps.forEach(step => {
-         if (!$kingdomState.phaseStepsCompleted.get(step)) {
+         if (!isPhaseStepCompleted(step)) {
             markPhaseStepCompleted(step);
          }
       });
@@ -76,8 +73,8 @@
       
       try {
          const result = await upkeepController.processFoodConsumption(
-            $kingdomState,
-            $kingdomState.currentTurn || 1
+            $kingdomData,
+            $kingdomData.currentTurn || 1
          );
          
          // Controller now handles settlement feeding status
@@ -96,8 +93,8 @@
       try {
          // Controller handles all military support logic
          const result = await upkeepController.processMilitarySupport(
-            $kingdomState,
-            $kingdomState.currentTurn || 1
+            $kingdomData,
+            $kingdomData.currentTurn || 1
          );
          
          if (result.success) {
@@ -116,10 +113,10 @@
       
       try {
          // Process projects through controller
-         const progress = upkeepController.processProjects($kingdomState);
+         const progress = upkeepController.processProjects($kingdomData);
          
-         // Update kingdom state to reflect completed projects
-         kingdomState.update(state => {
+         // Update kingdom data to reflect completed projects
+         updateKingdom(state => {
             // Remove completed projects (already done by controller)
             return state;
          });
@@ -139,8 +136,8 @@
       try {
          // Process resource decay
          await upkeepController.processResourceDecay(
-            $kingdomState,
-            $kingdomState.currentTurn || 1
+            $kingdomData,
+            $kingdomData.currentTurn || 1
          );
          
          markPhaseStepCompleted('upkeep-complete');
@@ -157,7 +154,7 @@
       }
       
       // Process modifiers using controller
-      kingdomState.update(state => {
+      updateKingdom(state => {
          upkeepController.processEndTurnModifiers(state);
          return state;
       });
@@ -343,14 +340,14 @@
          
          <button 
             on:click={handleBuildQueue} 
-            disabled={buildCompleted || processingBuild || $kingdomState.buildQueue.length === 0}
+            disabled={buildCompleted || processingBuild || $kingdomData.buildQueue?.length === 0}
             class="btn btn-secondary"
          >
             {#if buildCompleted}
                <i class="fas fa-check"></i> Resources Applied
             {:else if processingBuild}
                <i class="fas fa-spinner fa-spin"></i> Processing...
-            {:else if $kingdomState.buildQueue.length === 0}
+            {:else if $kingdomData.buildQueue?.length === 0}
                <i class="fas fa-ban"></i> No Projects in Queue
             {:else}
                <i class="fas fa-hammer"></i> Apply to Construction
@@ -358,16 +355,16 @@
          </button>
          
          <div class="card-content">
-            {#if $kingdomState.buildQueue.length > 0}
+            {#if $kingdomData.buildQueue?.length > 0}
                <div class="build-resources-available">
                   <strong>Available:</strong>
                   {['lumber', 'stone', 'ore'].map(r => 
-                     `${$kingdomState.resources.get(r) || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
+                     `${$kingdomData.resources?.[r] || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
                   ).join(', ')}
                </div>
                
                <div class="build-queue">
-                  {#each $kingdomState.buildQueue as project}
+                  {#each $kingdomData.buildQueue as project}
                      <div class="build-project-card">
                         <div class="project-header">
                            <span class="project-name">{project.structureId}</span>
@@ -427,10 +424,10 @@
                <p>Gold and stored food will carry over to the next turn.</p>
             </div>
             
-            {#if $kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 0}
+            {#if $kingdomData.settlements.filter(s => !s.wasFedLastTurn).length > 0}
                <div class="summary-item warning">
                   <i class="fas fa-exclamation-triangle"></i>
-                  <p>{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomState.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
+                  <p>{$kingdomData.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomData.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
                </div>
             {/if}
             

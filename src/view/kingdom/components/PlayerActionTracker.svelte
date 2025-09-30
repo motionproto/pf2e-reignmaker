@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { getAllPlayerActions, type PlayerAction } from '../../../stores/gameState';
-  import { gameState } from '../../../stores/gameState';
-  import { kingdomState } from '../../../stores/kingdom';
+  import { kingdomData } from '../../../stores/kingdomActor';
   
   export let compact: boolean = false;
   
-  $: playerActions = getAllPlayerActions();
-  $: currentPhase = $kingdomState.currentPhase;
+  // For now, disable player action tracking until we can properly implement it
+  // with the new architecture. The old gameState store no longer exists.
+  $: playerActions = [];
+  $: currentPhase = $kingdomData.currentPhase;
 </script>
 
 <div class="player-action-tracker {compact ? 'compact' : ''}">
@@ -15,28 +15,7 @@
   {/if}
   
   <div class="player-actions-list">
-    {#each playerActions as action}
-      <div class="player-action-item">
-        <span class="player-name">{action.playerName}:</span>
-        <div 
-          class="action-dot {action.actionSpent ? 'spent' : 'available'}"
-          style="background-color: {action.actionSpent ? action.playerColor : 'rgba(255, 255, 255, 0.1)'}; 
-                 border-color: {action.playerColor};"
-          title="{action.actionSpent ? `Action spent in ${action.spentInPhase}` : 'Action available'}"
-        >
-          {#if action.actionSpent}
-            <i class="fas fa-check"></i>
-          {/if}
-        </div>
-        {#if !compact && action.actionSpent && action.spentInPhase}
-          <span class="spent-in-phase">({action.spentInPhase})</span>
-        {/if}
-      </div>
-    {/each}
-    
-    {#if playerActions.length === 0}
-      <div class="no-players">No player actions initialized</div>
-    {/if}
+    <div class="no-players">Player action tracking disabled during migration</div>
   </div>
 </div>
 

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { gameState } from '../../../stores/gameState';
-  import { kingdomState, isPhaseComplete } from '../../../stores/kingdom';
+  import { currentPhase, currentTurn, isCurrentPhaseComplete } from '../../../stores/kingdomActor';
   import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   
@@ -10,12 +9,12 @@
   export let icon: string = '';
   export let onNextPhase: (() => void) | undefined = undefined;
   export let isUpkeepPhase: boolean = false;
-  export let currentTurn: number = 1;
+  // currentTurn is now imported from stores, remove the export
   
   let currentPhaseComplete = false;
   
-  // Check if the current phase is complete - use the centralized check from gameState
-  $: currentPhaseComplete = isPhaseComplete($kingdomState.currentPhase);
+  // Check if the current phase is complete - use the new kingdom actor check
+  $: currentPhaseComplete = isCurrentPhaseComplete();
   
   let headerElement: HTMLElement;
   let previousTitle = '';

@@ -1,6 +1,6 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData } from '../../../stores/kingdomActor';
    import Button from './baseComponents/Button.svelte';
    
    export let outcome: string;
@@ -19,7 +19,7 @@
    const dispatch = createEventDispatcher();
    
    // Get fame from kingdom state
-   $: currentFame = $kingdomState?.fame || 0;
+   $: currentFame = $kingdomData?.fame || 0;
    
    // Get outcome display properties
    $: outcomeProps = getOutcomeProps(outcome);

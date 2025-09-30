@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { kingdomState } from "../../../stores/kingdom";
+  import { kingdomData, updateKingdom } from "../../../stores/kingdomActor";
   import { 
-    gameState, 
     spendPlayerAction,
     resolveAction,
     unresolveAction,
@@ -9,7 +8,7 @@
     getActionResolution,
     resetPlayerAction,
     getPlayerAction
-  } from "../../../stores/gameState";
+  } from "../../../stores/kingdomActor";
   import { TurnPhase } from "../../../models/KingdomState";
   import { PlayerActionsData } from "../../../models/PlayerActions";
   import CheckCard from "../../kingdom/components/CheckCard.svelte";
@@ -51,7 +50,7 @@
 
   // Use gameState directly for all action tracking
   $: resolvedActions = $gameState.resolvedActions;
-  $: actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
+  $: actionsUsed = Array.from($kingdomData.playerActions?.values() || []).filter((pa: any) => pa.actionSpent).length;
   const MAX_ACTIONS = 4;
   
   // Force UI update when resolvedActions changes
@@ -225,8 +224,8 @@
     const result = await controller.executeAction(
       action,
       resolution.outcome,
-      $kingdomState,
-      $kingdomState.currentTurn || 1,
+      $kingdomData,
+      $kingdomData.currentTurn || 1,
       undefined, // rollTotal - not tracked in current UI
       resolution.actorName,
       resolution.skillName,
@@ -245,7 +244,7 @@
   // Reset an action
   async function resetAction(actionId: string, skipPlayerActionReset: boolean = false) {
     // Use the controller to reset the action
-    await controller.resetAction(actionId, $kingdomState, currentUserId || undefined);
+    await controller.resetAction(actionId, $kingdomData, currentUserId || undefined);
 
     // Also reset the player action in gameState (unless it's a reroll)
     if (!skipPlayerActionReset) {
@@ -391,12 +390,12 @@
 
   function isActionAvailable(action: any): boolean {
     // Delegate to controller for business logic
-    return controller.canPerformAction(action, $kingdomState);
+    return controller.canPerformAction(action, $kingdomData);
   }
   
   function getMissingRequirements(action: any): string[] {
     // Delegate to controller for business logic
-    const requirements = controller.getActionRequirements(action, $kingdomState);
+    const requirements = controller.getActionRequirements(action, $kingdomData);
     const missing: string[] = [];
     
     // Add general reason if present
@@ -500,7 +499,7 @@
       const success = spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
       
       // Manually update actionsUsed since reactive statement isn't updating immediately
-      actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = Array.from($kingdomData.playerActions.values()).filter(pa => pa.actionSpent).length;
     }
     
     // Get character for roll
@@ -551,7 +550,7 @@
     const { checkId, skill } = event.detail;
     
     // Check fame and get character
-    const currentFame = $kingdomState?.fame || 0;
+    const currentFame = $kingdomData?.fame || 0;
     if (currentFame <= 0) {
       ui.notifications?.warn("Not enough fame to reroll");
       return;
@@ -664,7 +663,7 @@
     const game = (window as any).game;
     if (game?.user?.id) {
       spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
-      actionsUsed = Array.from($kingdomState.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = Array.from($kingdomData.playerActions.values()).filter(pa => pa.actionSpent).length;
     }
     
     // Show success notification
@@ -778,7 +777,7 @@
                   {resolution}
                   character={selectedCharacter}
                   canPerformMore={actionsUsed < MAX_ACTIONS && !isResolved}
-                  currentFame={$kingdomState?.fame || 0}
+                  currentFame={$kingdomData?.fame || 0}
                   showFameReroll={true}
                   resolvedBadgeText="Resolved"
                   primaryButtonLabel="OK"

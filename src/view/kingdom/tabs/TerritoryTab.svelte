@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData } from '../../../stores/kingdomActor';
    import { WorksiteConfig } from '../../../models/Hex';
    
    // Resource icons and colors (matching ResourcesPhase)
@@ -39,16 +39,16 @@
    let filterWorksite: string = 'all';
    
    // Get unique terrain types from hexes
-   $: terrainTypes = [...new Set($kingdomState.hexes.map(h => h.terrain))].sort();
+   $: terrainTypes = [...new Set(($kingdomData.hexes || []).map(h => h.terrain))].sort();
    
    // Get unique worksite types from hexes
-   $: worksiteTypes = [...new Set($kingdomState.hexes
+   $: worksiteTypes = [...new Set(($kingdomData.hexes || [])
       .filter(h => h.worksite)
       .map(h => h.worksite!.type))].sort();
    
    // Apply filters and sorting
    $: filteredAndSortedHexes = (() => {
-      let hexes = [...$kingdomState.hexes];
+      let hexes = [...($kingdomData.hexes || [])];
       
       // Apply filters
       if (filterTerrain !== 'all') {
@@ -94,13 +94,13 @@
    })();
    
    // Calculate territory statistics
-   $: terrainBreakdown = $kingdomState.hexes.reduce((acc, hex) => {
+   $: terrainBreakdown = ($kingdomData.hexes || []).reduce((acc, hex) => {
       acc[hex.terrain] = (acc[hex.terrain] || 0) + 1;
       return acc;
    }, {} as Record<string, number>);
    
-   $: totalProduction = $kingdomState.hexes.reduce((acc, hex) => {
-      const production = hex.getProduction();
+   $: totalProduction = ($kingdomData.hexes || []).reduce((acc, hex) => {
+      const production = hex.getProduction?.() || new Map();
       production.forEach((amount, resource) => {
          acc[resource] = (acc[resource] || 0) + amount;
       });
@@ -265,7 +265,7 @@
          </table>
       {:else}
          <div class="no-territory">
-            {#if $kingdomState.hexes.length === 0}
+            {#if ($kingdomData.hexes || []).length === 0}
                <i class="fas fa-map-marked-alt"></i>
                <p>No territory has been claimed yet.</p>
                <p class="hint">Claim hexes to expand your kingdom's territory.</p>

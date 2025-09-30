@@ -1,9 +1,7 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState, setResource } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdom';
-   import { gameState } from '../../../stores/gameState';
+   import { kingdomData, setResource, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdomActor';
    import Button from '../components/baseComponents/Button.svelte';
    import { tick } from 'svelte';
    
@@ -66,8 +64,8 @@
    }
    
    // Reactive: Get all display data from controller in one call
-   $: if (resourceController && $kingdomState) {
-      displayData = resourceController.getDisplayData($kingdomState);
+   $: if (resourceController && $kingdomData) {
+      displayData = resourceController.getDisplayData($kingdomData);
    }
    
    // Extract commonly used values from display data for template convenience
@@ -103,8 +101,8 @@
       try {
          // Use controller to collect resources - it handles everything
          const result = await resourceController.collectResources(
-            $kingdomState,
-            $kingdomState.currentTurn || 1
+            $kingdomData,
+            $kingdomData.currentTurn || 1
          );
          
          if (result.success && result.result) {
@@ -121,7 +119,7 @@
             markPhaseStepCompleted('resources-collect');
             
             // Update display data after successful collection
-            displayData = resourceController.getDisplayData($kingdomState);
+            displayData = resourceController.getDisplayData($kingdomData);
          } else {
             console.error('Failed to collect resources:', result.error);
             // TODO: Show user-friendly error message

@@ -1,9 +1,7 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState, updateKingdom } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/kingdom';
-   import { gameState } from '../../../stores/gameState';
+   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    
    // Props
@@ -41,7 +39,7 @@
    
    // Reactive UI state
    $: incidentChecked = isPhaseStepCompleted('calculate-unrest');
-   $: unrestStatus = unrestController?.getUnrestStatus($kingdomState) || { 
+   $: unrestStatus = unrestController?.getUnrestStatus($kingdomData) || { 
       currentUnrest: 0, 
       tier: 0, 
       tierName: 'Stable',
@@ -81,8 +79,8 @@
       calculateUnrestGeneration();
       
       // Check if an incident was already rolled by another client
-      if ($kingdomState.currentIncidentId && unrestStatus.tier > 0) {
-         console.log('[UnrestPhase] Loading existing incident from kingdomState:', $kingdomState.currentIncidentId);
+      if ($kingdomData.currentIncidentId && unrestStatus.tier > 0) {
+         console.log('[UnrestPhase] Loading existing incident from kingdomState:', $kingdomData.currentIncidentId);
          // Load the incident by ID using the controller
          const result = unrestController.rollForIncident(unrestStatus.tier);
          // The controller will deterministically get the same incident based on the tier
@@ -116,7 +114,7 @@
    function calculateUnrestGeneration() {
       if (!unrestController) return;
       
-      const generation = unrestController.calculateUnrestGeneration($kingdomState);
+      const generation = unrestController.calculateUnrestGeneration($kingdomData);
       // Generation is calculated and stored in controller state
    }
    
@@ -169,7 +167,7 @@
       if (!unrestController || unrestStatus.tier === 0) return;
       
       // Check if another client already rolled for an incident
-      if ($kingdomState.currentIncidentId) {
+      if ($kingdomData.currentIncidentId) {
          console.log('[UnrestPhase] Incident already rolled by another client, loading existing incident');
          showIncidentResult = true;
          return;
@@ -212,7 +210,7 @@
    async function applyUnrestGeneration() {
       if (!unrestController) return;
       
-      const generation = unrestController.calculateUnrestGeneration($kingdomState);
+      const generation = unrestController.calculateUnrestGeneration($kingdomData);
       if (generation.total === 0) return;
       
       // Update kingdom state with generated unrest
@@ -346,7 +344,7 @@
    async function processImprisonedUnrest(action: 'execute' | 'pardon', amount?: number) {
       if (!unrestController) return;
       
-      const currentImprisoned = $kingdomState.imprisonedUnrest || 0;
+      const currentImprisoned = $kingdomData.imprisonedUnrest || 0;
       const result = unrestController.processImprisonedUnrest(currentImprisoned, action, amount);
       
       // Apply changes directly to kingdom state
@@ -439,11 +437,11 @@
                </div>
                
                <!-- Imprisoned Unrest -->
-               {#if $kingdomState.imprisonedUnrest > 0}
+               {#if $kingdomData.imprisonedUnrest > 0}
                   <div class="imprisoned-unrest">
                      <div class="imprisoned-value">
                         <i class="fas fa-dungeon"></i>
-                        <span>{$kingdomState.imprisonedUnrest}</span>
+                        <span>{$kingdomData.imprisonedUnrest}</span>
                      </div>
                      <div class="imprisoned-label">Imprisoned</div>
                   </div>

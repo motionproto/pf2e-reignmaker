@@ -3,13 +3,11 @@
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
-   import { kingdomState }                        from '../../stores/kingdom';
+   import { kingdomData }                         from '../../stores/kingdomActor';
    import { uiState, setSelectedTab }             from '../../stores/ui';
    
    // Import territory service for syncing
    import { territoryService }                    from '../../services/territory';
-   // Import persistence service to ensure data is loaded
-   import { persistenceService }                  from '../../services/persistence';
    
    // Components
    import ContentSelector from './components/ContentSelector.svelte';

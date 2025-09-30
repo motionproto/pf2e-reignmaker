@@ -1,6 +1,5 @@
 <script lang="ts">
-   import { gameState, isPhaseComplete, canOperatePhase, getNextPhase, advancePhase, markPhaseStepCompleted } from '../../../stores/gameState';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData, viewingPhase, isCurrentPhaseComplete, advancePhase, markPhaseStepCompleted } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    
    const phaseNames: Record<TurnPhase, string> = {
@@ -21,18 +20,26 @@
       [TurnPhase.PHASE_VI]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
    };
    
-   $: currentPhase = $kingdomState.currentPhase;
-   $: viewingPhase = $gameState.viewingPhase;
-   $: phaseStepsCompleted = $kingdomState.phaseStepsCompleted;
-   $: phasesCompleted = $kingdomState.phasesCompleted;
+   $: currentPhase = $kingdomData.currentPhase;
+   $: currentViewingPhase = $viewingPhase;
+   $: phaseStepsCompleted = $kingdomData.phaseStepsCompleted;
+   $: phasesCompleted = new Set(); // TODO: Implement in new store if needed
    $: nextPhase = getNextPhase(currentPhase);
-   $: currentPhaseComplete = isPhaseComplete(currentPhase);
+   $: currentPhaseComplete = isCurrentPhaseComplete();
    $: canAdvance = currentPhaseComplete;
+   
+   // Helper function for next phase calculation
+   function getNextPhase(phase: TurnPhase): TurnPhase | null {
+      const phases = Object.values(TurnPhase);
+      const currentIndex = phases.indexOf(phase);
+      return currentIndex < phases.length - 1 ? phases[currentIndex + 1] : null;
+   }
    
    function forceCompleteCurrentPhase() {
       const steps = phaseSteps[currentPhase] || [];
       steps.forEach(step => {
-         if (!phaseStepsCompleted.get(step)) {
+         const isCompleted = phaseStepsCompleted[step];
+         if (!isCompleted) {
             markPhaseStepCompleted(step);
          }
       });
@@ -58,7 +65,7 @@
          <div class="status-grid">
             <div class="status-item">
                <span class="label">Turn:</span>
-               <span class="value">{$kingdomState.currentTurn}</span>
+               <span class="value">{$kingdomData.currentTurn}</span>
             </div>
             <div class="status-item">
                <span class="label">Current Phase:</span>
@@ -66,7 +73,7 @@
             </div>
             <div class="status-item">
                <span class="label">Viewing Phase:</span>
-               <span class="value">{viewingPhase ? phaseNames[viewingPhase] : 'None'}</span>
+               <span class="value">{currentViewingPhase ? phaseNames[currentViewingPhase] : 'None'}</span>
             </div>
             <div class="status-item">
                <span class="label">Phase Complete:</span>
@@ -96,7 +103,7 @@
                   {#if steps.length > 0}
                      <div class="steps">
                         {#each steps as step}
-                           {@const completed = phaseStepsCompleted.get(step)}
+                           {@const completed = phaseStepsCompleted[step]}
                            <div class="step" class:completed>
                               <i class="fas {completed ? 'fa-check-square' : 'fa-square'}"></i>
                               {step}

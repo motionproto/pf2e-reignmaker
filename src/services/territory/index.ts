@@ -10,11 +10,14 @@
  */
 
 import { get } from 'svelte/store';
-import { kingdomState } from '../../stores/kingdom';
+import { kingdomData, updateKingdom } from '../../stores/kingdomActor';
 import { Hex, Worksite, WorksiteType } from '../../models/Hex';
 import type { Settlement, SettlementTier } from '../../models/KingdomState';
 import { createSettlement } from '../../models/Settlement';
 import type { HexFeature, HexState } from '../../api/kingmaker';
+
+// Declare Foundry globals
+declare const Hooks: any;
 
 export interface TerritoryMetrics {
     totalHexes: number;
@@ -155,28 +158,29 @@ export class TerritoryService {
      * Update the Kingdom store with territory data
      */
     private updateKingdomStore(hexes: Hex[], kingmakerSettlements: Settlement[]): void {
-        kingdomState.update(state => {
+        updateKingdom(state => {
             // Update territory data
             state.hexes = hexes;
             state.size = hexes.length;
             
             // Merge settlements - preserve existing data
-            const mergedSettlements = this.mergeSettlements(state.settlements, kingmakerSettlements);
+            const mergedSettlements = this.mergeSettlements(state.settlements || [], kingmakerSettlements);
             state.settlements = mergedSettlements;
             
             // Update worksite counts for UI display
             state.worksiteCount = this.countWorksites(hexes);
             
-            // Update cached production values - calculate once when hexes change
-            // Call the method on the state instance (which is a KingdomState class instance)
-            if (typeof state.updateCachedProduction === 'function') {
-                state.updateCachedProduction();
-            } else {
-                console.warn('[TerritoryService] updateCachedProduction method not available on state');
-            }
-            
             return state;
         });
+        
+        // Emit territory update hook for persistence service
+        if (typeof Hooks !== 'undefined') {
+            Hooks.call('pf2e-reignmaker.territoryUpdated', {
+                hexCount: hexes.length,
+                settlementCount: kingmakerSettlements.length,
+                source: 'kingmaker-sync'
+            });
+        }
     }
     
     /**
@@ -481,7 +485,7 @@ export class TerritoryService {
      */
     getTerritoryMetrics(hexes?: Hex[]): TerritoryMetrics {
         // Use provided hexes or get from kingdom store
-        const territory = hexes || get(kingdomState).hexes;
+        const territory = hexes || get(kingdomData).hexes || [];
         
         // Count hexes by terrain
         const hexesByTerrain = new Map<string, number>();
@@ -494,7 +498,7 @@ export class TerritoryService {
         const worksiteCount = this.countWorksites(territory);
         
         // Count settlements
-        const settlementCount = get(kingdomState).settlements.length;
+        const settlementCount = get(kingdomData).settlements?.length || 0;
         
         // Calculate total production
         const totalProduction = new Map<string, number>();
@@ -518,8 +522,8 @@ export class TerritoryService {
      * Get information about a specific hex
      */
     getTerritoryInfo(hexId: string): Hex | null {
-        const state = get(kingdomState);
-        return state.hexes.find(h => h.id === hexId) || null;
+        const state = get(kingdomData);
+        return state.hexes?.find((h: any) => h.id === hexId) || null;
     }
     
     /**

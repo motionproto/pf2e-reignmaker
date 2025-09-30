@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData } from '../../../stores/kingdomActor';
 </script>
 
 <div class="tw-h-full tw-flex tw-flex-col">

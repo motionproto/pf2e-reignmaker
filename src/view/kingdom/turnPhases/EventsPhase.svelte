@@ -1,8 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomState } from '../../../stores/kingdom';
-   import { markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdom';
-   import { gameState, spendPlayerAction } from '../../../stores/gameState';
+   import { kingdomData, markPhaseStepCompleted, isPhaseStepCompleted, updateKingdom, spendPlayerAction } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
    
@@ -54,11 +52,11 @@
    // Computed UI state
    $: eventChecked = isPhaseStepCompleted('resolve-event');
    $: eventResolved = isPhaseStepCompleted('resolve-event');
-   $: eventDC = $kingdomState.eventDC;
-   $: activeModifiers = $kingdomState.modifiers || [];
-   $: stabilityRoll = $kingdomState.eventStabilityRoll || 0;
-   $: showStabilityResult = $kingdomState.eventStabilityRoll !== null;
-   $: rolledAgainstDC = $kingdomState.eventRollDC || eventDC;
+   $: eventDC = $kingdomData.eventDC;
+   $: activeModifiers = $kingdomData.modifiers || [];
+   $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
+   $: showStabilityResult = $kingdomData.eventStabilityRoll !== null;
+   $: rolledAgainstDC = $kingdomData.eventRollDC || eventDC;
    
    onMount(() => {
       const initAsync = async () => {
@@ -68,9 +66,9 @@
          eventPhaseController = createEventPhaseController(eventService);
          
          // Check if an event was already rolled by another client
-         if ($kingdomState.currentEventId) {
-            console.log('[EventsPhase] Loading existing event from kingdomState:', $kingdomState.currentEventId);
-            const event = eventService.getEventById($kingdomState.currentEventId);
+         if ($kingdomData.currentEventId) {
+            console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
+            const event = eventService.getEventById($kingdomData.currentEventId);
             if (event) {
                currentEvent = event;
                // Also mark that we've checked for events so the button shows correctly
@@ -78,10 +76,10 @@
                   markPhaseStepCompleted('resolve-event');
                }
             }
-         } else if ($kingdomState.currentEventId === null && eventChecked) {
+         } else if ($kingdomData.currentEventId === null && eventChecked) {
             // Another client rolled and got no event - we should show that
             console.log('[EventsPhase] No event was rolled by another client');
-            // The gameState values should be synced via persistence
+            // The values should be synced via Foundry actor
          }
          
          if (typeof (window as any).game !== 'undefined') {
@@ -161,10 +159,10 @@
       if (!eventPhaseController) return;
       
       // Check if another client already rolled for an event
-      if ($kingdomState.currentEventId) {
+      if ($kingdomData.currentEventId) {
          console.log('[EventsPhase] Event already rolled by another client, loading existing event');
          // Load the event by ID
-         const event = eventService.getEventById($kingdomState.currentEventId);
+         const event = eventService.getEventById($kingdomData.currentEventId);
          if (event) {
             currentEvent = event;
          }
@@ -182,19 +180,17 @@
          const checkResult = await eventPhaseController.performStabilityCheck(currentDC);
          
          // Update kingdom state with roll results and new DC for multiplayer sync
-         kingdomState.update(state => {
-            state.eventDC = checkResult.newDC;
-            state.eventStabilityRoll = checkResult.roll;
-            state.eventRollDC = currentDC;
-            state.eventTriggered = checkResult.triggered;
+         await updateKingdom(kingdom => {
+            kingdom.eventDC = checkResult.newDC;
+            kingdom.eventStabilityRoll = checkResult.roll;
+            kingdom.eventRollDC = currentDC;
+            kingdom.eventTriggered = checkResult.triggered;
             
             if (checkResult.event) {
-               state.currentEventId = checkResult.event.id;
+               kingdom.currentEventId = checkResult.event.id;
             } else {
-               state.currentEventId = null;
+               kingdom.currentEventId = null;
             }
-            
-            return state;
          });
          
          if (checkResult.event) {
@@ -292,13 +288,12 @@
          const result = await eventPhaseController.applyEventOutcome(
             pendingEventOutcome.event,
             pendingEventOutcome.outcome,
-            get(kingdomState),
-            $kingdomState.currentTurn || 1
+            get(kingdomData),
+            $kingdomData.currentTurn || 1
          );
          
          if (result.success) {
-            // Update kingdom state with applied effects
-            kingdomState.update(state => state);
+            // Kingdom state automatically updated via Foundry actor
             
             // Mark phase as complete after successfully applying changes
             if (!eventResolved) {
@@ -326,12 +321,11 @@
       character = null;
       pendingEventOutcome = null;
       
-      // Clear event roll state in kingdomState for next turn
-      kingdomState.update(state => {
-         state.eventStabilityRoll = null;
-         state.eventRollDC = null;
-         state.eventTriggered = null;
-         return state;
+      // Clear event roll state for next turn using new updateKingdom function
+      await updateKingdom(kingdom => {
+         kingdom.eventStabilityRoll = null;
+         kingdom.eventRollDC = null;
+         kingdom.eventTriggered = null;
       });
       
       // Reset controller state for next phase
@@ -494,7 +488,7 @@
             <div class="check-result-display">
                <div class="roll-result failure">
                   <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
-                  <div>DC reduced to {$kingdomState.eventDC} for next turn.</div>
+                  <div>DC reduced to {$kingdomData.eventDC} for next turn.</div>
                </div>
             </div>
          {/if}

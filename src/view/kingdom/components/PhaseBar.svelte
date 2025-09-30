@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { gameState, setViewingPhase, viewingPhase } from '../../../stores/gameState';
-  import { kingdomState } from '../../../stores/kingdom';
+  import { kingdomData, setViewingPhase, viewingPhase } from '../../../stores/kingdomActor';
   import { TurnPhase } from '../../../models/KingdomState';
   import { onMount } from 'svelte';
 
@@ -14,8 +13,8 @@
     { id: TurnPhase.PHASE_VI, label: 'Upkeep', fullName: 'End of turn' }
   ];
 
-  $: currentPhase = $kingdomState.currentPhase;
-  $: currentTurn = $kingdomState.currentTurn;
+  $: currentPhase = $kingdomData.currentPhase;
+  $: currentTurn = $kingdomData.currentTurn;
   $: selectedPhase = $viewingPhase || currentPhase;
   
   // Initialize viewing phase on mount
@@ -36,6 +35,10 @@
   
 
   function handlePhaseClick(phase: TurnPhase) {
+    // Only allow clicking on the current phase
+    if (!isPhaseClickable(phase)) {
+      return;
+    }
     // Update the viewing phase when user clicks
     setViewingPhase(phase);
   }
@@ -48,19 +51,38 @@
     return phase === selectedPhase;
   }
   
+  function isPhaseClickable(phase: TurnPhase): boolean {
+    // Only the current phase is clickable
+    return phase === currentPhase;
+  }
+  
+  function isPhaseCompleted(phase: TurnPhase): boolean {
+    const phaseIndex = getPhaseIndex(phase);
+    return phaseIndex < currentPhaseIndex;
+  }
+  
+  function isPhaseFuture(phase: TurnPhase): boolean {
+    const phaseIndex = getPhaseIndex(phase);
+    return phaseIndex > currentPhaseIndex;
+  }
+  
   // Helper to build tooltip text
   function getTooltip(phase: typeof phases[0]): string {
     const isActive = isPhaseActive(phase.id);
-    const isSelected = isPhaseSelected(phase.id);
+    const isClickable = isPhaseClickable(phase.id);
+    const isCompleted = isPhaseCompleted(phase.id);
+    const isFuture = isPhaseFuture(phase.id);
     
     let tooltip = phase.fullName;
-    if (isActive && !isSelected) {
-      tooltip += ' (Currently Active)';
-    } else if (!isActive && isSelected) {
-      tooltip += ' (Viewing)';
-    } else if (isActive && isSelected) {
-      tooltip += ' (Active & Viewing)';
+    
+    if (isActive) {
+      tooltip += ' (Currently Active - Click to view)';
+    } else if (isCompleted) {
+      tooltip += ' (Completed - Complete current phase to advance)';
+    } else if (isFuture) {
+      tooltip += ' (Future phase - Complete current phase to advance)';
     }
+    
     return tooltip;
   }
 </script>
@@ -79,6 +101,8 @@
         class:active={phase.id === currentPhase}
         class:selected={phase.id === selectedPhase}
         class:completed={phaseCompletions[index]}
+        class:disabled={!isPhaseClickable(phase.id)}
+        disabled={!isPhaseClickable(phase.id)}
         on:click={() => handlePhaseClick(phase.id)}
         title={getTooltip(phase)}
       >
@@ -256,6 +280,41 @@
 
   .phase-item.active:not(.selected) {
     animation: pulse 2s infinite ease-in-out;
+  }
+
+  /* Disabled phase buttons - cannot be clicked */
+  .phase-item.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: var(--color-gray-800);
+    color: var(--text-disabled);
+    border-color: rgba(120, 120, 120, 0.2);
+  }
+
+  .phase-item.disabled:hover {
+    transform: none; /* No hover transform for disabled buttons */
+    box-shadow: none; /* No hover shadow for disabled buttons */
+    background: var(--color-gray-800); /* Keep same background on hover */
+    border-color: rgba(120, 120, 120, 0.2); /* Keep same border on hover */
+  }
+
+  .phase-item.disabled .phase-label {
+    color: var(--text-disabled);
+    opacity: 0.6;
+  }
+
+  /* Override disabled state for active phase (active phase should never be disabled) */
+  .phase-item.active.disabled {
+    cursor: pointer;
+    opacity: 1;
+    background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
+    color: #fff;
+    border-color: var(--color-primary-light);
+  }
+
+  .phase-item.active.disabled .phase-label {
+    color: #fff;
+    opacity: 1;
   }
 
   /* Responsive design */

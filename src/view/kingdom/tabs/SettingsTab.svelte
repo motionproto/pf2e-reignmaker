@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData, updateKingdom } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    import { KingdomSettings } from '../../../api/foundry';
    import { isKingmakerInstalled, getKingmakerRealmData } from '../../../api/kingmaker';
@@ -82,25 +82,22 @@
    }
    
    // Reset kingdom data
-   function resetKingdom() {
+   async function resetKingdom() {
       if (confirm('Are you sure you want to reset all kingdom data? This cannot be undone!')) {
-         // Reset kingdom state
-         $kingdomState.currentTurn = 1;
-         $kingdomState.currentPhase = TurnPhase.PHASE_I;
-         $kingdomState.fame = 0;
-         $kingdomState.unrest = 0;
-         $kingdomState.imprisonedUnrest = 0;
-         $kingdomState.resources.clear();
-         $kingdomState.resources.set('gold', 0);
-         $kingdomState.resources.set('food', 0);
-         $kingdomState.resources.set('lumber', 0);
-         $kingdomState.resources.set('stone', 0);
-         $kingdomState.resources.set('ore', 0);
-         $kingdomState.hexes = [];
-         $kingdomState.settlements = [];
-         $kingdomState.armies = [];
-         $kingdomState.buildQueue = [];
-         $kingdomState.phaseStepsCompleted.clear();
+         // Reset kingdom state using the new architecture
+         await updateKingdom(kingdom => {
+            kingdom.currentTurn = 1;
+            kingdom.currentPhase = TurnPhase.PHASE_I;
+            kingdom.fame = 0;
+            kingdom.unrest = 0;
+            kingdom.imprisonedUnrest = 0;
+            kingdom.resources = { gold: 0, food: 0, lumber: 0, stone: 0, ore: 0 };
+            kingdom.hexes = [];
+            kingdom.settlements = [];
+            kingdom.armies = [];
+            kingdom.buildQueue = [];
+            kingdom.phaseStepsCompleted = {};
+         });
          
          // Clear localStorage
          localStorage.removeItem('kingdomWarStatus');
@@ -320,28 +317,28 @@
          <div class="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 tw-gap-3">
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">Current Turn</div>
-               <div class="tw-stat-value tw-text-lg">{$kingdomState.currentTurn}</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomData.currentTurn}</div>
             </div>
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">Fame</div>
-               <div class="tw-stat-value tw-text-lg">{$kingdomState.fame}/3</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomData.fame}/3</div>
             </div>
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">Total Hexes</div>
-               <div class="tw-stat-value tw-text-lg">{$kingdomState.size}</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomData.size}</div>
             </div>
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">Settlements</div>
-               <div class="tw-stat-value tw-text-lg">{$kingdomState.settlements.length}</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomData.settlements.length}</div>
             </div>
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">Armies</div>
-               <div class="tw-stat-value tw-text-lg">{$kingdomState.armies.length}</div>
+               <div class="tw-stat-value tw-text-lg">{$kingdomData.armies.length}</div>
             </div>
             <div class="tw-stat tw-bg-base-300 tw-rounded tw-p-3">
                <div class="tw-stat-title tw-text-xs">War Status</div>
                <div class="tw-stat-value tw-text-lg">
-                  {#if $kingdomState.isAtWar}
+                  {#if $kingdomData.isAtWar}
                      <span class="tw-text-error">At War</span>
                   {:else}
                      <span class="tw-text-success">At Peace</span>

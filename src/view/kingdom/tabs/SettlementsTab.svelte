@@ -1,8 +1,7 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
+   import { kingdomData, updateKingdom } from '../../../stores/kingdomActor';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import type { Settlement } from '../../../models/Settlement';
-   import { updateSettlementName } from '../../../stores/kingdom';
 
    // Selected settlement for details view
    let selectedSettlement: Settlement | null = null;
@@ -12,11 +11,11 @@
    let editedName = '';
    
    // Get unique tiers from settlements
-   $: settlementTiers = [...new Set($kingdomState.settlements.map(s => s.tier))].sort();
+   $: settlementTiers = [...new Set($kingdomData.settlements.map(s => s.tier))].sort();
    
    // Apply filters
    $: filteredSettlements = (() => {
-      let settlements = [...$kingdomState.settlements];
+      let settlements = [...$kingdomData.settlements];
       
       // Search filter
       if (searchTerm) {
@@ -47,22 +46,22 @@
    
    // Keep selectedSettlement synchronized with store updates
    $: if (selectedSettlement) {
-      const updated = $kingdomState.settlements.find(s => s.id === selectedSettlement?.id);
+      const updated = $kingdomData.settlements.find(s => s.id === selectedSettlement?.id);
       if (updated) {
          selectedSettlement = updated;
       }
    }
    
    // Calculate settlement statistics
-   $: totalStructures = $kingdomState.settlements.reduce((acc, settlement) => 
+   $: totalStructures = $kingdomData.settlements.reduce((acc, settlement) => 
       acc + settlement.structureIds.length, 0);
    
-   $: totalArmySupport = $kingdomState.settlements.reduce((acc, settlement) => {
+   $: totalArmySupport = $kingdomData.settlements.reduce((acc, settlement) => {
       const config = SettlementTierConfig[settlement.tier];
       return acc + (config?.armySupport || 0);
    }, 0);
    
-   $: totalFoodConsumption = $kingdomState.settlements.reduce((acc, settlement) => {
+   $: totalFoodConsumption = $kingdomData.settlements.reduce((acc, settlement) => {
       const config = SettlementTierConfig[settlement.tier];
       return acc + (config?.foodConsumption || 0);
    }, 0);
@@ -126,8 +125,13 @@
    
    function saveSettlementName() {
       if (selectedSettlement && editedName.trim()) {
-         // Use the store's update method to ensure proper state management and persistence
-         updateSettlementName(selectedSettlement.id, editedName.trim());
+         // Use the new store's update method to ensure proper state management and persistence
+         updateKingdom(k => {
+            const settlement = k.settlements.find(s => s.id === selectedSettlement!.id);
+            if (settlement) {
+               settlement.name = editedName.trim();
+            }
+         });
          isEditingName = false;
       }
    }

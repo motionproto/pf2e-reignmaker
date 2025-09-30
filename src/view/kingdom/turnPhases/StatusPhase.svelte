@@ -1,8 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomState, markPhaseStepCompleted } from '../../../stores/kingdom';
-   import { gameState } from '../../../stores/gameState';
+   import { kingdomData, markPhaseStepCompleted } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    
    // Props
@@ -39,13 +38,13 @@
       statusController = createStatusPhaseController();
       
       // Only run automation if we're in the Status Phase
-      if ($kingdomState.currentPhase === TurnPhase.PHASE_I) {
+      if ($kingdomData.currentPhase === TurnPhase.PHASE_I) {
          await runAutomation();
       }
    });
    
    // Run automation when phase changes to Status Phase
-   $: if ($kingdomState.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
+   $: if ($kingdomData.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
       runAutomation();
    }
    
@@ -53,12 +52,12 @@
    async function runAutomation() {
       try {
          // Store previous fame for display
-         previousFame = $kingdomState.fame;
+         previousFame = $kingdomData.fame;
          
          // Reset fame to 1
          const fameResult = await statusController.resetFame(
-            get(kingdomState),
-            $kingdomState.currentTurn || 1
+            get(kingdomData),
+            $kingdomData.currentTurn || 1
          );
          
          if (fameResult.success) {
@@ -72,8 +71,8 @@
          
          // Process modifiers and get detailed effects
          const modifierResult = await statusController.processModifiers(
-            get(kingdomState),
-            $kingdomState.currentTurn || 1
+            get(kingdomData),
+            $kingdomData.currentTurn || 1
          );
          
          if (modifierResult.success) {
@@ -87,7 +86,7 @@
          }
          
          // Expire old modifiers
-         statusController.expireModifiers(get(kingdomState), $kingdomState.currentTurn || 1);
+         statusController.expireModifiers(get(kingdomData), $kingdomData.currentTurn || 1);
       } catch (error) {
          console.error('[StatusPhase] Error in runAutomation:', error);
       }
@@ -133,14 +132,14 @@
          <div class="fame-stars">
             {#each Array(MAX_FAME) as _, i}
                <i 
-                  class="{i < $kingdomState.fame ? 'fas' : 'far'} fa-star star-icon" 
-                  class:filled={i < $kingdomState.fame}
+                  class="{i < $kingdomData.fame ? 'fas' : 'far'} fa-star star-icon" 
+                  class:filled={i < $kingdomData.fame}
                ></i>
             {/each}
          </div>
          
          <div class="fame-info">
-            <div class="fame-value">{$kingdomState.fame} / {MAX_FAME}</div>
+            <div class="fame-value">{$kingdomData.fame} / {MAX_FAME}</div>
             {#if fameReset && previousFame !== 1}
                <div class="fame-change">
                   Fame reset from {previousFame} to 1
@@ -151,7 +150,7 @@
    </div>
    
    <!-- Active Modifiers Overview -->
-   {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
+   {#if $kingdomData.modifiers && $kingdomData.modifiers.length > 0}
       <div class="phase-section active-modifiers">
          <div class="section-header">
             <i class="fas fa-list"></i>
@@ -159,7 +158,7 @@
          </div>
          
          <div class="modifiers-grid">
-            {#each $kingdomState.modifiers as modifier}
+            {#each $kingdomData.modifiers as modifier}
                <ModifierCard {modifier} />
             {/each}
          </div>

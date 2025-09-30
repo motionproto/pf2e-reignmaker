@@ -1,6 +1,5 @@
 <script lang="ts">
-   import { kingdomState } from '../../../stores/kingdom';
-   import { gameState } from '../../../stores/gameState';
+   import { kingdomData } from '../../../stores/kingdomActor';
    import type { KingdomModifier } from '../../../models/Modifiers';
    
    // Get severity color classes
@@ -54,7 +53,7 @@
       return result;
    }
    
-   $: currentTurn = $kingdomState.currentTurn || 1;
+   $: currentTurn = $kingdomData.currentTurn || 1;
 </script>
 
 <div class="tw-h-full tw-flex tw-flex-col">
@@ -65,9 +64,9 @@
    
    <!-- Modifiers List -->
    <div class="tw-flex-1 tw-overflow-y-auto">
-      {#if $kingdomState.modifiers && $kingdomState.modifiers.length > 0}
+      {#if $kingdomData.modifiers && $kingdomData.modifiers.length > 0}
          <div class="tw-grid tw-gap-3">
-            {#each $kingdomState.modifiers as modifier}
+            {#each $kingdomData.modifiers as modifier}
                <div class="tw-card tw-border-2 tw-shadow-md {getSeverityClass(modifier.severity)}">
                   <div class="tw-card-body">
                      <!-- Header with name and duration -->
@@ -231,20 +230,20 @@
    <div class="tw-stats tw-shadow tw-bg-base-300 tw-w-full">
       <div class="tw-stat">
          <div class="tw-stat-title">Active Modifiers</div>
-         <div class="tw-stat-value tw-text-2xl">{$kingdomState.modifiers?.length || 0}</div>
+         <div class="tw-stat-value tw-text-2xl">{$kingdomData.modifiers?.length || 0}</div>
          <div class="tw-stat-desc">Currently affecting kingdom</div>
       </div>
       <div class="tw-stat">
          <div class="tw-stat-title">Temporary</div>
          <div class="tw-stat-value tw-text-2xl">
-            {$kingdomState.modifiers?.filter(m => typeof m.duration === 'number').length || 0}
+            {$kingdomData.modifiers?.filter(m => typeof m.duration === 'number').length || 0}
          </div>
          <div class="tw-stat-desc">Will expire over time</div>
       </div>
       <div class="tw-stat">
          <div class="tw-stat-title">Permanent</div>
          <div class="tw-stat-value tw-text-2xl">
-            {$kingdomState.modifiers?.filter(m => m.duration === 'permanent').length || 0}
+            {$kingdomData.modifiers?.filter(m => m.duration === 'permanent').length || 0}
          </div>
          <div class="tw-stat-desc">Lasting effects</div>
       </div>

@@ -8,9 +8,9 @@ import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
-import { persistenceService } from './services/persistence';
+import { initializeKingdomSystem } from './main.kingdom';
 import { get } from 'svelte/store';
-import { kingdomState } from './stores/kingdom';
+import { kingdomData } from './stores/kingdomActor';
 
 // Extend module type for our API
 declare global {
@@ -117,9 +117,13 @@ Hooks.once('ready', async () => {
     console.log('PF2E ReignMaker | Module ready');
     console.log('PF2E ReignMaker | Svelte Kingdom system initialized');
     
-    // Initialize persistence service
-    await persistenceService.initialize();
-    console.log('PF2E ReignMaker | Persistence service initialized');
+    // Initialize the new Foundry-first kingdom system
+    try {
+        initializeKingdomSystem();
+        console.log('PF2E ReignMaker | Kingdom system initialized');
+    } catch (error) {
+        console.error('[Module] Failed to initialize kingdom system:', error);
+    }
     
     // Initialize Kingmaker sync if available using Territory Service
     if (territoryService.isKingmakerAvailable()) {
@@ -175,44 +179,54 @@ Hooks.once('ready', async () => {
             });
             
             // Get current kingdom state to verify sync
-            const state = get(kingdomState);
+            const state = get(kingdomData);
             console.log('PF2E ReignMaker | Current Kingdom State:', {
-                hexes: state.hexes.length,
-                size: state.size,
-                settlements: state.settlements.length,
-                resources: Object.fromEntries(state.resources),
-                cachedProduction: Object.fromEntries(state.cachedProduction),
-                worksiteCount: Object.fromEntries(state.worksiteCount)
+                hexes: state.hexes?.length || 0,
+                size: state.size || 0,
+                settlements: state.settlements?.length || 0,
+                resources: state.resources || {},
+                fame: state.fame || 0,
+                unrest: state.unrest || 0
             });
             
             return result;
         };
         
-        // Data persistence API functions
+        // Data persistence API functions - now handled by KingdomActor
         const saveKingdom = async () => {
-            await persistenceService.saveData();
+            // @ts-ignore
+            ui?.notifications?.info('Data is now automatically saved via Foundry actors');
         };
         
         const loadKingdom = async () => {
-            await persistenceService.loadData();
+            // @ts-ignore
+            ui?.notifications?.info('Data is now automatically loaded via Foundry actors');
         };
         
         const exportKingdom = async () => {
-            const jsonData = await persistenceService.exportData();
-            // Create a download link
-            const blob = new Blob([jsonData], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `kingdom-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            // @ts-ignore
-            ui?.notifications?.info('Kingdom data exported successfully');
+            const { getKingdomActor } = await import('./main.kingdom');
+            const actor = await getKingdomActor();
+            if (actor) {
+                const kingdomData = actor.getKingdom();
+                if (kingdomData) {
+                    const jsonData = JSON.stringify(kingdomData, null, 2);
+                    const blob = new Blob([jsonData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `kingdom-${Date.now()}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    // @ts-ignore
+                    ui?.notifications?.info('Kingdom data exported successfully');
+                }
+            } else {
+                // @ts-ignore
+                ui?.notifications?.warn('No kingdom actor found');
+            }
         };
         
         const importKingdom = async () => {
-            // Create file input
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
@@ -220,14 +234,39 @@ Hooks.once('ready', async () => {
                 const file = e.target.files[0];
                 if (file) {
                     const text = await file.text();
-                    await persistenceService.importData(text);
+                    try {
+                        const kingdomData = JSON.parse(text);
+                        const { getKingdomActor } = await import('./main.kingdom');
+                        const actor = await getKingdomActor();
+                        if (actor) {
+                            await actor.setKingdom(kingdomData);
+                            // @ts-ignore
+                            ui?.notifications?.info('Kingdom data imported successfully');
+                        } else {
+                            // @ts-ignore
+                            ui?.notifications?.warn('No kingdom actor found');
+                        }
+                    } catch (error) {
+                        console.error('Failed to import kingdom data:', error);
+                        // @ts-ignore
+                        ui?.notifications?.error('Failed to import kingdom data');
+                    }
                 }
             };
             input.click();
         };
         
         const resetKingdom = async () => {
-            await persistenceService.resetKingdom();
+            const { getKingdomActor } = await import('./main.kingdom');
+            const actor = await getKingdomActor();
+            if (actor) {
+                await actor.initializeKingdom('New Kingdom');
+                // @ts-ignore
+                ui?.notifications?.info('Kingdom reset to default state');
+            } else {
+                // @ts-ignore
+                ui?.notifications?.warn('No kingdom actor found');
+            }
         };
         
         // Get the module object and add the API

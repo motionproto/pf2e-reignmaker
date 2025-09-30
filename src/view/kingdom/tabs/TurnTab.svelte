@@ -1,6 +1,5 @@
 <script lang="ts">
-   import { kingdomState, advancePhase } from '../../../stores/kingdom';
-   import { gameState, viewingPhase, setViewingPhase } from '../../../stores/gameState';
+   import { kingdomData, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/kingdomActor';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
    import { onMount } from 'svelte';
    
@@ -20,25 +19,25 @@
    let lastCurrentPhase: TurnPhase | null = null;
    
    // Always sync viewing phase with current phase on mount
-   // This ensures proper initialization even when kingdomState loads asynchronously
+   // This ensures proper initialization even when kingdomData loads asynchronously
    onMount(() => {
-      setViewingPhase($kingdomState.currentPhase);
-      lastCurrentPhase = $kingdomState.currentPhase;
+      setViewingPhase($kingdomData.currentPhase);
+      lastCurrentPhase = $kingdomData.currentPhase;
    });
    
    // When current phase changes, auto-sync viewing phase if user was viewing the old current phase
-   $: if ($kingdomState.currentPhase !== lastCurrentPhase) {
+   $: if ($kingdomData.currentPhase !== lastCurrentPhase) {
       // Phase has changed - if user was viewing the old current phase, update to new current phase
       if ($viewingPhase === lastCurrentPhase || !$viewingPhase) {
-         setViewingPhase($kingdomState.currentPhase);
+         setViewingPhase($kingdomData.currentPhase);
       }
-      lastCurrentPhase = $kingdomState.currentPhase;
+      lastCurrentPhase = $kingdomData.currentPhase;
    }
    
    // Get phase info based on what the user is viewing
-   $: displayPhase = $viewingPhase || $kingdomState.currentPhase;
-   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomState.currentPhase];
-   $: actualPhase = $kingdomState.currentPhase;
+   $: displayPhase = $viewingPhase || $kingdomData.currentPhase;
+   $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomData.currentPhase];
+   $: actualPhase = $kingdomData.currentPhase;
    
    // Define phase icons
    const phaseIcons = {
@@ -68,7 +67,7 @@
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
       isUpkeepPhase={displayPhase === TurnPhase.PHASE_VI}
-      currentTurn={$kingdomState.currentTurn}
+      currentTurn={$kingdomData.currentTurn}
    />
    
    <!-- Phase Bar underneath phase header -->
