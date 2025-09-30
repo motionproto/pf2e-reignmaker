@@ -2,10 +2,6 @@
   import { kingdomData, updateKingdom } from "../../../stores/kingdomActor";
   import { 
     spendPlayerAction,
-    resolveAction,
-    unresolveAction,
-    isActionResolved,
-    getActionResolution,
     resetPlayerAction,
     getPlayerAction
   } from "../../../stores/kingdomActor";
@@ -48,9 +44,9 @@
   let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
   let showBuildStructureDialog: boolean = false;
 
-  // Use gameState directly for all action tracking
-  $: resolvedActions = $gameState.resolvedActions;
-  $: actionsUsed = Array.from($kingdomData.playerActions?.values() || []).filter((pa: any) => pa.actionSpent).length;
+  // Simple action resolution tracking
+  let resolvedActions = new Map<string, any>();
+  $: actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
   const MAX_ACTIONS = 4;
   
   // Force UI update when resolvedActions changes
@@ -126,7 +122,7 @@
     }
 
     // Check if already resolved by current player
-    if (isActionResolved(actionId)) {
+    if (resolvedActions.has(actionId)) {
       return;
     }
 
@@ -188,7 +184,13 @@
     // Don't execute the command yet - wait for user confirmation
     // IMPORTANT: Pass currentUserId so the resolution is attributed to the correct player
     console.log('[ActionsPhase] Resolving action for player:', currentUserId, 'action:', action.id);
-    resolveAction(action.id, outcomeType, actorName, skillName, stateChanges, currentUserId || undefined);
+    resolvedActions.set(action.id, {
+      outcome: outcomeType,
+      actorName,
+      skillName,
+      stateChanges: Object.fromEntries(stateChanges)
+    });
+    resolvedActions = resolvedActions; // Trigger reactivity
 
     // Force Svelte to update
     await tick();
@@ -215,7 +217,7 @@
       return;
     }
 
-    const resolution = getActionResolution(actionId);
+    const resolution = resolvedActions.get(actionId);
     if (!resolution) {
       return;
     }
@@ -295,14 +297,13 @@
         if (message.userId !== currentUserId) {
           // Update the resolved actions store for this player's resolution
           console.log('[ActionsPhase] Storing resolution for other player:', message.userId);
-          resolveAction(
-            message.actionId,
-            message.outcome,
-            message.actorName,
-            message.skillName,
-            message.stateChanges,
-            message.userId
-          );
+          resolvedActions.set(message.actionId, {
+            outcome: message.outcome,
+            actorName: message.actorName,
+            skillName: message.skillName,
+            stateChanges: message.stateChanges
+          });
+          resolvedActions = resolvedActions; // Trigger reactivity
           
           // Remove from in-progress
           otherPlayersActions.delete(message.actionId);
@@ -461,7 +462,7 @@
     });
     
     // Check if ANY player has already performed an action (kingdom has used actions)
-    if (actionsUsed > 0 && !isActionResolved(action.id)) {
+    if (actionsUsed > 0 && !resolvedActions.has(action.id)) {
       // At least one action has been performed - show confirmation dialog
       pendingSkillExecution = { event, action };
       showActionConfirm = true;
@@ -478,7 +479,7 @@
     
     // Spend the player's action when they start a roll (not when it completes)
     const game = (window as any).game;
-    if (game?.user?.id && !isActionResolved(action.id)) {
+    if (game?.user?.id && !resolvedActions.has(action.id)) {
       // Ensure player exists before spending
       let playerAction = getPlayerAction(game.user.id);
       if (!playerAction) {
@@ -499,7 +500,7 @@
       const success = spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
       
       // Manually update actionsUsed since reactive statement isn't updating immediately
-      actionsUsed = Array.from($kingdomData.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
     }
     
     // Get character for roll
@@ -558,7 +559,7 @@
     
     let actingCharacter = selectedCharacter;
     if (!actingCharacter) {
-      const resolution = getActionResolution(checkId);
+      const resolution = resolvedActions.get(checkId);
       if (resolution?.actorName) {
         // Try to find the character by name
         const players = getPlayerCharacters();
@@ -635,7 +636,8 @@
   // Handle canceling an action result
   function handleActionResultCancel(actionId: string) {
     // Reset the action without applying effects
-    unresolveAction(actionId);
+    resolvedActions.delete(actionId);
+    resolvedActions = resolvedActions; // Trigger reactivity
     
     // Restore the player's action since they're canceling
     const game = (window as any).game;
@@ -663,7 +665,7 @@
     const game = (window as any).game;
     if (game?.user?.id) {
       spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
-      actionsUsed = Array.from($kingdomData.playerActions.values()).filter(pa => pa.actionSpent).length;
+      actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
     }
     
     // Show success notification
@@ -790,7 +792,8 @@
                     // Apply the effects and clear the resolved state
                     applyActionEffects(e.detail.checkId);
                     // Clear the resolved state so other players can use this action
-                    unresolveAction(e.detail.checkId);
+                    resolvedActions.delete(e.detail.checkId);
+                    resolvedActions = resolvedActions; // Trigger reactivity
                     // Collapse the card
                     toggleAction('');
                   }}

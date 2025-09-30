@@ -7,7 +7,7 @@
 
 import type { Command, CommandContext, CommandResult } from './Command';
 import { CommandHistory } from './CommandHistory';
-import { kingdomState as kingdomStore } from '../../stores/kingdom';
+import { kingdomData as kingdomStore } from '../../stores/kingdomActor';
 
 export interface ExecutionOptions {
     skipValidation?: boolean;
@@ -73,10 +73,8 @@ export class CommandExecutor {
             }
             
             // If the command was successful and modified kingdom state,
-            // trigger Svelte store update to ensure reactivity
-            if (result.success && context.kingdomState) {
-                kingdomStore.update(state => state);
-            }
+            // the kingdomData store will automatically update since it's derived
+            // from the kingdomActor store which should be updated by the command
             
             // Notify listeners
             this.notifyListeners({

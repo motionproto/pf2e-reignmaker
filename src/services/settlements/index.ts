@@ -2,7 +2,7 @@
 // Manages settlement operations and calculations
 
 import { get } from 'svelte/store';
-import { kingdomState } from '../../stores/kingdom';
+import { kingdomData } from '../../stores/kingdomActor';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTier, SettlementTierConfig } from '../../models/Settlement';
 import { structuresService } from '../structures';

@@ -8,9 +8,10 @@ import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
-import { initializeKingdomSystem } from './main.kingdom';
+import { initializeKingdomSystem, getKingdomActor } from './main.kingdom';
 import { get } from 'svelte/store';
 import { kingdomData } from './stores/kingdomActor';
+import { KingdomApp } from './view/kingdom/KingdomApp';
 
 // Extend module type for our API
 declare global {
@@ -130,10 +131,8 @@ Hooks.once('ready', async () => {
         initializeKingmakerSync();
     }
     
-    // Import KingdomApp at module level to avoid dynamic import issues
-    import('./view/kingdom/KingdomApp').then(({ KingdomApp }) => {
-        // Create openKingdomUI function
-        const openKingdomUI = (actorId?: string) => {
+    // Create openKingdomUI function using static import
+    const openKingdomUI = (actorId?: string) => {
             // If no actorId provided, try to find a party actor
             if (!actorId) {
                 // @ts-ignore
@@ -204,7 +203,6 @@ Hooks.once('ready', async () => {
         };
         
         const exportKingdom = async () => {
-            const { getKingdomActor } = await import('./main.kingdom');
             const actor = await getKingdomActor();
             if (actor) {
                 const kingdomData = actor.getKingdom();
@@ -236,7 +234,6 @@ Hooks.once('ready', async () => {
                     const text = await file.text();
                     try {
                         const kingdomData = JSON.parse(text);
-                        const { getKingdomActor } = await import('./main.kingdom');
                         const actor = await getKingdomActor();
                         if (actor) {
                             await actor.setKingdom(kingdomData);
@@ -257,7 +254,6 @@ Hooks.once('ready', async () => {
         };
         
         const resetKingdom = async () => {
-            const { getKingdomActor } = await import('./main.kingdom');
             const actor = await getKingdomActor();
             if (actor) {
                 await actor.initializeKingdom('New Kingdom');
@@ -332,9 +328,6 @@ Hooks.once('ready', async () => {
             console.log('  - window.openKingdomUI() [DEV ONLY]');
             console.log('  - All functions also available on window.pf2eReignMaker [DEV ONLY]');
         }
-    }).catch((error) => {
-        console.error('PF2E ReignMaker | Failed to load KingdomApp:', error);
-    });
 });
 
 // Hot Module Replacement support for development

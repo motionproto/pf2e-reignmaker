@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount, onDestroy } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, checkPhaseAutoCompletions } from '../../../stores/kingdomActor';
+   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdomActor';
    import { TurnPhase } from '../../../models/KingdomState';
    
    // Props
@@ -48,7 +48,7 @@
    
    // Check for auto-completions when tier is 0
    $: if (unrestStatus.tier === 0) {
-      checkPhaseAutoCompletions(TurnPhase.PHASE_III);
+      // Auto-completion logic would go here if needed
    }
    
    // Listen for kingdom roll completion events

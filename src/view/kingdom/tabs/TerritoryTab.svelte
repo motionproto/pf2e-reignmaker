@@ -286,43 +286,6 @@
       height: 100%;
    }
    
-   .territory-summary {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      
-      .summary-card {
-         display: flex;
-         align-items: center;
-         gap: 0.75rem;
-         background: rgba(0, 0, 0, 0.2);
-         padding: 0.75rem 1rem;
-         border-radius: 0.375rem;
-         border: 1px solid rgba(255, 255, 255, 0.1);
-         
-         i {
-            font-size: 1.5rem;
-            color: var(--color-primary, #5e0000);
-         }
-         
-         .summary-value {
-            font-size: 1.25rem;
-            font-weight: var(--font-weight-bold);
-            color: var(--color-text-dark-primary, #b5b3a4);
-            
-            &.production-positive {
-               color: var(--color-green-light, #90ee90);
-            }
-         }
-         
-         .summary-label {
-            font-size: 0.875rem;
-            color: var(--color-text-dark-secondary, #7a7971);
-            text-transform: capitalize;
-         }
-      }
-   }
-   
    .territory-filters {
       display: flex;
       gap: 1rem;

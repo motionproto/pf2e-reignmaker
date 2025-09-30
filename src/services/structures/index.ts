@@ -2,7 +2,7 @@
 // Manages structure definitions and calculations
 
 import { get } from 'svelte/store';
-import { kingdomState } from '../../stores/kingdom';
+import { kingdomData } from '../../stores/kingdomActor';
 import type { Settlement } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
@@ -171,7 +171,7 @@ export class StructuresService {
    */
   getAvailableStructures(settlement: Settlement): Structure[] {
     const settlementTier = this.getSettlementTierNumber(settlement.tier);
-    const state = get(kingdomState);
+    const state = get(kingdomData);
     
     return this.getAllStructures().filter(structure => {
       // Check tier requirement
@@ -404,11 +404,11 @@ export class StructuresService {
     const structure = this.getStructure(structureId);
     if (!structure) return false;
     
-    const state = get(kingdomState);
+    const state = get(kingdomData);
     const cost = structure.constructionCost;
     
     for (const [resource, amount] of Object.entries(cost)) {
-      const available = state.resources.get(resource) || 0;
+      const available = state.resources[resource] || 0;
       if (available < amount) {
         return false;
       }
@@ -438,7 +438,7 @@ export class StructuresService {
       return true; // Not a unique structure, so valid
     }
     
-    const state = get(kingdomState);
+    const state = get(kingdomData);
     
     for (const settlement of state.settlements) {
       // Skip the settlement we're checking for (in case of upgrade)

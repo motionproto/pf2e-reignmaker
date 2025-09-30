@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { kingdomState } from '../../../stores/kingdom';
+  import { kingdomData } from '../../../stores/kingdomActor';
   import { buildQueueService } from '../../../services/domain';
   import { structuresService } from '../../../services/structures';
   import type { Structure, ResourceCost } from '../../../models/Structure';
@@ -41,7 +41,7 @@
   
   // React to state changes
   $: if (show) {
-    settlements = $kingdomState.settlements;
+    settlements = $kingdomData.settlements;
     selectedStructureId = '';
     selectedSettlementId = settlements.length > 0 ? settlements[0].id : '';
     selectedStructure = undefined;
@@ -382,10 +382,10 @@
                     <!-- Show available structures as full cards with build buttons -->
                     {#each builtAndAvailable.available as structure}
                       {@const structureMissing = new Map()}
-                      {@const available = $kingdomState.resources}
+                      {@const available = $kingdomData.resources}
                       {#each Object.entries(structure.constructionCost) as [resource, needed]}
                         {#if needed && needed > 0}
-                          {@const avail = available.get(resource) || 0}
+                          {@const avail = available[resource] || 0}
                           {#if avail < needed}
                             {@const _ = structureMissing.set(resource, needed - avail)}
                           {/if}

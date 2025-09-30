@@ -3,8 +3,7 @@
 
 import { modifierService } from '../services/domain/modifiers/ModifierService';
 import { get } from 'svelte/store';
-import { kingdomState } from '../stores/kingdom';
-import { gameState } from '../stores/gameState';
+import { kingdomData } from '../stores/kingdomActor';
 
 declare const game: any;
 declare const ui: any;
@@ -219,9 +218,8 @@ export class PF2eIntegrationService {
     const dc = this.getKingdomActionDC(characterLevel);
     
     // Get modifiers from ModifierService
-    const currentKingdomState = get(kingdomState);
-    const currentGameState = get(gameState);
-    const currentTurn = currentGameState.currentTurn || 1;
+    const currentKingdomState = get(kingdomData);
+    const currentTurn = currentKingdomState.currentTurn || 1;
     
     const kingdomModifiers = modifierService.getModifiersForCheck(
       checkType,
