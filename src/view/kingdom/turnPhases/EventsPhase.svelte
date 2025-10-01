@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, markPhaseStepCompleted, isPhaseStepCompleted, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
+   import { kingdomData, getKingdomActor, isPhaseStepCompleted, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
    
@@ -8,7 +8,7 @@
    export let isViewingCurrentPhase: boolean = true;
    
    // Import controller instead of services/commands directly
-   import { EventPhaseController, createEventPhaseController } from '../../../controllers/EventPhaseController';
+   import { createEventPhaseController } from '../../../controllers/EventPhaseController';
    import { stateChangeFormatter } from '../../../services/formatters/StateChangeFormatter';
    
    // Import existing services and components
@@ -24,10 +24,10 @@
       getCurrentUserCharacter,
       showCharacterSelectionDialog,
       initializeRollResultHandler
-   } from '../../../api/pf2e-integration';
+   } from '../../../services/pf2e';
    
    // Initialize controller
-   let eventPhaseController: EventPhaseController;
+   let eventPhaseController: any;
    
    // UI State (no business logic)
    let isRolling = false;
@@ -73,7 +73,8 @@
                currentEvent = event;
                // Also mark that we've checked for events so the button shows correctly
                if (!eventChecked) {
-                  markPhaseStepCompleted('resolve-event');
+                  const actor = getKingdomActor();
+                  if (actor) await actor.markPhaseStepCompleted('resolve-event');
                }
             }
          } else if ($kingdomData.currentEventId === null && eventChecked) {
@@ -202,7 +203,8 @@
          
          // Always mark phase as complete after rolling (whether event or not)
          if (!eventChecked) {
-            markPhaseStepCompleted('resolve-event');
+            const actor = getKingdomActor();
+            if (actor) await actor.markPhaseStepCompleted('resolve-event');
          }
          
          isRolling = false;
@@ -303,7 +305,8 @@
             
             // Mark phase as complete after successfully applying changes
             if (!eventResolved) {
-               markPhaseStepCompleted('resolve-event');
+               const actor = getKingdomActor();
+               if (actor) await actor.markPhaseStepCompleted('resolve-event');
             }
             
             // Handle unresolved event if any

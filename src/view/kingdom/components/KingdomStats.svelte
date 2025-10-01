@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData, resources, updateKingdom, modifyResource } from '../../../stores/KingdomStore';
+   import { kingdomData, resources, updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
    import EditableStat from './EditableStat.svelte';
@@ -155,14 +155,21 @@
                on:click={() => startEditing('gold')}
             >
                <span class="stat-label">Gold:</span>
-               <EditableStat 
-                  value={$resources.gold || 0}
-                  onChange={(newValue) => modifyResource('gold', newValue)}
-                  isExternallyControlled={true}
-                  isEditing={editingField === 'gold'}
-                  onStartEdit={() => startEditing('gold')}
-                  onStopEdit={stopEditing}
-               />
+                  <EditableStat 
+                     value={$resources.gold || 0}
+                     onChange={(newValue) => {
+                        const actor = getKingdomActor();
+                        if (actor) {
+                           actor.updateKingdom((kingdom) => {
+                              kingdom.resources.gold = newValue;
+                           });
+                        }
+                     }}
+                     isExternallyControlled={true}
+                     isEditing={editingField === 'gold'}
+                     onStartEdit={() => startEditing('gold')}
+                     onStopEdit={stopEditing}
+                  />
             </div>
             <div class="stat-item">
                <label for="war-status-select" class="stat-label">War Status:</label>
@@ -282,7 +289,14 @@
                   <span class="stat-label">Current:</span>
                   <EditableStat 
                      value={$resources.food || 0}
-                     onChange={(newValue) => modifyResource('food', newValue)}
+                     onChange={(newValue) => {
+                        const actor = getKingdomActor();
+                        if (actor) {
+                           actor.updateKingdom((kingdom) => {
+                              kingdom.resources.food = newValue;
+                           });
+                        }
+                     }}
                      isExternallyControlled={true}
                      isEditing={editingField === 'food'}
                      onStartEdit={() => startEditing('food')}

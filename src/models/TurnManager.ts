@@ -166,8 +166,24 @@ export class TurnManager {
         console.log(`[TurnManager] Incremented to turn ${currentKingdom.currentTurn + 1}`);
     }
     
+  /**
+   * Get the current phase
+   */
+  async getCurrentPhase(): Promise<string> {
+    try {
+      const { kingdomData } = await import('../stores/KingdomStore');
+      const { get } = await import('svelte/store');
+      const currentKingdom = get(kingdomData);
+      return currentKingdom.currentPhase;
+    } catch (error) {
+      // Fallback - return a default phase if stores aren't available yet
+      console.warn('[TurnManager] Could not access kingdom data, falling back to STATUS phase');
+      return 'status';
+    }
+  }
+
     /**
-     * Mark current phase as complete (called directly by phase controllers)
+     * Mark the current phase as complete (called directly by phase controllers)
      */
     async markPhaseComplete(): Promise<void> {
         const { kingdomData } = await import('../stores/KingdomStore');
@@ -212,7 +228,6 @@ export class TurnManager {
             await this.endTurn();
         }
     }
-    
     
     /**
      * Get the next phase in sequence - uses PHASE_ORDER for maintainability
@@ -350,13 +365,14 @@ export class TurnManager {
      * Spend fame to reroll
      */
     async spendFameForReroll(): Promise<boolean> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData, updateKingdom } = await import('../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
         if (currentKingdom.fame > 0) {
-            const { modifyResource } = await import('../stores/KingdomStore');
-            await modifyResource('fame', -1);
+            await updateKingdom((kingdom) => {
+                kingdom.fame = kingdom.fame - 1;
+            });
             return true;
         } else {
             return false;

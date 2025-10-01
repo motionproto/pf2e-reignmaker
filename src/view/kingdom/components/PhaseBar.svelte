@@ -16,7 +16,7 @@
   $: currentPhase = $kingdomData.currentPhase;
   $: currentTurn = $kingdomData.currentTurn;
   $: selectedPhase = $viewingPhase || currentPhase;
-  $: phasesCompleted = $kingdomData.phasesCompleted || [];
+  $: currentPhaseSteps = $kingdomData.currentPhaseSteps || [];
   
   // Initialize viewing phase on mount
   onMount(() => {
@@ -58,12 +58,21 @@
   }
   
   function isPhaseCompleted(phase: TurnPhase): boolean {
-    // Follow architecture: Read from kingdomData store (KingdomActor → kingdomData store → Component Display)
     const phaseIndex = getPhaseIndex(phase);
     const currentIndex = getPhaseIndex($kingdomData.currentPhase);
     
-    // Phase is completed if it's in the completed array OR we've moved past it
-    return $kingdomData.phasesCompleted?.includes(phase) || phaseIndex < currentIndex;
+    // Phase is completed if we've moved past it
+    if (phaseIndex < currentIndex) {
+      return true;
+    }
+    
+    // For current phase, check if all steps are completed
+    if (phase === $kingdomData.currentPhase) {
+      return currentPhaseSteps.length > 0 && currentPhaseSteps.every(step => step.completed);
+    }
+    
+    // Future phases are not completed
+    return false;
   }
   
   function isPhaseFuture(phase: TurnPhase): boolean {

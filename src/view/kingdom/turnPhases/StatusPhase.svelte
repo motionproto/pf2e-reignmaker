@@ -1,87 +1,30 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
+import { kingdomData } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../models/KingdomState';
-
-// Props
-export let isViewingCurrentPhase: boolean = true;
-
-// Import the ModifierCard component
 import ModifierCard from '../components/ModifierCard.svelte';
+
+// Props - add the missing prop to fix the warning
+export let isViewingCurrentPhase: boolean = true;
 
 // Constants
 const MAX_FAME = 3;
 
-// UI State
-let automationRunning = false;
-let automationComplete = false;
-let previousFame = 0;
-
-// Reactive UI state based on step completion
-$: fameReset = isPhaseStepCompleted('gain-fame');
-$: modifiersProcessed = isPhaseStepCompleted('apply-modifiers');
-
-// Simple initialization - run automation when StatusPhase loads
-onMount(async () => {
-   console.log('🟡 [StatusPhase] Mounted, checking if should run automation...');
-   
-   // Wait for kingdomActor to be available before starting phase
-   const { kingdomActor } = await import('../../../stores/KingdomStore');
-   const unsubscribe = kingdomActor.subscribe(async (actor) => {
-      if (actor && $kingdomData.currentPhase === TurnPhase.STATUS && !fameReset && !modifiersProcessed) {
-         console.log('🟡 [StatusPhase] Starting automation...');
-         unsubscribe(); // Stop listening once we start
-         previousFame = $kingdomData.fame;
-         await runAutomation();
-      }
-   });
-});
-
-// UI calls controller - no business logic here
-async function runAutomation() {
-   if (automationRunning) return;
-   
-   automationRunning = true;
-   previousFame = $kingdomData.fame;
-   
-   try {
-      // Use controller for business logic
-      const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
-      const controller = await createStatusPhaseController();
-      
-      const result = await controller.startPhase();
-      
-      if (result.success) {
-         automationComplete = true;
-         console.log('✅ [StatusPhase] Phase started successfully');
-      } else {
-         console.error('❌ [StatusPhase] Phase start failed:', result.error);
-      }
-   } catch (error) {
-      console.error('❌ [StatusPhase] Error starting phase:', error);
-   } finally {
-      automationRunning = false;
-   }
+// Simple initialization - just set Fame to 1 and mark phase complete
+let hasInitialized = false;
+$: if ($kingdomData.currentPhase === TurnPhase.STATUS && !hasInitialized) {
+   initializePhase();
 }
 
-// Manual step functions for UI buttons (for testing/debugging)
-async function manualResetFame() {
+async function initializePhase() {
+   if (hasInitialized) return;
+   hasInitialized = true;
+   
    try {
       const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
       const controller = await createStatusPhaseController();
-      await controller.resetFame();
+      await controller.startPhase();
    } catch (error) {
-      console.error('❌ [StatusPhase] Manual fame reset failed:', error);
-   }
-}
-
-async function manualApplyModifiers() {
-   try {
-      const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
-      const controller = await createStatusPhaseController();
-      await controller.applyModifiers();
-   } catch (error) {
-      console.error('❌ [StatusPhase] Manual modifiers apply failed:', error);
+      console.error('❌ [StatusPhase] Error initializing phase:', error);
    }
 }
 </script>
@@ -106,22 +49,8 @@ async function manualApplyModifiers() {
 
          <div class="fame-info">
             <div class="fame-value">{$kingdomData.fame} / {MAX_FAME}</div>
-            {#if fameReset && previousFame !== 1}
-               <div class="fame-change">
-                  Fame reset from {previousFame} to 1
-               </div>
-            {/if}
          </div>
       </div>
-
-      <!-- Manual controls for testing/debugging -->
-      {#if !fameReset}
-         <div class="manual-controls">
-            <button on:click={manualResetFame} disabled={automationRunning}>
-               Reset Fame to 1
-            </button>
-         </div>
-      {/if}
    </div>
 
    <!-- Active Modifiers Overview -->
@@ -130,11 +59,6 @@ async function manualApplyModifiers() {
          <div class="section-header">
             <i class="fas fa-list"></i>
             <h3>Active Modifiers</h3>
-            {#if modifiersProcessed}
-               <span class="status-badge processed">✅ Applied</span>
-            {:else}
-               <span class="status-badge pending">⏳ Pending</span>
-            {/if}
          </div>
 
          <div class="modifiers-grid">
@@ -142,15 +66,6 @@ async function manualApplyModifiers() {
                <ModifierCard {modifier} />
             {/each}
          </div>
-
-         <!-- Manual controls for testing/debugging -->
-         {#if !modifiersProcessed}
-            <div class="manual-controls">
-               <button on:click={manualApplyModifiers} disabled={automationRunning}>
-                  Apply Modifiers
-               </button>
-            </div>
-         {/if}
       </div>
    {:else}
       <div class="phase-section no-modifiers">
@@ -161,38 +76,6 @@ async function manualApplyModifiers() {
          <p>Your kingdom has no active modifiers affecting this turn.</p>
       </div>
    {/if}
-
-   <!-- Automation Status -->
-   <div class="phase-section automation-status">
-      <div class="section-header">
-         <i class="fas fa-cog"></i>
-         <h3>Phase Status</h3>
-      </div>
-
-      <div class="status-grid">
-         <div class="status-item" class:complete={fameReset}>
-            <i class="fas {fameReset ? 'fa-check-circle' : 'fa-circle'}"></i>
-            <span>Fame Reset</span>
-         </div>
-         
-         <div class="status-item" class:complete={modifiersProcessed}>
-            <i class="fas {modifiersProcessed ? 'fa-check-circle' : 'fa-circle'}"></i>
-            <span>Modifiers Applied</span>
-         </div>
-      </div>
-
-      {#if automationRunning}
-         <div class="automation-running">
-            <i class="fas fa-spinner fa-spin"></i>
-            Running automation...
-         </div>
-      {:else if !automationComplete && !fameReset && !modifiersProcessed}
-         <button class="automation-button" on:click={runAutomation}>
-            <i class="fas fa-play"></i>
-            Run Status Phase
-         </button>
-      {/if}
-   </div>
 </div>
 
 <style lang="scss">
@@ -229,25 +112,6 @@ async function manualApplyModifiers() {
          line-height: 1.3;
          color: var(--text-primary);
          flex: 1;
-      }
-   }
-
-   .status-badge {
-      padding: 4px 8px;
-      border-radius: var(--radius-sm);
-      font-size: var(--font-sm);
-      font-weight: var(--font-weight-medium);
-      
-      &.processed {
-         background: rgba(34, 197, 94, 0.2);
-         color: var(--color-green);
-         border: 1px solid rgba(34, 197, 94, 0.3);
-      }
-      
-      &.pending {
-         background: rgba(251, 191, 36, 0.2);
-         color: var(--color-amber);
-         border: 1px solid rgba(251, 191, 36, 0.3);
       }
    }
 
@@ -294,116 +158,6 @@ async function manualApplyModifiers() {
          font-weight: var(--font-weight-semibold);
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
-      }
-
-      .fame-change {
-         margin-top: 8px;
-         font-size: var(--font-md);
-         color: var(--text-secondary);
-         font-style: italic;
-      }
-   }
-
-   // Status Grid
-   .status-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
-   }
-
-   .status-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
-      
-      &.complete {
-         border-color: var(--color-green);
-         background: rgba(34, 197, 94, 0.1);
-         
-         i {
-            color: var(--color-green);
-         }
-      }
-      
-      i {
-         font-size: 16px;
-         color: var(--color-gray-500);
-      }
-      
-      span {
-         color: var(--text-primary);
-         font-weight: var(--font-weight-medium);
-      }
-   }
-
-   // Manual Controls
-   .manual-controls {
-      margin-top: 15px;
-      text-align: center;
-      
-      button {
-         background: var(--color-secondary);
-         color: var(--text-primary);
-         border: 1px solid var(--border-default);
-         padding: 8px 16px;
-         border-radius: var(--radius-md);
-         cursor: pointer;
-         font-size: var(--font-sm);
-         
-         &:hover:not(:disabled) {
-            background: var(--color-secondary-hover);
-         }
-         
-         &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-         }
-      }
-   }
-
-   // Automation Button
-   .automation-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      padding: 12px 20px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
-      border-radius: var(--radius-md);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      
-      &:hover {
-         background: var(--color-primary-hover);
-         transform: translateY(-1px);
-      }
-      
-      i {
-         font-size: 14px;
-      }
-   }
-
-   .automation-running {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 12px;
-      color: var(--color-amber);
-      font-weight: var(--font-weight-medium);
-      
-      i {
-         font-size: 16px;
       }
    }
 

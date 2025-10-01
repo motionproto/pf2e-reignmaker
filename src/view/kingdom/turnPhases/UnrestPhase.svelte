@@ -2,6 +2,7 @@
    import { onMount } from 'svelte';
    import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
+   import { UnrestIncidentProvider } from '../../../controllers/unrest/UnrestIncidentProvider';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -9,6 +10,7 @@
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
    import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
+   import OutcomeDisplay from '../components/OutcomeDisplay.svelte';
    
    // UI State only - no business logic
    let automationRunning = false;
@@ -17,30 +19,61 @@
    let isRolling = false;
    let incidentResolved = false;
    let rollOutcome: string = '';
+   let rollActor: string = '';
+   let rollEffect: string = '';
+   let rollStateChanges: any = {};
    
-   // Reactive UI state from store
-   $: stepComplete = isPhaseStepCompleted('unrest-complete');
-   $: unrestStatus = $kingdomData ? {
-      currentUnrest: $kingdomData.unrest || 0,
-      tier: Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5)),
-      tierName: getTierName(Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5))),
-      penalty: Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5))
-   } : { currentUnrest: 0, tier: 0, tierName: 'Stable', penalty: 0 };
+   // Reactive UI state from store using centralized provider
+   $: stepComplete = isPhaseStepCompleted('incident-check');
+   $: unrestStatus = $kingdomData ? (() => {
+      const unrest = $kingdomData.unrest || 0;
+      const tierInfo = UnrestIncidentProvider.getTierInfo(unrest);
+      return {
+         currentUnrest: unrest,
+         tier: tierInfo.tier,
+         tierName: tierInfo.tierName,
+         penalty: tierInfo.penalty,
+         description: tierInfo.description,
+         statusClass: tierInfo.statusClass
+      };
+   })() : { currentUnrest: 0, tier: 0, tierName: 'Stable', penalty: 0, description: 'No incidents occur at this level', statusClass: 'stable' };
    
-   // Current incident from kingdom data - mock implementation
-   $: currentIncident = $kingdomData.currentIncidentId ? {
-      id: $kingdomData.currentIncidentId,
-      name: 'Sample Incident',
-      description: 'A sample incident for demonstration purposes',
-      level: 'MINOR',
-      skillOptions: [
-         { skill: 'diplomacy', description: 'Use diplomacy to resolve peacefully' },
-         { skill: 'intimidation', description: 'Use intimidation to suppress the incident' }
-      ],
-      successEffect: 'The incident is resolved successfully',
-      failureEffect: 'The incident causes minor unrest',
-      criticalFailureEffect: 'The incident escalates significantly'
-   } : null;
+   // Current incident from kingdom data - get real incident
+   let currentIncident: any = null;
+   
+   // Load incident when incident ID changes, but preserve it if already resolved
+   $: if ($kingdomData.currentIncidentId && !incidentResolved) {
+      loadIncident($kingdomData.currentIncidentId);
+   } else if (!$kingdomData.currentIncidentId && !incidentResolved) {
+      currentIncident = null;
+   }
+   
+   async function loadIncident(incidentId: string) {
+      try {
+         const { IncidentManager } = await import('../../../models/Incidents');
+         
+         // Find incident in the arrays
+         let incident = null;
+         const allIncidents = [
+            ...IncidentManager.minorIncidents,
+            ...IncidentManager.moderateIncidents,
+            ...IncidentManager.majorIncidents
+         ];
+         
+         incident = allIncidents.find(i => i.id === incidentId);
+         
+         if (incident) {
+            currentIncident = incident;
+            console.log('📋 [UnrestPhase] Loaded incident:', currentIncident.name);
+         } else {
+            console.error('❌ [UnrestPhase] Incident not found:', incidentId);
+            currentIncident = null;
+         }
+      } catch (error) {
+         console.error('❌ [UnrestPhase] Error loading incident:', error);
+         currentIncident = null;
+      }
+   }
    
    // No automatic behavior - incident checks are now manual only
    onMount(() => {
@@ -48,47 +81,71 @@
       console.log('🟡 [UnrestPhase] Component mounted - incident checks are manual');
    });
    
-   function getTierName(tier: number): string {
-      switch (tier) {
-         case 0: return 'Stable';
-         case 1: return 'Discontent';
-         case 2: return 'Unrest';  
-         case 3: return 'Rebellion';
-         default: return 'Stable';
-      }
-   }
-   
-   function getIncidentById(incidentId: string) {
-      // This would normally fetch from incident data
-      // For now, return mock data or null
-      return null;
-   }
+   // Helper functions removed - now using UnrestIncidentProvider
    
    
    async function rollForIncident() {
-      if (unrestStatus.tier === 0) return;
+      if (unrestStatus.tier === 0) {
+         console.log('🛑 [UnrestPhase] Cannot roll - unrest tier is 0');
+         return;
+      }
       
-      if (automationRunning) return;
+      if (automationRunning) {
+         console.log('🛑 [UnrestPhase] Cannot roll - automation running');
+         return;
+      }
       
+      if (stepComplete) {
+         console.log('🛑 [UnrestPhase] Cannot roll - step already complete');
+         return;
+      }
+      
+      console.log('🎲 [UnrestPhase] Starting incident roll...');
       isRolling = true;
       showIncidentResult = false;
       
       try {
          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
          const controller = await createUnrestPhaseController();
-         const result = await controller.rollForIncident(unrestStatus.tier);
          
-         showIncidentResult = true;
+         console.log('🎮 [UnrestPhase] Controller created, calling checkForIncidents...');
          
-         if (result.shouldCheck) {
-            console.log('✅ [UnrestPhase] Incident roll completed', result);
+         // Call the manual incident check method that completes the step
+         const result = await controller.checkForIncidents();
+         
+         console.log('🎲 [UnrestPhase] Incident check result:', result);
+         
+         // Force trigger reactivity by setting to false first, then true
+         showIncidentResult = false;
+         await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure reactivity
+         
+         // The controller already handles setting the incident ID, we just need to log it
+         if (result.incidentTriggered) {
+            console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
          } else {
-            console.log('ℹ️ [UnrestPhase] No incident check needed for this tier');
+            console.log('✅ [UnrestPhase] No incident occurred');
+            
+            // Make sure no incident is set
+            const { getKingdomActor } = await import('../../../stores/KingdomStore');
+            const actor = getKingdomActor();
+            if (actor) {
+               await actor.updateKingdom((kingdom) => {
+                  kingdom.currentIncidentId = null;
+               });
+            }
          }
+         
+         // Now show the result section
+         showIncidentResult = true;
+         console.log('👁️ [UnrestPhase] showIncidentResult set to true');
+         
       } catch (error) {
          console.error('❌ [UnrestPhase] Error rolling for incident:', error);
+         // Still show the result section even on error
+         showIncidentResult = true;
       } finally {
          isRolling = false;
+         console.log('🏁 [UnrestPhase] Rolling finished, isRolling:', isRolling, 'showIncidentResult:', showIncidentResult);
       }
    }
    
@@ -99,58 +156,128 @@
       isRolling = true;
       
       try {
-         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-         const controller = await createUnrestPhaseController();
+         console.log(`🎲 [UnrestPhase] Rolling ${skill} check for incident: ${currentIncident.name}`);
          
-         // Create mock incident object for controller
-         const mockIncident = {
-            id: currentIncident.id,
-            name: currentIncident.name,
-            description: currentIncident.description,
-            level: currentIncident.level as any, // Cast to avoid enum mismatch
-            percentileMin: 1,
-            percentileMax: 100,
-            skillOptions: currentIncident.skillOptions || [],
-            successEffect: currentIncident.successEffect,
-            failureEffect: currentIncident.failureEffect,
-            criticalFailureEffect: currentIncident.criticalFailureEffect,
-            imagePath: null
+         // Import PF2e integration for skill rolling
+         const { performKingdomSkillCheck, initializeRollResultHandler } = await import('../../../services/pf2e');
+         
+         // Initialize the roll result handler
+         initializeRollResultHandler();
+         
+         // Set up event listener for roll completion
+         const handleRollComplete = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            if (customEvent.detail?.checkId === currentIncident.id && customEvent.detail?.checkType === 'incident') {
+               const outcome = customEvent.detail.outcome;
+               console.log(`🎯 [UnrestPhase] Skill roll result: ${outcome}`);
+               
+               // Apply the result through the controller
+               finishIncidentResolution(outcome);
+               
+               // Remove the event listener
+               window.removeEventListener('kingdomRollComplete', handleRollComplete);
+            }
          };
          
-         const result = await controller.resolveIncident(
-            mockIncident,
+         // Add event listener for roll completion
+         window.addEventListener('kingdomRollComplete', handleRollComplete);
+         
+         // Trigger PF2e skill roll through the existing system
+         const rollResult = await performKingdomSkillCheck(
             skill,
-            15, // mock roll total
-            12, // mock DC
-            'Player'
+            'incident',
+            currentIncident.name,
+            currentIncident.id,
+            {
+               successEffect: currentIncident.successEffect,
+               failureEffect: currentIncident.failureEffect,
+               criticalFailureEffect: currentIncident.criticalFailureEffect
+            }
          );
          
-         if (result.success) {
-            incidentResolved = true;
-            rollOutcome = result.resolution?.outcome || 'success';
-            console.log('✅ [UnrestPhase] Incident resolved successfully');
-         } else {
-            console.error('❌ [UnrestPhase] Incident resolution failed:', result.error);
+         if (!rollResult) {
+            console.log('🚫 [UnrestPhase] Skill roll was cancelled');
+            window.removeEventListener('kingdomRollComplete', handleRollComplete);
+            return;
          }
+         
       } catch (error) {
          console.error('❌ [UnrestPhase] Error resolving incident:', error);
+         ui.notifications?.error('Failed to roll skill check. Make sure you have a character selected.');
       } finally {
          isRolling = false;
       }
    }
    
-   // Get tier styling
-   function getTierStyleClass(tierName: string): string {
-      switch (tierName.toLowerCase()) {
-         case 'stable': return 'stable';
-         case 'discontent': return 'discontent';
-         case 'unrest': return 'unrest';
-         case 'rebellion': return 'rebellion';
-         default: return 'stable';
+   async function finishIncidentResolution(outcome: string) {
+      try {
+         // Just set the UI state for displaying the outcome - don't call controller.resolveIncident yet
+         incidentResolved = true;
+         rollOutcome = outcome;
+         
+         // Get the current character info for display
+         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
+         const character = await getCurrentUserCharacter();
+         rollActor = character?.name || 'Unknown';
+         
+         // Set the effect based on outcome
+         switch (outcome) {
+            case 'criticalSuccess':
+               rollEffect = 'Critical Success! The incident is resolved favorably.';
+               break;
+            case 'success':
+               rollEffect = currentIncident.successEffect;
+               break;
+            case 'failure':
+               rollEffect = currentIncident.failureEffect;
+               break;
+            case 'criticalFailure':
+               rollEffect = currentIncident.criticalFailureEffect;
+               break;
+            default:
+               rollEffect = 'Unknown outcome';
+         }
+         
+         console.log(`✅ [UnrestPhase] Incident resolution outcome set: ${outcome}`);
+      } catch (error) {
+         console.error('❌ [UnrestPhase] Error finishing incident resolution:', error);
       }
    }
    
-   $: tierClass = getTierStyleClass(unrestStatus.tierName);
+   async function handleResolutionPrimary() {
+      try {
+         // Now apply the actual resolution through the controller
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         const controller = await createUnrestPhaseController();
+         
+         const result = await controller.resolveIncident(
+            currentIncident.id, 
+            rollOutcome === 'criticalSuccess' || rollOutcome === 'success' ? 'success' : 'failure'
+         );
+         
+         if (result.success) {
+            console.log(`✅ [UnrestPhase] Incident ${currentIncident.id} resolved through controller`);
+            // The controller will mark the step as complete and clear the incident
+         } else {
+            console.error('❌ [UnrestPhase] Incident resolution failed');
+         }
+      } catch (error) {
+         console.error('❌ [UnrestPhase] Error applying incident resolution:', error);
+      }
+   }
+   
+   function handleResolutionCancel() {
+      // Reset the resolution state to allow re-rolling
+      incidentResolved = false;
+      rollOutcome = '';
+      rollActor = '';
+      rollEffect = '';
+      rollStateChanges = {};
+      selectedSkill = '';
+   }
+   
+   // Use status class from provider
+   $: tierClass = unrestStatus.statusClass;
 </script>
 
 <div class="unrest-phase">
@@ -173,15 +300,7 @@
             </div>
             
             <div class="status-subtitle">
-               {#if unrestStatus.tier === 0}
-                  No incidents occur at this level
-               {:else if unrestStatus.tier === 1}
-                  Minor incidents possible
-               {:else if unrestStatus.tier === 2}
-                  Moderate incidents possible
-               {:else}
-                  Major incidents possible
-               {/if}
+               {unrestStatus.description}
             </div>
             
             {#if unrestStatus.penalty !== 0}
@@ -233,7 +352,7 @@
    </div>
    
    <!-- Step 2: Incident Results -->
-   {#if unrestStatus.tier > 0 && showIncidentResult}
+   {#if showIncidentResult}
       <div class="incident-section">
          <div class="incident-result-container">
             {#if currentIncident}
@@ -246,7 +365,7 @@
                      </div>
                   </div>
                   
-                  {#if currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
+                  {#if !incidentResolved && currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
                      <div class="skill-options">
                         <div class="skill-options-title">Choose Resolution Approach:</div>
                         <div class="skill-tags">
@@ -265,22 +384,17 @@
                   {/if}
                   
                   {#if incidentResolved}
-                     <div class="incident-effects">
-                        <div class="resolution-banner {rollOutcome}">
-                           <i class="fas fa-dice-d20"></i>
-                           <span>
-                              {#if rollOutcome === 'criticalSuccess'}
-                                 Critical Success! The incident is resolved favorably.
-                              {:else if rollOutcome === 'success'}
-                                 Success: {currentIncident.successEffect}
-                              {:else if rollOutcome === 'failure'}
-                                 Failure: {currentIncident.failureEffect}
-                              {:else}
-                                 Critical Failure: {currentIncident.criticalFailureEffect}
-                              {/if}
-                           </span>
-                        </div>
-                     </div>
+                     <OutcomeDisplay
+                        outcome={rollOutcome}
+                        actorName={rollActor}
+                        skillName={selectedSkill}
+                        effect={rollEffect}
+                        stateChanges={rollStateChanges}
+                        primaryButtonLabel="Apply Resolution"
+                        showFameReroll={false}
+                        on:primary={handleResolutionPrimary}
+                        on:cancel={handleResolutionCancel}
+                     />
                   {:else}
                      <PossibleOutcomes 
                         outcomes={[
@@ -688,49 +802,6 @@
       margin-top: 10px;
    }
    
-   .resolution-banner {
-      padding: 15px;
-      border-radius: var(--radius-md);
-      border: 1px solid;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: var(--font-weight-medium);
-      
-      i {
-         font-size: 20px;
-      }
-      
-      &.criticalSuccess {
-         background: rgba(34, 197, 94, 0.2);
-         border-color: var(--color-green);
-         color: var(--color-green);
-      }
-      
-      &.success {
-         background: rgba(34, 197, 94, 0.1);
-         border-color: rgba(34, 197, 94, 0.5);
-         color: var(--color-green-light);
-      }
-      
-      &.failure {
-         background: rgba(249, 115, 22, 0.1);
-         border-color: rgba(249, 115, 22, 0.5);
-         color: var(--color-orange);
-      }
-      
-      &.criticalFailure {
-         background: rgba(239, 68, 68, 0.2);
-         border-color: var(--color-red);
-         color: var(--color-red);
-      }
-   }
-   
-   .incident-effects {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-   }
    
    .no-incident {
       padding: 40px;

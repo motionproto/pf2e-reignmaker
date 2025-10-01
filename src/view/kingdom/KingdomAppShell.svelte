@@ -5,6 +5,7 @@
    // Stores
    import { kingdomData }                         from '../../stores/KingdomStore';
    import { uiState, setSelectedTab }             from '../../stores/ui';
+   import { TurnPhase } from '../../models/KingdomState';
    
    // Import territory service for syncing
    import { territoryService }                    from '../../services/territory';
@@ -37,6 +38,16 @@
 
    // Get external context
    const { actorId, application } = getContext<KingdomApp.External>('#external');
+   
+   // Debug kingdom data changes reactively
+   $: if ($kingdomData) {
+      console.log('🔍 [KingdomAppShell REACTIVE DEBUG] Kingdom data changed:', {
+         currentPhase: $kingdomData.currentPhase,
+         currentTurn: $kingdomData.currentTurn,
+         phasesCompleted: $kingdomData.phasesCompleted,
+         hasData: !!$kingdomData
+      });
+   }
    
    // Perform initial sync when the app opens
    onMount(async () => {
@@ -152,6 +163,21 @@
             // Setup Foundry synchronization hooks
             const { setupFoundrySync } = await import('../../stores/KingdomStore');
             setupFoundrySync();
+            
+            // Debug current phase after initialization
+            setTimeout(() => {
+               console.log('🔍 [KingdomAppShell DEBUG] Initial kingdom state after mount:', {
+                  currentPhase: $kingdomData?.currentPhase,
+                  currentTurn: $kingdomData?.currentTurn,
+                  phasesCompleted: $kingdomData?.phasesCompleted,
+                  isUpkeepPhase: $kingdomData?.currentPhase === TurnPhase.UPKEEP
+               });
+            }, 500);
+            
+            // Also add immediate debug when kingdom data changes
+            setTimeout(() => {
+               console.log('🔍 [KingdomAppShell DEBUG] Raw kingdom data:', $kingdomData);
+            }, 1000);
             
             // Now sync territory data from Kingmaker if available (no delay needed)
             if (territoryService.isKingmakerAvailable()) {

@@ -1,284 +1,178 @@
 /**
- * ActionPhaseController - Simplified version for working with available stores
+ * ActionPhaseController - Handles player action execution and resolution
  * 
- * This controller provides basic action phase functionality
- * using only the available kingdomActor store exports.
+ * NEW: Uses simplified step array system with execute-actions and resolve-results steps.
+ * Players execute their chosen actions and results are resolved.
  */
 
-import { get } from 'svelte/store';
-import { actionExecutionService } from '../services/domain/ActionExecutionService';
-import { ExecuteActionCommand } from '../commands/action/ExecuteActionCommand';
-import { commandExecutor } from '../commands/base/CommandExecutor';
-import type { CommandContext } from '../commands/base/Command';
-import type { PlayerAction } from '../models/PlayerActions';
-import type { KingdomState } from '../models/KingdomState';
-import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
+import { getKingdomActor } from '../stores/KingdomStore'
+import { get } from 'svelte/store'
+import { kingdomData } from '../stores/KingdomStore'
 import { 
-    kingdomData
-} from '../stores/KingdomStore';
-import { clientContextService } from '../services/ClientContextService';
+  reportPhaseStart, 
+  reportPhaseComplete, 
+  reportPhaseError, 
+  createPhaseResult,
+  initializePhaseSteps,
+  completePhaseStep,
+  isStepCompleted
+} from './shared/PhaseControllerHelpers'
 
-// Simple type definition for action resolution
-export interface ActionResolution {
-    actionId: string;
-    outcome: string;
-    actorName: string;
-    skillName?: string;
-    timestamp: Date;
-    playerId?: string;
-    stateChanges?: Map<string, any>;
-}
+// Define steps for Action Phase
+const ACTION_PHASE_STEPS = [
+  { id: 'execute-actions', name: 'Execute Player Actions' },
+  { id: 'resolve-results', name: 'Resolve Action Results' }
+]
 
-export class ActionPhaseController {
-    private readonly maxActions: number;
-    private resolutions: Map<string, ActionResolution> = new Map();
-    
-    constructor(maxActions: number = 4) {
-        this.maxActions = maxActions;
-    }
-    
-    /**
-     * Check if an action can be performed based on kingdom state
-     */
-    canPerformAction(action: PlayerAction, kingdomState: KingdomState): boolean {
-        const requirements = actionExecutionService.checkActionRequirements(
-            action,
-            kingdomState
-        );
-        return requirements.met;
-    }
-    
-    /**
-     * Get detailed requirements check for an action
-     */
-    getActionRequirements(action: PlayerAction, kingdomState: KingdomState) {
-        return actionExecutionService.checkActionRequirements(action, kingdomState);
-    }
-    
-    /**
-     * Get the number of actions used (simplified implementation)
-     */
-    getActionsUsed(): number {
-        // Simplified implementation - would need proper tracking
-        return 0;
-    }
-    
-    /**
-     * Execute an action using the command pattern (simplified)
-     */
-    async executeAction(
-        action: PlayerAction,
-        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        kingdomState: KingdomState,
-        currentTurn: number,
-        rollTotal?: number,
-        actorName?: string,
-        skillName?: string,
-        playerId?: string
-    ): Promise<{
-        success: boolean;
-        resolution?: ActionResolution;
-        error?: string;
-    }> {
-        // Create command context
-        const context: CommandContext = {
-            kingdomState,
-            currentTurn,
-            currentPhase: 'Phase V: Actions',
-            actorId: actorName
-        };
+export async function createActionPhaseController() {
+  return {
+    async startPhase() {
+      reportPhaseStart('ActionPhaseController')
+      
+      try {
+        // Initialize phase with predefined steps
+        await initializePhaseSteps(ACTION_PHASE_STEPS)
         
-        // Create and execute the command
-        const command = new ExecuteActionCommand(action, outcome, rollTotal);
-        const result = await commandExecutor.execute(command, context);
-        
-        if (result.success) {
-            const resolution: ActionResolution = {
-                actionId: action.id,
-                outcome,
-                actorName: actorName || 'The Kingdom',
-                skillName,
-                timestamp: new Date()
-            };
-            
-            return {
-                success: true,
-                resolution
-            };
-        }
-        
-        return {
-            success: false,
-            error: result.error
-        };
-    }
-    
-    /**
-     * Parse action outcome from description
-     */
-    parseActionOutcome(action: PlayerAction, outcome: string): Map<string, any> {
-        const parsedEffects = actionExecutionService.parseActionOutcome(
-            action, 
-            outcome as any
-        );
-        
-        const changes = new Map<string, any>();
-        for (const [key, value] of Object.entries(parsedEffects)) {
-            if (value !== undefined && value !== null) {
-                changes.set(key, value);
-            }
-        }
-        
-        return changes;
-    }
-    
-    /**
-     * Resolve an action (simplified implementation)
-     */
-    resolveAction(
-        action: PlayerAction,
-        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        actorName: string,
-        skillName?: string,
-        playerId?: string
-    ): ActionResolution | null {
-        // Simplified implementation
-        return {
-            actionId: action.id,
-            outcome,
-            actorName,
-            skillName,
-            timestamp: new Date()
-        };
-    }
-    
-    /**
-     * Check if more actions can be taken
-     */
-    canPerformMoreActions(): boolean {
-        const actionsUsed = this.getActionsUsed();
-        return actionsUsed < this.maxActions;
-    }
-    
-    /**
-     * Get the number of actions remaining
-     */
-    getActionsRemaining(): number {
-        const actionsUsed = this.getActionsUsed();
-        return Math.max(0, this.maxActions - actionsUsed);
-    }
-    
-    /**
-     * Get available actions for a category
-     */
-    getAvailableActions(
-        category: string,
-        allActions: PlayerAction[],
-        kingdomState: KingdomState
-    ): PlayerAction[] {
-        return actionExecutionService.getAvailableActions(
-            category,
-            kingdomState,
-            allActions
-        );
-    }
-    
-    /**
-     * Get DC for action resolution based on character level
-     */
-    getActionDC(characterLevel: number): number {
-        return actionExecutionService.getActionDC(characterLevel);
-    }
-    
-    /**
-     * Reset controller state for next phase
-     */
-    resetState(): void {
-        // Clear command history for actions
-        commandExecutor.clearHistory();
-    }
-    
-    /**
-     * Get current state
-     */
-    getState() {
-        return {
-            actionsUsed: this.getActionsUsed(),
-            maxActions: this.maxActions
-        };
-    }
-    
-    /**
-     * Get max actions
-     */
-    getMaxActions(): number {
-        return this.maxActions;
-    }
-    
-    /**
-     * Store an action resolution
-     */
-    storeResolution(resolution: ActionResolution): void {
-        const key = resolution.playerId ? `${resolution.actionId}-${resolution.playerId}` : resolution.actionId;
-        this.resolutions.set(key, resolution);
-    }
-    
-    /**
-     * Reset an action resolution
-     */
-    async resetAction(
-        actionId: string,
-        kingdomState?: KingdomState,
-        playerId?: string
-    ): Promise<boolean> {
-        const key = playerId ? `${actionId}-${playerId}` : actionId;
-        this.resolutions.delete(key);
-        return true;
-    }
-    
-    /**
-     * Check if an action has been resolved by the current player
-     */
-    isActionResolved(actionId: string, playerId?: string): boolean {
-        const key = playerId ? `${actionId}-${playerId}` : actionId;
-        return this.resolutions.has(key);
-    }
-    
-    /**
-     * Check if an action has been resolved by any player
-     */
-    isActionResolvedByAny(actionId: string): boolean {
-        for (const [key] of this.resolutions) {
-            if (key.startsWith(actionId)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    /**
-     * Get resolution details for an action by current player
-     */
-    getActionResolution(actionId: string, playerId?: string): ActionResolution | undefined {
-        const key = playerId ? `${actionId}-${playerId}` : actionId;
-        return this.resolutions.get(key);
-    }
-    
-    /**
-     * Get all player resolutions for an action
-     */
-    getAllPlayersResolutions(actionId: string): ActionResolution[] {
-        const results: ActionResolution[] = [];
-        for (const [key, resolution] of this.resolutions) {
-            if (key.startsWith(actionId)) {
-                results.push(resolution);
-            }
-        }
-        return results;
-    }
-}
+        reportPhaseComplete('ActionPhaseController')
+        return createPhaseResult(true)
+      } catch (error) {
+        reportPhaseError('ActionPhaseController', error instanceof Error ? error : new Error(String(error)))
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error')
+      }
+    },
 
-// Export factory function
-export function createActionPhaseController(maxActions: number = 4): ActionPhaseController {
-    return new ActionPhaseController(maxActions);
+    /**
+     * Execute player actions step
+     */
+    async executeActions() {
+      if (isStepCompleted('execute-actions')) {
+        console.log('🟡 [ActionPhaseController] Actions already executed')
+        return createPhaseResult(false, 'Actions already executed this turn')
+      }
+
+      try {
+        console.log('🎬 [ActionPhaseController] Executing player actions...')
+        
+        // Player actions are handled through the UI and individual action controllers
+        // This step is completed manually when all players have taken their actions
+        
+        // Complete the execute-actions step
+        await completePhaseStep('execute-actions')
+        
+        console.log('✅ [ActionPhaseController] Player actions executed')
+        return createPhaseResult(true)
+      } catch (error) {
+        console.error('❌ [ActionPhaseController] Error executing actions:', error)
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error')
+      }
+    },
+
+    /**
+     * Resolve action results step
+     */
+    async resolveResults() {
+      if (!isStepCompleted('execute-actions')) {
+        return createPhaseResult(false, 'Must execute actions before resolving results')
+      }
+
+      if (isStepCompleted('resolve-results')) {
+        console.log('🟡 [ActionPhaseController] Results already resolved')
+        return createPhaseResult(false, 'Results already resolved this turn')
+      }
+
+      try {
+        console.log('⚖️ [ActionPhaseController] Resolving action results...')
+        
+        // Action results are resolved through individual action implementations
+        // This step is completed manually when all action results have been processed
+        
+        // Complete the resolve-results step
+        await completePhaseStep('resolve-results')
+        
+        console.log('✅ [ActionPhaseController] Action results resolved')
+        return createPhaseResult(true)
+      } catch (error) {
+        console.error('❌ [ActionPhaseController] Error resolving results:', error)
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error')
+      }
+    },
+
+    /**
+     * Check if a specific player has spent their action
+     */
+    hasPlayerActed(playerId: string): boolean {
+      const kingdom = get(kingdomData)
+      const playerAction = kingdom.playerActions[playerId]
+      return playerAction?.actionSpent === true
+    },
+
+    /**
+     * Get all players who have spent their actions
+     */
+    getPlayersWhoActed(): string[] {
+      const kingdom = get(kingdomData)
+      return Object.values(kingdom.playerActions)
+        .filter(action => action.actionSpent)
+        .map(action => action.playerId)
+    },
+
+    /**
+     * Get all players who haven't spent their actions
+     */
+    getPlayersWhoHaventActed(): string[] {
+      const kingdom = get(kingdomData)
+      return Object.values(kingdom.playerActions)
+        .filter(action => !action.actionSpent)
+        .map(action => action.playerId)
+    },
+
+    /**
+     * Check if all players have taken their actions
+     */
+    haveAllPlayersActed(): boolean {
+      const kingdom = get(kingdomData)
+      const playerActions = Object.values(kingdom.playerActions)
+      
+      if (playerActions.length === 0) return false
+      
+      return playerActions.every(action => action.actionSpent)
+    },
+
+    /**
+     * Get display data for the UI
+     */
+    getDisplayData() {
+      const kingdom = get(kingdomData)
+      const playerActions = Object.values(kingdom.playerActions)
+      const actedCount = playerActions.filter(action => action.actionSpent).length
+      const totalPlayers = playerActions.length
+      
+      return {
+        totalPlayers,
+        actedCount,
+        remainingPlayers: totalPlayers - actedCount,
+        allPlayersActed: actedCount === totalPlayers && totalPlayers > 0,
+        playersWhoActed: this.getPlayersWhoActed(),
+        playersWhoHaventActed: this.getPlayersWhoHaventActed(),
+        actionsExecuted: isStepCompleted('execute-actions'),
+        resultsResolved: isStepCompleted('resolve-results')
+      }
+    },
+
+    /**
+     * Reset player actions for the turn (called by TurnManager)
+     */
+    async resetPlayerActions() {
+      const actor = getKingdomActor()
+      if (actor) {
+        await actor.updateKingdom((kingdom) => {
+          Object.values(kingdom.playerActions).forEach(action => {
+            action.actionSpent = false
+            action.spentInPhase = undefined
+          })
+        })
+        console.log('🔄 [ActionPhaseController] Reset all player actions')
+      }
+    }
+  }
 }

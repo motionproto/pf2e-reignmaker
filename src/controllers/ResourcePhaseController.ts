@@ -1,63 +1,126 @@
 /**
- * ResourcePhaseController - Simplified architecture for resource collection phase
+ * ResourcePhaseController - Collects territory and settlement resources
  * 
- * Follows new architecture pattern:
- * - Business logic only
- * - Uses kingdomData store as single source of truth
- * - Returns simple success/error results
+ * NEW: Uses simplified step array system with single "collect-resources" step.
+ * Any player can complete this step once per turn.
  */
 
-import { markPhaseStepCompleted, setResource, modifyResource } from '../stores/KingdomStore';
+import { getKingdomActor } from '../stores/KingdomStore';
 import { get } from 'svelte/store';
 import { kingdomData } from '../stores/KingdomStore';
+import { 
+  reportPhaseStart, 
+  reportPhaseComplete, 
+  reportPhaseError, 
+  createPhaseResult,
+  initializePhaseSteps,
+  completePhaseStep,
+  isStepCompleted
+} from './shared/PhaseControllerHelpers';
+
+// Define steps for Resources Phase
+const RESOURCES_PHASE_STEPS = [
+  { id: 'collect-resources', name: 'Collect Kingdom Resources' }
+];
 
 export async function createResourcePhaseController() {
+  // Helper functions defined outside the returned object
+  const calculateHexProduction = (hex: any): Map<string, number> => {
+    const production = new Map<string, number>();
+    
+    if (!hex.worksite) return production;
+    
+    const terrain = hex.terrain.toLowerCase();
+    const worksiteType = hex.worksite.type;
+    
+    // Base production based on worksite type and terrain compatibility
+    switch (worksiteType) {
+      case 'Farmstead':
+        if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
+        else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
+        break;
+      case 'Logging Camp':
+        if (terrain === 'forest') production.set('lumber', 2);
+        break;
+      case 'Quarry':
+        if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
+        break;
+      case 'Mine':
+      case 'Bog Mine':
+        if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
+        break;
+      case 'Hunting/Fishing Camp':
+        if (terrain === 'swamp') production.set('food', 1);
+        break;
+      case 'Oasis Farm':
+        if (terrain === 'desert') production.set('food', 1);
+        break;
+    }
+    
+    // Apply special trait bonus (+1 to all production)
+    if (hex.hasSpecialTrait) {
+      production.forEach((amount, resource) => {
+        production.set(resource, amount + 1);
+      });
+    }
+    
+    return production;
+  };
+
+  const getSettlementGoldValue = (tier: string): number => {
+    switch (tier.toLowerCase()) {
+      case 'village': return 1;
+      case 'town': return 2;
+      case 'city': return 3;
+      case 'metropolis': return 4;
+      default: return 0;
+    }
+  };
+
   return {
     /**
-     * Phase initialization following migration guide pattern (no automatic execution)
+     * Phase initialization - sets up the single step
      */
     async startPhase() {
-      console.log('🟡 [ResourcePhaseController] Starting resources phase (manual mode)...');
-      console.log('✅ [ResourcePhaseController] Phase ready for manual collection');
-      return { success: true };
-    },
-
-    /**
-     * Manual collection of both territory resources and settlement gold
-     */
-    async collectResources() {
+      reportPhaseStart('ResourcePhaseController');
+      
       try {
-        console.log('🟡 [ResourcePhaseController] Starting manual resource collection...');
+        // Initialize phase with predefined steps
+        await initializePhaseSteps(RESOURCES_PHASE_STEPS);
         
-        await this.collectTerritoryResources();
-        await this.collectSettlementGold();
-        await markPhaseStepCompleted('resources-collect');
-        
-        console.log('✅ [ResourcePhaseController] Collection completed successfully');
-        return { success: true };
+        reportPhaseComplete('ResourcePhaseController');
+        return createPhaseResult(true);
       } catch (error) {
-        console.error('❌ [ResourcePhaseController] Failed:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        };
+        reportPhaseError('ResourcePhaseController', error instanceof Error ? error : new Error(String(error)));
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
       }
     },
 
     /**
-     * Complete the phase (notify turn manager)
+     * NEW: Single-step resource collection (territory + settlements)
+     * Any player can complete this once per turn
      */
-    async completePhase() {
+    async collectResources() {
+      // Check if already completed
+      if (isStepCompleted('collect-resources')) {
+        return createPhaseResult(false, 'Resources already collected this turn');
+      }
+
       try {
-        await this.notifyPhaseComplete();
-        console.log('✅ [ResourcePhaseController] Phase completed');
-        return { success: true };
+        reportPhaseStart('ResourcePhaseController Collection');
+        
+        // Collect both territory resources and settlement gold
+        await this.collectTerritoryResources();
+        await this.collectSettlementGold();
+        
+        // Mark step as completed (will auto-complete phase)
+        await completePhaseStep('collect-resources');
+        
+        reportPhaseComplete('ResourcePhaseController Collection');
+        return createPhaseResult(true);
       } catch (error) {
-        console.error('❌ [ResourcePhaseController] Failed to complete phase:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        };
+        reportPhaseError('ResourcePhaseController Collection', error instanceof Error ? error : new Error(String(error)));
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
       }
     },
 
@@ -75,7 +138,7 @@ export async function createResourcePhaseController() {
       for (const hex of hexes) {
         if (!hex.worksite) continue;
         
-        const production = this.calculateHexProduction(hex);
+        const production = calculateHexProduction(hex);
         production.forEach((amount, resource) => {
           const current = resourceTotals.get(resource) || 0;
           resourceTotals.set(resource, current + amount);
@@ -83,11 +146,22 @@ export async function createResourcePhaseController() {
       }
       
       // Apply collected resources
-      for (const [resource, amount] of resourceTotals) {
-        if (amount > 0) {
-          await modifyResource(resource, amount);
-          console.log(`✅ [ResourcePhaseController] +${amount} ${resource} from territory`);
-        }
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [ResourcePhaseController] No KingdomActor available');
+        return resourceTotals;
+      }
+
+      if (resourceTotals.size > 0) {
+        await actor.updateKingdom((kingdom) => {
+          for (const [resource, amount] of resourceTotals) {
+            if (amount > 0) {
+              const current = kingdom.resources[resource] || 0;
+              kingdom.resources[resource] = current + amount;
+              console.log(`✅ [ResourcePhaseController] +${amount} ${resource} from territory`);
+            }
+          }
+        });
       }
       
       return resourceTotals;
@@ -110,7 +184,7 @@ export async function createResourcePhaseController() {
         // Only fed settlements generate gold
         if (settlement.wasFedLastTurn !== false) {
           // Gold income based on settlement tier
-          const income = this.getSettlementGoldValue(settlement.tier);
+          const income = getSettlementGoldValue(settlement.tier);
           totalGold += income;
           fedCount++;
           console.log(`💰 [ResourcePhaseController] ${settlement.name} (${settlement.tier}): +${income} gold`);
@@ -121,7 +195,13 @@ export async function createResourcePhaseController() {
       }
       
       if (totalGold > 0) {
-        await modifyResource('gold', totalGold);
+        const actor = getKingdomActor();
+        if (actor) {
+          await actor.updateKingdom((kingdom) => {
+            const current = kingdom.resources.gold || 0;
+            kingdom.resources.gold = current + totalGold;
+          });
+        }
         console.log(`✅ [ResourcePhaseController] +${totalGold} gold from ${fedCount} fed settlements`);
       }
       
@@ -135,60 +215,12 @@ export async function createResourcePhaseController() {
     /**
      * Get gold value for a settlement tier
      */
-    getSettlementGoldValue(tier: string): number {
-      switch (tier.toLowerCase()) {
-        case 'village': return 1;
-        case 'town': return 2;
-        case 'city': return 3;
-        case 'metropolis': return 4;
-        default: return 0;
-      }
-    },
+    getSettlementGoldValue,
 
     /**
      * Calculate production for a single hex (matches TerritoryTab logic)
      */
-    calculateHexProduction(hex: any): Map<string, number> {
-      const production = new Map<string, number>();
-      
-      if (!hex.worksite) return production;
-      
-      const terrain = hex.terrain.toLowerCase();
-      const worksiteType = hex.worksite.type;
-      
-      // Base production based on worksite type and terrain compatibility
-      switch (worksiteType) {
-        case 'Farmstead':
-          if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
-          else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
-          break;
-        case 'Logging Camp':
-          if (terrain === 'forest') production.set('lumber', 2);
-          break;
-        case 'Quarry':
-          if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
-          break;
-        case 'Mine':
-        case 'Bog Mine':
-          if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
-          break;
-        case 'Hunting/Fishing Camp':
-          if (terrain === 'swamp') production.set('food', 1);
-          break;
-        case 'Oasis Farm':
-          if (terrain === 'desert') production.set('food', 1);
-          break;
-      }
-      
-      // Apply special trait bonus (+1 to all production)
-      if (hex.hasSpecialTrait) {
-        production.forEach((amount, resource) => {
-          production.set(resource, amount + 1);
-        });
-      }
-      
-      return production;
-    },
+    calculateHexProduction,
 
     /**
      * Get preview of what would be collected (for UI display)
@@ -204,7 +236,7 @@ export async function createResourcePhaseController() {
       
       for (const hex of hexes) {
         if (!hex.worksite) continue;
-        const production = this.calculateHexProduction(hex);
+        const production = calculateHexProduction(hex);
         
         if (production.size > 0) {
           // Add to total production
@@ -229,7 +261,7 @@ export async function createResourcePhaseController() {
       
       for (const settlement of settlements) {
         if (settlement.wasFedLastTurn !== false) {
-          goldIncome += this.getSettlementGoldValue(settlement.tier);
+          goldIncome += getSettlementGoldValue(settlement.tier);
           fedCount++;
         } else {
           unfedCount++;
@@ -244,17 +276,6 @@ export async function createResourcePhaseController() {
         unfedCount,
         totalSettlements: settlements.length
       };
-    },
-
-    /**
-     * Notify turn manager that phase is complete
-     */
-    async notifyPhaseComplete() {
-      const { getTurnManager } = await import('../stores/KingdomStore');
-      const manager = getTurnManager();
-      if (manager) {
-        await manager.markPhaseComplete();
-      }
     }
   };
 }

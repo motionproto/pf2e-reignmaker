@@ -15,29 +15,31 @@
    import ActionsPhase from '../turnPhases/ActionsPhase.svelte';
    import UpkeepPhase from '../turnPhases/UpkeepPhase.svelte';
    
-   // Track the last known current phase to detect when it changes
-   let lastCurrentPhase: TurnPhase | null = null;
+   // Primary source: actual current phase from KingdomActor (always authoritative)
+   $: actualPhase = $kingdomData.currentPhase;
    
-   // Always sync viewing phase with current phase on mount
-   // This ensures proper initialization even when kingdomData loads asynchronously
-   onMount(() => {
-      setViewingPhase($kingdomData.currentPhase);
-      lastCurrentPhase = $kingdomData.currentPhase;
+   // Display phase: use viewingPhase only if explicitly set and different from actual
+   // This makes KingdomActor the primary source of truth for phase display
+   $: displayPhase = ($viewingPhase && $viewingPhase !== actualPhase) 
+      ? $viewingPhase 
+      : actualPhase;
+   
+   // Debug which phase is being displayed
+   $: console.log('🔍 [TurnTab DEBUG] Current phase display:', {
+      actualPhase,
+      viewingPhase: $viewingPhase,
+      displayPhase,
+      isUpkeepPhase: displayPhase === TurnPhase.UPKEEP,
+      turnPhaseUpkeepValue: TurnPhase.UPKEEP,
+      stringComparison: displayPhase === 'Upkeep'
    });
    
-   // When current phase changes, auto-sync viewing phase if user was viewing the old current phase
-   $: if ($kingdomData.currentPhase !== lastCurrentPhase) {
-      // Phase has changed - if user was viewing the old current phase, update to new current phase
-      if ($viewingPhase === lastCurrentPhase || !$viewingPhase) {
-         setViewingPhase($kingdomData.currentPhase);
-      }
-      lastCurrentPhase = $kingdomData.currentPhase;
+   // Initialize viewingPhase to match actual phase when data loads
+   // This is reactive and eliminates timing issues
+   $: if (actualPhase && !$viewingPhase) {
+      setViewingPhase(actualPhase);
    }
-   
-   // Get phase info based on what the user is viewing
-   $: displayPhase = $viewingPhase || $kingdomData.currentPhase;
    $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomData.currentPhase];
-   $: actualPhase = $kingdomData.currentPhase;
    
    // Safe fallback for phase info
    $: safePhaseInfo = phaseInfo || { displayName: 'Unknown Phase', description: 'Phase information not found' };

@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/KingdomStore';
+   import { kingdomData, updateKingdom, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    import type { BuildProject } from '../../../models/KingdomState';
    
@@ -26,6 +26,31 @@
    $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
    $: buildCompleted = isPhaseStepCompleted('upkeep-build');
    $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
+
+   // Check if all manual steps are complete and auto-complete phase
+   $: allManualStepsComplete = consumeCompleted && militaryCompleted && buildCompleted;
+   $: if (allManualStepsComplete && !resolveCompleted && !processingEndTurn) {
+      console.log('🔍 [UpkeepPhase DEBUG] All manual steps complete, triggering phase completion:', {
+         consumeCompleted,
+         militaryCompleted, 
+         buildCompleted,
+         resolveCompleted,
+         processingEndTurn,
+         shouldAutoComplete: true
+      });
+      handleCompletePhase();
+   }
+
+   // Debug step completion states
+   $: console.log('🔍 [UpkeepPhase DEBUG] Step completion status:', {
+      consumeCompleted,
+      militaryCompleted,
+      buildCompleted,
+      resolveCompleted,
+      allManualStepsComplete,
+      processingEndTurn,
+      shouldAutoComplete: allManualStepsComplete && !resolveCompleted && !processingEndTurn
+   });
    
    // Get all display data from controller (now async)
    let displayData = {
@@ -148,10 +173,22 @@
    }
 
    async function handleCompletePhase() {
-      if (processingEndTurn || !upkeepController) return;
+      console.log('🔍 [UpkeepPhase DEBUG] handleCompletePhase called:', {
+         processingEndTurn,
+         hasController: !!upkeepController
+      });
+      
+      if (processingEndTurn || !upkeepController) {
+         console.log('🔍 [UpkeepPhase DEBUG] handleCompletePhase blocked:', {
+            processingEndTurn,
+            hasController: !!upkeepController
+         });
+         return;
+      }
       
       processingEndTurn = true;
       try {
+         console.log('🔍 [UpkeepPhase DEBUG] Calling upkeepController.completePhase()...');
          const result = await upkeepController.completePhase();
          if (result.success) {
             console.log('✅ [UpkeepPhase] Phase completed successfully');

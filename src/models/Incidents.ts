@@ -98,7 +98,21 @@ export const IncidentManager = {
   },
   
   /**
-   * Roll for an incident based on unrest tier
+   * Get a random incident for the specified tier (simplified version)
+   * @param tier The unrest tier (0-3) 
+   */
+  getRandomIncident(tier: number): Incident | null {
+    if (tier === 0) return null; // Stable - no incidents
+    
+    const level = this.getIncidentLevel(tier);
+    console.log('Getting random incident for tier:', tier, 'level:', level);
+    if (!level) return null;
+    
+    return this.getRandomIncidentByLevel(level);
+  },
+
+  /**
+   * Roll for an incident based on unrest tier (legacy method)
    * Returns null if no incident occurs
    * @param tier The unrest tier (0-3)
    */
@@ -137,13 +151,13 @@ export const IncidentManager = {
     console.log('Incident level:', level);
     if (!level) return null;
     
-    return this.getRandomIncident(level);
+    return this.getRandomIncidentByLevel(level);
   },
   
   /**
    * Get a random incident from the appropriate level array
    */
-  getRandomIncident(level: IncidentLevel): Incident | null {
+  getRandomIncidentByLevel(level: IncidentLevel): Incident | null {
     let incidents: Incident[];
     
     switch (level) {

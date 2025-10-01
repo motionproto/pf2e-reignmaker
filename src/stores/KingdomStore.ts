@@ -141,19 +141,17 @@ export async function advancePhase(): Promise<void> {
   }
 }
 
-export async function markPhaseStepCompleted(stepId: string): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) {
-    console.warn(`[KingdomActor Store] Cannot mark step '${stepId}' complete - no actor available yet`);
-    return;
-  }
-  
-  await actor.markPhaseStepCompleted(stepId);
-}
+// markPhaseStepCompleted convenience method removed - use getKingdomActor().markPhaseStepCompleted() directly
 
 
 export function isPhaseStepCompleted(stepId: string): boolean {
   const data = get(kingdomData);
+  // NEW: Check in currentPhaseSteps array
+  const step = data.currentPhaseSteps?.find(s => s.id === stepId);
+  if (step) {
+    return step.completed;
+  }
+  // LEGACY: Fallback to old system for compatibility
   return data.phaseStepsCompleted[stepId] === true;
 }
 
@@ -164,67 +162,8 @@ export function isCurrentPhaseComplete(): boolean {
   return actor.isCurrentPhaseComplete();
 }
 
-export async function modifyResource(resource: string, amount: number): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) {
-    console.warn(`[KingdomActor Store] Cannot modify resource '${resource}' - no actor available yet`);
-    return;
-  }
-  
-  // Check if the actor has the modifyResource method (is a proper KingdomActor)
-  if (typeof actor.modifyResource !== 'function') {
-    console.error(`[KingdomActor Store] Actor does not have modifyResource method. Actor type:`, actor.constructor.name);
-    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
-    return;
-  }
-  
-  await actor.modifyResource(resource, amount);
-}
-
-export async function setResource(resource: string, amount: number): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) {
-    console.warn(`[KingdomActor Store] Cannot set resource '${resource}' - no actor available yet`);
-    return;
-  }
-  
-  // Check if the actor has the setResource method (is a proper KingdomActor)
-  if (typeof actor.setResource !== 'function') {
-    console.error(`[KingdomActor Store] Actor does not have setResource method. Actor type:`, actor.constructor.name);
-    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
-    return;
-  }
-  
-  await actor.setResource(resource, amount);
-}
-
-export async function addSettlement(settlement: any): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.addSettlement(settlement);
-}
-
-export async function updateSettlement(settlementId: string, updates: any): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.updateSettlement(settlementId, updates);
-}
-
-export async function addArmy(army: any): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.addArmy(army);
-}
-
-export async function removeArmy(armyId: string): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.removeArmy(armyId);
-}
+// Convenience methods removed - use getKingdomActor() and actor.updateKingdom() directly
+// This enforces the Single Source of Truth architecture pattern
 
 /**
  * Player action management - delegated to TurnManager

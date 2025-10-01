@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { currentPhase, currentTurn, isCurrentPhaseComplete } from '../../../stores/KingdomStore';
+  import { currentPhase, currentTurn, isCurrentPhaseComplete, kingdomData } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   
@@ -14,7 +14,21 @@
   let currentPhaseComplete = false;
   
   // Check if the current phase is complete - use the new kingdom actor check
-  $: currentPhaseComplete = isCurrentPhaseComplete();
+  // For Upkeep phase specifically, check if UPKEEP is in phasesCompleted
+  $: currentPhaseComplete = isUpkeepPhase 
+    ? ($kingdomData.phasesCompleted?.includes(TurnPhase.UPKEEP) || false)
+    : isCurrentPhaseComplete();
+
+  // Debug phase completion detection
+  $: if (isUpkeepPhase) {
+    console.log('🔍 [PhaseHeader DEBUG] Upkeep phase completion check:', {
+      isUpkeepPhase,
+      phasesCompleted: $kingdomData.phasesCompleted,
+      includesUpkeep: $kingdomData.phasesCompleted?.includes(TurnPhase.UPKEEP),
+      currentPhaseComplete,
+      buttonDisabled: !currentPhaseComplete
+    });
+  }
   
   let headerElement: HTMLElement;
   let previousTitle = '';
@@ -64,7 +78,7 @@
         tooltip={!currentPhaseComplete ? 'Complete all required steps in this phase first' : undefined}
       >
         {#if isUpkeepPhase}
-          End Turn {currentTurn}
+          End Turn {$currentTurn}
         {:else}
           Next Phase
         {/if}

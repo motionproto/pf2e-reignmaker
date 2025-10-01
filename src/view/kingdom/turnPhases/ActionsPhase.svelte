@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { kingdomData, updateKingdom, setResource } from "../../../stores/KingdomStore";
+  import { kingdomData, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
   import { 
     spendPlayerAction,
     resetPlayerAction,
@@ -20,7 +20,7 @@
     performKingdomActionRoll,
     getKingdomActionDC,
     showCharacterSelectionDialog
-  } from "../../../api/pf2e-integration";
+  } from "../../../services/pf2e";
   import { onMount, onDestroy, tick } from "svelte";
 
   // Props
@@ -554,7 +554,12 @@
     }
     
     // Deduct fame and reset action for reroll  
-    await setResource('fame', currentFame - 1);
+    const actor = getKingdomActor();
+    if (actor) {
+      await actor.updateKingdom((kingdom) => {
+        kingdom.fame = currentFame - 1;
+      });
+    }
     
     // Reset the action (skip player action reset for reroll)
     await resetAction(checkId, true);
@@ -583,7 +588,12 @@
     } catch (error) {
       console.error("Error rerolling with fame:", error);
       // Restore fame if the roll failed
-      await setResource('fame', currentFame);
+      const actor = getKingdomActor();
+      if (actor) {
+        await actor.updateKingdom((kingdom) => {
+          kingdom.fame = currentFame;
+        });
+      }
       ui.notifications?.error(`Failed to reroll: ${error}`);
     }
   }
@@ -639,6 +649,20 @@
     
     // Show success notification
     ui.notifications?.info(`Structure queued successfully!`);
+  }
+
+  // Manual phase completion
+  async function completeActionsPhase() {
+    try {
+      const { getTurnManager } = await import('../../../stores/KingdomStore');
+      const manager = getTurnManager();
+      if (manager) {
+        await manager.markPhaseComplete();
+        console.log('✅ [ActionsPhase] Phase marked complete');
+      }
+    } catch (error) {
+      console.error('❌ [ActionsPhase] Error completing phase:', error);
+    }
   }
 </script>
 
@@ -775,6 +799,22 @@
         </div>
       {/if}
     {/each}
+
+    <!-- Phase Completion Section -->
+    <div class="phase-completion">
+      <div class="completion-header">
+        <h3>Actions Phase Complete</h3>
+        <p>When you're finished performing kingdom actions, click below to proceed to the next phase.</p>
+      </div>
+      
+      <button 
+         class="btn btn-primary complete-phase-btn"
+         on:click={completeActionsPhase}
+      >
+         <i class="fas fa-check"></i>
+         Complete Actions Phase
+      </button>
+    </div>
   </div>
 </div>
 
@@ -973,5 +1013,53 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  .phase-completion {
+    background: linear-gradient(135deg,
+      rgba(31, 31, 35, 0.6),
+      rgba(15, 15, 17, 0.4));
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-medium);
+    padding: 20px;
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .completion-header h3 {
+    margin: 0 0 10px 0;
+    font-size: var(--font-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+  }
+
+  .completion-header p {
+    margin: 0 0 20px 0;
+    color: var(--text-secondary);
+    font-size: var(--font-md);
+  }
+
+  .complete-phase-btn {
+    background: var(--color-green);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--color-green-dark);
+      transform: translateY(-1px);
+    }
+
+    i {
+      font-size: 16px;
+    }
   }
 </style>

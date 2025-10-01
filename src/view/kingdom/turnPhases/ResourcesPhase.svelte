@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, setResource, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/KingdomStore';
+   import { kingdomData, getKingdomActor, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import Button from '../components/baseComponents/Button.svelte';
    import { tick } from 'svelte';
    
@@ -37,7 +37,13 @@
    
    function saveEdit() {
       if (editingResource) {
-         setResource(editingResource, Math.max(0, Math.floor(editValue)));
+         const actor = getKingdomActor();
+         if (actor) {
+            const resource = editingResource; // Capture in const to avoid null check issue
+            actor.updateKingdom((kingdom) => {
+               kingdom.resources[resource] = Math.max(0, Math.floor(editValue));
+            });
+         }
          editingResource = null;
       }
    }

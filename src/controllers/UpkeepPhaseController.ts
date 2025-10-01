@@ -1,19 +1,38 @@
 /**
- * UpkeepPhaseController - Self-executing upkeep phase controller
+ * UpkeepPhaseController - Handles settlement feeding, military support, and build processing
  * 
- * Follows the new architecture pattern with startPhase() method.
- * Handles resource decay, project processing, and end-of-turn cleanup.
+ * NEW: Uses simplified step array system with feed-settlements, support-military, and process-builds steps.
+ * Resource decay has been moved to StatusPhaseController (beginning of turn).
  */
 
-import { markPhaseStepCompleted, setResource, modifyResource } from '../stores/KingdomStore';
+import { getKingdomActor } from '../stores/KingdomStore';
 import { get } from 'svelte/store';
+import { 
+  reportPhaseStart, 
+  reportPhaseComplete, 
+  reportPhaseError, 
+  createPhaseResult,
+  initializePhaseSteps,
+  completePhaseStep,
+  isStepCompleted
+} from './shared/PhaseControllerHelpers';
+
+// Define steps for Upkeep Phase
+const UPKEEP_PHASE_STEPS = [
+  { id: 'feed-settlements', name: 'Feed Settlements' },
+  { id: 'support-military', name: 'Support Military' },
+  { id: 'process-builds', name: 'Process Build Queue' }
+];
 
 export async function createUpkeepPhaseController() {
   return {
     async startPhase() {
-      console.log('🟡 [UpkeepPhaseController] Starting upkeep phase (manual mode)...');
+      reportPhaseStart('UpkeepPhaseController');
       
       try {
+        // Initialize phase with predefined steps
+        await initializePhaseSteps(UPKEEP_PHASE_STEPS);
+        
         // Auto-mark skipped steps as complete
         const { kingdomData } = await import('../stores/KingdomStore');
         const kingdom = get(kingdomData);
@@ -21,62 +40,91 @@ export async function createUpkeepPhaseController() {
         // Auto-complete military support if no armies
         const armyCount = kingdom.armies?.length || 0;
         if (armyCount === 0) {
-          await markPhaseStepCompleted('upkeep-military');
+          await completePhaseStep('support-military');
           console.log('✅ [UpkeepPhaseController] Military support auto-completed (no armies)');
         }
         
         // Auto-complete build queue if no projects
         const buildQueueCount = kingdom.buildQueue?.length || 0;
         if (buildQueueCount === 0) {
-          await markPhaseStepCompleted('upkeep-build');
+          await completePhaseStep('process-builds');
           console.log('✅ [UpkeepPhaseController] Build queue auto-completed (no projects)');
         }
         
-        console.log('✅ [UpkeepPhaseController] Upkeep phase ready for manual operations');
-        return { success: true };
+        reportPhaseComplete('UpkeepPhaseController');
+        return createPhaseResult(true);
       } catch (error) {
-        console.error('❌ [UpkeepPhaseController] Upkeep phase failed:', error);
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        reportPhaseError('UpkeepPhaseController', error instanceof Error ? error : new Error(String(error)));
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
       }
     },
 
-    // Individual manual operation methods
-    async processFeedSettlements() {
-      console.log('🔄 [UpkeepPhaseController] Manually processing settlement food...');
-      await this.processFoodConsumption();
-      await markPhaseStepCompleted('upkeep-food');
-      return { success: true };
+    /**
+     * Feed settlements step
+     */
+    async feedSettlements() {
+      if (isStepCompleted('feed-settlements')) {
+        return createPhaseResult(false, 'Settlements already fed this turn');
+      }
+
+      try {
+        console.log('🍞 [UpkeepPhaseController] Processing settlement feeding...');
+        await this.processFoodConsumption();
+        
+        // Complete the feed-settlements step
+        await completePhaseStep('feed-settlements');
+        
+        return createPhaseResult(true);
+      } catch (error) {
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
+      }
     },
 
-    async processMilitarySupportManual() {
-      console.log('🔄 [UpkeepPhaseController] Manually processing military support...');
-      await this.processMilitarySupport();
-      await markPhaseStepCompleted('upkeep-military');
-      return { success: true };
+    /**
+     * Support military step
+     */
+    async supportMilitary() {
+      if (isStepCompleted('support-military')) {
+        return createPhaseResult(false, 'Military already supported this turn');
+      }
+
+      try {
+        console.log('�️ [UpkeepPhaseController] Processing military support...');
+        await this.processMilitarySupport();
+        
+        // Complete the support-military step
+        await completePhaseStep('support-military');
+        
+        return createPhaseResult(true);
+      } catch (error) {
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
+      }
     },
 
-    async processBuildQueueManual() {
-      console.log('🔄 [UpkeepPhaseController] Manually processing build queue...');
-      await this.processBuildProjects();
-      await markPhaseStepCompleted('upkeep-build');
-      return { success: true };
+    /**
+     * Process build queue step
+     */
+    async processBuilds() {
+      if (isStepCompleted('process-builds')) {
+        return createPhaseResult(false, 'Build queue already processed this turn');
+      }
+
+      try {
+        console.log('🏗️ [UpkeepPhaseController] Processing build queue...');
+        await this.processBuildProjects();
+        
+        // Complete the process-builds step
+        await completePhaseStep('process-builds');
+        
+        return createPhaseResult(true);
+      } catch (error) {
+        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
+      }
     },
 
-    async completePhase() {
-      console.log('🔄 [UpkeepPhaseController] Completing upkeep phase...');
-      
-      // Process resource decay
-      await this.processResourceDecay();
-      
-      // Mark phase as completed
-      await markPhaseStepCompleted('upkeep-complete');
-      
-      // Notify phase complete
-      await this.notifyPhaseComplete();
-      console.log('✅ [UpkeepPhaseController] Upkeep phase complete');
-      return { success: true };
-    },
-
+    /**
+     * Process food consumption for settlements
+     */
     async processFoodConsumption() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const { calculateConsumption } = await import('../services/economics/consumption');
@@ -88,19 +136,42 @@ export async function createUpkeepPhaseController() {
       const consumption = calculateConsumption(settlements, armies);
       const currentFood = kingdom.resources?.food || 0;
       
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        return;
+      }
+      
       if (currentFood >= consumption.totalFood) {
-        // Sufficient food
-        await setResource('food', currentFood - consumption.totalFood);
+        // Sufficient food - mark all settlements as fed
+        await actor.updateKingdom((kingdom) => {
+          kingdom.resources.food = currentFood - consumption.totalFood;
+          kingdom.settlements.forEach(settlement => {
+            settlement.wasFedLastTurn = true;
+          });
+        });
+        
         console.log(`🍞 [UpkeepPhaseController] Consumed ${consumption.totalFood} food (${consumption.settlementFood} settlements + ${consumption.armyFood} armies)`);
+        console.log(`✅ [UpkeepPhaseController] All ${settlements.length} settlements fed successfully`);
       } else {
-        // Food shortage - generate unrest
+        // Food shortage - generate unrest and mark settlements as unfed
         const shortage = consumption.totalFood - currentFood;
-        await setResource('food', 0);
-        await modifyResource('unrest', shortage);
+        await actor.updateKingdom((kingdom) => {
+          kingdom.resources.food = 0;
+          kingdom.unrest += shortage;
+          kingdom.settlements.forEach(settlement => {
+            settlement.wasFedLastTurn = false;
+          });
+        });
+        
         console.log(`⚠️ [UpkeepPhaseController] Food shortage: ${shortage} unrest generated (needed ${consumption.totalFood}, had ${currentFood})`);
+        console.log(`❌ [UpkeepPhaseController] ${settlements.length} settlements unfed - will not generate gold next turn`);
       }
     },
 
+    /**
+     * Process military support costs
+     */
     async processMilitarySupport() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const kingdom = get(kingdomData);
@@ -111,22 +182,35 @@ export async function createUpkeepPhaseController() {
         return;
       }
       
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        return;
+      }
+      
       // Simple military support cost
       const supportCost = armyCount;
       const currentGold = kingdom.resources?.gold || 0;
       
       if (currentGold >= supportCost) {
-        await modifyResource('gold', -supportCost);
+        await actor.updateKingdom((kingdom) => {
+          kingdom.resources.gold = currentGold - supportCost;
+        });
         console.log(`💰 [UpkeepPhaseController] Paid ${supportCost} gold for military support`);
       } else {
         // Can't afford support - generate unrest
         const shortage = supportCost - currentGold;
-        await setResource('gold', 0);
-        await modifyResource('unrest', shortage);
+        await actor.updateKingdom((kingdom) => {
+          kingdom.resources.gold = 0;
+          kingdom.unrest += shortage;
+        });
         console.log(`⚠️ [UpkeepPhaseController] Military support shortage: ${shortage} unrest generated`);
       }
     },
 
+    /**
+     * Process build queue projects
+     */
     async processBuildProjects() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const kingdom = get(kingdomData);
@@ -137,24 +221,27 @@ export async function createUpkeepPhaseController() {
         return;
       }
       
-      let projectsCompleted = 0;
-      for (const project of buildQueue) {
-        // Simple project progress logic
-        projectsCompleted++;
-        console.log(`🏗️ [UpkeepPhaseController] Processed project: ${project.structureId}`);
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        return;
       }
       
-      console.log(`✅ [UpkeepPhaseController] Processed ${projectsCompleted} build projects`);
+      // Actually process and remove completed projects from the queue
+      await actor.updateKingdom((kingdom) => {
+        const completedProjects = [...kingdom.buildQueue];
+        kingdom.buildQueue = []; // Clear the queue - projects are completed
+        
+        console.log(`🏗️ [UpkeepPhaseController] Completed ${completedProjects.length} build projects:`, 
+          completedProjects.map(p => p.structureId));
+      });
+      
+      console.log(`✅ [UpkeepPhaseController] Processed ${buildQueue.length} build projects`);
     },
 
-    async processResourceDecay() {
-      // Clear non-storable resources (lumber, stone, ore)
-      await setResource('lumber', 0);
-      await setResource('stone', 0);
-      await setResource('ore', 0);
-      console.log('♻️ [UpkeepPhaseController] Cleared non-storable resources');
-    },
-
+    /**
+     * Get display data for the UI
+     */
     async getDisplayData(kingdomData: any) {
       if (!kingdomData) {
         return {
@@ -168,7 +255,12 @@ export async function createUpkeepPhaseController() {
           unsupportedCount: 0,
           foodRemainingForArmies: 0,
           armyFoodShortage: 0,
-          settlementFoodShortage: 0
+          settlementFoodShortage: 0,
+          stepsCompleted: {
+            feedSettlements: false,
+            supportMilitary: false,
+            processBuilds: false
+          }
         };
       }
 
@@ -199,20 +291,13 @@ export async function createUpkeepPhaseController() {
         unsupportedCount,
         foodRemainingForArmies,
         armyFoodShortage,
-        settlementFoodShortage
+        settlementFoodShortage,
+        stepsCompleted: {
+          feedSettlements: isStepCompleted('feed-settlements'),
+          supportMilitary: isStepCompleted('support-military'),
+          processBuilds: isStepCompleted('process-builds')
+        }
       };
-    },
-
-    async notifyPhaseComplete() {
-      const { getTurnManager } = await import('../stores/KingdomStore');
-      const manager = getTurnManager();
-      
-      if (manager) {
-        await manager.markPhaseComplete();
-        console.log('🟡 [UpkeepPhaseController] Notified TurnManager that UpkeepPhase is complete');
-      } else {
-        throw new Error('No TurnManager available');
-      }
     }
   };
 }
