@@ -88,6 +88,9 @@ export async function createResourcePhaseController() {
         // Initialize phase with predefined steps
         await initializePhaseSteps(RESOURCES_PHASE_STEPS);
         
+        // Resource collection requires manual user interaction via UI button
+        console.log('🟡 [ResourcePhaseController] Resource collection requires manual completion');
+        
         reportPhaseComplete('ResourcePhaseController');
         return createPhaseResult(true);
       } catch (error) {

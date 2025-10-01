@@ -33,23 +33,26 @@ export async function createUpkeepPhaseController() {
         // Initialize phase with predefined steps
         await initializePhaseSteps(UPKEEP_PHASE_STEPS);
         
-        // Auto-mark skipped steps as complete
+        // Auto-mark skipped steps as complete (only when there's nothing to process)
         const { kingdomData } = await import('../stores/KingdomStore');
         const kingdom = get(kingdomData);
         
-        // Auto-complete military support if no armies
+        // Auto-complete military support ONLY if no armies
         const armyCount = kingdom.armies?.length || 0;
         if (armyCount === 0) {
           await completePhaseStep('support-military');
           console.log('✅ [UpkeepPhaseController] Military support auto-completed (no armies)');
         }
         
-        // Auto-complete build queue if no projects
+        // Auto-complete build queue ONLY if no projects
         const buildQueueCount = kingdom.buildQueue?.length || 0;
         if (buildQueueCount === 0) {
           await completePhaseStep('process-builds');
           console.log('✅ [UpkeepPhaseController] Build queue auto-completed (no projects)');
         }
+        
+        // Settlement feeding is NEVER auto-completed - always requires user interaction
+        console.log('🟡 [UpkeepPhaseController] Settlement feeding requires manual completion');
         
         reportPhaseComplete('UpkeepPhaseController');
         return createPhaseResult(true);

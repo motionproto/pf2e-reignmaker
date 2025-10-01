@@ -12,7 +12,8 @@
    import { stateChangeFormatter } from '../../../services/formatters/StateChangeFormatter';
    
    // Import existing services and components
-   import { eventService, type EventData, type EventSkill, type EventOutcome } from '../../../services/domain/events/EventService';
+   import type { EventData, EventSkill, EventOutcome } from '../../../services/domain/events/EventService';
+   import { EventProvider } from '../../../controllers/events/EventProvider';
    import Button from '../components/baseComponents/Button.svelte';
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
    import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
@@ -50,7 +51,7 @@
    } | null = null;
    
    // Computed UI state
-   $: eventChecked = isPhaseStepCompleted('resolve-event');
+   $: eventChecked = isPhaseStepCompleted('event-check');
    $: eventResolved = isPhaseStepCompleted('resolve-event');
    $: eventDC = $kingdomData.eventDC;
    $: activeModifiers = $kingdomData.modifiers || [];
@@ -60,15 +61,13 @@
    
    onMount(() => {
       const initAsync = async () => {
-         await eventService.loadEvents();
-         
-         // Initialize the controller
-         eventPhaseController = createEventPhaseController(eventService);
+         // Initialize the controller - no need for eventService parameter
+         eventPhaseController = createEventPhaseController(null);
          
          // Check if an event was already rolled by another client
          if ($kingdomData.currentEventId) {
             console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
-            const event = eventService.getEventById($kingdomData.currentEventId);
+            const event = await EventProvider.getEventById($kingdomData.currentEventId);
             if (event) {
                currentEvent = event;
                // Also mark that we've checked for events so the button shows correctly
@@ -158,15 +157,15 @@
       isRolling = false;
    }
    
-   // Use controller for stability check logic
-   async function performStabilityCheck() {
+   // Use controller for event check logic
+   async function performEventCheck() {
       if (!eventPhaseController) return;
       
       // Check if another client already rolled for an event
       if ($kingdomData.currentEventId) {
          console.log('[EventsPhase] Event already rolled by another client, loading existing event');
          // Load the event by ID
-         const event = eventService.getEventById($kingdomData.currentEventId);
+         const event = await EventProvider.getEventById($kingdomData.currentEventId);
          if (event) {
             currentEvent = event;
          }
@@ -180,8 +179,8 @@
       
       // Animate the roll
       setTimeout(async () => {
-         // Use the controller to perform the stability check
-         const checkResult = await eventPhaseController.performStabilityCheck(currentDC);
+         // Use the controller to perform the event check
+         const checkResult = await eventPhaseController.performEventCheck(currentDC);
          
          // Update kingdom state with roll results and new DC for multiplayer sync
          await updateKingdom(kingdom => {
@@ -201,10 +200,10 @@
             currentEvent = checkResult.event;
          }
          
-         // Always mark phase as complete after rolling (whether event or not)
+         // Always mark step as complete after rolling (whether event or not)
          if (!eventChecked) {
             const actor = getKingdomActor();
-            if (actor) await actor.markPhaseStepCompleted('resolve-event');
+            if (actor) await actor.markPhaseStepCompleted('event-check');
          }
          
          isRolling = false;
@@ -470,8 +469,8 @@
       </div>
    {:else}
       <!-- Event Check Section -->
-      <div class="stability-check-section">
-         <h3>Roll for Event</h3>
+      <div class="event-check-section">
+         <h3>Event Check</h3>
          <div class="dc-info">
             <span class="dc-label">Event DC:</span>
             <span class="dc-value">{eventDC}</span>
@@ -479,7 +478,7 @@
          
          <Button 
             variant="secondary"
-            on:click={performStabilityCheck}
+            on:click={performEventCheck}
             disabled={!isViewingCurrentPhase || isRolling || eventChecked}
             icon={eventChecked ? 'fas fa-check' : 'fas fa-dice-d20'}
             iconPosition="left"
@@ -654,7 +653,7 @@
       margin-top: 20px;
    }
    
-   .stability-check-section {
+   .event-check-section {
       background: rgba(0, 0, 0, 0.05);
       padding: 25px;
       border-radius: var(--radius-lg);

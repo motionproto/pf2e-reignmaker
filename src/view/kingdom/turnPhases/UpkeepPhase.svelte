@@ -21,11 +21,11 @@
    let processingBuild = false;
    let processingEndTurn = false;
    
-   // Reactive UI state - use new kingdomData store
-   $: consumeCompleted = isPhaseStepCompleted('upkeep-food');
-   $: militaryCompleted = isPhaseStepCompleted('upkeep-military');
-   $: buildCompleted = isPhaseStepCompleted('upkeep-build');
-   $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
+   // Reactive UI state - use new kingdomData store with correct step IDs
+   $: consumeCompleted = isPhaseStepCompleted('feed-settlements');
+   $: militaryCompleted = isPhaseStepCompleted('support-military');
+   $: buildCompleted = isPhaseStepCompleted('process-builds');
+   $: resolveCompleted = false; // No longer needed - phase completes when all steps are done
 
    // Check if all manual steps are complete and auto-complete phase
    $: allManualStepsComplete = consumeCompleted && militaryCompleted && buildCompleted;
@@ -123,7 +123,7 @@
       
       processingFood = true;
       try {
-         const result = await upkeepController.processFeedSettlements();
+         const result = await upkeepController.feedSettlements();
          if (result.success) {
             console.log('✅ [UpkeepPhase] Settlements fed successfully');
          } else {
@@ -141,7 +141,7 @@
       
       processingMilitary = true;
       try {
-         const result = await upkeepController.processMilitarySupportManual();
+         const result = await upkeepController.supportMilitary();
          if (result.success) {
             console.log('✅ [UpkeepPhase] Military support processed successfully');
          } else {
@@ -159,7 +159,7 @@
       
       processingBuild = true;
       try {
-         const result = await upkeepController.processBuildQueueManual();
+         const result = await upkeepController.processBuilds();
          if (result.success) {
             console.log('✅ [UpkeepPhase] Build queue processed successfully');
          } else {
@@ -172,34 +172,10 @@
       }
    }
 
+   // Remove the auto-complete logic since phase completion should be manual
    async function handleCompletePhase() {
-      console.log('🔍 [UpkeepPhase DEBUG] handleCompletePhase called:', {
-         processingEndTurn,
-         hasController: !!upkeepController
-      });
-      
-      if (processingEndTurn || !upkeepController) {
-         console.log('🔍 [UpkeepPhase DEBUG] handleCompletePhase blocked:', {
-            processingEndTurn,
-            hasController: !!upkeepController
-         });
-         return;
-      }
-      
-      processingEndTurn = true;
-      try {
-         console.log('🔍 [UpkeepPhase DEBUG] Calling upkeepController.completePhase()...');
-         const result = await upkeepController.completePhase();
-         if (result.success) {
-            console.log('✅ [UpkeepPhase] Phase completed successfully');
-         } else {
-            console.error('❌ [UpkeepPhase] Failed to complete phase:', result.error);
-         }
-      } catch (error) {
-         console.error('❌ [UpkeepPhase] Error completing phase:', error);
-      } finally {
-         processingEndTurn = false;
-      }
+      console.log('🔍 [UpkeepPhase DEBUG] Manual phase completion no longer needed');
+      // Phase completes automatically when all steps are done
    }
 </script>
 

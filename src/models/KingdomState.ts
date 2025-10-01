@@ -121,6 +121,7 @@ export class KingdomState {
   // Event and incident tracking (for multiplayer sync)
   currentEventId: string | null = null;
   currentIncidentId: string | null = null;
+  ongoingEvents: string[] = [];
   incidentRoll: number | null = null;
   
   // Event roll tracking (for multiplayer sync)

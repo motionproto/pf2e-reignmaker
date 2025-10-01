@@ -30,7 +30,7 @@
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
 
   // Initialize controller
-  let controller = createActionPhaseController();
+  let controller: any = null;
   
   // Track other players' actions
   let otherPlayersActions = new Map<string, any>();
@@ -278,9 +278,9 @@
   }
 
   // Component lifecycle
-  onMount(() => {
+  onMount(async () => {
     // Initialize controller
-    controller = createActionPhaseController();
+    controller = await createActionPhaseController();
     
     // Initialize client context service
     clientContextService.initialize();
@@ -386,11 +386,13 @@
 
   function isActionAvailable(action: any): boolean {
     // Delegate to controller for business logic
+    if (!controller) return false;
     return controller.canPerformAction(action, $kingdomData as any);
   }
   
   function getMissingRequirements(action: any): string[] {
     // Delegate to controller for business logic
+    if (!controller) return [];
     const requirements = controller.getActionRequirements(action, $kingdomData as any);
     const missing: string[] = [];
     
@@ -412,6 +414,7 @@
 
   function isActionResolvedHelper(actionId: string): boolean {
     // Delegate to controller for business logic
+    if (!controller) return false;
     return controller.isActionResolved(actionId, currentUserId || undefined);
   }
   
@@ -734,7 +737,7 @@
               {@const isResolved = isActionResolvedHelper(action.id)}
               {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
               {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
-              {@const otherPlayersResolutions = controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId)}
+              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId) : []}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}`}

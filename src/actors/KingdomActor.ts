@@ -68,6 +68,7 @@ export interface KingdomData {
   // Event/incident tracking
   currentEventId?: string | null;
   currentIncidentId?: string | null;
+  ongoingEvents?: string[];
   incidentRoll?: number | null;
   eventStabilityRoll?: number | null;
   eventRollDC?: number | null;
@@ -143,7 +144,7 @@ export class KingdomActor extends Actor {
       currentPhaseSteps: [],
       oncePerTurnActions: [],
       playerActions: {},
-      eventDC: 4
+      eventDC: 15
     };
     
     await this.setKingdom(defaultKingdom);
@@ -167,7 +168,7 @@ export class KingdomActor extends Actor {
   }
 
   /**
-   * NEW: Complete a specific step and check if phase is done
+   * Complete a specific step and check if phase is done
    */
   async completePhaseStep(stepId: string): Promise<{ phaseComplete: boolean }> {
     let phaseComplete = false;
@@ -192,13 +193,13 @@ export class KingdomActor extends Actor {
   }
 
   /**
-   * NEW: Check if current phase is complete (simplified)
+   * Check if current phase is complete (simplified)
    */
   isCurrentPhaseComplete(): boolean {
     const kingdom = this.getKingdom();
     if (!kingdom) return false;
     
-    // NEW: Phase complete when all currentPhaseSteps are completed
+    // Phase complete when all currentPhaseSteps are completed
     const allStepsCompleted = kingdom.currentPhaseSteps.length > 0 && 
                               kingdom.currentPhaseSteps.every(step => step.completed);
     
@@ -236,7 +237,7 @@ export class KingdomActor extends Actor {
   }
 
   /**
-   * NEW: Check if a specific step is completed
+   * Check if a specific step is completed
    */
   isStepCompleted(stepId: string): boolean {
     const kingdom = this.getKingdom();
@@ -250,10 +251,8 @@ export class KingdomActor extends Actor {
    * LEGACY: Mark a phase step as completed (kept for compatibility)
    */
   async markPhaseStepCompleted(stepId: string): Promise<void> {
-    await this.updateKingdom((kingdom) => {
-      kingdom.phaseStepsCompleted[stepId] = true;
-      console.log(`[KingdomActor] LEGACY: Marked step '${stepId}' as completed`);
-    });
+    // Use the new step completion method
+    await this.completePhaseStep(stepId);
   }
   
   /**
@@ -373,9 +372,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     modifiers: [],
     currentPhaseSteps: [],
     oncePerTurnActions: [],
-    phaseStepsCompleted: {},
-    phasesCompleted: [],
     playerActions: {},
-    eventDC: 4
+    eventDC: 15
   };
 }
