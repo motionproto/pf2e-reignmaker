@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData, updateKingdom } from '../../../stores/kingdomActor';
+   import { kingdomData, updateKingdom } from '../../../stores/KingdomStore';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import type { Settlement } from '../../../models/Settlement';
 

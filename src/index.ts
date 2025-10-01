@@ -11,7 +11,7 @@ import { initKingdomIconDebug } from './ui/KingdomIconDebug';
 import { territoryService } from './services/territory';
 import { initializeKingdomSystem, getKingdomActor } from './main.kingdom';
 import { get } from 'svelte/store';
-import { kingdomData } from './stores/kingdomActor';
+import { kingdomData } from './stores/KingdomStore';
 import { KingdomApp } from './view/kingdom/KingdomApp';
 
 // Extend module type for our API

@@ -3,7 +3,7 @@
 
 import { modifierService } from '../services/domain/modifiers/ModifierService';
 import { get } from 'svelte/store';
-import { kingdomData } from '../stores/kingdomActor';
+import { kingdomData } from '../stores/KingdomStore';
 
 declare const game: any;
 declare const ui: any;

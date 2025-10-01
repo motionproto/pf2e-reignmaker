@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData } from '../../../stores/kingdomActor';
+   import { kingdomData } from '../../../stores/KingdomStore';
    import { WorksiteConfig } from '../../../models/Hex';
    
    // Resource icons and colors (matching ResourcesPhase)

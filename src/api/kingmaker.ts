@@ -1,6 +1,6 @@
 // External definitions for accessing the PF2e Kingmaker module's state
 
-import { kingdomData, updateKingdom } from '../stores/kingdomActor';
+import { kingdomData, updateKingdom } from '../stores/KingdomStore';
 import { Hex, Worksite, WorksiteType } from '../models/Hex';
 import type { Settlement, SettlementTier } from '../models/KingdomState';
 import { get } from 'svelte/store';

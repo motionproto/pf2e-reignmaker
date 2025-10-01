@@ -27,28 +27,40 @@ export interface Army {
 export type BuildProject = BuildProjectType;
 
 /**
- * Turn phases based on Reignmaker Lite rules
+ * Turn phases based on Reignmaker Lite rules - using semantic names
  */
 export enum TurnPhase {
-  PHASE_I = 'Phase I: Kingdom Status',
-  PHASE_II = 'Phase II: Resources',
-  PHASE_III = 'Phase III: Unrest & Incidents',
-  PHASE_IV = 'Phase IV: Events',
-  PHASE_V = 'Phase V: Actions',
-  PHASE_VI = 'Phase VI: Upkeep'
+  STATUS = 'Kingdom Status',
+  RESOURCES = 'Resources', 
+  UNREST = 'Unrest & Incidents',
+  EVENTS = 'Events',
+  ACTIONS = 'Actions',
+  UPKEEP = 'Upkeep'
 }
 
 /**
- * Turn phase configuration
+ * Turn phase configuration with descriptions
  */
 export const TurnPhaseConfig = {
-  [TurnPhase.PHASE_I]: { displayName: 'Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
-  [TurnPhase.PHASE_II]: { displayName: 'Resources', description: 'Collect resources and revenue' },
-  [TurnPhase.PHASE_III]: { displayName: 'Unrest & Incidents', description: 'Calculate unrest and resolve incidents' },
-  [TurnPhase.PHASE_IV]: { displayName: 'Events', description: 'Resolve kingdom events' },
-  [TurnPhase.PHASE_V]: { displayName: 'Actions', description: 'Perform kingdom actions' },
-  [TurnPhase.PHASE_VI]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }
+  [TurnPhase.STATUS]: { displayName: 'Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
+  [TurnPhase.RESOURCES]: { displayName: 'Resources', description: 'Collect resources and revenue' },
+  [TurnPhase.UNREST]: { displayName: 'Unrest & Incidents', description: 'Calculate unrest and resolve incidents' },
+  [TurnPhase.EVENTS]: { displayName: 'Events', description: 'Resolve kingdom events' },
+  [TurnPhase.ACTIONS]: { displayName: 'Actions', description: 'Perform kingdom actions' },
+  [TurnPhase.UPKEEP]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }
 };
+
+/**
+ * Phase order - controlled by TurnManager for maintainability
+ */
+export const PHASE_ORDER: TurnPhase[] = [
+  TurnPhase.STATUS,
+  TurnPhase.RESOURCES,
+  TurnPhase.UNREST,
+  TurnPhase.EVENTS,
+  TurnPhase.ACTIONS,
+  TurnPhase.UPKEEP
+];
 
 
 /**
@@ -118,7 +130,7 @@ export class KingdomState {
   
   // Turn and phase management (for multiplayer sync)
   currentTurn: number = 1;
-  currentPhase: TurnPhase = TurnPhase.PHASE_I;
+  currentPhase: TurnPhase = TurnPhase.STATUS;
   phaseStepsCompleted: Map<string, boolean> = new Map();
   phasesCompleted: Set<TurnPhase> = new Set();
   oncePerTurnActions: Set<string> = new Set();

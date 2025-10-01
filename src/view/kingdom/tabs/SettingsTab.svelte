@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, updateKingdom } from '../../../stores/kingdomActor';
+   import { kingdomData, updateKingdom } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    import { KingdomSettings } from '../../../api/foundry';
    import { isKingmakerInstalled, getKingmakerRealmData } from '../../../api/kingmaker';

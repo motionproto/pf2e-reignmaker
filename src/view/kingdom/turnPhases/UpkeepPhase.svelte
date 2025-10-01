@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/kingdomActor';
+   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    import type { BuildProject } from '../../../models/KingdomState';
    
@@ -160,7 +160,7 @@
       });
       
       incrementTurn();
-      setCurrentPhase(TurnPhase.PHASE_I);
+      setCurrentPhase(TurnPhase.STATUS);
       resetPhaseSteps();
    }
    

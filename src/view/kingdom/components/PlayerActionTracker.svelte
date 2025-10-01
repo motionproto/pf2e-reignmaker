@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { kingdomData } from '../../../stores/kingdomActor';
+  import { kingdomData } from '../../../stores/KingdomStore';
   
   export let compact: boolean = false;
   

@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData } from '../../../stores/kingdomActor';
+   import { kingdomData } from '../../../stores/KingdomStore';
    import type { KingdomModifier } from '../../../models/Modifiers';
    
    // Get severity color classes

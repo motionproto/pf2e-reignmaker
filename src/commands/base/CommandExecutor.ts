@@ -7,7 +7,7 @@
 
 import type { Command, CommandContext, CommandResult } from './Command';
 import { CommandHistory } from './CommandHistory';
-import { kingdomData as kingdomStore } from '../../stores/kingdomActor';
+import { kingdomData as kingdomStore } from '../../stores/KingdomStore';
 
 export interface ExecutionOptions {
     skipValidation?: boolean;

@@ -3,7 +3,7 @@
  * Replaces the complex persistence service with simple Foundry hooks
  */
 
-import { setupFoundrySync } from '../stores/kingdomActor';
+import { setupFoundrySync } from '../stores/KingdomStore';
 import type { KingdomActor } from '../actors/KingdomActor';
 
 declare const Hooks: any;
@@ -72,7 +72,7 @@ async function initializeKingdomActor(): Promise<void> {
   }
   
   // Initialize the actor in our store system
-  const { initializeKingdomActor } = await import('../stores/kingdomActor');
+  const { initializeKingdomActor } = await import('../stores/KingdomStore');
   initializeKingdomActor(kingdomActor);
   
   // Load territory data from Kingmaker module if available

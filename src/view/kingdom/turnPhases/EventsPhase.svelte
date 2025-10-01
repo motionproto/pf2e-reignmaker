@@ -1,6 +1,6 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, markPhaseStepCompleted, isPhaseStepCompleted, updateKingdom, spendPlayerAction } from '../../../stores/kingdomActor';
+   import { kingdomData, markPhaseStepCompleted, isPhaseStepCompleted, updateKingdom, spendPlayerAction } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    import { get } from 'svelte/store';
    
@@ -123,7 +123,7 @@
       // Spend the player's action
       const game = (window as any).game;
       if (game?.user?.id) {
-         spendPlayerAction(game.user.id, TurnPhase.PHASE_IV);
+         spendPlayerAction(game.user.id, TurnPhase.EVENTS);
       }
       
       // Calculate preview of effects without applying
@@ -246,7 +246,7 @@
       // Spend the player's action for ignoring the event
       const game = (window as any).game;
       if (game?.user?.id) {
-         spendPlayerAction(game.user.id, TurnPhase.PHASE_IV);
+         spendPlayerAction(game.user.id, TurnPhase.EVENTS);
       }
       
       try {

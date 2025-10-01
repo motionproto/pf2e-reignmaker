@@ -2,7 +2,7 @@
 // Manages structure definitions and calculations
 
 import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/kingdomActor';
+import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';

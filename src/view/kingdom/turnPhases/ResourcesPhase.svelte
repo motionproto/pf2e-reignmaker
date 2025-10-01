@@ -1,23 +1,15 @@
 <script lang="ts">
-   import { onMount, onDestroy } from 'svelte';
+   import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, setResource, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdomActor';
+   import { kingdomData, setResource, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import Button from '../components/baseComponents/Button.svelte';
    import { tick } from 'svelte';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
    
-   // Import clean architecture components
-   import { createResourcePhaseController } from '../../../controllers/ResourcePhaseController';
-   import type { ResourcePhaseController, ResourcePhaseDisplayData } from '../../../controllers/ResourcePhaseController';
-   
-   // Controller instance
-   let resourceController: ResourcePhaseController;
-   
    // UI State only
    let isCollecting = false;
-   let displayData: ResourcePhaseDisplayData | null = null;
    
    // Resource icons and colors - this is presentation configuration, belongs in component
    const resourceConfig: Record<string, { icon: string; color: string }> = {
@@ -63,78 +55,146 @@
       }
    }
    
-   // Reactive: Get all display data from controller in one call
-   // TEMPORARILY DISABLED: Controller not fully initialized yet
-   // $: if (resourceController && $kingdomData) {
-   //    displayData = resourceController.getDisplayData($kingdomData);
-   // }
+   // Reactive data from kingdomData store
+   $: collectCompleted = isPhaseStepCompleted('resources-collect');
+   $: currentResources = new Map([
+      ['food', $kingdomData.resources?.food || 0],
+      ['lumber', $kingdomData.resources?.lumber || 0], 
+      ['stone', $kingdomData.resources?.stone || 0],
+      ['ore', $kingdomData.resources?.ore || 0],
+      ['gold', $kingdomData.resources?.gold || 0]
+   ]);
    
-   // Temporary fallback data for phase viewing
-   $: if ($kingdomData) {
-      displayData = {
-         collectionCompleted: false,
-         currentResources: new Map([
-            ['food', $kingdomData.resources?.food || 0],
-            ['lumber', $kingdomData.resources?.lumber || 0], 
-            ['stone', $kingdomData.resources?.stone || 0],
-            ['ore', $kingdomData.resources?.ore || 0],
-            ['gold', $kingdomData.resources?.gold || 0]
-         ]),
-         totalProduction: new Map(),
-         productionByHex: new Map(),
-         worksiteDetails: [],
-         potentialGoldIncome: 0,
-         fedSettlementsCount: 0,
-         unfedSettlementsCount: 0,
-         settlementCount: 0,
-         lastCollectionResult: null,
-         phaseSummary: null
+   // Calculate preview data using controller logic
+   $: previewData = (() => {
+      if (!$kingdomData) return null;
+      
+      const hexes = $kingdomData.hexes || [];
+      const settlements = $kingdomData.settlements || [];
+      
+      // Calculate territory production
+      const territoryProduction = new Map<string, number>();
+      const worksiteDetails: Array<{hexName: string, terrain: string, production: Map<string, number>}> = [];
+      
+      for (const hex of hexes) {
+         if (!hex.worksite) continue;
+         const production = calculateHexProduction(hex);
+         
+         if (production.size > 0) {
+            // Add to total production
+            production.forEach((amount, resource) => {
+               const current = territoryProduction.get(resource) || 0;
+               territoryProduction.set(resource, current + amount);
+            });
+            
+            // Add to worksite details
+            worksiteDetails.push({
+               hexName: hex.name || hex.id || 'Unnamed Hex',
+               terrain: hex.terrain || 'Unknown',
+               production
+            });
+         }
+      }
+      
+      // Calculate settlement gold
+      let goldIncome = 0;
+      let fedCount = 0;
+      let unfedCount = 0;
+      
+      for (const settlement of settlements) {
+         if (settlement.wasFedLastTurn !== false) {
+            goldIncome += settlement.goldIncome || 0;
+            fedCount++;
+         } else {
+            unfedCount++;
+         }
+      }
+      
+      return {
+         territoryProduction,
+         worksiteDetails,
+         goldIncome,
+         fedCount,
+         unfedCount,
+         totalSettlements: settlements.length
       };
+   })();
+   
+   $: totalProduction = previewData?.territoryProduction || new Map();
+   $: worksiteDetails = previewData?.worksiteDetails || [];
+   $: potentialGoldIncome = previewData?.goldIncome || 0;
+   $: fedSettlementsCount = previewData?.fedCount || 0;
+   $: unfedSettlementsCount = previewData?.unfedCount || 0;
+   $: settlementCount = previewData?.totalSettlements || 0;
+   
+   // Auto-run collection when viewing current phase and not completed (reactive)
+   $: if (isViewingCurrentPhase && !collectCompleted && $kingdomData) {
+      console.log('🟡 [ResourcesPhase] Auto-running collection:', { isViewingCurrentPhase, collectCompleted });
+      handleCollectResources();
    }
    
-   // Extract commonly used values from display data for template convenience
-   $: collectCompleted = displayData?.collectionCompleted || isPhaseStepCompleted('resources-collect');
-   $: currentResources = displayData?.currentResources || new Map();
-   $: totalProduction = displayData?.totalProduction || new Map();
-   $: worksiteDetails = displayData?.worksiteDetails || [];
-   $: potentialGoldIncome = displayData?.potentialGoldIncome || 0;
-   $: fedSettlementsCount = displayData?.fedSettlementsCount || 0;
-   $: unfedSettlementsCount = displayData?.unfedSettlementsCount || 0;
-   $: settlementCount = displayData?.settlementCount || 0;
-   $: lastCollectionResult = displayData?.lastCollectionResult || null;
-   $: phaseSummary = displayData?.phaseSummary || null;
-   
-   // Initialize controller on mount
-   onMount(() => {
-      resourceController = createResourcePhaseController();
-   });
-   
-   // Clean up on destroy
-   onDestroy(() => {
-      if (resourceController) {
-         resourceController.resetState();
-      }
-   });
-   
-   // Handle resource collection using controller and commands
-   // TEMPORARILY DISABLED: Controller not fully initialized yet
+   // Handle resource collection using controller
    async function handleCollectResources() {
       if (isCollecting) return;
       
       isCollecting = true;
       
       try {
-         // TODO: Re-enable when controllers are properly set up
-         console.log('Resource collection temporarily disabled during phase bar restoration');
+         const { createResourcePhaseController } = await import('../../../controllers/ResourcePhaseController');
+         const controller = await createResourcePhaseController();
+         const result = await controller.runAutomation();
          
-         // Mark step as completed for now - this is a UI concern
-         markPhaseStepCompleted('resources-collect');
-         
+         if (!result.success) {
+            console.error('❌ [ResourcesPhase] Collection failed:', result.error);
+         }
       } catch (error) {
-         console.error('Error collecting resources:', error);
+         console.error('❌ [ResourcesPhase] Error:', error);
       } finally {
          isCollecting = false;
       }
+   }
+   
+   // Calculate production for a single hex (matches controller logic)
+   function calculateHexProduction(hex: any): Map<string, number> {
+      const production = new Map<string, number>();
+      
+      if (!hex.worksite) return production;
+      
+      const terrain = hex.terrain.toLowerCase();
+      const worksiteType = hex.worksite.type;
+      
+      // Base production based on worksite type and terrain compatibility
+      switch (worksiteType) {
+         case 'Farmstead':
+            if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
+            else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
+            break;
+         case 'Logging Camp':
+            if (terrain === 'forest') production.set('lumber', 2);
+            break;
+         case 'Quarry':
+            if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
+            break;
+         case 'Mine':
+         case 'Bog Mine':
+            if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
+            break;
+         case 'Hunting/Fishing Camp':
+            if (terrain === 'swamp') production.set('food', 1);
+            break;
+         case 'Oasis Farm':
+            if (terrain === 'desert') production.set('food', 1);
+            break;
+      }
+      
+      // Apply special trait bonus (+1 to all production)
+      if (hex.hasSpecialTrait) {
+         production.forEach((amount: number, resource: string) => {
+            production.set(resource, amount + 1);
+         });
+      }
+      
+      return production;
    }
 </script>
 
@@ -288,14 +348,12 @@
             </div>
          {/if}
          
-         <!-- Summary of what controller has collected this phase -->
-         {#if phaseSummary && collectCompleted}
+         <!-- Collection completed indicator -->
+         {#if collectCompleted}
             <div class="phase-summary">
-               <div class="summary-title">Phase Summary:</div>
+               <div class="summary-title">✅ Resources collected this turn</div>
                <div class="summary-details">
-                  <span>Hex Production: {phaseSummary.hexProduction.size} resource types</span>
-                  <span>Gold Income: {phaseSummary.goldIncome} gold</span>
-                  <span>Total Resources: {phaseSummary.totalCollected.size} types collected</span>
+                  <span>Territory production and settlement gold have been added to your treasury</span>
                </div>
             </div>
          {/if}

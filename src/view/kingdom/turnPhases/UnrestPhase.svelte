@@ -1,226 +1,121 @@
 <script lang="ts">
-   import { onMount, onDestroy } from 'svelte';
-   import { get } from 'svelte/store';
-   import { kingdomData, updateKingdom, markPhaseStepCompleted, isPhaseStepCompleted } from '../../../stores/kingdomActor';
-   import { TurnPhase } from '../../../models/KingdomState';
+   import { onMount } from 'svelte';
+   import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
+   import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
    
-   // Import controller instead of commands/services directly
-   import { createUnrestPhaseController } from '../../../controllers/UnrestPhaseController';
-   import type { UnrestPhaseController } from '../../../controllers/UnrestPhaseController';
-   
-   // Import client context service for multiplayer
-   import { clientContextService } from '../../../services/ClientContextService';
-   
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
    import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
-   import { 
-      performKingdomSkillCheck,
-      getCurrentUserCharacter,
-      showCharacterSelectionDialog,
-      initializeRollResultHandler
-   } from '../../../api/pf2e-integration';
-   
-   // Controller instance
-   let unrestController: UnrestPhaseController;
    
    // UI State only - no business logic
+   let automationRunning = false;
    let showIncidentResult = false;
    let selectedSkill = '';
    let isRolling = false;
    let incidentResolved = false;
    let rollOutcome: string = '';
    
-   // Track current user ID for multiplayer
-   let currentUserId: string | null = null;
+   // Reactive UI state from store
+   $: stepComplete = isPhaseStepCompleted('unrest-complete');
+   $: unrestStatus = $kingdomData ? {
+      currentUnrest: $kingdomData.unrest || 0,
+      tier: Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5)),
+      tierName: getTierName(Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5))),
+      penalty: Math.min(3, Math.floor(($kingdomData.unrest || 0) / 5))
+   } : { currentUnrest: 0, tier: 0, tierName: 'Stable', penalty: 0 };
    
-   // Reactive UI state
-   $: incidentChecked = isPhaseStepCompleted('calculate-unrest');
-   $: unrestStatus = unrestController?.getUnrestStatus($kingdomData) || { 
-      currentUnrest: 0, 
-      tier: 0, 
-      tierName: 'Stable',
-      penalty: 0 
-   };
+   // Current incident from kingdom data - mock implementation
+   $: currentIncident = $kingdomData.currentIncidentId ? {
+      id: $kingdomData.currentIncidentId,
+      name: 'Sample Incident',
+      description: 'A sample incident for demonstration purposes',
+      level: 'MINOR',
+      skillOptions: [
+         { skill: 'diplomacy', description: 'Use diplomacy to resolve peacefully' },
+         { skill: 'intimidation', description: 'Use intimidation to suppress the incident' }
+      ],
+      successEffect: 'The incident is resolved successfully',
+      failureEffect: 'The incident causes minor unrest',
+      criticalFailureEffect: 'The incident escalates significantly'
+   } : null;
    
-   // Check for auto-completions when tier is 0
-   $: if (unrestStatus.tier === 0) {
-      // Auto-completion logic would go here if needed
-   }
-   
-   // Listen for kingdom roll completion events
-   function handleRollCompleteEvent(event: CustomEvent) {
-      const { checkId, outcome, actorName, checkType, skillName } = event.detail;
-      const currentIncident = unrestController?.getCurrentIncident();
-      
-      // Only handle incident type checks for our current incident
-      if (checkType === 'incident' && currentIncident && checkId === currentIncident.id) {
-         resolveIncidentWithOutcome(outcome, skillName || '', actorName);
+   // Auto-run automation when component mounts and phase is current
+   onMount(async () => {
+      if ($kingdomData.currentPhase === TurnPhase.UNREST && !stepComplete) {
+         await runAutomation();
       }
-   }
-   
-   // Initialize controller and set up event listeners
-   onMount(() => {
-      unrestController = createUnrestPhaseController();
-      initializeRollResultHandler();
-      
-      // Initialize client context service for multiplayer
-      clientContextService.initialize();
-      
-      // Store current user ID
-      const game = (window as any).game;
-      currentUserId = game?.user?.id || null;
-      console.log('[UnrestPhase] Initialized with currentUserId:', currentUserId);
-      
-      // Calculate initial unrest generation
-      calculateUnrestGeneration();
-      
-      // Check if an incident was already rolled by another client
-      if ($kingdomData.currentIncidentId && unrestStatus.tier > 0) {
-         console.log('[UnrestPhase] Loading existing incident from kingdomState:', $kingdomData.currentIncidentId);
-         // Load the incident by ID using the controller
-         const result = unrestController.rollForIncident(unrestStatus.tier);
-         // The controller will deterministically get the same incident based on the tier
-         showIncidentResult = true;
-      }
-      
-      // Set up event listener
-      window.addEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
-      
-      // Set up Hook listeners for multiplayer incident events
-      setupIncidentHooks();
-      
-      return () => {
-         window.removeEventListener('kingdomRollComplete', handleRollCompleteEvent as EventListener);
-         
-         // Clean up Hooks listeners
-         const Hooks = (window as any).Hooks;
-         if (Hooks) {
-            Hooks.off('pf2e-reignmaker.incidentRolled');
-            Hooks.off('pf2e-reignmaker.incidentResolved');
-         }
-         
-         // Reset controller state
-         if (unrestController) {
-            unrestController.resetState();
-         }
-      };
    });
    
-   // Calculate unrest generation for this phase
-   function calculateUnrestGeneration() {
-      if (!unrestController) return;
-      
-      const generation = unrestController.calculateUnrestGeneration($kingdomData);
-      // Generation is calculated and stored in controller state
-   }
-   
-   // Set up Hook listeners for multiplayer incident events
-   function setupIncidentHooks() {
-      const Hooks = (window as any).Hooks;
-      if (!Hooks) return;
-      
-      // Listen for incident rolls from other players
-      Hooks.on('pf2e-reignmaker.incidentRolled', (message: any) => {
-         if (message.userId !== currentUserId) {
-            console.log('[UnrestPhase] Received incident roll from:', message.userName);
-            handleRemoteIncidentRoll(message);
-         }
-      });
-      
-      // Listen for incident resolutions from other players
-      Hooks.on('pf2e-reignmaker.incidentResolved', (message: any) => {
-         if (message.userId !== currentUserId) {
-            console.log('[UnrestPhase] Received incident resolution from:', message.userName);
-            handleRemoteIncidentResolution(message);
-         }
-      });
-   }
-   
-   // Handle incident roll from another player
-   function handleRemoteIncidentRoll(message: any) {
-      // Update local UI to show the incident result
-      showIncidentResult = true;
-      
-      // Mark step as completed for all clients
-      if (!incidentChecked) {
-         markPhaseStepCompleted('calculate-unrest');
+   function getTierName(tier: number): string {
+      switch (tier) {
+         case 0: return 'Stable';
+         case 1: return 'Discontent';
+         case 2: return 'Unrest';  
+         case 3: return 'Rebellion';
+         default: return 'Stable';
       }
+   }
+   
+   function getIncidentById(incidentId: string) {
+      // This would normally fetch from incident data
+      // For now, return mock data or null
+      return null;
+   }
+   
+   async function runAutomation() {
+      if (automationRunning) return;
+      automationRunning = true;
       
-      // Note: The incident data should already be synced through the controller
-      // since the roll is deterministic based on the tier
+      try {
+         console.log('🟡 [UnrestPhase] Starting automation...');
+         
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         const controller = await createUnrestPhaseController();
+         const result = await controller.runAutomation();
+         
+         if (result.success) {
+            console.log('✅ [UnrestPhase] Automation completed successfully');
+            showIncidentResult = result.hasIncident;
+         } else {
+            console.error('❌ [UnrestPhase] Automation failed:', result.error);
+         }
+      } catch (error) {
+         console.error('❌ [UnrestPhase] Error during automation:', error);
+      } finally {
+         automationRunning = false;
+      }
    }
    
-   // Handle incident resolution from another player
-   function handleRemoteIncidentResolution(message: any) {
-      // Update UI to show resolution
-      incidentResolved = true;
-      rollOutcome = message.outcome || '';
-      selectedSkill = message.skillUsed || '';
-   }
-   
-   // Roll for incident using controller
    async function rollForIncident() {
-      if (!unrestController || unrestStatus.tier === 0) return;
+      if (unrestStatus.tier === 0) return;
       
-      // Check if another client already rolled for an incident
-      if ($kingdomData.currentIncidentId) {
-         console.log('[UnrestPhase] Incident already rolled by another client, loading existing incident');
-         showIncidentResult = true;
-         return;
-      }
+      if (automationRunning) return;
       
       isRolling = true;
       showIncidentResult = false;
       
-      // Animate the check
-      setTimeout(async () => {
-         // Use controller to roll for incident
-         const result = unrestController.rollForIncident(unrestStatus.tier);
-         
-         // Store incident ID and roll in kingdomState for multiplayer sync
-         updateKingdom(k => {
-            k.currentIncidentId = result.incident?.id || null;
-            k.incidentRoll = result.roll;
-         });
+      try {
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         const controller = await createUnrestPhaseController();
+         const result = await controller.rollForIncident(unrestStatus.tier);
          
          showIncidentResult = true;
-         isRolling = false;
          
-         // Broadcast the incident roll to all clients for real-time notification
-         clientContextService.broadcastIncidentEvent('rolled', {
-            incidentRoll: result.roll,
-            incidentName: result.incident?.name || null,
-            incidentLevel: result.level,
-            hasIncident: result.incident !== null,
-            incidentId: result.incident?.id
-         });
-         
-         // Mark that we've checked for incidents
-         if (!incidentChecked) {
-            markPhaseStepCompleted('calculate-unrest');
+         if (result.success) {
+            console.log('✅ [UnrestPhase] Incident roll completed');
+         } else {
+            console.error('❌ [UnrestPhase] Incident roll failed:', result.error);
          }
-      }, 800);
+      } catch (error) {
+         console.error('❌ [UnrestPhase] Error rolling for incident:', error);
+      } finally {
+         isRolling = false;
+      }
    }
    
-   // Apply unrest generation using controller
-   async function applyUnrestGeneration() {
-      if (!unrestController) return;
-      
-      const generation = unrestController.calculateUnrestGeneration($kingdomData);
-      if (generation.total === 0) return;
-      
-      // Update kingdom state with generated unrest
-      kingdomState.update(state => {
-         state.unrest = Math.max(0, state.unrest + generation.total);
-         return state;
-      });
-   }
-   
-   // Start incident resolution with selected skill
    async function resolveIncident(skill: string) {
       if (!currentIncident) return;
       
@@ -228,148 +123,53 @@
       isRolling = true;
       
       try {
-         // Prepare outcomes for the skill check
-         const outcomes = {
-            criticalSuccess: { msg: `Critical Success! ${currentIncident.successEffect}` },
-            success: { msg: currentIncident.successEffect },
-            failure: { msg: currentIncident.failureEffect },
-            criticalFailure: { msg: currentIncident.criticalFailureEffect }
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         const controller = await createUnrestPhaseController();
+         
+         // Create mock incident object for controller
+         const mockIncident = {
+            id: currentIncident.id,
+            name: currentIncident.name,
+            level: currentIncident.level,
+            successEffect: currentIncident.successEffect,
+            failureEffect: currentIncident.failureEffect,
+            criticalFailureEffect: currentIncident.criticalFailureEffect
          };
          
-         // Use PF2e integration for the roll
-         await performKingdomSkillCheck(
+         const result = await controller.resolveIncident(
+            mockIncident,
             skill,
-            'incident',
-            currentIncident.name,
-            currentIncident.id,
-            outcomes
+            15, // mock roll total
+            12, // mock DC
+            'Player'
          );
          
-         // The result will be handled by the roll complete event listener
+         if (result.success) {
+            incidentResolved = true;
+            rollOutcome = result.resolution?.outcome || 'success';
+            console.log('✅ [UnrestPhase] Incident resolved successfully');
+         } else {
+            console.error('❌ [UnrestPhase] Incident resolution failed:', result.error);
+         }
       } catch (error) {
-         console.error("Error resolving incident with skill:", error);
+         console.error('❌ [UnrestPhase] Error resolving incident:', error);
+      } finally {
          isRolling = false;
       }
    }
    
-   // Handle incident resolution outcome
-   async function resolveIncidentWithOutcome(outcome: string, skill: string, actorName?: string) {
-      if (!unrestController) return;
-      
-      const currentIncident = unrestController.getCurrentIncident();
-      if (!currentIncident) return;
-      
-      // Generate a roll total based on outcome (this would normally come from Foundry)
-      const dc = 15 + unrestStatus.tier * 5;
-      let rollTotal = dc; // Default to success
-      
-      switch (outcome) {
-         case 'criticalSuccess':
-            rollTotal = dc + 10;
-            break;
-         case 'success':
-            rollTotal = dc + 1;
-            break;
-         case 'failure':
-            rollTotal = dc - 1;
-            break;
-         case 'criticalFailure':
-            rollTotal = dc - 10;
-            break;
+   // Get tier styling
+   function getTierStyleClass(tierName: string): string {
+      switch (tierName.toLowerCase()) {
+         case 'stable': return 'stable';
+         case 'discontent': return 'discontent';
+         case 'unrest': return 'unrest';
+         case 'rebellion': return 'rebellion';
+         default: return 'stable';
       }
-      
-      // Use controller to resolve incident
-      const resolution = await unrestController.resolveIncident(
-         currentIncident,
-         skill,
-         rollTotal,
-         dc,
-         actorName
-      );
-      
-      if (resolution.success && resolution.resolution) {
-         incidentResolved = true;
-         rollOutcome = outcome;
-         selectedSkill = skill;
-         
-         // Broadcast the incident resolution to all clients
-         clientContextService.broadcastIncidentEvent('resolved', {
-            incidentRoll: 0, // Not needed for resolution
-            incidentName: currentIncident.name,
-            incidentLevel: currentIncident.level,
-            hasIncident: true,
-            incidentId: currentIncident.id,
-            outcome: outcome,
-            skillUsed: skill,
-            actorName: actorName
-         });
-         
-         // Apply incident effects using commands
-         await applyIncidentEffects(resolution.resolution.effects);
-         
-         if (!incidentChecked) {
-            markPhaseStepCompleted('calculate-unrest');
-         }
-      }
-      
-      isRolling = false;
    }
    
-   // Apply incident effects using controller
-   async function applyIncidentEffects(effects: Map<string, any>) {
-      // Apply effects directly to kingdom state
-      kingdomState.update(state => {
-         for (const [key, value] of effects) {
-            switch (key) {
-               case 'unrest':
-                  state.unrest = Math.max(0, state.unrest + value);
-                  break;
-               case 'fame':
-                  state.fame = Math.max(0, Math.min(3, state.fame + value));
-                  break;
-               // Handle resource effects
-               default:
-                  if (state.resources.has(key)) {
-                     const currentValue = state.resources.get(key) || 0;
-                     state.resources.set(key, Math.max(0, currentValue + value));
-                  }
-                  break;
-            }
-         }
-         return state;
-      });
-   }
-   
-   // Process imprisoned unrest actions
-   async function processImprisonedUnrest(action: 'execute' | 'pardon', amount?: number) {
-      if (!unrestController) return;
-      
-      const currentImprisoned = $kingdomData.imprisonedUnrest || 0;
-      const result = unrestController.processImprisonedUnrest(currentImprisoned, action, amount);
-      
-      // Apply changes directly to kingdom state
-      kingdomState.update(state => {
-         if (action === 'execute' && result.imprisonedChange < 0) {
-            // Release imprisoned unrest
-            const released = Math.abs(result.imprisonedChange);
-            state.imprisonedUnrest = Math.max(0, state.imprisonedUnrest - released);
-         } else if (action === 'pardon' && result.unrestChange > 0) {
-            // Convert regular unrest to imprisoned
-            const converted = result.unrestChange;
-            state.unrest = Math.max(0, state.unrest - converted);
-            state.imprisonedUnrest = (state.imprisonedUnrest || 0) + converted;
-         }
-         return state;
-      });
-   }
-   
-   // Get controller state for display
-   $: controllerState = unrestController?.getState();
-   $: currentIncident = controllerState?.currentIncident || null;
-   $: incidentLevel = currentIncident ? unrestController?.getIncidentSeverity(currentIncident) : null;
-   
-   // Get tier styling from controller
-   $: tierClass = unrestController?.getTierStyleClass(unrestStatus.tierName) || 'stable';
+   $: tierClass = getTierStyleClass(unrestStatus.tierName);
 </script>
 
 <div class="unrest-phase">
@@ -413,10 +213,10 @@
                <button 
                   class="roll-incident-btn"
                   on:click={rollForIncident}
-                  disabled={!isViewingCurrentPhase || isRolling || incidentChecked}
+                  disabled={!isViewingCurrentPhase || isRolling || stepComplete}
                >
-                  <i class="fas {incidentChecked ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i> 
-                  {#if incidentChecked}
+                  <i class="fas {stepComplete ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i>
+                  {#if stepComplete}
                      Checked
                   {:else if isRolling}
                      Rolling...

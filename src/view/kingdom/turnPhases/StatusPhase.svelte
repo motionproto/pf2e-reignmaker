@@ -1,6 +1,6 @@
 <script lang="ts">
 import { onMount } from 'svelte';
-import { kingdomData, isPhaseStepCompleted } from '../../../stores/kingdomActor';
+import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../models/KingdomState';
 
 // Props (currently unused but kept for potential future use)
@@ -26,7 +26,7 @@ onMount(async () => {
    console.log('🟡 [StatusPhase] Mounted, checking if should run automation...');
    
    // Only run automation if we're in the Status Phase and haven't run yet
-   if ($kingdomData.currentPhase === TurnPhase.PHASE_I && !fameReset && !modifiersProcessed) {
+   if ($kingdomData.currentPhase === TurnPhase.STATUS && !fameReset && !modifiersProcessed) {
       console.log('🟡 [StatusPhase] Starting automation...');
       previousFame = $kingdomData.fame;
       await runAutomation();

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { currentPhase, currentTurn, isCurrentPhaseComplete } from '../../../stores/kingdomActor';
+  import { currentPhase, currentTurn, isCurrentPhaseComplete } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../models/KingdomState';
   import Button from './baseComponents/Button.svelte';
   

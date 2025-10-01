@@ -80,4 +80,4 @@ export async function markPhaseStepCompleted(stepId: string): Promise<void> {
 // Re-export key types and classes
 export { KingdomActor } from './actors/KingdomActor';
 export type { KingdomData } from './actors/KingdomActor';
-export * from './stores/kingdomActor';
+export * from './stores/KingdomStore';

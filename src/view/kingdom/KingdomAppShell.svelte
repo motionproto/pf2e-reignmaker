@@ -3,7 +3,7 @@
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
-   import { kingdomData }                         from '../../stores/kingdomActor';
+   import { kingdomData }                         from '../../stores/KingdomStore';
    import { uiState, setSelectedTab }             from '../../stores/ui';
    
    // Import territory service for syncing
@@ -43,7 +43,7 @@
       // First ensure we have a kingdom actor
       try {
          const { ensureKingdomActor } = await import('../../hooks/kingdomSync');
-         const { initializeKingdomActor } = await import('../../stores/kingdomActor');
+         const { initializeKingdomActor } = await import('../../stores/KingdomStore');
          const { KingdomActor } = await import('../../actors/KingdomActor');
          
          console.log('[KingdomAppShell] Ensuring kingdom actor exists...');

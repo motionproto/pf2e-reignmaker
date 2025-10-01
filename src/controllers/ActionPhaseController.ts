@@ -15,7 +15,7 @@ import type { KingdomState } from '../models/KingdomState';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
 import { 
     kingdomData
-} from '../stores/kingdomActor';
+} from '../stores/KingdomStore';
 import { clientContextService } from '../services/ClientContextService';
 
 // Simple type definition for action resolution

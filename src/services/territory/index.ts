@@ -10,7 +10,7 @@
  */
 
 import { get } from 'svelte/store';
-import { kingdomData, updateKingdom } from '../../stores/kingdomActor';
+import { kingdomData, updateKingdom } from '../../stores/KingdomStore';
 import { Hex, Worksite, WorksiteType } from '../../models/Hex';
 import type { Settlement, SettlementTier } from '../../models/KingdomState';
 import { createSettlement } from '../../models/Settlement';

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { kingdomData, updateKingdom } from "../../../stores/kingdomActor";
+  import { kingdomData, updateKingdom } from "../../../stores/KingdomStore";
   import { 
     spendPlayerAction,
     resetPlayerAction,
     getPlayerAction
-  } from "../../../stores/kingdomActor";
+  } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../models/KingdomState";
   import { PlayerActionsData } from "../../../models/PlayerActions";
   import CheckCard from "../../kingdom/components/CheckCard.svelte";
@@ -497,7 +497,7 @@
         });
       }
       
-      const success = spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
+      const success = spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
       
       // Manually update actionsUsed since reactive statement isn't updating immediately
       actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
@@ -664,7 +664,7 @@
     // Mark the build-structure action as used for this player
     const game = (window as any).game;
     if (game?.user?.id) {
-      spendPlayerAction(game.user.id, TurnPhase.PHASE_V);
+      spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
       actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
     }
     

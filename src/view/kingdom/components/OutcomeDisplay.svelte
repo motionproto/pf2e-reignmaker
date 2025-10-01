@@ -1,6 +1,6 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
-   import { kingdomData } from '../../../stores/kingdomActor';
+   import { kingdomData } from '../../../stores/KingdomStore';
    import Button from './baseComponents/Button.svelte';
    
    export let outcome: string;

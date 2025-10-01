@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData, resources, updateKingdom, modifyResource } from '../../../stores/kingdomActor';
+   import { kingdomData, resources, updateKingdom, modifyResource } from '../../../stores/KingdomStore';
    import type { KingdomState } from '../../../models/KingdomState';
    import { tick } from 'svelte';
    import EditableStat from './EditableStat.svelte';

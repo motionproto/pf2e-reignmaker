@@ -13,7 +13,7 @@
 
 ### 3. Data Flow Pattern
 ```
-Read:  KingdomActor → kingdomData store → Component Display
+Read:  KingdomActor → KingdomStore → Component Display
 Write: Component Action → Controller → KingdomActor → Foundry → All Clients
 ```
 
@@ -23,7 +23,7 @@ Write: Component Action → Controller → KingdomActor → Foundry → All Clie
 ```svelte
 <script>
 // ✅ READ from stores
-import { kingdomData, resources } from '../stores/kingdomActor';
+import { kingdomData, resources } from '../stores/KingdomStore';
 
 // ✅ UI state only
 let isProcessing = false;
@@ -73,7 +73,7 @@ src/
 ├── view/          # Svelte components (presentation only)
 ├── controllers/   # Business logic (phase operations, game rules)
 ├── services/      # Complex operations (utilities, calculations)
-├── stores/        # Reactive bridges (read-only)
+├── stores/        # KingdomStore - Reactive bridges (read-only)
 ├── actors/        # KingdomActor (single source of truth)
 └── models/        # TurnManager (simple turn progression)
 ```

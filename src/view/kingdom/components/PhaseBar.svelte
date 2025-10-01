@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { kingdomData, setViewingPhase, viewingPhase } from '../../../stores/kingdomActor';
+  import { kingdomData, setViewingPhase, viewingPhase } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../models/KingdomState';
   import { onMount } from 'svelte';
 
@@ -58,7 +58,12 @@
   }
   
   function isPhaseCompleted(phase: TurnPhase): boolean {
-    return phasesCompleted.includes(phase);
+    // Follow architecture: Read from kingdomData store (KingdomActor → kingdomData store → Component Display)
+    const phaseIndex = getPhaseIndex(phase);
+    const currentIndex = getPhaseIndex($kingdomData.currentPhase);
+    
+    // Phase is completed if it's in the completed array OR we've moved past it
+    return $kingdomData.phasesCompleted?.includes(phase) || phaseIndex < currentIndex;
   }
   
   function isPhaseFuture(phase: TurnPhase): boolean {

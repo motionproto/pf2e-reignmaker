@@ -27,7 +27,7 @@ export const unrest = derived(kingdomData, $data => $data.unrest);
 export const fame = derived(kingdomData, $data => $data.fame);
 
 // UI-only state (no persistence needed)
-export const viewingPhase = writable<TurnPhase>(TurnPhase.PHASE_I);
+export const viewingPhase = writable<TurnPhase>(TurnPhase.STATUS);
 export const selectedSettlement = writable<string | null>(null);
 export const expandedSections = writable<Set<string>>(new Set());
 
@@ -44,6 +44,31 @@ export function initializeKingdomActor(actor: KingdomActor): void {
   }
   
   console.log('[KingdomActor Store] Initialized with actor:', actor.name);
+  
+  // Initialize TurnManager and trigger current phase controller
+  initializeTurnManagerAndTriggerPhase();
+}
+
+/**
+ * Initialize TurnManager and trigger controller for current phase
+ */
+async function initializeTurnManagerAndTriggerPhase(): Promise<void> {
+  try {
+    // Initialize TurnManager
+    const { initializeTurnManager } = await import('./turn');
+    initializeTurnManager();
+    
+    // Trigger current phase controller - architecture ensures proper reactive flow
+    try {
+      const { triggerCurrentPhaseController } = await import('./turn');
+      triggerCurrentPhaseController();
+      console.log('✅ [KingdomActor Store] TurnManager initialized and current phase controller triggered');
+    } catch (error) {
+      console.error('[KingdomActor Store] Error triggering current phase controller:', error);
+    }
+  } catch (error) {
+    console.error('[KingdomActor Store] Error initializing TurnManager:', error);
+  }
 }
 
 /**
@@ -93,15 +118,41 @@ export async function updateKingdom(updater: (kingdom: KingdomData) => void): Pr
  */
 
 export async function advancePhase(): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.advancePhase();
-  
-  // Update viewing phase to match new current phase
-  const updatedKingdom = actor.getKingdom();
-  if (updatedKingdom) {
-    viewingPhase.set(updatedKingdom.currentPhase);
+  // Use TurnManager for phase advancement instead of direct actor call
+  // This ensures phase controllers are properly triggered
+  try {
+    const { turnManager } = await import('./turn');
+    const manager = get(turnManager);
+    
+    if (manager) {
+      await manager.nextPhase();
+      console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
+    } else {
+      console.warn('[KingdomActor Store] No TurnManager available, falling back to direct actor call');
+      const actor = get(kingdomActor);
+      if (actor) {
+        await actor.advancePhase();
+      }
+    }
+    
+    // Update viewing phase to match new current phase
+    const actor = get(kingdomActor);
+    const updatedKingdom = actor?.getKingdom();
+    if (updatedKingdom) {
+      viewingPhase.set(updatedKingdom.currentPhase);
+    }
+  } catch (error) {
+    console.error('[KingdomActor Store] Error advancing phase:', error);
+    
+    // Fallback to direct actor call if TurnManager fails
+    const actor = get(kingdomActor);
+    if (actor) {
+      await actor.advancePhase();
+      const updatedKingdom = actor.getKingdom();
+      if (updatedKingdom) {
+        viewingPhase.set(updatedKingdom.currentPhase);
+      }
+    }
   }
 }
 

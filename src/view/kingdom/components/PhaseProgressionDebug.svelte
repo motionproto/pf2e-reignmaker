@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData, viewingPhase, isCurrentPhaseComplete, advancePhase, markPhaseStepCompleted } from '../../../stores/kingdomActor';
+   import { kingdomData, viewingPhase, isCurrentPhaseComplete, advancePhase, markPhaseStepCompleted } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../models/KingdomState';
    
    const phaseNames: Record<TurnPhase, string> = {

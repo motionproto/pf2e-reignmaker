@@ -4,7 +4,7 @@
  */
 
 import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/kingdomActor';
+import { kingdomData } from '../../stores/KingdomStore';
 import { structuresService } from '../structures';
 import { settlementService } from '../settlements';
 import type { BuildProject } from '../../models/BuildProject';

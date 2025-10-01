@@ -7,7 +7,7 @@
  * - Notify TurnManager when complete
  */
 
-import { markPhaseStepCompleted, setResource, modifyResource } from '../stores/kingdomActor';
+import { markPhaseStepCompleted, setResource, modifyResource } from '../stores/KingdomStore';
 import { get } from 'svelte/store';
 
 export async function createStatusPhaseController() {
@@ -43,7 +43,7 @@ export async function createStatusPhaseController() {
     },
     
     async applyModifiers() {
-      const { kingdomData } = await import('../stores/kingdomActor');
+      const { kingdomData } = await import('../stores/KingdomStore');
       const kingdom = get(kingdomData);
       
       const modifiers = kingdom.modifiers || [];

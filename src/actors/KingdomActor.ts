@@ -111,7 +111,7 @@ export class KingdomActor extends Actor {
   async initializeKingdom(name: string = 'New Kingdom'): Promise<void> {
     const defaultKingdom: KingdomData = {
       currentTurn: 1,
-      currentPhase: TurnPhase.PHASE_I,
+      currentPhase: TurnPhase.STATUS,
       resources: {
         gold: 0,
         food: 0,
@@ -146,27 +146,20 @@ export class KingdomActor extends Actor {
   
   /**
    * Advance to next phase - handles both phase progression and turn advancement
+   * Uses semantic phase names for better maintainability
    */
   async advancePhase(): Promise<void> {
     await this.updateKingdom((kingdom) => {
-      const phases: TurnPhase[] = [
-        TurnPhase.PHASE_I, 
-        TurnPhase.PHASE_II, 
-        TurnPhase.PHASE_III, 
-        TurnPhase.PHASE_IV, 
-        TurnPhase.PHASE_V, 
-        TurnPhase.PHASE_VI
-      ];
-      const currentIndex = phases.indexOf(kingdom.currentPhase);
+      const nextPhase = this.getNextPhase(kingdom.currentPhase);
       
-      if (currentIndex < phases.length - 1) {
+      if (nextPhase) {
         // Advance to next phase
-        kingdom.currentPhase = phases[currentIndex + 1];
+        kingdom.currentPhase = nextPhase;
         console.log(`[KingdomActor] Advanced to ${kingdom.currentPhase}`);
       } else {
         // End of turn - advance to next turn
         kingdom.currentTurn += 1;
-        kingdom.currentPhase = TurnPhase.PHASE_I;
+        kingdom.currentPhase = TurnPhase.STATUS;
         
         // Clear turn-specific data
         kingdom.phaseStepsCompleted = {};
@@ -325,19 +318,37 @@ export class KingdomActor extends Actor {
   }
   
   /**
-   * Get required steps for a phase
+   * Get next phase in sequence - uses PHASE_ORDER for maintainability
+   */
+  private getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
+    const { PHASE_ORDER } = require('../models/KingdomState');
+    const currentIndex = PHASE_ORDER.indexOf(currentPhase);
+    
+    if (currentIndex >= 0 && currentIndex < PHASE_ORDER.length - 1) {
+      return PHASE_ORDER[currentIndex + 1];
+    }
+    
+    return null; // End of turn
+  }
+
+  /**
+   * Get required steps for a phase - using semantic names
    */
   private getRequiredStepsForPhase(phase: TurnPhase): string[] {
-    const phaseSteps: Record<TurnPhase, string[]> = {
-      [TurnPhase.PHASE_I]: ['gain-fame', 'apply-modifiers'],
-      [TurnPhase.PHASE_II]: ['resources-collect'],
-      [TurnPhase.PHASE_III]: ['calculate-unrest'],
-      [TurnPhase.PHASE_IV]: ['resolve-event'],
-      [TurnPhase.PHASE_V]: [], // No required steps for actions phase
-      [TurnPhase.PHASE_VI]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
+    const { TurnPhaseConfig } = require('../models/KingdomState');
+    const phaseConfig = TurnPhaseConfig[phase];
+    
+    // Map semantic phase names to required steps
+    const stepsByPhaseName: Record<string, string[]> = {
+      'Kingdom Status': ['gain-fame', 'apply-modifiers'],
+      'Resources': ['resources-collect'],
+      'Unrest & Incidents': ['calculate-unrest'],
+      'Events': ['resolve-event'],
+      'Actions': [], // No required steps for actions phase
+      'Upkeep': ['upkeep-food', 'upkeep-military', 'upkeep-build']
     };
     
-    return phaseSteps[phase] || [];
+    return stepsByPhaseName[phaseConfig?.displayName] || [];
   }
 }
 
@@ -347,7 +358,7 @@ export class KingdomActor extends Actor {
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
   return {
     currentTurn: 1,
-    currentPhase: TurnPhase.PHASE_I,
+    currentPhase: TurnPhase.STATUS,
     resources: {
       gold: 0,
       food: 0,

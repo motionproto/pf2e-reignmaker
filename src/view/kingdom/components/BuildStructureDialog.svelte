@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { kingdomData } from '../../../stores/kingdomActor';
+  import { kingdomData } from '../../../stores/KingdomStore';
   import { buildQueueService } from '../../../services/domain';
   import { structuresService } from '../../../services/structures';
   import type { Structure, ResourceCost } from '../../../models/Structure';

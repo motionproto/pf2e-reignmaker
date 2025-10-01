@@ -44,7 +44,7 @@ markPhaseStepCompleted(stepId: string): Promise<void>
 addSettlement(settlement: Settlement): Promise<void>
 ```
 
-### 2. Reactive Store Bridge (`src/stores/kingdomActor.ts`)
+### 2. Reactive Store Bridge (`src/stores/KingdomStore.ts`)
 **Role:** Read-only reactive bridge between KingdomActor and UI
 
 **Available Stores:**
@@ -108,7 +108,7 @@ Component Action → KingdomActor → Foundry → All Clients Update
 ```svelte
 <script>
 // ✅ READ from reactive bridge
-import { kingdomData, fame, resources } from '../stores/kingdomActor';
+import { kingdomData, fame, resources } from '../stores/KingdomStore';
 
 // ✅ UI State only
 let isProcessing = false;
@@ -247,7 +247,7 @@ async function tellTurnManagerDone() {
 src/
 ├── actors/              # KingdomActor (single source of truth)
 ├── models/              # TurnManager (turn progression only)
-├── stores/              # Reactive bridge stores (read-only)
+├── stores/              # KingdomStore - Reactive bridge stores (read-only)
 ├── view/                # Svelte components (read from stores, write to actor)
 ├── controllers/         # Simple phase controllers (direct implementation)
 ├── services/            # Business logic services
@@ -258,7 +258,7 @@ src/
 
 ### Reading Data:
 ```typescript
-import { kingdomData, fame, resources } from '../stores/kingdomActor';
+import { kingdomData, fame, resources } from '../stores/KingdomStore';
 
 // Reactive access
 $: currentFame = $fame;
@@ -267,7 +267,7 @@ $: goldAmount = $resources.gold;
 
 ### Writing Data:
 ```typescript
-import { updateKingdom, setResource } from '../stores/kingdomActor';
+import { updateKingdom, setResource } from '../stores/KingdomStore';
 
 // Simple resource update
 await setResource('fame', 10);
@@ -282,7 +282,7 @@ await updateKingdom(kingdom => {
 
 ### Phase Completion:
 ```typescript
-import { markPhaseStepCompleted } from '../stores/kingdomActor';
+import { markPhaseStepCompleted } from '../stores/KingdomStore';
 
 // Mark step complete
 await markPhaseStepCompleted('resource-collection');
