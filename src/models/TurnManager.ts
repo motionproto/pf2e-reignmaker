@@ -1,31 +1,175 @@
 /**
- * TurnManager - Simple turn progression system
+ * TurnManager - Central coordinator for all turn-scoped state
  * 
- * This class focuses ONLY on turn and phase progression.
- * No orchestration, no controllers, no complex state management.
+ * Handles:
+ * - Turn and phase progression 
+ * - Player action management across phases
+ * - Turn-scoped state management
  * 
- * Phases handle their own execution and tell TurnManager when complete.
+ * This is the single source of truth for turn/phase/player state.
  */
 
 import { TurnPhase } from './KingdomState';
 
+// Player action state (turn-scoped)
+interface PlayerAction {
+    playerId: string;
+    playerName: string;
+    actionSpent: boolean;
+    spentInPhase?: TurnPhase;
+}
+
 /**
- * Simple turn progression manager
+ * Central turn and player action coordinator
  */
 export class TurnManager {
-    // Simple callbacks for UI updates
+    // Turn progression callbacks for UI updates
     onTurnChanged?: (turn: number) => void;
     onPhaseChanged?: (phase: TurnPhase) => void;
     onTurnEnded?: (turn: number) => void;
     
+    // Player action state (in-memory, turn-scoped)
+    private playerActions: Map<string, PlayerAction> = new Map();
+    
     constructor() {
-        console.log('[TurnManager] Initialized - simple turn progression only');
+        console.log('[TurnManager] Initialized - central turn and player coordinator');
+        this.initializePlayers();
+    }
+    
+    // === PLAYER ACTION MANAGEMENT ===
+    
+    /**
+     * Initialize all current players in the game
+     */
+    private initializePlayers(): void {
+        const game = (window as any).game;
+        if (!game?.users) {
+            console.warn('[TurnManager] Game not available, cannot initialize players');
+            return;
+        }
+
+        const initializedPlayers: string[] = [];
+        
+        // Clear existing actions for fresh start
+        this.playerActions.clear();
+        
+        // Initialize all users
+        for (const user of game.users) {
+            const playerAction: PlayerAction = {
+                playerId: user.id,
+                playerName: user.name || 'Unknown Player',
+                actionSpent: false,
+                spentInPhase: undefined
+            };
+            
+            this.playerActions.set(user.id, playerAction);
+            initializedPlayers.push(user.name);
+        }
+        
+        console.log(`[TurnManager] Initialized player actions for: ${initializedPlayers.join(', ')}`);
     }
     
     /**
-     * Mark current phase as complete (called directly by phases)
+     * Spend a player action in a specific phase
      */
-    async markCurrentPhaseComplete(): Promise<void> {
+    spendPlayerAction(playerId: string, phase: TurnPhase): boolean {
+        const playerAction = this.playerActions.get(playerId) || {
+            playerId,
+            playerName: (window as any).game?.users?.get(playerId)?.name || 'Unknown',
+            actionSpent: false,
+            spentInPhase: undefined
+        };
+        
+        if (!playerAction.actionSpent) {
+            playerAction.actionSpent = true;
+            playerAction.spentInPhase = phase;
+            this.playerActions.set(playerId, playerAction);
+            console.log(`[TurnManager] Player ${playerAction.playerName} spent action in ${phase}`);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Reset a player's action for the turn
+     */
+    resetPlayerAction(playerId: string): void {
+        const playerAction = this.playerActions.get(playerId);
+        if (playerAction) {
+            playerAction.actionSpent = false;
+            playerAction.spentInPhase = undefined;
+            this.playerActions.set(playerId, playerAction);
+            console.log(`[TurnManager] Reset action for player ${playerAction.playerName}`);
+        }
+    }
+    
+    /**
+     * Get a player's action state
+     */
+    getPlayerAction(playerId: string): PlayerAction | undefined {
+        return this.playerActions.get(playerId);
+    }
+    
+    /**
+     * Reset all player actions (called at turn end)
+     */
+    private resetAllPlayerActions(): void {
+        for (const [playerId, playerAction] of this.playerActions) {
+            playerAction.actionSpent = false;
+            playerAction.spentInPhase = undefined;
+        }
+        console.log('[TurnManager] Reset all player actions for new turn');
+    }
+    
+    // === TURN MANAGEMENT ===
+    
+    /**
+     * Set current phase directly
+     */
+    async setCurrentPhase(phase: TurnPhase): Promise<void> {
+        const { updateKingdom } = await import('../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+            kingdom.currentPhase = phase;
+        });
+        
+        this.onPhaseChanged?.(phase);
+        console.log(`[TurnManager] Set current phase to ${phase}`);
+    }
+    
+    /**
+     * Reset phase steps for new phase
+     */
+    async resetPhaseSteps(): Promise<void> {
+        const { updateKingdom } = await import('../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+            kingdom.phaseStepsCompleted = {};
+        });
+        
+        console.log('[TurnManager] Reset phase steps');
+    }
+    
+    /**
+     * Increment turn manually
+     */
+    async incrementTurn(): Promise<void> {
+        const { kingdomData } = await import('../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        const currentKingdom = get(kingdomData);
+        
+        const { updateKingdom } = await import('../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+            kingdom.currentTurn = (kingdom.currentTurn || 1) + 1;
+        });
+        
+        this.onTurnChanged?.(currentKingdom.currentTurn + 1);
+        console.log(`[TurnManager] Incremented to turn ${currentKingdom.currentTurn + 1}`);
+    }
+    
+    /**
+     * Mark current phase as complete (called directly by phase controllers)
+     */
+    async markPhaseComplete(): Promise<void> {
         const { kingdomData } = await import('../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
@@ -95,6 +239,9 @@ export class TurnManager {
         console.log(`[TurnManager] Ending turn ${currentKingdom.currentTurn}`);
         
         this.onTurnEnded?.(currentKingdom.currentTurn);
+        
+        // Reset player actions for new turn
+        this.resetAllPlayerActions();
         
         const { updateKingdom } = await import('../stores/KingdomStore');
         await updateKingdom((kingdom) => {

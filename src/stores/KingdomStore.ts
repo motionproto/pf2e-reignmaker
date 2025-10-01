@@ -126,11 +126,8 @@ export async function advancePhase(): Promise<void> {
       await turnManagerInstance.nextPhase();
       console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
     } else {
-      console.warn('[KingdomActor Store] No TurnManager available, falling back to direct actor call');
-      const actor = get(kingdomActor);
-      if (actor) {
-        await actor.advancePhase();
-      }
+      console.warn('[KingdomActor Store] No TurnManager available - cannot advance phase');
+      return;
     }
     
     // Update viewing phase to match new current phase
@@ -141,16 +138,6 @@ export async function advancePhase(): Promise<void> {
     }
   } catch (error) {
     console.error('[KingdomActor Store] Error advancing phase:', error);
-    
-    // Fallback to direct actor call if TurnManager fails
-    const actor = get(kingdomActor);
-    if (actor) {
-      await actor.advancePhase();
-      const updatedKingdom = actor.getKingdom();
-      if (updatedKingdom) {
-        viewingPhase.set(updatedKingdom.currentPhase);
-      }
-    }
   }
 }
 
@@ -164,30 +151,6 @@ export async function markPhaseStepCompleted(stepId: string): Promise<void> {
   await actor.markPhaseStepCompleted(stepId);
 }
 
-export async function markPhaseCompleted(phase: TurnPhase): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) {
-    console.warn(`[KingdomActor Store] Cannot mark phase '${phase}' complete - no actor available yet`);
-    return;
-  }
-  
-  // Check if the actor has the markPhaseCompleted method (is a proper KingdomActor)
-  if (typeof actor.markPhaseCompleted !== 'function') {
-    console.error(`[KingdomActor Store] Actor does not have markPhaseCompleted method. Actor type:`, actor.constructor.name);
-    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
-    
-    // Fallback: update kingdom data directly
-    await actor.updateKingdom(kingdom => {
-      if (!kingdom.phasesCompleted.includes(phase)) {
-        kingdom.phasesCompleted.push(phase);
-        console.log(`[KingdomActor Store] Phase ${phase} marked as complete (fallback method)`);
-      }
-    });
-    return;
-  }
-  
-  await actor.markPhaseCompleted(phase);
-}
 
 export function isPhaseStepCompleted(stepId: string): boolean {
   const data = get(kingdomData);
@@ -264,88 +227,44 @@ export async function removeArmy(armyId: string): Promise<void> {
 }
 
 /**
- * Player action management functions
+ * Player action management - delegated to TurnManager
  */
 
-// Simple in-memory player actions tracking (UI-only, doesn't need persistence)
-const playerActions = writable<Map<string, { playerId: string; playerName: string; actionSpent: boolean; spentInPhase?: TurnPhase }>>(new Map());
-
 export function spendPlayerAction(playerId: string, phase: TurnPhase): boolean {
-  playerActions.update(actions => {
-    const playerAction = actions.get(playerId) || {
-      playerId,
-      playerName: (window as any).game?.users?.get(playerId)?.name || 'Unknown',
-      actionSpent: false,
-      spentInPhase: undefined
-    };
-    
-    if (!playerAction.actionSpent) {
-      playerAction.actionSpent = true;
-      playerAction.spentInPhase = phase;
-      actions.set(playerId, playerAction);
-      console.log(`[KingdomActor] Player ${playerAction.playerName} spent action in ${phase}`);
-      return actions;
-    }
-    
-    return actions;
-  });
-  
-  return true;
+  const manager = getTurnManager();
+  if (manager) {
+    return manager.spendPlayerAction(playerId, phase);
+  }
+  console.warn('[KingdomStore] No TurnManager available for spendPlayerAction');
+  return false;
 }
 
 export function resetPlayerAction(playerId: string): void {
-  playerActions.update(actions => {
-    const playerAction = actions.get(playerId);
-    if (playerAction) {
-      playerAction.actionSpent = false;
-      playerAction.spentInPhase = undefined;
-      actions.set(playerId, playerAction);
-    }
-    return actions;
-  });
+  const manager = getTurnManager();
+  if (manager) {
+    manager.resetPlayerAction(playerId);
+  } else {
+    console.warn('[KingdomStore] No TurnManager available for resetPlayerAction');
+  }
+}
+
+export function getPlayerAction(playerId: string): any {
+  const manager = getTurnManager();
+  if (manager) {
+    return manager.getPlayerAction(playerId);
+  }
+  console.warn('[KingdomStore] No TurnManager available for getPlayerAction');
+  return undefined;
 }
 
 /**
- * Initialize all current players in the game
+ * Initialize all current players - delegated to TurnManager
  */
 export function initializeAllPlayers(): void {
-  const game = (window as any).game;
-  if (!game?.users) {
-    console.warn('[KingdomStore] Game not available, cannot initialize players');
-    return;
-  }
-
-  const initializedPlayers: string[] = [];
-  
-  playerActions.update(actions => {
-    // Clear existing actions for fresh start
-    actions.clear();
-    
-    // Initialize all users
-    for (const user of game.users) {
-      const playerAction = {
-        playerId: user.id,
-        playerName: user.name || 'Unknown Player',
-        actionSpent: false,
-        spentInPhase: undefined
-      };
-      
-      actions.set(user.id, playerAction);
-      initializedPlayers.push(user.name);
-    }
-    
-    return actions;
-  });
-  
-  console.log(`[KingdomStore] Initialized player actions for: ${initializedPlayers.join(', ')}`);
-  
+  // TurnManager handles this automatically in constructor
   // Mark as fully initialized
   isInitialized.set(true);
-}
-
-export function getPlayerAction(playerId: string): { playerId: string; playerName: string; actionSpent: boolean; spentInPhase?: TurnPhase } | undefined {
-  const actions = get(playerActions);
-  return actions.get(playerId);
+  console.log('[KingdomStore] Player initialization delegated to TurnManager');
 }
 
 /**
@@ -356,55 +275,45 @@ export function setViewingPhase(phase: TurnPhase): void {
   viewingPhase.set(phase);
 }
 
+/**
+ * Turn management functions - delegated to TurnManager
+ */
+
 export async function setCurrentPhase(phase: TurnPhase): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.updateKingdom(kingdom => {
-    kingdom.currentPhase = phase;
-  });
-  
-  // Also update viewing phase to match
-  viewingPhase.set(phase);
+  const manager = getTurnManager();
+  if (manager) {
+    await manager.setCurrentPhase(phase);
+    // Update viewing phase to match
+    viewingPhase.set(phase);
+  } else {
+    console.warn('[KingdomStore] No TurnManager available for setCurrentPhase');
+  }
 }
 
 export async function resetPhaseSteps(): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.updateKingdom(kingdom => {
-    kingdom.phaseStepsCompleted = {};
-  });
+  const manager = getTurnManager();
+  if (manager) {
+    await manager.resetPhaseSteps();
+  } else {
+    console.warn('[KingdomStore] No TurnManager available for resetPhaseSteps');
+  }
 }
 
 export async function incrementTurn(): Promise<void> {
-  const actor = get(kingdomActor);
-  if (!actor) return;
-  
-  await actor.updateKingdom(kingdom => {
-    kingdom.currentTurn = (kingdom.currentTurn || 1) + 1;
-  });
+  const manager = getTurnManager();
+  if (manager) {
+    await manager.incrementTurn();
+  } else {
+    console.warn('[KingdomStore] No TurnManager available for incrementTurn');
+  }
 }
+
+/**
+ * Simple UI state functions
+ */
 
 export function selectSettlement(settlementId: string | null): void {
   selectedSettlement.set(settlementId);
-}
-
-export function toggleSection(sectionId: string): void {
-  expandedSections.update(sections => {
-    const newSections = new Set(sections);
-    if (newSections.has(sectionId)) {
-      newSections.delete(sectionId);
-    } else {
-      newSections.add(sectionId);
-    }
-    return newSections;
-  });
-}
-
-export function isSectionExpanded(sectionId: string): boolean {
-  const sections = get(expandedSections);
-  return sections.has(sectionId);
 }
 
 /**

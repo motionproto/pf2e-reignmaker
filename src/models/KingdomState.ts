@@ -32,7 +32,7 @@ export type BuildProject = BuildProjectType;
 export enum TurnPhase {
   STATUS = 'Kingdom Status',
   RESOURCES = 'Resources', 
-  UNREST = 'Unrest & Incidents',
+  UNREST = 'Unrest',
   EVENTS = 'Events',
   ACTIONS = 'Actions',
   UPKEEP = 'Upkeep'
@@ -44,7 +44,7 @@ export enum TurnPhase {
 export const TurnPhaseConfig = {
   [TurnPhase.STATUS]: { displayName: 'Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
   [TurnPhase.RESOURCES]: { displayName: 'Resources', description: 'Collect resources and revenue' },
-  [TurnPhase.UNREST]: { displayName: 'Unrest & Incidents', description: 'Calculate unrest and resolve incidents' },
+  [TurnPhase.UNREST]: { displayName: 'Unrest', description: 'Check unrest status and manually roll for incidents if needed' },
   [TurnPhase.EVENTS]: { displayName: 'Events', description: 'Resolve kingdom events' },
   [TurnPhase.ACTIONS]: { displayName: 'Actions', description: 'Perform kingdom actions' },
   [TurnPhase.UPKEEP]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }

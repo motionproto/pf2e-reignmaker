@@ -42,11 +42,10 @@
       criticalFailureEffect: 'The incident escalates significantly'
    } : null;
    
-   // Auto-run automation when component mounts and phase is current
-   onMount(async () => {
-      if ($kingdomData.currentPhase === TurnPhase.UNREST && !stepComplete) {
-         await runAutomation();
-      }
+   // No automatic behavior - incident checks are now manual only
+   onMount(() => {
+      // Component mounted - unrest status is displayed, but no automatic actions
+      console.log('🟡 [UnrestPhase] Component mounted - incident checks are manual');
    });
    
    function getTierName(tier: number): string {
@@ -65,29 +64,6 @@
       return null;
    }
    
-   async function runAutomation() {
-      if (automationRunning) return;
-      automationRunning = true;
-      
-      try {
-         console.log('🟡 [UnrestPhase] Starting automation...');
-         
-         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-         const controller = await createUnrestPhaseController();
-         const result = await controller.runAutomation();
-         
-         if (result.success) {
-            console.log('✅ [UnrestPhase] Automation completed successfully');
-            showIncidentResult = result.hasIncident;
-         } else {
-            console.error('❌ [UnrestPhase] Automation failed:', result.error);
-         }
-      } catch (error) {
-         console.error('❌ [UnrestPhase] Error during automation:', error);
-      } finally {
-         automationRunning = false;
-      }
-   }
    
    async function rollForIncident() {
       if (unrestStatus.tier === 0) return;
@@ -104,10 +80,10 @@
          
          showIncidentResult = true;
          
-         if (result.success) {
-            console.log('✅ [UnrestPhase] Incident roll completed');
+         if (result.shouldCheck) {
+            console.log('✅ [UnrestPhase] Incident roll completed', result);
          } else {
-            console.error('❌ [UnrestPhase] Incident roll failed:', result.error);
+            console.log('ℹ️ [UnrestPhase] No incident check needed for this tier');
          }
       } catch (error) {
          console.error('❌ [UnrestPhase] Error rolling for incident:', error);
@@ -130,10 +106,15 @@
          const mockIncident = {
             id: currentIncident.id,
             name: currentIncident.name,
-            level: currentIncident.level,
+            description: currentIncident.description,
+            level: currentIncident.level as any, // Cast to avoid enum mismatch
+            percentileMin: 1,
+            percentileMax: 100,
+            skillOptions: currentIncident.skillOptions || [],
             successEffect: currentIncident.successEffect,
             failureEffect: currentIncident.failureEffect,
-            criticalFailureEffect: currentIncident.criticalFailureEffect
+            criticalFailureEffect: currentIncident.criticalFailureEffect,
+            imagePath: null
          };
          
          const result = await controller.resolveIncident(

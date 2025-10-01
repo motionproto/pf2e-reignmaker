@@ -127,22 +127,33 @@
    $: unfedSettlementsCount = previewData?.unfedCount || 0;
    $: settlementCount = previewData?.totalSettlements || 0;
    
-   // Auto-run collection when viewing current phase and not completed (reactive)
-   $: if (isViewingCurrentPhase && !collectCompleted && $kingdomData) {
-      console.log('🟡 [ResourcesPhase] Auto-running collection:', { isViewingCurrentPhase, collectCompleted });
-      handleCollectResources();
+   // Initialize controller when component mounts
+   let resourceController: any;
+   
+   onMount(async () => {
+      if (isViewingCurrentPhase && $kingdomData) {
+         await initializePhase();
+      }
+   });
+
+   async function initializePhase() {
+      try {
+         const { createResourcePhaseController } = await import('../../../controllers/ResourcePhaseController');
+         resourceController = await createResourcePhaseController();
+         await resourceController.startPhase();
+      } catch (error) {
+         console.error('❌ [ResourcesPhase] Failed to initialize:', error);
+      }
    }
    
-   // Handle resource collection using controller
+   // Handle manual resource collection
    async function handleCollectResources() {
-      if (isCollecting) return;
+      if (isCollecting || !resourceController) return;
       
       isCollecting = true;
       
       try {
-         const { createResourcePhaseController } = await import('../../../controllers/ResourcePhaseController');
-         const controller = await createResourcePhaseController();
-         const result = await controller.runAutomation();
+         const result = await resourceController.collectResources();
          
          if (!result.success) {
             console.error('❌ [ResourcesPhase] Collection failed:', result.error);
@@ -250,23 +261,35 @@
       {/each}
    </div>
    
-   <!-- Collect Resources Button -->
-   <div class="collect-button-container">
-   <Button 
-      variant="secondary"
-      on:click={handleCollectResources} 
-      disabled={!isViewingCurrentPhase || collectCompleted || isCollecting}
-      icon={collectCompleted ? "fas fa-check" : isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
-      iconPosition="left"
-   >
-      {#if collectCompleted}
-         Resources Collected
-      {:else if isCollecting}
-         Collecting...
+   <!-- Manual Collection Controls -->
+   <div class="manual-collection-section">
+      {#if !collectCompleted}
+         <div class="collection-prompt">
+            <h3>Ready to Collect Resources</h3>
+            <p>Click the button below to manually collect territory production and settlement gold income.</p>
+         </div>
+         
+         <div class="collect-button-container">
+            <Button 
+               variant="secondary"
+               on:click={handleCollectResources} 
+               disabled={isCollecting}
+               icon={isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
+               iconPosition="left"
+            >
+               {#if isCollecting}
+                  Collecting Resources...
+               {:else}
+                  Collect All Resources
+               {/if}
+            </Button>
+         </div>
       {:else}
-         Collect Resources
+         <div class="collection-completed">
+            <h3>✅ Resources Collected</h3>
+            <p>All territory production and settlement gold have been added to your treasury.</p>
+         </div>
       {/if}
-</Button>
    </div>
    
    <!-- Phase Steps -->
@@ -675,6 +698,41 @@
          i {
             font-size: 14px;
          }
+      }
+   }
+   
+   .manual-collection-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.5),
+         rgba(31, 31, 35, 0.3));
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-default);
+      text-align: center;
+      
+      h3 {
+         margin: 0 0 10px 0;
+         color: var(--text-primary);
+         font-size: var(--font-xl);
+         font-weight: var(--font-weight-semibold);
+      }
+      
+      p {
+         margin: 0 0 20px 0;
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+         line-height: 1.5;
+      }
+   }
+   
+   .collection-prompt {
+      margin-bottom: 20px;
+   }
+   
+   .collection-completed {
+      h3 {
+         color: var(--color-green);
       }
    }
    

@@ -5,8 +5,12 @@
    import { TurnPhase } from '../../../models/KingdomState';
    import type { BuildProject } from '../../../models/KingdomState';
    
+   // Props
+   export let isViewingCurrentPhase: boolean = true;
+   
    // Import clean architecture components
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
+   import Button from '../components/baseComponents/Button.svelte';
    
    // Controller instance
    let upkeepController: any;
@@ -23,8 +27,8 @@
    $: buildCompleted = isPhaseStepCompleted('upkeep-build');
    $: resolveCompleted = isPhaseStepCompleted('upkeep-complete');
    
-   // Get all display data from controller
-   $: displayData = upkeepController?.getDisplayData($kingdomData) || {
+   // Get all display data from controller (now async)
+   let displayData = {
       currentFood: 0,
       foodConsumption: 0,
       foodShortage: 0,
@@ -37,6 +41,13 @@
       armyFoodShortage: 0,
       settlementFoodShortage: 0
    };
+   
+   // Update display data when kingdom data or controller changes
+   $: if (upkeepController && $kingdomData) {
+      upkeepController.getDisplayData($kingdomData).then((data: any) => {
+         displayData = data;
+      });
+   }
    
    // Destructure for easier template access
    $: ({
@@ -51,42 +62,108 @@
       settlementFoodShortage
    } = displayData);
    
-   // Auto-start phase when component mounts and we're in the correct phase
+   // Initialize phase when component mounts
    onMount(async () => {
       // Wait for kingdomActor to be available before starting phase
       const { kingdomActor } = await import('../../../stores/KingdomStore');
-      const unsubscribe = kingdomActor.subscribe(async (actor) => {
-         if (actor && $kingdomData?.currentPhase === TurnPhase.UPKEEP && !resolveCompleted && !processingEndTurn) {
-            unsubscribe(); // Stop listening once we start
-            await startPhase();
+      let unsubscribe: (() => void) | null = null;
+      unsubscribe = kingdomActor.subscribe(async (actor) => {
+         if (actor && $kingdomData?.currentPhase === TurnPhase.UPKEEP) {
+            if (unsubscribe) unsubscribe(); // Stop listening once we start
+            await initializePhase();
          }
       });
    });
 
-   async function startPhase() {
-      if (processingEndTurn) return;
+   async function initializePhase() {
+      console.log('🟡 [UpkeepPhase] Component mounted - initializing phase...');
       
-      console.log('🟡 [UpkeepPhase] Component mounted - starting phase...');
-      processingEndTurn = true;
-
       try {
-         const controller = await createUpkeepPhaseController();
-         const result = await controller.startPhase();
+         upkeepController = await createUpkeepPhaseController();
+         const result = await upkeepController.startPhase();
          
          if (result.success) {
-            console.log('✅ [UpkeepPhase] Phase completed successfully');
+            console.log('✅ [UpkeepPhase] Phase initialized for manual operations');
          } else {
-            console.error('❌ [UpkeepPhase] Phase failed:', result.error);
+            console.error('❌ [UpkeepPhase] Phase initialization failed:', result.error);
          }
       } catch (error) {
          console.error('❌ [UpkeepPhase] Unexpected error:', error);
+      }
+   }
+   
+   // Manual operation handlers
+   async function handleFeedSettlements() {
+      if (processingFood || !upkeepController) return;
+      
+      processingFood = true;
+      try {
+         const result = await upkeepController.processFeedSettlements();
+         if (result.success) {
+            console.log('✅ [UpkeepPhase] Settlements fed successfully');
+         } else {
+            console.error('❌ [UpkeepPhase] Failed to feed settlements:', result.error);
+         }
+      } catch (error) {
+         console.error('❌ [UpkeepPhase] Error feeding settlements:', error);
+      } finally {
+         processingFood = false;
+      }
+   }
+
+   async function handleMilitarySupport() {
+      if (processingMilitary || !upkeepController) return;
+      
+      processingMilitary = true;
+      try {
+         const result = await upkeepController.processMilitarySupportManual();
+         if (result.success) {
+            console.log('✅ [UpkeepPhase] Military support processed successfully');
+         } else {
+            console.error('❌ [UpkeepPhase] Failed to process military support:', result.error);
+         }
+      } catch (error) {
+         console.error('❌ [UpkeepPhase] Error processing military support:', error);
+      } finally {
+         processingMilitary = false;
+      }
+   }
+
+   async function handleBuildQueue() {
+      if (processingBuild || !upkeepController) return;
+      
+      processingBuild = true;
+      try {
+         const result = await upkeepController.processBuildQueueManual();
+         if (result.success) {
+            console.log('✅ [UpkeepPhase] Build queue processed successfully');
+         } else {
+            console.error('❌ [UpkeepPhase] Failed to process build queue:', result.error);
+         }
+      } catch (error) {
+         console.error('❌ [UpkeepPhase] Error processing build queue:', error);
+      } finally {
+         processingBuild = false;
+      }
+   }
+
+   async function handleCompletePhase() {
+      if (processingEndTurn || !upkeepController) return;
+      
+      processingEndTurn = true;
+      try {
+         const result = await upkeepController.completePhase();
+         if (result.success) {
+            console.log('✅ [UpkeepPhase] Phase completed successfully');
+         } else {
+            console.error('❌ [UpkeepPhase] Failed to complete phase:', result.error);
+         }
+      } catch (error) {
+         console.error('❌ [UpkeepPhase] Error completing phase:', error);
       } finally {
          processingEndTurn = false;
       }
    }
-   
-   // Since the phase is now auto-executing, these legacy manual functions are no longer needed
-   // The new architecture handles everything automatically through the startPhase() method
 </script>
 
 <div class="upkeep-phase">
@@ -104,14 +181,6 @@
             </h4>
             {#if consumeCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
-            {/if}
-         </div>
-         
-         <div class="auto-status">
-            {#if consumeCompleted}
-               <i class="fas fa-check"></i> Settlements Fed (Auto-processed)
-            {:else}
-               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
          </div>
          
@@ -139,6 +208,21 @@
             {:else if !consumeCompleted}
                <div class="info-text">Settlements require {settlementConsumption} food this turn</div>
             {/if}
+            
+            {#if !consumeCompleted}
+               <Button 
+                  variant="secondary" 
+                  disabled={processingFood}
+                  icon={processingFood ? "fas fa-spinner spinning" : "fas fa-utensils"}
+                  on:click={handleFeedSettlements}
+               >
+                  {processingFood ? "Processing..." : "Feed Settlements"}
+               </Button>
+            {:else}
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> Settlements Fed
+               </div>
+            {/if}
          </div>
       </div>
       
@@ -151,16 +235,6 @@
             </h4>
             {#if militaryCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
-            {/if}
-         </div>
-         
-         <div class="auto-status">
-            {#if militaryCompleted}
-               <i class="fas fa-check"></i> Military Support Processed (Auto-processed)
-            {:else if armyCount === 0}
-               <i class="fas fa-ban"></i> No Armies to Support (Skipped)
-            {:else}
-               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
          </div>
          
@@ -217,11 +291,32 @@
                      <br><small>Future update: Morale checks will be required.</small>
                   </div>
                {/if}
+               
+               {#if !militaryCompleted}
+                  <Button 
+                     variant="secondary" 
+                     disabled={processingMilitary}
+                     icon={processingMilitary ? "fas fa-spinner spinning" : "fas fa-shield-alt"}
+                     on:click={handleMilitarySupport}
+                  >
+                     {processingMilitary ? "Processing..." : "Process Military Support"}
+                  </Button>
+               {:else}
+                  <div class="auto-status">
+                     <i class="fas fa-check"></i> Military Support Processed
+                  </div>
+               {/if}
             {:else}
                <div class="info-text">No armies currently fielded</div>
-               <div class="auto-skipped">
-                  <i class="fas fa-ban"></i>
-                  <span>No Armies to Support (Skipped)</span>
+               <Button 
+                  variant="secondary" 
+                  disabled={true}
+                  icon="fas fa-shield-alt"
+               >
+                  Process Military Support
+               </Button>
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> Military Support Skipped (No Armies)
                </div>
             {/if}
          </div>
@@ -236,16 +331,6 @@
             </h4>
             {#if buildCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
-            {/if}
-         </div>
-         
-         <div class="auto-status">
-            {#if buildCompleted}
-               <i class="fas fa-check"></i> Build Queue Processed (Auto-processed)
-            {:else if $kingdomData.buildQueue?.length === 0}
-               <i class="fas fa-ban"></i> No Projects in Queue (Skipped)
-            {:else}
-               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
          </div>
          
@@ -266,15 +351,36 @@
                            <span class="project-tier">In {project.settlementName}</span>
                         </div>
                         
-                        <div class="info-text">Build project will be processed automatically</div>
+                        <div class="info-text">Build project ready to process</div>
                      </div>
                   {/each}
                </div>
+               
+               {#if !buildCompleted}
+                  <Button 
+                     variant="secondary" 
+                     disabled={processingBuild}
+                     icon={processingBuild ? "fas fa-spinner spinning" : "fas fa-hammer"}
+                     on:click={handleBuildQueue}
+                  >
+                     {processingBuild ? "Processing..." : "Process Build Queue"}
+                  </Button>
+               {:else}
+                  <div class="auto-status">
+                     <i class="fas fa-check"></i> Build Queue Processed
+                  </div>
+               {/if}
             {:else}
                <div class="info-text">No construction projects in queue</div>
-               <div class="auto-skipped">
-                  <i class="fas fa-ban"></i>
-                  <span>No Construction Projects (Skipped)</span>
+               <Button 
+                  variant="secondary" 
+                  disabled={true}
+                  icon="fas fa-hammer"
+               >
+                  Process Build Queue
+               </Button>
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> Build Queue Skipped (No Projects)
                </div>
             {/if}
          </div>

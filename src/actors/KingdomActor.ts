@@ -144,51 +144,6 @@ export class KingdomActor extends Actor {
     await this.setKingdom(defaultKingdom);
   }
   
-  /**
-   * Advance to next phase - handles both phase progression and turn advancement
-   * Uses semantic phase names for better maintainability
-   */
-  async advancePhase(): Promise<void> {
-    await this.updateKingdom((kingdom) => {
-      const nextPhase = this.getNextPhase(kingdom.currentPhase);
-      
-      if (nextPhase) {
-        // Advance to next phase
-        kingdom.currentPhase = nextPhase;
-        console.log(`[KingdomActor] Advanced to ${kingdom.currentPhase}`);
-      } else {
-        // End of turn - advance to next turn
-        kingdom.currentTurn += 1;
-        kingdom.currentPhase = TurnPhase.STATUS;
-        
-        // Clear turn-specific data
-        kingdom.phaseStepsCompleted = {};
-        kingdom.phasesCompleted = [];
-        kingdom.oncePerTurnActions = [];
-        
-        // Clear non-storable resources
-        kingdom.resources.lumber = 0;
-        kingdom.resources.stone = 0;
-        kingdom.resources.ore = 0;
-        
-        // Reset player actions
-        Object.values(kingdom.playerActions).forEach(action => {
-          action.actionSpent = false;
-          action.spentInPhase = undefined;
-        });
-        
-        // Clear event/incident tracking
-        kingdom.currentEventId = null;
-        kingdom.currentIncidentId = null;
-        kingdom.incidentRoll = null;
-        kingdom.eventStabilityRoll = null;
-        kingdom.eventRollDC = null;
-        kingdom.eventTriggered = null;
-        
-        console.log(`[KingdomActor] Advanced to Turn ${kingdom.currentTurn}, Phase I`);
-      }
-    });
-  }
   
   /**
    * Mark a phase step as completed
@@ -200,17 +155,6 @@ export class KingdomActor extends Actor {
     });
   }
   
-  /**
-   * Mark a phase as completed - called directly by controllers
-   */
-  async markPhaseCompleted(phase: TurnPhase): Promise<void> {
-    await this.updateKingdom((kingdom) => {
-      if (!kingdom.phasesCompleted.includes(phase)) {
-        kingdom.phasesCompleted.push(phase);
-        console.log(`[KingdomActor] Phase ${phase} marked as complete`);
-      }
-    });
-  }
   
   /**
    * Check if current phase is complete
@@ -316,19 +260,6 @@ export class KingdomActor extends Actor {
     });
   }
   
-  /**
-   * Get next phase in sequence - uses PHASE_ORDER for maintainability
-   */
-  private getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
-    const { PHASE_ORDER } = require('../models/KingdomState');
-    const currentIndex = PHASE_ORDER.indexOf(currentPhase);
-    
-    if (currentIndex >= 0 && currentIndex < PHASE_ORDER.length - 1) {
-      return PHASE_ORDER[currentIndex + 1];
-    }
-    
-    return null; // End of turn
-  }
 
 }
 

@@ -7,7 +7,7 @@
  * - Notify TurnManager when complete
  */
 
-import { markPhaseStepCompleted, markPhaseCompleted, setResource, modifyResource } from '../stores/KingdomStore';
+import { markPhaseStepCompleted, setResource, modifyResource, getTurnManager } from '../stores/KingdomStore';
 import { TurnPhase } from '../models/KingdomState';
 import { get } from 'svelte/store';
 
@@ -28,7 +28,10 @@ export async function createStatusPhaseController() {
         console.log('✅ [StatusPhaseController] Modifiers applied');
         
         // Step 3: Mark phase as complete
-        await markPhaseCompleted(TurnPhase.STATUS);
+        const turnManager = getTurnManager();
+        if (turnManager) {
+          await turnManager.markPhaseComplete();
+        }
         console.log('✅ [StatusPhaseController] Status phase complete');
         
         return { success: true };
