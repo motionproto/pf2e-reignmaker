@@ -69,14 +69,14 @@ export async function modifyResource(resource: string, amount: number)
 ```
 
 ### 3. TurnManager (`src/models/TurnManager.ts`)
-**Role:** Simple turn and phase progression
+**Role:** Simple turn and phase progression (no orchestration)
 
 **Key Methods:**
 ```typescript
 // Phase completion (called by phases when done)
 async markCurrentPhaseComplete(): Promise<void>
 
-// Turn progression
+// Turn progression (ONLY updates currentPhase)
 async nextPhase(): Promise<void>
 async endTurn(): Promise<void>
 async skipToPhase(phase: TurnPhase): Promise<void>
@@ -85,6 +85,47 @@ async skipToPhase(phase: TurnPhase): Promise<void>
 async canPerformAction(actionId: string): Promise<boolean>
 async getUnrestPenalty(): Promise<number>
 async spendFameForReroll(): Promise<boolean>
+```
+
+**Important:** TurnManager does NOT trigger phase controllers. Phases are self-executing when mounted.
+
+### 4. Phase Controllers (`src/controllers/*PhaseController.ts`)
+**Role:** Execute phase-specific business logic
+
+**Key Pattern:**
+```typescript
+export async function createPhaseController() {
+  return {
+    async startPhase() {
+      console.log('🟡 [PhaseController] Starting phase...');
+      try {
+        await this.doPhaseWork();
+        await markPhaseStepCompleted('phase-complete');
+        await this.notifyPhaseComplete();
+        console.log('✅ [PhaseController] Phase complete');
+        return { success: true };
+      } catch (error) {
+        console.error('❌ [PhaseController] Phase failed:', error);
+        return { success: false, error: error.message };
+      }
+    }
+  };
+}
+```
+
+### 5. Phase Components (`src/view/kingdom/turnPhases/*.svelte`)
+**Role:** Mount when active, auto-start phase execution
+
+**Key Pattern:**
+```svelte
+<script>
+onMount(async () => {
+  if ($kingdomData.currentPhase === OUR_PHASE && !isCompleted) {
+    const controller = await createPhaseController();
+    await controller.startPhase();
+  }
+});
+</script>
 ```
 
 ## Data Flow Pattern
@@ -98,8 +139,16 @@ KingdomActor → kingdomData store → Component Display
 
 #### Write Path (Actions):
 ```
-Component Action → KingdomActor → Foundry → All Clients Update
+Component Action → Controller → KingdomActor → Foundry → All Clients Update
 ```
+
+#### Phase Execution Flow:
+```
+TurnManager.nextPhase() → Update currentPhase → 
+Component Mounts → controller.startPhase() → Execute Logic
+```
+
+**Key Change:** TurnManager no longer triggers controllers. Phases are self-executing when mounted.
 
 ## Development Patterns
 
@@ -169,28 +218,51 @@ async function buyFame() {
 </div>
 ```
 
-### 2. Phase Implementation
+### 2. Phase Implementation (Self-Executing Pattern)
 
+**Controller:**
 ```typescript
-// Simple, direct phase implementation
-async function runPhaseAutomation() {
-  console.log('🟡 [Phase] Starting...');
-  
-  // Do the work directly
-  await doPhaseWork();
-  await markPhaseStepCompleted('step-1');
-  
-  // Tell TurnManager we're done
-  await tellTurnManagerDone();
-  
-  console.log('✅ [Phase] Complete');
+export async function createPhaseController() {
+  return {
+    async startPhase() {
+      console.log('🟡 [PhaseController] Starting phase...');
+      try {
+        // Execute phase-specific business logic
+        await this.doPhaseWork();
+        await markPhaseStepCompleted('phase-complete');
+        
+        // Notify completion
+        await this.notifyPhaseComplete();
+        console.log('✅ [PhaseController] Phase complete');
+        return { success: true };
+      } catch (error) {
+        console.error('❌ [PhaseController] Phase failed:', error);
+        return { success: false, error: error.message };
+      }
+    },
+    
+    async notifyPhaseComplete() {
+      const { turnManager } = await import('../stores/turn');
+      const manager = get(turnManager);
+      if (manager) {
+        await manager.markCurrentPhaseComplete();
+      }
+    }
+  };
 }
+```
 
-async function tellTurnManagerDone() {
-  const { turnManager } = await import('../stores/turn');
-  const manager = get(turnManager);
-  await manager.markCurrentPhaseComplete();
-}
+**Component:**
+```svelte
+<script>
+onMount(async () => {
+  // Only start if we're in the correct phase and haven't run yet
+  if ($kingdomData.currentPhase === OUR_PHASE && !isCompleted) {
+    const controller = await createPhaseController();
+    await controller.startPhase();
+  }
+});
+</script>
 ```
 
 ### 3. Adding New Features
@@ -230,11 +302,18 @@ async function tellTurnManagerDone() {
 - **Services handle complex operations** - calculations, integrations, utilities
 - **No business logic in Svelte files** - components delegate to controllers/services
 
-### 4. Direct Simplicity
+### 4. Phase Management Pattern
+- **TurnManager** = ONLY turn/phase progression (no orchestration)
+- **Phase Components** = Mount when active, call `controller.startPhase()` 
+- **Phase Controllers** = Execute phase business logic, mark completion
+- **NO triggering from TurnManager** - phases are self-executing when mounted
+
+### 5. Direct Simplicity
 - Direct function calls instead of complex patterns
 - Simple async operations
-- Clear console logging
+- Clear console logging with emoji indicators
 - Minimal abstractions, maximum clarity
+- Use `startPhase()` not misleading names like "automation"
 
 ### 5. Foundry-First Design
 - Use actor flags for persistence

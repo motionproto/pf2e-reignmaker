@@ -3,21 +3,21 @@
    import { TurnPhase } from '../../../models/KingdomState';
    
    const phaseNames: Record<TurnPhase, string> = {
-      [TurnPhase.PHASE_I]: 'Status',
-      [TurnPhase.PHASE_II]: 'Resources',
-      [TurnPhase.PHASE_III]: 'Unrest',
-      [TurnPhase.PHASE_IV]: 'Events',
-      [TurnPhase.PHASE_V]: 'Actions',
-      [TurnPhase.PHASE_VI]: 'Upkeep'
+      [TurnPhase.STATUS]: 'Status',
+      [TurnPhase.RESOURCES]: 'Resources',
+      [TurnPhase.UNREST]: 'Unrest',
+      [TurnPhase.EVENTS]: 'Events',
+      [TurnPhase.ACTIONS]: 'Actions',
+      [TurnPhase.UPKEEP]: 'Upkeep'
    };
    
    const phaseSteps: Record<TurnPhase, string[]> = {
-      [TurnPhase.PHASE_I]: ['gain-fame', 'apply-modifiers'],
-      [TurnPhase.PHASE_II]: ['resources-collect'],
-      [TurnPhase.PHASE_III]: ['calculate-unrest'],
-      [TurnPhase.PHASE_IV]: ['resolve-event'],
-      [TurnPhase.PHASE_V]: [],  // No required steps
-      [TurnPhase.PHASE_VI]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
+      [TurnPhase.STATUS]: ['gain-fame', 'apply-modifiers'],
+      [TurnPhase.RESOURCES]: ['resources-collect'],
+      [TurnPhase.UNREST]: ['calculate-unrest'],
+      [TurnPhase.EVENTS]: ['resolve-event'],
+      [TurnPhase.ACTIONS]: [],  // No required steps
+      [TurnPhase.UPKEEP]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
    };
    
    $: currentPhase = $kingdomData.currentPhase;

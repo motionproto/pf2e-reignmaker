@@ -195,8 +195,8 @@ export async function createResourcePhaseController() {
      * Notify turn manager that phase is complete
      */
     async notifyPhaseComplete() {
-      const { turnManager } = await import('../stores/turn');
-      const manager = get(turnManager);
+      const { getTurnManager } = await import('../stores/KingdomStore');
+      const manager = getTurnManager();
       if (manager) {
         await manager.markCurrentPhaseComplete();
       }

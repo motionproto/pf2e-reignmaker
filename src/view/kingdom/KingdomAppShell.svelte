@@ -53,62 +53,89 @@
             console.log('[KingdomAppShell] Initializing kingdom actor store...');
             
             // Create a kingdom actor wrapper that adds our methods to the foundry actor
-            const kingdomActor = Object.assign(foundryActor, {
-               getKingdom: function() {
-                  return this.getFlag('pf2e-reignmaker', 'kingdom-data') || null;
-               },
-               setKingdom: async function(kingdom) {
-                  await this.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
-               },
-               updateKingdom: async function(updater) {
-                  const kingdom = this.getKingdom();
-                  if (!kingdom) {
-                     console.warn('[KingdomActor] No kingdom data found, cannot update');
-                     return;
-                  }
-                  updater(kingdom);
-                  await this.setKingdom(kingdom);
-               },
-               initializeKingdom: async function(name = 'New Kingdom') {
-                  const { createDefaultKingdom } = await import('../../actors/KingdomActor');
-                  const defaultKingdom = createDefaultKingdom(name);
-                  await this.setKingdom(defaultKingdom);
-               },
-               isCurrentPhaseComplete: function() {
-                  const kingdom = this.getKingdom();
-                  if (!kingdom) return false;
-                  return kingdom.phasesCompleted?.includes(kingdom.currentPhase) || false;
-               },
-               advancePhase: async function() {
-                  await this.updateKingdom((kingdom) => {
-                     const { TurnPhase } = require('../../models/KingdomState');
-                     const phases = [
-                        TurnPhase.PHASE_I, 
-                        TurnPhase.PHASE_II, 
-                        TurnPhase.PHASE_III, 
-                        TurnPhase.PHASE_IV, 
-                        TurnPhase.PHASE_V, 
-                        TurnPhase.PHASE_VI
-                     ];
-                     const currentIndex = phases.indexOf(kingdom.currentPhase);
-                     
-                     if (currentIndex < phases.length - 1) {
-                        kingdom.currentPhase = phases[currentIndex + 1];
-                     } else {
-                        kingdom.currentTurn = (kingdom.currentTurn || 1) + 1;
-                        kingdom.currentPhase = TurnPhase.PHASE_I;
-                        kingdom.phaseStepsCompleted = {};
-                        kingdom.phasesCompleted = [];
-                     }
-                  });
-               },
-               markPhaseStepCompleted: async function(stepId) {
-                  await this.updateKingdom((kingdom) => {
-                     if (!kingdom.phaseStepsCompleted) kingdom.phaseStepsCompleted = {};
-                     kingdom.phaseStepsCompleted[stepId] = true;
-                  });
+            const kingdomActor = foundryActor;
+            
+            // Add our kingdom methods to the actor
+            kingdomActor.getKingdom = function() {
+               return this.getFlag('pf2e-reignmaker', 'kingdom-data') || null;
+            };
+            kingdomActor.setKingdom = async function(kingdom: any) {
+               await this.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
+            };
+            kingdomActor.updateKingdom = async function(updater: any) {
+               const kingdom = this.getKingdom();
+               if (!kingdom) {
+                  console.warn('[KingdomActor] No kingdom data found, cannot update');
+                  return;
                }
-            });
+               updater(kingdom);
+               await this.setKingdom(kingdom);
+            };
+            kingdomActor.initializeKingdom = async function(name = 'New Kingdom') {
+               const { createDefaultKingdom } = await import('../../actors/KingdomActor');
+               const defaultKingdom = createDefaultKingdom(name);
+               await this.setKingdom(defaultKingdom);
+            };
+            kingdomActor.isCurrentPhaseComplete = function() {
+               const kingdom = this.getKingdom();
+               if (!kingdom) return false;
+               return kingdom.phasesCompleted?.includes(kingdom.currentPhase) || false;
+            };
+            kingdomActor.markPhaseStepCompleted = async function(stepId: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  if (!kingdom.phaseStepsCompleted) kingdom.phaseStepsCompleted = {};
+                  kingdom.phaseStepsCompleted[stepId] = true;
+               });
+            };
+            kingdomActor.modifyResource = async function(resource: any, amount: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  const current = kingdom.resources[resource] || 0;
+                  kingdom.resources[resource] = Math.max(0, current + amount);
+               });
+            };
+            kingdomActor.setResource = async function(resource: any, amount: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.resources[resource] = Math.max(0, amount);
+               });
+            };
+            kingdomActor.addSettlement = async function(settlement: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.settlements.push(settlement);
+               });
+            };
+            kingdomActor.removeSettlement = async function(settlementId: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.settlements = kingdom.settlements.filter((s: any) => s.id !== settlementId);
+               });
+            };
+            kingdomActor.updateSettlement = async function(settlementId: any, updates: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  const index = kingdom.settlements.findIndex((s: any) => s.id === settlementId);
+                  if (index >= 0) {
+                     kingdom.settlements[index] = { ...kingdom.settlements[index], ...updates };
+                  }
+               });
+            };
+            kingdomActor.addArmy = async function(army: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.armies.push(army);
+               });
+            };
+            kingdomActor.removeArmy = async function(armyId: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.armies = kingdom.armies.filter((a: any) => a.id !== armyId);
+               });
+            };
+            kingdomActor.addModifier = async function(modifier: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.modifiers.push(modifier);
+               });
+            };
+            kingdomActor.removeModifier = async function(modifierId: any) {
+               await this.updateKingdom((kingdom: any) => {
+                  kingdom.modifiers = kingdom.modifiers.filter((m: any) => m.id !== modifierId);
+               });
+            };
             
             // Initialize the kingdom data if it doesn't exist
             if (!kingdomActor.getKingdom()) {
@@ -118,28 +145,33 @@
             // Initialize the store
             initializeKingdomActor(kingdomActor);
             
-            // Wait a bit for the store to be ready
-            setTimeout(() => {
-               // Now sync territory data from Kingmaker if available
-               if (territoryService.isKingmakerAvailable()) {
-                  console.log('[KingdomAppShell] Syncing territory data...');
-                  const result = territoryService.syncFromKingmaker();
-                  
-                  if (result.success) {
-                     // Only show notification if there's actual data
-                     if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
-                        // @ts-ignore
-                        ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
-                     }
-                  } else if (result.error) {
-                     // Don't show error notification on initial load unless there's a real error
-                     if (!result.error.includes('not available')) {
-                        // @ts-ignore
-                        ui.notifications?.warn(`Territory sync failed: ${result.error}`);
-                     }
+            // Initialize all players for kingdom actions immediately after actor initialization
+            const { initializeAllPlayers } = await import('../../stores/KingdomStore');
+            initializeAllPlayers();
+            
+            // Setup Foundry synchronization hooks
+            const { setupFoundrySync } = await import('../../stores/KingdomStore');
+            setupFoundrySync();
+            
+            // Now sync territory data from Kingmaker if available (no delay needed)
+            if (territoryService.isKingmakerAvailable()) {
+               console.log('[KingdomAppShell] Syncing territory data...');
+               const result = territoryService.syncFromKingmaker();
+               
+               if (result.success) {
+                  // Only show notification if there's actual data
+                  if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
+                     // @ts-ignore
+                     ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+                  }
+               } else if (result.error) {
+                  // Don't show error notification on initial load unless there's a real error
+                  if (!result.error.includes('not available')) {
+                     // @ts-ignore
+                     ui.notifications?.warn(`Territory sync failed: ${result.error}`);
                   }
                }
-            }, 200);
+            }
          } else {
             console.warn('[KingdomAppShell] No kingdom actor available');
          }

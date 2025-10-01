@@ -39,14 +39,17 @@
    $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomData.currentPhase];
    $: actualPhase = $kingdomData.currentPhase;
    
+   // Safe fallback for phase info
+   $: safePhaseInfo = phaseInfo || { displayName: 'Unknown Phase', description: 'Phase information not found' };
+   
    // Define phase icons
    const phaseIcons = {
-      [TurnPhase.PHASE_I]: 'fas fa-chart-line',
-      [TurnPhase.PHASE_II]: 'fas fa-coins',
-      [TurnPhase.PHASE_III]: 'fas fa-fire',
-      [TurnPhase.PHASE_IV]: 'fas fa-dice',
-      [TurnPhase.PHASE_V]: 'fas fa-hammer',
-      [TurnPhase.PHASE_VI]: 'fas fa-check-circle'
+      [TurnPhase.STATUS]: 'fas fa-chart-line',
+      [TurnPhase.RESOURCES]: 'fas fa-coins',
+      [TurnPhase.UNREST]: 'fas fa-fire',
+      [TurnPhase.EVENTS]: 'fas fa-dice',
+      [TurnPhase.ACTIONS]: 'fas fa-hammer',
+      [TurnPhase.UPKEEP]: 'fas fa-check-circle'
    };
    
    $: displayPhaseIcon = phaseIcons[displayPhase as TurnPhase];
@@ -62,29 +65,29 @@
 <div class="turn-management">
    <!-- Phase header with gradient styling -->
    <PhaseHeader 
-      title={phaseInfo.displayName}
-      description={phaseInfo.description}
+      title={safePhaseInfo.displayName}
+      description={safePhaseInfo.description}
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
-      isUpkeepPhase={displayPhase === TurnPhase.PHASE_VI}
+      isUpkeepPhase={displayPhase === TurnPhase.UPKEEP}
    />
    
    <!-- Phase Bar underneath phase header -->
    <PhaseBar />
    
    <div class="phase-content">
-      {#if displayPhase === TurnPhase.PHASE_I}
-         <StatusPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
-      {:else if displayPhase === TurnPhase.PHASE_II}
-         <ResourcesPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
-      {:else if displayPhase === TurnPhase.PHASE_III}
-         <UnrestPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
-      {:else if displayPhase === TurnPhase.PHASE_IV}
-         <EventsPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
-      {:else if displayPhase === TurnPhase.PHASE_V}
-         <ActionsPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
-      {:else if displayPhase === TurnPhase.PHASE_VI}
-         <UpkeepPhase isViewingCurrentPhase={!isViewingDifferentPhase} />
+      {#if displayPhase === TurnPhase.STATUS}
+         <StatusPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+      {:else if displayPhase === TurnPhase.RESOURCES}
+         <ResourcesPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+      {:else if displayPhase === TurnPhase.UNREST}
+         <UnrestPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+      {:else if displayPhase === TurnPhase.EVENTS}
+         <EventsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+      {:else if displayPhase === TurnPhase.ACTIONS}
+         <ActionsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+      {:else if displayPhase === TurnPhase.UPKEEP}
+         <UpkeepPhase isViewingCurrentPhase={displayPhase === actualPhase} />
       {/if}
    </div>
 </div>

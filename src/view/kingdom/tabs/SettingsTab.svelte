@@ -87,7 +87,7 @@
          // Reset kingdom state using the new architecture
          await updateKingdom(kingdom => {
             kingdom.currentTurn = 1;
-            kingdom.currentPhase = TurnPhase.PHASE_I;
+            kingdom.currentPhase = TurnPhase.STATUS;
             kingdom.fame = 0;
             kingdom.unrest = 0;
             kingdom.imprisonedUnrest = 0;

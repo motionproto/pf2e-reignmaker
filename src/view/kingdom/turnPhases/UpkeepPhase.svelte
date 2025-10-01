@@ -7,10 +7,9 @@
    
    // Import clean architecture components
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
-   import type { UpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    
    // Controller instance
-   let upkeepController: UpkeepPhaseController;
+   let upkeepController: any;
    
    // UI State only - no business logic
    let processingFood = false;
@@ -52,128 +51,42 @@
       settlementFoodShortage
    } = displayData);
    
-   // Initialize controller on mount
-   onMount(() => {
-      upkeepController = createUpkeepPhaseController();
-      
-      // Auto-complete steps that don't need action
-      const autoCompleteSteps = upkeepController.getAutoCompleteSteps($kingdomData);
-      autoCompleteSteps.forEach(step => {
-         if (!isPhaseStepCompleted(step)) {
-            markPhaseStepCompleted(step);
+   // Auto-start phase when component mounts and we're in the correct phase
+   onMount(async () => {
+      // Wait for kingdomActor to be available before starting phase
+      const { kingdomActor } = await import('../../../stores/KingdomStore');
+      const unsubscribe = kingdomActor.subscribe(async (actor) => {
+         if (actor && $kingdomData?.currentPhase === TurnPhase.UPKEEP && !resolveCompleted && !processingEndTurn) {
+            unsubscribe(); // Stop listening once we start
+            await startPhase();
          }
       });
    });
-   
-   // Handle food consumption using controller
-   async function handleFoodConsumption() {
-      if (!upkeepController) return;
+
+   async function startPhase() {
+      if (processingEndTurn) return;
       
-      processingFood = true;
-      
+      console.log('🟡 [UpkeepPhase] Component mounted - starting phase...');
+      processingEndTurn = true;
+
       try {
-         const result = await upkeepController.processFoodConsumption(
-            $kingdomData,
-            $kingdomData.currentTurn || 1
-         );
-         
-         // Controller now handles settlement feeding status
-         markPhaseStepCompleted('upkeep-food');
-      } finally {
-         processingFood = false;
-      }
-   }
-   
-   // Handle military support using controller
-   async function handleMilitarySupport() {
-      if (!upkeepController) return;
-      
-      processingMilitary = true;
-      
-      try {
-         // Controller handles all military support logic
-         const result = await upkeepController.processMilitarySupport(
-            $kingdomData,
-            $kingdomData.currentTurn || 1
-         );
+         const controller = await createUpkeepPhaseController();
+         const result = await controller.startPhase();
          
          if (result.success) {
-            markPhaseStepCompleted('upkeep-military');
+            console.log('✅ [UpkeepPhase] Phase completed successfully');
+         } else {
+            console.error('❌ [UpkeepPhase] Phase failed:', result.error);
          }
-      } finally {
-         processingMilitary = false;
-      }
-   }
-   
-   // Handle build queue using controller
-   async function handleBuildQueue() {
-      if (!upkeepController) return;
-      
-      processingBuild = true;
-      
-      try {
-         // Process projects through controller
-         const progress = upkeepController.processProjects($kingdomData);
-         
-         // Update kingdom data to reflect completed projects
-         updateKingdom(state => {
-            // Remove completed projects (already done by controller)
-            return state;
-         });
-         
-         markPhaseStepCompleted('upkeep-build');
-      } finally {
-         processingBuild = false;
-      }
-   }
-   
-   // Handle end turn resolution using controller and commands
-   async function handleEndTurnResolution() {
-      if (!upkeepController) return;
-      
-      processingEndTurn = true;
-      
-      try {
-         // Process resource decay
-         await upkeepController.processResourceDecay(
-            $kingdomData,
-            $kingdomData.currentTurn || 1
-         );
-         
-         markPhaseStepCompleted('upkeep-complete');
+      } catch (error) {
+         console.error('❌ [UpkeepPhase] Unexpected error:', error);
       } finally {
          processingEndTurn = false;
       }
    }
    
-   // End turn and move to next
-   async function endTurn() {
-      // Automatically clear non-storable resources when ending turn
-      if (!resolveCompleted) {
-         await handleEndTurnResolution();
-      }
-      
-      // Process modifiers using controller
-      updateKingdom(state => {
-         upkeepController.processEndTurnModifiers(state);
-         return state;
-      });
-      
-      incrementTurn();
-      setCurrentPhase(TurnPhase.STATUS);
-      resetPhaseSteps();
-   }
-   
-   // Use controller methods for project calculations
-   $: getProjectCompletionPercentage = (project: BuildProject) => 
-      upkeepController ? upkeepController.getProjectCompletionPercentage(project) : 0;
-   
-   $: getProjectRemainingCost = (project: BuildProject) => 
-      upkeepController ? upkeepController.getProjectRemainingCost(project) : {};
-   
-   // Get controller state for display
-   $: controllerState = upkeepController?.getState();
-   $: phaseSummary = upkeepController?.getPhaseSummary();
+   // Since the phase is now auto-executing, these legacy manual functions are no longer needed
+   // The new architecture handles everything automatically through the startPhase() method
 </script>
 
 <div class="upkeep-phase">
@@ -194,19 +107,13 @@
             {/if}
          </div>
          
-         <button 
-            on:click={handleFoodConsumption} 
-            disabled={consumeCompleted || processingFood}
-            class="btn btn-secondary"
-         >
+         <div class="auto-status">
             {#if consumeCompleted}
-               <i class="fas fa-check"></i> Settlements Fed
-            {:else if processingFood}
-               <i class="fas fa-spinner fa-spin"></i> Processing...
+               <i class="fas fa-check"></i> Settlements Fed (Auto-processed)
             {:else}
-               <i class="fas fa-utensils"></i> Feed Settlements
+               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
-         </button>
+         </div>
          
          <div class="card-content">
             <div class="consumption-display">
@@ -247,21 +154,15 @@
             {/if}
          </div>
          
-         <button 
-            on:click={handleMilitarySupport} 
-            disabled={militaryCompleted || processingMilitary || armyCount === 0}
-            class="btn btn-secondary"
-         >
+         <div class="auto-status">
             {#if militaryCompleted}
-               <i class="fas fa-check"></i> Military Support Processed
-            {:else if processingMilitary}
-               <i class="fas fa-spinner fa-spin"></i> Processing...
+               <i class="fas fa-check"></i> Military Support Processed (Auto-processed)
             {:else if armyCount === 0}
-               <i class="fas fa-ban"></i> No Armies to Support
+               <i class="fas fa-ban"></i> No Armies to Support (Skipped)
             {:else}
-               <i class="fas fa-flag"></i> Support Military
+               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
-         </button>
+         </div>
          
          <div class="card-content">
             {#if armyCount > 0}
@@ -338,21 +239,15 @@
             {/if}
          </div>
          
-         <button 
-            on:click={handleBuildQueue} 
-            disabled={buildCompleted || processingBuild || $kingdomData.buildQueue?.length === 0}
-            class="btn btn-secondary"
-         >
+         <div class="auto-status">
             {#if buildCompleted}
-               <i class="fas fa-check"></i> Resources Applied
-            {:else if processingBuild}
-               <i class="fas fa-spinner fa-spin"></i> Processing...
+               <i class="fas fa-check"></i> Build Queue Processed (Auto-processed)
             {:else if $kingdomData.buildQueue?.length === 0}
-               <i class="fas fa-ban"></i> No Projects in Queue
+               <i class="fas fa-ban"></i> No Projects in Queue (Skipped)
             {:else}
-               <i class="fas fa-hammer"></i> Apply to Construction
+               <i class="fas fa-cog fa-spin"></i> Processing automatically...
             {/if}
-         </button>
+         </div>
          
          <div class="card-content">
             {#if $kingdomData.buildQueue?.length > 0}
@@ -371,21 +266,7 @@
                            <span class="project-tier">In {project.settlementName}</span>
                         </div>
                         
-                        <div class="progress-bar">
-                           <div class="progress-fill" style="width: {getProjectCompletionPercentage(project)}%">
-                              <span class="progress-text">{getProjectCompletionPercentage(project)}%</span>
-                           </div>
-                        </div>
-                        
-                        <div class="project-needs">
-                           {#if Object.keys(getProjectRemainingCost(project)).length > 0}
-                              Needs: {Object.entries(getProjectRemainingCost(project))
-                                 .map(([r, a]) => `${a} ${r}`)
-                                 .join(', ')}
-                           {:else}
-                              Complete!
-                           {/if}
-                        </div>
+                        <div class="info-text">Build project will be processed automatically</div>
                      </div>
                   {/each}
                </div>
@@ -431,12 +312,10 @@
                </div>
             {/if}
             
-            {#if phaseSummary}
-               <div class="summary-item">
-                  <i class="fas fa-chart-line"></i>
-                  <p>Turn summary: {phaseSummary.unrestGenerated} unrest generated, {phaseSummary.projectsCompleted} projects completed</p>
-               </div>
-            {/if}
+            <div class="summary-item">
+               <i class="fas fa-chart-line"></i>
+               <p>Phase processing complete - all upkeep operations handled automatically</p>
+            </div>
          </div>
       </div>
    </div>
@@ -929,7 +808,34 @@
    }
    
    
-   // Remove the .step-button styles as we replaced it with .step-action-button
+   // Auto-status section for the new architecture
+   .auto-status {
+      margin: 0 20px 16px 20px;
+      padding: 0.5rem 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      text-align: center;
+      
+      i {
+         margin-right: 8px;
+         color: var(--color-blue);
+         
+         &.fa-check {
+            color: var(--color-green);
+         }
+         
+         &.fa-ban {
+            color: var(--text-tertiary);
+         }
+         
+         &.fa-cog {
+            color: var(--color-amber);
+         }
+      }
+   }
    
    .auto-skipped {
       display: flex;

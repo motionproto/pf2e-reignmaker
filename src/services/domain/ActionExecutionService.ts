@@ -62,7 +62,10 @@ export class ActionExecutionService {
             const missingResources = new Map<string, number>();
             
             for (const [resource, required] of action.cost.entries()) {
-                const available = kingdomState.resources.get(resource) || 0;
+                // Handle both old Map-based and new object-based resource access
+                const available = (kingdomState.resources as any).get 
+                    ? (kingdomState.resources as any).get(resource) || 0
+                    : (kingdomState.resources as any)[resource] || 0;
                 if (available < required) {
                     missingResources.set(resource, required - available);
                 }

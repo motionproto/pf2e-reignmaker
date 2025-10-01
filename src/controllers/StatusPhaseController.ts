@@ -12,8 +12,8 @@ import { get } from 'svelte/store';
 
 export async function createStatusPhaseController() {
   return {
-    async runAutomation() {
-      console.log('🟡 [StatusPhaseController] Starting automation...');
+    async startPhase() {
+      console.log('🟡 [StatusPhaseController] Starting status phase...');
       
       try {
         // Step 1: Reset fame to 1
@@ -28,11 +28,11 @@ export async function createStatusPhaseController() {
         
         // Step 3: Tell TurnManager we're done
         await this.notifyPhaseComplete();
-        console.log('✅ [StatusPhaseController] Automation complete');
+        console.log('✅ [StatusPhaseController] Status phase complete');
         
         return { success: true };
       } catch (error) {
-        console.error('❌ [StatusPhaseController] Automation failed:', error);
+        console.error('❌ [StatusPhaseController] Status phase failed:', error);
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       }
     },
@@ -65,8 +65,8 @@ export async function createStatusPhaseController() {
     },
     
     async notifyPhaseComplete() {
-      const { turnManager } = await import('../stores/turn');
-      const manager = get(turnManager);
+      const { getTurnManager } = await import('../stores/KingdomStore');
+      const manager = getTurnManager();
       
       if (manager) {
         await manager.markCurrentPhaseComplete();

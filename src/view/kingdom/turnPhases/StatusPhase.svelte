@@ -3,8 +3,8 @@ import { onMount } from 'svelte';
 import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../models/KingdomState';
 
-// Props (currently unused but kept for potential future use)
-// export let isViewingCurrentPhase: boolean = true;
+// Props
+export let isViewingCurrentPhase: boolean = true;
 
 // Import the ModifierCard component
 import ModifierCard from '../components/ModifierCard.svelte';
@@ -25,14 +25,16 @@ $: modifiersProcessed = isPhaseStepCompleted('apply-modifiers');
 onMount(async () => {
    console.log('🟡 [StatusPhase] Mounted, checking if should run automation...');
    
-   // Only run automation if we're in the Status Phase and haven't run yet
-   if ($kingdomData.currentPhase === TurnPhase.STATUS && !fameReset && !modifiersProcessed) {
-      console.log('🟡 [StatusPhase] Starting automation...');
-      previousFame = $kingdomData.fame;
-      await runAutomation();
-   } else {
-      console.log('🟡 [StatusPhase] Skipping automation (wrong phase or already done)');
-   }
+   // Wait for kingdomActor to be available before starting phase
+   const { kingdomActor } = await import('../../../stores/KingdomStore');
+   const unsubscribe = kingdomActor.subscribe(async (actor) => {
+      if (actor && $kingdomData.currentPhase === TurnPhase.STATUS && !fameReset && !modifiersProcessed) {
+         console.log('🟡 [StatusPhase] Starting automation...');
+         unsubscribe(); // Stop listening once we start
+         previousFame = $kingdomData.fame;
+         await runAutomation();
+      }
+   });
 });
 
 // UI calls controller - no business logic here
@@ -47,16 +49,16 @@ async function runAutomation() {
       const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
       const controller = await createStatusPhaseController();
       
-      const result = await controller.runAutomation();
+      const result = await controller.startPhase();
       
       if (result.success) {
          automationComplete = true;
-         console.log('✅ [StatusPhase] Automation completed successfully');
+         console.log('✅ [StatusPhase] Phase started successfully');
       } else {
-         console.error('❌ [StatusPhase] Automation failed:', result.error);
+         console.error('❌ [StatusPhase] Phase start failed:', result.error);
       }
    } catch (error) {
-      console.error('❌ [StatusPhase] Error running automation:', error);
+      console.error('❌ [StatusPhase] Error starting phase:', error);
    } finally {
       automationRunning = false;
    }

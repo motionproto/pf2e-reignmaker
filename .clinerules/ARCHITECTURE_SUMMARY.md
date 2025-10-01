@@ -17,6 +17,17 @@ Read:  KingdomActor → KingdomStore → Component Display
 Write: Component Action → Controller → KingdomActor → Foundry → All Clients
 ```
 
+### 4. Phase Management Pattern
+- **TurnManager** = ONLY turn/phase progression (no orchestration)
+- **Phase Components** = Mount when active, call `controller.startPhase()` 
+- **Phase Controllers** = Execute phase business logic, mark completion
+- **NO triggering from TurnManager** - phases are self-executing when mounted
+
+```
+Phase Flow: TurnManager.nextPhase() → Update currentPhase → 
+           Component Mounts → controller.startPhase() → Execute Logic
+```
+
 ## Implementation Patterns
 
 ### Component Pattern (UI Only)
@@ -52,6 +63,43 @@ export async function createSomeController() {
 }
 ```
 
+### Phase Controller Pattern (Self-Executing Phases)
+```typescript
+export async function createPhaseController() {
+  return {
+    async startPhase() {
+      console.log('🟡 [PhaseController] Starting phase...');
+      try {
+        // Execute phase-specific business logic
+        await this.doPhaseWork();
+        await markPhaseStepCompleted('phase-complete');
+        
+        // Notify completion
+        await this.notifyPhaseComplete();
+        console.log('✅ [PhaseController] Phase complete');
+        return { success: true };
+      } catch (error) {
+        console.error('❌ [PhaseController] Phase failed:', error);
+        return { success: false, error: error.message };
+      }
+    }
+  };
+}
+```
+
+### Phase Component Pattern (Auto-Starting)
+```svelte
+<script>
+onMount(async () => {
+  // Only start if we're in the correct phase and haven't run yet
+  if ($kingdomData.currentPhase === OUR_PHASE && !isCompleted) {
+    const controller = await createPhaseController();
+    await controller.startPhase();
+  }
+});
+</script>
+```
+
 ## Key Rules
 
 ### DO:
@@ -60,12 +108,18 @@ export async function createSomeController() {
 - ✅ Use reactive stores for data display
 - ✅ Return `{ success: boolean, error?: string }` from controllers
 - ✅ Use clear console logging with emoji indicators
+- ✅ Name phase methods `startPhase()` not `runAutomation()`
+- ✅ Let phases self-execute on mount, not triggered by TurnManager
+- ✅ Keep TurnManager simple - only progression, no orchestration
 
 ### DON'T:
 - ❌ Put business logic in Svelte components
 - ❌ Write to derived stores directly
 - ❌ Create complex abstractions unless necessary
 - ❌ Mix UI concerns with business logic
+- ❌ Trigger phase controllers from TurnManager
+- ❌ Use misleading names like "automation" for phase operations
+- ❌ Create double-execution paths (TurnManager + Component)
 
 ## File Organization
 ```

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { kingdomData, updateKingdom } from "../../../stores/KingdomStore";
+  import { kingdomData, updateKingdom, setResource } from "../../../stores/KingdomStore";
   import { 
     spendPlayerAction,
     resetPlayerAction,
@@ -46,7 +46,7 @@
 
   // Simple action resolution tracking
   let resolvedActions = new Map<string, any>();
-  $: actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
+  $: actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
   const MAX_ACTIONS = 4;
   
   // Force UI update when resolvedActions changes
@@ -336,24 +336,8 @@
       selectedCharacterId = currentUserChar.id;
     }
 
-    // Ensure player actions are initialized if not already
-    if (game?.user?.id) {
-      const playerAction = getPlayerAction(game.user.id);
-      if (!playerAction) {
-        // Initialize just this player in kingdomState
-        kingdomState.update(state => {
-          const newPlayerActions = new Map(state.playerActions);
-          newPlayerActions.set(game.user.id, {
-            playerId: game.user.id,
-            playerName: game.user.name,
-            playerColor: game.user.color || '#ffffff',
-            actionSpent: false
-          });
-          state.playerActions = newPlayerActions;
-          return state;
-        });
-      }
-    }
+    // Wait for store initialization before accessing player data
+    console.log('[ActionsPhase] Component mounted, waiting for store initialization...');
   });
 
   onDestroy(() => {
@@ -480,27 +464,18 @@
     // Spend the player's action when they start a roll (not when it completes)
     const game = (window as any).game;
     if (game?.user?.id && !resolvedActions.has(action.id)) {
-      // Ensure player exists before spending
-      let playerAction = getPlayerAction(game.user.id);
-      if (!playerAction) {
-        // Initialize just this player if not found in kingdomState
-        kingdomState.update(state => {
-          const newPlayerActions = new Map(state.playerActions);
-          newPlayerActions.set(game.user.id, {
-            playerId: game.user.id,
-            playerName: game.user.name,
-            playerColor: game.user.color || '#ffffff',
-            actionSpent: false
-          });
-          state.playerActions = newPlayerActions;
-          return state;
-        });
-      }
+            // Ensure player exists before spending
+            let playerAction = getPlayerAction(game.user.id);
+            if (!playerAction) {
+               // Initialize just this player if not found - delegate to store
+               // Note: This would be handled by the KingdomStore initialization
+               console.warn('[ActionsPhase] Player action not found for user:', game.user.id);
+            }
       
       const success = spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
       
       // Manually update actionsUsed since reactive statement isn't updating immediately
-      actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
+      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
     }
     
     // Get character for roll
@@ -578,11 +553,8 @@
       }
     }
     
-    // Deduct fame and reset action for reroll
-    kingdomState.update(state => {
-      state.fame = currentFame - 1;
-      return state;
-    });
+    // Deduct fame and reset action for reroll  
+    await setResource('fame', currentFame - 1);
     
     // Reset the action (skip player action reset for reroll)
     await resetAction(checkId, true);
@@ -611,10 +583,7 @@
     } catch (error) {
       console.error("Error rerolling with fame:", error);
       // Restore fame if the roll failed
-      kingdomState.update(state => {
-        state.fame = currentFame;
-        return state;
-      });
+      await setResource('fame', currentFame);
       ui.notifications?.error(`Failed to reroll: ${error}`);
     }
   }
@@ -665,7 +634,7 @@
     const game = (window as any).game;
     if (game?.user?.id) {
       spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
-      actionsUsed = $kingdomData.playerActions?.filter((pa: any) => pa.actionSpent)?.length || 0;
+      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
     }
     
     // Show success notification
@@ -777,14 +746,12 @@
                   {missingRequirements}
                   resolved={isResolved}
                   {resolution}
-                  character={selectedCharacter}
                   canPerformMore={actionsUsed < MAX_ACTIONS && !isResolved}
                   currentFame={$kingdomData?.fame || 0}
                   showFameReroll={true}
                   resolvedBadgeText="Resolved"
                   primaryButtonLabel="OK"
                   skillSectionTitle="Choose Skill:"
-                  hideCharacterHint={false}
                   on:toggle={() => toggleAction(action.id)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
                   on:rerollWithFame={(e) => handleRerollWithFame(e, action)}

@@ -7,6 +7,7 @@ import { writable, derived, get } from 'svelte/store';
 import type { KingdomActor, KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
 import { TurnPhase } from '../models/KingdomState';
+import { TurnManager } from '../models/TurnManager';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -31,6 +32,19 @@ export const viewingPhase = writable<TurnPhase>(TurnPhase.STATUS);
 export const selectedSettlement = writable<string | null>(null);
 export const expandedSections = writable<Set<string>>(new Set());
 
+// Initialization state - components can wait for this to be true
+export const isInitialized = writable<boolean>(false);
+
+// Turn management - simple instance, no store wrapper needed
+let turnManagerInstance: TurnManager | null = null;
+
+/**
+ * Get the TurnManager instance
+ */
+export function getTurnManager(): TurnManager | null {
+  return turnManagerInstance;
+}
+
 /**
  * Initialize the kingdom actor store
  */
@@ -45,30 +59,18 @@ export function initializeKingdomActor(actor: KingdomActor): void {
   
   console.log('[KingdomActor Store] Initialized with actor:', actor.name);
   
-  // Initialize TurnManager and trigger current phase controller
-  initializeTurnManagerAndTriggerPhase();
+  // Initialize TurnManager for phase progression
+  initializeTurnManager();
 }
 
 /**
- * Initialize TurnManager and trigger controller for current phase
+ * Initialize TurnManager - simplified for new phase architecture
  */
-async function initializeTurnManagerAndTriggerPhase(): Promise<void> {
-  try {
-    // Initialize TurnManager
-    const { initializeTurnManager } = await import('./turn');
-    initializeTurnManager();
-    
-    // Trigger current phase controller - architecture ensures proper reactive flow
-    try {
-      const { triggerCurrentPhaseController } = await import('./turn');
-      triggerCurrentPhaseController();
-      console.log('✅ [KingdomActor Store] TurnManager initialized and current phase controller triggered');
-    } catch (error) {
-      console.error('[KingdomActor Store] Error triggering current phase controller:', error);
-    }
-  } catch (error) {
-    console.error('[KingdomActor Store] Error initializing TurnManager:', error);
-  }
+function initializeTurnManager(): void {
+  // Create TurnManager directly - no store needed, just a simple instance
+  turnManagerInstance = new TurnManager();
+  
+  console.log('✅ [KingdomActor Store] TurnManager initialized - phases are self-executing');
 }
 
 /**
@@ -118,14 +120,10 @@ export async function updateKingdom(updater: (kingdom: KingdomData) => void): Pr
  */
 
 export async function advancePhase(): Promise<void> {
-  // Use TurnManager for phase advancement instead of direct actor call
-  // This ensures phase controllers are properly triggered
+  // Use TurnManager for phase advancement
   try {
-    const { turnManager } = await import('./turn');
-    const manager = get(turnManager);
-    
-    if (manager) {
-      await manager.nextPhase();
+    if (turnManagerInstance) {
+      await turnManagerInstance.nextPhase();
       console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
     } else {
       console.warn('[KingdomActor Store] No TurnManager available, falling back to direct actor call');
@@ -180,14 +178,34 @@ export function isCurrentPhaseComplete(): boolean {
 
 export async function modifyResource(resource: string, amount: number): Promise<void> {
   const actor = get(kingdomActor);
-  if (!actor) return;
+  if (!actor) {
+    console.warn(`[KingdomActor Store] Cannot modify resource '${resource}' - no actor available yet`);
+    return;
+  }
+  
+  // Check if the actor has the modifyResource method (is a proper KingdomActor)
+  if (typeof actor.modifyResource !== 'function') {
+    console.error(`[KingdomActor Store] Actor does not have modifyResource method. Actor type:`, actor.constructor.name);
+    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
+    return;
+  }
   
   await actor.modifyResource(resource, amount);
 }
 
 export async function setResource(resource: string, amount: number): Promise<void> {
   const actor = get(kingdomActor);
-  if (!actor) return;
+  if (!actor) {
+    console.warn(`[KingdomActor Store] Cannot set resource '${resource}' - no actor available yet`);
+    return;
+  }
+  
+  // Check if the actor has the setResource method (is a proper KingdomActor)
+  if (typeof actor.setResource !== 'function') {
+    console.error(`[KingdomActor Store] Actor does not have setResource method. Actor type:`, actor.constructor.name);
+    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
+    return;
+  }
   
   await actor.setResource(resource, amount);
 }
@@ -262,7 +280,45 @@ export function resetPlayerAction(playerId: string): void {
   });
 }
 
-export function getPlayerAction(playerId: string) {
+/**
+ * Initialize all current players in the game
+ */
+export function initializeAllPlayers(): void {
+  const game = (window as any).game;
+  if (!game?.users) {
+    console.warn('[KingdomStore] Game not available, cannot initialize players');
+    return;
+  }
+
+  const initializedPlayers: string[] = [];
+  
+  playerActions.update(actions => {
+    // Clear existing actions for fresh start
+    actions.clear();
+    
+    // Initialize all users
+    for (const user of game.users) {
+      const playerAction = {
+        playerId: user.id,
+        playerName: user.name || 'Unknown Player',
+        actionSpent: false,
+        spentInPhase: undefined
+      };
+      
+      actions.set(user.id, playerAction);
+      initializedPlayers.push(user.name);
+    }
+    
+    return actions;
+  });
+  
+  console.log(`[KingdomStore] Initialized player actions for: ${initializedPlayers.join(', ')}`);
+  
+  // Mark as fully initialized
+  isInitialized.set(true);
+}
+
+export function getPlayerAction(playerId: string): { playerId: string; playerName: string; actionSpent: boolean; spentInPhase?: TurnPhase } | undefined {
   const actions = get(playerActions);
   return actions.get(playerId);
 }

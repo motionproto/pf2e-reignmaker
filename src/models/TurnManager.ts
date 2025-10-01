@@ -54,15 +54,12 @@ export class TurnManager {
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
-        const next = this.getNextPhase(currentKingdom.currentPhase);
+        const next = await this.getNextPhase(currentKingdom.currentPhase);
         if (next !== null) {
             const { updateKingdom } = await import('../stores/KingdomStore');
             await updateKingdom((kingdom) => {
                 kingdom.currentPhase = next;
             });
-            
-            // Trigger the phase controller for the new phase
-            await this.triggerPhaseController(next);
             
             this.onPhaseChanged?.(next);
             console.log(`[TurnManager] Advanced to ${next}`);
@@ -72,80 +69,12 @@ export class TurnManager {
         }
     }
     
-    /**
-     * Trigger the appropriate phase controller when entering a new phase
-     */
-    async triggerPhaseController(phase: TurnPhase): Promise<void> {
-        console.log(`🟡 [TurnManager] Triggering controller for ${phase}...`);
-        
-        try {
-            switch (phase) {
-                case TurnPhase.STATUS: // Status Phase
-                    await this.tryTriggerController('../controllers/StatusPhaseController', 'createStatusPhaseController', phase);
-                    break;
-                
-                case TurnPhase.RESOURCES: // Resources Phase
-                    await this.tryTriggerController('../controllers/ResourcePhaseController', 'createResourcePhaseController', phase);
-                    break;
-                
-                case TurnPhase.UNREST: // Unrest Phase
-                    await this.tryTriggerController('../controllers/UnrestPhaseController', 'createUnrestPhaseController', phase);
-                    break;
-                
-                case TurnPhase.EVENTS: // Events Phase
-                    await this.tryTriggerController('../controllers/EventPhaseController', 'createEventPhaseController', phase);
-                    break;
-                
-                case TurnPhase.ACTIONS: // Actions Phase
-                    await this.tryTriggerController('../controllers/ActionPhaseController', 'createActionPhaseController', phase);
-                    break;
-                
-                case TurnPhase.UPKEEP: // Upkeep Phase
-                    await this.tryTriggerController('../controllers/UpkeepPhaseController', 'createUpkeepPhaseController', phase);
-                    break;
-                
-                default:
-                    console.warn(`[TurnManager] No controller available for phase: ${phase}`);
-            }
-            
-            console.log(`✅ [TurnManager] Phase controller check completed for ${phase}`);
-        } catch (error) {
-            console.error(`❌ [TurnManager] Error triggering controller for ${phase}:`, error);
-        }
-    }
-    
-    /**
-     * Helper method to safely try triggering a controller
-     */
-    private async tryTriggerController(modulePath: string, factoryName: string, phase: TurnPhase): Promise<void> {
-        try {
-            const module = await import(modulePath);
-            const factory = module[factoryName];
-            
-            if (typeof factory === 'function') {
-                const controller = await factory();
-                
-                if (controller && typeof (controller as any).runAutomation === 'function') {
-                    const result = await (controller as any).runAutomation();
-                    if (!result.success) {
-                        console.error(`❌ [TurnManager] ${phase} controller failed:`, result.error);
-                    }
-                } else {
-                    console.log(`🟡 [TurnManager] ${phase} controller not yet migrated to new architecture`);
-                }
-            } else {
-                console.log(`🟡 [TurnManager] ${phase} controller factory not found`);
-            }
-        } catch (error) {
-            console.log(`🟡 [TurnManager] ${phase} controller not available or not migrated:`, error);
-        }
-    }
     
     /**
      * Get the next phase in sequence - uses PHASE_ORDER for maintainability
      */
-    private getNextPhase(currentPhase: TurnPhase): TurnPhase | null {
-        const { PHASE_ORDER } = require('./KingdomState');
+    private async getNextPhase(currentPhase: TurnPhase): Promise<TurnPhase | null> {
+        const { PHASE_ORDER } = await import('./KingdomState');
         const currentIndex = PHASE_ORDER.indexOf(currentPhase);
         
         if (currentIndex >= 0 && currentIndex < PHASE_ORDER.length - 1) {

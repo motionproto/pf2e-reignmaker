@@ -3,14 +3,14 @@
   import { TurnPhase } from '../../../models/KingdomState';
   import { onMount } from 'svelte';
 
-  // Define the phases in order
+  // Define the phases in order - using new semantic names
   const phases = [
-    { id: TurnPhase.PHASE_I, label: 'Status', fullName: 'Gain Fame and apply ongoing modifiers' },
-    { id: TurnPhase.PHASE_II, label: 'Resources', fullName: 'Collect resources and manage consumption' },
-    { id: TurnPhase.PHASE_III, label: 'Unrest', fullName: 'Calculate unrest and resolve incidents' },
-    { id: TurnPhase.PHASE_IV, label: 'Events', fullName: 'Resolve kingdom events' },
-    { id: TurnPhase.PHASE_V, label: 'Actions', fullName: 'Perform kingdom actions' },
-    { id: TurnPhase.PHASE_VI, label: 'Upkeep', fullName: 'End of turn' }
+    { id: TurnPhase.STATUS, label: 'Status', fullName: 'Gain Fame and apply ongoing modifiers' },
+    { id: TurnPhase.RESOURCES, label: 'Resources', fullName: 'Collect resources and manage consumption' },
+    { id: TurnPhase.UNREST, label: 'Unrest', fullName: 'Calculate unrest and resolve incidents' },
+    { id: TurnPhase.EVENTS, label: 'Events', fullName: 'Resolve kingdom events' },
+    { id: TurnPhase.ACTIONS, label: 'Actions', fullName: 'Perform kingdom actions' },
+    { id: TurnPhase.UPKEEP, label: 'Upkeep', fullName: 'End of turn' }
   ];
 
   $: currentPhase = $kingdomData.currentPhase;
