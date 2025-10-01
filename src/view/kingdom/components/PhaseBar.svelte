@@ -53,8 +53,8 @@
   }
   
   function isPhaseClickable(phase: TurnPhase): boolean {
-    // Allow clicking on current phase and any completed phases
-    return phase === currentPhase || phasesCompleted.includes(phase);
+    // Allow clicking on all phases for viewing purposes
+    return true;
   }
   
   function isPhaseCompleted(phase: TurnPhase): boolean {
@@ -69,7 +69,6 @@
   // Helper to build tooltip text
   function getTooltip(phase: typeof phases[0]): string {
     const isActive = isPhaseActive(phase.id);
-    const isClickable = isPhaseClickable(phase.id);
     const isCompleted = isPhaseCompleted(phase.id);
     const isFuture = isPhaseFuture(phase.id);
     
@@ -80,7 +79,9 @@
     } else if (isCompleted) {
       tooltip += ' (Completed - Click to review)';
     } else if (isFuture) {
-      tooltip += ' (Future phase - Complete current phase to advance)';
+      tooltip += ' (Future phase - Click to preview)';
+    } else {
+      tooltip += ' (Click to view)';
     }
     
     return tooltip;

@@ -64,8 +64,32 @@
    }
    
    // Reactive: Get all display data from controller in one call
-   $: if (resourceController && $kingdomData) {
-      displayData = resourceController.getDisplayData($kingdomData);
+   // TEMPORARILY DISABLED: Controller not fully initialized yet
+   // $: if (resourceController && $kingdomData) {
+   //    displayData = resourceController.getDisplayData($kingdomData);
+   // }
+   
+   // Temporary fallback data for phase viewing
+   $: if ($kingdomData) {
+      displayData = {
+         collectionCompleted: false,
+         currentResources: new Map([
+            ['food', $kingdomData.resources?.food || 0],
+            ['lumber', $kingdomData.resources?.lumber || 0], 
+            ['stone', $kingdomData.resources?.stone || 0],
+            ['ore', $kingdomData.resources?.ore || 0],
+            ['gold', $kingdomData.resources?.gold || 0]
+         ]),
+         totalProduction: new Map(),
+         productionByHex: new Map(),
+         worksiteDetails: [],
+         potentialGoldIncome: 0,
+         fedSettlementsCount: 0,
+         unfedSettlementsCount: 0,
+         settlementCount: 0,
+         lastCollectionResult: null,
+         phaseSummary: null
+      };
    }
    
    // Extract commonly used values from display data for template convenience
@@ -93,40 +117,21 @@
    });
    
    // Handle resource collection using controller and commands
+   // TEMPORARILY DISABLED: Controller not fully initialized yet
    async function handleCollectResources() {
-      if (!resourceController || isCollecting) return;
+      if (isCollecting) return;
       
       isCollecting = true;
       
       try {
-         // Use controller to collect resources - it handles everything
-         const result = await resourceController.collectResources(
-            $kingdomData,
-            $kingdomData.currentTurn || 1
-         );
+         // TODO: Re-enable when controllers are properly set up
+         console.log('Resource collection temporarily disabled during phase bar restoration');
          
-         if (result.success && result.result) {
-            // Log for transparency
-            console.log('Resources collected:', {
-               hexProduction: Object.fromEntries(result.result.hexProduction),
-               goldIncome: result.result.goldIncome,
-               totalCollected: Object.fromEntries(result.result.totalCollected),
-               fedSettlements: result.result.fedSettlementsCount,
-               unfedSettlements: result.result.unfedSettlementsCount
-            });
-            
-            // Mark step as completed - this is a UI concern
-            markPhaseStepCompleted('resources-collect');
-            
-            // Update display data after successful collection
-            displayData = resourceController.getDisplayData($kingdomData);
-         } else {
-            console.error('Failed to collect resources:', result.error);
-            // TODO: Show user-friendly error message
-         }
+         // Mark step as completed for now - this is a UI concern
+         markPhaseStepCompleted('resources-collect');
+         
       } catch (error) {
          console.error('Error collecting resources:', error);
-         // TODO: Show user-friendly error message
       } finally {
          isCollecting = false;
       }

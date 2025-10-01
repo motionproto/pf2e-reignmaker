@@ -28,6 +28,17 @@
    $: currentPhaseComplete = isCurrentPhaseComplete();
    $: canAdvance = currentPhaseComplete;
    
+   // Debug logging
+   $: {
+      console.log('[PhaseProgressionDebug] Phase completion check:', {
+         currentPhase,
+         currentPhaseComplete,
+         canAdvance,
+         phaseStepsCompleted,
+         phasesCompleted: $kingdomData.phasesCompleted
+      });
+   }
+   
    // Helper function for next phase calculation
    function getNextPhase(phase: TurnPhase): TurnPhase | null {
       const phases = Object.values(TurnPhase);

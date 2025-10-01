@@ -1,25 +1,71 @@
 /**
- * Controllers - Orchestration layer for coordinating services and commands
+ * Simplified Controller Factory
  * 
- * Controllers manage the interaction between domain services, commands,
- * and UI components, providing a clean interface for complex operations.
+ * Creates and manages simple controllers without complex registry patterns.
+ * Focus on direct instantiation and simple validation.
  */
 
-export { EventPhaseController, createEventPhaseController } from './EventPhaseController';
-export type { EventPhaseState } from './EventPhaseController';
+import { TurnManager } from '../models/TurnManager';
 
-export { ActionPhaseController, createActionPhaseController } from './ActionPhaseController';
-export type { ActionPhaseState, ActionResolution } from './ActionPhaseController';
+/**
+ * Factory for creating controller components
+ */
+export class ControllerFactory {
+    
+    /**
+     * Create a new TurnManager (simple turn progression only)
+     */
+    static createTurnManager(): TurnManager {
+        console.log('[ControllerFactory] Creating simplified TurnManager');
+        return new TurnManager();
+    }
+    
+    /**
+     * Validate basic system health
+     */
+    static validateSystem(): { valid: boolean; issues: string[] } {
+        const issues: string[] = [];
+        
+        try {
+            // Basic validation - can we create a TurnManager?
+            const testManager = new TurnManager();
+            if (!testManager) {
+                issues.push('Failed to create TurnManager');
+            }
+        } catch (error) {
+            issues.push(`TurnManager creation failed: ${error}`);
+        }
+        
+        return {
+            valid: issues.length === 0,
+            issues
+        };
+    }
+    
+    /**
+     * Get system status summary
+     */
+    static getSystemStatus(): {
+        turnManagerAvailable: boolean;
+        systemValid: boolean;
+        issues: string[];
+    } {
+        const validation = this.validateSystem();
+        
+        return {
+            turnManagerAvailable: true, // Simple - we can always create one
+            systemValid: validation.valid,
+            issues: validation.issues
+        };
+    }
+}
 
-export { UnrestPhaseController, createUnrestPhaseController } from './UnrestPhaseController';
-export type { UnrestPhaseState, IncidentResolution } from './UnrestPhaseController';
+// Export factory for easy access
+export { ControllerFactory as default };
 
-export { StatusPhaseController, createStatusPhaseController } from './StatusPhaseController';
-export type { StatusPhaseState, MilestoneCheck } from './StatusPhaseController';
-
-export { UpkeepPhaseController, createUpkeepPhaseController } from './UpkeepPhaseController';
-export type { UpkeepPhaseState, ProjectProgress, UpkeepPhaseSummary } from './UpkeepPhaseController';
-
-// Future controllers can be added here:
-export { ResourcePhaseController, createResourcePhaseController } from './ResourcePhaseController';
-// export { TurnController } from './TurnController';
+/**
+ * Quick factory function for common use case
+ */
+export function createTurnManager(): TurnManager {
+    return ControllerFactory.createTurnManager();
+}

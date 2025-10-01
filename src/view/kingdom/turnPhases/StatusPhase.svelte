@@ -1,112 +1,87 @@
 <script lang="ts">
-   import { onMount } from 'svelte';
-   import { get } from 'svelte/store';
-   import { kingdomData, markPhaseStepCompleted } from '../../../stores/kingdomActor';
-   import { TurnPhase } from '../../../models/KingdomState';
+import { onMount } from 'svelte';
+import { kingdomData, isPhaseStepCompleted } from '../../../stores/kingdomActor';
+import { TurnPhase } from '../../../models/KingdomState';
+
+// Props (currently unused but kept for potential future use)
+// export let isViewingCurrentPhase: boolean = true;
+
+// Import the ModifierCard component
+import ModifierCard from '../components/ModifierCard.svelte';
+
+// Constants
+const MAX_FAME = 3;
+
+// UI State
+let automationRunning = false;
+let automationComplete = false;
+let previousFame = 0;
+
+// Reactive UI state based on step completion
+$: fameReset = isPhaseStepCompleted('gain-fame');
+$: modifiersProcessed = isPhaseStepCompleted('apply-modifiers');
+
+// Simple initialization - run automation when StatusPhase loads
+onMount(async () => {
+   console.log('🟡 [StatusPhase] Mounted, checking if should run automation...');
    
-   // Props
-   export let isViewingCurrentPhase: boolean = true;
+   // Only run automation if we're in the Status Phase and haven't run yet
+   if ($kingdomData.currentPhase === TurnPhase.PHASE_I && !fameReset && !modifiersProcessed) {
+      console.log('🟡 [StatusPhase] Starting automation...');
+      previousFame = $kingdomData.fame;
+      await runAutomation();
+   } else {
+      console.log('🟡 [StatusPhase] Skipping automation (wrong phase or already done)');
+   }
+});
+
+// UI calls controller - no business logic here
+async function runAutomation() {
+   if (automationRunning) return;
    
-   // Import clean architecture components
-   import { createStatusPhaseController } from '../../../controllers/StatusPhaseController';
-   import type { StatusPhaseController } from '../../../controllers/StatusPhaseController';
+   automationRunning = true;
+   previousFame = $kingdomData.fame;
    
-   // Import the ModifierCard component
-   import ModifierCard from '../components/ModifierCard.svelte';
-   
-   // Controller instance
-   let statusController: StatusPhaseController;
-   
-   // Constants
-   const MAX_FAME = 3;
-   
-   // UI State for tracking what happened
-   let fameReset = false;
-   let previousFame = 0;
-   let modifiersProcessed = false;
-   let appliedEffects: Array<{
-      name: string;
-      source: string;
-      effects: Array<{
-         resource: string;
-         amount: number;
-      }>;
-   }> = [];
-   
-   // Initialize controller and automatically process phase on mount
-   onMount(async () => {
-      statusController = createStatusPhaseController();
+   try {
+      // Use controller for business logic
+      const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
+      const controller = await createStatusPhaseController();
       
-      // Only run automation if we're in the Status Phase
-      if ($kingdomData.currentPhase === TurnPhase.PHASE_I) {
-         // Add a small delay to ensure actor is initialized
-         setTimeout(() => runAutomation(), 250);
+      const result = await controller.runAutomation();
+      
+      if (result.success) {
+         automationComplete = true;
+         console.log('✅ [StatusPhase] Automation completed successfully');
+      } else {
+         console.error('❌ [StatusPhase] Automation failed:', result.error);
       }
-   });
-   
-   // Run automation when phase changes to Status Phase
-   $: if ($kingdomData.currentPhase === TurnPhase.PHASE_I && statusController && !fameReset && !modifiersProcessed) {
-      console.log('[StatusPhase] Reactive statement triggered - running automation');
-      // Add a small delay to ensure actor is available
-      setTimeout(() => runAutomation(), 100);
+   } catch (error) {
+      console.error('❌ [StatusPhase] Error running automation:', error);
+   } finally {
+      automationRunning = false;
    }
-   
-   // Automatically process fame and modifiers
-   async function runAutomation() {
-      try {
-         console.log('[StatusPhase] Starting automation for Status Phase');
-         
-         // Store previous fame for display
-         previousFame = $kingdomData.fame;
-         
-         // Reset fame to 1 (StatusPhaseController needs different interface)
-         // For now, just mark the step as completed since we can't use the controller directly
-         fameReset = true;
-         console.log('[StatusPhase] About to mark gain-fame as completed');
-         await markPhaseStepCompleted('gain-fame');
-         console.log('[StatusPhase] Successfully marked gain-fame as completed');
-         
-         // Process modifiers (simplified for now since controller expects different type)
-         modifiersProcessed = true;
-         console.log('[StatusPhase] About to mark apply-modifiers as completed');
-         await markPhaseStepCompleted('apply-modifiers');
-         console.log('[StatusPhase] Successfully marked apply-modifiers as completed');
-         
-         // Force a small delay to ensure all async operations complete
-         await new Promise(resolve => setTimeout(resolve, 100));
-         
-         console.log('[StatusPhase] Automation completed - phase should now be ready to advance');
-      } catch (error) {
-         console.error('[StatusPhase] Error in runAutomation:', error);
-      }
+}
+
+// Manual step functions for UI buttons (for testing/debugging)
+async function manualResetFame() {
+   try {
+      const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
+      const controller = await createStatusPhaseController();
+      await controller.resetFame();
+   } catch (error) {
+      console.error('❌ [StatusPhase] Manual fame reset failed:', error);
    }
-   
-   // Format resource name for display
-   function formatResourceName(resource: string): string {
-      const resourceNames: Record<string, string> = {
-         gold: 'Gold',
-         food: 'Food',
-         lumber: 'Lumber',
-         stone: 'Stone',
-         ore: 'Ore',
-         luxuries: 'Luxuries',
-         unrest: 'Unrest',
-         fame: 'Fame'
-      };
-      return resourceNames[resource] || resource;
+}
+
+async function manualApplyModifiers() {
+   try {
+      const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
+      const controller = await createStatusPhaseController();
+      await controller.applyModifiers();
+   } catch (error) {
+      console.error('❌ [StatusPhase] Manual modifiers apply failed:', error);
    }
-   
-   // Group effects by positive and negative
-   $: positiveEffects = appliedEffects.filter(mod => 
-      mod.effects.some(e => e.amount > 0)
-   );
-   
-   $: negativeEffects = appliedEffects.filter(mod => 
-      mod.effects.some(e => e.amount < 0)
-   );
-   
-   // Get phase summary from controller
-   $: phaseSummary = statusController?.getPhaseSummary();
+}
 </script>
 
 <div class="status-phase">
@@ -116,17 +91,17 @@
          <i class="fas fa-star"></i>
          <h3>Kingdom Fame</h3>
       </div>
-      
+
       <div class="fame-display">
          <div class="fame-stars">
             {#each Array(MAX_FAME) as _, i}
-               <i 
-                  class="{i < $kingdomData.fame ? 'fas' : 'far'} fa-star star-icon" 
+               <i
+                  class="{i < $kingdomData.fame ? 'fas' : 'far'} fa-star star-icon"
                   class:filled={i < $kingdomData.fame}
                ></i>
             {/each}
          </div>
-         
+
          <div class="fame-info">
             <div class="fame-value">{$kingdomData.fame} / {MAX_FAME}</div>
             {#if fameReset && previousFame !== 1}
@@ -136,24 +111,86 @@
             {/if}
          </div>
       </div>
+
+      <!-- Manual controls for testing/debugging -->
+      {#if !fameReset}
+         <div class="manual-controls">
+            <button on:click={manualResetFame} disabled={automationRunning}>
+               Reset Fame to 1
+            </button>
+         </div>
+      {/if}
    </div>
-   
+
    <!-- Active Modifiers Overview -->
    {#if $kingdomData.modifiers && $kingdomData.modifiers.length > 0}
       <div class="phase-section active-modifiers">
          <div class="section-header">
             <i class="fas fa-list"></i>
             <h3>Active Modifiers</h3>
+            {#if modifiersProcessed}
+               <span class="status-badge processed">✅ Applied</span>
+            {:else}
+               <span class="status-badge pending">⏳ Pending</span>
+            {/if}
          </div>
-         
+
          <div class="modifiers-grid">
             {#each $kingdomData.modifiers as modifier}
                <ModifierCard {modifier} />
             {/each}
          </div>
+
+         <!-- Manual controls for testing/debugging -->
+         {#if !modifiersProcessed}
+            <div class="manual-controls">
+               <button on:click={manualApplyModifiers} disabled={automationRunning}>
+                  Apply Modifiers
+               </button>
+            </div>
+         {/if}
+      </div>
+   {:else}
+      <div class="phase-section no-modifiers">
+         <div class="section-header">
+            <i class="fas fa-check-circle"></i>
+            <h3>No Active Modifiers</h3>
+         </div>
+         <p>Your kingdom has no active modifiers affecting this turn.</p>
       </div>
    {/if}
-   
+
+   <!-- Automation Status -->
+   <div class="phase-section automation-status">
+      <div class="section-header">
+         <i class="fas fa-cog"></i>
+         <h3>Phase Status</h3>
+      </div>
+
+      <div class="status-grid">
+         <div class="status-item" class:complete={fameReset}>
+            <i class="fas {fameReset ? 'fa-check-circle' : 'fa-circle'}"></i>
+            <span>Fame Reset</span>
+         </div>
+         
+         <div class="status-item" class:complete={modifiersProcessed}>
+            <i class="fas {modifiersProcessed ? 'fa-check-circle' : 'fa-circle'}"></i>
+            <span>Modifiers Applied</span>
+         </div>
+      </div>
+
+      {#if automationRunning}
+         <div class="automation-running">
+            <i class="fas fa-spinner fa-spin"></i>
+            Running automation...
+         </div>
+      {:else if !automationComplete && !fameReset && !modifiersProcessed}
+         <button class="automation-button" on:click={runAutomation}>
+            <i class="fas fa-play"></i>
+            Run Status Phase
+         </button>
+      {/if}
+   </div>
 </div>
 
 <style lang="scss">
@@ -162,7 +199,7 @@
       flex-direction: column;
       gap: 20px;
    }
-   
+
    .phase-section {
       background: linear-gradient(135deg,
          rgba(31, 31, 35, 0.6),
@@ -171,27 +208,47 @@
       border: 1px solid var(--border-medium);
       padding: 20px;
    }
-   
+
    .section-header {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 15px;
-      
+
       i {
          font-size: 20px;
          color: var(--color-amber);
       }
-      
+
       h3 {
          margin: 0;
          font-size: var(--font-2xl);
          font-weight: var(--font-weight-semibold);
          line-height: 1.3;
          color: var(--text-primary);
+         flex: 1;
       }
    }
-   
+
+   .status-badge {
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-medium);
+      
+      &.processed {
+         background: rgba(34, 197, 94, 0.2);
+         color: var(--color-green);
+         border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      
+      &.pending {
+         background: rgba(251, 191, 36, 0.2);
+         color: var(--color-amber);
+         border: 1px solid rgba(251, 191, 36, 0.3);
+      }
+   }
+
    // Fame Section Styles
    .fame-display {
       display: flex;
@@ -202,41 +259,41 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-md);
    }
-   
+
    .fame-stars {
       display: flex;
       gap: 12px;
       justify-content: center;
-      
+
       .star-icon {
          font-size: 48px;
          transition: all 0.3s ease;
          color: var(--color-gray-600);
-         
+
          &.filled {
             color: var(--color-amber-light);
-            text-shadow: 
+            text-shadow:
                0 0 20px rgba(251, 191, 36, 0.4),
                0 2px 4px rgba(0, 0, 0, 0.3);
             transform: scale(1.05);
          }
-         
+
          &:not(.filled) {
             opacity: 0.3;
          }
       }
    }
-   
+
    .fame-info {
       text-align: center;
-      
+
       .fame-value {
          font-size: var(--font-3xl);
          font-weight: var(--font-weight-semibold);
          color: var(--color-amber-light);
          text-shadow: var(--text-shadow-md);
       }
-      
+
       .fame-change {
          margin-top: 8px;
          font-size: var(--font-md);
@@ -244,146 +301,125 @@
          font-style: italic;
       }
    }
-   
-   // Modifier Effects Styles
-   .no-modifiers {
-      text-align: center;
-      padding: 30px;
-      color: var(--text-secondary);
-      
-      i {
-         font-size: 48px;
-         color: var(--color-green);
-         margin-bottom: 10px;
-      }
-      
-      p {
-         margin: 0;
-         font-size: var(--font-md);
-      }
+
+   // Status Grid
+   .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
    }
-   
-   .effects-container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-   }
-   
-   .effects-group {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
-      padding: 15px;
-      
-      h4 {
-         margin: 0 0 12px 0;
-         font-size: var(--font-xl);
-         font-weight: var(--font-weight-semibold);
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         
-         i {
-            font-size: 18px;
-         }
-      }
-      
-      &.positive {
-         border-left: 3px solid var(--color-green);
-         
-         h4 {
-            color: var(--color-green-light);
-            
-            i {
-               color: var(--color-green);
-            }
-         }
-         
-         .effect-value {
-            color: var(--color-green-light);
-         }
-      }
-      
-      &.negative {
-         border-left: 3px solid var(--color-red);
-         
-         h4 {
-            color: var(--color-red-light);
-            
-            i {
-               color: var(--color-red);
-            }
-         }
-         
-         .effect-value {
-            color: var(--color-red-light);
-         }
-      }
-   }
-   
-   .effects-list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-   }
-   
-   .effect-item {
+
+   .status-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: var(--font-md);
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-default);
       
-      &:last-child {
-         border-bottom: none;
+      &.complete {
+         border-color: var(--color-green);
+         background: rgba(34, 197, 94, 0.1);
+         
+         i {
+            color: var(--color-green);
+         }
       }
       
-      .effect-value {
-         font-weight: var(--font-weight-bold);
-         font-size: var(--font-lg);
-         min-width: 40px;
+      i {
+         font-size: 16px;
+         color: var(--color-gray-500);
       }
       
-      .effect-resource {
+      span {
          color: var(--text-primary);
          font-weight: var(--font-weight-medium);
       }
+   }
+
+   // Manual Controls
+   .manual-controls {
+      margin-top: 15px;
+      text-align: center;
       
-      .effect-source {
-         margin-left: auto;
-         color: var(--text-tertiary);
+      button {
+         background: var(--color-secondary);
+         color: var(--text-primary);
+         border: 1px solid var(--border-default);
+         padding: 8px 16px;
+         border-radius: var(--radius-md);
+         cursor: pointer;
          font-size: var(--font-sm);
-         font-style: italic;
+         
+         &:hover:not(:disabled) {
+            background: var(--color-secondary-hover);
+         }
+         
+         &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+         }
       }
    }
-   
+
+   // Automation Button
+   .automation-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 20px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover {
+         background: var(--color-primary-hover);
+         transform: translateY(-1px);
+      }
+      
+      i {
+         font-size: 14px;
+      }
+   }
+
+   .automation-running {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px;
+      color: var(--color-amber);
+      font-weight: var(--font-weight-medium);
+      
+      i {
+         font-size: 16px;
+      }
+   }
+
+   // No Modifiers Styles
+   .no-modifiers {
+      text-align: center;
+      
+      p {
+         margin: 0;
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+      }
+   }
+
    // Active Modifiers Grid
    .modifiers-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
-   }
-   
-   // Phase Complete Indicator
-   .phase-complete {
-      background: linear-gradient(135deg,
-         rgba(34, 197, 94, 0.1),
-         rgba(34, 197, 94, 0.05));
-      border: 1px solid var(--color-green-border);
-      border-radius: var(--radius-md);
-      padding: 20px;
-      text-align: center;
-      
-      i {
-         font-size: 32px;
-         color: var(--color-green);
-         margin-bottom: 10px;
-      }
-      
-      p {
-         margin: 0;
-         color: var(--color-green-light);
-         font-size: var(--font-md);
-      }
    }
 </style>

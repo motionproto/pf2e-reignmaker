@@ -1,10 +1,18 @@
 import { writable, derived } from 'svelte/store';
 import { TurnManager } from '../models/TurnManager';
+import { KingdomState } from '../models/KingdomState';
 import type { PlayerAction } from '../models/PlayerActions';
 import type { TurnPhase } from '../models/KingdomState';
 
-// Turn management store
-export const turnManager = writable(new TurnManager());
+// Turn management store - initialize with null until kingdom state is available
+export const turnManager = writable<TurnManager | null>(null);
+
+// Initialize turn manager when kingdom state becomes available
+export function initializeTurnManager(kingdomState: KingdomState): void {
+    const manager = new TurnManager(kingdomState);
+    turnManager.set(manager);
+    console.log('[TurnStore] Initialized TurnManager with kingdom state');
+}
 
 // Store for available actions in the current phase
 export const availableActions = writable<PlayerAction[]>([]);
@@ -21,13 +29,15 @@ export const actionHistory = writable<Array<{
 
 // Derived store for current phase info
 export const currentPhaseInfo = derived(turnManager, $manager => {
-    return $manager.getCurrentPhaseInfo();
+    return $manager?.getCurrentPhaseInfo() || null;
 });
 
 // Actions to modify turn state
 export function startNewTurn() {
     turnManager.update(manager => {
-        manager.startNewTurn();
+        if (manager) {
+            manager.startNewTurn();
+        }
         return manager;
     });
     actionHistory.set([]);
@@ -35,7 +45,9 @@ export function startNewTurn() {
 
 export function completePhase(phase: TurnPhase) {
     turnManager.update(manager => {
-        manager.completePhase(phase);
+        if (manager) {
+            manager.completePhase(phase);
+        }
         return manager;
     });
 }
@@ -64,8 +76,17 @@ export function clearActionHistory() {
 }
 
 export function resetTurnState() {
-    turnManager.set(new TurnManager());
+    turnManager.set(null);
     availableActions.set([]);
     selectedAction.set(null);
     actionHistory.set([]);
+}
+
+export function updateTurnManagerKingdomState(kingdomState: KingdomState): void {
+    turnManager.update(manager => {
+        if (manager) {
+            manager.updateKingdomState(kingdomState);
+        }
+        return manager;
+    });
 }
