@@ -197,18 +197,17 @@ export class KingdomActor extends Actor {
     await this.updateKingdom((kingdom) => {
       kingdom.phaseStepsCompleted[stepId] = true;
       console.log(`[KingdomActor] Marked step '${stepId}' as completed`);
-      
-      // Check if phase should be marked as complete
-      const requiredSteps = this.getRequiredStepsForPhase(kingdom.currentPhase);
-      console.log(`[KingdomActor] Required steps for ${kingdom.currentPhase}:`, requiredSteps);
-      console.log(`[KingdomActor] Completed steps:`, kingdom.phaseStepsCompleted);
-      
-      const allCompleted = requiredSteps.every(step => kingdom.phaseStepsCompleted[step] === true);
-      console.log(`[KingdomActor] All steps completed: ${allCompleted}`);
-      
-      if (allCompleted && !kingdom.phasesCompleted.includes(kingdom.currentPhase)) {
-        kingdom.phasesCompleted.push(kingdom.currentPhase);
-        console.log(`[KingdomActor] Phase ${kingdom.currentPhase} marked as complete`);
+    });
+  }
+  
+  /**
+   * Mark a phase as completed - called directly by controllers
+   */
+  async markPhaseCompleted(phase: TurnPhase): Promise<void> {
+    await this.updateKingdom((kingdom) => {
+      if (!kingdom.phasesCompleted.includes(phase)) {
+        kingdom.phasesCompleted.push(phase);
+        console.log(`[KingdomActor] Phase ${phase} marked as complete`);
       }
     });
   }
@@ -331,25 +330,6 @@ export class KingdomActor extends Actor {
     return null; // End of turn
   }
 
-  /**
-   * Get required steps for a phase - using semantic names
-   */
-  private getRequiredStepsForPhase(phase: TurnPhase): string[] {
-    const { TurnPhaseConfig } = require('../models/KingdomState');
-    const phaseConfig = TurnPhaseConfig[phase];
-    
-    // Map semantic phase names to required steps
-    const stepsByPhaseName: Record<string, string[]> = {
-      'Kingdom Status': ['gain-fame', 'apply-modifiers'],
-      'Resources': ['resources-collect'],
-      'Unrest & Incidents': ['calculate-unrest'],
-      'Events': ['resolve-event'],
-      'Actions': [], // No required steps for actions phase
-      'Upkeep': ['upkeep-food', 'upkeep-military', 'upkeep-build']
-    };
-    
-    return stepsByPhaseName[phaseConfig?.displayName] || [];
-  }
 }
 
 /**

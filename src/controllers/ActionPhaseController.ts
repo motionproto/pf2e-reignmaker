@@ -31,6 +31,7 @@ export interface ActionResolution {
 
 export class ActionPhaseController {
     private readonly maxActions: number;
+    private resolutions: Map<string, ActionResolution> = new Map();
     
     constructor(maxActions: number = 4) {
         this.maxActions = maxActions;
@@ -215,47 +216,65 @@ export class ActionPhaseController {
     }
     
     /**
-     * Reset an action (simplified implementation)
+     * Store an action resolution
+     */
+    storeResolution(resolution: ActionResolution): void {
+        const key = resolution.playerId ? `${resolution.actionId}-${resolution.playerId}` : resolution.actionId;
+        this.resolutions.set(key, resolution);
+    }
+    
+    /**
+     * Reset an action resolution
      */
     async resetAction(
         actionId: string,
         kingdomState?: KingdomState,
         playerId?: string
     ): Promise<boolean> {
-        // Simplified implementation - just return true
+        const key = playerId ? `${actionId}-${playerId}` : actionId;
+        this.resolutions.delete(key);
         return true;
     }
     
     /**
-     * Check if an action has been resolved by the current player (simplified)
+     * Check if an action has been resolved by the current player
      */
     isActionResolved(actionId: string, playerId?: string): boolean {
-        // Simplified implementation - return false
-        return false;
+        const key = playerId ? `${actionId}-${playerId}` : actionId;
+        return this.resolutions.has(key);
     }
     
     /**
-     * Check if an action has been resolved by any player (simplified)
+     * Check if an action has been resolved by any player
      */
     isActionResolvedByAny(actionId: string): boolean {
-        // Simplified implementation - return false
+        for (const [key] of this.resolutions) {
+            if (key.startsWith(actionId)) {
+                return true;
+            }
+        }
         return false;
     }
     
     /**
-     * Get resolution details for an action by current player (simplified)
+     * Get resolution details for an action by current player
      */
     getActionResolution(actionId: string, playerId?: string): ActionResolution | undefined {
-        // Simplified implementation - return undefined
-        return undefined;
+        const key = playerId ? `${actionId}-${playerId}` : actionId;
+        return this.resolutions.get(key);
     }
     
     /**
-     * Get all player resolutions for an action (simplified)
+     * Get all player resolutions for an action
      */
     getAllPlayersResolutions(actionId: string): ActionResolution[] {
-        // Simplified implementation - return empty array
-        return [];
+        const results: ActionResolution[] = [];
+        for (const [key, resolution] of this.resolutions) {
+            if (key.startsWith(actionId)) {
+                results.push(resolution);
+            }
+        }
+        return results;
     }
 }
 

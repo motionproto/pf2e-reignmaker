@@ -164,6 +164,31 @@ export async function markPhaseStepCompleted(stepId: string): Promise<void> {
   await actor.markPhaseStepCompleted(stepId);
 }
 
+export async function markPhaseCompleted(phase: TurnPhase): Promise<void> {
+  const actor = get(kingdomActor);
+  if (!actor) {
+    console.warn(`[KingdomActor Store] Cannot mark phase '${phase}' complete - no actor available yet`);
+    return;
+  }
+  
+  // Check if the actor has the markPhaseCompleted method (is a proper KingdomActor)
+  if (typeof actor.markPhaseCompleted !== 'function') {
+    console.error(`[KingdomActor Store] Actor does not have markPhaseCompleted method. Actor type:`, actor.constructor.name);
+    console.error(`[KingdomActor Store] Available methods:`, Object.getOwnPropertyNames(Object.getPrototypeOf(actor)));
+    
+    // Fallback: update kingdom data directly
+    await actor.updateKingdom(kingdom => {
+      if (!kingdom.phasesCompleted.includes(phase)) {
+        kingdom.phasesCompleted.push(phase);
+        console.log(`[KingdomActor Store] Phase ${phase} marked as complete (fallback method)`);
+      }
+    });
+    return;
+  }
+  
+  await actor.markPhaseCompleted(phase);
+}
+
 export function isPhaseStepCompleted(stepId: string): boolean {
   const data = get(kingdomData);
   return data.phaseStepsCompleted[stepId] === true;

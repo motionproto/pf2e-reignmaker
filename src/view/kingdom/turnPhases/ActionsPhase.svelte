@@ -180,10 +180,21 @@
       expandedActions = new Set(expandedActions);
     }
     
-    // Mark as resolved in gameState with preview state changes
-    // Don't execute the command yet - wait for user confirmation
-    // IMPORTANT: Pass currentUserId so the resolution is attributed to the correct player
+    // Store resolution in controller (proper business logic location)
     console.log('[ActionsPhase] Resolving action for player:', currentUserId, 'action:', action.id);
+    const resolution = {
+      actionId: action.id,
+      outcome: outcomeType,
+      actorName,
+      skillName,
+      timestamp: new Date(),
+      playerId: currentUserId || undefined,
+      stateChanges
+    };
+    
+    controller.storeResolution(resolution);
+    
+    // Also store locally for UI reactivity (until we have proper reactive controller)
     resolvedActions.set(action.id, {
       outcome: outcomeType,
       actorName,
@@ -246,7 +257,7 @@
   // Reset an action
   async function resetAction(actionId: string, skipPlayerActionReset: boolean = false) {
     // Use the controller to reset the action
-    await controller.resetAction(actionId, $kingdomData, currentUserId || undefined);
+    await controller.resetAction(actionId, $kingdomData as any, currentUserId || undefined);
 
     // Also reset the player action in gameState (unless it's a reroll)
     if (!skipPlayerActionReset) {
@@ -375,12 +386,12 @@
 
   function isActionAvailable(action: any): boolean {
     // Delegate to controller for business logic
-    return controller.canPerformAction(action, $kingdomData);
+    return controller.canPerformAction(action, $kingdomData as any);
   }
   
   function getMissingRequirements(action: any): string[] {
     // Delegate to controller for business logic
-    const requirements = controller.getActionRequirements(action, $kingdomData);
+    const requirements = controller.getActionRequirements(action, $kingdomData as any);
     const missing: string[] = [];
     
     // Add general reason if present
@@ -400,34 +411,23 @@
   }
 
   function isActionResolvedHelper(actionId: string): boolean {
+    // Delegate to controller for business logic
     return controller.isActionResolved(actionId, currentUserId || undefined);
   }
   
   // Check if any player has resolved this action
   function isActionResolvedByAnyHelper(actionId: string): boolean {
-    return controller.isActionResolvedByAny(actionId);
+    // Use local resolvedActions data instead of controller
+    return resolvedActions.has(actionId);
   }
 
   function getActionResolutionHelper(actionId: string) {
-    const resolution = controller.getActionResolution(actionId, currentUserId || undefined);
+    // Use local resolvedActions data instead of controller
+    const resolution = resolvedActions.get(actionId);
     if (!resolution) return undefined;
     
-    // Convert Map to plain object for the component
-    const stateChangesObj: Record<string, any> = {};
-    if (resolution.stateChanges) {
-      resolution.stateChanges.forEach((value, key) => {
-        stateChangesObj[key] = value;
-      });
-    }
-    
-    const formattedResolution = {
-      outcome: resolution.outcome,
-      actorName: resolution.actorName,
-      skillName: resolution.skillName,  
-      stateChanges: stateChangesObj
-    };
-    
-    return formattedResolution;
+    // Return the resolution directly since it's already in the correct format
+    return resolution;
   }
 
   // Handle skill execution from CheckCard (decoupled from component)
