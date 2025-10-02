@@ -1,6 +1,6 @@
 <script lang="ts">
-   import { kingdomData, viewingPhase, isCurrentPhaseComplete, advancePhase, markPhaseStepCompleted } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../models/KingdomState';
+   import { currentPhase, currentTurn, viewingPhase, isCurrentPhaseComplete, advancePhase, kingdomData } from '../../../stores/KingdomStore';
+   import { TurnPhase } from '../../../actors/KingdomActor';
    
    const phaseNames: Record<TurnPhase, string> = {
       [TurnPhase.STATUS]: 'Status',
@@ -20,22 +20,22 @@
       [TurnPhase.UPKEEP]: ['upkeep-food', 'upkeep-military', 'upkeep-build']
    };
    
-   $: currentPhase = $kingdomData.currentPhase;
+   $: actualPhase = $currentPhase;
    $: currentViewingPhase = $viewingPhase;
-   $: phaseStepsCompleted = $kingdomData.phaseStepsCompleted;
+   $: currentSteps = $kingdomData.currentPhaseSteps || [];
    $: phasesCompleted = new Set(); // TODO: Implement in new store if needed
-   $: nextPhase = getNextPhase(currentPhase);
+   $: nextPhase = getNextPhase(actualPhase);
    $: currentPhaseComplete = isCurrentPhaseComplete();
    $: canAdvance = currentPhaseComplete;
    
    // Debug logging
    $: {
       console.log('[PhaseProgressionDebug] Phase completion check:', {
-         currentPhase,
+         currentPhase: actualPhase,
          currentPhaseComplete,
          canAdvance,
-         phaseStepsCompleted,
-         phasesCompleted: $kingdomData.phasesCompleted
+         currentSteps,
+         phasesCompleted: []
       });
    }
    
@@ -46,14 +46,16 @@
       return currentIndex < phases.length - 1 ? phases[currentIndex + 1] : null;
    }
    
-   function forceCompleteCurrentPhase() {
-      const steps = phaseSteps[currentPhase] || [];
-      steps.forEach(step => {
-         const isCompleted = phaseStepsCompleted[step];
-         if (!isCompleted) {
-            markPhaseStepCompleted(step);
+   async function forceCompleteCurrentPhase() {
+      const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+      const totalSteps = currentSteps.length;
+      
+      // Complete all incomplete steps
+      for (let i = 0; i < totalSteps; i++) {
+         if (currentSteps[i]?.completed !== 1) {
+            await PhaseHandler.completePhaseStepByIndex(i);
          }
-      });
+      }
    }
    
    function handleAdvancePhase() {
@@ -76,11 +78,11 @@
          <div class="status-grid">
             <div class="status-item">
                <span class="label">Turn:</span>
-               <span class="value">{$kingdomData.currentTurn}</span>
+               <span class="value">{$currentTurn}</span>
             </div>
             <div class="status-item">
                <span class="label">Current Phase:</span>
-               <span class="value">{phaseNames[currentPhase]} ({currentPhase})</span>
+               <span class="value">{phaseNames[actualPhase]} ({actualPhase})</span>
             </div>
             <div class="status-item">
                <span class="label">Viewing Phase:</span>
@@ -102,7 +104,7 @@
             {#each Object.entries(phaseSteps) as [phaseKey, steps]}
                {@const phase = phaseKey as TurnPhase}
                {@const phaseName = phaseNames[phase]}
-               {@const isCurrentPhase = phase === currentPhase}
+               {@const isCurrentPhase = phase === actualPhase}
                {@const phaseComplete = phasesCompleted.has(phase)}
                <div class="phase-group" class:current={isCurrentPhase} class:complete={phaseComplete}>
                   <div class="phase-name">
@@ -113,8 +115,8 @@
                   </div>
                   {#if steps.length > 0}
                      <div class="steps">
-                        {#each steps as step}
-                           {@const completed = phaseStepsCompleted[step]}
+                        {#each steps as step, stepIndex}
+                           {@const completed = isCurrentPhase ? currentSteps[stepIndex]?.completed === 1 : false}
                            <div class="step" class:completed>
                               <i class="fas {completed ? 'fa-check-square' : 'fa-square'}"></i>
                               {step}

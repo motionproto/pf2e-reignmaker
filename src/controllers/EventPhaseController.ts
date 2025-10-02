@@ -10,7 +10,7 @@ import { ApplyEventOutcomeCommand } from '../commands/event/ApplyEventOutcomeCom
 import { commandExecutor } from '../commands/base/CommandExecutor';
 import type { CommandContext } from '../commands/base/Command';
 import type { EventData } from '../services/domain/events/EventService';
-import type { KingdomState } from '../models/KingdomState';
+import type { KingdomData } from '../actors/KingdomActor';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
 import { EventProvider } from './events/EventProvider';
 import { modifierService } from '../services/domain/modifiers/ModifierService';
@@ -21,8 +21,8 @@ import {
   reportPhaseError, 
   createPhaseResult,
   initializePhaseSteps,
-  completePhaseStep,
-  isStepCompleted
+  completePhaseStepByIndex,
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
 
 export interface EventPhaseState {
@@ -44,10 +44,10 @@ export interface IncidentResolution {
     message: string;
 }
 
-// Define steps for Events Phase
+// Define steps for Events Phase - FIXED structure
 const EVENTS_PHASE_STEPS = [
-  { id: 'event-check', name: 'Perform Event Check' }
-  // 'resolve-event' step is added dynamically if event is triggered
+  { name: 'Event Check' },     // Step 0 - MANUAL (user rolls)
+  { name: 'Resolve Event' } // Step 1 - CONDITIONAL (auto if no event, manual if event)
 ];
 
 export async function createEventPhaseController(eventService: any) {
@@ -69,11 +69,30 @@ export async function createEventPhaseController(eventService: any) {
             reportPhaseStart('EventPhaseController');
             
             try {
-                // Initialize phase with predefined steps
+                // Initialize phase with fixed 2-step structure
                 await initializePhaseSteps(EVENTS_PHASE_STEPS);
                 
-                // Initialize the phase
+                // Initialize the phase state
                 state = createInitialState();
+                
+                // Step 0: Perform Event Check - MANUAL (never auto-complete)
+                // Step 1: Resolve Triggered Event - MANUAL (always requires resolution if event exists)
+                
+                // Check if there's a pre-existing event that needs resolution
+                const { getKingdomActor } = await import('../stores/KingdomStore');
+                const actor = getKingdomActor();
+                const kingdom = actor?.getKingdom();
+                const hasActiveEvent = kingdom?.currentEventId !== null;
+                
+                if (hasActiveEvent) {
+                    console.log('⚠️ [EventPhaseController] Pre-existing event requires resolution in step 2');
+                } else {
+                    // No event to resolve - auto-complete step 1
+                    await completePhaseStepByIndex(1);
+                    console.log('✅ [EventPhaseController] Event resolution auto-completed (no event to resolve)');
+                }
+                
+                console.log('✅ [EventPhaseController] Event check requires user action');
                 
                 reportPhaseComplete('EventPhaseController');
                 return createPhaseResult(true);
@@ -92,8 +111,8 @@ export async function createEventPhaseController(eventService: any) {
             roll: number;
             newDC: number;
         }> {
-            // Check if already completed
-            if (isStepCompleted('event-check')) {
+            // Check if step 0 (event-check) is already completed
+            if (isStepCompletedByIndex(0)) {
                 console.log('🟡 [EventPhaseController] Event check already completed');
                 return {
                     triggered: !!state.currentEvent,
@@ -123,7 +142,7 @@ export async function createEventPhaseController(eventService: any) {
                     state.currentEvent = event;
                     console.log(`✨ [EventPhaseController] Event triggered: "${event.name}" (${event.id})`);
                     
-                    // Add resolve-event step dynamically
+                    // Store event in kingdom state and mark step 1 as incomplete
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
                     if (actor) {
@@ -132,14 +151,9 @@ export async function createEventPhaseController(eventService: any) {
                             kingdom.currentEventId = event.id;
                             kingdom.eventDC = newDC;
                             
-                            // Add resolve-event step if not already present
-                            const hasResolveStep = kingdom.currentPhaseSteps.some(s => s.id === 'resolve-event');
-                            if (!hasResolveStep) {
-                                kingdom.currentPhaseSteps.push({
-                                    id: 'resolve-event',
-                                    name: 'Resolve Triggered Event',
-                                    completed: false
-                                });
+                            // Mark step 1 (resolve-event) as incomplete since event is triggered
+                            if (kingdom.currentPhaseSteps[1]) {
+                                kingdom.currentPhaseSteps[1].completed = 0;
                             }
                         });
                     }
@@ -149,21 +163,26 @@ export async function createEventPhaseController(eventService: any) {
                 newDC = Math.max(6, currentDC - 5);
                 console.log(`📉 [EventPhaseController] No event, DC reduced from ${currentDC} to ${newDC}`);
                 
-                // Update kingdom state with new DC
+                // Update kingdom state with new DC and auto-complete step 1
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
                     await actor.updateKingdom((kingdom) => {
                         kingdom.eventDC = newDC;
                         kingdom.currentEventId = null;
+                        
+                        // Auto-complete step 1 (resolve-event) since no event
+                        if (kingdom.currentPhaseSteps[1]) {
+                            kingdom.currentPhaseSteps[1].completed = 1;
+                        }
                     });
                 }
             }
             
             state.eventDC = newDC;
             
-            // Complete the event-check step
-            await completePhaseStep('event-check');
+            // Complete step 0 (event-check)
+            await completePhaseStepByIndex(0);
             
             return {
                 triggered,
@@ -179,7 +198,7 @@ export async function createEventPhaseController(eventService: any) {
         async applyEventOutcome(
             event: EventData,
             outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-            kingdomState: KingdomState,
+            kingdomData: KingdomData,
             currentTurn: number
         ): Promise<{
             success: boolean;
@@ -191,7 +210,7 @@ export async function createEventPhaseController(eventService: any) {
             console.log(`🎯 [EventPhaseController] Applying event outcome: ${event.name} -> ${outcome}`);
             
             const context: CommandContext = {
-                kingdomState,
+                kingdomState: kingdomData,
                 currentTurn,
                 currentPhase: 'Phase IV: Events'
             };
@@ -216,9 +235,9 @@ export async function createEventPhaseController(eventService: any) {
                     state.appliedEffects
                 );
                 
-                // Complete the resolve-event step if it exists
-                if (isStepCompleted('event-check') && !isStepCompleted('resolve-event')) {
-                    await completePhaseStep('resolve-event');
+                // Complete step 1 (resolve-event) if it exists  
+                if (isStepCompletedByIndex(0) && !isStepCompletedByIndex(1)) {
+                    await completePhaseStepByIndex(1);
                 }
                 
                 return {

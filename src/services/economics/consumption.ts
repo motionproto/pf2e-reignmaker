@@ -4,7 +4,7 @@
  * Handles resource consumption and upkeep for the kingdom
  */
 
-import type { Settlement, Army } from '../../models/KingdomState';
+import type { Settlement, Army } from '../../actors/KingdomActor';
 import { SettlementTierConfig } from '../../models/KingdomState';
 import type { ConsumptionResult, EconomicModifier } from './types';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-   import { kingdomData, resources, updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
-   import type { KingdomState } from '../../../models/KingdomState';
+   import { kingdomData, currentTurn, fame, unrest, settlements, resources, updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
+   import type { KingdomData } from '../../../actors/KingdomActor';
    import { tick } from 'svelte';
    import EditableStat from './EditableStat.svelte';
    
@@ -27,7 +27,7 @@
    
    // Fame adjustment
    function adjustFame(delta: number) {
-      const newFame = $kingdomData.fame + delta;
+      const newFame = $fame + delta;
       if (newFame >= 0 && newFame <= 3) {
          updateKingdom(k => { k.fame = newFame; });
       }
@@ -124,23 +124,23 @@
          
          <!-- Core Trackers -->
          <div class="stat-group">
-            <h4 class="stat-group-header">Turn {$kingdomData.currentTurn}</h4>
+            <h4 class="stat-group-header">Turn {$currentTurn}</h4>
             <div class="stat-item">
                <span class="stat-label">Fame:</span>
                <div class="fame-controls">
                   <button 
                      class="stat-adjust-button" 
                      on:click={() => adjustFame(-1)}
-                     disabled={$kingdomData.fame <= 0}
+                     disabled={$fame <= 0}
                      title="Decrease Fame"
                   >
                      <i class="fas fa-minus"></i>
                   </button>
-                  <span class="stat-value fame-value">{$kingdomData.fame}</span>
+                  <span class="stat-value fame-value">{$fame}</span>
                   <button 
                      class="stat-adjust-button" 
                      on:click={() => adjustFame(1)}
-                     disabled={$kingdomData.fame >= 3}
+                     disabled={$fame >= 3}
                      title="Increase Fame"
                   >
                      <i class="fas fa-plus"></i>
@@ -192,9 +192,9 @@
             >
                <span class="stat-label">Current Unrest:</span>
                <EditableStat 
-                  value={$kingdomData.unrest}
+                  value={$unrest}
                   onChange={(newValue) => updateKingdom(k => { k.unrest = newValue; })}
-                  className={$kingdomData.unrest > 5 ? 'danger' : ''}
+                  className={$unrest > 5 ? 'danger' : ''}
                   isExternallyControlled={true}
                   isEditing={editingField === 'unrest'}
                   onStartEdit={() => startEditing('unrest')}
@@ -258,19 +258,19 @@
             </div>
             <div class="stat-item">
                <span class="stat-label">Villages:</span>
-               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Village').length}</span>
+               <span class="stat-value">{$settlements.filter(s => s.tier === 'Village').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Towns:</span>
-               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Town').length}</span>
+               <span class="stat-value">{$settlements.filter(s => s.tier === 'Town').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Cities:</span>
-               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'City').length}</span>
+               <span class="stat-value">{$settlements.filter(s => s.tier === 'City').length}</span>
             </div>
             <div class="stat-item">
                <span class="stat-label">Metropolises:</span>
-               <span class="stat-value">{$kingdomData.settlements.filter(s => s.tier === 'Metropolis').length}</span>
+               <span class="stat-value">{$settlements.filter(s => s.tier === 'Metropolis').length}</span>
             </div>
          </div>
          

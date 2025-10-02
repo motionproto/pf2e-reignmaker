@@ -6,9 +6,11 @@
  */
 
 import { diceService } from './DiceService';
-import type { KingdomState } from '../../models/KingdomState';
+import type { KingdomData } from '../../actors/KingdomActor';
 import type { Incident, IncidentLevel } from '../../models/Incidents';
 import { IncidentManager } from '../../models/Incidents';
+import type { Settlement } from '../../models/Settlement';
+import { SettlementTier } from '../../models/Settlement';
 
 export interface UnrestStatus {
     currentUnrest: number;
@@ -36,9 +38,9 @@ export class UnrestService {
     /**
      * Calculate current unrest status
      */
-    getUnrestStatus(state: KingdomState): UnrestStatus {
-        const currentUnrest = state.unrest || 0;
-        const imprisonedUnrest = state.imprisonedUnrest || 0;
+    getUnrestStatus(kingdomData: KingdomData): UnrestStatus {
+        const currentUnrest = kingdomData.unrest || 0;
+        const imprisonedUnrest = kingdomData.imprisonedUnrest || 0;
         const tier = IncidentManager.getUnrestTier(currentUnrest);
         const tierName = IncidentManager.getUnrestTierName(tier);
         const penalty = IncidentManager.getUnrestPenalty(currentUnrest);
@@ -157,27 +159,63 @@ export class UnrestService {
     /**
      * Calculate unrest generation from various sources
      */
-    calculateUnrestGeneration(state: KingdomState): Map<string, number> {
-        const sources = new Map<string, number>();
+    calculateUnrestGeneration(kingdomData: KingdomData): Record<string, number> {
+        const sources: Record<string, number> = {};
         
-        // Food shortage
-        const foodShortage = state.calculateFoodShortage();
+        // Food shortage - calculate based on consumption vs available
+        const totalFood = this.calculateTotalFoodConsumption(kingdomData);
+        const availableFood = kingdomData.resources.food || 0;
+        const foodShortage = Math.max(0, totalFood - availableFood);
         if (foodShortage > 0) {
-            sources.set('foodShortage', foodShortage);
+            sources.foodShortage = foodShortage;
         }
         
         // Unsupported armies
-        const unsupportedArmies = state.getUnsupportedArmies();
+        const unsupportedArmies = this.calculateUnsupportedArmies(kingdomData);
         if (unsupportedArmies > 0) {
-            sources.set('unsupportedArmies', unsupportedArmies);
+            sources.unsupportedArmies = unsupportedArmies;
         }
         
         // War status
-        if (state.isAtWar) {
-            sources.set('atWar', 1); // Being at war adds 1 unrest per turn
+        if (kingdomData.isAtWar) {
+            sources.atWar = 1; // Being at war adds 1 unrest per turn
         }
         
         return sources;
+    }
+    
+    /**
+     * Calculate total food consumption
+     */
+    private calculateTotalFoodConsumption(kingdomData: KingdomData): number {
+        const settlementFood = kingdomData.settlements.reduce((sum, settlement) => {
+            switch (settlement.tier) {
+                case SettlementTier.VILLAGE: return sum + 1;
+                case SettlementTier.TOWN: return sum + 4;
+                case SettlementTier.CITY: return sum + 8;
+                case SettlementTier.METROPOLIS: return sum + 12;
+                default: return sum;
+            }
+        }, 0);
+        
+        return settlementFood + kingdomData.armies.length;
+    }
+    
+    /**
+     * Calculate unsupported armies
+     */
+    private calculateUnsupportedArmies(kingdomData: KingdomData): number {
+        const totalSupport = kingdomData.settlements.reduce((sum, settlement) => {
+            switch (settlement.tier) {
+                case SettlementTier.VILLAGE: return sum + 1;
+                case SettlementTier.TOWN: return sum + 2;
+                case SettlementTier.CITY: return sum + 3;
+                case SettlementTier.METROPOLIS: return sum + 4;
+                default: return sum;
+            }
+        }, 0);
+        
+        return Math.max(0, kingdomData.armies.length - totalSupport);
     }
     
     /**

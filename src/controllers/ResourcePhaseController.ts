@@ -1,6 +1,5 @@
 /**
  * ResourcePhaseController - Collects territory and settlement resources
- * 
  * NEW: Uses simplified step array system with single "collect-resources" step.
  * Any player can complete this step once per turn.
  */
@@ -15,14 +14,9 @@ import {
   reportPhaseError, 
   createPhaseResult,
   initializePhaseSteps,
-  completePhaseStep,
-  isStepCompleted
+  completePhaseStepByIndex,
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
-
-// Define steps for Resources Phase
-const RESOURCES_PHASE_STEPS = [
-  { id: 'collect-resources', name: 'Collect Kingdom Resources' }
-];
 
 export async function createResourcePhaseController() {
   // Helper function to get active economic modifiers
@@ -44,8 +38,12 @@ export async function createResourcePhaseController() {
       reportPhaseStart('ResourcePhaseController');
       
       try {
-        // Initialize phase with predefined steps
-        await initializePhaseSteps(RESOURCES_PHASE_STEPS);
+        // Initialize single manual step as specified
+        const steps = [
+          { name: 'Resources' }
+        ];
+        
+        await initializePhaseSteps(steps);
         
         // Resource collection requires manual user interaction via UI button
         console.log('🟡 [ResourcePhaseController] Resource collection requires manual completion');
@@ -63,8 +61,8 @@ export async function createResourcePhaseController() {
      * Any player can complete this once per turn
      */
     async collectResources() {
-      // Check if already completed
-      if (isStepCompleted('collect-resources')) {
+      // Check if step 0 (collect-resources) is already completed
+      if (isStepCompletedByIndex(0)) {
         return createPhaseResult(false, 'Resources already collected this turn');
       }
 
@@ -137,8 +135,8 @@ export async function createResourcePhaseController() {
           }
         });
         
-        // Mark step as completed (will auto-complete phase)
-        await completePhaseStep('collect-resources');
+        // Mark step 0 (collect-resources) as completed
+        await completePhaseStepByIndex(0);
         
         reportPhaseComplete('ResourcePhaseController Collection');
         return createPhaseResult(true);
@@ -190,7 +188,7 @@ export async function createResourcePhaseController() {
           totalCollected: result.totalCollected,
           
           // Collection status
-          isCollected: isStepCompleted('collect-resources')
+          isCollected: isStepCompletedByIndex(0) // Step 0 = collect-resources
         };
       } catch (error) {
         console.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
@@ -204,7 +202,7 @@ export async function createResourcePhaseController() {
           unfedCount: 0,
           totalSettlements: settlements.length,
           totalCollected: new Map(),
-          isCollected: isStepCompleted('collect-resources')
+          isCollected: isStepCompletedByIndex(0) // Step 0 = collect-resources
         };
       }
     },

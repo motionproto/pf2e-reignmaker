@@ -14,11 +14,11 @@
 ### 3. Data Flow Pattern
 ```
 Read:  KingdomActor → KingdomStore → Component Display
-Write: Component Action → Controller → KingdomActor → Foundry → All Clients
+Write: Component Action → Controller → TurnManager → KingdomActor → Foundry → All Clients
 ```
 
 ### 4. Phase Management Pattern
-- **TurnManager** = ONLY turn/phase progression (no orchestration)
+- **TurnManager** = Central coordinator (turn/phase progression + step management)
 - **Phase Components** = Mount when active, call `controller.startPhase()` 
 - **Phase Controllers** = Execute phase business logic, mark completion
 - **NO triggering from TurnManager** - phases are self-executing when mounted
@@ -27,6 +27,12 @@ Write: Component Action → Controller → KingdomActor → Foundry → All Clie
 Phase Flow: TurnManager.nextPhase() → Update currentPhase → 
            Component Mounts → controller.startPhase() → Execute Logic
 ```
+
+### 5. Modular TurnManager Architecture
+- **TurnManager** = Main coordinator class with modular utilities
+- **PhaseHandler** = Utility class for step management (imported by TurnManager)
+- **PhaseControllerHelpers** = Utility functions (imported by controllers)
+- Utilities are implementation details, not separate architectural components
 
 ## Implementation Patterns
 

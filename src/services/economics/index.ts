@@ -17,7 +17,7 @@
  */
 
 import type { Hex } from '../../models/Hex';
-import type { Settlement, Army } from '../../models/KingdomState';
+import type { Settlement, Army } from '../../actors/KingdomActor';
 import type { 
   ProductionResult, 
   ConsumptionResult, 

@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { kingdomData, updateKingdom } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../models/KingdomState';
+   import { TurnPhase } from '../../../actors/KingdomActor';
    import { KingdomSettings } from '../../../api/foundry';
    import { isKingmakerInstalled, getKingmakerRealmData } from '../../../api/kingmaker';
    
@@ -96,7 +96,7 @@
             kingdom.settlements = [];
             kingdom.armies = [];
             kingdom.buildQueue = [];
-            kingdom.phaseStepsCompleted = {};
+            kingdom.currentPhaseSteps = [];
          });
          
          // Clear localStorage

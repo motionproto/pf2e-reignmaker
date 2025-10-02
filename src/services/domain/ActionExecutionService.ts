@@ -7,7 +7,7 @@
 
 import { diceService } from './DiceService';
 import type { PlayerAction } from '../../models/PlayerActions';
-import type { KingdomState } from '../../models/KingdomState';
+import type { KingdomData } from '../../actors/KingdomActor';
 
 export interface ActionRequirement {
     met: boolean;
@@ -49,10 +49,10 @@ export class ActionExecutionService {
      */
     checkActionRequirements(
         action: PlayerAction,
-        kingdomState: KingdomState
+        kingdomData: KingdomData
     ): ActionRequirement {
         // Check specific action-based requirements
-        const specificCheck = this.checkSpecificActionRequirements(action, kingdomState);
+        const specificCheck = this.checkSpecificActionRequirements(action, kingdomData);
         if (!specificCheck.met) {
             return specificCheck;
         }
@@ -62,10 +62,7 @@ export class ActionExecutionService {
             const missingResources = new Map<string, number>();
             
             for (const [resource, required] of action.cost.entries()) {
-                // Handle both old Map-based and new object-based resource access
-                const available = (kingdomState.resources as any).get 
-                    ? (kingdomState.resources as any).get(resource) || 0
-                    : (kingdomState.resources as any)[resource] || 0;
+                const available = kingdomData.resources[resource] || 0;
                 if (available < required) {
                     missingResources.set(resource, required - available);
                 }
@@ -89,13 +86,13 @@ export class ActionExecutionService {
      */
     private checkSpecificActionRequirements(
         action: PlayerAction,
-        state: KingdomState
+        kingdomData: KingdomData
     ): ActionRequirement {
         switch (action.id) {
             case 'arrest-dissidents':
                 // Needs a justice structure with capacity (simplified check)
                 // In full implementation, would check for specific structures
-                if (state.unrest === 0) {
+                if (kingdomData.unrest === 0) {
                     return {
                         met: false,
                         reason: 'No unrest to arrest'
@@ -105,7 +102,7 @@ export class ActionExecutionService {
                 
             case 'execute-pardon-prisoners':
             case 'execute-or-pardon-prisoners':
-                if (state.imprisonedUnrest <= 0) {
+                if (kingdomData.imprisonedUnrest <= 0) {
                     return {
                         met: false,
                         reason: 'No imprisoned unrest to resolve'
@@ -114,7 +111,7 @@ export class ActionExecutionService {
                 break;
                 
             case 'disband-army':
-                if (state.armies.length === 0) {
+                if (kingdomData.armies.length === 0) {
                     return {
                         met: false,
                         reason: 'No armies to disband'
@@ -126,7 +123,7 @@ export class ActionExecutionService {
             case 'outfit-army':
             case 'recover-army':
             case 'train-army':
-                if (state.armies.length === 0) {
+                if (kingdomData.armies.length === 0) {
                     return {
                         met: false,
                         reason: 'No armies available'
@@ -135,7 +132,7 @@ export class ActionExecutionService {
                 break;
                 
             case 'upgrade-settlement':
-                if (state.settlements.length === 0) {
+                if (kingdomData.settlements.length === 0) {
                     return {
                         met: false,
                         reason: 'No settlements to upgrade'
@@ -321,7 +318,7 @@ export class ActionExecutionService {
     executeAction(
         action: PlayerAction,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        kingdomState: KingdomState
+        kingdomData: KingdomData
     ): ActionOutcome {
         const parsedEffects = this.parseActionOutcome(action, outcome);
         const stateChanges = new Map<string, any>();
@@ -383,12 +380,12 @@ export class ActionExecutionService {
      */
     getAvailableActions(
         category: string,
-        kingdomState: KingdomState,
+        kingdomData: KingdomData,
         allActions: PlayerAction[]
     ): PlayerAction[] {
         return allActions
             .filter(action => action.category === category)
-            .filter(action => this.checkActionRequirements(action, kingdomState).met);
+            .filter(action => this.checkActionRequirements(action, kingdomData).met);
     }
     
     /**

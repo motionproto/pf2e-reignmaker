@@ -6,8 +6,8 @@
 import { writable, derived, get } from 'svelte/store';
 import type { KingdomActor, KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
-import { TurnPhase } from '../models/KingdomState';
-import { TurnManager } from '../models/TurnManager';
+import { TurnPhase } from '../actors/KingdomActor';
+import { TurnManager } from '../models/turn-manager';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -141,25 +141,21 @@ export async function advancePhase(): Promise<void> {
   }
 }
 
-// markPhaseStepCompleted convenience method removed - use getKingdomActor().markPhaseStepCompleted() directly
 
 
-export function isPhaseStepCompleted(stepId: string): boolean {
+export function isPhaseStepCompleted(stepIndex: number): boolean {
   const data = get(kingdomData);
-  // NEW: Check in currentPhaseSteps array
-  const step = data.currentPhaseSteps?.find(s => s.id === stepId);
-  if (step) {
-    return step.completed;
-  }
-  // LEGACY: Fallback to old system for compatibility
-  return data.phaseStepsCompleted[stepId] === true;
+  // Check in currentPhaseSteps array by index
+  const step = data.currentPhaseSteps?.[stepIndex];
+  return step?.completed === 1;
 }
 
 export function isCurrentPhaseComplete(): boolean {
-  const actor = get(kingdomActor);
-  if (!actor) return false;
+  const data = get(kingdomData);
+  if (!data.currentPhaseSteps) return false;
   
-  return actor.isCurrentPhaseComplete();
+  // Check if all steps are completed
+  return data.currentPhaseSteps.every(step => step.completed === 1);
 }
 
 // Convenience methods removed - use getKingdomActor() and actor.updateKingdom() directly

@@ -216,10 +216,10 @@ reportPhaseError(phaseName: string, error: Error): void
 // Results
 createPhaseResult(success: boolean, error?: string): { success: boolean; error?: string }
 
-// Step Management (NEW)
-initializePhaseSteps(steps: Array<{ id: string; name: string }>): Promise<void>
-completePhaseStep(stepId: string): Promise<{ phaseComplete: boolean }>
-isStepCompleted(stepId: string): boolean
+// Step Management (Uses TurnManager)
+initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
+completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }>
+isStepCompletedByIndex(stepIndex: number): Promise<boolean>
 getRemainingSteps(): Array<{ id: string; name: string; completed: boolean }>
 ```
 

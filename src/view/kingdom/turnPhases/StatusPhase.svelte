@@ -1,6 +1,6 @@
 <script lang="ts">
-import { kingdomData } from '../../../stores/KingdomStore';
-import { TurnPhase } from '../../../models/KingdomState';
+import { kingdomData, kingdomActor, isInitialized } from '../../../stores/KingdomStore';
+import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 
 // Props - add the missing prop to fix the warning
@@ -9,9 +9,9 @@ export let isViewingCurrentPhase: boolean = true;
 // Constants
 const MAX_FAME = 3;
 
-// Simple initialization - just set Fame to 1 and mark phase complete
+// Better initialization - wait for store to be ready before initializing phase
 let hasInitialized = false;
-$: if ($kingdomData.currentPhase === TurnPhase.STATUS && !hasInitialized) {
+$: if ($kingdomData.currentPhase === TurnPhase.STATUS && $isInitialized && $kingdomActor && !hasInitialized) {
    initializePhase();
 }
 
@@ -19,12 +19,16 @@ async function initializePhase() {
    if (hasInitialized) return;
    hasInitialized = true;
    
+   console.log('🟡 [StatusPhase] Initializing phase controller...');
+   
    try {
       const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
       const controller = await createStatusPhaseController();
       await controller.startPhase();
    } catch (error) {
-      console.error('❌ [StatusPhase] Error initializing phase:', error);
+      console.error('❌ [StatusPhase] FATAL: Phase initialization failed:', error);
+      // No retry - fail fast and loud
+      throw error;
    }
 }
 </script>

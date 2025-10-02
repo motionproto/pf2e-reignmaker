@@ -3,16 +3,58 @@
  * Following the _pf2e-kingmaker-tools pattern for direct Foundry integration
  */
 
-import { TurnPhase } from '../models/KingdomState';
-import type { Settlement, Army, BuildProject } from '../models/KingdomState';
+import type { Settlement } from '../models/Settlement';
+import type { BuildProject, Army } from '../models/BuildProject';
 import type { KingdomEvent } from '../models/Events';
 import type { KingdomModifier } from '../models/Modifiers';
 
-// Phase step definition
+// Turn phases based on Reignmaker Lite rules - using semantic names
+export enum TurnPhase {
+  STATUS = 'Kingdom Status',
+  RESOURCES = 'Resources', 
+  UNREST = 'Unrest',
+  EVENTS = 'Events',
+  ACTIONS = 'Actions',
+  UPKEEP = 'Upkeep'
+}
+
+// Phase order - controlled by TurnManager for maintainability
+export const PHASE_ORDER: TurnPhase[] = [
+  TurnPhase.STATUS,
+  TurnPhase.RESOURCES,
+  TurnPhase.UNREST,
+  TurnPhase.EVENTS,
+  TurnPhase.ACTIONS,
+  TurnPhase.UPKEEP
+];
+
+// Turn phase configuration with descriptions
+export const TurnPhaseConfig = {
+  [TurnPhase.STATUS]: { displayName: 'Kingdom Status', description: 'Gain Fame and apply ongoing modifiers' },
+  [TurnPhase.RESOURCES]: { displayName: 'Resources', description: 'Collect resources and revenue' },
+  [TurnPhase.UNREST]: { displayName: 'Unrest', description: 'Check unrest status and manually roll for incidents if needed' },
+  [TurnPhase.EVENTS]: { displayName: 'Events', description: 'Resolve kingdom events' },
+  [TurnPhase.ACTIONS]: { displayName: 'Actions', description: 'Perform kingdom actions' },
+  [TurnPhase.UPKEEP]: { displayName: 'Upkeep', description: 'Pay consumption, support costs, and end turn' }
+};
+
+// Phase step counts - static lengths for predictable completion
+export const PHASE_STEP_COUNTS = {
+  [TurnPhase.STATUS]: 2,      // Auto-complete on init
+  [TurnPhase.RESOURCES]: 1,   // Always manual
+  [TurnPhase.UNREST]: 3,      // Auto calc + manual check + conditional resolve
+  [TurnPhase.EVENTS]: 2,      // Manual check + conditional resolve
+  [TurnPhase.ACTIONS]: 1,     // Auto-complete on init (actions optional)
+  [TurnPhase.UPKEEP]: 3       // Manual feed + conditional military + conditional build
+};
+
+// Export types for use throughout the application
+export type { Settlement, Army, BuildProject };
+
+// Phase step definition - New simplified structure
 export interface PhaseStep {
-  id: string;
   name: string;
-  completed: boolean;
+  completed: 0 | 1;  // 0 = incomplete, 1 = complete
 }
 
 // Simplified, serializable kingdom data structure
@@ -20,6 +62,8 @@ export interface KingdomData {
   // Core progression
   currentTurn: number;
   currentPhase: TurnPhase;
+  currentPhaseStepIndex: number;  // Current step being worked on
+  currentStepName?: string;       // Name of the current step
   
   // Resources - simple object instead of Map
   resources: Record<string, number>;
@@ -119,6 +163,7 @@ export class KingdomActor extends Actor {
     const defaultKingdom: KingdomData = {
       currentTurn: 1,
       currentPhase: TurnPhase.STATUS,
+      currentPhaseStepIndex: 0,
       resources: {
         gold: 0,
         food: 0,
@@ -151,109 +196,34 @@ export class KingdomActor extends Actor {
   }
   
   /**
-   * Initialize phase steps for current phase - sets up currentPhaseSteps array
+   * Set phase steps - simple data setter
    */
-  async initializePhaseSteps(steps: Array<{ id: string; name: string }>): Promise<void> {
+  async setPhaseSteps(steps: Array<{ name: string; completed: 0 | 1 }>): Promise<void> {
     await this.updateKingdom((kingdom) => {
-      // Set up current phase steps array
-      kingdom.currentPhaseSteps = steps.map(step => ({
-        id: step.id,
-        name: step.name,
-        completed: false
-      }));
-      
-      console.log(`✅ [KingdomActor] Initialized ${steps.length} steps for ${kingdom.currentPhase}:`, 
-        steps.map(s => s.name));
+      kingdom.currentPhaseSteps = steps;
     });
   }
 
   /**
-   * Complete a specific step and check if phase is done
+   * Set current step index - simple data setter
    */
-  async completePhaseStep(stepId: string): Promise<{ phaseComplete: boolean }> {
-    let phaseComplete = false;
-    
+  async setCurrentStepIndex(stepIndex: number): Promise<void> {
     await this.updateKingdom((kingdom) => {
-      const step = kingdom.currentPhaseSteps.find(s => s.id === stepId);
-      if (step) {
-        step.completed = true;
-        console.log(`[KingdomActor] Completed step '${step.name}' (${stepId})`);
-        
-        // Check if all steps are completed
-        phaseComplete = kingdom.currentPhaseSteps.every(s => s.completed);
-        if (phaseComplete) {
-          console.log(`✅ [KingdomActor] All steps completed for ${kingdom.currentPhase}`);
-        }
-      } else {
-        console.warn(`[KingdomActor] Step '${stepId}' not found in current phase steps`);
+      kingdom.currentPhaseStepIndex = stepIndex;
+    });
+  }
+
+  /**
+   * Complete a step by index - simple data setter
+   */
+  async completeStepByIndex(stepIndex: number): Promise<void> {
+    await this.updateKingdom((kingdom) => {
+      if (stepIndex >= 0 && stepIndex < kingdom.currentPhaseSteps.length) {
+        kingdom.currentPhaseSteps[stepIndex].completed = 1;
       }
     });
-    
-    return { phaseComplete };
   }
 
-  /**
-   * Check if current phase is complete (simplified)
-   */
-  isCurrentPhaseComplete(): boolean {
-    const kingdom = this.getKingdom();
-    if (!kingdom) return false;
-    
-    // Phase complete when all currentPhaseSteps are completed
-    const allStepsCompleted = kingdom.currentPhaseSteps.length > 0 && 
-                              kingdom.currentPhaseSteps.every(step => step.completed);
-    
-    console.log(`[KingdomActor] Phase ${kingdom.currentPhase} completion check:`, {
-      allStepsCompleted,
-      totalSteps: kingdom.currentPhaseSteps.length,
-      completedSteps: kingdom.currentPhaseSteps.filter(s => s.completed).length
-    });
-    
-    return allStepsCompleted;
-  }
-
-  /**
-   * Get remaining steps for current phase
-   */
-  getRemainingSteps(): Array<{ id: string; name: string; completed: boolean }> {
-    const kingdom = this.getKingdom();
-    if (!kingdom) {
-      return [];
-    }
-    
-    return kingdom.currentPhaseSteps.filter(step => !step.completed);
-  }
-
-  /**
-   * Get all steps for current phase (completed and incomplete)
-   */
-  getAllSteps(): Array<{ id: string; name: string; completed: boolean }> {
-    const kingdom = this.getKingdom();
-    if (!kingdom) {
-      return [];
-    }
-    
-    return [...kingdom.currentPhaseSteps];
-  }
-
-  /**
-   * Check if a specific step is completed
-   */
-  isStepCompleted(stepId: string): boolean {
-    const kingdom = this.getKingdom();
-    if (!kingdom) return false;
-    
-    const step = kingdom.currentPhaseSteps.find(s => s.id === stepId);
-    return step?.completed || false;
-  }
-
-  /**
-   * LEGACY: Mark a phase step as completed (kept for compatibility)
-   */
-  async markPhaseStepCompleted(stepId: string): Promise<void> {
-    // Use the new step completion method
-    await this.completePhaseStep(stepId);
-  }
   
   /**
    * Modify resource amounts
@@ -348,6 +318,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
   return {
     currentTurn: 1,
     currentPhase: TurnPhase.STATUS,
+    currentPhaseStepIndex: 0,
     resources: {
       gold: 0,
       food: 0,

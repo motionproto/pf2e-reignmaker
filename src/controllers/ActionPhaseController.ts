@@ -14,18 +14,12 @@ import {
   reportPhaseError, 
   createPhaseResult,
   initializePhaseSteps,
-  completePhaseStep,
-  isStepCompleted
+  completePhaseStepByIndex,
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
 import { actionExecutionService } from '../services/domain/ActionExecutionService'
 import type { PlayerAction } from '../models/PlayerActions'
-import type { KingdomState } from '../models/KingdomState'
-
-// Define steps for Action Phase
-const ACTION_PHASE_STEPS = [
-  { id: 'execute-actions', name: 'Execute Player Actions' },
-  { id: 'resolve-results', name: 'Resolve Action Results' }
-]
+import type { KingdomData } from '../actors/KingdomActor'
 
 export async function createActionPhaseController() {
   // Store for action resolutions
@@ -36,13 +30,15 @@ export async function createActionPhaseController() {
       reportPhaseStart('ActionPhaseController')
       
       try {
-        // Initialize phase with predefined steps
-        await initializePhaseSteps(ACTION_PHASE_STEPS)
+        // Initialize steps using shared helpers - auto-complete on init as specified  
+        const steps = [
+          { name: 'Actions' }  // Single step that auto-completes
+        ];
         
-        // Auto-complete both steps since players can choose to skip actions
-        // and we track the 4-action limit manually in the UI
-        await completePhaseStep('execute-actions')
-        await completePhaseStep('resolve-results')
+        await initializePhaseSteps(steps);
+        
+        // Auto-complete immediately since players can choose to skip actions
+        await completePhaseStepByIndex(0);
         
         console.log('✅ [ActionPhaseController] Actions phase auto-completed (players can skip actions)')
         
@@ -58,7 +54,7 @@ export async function createActionPhaseController() {
      * Execute player actions step
      */
     async executeActions() {
-      if (isStepCompleted('execute-actions')) {
+      if (isStepCompletedByIndex(0)) {
         console.log('🟡 [ActionPhaseController] Actions already executed')
         return createPhaseResult(false, 'Actions already executed this turn')
       }
@@ -69,8 +65,8 @@ export async function createActionPhaseController() {
         // Player actions are handled through the UI and individual action controllers
         // This step is completed manually when all players have taken their actions
         
-        // Complete the execute-actions step
-        await completePhaseStep('execute-actions')
+        // Complete step 0 (execute-actions)
+        await completePhaseStepByIndex(0)
         
         console.log('✅ [ActionPhaseController] Player actions executed')
         return createPhaseResult(true)
@@ -84,11 +80,11 @@ export async function createActionPhaseController() {
      * Resolve action results step
      */
     async resolveResults() {
-      if (!isStepCompleted('execute-actions')) {
+      if (!isStepCompletedByIndex(0)) {
         return createPhaseResult(false, 'Must execute actions before resolving results')
       }
 
-      if (isStepCompleted('resolve-results')) {
+      if (isStepCompletedByIndex(1)) {
         console.log('🟡 [ActionPhaseController] Results already resolved')
         return createPhaseResult(false, 'Results already resolved this turn')
       }
@@ -99,8 +95,8 @@ export async function createActionPhaseController() {
         // Action results are resolved through individual action implementations
         // This step is completed manually when all action results have been processed
         
-        // Complete the resolve-results step
-        await completePhaseStep('resolve-results')
+        // Complete step 1 (resolve-results)
+        await completePhaseStepByIndex(1)
         
         console.log('✅ [ActionPhaseController] Action results resolved')
         return createPhaseResult(true)
@@ -170,8 +166,7 @@ export async function createActionPhaseController() {
         allPlayersActed: actedCount === totalPlayers && totalPlayers > 0,
         playersWhoActed: this.getPlayersWhoActed(),
         playersWhoHaventActed: this.getPlayersWhoHaventActed(),
-        actionsExecuted: isStepCompleted('execute-actions'),
-        resultsResolved: isStepCompleted('resolve-results')
+        actionsCompleted: isStepCompletedByIndex(0)  // Step 0 = perform-actions
       }
     },
 
@@ -194,16 +189,16 @@ export async function createActionPhaseController() {
     /**
      * Check if an action can be performed
      */
-    canPerformAction(action: PlayerAction, kingdomState: KingdomState): boolean {
-      const requirements = actionExecutionService.checkActionRequirements(action, kingdomState)
+    canPerformAction(action: PlayerAction, kingdomData: KingdomData): boolean {
+      const requirements = actionExecutionService.checkActionRequirements(action, kingdomData)
       return requirements.met
     },
 
     /**
      * Get action requirements
      */
-    getActionRequirements(action: PlayerAction, kingdomState: KingdomState) {
-      return actionExecutionService.checkActionRequirements(action, kingdomState)
+    getActionRequirements(action: PlayerAction, kingdomData: KingdomData) {
+      return actionExecutionService.checkActionRequirements(action, kingdomData)
     },
 
     /**
@@ -236,7 +231,7 @@ export async function createActionPhaseController() {
     async executeAction(
       action: PlayerAction,
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      kingdomState: KingdomState,
+      kingdomData: KingdomData,
       currentTurn: number,
       rollTotal?: number,
       actorName?: string,
@@ -245,13 +240,13 @@ export async function createActionPhaseController() {
     ) {
       try {
         // Check requirements first
-        const requirements = this.getActionRequirements(action, kingdomState)
+        const requirements = this.getActionRequirements(action, kingdomData)
         if (!requirements.met) {
           return { success: false, error: requirements.reason || 'Action requirements not met' }
         }
 
         // Execute the action
-        const result = actionExecutionService.executeAction(action, outcome, kingdomState)
+        const result = actionExecutionService.executeAction(action, outcome, kingdomData)
         
         // Apply state changes to kingdom
         const actor = getKingdomActor()
@@ -261,10 +256,10 @@ export async function createActionPhaseController() {
               if (key === 'unrest') {
                 kingdom.unrest = Math.max(0, (kingdom.unrest || 0) + value)
               } else if (['gold', 'food', 'lumber', 'stone', 'ore'].includes(key)) {
-                // All resources are stored in the resources Map
-                const current = kingdom.resources.get(key) || 0
+                // All resources are stored in the resources object
+                const current = kingdom.resources[key] || 0
                 const newValue = Math.max(0, current + value)
-                kingdom.resources.set(key, newValue)
+                kingdom.resources[key] = newValue
               } else if (key === 'fame') {
                 kingdom.fame = Math.max(0, (kingdom.fame || 0) + value)
               } else if (key === 'imprisonedUnrest') {
@@ -315,7 +310,7 @@ export async function createActionPhaseController() {
     /**
      * Reset action resolution
      */
-    async resetAction(actionId: string, kingdomState: KingdomState, playerId?: string) {
+    async resetAction(actionId: string, kingdomData: KingdomData, playerId?: string) {
       actionResolutions.delete(actionId)
       console.log(`🔄 [ActionPhaseController] Reset action resolution for ${actionId}`)
     },

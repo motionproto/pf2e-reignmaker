@@ -68,23 +68,46 @@ export async function setResource(resource: string, amount: number)
 export async function modifyResource(resource: string, amount: number)
 ```
 
-### 3. TurnManager (`src/models/TurnManager.ts`)
-**Role:** Simple turn and phase progression (no orchestration)
+### 3. TurnManager (`src/models/turn-manager/`)
+**Role:** Central coordinator with modular architecture
 
-**Key Methods:**
+**Structure:**
+```
+src/models/turn-manager/
+├── index.ts          # Clean module exports
+├── TurnManager.ts    # Main coordinator (turn/phase progression, player actions)
+└── phase-handler.ts  # Step management utilities (imported by TurnManager)
+```
+
+**TurnManager Key Methods:**
 ```typescript
-// Phase completion (called by phases when done)
-async markCurrentPhaseComplete(): Promise<void>
-
-// Turn progression (ONLY updates currentPhase)
+// Turn and phase progression
 async nextPhase(): Promise<void>
 async endTurn(): Promise<void>
 async skipToPhase(phase: TurnPhase): Promise<void>
+
+// Phase step management (delegates to PhaseHandler)
+async initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
+async completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }>
+async isStepCompletedByIndex(stepIndex: number): Promise<boolean>
+
+// Player action management
+spendPlayerAction(playerId: string, phase: TurnPhase): boolean
+resetPlayerAction(playerId: string): void
 
 // Utility functions
 async canPerformAction(actionId: string): Promise<boolean>
 async getUnrestPenalty(): Promise<number>
 async spendFameForReroll(): Promise<boolean>
+```
+
+**PhaseHandler Utilities:**
+```typescript
+// Step initialization and completion logic
+static async initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
+static async completePhaseStepByIndex(stepIndex: number): Promise<StepCompletionResult>
+static async isStepCompletedByIndex(stepIndex: number): Promise<boolean>
+static async isCurrentPhaseComplete(): Promise<boolean>
 ```
 
 **Important:** TurnManager does NOT trigger phase controllers. Phases are self-executing when mounted.

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { currentPhase, currentTurn, isCurrentPhaseComplete, kingdomData } from '../../../stores/KingdomStore';
-  import { TurnPhase } from '../../../models/KingdomState';
+  import { TurnPhase } from '../../../actors/KingdomActor';
   import Button from './baseComponents/Button.svelte';
   
   export let title: string;
@@ -13,22 +13,19 @@
   
   let currentPhaseComplete = false;
   
-  // Check if the current phase is complete - use the new kingdom actor check
-  // For Upkeep phase specifically, check if UPKEEP is in phasesCompleted
-  $: currentPhaseComplete = isUpkeepPhase 
-    ? ($kingdomData.phasesCompleted?.includes(TurnPhase.UPKEEP) || false)
-    : isCurrentPhaseComplete();
+  // Check if the current phase is complete using currentPhaseSteps
+  $: currentPhaseComplete = $kingdomData.currentPhaseSteps?.length > 0 
+    ? $kingdomData.currentPhaseSteps.every(step => step.completed)
+    : false;
 
   // Debug phase completion detection
-  $: if (isUpkeepPhase) {
-    console.log('🔍 [PhaseHeader DEBUG] Upkeep phase completion check:', {
-      isUpkeepPhase,
-      phasesCompleted: $kingdomData.phasesCompleted,
-      includesUpkeep: $kingdomData.phasesCompleted?.includes(TurnPhase.UPKEEP),
-      currentPhaseComplete,
-      buttonDisabled: !currentPhaseComplete
-    });
-  }
+  $: console.log('🔍 [PhaseHeader DEBUG] Phase completion check:', {
+    currentPhase: $currentPhase,
+    totalSteps: $kingdomData.currentPhaseSteps?.length || 0,
+    completedSteps: $kingdomData.currentPhaseSteps?.filter(s => s.completed).length || 0,
+    allStepsCompleted: currentPhaseComplete,
+    buttonDisabled: !currentPhaseComplete
+  });
   
   let headerElement: HTMLElement;
   let previousTitle = '';

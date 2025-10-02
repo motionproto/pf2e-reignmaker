@@ -9,7 +9,7 @@
  * This is the single source of truth for turn/phase/player state.
  */
 
-import { TurnPhase } from './KingdomState';
+import { TurnPhase, type PhaseStep } from '../../actors/KingdomActor';
 
 // Player action state (turn-scoped)
 interface PlayerAction {
@@ -122,13 +122,119 @@ export class TurnManager {
         console.log('[TurnManager] Reset all player actions for new turn');
     }
     
+    // === PHASE STEP MANAGEMENT ===
+    
+    /**
+     * Initialize phase steps with intelligent auto-completion
+     */
+    async initializePhaseSteps(steps: Array<{ name: string; completed?: 0 | 1 }>): Promise<void> {
+        const { getKingdomActor } = await import('../../stores/KingdomStore');
+        const actor = getKingdomActor();
+        if (!actor) {
+            throw new Error('No kingdom actor available');
+        }
+
+        // Set up phase steps array
+        const phaseSteps = steps.map(step => ({
+            name: step.name,
+            completed: (step.completed || 0) as 0 | 1
+        }));
+
+        await actor.setPhaseSteps(phaseSteps);
+
+        // Set step index to first incomplete step
+        const firstIncompleteIndex = phaseSteps.findIndex(s => s.completed === 0);
+        await actor.setCurrentStepIndex(firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0);
+
+        console.log(`✅ [TurnManager] Initialized ${steps.length} steps:`, 
+            steps.map(s => s.name));
+    }
+
+    /**
+     * Complete a step by index and handle progression logic
+     */
+    async completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }> {
+        const { getKingdomActor, kingdomData } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        
+        const actor = getKingdomActor();
+        if (!actor) {
+            throw new Error('No kingdom actor available');
+        }
+
+        const kingdom = get(kingdomData);
+        if (stepIndex < 0 || stepIndex >= kingdom.currentPhaseSteps.length) {
+            console.warn(`[TurnManager] Invalid step index: ${stepIndex} (array length: ${kingdom.currentPhaseSteps.length})`);
+            return { phaseComplete: false };
+        }
+
+        // Complete the step
+        if (typeof actor.completeStepByIndex !== 'function') {
+            console.error(`[TurnManager] Actor does not have completeStepByIndex method. Actor type:`, typeof actor, actor);
+            throw new Error('KingdomActor missing completeStepByIndex method');
+        }
+        await actor.completeStepByIndex(stepIndex);
+
+        // Get updated kingdom data to check completion
+        const updatedKingdom = get(kingdomData);
+        const stepName = updatedKingdom.currentPhaseSteps[stepIndex]?.name;
+        console.log(`[TurnManager] Completed step ${stepIndex}: '${stepName}'`);
+
+        // Check if all steps are completed
+        const totalSteps = updatedKingdom.currentPhaseSteps.length;
+        const completedCount = updatedKingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+        const phaseComplete = totalSteps > 0 && completedCount === totalSteps;
+
+        if (phaseComplete) {
+            console.log(`✅ [TurnManager] All ${totalSteps} steps completed for ${updatedKingdom.currentPhase}`);
+        } else {
+            // Advance to next incomplete step
+            const nextIncompleteIndex = updatedKingdom.currentPhaseSteps.findIndex((s, i) => i > stepIndex && s.completed === 0);
+            if (nextIncompleteIndex >= 0) {
+                await actor.setCurrentStepIndex(nextIncompleteIndex);
+            }
+        }
+
+        return { phaseComplete };
+    }
+
+    /**
+     * Check if a specific step is completed by index
+     */
+    async isStepCompletedByIndex(stepIndex: number): Promise<boolean> {
+        const { kingdomData } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        const kingdom = get(kingdomData);
+        if (!kingdom) return false;
+
+        const step = kingdom.currentPhaseSteps[stepIndex];
+        return step?.completed === 1 || false;
+    }
+
+    /**
+     * Check if current phase is complete
+     */
+    async isCurrentPhaseComplete(): Promise<boolean> {
+        const { kingdomData } = await import('../../stores/KingdomStore');
+        const { get } = await import('svelte/store');
+        const kingdom = get(kingdomData);
+        if (!kingdom) return false;
+
+        const totalSteps = kingdom.currentPhaseSteps.length;
+        const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+        const allComplete = totalSteps > 0 && completedCount === totalSteps;
+
+        console.log(`[TurnManager] Phase ${kingdom.currentPhase} completion: ${completedCount}/${totalSteps} steps`);
+        return allComplete;
+    }
+
     // === TURN MANAGEMENT ===
     
     /**
      * Set current phase directly
      */
     async setCurrentPhase(phase: TurnPhase): Promise<void> {
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
             kingdom.currentPhase = phase;
         });
@@ -141,9 +247,10 @@ export class TurnManager {
      * Reset phase steps for new phase
      */
     async resetPhaseSteps(): Promise<void> {
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
-            kingdom.phaseStepsCompleted = {};
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
         });
         
         console.log('[TurnManager] Reset phase steps');
@@ -153,11 +260,11 @@ export class TurnManager {
      * Increment turn manually
      */
     async incrementTurn(): Promise<void> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
             kingdom.currentTurn = (kingdom.currentTurn || 1) + 1;
         });
@@ -171,7 +278,7 @@ export class TurnManager {
    */
   async getCurrentPhase(): Promise<string> {
     try {
-      const { kingdomData } = await import('../stores/KingdomStore');
+      const { kingdomData } = await import('../../stores/KingdomStore');
       const { get } = await import('svelte/store');
       const currentKingdom = get(kingdomData);
       return currentKingdom.currentPhase;
@@ -186,21 +293,11 @@ export class TurnManager {
      * Mark the current phase as complete (called directly by phase controllers)
      */
     async markPhaseComplete(): Promise<void> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
         console.log(`[TurnManager] Phase ${currentKingdom.currentPhase} marked as complete`);
-        
-        // Update completion tracking in KingdomActor
-        const { updateKingdom } = await import('../stores/KingdomStore');
-        
-        await updateKingdom((kingdom) => {
-            if (!kingdom.phasesCompleted.includes(currentKingdom.currentPhase)) {
-                kingdom.phasesCompleted.push(currentKingdom.currentPhase);
-                console.log(`[TurnManager] Added ${currentKingdom.currentPhase} to completed phases:`, kingdom.phasesCompleted);
-            }
-        });
         
         // Notify UI of phase completion
         this.onPhaseChanged?.(currentKingdom.currentPhase);
@@ -210,13 +307,13 @@ export class TurnManager {
      * Progress to the next phase
      */
     async nextPhase(): Promise<void> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
         const next = await this.getNextPhase(currentKingdom.currentPhase);
         if (next !== null) {
-            const { updateKingdom } = await import('../stores/KingdomStore');
+            const { updateKingdom } = await import('../../stores/KingdomStore');
             await updateKingdom((kingdom) => {
                 kingdom.currentPhase = next;
             });
@@ -233,7 +330,7 @@ export class TurnManager {
      * Get the next phase in sequence - uses PHASE_ORDER for maintainability
      */
     private async getNextPhase(currentPhase: TurnPhase): Promise<TurnPhase | null> {
-        const { PHASE_ORDER } = await import('./KingdomState');
+        const { PHASE_ORDER } = await import('../../actors/KingdomActor');
         const currentIndex = PHASE_ORDER.indexOf(currentPhase);
         
         if (currentIndex >= 0 && currentIndex < PHASE_ORDER.length - 1) {
@@ -247,7 +344,7 @@ export class TurnManager {
      * End the current turn and start a new one
      */
     async endTurn(): Promise<void> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
@@ -258,12 +355,12 @@ export class TurnManager {
         // Reset player actions for new turn
         this.resetAllPlayerActions();
         
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             kingdom.currentTurn++;
             kingdom.currentPhase = TurnPhase.STATUS;
-            kingdom.phasesCompleted = [];
-            kingdom.phaseStepsCompleted = {};
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
             kingdom.oncePerTurnActions = [];
             
             // Decrement modifier durations
@@ -290,12 +387,12 @@ export class TurnManager {
     async startNewGame(): Promise<void> {
         console.log('[TurnManager] Starting new game');
         
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             kingdom.currentTurn = 1;
             kingdom.currentPhase = TurnPhase.STATUS;
-            kingdom.phasesCompleted = [];
-            kingdom.phaseStepsCompleted = {};
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
             kingdom.oncePerTurnActions = [];
             kingdom.unrest = 0;
             kingdom.fame = 0;
@@ -309,7 +406,7 @@ export class TurnManager {
      * Skip to a specific phase (for testing or special events)
      */
     async skipToPhase(phase: TurnPhase): Promise<void> {
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             kingdom.currentPhase = phase;
         });
@@ -322,7 +419,7 @@ export class TurnManager {
      * Check if a once-per-turn action can be performed
      */
     async canPerformAction(actionId: string): Promise<boolean> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
@@ -333,7 +430,7 @@ export class TurnManager {
      * Mark an action as used this turn
      */
     async markActionUsed(actionId: string): Promise<void> {
-        const { updateKingdom } = await import('../stores/KingdomStore');
+        const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             if (!kingdom.oncePerTurnActions.includes(actionId)) {
                 kingdom.oncePerTurnActions.push(actionId);
@@ -345,7 +442,7 @@ export class TurnManager {
      * Get unrest penalty for kingdom checks
      */
     async getUnrestPenalty(): Promise<number> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         const unrest = currentKingdom.unrest;
@@ -365,7 +462,7 @@ export class TurnManager {
      * Spend fame to reroll
      */
     async spendFameForReroll(): Promise<boolean> {
-        const { kingdomData, updateKingdom } = await import('../stores/KingdomStore');
+        const { kingdomData, updateKingdom } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         
@@ -383,7 +480,7 @@ export class TurnManager {
      * Get a summary of the current turn state
      */
     async getTurnSummary(): Promise<string> {
-        const { kingdomData } = await import('../stores/KingdomStore');
+        const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
         

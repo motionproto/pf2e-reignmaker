@@ -1,6 +1,6 @@
 <script lang="ts">
    import { kingdomData, advancePhase, viewingPhase, setViewingPhase } from '../../../stores/KingdomStore';
-   import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
+   import { TurnPhase, TurnPhaseConfig } from '../../../actors/KingdomActor';
    import { onMount } from 'svelte';
    
    // Components

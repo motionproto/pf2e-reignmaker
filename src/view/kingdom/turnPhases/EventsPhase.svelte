@@ -1,7 +1,7 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, getKingdomActor, isPhaseStepCompleted, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../models/KingdomState';
+   import { kingdomData, getKingdomActor, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
+   import { TurnPhase } from '../../../actors/KingdomActor';
    import { get } from 'svelte/store';
    
    // Props
@@ -50,9 +50,10 @@
       effects: Map<string, any>;
    } | null = null;
    
-   // Computed UI state
-   $: eventChecked = isPhaseStepCompleted('event-check');
-   $: eventResolved = isPhaseStepCompleted('resolve-event');
+   // Computed UI state - use currentPhaseSteps array with index-based approach
+   $: currentSteps = $kingdomData.currentPhaseSteps || [];
+   $: eventChecked = currentSteps[0]?.completed === 1; // Step 0 = event-check
+   $: eventResolved = currentSteps[1]?.completed === 1; // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC;
    $: activeModifiers = $kingdomData.modifiers || [];
    $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
@@ -70,11 +71,11 @@
             const event = await EventProvider.getEventById($kingdomData.currentEventId);
             if (event) {
                currentEvent = event;
-               // Also mark that we've checked for events so the button shows correctly
-               if (!eventChecked) {
-                  const actor = getKingdomActor();
-                  if (actor) await actor.markPhaseStepCompleted('resolve-event');
-               }
+         // Also mark that we've checked for events so the button shows correctly
+         if (!eventChecked) {
+            const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+            await PhaseHandler.completePhaseStepByIndex(0); // Step 0 = event-check
+         }
             }
          } else if ($kingdomData.currentEventId === null && eventChecked) {
             // Another client rolled and got no event - we should show that
@@ -202,8 +203,8 @@
          
          // Always mark step as complete after rolling (whether event or not)
          if (!eventChecked) {
-            const actor = getKingdomActor();
-            if (actor) await actor.markPhaseStepCompleted('event-check');
+            const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+            await PhaseHandler.completePhaseStepByIndex(0); // Step 0 = event-check
          }
          
          isRolling = false;
@@ -304,8 +305,8 @@
             
             // Mark phase as complete after successfully applying changes
             if (!eventResolved) {
-               const actor = getKingdomActor();
-               if (actor) await actor.markPhaseStepCompleted('resolve-event');
+               const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
+               await PhaseHandler.completePhaseStepByIndex(1); // Step 1 = resolve-event
             }
             
             // Handle unresolved event if any

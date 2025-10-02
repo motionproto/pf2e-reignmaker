@@ -1,7 +1,5 @@
 /**
  * StatusPhaseController - Shows kingdom status and processes resource decay
- * 
- * NEW: Uses simplified step array system with predefined steps.
  * This phase auto-completes immediately and processes resource decay from previous turn.
  */
 
@@ -12,13 +10,8 @@ import {
   reportPhaseError, 
   createPhaseResult,
   initializePhaseSteps,
-  completePhaseStep
+  completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
-
-// Define steps for Status Phase
-const STATUS_PHASE_STEPS = [
-  { id: 'show-status', name: 'Show Kingdom Status' }
-];
 
 export async function createStatusPhaseController() {
   return {
@@ -26,8 +19,12 @@ export async function createStatusPhaseController() {
       reportPhaseStart('StatusPhaseController');
       
       try {
-        // Initialize phase with predefined steps
-        await initializePhaseSteps(STATUS_PHASE_STEPS);
+        // Initialize single step that handles all status processing
+        const steps = [
+          { name: 'Status' }
+        ];
+        
+        await initializePhaseSteps(steps);
         
         // Process resource decay from previous turn (moved from Upkeep)
         await this.processResourceDecay();
@@ -35,8 +32,10 @@ export async function createStatusPhaseController() {
         // Set Fame to 1 (initial condition for each turn)
         await this.initializeFame();
         
-        // Auto-complete the show-status step
-        await completePhaseStep('show-status');
+        // Auto-complete the single step immediately
+        await completePhaseStepByIndex(0);
+        
+        console.log('✅ [StatusPhaseController] Status step auto-completed');
         
         reportPhaseComplete('StatusPhaseController');
         return createPhaseResult(true);

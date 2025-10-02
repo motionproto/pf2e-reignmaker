@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { kingdomData, setViewingPhase, viewingPhase } from '../../../stores/KingdomStore';
-  import { TurnPhase } from '../../../models/KingdomState';
+  import { currentPhase, setViewingPhase, viewingPhase } from '../../../stores/KingdomStore';
+  import { TurnPhase } from '../../../actors/KingdomActor';
   import { onMount } from 'svelte';
 
-  // Define the phases in order - using new semantic names
+  // Define the phases in order - pure display data
   const phases = [
     { id: TurnPhase.STATUS, label: 'Status', fullName: 'Gain Fame and apply ongoing modifiers' },
     { id: TurnPhase.RESOURCES, label: 'Resources', fullName: 'Collect resources and manage consumption' },
@@ -13,92 +13,19 @@
     { id: TurnPhase.UPKEEP, label: 'Upkeep', fullName: 'End of turn' }
   ];
 
-  $: currentPhase = $kingdomData.currentPhase;
-  $: currentTurn = $kingdomData.currentTurn;
-  $: selectedPhase = $viewingPhase || currentPhase;
-  $: currentPhaseSteps = $kingdomData.currentPhaseSteps || [];
+  // Pure UI state - no business logic  
+  $: selectedPhase = $viewingPhase || $currentPhase;
   
   // Initialize viewing phase on mount
   onMount(() => {
     if (!$viewingPhase) {
-      setViewingPhase(currentPhase);
+      setViewingPhase($currentPhase);
     }
   });
-  
-  function getPhaseIndex(phase: TurnPhase): number {
-    return phases.findIndex(p => p.id === phase);
-  }
-  
-  $: currentPhaseIndex = getPhaseIndex(currentPhase);
-  
-  // Make phase completion status reactive - recalculates whenever currentPhaseIndex changes
-  $: phaseCompletions = phases.map((_, index) => index < currentPhaseIndex);
-  
 
+  // Pure UI actions - just update viewing state
   function handlePhaseClick(phase: TurnPhase) {
-    // Only allow clicking on the current phase
-    if (!isPhaseClickable(phase)) {
-      return;
-    }
-    // Update the viewing phase when user clicks
     setViewingPhase(phase);
-  }
-
-  function isPhaseActive(phase: TurnPhase): boolean {
-    return phase === currentPhase;
-  }
-  
-  function isPhaseSelected(phase: TurnPhase): boolean {
-    return phase === selectedPhase;
-  }
-  
-  function isPhaseClickable(phase: TurnPhase): boolean {
-    // Allow clicking on all phases for viewing purposes
-    return true;
-  }
-  
-  function isPhaseCompleted(phase: TurnPhase): boolean {
-    const phaseIndex = getPhaseIndex(phase);
-    const currentIndex = getPhaseIndex($kingdomData.currentPhase);
-    
-    // Phase is completed if we've moved past it
-    if (phaseIndex < currentIndex) {
-      return true;
-    }
-    
-    // For current phase, check if all steps are completed
-    if (phase === $kingdomData.currentPhase) {
-      return currentPhaseSteps.length > 0 && currentPhaseSteps.every(step => step.completed);
-    }
-    
-    // Future phases are not completed
-    return false;
-  }
-  
-  function isPhaseFuture(phase: TurnPhase): boolean {
-    const phaseIndex = getPhaseIndex(phase);
-    return phaseIndex > currentPhaseIndex;
-  }
-  
-  // Helper to build tooltip text
-  function getTooltip(phase: typeof phases[0]): string {
-    const isActive = isPhaseActive(phase.id);
-    const isCompleted = isPhaseCompleted(phase.id);
-    const isFuture = isPhaseFuture(phase.id);
-    
-    let tooltip = phase.fullName;
-    
-    if (isActive) {
-      tooltip += ' (Currently Active - Click to view)';
-    } else if (isCompleted) {
-      tooltip += ' (Completed - Click to review)';
-    } else if (isFuture) {
-      tooltip += ' (Future phase - Click to preview)';
-    } else {
-      tooltip += ' (Click to view)';
-    }
-    
-    return tooltip;
   }
 </script>
 
@@ -107,22 +34,19 @@
     {#each phases as phase, index (phase.id)}
       <!-- Phase connector line (before phase except for first) -->
       {#if index > 0}
-        <div class="phase-connector" class:completed={isPhaseCompleted(phase.id)}></div>
+        <div class="phase-connector"></div>
       {/if}
       
       <!-- Phase button -->
-        <button
-          class="phase-item"
-          class:active={phase.id === currentPhase}
-          class:selected={phase.id === selectedPhase}
-          class:completed={isPhaseCompleted(phase.id)}
-          class:disabled={!isPhaseClickable(phase.id)}
-          disabled={!isPhaseClickable(phase.id)}
-          on:click={() => handlePhaseClick(phase.id)}
-          title={getTooltip(phase)}
-        >
+      <button
+        class="phase-item"
+        class:active={phase.id === $currentPhase}
+        class:selected={phase.id === selectedPhase}
+        on:click={() => handlePhaseClick(phase.id)}
+        title={phase.fullName}
+      >
         <!-- Active indicator dot -->
-        {#if phase.id === currentPhase && phase.id !== selectedPhase}
+        {#if phase.id === $currentPhase && phase.id !== selectedPhase}
           <span class="active-indicator"></span>
         {/if}
         <span class="phase-label">{phase.label}</span>

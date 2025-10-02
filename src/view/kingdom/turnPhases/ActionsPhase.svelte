@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { kingdomData, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
+  import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
   import { 
     spendPlayerAction,
     resetPlayerAction,
     getPlayerAction
   } from "../../../stores/KingdomStore";
-  import { TurnPhase } from "../../../models/KingdomState";
+  import { TurnPhase } from "../../../actors/KingdomActor";
   import { PlayerActionsData } from "../../../models/PlayerActions";
   import CheckCard from "../../kingdom/components/CheckCard.svelte";
   import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
@@ -238,7 +238,7 @@
       action,
       resolution.outcome,
       $kingdomData,
-      $kingdomData.currentTurn || 1,
+      $currentTurn || 1,
       undefined, // rollTotal - not tracked in current UI
       resolution.actorName,
       resolution.skillName,

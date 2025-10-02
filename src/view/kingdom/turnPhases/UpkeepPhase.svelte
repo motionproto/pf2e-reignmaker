@@ -1,9 +1,9 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { get } from 'svelte/store';
-   import { kingdomData, updateKingdom, isPhaseStepCompleted, resetPhaseSteps, setCurrentPhase, incrementTurn } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../models/KingdomState';
-   import type { BuildProject } from '../../../models/KingdomState';
+   import { kingdomData, resources, settlements, updateKingdom } from '../../../stores/KingdomStore';
+   import { TurnPhase } from '../../../actors/KingdomActor';
+   import type { BuildProject } from '../../../models/BuildProject';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -21,35 +21,21 @@
    let processingBuild = false;
    let processingEndTurn = false;
    
-   // Reactive UI state - use new kingdomData store with correct step IDs
-   $: consumeCompleted = isPhaseStepCompleted('feed-settlements');
-   $: militaryCompleted = isPhaseStepCompleted('support-military');
-   $: buildCompleted = isPhaseStepCompleted('process-builds');
-   $: resolveCompleted = false; // No longer needed - phase completes when all steps are done
-
-   // Check if all manual steps are complete and auto-complete phase
-   $: allManualStepsComplete = consumeCompleted && militaryCompleted && buildCompleted;
-   $: if (allManualStepsComplete && !resolveCompleted && !processingEndTurn) {
-      console.log('🔍 [UpkeepPhase DEBUG] All manual steps complete, triggering phase completion:', {
-         consumeCompleted,
-         militaryCompleted, 
-         buildCompleted,
-         resolveCompleted,
-         processingEndTurn,
-         shouldAutoComplete: true
-      });
-      handleCompletePhase();
-   }
-
+   // Reactive UI state - use currentPhaseSteps array
+   $: currentSteps = $kingdomData.currentPhaseSteps || [];
+   $: consumeCompleted = currentSteps.find(s => s.id === 'feed-settlements')?.completed || false;
+   $: militaryCompleted = currentSteps.find(s => s.id === 'support-military')?.completed || false;
+   $: buildCompleted = currentSteps.find(s => s.id === 'process-builds')?.completed || false;
+   
+   // Phase automatically completes when all steps are done - no manual intervention needed
+   $: allStepsComplete = currentSteps.length > 0 && currentSteps.every(step => step.completed);
+   
    // Debug step completion states
    $: console.log('🔍 [UpkeepPhase DEBUG] Step completion status:', {
-      consumeCompleted,
-      militaryCompleted,
-      buildCompleted,
-      resolveCompleted,
-      allManualStepsComplete,
-      processingEndTurn,
-      shouldAutoComplete: allManualStepsComplete && !resolveCompleted && !processingEndTurn
+      totalSteps: currentSteps.length,
+      completedSteps: currentSteps.filter(s => s.completed).length,
+      allStepsComplete,
+      currentSteps
    });
    
    // Get all display data from controller (now async)
@@ -352,7 +338,7 @@
                <div class="build-resources-available">
                   <strong>Available:</strong>
                   {['lumber', 'stone', 'ore'].map(r => 
-                     `${$kingdomData.resources?.[r] || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
+                     `${$resources?.[r] || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
                   ).join(', ')}
                </div>
                
@@ -401,13 +387,13 @@
    </div>
    
    <!-- End of Turn Summary Section -->
-   <div class="end-turn-summary" class:completed={resolveCompleted}>
+   <div class="end-turn-summary" class:completed={allStepsComplete}>
       <div class="summary-header">
          <h4 class="text-heading-secondary">
             <i class="fas fa-scroll"></i>
             End of Turn Summary
          </h4>
-         {#if resolveCompleted}
+         {#if allStepsComplete}
             <i class="fas fa-check-circle phase-complete-indicator"></i>
          {/if}
       </div>
@@ -424,10 +410,10 @@
                <p>Gold and stored food will carry over to the next turn.</p>
             </div>
             
-            {#if $kingdomData.settlements.filter(s => !s.wasFedLastTurn).length > 0}
+            {#if $settlements.filter(s => !s.wasFedLastTurn).length > 0}
                <div class="summary-item warning">
                   <i class="fas fa-exclamation-triangle"></i>
-                  <p>{$kingdomData.settlements.filter(s => !s.wasFedLastTurn).length} settlement{$kingdomData.settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
+                  <p>{$settlements.filter(s => !s.wasFedLastTurn).length} settlement{$settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
                </div>
             {/if}
             

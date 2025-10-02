@@ -7,7 +7,7 @@
 
 import { diceService, type D20Result } from './DiceService';
 import type { EventService, EventData, EventOutcome as EventEffect } from './events/EventService';
-import type { KingdomState } from '../../models/KingdomState';
+import type { KingdomData } from '../../actors/KingdomActor';
 import type { KingdomModifier, ModifierEffects } from '../../models/Modifiers';
 
 export interface StabilityCheckResult {
@@ -258,11 +258,11 @@ export class EventResolutionService {
      * Note: This returns the changes to be applied, not directly mutating state
      */
     prepareStateChanges(
-        currentState: KingdomState,
+        currentState: KingdomData,
         resourceChanges: Map<string, number>
-    ): Partial<KingdomState> {
-        const updates: Partial<KingdomState> = {
-            resources: new Map(currentState.resources)
+    ): Partial<KingdomData> {
+        const updates: Partial<KingdomData> = {
+            resources: { ...currentState.resources }
         };
         
         // Apply resource changes with bounds checking
@@ -273,8 +273,8 @@ export class EventResolutionService {
                 // Fame is capped between 0 and 3
                 updates.fame = Math.max(0, Math.min(3, (currentState.fame || 0) + change));
             } else if (updates.resources) {
-                const current = updates.resources.get(resource) || 0;
-                updates.resources.set(resource, Math.max(0, current + change));
+                const current = updates.resources[resource] || 0;
+                updates.resources[resource] = Math.max(0, current + change);
             }
         }
         

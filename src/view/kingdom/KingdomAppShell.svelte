@@ -5,7 +5,7 @@
    // Stores
    import { kingdomData }                         from '../../stores/KingdomStore';
    import { uiState, setSelectedTab }             from '../../stores/ui';
-   import { TurnPhase } from '../../models/KingdomState';
+   import { TurnPhase } from '../../actors/KingdomActor';
    
    // Import territory service for syncing
    import { territoryService }                    from '../../services/territory';
@@ -44,7 +44,7 @@
       console.log('🔍 [KingdomAppShell REACTIVE DEBUG] Kingdom data changed:', {
          currentPhase: $kingdomData.currentPhase,
          currentTurn: $kingdomData.currentTurn,
-         phasesCompleted: $kingdomData.phasesCompleted,
+         currentPhaseSteps: $kingdomData.currentPhaseSteps,
          hasData: !!$kingdomData
       });
    }
@@ -91,12 +91,6 @@
                const kingdom = this.getKingdom();
                if (!kingdom) return false;
                return kingdom.phasesCompleted?.includes(kingdom.currentPhase) || false;
-            };
-            kingdomActor.markPhaseStepCompleted = async function(stepId: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  if (!kingdom.phaseStepsCompleted) kingdom.phaseStepsCompleted = {};
-                  kingdom.phaseStepsCompleted[stepId] = true;
-               });
             };
             kingdomActor.modifyResource = async function(resource: any, amount: any) {
                await this.updateKingdom((kingdom: any) => {
@@ -169,7 +163,7 @@
                console.log('🔍 [KingdomAppShell DEBUG] Initial kingdom state after mount:', {
                   currentPhase: $kingdomData?.currentPhase,
                   currentTurn: $kingdomData?.currentTurn,
-                  phasesCompleted: $kingdomData?.phasesCompleted,
+                  currentPhaseSteps: $kingdomData?.currentPhaseSteps,
                   isUpkeepPhase: $kingdomData?.currentPhase === TurnPhase.UPKEEP
                });
             }, 500);

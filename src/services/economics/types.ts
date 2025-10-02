@@ -4,7 +4,7 @@
  * Type definitions for the kingdom economics system
  */
 
-import type { Settlement, Army } from '../../models/KingdomState';
+import type { Settlement, Army } from '../../actors/KingdomActor';
 import type { Hex } from '../../models/Hex';
 
 /**

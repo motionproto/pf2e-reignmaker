@@ -1,8 +1,10 @@
 /**
  * UnrestPhaseController - Handles unrest calculation and incident resolution
  * 
- * NEW: Uses simplified step array system with show-unrest, incident-check, and resolve-incident steps.
- * Auto-calculates unrest and checks for incidents based on unrest level.
+ * NEW: Uses static-length step system with CONDITIONAL auto-completion
+ * - Step 0: Calculate Unrest (auto-complete immediately)
+ * - Step 1: Check for Incidents (MANUAL - user must roll)
+ * - Step 2: Resolve Incident (CONDITIONAL - auto if no incident, manual if incident)
  */
 
 import { getKingdomActor } from '../stores/KingdomStore'
@@ -14,16 +16,9 @@ import {
   reportPhaseError, 
   createPhaseResult,
   initializePhaseSteps,
-  completePhaseStep,
-  isStepCompleted
+  completePhaseStepByIndex,
+  isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
-
-// Define steps for Unrest Phase
-const UNREST_PHASE_STEPS = [
-  { id: 'show-unrest', name: 'Calculate and Show Unrest' },
-  { id: 'incident-check', name: 'Check for Incidents' }
-  // 'resolve-incident' step is added dynamically if incident occurs
-]
 
 export async function createUnrestPhaseController() {
   return {
@@ -31,12 +26,36 @@ export async function createUnrestPhaseController() {
       reportPhaseStart('UnrestPhaseController')
       
       try {
-        // Initialize phase with predefined steps but DON'T auto-complete them
-        await initializePhaseSteps(UNREST_PHASE_STEPS)
+        const kingdom = get(kingdomData);
+        const hasActiveIncident = kingdom.currentIncidentId !== null;
         
-        console.log('🟡 [UnrestPhaseController] Phase initialized - manual interaction required')
+        // Initialize steps with intelligent auto-completion using shared helpers
+        const steps = [
+          { name: 'Calculate Unrest' },              // Index 0 - Auto-complete immediately
+          { name: 'Incident Check' },               // Index 1 - Always manual
+          { name: 'Resolve Incident' }              // Index 2 - Conditional
+        ];
         
-        // No auto-completion - steps must be completed manually through user interaction
+        await initializePhaseSteps(steps);
+        
+        // CONDITIONAL auto-completion logic
+        // Step 0: Auto-complete unrest calculation immediately
+        await completePhaseStepByIndex(0); // Step 0: Calculate Unrest
+        
+        // Step 1: Check for Incidents - MANUAL (user must roll)
+        // Do NOT auto-complete - user must manually trigger incident check
+        
+        // Step 2: Resolve Incident - CONDITIONAL
+        // Only auto-complete if no active incident exists
+        if (!hasActiveIncident) {
+          await completePhaseStepByIndex(2); // Step 2: Auto-complete if no incident
+          console.log('✅ [UnrestPhaseController] Incident resolution auto-completed (no active incident)');
+        } else {
+          console.log('⚠️ [UnrestPhaseController] Incident resolution requires manual completion');
+        }
+        
+        console.log('✅ [UnrestPhaseController] Unrest calculation auto-completed, incident check requires user action');
+        
         return createPhaseResult(true)
       } catch (error) {
         reportPhaseError('UnrestPhaseController', error instanceof Error ? error : new Error(String(error)))
@@ -45,126 +64,134 @@ export async function createUnrestPhaseController() {
     },
 
     /**
-     * Calculate and display current unrest level
+     * Calculate and display current unrest level (auto-completed on init)
      */
     async calculateUnrest() {
-      if (isStepCompleted('show-unrest')) {
-        console.log('🟡 [UnrestPhaseController] Unrest already calculated')
-        return
-      }
-
       const kingdom = get(kingdomData)
       const currentUnrest = kingdom.unrest || 0
       
       console.log(`📊 [UnrestPhaseController] Current unrest level: ${currentUnrest}`)
       
-      // Complete the show-unrest step
-      await completePhaseStep('show-unrest')
-      
+      // This step is already auto-completed during initialization
       return { unrest: currentUnrest }
     },
 
     /**
-     * Check for incidents based on unrest level
+     * Check for incidents based on unrest level (manual step)
      */
     async checkForIncidents() {
-      if (isStepCompleted('incident-check')) {
-        console.log('🟡 [UnrestPhaseController] Incident check already completed')
-        return { incidentTriggered: false }
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+        return { incidentTriggered: false };
       }
 
-      const kingdom = get(kingdomData)
-      const unrest = kingdom.unrest || 0
+      // Check if step 1 (check incidents) is already completed
+      if (isStepCompletedByIndex(1)) {
+        console.log('🟡 [UnrestPhaseController] Incident check already completed');
+        return { incidentTriggered: false };
+      }
+
+      const kingdom = get(kingdomData);
+      const unrest = kingdom.unrest || 0;
       
       // Get unrest tier and incident chance
-      const tier = this.getUnrestTier(unrest)
-      const incidentChance = this.getIncidentChance(tier)
+      const tier = this.getUnrestTier(unrest);
+      const incidentChance = this.getIncidentChance(tier);
       
       // Roll for incident occurrence
-      const roll = Math.random()
-      const incidentTriggered = roll < incidentChance
+      const roll = Math.random();
+      const incidentTriggered = roll < incidentChance;
       
-      console.log(`🎲 [UnrestPhaseController] Incident check: rolled ${(roll * 100).toFixed(1)}% vs ${(incidentChance * 100)}% chance (tier ${tier})`)
+      console.log(`🎲 [UnrestPhaseController] Incident check: rolled ${(roll * 100).toFixed(1)}% vs ${(incidentChance * 100)}% chance (tier ${tier})`);
       
-      let incidentId: string | null = null
+      let incidentId: string | null = null;
       if (incidentTriggered) {
         try {
-          const { IncidentManager } = await import('../models/Incidents')
-          const incident = IncidentManager.getRandomIncident(tier)
-          incidentId = incident?.id || null
+          const { IncidentManager } = await import('../models/Incidents');
+          const incident = IncidentManager.getRandomIncident(tier);
+          incidentId = incident?.id || null;
           
-          console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name)
-        } catch (error) {
-          console.error('❌ [UnrestPhaseController] Error loading incident:', error)
-        }
-        
-        // Add resolve-incident step dynamically
-        const actor = getKingdomActor()
-        if (actor) {
+          console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name);
+          
+          // Set the incident and update step 2 to require resolution
           await actor.updateKingdom((kingdom) => {
-            // Set the incident ID
-            kingdom.currentIncidentId = incidentId
-            
-            // Add resolve-incident step if not already present
-            const hasResolveStep = kingdom.currentPhaseSteps.some(s => s.id === 'resolve-incident')
-            if (!hasResolveStep) {
-              kingdom.currentPhaseSteps.push({
-                id: 'resolve-incident',
-                name: 'Resolve Triggered Incident',
-                completed: false
-              })
+            kingdom.currentIncidentId = incidentId;
+            // Update step 2 to require resolution
+            if (kingdom.currentPhaseSteps[2]) {
+              kingdom.currentPhaseSteps[2].completed = 0;
             }
-          })
+          });
+          
+          console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 now requires resolution');
+        } catch (error) {
+          console.error('❌ [UnrestPhaseController] Error loading incident:', error);
         }
-        
-        console.log('⚠️ [UnrestPhaseController] Incident triggered, added resolve step')
       } else {
-        console.log('✅ [UnrestPhaseController] No incident occurred')
+        console.log('✅ [UnrestPhaseController] No incident occurred');
+        
+        // Ensure no incident is set and step 2 remains auto-completed
+        await actor.updateKingdom((kingdom) => {
+          kingdom.currentIncidentId = null;
+          // Keep step 2 auto-completed since no incident
+          if (kingdom.currentPhaseSteps[2]) {
+            kingdom.currentPhaseSteps[2].completed = 1;
+          }
+        });
       }
       
-      // Complete the incident-check step
-      await completePhaseStep('incident-check')
+      // Complete step 1 (incident check)
+      await completePhaseStepByIndex(1);
       
       return { 
         incidentTriggered,
         roll: Math.round(roll * 100),
         chance: Math.round(incidentChance * 100),
         incidentId
-      }
+      };
     },
 
     /**
-     * Resolve a triggered incident
+     * Resolve a triggered incident (step 2)
      */
     async resolveIncident(incidentId: string, outcome: 'success' | 'failure') {
-      // Don't check for completed steps - allow resolution when incident is triggered
-      console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`)
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+        return { success: false, error: 'No kingdom actor' };
+      }
+
+      console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`);
 
       // Apply incident effects based on outcome
-      const actor = getKingdomActor()
-      if (actor) {
-        await actor.updateKingdom((kingdom) => {
-          if (outcome === 'success') {
-            // Successful resolution may reduce unrest
-            kingdom.unrest = Math.max(0, kingdom.unrest - 1)
-            console.log('✅ [UnrestPhaseController] Incident resolved successfully, -1 unrest')
-          } else {
-            // Failed resolution may increase unrest
-            kingdom.unrest = kingdom.unrest + 1
-            console.log('❌ [UnrestPhaseController] Incident resolution failed, +1 unrest')
-          }
-          
-          // Clear the current incident
-          kingdom.currentIncidentId = null
-        })
-      }
+      await actor.updateKingdom((kingdom) => {
+        if (outcome === 'success') {
+          // Successful resolution may reduce unrest
+          kingdom.unrest = Math.max(0, kingdom.unrest - 1);
+          console.log('✅ [UnrestPhaseController] Incident resolved successfully, -1 unrest');
+        } else {
+          // Failed resolution may increase unrest
+          kingdom.unrest = kingdom.unrest + 1;
+          console.log('❌ [UnrestPhaseController] Incident resolution failed, +1 unrest');
+        }
+        
+        // Clear the current incident
+        kingdom.currentIncidentId = null;
+      });
       
-      // Complete the resolve-incident step if it exists
-      if (!isStepCompleted('resolve-incident')) {
-        await completePhaseStep('resolve-incident')
-      }
+      // Complete step 2 (resolve incident)
+      await completePhaseStepByIndex(2);
       
-      return { success: true, outcome }
+      return { success: true, outcome };
+    },
+
+    /**
+     * Check if phase is complete using new index-based system
+     */
+    async isPhaseComplete(): Promise<boolean> {
+      const { TurnManager } = await import('../models/turn-manager');
+      const turnManager = new TurnManager();
+      return await turnManager.isCurrentPhaseComplete();
     },
 
     /**
@@ -194,27 +221,27 @@ export async function createUnrestPhaseController() {
      * Get incident threshold based on unrest level (legacy method)
      */
     getIncidentThreshold(unrest: number): number {
-      const tier = this.getUnrestTier(unrest)
-      return Math.round(this.getIncidentChance(tier) * 20) // Convert to d20 equivalent for display
+      const tier = this.getUnrestTier(unrest);
+      return Math.round(this.getIncidentChance(tier) * 20); // Convert to d20 equivalent for display
     },
 
     /**
      * Get incident severity based on unrest level
      */
     getIncidentSeverity(unrest: number): 'minor' | 'moderate' | 'major' {
-      if (unrest <= 4) return 'minor'
-      if (unrest <= 8) return 'moderate'
-      return 'major'
+      if (unrest <= 4) return 'minor';
+      if (unrest <= 8) return 'moderate';
+      return 'major';
     },
 
     /**
      * Get display data for the UI
      */
     getDisplayData() {
-      const kingdom = get(kingdomData)
-      const unrest = kingdom.unrest || 0
-      const threshold = this.getIncidentThreshold(unrest)
-      const severity = this.getIncidentSeverity(unrest)
+      const kingdom = get(kingdomData);
+      const unrest = kingdom.unrest || 0;
+      const threshold = this.getIncidentThreshold(unrest);
+      const severity = this.getIncidentSeverity(unrest);
       
       return {
         currentUnrest: unrest,
@@ -226,7 +253,7 @@ export async function createUnrestPhaseController() {
                 unrest <= 4 ? 'tense' :
                 unrest <= 6 ? 'troubled' :
                 unrest <= 8 ? 'volatile' : 'critical'
-      }
+      };
     }
-  }
+  };
 }

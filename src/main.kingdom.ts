@@ -56,12 +56,6 @@ export async function ensureKingdomActor(): Promise<KingdomActor | null> {
  * Quick access functions for common operations
  */
 
-export async function advancePhase(): Promise<void> {
-  const actor = await getKingdomActor();
-  if (actor) {
-    await actor.advancePhase();
-  }
-}
 
 export async function modifyResource(resource: string, amount: number): Promise<void> {
   const actor = await getKingdomActor();
@@ -70,12 +64,6 @@ export async function modifyResource(resource: string, amount: number): Promise<
   }
 }
 
-export async function markPhaseStepCompleted(stepId: string): Promise<void> {
-  const actor = await getKingdomActor();
-  if (actor) {
-    await actor.markPhaseStepCompleted(stepId);
-  }
-}
 
 // Re-export key types and classes
 export { KingdomActor } from './actors/KingdomActor';

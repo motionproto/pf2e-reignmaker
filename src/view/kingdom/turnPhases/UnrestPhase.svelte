@@ -1,8 +1,8 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, isPhaseStepCompleted } from '../../../stores/KingdomStore';
-   import { TurnPhase, TurnPhaseConfig } from '../../../models/KingdomState';
-   import { UnrestIncidentProvider } from '../../../controllers/unrest/UnrestIncidentProvider';
+   import { kingdomData, unrest, isPhaseStepCompleted } from '../../../stores/KingdomStore';
+   import { TurnPhase } from '../../../actors/KingdomActor';
+   import { UnrestIncidentProvider } from '../../../controllers/incidents/UnrestIncidentProvider';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -23,13 +23,13 @@
    let rollEffect: string = '';
    let rollStateChanges: any = {};
    
-   // Reactive UI state from store using centralized provider
-   $: stepComplete = isPhaseStepCompleted('incident-check');
-   $: unrestStatus = $kingdomData ? (() => {
-      const unrest = $kingdomData.unrest || 0;
-      const tierInfo = UnrestIncidentProvider.getTierInfo(unrest);
+   // Reactive UI state using new index-based system
+   $: stepComplete = $kingdomData.currentPhaseSteps?.[1]?.completed === 1; // Step 1 = incident check
+   $: unrestStatus = $unrest !== undefined ? (() => {
+      const unrestValue = $unrest || 0;
+      const tierInfo = UnrestIncidentProvider.getTierInfo(unrestValue);
       return {
-         currentUnrest: unrest,
+         currentUnrest: unrestValue,
          tier: tierInfo.tier,
          tierName: tierInfo.tierName,
          penalty: tierInfo.penalty,
@@ -75,9 +75,40 @@
       }
    }
    
-   // No automatic behavior - incident checks are now manual only
-   onMount(() => {
-      // Component mounted - unrest status is displayed, but no automatic actions
+   // Initialize phase steps when component mounts
+   onMount(async () => {
+      console.log('🟡 [UnrestPhase] Component mounted, checking phase state...');
+      console.log('🔍 [UnrestPhase] Current phase:', $kingdomData.currentPhase);
+      console.log('🔍 [UnrestPhase] Current phase steps:', $kingdomData.currentPhaseSteps);
+      console.log('🔍 [UnrestPhase] TurnPhase.UNREST value:', TurnPhase.UNREST);
+      
+      // Check if we're in the correct phase and need to initialize steps
+      if ($kingdomData.currentPhase === TurnPhase.UNREST) {
+        const currentSteps = $kingdomData.currentPhaseSteps || [];
+        const expectedSteps = ['Calculate Unrest', 'Incident Check', 'Resolve Incident'];
+        
+        // Check if steps need initialization (empty or don't match expected format)
+        const needsInitialization = currentSteps.length === 0 || 
+          currentSteps.length !== expectedSteps.length ||
+          !expectedSteps.every((name, index) => currentSteps[index]?.name === name);
+        
+        if (needsInitialization) {
+          console.log('🟡 [UnrestPhase] Initializing phase steps...');
+          console.log('🔍 [UnrestPhase] Current steps:', currentSteps);
+          console.log('🔍 [UnrestPhase] Expected steps:', expectedSteps);
+          
+          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+          const controller = await createUnrestPhaseController();
+          await controller.startPhase();
+          console.log('✅ [UnrestPhase] Phase initialization complete');
+        } else {
+          console.log('🟡 [UnrestPhase] Phase steps already correctly initialized');
+        }
+      } else {
+        console.log('🟡 [UnrestPhase] Not in UNREST phase, skipping initialization');
+      }
+      
+      // Component mounted - incident checks are manual
       console.log('🟡 [UnrestPhase] Component mounted - incident checks are manual');
    });
    
