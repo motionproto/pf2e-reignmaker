@@ -20,6 +20,70 @@ import {
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
 
+/**
+ * Unrest tier information for display
+ */
+export interface UnrestTierInfo {
+  tier: number;
+  tierName: string;
+  penalty: number;
+  incidentThreshold: number;
+  incidentChance: number;
+  incidentSeverity: 'minor' | 'moderate' | 'major';
+  description: string;
+  statusClass: string;
+}
+
+/**
+ * Static helper: Get comprehensive unrest tier information for UI display
+ * This is the single source of truth for unrest tier calculations
+ */
+export function getUnrestTierInfo(unrest: number): UnrestTierInfo {
+  const tier = Math.min(3, Math.floor(unrest / 3));
+  
+  // Tier-based thresholds
+  const thresholds = [0, 3, 6, 10, 15];
+  const threshold = unrest <= 2 ? 0 : 
+                    unrest <= 4 ? 3 : 
+                    unrest <= 6 ? 6 : 
+                    unrest <= 8 ? 10 : 15;
+  
+  const tierNames = ['Stable', 'Discontent', 'Unrest', 'Rebellion'];
+  const tierDescriptions = [
+    'No incidents occur at this level',
+    'Minor incidents possible',
+    'Moderate incidents possible',
+    'Major incidents possible'
+  ];
+  const statusClasses = ['stable', 'discontent', 'unrest', 'rebellion'];
+  
+  const severity: 'minor' | 'moderate' | 'major' = 
+    tier <= 1 ? 'minor' : tier <= 2 ? 'moderate' : 'major';
+  
+  return {
+    tier,
+    tierName: tierNames[tier] || 'Stable',
+    penalty: tier,
+    incidentThreshold: threshold,
+    incidentChance: threshold > 0 ? Math.round((threshold / 20) * 100) : 0,
+    incidentSeverity: severity,
+    description: tierDescriptions[tier] || 'No incidents occur at this level',
+    statusClass: statusClasses[tier] || 'stable'
+  };
+}
+
+/**
+ * Static helper: Get unrest status text based on level
+ */
+export function getUnrestStatus(unrest: number): string {
+  if (unrest === 0) return 'stable';
+  if (unrest <= 2) return 'calm';
+  if (unrest <= 4) return 'tense';
+  if (unrest <= 6) return 'troubled';
+  if (unrest <= 8) return 'volatile';
+  return 'critical';
+}
+
 export async function createUnrestPhaseController() {
   return {
     async startPhase() {
@@ -154,8 +218,12 @@ export async function createUnrestPhaseController() {
 
     /**
      * Resolve a triggered incident (step 2)
+     * Now uses IncidentResolutionService for proper effect parsing
      */
-    async resolveIncident(incidentId: string, outcome: 'success' | 'failure') {
+    async resolveIncident(
+      incidentId: string, 
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+    ) {
       const actor = getKingdomActor();
       if (!actor) {
         console.error('❌ [UnrestPhaseController] No kingdom actor available');
@@ -164,26 +232,62 @@ export async function createUnrestPhaseController() {
 
       console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`);
 
-      // Apply incident effects based on outcome
-      await actor.updateKingdom((kingdom) => {
-        if (outcome === 'success') {
-          // Successful resolution may reduce unrest
-          kingdom.unrest = Math.max(0, kingdom.unrest - 1);
-          console.log('✅ [UnrestPhaseController] Incident resolved successfully, -1 unrest');
-        } else {
-          // Failed resolution may increase unrest
-          kingdom.unrest = kingdom.unrest + 1;
-          console.log('❌ [UnrestPhaseController] Incident resolution failed, +1 unrest');
-        }
+      try {
+        // Load incident data
+        const { incidentLoader } = await import('./incidents/incident-loader');
+        const incident = incidentLoader.getIncidentById(incidentId);
         
-        // Clear the current incident
-        kingdom.currentIncidentId = null;
-      });
-      
-      // Complete step 2 (resolve incident)
-      await completePhaseStepByIndex(2);
-      
-      return { success: true, outcome };
+        if (!incident) {
+          console.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
+          return { success: false, error: 'Incident not found' };
+        }
+
+        // Use incident resolution service to parse effects
+        const { incidentResolutionService } = await import('./incidents/incident-resolution');
+        const result = incidentResolutionService.applyIncidentOutcome(incident, outcome);
+
+        // Apply resource changes to kingdom
+        await actor.updateKingdom((kingdom) => {
+          // Apply resource changes from incident effects
+          for (const [resource, change] of result.resourceChanges.entries()) {
+            if (resource === 'unrest') {
+              kingdom.unrest = Math.max(0, (kingdom.unrest || 0) + change);
+            } else if (resource === 'fame') {
+              kingdom.fame = Math.max(0, Math.min(3, (kingdom.fame || 0) + change));
+            } else if (kingdom.resources[resource] !== undefined) {
+              kingdom.resources[resource] = Math.max(0, (kingdom.resources[resource] || 0) + change);
+            }
+          }
+
+          // Add unresolved modifier if incident failed
+          if (result.unresolvedModifier) {
+            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+            kingdom.activeModifiers.push(result.unresolvedModifier);
+            console.log('📋 [UnrestPhaseController] Added unresolved incident modifier');
+          }
+          
+          // Clear the current incident
+          kingdom.currentIncidentId = null;
+        });
+
+        console.log(`✅ [UnrestPhaseController] Incident resolved: ${result.message}`);
+        
+        // Complete step 2 (resolve incident)
+        await completePhaseStepByIndex(2);
+        
+        return { 
+          success: true, 
+          outcome: result.outcome,
+          message: result.message,
+          resourceChanges: result.resourceChanges
+        };
+      } catch (error) {
+        console.error('❌ [UnrestPhaseController] Error resolving incident:', error);
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Unknown error' 
+        };
+      }
     },
 
     /**
@@ -197,12 +301,10 @@ export async function createUnrestPhaseController() {
 
     /**
      * Get unrest tier based on current unrest level
+     * Uses the correct formula: Math.min(3, Math.floor(unrest / 3))
      */
     getUnrestTier(unrest: number): number {
-      if (unrest >= 0 && unrest <= 2) return 0; // Stable
-      if (unrest >= 3 && unrest <= 5) return 1; // Discontent (Minor incidents)
-      if (unrest >= 6 && unrest <= 8) return 2; // Unrest (Moderate incidents)
-      return 3; // Rebellion (Major incidents)
+      return Math.min(3, Math.floor(unrest / 3));
     },
 
     /**
@@ -219,41 +321,29 @@ export async function createUnrestPhaseController() {
     },
 
     /**
-     * Get incident threshold based on unrest level (legacy method)
-     */
-    getIncidentThreshold(unrest: number): number {
-      const tier = this.getUnrestTier(unrest);
-      return Math.round(this.getIncidentChance(tier) * 20); // Convert to d20 equivalent for display
-    },
-
-    /**
-     * Get incident severity based on unrest level
+     * Get incident severity based on tier (uses correct tier calculation)
      */
     getIncidentSeverity(unrest: number): 'minor' | 'moderate' | 'major' {
-      if (unrest <= 4) return 'minor';
-      if (unrest <= 8) return 'moderate';
+      const tier = this.getUnrestTier(unrest);
+      if (tier <= 1) return 'minor';
+      if (tier <= 2) return 'moderate';
       return 'major';
     },
 
     /**
-     * Get display data for the UI
+     * Get display data for the UI (delegates to static helper)
      */
     getDisplayData() {
       const kingdom = get(kingdomData);
       const unrest = kingdom.unrest || 0;
-      const threshold = this.getIncidentThreshold(unrest);
-      const severity = this.getIncidentSeverity(unrest);
+      const tierInfo = getUnrestTierInfo(unrest);
       
       return {
         currentUnrest: unrest,
-        incidentThreshold: threshold,
-        incidentChance: threshold > 0 ? Math.round((threshold / 20) * 100) : 0,
-        incidentSeverity: severity,
-        status: unrest === 0 ? 'stable' : 
-                unrest <= 2 ? 'calm' :
-                unrest <= 4 ? 'tense' :
-                unrest <= 6 ? 'troubled' :
-                unrest <= 8 ? 'volatile' : 'critical'
+        incidentThreshold: tierInfo.incidentThreshold,
+        incidentChance: tierInfo.incidentChance,
+        incidentSeverity: tierInfo.incidentSeverity,
+        status: getUnrestStatus(unrest)
       };
     }
   };

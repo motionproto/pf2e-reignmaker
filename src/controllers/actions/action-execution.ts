@@ -5,9 +5,13 @@
  * for kingdom actions according to the Reignmaker Lite rules.
  */
 
-import { diceService } from './DiceService';
+import { diceService } from '../../services/domain/DiceService';
 import type { PlayerAction } from '../../models/PlayerActions';
 import type { KingdomData } from '../../actors/KingdomActor';
+import {
+    getLevelBasedDC,
+    hasRequiredResources
+} from '../shared/resolution-service';
 
 export interface ActionRequirement {
     met: boolean;
@@ -57,23 +61,16 @@ export class ActionExecutionService {
             return specificCheck;
         }
         
-        // Check resource costs
+        // Check resource costs using shared utility
         if (action.cost && action.cost.size > 0) {
-            const missingResources = new Map<string, number>();
+            const resourceCheck = hasRequiredResources(kingdomData, action.cost);
             
-            for (const [resource, required] of action.cost.entries()) {
-                const available = kingdomData.resources[resource] || 0;
-                if (available < required) {
-                    missingResources.set(resource, required - available);
-                }
-            }
-            
-            if (missingResources.size > 0) {
+            if (!resourceCheck.valid) {
                 return {
                     met: false,
                     reason: 'Insufficient resources',
                     requiredResources: action.cost,
-                    missingResources
+                    missingResources: resourceCheck.missing
                 };
             }
         }
@@ -392,15 +389,8 @@ export class ActionExecutionService {
      * Calculate DC for an action based on character level
      */
     getActionDC(characterLevel: number): number {
-        // Standard level-based DCs for Pathfinder 2e
-        const dcByLevel: Record<number, number> = {
-            1: 15, 2: 16, 3: 18, 4: 19, 5: 20,
-            6: 22, 7: 23, 8: 24, 9: 26, 10: 27,
-            11: 28, 12: 30, 13: 31, 14: 32, 15: 34,
-            16: 35, 17: 36, 18: 38, 19: 39, 20: 40
-        };
-        
-        return dcByLevel[characterLevel] || 15;
+        // Use shared level-based DC calculation
+        return getLevelBasedDC(characterLevel);
     }
 }
 

@@ -1,59 +1,38 @@
 <script lang="ts">
    import { kingdomData } from '../../../stores/KingdomStore';
-   import type { KingdomModifier } from '../../../models/Modifiers';
-   
-   // Get severity color classes
-   function getSeverityClass(severity: string): string {
-      switch(severity) {
-         case 'beneficial': return 'tw-border-success tw-bg-success/10';
-         case 'neutral': return 'tw-border-base-300 tw-bg-base-200';
-         case 'dangerous': return 'tw-border-warning tw-bg-warning/10';
-         case 'critical': return 'tw-border-error tw-bg-error/10';
-         default: return 'tw-border-base-300 tw-bg-base-200';
-      }
-   }
+   import type { ActiveModifier } from '../../../models/Modifiers';
    
    // Format duration display
-   function formatDuration(modifier: KingdomModifier, currentTurn: number): string {
-      if (modifier.duration === 'permanent') return 'Permanent';
-      if (modifier.duration === 'until-resolved') return 'Until Resolved';
-      if (modifier.duration === 'until-cancelled') return 'Until Cancelled';
-      if (typeof modifier.duration === 'number') {
-         const remaining = modifier.duration - (currentTurn - modifier.startTurn);
-         return `${remaining} turn${remaining !== 1 ? 's' : ''} remaining`;
-      }
-      return 'Unknown';
+   function formatDuration(modifier: ActiveModifier, currentTurn: number): string {
+      // ActiveModifier doesn't have duration field - modifiers are removed when expired
+      // This is managed by ModifierService.cleanupExpiredModifiers()
+      return 'Active';
    }
    
-   // Format effects for display
-   function formatEffects(effects: any): string[] {
+   // Format effects for display (from EventModifier array)
+   function formatEffects(modifiers: any[]): string[] {
       const result: string[] = [];
       
-      // Resource effects
-      if (effects.gold) result.push(`Gold: ${effects.gold > 0 ? '+' : ''}${effects.gold}/turn`);
-      if (effects.food) result.push(`Food: ${effects.food > 0 ? '+' : ''}${effects.food}/turn`);
-      if (effects.lumber) result.push(`Lumber: ${effects.lumber > 0 ? '+' : ''}${effects.lumber}/turn`);
-      if (effects.stone) result.push(`Stone: ${effects.stone > 0 ? '+' : ''}${effects.stone}/turn`);
-      if (effects.ore) result.push(`Ore: ${effects.ore > 0 ? '+' : ''}${effects.ore}/turn`);
-      if (effects.luxuries) result.push(`Luxuries: ${effects.luxuries > 0 ? '+' : ''}${effects.luxuries}/turn`);
+      if (!modifiers || !Array.isArray(modifiers)) return result;
       
-      // Kingdom stats
-      if (effects.unrest) result.push(`Unrest: ${effects.unrest > 0 ? '+' : ''}${effects.unrest}/turn`);
-      if (effects.fame) result.push(`Fame: ${effects.fame > 0 ? '+' : ''}${effects.fame}/turn`);
-      if (effects.infamy) result.push(`Infamy: ${effects.infamy > 0 ? '+' : ''}${effects.infamy}/turn`);
-      
-      // Roll modifiers
-      if (effects.rollModifiers && effects.rollModifiers.length > 0) {
-         effects.rollModifiers.forEach((mod: any) => {
-            const type = Array.isArray(mod.type) ? mod.type.join(', ') : mod.type;
-            result.push(`${mod.value > 0 ? '+' : ''}${mod.value} to ${type} rolls`);
-         });
+      for (const mod of modifiers) {
+         if (mod.type === 'resource') {
+            const sign = mod.value > 0 ? '+' : '';
+            result.push(`${mod.resource}: ${sign}${mod.value}`);
+         } else if (mod.type === 'stat') {
+            const sign = mod.value > 0 ? '+' : '';
+            result.push(`${mod.stat}: ${sign}${mod.value}`);
+         } else if (mod.type === 'skill') {
+            const sign = mod.value > 0 ? '+' : '';
+            result.push(`${sign}${mod.value} to ${mod.skill} checks`);
+         }
       }
       
       return result;
    }
    
    $: currentTurn = $kingdomData.currentTurn || 1;
+   $: activeModifiers = ($kingdomData.activeModifiers || []) as ActiveModifier[];
 </script>
 
 <div class="tw-h-full tw-flex tw-flex-col">
@@ -64,12 +43,12 @@
    
    <!-- Modifiers List -->
    <div class="tw-flex-1 tw-overflow-y-auto">
-      {#if $kingdomData.modifiers && $kingdomData.modifiers.length > 0}
+      {#if activeModifiers.length > 0}
          <div class="tw-grid tw-gap-3">
-            {#each $kingdomData.modifiers as modifier}
-               <div class="tw-card tw-border-2 tw-shadow-md {getSeverityClass(modifier.severity)}">
+            {#each activeModifiers as modifier}
+               <div class="tw-card tw-border-2 tw-shadow-md tw-border-base-300 tw-bg-base-200">
                   <div class="tw-card-body">
-                     <!-- Header with name and duration -->
+                     <!-- Header with name and tier -->
                      <div class="tw-flex tw-justify-between tw-items-start">
                         <div class="tw-flex-1">
                            <h4 class="tw-card-title tw-text-lg tw-flex tw-items-center tw-gap-2">
@@ -81,22 +60,20 @@
                            <p class="tw-text-sm tw-text-base-content/70 tw-mt-1">{modifier.description}</p>
                            
                            <!-- Source -->
-                           {#if modifier.source}
-                              <div class="tw-text-xs tw-text-base-content/50 tw-mt-2">
-                                 Source: {modifier.source.name || modifier.source.id} ({modifier.source.type})
-                              </div>
-                           {/if}
+                           <div class="tw-text-xs tw-text-base-content/50 tw-mt-2">
+                              Source: {modifier.sourceName} ({modifier.sourceType})
+                           </div>
                         </div>
                         
-                        <!-- Duration Badge -->
-                        <div class="tw-badge tw-badge-lg {modifier.duration === 'until-resolved' ? 'tw-badge-warning' : modifier.duration === 'permanent' ? 'tw-badge-accent' : 'tw-badge-secondary'}">
-                           {formatDuration(modifier, currentTurn)}
+                        <!-- Tier Badge -->
+                        <div class="tw-badge tw-badge-lg tw-badge-primary">
+                           Tier {modifier.tier}
                         </div>
                      </div>
                      
                      <!-- Effects -->
-                     {#if modifier.effects}
-                        {@const effects = formatEffects(modifier.effects)}
+                     {#if modifier.modifiers && modifier.modifiers.length > 0}
+                        {@const effects = formatEffects(modifier.modifiers)}
                         {#if effects.length > 0}
                            <div class="tw-divider tw-my-2"></div>
                            <div class="tw-flex tw-flex-wrap tw-gap-2">
@@ -110,46 +87,29 @@
                      {/if}
                      
                      <!-- Resolution Info -->
-                     {#if modifier.resolution}
+                     {#if modifier.resolvedWhen}
                         <div class="tw-divider tw-my-2"></div>
                         <div class="tw-text-sm">
-                           <div class="tw-font-semibold tw-text-base-content/80 tw-mb-1">Resolution:</div>
-                           {#if modifier.resolution.skills && modifier.resolution.skills.length > 0}
-                              <div class="tw-flex tw-items-center tw-gap-2 tw-mb-1">
-                                 <span class="tw-text-xs">Skills:</span>
-                                 <div class="tw-flex tw-flex-wrap tw-gap-1">
-                                    {#each modifier.resolution.skills as skill}
-                                       <span class="tw-badge tw-badge-sm tw-badge-primary">{skill}</span>
-                                    {/each}
-                                 </div>
+                           <div class="tw-font-semibold tw-text-base-content/80 tw-mb-1">Can be resolved:</div>
+                           {#if modifier.resolvedWhen.type === 'skill' && modifier.resolvedWhen.skillResolution}
+                              <div class="tw-text-xs tw-text-info">
+                                 <i class="fas fa-dice-d20"></i>
+                                 Skill check with DC adjustment: {modifier.resolvedWhen.skillResolution.dcAdjustment > 0 ? '+' : ''}{modifier.resolvedWhen.skillResolution.dcAdjustment}
                               </div>
                            {/if}
-                           {#if modifier.resolution.dc}
-                              <div class="tw-text-xs">
-                                 DC: {modifier.resolution.dc}
-                              </div>
-                           {/if}
-                           {#if modifier.resolution.automatic}
+                           {#if modifier.resolvedWhen.type === 'condition' && modifier.resolvedWhen.conditionResolution}
                               <div class="tw-text-xs tw-text-info tw-mt-1">
                                  <i class="fas fa-info-circle"></i>
-                                 Auto-resolves: {modifier.resolution.automatic.description}
+                                 {modifier.resolvedWhen.conditionResolution.description}
                               </div>
                            {/if}
                         </div>
                      {/if}
                      
-                     <!-- Escalation Warning -->
-                     {#if modifier.escalation && !modifier.escalation.hasEscalated}
-                        {@const turnsUntilEscalation = modifier.escalation.turnsUntilEscalation - (currentTurn - modifier.startTurn)}
-                        {#if turnsUntilEscalation > 0}
-                           <div class="tw-alert tw-alert-warning tw-mt-2">
-                              <i class="fas fa-exclamation-triangle"></i>
-                              <span class="tw-text-xs">
-                                 Will escalate in {turnsUntilEscalation} turn{turnsUntilEscalation !== 1 ? 's' : ''}
-                              </span>
-                           </div>
-                        {/if}
-                     {/if}
+                     <!-- Start Turn Info -->
+                     <div class="tw-text-xs tw-text-base-content/50 tw-mt-2">
+                        Started: Turn {modifier.startTurn}
+                     </div>
                   </div>
                </div>
             {/each}
@@ -175,11 +135,11 @@
                   <div class="tw-card tw-bg-base-300 tw-card-compact">
                      <div class="tw-card-body">
                         <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-chart-line tw-text-success"></i>
-                           Economic Bonuses
+                           <i class="fas fa-calendar-times tw-text-warning"></i>
+                           Unresolved Events
                         </h4>
                         <p class="tw-text-xs tw-text-base-content/60">
-                           Increase resource production and reduce costs
+                           Events that were failed or ignored
                         </p>
                      </div>
                   </div>
@@ -187,11 +147,11 @@
                   <div class="tw-card tw-bg-base-300 tw-card-compact">
                      <div class="tw-card-body">
                         <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-shield-alt tw-text-primary"></i>
-                           Military Advantages
+                           <i class="fas fa-fire tw-text-error"></i>
+                           Unrest Incidents
                         </h4>
                         <p class="tw-text-xs tw-text-base-content/60">
-                           Strengthen armies and improve defense
+                           Ongoing effects from unrest incidents
                         </p>
                      </div>
                   </div>
@@ -199,11 +159,11 @@
                   <div class="tw-card tw-bg-base-300 tw-card-compact">
                      <div class="tw-card-body">
                         <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-heart tw-text-error"></i>
-                           Social Effects
+                           <i class="fas fa-building tw-text-primary"></i>
+                           Structures
                         </h4>
                         <p class="tw-text-xs tw-text-base-content/60">
-                           Affect unrest, loyalty, and population growth
+                           Ongoing bonuses from kingdom structures
                         </p>
                      </div>
                   </div>
@@ -211,11 +171,11 @@
                   <div class="tw-card tw-bg-base-300 tw-card-compact">
                      <div class="tw-card-body">
                         <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-exclamation-triangle tw-text-warning"></i>
-                           Curses & Penalties
+                           <i class="fas fa-handshake tw-text-success"></i>
+                           Diplomatic Relations
                         </h4>
                         <p class="tw-text-xs tw-text-base-content/60">
-                           Negative effects from events or poor decisions
+                           Effects from alliances and treaties
                         </p>
                      </div>
                   </div>
@@ -230,22 +190,22 @@
    <div class="tw-stats tw-shadow tw-bg-base-300 tw-w-full">
       <div class="tw-stat">
          <div class="tw-stat-title">Active Modifiers</div>
-         <div class="tw-stat-value tw-text-2xl">{$kingdomData.modifiers?.length || 0}</div>
+         <div class="tw-stat-value tw-text-2xl">{activeModifiers.length}</div>
          <div class="tw-stat-desc">Currently affecting kingdom</div>
       </div>
       <div class="tw-stat">
-         <div class="tw-stat-title">Temporary</div>
+         <div class="tw-stat-title">From Events</div>
          <div class="tw-stat-value tw-text-2xl">
-            {$kingdomData.modifiers?.filter(m => typeof m.duration === 'number').length || 0}
+            {activeModifiers.filter(m => m.sourceType === 'event').length}
          </div>
-         <div class="tw-stat-desc">Will expire over time</div>
+         <div class="tw-stat-desc">Unresolved events</div>
       </div>
       <div class="tw-stat">
-         <div class="tw-stat-title">Permanent</div>
+         <div class="tw-stat-title">From Incidents</div>
          <div class="tw-stat-value tw-text-2xl">
-            {$kingdomData.modifiers?.filter(m => m.duration === 'permanent').length || 0}
+            {activeModifiers.filter(m => m.sourceType === 'incident').length}
          </div>
-         <div class="tw-stat-desc">Lasting effects</div>
+         <div class="tw-stat-desc">Unrest incidents</div>
       </div>
    </div>
 </div>

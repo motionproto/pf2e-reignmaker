@@ -4,7 +4,7 @@ import eventsData from '../../../dist/events.json';
 
 
 /**
- * Unresolved event configuration
+ * Unresolved event configuration (cleaned up - no legacy severity/escalation/priority)
  */
 export interface UnresolvedEvent {
     type: 'continuous' | 'auto-resolve' | 'expires';
@@ -14,7 +14,6 @@ export interface UnresolvedEvent {
             name: string;
             description?: string;
             duration: string | number;
-            severity: 'beneficial' | 'neutral' | 'dangerous' | 'critical';
             effects: Record<string, any>;
             resolution?: {
                 skills: string[];
@@ -24,9 +23,7 @@ export interface UnresolvedEvent {
                     description: string;
                 };
             };
-            escalation?: any;
             icon?: string;
-            priority?: number;
         };
     };
     expires?: {

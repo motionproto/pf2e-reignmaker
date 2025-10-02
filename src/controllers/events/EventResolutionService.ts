@@ -5,10 +5,18 @@
  * and unresolved event handling for the kingdom game.
  */
 
-import { diceService, type D20Result } from './DiceService';
-import type { EventService, EventData, EventOutcome as EventEffect } from './events/EventService';
+import { diceService, type D20Result } from '../../services/domain/DiceService';
+import type { EventService, EventData } from './event-loader';
+import type { EventOutcome, EventModifier, OngoingEffect } from './event-types';
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { KingdomModifier, ModifierEffects } from '../../models/Modifiers';
+import type { ActiveModifier } from '../../models/Modifiers';
+import {
+  aggregateResourceChanges,
+  prepareStateChanges,
+  createUnresolvedModifier as createUnresolvedModifierShared,
+  canResolveWithSkill as canResolveWithSkillShared,
+  getLevelBasedDC
+} from '../shared/resolution-service';
 
 export interface StabilityCheckResult {
     roll: number;
@@ -20,7 +28,7 @@ export interface StabilityCheckResult {
 export interface EventOutcomeApplication {
     resourceChanges: Map<string, number>;
     messages: string[];
-    unresolvedModifier?: KingdomModifier;
+    unresolvedModifier?: ActiveModifier;
 }
 
 export interface EventResolutionResult {
@@ -67,30 +75,25 @@ export class EventResolutionService {
      */
     applyEventOutcome(
         event: EventData,
-        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+        currentTurn: number = 0
     ): EventOutcomeApplication {
-        const resourceChanges = new Map<string, number>();
         const messages: string[] = [];
-        let unresolvedModifier: KingdomModifier | undefined;
+        let unresolvedModifier: ActiveModifier | undefined;
         
         const effect = event.effects?.[outcome];
         if (!effect) {
-            return { resourceChanges, messages };
+            return { resourceChanges: new Map(), messages };
         }
         
-        // Parse and aggregate resource modifiers
-        if (effect.modifiers) {
-            for (const modifier of effect.modifiers) {
-                if (!modifier.enabled) continue;
-                
-                const currentValue = resourceChanges.get(modifier.selector) || 0;
-                resourceChanges.set(modifier.selector, currentValue + modifier.value);
-            }
-        }
+        // Parse and aggregate resource modifiers using shared utility
+        const resourceChanges = effect.modifiers 
+            ? aggregateResourceChanges(effect.modifiers)
+            : new Map<string, number>();
         
         // Handle unresolved events (create continuous modifier)
         if ((outcome === 'failure' || outcome === 'criticalFailure') && event.ifUnresolved) {
-            unresolvedModifier = this.createUnresolvedModifier(event);
+            unresolvedModifier = this.createUnresolvedModifier(event, currentTurn);
         }
         
         // Add outcome message
@@ -105,120 +108,109 @@ export class EventResolutionService {
      * Calculate resource changes from event outcome
      */
     calculateResourceChanges(event: EventData, outcome: string): Map<string, number> {
-        const changes = new Map<string, number>();
         const effect = event.effects?.[outcome as keyof typeof event.effects];
         
-        if (!effect?.modifiers) return changes;
+        if (!effect?.modifiers) return new Map();
         
-        for (const modifier of effect.modifiers) {
-            if (!modifier.enabled) continue;
-            
-            // Handle different resource types
-            switch (modifier.selector) {
-                case 'gold':
-                case 'food':
-                case 'lumber':
-                case 'stone':
-                case 'ore':
-                case 'luxuries':
-                    const current = changes.get(modifier.selector) || 0;
-                    changes.set(modifier.selector, current + modifier.value);
-                    break;
-                    
-                case 'resources':
-                    // Generic resources affect lumber, stone, and ore
-                    ['lumber', 'stone', 'ore'].forEach(resource => {
-                        const current = changes.get(resource) || 0;
-                        changes.set(resource, current + modifier.value);
-                    });
-                    break;
-                    
-                case 'unrest':
-                case 'fame':
-                    const currentValue = changes.get(modifier.selector) || 0;
-                    changes.set(modifier.selector, currentValue + modifier.value);
-                    break;
-                    
-                default:
-                    console.warn(`Unknown modifier selector: ${modifier.selector}`);
-            }
-        }
-        
-        return changes;
+        // Use shared utility for resource aggregation
+        return aggregateResourceChanges(effect.modifiers);
     }
 
     /**
      * Create an unresolved modifier from an event
      */
-    private createUnresolvedModifier(event: EventData): KingdomModifier {
+    private createUnresolvedModifier(event: EventData, currentTurn: number): ActiveModifier {
         if (!event.ifUnresolved) {
             throw new Error('Event does not have unresolved configuration');
         }
         
-        const currentTurn = 0; // This should be passed in from the game state
+        const unresolved = event.ifUnresolved;
         
-        const modifier: KingdomModifier = {
-            id: `unresolved-${event.id}-${Date.now()}`,
-            name: event.name,
-            description: event.description,
-            source: {
-                type: 'event',
-                id: event.id,
-                name: event.name
-            },
-            startTurn: currentTurn,
-            duration: 'until-resolved',
-            priority: 100,
-            effects: {},
-            resolution: {
-                skills: event.skills?.map(s => s.skill) || [],
-                dc: 15,
-                onResolution: {
-                    successMsg: 'The event has been resolved',
-                    removeOnSuccess: true
-                }
-            },
-            visible: true,
-            severity: this.mapEventTypeToSeverity(event.ifUnresolved.type)
+        // EventData uses legacy UnresolvedEvent structure, need to convert
+        if (unresolved.type === 'continuous' && unresolved.continuous?.modifierTemplate) {
+            const template = unresolved.continuous.modifierTemplate;
+            
+            // Convert to OngoingEffect format
+            const ongoingEffect: OngoingEffect = {
+                name: template.name,
+                description: template.description || event.description,
+                tier: 1,
+                icon: template.icon || '',
+                modifiers: this.convertEffectsToEventModifiers(template.effects, template.duration),
+                resolvedWhen: template.resolution ? {
+                    type: 'skill',
+                    skillResolution: {
+                        dcAdjustment: template.resolution.dc || 0,
+                        onSuccess: {
+                            msg: 'Event resolved successfully',
+                            removeAllModifiers: true
+                        }
+                    }
+                } : undefined
+            };
+            
+            return createUnresolvedModifierShared(
+                ongoingEffect,
+                'event',
+                event.id,
+                event.name,
+                currentTurn
+            );
+        }
+        
+        throw new Error('Event does not have continuous modifier template');
+    }
+    
+    /**
+     * Convert event effects to EventModifier array format
+     */
+    private convertEffectsToEventModifiers(effects: Record<string, any>, duration: string | number): EventModifier[] {
+        const modifiers: EventModifier[] = [];
+        
+        const resourceMappings: Record<string, EventModifier['resource']> = {
+            'gold': 'gold',
+            'food': 'food',
+            'lumber': 'lumber',
+            'stone': 'stone',
+            'ore': 'ore',
+            'luxuries': 'luxuries',
+            'unrest': 'unrest',
+            'fame': 'fame'
         };
         
-        // Note: event.ifUnresolved structure may need to be adjusted based on actual EventData type
-        // For now, we're using a basic implementation
-        
-        return modifier;
-    }
-
-    /**
-     * Map event type to modifier severity
-     */
-    private mapEventTypeToSeverity(eventType?: string): 'beneficial' | 'neutral' | 'dangerous' | 'critical' {
-        switch (eventType) {
-            case 'continuous':
-                return 'dangerous';
-            case 'auto-resolve':
-                return 'neutral';
-            case 'expires':
-                return 'dangerous';
-            default:
-                return 'neutral';
+        for (const [key, resource] of Object.entries(resourceMappings)) {
+            if (effects[key] !== undefined && effects[key] !== 0) {
+                const modifier: EventModifier = {
+                    name: `${key} modifier`,
+                    resource: resource,
+                    value: effects[key],
+                    duration: typeof duration === 'number' ? 'turns' : (duration as any)
+                };
+                
+                if (modifier.duration === 'turns' && typeof duration === 'number') {
+                    modifier.turns = duration;
+                }
+                
+                modifiers.push(modifier);
+            }
         }
+        
+        return modifiers;
     }
 
     /**
      * Check if an event can be resolved with a specific skill
      */
     canResolveWithSkill(event: EventData, skill: string): boolean {
-        if (!event.skills) return false;
-        return event.skills.some(s => s.skill === skill);
+        return canResolveWithSkillShared(event.skills, skill);
     }
 
     /**
      * Get the DC for resolving an event
      */
-    getResolutionDC(event: EventData): number {
-        // Default to level-based DC
-        // This could be enhanced to look at event difficulty or other factors
-        return 15;
+    getResolutionDC(kingdomLevel: number): number {
+        // Use shared level-based DC calculation
+        return getLevelBasedDC(kingdomLevel);
     }
 
     /**
@@ -257,28 +249,12 @@ export class EventResolutionService {
      * Apply state changes to kingdom
      * Note: This returns the changes to be applied, not directly mutating state
      */
-    prepareStateChanges(
+    prepareKingdomStateChanges(
         currentState: KingdomData,
         resourceChanges: Map<string, number>
     ): Partial<KingdomData> {
-        const updates: Partial<KingdomData> = {
-            resources: { ...currentState.resources }
-        };
-        
-        // Apply resource changes with bounds checking
-        for (const [resource, change] of resourceChanges) {
-            if (resource === 'unrest') {
-                updates.unrest = Math.max(0, (currentState.unrest || 0) + change);
-            } else if (resource === 'fame') {
-                // Fame is capped between 0 and 3
-                updates.fame = Math.max(0, Math.min(3, (currentState.fame || 0) + change));
-            } else if (updates.resources) {
-                const current = updates.resources[resource] || 0;
-                updates.resources[resource] = Math.max(0, current + change);
-            }
-        }
-        
-        return updates;
+        // Use shared state preparation utility
+        return prepareStateChanges(currentState, resourceChanges);
     }
 }
 

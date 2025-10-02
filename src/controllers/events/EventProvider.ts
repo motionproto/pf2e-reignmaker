@@ -5,7 +5,7 @@
  * No game logic - just data access.
  */
 
-import { eventService, type EventData } from '../../services/domain/events/EventService';
+import { eventService, type EventData } from './event-loader';
 
 export class EventProvider {
     /**

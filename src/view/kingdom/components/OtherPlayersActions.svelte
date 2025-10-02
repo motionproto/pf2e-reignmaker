@@ -1,5 +1,12 @@
 <script lang="ts">
-  import type { ActionResolution } from '../../../stores/gameState';
+  // Define ActionResolution inline since stores/gameState doesn't exist
+  interface ActionResolution {
+    playerName: string;
+    playerColor: string;
+    actorName: string;
+    skillName?: string;
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+  }
   
   export let resolutions: ActionResolution[] = [];
   export let compact: boolean = false;

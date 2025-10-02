@@ -12,7 +12,6 @@
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
-  import { clientContextService } from "../../../services/ClientContextService";
   import {
     getPlayerCharacters,
     getCurrentUserCharacter,
@@ -31,9 +30,6 @@
 
   // Initialize controller
   let controller: any = null;
-  
-  // Track other players' actions
-  let otherPlayersActions = new Map<string, any>();
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -207,18 +203,6 @@
     await tick();
   }
 
-  // Broadcast action resolved to other players
-  function broadcastActionResolved(action: any, resolution: any) {
-    clientContextService.broadcastActionEvent('resolved', {
-      actionId: action.id,
-      actionName: action.name,
-      outcome: resolution.outcome,
-      actorName: resolution.actorName,
-      skillName: resolution.skillName,
-      stateChanges: resolution.stateChanges
-    });
-  }
-
   // Apply the actual state changes when user confirms the resolution
   async function applyActionEffects(actionId: string) {
     const action = PlayerActionsData.getAllActions().find(
@@ -248,9 +232,6 @@
     if (!result.success) {
       // Show error to user about requirements not being met
       ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
-    } else {
-      // Broadcast the action was resolved
-      broadcastActionResolved(action, resolution);
     }
   }
 
@@ -282,54 +263,10 @@
     // Initialize controller
     controller = await createActionPhaseController();
     
-    // Initialize client context service
-    clientContextService.initialize();
-    
     // Store current user ID
     const game = (window as any).game;
     currentUserId = game?.user?.id || null;
     console.log('[ActionsPhase] Initialized with currentUserId:', currentUserId, 'userName:', game?.user?.name);
-    
-    // Register socket listeners for other players' actions
-    const Hooks = (window as any).Hooks;
-    if (Hooks) {
-      // Listen for other players starting actions
-      Hooks.on('pf2e-reignmaker.actionStarted', (message: any) => {
-        if (message.userId !== currentUserId) {
-          otherPlayersActions.set(message.actionId, message);
-          // Force re-render
-          otherPlayersActions = otherPlayersActions;
-        }
-      });
-      
-      // Listen for other players resolving actions
-      Hooks.on('pf2e-reignmaker.actionResolved', (message: any) => {
-        console.log('[ActionsPhase] Received action resolved from:', message.userId, message.userName, 'action:', message.actionId);
-        if (message.userId !== currentUserId) {
-          // Update the resolved actions store for this player's resolution
-          console.log('[ActionsPhase] Storing resolution for other player:', message.userId);
-          resolvedActions.set(message.actionId, {
-            outcome: message.outcome,
-            actorName: message.actorName,
-            skillName: message.skillName,
-            stateChanges: message.stateChanges
-          });
-          resolvedActions = resolvedActions; // Trigger reactivity
-          
-          // Remove from in-progress
-          otherPlayersActions.delete(message.actionId);
-          otherPlayersActions = otherPlayersActions;
-        }
-      });
-      
-      // Listen for action cancellations
-      Hooks.on('pf2e-reignmaker.actionCancelled', (message: any) => {
-        if (message.userId !== currentUserId) {
-          otherPlayersActions.delete(message.actionId);
-          otherPlayersActions = otherPlayersActions;
-        }
-      });
-    }
     
     window.addEventListener(
       "kingdomRollComplete",
@@ -356,14 +293,6 @@
       "kingdomRollComplete",
       handleRollComplete as EventListener
     );
-    
-    // Clean up Hooks listeners
-    const Hooks = (window as any).Hooks;
-    if (Hooks) {
-      Hooks.off('pf2e-reignmaker.actionStarted');
-      Hooks.off('pf2e-reignmaker.actionResolved');
-      Hooks.off('pf2e-reignmaker.actionCancelled');
-    }
     
     // Reset controller state for next phase
     if (controller) {
@@ -441,12 +370,6 @@
       showBuildStructureDialog = true;
       return;
     }
-    
-    // Broadcast that we're starting an action
-    clientContextService.broadcastActionEvent('started', {
-      actionId: action.id,
-      actionName: action.name
-    });
     
     // Check if ANY player has already performed an action (kingdom has used actions)
     if (actionsUsed > 0 && !resolvedActions.has(action.id)) {
@@ -625,17 +548,6 @@
     const game = (window as any).game;
     if (game?.user?.id) {
       resetPlayerAction(game.user.id);
-    }
-    
-    // Broadcast cancellation
-    const action = PlayerActionsData.getAllActions().find(
-      (a) => a.id === actionId
-    );
-    if (action) {
-      clientContextService.broadcastActionEvent('cancelled', {
-        actionId: actionId,
-        actionName: action.name
-      });
     }
   }
   

@@ -17,7 +17,7 @@ import {
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
-import { actionExecutionService } from '../services/domain/ActionExecutionService'
+import { actionExecutionService } from './actions/action-execution'
 import type { PlayerAction } from '../models/PlayerActions'
 import type { KingdomData } from '../actors/KingdomActor'
 

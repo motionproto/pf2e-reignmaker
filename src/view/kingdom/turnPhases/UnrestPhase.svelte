@@ -2,7 +2,7 @@
    import { onMount } from 'svelte';
    import { kingdomData, unrest, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
-   import { UnrestIncidentProvider } from '../../../controllers/incidents/UnrestIncidentProvider';
+   import { getUnrestTierInfo, getUnrestStatus } from '../../../controllers/UnrestPhaseController';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -13,7 +13,7 @@
    import OutcomeDisplay from '../components/OutcomeDisplay.svelte';
    
    // UI State only - no business logic
-   let automationRunning = false;
+   let phaseExecuting = false;
    let showIncidentResult = false;
    let selectedSkill = '';
    let isRolling = false;
@@ -27,7 +27,7 @@
    $: stepComplete = $kingdomData.currentPhaseSteps?.[1]?.completed === 1; // Step 1 = incident check
    $: unrestStatus = $unrest !== undefined ? (() => {
       const unrestValue = $unrest || 0;
-      const tierInfo = UnrestIncidentProvider.getTierInfo(unrestValue);
+      const tierInfo = getUnrestTierInfo(unrestValue);
       return {
          currentUnrest: unrestValue,
          tier: tierInfo.tier,
@@ -50,10 +50,10 @@
    
    async function loadIncident(incidentId: string) {
       try {
-         const { getIncidentById } = await import('../../../controllers/incidents/IncidentProvider');
+         const { incidentLoader } = await import('../../../controllers/incidents/incident-loader');
          
-         // Use the new IncidentProvider to get the incident
-         const incident = getIncidentById(incidentId);
+         // Use the incident loader to get the incident
+         const incident = incidentLoader.getIncidentById(incidentId);
          
          if (incident) {
             currentIncident = incident;
@@ -104,8 +104,8 @@
          return;
       }
       
-      if (automationRunning) {
-         console.log('🛑 [UnrestPhase] Cannot roll - automation running');
+      if (phaseExecuting) {
+         console.log('🛑 [UnrestPhase] Cannot roll - phase executing');
          return;
       }
       

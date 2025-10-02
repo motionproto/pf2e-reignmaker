@@ -9,10 +9,10 @@
    
    // Import controller instead of services/commands directly
    import { createEventPhaseController } from '../../../controllers/EventPhaseController';
-   import { stateChangeFormatter } from '../../../services/formatters/StateChangeFormatter';
    
    // Import existing services and components
-   import type { EventData, EventSkill, EventOutcome } from '../../../services/domain/events/EventService';
+   import type { EventData } from '../../../controllers/events/event-loader';
+   import type { EventSkill, EventOutcome } from '../../../controllers/events/event-types';
    import { EventProvider } from '../../../controllers/events/EventProvider';
    import Button from '../components/baseComponents/Button.svelte';
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
@@ -55,7 +55,7 @@
    $: eventChecked = currentSteps[0]?.completed === 1; // Step 0 = event-check
    $: eventResolved = currentSteps[1]?.completed === 1; // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC;
-   $: activeModifiers = $kingdomData.modifiers || [];
+   $: activeModifiers = $kingdomData.activeModifiers || [];
    $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
    $: showStabilityResult = $kingdomData.eventStabilityRoll !== null;
    $: rolledAgainstDC = $kingdomData.eventRollDC || eventDC;
@@ -137,9 +137,8 @@
       if (effects && effects.modifiers) {
          // Parse modifiers array to extract resource changes
          for (const modifier of effects.modifiers) {
-            if (modifier.enabled && modifier.selector) {
-               previewEffects.set(modifier.selector, (previewEffects.get(modifier.selector) || 0) + modifier.value);
-            }
+            // EventModifier has resource property, not selector
+            previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
          }
       }
       
@@ -265,9 +264,8 @@
          if (effects && effects.modifiers) {
             // Parse modifiers array to extract resource changes
             for (const modifier of effects.modifiers) {
-               if (modifier.enabled && modifier.selector) {
-                  previewEffects.set(modifier.selector, (previewEffects.get(modifier.selector) || 0) + modifier.value);
-               }
+               // EventModifier has resource property, not selector
+               previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
             }
          }
          
@@ -510,14 +508,10 @@
          <h4>Active Modifiers</h4>
          <div class="modifiers-list">
             {#each activeModifiers as modifier}
-               <div class="modifier-item severity-{modifier.severity}">
+               <div class="modifier-item">
                   <div class="modifier-header">
                      <span class="modifier-name">{modifier.name}</span>
-                     {#if modifier.duration !== 'permanent' && modifier.duration !== 'until-resolved'}
-                        <span class="modifier-duration">
-                           {stateChangeFormatter.formatDuration(modifier.duration)}
-                        </span>
-                     {/if}
+                     <span class="modifier-tier">Tier {modifier.tier}</span>
                   </div>
                   {#if modifier.description}
                      <p class="modifier-description">{modifier.description}</p>
@@ -751,22 +745,7 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      
-      &.severity-beneficial {
-         border-left: 3px solid var(--color-green);
-      }
-      
-      &.severity-neutral {
-         border-left: 3px solid var(--color-blue);
-      }
-      
-      &.severity-dangerous {
-         border-left: 3px solid var(--color-amber);
-      }
-      
-      &.severity-critical {
-         border-left: 3px solid var(--color-red);
-      }
+      border-left: 3px solid var(--color-blue);
       
       .modifier-header {
          display: flex;
