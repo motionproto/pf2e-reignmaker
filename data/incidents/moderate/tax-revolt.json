@@ -3,36 +3,36 @@
   "name": "Tax Revolt",
   "tier": "MODERATE",
   "description": "Citizens revolt against tax collection",
-  "percentileMin": 34,
-  "percentileMax": 42,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "intimidation",
-      "description": "enforce collection",
-      "successEffect": "Taxes collected normally",
-      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "enforce collection"
     },
     {
       "skill": "diplomacy",
-      "description": "negotiate rates",
-      "successEffect": "Taxes collected normally",
-      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "negotiate rates"
     },
     {
       "skill": "society",
-      "description": "tax reform",
-      "successEffect": "Taxes collected normally",
-      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "tax reform"
     },
     {
       "skill": "deception",
-      "description": "creative accounting",
-      "successEffect": "Taxes collected normally",
-      "failureEffect": "Lose 1d4 Gold (reduced tax collection)",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "creative accounting"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Taxes collected normally",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1d4 Gold (reduced tax collection)",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 2d4 Gold, +1 Unrest",
+      "modifiers": []
+    }
+  }
 }

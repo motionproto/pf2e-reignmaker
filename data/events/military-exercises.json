@@ -2,22 +2,11 @@
   "id": "military-exercises",
   "name": "Military Exercises",
   "description": "Your kingdom conducts large-scale military training maneuvers.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Settlement with military structures or the largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Military & Training structures, gain an untyped bonus equal to their tier to the check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Military Exercises expires"
-    }
-  },
   "skills": [
     {
       "skill": "athletics",
@@ -35,40 +24,41 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Elite forces trained",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Training is ineffective;",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Training accident; +1 Unrest, one military structure becomes damaged",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Training accident",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Training accident",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

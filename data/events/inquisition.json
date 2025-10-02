@@ -2,63 +2,12 @@
   "id": "inquisition",
   "name": "Inquisition",
   "description": "Zealots mobilize against a minority group or belief.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Faith & Nature structures, gain an untyped bonus equal to the tier to Religion checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Ongoing Persecution",
-        "description": "Religious zealots continue their persecution, creating fear and division",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-fire",
-        "priority": 100,
-        "effects": {
-          "unrest": 2,
-          "fame": -1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "religion",
-            "intimidation"
-          ],
-          "dc": 16,
-          "onResolution": {
-            "successMsg": "The ongoing persecution situation has been resolved!",
-            "failureMsg": "Failed to resolve the ongoing persecution situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Religious Purges",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 3,
-              "fame": -2,
-              "gold": -2
-            },
-            "resolution": {
-              "dc": 19
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "religion",
@@ -76,50 +25,83 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Peacefully resolved; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Peacefully resolved",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Zealots dispersed; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Persecution spreads; +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Persecution spreads",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Violence erupts; +2 Unrest, one structure destroyed",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Violence erupts",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Violence erupts",
+          "resource": "destroy_structure",
           "value": 1,
-          "selector": "destroy_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Ongoing Persecution",
+    "description": "Religious zealots continue their persecution, creating fear and division",
+    "tier": 1,
+    "icon": "fas fa-fire",
+    "modifiers": [
+      {
+        "name": "Ongoing Persecution",
+        "resource": "unrest",
+        "value": 2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Persecution",
+        "resource": "fame",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The ongoing persecution situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the ongoing persecution situation"
+        }
+      }
     }
   }
 }

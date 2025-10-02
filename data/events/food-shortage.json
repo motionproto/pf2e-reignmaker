@@ -2,68 +2,12 @@
   "id": "food-shortage",
   "name": "Food Shortage",
   "description": "Disease, weather, or pests destroy agricultural production.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Ongoing Food Crisis",
-        "description": "Agricultural production remains devastated, causing continued food shortages and civil unrest",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-seedling",
-        "priority": 95,
-        "effects": {
-          "food": -2,
-          "unrest": 1,
-          "gold": -1
-        },
-        "resolution": {
-          "skills": [
-            "nature",
-            "survival",
-            "diplomacy"
-          ],
-          "dc": 15,
-          "automatic": {
-            "condition": "action:purchase_resources",
-            "description": "Purchase food supplies to end the shortage"
-          },
-          "onResolution": {
-            "successMsg": "Food production has been restored and the crisis is over!",
-            "failureMsg": "The food shortage continues despite your efforts"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Famine",
-            "description": "The food shortage has escalated into a full famine with starvation and riots",
-            "severity": "critical",
-            "effects": {
-              "food": -4,
-              "unrest": 2,
-              "gold": -2,
-              "fame": -1
-            },
-            "resolution": {
-              "dc": 20
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "nature",
@@ -81,69 +25,106 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Crisis averted; lose 2 Food this turn, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Crisis averted",
+          "resource": "food",
           "value": -2,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Shortage controlled; lose 4 Food this turn, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Shortage controlled",
+          "resource": "food",
           "value": -4,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Severe shortage; lose 6 Food this turn, +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Severe shortage",
+          "resource": "food",
           "value": -6,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Severe shortage",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Famine threatens; lose 8 Food this turn, +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Famine threatens",
+          "resource": "food",
           "value": -8,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Famine threatens",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Ongoing Food Crisis",
+    "description": "Agricultural production remains devastated, causing continued food shortages and civil unrest",
+    "tier": 1,
+    "icon": "fas fa-seedling",
+    "modifiers": [
+      {
+        "name": "Ongoing Food Crisis",
+        "resource": "food",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Food Crisis",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Food Crisis",
+        "resource": "gold",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "Food production has been restored and the crisis is over!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "The food shortage continues despite your efforts"
+        }
+      }
     }
   }
 }

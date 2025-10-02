@@ -2,61 +2,11 @@
   "id": "public-scandal",
   "name": "Public Scandal",
   "description": "A leader is implicated in an embarrassing or criminal situation.",
+  "tier": 1,
   "traits": [
     "dangerous"
   ],
   "location": "Random PC",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Lingering Scandal",
-        "description": "The scandal continues to damage your kingdom's reputation and authority",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-newspaper",
-        "priority": 120,
-        "effects": {
-          "unrest": 1,
-          "fame": -1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "deception",
-            "society"
-          ],
-          "dc": 14,
-          "onResolution": {
-            "successMsg": "The lingering scandal situation has been resolved!",
-            "failureMsg": "Failed to resolve the lingering scandal situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 4,
-          "escalatedModifier": {
-            "name": "Government Crisis",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "fame": -2,
-              "gold": -1
-            },
-            "resolution": {
-              "dc": 17
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "deception",
@@ -74,43 +24,77 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Scandal deflected; no effect",
+      "endsEvent": true,
       "modifiers": []
     },
     "success": {
       "msg": "Damage controlled; +1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Damage controlled",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Public outrage; +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Public outrage",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Leader must lay low; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Leader must lay low",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Lingering Scandal",
+    "description": "The scandal continues to damage your kingdom's reputation and authority",
+    "tier": 1,
+    "icon": "fas fa-newspaper",
+    "modifiers": [
+      {
+        "name": "Lingering Scandal",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Lingering Scandal",
+        "resource": "fame",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The lingering scandal situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the lingering scandal situation"
+        }
+      }
     }
   }
 }

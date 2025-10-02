@@ -3,36 +3,36 @@
   "name": "Economic Crash",
   "tier": "MAJOR",
   "description": "Your kingdom's economy collapses",
-  "percentileMin": 60,
-  "percentileMax": 66,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "society",
-      "description": "economic reform",
-      "successEffect": "Economy stabilized, no effect",
-      "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "description": "economic reform"
     },
     {
       "skill": "diplomacy",
-      "description": "secure loans",
-      "successEffect": "Economy stabilized, no effect",
-      "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "description": "secure loans"
     },
     {
       "skill": "crafting",
-      "description": "boost production",
-      "successEffect": "Economy stabilized, no effect",
-      "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "description": "boost production"
     },
     {
       "skill": "arcana",
-      "description": "transmute resources",
-      "successEffect": "Economy stabilized, no effect",
-      "failureEffect": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "criticalFailureEffect": "Lose 4d6 gold, your highest tier commerce structure is destroyed"
+      "description": "transmute resources"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Economy stabilized, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 2d6 gold, your highest tier commerce structure is damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 4d6 gold, your highest tier commerce structure is destroyed",
+      "modifiers": []
+    }
+  }
 }

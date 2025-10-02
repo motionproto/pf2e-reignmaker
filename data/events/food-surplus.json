@@ -2,25 +2,11 @@
   "id": "food-surplus",
   "name": "Food Surplus",
   "description": "Exceptional harvests provide abundant food.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "First turn: +1 Gold (Failure result). Second turn: Spoilage begins, +1 Unrest per turn as surplus rots.",
-      "turnsUntilSpoilage": 2,
-      "spoilageEffect": {
-        "unrest": 1
-      }
-    }
-  },
   "skills": [
     {
       "skill": "nature",
@@ -38,59 +24,58 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Massive surplus; +3 Gold (from selling excess), -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Massive surplus",
+          "resource": "gold",
           "value": 3,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Massive surplus",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Good harvest; +2 Gold",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Good harvest",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Minor surplus; +1 Gold",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Minor surplus",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "criticalFailure": {
       "msg": "Surplus spoils; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Surplus spoils",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

@@ -11,8 +11,8 @@ import type { KingdomData } from '../actors/KingdomActor';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
 import { updateKingdom } from '../stores/KingdomStore';
 import { EventProvider } from './events/EventProvider';
-import { modifierService } from '../services/domain/modifiers/ModifierService';
-import type { KingdomModifier } from '../models/Modifiers';
+import { createModifierService } from '../services/ModifierService';
+import type { ActiveModifier } from '../models/Modifiers';
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -50,6 +50,7 @@ const EVENTS_PHASE_STEPS = [
 
 export async function createEventPhaseController(eventService?: any) {
     const eventResolutionService = new EventResolutionService(eventService);
+    const modifierService = await createModifierService();
     
     const createInitialState = (): EventPhaseState => ({
         currentEvent: null,
@@ -242,7 +243,10 @@ export async function createEventPhaseController(eventService?: any) {
                 
                 // Add unresolved modifier if applicable
                 if (application.unresolvedModifier) {
-                    await modifierService.addModifier(application.unresolvedModifier);
+                    await updateKingdom(kingdom => {
+                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                        kingdom.activeModifiers.push(application.unresolvedModifier);
+                    });
                     appliedChanges.set('modifier', application.unresolvedModifier);
                 }
                 
@@ -288,7 +292,7 @@ export async function createEventPhaseController(eventService?: any) {
         async ignoreEvent(event: EventData, currentTurn: number): Promise<{
             success: boolean;
             effects: Map<string, any>;
-            modifier?: KingdomModifier;
+            modifier?: ActiveModifier;
         }> {
             console.log(`🚫 [EventPhaseController] Ignoring event: ${event.name}`);
             
@@ -296,14 +300,21 @@ export async function createEventPhaseController(eventService?: any) {
             const failureEffects = eventResolutionService.calculateResourceChanges(event, 'failure');
             
             // Create ongoing modifier if event has ifUnresolved configuration
-            let modifier: KingdomModifier | undefined;
+            let modifier: ActiveModifier | undefined;
             if (event.ifUnresolved) {
-                modifier = await this.createEventModifier(event, currentTurn) || undefined;
-                if (modifier) {
-                    await modifierService.addModifier(modifier);
-                    await this.addToOngoingEvents(event.id);
-                    console.log(`📋 [EventPhaseController] Created ongoing modifier for ignored event: ${modifier.name}`);
-                }
+                // Cast EventData to KingdomEvent format (add tier from ifUnresolved)
+                const kingdomEvent = {
+                    ...event,
+                    tier: event.ifUnresolved.tier || 1
+                } as any;
+                
+                modifier = modifierService.createFromUnresolvedEvent(kingdomEvent, currentTurn);
+                await updateKingdom(kingdom => {
+                    if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                    kingdom.activeModifiers.push(modifier!);
+                });
+                await this.addToOngoingEvents(event.id);
+                console.log(`📋 [EventPhaseController] Created ongoing modifier for ignored event: ${modifier.name}`);
             }
             
             // Clear current event
@@ -335,13 +346,20 @@ export async function createEventPhaseController(eventService?: any) {
         ): Promise<void> {
             // Check if this is a continuous event that should become a modifier
             if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
-                const modifier = await this.createEventModifier(event, currentTurn);
-                if (modifier) {
-                    await modifierService.addModifier(modifier);
-                    await this.addToOngoingEvents(event.id);
-                    state.unresolvedEvent = event;
-                    console.log(`📋 [EventPhaseController] Event failed - created ongoing modifier: ${modifier.name}`);
-                }
+                // Cast EventData to KingdomEvent format (add tier from event)
+                const kingdomEvent = {
+                    ...event,
+                    tier: 1  // Default tier for events
+                } as any;
+                
+                const modifier = modifierService.createFromUnresolvedEvent(kingdomEvent, currentTurn);
+                await updateKingdom(kingdom => {
+                    if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                    kingdom.activeModifiers.push(modifier);
+                });
+                await this.addToOngoingEvents(event.id);
+                state.unresolvedEvent = event;
+                console.log(`📋 [EventPhaseController] Event failed - created ongoing modifier: ${modifier.name}`);
             } else {
                 // Check if continuous event ends based on outcome message
                 const effectOutcome = event.effects?.[outcome];
@@ -362,46 +380,6 @@ export async function createEventPhaseController(eventService?: any) {
             }
         },
 
-        /**
-         * Create a modifier from an unresolved event
-         */
-        async createEventModifier(event: EventData, currentTurn: number): Promise<KingdomModifier | null> {
-            if (!event.ifUnresolved) return null;
-            
-            const template = event.ifUnresolved.continuous?.modifierTemplate;
-            if (!template) {
-                console.warn(`[EventPhaseController] Event ${event.id} has ifUnresolved but no modifier template`);
-                return null;
-            }
-            
-            const modifier: KingdomModifier = {
-                id: `event-${event.id}-${currentTurn}-${Date.now()}`,
-                name: template.name || event.name,
-                description: template.description || event.description,
-                source: {
-                    type: 'event',
-                    id: event.id,
-                    name: event.name
-                },
-                startTurn: currentTurn,
-                duration: (template.duration as any) || 'until-resolved',
-                priority: template.priority || 100,
-                effects: template.effects || {},
-                visible: true,
-                severity: template.severity || 'dangerous',
-                icon: template.icon
-            };
-            
-            // Add resolution information if present
-            if (template.resolution) {
-                modifier.resolution = {
-                    skills: template.resolution.skills || [],
-                    dc: template.resolution.dc || 15
-                };
-            }
-            
-            return modifier;
-        },
 
         /**
          * Add event to ongoing events list

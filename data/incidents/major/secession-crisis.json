@@ -3,36 +3,36 @@
   "name": "Secession Crisis",
   "tier": "MAJOR",
   "description": "A settlement declares independence from your kingdom",
-  "percentileMin": 81,
-  "percentileMax": 87,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate autonomy",
-      "successEffect": "Independence movement quelled, no effect",
-      "failureEffect": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
-      "criticalFailureEffect": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      "description": "negotiate autonomy"
     },
     {
       "skill": "intimidation",
-      "description": "suppress movement",
-      "successEffect": "Independence movement quelled, no effect",
-      "failureEffect": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
-      "criticalFailureEffect": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      "description": "suppress movement"
     },
     {
       "skill": "society",
-      "description": "address grievances",
-      "successEffect": "Independence movement quelled, no effect",
-      "failureEffect": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
-      "criticalFailureEffect": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      "description": "address grievances"
     },
     {
       "skill": "performance",
-      "description": "inspire loyalty",
-      "successEffect": "Independence movement quelled, no effect",
-      "failureEffect": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
-      "criticalFailureEffect": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect"
+      "description": "inspire loyalty"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Independence movement quelled, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect",
+      "modifiers": []
+    }
+  }
 }

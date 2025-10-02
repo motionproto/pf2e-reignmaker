@@ -3,29 +3,32 @@
   "name": "Prison Breaks",
   "tier": "MAJOR",
   "description": "Mass prison breaks release dangerous criminals",
-  "percentileMin": 46,
-  "percentileMax": 52,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "intimidation",
-      "description": "lockdown prisons",
-      "successEffect": "Break prevented, no effect",
-      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "description": "lockdown prisons"
     },
     {
       "skill": "athletics",
-      "description": "pursuit",
-      "successEffect": "Break prevented, no effect",
-      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "description": "pursuit"
     },
     {
       "skill": "society",
-      "description": "negotiation",
-      "successEffect": "Break prevented, no effect",
-      "failureEffect": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "criticalFailureEffect": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed"
+      "description": "negotiation"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Break prevented, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed",
+      "modifiers": []
+    }
+  }
 }

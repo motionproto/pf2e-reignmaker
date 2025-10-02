@@ -2,23 +2,11 @@
   "id": "justice-prevails",
   "name": "Justice Prevails",
   "description": "Authorities catch a notorious criminal or resolve a major injustice.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Capital or largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Civic & Governance structures, gain an untyped bonus equal to the tier to the check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Justice Prevails expires",
-      "transformsTo": "miscarriage-of-justice"
-    }
-  },
   "skills": [
     {
       "skill": "intimidation",
@@ -36,49 +24,49 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major triumph; -2 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major triumph",
+          "resource": "unrest",
           "value": -2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Justice served; -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Justice served",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Justice with complications; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Justice with complications",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Miscarriage of justice; +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Miscarriage of justice",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

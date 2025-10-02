@@ -2,68 +2,12 @@
   "id": "plague",
   "name": "Plague",
   "description": "Disease spreads rapidly through your settlements.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Largest settlement, then spreads",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Settlements with Medicine & Healing or Faith & Nature structures gain an untyped bonus equal to the tier to checks. Bonuses from different structure types stack.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Plague Outbreak",
-        "description": "Disease continues to spread through your settlements, weakening the population",
-        "duration": "until-resolved",
-        "severity": "critical",
-        "icon": "fas fa-virus",
-        "priority": 90,
-        "effects": {
-          "unrest": 1,
-          "gold": -2,
-          "food": -1
-        },
-        "resolution": {
-          "skills": [
-            "medicine",
-            "religion",
-            "society"
-          ],
-          "dc": 18,
-          "automatic": {
-            "condition": "build:temple,hospital",
-            "description": "Build a temple or hospital to provide healing"
-          },
-          "onResolution": {
-            "successMsg": "The plague has been contained and the sick are recovering!",
-            "failureMsg": "The plague continues to ravage your settlements despite your efforts"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 2,
-          "escalatedModifier": {
-            "name": "Devastating Pandemic",
-            "description": "The plague has become a full pandemic, causing mass casualties",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "gold": -4,
-              "food": -2
-            },
-            "resolution": {
-              "dc": 22
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "medicine",
@@ -81,59 +25,97 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Plague cured; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Plague cured",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Plague contained; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Plague spreads; +1 Unrest, -2 Gold, spreads to a settlement connected by a road",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Plague spreads",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Plague spreads",
+          "resource": "gold",
           "value": -2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "criticalFailure": {
       "msg": "Devastating outbreak; +2 Unrest, -2 Gold, spreads to all settlements connected by a road",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Devastating outbreak",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Devastating outbreak",
+          "resource": "gold",
           "value": -2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Plague Outbreak",
+    "description": "Disease continues to spread through your settlements, weakening the population",
+    "tier": 1,
+    "icon": "fas fa-virus",
+    "modifiers": [
+      {
+        "name": "Plague Outbreak",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Plague Outbreak",
+        "resource": "gold",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Plague Outbreak",
+        "resource": "food",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The plague has been contained and the sick are recovering!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "The plague continues to ravage your settlements despite your efforts"
+        }
+      }
     }
   }
 }

@@ -3,36 +3,36 @@
   "name": "Religious Schism",
   "tier": "MAJOR",
   "description": "Religious divisions tear your kingdom apart",
-  "percentileMin": 67,
-  "percentileMax": 73,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "religion",
-      "description": "theological debate",
-      "successEffect": "Schism averted, no effect",
-      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-      "criticalFailureEffect": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
+      "description": "theological debate"
     },
     {
       "skill": "diplomacy",
-      "description": "mediate factions",
-      "successEffect": "Schism averted, no effect",
-      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-      "criticalFailureEffect": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
+      "description": "mediate factions"
     },
     {
       "skill": "occultism",
-      "description": "divine intervention",
-      "successEffect": "Schism averted, no effect",
-      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-      "criticalFailureEffect": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
+      "description": "divine intervention"
     },
     {
       "skill": "society",
-      "description": "secular compromise",
-      "successEffect": "Schism averted, no effect",
-      "failureEffect": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-      "criticalFailureEffect": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed"
+      "description": "secular compromise"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Schism averted, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed",
+      "modifiers": []
+    }
+  }
 }

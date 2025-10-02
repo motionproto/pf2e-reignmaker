@@ -3,29 +3,32 @@
   "name": "Mass Exodus",
   "tier": "MODERATE",
   "description": "Large numbers of citizens flee your kingdom",
-  "percentileMin": 94,
-  "percentileMax": 100,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "convince to stay",
-      "successEffect": "Population remains, no effect",
-      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "description": "convince to stay"
     },
     {
       "skill": "performance",
-      "description": "inspire hope",
-      "successEffect": "Population remains, no effect",
-      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "description": "inspire hope"
     },
     {
       "skill": "religion",
-      "description": "spiritual guidance",
-      "successEffect": "Population remains, no effect",
-      "failureEffect": "Lose 1 worksite permanently, +1 Unrest",
-      "criticalFailureEffect": "Lose 1 worksite permanently, +1 Unrest, -1 Fame"
+      "description": "spiritual guidance"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Population remains, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1 worksite permanently, +1 Unrest",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 1 worksite permanently, +1 Unrest, -1 Fame",
+      "modifiers": []
+    }
+  }
 }

@@ -2,62 +2,11 @@
   "id": "sensational-crime",
   "name": "Sensational Crime",
   "description": "A notorious crime captures public attention.",
+  "tier": 1,
   "traits": [
     "dangerous"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Crime & Intrigue structures provide an untyped bonus equal to their tier to checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Criminal at Large",
-        "description": "The criminal remains free, committing more crimes and mocking authority",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-user-ninja",
-        "priority": 115,
-        "effects": {
-          "unrest": 1,
-          "fame": -1
-        },
-        "resolution": {
-          "skills": [
-            "intimidation",
-            "society",
-            "diplomacy"
-          ],
-          "dc": 14,
-          "onResolution": {
-            "successMsg": "The criminal at large situation has been resolved!",
-            "failureMsg": "Failed to resolve the criminal at large situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Crime Wave",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "fame": -1,
-              "gold": -2
-            },
-            "resolution": {
-              "dc": 17
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "intimidation",
@@ -75,43 +24,77 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Criminal caught spectacularly; -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Criminal caught spectacularly",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Crime solved; no effect",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Criminal escapes; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Criminal escapes",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Copycat crimes; +2 Unrest, event may recur",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Copycat crimes",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Criminal at Large",
+    "description": "The criminal remains free, committing more crimes and mocking authority",
+    "tier": 1,
+    "icon": "fas fa-user-ninja",
+    "modifiers": [
+      {
+        "name": "Criminal at Large",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Criminal at Large",
+        "resource": "fame",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The criminal at large situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the criminal at large situation"
+        }
+      }
     }
   }
 }

@@ -47,12 +47,18 @@
    $: warUnrest = isAtWar ? 1 : 0;
    $: structureBonus = 0; // TODO: Calculate from actual structures
    
-   // Calculate event-based unrest from modifiers
+   // Calculate event-based unrest from active modifiers
    $: eventUnrest = (() => {
       let unrest = 0;
-      for (const modifier of $kingdomData.modifiers) {
-         if (modifier.effects?.unrest) {
-            unrest += modifier.effects.unrest;
+      const modifiers = $kingdomData.activeModifiers || [];
+      for (const modifier of modifiers) {
+         // Check if modifier has unrest effects in the modifiers array
+         if (modifier.modifiers) {
+            for (const mod of modifier.modifiers) {
+               if (mod.resource === 'unrest') {
+                  unrest += mod.value;
+               }
+            }
          }
       }
       return unrest;

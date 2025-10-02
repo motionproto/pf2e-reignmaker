@@ -3,29 +3,32 @@
   "name": "Mass Desertion Threat",
   "tier": "MAJOR",
   "description": "Your armies threaten mass desertion",
-  "percentileMin": 18,
-  "percentileMax": 24,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "rally troops",
-      "successEffect": "Troops remain loyal, no effect",
-      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
+      "description": "rally troops"
     },
     {
       "skill": "intimidation",
-      "description": "threaten deserters",
-      "successEffect": "Troops remain loyal, no effect",
-      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
+      "description": "threaten deserters"
     },
     {
       "skill": "performance",
-      "description": "inspire loyalty",
-      "successEffect": "Troops remain loyal, no effect",
-      "failureEffect": "1 army makes morale checks, highest tier military structure is damaged",
-      "criticalFailureEffect": "2 armies make morale checks, highest tier military structure is destroyed"
+      "description": "inspire loyalty"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Troops remain loyal, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "1 army makes morale checks, highest tier military structure is damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "2 armies make morale checks, highest tier military structure is destroyed",
+      "modifiers": []
+    }
+  }
 }

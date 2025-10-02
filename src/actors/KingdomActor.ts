@@ -5,8 +5,7 @@
 
 import type { Settlement } from '../models/Settlement';
 import type { BuildProject, Army } from '../models/BuildProject';
-import type { KingdomEvent } from '../models/Events';
-import type { KingdomModifier } from '../models/Modifiers';
+import type { ActiveModifier } from '../models/Modifiers';
 
 // Turn phases based on Reignmaker Lite rules - using semantic names
 export enum TurnPhase {
@@ -93,9 +92,9 @@ export interface KingdomData {
   isAtWar: boolean;
   
   // Events & Modifiers
-  currentEvent: KingdomEvent | null;
-  continuousEvents: KingdomEvent[];
-  modifiers: KingdomModifier[];
+  currentEvent: any | null;  // Event data (simplified)
+  continuousEvents: any[];    // Event data array (simplified)
+  activeModifiers: ActiveModifier[];  // Renamed from 'modifiers'
   
   // Simplified phase management with step arrays - single source of truth
   currentPhaseSteps: PhaseStep[];
@@ -187,7 +186,7 @@ export class KingdomActor extends Actor {
       isAtWar: false,
       currentEvent: null,
       continuousEvents: [],
-      modifiers: [],
+      activeModifiers: [],
       currentPhaseSteps: [],
       phaseComplete: false,
       oncePerTurnActions: [],
@@ -296,20 +295,20 @@ export class KingdomActor extends Actor {
   }
   
   /**
-   * Add modifier
+   * Add active modifier
    */
-  async addModifier(modifier: KingdomModifier): Promise<void> {
+  async addActiveModifier(modifier: ActiveModifier): Promise<void> {
     await this.updateKingdom((kingdom) => {
-      kingdom.modifiers.push(modifier);
+      kingdom.activeModifiers.push(modifier);
     });
   }
   
   /**
-   * Remove modifier
+   * Remove active modifier
    */
-  async removeModifier(modifierId: string): Promise<void> {
+  async removeActiveModifier(modifierId: string): Promise<void> {
     await this.updateKingdom((kingdom) => {
-      kingdom.modifiers = kingdom.modifiers.filter(m => m.id !== modifierId);
+      kingdom.activeModifiers = kingdom.activeModifiers.filter(m => m.id !== modifierId);
     });
   }
 }
@@ -341,10 +340,10 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     imprisonedUnrest: 0,
     fame: 0,
     isAtWar: false,
-    currentEvent: null,
-    continuousEvents: [],
-    modifiers: [],
-    currentPhaseSteps: [],
+      currentEvent: null,
+      continuousEvents: [],
+      activeModifiers: [],
+      currentPhaseSteps: [],
     phaseComplete: false,
     oncePerTurnActions: [],
     playerActions: {},

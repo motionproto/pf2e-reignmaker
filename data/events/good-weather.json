@@ -2,23 +2,12 @@
   "id": "good-weather",
   "name": "Good Weather",
   "description": "Perfect weather conditions boost morale and productivity.",
+  "tier": 1,
   "traits": [
     "beneficial",
     "continuous"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "failure",
-    "criticalFailure"
-  ],
-  "special": "pf2e-reignmaker.events.good-weather.special",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "First turn: +2 Food (automatic). Second turn: Weather changes (Failure result, event ends)."
-    }
-  },
   "skills": [
     {
       "skill": "nature",
@@ -36,50 +25,50 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Weather holds perfectly; +2 Food, -1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Weather holds perfectly",
+          "resource": "food",
           "value": 2,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Weather holds perfectly",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Weather remains good; +2 Food",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Weather remains good",
+          "resource": "food",
           "value": 2,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Weather changes; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Weather turns bad; +1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Weather turns bad",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

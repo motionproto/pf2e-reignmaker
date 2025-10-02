@@ -44,15 +44,7 @@ export type EventTrait =
  * Modifier selector types (what the modifier affects)
  */
 export type ModifierSelector = 
-  | "damage_structure"
-  | "destroy_structure"
-  | "fame"
-  | "food"
-  | "gold"
-  | "hex"
-  | "imprisoned_unrest"
-  | "resources"
-  | "unrest";
+;
 
 /**
  * Event location types

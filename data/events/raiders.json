@@ -2,65 +2,12 @@
   "id": "raiders",
   "name": "Raiders",
   "description": "Armed raiders threaten settlements and trade routes.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Random settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Can pay 2 Gold tribute to immediately end the event (no check required). Fortifications provide an untyped bonus equal to the tier to checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Ongoing Raids",
-        "description": "Raiders continue to pillage your borderlands, stealing resources and terrorizing citizens",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-horse",
-        "priority": 95,
-        "effects": {
-          "gold": -2,
-          "food": -1,
-          "unrest": 1
-        },
-        "resolution": {
-          "skills": [
-            "intimidation",
-            "diplomacy",
-            "warfare"
-          ],
-          "dc": 16,
-          "onResolution": {
-            "successMsg": "The ongoing raids situation has been resolved!",
-            "failureMsg": "Failed to resolve the ongoing raids situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Raider Stronghold",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "gold": -3,
-              "food": -2,
-              "unrest": 2,
-              "luxuries": -1
-            },
-            "resolution": {
-              "dc": 19
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "intimidation",
@@ -78,83 +25,118 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Raiders defeated; +1 Gold (loot), **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Raiders defeated",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Successful raid; -2 Gold, -2 Food, +1 Unrest",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "resource": "gold",
           "value": -2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "resource": "food",
           "value": -2,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Major raid; -2 Gold, -2 Food, +2 Unrest, one structure becomes damaged",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major raid",
+          "resource": "gold",
           "value": -2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Major raid",
+          "resource": "food",
           "value": -2,
-          "selector": "food",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Major raid",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Major raid",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Ongoing Raids",
+    "description": "Raiders continue to pillage your borderlands, stealing resources and terrorizing citizens",
+    "tier": 1,
+    "icon": "fas fa-horse",
+    "modifiers": [
+      {
+        "name": "Ongoing Raids",
+        "resource": "gold",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Raids",
+        "resource": "food",
+        "value": -1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Raids",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The ongoing raids situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the ongoing raids situation"
+        }
+      }
     }
   }
 }

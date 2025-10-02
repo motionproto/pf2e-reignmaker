@@ -3,36 +3,36 @@
   "name": "Rising Tensions",
   "tier": "MINOR",
   "description": "General tensions rise throughout your kingdom",
-  "percentileMin": 71,
-  "percentileMax": 80,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "calm populace",
-      "successEffect": "Tensions ease, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureEffect": "+2 Unrest"
+      "description": "calm populace"
     },
     {
       "skill": "religion",
-      "description": "spiritual guidance",
-      "successEffect": "Tensions ease, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureEffect": "+2 Unrest"
+      "description": "spiritual guidance"
     },
     {
       "skill": "performance",
-      "description": "entertainment",
-      "successEffect": "Tensions ease, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureEffect": "+2 Unrest"
+      "description": "entertainment"
     },
     {
       "skill": "arcana",
-      "description": "magical displays",
-      "successEffect": "Tensions ease, no effect",
-      "failureEffect": "+1 Unrest",
-      "criticalFailureEffect": "+2 Unrest"
+      "description": "magical displays"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Tensions ease, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "+1 Unrest",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "+2 Unrest",
+      "modifiers": []
+    }
+  }
 }

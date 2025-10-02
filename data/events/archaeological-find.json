@@ -2,27 +2,11 @@
   "id": "archaeological-find",
   "name": "Archaeological Find",
   "description": "Ancient ruins or artifacts are discovered in your territory.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to the check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Archaeological Find expires",
-      "effects": {
-        "resources": 1
-      },
-      "turnsUntilTransform": 3,
-      "transformsTo": "cursed-excavation"
-    }
-  },
   "skills": [
     {
       "skill": "society",
@@ -40,73 +24,64 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major discovery; +2 Gold, -1 Unrest, +1 Fame",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major discovery",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Major discovery",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Major discovery",
+          "resource": "fame",
           "value": 1,
-          "selector": "fame",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Valuable find; +1 Gold",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Valuable find",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Minor artifacts; gain 1 Resource of your choice",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Minor artifacts",
+          "resource": "food",
           "value": 1,
-          "selector": "food",
-          "enabled": true,
-          "turns": 1,
-          "choice": [
-            "food",
-            "ore",
-            "stone",
-            "lumber",
-            "luxuries"
-          ]
+          "duration": "turns",
+          "turns": 1
         }
       ]
     },
     "criticalFailure": {
       "msg": "Dangerous site; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Dangerous site",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

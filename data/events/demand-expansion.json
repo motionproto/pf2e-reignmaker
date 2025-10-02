@@ -2,61 +2,12 @@
   "id": "demand-expansion",
   "name": "Demand Expansion",
   "description": "Citizens demand the kingdom claim new territory.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you expand your territory this turn (claim a new hex), automatically succeed and event ends.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Expansion Pressure",
-        "description": "Citizens continue demanding territorial expansion, growing increasingly frustrated",
-        "duration": "until-resolved",
-        "severity": "neutral",
-        "icon": "fas fa-expand-arrows-alt",
-        "priority": 130,
-        "effects": {
-          "unrest": 1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "deception",
-            "society"
-          ],
-          "dc": 13,
-          "onResolution": {
-            "successMsg": "The expansion pressure situation has been resolved!",
-            "failureMsg": "Failed to resolve the expansion pressure situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 5,
-          "escalatedModifier": {
-            "name": "Expansion Riots",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "fame": -1
-            },
-            "resolution": {
-              "dc": 16
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "diplomacy",
@@ -74,43 +25,71 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Citizens satisfied; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Citizens satisfied",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Citizens satisfied; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Citizens unhappy; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Citizens unhappy",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Major dissatisfaction; +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major dissatisfaction",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Expansion Pressure",
+    "description": "Citizens continue demanding territorial expansion, growing increasingly frustrated",
+    "tier": 1,
+    "icon": "fas fa-expand-arrows-alt",
+    "modifiers": [
+      {
+        "name": "Expansion Pressure",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The expansion pressure situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the expansion pressure situation"
+        }
+      }
     }
   }
 }

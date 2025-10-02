@@ -2,61 +2,11 @@
   "id": "immigration",
   "name": "Immigration",
   "description": "New settlers arrive seeking homes in your kingdom.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Immigration Crisis",
-        "description": "The poorly managed immigration has created ongoing integration problems",
-        "duration": "until-resolved",
-        "severity": "neutral",
-        "icon": "fas fa-users",
-        "priority": 125,
-        "effects": {
-          "unrest": 1,
-          "food": -1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "society",
-            "intimidation"
-          ],
-          "dc": 13,
-          "onResolution": {
-            "successMsg": "The immigration crisis situation has been resolved!",
-            "failureMsg": "Failed to resolve the immigration crisis situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 4,
-          "escalatedModifier": {
-            "name": "Ethnic Tensions",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "food": -1,
-              "gold": -1
-            },
-            "resolution": {
-              "dc": 16
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "diplomacy",
@@ -74,45 +24,79 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major influx; +2 Gold, +2 untyped bonus to Build Structure actions this turn",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major influx",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Steady immigration; +1 Gold, +1 untyped bonus to Build Structure actions this turn",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Steady immigration",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Few settlers stay; no significant effect",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Integration problems; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Integration problems",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Immigration Crisis",
+    "description": "The poorly managed immigration has created ongoing integration problems",
+    "tier": 1,
+    "icon": "fas fa-users",
+    "modifiers": [
+      {
+        "name": "Immigration Crisis",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Immigration Crisis",
+        "resource": "food",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The immigration crisis situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the immigration crisis situation"
+        }
+      }
     }
   }
 }

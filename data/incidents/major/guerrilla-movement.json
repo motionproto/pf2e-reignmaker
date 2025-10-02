@@ -3,36 +3,36 @@
   "name": "Guerrilla Movement",
   "tier": "MAJOR",
   "description": "Armed rebels seize control of kingdom territory",
-  "percentileMin": 11,
-  "percentileMax": 17,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate with rebels",
-      "successEffect": "Rebellion dispersed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "description": "negotiate with rebels"
     },
     {
       "skill": "intimidation",
-      "description": "crush rebellion",
-      "successEffect": "Rebellion dispersed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "description": "crush rebellion"
     },
     {
       "skill": "society",
-      "description": "address grievances",
-      "successEffect": "Rebellion dispersed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "description": "address grievances"
     },
     {
       "skill": "religion",
-      "description": "appeal to faith",
-      "successEffect": "Rebellion dispersed",
-      "failureEffect": "Rebels seize 1d3 hexes",
-      "criticalFailureEffect": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)"
+      "description": "appeal to faith"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Rebellion dispersed",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Rebels seize 1d3 hexes",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)",
+      "modifiers": []
+    }
+  }
 }

@@ -3,36 +3,36 @@
   "name": "Trade Embargo",
   "tier": "MAJOR",
   "description": "A complete trade embargo devastates your economy",
-  "percentileMin": 25,
-  "percentileMax": 31,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "negotiate"
     },
     {
       "skill": "society",
-      "description": "find loopholes",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "find loopholes"
     },
     {
       "skill": "deception",
-      "description": "smuggling routes",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "smuggling routes"
     },
     {
       "skill": "arcana",
-      "description": "teleportation network",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest"
+      "description": "teleportation network"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Trade continues, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 2d4 Gold OR 2d4+1 Resources (player's choice)",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 3d4 Gold AND 2d4+1 Resources, +1 Unrest",
+      "modifiers": []
+    }
+  }
 }

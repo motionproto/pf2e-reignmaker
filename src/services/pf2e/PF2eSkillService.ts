@@ -1,4 +1,5 @@
-import { modifierService } from '../domain/modifiers/ModifierService';
+// NOTE: Using new simplified ModifierService
+import { createModifierService } from '../ModifierService';
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { PF2eCharacterService } from './PF2eCharacterService';

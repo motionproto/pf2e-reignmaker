@@ -3,36 +3,36 @@
   "name": "Crime Wave",
   "tier": "MINOR",
   "description": "Criminal activity surges throughout your settlements",
-  "percentileMin": 21,
-  "percentileMax": 30,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "intimidation",
-      "description": "crack down on criminals",
-      "successEffect": "Crime suppressed, no effect",
-      "failureEffect": "Lose 1d4 Gold",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "crack down on criminals"
     },
     {
       "skill": "thievery",
-      "description": "infiltrate gangs",
-      "successEffect": "Crime suppressed, no effect",
-      "failureEffect": "Lose 1d4 Gold",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "infiltrate gangs"
     },
     {
       "skill": "society",
-      "description": "legal reform",
-      "successEffect": "Crime suppressed, no effect",
-      "failureEffect": "Lose 1d4 Gold",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "legal reform"
     },
     {
       "skill": "occultism",
-      "description": "divine the source",
-      "successEffect": "Crime suppressed, no effect",
-      "failureEffect": "Lose 1d4 Gold",
-      "criticalFailureEffect": "Lose 2d4 Gold, +1 Unrest"
+      "description": "divine the source"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Crime suppressed, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1d4 Gold",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 2d4 Gold, +1 Unrest",
+      "modifiers": []
+    }
+  }
 }

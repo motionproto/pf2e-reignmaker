@@ -2,64 +2,11 @@
   "id": "natural-disaster",
   "name": "Natural Disaster",
   "description": "Earthquake, tornado, wildfire, or severe flooding strikes the kingdom.",
+  "tier": 1,
   "traits": [
     "dangerous"
   ],
   "location": "a random worksite and 2 adjacent hexes (roll 1d6)",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Can spend 1 Gold per hex before rolling to gain +2 to that check (emergency supplies). If one of the adjacent hexes has a settlement, treat it as a Local Disaster for that settlement.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Natural Disaster Aftermath",
-        "description": "The natural disaster has left widespread devastation requiring ongoing recovery efforts",
-        "duration": "until-resolved",
-        "severity": "critical",
-        "icon": "fas fa-tornado",
-        "priority": 70,
-        "effects": {
-          "gold": -3,
-          "food": -2,
-          "resources": -2
-        },
-        "resolution": {
-          "skills": [
-            "survival",
-            "crafting",
-            "diplomacy"
-          ],
-          "dc": 19,
-          "onResolution": {
-            "successMsg": "The natural disaster aftermath situation has been resolved!",
-            "failureMsg": "Failed to resolve the natural disaster aftermath situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 2,
-          "escalatedModifier": {
-            "name": "Total Devastation",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "gold": -4,
-              "food": -3,
-              "resources": -3,
-              "unrest": 2
-            },
-            "resolution": {
-              "dc": 22
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "survival",
@@ -77,52 +24,91 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Minimal damage; citizens impressed by response, -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Minimal damage",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Some damage; lose 1 Resource from this hex",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Some damage",
+          "resource": "resources",
           "value": -1,
-          "selector": "resources",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Major damage; lose all production from the hex this turn, +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major damage",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Devastating losses. Any worksites are removed from the hex, +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Devastating losses. Any worksites are removed from the hex",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Natural Disaster Aftermath",
+    "description": "The natural disaster has left widespread devastation requiring ongoing recovery efforts",
+    "tier": 1,
+    "icon": "fas fa-tornado",
+    "modifiers": [
+      {
+        "name": "Natural Disaster Aftermath",
+        "resource": "gold",
+        "value": -3,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Natural Disaster Aftermath",
+        "resource": "food",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Natural Disaster Aftermath",
+        "resource": "resources",
+        "value": -2,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The natural disaster aftermath situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the natural disaster aftermath situation"
+        }
+      }
     }
   }
 }

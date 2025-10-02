@@ -2,22 +2,11 @@
   "id": "visiting-celebrity",
   "name": "Visiting Celebrity",
   "description": "A famous person visits your kingdom, bringing attention and opportunity.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Random settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Performance & Culture structures, gain an untyped bonus equal to their tier to the check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Visiting Celebrity expires"
-    }
-  },
   "skills": [
     {
       "skill": "diplomacy",
@@ -35,50 +24,50 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Spectacular visit; +2 Gold, -2 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Spectacular visit",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Spectacular visit",
+          "resource": "unrest",
           "value": -2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Pleasant visit; +1 Gold OR -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Pleasant visit",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Mediocre visit; no significant effect",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Celebrity offended; +1 Unrest, -2 to next celebrity event",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Celebrity offended",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

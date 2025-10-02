@@ -2,23 +2,12 @@
   "id": "boomtown",
   "name": "Boomtown",
   "description": "A settlement experiences sudden, dramatic growth.",
+  "tier": 1,
   "traits": [
     "beneficial",
     "continuous"
   ],
   "location": "Random settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "failure",
-    "criticalFailure"
-  ],
-  "special": "While active gain +1 untyped bonus to all Crafting and Society checks in that settlement",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Boomtown expires"
-    }
-  },
   "skills": [
     {
       "skill": "society",
@@ -36,43 +25,44 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major growth; +4 Gold",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major growth",
+          "resource": "gold",
           "value": 4,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Steady expansion; +2 Gold this turn",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Steady expansion",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Growth stalls; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Boom goes bust; +1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Boom goes bust",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

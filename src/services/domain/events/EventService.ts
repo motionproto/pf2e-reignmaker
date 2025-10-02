@@ -1,45 +1,7 @@
-import type { KingdomModifier } from '../../../models/Modifiers';
-import { ModifierUtils } from '../../../models/Modifiers';
+import type { ActiveModifier } from '../../../models/Modifiers';
+import type { EventSkill, EventOutcome, EventModifier, EventEffects } from '../../../controllers/events/types';
 import eventsData from '../../../../dist/events.json';
 
-/**
- * Skill with description (aligned with player actions)
- */
-export interface EventSkill {
-    skill: string;
-    description: string;
-}
-
-/**
- * Event outcome with message and modifiers
- */
-export interface EventOutcome {
-    msg: string;
-    modifiers: EventModifier[];
-}
-
-/**
- * Event modifier details
- */
-export interface EventModifier {
-    type: string;
-    name: string;
-    value: number;
-    selector: string;
-    enabled: boolean;
-    turns?: number;
-    choice?: string[];
-}
-
-/**
- * Event effects (outcomes for different degrees of success)
- */
-export interface EventEffects {
-    criticalSuccess?: EventOutcome;
-    success?: EventOutcome;
-    failure?: EventOutcome;
-    criticalFailure?: EventOutcome;
-}
 
 /**
  * Unresolved event configuration
@@ -198,11 +160,11 @@ export class EventService {
         const outcome = effects[result];
         const appliedEffects: Record<string, number> = {};
 
-        // Process modifiers
+        // Process modifiers using the new EventModifier structure
         if (outcome.modifiers && Array.isArray(outcome.modifiers)) {
             for (const modifier of outcome.modifiers) {
-                if (modifier.enabled && modifier.selector) {
-                    appliedEffects[modifier.selector] = (appliedEffects[modifier.selector] || 0) + modifier.value;
+                if (modifier.resource) {
+                    appliedEffects[modifier.resource] = (appliedEffects[modifier.resource] || 0) + modifier.value;
                 }
             }
         }
@@ -222,7 +184,7 @@ export class EventService {
      * Handle an unresolved event based on its configuration
      * Returns a modifier if the event becomes one, or null
      */
-    handleUnresolvedEvent(event: EventData, currentTurn: number): KingdomModifier | null {
+    handleUnresolvedEvent(event: EventData, currentTurn: number): ActiveModifier | null {
         if (!event.ifUnresolved) {
             // Event expires with no further effect
             return null;
@@ -269,70 +231,80 @@ export class EventService {
         event: EventData,
         template: any,
         currentTurn: number
-    ): KingdomModifier {
-        const modifier: KingdomModifier = {
+    ): ActiveModifier {
+        const modifier: ActiveModifier = {
             id: `event-${event.id}-${currentTurn}`,
             name: template.name || event.name,
             description: template.description || event.description,
-            source: {
-                type: 'event',
-                id: event.id,
-                name: event.name
-            },
+            icon: template.icon,
+            tier: 1, // Events typically start at tier 1
+            
+            // Source tracking (new format)
+            sourceType: 'event',
+            sourceId: event.id,
+            sourceName: event.name,
+            
+            // Timing
             startTurn: currentTurn,
-            duration: template.duration || 'until-resolved',
-            priority: template.priority || 100,
-            effects: this.convertEffectsToModifierFormat(template.effects),
-            visible: true,
-            severity: template.severity || 'dangerous',
-            icon: template.icon
+            
+            // Effects - convert template effects to EventModifier array
+            modifiers: this.convertEffectsToEventModifiers(template.effects, template.duration),
+            
+            // Resolution info if present
+            resolvedWhen: template.resolution ? {
+                type: 'skill',
+                skillResolution: {
+                    dcAdjustment: template.resolution.dc || 0,
+                    onSuccess: {
+                        msg: 'Event resolved successfully',
+                        removeAllModifiers: true
+                    }
+                }
+            } : undefined
         };
-
-        // Add resolution information if present
-        if (template.resolution) {
-            modifier.resolution = {
-                skills: template.resolution.skills,
-                dc: template.resolution.dc
-            };
-        }
-
-        // Add escalation if present
-        if (template.escalation) {
-            modifier.escalation = template.escalation;
-        }
 
         return modifier;
     }
 
     /**
-     * Convert event effects to modifier effects format
+     * Convert event effects to EventModifier array format
      */
-    private convertEffectsToModifierFormat(effects: Record<string, any>): any {
-        const modifierEffects: any = {};
+    private convertEffectsToEventModifiers(effects: Record<string, any>, duration: string | number): EventModifier[] {
+        const modifiers: EventModifier[] = [];
 
-        // Direct mappings for resources and stats
-        const directMappings = [
-            'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries', 'resources',
-            'unrest', 'fame', 'infamy', 'armyMorale', 'armyCapacity'
-        ];
+        // Resource type mapping
+        type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame';
+        
+        const resourceMappings: Record<string, ResourceType> = {
+            'gold': 'gold',
+            'food': 'food',
+            'lumber': 'lumber',
+            'stone': 'stone',
+            'ore': 'ore',
+            'luxuries': 'luxuries',
+            'unrest': 'unrest',
+            'fame': 'fame'
+        };
 
-        for (const key of directMappings) {
-            if (effects[key] !== undefined) {
-                modifierEffects[key] = effects[key];
+        for (const [key, resource] of Object.entries(resourceMappings)) {
+            if (effects[key] !== undefined && effects[key] !== 0) {
+                const modifier: EventModifier = {
+                    name: `${key} modifier`,
+                    resource: resource,
+                    value: effects[key],
+                    duration: typeof duration === 'number' ? 'turns' : (duration as any)
+                };
+                
+                // Add turns field only if duration is 'turns'
+                if (modifier.duration === 'turns' && typeof duration === 'number') {
+                    modifier.turns = duration;
+                }
+                
+                modifiers.push(modifier);
             }
         }
 
-        // Handle roll modifiers if present
-        if (effects.rollModifiers) {
-            modifierEffects.rollModifiers = effects.rollModifiers;
-        }
-
-        // Handle special effects
-        if (effects.special) {
-            modifierEffects.special = effects.special;
-        }
-
-        return modifierEffects;
+        return modifiers;
     }
 
     /**

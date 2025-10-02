@@ -2,10 +2,8 @@
   "id": "bandit-activity",
   "name": "Bandit Activity",
   "description": "Bandits have been spotted raiding caravans and settlements in your territory.",
-  "category": "danger",
-  "icon": "fas fa-mask",
-  "dc": 16,
-  "modifier": 0,
+  "tier": 1,
+  "traits": [],
   "skills": [
     {
       "skill": "intimidation",
@@ -23,77 +21,112 @@
   "effects": {
     "criticalSuccess": {
       "msg": "You capture the bandit leaders and turn them into productive citizens. The former bandits become valuable scouts.",
+      "endsEvent": true,
       "modifiers": [
-        { "selector": "gold", "value": 2, "enabled": true },
-        { "selector": "unrest", "value": -1, "enabled": true }
+        {
+          "name": "",
+          "resource": "gold",
+          "value": 2,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "immediate"
+        }
       ]
     },
     "success": {
       "msg": "You successfully drive off the bandits. Trade routes are secure once more.",
+      "endsEvent": true,
       "modifiers": [
-        { "selector": "gold", "value": 1, "enabled": true }
+        {
+          "name": "",
+          "resource": "gold",
+          "value": 1,
+          "duration": "immediate"
+        }
       ]
     },
     "failure": {
       "msg": "The bandits evade your forces and continue their raids.",
+      "endsEvent": false,
       "modifiers": [
-        { "selector": "gold", "value": -2, "enabled": true },
-        { "selector": "unrest", "value": 1, "enabled": true }
+        {
+          "name": "",
+          "resource": "gold",
+          "value": -2,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
       ]
     },
     "criticalFailure": {
       "msg": "Your forces are ambushed! The bandits grow bolder and recruit more members.",
+      "endsEvent": false,
       "modifiers": [
-        { "selector": "gold", "value": -3, "enabled": true },
-        { "selector": "food", "value": -2, "enabled": true },
-        { "selector": "unrest", "value": 2, "enabled": true }
+        {
+          "name": "",
+          "resource": "gold",
+          "value": -3,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "food",
+          "value": -2,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
       ]
     }
   },
   "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
+    "name": "Ongoing Bandit Raids",
+    "description": "Bandits continue to raid your territory, disrupting trade and causing unrest",
+    "tier": 1,
+    "icon": "fas fa-mask",
+    "modifiers": [
+      {
         "name": "Ongoing Bandit Raids",
-        "description": "Bandits continue to raid your territory, disrupting trade and causing unrest",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-mask",
-        "priority": 100,
-        "effects": {
-          "gold": -1,
-          "food": -1,
-          "unrest": 1
+        "resource": "gold",
+        "value": -1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Bandit Raids",
+        "resource": "food",
+        "value": -1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Bandit Raids",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The bandit threat has been eliminated!",
+          "removeAllModifiers": true
         },
-        "resolution": {
-          "skills": ["intimidation", "diplomacy", "stealth"],
-          "dc": 16,
-          "automatic": {
-            "condition": "action:hire_adventurers",
-            "description": "Hire adventurers to deal with the bandits"
-          },
-          "onResolution": {
-            "successMsg": "The bandit threat has been eliminated!",
-            "failureMsg": "Failed to stop the bandits - they continue their raids"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Bandit Stronghold",
-            "description": "The bandits have established a fortified base and are organizing larger raids",
-            "severity": "critical",
-            "effects": {
-              "gold": -2,
-              "food": -2,
-              "unrest": 2,
-              "luxuries": -1
-            },
-            "resolution": {
-              "dc": 20
-            }
-          }
+        "onFailure": {
+          "msg": "Failed to stop the bandits - they continue their raids"
         }
       }
     }

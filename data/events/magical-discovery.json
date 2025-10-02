@@ -2,22 +2,11 @@
   "id": "magical-discovery",
   "name": "Magical Discovery",
   "description": "A powerful magical site or artifact is discovered in your kingdom.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to the tier to check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Magical Discovery expires"
-    }
-  },
   "skills": [
     {
       "skill": "arcana",
@@ -35,48 +24,48 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major magical boon; gain a free Tier 1 magical structure or upgrade an existing structure to the next tier",
+      "endsEvent": true,
       "modifiers": []
     },
     "success": {
       "msg": "Useful discovery; -2 Unrest OR +1 Fame",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Useful discovery",
+          "resource": "unrest",
           "value": -2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Magic proves dangerous; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Magic proves dangerous",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Magical disaster; +2 Unrest, one random magical structure becomes damaged in an accident",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Magical disaster",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Magical disaster",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

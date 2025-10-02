@@ -2,23 +2,12 @@
   "id": "economic-surge",
   "name": "Economic Surge",
   "description": "Trade and productivity boom throughout your kingdom.",
+  "tier": 1,
   "traits": [
     "beneficial",
     "continuous"
   ],
   "location": "Kingdom-wide (check in capital or largest settlement)",
-  "modifier": 0,
-  "resolvedOn": [
-    "failure",
-    "criticalFailure"
-  ],
-  "special": "Commerce structures provide an untyped bonus equal to the tier to checks.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Economic Surge expires"
-    }
-  },
   "skills": [
     {
       "skill": "society",
@@ -36,43 +25,44 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Trade bonanza; +2 Gold this turn",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Trade bonanza",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Steady growth; +1 Gold this turn",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Steady growth",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Surge slows; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Economic bubble bursts; +1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Economic bubble bursts",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

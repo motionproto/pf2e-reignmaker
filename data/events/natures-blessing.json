@@ -2,22 +2,11 @@
   "id": "natures-blessing",
   "name": "Nature's Blessing",
   "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Faith & Nature or Exploration & Wilderness structures, gain an untyped bonus equal to the tier to check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Nature's Blessing expires"
-    }
-  },
   "skills": [
     {
       "skill": "nature",
@@ -35,49 +24,49 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Inspiring blessing; -2 Unrest, +1 Gold (from increased tourism)",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Inspiring blessing",
+          "resource": "unrest",
           "value": -2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Inspiring blessing",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Pleasant omen; -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Pleasant omen",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Brief wonder; no significant effect",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Arguments over meaning; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Arguments over meaning",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

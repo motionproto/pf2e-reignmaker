@@ -3,29 +3,32 @@
   "name": "Assassination Attempt",
   "tier": "MODERATE",
   "description": "An assassin targets one of your kingdom's leaders",
-  "percentileMin": 79,
-  "percentileMax": 87,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "athletics",
-      "description": "protect target",
-      "successEffect": "Assassination prevented, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "protect target"
     },
     {
       "skill": "medicine",
-      "description": "treat wounds",
-      "successEffect": "Assassination prevented, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "treat wounds"
     },
     {
       "skill": "stealth",
-      "description": "avoid the assassin",
-      "successEffect": "Assassination prevented, no effect",
-      "failureEffect": "Leader escapes; +1 Unrest",
-      "criticalFailureEffect": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn"
+      "description": "avoid the assassin"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Assassination prevented, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Leader escapes; +1 Unrest",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+      "modifiers": []
+    }
+  }
 }

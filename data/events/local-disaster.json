@@ -2,62 +2,11 @@
   "id": "local-disaster",
   "name": "Local Disaster",
   "description": "Fire, flood, or structural collapse strikes a settlement.",
+  "tier": 1,
   "traits": [
     "dangerous"
   ],
   "location": "Random settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Settlements with Fortifications increase the result by one degree of success.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Disaster Recovery Needed",
-        "description": "The local disaster has left lasting damage that continues to hamper the kingdom",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-house-damage",
-        "priority": 90,
-        "effects": {
-          "gold": -2,
-          "resources": -1
-        },
-        "resolution": {
-          "skills": [
-            "crafting",
-            "society",
-            "athletics"
-          ],
-          "dc": 15,
-          "onResolution": {
-            "successMsg": "The disaster recovery needed situation has been resolved!",
-            "failureMsg": "Failed to resolve the disaster recovery needed situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Infrastructure Collapse",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "gold": -3,
-              "resources": -2,
-              "unrest": 1
-            },
-            "resolution": {
-              "dc": 18
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "crafting",
@@ -75,57 +24,89 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Disaster contained; no significant damage",
+      "endsEvent": true,
       "modifiers": []
     },
     "success": {
       "msg": "Limited damage; +1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Limited damage",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Major damage; one structure becomes damaged, +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major damage",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Major damage",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Catastrophic; one structure is destroyed, +2 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Catastrophic",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Catastrophic",
+          "resource": "destroy_structure",
           "value": 1,
-          "selector": "destroy_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Disaster Recovery Needed",
+    "description": "The local disaster has left lasting damage that continues to hamper the kingdom",
+    "tier": 1,
+    "icon": "fas fa-house-damage",
+    "modifiers": [
+      {
+        "name": "Disaster Recovery Needed",
+        "resource": "gold",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Disaster Recovery Needed",
+        "resource": "resources",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The disaster recovery needed situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the disaster recovery needed situation"
+        }
+      }
     }
   }
 }

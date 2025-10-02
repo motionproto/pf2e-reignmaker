@@ -2,60 +2,12 @@
   "id": "demand-structure",
   "name": "Demand Structure",
   "description": "Citizens demand that a specific structure be built.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you build a structure of the demanded type, the event ends (automatic success).",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Construction Demands",
-        "description": "Citizens continue demanding specific structures be built, growing impatient",
-        "duration": "until-resolved",
-        "severity": "neutral",
-        "icon": "fas fa-building",
-        "priority": 135,
-        "effects": {
-          "unrest": 1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "crafting",
-            "society"
-          ],
-          "dc": 12,
-          "onResolution": {
-            "successMsg": "The construction demands situation has been resolved!",
-            "failureMsg": "Failed to resolve the construction demands situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 4,
-          "escalatedModifier": {
-            "name": "Construction Protests",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2
-            },
-            "resolution": {
-              "dc": 15
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "diplomacy",
@@ -73,43 +25,71 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Citizens convinced; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Citizens convinced",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Demands are satisfied; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Protests continue; +1 Unrest, or pay 1 Gold as concessions",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Protests continue",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Violence erupts; +2 Unrest, event escalates",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Violence erupts",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Construction Demands",
+    "description": "Citizens continue demanding specific structures be built, growing impatient",
+    "tier": 1,
+    "icon": "fas fa-building",
+    "modifiers": [
+      {
+        "name": "Construction Demands",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The construction demands situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the construction demands situation"
+        }
+      }
     }
   }
 }

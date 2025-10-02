@@ -3,36 +3,36 @@
   "name": "Riot",
   "tier": "MODERATE",
   "description": "Violent riots break out in your settlements",
-  "percentileMin": 61,
-  "percentileMax": 69,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "intimidation",
-      "description": "suppress riot",
-      "successEffect": "Riot quelled, no effect",
-      "failureEffect": "+1 Unrest, 1 structure damaged",
-      "criticalFailureEffect": "+1 Unrest, 1 structure destroyed"
+      "description": "suppress riot"
     },
     {
       "skill": "diplomacy",
-      "description": "negotiate with rioters",
-      "successEffect": "Riot quelled, no effect",
-      "failureEffect": "+1 Unrest, 1 structure damaged",
-      "criticalFailureEffect": "+1 Unrest, 1 structure destroyed"
+      "description": "negotiate with rioters"
     },
     {
       "skill": "athletics",
-      "description": "contain riot",
-      "successEffect": "Riot quelled, no effect",
-      "failureEffect": "+1 Unrest, 1 structure damaged",
-      "criticalFailureEffect": "+1 Unrest, 1 structure destroyed"
+      "description": "contain riot"
     },
     {
       "skill": "medicine",
-      "description": "treat injured",
-      "successEffect": "Riot quelled, no effect",
-      "failureEffect": "+1 Unrest, 1 structure damaged",
-      "criticalFailureEffect": "+1 Unrest, 1 structure destroyed"
+      "description": "treat injured"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Riot quelled, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "+1 Unrest, 1 structure damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "+1 Unrest, 1 structure destroyed",
+      "modifiers": []
+    }
+  }
 }

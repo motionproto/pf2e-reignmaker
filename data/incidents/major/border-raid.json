@@ -3,36 +3,36 @@
   "name": "Border Raid",
   "tier": "MAJOR",
   "description": "Enemy forces raid your border territories",
-  "percentileMin": 74,
-  "percentileMax": 80,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "athletics",
-      "description": "rapid response",
-      "successEffect": "Raiders repelled, no effect",
-      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "description": "rapid response"
     },
     {
       "skill": "intimidation",
-      "description": "retaliation",
-      "successEffect": "Raiders repelled, no effect",
-      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "description": "retaliation"
     },
     {
       "skill": "survival",
-      "description": "tracking",
-      "successEffect": "Raiders repelled, no effect",
-      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "description": "tracking"
     },
     {
       "skill": "nature",
-      "description": "use terrain",
-      "successEffect": "Raiders repelled, no effect",
-      "failureEffect": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "criticalFailureEffect": "Lose 1d3 border hexes permanently, lose 2d4 Gold"
+      "description": "use terrain"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Raiders repelled, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 1d3 border hexes permanently, lose 2d4 Gold",
+      "modifiers": []
+    }
+  }
 }

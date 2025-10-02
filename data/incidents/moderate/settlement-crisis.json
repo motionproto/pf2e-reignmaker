@@ -3,29 +3,32 @@
   "name": "Settlement Crisis",
   "tier": "MODERATE",
   "description": "One of your settlements faces a major crisis",
-  "percentileMin": 70,
-  "percentileMax": 78,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "address concerns",
-      "successEffect": "Settlement stabilized, no effect",
-      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), +1 unrest"
+      "description": "address concerns"
     },
     {
       "skill": "society",
-      "description": "emergency aid",
-      "successEffect": "Settlement stabilized, no effect",
-      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), +1 unrest"
+      "description": "emergency aid"
     },
     {
       "skill": "religion",
-      "description": "provide hope",
-      "successEffect": "Settlement stabilized, no effect",
-      "failureEffect": "Random settlement loses 1d4 Gold OR 1 structure damaged",
-      "criticalFailureEffect": "Random settlement loses one level (minimum level 1), +1 unrest"
+      "description": "provide hope"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Settlement stabilized, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Random settlement loses 1d4 Gold OR 1 structure damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Random settlement loses one level (minimum level 1), +1 unrest",
+      "modifiers": []
+    }
+  }
 }

@@ -2,22 +2,11 @@
   "id": "grand-tournament",
   "name": "Grand Tournament",
   "description": "A martial competition draws competitors from across the realm.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Performance & Culture or Military & Training structures, gain an untyped bonus equal to their tier to checks.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Grand Tournament expires"
-    }
-  },
   "skills": [
     {
       "skill": "athletics",
@@ -35,56 +24,55 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Spectacular event; +2 Gold, -1 Unrest, +1 Fame",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Spectacular event",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Spectacular event",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Spectacular event",
+          "resource": "fame",
           "value": 1,
-          "selector": "fame",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Successful tournament; -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Successful tournament",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Disappointing turnout;",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Accident or scandal; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Accident or scandal",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

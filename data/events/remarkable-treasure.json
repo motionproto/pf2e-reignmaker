@@ -2,26 +2,11 @@
   "id": "remarkable-treasure",
   "name": "Remarkable Treasure",
   "description": "Explorers discover valuable resources or ancient treasure.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Gain +1 to the check for each mine or quarry you control (prospecting experience).",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Remarkable Treasure expires",
-      "turnsUntilDispute": 2,
-      "disputeEffect": {
-        "unrest": 1
-      }
-    }
-  },
   "skills": [
     {
       "skill": "society",
@@ -39,59 +24,58 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Legendary treasure; +4 Gold, -1 Unrest",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Legendary treasure",
+          "resource": "gold",
           "value": 4,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Legendary treasure",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Valuable find; +2 Gold",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Valuable find",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Modest value; +1 Gold",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Modest value",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "criticalFailure": {
       "msg": "Treasure cursed or false; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Treasure cursed or false",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

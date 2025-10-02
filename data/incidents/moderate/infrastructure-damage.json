@@ -3,36 +3,36 @@
   "name": "Infrastructure Damage",
   "tier": "MODERATE",
   "description": "Critical infrastructure is damaged or sabotaged",
-  "percentileMin": 43,
-  "percentileMax": 51,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "crafting",
-      "description": "emergency repairs",
-      "successEffect": "Damage prevented, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "description": "emergency repairs"
     },
     {
       "skill": "athletics",
-      "description": "labor mobilization",
-      "successEffect": "Damage prevented, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "description": "labor mobilization"
     },
     {
       "skill": "society",
-      "description": "organize response",
-      "successEffect": "Damage prevented, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "description": "organize response"
     },
     {
       "skill": "arcana",
-      "description": "magical restoration",
-      "successEffect": "Damage prevented, no effect",
-      "failureEffect": "One random structure in a random settlement becomes damaged",
-      "criticalFailureEffect": "1d3 random structures become damaged (random settlements), +1 unrest"
+      "description": "magical restoration"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Damage prevented, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "One random structure in a random settlement becomes damaged",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "1d3 random structures become damaged (random settlements), +1 unrest",
+      "modifiers": []
+    }
+  }
 }

@@ -3,36 +3,36 @@
   "name": "Trade Embargo",
   "tier": "MODERATE",
   "description": "Neighboring kingdoms impose trade restrictions",
-  "percentileMin": 88,
-  "percentileMax": 93,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "negotiate"
     },
     {
       "skill": "society",
-      "description": "find loopholes",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "find loopholes"
     },
     {
       "skill": "deception",
-      "description": "smuggling routes",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "smuggling routes"
     },
     {
       "skill": "occultism",
-      "description": "divine trade routes",
-      "successEffect": "Trade continues, no effect",
-      "failureEffect": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
-      "criticalFailureEffect": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest"
+      "description": "divine trade routes"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Trade continues, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest",
+      "modifiers": []
+    }
+  }
 }

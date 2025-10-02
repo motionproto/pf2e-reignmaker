@@ -2,65 +2,12 @@
   "id": "undead-uprising",
   "name": "Undead Uprising",
   "description": "The dead rise from their graves to threaten the living.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Random Settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Settlements with Faith & Nature or Knowledge & Magic structures gain an untyped bonus equal to their tier to checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Undead Plague",
-        "description": "The undead continue to rise from graveyards and battlefields, threatening the living",
-        "duration": "until-resolved",
-        "severity": "critical",
-        "icon": "fas fa-skull-crossbones",
-        "priority": 80,
-        "effects": {
-          "unrest": 2,
-          "food": -1,
-          "fame": -1
-        },
-        "resolution": {
-          "skills": [
-            "religion",
-            "arcana",
-            "intimidation"
-          ],
-          "dc": 17,
-          "onResolution": {
-            "successMsg": "The undead plague situation has been resolved!",
-            "failureMsg": "Failed to resolve the undead plague situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 2,
-          "escalatedModifier": {
-            "name": "Necropolis Rising",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 3,
-              "food": -2,
-              "fame": -2,
-              "gold": -2
-            },
-            "resolution": {
-              "dc": 20
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "religion",
@@ -78,64 +25,101 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Undead destroyed; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Undead destroyed",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Undead destroyed; **event ends**",
+      "endsEvent": true,
       "modifiers": []
     },
     "failure": {
       "msg": "Undead spread; +1 Unrest, one structure becomes damaged",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Undead spread",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Undead spread",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
       "msg": "Major outbreak; +2 Unrest, one structure destroyed and another damaged",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major outbreak",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Major outbreak",
+          "resource": "destroy_structure",
           "value": 1,
-          "selector": "destroy_structure",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Major outbreak",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Undead Plague",
+    "description": "The undead continue to rise from graveyards and battlefields, threatening the living",
+    "tier": 1,
+    "icon": "fas fa-skull-crossbones",
+    "modifiers": [
+      {
+        "name": "Undead Plague",
+        "resource": "unrest",
+        "value": 2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Undead Plague",
+        "resource": "food",
+        "value": -1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Undead Plague",
+        "resource": "fame",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The undead plague situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the undead plague situation"
+        }
+      }
     }
   }
 }

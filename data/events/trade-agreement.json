@@ -2,62 +2,11 @@
   "id": "trade-agreement",
   "name": "Trade Agreement",
   "description": "Merchants propose a lucrative trade arrangement.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Capital or largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "Commerce structures provide an untyped bonus equal to their tier to checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Trade Disruption",
-        "description": "The failed trade agreement has disrupted commerce and angered merchants",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-balance-scale",
-        "priority": 95,
-        "effects": {
-          "gold": -2,
-          "luxuries": -1
-        },
-        "resolution": {
-          "skills": [
-            "diplomacy",
-            "society",
-            "deception"
-          ],
-          "dc": 15,
-          "onResolution": {
-            "successMsg": "The trade disruption situation has been resolved!",
-            "failureMsg": "Failed to resolve the trade disruption situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Trade War",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "gold": -3,
-              "luxuries": -2,
-              "resources": -1
-            },
-            "resolution": {
-              "dc": 18
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "diplomacy",
@@ -75,53 +24,86 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Exclusive deal; +2 Gold",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Exclusive deal",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "success": {
       "msg": "Standard agreement; +1 Gold",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Standard agreement",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Poor terms; no significant benefit",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Trade dispute; -1 Gold, +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Trade dispute",
+          "resource": "gold",
           "value": -1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Trade dispute",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Trade Disruption",
+    "description": "The failed trade agreement has disrupted commerce and angered merchants",
+    "tier": 1,
+    "icon": "fas fa-balance-scale",
+    "modifiers": [
+      {
+        "name": "Trade Disruption",
+        "resource": "gold",
+        "value": -2,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Trade Disruption",
+        "resource": "luxuries",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The trade disruption situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the trade disruption situation"
+        }
+      }
     }
   }
 }

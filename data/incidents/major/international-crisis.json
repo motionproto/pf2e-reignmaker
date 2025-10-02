@@ -3,36 +3,36 @@
   "name": "International Crisis",
   "tier": "MAJOR",
   "description": "Multiple kingdoms turn against you due to internal chaos",
-  "percentileMin": 88,
-  "percentileMax": 100,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "damage control",
-      "successEffect": "Crisis contained, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "damage control"
     },
     {
       "skill": "deception",
-      "description": "blame shifting",
-      "successEffect": "Crisis contained, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "blame shifting"
     },
     {
       "skill": "society",
-      "description": "formal reparations",
-      "successEffect": "Crisis contained, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "formal reparations"
     },
     {
       "skill": "performance",
-      "description": "public relations",
-      "successEffect": "Crisis contained, no effect",
-      "failureEffect": "One kingdom's attitude worsens by 2 steps",
-      "criticalFailureEffect": "Two kingdoms' attitudes worsen by 2 steps, -1 fame"
+      "description": "public relations"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Crisis contained, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "One kingdom's attitude worsens by 2 steps",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Two kingdoms' attitudes worsen by 2 steps, -1 fame",
+      "modifiers": []
+    }
+  }
 }

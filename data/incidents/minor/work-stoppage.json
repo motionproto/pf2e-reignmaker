@@ -3,36 +3,36 @@
   "name": "Work Stoppage",
   "tier": "MINOR",
   "description": "Workers in your kingdom refuse to continue their labor",
-  "percentileMin": 31,
-  "percentileMax": 40,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate with workers",
-      "successEffect": "Workers return, no effect",
-      "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
+      "description": "negotiate with workers"
     },
     {
       "skill": "intimidation",
-      "description": "force work",
-      "successEffect": "Workers return, no effect",
-      "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
+      "description": "force work"
     },
     {
       "skill": "performance",
-      "description": "inspire workers",
-      "successEffect": "Workers return, no effect",
-      "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
+      "description": "inspire workers"
     },
     {
       "skill": "medicine",
-      "description": "address health concerns",
-      "successEffect": "Workers return, no effect",
-      "failureEffect": "One random worksite produces nothing this turn",
-      "criticalFailureEffect": "Two worksites produce nothing, +1 Unrest"
+      "description": "address health concerns"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Workers return, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "One random worksite produces nothing this turn",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Two worksites produce nothing, +1 Unrest",
+      "modifiers": []
+    }
+  }
 }

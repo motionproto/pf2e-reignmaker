@@ -2,62 +2,12 @@
   "id": "drug-den",
   "name": "Drug Den",
   "description": "An illicit drug trade threatens to corrupt your settlement.",
+  "tier": 1,
   "traits": [
     "dangerous",
     "continuous"
   ],
   "location": "Largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If the settlement has Crime & Intrigue structures, gain an untyped bonus equal to the tier to checks.",
-  "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
-        "name": "Drug Trade Expanding",
-        "description": "The drug trade continues to corrupt your citizens and undermine social order",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-pills",
-        "priority": 105,
-        "effects": {
-          "unrest": 1,
-          "gold": -1
-        },
-        "resolution": {
-          "skills": [
-            "intimidation",
-            "deception",
-            "society"
-          ],
-          "dc": 15,
-          "onResolution": {
-            "successMsg": "The drug trade expanding situation has been resolved!",
-            "failureMsg": "Failed to resolve the drug trade expanding situation"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 4,
-          "escalatedModifier": {
-            "name": "Drug Cartel Control",
-            "description": "The situation has escalated dramatically",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "gold": -3
-            },
-            "resolution": {
-              "dc": 18
-            }
-          }
-        }
-      }
-    }
-  },
   "skills": [
     {
       "skill": "stealth",
@@ -75,66 +25,97 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Drug ring destroyed; -1 Unrest, **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Drug ring destroyed",
+          "resource": "unrest",
           "value": -1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Major arrests, convert 1 unrest to imprisoned unrest; **event ends**",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "event",
           "name": "Major arrests, convert 1 unrest to imprisoned unrest",
+          "resource": "imprisoned_unrest",
           "value": 1,
-          "selector": "imprisoned_unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "failure": {
       "msg": "Drug trade spreads; +1 Unrest, -1 Gold",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Drug trade spreads",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "untyped",
           "name": "Drug trade spreads",
+          "resource": "gold",
           "value": -1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "criticalFailure": {
       "msg": "Major drug crisis; +2 Unrest, one structure becomes damaged.",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Major drug crisis",
+          "resource": "unrest",
           "value": 2,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         },
         {
-          "type": "event",
           "name": "Major drug crisis",
+          "resource": "damage_structure",
           "value": 1,
-          "selector": "damage_structure",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
+    }
+  },
+  "ifUnresolved": {
+    "name": "Drug Trade Expanding",
+    "description": "The drug trade continues to corrupt your citizens and undermine social order",
+    "tier": 1,
+    "icon": "fas fa-pills",
+    "modifiers": [
+      {
+        "name": "Drug Trade Expanding",
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Drug Trade Expanding",
+        "resource": "gold",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The drug trade expanding situation has been resolved!",
+          "removeAllModifiers": true
+        },
+        "onFailure": {
+          "msg": "Failed to resolve the drug trade expanding situation"
+        }
+      }
     }
   }
 }

@@ -2,22 +2,11 @@
   "id": "scholarly-discovery",
   "name": "Scholarly Discovery",
   "description": "Researchers in your kingdom make an important academic breakthrough.",
+  "tier": 1,
   "traits": [
     "beneficial"
   ],
   "location": "Settlement with knowledge structures or largest settlement",
-  "modifier": 0,
-  "resolvedOn": [
-    "criticalSuccess",
-    "success"
-  ],
-  "special": "If you have Knowledge & Magic structures, gain an untyped bonus equal to their tier to the check.",
-  "ifUnresolved": {
-    "type": "expires",
-    "expires": {
-      "message": "Scholarly Discovery expires"
-    }
-  },
   "skills": [
     {
       "skill": "lore",
@@ -35,50 +24,50 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Revolutionary discovery; +2 Gold, +1 Fame, may build one Knowledge structure at half cost",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Revolutionary discovery",
+          "resource": "gold",
           "value": 2,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         },
         {
-          "type": "untyped",
           "name": "Revolutionary discovery",
+          "resource": "fame",
           "value": 1,
-          "selector": "fame",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     },
     "success": {
       "msg": "Important findings: +1 Gold OR +1 Fame",
+      "endsEvent": true,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Important findings: +1",
+          "resource": "gold",
           "value": 1,
-          "selector": "gold",
-          "enabled": true,
+          "duration": "turns",
           "turns": 1
         }
       ]
     },
     "failure": {
       "msg": "Research inconclusive; no benefit",
+      "endsEvent": false,
       "modifiers": []
     },
     "criticalFailure": {
       "msg": "Academic scandal; +1 Unrest",
+      "endsEvent": false,
       "modifiers": [
         {
-          "type": "untyped",
           "name": "Academic scandal",
+          "resource": "unrest",
           "value": 1,
-          "selector": "unrest",
-          "enabled": true
+          "duration": "immediate"
         }
       ]
     }

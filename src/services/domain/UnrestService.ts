@@ -7,10 +7,15 @@
 
 import { diceService } from './DiceService';
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { Incident, IncidentLevel } from '../../models/Incidents';
-import { IncidentManager } from '../../models/Incidents';
+import type { KingdomIncident } from '../../controllers/incidents/types';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTier } from '../../models/Settlement';
+
+// Incident severity type
+export type IncidentSeverity = 'minor' | 'moderate' | 'major';
+
+// Type alias for compatibility
+type Incident = KingdomIncident;
 
 export interface UnrestStatus {
     currentUnrest: number;
@@ -18,13 +23,13 @@ export interface UnrestStatus {
     tier: number;
     tierName: string;
     penalty: number;
-    incidentLevel: IncidentLevel | null;
+    incidentSeverity: IncidentSeverity | null;
 }
 
 export interface IncidentCheckResult {
     roll: number;
     incident: Incident | null;
-    level: IncidentLevel | null;
+    severity: IncidentSeverity | null;
 }
 
 export interface IncidentResolutionResult {
@@ -41,10 +46,12 @@ export class UnrestService {
     getUnrestStatus(kingdomData: KingdomData): UnrestStatus {
         const currentUnrest = kingdomData.unrest || 0;
         const imprisonedUnrest = kingdomData.imprisonedUnrest || 0;
-        const tier = IncidentManager.getUnrestTier(currentUnrest);
-        const tierName = IncidentManager.getUnrestTierName(tier);
-        const penalty = IncidentManager.getUnrestPenalty(currentUnrest);
-        const incidentLevel = IncidentManager.getIncidentLevel(tier);
+        
+        // Calculate tier based on unrest value
+        const tier = this.getUnrestTier(currentUnrest);
+        const tierName = this.getUnrestTierName(tier);
+        const penalty = this.getUnrestPenalty(currentUnrest);
+        const incidentSeverity = this.getIncidentSeverity(tier);
         
         return {
             currentUnrest,
@@ -52,12 +59,41 @@ export class UnrestService {
             tier,
             tierName,
             penalty,
-            incidentLevel
+            incidentSeverity
         };
     }
     
     /**
+     * Get unrest tier from unrest value
+     */
+    private getUnrestTier(unrest: number): number {
+        if (unrest >= 15) return 3;  // Rebellion
+        if (unrest >= 10) return 2;  // Unrest
+        if (unrest >= 5) return 1;   // Discontent
+        return 0;                     // Stable
+    }
+    
+    /**
+     * Get tier name
+     */
+    private getUnrestTierName(tier: number): string {
+        const names = ['Stable', 'Discontent', 'Unrest', 'Rebellion'];
+        return names[tier] || 'Stable';
+    }
+    
+    /**
+     * Get unrest penalty
+     */
+    private getUnrestPenalty(unrest: number): number {
+        if (unrest >= 15) return -4;
+        if (unrest >= 10) return -2;
+        if (unrest >= 5) return -1;
+        return 0;
+    }
+    
+    /**
      * Roll for incidents based on current unrest tier
+     * Note: This is now handled by IncidentProvider, this is just for compatibility
      */
     rollForIncident(tier?: number): IncidentCheckResult {
         // If no tier is provided, return no incident
@@ -65,25 +101,25 @@ export class UnrestService {
             return {
                 roll: 0,
                 incident: null,
-                level: null
+                severity: null
             };
         }
         
-        // Use the simplified IncidentManager logic
-        const incident = IncidentManager.rollForIncident(tier);
-        const level = IncidentManager.getIncidentLevel(tier);
+        // Map tier to severity
+        const severity = this.getIncidentSeverity(tier);
         
-        // We don't need to track the actual roll value anymore
-        // Just return whether we got an incident or not
+        // Note: Actual incident selection is now done by IncidentProvider
+        // This method is just for status/compatibility
         return {
-            roll: incident ? 1 : 0, // Simplified: 1 if incident, 0 if no incident
-            incident,
-            level
+            roll: 1,
+            incident: null,  // Will be populated by IncidentProvider
+            severity
         };
     }
     
     /**
      * Resolve an incident with a skill check
+     * Note: This now uses the new event-based structure
      */
     resolveIncident(
         incident: Incident,
@@ -95,29 +131,40 @@ export class UnrestService {
         const effects = new Map<string, number>();
         let message = '';
         
+        // Get the appropriate outcome from the new structure
+        const effectsData = incident.effects;
+        let eventOutcome;
+        
         switch (outcome) {
             case 'criticalSuccess':
-                message = 'The incident is resolved favorably';
-                // Critical success might reduce unrest
-                effects.set('unrest', -1);
+                eventOutcome = effectsData.criticalSuccess;
+                message = eventOutcome?.msg || 'The incident is resolved favorably';
                 break;
                 
             case 'success':
-                message = incident.successEffect || 'The incident is resolved';
-                // Success typically resolves without additional effects
+                eventOutcome = effectsData.success;
+                message = eventOutcome?.msg || 'The incident is resolved';
                 break;
                 
             case 'failure':
-                message = incident.failureEffect || 'Failed to resolve the incident';
-                // Failure might add unrest based on incident level
-                effects.set('unrest', incident.level === 'MAJOR' ? 2 : 1);
+                eventOutcome = effectsData.failure;
+                message = eventOutcome?.msg || 'Failed to resolve the incident';
                 break;
                 
             case 'criticalFailure':
-                message = incident.criticalFailureEffect || 'The incident worsens dramatically';
-                // Critical failure adds more unrest
-                effects.set('unrest', incident.level === 'MAJOR' ? 3 : 2);
+                eventOutcome = effectsData.criticalFailure;
+                message = eventOutcome?.msg || 'The incident worsens dramatically';
                 break;
+        }
+        
+        // Apply modifiers from the outcome
+        if (eventOutcome?.modifiers) {
+            for (const modifier of eventOutcome.modifiers) {
+                if (modifier.duration === 'immediate') {
+                    const current = effects.get(modifier.resource) || 0;
+                    effects.set(modifier.resource, current + modifier.value);
+                }
+            }
         }
         
         return {
@@ -126,34 +173,6 @@ export class UnrestService {
             effects,
             message
         };
-    }
-    
-    /**
-     * Apply incident effects to the effects map
-     */
-    private applyIncidentEffects(
-        incidentEffects: any,
-        effects: Map<string, number>
-    ): void {
-        // Parse incident effects based on the structure
-        if (incidentEffects.unrest !== undefined) {
-            effects.set('unrest', incidentEffects.unrest);
-        }
-        
-        if (incidentEffects.gold !== undefined) {
-            effects.set('gold', incidentEffects.gold);
-        }
-        
-        if (incidentEffects.resources !== undefined) {
-            // Generic resources affect lumber, stone, and ore
-            effects.set('lumber', incidentEffects.resources);
-            effects.set('stone', incidentEffects.resources);
-            effects.set('ore', incidentEffects.resources);
-        }
-        
-        if (incidentEffects.fame !== undefined) {
-            effects.set('fame', incidentEffects.fame);
-        }
     }
     
     /**
@@ -267,17 +286,15 @@ export class UnrestService {
     }
     
     /**
-     * Get incident severity level
+     * Get incident severity from tier
      */
-    getIncidentSeverity(level: IncidentLevel | null): 'minor' | 'moderate' | 'major' | null {
-        if (!level) return null;
-        
-        switch (level) {
-            case 'MINOR':
+    getIncidentSeverity(tier: number): IncidentSeverity | null {
+        switch (tier) {
+            case 1:
                 return 'minor';
-            case 'MODERATE': 
+            case 2:
                 return 'moderate';
-            case 'MAJOR':
+            case 3:
                 return 'major';
             default:
                 return null;

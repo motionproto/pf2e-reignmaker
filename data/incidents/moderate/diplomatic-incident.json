@@ -3,29 +3,32 @@
   "name": "Diplomatic Incident",
   "tier": "MODERATE",
   "description": "A serious diplomatic incident threatens relations",
-  "percentileMin": 25,
-  "percentileMax": 33,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "smooth over",
-      "successEffect": "Relations maintained, no effect",
-      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
-      "criticalFailureEffect": "Two random kingdoms' attitudes worsen by 1 step"
+      "description": "smooth over"
     },
     {
       "skill": "deception",
-      "description": "deny responsibility",
-      "successEffect": "Relations maintained, no effect",
-      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
-      "criticalFailureEffect": "Two random kingdoms' attitudes worsen by 1 step"
+      "description": "deny responsibility"
     },
     {
       "skill": "society",
-      "description": "formal apology",
-      "successEffect": "Relations maintained, no effect",
-      "failureEffect": "One neighbouring kingdom's attitude worsens by 1 step",
-      "criticalFailureEffect": "Two random kingdoms' attitudes worsen by 1 step"
+      "description": "formal apology"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Relations maintained, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "One neighbouring kingdom's attitude worsens by 1 step",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Two random kingdoms' attitudes worsen by 1 step",
+      "modifiers": []
+    }
+  }
 }

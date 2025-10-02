@@ -2,10 +2,8 @@
   "id": "feud",
   "name": "Feud",
   "description": "Two prominent families are engaged in a bitter feud that threatens to tear the community apart.",
-  "category": "social",
-  "icon": "fas fa-fist-raised",
-  "dc": 14,
-  "modifier": 0,
+  "tier": 1,
+  "traits": [],
   "skills": [
     {
       "skill": "diplomacy",
@@ -23,68 +21,94 @@
   "effects": {
     "criticalSuccess": {
       "msg": "You broker a lasting peace and the families become allies. The unity strengthens your kingdom.",
+      "endsEvent": true,
       "modifiers": [
-        { "selector": "unrest", "value": -2, "enabled": true },
-        { "selector": "fame", "value": 1, "enabled": true }
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": -2,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "fame",
+          "value": 1,
+          "duration": "immediate"
+        }
       ]
     },
     "success": {
       "msg": "You successfully mediate the dispute and restore peace.",
+      "endsEvent": true,
       "modifiers": [
-        { "selector": "unrest", "value": -1, "enabled": true }
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "immediate"
+        }
       ]
     },
     "failure": {
       "msg": "Your mediation fails. The feud escalates and spreads to their supporters.",
+      "endsEvent": false,
       "modifiers": [
-        { "selector": "unrest", "value": 2, "enabled": true }
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
       ]
     },
     "criticalFailure": {
       "msg": "Your intervention makes things worse! Violence erupts in the streets.",
+      "endsEvent": false,
       "modifiers": [
-        { "selector": "unrest", "value": 3, "enabled": true },
-        { "selector": "gold", "value": -1, "enabled": true }
+        {
+          "name": "",
+          "resource": "unrest",
+          "value": 3,
+          "duration": "immediate"
+        },
+        {
+          "name": "",
+          "resource": "gold",
+          "value": -1,
+          "duration": "immediate"
+        }
       ]
     }
   },
   "ifUnresolved": {
-    "type": "continuous",
-    "continuous": {
-      "becomesModifier": true,
-      "modifierTemplate": {
+    "name": "Ongoing Feud",
+    "description": "The feuding families continue their conflict, disrupting trade and causing civil unrest",
+    "tier": 1,
+    "icon": "fas fa-fist-raised",
+    "modifiers": [
+      {
         "name": "Ongoing Feud",
-        "description": "The feuding families continue their conflict, disrupting trade and causing civil unrest",
-        "duration": "until-resolved",
-        "severity": "dangerous",
-        "icon": "fas fa-fist-raised",
-        "priority": 110,
-        "effects": {
-          "unrest": 1,
-          "gold": -1
+        "resource": "unrest",
+        "value": 1,
+        "duration": "ongoing"
+      },
+      {
+        "name": "Ongoing Feud",
+        "resource": "gold",
+        "value": -1,
+        "duration": "ongoing"
+      }
+    ],
+    "resolvedWhen": {
+      "type": "skill",
+      "skillResolution": {
+        "dcAdjustment": 0,
+        "onSuccess": {
+          "msg": "The feud has been settled and peace restored!",
+          "removeAllModifiers": true
         },
-        "resolution": {
-          "skills": ["diplomacy", "intimidation", "deception"],
-          "dc": 14,
-          "onResolution": {
-            "successMsg": "The feud has been settled and peace restored!",
-            "failureMsg": "The families remain at each other's throats"
-          }
-        },
-        "escalation": {
-          "turnsUntilEscalation": 3,
-          "escalatedModifier": {
-            "name": "Blood Feud",
-            "description": "The feud has turned violent with regular bloodshed in the streets",
-            "severity": "critical",
-            "effects": {
-              "unrest": 2,
-              "gold": -2
-            },
-            "resolution": {
-              "dc": 18
-            }
-          }
+        "onFailure": {
+          "msg": "The families remain at each other's throats"
         }
       }
     }

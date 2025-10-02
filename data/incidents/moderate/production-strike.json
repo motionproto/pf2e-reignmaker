@@ -3,36 +3,36 @@
   "name": "Production Strike",
   "tier": "MODERATE",
   "description": "Workers strike, halting resource production",
-  "percentileMin": 16,
-  "percentileMax": 24,
-  "skillOptions": [
+  "skills": [
     {
       "skill": "diplomacy",
-      "description": "negotiate with workers",
-      "successEffect": "Strike ends, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "description": "negotiate with workers"
     },
     {
       "skill": "society",
-      "description": "arbitrate",
-      "successEffect": "Strike ends, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "description": "arbitrate"
     },
     {
       "skill": "crafting",
-      "description": "work alongside",
-      "successEffect": "Strike ends, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "description": "work alongside"
     },
     {
       "skill": "arcana",
-      "description": "automate production",
-      "successEffect": "Strike ends, no effect",
-      "failureEffect": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "criticalFailureEffect": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)"
+      "description": "automate production"
     }
-  ]
+  ],
+  "effects": {
+    "success": {
+      "msg": "Strike ends, no effect",
+      "modifiers": []
+    },
+    "failure": {
+      "msg": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
+      "modifiers": []
+    },
+    "criticalFailure": {
+      "msg": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)",
+      "modifiers": []
+    }
+  }
 }

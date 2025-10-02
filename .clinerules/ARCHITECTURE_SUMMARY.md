@@ -130,13 +130,111 @@ onMount(async () => {
 ## File Organization
 ```
 src/
-├── view/          # Svelte components (presentation only)
-├── controllers/   # Business logic (phase operations, game rules)
-├── services/      # Complex operations (utilities, calculations)
-├── stores/        # KingdomStore - Reactive bridges (read-only)
-├── actors/        # KingdomActor (single source of truth)
-└── models/        # TurnManager (simple turn progression)
+├── view/                    # Svelte components (presentation only)
+├── controllers/             # Business logic (phase operations, game rules)
+│   ├── events/              # Event types & providers
+│   ├── incidents/           # Incident types & providers
+│   └── shared/              # Shared controller utilities
+├── services/                # Complex operations (utilities, calculations)
+│   ├── domain/              # Domain services (events, incidents, unrest)
+│   │   ├── events/          # EventService (load from dist/events.json)
+│   │   └── incidents/       # IncidentService (load from dist/incidents.json)
+│   ├── pf2e/                # PF2e integration services
+│   └── ModifierService.ts   # Simplified modifier management
+├── stores/                  # KingdomStore - Reactive bridges (read-only)
+├── actors/                  # KingdomActor (single source of truth)
+└── models/                  # TurnManager, Modifiers (data structures)
 ```
+
+## Event & Incident System (Normalized Structure)
+
+### Data Location
+- **Events:** `dist/events.json` (37 normalized events)
+- **Incidents:** `dist/incidents.json` (30 normalized incidents: 8 minor, 10 moderate, 12 major)
+
+### Normalized Structure
+```typescript
+{
+  id: string;
+  name: string;
+  description: string;
+  tier: number;  // All start at tier 1
+  skills: EventSkill[];  // Flat structure
+  effects: {  // Consolidated outcomes
+    criticalSuccess?: { msg: string, modifiers: EventModifier[] },
+    success?: { msg: string, modifiers: EventModifier[] },
+    failure?: { msg: string, modifiers: EventModifier[] },
+    criticalFailure?: { msg: string, modifiers: EventModifier[] }
+  };
+  ifUnresolved?: UnresolvedEvent;  // Becomes modifier if failed/ignored
+}
+```
+
+### Key Changes from Old System
+- ✅ Removed: `escalation`, `priority`, `severity`, `fixed DCs`
+- ✅ Simplified: `stages` → flat `skills` array
+- ✅ Standardized: All outcomes use `EventModifier[]` format
+- ✅ Duration: Only in modifiers, not at event level
+- ✅ DC: Level-based only (no fixed values)
+
+## Modifier System (Simplified)
+
+### Storage
+- **Location:** `kingdom.activeModifiers: ActiveModifier[]` (in KingdomActor)
+- **NO complex priority/escalation logic**
+- **Direct array manipulation** via `updateKingdom()`
+
+### ActiveModifier Structure
+```typescript
+interface ActiveModifier {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  tier: number;
+  
+  // Source tracking
+  sourceType: 'event' | 'incident' | 'structure';
+  sourceId: string;
+  sourceName: string;
+  
+  // Timing
+  startTurn: number;
+  
+  // Effects (uses EventModifier format)
+  modifiers: EventModifier[];
+  
+  // Resolution (optional)
+  resolvedWhen?: ResolutionCondition;
+}
+```
+
+### ModifierService Pattern
+```typescript
+// Create service
+const modifierService = await createModifierService();
+
+// Create modifier from event
+const modifier = modifierService.createFromUnresolvedEvent(event, currentTurn);
+
+// Add to KingdomActor directly
+await updateKingdom(kingdom => {
+  if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+  kingdom.activeModifiers.push(modifier);
+});
+
+// Apply during Status phase
+await modifierService.applyOngoingModifiers();
+
+// Clean up expired
+await modifierService.cleanupExpiredModifiers();
+```
+
+### Integration Points
+1. **EventPhaseController** - Creates modifiers for failed/ignored events
+2. **UnrestPhaseController** - Creates modifiers for unresolved incidents
+3. **StatusPhaseController** - Applies ongoing modifiers each turn
+4. **ModifierService** - Handles creation, application, cleanup
 
 ---
 

@@ -50,17 +50,10 @@
    
    async function loadIncident(incidentId: string) {
       try {
-         const { IncidentManager } = await import('../../../models/Incidents');
+         const { getIncidentById } = await import('../../../controllers/incidents/IncidentProvider');
          
-         // Find incident in the arrays
-         let incident = null;
-         const allIncidents = [
-            ...IncidentManager.minorIncidents,
-            ...IncidentManager.moderateIncidents,
-            ...IncidentManager.majorIncidents
-         ];
-         
-         incident = allIncidents.find(i => i.id === incidentId);
+         // Use the new IncidentProvider to get the incident
+         const incident = getIncidentById(incidentId);
          
          if (incident) {
             currentIncident = incident;

@@ -343,16 +343,116 @@ onMount(async () => {
 - Use Foundry hooks for reactivity
 - Use Foundry's networking for multiplayer sync
 
+## Event & Incident System
+
+### Data Structure (Normalized)
+
+All events and incidents use a standardized structure stored in `dist/events.json` and `dist/incidents.json`:
+
+```typescript
+interface KingdomEvent {
+  id: string;
+  name: string;
+  description: string;
+  tier: number;  // All start at tier 1
+  skills: EventSkill[];  // Flat structure
+  effects: {  // Consolidated outcomes
+    criticalSuccess?: { msg: string, modifiers: EventModifier[] },
+    success?: { msg: string, modifiers: EventModifier[] },
+    failure?: { msg: string, modifiers: EventModifier[] },
+    criticalFailure?: { msg: string, modifiers: EventModifier[] }
+  };
+  ifUnresolved?: UnresolvedEvent;  // Becomes modifier if failed/ignored
+}
+```
+
+**Key Changes from Old System:**
+- ✅ Removed: `escalation`, `priority`, `severity`, fixed DCs
+- ✅ Simplified: `stages` → flat `skills` array
+- ✅ Standardized: All outcomes use `EventModifier[]` format
+- ✅ Duration: Only in modifiers, not at event level
+- ✅ DC: Level-based only (no fixed values)
+
+### Modifier System (Simplified)
+
+**Storage Location:** `kingdom.activeModifiers: ActiveModifier[]` in KingdomActor
+
+**ActiveModifier Structure:**
+```typescript
+interface ActiveModifier {
+  id: string;
+  name: string;
+  description: string;
+  icon?: string;
+  tier: number;
+  
+  // Source tracking
+  sourceType: 'event' | 'incident' | 'structure';
+  sourceId: string;
+  sourceName: string;
+  
+  // Timing
+  startTurn: number;
+  
+  // Effects (uses EventModifier format)
+  modifiers: EventModifier[];
+  
+  // Resolution (optional)
+  resolvedWhen?: ResolutionCondition;
+}
+```
+
+**ModifierService Pattern:**
+```typescript
+// Create service instance
+const modifierService = await createModifierService();
+
+// Create modifier from unresolved event
+const modifier = modifierService.createFromUnresolvedEvent(event, currentTurn);
+
+// Add to KingdomActor directly
+await updateKingdom(kingdom => {
+  if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+  kingdom.activeModifiers.push(modifier);
+});
+
+// Apply during Status phase
+await modifierService.applyOngoingModifiers();
+
+// Clean up expired modifiers
+await modifierService.cleanupExpiredModifiers();
+```
+
+**Integration Points:**
+1. **EventPhaseController** - Creates modifiers for failed/ignored events
+2. **UnrestPhaseController** - Creates modifiers for unresolved incidents
+3. **StatusPhaseController** - Applies ongoing modifiers each turn
+4. **ModifierService** - Handles creation, application, cleanup
+
+**Key Simplifications:**
+- NO complex priority/escalation logic
+- Direct array manipulation via `updateKingdom()`
+- Simple turn-based or ongoing duration
+- Straightforward application during Status phase
+
 ## File Organization
 
 ```
 src/
 ├── actors/              # KingdomActor (single source of truth)
-├── models/              # TurnManager (turn progression only)
+├── models/              # TurnManager, Modifiers (data structures)
 ├── stores/              # KingdomStore - Reactive bridge stores (read-only)
 ├── view/                # Svelte components (read from stores, write to actor)
 ├── controllers/         # Simple phase controllers (direct implementation)
+│   ├── events/          # Event types & providers
+│   ├── incidents/       # Incident types & providers
+│   └── shared/          # Shared controller utilities
 ├── services/            # Business logic services
+│   ├── domain/          # Domain services (events, incidents, unrest)
+│   │   ├── events/      # EventService (load from dist/events.json)
+│   │   └── incidents/   # IncidentService (load from dist/incidents.json)
+│   ├── pf2e/            # PF2e integration services
+│   └── ModifierService.ts  # Simplified modifier management
 └── types/               # TypeScript definitions
 ```
 
