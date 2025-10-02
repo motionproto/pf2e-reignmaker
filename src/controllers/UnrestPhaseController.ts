@@ -108,9 +108,9 @@ export async function createUnrestPhaseController() {
       let incidentId: string | null = null;
       if (incidentTriggered) {
         try {
-          const { IncidentProvider } = await import('./incidents/IncidentProvider');
+          const { incidentLoader } = await import('./incidents/incident-loader');
           const severity = tier === 1 ? 'minor' : tier === 2 ? 'moderate' : 'major';
-          const incident = await IncidentProvider.getRandomIncident(severity);
+          const incident = incidentLoader.getRandomIncident(severity);
           incidentId = incident?.id || null;
           
           console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name);

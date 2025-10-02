@@ -5,7 +5,7 @@
  * Changed "stability roll" terminology to clearer "event check".
  */
 
-import { EventResolutionService } from '../services/domain/EventResolutionService';
+import { EventResolutionService } from './events/EventResolutionService';
 import type { EventData } from '../services/domain/events/EventService';
 import type { KingdomData } from '../actors/KingdomActor';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';

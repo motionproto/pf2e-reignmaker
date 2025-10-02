@@ -1,5 +1,5 @@
-import type { KingdomIncident, EventSkill, EventOutcome } from '../../../controllers/incidents/types';
-import incidentsData from '../../../../dist/incidents.json';
+import type { KingdomIncident, EventSkill, EventOutcome } from './incident-types';
+import incidentsData from '../../../dist/incidents.json';
 
 /**
  * Raw incident data structure from JSON (before type conversion)
@@ -32,10 +32,10 @@ interface RawIncidentData {
 }
 
 /**
- * Service for managing kingdom incidents (unrest-triggered events)
- * Mirrors EventService pattern for consistency
+ * Service for loading kingdom incidents from JSON data
+ * Pure data access - no business logic (Repository pattern)
  */
-export class IncidentService {
+export class IncidentLoader {
     private incidents: Map<string, KingdomIncident> = new Map();
     private incidentsLoaded: boolean = false;
 
@@ -237,9 +237,9 @@ export class IncidentService {
 }
 
 // Export singleton instance
-export const incidentService = new IncidentService();
+export const incidentLoader = new IncidentLoader();
 
 // Initialize incidents on module load
 if (typeof window !== 'undefined') {
-    incidentService.loadIncidents();
+    incidentLoader.loadIncidents();
 }

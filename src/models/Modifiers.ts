@@ -9,7 +9,7 @@
  * Applied during Status phase each turn.
  */
 
-import type { EventModifier, ResolutionCondition } from '../controllers/events/types';
+import type { EventModifier, ResolutionCondition } from '../controllers/events/event-types';
 
 /**
  * Source types for modifiers

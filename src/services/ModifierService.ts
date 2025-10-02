@@ -9,7 +9,7 @@
  */
 
 import type { ActiveModifier, ResolutionResult } from '../models/Modifiers';
-import type { KingdomEvent, EventModifier } from '../controllers/events/types';
+import type { KingdomEvent, EventModifier } from '../controllers/events/event-types';
 import { updateKingdom } from '../stores/KingdomStore';
 
 /**

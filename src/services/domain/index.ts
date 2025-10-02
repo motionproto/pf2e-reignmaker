@@ -1,43 +1,22 @@
 /**
- * Domain Services
+ * Domain Services Index
  * 
- * This module exports all domain services that contain business logic
- * extracted from UI components. These services handle the core game
- * mechanics and rules, independent of the UI layer.
+ * Generic, reusable services that don't belong to specific controllers.
+ * Controller-specific logic should be in the respective controller folders.
  */
 
-export { DiceService, diceService } from './DiceService';
-export type { DiceRoll, D20Result } from './DiceService';
+// Generic action execution utilities
+export { ActionExecutionService } from './ActionExecutionService';
 
-export { EventResolutionService } from './EventResolutionService';
-export type { 
-    StabilityCheckResult, 
-    EventOutcomeApplication, 
-    EventResolutionResult 
-} from './EventResolutionService';
+// Generic dice utilities
+export { DiceService } from './DiceService';
 
-export { UnrestService, unrestService } from './UnrestService';
-export type {
-    UnrestStatus,
-    IncidentCheckResult,
-    IncidentResolutionResult
-} from './UnrestService';
-
-export { ActionExecutionService, actionExecutionService } from './ActionExecutionService';
-export type {
-    ActionRequirement,
-    ParsedActionEffect,
-    ActionOutcome
-} from './ActionExecutionService';
-
-export { ResourceManagementService, resourceManagementService } from './ResourceManagementService';
-export type {
-    ResourceConsumption,
-    ResourceDecay
-} from './ResourceManagementService';
-
-export { BuildQueueService, buildQueueService } from './BuildQueueService';
-export type {
-    BuildQueueItem,
-    ResourceAllocation
-} from './BuildQueueService';
+/**
+ * REMOVED SERVICES (moved to controller folders):
+ * - EventService → src/controllers/events/event-loader.ts
+ * - IncidentService → src/controllers/incidents/incident-loader.ts
+ * - UnrestService (deleted - unused)
+ * - ResourceManagementService (deleted - unused)
+ * - BuildQueueService (deleted - violated architecture)
+ * - modifiers/ folder (deleted - unused)
+ */
