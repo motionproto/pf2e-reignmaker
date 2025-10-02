@@ -654,19 +654,6 @@
     ui.notifications?.info(`Structure queued successfully!`);
   }
 
-  // Manual phase completion
-  async function completeActionsPhase() {
-    try {
-      const { getTurnManager } = await import('../../../stores/KingdomStore');
-      const manager = getTurnManager();
-      if (manager) {
-        await manager.markPhaseComplete();
-        console.log('✅ [ActionsPhase] Phase marked complete');
-      }
-    } catch (error) {
-      console.error('❌ [ActionsPhase] Error completing phase:', error);
-    }
-  }
 </script>
 
 <div class="actions-phase">
@@ -803,21 +790,6 @@
       {/if}
     {/each}
 
-    <!-- Phase Completion Section -->
-    <div class="phase-completion">
-      <div class="completion-header">
-        <h3>Actions Phase Complete</h3>
-        <p>When you're finished performing kingdom actions, click below to proceed to the next phase.</p>
-      </div>
-      
-      <button 
-         class="btn btn-primary complete-phase-btn"
-         on:click={completeActionsPhase}
-      >
-         <i class="fas fa-check"></i>
-         Complete Actions Phase
-      </button>
-    </div>
   </div>
 </div>
 

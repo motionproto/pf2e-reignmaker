@@ -46,6 +46,11 @@ export interface ResourceCollectionResult {
   fedSettlementsCount: number;
   unfedSettlementsCount: number;
   totalCollected: Map<string, number>;
+  // Separate resource collections for clarity
+  resourceCollection: {
+    territoryResources: Map<string, number>;
+    settlementGold: number;
+  };
   details: {
     hexCount: number;
     productionByHex: Array<{ hexId: string; hexName: string; terrain: string; production: Map<string, number> }>;
@@ -161,7 +166,11 @@ export class EconomicsService {
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
     const goldIncome = this.calculateSettlementGoldIncome(state.settlements);
     
-    // Combine all resources collected
+    // Create separate collections for clarity
+    const territoryResources = new Map(hexProduction);
+    const settlementGold = goldIncome;
+    
+    // Combine all resources collected (maintaining backward compatibility)
     const totalCollected = new Map(hexProduction);
     if (goldIncome > 0) {
       totalCollected.set('gold', (totalCollected.get('gold') || 0) + goldIncome);
@@ -181,6 +190,11 @@ export class EconomicsService {
       fedSettlementsCount: fedSettlements.length,
       unfedSettlementsCount: unfedSettlements.length,
       totalCollected,
+      // New separate resource collections for clarity
+      resourceCollection: {
+        territoryResources,
+        settlementGold
+      },
       details: {
         hexCount: state.cachedProductionByHex.length,
         productionByHex

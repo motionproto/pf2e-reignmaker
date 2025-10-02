@@ -8,6 +8,7 @@
 import { getKingdomActor } from '../stores/KingdomStore';
 import { get } from 'svelte/store';
 import { kingdomData } from '../stores/KingdomStore';
+import { economicsService } from '../services/economics';
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -24,57 +25,15 @@ const RESOURCES_PHASE_STEPS = [
 ];
 
 export async function createResourcePhaseController() {
-  // Helper functions defined outside the returned object
-  const calculateHexProduction = (hex: any): Map<string, number> => {
-    const production = new Map<string, number>();
-    
-    if (!hex.worksite) return production;
-    
-    const terrain = hex.terrain.toLowerCase();
-    const worksiteType = hex.worksite.type;
-    
-    // Base production based on worksite type and terrain compatibility
-    switch (worksiteType) {
-      case 'Farmstead':
-        if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
-        else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
-        break;
-      case 'Logging Camp':
-        if (terrain === 'forest') production.set('lumber', 2);
-        break;
-      case 'Quarry':
-        if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
-        break;
-      case 'Mine':
-      case 'Bog Mine':
-        if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
-        break;
-      case 'Hunting/Fishing Camp':
-        if (terrain === 'swamp') production.set('food', 1);
-        break;
-      case 'Oasis Farm':
-        if (terrain === 'desert') production.set('food', 1);
-        break;
-    }
-    
-    // Apply special trait bonus (+1 to all production)
-    if (hex.hasSpecialTrait) {
-      production.forEach((amount, resource) => {
-        production.set(resource, amount + 1);
-      });
-    }
-    
-    return production;
-  };
-
-  const getSettlementGoldValue = (tier: string): number => {
-    switch (tier.toLowerCase()) {
-      case 'village': return 1;
-      case 'town': return 2;
-      case 'city': return 3;
-      case 'metropolis': return 4;
-      default: return 0;
-    }
+  // Helper function to get active economic modifiers
+  const getActiveModifiers = (kingdom: any) => {
+    return economicsService.getActiveModifiers({
+      isAtWar: kingdom.isAtWar || false,
+      season: kingdom.season,
+      economy: kingdom.economy || 0,
+      unrest: kingdom.unrest || 0,
+      leadershipSkills: kingdom.leadershipSkills || new Map()
+    });
   };
 
   return {
@@ -100,7 +59,7 @@ export async function createResourcePhaseController() {
     },
 
     /**
-     * NEW: Single-step resource collection (territory + settlements)
+     * Single-step resource collection using economics service
      * Any player can complete this once per turn
      */
     async collectResources() {
@@ -112,9 +71,71 @@ export async function createResourcePhaseController() {
       try {
         reportPhaseStart('ResourcePhaseController Collection');
         
-        // Collect both territory resources and settlement gold
-        await this.collectTerritoryResources();
-        await this.collectSettlementGold();
+        const kingdom = get(kingdomData);
+        const actor = getKingdomActor();
+        
+        if (!actor) {
+          return createPhaseResult(false, 'No kingdom actor available');
+        }
+
+        console.log(`🟡 [ResourcePhaseController] Collecting resources using economics service...`);
+        
+        // Get active economic modifiers
+        const modifiers = getActiveModifiers(kingdom);
+        console.log(`� [ResourcePhaseController] Applying ${modifiers.length} economic modifiers`);
+        
+        // Use economics service to collect all resources
+        const result = economicsService.collectTurnResources({
+          hexes: (kingdom.hexes || []) as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
+          settlements: kingdom.settlements || [],
+          cachedProduction: new Map(Object.entries(kingdom.cachedProduction || {})),
+          cachedProductionByHex: [],
+          modifiers
+        });
+        
+        // Apply collected resources to kingdom using the new separated structure
+        await actor.updateKingdom((kingdom) => {
+          // Apply territory resources (food, lumber, stone, ore)
+          result.resourceCollection.territoryResources.forEach((amount, resource) => {
+            if (amount > 0) {
+              const current = kingdom.resources[resource] || 0;
+              kingdom.resources[resource] = current + amount;
+              console.log(`✅ [ResourcePhaseController] +${amount} ${resource} collected from territory`);
+            }
+          });
+          
+          // Apply settlement gold
+          if (result.resourceCollection.settlementGold > 0) {
+            const current = kingdom.resources['gold'] || 0;
+            kingdom.resources['gold'] = current + result.resourceCollection.settlementGold;
+            console.log(`✅ [ResourcePhaseController] +${result.resourceCollection.settlementGold} gold collected from settlements`);
+          }
+        });
+        
+        // Log detailed results with clear separation
+        console.log(`🏞️ [ResourcePhaseController] Territory Resources Collected:`);
+        if (result.resourceCollection.territoryResources.size > 0) {
+          result.resourceCollection.territoryResources.forEach((amount, resource) => {
+            console.log(`   +${amount} ${resource}`);
+          });
+        } else {
+          console.log(`   No territory resources this turn`);
+        }
+        
+        console.log(`💰 [ResourcePhaseController] Settlement Gold: +${result.resourceCollection.settlementGold} from ${result.fedSettlementsCount} fed settlements`);
+        if (result.unfedSettlementsCount > 0) {
+          console.log(`🍞 [ResourcePhaseController] ${result.unfedSettlementsCount} settlements unfed (no gold income)`);
+        }
+        
+        // Log worksite details
+        result.details.productionByHex.forEach(hex => {
+          if (hex.production.size > 0) {
+            const productionList = Array.from(hex.production.entries())
+              .map(([resource, amount]) => `${amount} ${resource}`)
+              .join(', ');
+            console.log(`�️ [ResourcePhaseController] ${hex.hexName}: ${productionList}`);
+          }
+        });
         
         // Mark step as completed (will auto-complete phase)
         await completePhaseStep('collect-resources');
@@ -128,157 +149,71 @@ export async function createResourcePhaseController() {
     },
 
     /**
-     * Collect resources from territory hexes with worksites
+     * Get preview of what would be collected using economics service (for UI display)
+     * This should match exactly what collectResources() will actually collect
      */
-    async collectTerritoryResources() {
+    getPreviewData() {
       const kingdom = get(kingdomData);
       const hexes = kingdom.hexes || [];
-      
-      console.log(`🟡 [ResourcePhaseController] Collecting from ${hexes.length} hexes...`);
-      
-      const resourceTotals = new Map<string, number>();
-      
-      for (const hex of hexes) {
-        if (!hex.worksite) continue;
-        
-        const production = calculateHexProduction(hex);
-        production.forEach((amount, resource) => {
-          const current = resourceTotals.get(resource) || 0;
-          resourceTotals.set(resource, current + amount);
-        });
-      }
-      
-      // Apply collected resources
-      const actor = getKingdomActor();
-      if (!actor) {
-        console.error('❌ [ResourcePhaseController] No KingdomActor available');
-        return resourceTotals;
-      }
-
-      if (resourceTotals.size > 0) {
-        await actor.updateKingdom((kingdom) => {
-          for (const [resource, amount] of resourceTotals) {
-            if (amount > 0) {
-              const current = kingdom.resources[resource] || 0;
-              kingdom.resources[resource] = current + amount;
-              console.log(`✅ [ResourcePhaseController] +${amount} ${resource} from territory`);
-            }
-          }
-        });
-      }
-      
-      return resourceTotals;
-    },
-
-    /**
-     * Collect gold income from settlements
-     */
-    async collectSettlementGold() {
-      const kingdom = get(kingdomData);
       const settlements = kingdom.settlements || [];
       
-      console.log(`🟡 [ResourcePhaseController] Collecting gold from ${settlements.length} settlements...`);
-      
-      let totalGold = 0;
-      let fedCount = 0;
-      let unfedCount = 0;
-      
-      for (const settlement of settlements) {
-        // Only fed settlements generate gold
-        if (settlement.wasFedLastTurn !== false) {
-          // Gold income based on settlement tier
-          const income = getSettlementGoldValue(settlement.tier);
-          totalGold += income;
-          fedCount++;
-          console.log(`💰 [ResourcePhaseController] ${settlement.name} (${settlement.tier}): +${income} gold`);
-        } else {
-          unfedCount++;
-          console.log(`🍞 [ResourcePhaseController] ${settlement.name} (${settlement.tier}): unfed, no gold income`);
-        }
+      try {
+        // Get active economic modifiers (including commodities, leadership bonuses, etc.)
+        const modifiers = getActiveModifiers(kingdom);
+        
+        // Use economics service with the same cached production that actual collection uses
+        const result = economicsService.collectTurnResources({
+          hexes: hexes as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
+          settlements,
+          cachedProduction: new Map(Object.entries(kingdom.cachedProduction || {})),
+          cachedProductionByHex: [], // This will be calculated by the economics service from hexes
+          modifiers
+        });
+        
+        // Convert to format expected by UI - structured for presentation
+        return {
+          // Territory production breakdown
+          territoryProduction: result.resourceCollection.territoryResources,
+          worksiteDetails: result.details.productionByHex.map(hex => ({
+            hexName: hex.hexName,
+            terrain: hex.terrain,
+            production: hex.production
+          })),
+          
+          // Settlement gold income
+          goldIncome: result.resourceCollection.settlementGold,
+          fedCount: result.fedSettlementsCount,
+          unfedCount: result.unfedSettlementsCount,
+          totalSettlements: settlements.length,
+          
+          // Combined total for verification
+          totalCollected: result.totalCollected,
+          
+          // Collection status
+          isCollected: isStepCompleted('collect-resources')
+        };
+      } catch (error) {
+        console.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
+        
+        // Fallback to empty result
+        return {
+          territoryProduction: new Map(),
+          worksiteDetails: [],
+          goldIncome: 0,
+          fedCount: 0,
+          unfedCount: 0,
+          totalSettlements: settlements.length,
+          totalCollected: new Map(),
+          isCollected: isStepCompleted('collect-resources')
+        };
       }
-      
-      if (totalGold > 0) {
-        const actor = getKingdomActor();
-        if (actor) {
-          await actor.updateKingdom((kingdom) => {
-            const current = kingdom.resources.gold || 0;
-            kingdom.resources.gold = current + totalGold;
-          });
-        }
-        console.log(`✅ [ResourcePhaseController] +${totalGold} gold from ${fedCount} fed settlements`);
-      }
-      
-      if (unfedCount > 0) {
-        console.log(`🟡 [ResourcePhaseController] ${unfedCount} settlements unfed (no gold income)`);
-      }
-      
-      return { totalGold, fedCount, unfedCount };
     },
 
     /**
-     * Get gold value for a settlement tier
-     */
-    getSettlementGoldValue,
-
-    /**
-     * Calculate production for a single hex (matches TerritoryTab logic)
-     */
-    calculateHexProduction,
-
-    /**
-     * Get preview of what would be collected (for UI display)
+     * @deprecated Use getPreviewData() instead - kept for backward compatibility
      */
     getCollectionPreview() {
-      const kingdom = get(kingdomData);
-      const hexes = kingdom.hexes || [];
-      const settlements = kingdom.settlements || [];
-      
-      // Calculate territory production with worksite details
-      const territoryProduction = new Map<string, number>();
-      const worksiteDetails: Array<{hexName: string, terrain: string, production: Map<string, number>}> = [];
-      
-      for (const hex of hexes) {
-        if (!hex.worksite) continue;
-        const production = calculateHexProduction(hex);
-        
-        if (production.size > 0) {
-          // Add to total production
-          production.forEach((amount, resource) => {
-            const current = territoryProduction.get(resource) || 0;
-            territoryProduction.set(resource, current + amount);
-          });
-          
-          // Add to worksite details
-          worksiteDetails.push({
-            hexName: hex.name || hex.id || 'Unnamed Hex',
-            terrain: hex.terrain || 'Unknown',
-            production
-          });
-        }
-      }
-      
-      // Calculate settlement gold
-      let goldIncome = 0;
-      let fedCount = 0;
-      let unfedCount = 0;
-      
-      for (const settlement of settlements) {
-        if (settlement.wasFedLastTurn !== false) {
-          goldIncome += getSettlementGoldValue(settlement.tier);
-          fedCount++;
-        } else {
-          unfedCount++;
-        }
-      }
-      
-      return {
-        territoryProduction,
-        worksiteDetails,
-        goldIncome,
-        fedCount,
-        unfedCount,
-        totalSettlements: settlements.length
-      };
+      return this.getPreviewData();
     }
   };
 }

@@ -62,7 +62,6 @@
    }
    
    // Reactive data from kingdomData store
-   $: collectCompleted = isPhaseStepCompleted('resources-collect');
    $: currentResources = new Map([
       ['food', $kingdomData.resources?.food || 0],
       ['lumber', $kingdomData.resources?.lumber || 0], 
@@ -71,60 +70,8 @@
       ['gold', $kingdomData.resources?.gold || 0]
    ]);
    
-   // Calculate preview data using controller logic
-   $: previewData = (() => {
-      if (!$kingdomData) return null;
-      
-      const hexes = $kingdomData.hexes || [];
-      const settlements = $kingdomData.settlements || [];
-      
-      // Calculate territory production
-      const territoryProduction = new Map<string, number>();
-      const worksiteDetails: Array<{hexName: string, terrain: string, production: Map<string, number>}> = [];
-      
-      for (const hex of hexes) {
-         if (!hex.worksite) continue;
-         const production = calculateHexProduction(hex);
-         
-         if (production.size > 0) {
-            // Add to total production
-            production.forEach((amount, resource) => {
-               const current = territoryProduction.get(resource) || 0;
-               territoryProduction.set(resource, current + amount);
-            });
-            
-            // Add to worksite details
-            worksiteDetails.push({
-               hexName: hex.name || hex.id || 'Unnamed Hex',
-               terrain: hex.terrain || 'Unknown',
-               production
-            });
-         }
-      }
-      
-      // Calculate settlement gold
-      let goldIncome = 0;
-      let fedCount = 0;
-      let unfedCount = 0;
-      
-      for (const settlement of settlements) {
-         if (settlement.wasFedLastTurn !== false) {
-            goldIncome += settlement.goldIncome || 0;
-            fedCount++;
-         } else {
-            unfedCount++;
-         }
-      }
-      
-      return {
-         territoryProduction,
-         worksiteDetails,
-         goldIncome,
-         fedCount,
-         unfedCount,
-         totalSettlements: settlements.length
-      };
-   })();
+   // Get preview data from controller (no business logic in component)
+   $: previewData = resourceController?.getPreviewData() || null;
    
    $: totalProduction = previewData?.territoryProduction || new Map();
    $: worksiteDetails = previewData?.worksiteDetails || [];
@@ -132,6 +79,7 @@
    $: fedSettlementsCount = previewData?.fedCount || 0;
    $: unfedSettlementsCount = previewData?.unfedCount || 0;
    $: settlementCount = previewData?.totalSettlements || 0;
+   $: collectCompleted = previewData?.isCollected || isPhaseStepCompleted('collect-resources');
    
    // Initialize controller when component mounts
    let resourceController: any;
@@ -171,48 +119,6 @@
       }
    }
    
-   // Calculate production for a single hex (matches controller logic)
-   function calculateHexProduction(hex: any): Map<string, number> {
-      const production = new Map<string, number>();
-      
-      if (!hex.worksite) return production;
-      
-      const terrain = hex.terrain.toLowerCase();
-      const worksiteType = hex.worksite.type;
-      
-      // Base production based on worksite type and terrain compatibility
-      switch (worksiteType) {
-         case 'Farmstead':
-            if (terrain === 'plains' || terrain === 'forest') production.set('food', 2);
-            else if (terrain === 'hills' || terrain === 'swamp' || terrain === 'desert') production.set('food', 1);
-            break;
-         case 'Logging Camp':
-            if (terrain === 'forest') production.set('lumber', 2);
-            break;
-         case 'Quarry':
-            if (terrain === 'hills' || terrain === 'mountains') production.set('stone', 1);
-            break;
-         case 'Mine':
-         case 'Bog Mine':
-            if (terrain === 'mountains' || terrain === 'swamp') production.set('ore', 1);
-            break;
-         case 'Hunting/Fishing Camp':
-            if (terrain === 'swamp') production.set('food', 1);
-            break;
-         case 'Oasis Farm':
-            if (terrain === 'desert') production.set('food', 1);
-            break;
-      }
-      
-      // Apply special trait bonus (+1 to all production)
-      if (hex.hasSpecialTrait) {
-         production.forEach((amount: number, resource: string) => {
-            production.set(resource, amount + 1);
-         });
-      }
-      
-      return production;
-   }
 </script>
 
 <div class="resources-phase">
@@ -307,7 +213,7 @@
          {#if totalProduction.size > 0}
             {@const productionList = Object.keys(resourceConfig)
                .filter(resource => (totalProduction.get(resource) || 0) > 0)
-               .map(resource => ({resource, amount: totalProduction.get(resource)}))}
+               .map(resource => ({resource, amount: totalProduction.get(resource) || 0}))}
             <div class="production-summary">
                <div class="production-header">
                   <span class="production-title">Resource Production This Turn:</span>
@@ -329,7 +235,7 @@
                            <li class="worksite-item">
                               <span>{worksite.hexName} ({worksite.terrain})</span>
                               <span class="worksite-production">
-                                 {#each Array.from(worksite.production.entries()) as [resource, amount], i}
+                                 {#each Array.from(worksite.production?.entries() || []) as [resource, amount], i}
                                     {#if i > 0}, {/if}
                                     {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
                                  {/each}

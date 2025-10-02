@@ -69,9 +69,8 @@
    function toggleExpanded(event: Event) {
       event.preventDefault();
       event.stopPropagation();
-      if (available || resolved) {
-         dispatch('toggle');
-      }
+      // Always allow expansion to see action details, regardless of availability
+      dispatch('toggle');
    }
    
    function handleSkillExecute(event: CustomEvent) {
@@ -143,7 +142,7 @@
    <button 
       class="card-header-btn"
       on:click={toggleExpanded}
-      disabled={!available && !resolved}
+      disabled={false}
    >
       <div class="card-header-content">
          <div class="card-main">
@@ -198,7 +197,7 @@
                      {@const isDisabled = !canPerformMore || resolved}
                      <SkillTag
                         skill={skillOption.skill}
-                        description={skillOption.description || ''}
+                        description={skillOption.description || ''} 
                         selected={false}
                         disabled={isDisabled}
                         loading={isRolling && skillOption.skill === localUsedSkill}
@@ -367,17 +366,31 @@
       
       // Style for unavailable actions
       &.not-available {
-         opacity: 0.6;
+         opacity: 0.85; // Less faded so it's more readable
          background: linear-gradient(135deg,
-            rgba(24, 24, 27, 0.4),
-            rgba(31, 31, 35, 0.3));
+            rgba(24, 24, 27, 0.5),
+            rgba(31, 31, 35, 0.4));
+         border-color: var(--border-subtle);
          
          .card-name {
             color: var(--text-secondary);
          }
          
          .card-brief {
-            color: var(--text-tertiary);
+            color: var(--text-secondary);
+         }
+         
+         // Add a subtle visual indicator for unavailable state
+         &::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--color-amber);
+            opacity: 0.6;
          }
       }
    }
