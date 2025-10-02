@@ -63,7 +63,7 @@
    onMount(() => {
       const initAsync = async () => {
          // Initialize the controller - no need for eventService parameter
-         eventPhaseController = createEventPhaseController(null);
+         eventPhaseController = await createEventPhaseController(null);
          
          // Check if an event was already rolled by another client
          if ($kingdomData.currentEventId) {

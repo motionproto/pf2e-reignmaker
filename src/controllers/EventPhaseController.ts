@@ -6,12 +6,10 @@
  */
 
 import { EventResolutionService } from '../services/domain/EventResolutionService';
-import { ApplyEventOutcomeCommand } from '../commands/event/ApplyEventOutcomeCommand';
-import { commandExecutor } from '../commands/base/CommandExecutor';
-import type { CommandContext } from '../commands/base/Command';
 import type { EventData } from '../services/domain/events/EventService';
 import type { KingdomData } from '../actors/KingdomActor';
 import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
+import { updateKingdom } from '../stores/KingdomStore';
 import { EventProvider } from './events/EventProvider';
 import { modifierService } from '../services/domain/modifiers/ModifierService';
 import type { KingdomModifier } from '../models/Modifiers';
@@ -50,7 +48,7 @@ const EVENTS_PHASE_STEPS = [
   { name: 'Resolve Event' } // Step 1 - CONDITIONAL (auto if no event, manual if event)
 ];
 
-export async function createEventPhaseController(eventService: any) {
+export async function createEventPhaseController(eventService?: any) {
     const eventResolutionService = new EventResolutionService(eventService);
     
     const createInitialState = (): EventPhaseState => ({
@@ -112,7 +110,7 @@ export async function createEventPhaseController(eventService: any) {
             newDC: number;
         }> {
             // Check if step 0 (event-check) is already completed
-            if (isStepCompletedByIndex(0)) {
+            if (await isStepCompletedByIndex(0)) {
                 console.log('🟡 [EventPhaseController] Event check already completed');
                 return {
                     triggered: !!state.currentEvent,
@@ -148,7 +146,7 @@ export async function createEventPhaseController(eventService: any) {
                     if (actor) {
                         await actor.updateKingdom((kingdom) => {
                             // Store event in kingdom state
-                            kingdom.currentEventId = event.id;
+                            kingdom.currentEventId = event!.id;
                             kingdom.eventDC = newDC;
                             
                             // Mark step 1 (resolve-event) as incomplete since event is triggered
@@ -193,7 +191,7 @@ export async function createEventPhaseController(eventService: any) {
         },
         
         /**
-         * Apply event outcome using command pattern
+         * Apply event outcome directly to KingdomActor (New Architecture)
          */
         async applyEventOutcome(
             event: EventData,
@@ -209,23 +207,47 @@ export async function createEventPhaseController(eventService: any) {
         }> {
             console.log(`🎯 [EventPhaseController] Applying event outcome: ${event.name} -> ${outcome}`);
             
-            const context: CommandContext = {
-                kingdomState: kingdomData,
-                currentTurn,
-                currentPhase: 'Phase IV: Events'
-            };
-            
-            const command = new ApplyEventOutcomeCommand(
-                event,
-                outcome,
-                eventResolutionService
-            );
-            
-            const result = await commandExecutor.execute(command, context);
-            
-            if (result.success) {
+            try {
+                // Apply the event outcome using the service
+                const application = eventResolutionService.applyEventOutcome(
+                    event,
+                    outcome
+                );
+                
+                // Apply resource changes directly to KingdomActor
+                const appliedChanges = new Map<string, any>();
+                
+                await updateKingdom(kingdom => {
+                    // Apply resource changes
+                    for (const [resource, change] of application.resourceChanges) {
+                        if (resource === 'unrest') {
+                            const newUnrest = Math.max(0, kingdom.unrest + change);
+                            kingdom.unrest = newUnrest;
+                            appliedChanges.set('unrest', change);
+                        } else if (resource === 'fame') {
+                            const newFame = Math.max(0, Math.min(3, kingdom.fame + change));
+                            kingdom.fame = newFame;
+                            appliedChanges.set('fame', change);
+                        } else {
+                            const currentAmount = kingdom.resources[resource] || 0;
+                            const newAmount = Math.max(0, currentAmount + change);
+                            kingdom.resources[resource] = newAmount;
+                            appliedChanges.set(resource, change);
+                        }
+                    }
+                    
+                    // Clear current event
+                    kingdom.currentEventId = null;
+                });
+                
+                // Add unresolved modifier if applicable
+                if (application.unresolvedModifier) {
+                    await modifierService.addModifier(application.unresolvedModifier);
+                    appliedChanges.set('modifier', application.unresolvedModifier);
+                }
+                
                 state.resolutionOutcome = outcome;
-                state.appliedEffects = result.data?.appliedChanges || new Map();
+                state.appliedEffects = appliedChanges;
                 
                 // Handle event resolution and modifiers
                 await this.handleEventResolution(event, outcome, currentTurn);
@@ -236,7 +258,7 @@ export async function createEventPhaseController(eventService: any) {
                 );
                 
                 // Complete step 1 (resolve-event) if it exists  
-                if (isStepCompletedByIndex(0) && !isStepCompletedByIndex(1)) {
+                if (await isStepCompletedByIndex(0) && !(await isStepCompletedByIndex(1))) {
                     await completePhaseStepByIndex(1);
                 }
                 
@@ -246,13 +268,16 @@ export async function createEventPhaseController(eventService: any) {
                     formattedEffects,
                     unresolvedEvent: state.unresolvedEvent
                 };
-            } else {
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                console.error('❌ [EventPhaseController] Failed to apply event outcome:', error);
+                
                 return {
                     success: false,
                     effects: new Map(),
                     formattedEffects: [],
                     unresolvedEvent: null,
-                    error: result.error
+                    error: errorMessage
                 };
             }
         },
@@ -273,7 +298,7 @@ export async function createEventPhaseController(eventService: any) {
             // Create ongoing modifier if event has ifUnresolved configuration
             let modifier: KingdomModifier | undefined;
             if (event.ifUnresolved) {
-                modifier = await this.createEventModifier(event, currentTurn);
+                modifier = await this.createEventModifier(event, currentTurn) || undefined;
                 if (modifier) {
                     await modifierService.addModifier(modifier);
                     await this.addToOngoingEvents(event.id);
@@ -359,7 +384,7 @@ export async function createEventPhaseController(eventService: any) {
                     name: event.name
                 },
                 startTurn: currentTurn,
-                duration: template.duration || 'until-resolved',
+                duration: (template.duration as any) || 'until-resolved',
                 priority: template.priority || 100,
                 effects: template.effects || {},
                 visible: true,
@@ -420,7 +445,7 @@ export async function createEventPhaseController(eventService: any) {
             if (!actor) return [];
             
             const kingdom = actor.getKingdom();
-            if (!kingdom.ongoingEvents || kingdom.ongoingEvents.length === 0) {
+            if (!kingdom || !kingdom.ongoingEvents || kingdom.ongoingEvents.length === 0) {
                 return [];
             }
             

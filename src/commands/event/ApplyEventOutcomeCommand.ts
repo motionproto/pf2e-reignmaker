@@ -67,8 +67,10 @@ export class ApplyEventOutcomeCommand extends Command<EventOutcomeData> {
         this.previousState = {
             unrest: context.kingdomState.unrest,
             fame: context.kingdomState.fame,
-            resources: new Map(context.kingdomState.resources),
-            modifiers: [...context.kingdomState.modifiers],
+            resources: context.kingdomState.resources instanceof Map 
+                ? new Map(context.kingdomState.resources)
+                : new Map(Object.entries(context.kingdomState.resources || {})),
+            modifiers: [...(context.kingdomState.modifiers || [])],
             currentEvent: context.kingdomState.currentEvent
         };
         

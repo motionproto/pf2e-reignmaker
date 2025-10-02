@@ -66,7 +66,7 @@ export async function createUpkeepPhaseController() {
      * Feed settlements step
      */
     async feedSettlements() {
-      if (isStepCompletedByIndex(0)) { // Step 0 = feed-settlements
+      if (await isStepCompletedByIndex(0)) { // Step 0 = feed-settlements
         return createPhaseResult(false, 'Settlements already fed this turn');
       }
 
@@ -87,7 +87,7 @@ export async function createUpkeepPhaseController() {
      * Support military step
      */
     async supportMilitary() {
-      if (isStepCompletedByIndex(1)) { // Step 1 = support-military
+      if (await isStepCompletedByIndex(1)) { // Step 1 = support-military
         return createPhaseResult(false, 'Military already supported this turn');
       }
 
@@ -108,7 +108,7 @@ export async function createUpkeepPhaseController() {
      * Process build queue step
      */
     async processBuilds() {
-      if (isStepCompletedByIndex(2)) { // Step 2 = process-builds
+      if (await isStepCompletedByIndex(2)) { // Step 2 = process-builds
         return createPhaseResult(false, 'Build queue already processed this turn');
       }
 
@@ -296,9 +296,9 @@ export async function createUpkeepPhaseController() {
         armyFoodShortage,
         settlementFoodShortage,
         stepsCompleted: {
-          feedSettlements: isStepCompletedByIndex(0), // Step 0 = feed-settlements
-          supportMilitary: isStepCompletedByIndex(1), // Step 1 = support-military
-          processBuilds: isStepCompletedByIndex(2)    // Step 2 = process-builds
+          feedSettlements: await isStepCompletedByIndex(0), // Step 0 = feed-settlements
+          supportMilitary: await isStepCompletedByIndex(1), // Step 1 = support-military
+          processBuilds: await isStepCompletedByIndex(2)    // Step 2 = process-builds
         }
       };
     }

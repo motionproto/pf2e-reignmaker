@@ -80,6 +80,7 @@ export interface KingdomData {
   size: number;
   worksiteCount: Record<string, number>;
   cachedProduction: Record<string, number>;
+  cachedProductionByHex?: Array<[any, Map<string, number>]>;
   
   // Military & Construction
   armies: Army[];
@@ -98,6 +99,7 @@ export interface KingdomData {
   
   // Simplified phase management with step arrays - single source of truth
   currentPhaseSteps: PhaseStep[];
+  phaseComplete: boolean;
   oncePerTurnActions: string[];
   
   // Player actions - simple object instead of Map
@@ -187,6 +189,7 @@ export class KingdomActor extends Actor {
       continuousEvents: [],
       modifiers: [],
       currentPhaseSteps: [],
+      phaseComplete: false,
       oncePerTurnActions: [],
       playerActions: {},
       eventDC: 15
@@ -342,6 +345,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     continuousEvents: [],
     modifiers: [],
     currentPhaseSteps: [],
+    phaseComplete: false,
     oncePerTurnActions: [],
     playerActions: {},
     eventDC: 15

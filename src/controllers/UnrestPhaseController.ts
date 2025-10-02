@@ -87,7 +87,7 @@ export async function createUnrestPhaseController() {
       }
 
       // Check if step 1 (check incidents) is already completed
-      if (isStepCompletedByIndex(1)) {
+      if (await isStepCompletedByIndex(1)) {
         console.log('🟡 [UnrestPhaseController] Incident check already completed');
         return { incidentTriggered: false };
       }

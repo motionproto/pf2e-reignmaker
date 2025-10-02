@@ -62,7 +62,7 @@ export async function createResourcePhaseController() {
      */
     async collectResources() {
       // Check if step 0 (collect-resources) is already completed
-      if (isStepCompletedByIndex(0)) {
+      if (await isStepCompletedByIndex(0)) {
         return createPhaseResult(false, 'Resources already collected this turn');
       }
 
@@ -150,7 +150,7 @@ export async function createResourcePhaseController() {
      * Get preview of what would be collected using economics service (for UI display)
      * This should match exactly what collectResources() will actually collect
      */
-    getPreviewData() {
+    async getPreviewData() {
       const kingdom = get(kingdomData);
       const hexes = kingdom.hexes || [];
       const settlements = kingdom.settlements || [];
@@ -188,7 +188,7 @@ export async function createResourcePhaseController() {
           totalCollected: result.totalCollected,
           
           // Collection status
-          isCollected: isStepCompletedByIndex(0) // Step 0 = collect-resources
+          isCollected: await isStepCompletedByIndex(0) // Step 0 = collect-resources
         };
       } catch (error) {
         console.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
@@ -202,7 +202,7 @@ export async function createResourcePhaseController() {
           unfedCount: 0,
           totalSettlements: settlements.length,
           totalCollected: new Map(),
-          isCollected: isStepCompletedByIndex(0) // Step 0 = collect-resources
+          isCollected: await isStepCompletedByIndex(0) // Step 0 = collect-resources
         };
       }
     },
@@ -210,8 +210,8 @@ export async function createResourcePhaseController() {
     /**
      * @deprecated Use getPreviewData() instead - kept for backward compatibility
      */
-    getCollectionPreview() {
-      return this.getPreviewData();
+    async getCollectionPreview() {
+      return await this.getPreviewData();
     }
   };
 }

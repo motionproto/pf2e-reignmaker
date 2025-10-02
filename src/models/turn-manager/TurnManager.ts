@@ -125,90 +125,32 @@ export class TurnManager {
     // === PHASE STEP MANAGEMENT ===
     
     /**
-     * Initialize phase steps with intelligent auto-completion
+     * Initialize phase steps - delegates to PhaseHandler
      */
     async initializePhaseSteps(steps: Array<{ name: string; completed?: 0 | 1 }>): Promise<void> {
-        const { getKingdomActor } = await import('../../stores/KingdomStore');
-        const actor = getKingdomActor();
-        if (!actor) {
-            throw new Error('No kingdom actor available');
-        }
-
-        // Set up phase steps array
-        const phaseSteps = steps.map(step => ({
-            name: step.name,
-            completed: (step.completed || 0) as 0 | 1
-        }));
-
-        await actor.setPhaseSteps(phaseSteps);
-
-        // Set step index to first incomplete step
-        const firstIncompleteIndex = phaseSteps.findIndex(s => s.completed === 0);
-        await actor.setCurrentStepIndex(firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0);
-
-        console.log(`✅ [TurnManager] Initialized ${steps.length} steps:`, 
-            steps.map(s => s.name));
+        // Use existing PhaseHandler implementation
+        const { PhaseHandler } = await import('./phase-handler');
+        await PhaseHandler.initializePhaseSteps(steps);
+        
+        console.log(`✅ [TurnManager] Delegated phase step initialization to PhaseHandler`);
     }
 
     /**
-     * Complete a step by index and handle progression logic
+     * Complete a step by index and handle progression logic - delegates to PhaseHandler
      */
     async completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }> {
-        const { getKingdomActor, kingdomData } = await import('../../stores/KingdomStore');
-        const { get } = await import('svelte/store');
-        
-        const actor = getKingdomActor();
-        if (!actor) {
-            throw new Error('No kingdom actor available');
-        }
-
-        const kingdom = get(kingdomData);
-        if (stepIndex < 0 || stepIndex >= kingdom.currentPhaseSteps.length) {
-            console.warn(`[TurnManager] Invalid step index: ${stepIndex} (array length: ${kingdom.currentPhaseSteps.length})`);
-            return { phaseComplete: false };
-        }
-
-        // Complete the step
-        if (typeof actor.completeStepByIndex !== 'function') {
-            console.error(`[TurnManager] Actor does not have completeStepByIndex method. Actor type:`, typeof actor, actor);
-            throw new Error('KingdomActor missing completeStepByIndex method');
-        }
-        await actor.completeStepByIndex(stepIndex);
-
-        // Get updated kingdom data to check completion
-        const updatedKingdom = get(kingdomData);
-        const stepName = updatedKingdom.currentPhaseSteps[stepIndex]?.name;
-        console.log(`[TurnManager] Completed step ${stepIndex}: '${stepName}'`);
-
-        // Check if all steps are completed
-        const totalSteps = updatedKingdom.currentPhaseSteps.length;
-        const completedCount = updatedKingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
-        const phaseComplete = totalSteps > 0 && completedCount === totalSteps;
-
-        if (phaseComplete) {
-            console.log(`✅ [TurnManager] All ${totalSteps} steps completed for ${updatedKingdom.currentPhase}`);
-        } else {
-            // Advance to next incomplete step
-            const nextIncompleteIndex = updatedKingdom.currentPhaseSteps.findIndex((s, i) => i > stepIndex && s.completed === 0);
-            if (nextIncompleteIndex >= 0) {
-                await actor.setCurrentStepIndex(nextIncompleteIndex);
-            }
-        }
-
-        return { phaseComplete };
+        // Use existing PhaseHandler implementation
+        const { PhaseHandler } = await import('./phase-handler');
+        return await PhaseHandler.completePhaseStepByIndex(stepIndex);
     }
 
     /**
-     * Check if a specific step is completed by index
+     * Check if a specific step is completed by index - delegates to PhaseHandler
      */
     async isStepCompletedByIndex(stepIndex: number): Promise<boolean> {
-        const { kingdomData } = await import('../../stores/KingdomStore');
-        const { get } = await import('svelte/store');
-        const kingdom = get(kingdomData);
-        if (!kingdom) return false;
-
-        const step = kingdom.currentPhaseSteps[stepIndex];
-        return step?.completed === 1 || false;
+        // Use existing PhaseHandler implementation
+        const { PhaseHandler } = await import('./phase-handler');
+        return await PhaseHandler.isStepCompletedByIndex(stepIndex);
     }
 
     /**
@@ -251,9 +193,24 @@ export class TurnManager {
         await updateKingdom(kingdom => {
             kingdom.currentPhaseSteps = [];
             kingdom.currentPhaseStepIndex = 0;
+            kingdom.phaseComplete = false;
         });
         
         console.log('[TurnManager] Reset phase steps');
+    }
+
+    /**
+     * Force reset current phase steps (for testing/debugging)
+     */
+    async forceResetCurrentPhaseSteps(): Promise<void> {
+        const { updateKingdom } = await import('../../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+            kingdom.currentPhaseSteps = [];
+            kingdom.currentPhaseStepIndex = 0;
+            kingdom.phaseComplete = false;
+        });
+        
+        console.log('[TurnManager] Force reset current phase steps for testing');
     }
     
     /**
@@ -313,13 +270,16 @@ export class TurnManager {
         
         const next = await this.getNextPhase(currentKingdom.currentPhase);
         if (next !== null) {
+            // ✅ RESET STEPS BEFORE ADVANCING - ensures each phase starts fresh
+            await this.resetPhaseSteps();
+            
             const { updateKingdom } = await import('../../stores/KingdomStore');
             await updateKingdom((kingdom) => {
                 kingdom.currentPhase = next;
             });
             
             this.onPhaseChanged?.(next);
-            console.log(`[TurnManager] Advanced to ${next}`);
+            console.log(`[TurnManager] Advanced to ${next} with fresh step state`);
         } else {
             // End of turn reached
             await this.endTurn();

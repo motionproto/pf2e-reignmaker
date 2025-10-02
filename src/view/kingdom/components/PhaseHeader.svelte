@@ -11,19 +11,16 @@
   export let isUpkeepPhase: boolean = false;
   // currentTurn is now imported from stores, remove the export
   
-  let currentPhaseComplete = false;
-  
-  // Check if the current phase is complete using currentPhaseSteps
-  $: currentPhaseComplete = $kingdomData.currentPhaseSteps?.length > 0 
-    ? $kingdomData.currentPhaseSteps.every(step => step.completed)
-    : false;
+  // Use the reactive phaseComplete property from KingdomActor
+  $: currentPhaseComplete = $kingdomData.phaseComplete || false;
 
   // Debug phase completion detection
   $: console.log('🔍 [PhaseHeader DEBUG] Phase completion check:', {
     currentPhase: $currentPhase,
     totalSteps: $kingdomData.currentPhaseSteps?.length || 0,
     completedSteps: $kingdomData.currentPhaseSteps?.filter(s => s.completed).length || 0,
-    allStepsCompleted: currentPhaseComplete,
+    phaseComplete: $kingdomData.phaseComplete,
+    currentPhaseComplete,
     buttonDisabled: !currentPhaseComplete
   });
   

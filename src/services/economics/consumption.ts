@@ -5,7 +5,7 @@
  */
 
 import type { Settlement, Army } from '../../actors/KingdomActor';
-import { SettlementTierConfig } from '../../models/KingdomState';
+import { SettlementTierConfig } from '../../models/Settlement';
 import type { ConsumptionResult, EconomicModifier } from './types';
 
 /**

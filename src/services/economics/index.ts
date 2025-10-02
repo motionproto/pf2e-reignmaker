@@ -158,6 +158,18 @@ export class EconomicsService {
       modifiers?: EconomicModifier[];
     }
   ): ResourceCollectionResult {
+    console.log('🏭 [EconomicsService] Collecting turn resources with state:', {
+      hexCount: state.hexes.length,
+      settlementCount: state.settlements.length,
+      cachedProductionSize: state.cachedProduction.size,
+      cachedProduction: Object.fromEntries(state.cachedProduction),
+      settlements: state.settlements.map(s => ({ 
+        name: s.name, 
+        tier: s.tier, 
+        wasFedLastTurn: s.wasFedLastTurn ?? 'undefined' 
+      }))
+    });
+    
     // Use cached production from KingdomState (calculated once when hexes change)
     const hexProduction = new Map(state.cachedProduction);
     
@@ -165,6 +177,14 @@ export class EconomicsService {
     const fedSettlements = state.settlements.filter(s => s.wasFedLastTurn);
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
     const goldIncome = this.calculateSettlementGoldIncome(state.settlements);
+    
+    console.log('💰 [EconomicsService] Settlement analysis:', {
+      totalSettlements: state.settlements.length,
+      fedSettlements: fedSettlements.length,
+      unfedSettlements: unfedSettlements.length,
+      goldIncome,
+      fedSettlementDetails: fedSettlements.map(s => ({ name: s.name, tier: s.tier }))
+    });
     
     // Create separate collections for clarity
     const territoryResources = new Map(hexProduction);
@@ -183,6 +203,13 @@ export class EconomicsService {
       terrain: hex.terrain,
       production: new Map(production)
     }));
+    
+    console.log('📊 [EconomicsService] Final collection result:', {
+      territoryResources: Object.fromEntries(territoryResources),
+      settlementGold,
+      totalCollected: Object.fromEntries(totalCollected),
+      productionByHexCount: productionByHex.length
+    });
     
     return {
       hexProduction,

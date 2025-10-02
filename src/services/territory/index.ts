@@ -12,7 +12,7 @@
 import { get } from 'svelte/store';
 import { kingdomData, updateKingdom } from '../../stores/KingdomStore';
 import { Hex, Worksite, WorksiteType } from '../../models/Hex';
-import type { Settlement, SettlementTier } from '../../models/KingdomState';
+import type { Settlement, SettlementTier } from '../../models/Settlement';
 import { createSettlement } from '../../models/Settlement';
 import type { HexFeature, HexState } from '../../api/kingmaker';
 
@@ -116,6 +116,17 @@ export class TerritoryService {
                 // Check for special commodity trait
                 const hasSpecialTrait = this.hasMatchingCommodity(hexState, worksite);
                 
+                // Log commodity detection for debugging
+                if (worksite) {
+                    console.log(`Hex ${dotNotationId} worksite analysis:`, {
+                        worksiteType: worksite.type,
+                        commodity: hexState.commodity || 'none',
+                        hasMatchingCommodity: hasSpecialTrait,
+                        expectedProduction: worksite.getBaseProduction(terrain),
+                        bonusApplied: hasSpecialTrait ? '+1' : 'none'
+                    });
+                }
+                
                 // Create hex
                 const hex = new Hex(
                     dotNotationId,
@@ -193,10 +204,37 @@ export class TerritoryService {
             });
             state.worksiteCount = worksiteCount;
             
+            // Calculate and cache total production from all hexes
+            const cachedProduction: Record<string, number> = {};
+            const cachedProductionByHex: Array<[any, Map<string, number>]> = [];
+            
+            for (const hex of hexes) {
+                const production = hex.getProduction();
+                
+                // Add to total cached production
+                production.forEach((amount, resource) => {
+                    cachedProduction[resource] = (cachedProduction[resource] || 0) + amount;
+                });
+                
+                // Store per-hex production for detailed breakdown
+                if (production.size > 0) {
+                    cachedProductionByHex.push([{
+                        id: hex.id,
+                        name: hex.name || `Hex ${hex.id}`,
+                        terrain: hex.terrain
+                    }, production]);
+                }
+            }
+            
+            state.cachedProduction = cachedProduction;
+            state.cachedProductionByHex = cachedProductionByHex;
+            
             console.log('[Territory Service] Updated kingdom store with:', {
                 hexes: state.hexes.length,
                 settlements: state.settlements.length,
-                worksiteCount: state.worksiteCount
+                worksiteCount: state.worksiteCount,
+                cachedProduction: state.cachedProduction,
+                productionByHexCount: state.cachedProductionByHex.length
             });
             
             return state;
@@ -416,18 +454,18 @@ export class TerritoryService {
      * Check if hex has commodity matching its worksite production
      */
     private hasMatchingCommodity(hexState: HexState, worksite: Worksite | null): boolean {
-        if (!worksite || !hexState.commodity) return false;
+        if (!worksite || !hexState.commodity || hexState.commodity.trim() === '') return false;
         
         // Check worksite-commodity matches
         switch (worksite.type) {
             case WorksiteType.FARMSTEAD: 
-                return hexState.commodity === 'food';
+                return hexState.commodity.toLowerCase() === 'food';
             case WorksiteType.LOGGING_CAMP: 
-                return hexState.commodity === 'lumber';
+                return hexState.commodity.toLowerCase() === 'lumber';
             case WorksiteType.QUARRY: 
-                return hexState.commodity === 'stone';
+                return hexState.commodity.toLowerCase() === 'stone';
             case WorksiteType.MINE: 
-                return hexState.commodity === 'ore';
+                return hexState.commodity.toLowerCase() === 'ore';
             default: 
                 return false;
         }
@@ -513,8 +551,22 @@ export class TerritoryService {
      * Get territory metrics for display
      */
     getTerritoryMetrics(hexes?: Hex[]): TerritoryMetrics {
-        // Use provided hexes or get from kingdom store
-        const territory = hexes || get(kingdomData).hexes || [];
+        // Use provided hexes or reconstruct from kingdom store
+        let territory: Hex[];
+        if (hexes) {
+            territory = hexes;
+        } else {
+            const kingdomState = get(kingdomData);
+            territory = (kingdomState.hexes || []).map(hexData => 
+                new Hex(
+                    hexData.id,
+                    hexData.terrain,
+                    hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
+                    hexData.hasSpecialTrait || false,
+                    hexData.name || null
+                )
+            );
+        }
         
         // Count hexes by terrain
         const hexesByTerrain = new Map<string, number>();
@@ -533,7 +585,7 @@ export class TerritoryService {
         const totalProduction = new Map<string, number>();
         for (const hex of territory) {
             const production = hex.getProduction();
-            production.forEach((amount, resource) => {
+            production.forEach((amount: number, resource: string) => {
                 totalProduction.set(resource, (totalProduction.get(resource) || 0) + amount);
             });
         }
@@ -552,7 +604,16 @@ export class TerritoryService {
      */
     getTerritoryInfo(hexId: string): Hex | null {
         const state = get(kingdomData);
-        return state.hexes?.find((h: any) => h.id === hexId) || null;
+        const hexData = state.hexes?.find((h: any) => h.id === hexId);
+        if (!hexData) return null;
+        
+        return new Hex(
+            hexData.id,
+            hexData.terrain,
+            hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
+            hexData.hasSpecialTrait || false,
+            hexData.name || null
+        );
     }
     
     /**

@@ -28,6 +28,11 @@ export class PhaseHandler {
       const firstIncompleteIndex = kingdom.currentPhaseSteps.findIndex(s => s.completed === 0);
       kingdom.currentPhaseStepIndex = firstIncompleteIndex >= 0 ? firstIncompleteIndex : 0;
       kingdom.currentStepName = kingdom.currentPhaseSteps[kingdom.currentPhaseStepIndex]?.name || 'Unknown Step';
+      
+      // Set initial phaseComplete state based on current completion
+      const totalSteps = kingdom.currentPhaseSteps.length;
+      const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+      kingdom.phaseComplete = totalSteps > 0 && completedCount === totalSteps;
     });
 
     console.log(`✅ [PhaseHandler] Initialized ${steps.length} steps:`, 
@@ -82,10 +87,15 @@ export class PhaseHandler {
     const completedCount = updatedKingdom?.currentPhaseSteps.filter(s => s.completed === 1).length || 0;
     const phaseComplete = totalSteps > 0 && completedCount === totalSteps;
 
+    // Update the phaseComplete property in KingdomActor
+    await updateKingdom(kingdom => {
+      kingdom.phaseComplete = phaseComplete;
+    });
+
     if (phaseComplete) {
-      console.log(`✅ [PhaseHandler] All ${totalSteps} steps completed for phase`);
+      console.log(`✅ [PhaseHandler] All ${totalSteps} steps completed for phase - phaseComplete set to true`);
     } else {
-      console.log(`[PhaseHandler] Progress: ${completedCount}/${totalSteps} steps complete`);
+      console.log(`[PhaseHandler] Progress: ${completedCount}/${totalSteps} steps complete - phaseComplete set to false`);
     }
 
     return { success: true, phaseComplete };

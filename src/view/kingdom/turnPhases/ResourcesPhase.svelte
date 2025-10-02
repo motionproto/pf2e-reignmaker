@@ -70,8 +70,8 @@
       ['gold', $kingdomData.resources?.gold || 0]
    ]);
    
-   // Get preview data from controller (no business logic in component)
-   $: previewData = resourceController?.getPreviewData() || null;
+   // Preview data state - now handled with async calls
+   let previewData: any = null;
    
    $: totalProduction = previewData?.territoryProduction || new Map();
    $: worksiteDetails = previewData?.worksiteDetails || [];
@@ -79,7 +79,24 @@
    $: fedSettlementsCount = previewData?.fedCount || 0;
    $: unfedSettlementsCount = previewData?.unfedCount || 0;
    $: settlementCount = previewData?.totalSettlements || 0;
-   $: collectCompleted = previewData?.isCollected || isPhaseStepCompleted('collect-resources');
+   $: collectCompleted = previewData?.isCollected || isPhaseStepCompleted(0);
+   
+   // Function to update preview data
+   async function updatePreviewData() {
+      if (resourceController) {
+         try {
+            previewData = await resourceController.getPreviewData();
+         } catch (error) {
+            console.error('❌ [ResourcesPhase] Failed to get preview data:', error);
+            previewData = null;
+         }
+      }
+   }
+   
+   // React to kingdom data changes to update preview
+   $: if (resourceController && $kingdomData) {
+      updatePreviewData();
+   }
    
    // Initialize controller when component mounts
    let resourceController: any;
@@ -95,6 +112,8 @@
          const { createResourcePhaseController } = await import('../../../controllers/ResourcePhaseController');
          resourceController = await createResourcePhaseController();
          await resourceController.startPhase();
+         // Load initial preview data
+         await updatePreviewData();
       } catch (error) {
          console.error('❌ [ResourcesPhase] Failed to initialize:', error);
       }
@@ -228,22 +247,9 @@
                </div>
                
                {#if worksiteDetails.length > 0}
-                  <details class="worksite-details">
-                     <summary>View Worksite Details</summary>
-                     <ul class="worksite-list">
-                        {#each worksiteDetails as worksite}
-                           <li class="worksite-item">
-                              <span>{worksite.hexName} ({worksite.terrain})</span>
-                              <span class="worksite-production">
-                                 {#each Array.from(worksite.production?.entries() || []) as [resource, amount], i}
-                                    {#if i > 0}, {/if}
-                                    {amount} {resource.charAt(0).toUpperCase() + resource.slice(1)}
-                                 {/each}
-                              </span>
-                           </li>
-                        {/each}
-                     </ul>
-                  </details>
+                  <div class="worksite-summary">
+                     <span class="worksite-count">{worksiteDetails.length} worksite{worksiteDetails.length !== 1 ? 's' : ''} producing resources</span>
+                  </div>
                {/if}
             </div>
          {:else}
@@ -506,38 +512,13 @@
       }
    }
    
-   .worksite-details {
+   .worksite-summary {
       margin-top: 10px;
       
-      summary {
-         cursor: pointer;
-         color: var(--text-tertiary);
-         font-size: var(--font-lg);
-         
-         &:hover {
-            color: var(--text-secondary);
-         }
-      }
-   }
-   
-   .worksite-list {
-      margin: 10px 0 0 0;
-      padding: 0;
-      list-style: none;
-   }
-   
-   .worksite-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-sm);
-      margin-bottom: 5px;
-      font-size: var(--font-m);
-      color: var(--text-secondary);
-      
-      .worksite-production {
-         color: var(--text-primary);
+      .worksite-count {
+         color: var(--text-secondary);
+         font-size: var(--font-sm);
+         font-style: italic;
       }
    }
    
