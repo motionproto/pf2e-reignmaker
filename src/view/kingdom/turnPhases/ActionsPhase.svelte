@@ -263,6 +263,10 @@
     // Initialize controller
     controller = await createActionPhaseController();
     
+    // Initialize the phase (this auto-completes immediately to allow players to skip actions)
+    await controller.startPhase();
+    console.log('[ActionsPhase] Phase initialized with controller');
+    
     // Store current user ID
     const game = (window as any).game;
     currentUserId = game?.user?.id || null;

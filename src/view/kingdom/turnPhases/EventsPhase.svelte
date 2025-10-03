@@ -44,6 +44,7 @@
    let character: any = null;
    let isIgnoringEvent = false;
    let rolledAgainstDC: number = 0; // Store the DC that was actually rolled against
+   let outcomeApplied = false; // Track when outcome has been applied
    let pendingEventOutcome: {
       event: EventData;
       outcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
@@ -65,17 +66,16 @@
          // Initialize the controller - no need for eventService parameter
          eventPhaseController = await createEventPhaseController(null);
          
+         // Initialize the phase (this sets up currentPhaseSteps!)
+         await eventPhaseController.startPhase();
+         console.log('[EventsPhase] Phase initialized with controller');
+         
          // Check if an event was already rolled by another client
          if ($kingdomData.currentEventId) {
             console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
             const event = await EventProvider.getEventById($kingdomData.currentEventId);
             if (event) {
                currentEvent = event;
-         // Also mark that we've checked for events so the button shows correctly
-         if (!eventChecked) {
-            const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
-            await PhaseHandler.completePhaseStepByIndex(0); // Step 0 = event-check
-         }
             }
          } else if ($kingdomData.currentEventId === null && eventChecked) {
             // Another client rolled and got no event - we should show that
@@ -180,31 +180,16 @@
       // Animate the roll
       setTimeout(async () => {
          // Use the controller to perform the event check
+         // The controller handles ALL kingdom updates including step completion
          const checkResult = await eventPhaseController.performEventCheck(currentDC);
          
-         // Update kingdom state with roll results and new DC for multiplayer sync
-         await updateKingdom(kingdom => {
-            kingdom.eventDC = checkResult.newDC;
-            kingdom.eventStabilityRoll = checkResult.roll;
-            kingdom.eventRollDC = currentDC;
-            kingdom.eventTriggered = checkResult.triggered;
-            
-            if (checkResult.event) {
-               kingdom.currentEventId = checkResult.event.id;
-            } else {
-               kingdom.currentEventId = null;
-            }
-         });
-         
+         // Only update local UI state - kingdom state is managed by controller
          if (checkResult.event) {
             currentEvent = checkResult.event;
          }
          
-         // Always mark step as complete after rolling (whether event or not)
-         if (!eventChecked) {
-            const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
-            await PhaseHandler.completePhaseStepByIndex(0); // Step 0 = event-check
-         }
+         // Store the DC that was rolled against for display
+         rolledAgainstDC = currentDC;
          
          isRolling = false;
       }, 1000);
@@ -289,8 +274,12 @@
    
    // Apply the pending changes when user clicks OK
    async function completeEventResolution() {
+      console.log('[EventsPhase] completeEventResolution() called');
+      
       // Apply the pending changes if they exist
       if (pendingEventOutcome && eventPhaseController) {
+         console.log('[EventsPhase] Applying pending outcome:', pendingEventOutcome.outcome);
+         
          const result = await eventPhaseController.applyEventOutcome(
             pendingEventOutcome.event,
             pendingEventOutcome.outcome,
@@ -298,46 +287,32 @@
             $kingdomData.currentTurn || 1
          );
          
+         console.log('[EventsPhase] applyEventOutcome result:', result);
+         
          if (result.success) {
             // Kingdom state automatically updated via Foundry actor
-            
-            // Mark phase as complete after successfully applying changes
-            if (!eventResolved) {
-               const { PhaseHandler } = await import('../../../models/turn-manager/phase-handler');
-               await PhaseHandler.completePhaseStepByIndex(1); // Step 1 = resolve-event
-            }
+            // Step completion is handled by the controller in applyEventOutcome
             
             // Handle unresolved event if any
             if (result.unresolvedEvent) {
                unresolvedEvent = result.unresolvedEvent;
             }
+            
+            // Keep the outcome visible but mark it as applied
+            outcomeApplied = true;
+            pendingEventOutcome = null;
+            
+            console.log('✅ [EventsPhase] Event resolution applied successfully');
+            console.log('[EventsPhase] Current step completion:', {
+               step0: $kingdomData.currentPhaseSteps[0]?.completed,
+               step1: $kingdomData.currentPhaseSteps[1]?.completed,
+               phaseComplete: $kingdomData.phaseComplete
+            });
          } else {
-            console.error('Failed to apply event outcome:', result.error);
+            console.error('[EventsPhase] Failed to apply event outcome:', result.error);
          }
-      }
-      
-      // Reset UI state
-      currentEvent = null;
-      selectedSkill = '';
-      showResolutionResult = false;
-      resolutionOutcome = null;
-      outcomeMessage = '';
-      currentEffects = null;
-      unresolvedEvent = null;
-      resolvedActor = '';
-      character = null;
-      pendingEventOutcome = null;
-      
-      // Clear event roll state for next turn using new updateKingdom function
-      await updateKingdom(kingdom => {
-         kingdom.eventStabilityRoll = null;
-         kingdom.eventRollDC = null;
-         kingdom.eventTriggered = null;
-      });
-      
-      // Reset controller state for next phase
-      if (eventPhaseController) {
-         eventPhaseController.resetState();
+      } else {
+         console.warn('[EventsPhase] No pending outcome or controller not available');
       }
    }
    
@@ -459,7 +434,9 @@
                      skillName={selectedSkill}
                      effect={outcomeMessage}
                      stateChanges={currentEffects}
-                     showFameReroll={false}
+                     showFameReroll={!outcomeApplied}
+                     showCancel={!outcomeApplied}
+                     primaryButtonLabel={outcomeApplied ? "" : "Apply"}
                      on:primary={completeEventResolution}
                   />
                </div>

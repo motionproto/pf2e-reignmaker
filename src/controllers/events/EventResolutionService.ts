@@ -92,8 +92,15 @@ export class EventResolutionService {
             : new Map<string, number>();
         
         // Handle unresolved events (create continuous modifier)
-        if ((outcome === 'failure' || outcome === 'criticalFailure') && event.ifUnresolved) {
-            unresolvedModifier = this.createUnresolvedModifier(event, currentTurn);
+        // Only create modifier if event has proper ifUnresolved configuration with continuous type
+        if ((outcome === 'failure' || outcome === 'criticalFailure') && 
+            event.ifUnresolved?.type === 'continuous' && 
+            event.ifUnresolved.continuous?.modifierTemplate) {
+            try {
+                unresolvedModifier = this.createUnresolvedModifier(event, currentTurn);
+            } catch (error) {
+                console.warn('[EventResolutionService] Could not create unresolved modifier:', error);
+            }
         }
         
         // Add outcome message

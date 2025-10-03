@@ -6,9 +6,8 @@
  */
 
 import { EventResolutionService } from './events/EventResolutionService';
-import type { EventData } from '../services/domain/events/EventService';
+import type { EventData } from './events/event-loader';
 import type { KingdomData } from '../actors/KingdomActor';
-import { stateChangeFormatter } from '../services/formatters/StateChangeFormatter';
 import { updateKingdom } from '../stores/KingdomStore';
 import { EventProvider } from './events/EventProvider';
 import { createModifierService } from '../services/ModifierService';
@@ -42,10 +41,11 @@ export interface IncidentResolution {
     message: string;
 }
 
-// Define steps for Events Phase - FIXED structure
+// Define steps for Events Phase - 3-step structure for clarity
 const EVENTS_PHASE_STEPS = [
-  { name: 'Event Check' },     // Step 0 - MANUAL (user rolls)
-  { name: 'Resolve Event' } // Step 1 - CONDITIONAL (auto if no event, manual if event)
+  { name: 'Event Roll' },        // Step 0 - MANUAL (user rolls)
+  { name: 'Resolve Event' },     // Step 1 - CONDITIONAL (auto if no event, manual if event)
+  { name: 'Apply Modifiers' }    // Step 2 - CONDITIONAL (auto-complete based on outcome)
 ];
 
 export async function createEventPhaseController(eventService?: any) {
@@ -68,14 +68,15 @@ export async function createEventPhaseController(eventService?: any) {
             reportPhaseStart('EventPhaseController');
             
             try {
-                // Initialize phase with fixed 2-step structure
+                // Initialize phase with 3-step structure
                 await initializePhaseSteps(EVENTS_PHASE_STEPS);
                 
                 // Initialize the phase state
                 state = createInitialState();
                 
-                // Step 0: Perform Event Check - MANUAL (never auto-complete)
-                // Step 1: Resolve Triggered Event - MANUAL (always requires resolution if event exists)
+                // Step 0: Event Roll - MANUAL (never auto-complete)
+                // Step 1: Resolve Event - CONDITIONAL (auto if no event, manual if event exists)
+                // Step 2: Apply Modifiers - CONDITIONAL (auto-complete when steps 0 & 1 complete)
                 
                 // Check if there's a pre-existing event that needs resolution
                 const { getKingdomActor } = await import('../stores/KingdomStore');
@@ -84,14 +85,13 @@ export async function createEventPhaseController(eventService?: any) {
                 const hasActiveEvent = kingdom?.currentEventId !== null;
                 
                 if (hasActiveEvent) {
-                    console.log('⚠️ [EventPhaseController] Pre-existing event requires resolution in step 2');
+                    console.log('⚠️ [EventPhaseController] Pre-existing event requires resolution');
                 } else {
-                    // No event to resolve - auto-complete step 1
-                    await completePhaseStepByIndex(1);
-                    console.log('✅ [EventPhaseController] Event resolution auto-completed (no event to resolve)');
+                    console.log('🟡 [EventPhaseController] Event roll required (step 0)');
                 }
                 
-                console.log('✅ [EventPhaseController] Event check requires user action');
+                // Don't auto-complete any steps at initialization
+                // All steps start as incomplete and are completed by performEventCheck() or applyEventOutcome()
                 
                 reportPhaseComplete('EventPhaseController');
                 return createPhaseResult(true);
@@ -141,46 +141,44 @@ export async function createEventPhaseController(eventService?: any) {
                     state.currentEvent = event;
                     console.log(`✨ [EventPhaseController] Event triggered: "${event.name}" (${event.id})`);
                     
-                    // Store event in kingdom state and mark step 1 as incomplete
+                    // Store event in kingdom state
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
                     if (actor) {
                         await actor.updateKingdom((kingdom) => {
-                            // Store event in kingdom state
                             kingdom.currentEventId = event!.id;
                             kingdom.eventDC = newDC;
-                            
-                            // Mark step 1 (resolve-event) as incomplete since event is triggered
-                            if (kingdom.currentPhaseSteps[1]) {
-                                kingdom.currentPhaseSteps[1].completed = 0;
-                            }
                         });
                     }
+                    
+                    // Step 1 (Resolve Event) remains INCOMPLETE - player must resolve
+                    // Step 2 (Apply Modifiers) remains INCOMPLETE - will complete with step 1
+                    console.log('⚠️ [EventPhaseController] Event triggered - step 1 requires resolution');
                 }
             } else {
                 // No event - reduce DC by 5 (minimum 6)
                 newDC = Math.max(6, currentDC - 5);
                 console.log(`📉 [EventPhaseController] No event, DC reduced from ${currentDC} to ${newDC}`);
                 
-                // Update kingdom state with new DC and auto-complete step 1
+                // Update kingdom state with new DC
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
                     await actor.updateKingdom((kingdom) => {
                         kingdom.eventDC = newDC;
                         kingdom.currentEventId = null;
-                        
-                        // Auto-complete step 1 (resolve-event) since no event
-                        if (kingdom.currentPhaseSteps[1]) {
-                            kingdom.currentPhaseSteps[1].completed = 1;
-                        }
                     });
                 }
+                
+                // Auto-complete steps 1 & 2 since no event to resolve or modifiers to apply
+                await completePhaseStepByIndex(1);
+                await completePhaseStepByIndex(2);
+                console.log('✅ [EventPhaseController] No event - steps 1 & 2 auto-completed');
             }
             
             state.eventDC = newDC;
             
-            // Complete step 0 (event-check)
+            // Complete step 0 (event-roll) - always completes after roll
             await completePhaseStepByIndex(0);
             
             return {
@@ -202,7 +200,6 @@ export async function createEventPhaseController(eventService?: any) {
         ): Promise<{
             success: boolean;
             effects: Map<string, any>;
-            formattedEffects: any[];
             unresolvedEvent: EventData | null;
             error?: string;
         }> {
@@ -212,10 +209,11 @@ export async function createEventPhaseController(eventService?: any) {
                 // Apply the event outcome using the service
                 const application = eventResolutionService.applyEventOutcome(
                     event,
-                    outcome
+                    outcome,
+                    currentTurn
                 );
                 
-                // Apply resource changes directly to KingdomActor
+                // Apply ALL changes in a single updateKingdom call to avoid clearing steps array
                 const appliedChanges = new Map<string, any>();
                 
                 await updateKingdom(kingdom => {
@@ -237,39 +235,39 @@ export async function createEventPhaseController(eventService?: any) {
                         }
                     }
                     
-                    // Clear current event
-                    kingdom.currentEventId = null;
-                });
-                
-                // Add unresolved modifier if applicable
-                if (application.unresolvedModifier) {
-                    await updateKingdom(kingdom => {
+                    // Add unresolved modifier if applicable (in same update)
+                    if (application.unresolvedModifier) {
                         if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
                         kingdom.activeModifiers.push(application.unresolvedModifier);
-                    });
-                    appliedChanges.set('modifier', application.unresolvedModifier);
-                }
+                        appliedChanges.set('modifier', application.unresolvedModifier);
+                    }
+                    
+                    // Clear current event (in same update)
+                    kingdom.currentEventId = null;
+                });
                 
                 state.resolutionOutcome = outcome;
                 state.appliedEffects = appliedChanges;
                 
-                // Handle event resolution and modifiers
-                await this.handleEventResolution(event, outcome, currentTurn);
-                
-                // Format effects for display
-                const formattedEffects = stateChangeFormatter.formatStateChanges(
-                    state.appliedEffects
-                );
-                
-                // Complete step 1 (resolve-event) if it exists  
-                if (await isStepCompletedByIndex(0) && !(await isStepCompletedByIndex(1))) {
-                    await completePhaseStepByIndex(1);
+                // Handle ongoing events list (this doesn't call updateKingdom)
+                if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
+                    await this.addToOngoingEvents(event.id);
+                    state.unresolvedEvent = event;
+                } else {
+                    const effectOutcome = event.effects?.[outcome];
+                    if (effectOutcome?.msg && effectOutcome.msg.includes('<EVENT ENDS>')) {
+                        await this.removeFromOngoingEvents(event.id);
+                    }
                 }
+                
+                // Complete steps 1 & 2 (resolve-event & apply-modifiers)
+                await completePhaseStepByIndex(1);
+                await completePhaseStepByIndex(2);
+                console.log('✅ [EventPhaseController] Event resolution & modifier application completed');
                 
                 return {
                     success: true,
                     effects: state.appliedEffects,
-                    formattedEffects,
                     unresolvedEvent: state.unresolvedEvent
                 };
             } catch (error) {
@@ -279,7 +277,6 @@ export async function createEventPhaseController(eventService?: any) {
                 return {
                     success: false,
                     effects: new Map(),
-                    formattedEffects: [],
                     unresolvedEvent: null,
                     error: errorMessage
                 };
@@ -302,19 +299,16 @@ export async function createEventPhaseController(eventService?: any) {
             // Create ongoing modifier if event has ifUnresolved configuration
             let modifier: ActiveModifier | undefined;
             if (event.ifUnresolved) {
-                // Cast EventData to KingdomEvent format (add tier from ifUnresolved)
-                const kingdomEvent = {
-                    ...event,
-                    tier: event.ifUnresolved.tier || 1
-                } as any;
-                
-                modifier = modifierService.createFromUnresolvedEvent(kingdomEvent, currentTurn);
-                await updateKingdom(kingdom => {
-                    if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                    kingdom.activeModifiers.push(modifier!);
-                });
-                await this.addToOngoingEvents(event.id);
-                console.log(`📋 [EventPhaseController] Created ongoing modifier for ignored event: ${modifier.name}`);
+                // Event already has tier at the top level, use it directly
+                modifier = modifierService.createFromUnresolvedEvent(event as any, currentTurn);
+                if (modifier) {
+                    await updateKingdom(kingdom => {
+                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                        kingdom.activeModifiers.push(modifier!);
+                    });
+                    await this.addToOngoingEvents(event.id);
+                    console.log(`📋 [EventPhaseController] Created ongoing modifier for ignored event: ${modifier.name}`);
+                }
             }
             
             // Clear current event
@@ -336,49 +330,6 @@ export async function createEventPhaseController(eventService?: any) {
             };
         },
 
-        /**
-         * Handle event resolution logic (check for continuous events, create modifiers)
-         */
-        async handleEventResolution(
-            event: EventData,
-            outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-            currentTurn: number
-        ): Promise<void> {
-            // Check if this is a continuous event that should become a modifier
-            if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
-                // Cast EventData to KingdomEvent format (add tier from event)
-                const kingdomEvent = {
-                    ...event,
-                    tier: 1  // Default tier for events
-                } as any;
-                
-                const modifier = modifierService.createFromUnresolvedEvent(kingdomEvent, currentTurn);
-                await updateKingdom(kingdom => {
-                    if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                    kingdom.activeModifiers.push(modifier);
-                });
-                await this.addToOngoingEvents(event.id);
-                state.unresolvedEvent = event;
-                console.log(`📋 [EventPhaseController] Event failed - created ongoing modifier: ${modifier.name}`);
-            } else {
-                // Check if continuous event ends based on outcome message
-                const effectOutcome = event.effects?.[outcome];
-                if (effectOutcome?.msg && effectOutcome.msg.includes('<EVENT ENDS>')) {
-                    await this.removeFromOngoingEvents(event.id);
-                    console.log(`✅ [EventPhaseController] Continuous event ended: ${event.name}`);
-                }
-            }
-            
-            // Clear current event from state
-            state.currentEvent = null;
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (actor) {
-                await actor.updateKingdom((kingdom) => {
-                    kingdom.currentEventId = null;
-                });
-            }
-        },
 
 
         /**
@@ -448,8 +399,8 @@ export async function createEventPhaseController(eventService?: any) {
         /**
          * Get the DC for resolving an event
          */
-        getEventResolutionDC(event: EventData): number {
-            return eventResolutionService.getResolutionDC(event);
+        getEventResolutionDC(kingdomLevel: number): number {
+            return eventResolutionService.getResolutionDC(kingdomLevel);
         },
         
         /**

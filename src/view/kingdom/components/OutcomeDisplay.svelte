@@ -205,40 +205,44 @@
       {/if}
    </div>
    
-   <div class="resolution-actions">
-      {#if showCancel}
-         <Button
-            variant="outline"
-            on:click={handleCancel}
-            icon="fas fa-times"
-            iconPosition="left"
-         >
-            Cancel
-         </Button>
-      {/if}
-      <div class="resolution-actions-main">
-         {#if showFameReroll}
+   {#if showCancel || showFameReroll || primaryButtonLabel}
+      <div class="resolution-actions">
+         {#if showCancel}
             <Button
-               variant="secondary"
-               disabled={currentFame === 0}
-               on:click={handleReroll}
-               icon="fas fa-star"
+               variant="outline"
+               on:click={handleCancel}
+               icon="fas fa-times"
                iconPosition="left"
             >
-               Reroll with Fame
-               <span class="fame-count">({currentFame} left)</span>
+               Cancel
             </Button>
          {/if}
-         <Button
-            variant="secondary"
-            on:click={handlePrimary}
-            icon="fas fa-check"
-            iconPosition="left"
-         >
-            {primaryButtonLabel}
-         </Button>
+         <div class="resolution-actions-main">
+            {#if showFameReroll}
+               <Button
+                  variant="secondary"
+                  disabled={currentFame === 0}
+                  on:click={handleReroll}
+                  icon="fas fa-star"
+                  iconPosition="left"
+               >
+                  Reroll with Fame
+                  <span class="fame-count">({currentFame} left)</span>
+               </Button>
+            {/if}
+            {#if primaryButtonLabel}
+               <Button
+                  variant="secondary"
+                  on:click={handlePrimary}
+                  icon="fas fa-check"
+                  iconPosition="left"
+               >
+                  {primaryButtonLabel}
+               </Button>
+            {/if}
+         </div>
       </div>
-   </div>
+   {/if}
 </div>
 
 <style lang="scss">

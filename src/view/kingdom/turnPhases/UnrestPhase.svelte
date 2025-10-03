@@ -22,6 +22,9 @@
    let rollActor: string = '';
    let rollEffect: string = '';
    let rollStateChanges: any = {};
+   let incidentCheckRoll: number = 0;
+   let incidentCheckDC: number = 0;
+   let incidentCheckChance: number = 0;
    
    // Reactive UI state using new index-based system
    $: stepComplete = $kingdomData.currentPhaseSteps?.[1]?.completed === 1; // Step 1 = incident check
@@ -70,29 +73,16 @@
    
    // Initialize phase steps when component mounts
    onMount(async () => {
-      console.log('🟡 [UnrestPhase] Component mounted, checking phase state...');
-      console.log('🔍 [UnrestPhase] Current phase:', $kingdomData.currentPhase);
-      console.log('🔍 [UnrestPhase] Current phase steps:', $kingdomData.currentPhaseSteps);
-      console.log('🔍 [UnrestPhase] TurnPhase.UNREST value:', TurnPhase.UNREST);
+      console.log('🟡 [UnrestPhase] Component mounted, initializing phase...');
       
-      // Check if we're in the correct phase and force-initialize with correct format
-      if ($kingdomData.currentPhase === TurnPhase.UNREST) {
-        const currentSteps = $kingdomData.currentPhaseSteps || [];
-        
-        console.log('🟡 [UnrestPhase] Force-initializing phase steps (removing any old format)...');
-        console.log('🔍 [UnrestPhase] Clearing old steps:', currentSteps);
-        
-        // Always reinitialize to ensure clean, correct format
-        const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-        const controller = await createUnrestPhaseController();
-        await controller.startPhase();
-        console.log('✅ [UnrestPhase] Phase initialization complete with fresh format');
-      } else {
-        console.log('🟡 [UnrestPhase] Not in UNREST phase, skipping initialization');
-      }
+      // Initialize the phase (this sets up currentPhaseSteps!)
+      const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+      const controller = await createUnrestPhaseController();
+      await controller.startPhase();
+      console.log('✅ [UnrestPhase] Phase initialized with controller');
       
       // Component mounted - incident checks are manual
-      console.log('🟡 [UnrestPhase] Component mounted - incident checks are manual');
+      console.log('🟡 [UnrestPhase] Component ready - incident checks are manual');
    });
    
    // Helper functions removed - now using UnrestIncidentProvider
@@ -129,6 +119,11 @@
          
          console.log('🎲 [UnrestPhase] Incident check result:', result);
          
+         // Store roll results for display
+         incidentCheckRoll = result.roll || 0;
+         incidentCheckDC = result.chance || 0;
+         incidentCheckChance = result.chance || 0;
+         
          // Force trigger reactivity by setting to false first, then true
          showIncidentResult = false;
          await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure reactivity
@@ -138,15 +133,7 @@
             console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
          } else {
             console.log('✅ [UnrestPhase] No incident occurred');
-            
-            // Make sure no incident is set
-            const { getKingdomActor } = await import('../../../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (actor) {
-               await actor.updateKingdom((kingdom) => {
-                  kingdom.currentIncidentId = null;
-               });
-            }
+            // Controller already cleared the incident ID (no need for component to do it)
          }
          
          // Now show the result section
@@ -203,9 +190,9 @@
             currentIncident.name,
             currentIncident.id,
             {
-               successEffect: currentIncident.successEffect,
-               failureEffect: currentIncident.failureEffect,
-               criticalFailureEffect: currentIncident.criticalFailureEffect
+               successEffect: currentIncident.effects?.success?.msg || 'Success',
+               failureEffect: currentIncident.effects?.failure?.msg || 'Failure',
+               criticalFailureEffect: currentIncident.effects?.criticalFailure?.msg || 'Critical Failure'
             }
          );
          
@@ -240,13 +227,13 @@
                rollEffect = 'Critical Success! The incident is resolved favorably.';
                break;
             case 'success':
-               rollEffect = currentIncident.successEffect;
+               rollEffect = currentIncident.effects?.success?.msg || 'Success';
                break;
             case 'failure':
-               rollEffect = currentIncident.failureEffect;
+               rollEffect = currentIncident.effects?.failure?.msg || 'Failure';
                break;
             case 'criticalFailure':
-               rollEffect = currentIncident.criticalFailureEffect;
+               rollEffect = currentIncident.effects?.criticalFailure?.msg || 'Critical Failure';
                break;
             default:
                rollEffect = 'Unknown outcome';
@@ -338,6 +325,17 @@
                      Roll for Incident
                   {/if}
                </button>
+               {#if stepComplete && showIncidentResult}
+                  <div class="roll-result-text">
+                     {#if currentIncident}
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Rolled {incidentCheckRoll}% &lt;= {incidentCheckDC}% chance - Incident: {currentIncident.name}</span>
+                     {:else}
+                        <i class="fas fa-check-circle"></i>
+                        <span>Rolled {incidentCheckRoll}% &gt; {incidentCheckDC}% chance - No incident</span>
+                     {/if}
+                  </div>
+               {/if}
             {/if}
          </div>
          
@@ -374,16 +372,18 @@
                   <div class="incident-info">
                      <div class="incident-name">{currentIncident.name}</div>
                      <div class="incident-description">{currentIncident.description}</div>
-                     <div class="incident-level-badge level-{currentIncident.level.toLowerCase()}">
-                        {currentIncident.level}
-                     </div>
+                     {#if currentIncident.severity}
+                        <div class="incident-level-badge level-{currentIncident.severity}">
+                           {currentIncident.severity.toUpperCase()}
+                        </div>
+                     {/if}
                   </div>
                   
-                  {#if !incidentResolved && currentIncident.skillOptions && currentIncident.skillOptions.length > 0}
+                  {#if !incidentResolved && currentIncident.skills && currentIncident.skills.length > 0}
                      <div class="skill-options">
                         <div class="skill-options-title">Choose Resolution Approach:</div>
                         <div class="skill-tags">
-                           {#each currentIncident.skillOptions as option}
+                           {#each currentIncident.skills as option}
                               <SkillTag
                                  skill={option.skill}
                                  description={option.description}
@@ -412,9 +412,9 @@
                   {:else}
                      <PossibleOutcomes 
                         outcomes={[
-                           { result: 'success', label: 'Success', description: currentIncident.successEffect },
-                           { result: 'failure', label: 'Failure', description: currentIncident.failureEffect },
-                           { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.criticalFailureEffect }
+                           { result: 'success', label: 'Success', description: currentIncident.effects?.success?.msg || 'Success' },
+                           { result: 'failure', label: 'Failure', description: currentIncident.effects?.failure?.msg || 'Failure' },
+                           { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.effects?.criticalFailure?.msg || 'Critical Failure' }
                         ]}
                         showTitle={false}
                      />
@@ -560,6 +560,27 @@
          
          i.spinning {
             animation: spin 1s linear infinite;
+         }
+      }
+      
+      .roll-result-text {
+         margin-top: 8px;
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         
+         i {
+            font-size: var(--font-md);
+            
+            &.fa-exclamation-triangle {
+               color: var(--color-amber);
+            }
+            
+            &.fa-check-circle {
+               color: var(--color-green);
+            }
          }
       }
    }

@@ -65,16 +65,29 @@ export type EventLocation =
   | "a random worksite and 2 adjacent hexes (roll 1d6)";
 
 /**
- * Event modifier details
+ * Event tier types (standardized: all events are 'minor', incidents vary)
+ */
+export type EventTier = 'minor' | 'moderate' | 'major';
+
+/**
+ * Resource types that can be modified
+ */
+export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame';
+
+/**
+ * Modifier duration types
+ */
+export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | 'turns';
+
+/**
+ * Event modifier details (simplified from actual JSON structure)
  */
 export interface EventModifier {
-  type: string;
   name: string;
+  resource: ResourceType;
   value: number;
-  selector: ModifierSelector;
-  enabled: boolean;
-  turns?: number;
-  choice?: string[];
+  duration: ModifierDuration;
+  turns?: number;  // Required if duration === 'turns'
 }
 
 /**
@@ -82,6 +95,7 @@ export interface EventModifier {
  */
 export interface EventOutcome {
   msg: string;
+  endsEvent?: boolean;
   modifiers: EventModifier[];
 }
 
@@ -96,46 +110,13 @@ export interface EventEffects {
 }
 
 /**
- * Unresolved event configuration
- */
-export interface UnresolvedEvent {
-  type: 'continuous' | 'auto-resolve' | 'expires';
-  continuous?: {
-    becomesModifier: boolean;
-    modifierTemplate?: {
-      name: string;
-      description?: string;
-      duration: string | number;
-      severity: 'beneficial' | 'neutral' | 'dangerous' | 'critical';
-      effects: Record<string, any>;
-      resolution?: {
-        skills: KingdomSkill[];
-        dc?: number;
-        automatic?: {
-          condition: string;
-          description: string;
-        };
-      };
-      escalation?: any;
-      icon?: string;
-      priority?: number;
-    };
-  };
-  expires?: {
-    message?: string;
-    effects?: Record<string, number>;
-    turnsUntilTransform?: number;
-    transformsTo?: string;
-  };
-}
-
-/**
- * Kingdom Event data structure
+ * Kingdom Event data structure (matches actual JSON structure)
  */
 export interface KingdomEvent {
   id: string;
   name: string;
   description: string;
+  tier: EventTier;
   traits?: EventTrait[];
   location?: EventLocation | string;
   modifier?: number;
@@ -143,7 +124,14 @@ export interface KingdomEvent {
   skills?: EventSkill[];
   effects: EventEffects;
   special?: string;
-  ifUnresolved?: UnresolvedEvent;
+  ifUnresolved?: any;  // TODO: Define proper structure when needed
+}
+
+/**
+ * Kingdom Incident (same structure as event with tier variations)
+ */
+export interface KingdomIncident extends KingdomEvent {
+  tier: EventTier;  // 'minor' | 'moderate' | 'major'
 }
 
 /**

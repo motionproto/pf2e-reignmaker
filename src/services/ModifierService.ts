@@ -9,8 +9,20 @@
  */
 
 import type { ActiveModifier, ResolutionResult } from '../models/Modifiers';
-import type { KingdomEvent, EventModifier } from '../controllers/events/event-types';
+import type { KingdomEvent, EventModifier, EventTier } from '../types/events';
 import { updateKingdom } from '../stores/KingdomStore';
+
+/**
+ * Map tier descriptors to numeric values for modifier tracking
+ */
+function tierToNumber(tier: EventTier): number {
+  switch (tier) {
+    case 'minor': return 1;
+    case 'moderate': return 2;
+    case 'major': return 3;
+    default: return 1;
+  }
+}
 
 /**
  * Create modifier service
@@ -19,26 +31,30 @@ export async function createModifierService() {
   return {
     /**
      * Create active modifier from unresolved event/incident
+     * 
+     * NOTE: This is a simplified implementation that creates a basic modifier.
+     * The full ifUnresolved structure is not yet implemented in the JSON data.
+     * For now, this creates a modifier based on the event's tier.
      */
-    createFromUnresolvedEvent(event: KingdomEvent, currentTurn: number): ActiveModifier {
-      const unresolved = event.ifUnresolved;
-      
-      if (!unresolved) {
-        throw new Error(`Event ${event.id} has no unresolved section`);
+    createFromUnresolvedEvent(event: KingdomEvent, currentTurn: number): ActiveModifier | undefined {
+      // TODO: Implement proper ifUnresolved structure in JSON data
+      // For now, return undefined as most events don't have this configured yet
+      if (!event.ifUnresolved) {
+        console.warn(`Event ${event.id} has no ifUnresolved configuration`);
+        return undefined;
       }
       
+      // Create a basic modifier using event data
       return {
         id: `event-${event.id}-${currentTurn}`,
-        name: unresolved.name,
-        description: unresolved.description,
-        icon: unresolved.icon,
-        tier: unresolved.tier,
+        name: event.name,
+        description: event.description,
+        tier: tierToNumber(event.tier),
         sourceType: 'event',
         sourceId: event.id,
         sourceName: event.name,
         startTurn: currentTurn,
-        modifiers: unresolved.modifiers,
-        resolvedWhen: unresolved.resolvedWhen
+        modifiers: [] // TODO: Extract from ifUnresolved when structure is defined
       };
     },
     

@@ -179,30 +179,25 @@ export async function createUnrestPhaseController() {
           
           console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name);
           
-          // Set the incident and update step 2 to require resolution
+          // Set the incident (DON'T manipulate currentPhaseSteps directly)
           await actor.updateKingdom((kingdom) => {
             kingdom.currentIncidentId = incidentId;
-            // Update step 2 to require resolution
-            if (kingdom.currentPhaseSteps[2]) {
-              kingdom.currentPhaseSteps[2].completed = 0;
-            }
           });
           
-          console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 now requires resolution');
+          console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 will require manual resolution');
         } catch (error) {
           console.error('❌ [UnrestPhaseController] Error loading incident:', error);
         }
       } else {
         console.log('✅ [UnrestPhaseController] No incident occurred');
         
-        // Ensure no incident is set and step 2 remains auto-completed
+        // Ensure no incident is set (DON'T manipulate currentPhaseSteps directly)
         await actor.updateKingdom((kingdom) => {
           kingdom.currentIncidentId = null;
-          // Keep step 2 auto-completed since no incident
-          if (kingdom.currentPhaseSteps[2]) {
-            kingdom.currentPhaseSteps[2].completed = 1;
-          }
         });
+        
+        // Auto-complete step 2 since no incident (using PhaseHandler)
+        await completePhaseStepByIndex(2);
       }
       
       // Complete step 1 (incident check)

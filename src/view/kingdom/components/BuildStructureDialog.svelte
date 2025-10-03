@@ -1,12 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { kingdomData } from '../../../stores/KingdomStore';
-  import { buildQueueService } from '../../../services/domain';
+  import { createBuildStructureController } from '../../../controllers/BuildStructureController';
   import { structuresService } from '../../../services/structures';
   import type { Structure, ResourceCost } from '../../../models/Structure';
   import { getCategoryDisplayName } from '../../../models/Structure';
   import type { Settlement } from '../../../models/Settlement';
-  import type { ResourceAllocation } from '../../../services/domain';
   import CategoryItem from './structures/CategoryItem.svelte';
   import StructureCard from './structures/StructureCard.svelte';
   import {
@@ -33,10 +32,12 @@
   let errorMessage: string = '';
   let successMessage: string = '';
   let addToQueueOnly: boolean = false;
+  let controller: Awaited<ReturnType<typeof createBuildStructureController>> | null = null;
   
-  // Initialize structures service
-  onMount(() => {
+  // Initialize structures service and controller
+  onMount(async () => {
     structuresService.initializeStructures();
+    controller = await createBuildStructureController();
   });
   
   // React to state changes
@@ -53,8 +54,8 @@
   }
   
   // When settlement is selected, update available structures
-  $: if (selectedSettlementId) {
-    availableStructures = buildQueueService.getAvailableStructuresForSettlement(selectedSettlementId);
+  $: if (selectedSettlementId && controller) {
+    availableStructures = controller.getAvailableStructuresForSettlement(selectedSettlementId);
     
     // Auto-select first category
     if (availableStructures.length > 0 && !selectedCategory) {
@@ -115,10 +116,10 @@
   $: structuresByTier = groupStructuresByTier(categoryStructures);
   
   // When structure is selected, check affordability
-  $: if (selectedStructureId) {
+  $: if (selectedStructureId && controller) {
     selectedStructure = structuresService.getStructure(selectedStructureId);
     if (selectedStructure) {
-      const affordCheck = buildQueueService.canAffordStructure(selectedStructureId);
+      const affordCheck = controller.canAffordStructure(selectedStructureId);
       canAfford = affordCheck.canAfford;
       missingResources = affordCheck.missing;
       
@@ -165,36 +166,33 @@
     dispatch('close');
   }
   
-  function handleConfirm() {
-    if (!selectedStructureId || !selectedSettlementId) {
+  async function handleConfirm() {
+    if (!selectedStructureId || !selectedSettlementId || !controller) {
       errorMessage = 'Please select both a structure and a settlement';
       return;
     }
     
     // Add to build queue
-    const result = buildQueueService.addToBuildQueue(selectedStructureId, selectedSettlementId);
+    const result = await controller.addToBuildQueue(selectedStructureId, selectedSettlementId);
     
     if (result.success) {
       // If we can afford it, auto-allocate resources
-      if (canAfford && !addToQueueOnly) {
-        const allocations: ResourceAllocation[] = [];
-        if (selectedStructure) {
-          Object.entries(selectedStructure.constructionCost).forEach(([resource, amount]) => {
-            if (result.project && amount) {
-              allocations.push({
-                projectId: result.project.id,
-                resource,
-                amount
-              });
+      if (canAfford && !addToQueueOnly && selectedStructure && result.project) {
+        let allAllocated = true;
+        
+        for (const [resource, amount] of Object.entries(selectedStructure.constructionCost)) {
+          if (amount && amount > 0) {
+            const allocated = await controller.allocateResources(result.project.id, resource, amount);
+            if (!allocated) {
+              allAllocated = false;
             }
-          });
-          
-          const allocResult = buildQueueService.allocateResources(allocations);
-          if (allocResult.success) {
-            successMessage = `${selectedStructure.name} construction started!`;
-          } else {
-            successMessage = `${selectedStructure.name} added to build queue. Resources will be allocated when available.`;
           }
+        }
+        
+        if (allAllocated) {
+          successMessage = `${selectedStructure.name} construction started!`;
+        } else {
+          successMessage = `${selectedStructure.name} added to build queue. Resources will be allocated when available.`;
         }
       } else {
         successMessage = `${selectedStructure?.name} added to build queue`;
@@ -217,10 +215,10 @@
   }
   
   // Handle build button click from structure card
-  function handleBuildStructure(structureId: string) {
+  async function handleBuildStructure(structureId: string) {
     selectedStructureId = structureId;
     selectedStructure = structuresService.getStructure(structureId);
-    handleConfirm();
+    await handleConfirm();
   }
   
   // Select a structure

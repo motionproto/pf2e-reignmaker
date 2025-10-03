@@ -1,10 +1,85 @@
 # PF2e Reignmaker - Architecture Guide
 
-**Last Updated:** October 1, 2025
+**Last Updated:** October 3, 2025
 
 ## Overview
 
-PF2e Reignmaker is a Foundry VTT module implementing kingdom management mechanics for Pathfinder 2e. The architecture uses **KingdomActor as the single source of truth** with **reactive Svelte stores as read-only bridges** for UI components.
+PF2e Reignmaker is a Foundry VTT module implementing kingdom management mechanics for Pathfinder 2e. The architecture uses **KingdomActor as the single source of truth** with **reactive Svelte stores as read-only bridges** for UI components. The system features a **dual-effect player action system** with structured game effects and resource modifiers for complete type safety.
+
+## Quick Start for Developers & AI Programmers
+
+### Core Concepts
+
+1. **Single Source of Truth**: All kingdom data lives in `KingdomActor`. Never write to stores directly.
+2. **Reactive Bridge**: Svelte stores provide reactive access to KingdomActor data (read-only).
+3. **Separation of Concerns**: Components = UI only. Controllers = Business logic. Services = Complex utilities.
+4. **Self-Executing Phases**: Phase components auto-start their controllers on mount. TurnManager only handles progression.
+5. **Dual-Effect Actions**: Player actions use structured `modifiers` (resources) + `gameEffects` (gameplay mechanics).
+
+### Data Flow
+```
+Read:  KingdomActor → Reactive Store → Component Display
+Write: Component → Controller → KingdomActor → Foundry → All Clients
+```
+
+### Key Files to Know
+
+**Data Layer:**
+- `src/actors/KingdomActor.ts` - Single source of truth (ALL writes go here)
+- `src/stores/KingdomStore.ts` - Reactive bridge (read-only stores + write helpers)
+
+**Turn/Phase System:**
+- `src/models/turn-manager/TurnManager.ts` - Turn/phase progression coordinator
+- `src/controllers/*PhaseController.ts` - Phase business logic (6 phase controllers)
+- `src/controllers/shared/PhaseControllerHelpers.ts` - Shared phase utilities
+
+**Player Actions:**
+- `src/controllers/actions/action-types.ts` - Action interfaces
+- `src/controllers/actions/game-effects.ts` - 25+ typed game effect definitions
+- `src/controllers/actions/action-loader.ts` - Load/query actions from JSON
+- `src/controllers/actions/action-execution.ts` - Execute actions, apply effects
+- `data/player-actions/*.json` - 29 action definitions (structured effects)
+
+**UI Layer:**
+- `src/view/kingdom/turnPhases/*.svelte` - Phase UI components (presentation only)
+
+### Common Tasks
+
+**Read Kingdom Data:**
+```typescript
+import { kingdomData, resources, fame } from '../stores/KingdomStore'
+$: currentGold = $resources.gold  // Reactive in Svelte
+```
+
+**Modify Kingdom Data:**
+```typescript
+import { updateKingdom, modifyResource } from '../stores/KingdomStore'
+await modifyResource('gold', -50)  // Spend 50 gold
+await updateKingdom(k => k.unrest = Math.max(0, k.unrest - 1))
+```
+
+**Execute Player Action:**
+```typescript
+import { actionLoader } from '../controllers/actions/action-loader'
+import { actionExecutionService } from '../controllers/actions/action-execution'
+
+const action = actionLoader.getActionById('claim-hexes')
+const result = actionExecutionService.executeAction(action, 'success', kingdom)
+```
+
+**Create Phase Controller:**
+```typescript
+export async function createPhaseController() {
+  return {
+    async startPhase() {
+      await initializePhaseSteps([{ name: 'step-1' }])
+      // Do phase work...
+      await completePhaseStepByIndex(0)
+      return createPhaseResult(true)
+    }
+  }
+}
+```
 
 ## Core Architecture
 
@@ -42,6 +117,15 @@ modifyResource(resource: string, amount: number): Promise<void>
 setResource(resource: string, amount: number): Promise<void>
 markPhaseStepCompleted(stepId: string): Promise<void>
 addSettlement(settlement: Settlement): Promise<void>
+
+// Resource management
+resources: {
+  gold: number,
+  food: number,
+  lumber: number,
+  stone: number,
+  ore: number
+}
 ```
 
 ### 2. Reactive Store Bridge (`src/stores/KingdomStore.ts`)
@@ -69,7 +153,7 @@ export async function modifyResource(resource: string, amount: number)
 ```
 
 ### 3. TurnManager (`src/models/turn-manager/`)
-**Role:** Central coordinator with modular architecture
+**Role:** Central coordinator for turn/phase progression and player action tracking
 
 **Structure:**
 ```
@@ -79,75 +163,201 @@ src/models/turn-manager/
 └── phase-handler.ts  # Step management utilities (imported by TurnManager)
 ```
 
-**TurnManager Key Methods:**
+**TurnManager Responsibilities:**
+- Turn and phase progression only
+- Player action state tracking (turn-scoped, in-memory)
+- Phase step delegation to PhaseHandler
+- Utility functions for game mechanics
+
+**Key Methods:**
 ```typescript
 // Turn and phase progression
 async nextPhase(): Promise<void>
 async endTurn(): Promise<void>
+async setCurrentPhase(phase: TurnPhase): Promise<void>
 async skipToPhase(phase: TurnPhase): Promise<void>
+async getCurrentPhase(): Promise<string>
 
 // Phase step management (delegates to PhaseHandler)
 async initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
 async completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }>
 async isStepCompletedByIndex(stepIndex: number): Promise<boolean>
+async isCurrentPhaseComplete(): Promise<boolean>
+async resetPhaseSteps(): Promise<void>
 
-// Player action management
+// Player action management (turn-scoped state)
 spendPlayerAction(playerId: string, phase: TurnPhase): boolean
 resetPlayerAction(playerId: string): void
+getPlayerAction(playerId: string): PlayerAction | undefined
 
 // Utility functions
 async canPerformAction(actionId: string): Promise<boolean>
+async markActionUsed(actionId: string): Promise<void>
 async getUnrestPenalty(): Promise<number>
 async spendFameForReroll(): Promise<boolean>
+async getTurnSummary(): Promise<string>
 ```
 
 **PhaseHandler Utilities:**
 ```typescript
-// Step initialization and completion logic
+// Step initialization and completion logic (imported by TurnManager)
 static async initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
 static async completePhaseStepByIndex(stepIndex: number): Promise<StepCompletionResult>
 static async isStepCompletedByIndex(stepIndex: number): Promise<boolean>
 static async isCurrentPhaseComplete(): Promise<boolean>
 ```
 
-**Important:** TurnManager does NOT trigger phase controllers. Phases are self-executing when mounted.
+**Important Architectural Principle:** 
+- TurnManager does NOT trigger or orchestrate phase controllers
+- Phases are self-executing when their component mounts
+- TurnManager only handles progression, not execution
 
 ### 4. Phase Controllers (`src/controllers/*PhaseController.ts`)
-**Role:** Execute phase-specific business logic
+**Role:** Execute phase-specific business logic (self-contained)
 
-**Key Pattern:**
+**Available Controllers:**
+- `StatusPhaseController.ts` - Apply ongoing modifiers, check kingdom status
+- `EventPhaseController.ts` - Resolve kingdom events
+- `UnrestPhaseController.ts` - Handle incidents and unrest effects
+- `ResourcePhaseController.ts` - Collect resources from worksites
+- `ActionPhaseController.ts` - Execute player actions
+- `UpkeepPhaseController.ts` - Handle end-of-turn cleanup
+
+**Standard Controller Pattern:**
 ```typescript
 export async function createPhaseController() {
   return {
     async startPhase() {
-      console.log('🟡 [PhaseController] Starting phase...');
+      reportPhaseStart('PhaseControllerName')
+      
       try {
-        await this.doPhaseWork();
-        await markPhaseStepCompleted('phase-complete');
-        await this.notifyPhaseComplete();
-        console.log('✅ [PhaseController] Phase complete');
-        return { success: true };
+        // Initialize phase steps
+        const steps = [
+          { name: 'step-name-1' },
+          { name: 'step-name-2' }
+        ]
+        await initializePhaseSteps(steps)
+        
+        // Execute phase logic
+        await this.doPhaseWork()
+        
+        // Complete steps as work progresses
+        await completePhaseStepByIndex(0)
+        await completePhaseStepByIndex(1)
+        
+        reportPhaseComplete('PhaseControllerName')
+        return createPhaseResult(true)
       } catch (error) {
-        console.error('❌ [PhaseController] Phase failed:', error);
-        return { success: false, error: error.message };
+        reportPhaseError('PhaseControllerName', error)
+        return createPhaseResult(false, error.message)
       }
     }
-  };
+  }
 }
 ```
 
-### 5. Phase Components (`src/view/kingdom/turnPhases/*.svelte`)
+**Shared Helper Functions:**
+```typescript
+// From src/controllers/shared/PhaseControllerHelpers.ts
+reportPhaseStart(controllerName: string): void
+reportPhaseComplete(controllerName: string): void
+reportPhaseError(controllerName: string, error: Error): void
+createPhaseResult(success: boolean, error?: string): PhaseResult
+initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
+completePhaseStepByIndex(stepIndex: number): Promise<StepCompletionResult>
+isStepCompletedByIndex(stepIndex: number): Promise<boolean>
+```
+
+### 5. Player Action System (`src/controllers/actions/`)
+**Role:** Structured action execution with type-safe effects
+
+**Architecture:**
+```
+src/controllers/actions/
+├── action-types.ts       # TypeScript interfaces for actions
+├── game-effects.ts       # 25+ typed game effect definitions
+├── action-loader.ts      # Load and manage action definitions
+└── action-execution.ts   # Execute actions and apply effects
+```
+
+**Action Structure:**
+```typescript
+interface PlayerAction {
+  id: string
+  name: string
+  category: ActionCategory
+  brief: string
+  description: string
+  skills: SkillOption[]
+  effects: {
+    criticalSuccess: ActionEffect
+    success: ActionEffect
+    failure: ActionEffect
+    criticalFailure: ActionEffect
+  }
+  requirements?: string[]
+  costs?: Record<string, number>
+}
+
+interface ActionEffect {
+  description: string
+  modifiers: ActionModifier[]      // Resource changes (gold, unrest, etc.)
+  gameEffects: GameEffect[]        // Gameplay mechanics (claim hexes, build, etc.)
+}
+```
+
+**Game Effect Types (25+ types):**
+- **Territory:** `claimHexes`, `fortifyHex`, `buildRoads`
+- **Construction:** `buildStructure`, `foundSettlement`, `upgradeSettlement`, `createWorksite`
+- **Military:** `recruitArmy`, `trainArmy`, `deployArmy`, `recoverArmy`, `disbandArmy`
+- **Diplomatic:** `establishDiplomaticRelations`, `requestEconomicAid`, `infiltration`
+- **Support:** `aidBonus`, `grantReroll`, `hireAdventurers`
+- **Unrest:** `arrestDissidents`, `executePrisoners`, `pardonPrisoners`
+
+**ActionLoader Class:**
+```typescript
+// Load all actions from JSON
+loadActions(): void
+
+// Query actions
+getActionById(actionId: string): PlayerAction | null
+getActionsByCategory(category: string): PlayerAction[]
+getAllActions(): PlayerAction[]
+
+// Action utilities
+canPerformWithSkill(action: PlayerAction, skill: string): boolean
+getActionSkills(action: PlayerAction): SkillOption[]
+getActionOutcome(action, outcome): ActionEffect
+```
+
+**ActionExecutionService:**
+```typescript
+// Validate and execute
+checkActionRequirements(action, kingdomData): RequirementResult
+parseActionOutcome(action, outcome): ParsedActionEffect
+executeAction(action, outcome, kingdomData): ExecutionResult
+
+// Utilities
+getActionDC(characterLevel: number): number
+getAvailableActions(kingdomData): PlayerAction[]
+```
+
+### 6. Phase Components (`src/view/kingdom/turnPhases/*.svelte`)
 **Role:** Mount when active, auto-start phase execution
 
 **Key Pattern:**
 ```svelte
 <script>
+import { onMount } from 'svelte'
+import { kingdomData } from '../stores/KingdomStore'
+
 onMount(async () => {
   if ($kingdomData.currentPhase === OUR_PHASE && !isCompleted) {
-    const controller = await createPhaseController();
-    await controller.startPhase();
+    const { createPhaseController } = await import('../controllers/PhaseController')
+    const controller = await createPhaseController()
+    await controller.startPhase()
   }
-});
+})
 </script>
 ```
 
@@ -439,74 +649,245 @@ await modifierService.cleanupExpiredModifiers();
 
 ```
 src/
-├── actors/              # KingdomActor (single source of truth)
-├── models/              # TurnManager, Modifiers (data structures)
-├── stores/              # KingdomStore - Reactive bridge stores (read-only)
-├── view/                # Svelte components (read from stores, write to actor)
-├── controllers/         # Simple phase controllers (direct implementation)
-│   ├── events/          # Event types & providers
-│   ├── incidents/       # Incident types & providers
-│   └── shared/          # Shared controller utilities
-├── services/            # Business logic services
-│   ├── domain/          # Domain services (events, incidents, unrest)
-│   │   ├── events/      # EventService (load from dist/events.json)
-│   │   └── incidents/   # IncidentService (load from dist/incidents.json)
-│   ├── pf2e/            # PF2e integration services
-│   └── ModifierService.ts  # Simplified modifier management
-└── types/               # TypeScript definitions
+├── actors/                    # KingdomActor (single source of truth)
+│   └── KingdomActor.ts        # All persistent kingdom data
+├── models/                    # Data structures and game logic
+│   ├── turn-manager/          # Turn/phase coordination
+│   │   ├── TurnManager.ts     # Central coordinator
+│   │   └── phase-handler.ts   # Step management utilities
+│   ├── PlayerActions.ts       # Action data management
+│   └── Modifiers.ts           # Modifier type definitions
+├── stores/                    # Reactive bridge layer (read-only)
+│   └── KingdomStore.ts        # Reactive stores + write functions
+├── controllers/               # Phase execution and business logic
+│   ├── StatusPhaseController.ts
+│   ├── EventPhaseController.ts
+│   ├── UnrestPhaseController.ts
+│   ├── ResourcePhaseController.ts
+│   ├── ActionPhaseController.ts
+│   ├── UpkeepPhaseController.ts
+│   ├── actions/               # Player action system
+│   │   ├── action-types.ts    # TypeScript interfaces
+│   │   ├── game-effects.ts    # Game effect definitions
+│   │   ├── action-loader.ts   # Action loading/querying
+│   │   └── action-execution.ts # Action execution logic
+│   ├── events/                # Event type providers
+│   ├── incidents/             # Incident type providers
+│   └── shared/                # Shared controller utilities
+│       └── PhaseControllerHelpers.ts
+├── services/                  # Complex operations and utilities
+│   ├── domain/                # Domain-specific services
+│   │   ├── events/            # Event management
+│   │   └── incidents/         # Incident management
+│   ├── pf2e/                  # PF2e system integration
+│   └── ModifierService.ts     # Modifier lifecycle management
+├── view/                      # Svelte UI components (presentation only)
+│   └── kingdom/
+│       └── turnPhases/        # Phase-specific UI components
+├── types/                     # TypeScript type definitions
+│   └── events.ts              # Event/incident types
+└── utils/                     # Utility functions
+```
+
+**Data Files:**
+```
+data/
+├── player-actions/            # 29 action JSON files (structured effects)
+├── events/                    # Event definitions (resource modifiers)
+└── incidents/                 # Incident definitions (resource modifiers)
 ```
 
 ## Common Operations
 
 ### Reading Data:
 ```typescript
-import { kingdomData, fame, resources } from '../stores/KingdomStore';
+import { kingdomData, fame, resources } from '../stores/KingdomStore'
+import { get } from 'svelte/store'
 
-// Reactive access
-$: currentFame = $fame;
-$: goldAmount = $resources.gold;
+// Reactive access in Svelte components
+$: currentFame = $fame
+$: goldAmount = $resources.gold
+$: currentPhase = $kingdomData.currentPhase
+
+// Direct access in controllers
+const kingdom = get(kingdomData)
+const currentGold = kingdom.resources.gold
 ```
 
 ### Writing Data:
 ```typescript
-import { updateKingdom, setResource } from '../stores/KingdomStore';
+import { updateKingdom, setResource, modifyResource } from '../stores/KingdomStore'
 
-// Simple resource update
-await setResource('fame', 10);
+// Simple resource updates
+await setResource('gold', 100)        // Set absolute value
+await modifyResource('gold', -50)     // Add/subtract value
 
 // Complex update
 await updateKingdom(kingdom => {
-  kingdom.resources.gold -= 50;
-  kingdom.fame += 1;
-  kingdom.unrest = Math.max(0, kingdom.unrest - 1);
-});
+  kingdom.resources.gold -= 50
+  kingdom.fame += 1
+  kingdom.unrest = Math.max(0, kingdom.unrest - 1)
+  
+  // Add active modifiers
+  if (!kingdom.activeModifiers) kingdom.activeModifiers = []
+  kingdom.activeModifiers.push(newModifier)
+})
 ```
 
-### Phase Completion:
+### Phase Step Management:
 ```typescript
-import { markPhaseStepCompleted } from '../stores/KingdomStore';
+import { 
+  initializePhaseSteps, 
+  completePhaseStepByIndex,
+  isStepCompletedByIndex 
+} from '../controllers/shared/PhaseControllerHelpers'
 
-// Mark step complete
-await markPhaseStepCompleted('resource-collection');
+// Initialize steps for a phase
+const steps = [
+  { name: 'collect-resources' },
+  { name: 'apply-effects' }
+]
+await initializePhaseSteps(steps)
 
-// Tell TurnManager phase is done
-const { turnManager } = await import('../stores/turn');
-await get(turnManager).markCurrentPhaseComplete();
+// Complete steps as work progresses
+await completePhaseStepByIndex(0)
+
+// Check step status
+const isComplete = await isStepCompletedByIndex(0)
 ```
+
+### Player Action Execution:
+```typescript
+import { actionLoader } from '../controllers/actions/action-loader'
+import { actionExecutionService } from '../controllers/actions/action-execution'
+
+// Load and query actions
+const action = actionLoader.getActionById('claim-hexes')
+const expandActions = actionLoader.getActionsByCategory('expand-borders')
+
+// Check requirements
+const requirements = actionExecutionService.checkActionRequirements(action, kingdom)
+if (!requirements.met) {
+  console.log(requirements.reason)
+}
+
+// Execute action
+const result = actionExecutionService.executeAction(action, 'success', kingdom)
+
+// Apply state changes
+for (const [resource, value] of result.stateChanges) {
+  await modifyResource(resource, value)
+}
+```
+
+### Loading Actions from JSON:
+```typescript
+// Actions are automatically loaded at startup
+// Located in: data/player-actions/*.json
+
+// Example action structure:
+{
+  "id": "claim-hexes",
+  "name": "Claim Hexes",
+  "category": "expand-borders",
+  "skills": [
+    { "skill": "survival", "description": "wilderness expertise" }
+  ],
+  "effects": {
+    "success": {
+      "description": "Claim hexes based on proficiency",
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "claimHexes",
+          "count": "proficiency-scaled",
+          "scaling": { "trained": 1, "expert": 1, "master": 2, "legendary": 3 }
+        }
+      ]
+    }
+  }
+}
+```
+
+## System Integration Points
+
+### Events & Incidents
+- **Location**: `data/events/*.json` and `data/incidents/*.json`
+- **Format**: Normalized structure with `EventModifier[]` for outcomes
+- **Processing**: Controllers create `ActiveModifier` instances for unresolved items
+- **See**: `docs/GAME_EFFECTS_SYSTEM.md` for detailed effect system documentation
+
+### Modifiers
+- **Storage**: `kingdom.activeModifiers: ActiveModifier[]` in KingdomActor
+- **Service**: `src/services/ModifierService.ts` handles lifecycle
+- **Application**: StatusPhaseController applies ongoing modifiers each turn
+- **Cleanup**: Automatic expiration based on turn count or resolution conditions
+
+### Player Actions
+- **29 Actions**: Loaded from `data/player-actions/*.json` at startup
+- **6 Categories**: uphold-stability, military-operations, expand-borders, urban-planning, foreign-affairs, economic-actions
+- **Type Safety**: Full TypeScript validation via `action-types.ts` and `game-effects.ts`
+- **Execution**: ActionExecutionService validates requirements, parses outcomes, applies effects
+
+### Turn Phases (in order)
+1. **STATUS** - Apply modifiers, check kingdom state
+2. **EVENT** - Resolve kingdom events  
+3. **UNREST** - Handle incidents, imprisoned unrest
+4. **RESOURCE** - Collect from worksites
+5. **ACTION** - Players execute actions
+6. **UPKEEP** - End-of-turn cleanup
 
 ## Error Handling
 
-- Use clear console logging with emoji indicators
-- Simple try/catch blocks with meaningful error messages
-- Direct error handling without complex orchestration
+**Console Logging Pattern:**
+- 🟡 `[Controller]` - Phase/action start
+- ✅ `[Controller]` - Success completion
+- ❌ `[Controller]` - Error/failure
+- 🔄 `[Controller]` - Reset/cleanup
+- 🧹 `[Service]` - Maintenance operations
+
+**Error Patterns:**
+```typescript
+try {
+  // Operation
+  return { success: true, data: result }
+} catch (error) {
+  console.error('❌ [Component] Operation failed:', error)
+  return { success: false, error: error.message }
+}
+```
 
 ## Testing Approach
 
-- Test KingdomActor operations directly
-- Test component reactivity with mock KingdomActor
-- Test turn progression with simple scenarios
-- Direct operations testing
+- **Unit Tests**: Test KingdomActor operations directly
+- **Integration**: Test component reactivity with mock KingdomActor
+- **Turn Flow**: Test phase progression with simple scenarios
+- **Actions**: Validate action requirements and outcome parsing
+- **Data Validation**: JSON schema validation for actions/events/incidents
+
+## Migration Notes
+
+**Recent Changes:**
+- ✅ Actions migrated to dual-effect system (modifiers + gameEffects)
+- ✅ Events/incidents normalized with EventModifier format
+- ✅ Removed complex escalation/priority logic from modifiers
+- ✅ TurnManager no longer orchestrates phases (self-executing pattern)
+- ✅ Phase steps now use simple array indexing (no string IDs)
+
+**Breaking Changes:**
+- Old modifier escalation system removed
+- Fixed DCs removed from events (now level-based only)
+- Event stages flattened to simple skill arrays
+- Phase triggering now happens on component mount, not from TurnManager
 
 ---
 
-This architecture provides a clean, maintainable system that leverages Foundry's strengths while keeping the code simple and understandable.
+## Additional Documentation
+
+- **Game Effects System**: See `docs/GAME_EFFECTS_SYSTEM.md` for detailed action effect documentation
+- **Phase Controllers**: See `docs/PHASE_CONTROLLER_GUIDE.md` for phase implementation patterns  
+- **TurnManager Reference**: See `docs/TURNMANAGER_REFERENCE.md` for turn/phase coordination details
+
+---
+
+This architecture provides a **clean, maintainable system** that leverages Foundry's strengths while keeping the code **simple and understandable**. The dual-effect action system provides complete type safety, and the reactive bridge pattern ensures consistent data flow throughout the application.
