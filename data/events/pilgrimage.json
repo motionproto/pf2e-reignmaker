@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major pilgrimage; +1 Gold, -1 Unrest, +1 Fame",
-      "endsEvent": true,
+      "msg": "Major pilgrimage; +{gold} gold, -{unrest} unrest, +{fame} fame",
       "modifiers": [
         {
           "name": "Major pilgrimage",
@@ -45,11 +44,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Peaceful passage; +1 Gold",
-      "endsEvent": true,
+      "msg": "Peaceful passage; +{gold} gold",
       "modifiers": [
         {
           "name": "Peaceful passage",
@@ -58,16 +57,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Minor disruption; no significant effect",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Religious tensions; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Religious tensions; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Religious tensions",
@@ -75,7 +74,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

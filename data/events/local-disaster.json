@@ -24,12 +24,11 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Disaster contained; no significant damage",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Limited damage; +1 Unrest",
-      "endsEvent": true,
+      "msg": "Limited damage; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Limited damage",
@@ -37,11 +36,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Major damage; one structure becomes damaged, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Major damage; one structure becomes damaged, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Major damage",
@@ -55,11 +54,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Catastrophic; one structure is destroyed, +2 Unrest",
-      "endsEvent": false,
+      "msg": "Catastrophic; one structure is destroyed, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Catastrophic",
@@ -73,7 +72,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

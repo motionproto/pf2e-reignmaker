@@ -23,21 +23,20 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major influx; +2 Gold, +2 untyped bonus to Build Structure actions this turn",
-      "endsEvent": true,
+      "msg": "Major influx; +{gold} gold, +2 untyped bonus to Build Structure actions this turn",
       "modifiers": [
         {
           "name": "Major influx",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Steady immigration; +1 Gold, +1 untyped bonus to Build Structure actions this turn",
-      "endsEvent": true,
+      "msg": "Steady immigration; +{gold} gold, +1 untyped bonus to Build Structure actions this turn",
       "modifiers": [
         {
           "name": "Steady immigration",
@@ -46,16 +45,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Few settlers stay; no significant effect",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Integration problems; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Integration problems; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Integration problems",
@@ -63,7 +62,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

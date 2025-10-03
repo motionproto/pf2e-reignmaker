@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Inspiring blessing; -2 Unrest, +1 Gold (from increased tourism)",
-      "endsEvent": true,
+      "msg": "Inspiring blessing; -{unrest} unrest, +{gold} gold (from increased tourism)",
       "modifiers": [
         {
           "name": "Inspiring blessing",
@@ -39,11 +38,11 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant omen; -1 Unrest",
-      "endsEvent": true,
+      "msg": "Pleasant omen; -{unrest} unrest",
       "modifiers": [
         {
           "name": "Pleasant omen",
@@ -51,16 +50,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Brief wonder; no significant effect",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Arguments over meaning; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Arguments over meaning; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Arguments over meaning",
@@ -68,7 +67,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

@@ -36,19 +36,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Trade 2 Resources \u2192 2 Gold",
       "modifiers": [
         {
           "name": "Sell Surplus",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "success": {
-      "description": "Trade 2 Resources \u2192 1 Gold",
       "modifiers": [
         {
           "name": "Sell Surplus",
@@ -56,18 +53,13 @@
           "value": 1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "failure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   },
   "special": "Trade a single resource type for gold"

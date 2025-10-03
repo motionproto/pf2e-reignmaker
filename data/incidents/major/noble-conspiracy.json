@@ -27,12 +27,44 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Lose 1d4 Gold, -1 fame",
-      "modifiers": []
+      "msg": "Lose {gold} gold, -{fame} fame",
+      "modifiers": [
+        {
+          "name": "Noble Conspiracy Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Noble Conspiracy Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold, -1 fame, one random PC loses kingdom action this turn, +1 unrest",
-      "modifiers": []
+      "msg": "Lose {gold} gold, -{fame} fame, one random PC loses kingdom action this turn, +{unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Noble Conspiracy Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Noble Conspiracy Critical Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        },
+        {
+          "name": "Noble Conspiracy Critical Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

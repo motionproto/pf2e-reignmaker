@@ -28,7 +28,6 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
       "modifiers": [
         {
           "name": "Execute or Pardon Prisoners",
@@ -36,21 +35,15 @@
           "value": -1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "success": {
-      "description": "Remove 1d4 imprisoned Unrest from the settlement",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "failure": {
-      "description": "Remove none",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
       "modifiers": [
         {
           "name": "Execute or Pardon Prisoners",
@@ -58,8 +51,7 @@
           "value": 1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     }
   },
   "failureCausesUnrest": true,

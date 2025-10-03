@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Relations improve by one step; if now Helpful, +1 Gold and -1 Unrest",
-      "endsEvent": true,
+      "msg": "Relations improve by one step; if now Helpful, +{gold} gold and -{unrest} unrest",
       "modifiers": [
         {
           "name": "Relations improve by one step",
@@ -39,21 +38,21 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Relations improve by one step (max Friendly without diplomatic structures)",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
       "msg": "No change in relations; minor diplomatic friction",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Relations worsen by one step; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Relations worsen by one step; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Relations worsen by one step",
@@ -61,7 +60,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

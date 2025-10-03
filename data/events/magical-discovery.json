@@ -24,12 +24,11 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Major magical boon; gain a free Tier 1 magical structure or upgrade an existing structure to the next tier",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Useful discovery; -2 Unrest OR +1 Fame",
-      "endsEvent": true,
+      "msg": "Useful discovery; -{unrest} unrest OR +1 Fame",
       "modifiers": [
         {
           "name": "Useful discovery",
@@ -37,11 +36,11 @@
           "value": -2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Magic proves dangerous; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Magic proves dangerous; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Magic proves dangerous",
@@ -49,11 +48,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Magical disaster; +2 Unrest, one random magical structure becomes damaged in an accident",
-      "endsEvent": false,
+      "msg": "Magical disaster; +{unrest} unrest, one random magical structure becomes damaged in an accident",
       "modifiers": [
         {
           "name": "Magical disaster",
@@ -67,7 +66,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

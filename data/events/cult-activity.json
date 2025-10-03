@@ -21,7 +21,6 @@
   "effects": {
     "criticalSuccess": {
       "msg": "You convert the cultists to a productive faith. They become valuable citizens.",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "",
@@ -35,11 +34,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "You successfully disband the cult and arrest its leaders.",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "",
@@ -47,11 +46,11 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "The cult evades your forces and continues recruiting.",
-      "endsEvent": false,
       "modifiers": [
         {
           "name": "",
@@ -59,11 +58,11 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
       "msg": "The cult's influence spreads! They gain powerful supporters.",
-      "endsEvent": false,
       "modifiers": [
         {
           "name": "",
@@ -74,10 +73,11 @@
         {
           "name": "",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

@@ -23,12 +23,36 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Random settlement loses 2d4 Gold OR 2 structures damaged",
-      "modifiers": []
+      "msg": "Random settlement: choose one:",
+      "modifiers": [],
+      "choices": [
+        {
+          "label": "Lose {gold} gold",
+          "modifiers": [
+            {
+              "name": "Settlement Crisis Gold Loss",
+              "resource": "gold",
+              "value": "-2d4",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "2 structures damaged",
+          "modifiers": []
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +1 unrest",
-      "modifiers": []
+      "msg": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +{unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Settlement Crisis Critical Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

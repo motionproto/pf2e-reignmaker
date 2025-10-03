@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Citizens satisfied; -1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Citizens satisfied; -{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Citizens satisfied",
@@ -33,16 +32,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Citizens satisfied; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Citizens unhappy; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Citizens unhappy; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Citizens unhappy",
@@ -50,11 +49,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major dissatisfaction; +2 Unrest",
-      "endsEvent": false,
+      "msg": "Major dissatisfaction; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Major dissatisfaction",
@@ -62,7 +61,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

@@ -23,21 +23,20 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Exclusive deal; +2 Gold",
-      "endsEvent": true,
+      "msg": "Exclusive deal; +{gold} gold",
       "modifiers": [
         {
           "name": "Exclusive deal",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Standard agreement; +1 Gold",
-      "endsEvent": true,
+      "msg": "Standard agreement; +{gold} gold",
       "modifiers": [
         {
           "name": "Standard agreement",
@@ -46,16 +45,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Poor terms; no significant benefit",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Trade dispute; -1 Gold, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Trade dispute; -{gold} gold, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Trade dispute",
@@ -70,7 +69,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Spectacular visit; +2 Gold, -2 Unrest",
-      "endsEvent": true,
+      "msg": "Spectacular visit; +{gold} gold, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Spectacular visit",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -39,11 +38,11 @@
           "value": -2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant visit; +1 Gold OR -1 Unrest",
-      "endsEvent": true,
+      "msg": "Pleasant visit; +{gold} gold OR -1 Unrest",
       "modifiers": [
         {
           "name": "Pleasant visit",
@@ -52,16 +51,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Mediocre visit; no significant effect",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Celebrity offended; +1 Unrest, -2 to next celebrity event",
-      "endsEvent": false,
+      "msg": "Celebrity offended; +{unrest} unrest, -2 to next celebrity event",
       "modifiers": [
         {
           "name": "Celebrity offended",
@@ -69,7 +68,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

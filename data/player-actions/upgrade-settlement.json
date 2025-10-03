@@ -28,38 +28,21 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Increase Level +1 Structure",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "upgradeSettlement",
-          "structureBonus": 1
-        }
-      ]
+      "modifiers": []
     },
     "success": {
-      "description": "Increase Level",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "upgradeSettlement"
-        }
-      ]
+      "modifiers": []
     },
     "failure": {
-      "description": "no effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   },
   "requirements": [
-    "Village → Town: Level 2+ and 2+ Structures",
-    "Town → City: Level 5+ and 4+ Structures",
-    "City → Metropolis: Level 10+ and 6+ Structures"
+    "Village \u2192 Town: Level 2+ and 2+ Structures",
+    "Town \u2192 City: Level 5+ and 4+ Structures",
+    "City \u2192 Metropolis: Level 10+ and 6+ Structures"
   ]
 }

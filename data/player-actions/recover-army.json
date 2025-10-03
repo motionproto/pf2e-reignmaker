@@ -32,24 +32,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Troop recovers completely",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "success": {
-      "description": "Troop recovers 1 segment",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "failure": {
-      "description": "No recovery",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No recovery",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   }
 }

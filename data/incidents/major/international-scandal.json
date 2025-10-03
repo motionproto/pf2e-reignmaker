@@ -23,12 +23,38 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Lose 1 Fame AND 1d4 gold",
-      "modifiers": []
+      "msg": "Lose {fame} fame and {gold} gold",
+      "modifiers": [
+        {
+          "name": "International Scandal Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        },
+        {
+          "name": "International Scandal Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "King has zero fame this round and cannot gain fame this round, lose 2d4 gold, +1 Unrest",
-      "modifiers": []
+      "msg": "King has zero fame this round and cannot gain fame this round, lose {gold} gold, +{unrest} unrest",
+      "modifiers": [
+        {
+          "name": "International Scandal Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "International Scandal Critical Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

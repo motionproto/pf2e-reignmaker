@@ -24,7 +24,6 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Settlers successfully expand the kingdom; **gain 2 hexes**",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "Settlers successfully expand the kingdom",
@@ -32,11 +31,11 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Settlers expand the kingdom; **gain 1 hex**",
-      "endsEvent": true,
+      "msg": "Settlers expand the kingdom; **gain {hex} hex**",
       "modifiers": [
         {
           "name": "Settlers expand the kingdom",
@@ -44,11 +43,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Settlers disperse without helping; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Settlers disperse without helping; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Settlers disperse without helping",
@@ -56,11 +55,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts at border; +2 Unrest",
-      "endsEvent": false,
+      "msg": "Violence erupts at border; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Violence erupts at border",
@@ -68,7 +67,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

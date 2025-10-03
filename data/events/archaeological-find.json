@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major discovery; +2 Gold, -1 Unrest, +1 Fame",
-      "endsEvent": true,
+      "msg": "Major discovery; +{gold} gold, -{unrest} unrest, +{fame} fame",
       "modifiers": [
         {
           "name": "Major discovery",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -45,11 +44,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Valuable find; +1 Gold",
-      "endsEvent": true,
+      "msg": "Valuable find; +{gold} gold",
       "modifiers": [
         {
           "name": "Valuable find",
@@ -58,24 +57,24 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Minor artifacts; gain 1 Resource of your choice",
-      "endsEvent": false,
+      "msg": "Minor artifacts; gain 1 of your choice",
       "modifiers": [
         {
           "name": "Minor artifacts",
-          "resource": "food",
+          "resource": ["food", "lumber", "ore", "stone"],
           "value": 1,
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Dangerous site; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Dangerous site; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Dangerous site",
@@ -83,7 +82,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

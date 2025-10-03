@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Monster defeated; trophy worth 2 Gold, -1 Unrest",
-      "endsEvent": true,
+      "msg": "Monster defeated; trophy worth {gold} gold, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Monster defeated",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -39,16 +38,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Monster driven away; no negative effect",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Monster causes damage; one structure becomes damaged, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Monster causes damage; one structure becomes damaged, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Monster causes damage",
@@ -62,11 +61,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Monster rampages; one structure becomes destroyed, +2 Unrest",
-      "endsEvent": false,
+      "msg": "Monster rampages; one structure becomes destroyed, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Monster rampages",
@@ -80,7 +79,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

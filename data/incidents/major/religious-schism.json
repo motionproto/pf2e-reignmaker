@@ -27,12 +27,26 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Church factions form, lose 2d6 gold, your highest tier religious structure is damaged",
-      "modifiers": []
+      "msg": "Church factions form, lose {gold} gold, your highest tier religious structure is damaged",
+      "modifiers": [
+        {
+          "name": "Religious Schism Gold Loss",
+          "resource": "gold",
+          "value": "-2d6",
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Church splits, lose 4d6 gold, your highest tier religious structure is destroyed",
-      "modifiers": []
+      "msg": "Church splits, lose {gold} gold, your highest tier religious structure is destroyed",
+      "modifiers": [
+        {
+          "name": "Religious Schism Critical Gold Loss",
+          "resource": "gold",
+          "value": "-4d6",
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

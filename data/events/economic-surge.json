@@ -24,21 +24,20 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Trade bonanza; +2 Gold this turn",
-      "endsEvent": false,
+      "msg": "Trade bonanza; +{gold} gold this turn",
       "modifiers": [
         {
           "name": "Trade bonanza",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "success": {
-      "msg": "Steady growth; +1 Gold this turn",
-      "endsEvent": false,
+      "msg": "Steady growth; +{gold} gold this turn",
       "modifiers": [
         {
           "name": "Steady growth",
@@ -47,16 +46,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "failure": {
       "msg": "Surge slows; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Economic bubble bursts; +1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Economic bubble bursts; +{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Economic bubble bursts",
@@ -64,7 +63,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     }
   }
 }

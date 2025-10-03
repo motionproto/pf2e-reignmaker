@@ -28,38 +28,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Found village +1 Structure",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "foundSettlement",
-          "tier": "village"
-        },
-        {
-          "type": "buildStructure",
-          "count": 1
-        }
-      ]
+      "modifiers": []
     },
     "success": {
-      "description": "Found village",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "foundSettlement",
-          "tier": "village"
-        }
-      ]
+      "modifiers": []
     },
     "failure": {
-      "description": "no effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   },
   "special": "Villages are typically Level 1. A new settlement begins as a Village unless special circumstances apply"

@@ -59,63 +59,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Aided PC gains circumstance bonus based on your proficiency (Trained/Expert: +2, Master: +3, Legendary: +4) and may reroll if they fail",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "aidBonus",
-          "target": "other-pc",
-          "bonusType": "proficiency-scaled",
-          "value": {
-            "trained": 2,
-            "expert": 2,
-            "master": 3,
-            "legendary": 4
-          },
-          "allowReroll": true
-        }
-      ]
+      "modifiers": []
     },
     "success": {
-      "description": "Aided PC gains circumstance bonus based on your proficiency (Trained/Expert: +2, Master: +3, Legendary: +4)",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "aidBonus",
-          "target": "other-pc",
-          "bonusType": "proficiency-scaled",
-          "value": {
-            "trained": 2,
-            "expert": 2,
-            "master": 3,
-            "legendary": 4
-          }
-        }
-      ]
+      "modifiers": []
     },
     "failure": {
-      "description": "Aided PC gains +1 circumstance bonus",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "aidBonus",
-          "target": "other-pc",
-          "bonusType": "circumstance",
-          "value": 1
-        }
-      ]
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "Aided PC suffers -1 circumstance penalty",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "aidBonus",
-          "target": "other-pc",
-          "bonusType": "circumstance",
-          "value": -1
-        }
-      ]
+      "modifiers": []
     }
   },
   "special": "Must declare at the start of the Kingdom Turn which PC you are aiding and their intended action. You must be working in the same region or settlement. This uses your Kingdom Action for the turn.",

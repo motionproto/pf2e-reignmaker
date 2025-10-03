@@ -24,39 +24,38 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major growth; +4 Gold",
-      "endsEvent": false,
+      "msg": "Major growth; +{gold} gold",
       "modifiers": [
         {
           "name": "Major growth",
           "resource": "gold",
-          "value": 4,
+          "value": "1d6+1",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "success": {
-      "msg": "Steady expansion; +2 Gold this turn",
-      "endsEvent": false,
+      "msg": "Steady expansion; +{gold} gold this turn",
       "modifiers": [
         {
           "name": "Steady expansion",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "failure": {
       "msg": "Growth stalls; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Boom goes bust; +1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Boom goes bust; +{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Boom goes bust",
@@ -64,7 +63,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     }
   }
 }

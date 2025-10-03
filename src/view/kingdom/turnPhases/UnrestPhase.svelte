@@ -462,6 +462,7 @@
                         skillName={selectedSkill}
                         effect={rollEffect}
                         stateChanges={rollStateChanges}
+                        modifiers={currentIncident?.effects?.[rollOutcome]?.modifiers}
                         primaryButtonLabel="Apply Result"
                         showFameReroll={true}
                         applied={resolutionApplied}

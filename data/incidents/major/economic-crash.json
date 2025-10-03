@@ -2,23 +2,23 @@
   "id": "economic-crash",
   "name": "Economic Crash",
   "tier": "MAJOR",
-  "description": "Your kingdom's economy collapses",
+  "description": "A severe economic downturn threatens your kingdom's prosperity",
   "skills": [
     {
-      "skill": "society",
-      "description": "economic reform"
-    },
-    {
       "skill": "diplomacy",
-      "description": "secure loans"
+      "description": "stabilize markets"
     },
     {
-      "skill": "crafting",
-      "description": "boost production"
+      "skill": "society",
+      "description": "public confidence"
     },
     {
-      "skill": "arcana",
-      "description": "transmute resources"
+      "skill": "intimidation",
+      "description": "force compliance"
+    },
+    {
+      "skill": "occultism",
+      "description": "divine intervention"
     }
   ],
   "effects": {
@@ -27,12 +27,26 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Lose 2d6 gold, your highest tier commerce structure is damaged",
-      "modifiers": []
+      "msg": "Lose {gold} gold, your highest tier commerce structure is damaged",
+      "modifiers": [
+        {
+          "name": "Economic Crash Gold Loss",
+          "resource": "gold",
+          "value": "-2d6",
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Lose 4d6 gold, your highest tier commerce structure is destroyed",
-      "modifiers": []
+      "msg": "Lose {gold} gold, your highest tier commerce structure is destroyed",
+      "modifiers": [
+        {
+          "name": "Economic Crash Critical Gold Loss",
+          "resource": "gold",
+          "value": "-4d6",
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

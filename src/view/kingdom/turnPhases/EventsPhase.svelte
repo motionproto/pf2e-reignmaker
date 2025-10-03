@@ -139,7 +139,10 @@
          // Parse modifiers array to extract resource changes
          for (const modifier of effects.modifiers) {
             // EventModifier has resource property, not selector
-            previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
+            // Skip modifiers with resource arrays (they require player choice)
+            if (!Array.isArray(modifier.resource)) {
+               previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
+            }
          }
       }
       
@@ -251,7 +254,10 @@
             // Parse modifiers array to extract resource changes
             for (const modifier of effects.modifiers) {
                // EventModifier has resource property, not selector
-               previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
+               // Skip modifiers with resource arrays (they require player choice)
+               if (!Array.isArray(modifier.resource)) {
+                  previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
+               }
             }
          }
          
@@ -480,6 +486,7 @@
                      skillName={selectedSkill}
                      effect={outcomeMessage}
                      stateChanges={currentEffects}
+                     modifiers={currentEvent?.effects?.[resolutionOutcome]?.modifiers}
                      primaryButtonLabel="Apply Result"
                      applied={outcomeApplied}
                      choices={currentEvent?.effects?.[resolutionOutcome]?.choices}

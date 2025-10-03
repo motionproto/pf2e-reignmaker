@@ -36,17 +36,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain double the listed amount",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "success": {
-      "description": "Gain the listed amount",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "failure": {
-      "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
       "modifiers": [
         {
           "name": "Collect Stipend",
@@ -54,11 +49,9 @@
           "value": 1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "criticalFailure": {
-      "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
       "modifiers": [
         {
           "name": "Collect Stipend",
@@ -66,8 +59,7 @@
           "value": "1d4",
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     }
   },
   "failureCausesUnrest": true,

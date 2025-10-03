@@ -8,6 +8,8 @@
    export let skillName: string | undefined = undefined;
    export let effect: string;
    export let stateChanges: Record<string, any> | undefined = undefined;
+   export let modifiers: any[] | undefined = undefined; // Raw modifiers for resource array detection
+   export let manualEffects: string[] | undefined = undefined; // Manual effects from EventOutcome
    export const rerollEnabled: boolean = false; // Unused - marked as const
    export const rerollLabel: string = "Reroll"; // Unused - marked as const
    export const rerollCount: number | undefined = undefined; // Unused - marked as const
@@ -24,6 +26,10 @@
    let selectedChoice: number | null = null;
    let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
    
+   // Resource array selection state
+   let resourceArrayModifiers: any[] = [];
+   let selectedResources: Map<number, string> = new Map(); // Map modifier index to selected resource
+   
    // Dice formula detection regex
    const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
    
@@ -33,19 +39,45 @@
    // Get outcome display properties
    $: outcomeProps = getOutcomeProps(outcome);
    
-   // Determine if choices are present and not yet resolved
+   // Detect resource-array modifiers
+   $: resourceArrayModifiers = detectResourceArrayModifiers(modifiers);
+   $: hasResourceArrays = resourceArrayModifiers.length > 0;
+   $: resourceArraysResolved = hasResourceArrays && resourceArrayModifiers.every((_, idx) => selectedResources.has(idx));
+   
+   // Manual effects from EventOutcome.manualEffects array (not modifiers)
+   $: hasManualEffects = manualEffects && manualEffects.length > 0;
+   
+   // Determine if choices are present (explicit choice buttons)
    $: hasChoices = choices && choices.length > 0;
    $: choicesResolved = hasChoices && selectedChoice !== null;
    
    // Automatically derive button visibility based on applied state
    $: showCancelButton = showCancel && !applied;
-   $: showFameRerollButton = showFameReroll && !applied && !hasChoices;
+   $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays;
    $: effectivePrimaryLabel = applied ? '' : primaryButtonLabel;
-   $: primaryButtonDisabled = hasChoices && !choicesResolved;
+   $: primaryButtonDisabled = (hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved);
    
-   // Display effective message and state changes (choice result overrides original)
+   // Display effective message and state changes (choice result overrides original, resource selections augment)
    $: displayEffect = choiceResult ? choiceResult.effect : effect;
-   $: displayStateChanges = choiceResult ? choiceResult.stateChanges : stateChanges;
+   $: displayStateChanges = getDisplayStateChanges();
+   
+   function getDisplayStateChanges() {
+      if (choiceResult) return choiceResult.stateChanges;
+      
+      // If we have resource array selections, merge them with stateChanges
+      if (hasResourceArrays && resourceArraysResolved) {
+         const merged = { ...(stateChanges || {}) };
+         resourceArrayModifiers.forEach((modifier, idx) => {
+            const selectedResource = selectedResources.get(idx);
+            if (selectedResource) {
+               merged[selectedResource] = (merged[selectedResource] || 0) + modifier.value;
+            }
+         });
+         return merged;
+      }
+      
+      return stateChanges;
+   }
    
    function getOutcomeProps(outcomeType: string) {
       switch(outcomeType) {
@@ -189,15 +221,44 @@
          return;
       }
       
-      // If a choice was made, include it in the dispatch
-      if (selectedChoice !== null && choices) {
-         dispatch('primary', { 
-            choiceIndex: selectedChoice,
-            choice: choices[selectedChoice]
-         });
-      } else {
-         dispatch('primary');
+      if (hasResourceArrays && !resourceArraysResolved) {
+         // Don't allow primary action until all resource arrays are resolved
+         return;
       }
+      
+      // Include both choice selections and resource array selections in the dispatch
+      const eventData: any = {};
+      
+      if (selectedChoice !== null && choices) {
+         eventData.choiceIndex = selectedChoice;
+         eventData.choice = choices[selectedChoice];
+      }
+      
+      if (hasResourceArrays && resourceArraysResolved) {
+         eventData.resourceSelections = Object.fromEntries(selectedResources);
+      }
+      
+      dispatch('primary', eventData);
+   }
+   
+   // Detect modifiers with resource arrays
+   function detectResourceArrayModifiers(modifiers: any[] | undefined): any[] {
+      if (!modifiers) return [];
+      return modifiers.filter(m => Array.isArray(m.resource));
+   }
+   
+   // Handle resource selection from dropdown
+   function handleResourceSelect(modifierIndex: number, resourceType: string) {
+      const newSelections = new Map(selectedResources);
+      newSelections.set(modifierIndex, resourceType);
+      selectedResources = newSelections;
+      
+      // Dispatch event to notify parent
+      dispatch('resourceSelected', {
+         modifierIndex,
+         resourceType,
+         allSelections: Object.fromEntries(selectedResources)
+      });
    }
    
    function handleChoiceSelect(index: number) {
@@ -306,6 +367,44 @@
       {#if displayEffect}
          <div class="resolution-effect">
             {displayEffect}
+         </div>
+      {/if}
+      
+      {#if hasManualEffects && manualEffects}
+         <div class="manual-effects">
+            <div class="manual-effects-header">
+               <i class="fas fa-exclamation-triangle"></i>
+               <span>Manual Effects - Apply Yourself</span>
+            </div>
+            <ul class="manual-effects-list">
+               {#each manualEffects as effect}
+                  <li>{effect}</li>
+               {/each}
+            </ul>
+         </div>
+      {/if}
+      
+      {#if hasResourceArrays}
+         <div class="resource-array-selectors">
+            {#each resourceArrayModifiers as modifier, index}
+               <div class="resource-selector">
+                  <label class="resource-selector-label">
+                     Choose resource {modifier.value > 0 ? 'to gain' : 'to lose'} ({modifier.value > 0 ? '+' : ''}{modifier.value}):
+                  </label>
+                  <select 
+                     class="resource-dropdown"
+                     value={selectedResources.get(index) || ''}
+                     on:change={(e) => handleResourceSelect(index, e.currentTarget.value)}
+                  >
+                     <option value="" disabled>Select resource...</option>
+                     {#each modifier.resource as resourceType}
+                        <option value={resourceType}>
+                           {formatStateChangeLabel(resourceType)}
+                        </option>
+                     {/each}
+                  </select>
+               </div>
+            {/each}
          </div>
       {/if}
       
@@ -620,6 +719,93 @@
          :global(.button) {
             flex: 0 1 auto;
             min-width: 120px;
+         }
+      }
+   }
+   
+   .resource-array-selectors {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      .resource-selector {
+         display: flex;
+         flex-direction: column;
+         gap: 6px;
+         
+         .resource-selector-label {
+            font-size: var(--font-sm);
+            font-weight: var(--font-weight-medium);
+            color: var(--text-secondary);
+         }
+         
+         .resource-dropdown {
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border-medium);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: var(--font-md);
+            font-weight: var(--font-weight-medium);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            
+            &:hover {
+               background: rgba(0, 0, 0, 0.4);
+               border-color: var(--border-strong);
+            }
+            
+            &:focus {
+               outline: none;
+               border-color: var(--color-blue);
+               box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+            
+            option {
+               background: var(--bg-primary);
+               color: var(--text-primary);
+            }
+         }
+      }
+   }
+   
+   .manual-effects {
+      padding: 14px 16px;
+      background: linear-gradient(135deg, 
+         rgba(251, 146, 60, 0.15),
+         rgba(251, 146, 60, 0.05));
+      border: 2px solid rgba(251, 146, 60, 0.4);
+      border-radius: var(--radius-sm);
+      
+      .manual-effects-header {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-semibold);
+         color: rgba(251, 146, 60, 1);
+         margin-bottom: 10px;
+         
+         i {
+            font-size: 18px;
+         }
+      }
+      
+      .manual-effects-list {
+         margin: 0;
+         padding-left: 24px;
+         list-style-type: disc;
+         
+         li {
+            color: var(--text-primary);
+            font-size: var(--font-md);
+            line-height: 1.6;
+            margin-bottom: 6px;
+            
+            &:last-child {
+               margin-bottom: 0;
+            }
          }
       }
    }

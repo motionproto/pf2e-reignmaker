@@ -27,12 +27,26 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Lose 1 border hex permanently, lose 1d4 Gold (pillaging)",
-      "modifiers": []
+      "msg": "Lose 1 border hex permanently, lose {gold} gold (pillaging)",
+      "modifiers": [
+        {
+          "name": "Border Raid Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Lose 1d3 border hexes permanently, lose 2d4 Gold",
-      "modifiers": []
+      "msg": "Lose 1d3 border hexes permanently, lose {gold} gold",
+      "modifiers": [
+        {
+          "name": "Border Raid Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

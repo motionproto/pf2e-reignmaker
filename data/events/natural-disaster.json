@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Minimal damage; citizens impressed by response, -1 Unrest",
-      "endsEvent": true,
+      "msg": "Minimal damage; citizens impressed by response, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Minimal damage",
@@ -32,11 +31,11 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Some damage; lose 1 Resource from this hex",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "Some damage",
@@ -45,11 +44,11 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Major damage; lose all production from the hex this turn, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Major damage; lose all production from the hex this turn, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Major damage",
@@ -57,11 +56,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Devastating losses. Any worksites are removed from the hex, +2 Unrest",
-      "endsEvent": false,
+      "msg": "Devastating losses. Any worksites are removed from the hex, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Devastating losses. Any worksites are removed from the hex",
@@ -69,7 +68,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

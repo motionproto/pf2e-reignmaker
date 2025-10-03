@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Plague cured; -1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Plague cured; -{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Plague cured",
@@ -33,16 +32,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Plague contained; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Plague spreads; +1 Unrest, -2 Gold, spreads to a settlement connected by a road",
-      "endsEvent": false,
+      "msg": "Plague spreads; +{unrest} unrest, -{gold} gold, spreads to a settlement connected by a road",
       "modifiers": [
         {
           "name": "Plague spreads",
@@ -53,15 +52,15 @@
         {
           "name": "Plague spreads",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Devastating outbreak; +2 Unrest, -2 Gold, spreads to all settlements connected by a road",
-      "endsEvent": false,
+      "msg": "Devastating outbreak; +{unrest} unrest, -{gold} gold, spreads to all settlements connected by a road",
       "modifiers": [
         {
           "name": "Devastating outbreak",
@@ -72,11 +71,12 @@
         {
           "name": "Devastating outbreak",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

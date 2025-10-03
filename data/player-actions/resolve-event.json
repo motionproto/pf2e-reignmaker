@@ -12,10 +12,10 @@
   "defaultDC": 0,
   "dcAdjustment": 0,
   "effects": {
-    "successMsg": "The ongoing event has been successfully resolved!",
-    "criticalSuccessMsg": "The ongoing event has been resolved with exceptional success!",
-    "failureMsg": "Failed to resolve the ongoing event. It continues to affect your kingdom.",
-    "criticalFailureMsg": "Your attempt to resolve the event has made things worse!"
+    "successMsg": {},
+    "criticalSuccessMsg": {},
+    "failureMsg": {},
+    "criticalFailureMsg": {}
   },
   "requirements": {
     "hasModifiers": true,

@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Peacefully resolved; -1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Peacefully resolved; -{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Peacefully resolved",
@@ -33,16 +32,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Zealots dispersed; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Persecution spreads; +2 Unrest",
-      "endsEvent": false,
+      "msg": "Persecution spreads; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Persecution spreads",
@@ -50,11 +49,11 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts; +2 Unrest, one structure destroyed",
-      "endsEvent": false,
+      "msg": "Violence erupts; +{unrest} unrest, one structure destroyed",
       "modifiers": [
         {
           "name": "Violence erupts",
@@ -68,7 +67,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

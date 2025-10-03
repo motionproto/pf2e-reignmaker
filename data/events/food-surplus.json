@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Massive surplus; +3 Gold (from selling excess), -1 Unrest",
-      "endsEvent": true,
+      "msg": "Massive surplus; +{gold} gold (from selling excess), -{unrest} unrest",
       "modifiers": [
         {
           "name": "Massive surplus",
           "resource": "gold",
-          "value": 3,
+          "value": "1d4+1",
           "duration": "turns",
           "turns": 1
         },
@@ -39,24 +38,24 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Good harvest; +2 Gold",
-      "endsEvent": true,
+      "msg": "Good harvest; +{gold} gold",
       "modifiers": [
         {
           "name": "Good harvest",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Minor surplus; +1 Gold",
-      "endsEvent": false,
+      "msg": "Minor surplus; +{gold} gold",
       "modifiers": [
         {
           "name": "Minor surplus",
@@ -65,11 +64,11 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Surplus spoils; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Surplus spoils; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Surplus spoils",
@@ -77,7 +76,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

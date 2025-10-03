@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Spectacular event; +2 Gold, -1 Unrest, +1 Fame",
-      "endsEvent": true,
+      "msg": "Spectacular event; +{gold} gold, -{unrest} unrest, +{fame} fame",
       "modifiers": [
         {
           "name": "Spectacular event",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -45,11 +44,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Successful tournament; -1 Unrest",
-      "endsEvent": true,
+      "msg": "Successful tournament; -{unrest} unrest",
       "modifiers": [
         {
           "name": "Successful tournament",
@@ -57,16 +56,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Disappointing turnout;",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Accident or scandal; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Accident or scandal; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Accident or scandal",
@@ -74,7 +73,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

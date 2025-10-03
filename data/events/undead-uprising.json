@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Undead destroyed; -1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Undead destroyed; -{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Undead destroyed",
@@ -33,16 +32,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Undead destroyed; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Undead spread; +1 Unrest, one structure becomes damaged",
-      "endsEvent": false,
+      "msg": "Undead spread; +{unrest} unrest, one structure becomes damaged",
       "modifiers": [
         {
           "name": "Undead spread",
@@ -56,11 +55,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major outbreak; +2 Unrest, one structure destroyed and another damaged",
-      "endsEvent": false,
+      "msg": "Major outbreak; +{unrest} unrest, one structure destroyed and another damaged",
       "modifiers": [
         {
           "name": "Major outbreak",
@@ -80,7 +79,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

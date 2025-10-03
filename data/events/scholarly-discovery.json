@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Revolutionary discovery; +2 Gold, +1 Fame, may build one Knowledge structure at half cost",
-      "endsEvent": true,
+      "msg": "Revolutionary discovery; +{gold} gold, +{fame} fame, may build one Knowledge structure at half cost",
       "modifiers": [
         {
           "name": "Revolutionary discovery",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -39,11 +38,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Important findings: +1 Gold OR +1 Fame",
-      "endsEvent": true,
+      "msg": "Important findings: +{gold} gold OR +1 Fame",
       "modifiers": [
         {
           "name": "Important findings: +1",
@@ -52,16 +51,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Research inconclusive; no benefit",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Academic scandal; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Academic scandal; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Academic scandal",
@@ -69,7 +68,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

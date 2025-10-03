@@ -24,7 +24,6 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Thieves captured with stolen goods; recover losses, convert 2 Unrest to imprisoned unrest",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "Thieves captured with stolen goods",
@@ -32,11 +31,11 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Thieves arrested; convert 1 Unrest to imprisoned unrest",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "Thieves arrested",
@@ -44,16 +43,16 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Thieves escape; -2 Gold, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Thieves escape; -{gold} gold, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Thieves escape",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -63,16 +62,16 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Crime syndicate exposed; -3 Gold, +2 Unrest, may trigger additional crime events",
-      "endsEvent": false,
+      "msg": "Crime syndicate exposed; -{gold} gold, +{unrest} unrest, may trigger additional crime events",
       "modifiers": [
         {
           "name": "Crime syndicate exposed",
           "resource": "gold",
-          "value": -3,
+          "value": "-1d4+1",
           "duration": "turns",
           "turns": 1
         },
@@ -82,7 +81,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

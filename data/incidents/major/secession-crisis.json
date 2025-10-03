@@ -1,5 +1,4 @@
-{
-  "id": "secession-crisis",
+{"id": "secession-crisis",
   "name": "Secession Crisis",
   "tier": "MAJOR",
   "description": "A settlement declares independence from your kingdom",
@@ -27,12 +26,26 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose 2d4 Gold",
-      "modifiers": []
+      "msg": "Settlement in revolt - loses one level (minimum 1), highest tier structure in that settlement is destroyed, lose {gold} gold",
+      "modifiers": [
+        {
+          "name": "Secession Crisis Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Settlement declares independence with all adjacent hexes (becomes free city-state), +2 Unrest, any armies located in the hexes defect",
-      "modifiers": []
+      "msg": "Settlement declares independence with all adjacent hexes (becomes free city-state), +{unrest} unrest, any armies located in the hexes defect",
+      "modifiers": [
+        {
+          "name": "Secession Crisis Critical Unrest",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

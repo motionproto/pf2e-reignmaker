@@ -28,7 +28,6 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Fortify, reduce Unrest by 1",
       "modifiers": [
         {
           "name": "Fortify Hex",
@@ -36,23 +35,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "success": {
-      "description": "Fortify",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "failure": {
-      "description": "Fail",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   },
   "special": "Fortification Benefits: Troops defending in a fortified hex gain +1 armor class and +2 initiative circumstance bonus"

@@ -32,29 +32,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Learn about 2 hexes",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "success": {
-      "description": "Learn about 1 hex",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "failure": {
-      "description": "no report",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "Scouts lost",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "sendScouts",
-          "purpose": "exploration"
-        }
-      ]
+      "modifiers": []
     }
   }
 }

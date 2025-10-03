@@ -24,13 +24,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Weather holds perfectly; +2 Food, -1 Unrest",
-      "endsEvent": false,
+      "msg": "Weather holds perfectly; +{food} food, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Weather holds perfectly",
           "resource": "food",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -40,29 +39,29 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "success": {
-      "msg": "Weather remains good; +2 Food",
-      "endsEvent": false,
+      "msg": "Weather remains good; +{food} food",
       "modifiers": [
         {
           "name": "Weather remains good",
           "resource": "food",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "failure": {
       "msg": "Weather changes; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Weather turns bad; +1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Weather turns bad; +{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Weather turns bad",
@@ -70,7 +69,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     }
   }
 }

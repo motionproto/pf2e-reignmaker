@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major triumph; -2 Unrest",
-      "endsEvent": true,
+      "msg": "Major triumph; -{unrest} unrest",
       "modifiers": [
         {
           "name": "Major triumph",
@@ -32,11 +31,11 @@
           "value": -2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Justice served; -1 Unrest",
-      "endsEvent": true,
+      "msg": "Justice served; -{unrest} unrest",
       "modifiers": [
         {
           "name": "Justice served",
@@ -44,11 +43,11 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Justice with complications; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Justice with complications; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Justice with complications",
@@ -56,11 +55,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Miscarriage of justice; +2 Unrest",
-      "endsEvent": false,
+      "msg": "Miscarriage of justice; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Miscarriage of justice",
@@ -68,7 +67,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

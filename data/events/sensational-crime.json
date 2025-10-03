@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Criminal caught spectacularly; -1 Unrest",
-      "endsEvent": true,
+      "msg": "Criminal caught spectacularly; -{unrest} unrest",
       "modifiers": [
         {
           "name": "Criminal caught spectacularly",
@@ -32,16 +31,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Crime solved; no effect",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Criminal escapes; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Criminal escapes; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Criminal escapes",
@@ -49,11 +48,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Copycat crimes; +2 Unrest, event may recur",
-      "endsEvent": false,
+      "msg": "Copycat crimes; +{unrest} unrest, event may recur",
       "modifiers": [
         {
           "name": "Copycat crimes",
@@ -61,7 +60,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

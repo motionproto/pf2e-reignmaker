@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -1 Unrest",
-      "endsEvent": true,
+      "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Elite forces trained",
@@ -32,21 +31,21 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Training is ineffective;",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Training accident; +1 Unrest, one military structure becomes damaged",
-      "endsEvent": false,
+      "msg": "Training accident; +{unrest} unrest, one military structure becomes damaged",
       "modifiers": [
         {
           "name": "Training accident",
@@ -60,7 +59,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

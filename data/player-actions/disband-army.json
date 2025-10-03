@@ -28,7 +28,6 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "People welcome them home with honours!, -2 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",
@@ -36,11 +35,9 @@
           "value": -2,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     },
     "success": {
-      "description": "Army disbands, -1 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",
@@ -48,38 +45,18 @@
           "value": -1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": [
-        {
-          "type": "disbandArmy",
-          "targetArmy": "selected"
-        }
       ]
     },
     "failure": {
-      "description": "Army disbands",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "disbandArmy",
-          "targetArmy": "selected"
-        }
-      ]
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "Army disbands, +1 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
-        }
-      ],
-      "gameEffects": [
-        {
-          "type": "disbandArmy",
-          "targetArmy": "selected"
         }
       ]
     }

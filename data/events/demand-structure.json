@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Citizens convinced; -1 Unrest, **event ends**",
-      "endsEvent": true,
+      "msg": "Citizens convinced; -{unrest} unrest, **event ends**",
       "modifiers": [
         {
           "name": "Citizens convinced",
@@ -33,16 +32,16 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Demands are satisfied; **event ends**",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Protests continue; +1 Unrest, or pay 1 Gold as concessions",
-      "endsEvent": false,
+      "msg": "Protests continue; +{unrest} unrest, or pay 1 Gold as concessions",
       "modifiers": [
         {
           "name": "Protests continue",
@@ -50,11 +49,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts; +2 Unrest, event escalates",
-      "endsEvent": false,
+      "msg": "Violence erupts; +{unrest} unrest, event escalates",
       "modifiers": [
         {
           "name": "Violence erupts",
@@ -62,7 +61,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

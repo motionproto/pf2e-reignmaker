@@ -24,12 +24,11 @@
   "effects": {
     "criticalSuccess": {
       "msg": "Scandal deflected; no effect",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Damage controlled; +1 Unrest",
-      "endsEvent": true,
+      "msg": "Damage controlled; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Damage controlled",
@@ -37,11 +36,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Public outrage; +2 Unrest",
-      "endsEvent": false,
+      "msg": "Public outrage; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Public outrage",
@@ -49,11 +48,11 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Leader must lay low; +2 Unrest, that PC cannot take a Kingdom Action this turn",
-      "endsEvent": false,
+      "msg": "Leader must lay low; +{unrest} unrest, that PC cannot take a Kingdom Action this turn",
       "modifiers": [
         {
           "name": "Leader must lay low",
@@ -61,7 +60,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

@@ -23,13 +23,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Legendary treasure; +4 Gold, -1 Unrest",
-      "endsEvent": true,
+      "msg": "Legendary treasure; +{gold} gold, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Legendary treasure",
           "resource": "gold",
-          "value": 4,
+          "value": "1d6+1",
           "duration": "turns",
           "turns": 1
         },
@@ -39,24 +38,24 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Valuable find; +2 Gold",
-      "endsEvent": true,
+      "msg": "Valuable find; +{gold} gold",
       "modifiers": [
         {
           "name": "Valuable find",
           "resource": "gold",
-          "value": 2,
+          "value": "1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Modest value; +1 Gold",
-      "endsEvent": false,
+      "msg": "Modest value; +{gold} gold",
       "modifiers": [
         {
           "name": "Modest value",
@@ -65,11 +64,11 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Treasure cursed or false; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Treasure cursed or false; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Treasure cursed or false",
@@ -77,7 +76,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   }
 }

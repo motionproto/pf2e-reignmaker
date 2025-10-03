@@ -44,6 +44,7 @@ export function getLevelBasedDC(level: number): number {
 /**
  * Aggregate resource changes from multiple modifiers
  * Only applies immediate and permanent duration modifiers
+ * Skips resource array modifiers (require player choice)
  */
 export function aggregateResourceChanges(
   modifiers: EventModifier[]
@@ -51,9 +52,16 @@ export function aggregateResourceChanges(
   const changes = new Map<string, number>();
   
   for (const modifier of modifiers) {
+    // Skip resource arrays (player must choose which resource)
+    if (Array.isArray(modifier.resource)) {
+      continue;
+    }
+    
     if (modifier.duration === 'immediate' || modifier.duration === 'permanent') {
+      // TypeScript now knows modifier.resource is a single ResourceType, not an array
+      const resourceValue = typeof modifier.value === 'number' ? modifier.value : 0;
       const current = changes.get(modifier.resource) || 0;
-      changes.set(modifier.resource, current + modifier.value);
+      changes.set(modifier.resource, current + resourceValue);
     }
   }
   

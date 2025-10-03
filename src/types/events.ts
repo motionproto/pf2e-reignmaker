@@ -81,10 +81,11 @@ export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | 'turns';
 /**
  * Event modifier details
  * Value can be a number (static) or a dice formula string (e.g., "1d4", "-2d6+1")
+ * Resource can be a single type or an array (for player choice)
  */
 export interface EventModifier {
   name: string;
-  resource: ResourceType;
+  resource: ResourceType | ResourceType[];  // Single resource OR array for player choice
   value: number | string;  // Static number (e.g., 5, -10) or dice formula (e.g., "1d4", "-2d6+1")
   duration: ModifierDuration;
   turns?: number;  // Required if duration === 'turns'
@@ -103,9 +104,10 @@ export interface EventChoice {
  */
 export interface EventOutcome {
   msg: string;
-  endsEvent?: boolean;
-  modifiers: EventModifier[];
-  choices?: EventChoice[]; // Optional player choices
+  endsEvent?: boolean;           // Does this outcome end the event (vs. persist as ongoing)?
+  modifiers: EventModifier[];    // Only actual resource/state changes
+  manualEffects?: string[];      // Effects requiring manual GM application (e.g., "Lose 1d3 hexes")
+  choices?: EventChoice[];       // Optional player choices
 }
 
 /**

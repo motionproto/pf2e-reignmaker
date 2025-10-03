@@ -28,35 +28,16 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build Structures for half cost",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "buildStructure",
-          "count": 1,
-          "costReduction": 50
-        }
-      ]
+      "modifiers": []
     },
     "success": {
-      "description": "Build 1 Structure",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "buildStructure",
-          "count": 1
-        }
-      ]
+      "modifiers": []
     },
     "failure": {
-      "description": "no progress",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "No progress",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     }
   }
 }

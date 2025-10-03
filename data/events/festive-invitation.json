@@ -23,8 +23,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Great success; Gold equal to Resources brought +1, -1 Unrest",
-      "endsEvent": true,
+      "msg": "Great success; Gold equal to Resources brought +1, -{unrest} unrest",
       "modifiers": [
         {
           "name": "Great success",
@@ -39,11 +38,11 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Pleasant visit; Gold equal to Resources brought",
-      "endsEvent": true,
       "modifiers": [
         {
           "name": "Pleasant visit",
@@ -52,16 +51,16 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
       "msg": "Adequate visit; gifts not reciprocated",
-      "endsEvent": false,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Diplomatic faux pas; +1 Unrest",
-      "endsEvent": false,
+      "msg": "Diplomatic faux pas; +{unrest} unrest",
       "modifiers": [
         {
           "name": "Diplomatic faux pas",
@@ -69,7 +68,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

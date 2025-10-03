@@ -24,39 +24,38 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Crisis averted; lose 2 Food this turn, **event ends**",
-      "endsEvent": true,
+      "msg": "Crisis averted; lose {food} food this turn, **event ends**",
       "modifiers": [
         {
           "name": "Crisis averted",
           "resource": "food",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
-      "msg": "Shortage controlled; lose 4 Food this turn, **event ends**",
-      "endsEvent": true,
+      "msg": "Shortage controlled; lose {food} food this turn, **event ends**",
       "modifiers": [
         {
           "name": "Shortage controlled",
           "resource": "food",
-          "value": -4,
+          "value": "-1d6+1",
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Severe shortage; lose 6 Food this turn, +1 Unrest",
-      "endsEvent": false,
+      "msg": "Severe shortage; lose {food} food this turn, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Severe shortage",
           "resource": "food",
-          "value": -6,
+          "value": "-2d4",
           "duration": "turns",
           "turns": 1
         },
@@ -66,16 +65,16 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Famine threatens; lose 8 Food this turn, +2 Unrest",
-      "endsEvent": false,
+      "msg": "Famine threatens; lose {food} food this turn, +{unrest} unrest",
       "modifiers": [
         {
           "name": "Famine threatens",
           "resource": "food",
-          "value": -8,
+          "value": "-2d6+1",
           "duration": "turns",
           "turns": 1
         },
@@ -85,7 +84,8 @@
           "value": 2,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {

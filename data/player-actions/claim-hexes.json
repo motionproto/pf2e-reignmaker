@@ -24,45 +24,15 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Claim hexes based on proficiency (Trained/Expert: 1, Master: 2, Legendary: 3) + 1 extra hex",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "claimHexes",
-          "count": "proficiency-scaled",
-          "scaling": {
-            "trained": 1,
-            "expert": 1,
-            "master": 2,
-            "legendary": 3
-          },
-          "bonus": 1
-        }
-      ]
+      "modifiers": []
     },
     "success": {
-      "description": "Claim hexes based on proficiency (Trained/Expert: 1, Master: 2, Legendary: 3)",
-      "modifiers": [],
-      "gameEffects": [
-        {
-          "type": "claimHexes",
-          "count": "proficiency-scaled",
-          "scaling": {
-            "trained": 1,
-            "expert": 1,
-            "master": 2,
-            "legendary": 3
-          }
-        }
-      ]
+      "modifiers": []
     },
     "failure": {
-      "description": "No effect",
-      "modifiers": [],
-      "gameEffects": []
+      "modifiers": []
     },
     "criticalFailure": {
-      "description": "Failed expansion causes discontent. +1 Unrest",
       "modifiers": [
         {
           "name": "Claim Hexes",
@@ -70,8 +40,7 @@
           "value": 1,
           "duration": "immediate"
         }
-      ],
-      "gameEffects": []
+      ]
     }
   },
   "special": "Can only claim hexes adjacent to existing kingdom territory"

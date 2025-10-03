@@ -24,8 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Raiders defeated; +1 Gold (loot), **event ends**",
-      "endsEvent": true,
+      "msg": "Raiders defeated; +{gold} gold (loot), **event ends**",
       "modifiers": [
         {
           "name": "Raiders defeated",
@@ -34,28 +33,28 @@
           "duration": "turns",
           "turns": 1
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "success": {
       "msg": "Successful raid; -2 Gold, -2 Food, +1 Unrest",
-      "endsEvent": true,
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
       "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
-      "endsEvent": false,
       "modifiers": [
         {
           "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         },
         {
           "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
           "resource": "food",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -65,23 +64,23 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major raid; -2 Gold, -2 Food, +2 Unrest, one structure becomes damaged",
-      "endsEvent": false,
+      "msg": "Major raid; -{gold} gold, -{food} food, +{unrest} unrest, one structure becomes damaged",
       "modifiers": [
         {
           "name": "Major raid",
           "resource": "gold",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         },
         {
           "name": "Major raid",
           "resource": "food",
-          "value": -2,
+          "value": "-1d4",
           "duration": "turns",
           "turns": 1
         },
@@ -97,7 +96,8 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": false
     }
   },
   "ifUnresolved": {
