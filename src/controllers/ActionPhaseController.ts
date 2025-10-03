@@ -17,7 +17,7 @@ import {
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
-import { actionExecutionService } from './actions/action-execution'
+import { actionResolver } from './actions/action-resolver'
 import type { PlayerAction } from '../models/PlayerActions'
 import type { KingdomData } from '../actors/KingdomActor'
 
@@ -190,7 +190,7 @@ export async function createActionPhaseController() {
      * Check if an action can be performed
      */
     canPerformAction(action: PlayerAction, kingdomData: KingdomData): boolean {
-      const requirements = actionExecutionService.checkActionRequirements(action, kingdomData)
+      const requirements = actionResolver.checkActionRequirements(action, kingdomData)
       return requirements.met
     },
 
@@ -198,14 +198,14 @@ export async function createActionPhaseController() {
      * Get action requirements
      */
     getActionRequirements(action: PlayerAction, kingdomData: KingdomData) {
-      return actionExecutionService.checkActionRequirements(action, kingdomData)
+      return actionResolver.checkActionRequirements(action, kingdomData)
     },
 
     /**
      * Parse action outcome
      */
     parseActionOutcome(action: PlayerAction, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      const parsed = actionExecutionService.parseActionOutcome(action, outcome)
+      const parsed = actionResolver.parseActionOutcome(action, outcome)
       const stateChanges = new Map<string, any>()
       
       // Convert parsed effects to state changes Map
@@ -222,7 +222,7 @@ export async function createActionPhaseController() {
      * Get action DC based on character level
      */
     getActionDC(characterLevel: number): number {
-      return actionExecutionService.getActionDC(characterLevel)
+      return actionResolver.getActionDC(characterLevel)
     },
 
     /**
@@ -246,7 +246,7 @@ export async function createActionPhaseController() {
         }
 
         // Execute the action
-        const result = actionExecutionService.executeAction(action, outcome, kingdomData)
+        const result = actionResolver.executeAction(action, outcome, kingdomData)
         
         // Apply state changes to kingdom
         const actor = getKingdomActor()

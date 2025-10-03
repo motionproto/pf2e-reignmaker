@@ -67,18 +67,17 @@ def combine_incidents():
                 try:
                     with open(json_file, 'r') as f:
                         incident_data = json.load(f)
-                        # Add severity field if not present
-                        if 'severity' not in incident_data:
-                            incident_data['severity'] = severity
+                        # Note: We use 'tier' field, not 'severity' (severity is redundant)
                         all_incidents.append(incident_data)
                         print(f"    ✓ Loaded: {json_file.name}")
                 except Exception as e:
                     print(f"    ✗ Error loading {json_file.name}: {e}")
     
-    # Sort incidents by severity (minor first, then moderate, then major) and then by id
-    severity_priority = {"minor": 0, "moderate": 1, "major": 2}
+    # Sort incidents by tier (minor first, then moderate, then major) and then by id
+    # Normalize tier from MINOR/MODERATE/MAJOR to lowercase
+    tier_priority = {"minor": 0, "moderate": 1, "major": 2}
     all_incidents.sort(key=lambda x: (
-        severity_priority.get(x.get('severity', 'minor'), 0),
+        tier_priority.get(x.get('tier', 'MINOR').lower(), 0),
         x.get('id', '')
     ))
     
@@ -87,18 +86,18 @@ def combine_incidents():
     with open(output_file, 'w') as f:
         json.dump(all_incidents, f, indent=4)
     
-    # Summary
-    severity_counts = {}
+    # Summary by tier
+    tier_counts = {}
     for incident in all_incidents:
-        severity = incident.get('severity', 'unknown')
-        severity_counts[severity] = severity_counts.get(severity, 0) + 1
+        tier = incident.get('tier', 'UNKNOWN').lower()
+        tier_counts[tier] = tier_counts.get(tier, 0) + 1
     
     print(f"\n✅ Successfully combined {len(all_incidents)} incidents")
     print(f"📁 Output written to: {output_file}")
-    print("\nIncidents by severity:")
-    for severity in severity_order:
-        if severity in severity_counts:
-            print(f"  {severity}: {severity_counts[severity]} incidents")
+    print("\nIncidents by tier:")
+    for tier in severity_order:  # Still use severity_order for directory structure
+        if tier in tier_counts:
+            print(f"  {tier}: {tier_counts[tier]} incidents")
     
     return all_incidents
 

@@ -11,7 +11,20 @@
 
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActiveModifier } from '../../models/Modifiers';
-import type { EventModifier, OngoingEffect } from '../events/event-types';
+import type { EventModifier } from '../../types/events';
+
+/**
+ * OngoingEffect - Structure for unresolved event/incident effects
+ * This matches the JSON structure of the ifUnresolved field
+ */
+export interface OngoingEffect {
+  name: string;
+  description: string;
+  tier: number;
+  icon?: string;
+  modifiers: EventModifier[];
+  resolvedWhen?: any;  // TODO: Define ResolutionCondition type when needed
+}
 
 /**
  * Calculate DC based on kingdom/character level

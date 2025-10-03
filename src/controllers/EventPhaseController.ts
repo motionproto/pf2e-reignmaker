@@ -5,12 +5,13 @@
  * Changed "stability roll" terminology to clearer "event check".
  */
 
-import { EventResolutionService } from './events/EventResolutionService';
+import { EventResolver } from './events/event-resolver';
+import { eventService } from './events/event-loader';
 import type { EventData } from './events/event-loader';
 import type { KingdomData } from '../actors/KingdomActor';
 import { updateKingdom } from '../stores/KingdomStore';
-import { EventProvider } from './events/EventProvider';
 import { createModifierService } from '../services/ModifierService';
+import { createGameEffectsService } from '../services/GameEffectsService';
 import type { ActiveModifier } from '../models/Modifiers';
 import { 
   reportPhaseStart, 
@@ -48,9 +49,10 @@ const EVENTS_PHASE_STEPS = [
   { name: 'Apply Modifiers' }    // Step 2 - CONDITIONAL (auto-complete based on outcome)
 ];
 
-export async function createEventPhaseController(eventService?: any) {
-    const eventResolutionService = new EventResolutionService(eventService);
+export async function createEventPhaseController(_eventService?: any) {
+    const eventResolver = new EventResolver(eventService);
     const modifierService = await createModifierService();
+    const gameEffectsService = await createGameEffectsService();
     
     const createInitialState = (): EventPhaseState => ({
         currentEvent: null,
@@ -134,7 +136,7 @@ export async function createEventPhaseController(eventService?: any) {
             
             if (triggered) {
                 // Event triggered - get random event and reset DC to 15
-                event = await EventProvider.getRandomEvent();
+                event = eventService.getRandomEvent();
                 newDC = 15;
                 
                 if (event) {
@@ -148,6 +150,9 @@ export async function createEventPhaseController(eventService?: any) {
                         await actor.updateKingdom((kingdom) => {
                             kingdom.currentEventId = event!.id;
                             kingdom.eventDC = newDC;
+                            kingdom.eventStabilityRoll = roll;
+                            kingdom.eventRollDC = currentDC;
+                            kingdom.eventTriggered = true;
                         });
                     }
                     
@@ -167,6 +172,9 @@ export async function createEventPhaseController(eventService?: any) {
                     await actor.updateKingdom((kingdom) => {
                         kingdom.eventDC = newDC;
                         kingdom.currentEventId = null;
+                        kingdom.eventStabilityRoll = roll;
+                        kingdom.eventRollDC = currentDC;
+                        kingdom.eventTriggered = false;
                     });
                 }
                 
@@ -190,7 +198,7 @@ export async function createEventPhaseController(eventService?: any) {
         },
         
         /**
-         * Apply event outcome directly to KingdomActor (New Architecture)
+         * Apply event outcome using GameEffectsService (New Architecture)
          */
         async applyEventOutcome(
             event: EventData,
@@ -206,55 +214,59 @@ export async function createEventPhaseController(eventService?: any) {
             console.log(`🎯 [EventPhaseController] Applying event outcome: ${event.name} -> ${outcome}`);
             
             try {
-                // Apply the event outcome using the service
-                const application = eventResolutionService.applyEventOutcome(
-                    event,
-                    outcome,
-                    currentTurn
-                );
+                // Get the outcome effects from the event
+                const effectOutcome = event.effects?.[outcome];
+                if (!effectOutcome) {
+                    throw new Error(`No effects defined for outcome: ${outcome}`);
+                }
                 
-                // Apply ALL changes in a single updateKingdom call to avoid clearing steps array
+                // Use GameEffectsService to apply the outcome
+                const result = await gameEffectsService.applyOutcome({
+                    type: 'event',
+                    sourceId: event.id,
+                    sourceName: event.name,
+                    outcome: outcome,
+                    modifiers: effectOutcome.modifiers || [],
+                    createOngoingModifier: false // Handle separately below
+                });
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to apply outcome');
+                }
+                
+                // Convert applied resources to Map for compatibility
                 const appliedChanges = new Map<string, any>();
+                for (const { resource, value } of result.applied.resources) {
+                    appliedChanges.set(resource, value);
+                }
                 
+                // Handle unresolved modifier creation if applicable
+                let unresolvedModifier: ActiveModifier | undefined;
+                if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
+                    unresolvedModifier = modifierService.createFromUnresolvedEvent(event as any, currentTurn);
+                    if (unresolvedModifier) {
+                        await updateKingdom(kingdom => {
+                            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                            kingdom.activeModifiers.push(unresolvedModifier!);
+                        });
+                        appliedChanges.set('modifier', unresolvedModifier);
+                        console.log(`📋 [EventPhaseController] Created ongoing modifier: ${unresolvedModifier.name}`);
+                    }
+                }
+                
+                // Clear current event
                 await updateKingdom(kingdom => {
-                    // Apply resource changes
-                    for (const [resource, change] of application.resourceChanges) {
-                        if (resource === 'unrest') {
-                            const newUnrest = Math.max(0, kingdom.unrest + change);
-                            kingdom.unrest = newUnrest;
-                            appliedChanges.set('unrest', change);
-                        } else if (resource === 'fame') {
-                            const newFame = Math.max(0, Math.min(3, kingdom.fame + change));
-                            kingdom.fame = newFame;
-                            appliedChanges.set('fame', change);
-                        } else {
-                            const currentAmount = kingdom.resources[resource] || 0;
-                            const newAmount = Math.max(0, currentAmount + change);
-                            kingdom.resources[resource] = newAmount;
-                            appliedChanges.set(resource, change);
-                        }
-                    }
-                    
-                    // Add unresolved modifier if applicable (in same update)
-                    if (application.unresolvedModifier) {
-                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                        kingdom.activeModifiers.push(application.unresolvedModifier);
-                        appliedChanges.set('modifier', application.unresolvedModifier);
-                    }
-                    
-                    // Clear current event (in same update)
                     kingdom.currentEventId = null;
                 });
                 
                 state.resolutionOutcome = outcome;
                 state.appliedEffects = appliedChanges;
                 
-                // Handle ongoing events list (this doesn't call updateKingdom)
+                // Handle ongoing events list
                 if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
                     await this.addToOngoingEvents(event.id);
                     state.unresolvedEvent = event;
                 } else {
-                    const effectOutcome = event.effects?.[outcome];
                     if (effectOutcome?.msg && effectOutcome.msg.includes('<EVENT ENDS>')) {
                         await this.removeFromOngoingEvents(event.id);
                     }
@@ -294,7 +306,7 @@ export async function createEventPhaseController(eventService?: any) {
             console.log(`🚫 [EventPhaseController] Ignoring event: ${event.name}`);
             
             // Apply failure effects
-            const failureEffects = eventResolutionService.calculateResourceChanges(event, 'failure');
+            const failureEffects = eventResolver.calculateResourceChanges(event, 'failure');
             
             // Create ongoing modifier if event has ifUnresolved configuration
             let modifier: ActiveModifier | undefined;
@@ -380,7 +392,7 @@ export async function createEventPhaseController(eventService?: any) {
             
             const events: EventData[] = [];
             for (const eventId of kingdom.ongoingEvents) {
-                const event = await EventProvider.getEventById(eventId);
+                const event = eventService.getEventById(eventId);
                 if (event) {
                     events.push(event);
                 }
@@ -393,14 +405,14 @@ export async function createEventPhaseController(eventService?: any) {
          * Check if event can be resolved with a specific skill
          */
         canResolveWithSkill(event: EventData, skill: string): boolean {
-            return eventResolutionService.canResolveWithSkill(event, skill);
+            return eventResolver.canResolveWithSkill(event, skill);
         },
         
         /**
          * Get the DC for resolving an event
          */
         getEventResolutionDC(kingdomLevel: number): number {
-            return eventResolutionService.getResolutionDC(kingdomLevel);
+            return eventResolver.getResolutionDC(kingdomLevel);
         },
         
         /**
@@ -408,7 +420,7 @@ export async function createEventPhaseController(eventService?: any) {
          */
         determineOutcome(roll: number, modifier: number, dc: number): 
             'criticalSuccess' | 'success' | 'failure' | 'criticalFailure' {
-            return eventResolutionService.determineOutcome(roll, modifier, dc);
+            return eventResolver.determineOutcome(roll, modifier, dc);
         },
         
         /**

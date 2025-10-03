@@ -1,5 +1,5 @@
 import type { ActiveModifier } from '../../models/Modifiers';
-import type { EventSkill, EventOutcome, EventModifier, EventEffects } from './event-types';
+import type { EventSkill, EventOutcome, EventModifier, EventEffects } from '../../types/events';
 import eventsData from '../../../dist/events.json';
 
 

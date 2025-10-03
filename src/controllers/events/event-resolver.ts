@@ -1,5 +1,5 @@
 /**
- * EventResolutionService - Handles all event resolution business logic
+ * EventResolver - Handles all event resolution business logic
  * 
  * This service manages event stability checks, outcome application,
  * and unresolved event handling for the kingdom game.
@@ -38,7 +38,7 @@ export interface EventResolutionResult {
     unresolvedEvent?: EventData;
 }
 
-export class EventResolutionService {
+export class EventResolver {
     constructor(
         private eventService: EventService
     ) {}
@@ -99,7 +99,7 @@ export class EventResolutionService {
             try {
                 unresolvedModifier = this.createUnresolvedModifier(event, currentTurn);
             } catch (error) {
-                console.warn('[EventResolutionService] Could not create unresolved modifier:', error);
+                console.warn('[EventResolver] Could not create unresolved modifier:', error);
             }
         }
         
@@ -265,5 +265,6 @@ export class EventResolutionService {
     }
 }
 
-// Note: We don't export a singleton here as it needs EventService injection
-// This will be instantiated in the controller/store layer with proper dependencies
+// Export singleton instance with EventService dependency
+import { eventService } from './event-loader';
+export const eventResolver = new EventResolver(eventService);

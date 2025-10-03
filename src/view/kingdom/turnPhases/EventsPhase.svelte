@@ -12,8 +12,8 @@
    
    // Import existing services and components
    import type { EventData } from '../../../controllers/events/event-loader';
-   import type { EventSkill, EventOutcome } from '../../../controllers/events/event-types';
-   import { EventProvider } from '../../../controllers/events/EventProvider';
+   import type { EventSkill } from '../../../types/events';
+   import { eventService } from '../../../controllers/events/event-loader';
    import Button from '../components/baseComponents/Button.svelte';
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
    import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
@@ -60,6 +60,7 @@
    $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
    $: showStabilityResult = $kingdomData.eventStabilityRoll !== null;
    $: rolledAgainstDC = $kingdomData.eventRollDC || eventDC;
+   $: eventWasTriggered = $kingdomData.eventTriggered ?? null;
    
    onMount(() => {
       const initAsync = async () => {
@@ -73,7 +74,7 @@
          // Check if an event was already rolled by another client
          if ($kingdomData.currentEventId) {
             console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
-            const event = await EventProvider.getEventById($kingdomData.currentEventId);
+            const event = eventService.getEventById($kingdomData.currentEventId);
             if (event) {
                currentEvent = event;
             }
@@ -165,7 +166,7 @@
       if ($kingdomData.currentEventId) {
          console.log('[EventsPhase] Event already rolled by another client, loading existing event');
          // Load the event by ID
-         const event = await EventProvider.getEventById($kingdomData.currentEventId);
+         const event = eventService.getEventById($kingdomData.currentEventId);
          if (event) {
             currentEvent = event;
          }
@@ -467,7 +468,7 @@
             {/if}
          </Button>
          
-         {#if showStabilityResult && eventChecked}
+         {#if showStabilityResult && eventChecked && eventWasTriggered === false}
             <div class="check-result-display">
                <div class="roll-result failure">
                   <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})

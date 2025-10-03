@@ -182,6 +182,8 @@ export async function createUnrestPhaseController() {
           // Set the incident (DON'T manipulate currentPhaseSteps directly)
           await actor.updateKingdom((kingdom) => {
             kingdom.currentIncidentId = incidentId;
+            kingdom.incidentRoll = Math.round(roll * 100);
+            kingdom.incidentTriggered = true;
           });
           
           console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 will require manual resolution');
@@ -194,6 +196,8 @@ export async function createUnrestPhaseController() {
         // Ensure no incident is set (DON'T manipulate currentPhaseSteps directly)
         await actor.updateKingdom((kingdom) => {
           kingdom.currentIncidentId = null;
+          kingdom.incidentRoll = Math.round(roll * 100);
+          kingdom.incidentTriggered = false;
         });
         
         // Auto-complete step 2 since no incident (using PhaseHandler)
@@ -213,7 +217,7 @@ export async function createUnrestPhaseController() {
 
     /**
      * Resolve a triggered incident (step 2)
-     * Now uses IncidentResolutionService for proper effect parsing
+     * Now uses GameEffectsService for consistent outcome application
      */
     async resolveIncident(
       incidentId: string, 
@@ -237,44 +241,68 @@ export async function createUnrestPhaseController() {
           return { success: false, error: 'Incident not found' };
         }
 
-        // Use incident resolution service to parse effects
-        const { incidentResolutionService } = await import('./incidents/incident-resolution');
-        const result = incidentResolutionService.applyIncidentOutcome(incident, outcome);
+        // Get the outcome effects from the incident
+        const effectOutcome = incident.effects?.[outcome];
+        if (!effectOutcome) {
+          throw new Error(`No effects defined for outcome: ${outcome}`);
+        }
 
-        // Apply resource changes to kingdom
-        await actor.updateKingdom((kingdom) => {
-          // Apply resource changes from incident effects
-          for (const [resource, change] of result.resourceChanges.entries()) {
-            if (resource === 'unrest') {
-              kingdom.unrest = Math.max(0, (kingdom.unrest || 0) + change);
-            } else if (resource === 'fame') {
-              kingdom.fame = Math.max(0, Math.min(3, (kingdom.fame || 0) + change));
-            } else if (kingdom.resources[resource] !== undefined) {
-              kingdom.resources[resource] = Math.max(0, (kingdom.resources[resource] || 0) + change);
-            }
-          }
+        // Use GameEffectsService to apply the outcome
+        const { createGameEffectsService } = await import('../services/GameEffectsService');
+        const gameEffectsService = await createGameEffectsService();
+        
+        const result = await gameEffectsService.applyOutcome({
+          type: 'incident',
+          sourceId: incident.id,
+          sourceName: incident.name,
+          outcome: outcome,
+          modifiers: effectOutcome.modifiers || [],
+          createOngoingModifier: false // Handle separately below
+        });
 
-          // Add unresolved modifier if incident failed
-          if (result.unresolvedModifier) {
-            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-            kingdom.activeModifiers.push(result.unresolvedModifier);
-            console.log('📋 [UnrestPhaseController] Added unresolved incident modifier');
-          }
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to apply outcome');
+        }
+
+        // Convert applied resources to Map for compatibility
+        const appliedChanges = new Map<string, any>();
+        for (const { resource, value } of result.applied.resources) {
+          appliedChanges.set(resource, value);
+        }
+
+        // Handle unresolved modifier creation if applicable
+        if (incident.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
+          const { createModifierService } = await import('../services/ModifierService');
+          const modifierService = await createModifierService();
           
-          // Clear the current incident
+          const kingdom = get(kingdomData);
+          const unresolvedModifier = modifierService.createFromUnresolvedEvent(incident as any, kingdom.currentTurn || 1);
+          
+          if (unresolvedModifier) {
+            await actor.updateKingdom(kingdom => {
+              if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+              kingdom.activeModifiers.push(unresolvedModifier);
+            });
+            appliedChanges.set('modifier', unresolvedModifier);
+            console.log(`📋 [UnrestPhaseController] Created ongoing modifier: ${unresolvedModifier.name}`);
+          }
+        }
+
+        // Clear the current incident
+        await actor.updateKingdom((kingdom) => {
           kingdom.currentIncidentId = null;
         });
 
-        console.log(`✅ [UnrestPhaseController] Incident resolved: ${result.message}`);
+        console.log(`✅ [UnrestPhaseController] Incident resolved: ${effectOutcome.msg}`);
         
         // Complete step 2 (resolve incident)
         await completePhaseStepByIndex(2);
         
         return { 
           success: true, 
-          outcome: result.outcome,
-          message: result.message,
-          resourceChanges: result.resourceChanges
+          outcome: outcome,
+          message: effectOutcome.msg,
+          resourceChanges: appliedChanges
         };
       } catch (error) {
         console.error('❌ [UnrestPhaseController] Error resolving incident:', error);

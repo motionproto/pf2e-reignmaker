@@ -1,12 +1,12 @@
 /**
- * IncidentResolutionService - Handles incident resolution business logic
+ * IncidentResolver - Handles incident resolution business logic
  * 
  * Incidents use the same structure as events (KingdomEvent/KingdomIncident)
  * and require the same resolution logic: skill checks, outcome parsing,
  * resource changes, and modifier creation.
  */
 
-import type { KingdomIncident, EventOutcome } from '../events/event-types';
+import type { KingdomIncident, EventOutcome } from '../../types/incidents';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActiveModifier } from '../../models/Modifiers';
 import {
@@ -24,7 +24,7 @@ export interface IncidentResolutionResult {
   unresolvedModifier?: ActiveModifier;
 }
 
-export class IncidentResolutionService {
+export class IncidentResolver {
   /**
    * Apply the outcome of an incident resolution
    */
@@ -124,4 +124,4 @@ export class IncidentResolutionService {
 }
 
 // Export singleton instance
-export const incidentResolutionService = new IncidentResolutionService();
+export const incidentResolver = new IncidentResolver();

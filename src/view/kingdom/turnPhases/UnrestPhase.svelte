@@ -29,6 +29,7 @@
    
    // Reactive UI state using new index-based system
    $: stepComplete = $kingdomData.currentPhaseSteps?.[1]?.completed === 1; // Step 1 = incident check
+   $: incidentWasTriggered = $kingdomData.incidentTriggered ?? null;
    $: unrestStatus = $unrest !== undefined ? (() => {
       const unrestValue = $unrest || 0;
       const tierInfo = getUnrestTierInfo(unrestValue);
@@ -331,12 +332,12 @@
                </button>
                {#if stepComplete && showIncidentResult}
                   <div class="roll-result-text">
-                     {#if currentIncident}
+                     {#if incidentWasTriggered}
                         <i class="fas fa-exclamation-triangle"></i>
-                        <span>Rolled {incidentCheckRoll}% &lt;= {incidentCheckDC}% chance - Incident: {currentIncident.name}</span>
+                        <span>Rolled {incidentCheckRoll}% &lt; {incidentCheckDC}% chance - Incident triggered</span>
                      {:else}
                         <i class="fas fa-check-circle"></i>
-                        <span>Rolled {incidentCheckRoll}% &gt; {incidentCheckDC}% chance - No incident</span>
+                        <span>Rolled {incidentCheckRoll}% &gt;= {incidentCheckDC}% chance - No incident</span>
                      {/if}
                   </div>
                {/if}

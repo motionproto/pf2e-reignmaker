@@ -1,5 +1,5 @@
 /**
- * ActionExecutionService - Handles player action execution and validation
+ * ActionResolver - Handles player action resolution and validation
  * 
  * This service manages action requirements, outcome parsing, and state changes
  * for kingdom actions according to the Reignmaker Lite rules.
@@ -47,7 +47,7 @@ export interface ActionOutcome {
     sideEffects?: string[];
 }
 
-export class ActionExecutionService {
+export class ActionResolver {
     /**
      * Check if an action can be performed based on kingdom state
      */
@@ -397,4 +397,4 @@ export class ActionExecutionService {
 }
 
 // Export singleton instance
-export const actionExecutionService = new ActionExecutionService();
+export const actionResolver = new ActionResolver();

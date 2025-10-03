@@ -119,6 +119,7 @@ export interface KingdomData {
   eventRollDC?: number | null;
   eventTriggered?: boolean | null;
   eventDC: number;
+  incidentTriggered?: boolean | null;
 }
 
 export class KingdomActor extends Actor {
