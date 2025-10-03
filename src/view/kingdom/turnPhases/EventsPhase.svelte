@@ -434,9 +434,8 @@
                      skillName={selectedSkill}
                      effect={outcomeMessage}
                      stateChanges={currentEffects}
-                     showFameReroll={!outcomeApplied}
-                     showCancel={!outcomeApplied}
-                     primaryButtonLabel={outcomeApplied ? "" : "Apply"}
+                     primaryButtonLabel="Apply"
+                     applied={outcomeApplied}
                      on:primary={completeEventResolution}
                   />
                </div>

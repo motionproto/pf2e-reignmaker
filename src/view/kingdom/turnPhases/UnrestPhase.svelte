@@ -18,6 +18,7 @@
    let selectedSkill = '';
    let isRolling = false;
    let incidentResolved = false;
+   let resolutionApplied = false; // Track if resolution has been applied
    let rollOutcome: string = '';
    let rollActor: string = '';
    let rollEffect: string = '';
@@ -258,6 +259,8 @@
          
          if (result.success) {
             console.log(`✅ [UnrestPhase] Incident ${currentIncident.id} resolved through controller`);
+            // Mark that the resolution has been applied to hide buttons
+            resolutionApplied = true;
             // The controller will mark the step as complete and clear the incident
          } else {
             console.error('❌ [UnrestPhase] Incident resolution failed');
@@ -270,6 +273,7 @@
    function handleResolutionCancel() {
       // Reset the resolution state to allow re-rolling
       incidentResolved = false;
+      resolutionApplied = false;
       rollOutcome = '';
       rollActor = '';
       rollEffect = '';
@@ -406,6 +410,7 @@
                         stateChanges={rollStateChanges}
                         primaryButtonLabel="Apply Resolution"
                         showFameReroll={false}
+                        applied={resolutionApplied}
                         on:primary={handleResolutionPrimary}
                         on:cancel={handleResolutionCancel}
                      />

@@ -49,6 +49,9 @@
    export let canPerformMore: boolean = true;
    export let currentFame: number = 0;
    
+   // Track resolution history for player actions (multiple players can do the same action)
+   let resolutionHistory: Array<{ actor: string; outcome: string }> = [];
+   
    // UI customization props
    export let showFameReroll: boolean = checkType === 'action';
    export let resolvedBadgeText: string = 'Resolved';
@@ -118,11 +121,34 @@
    }
    
    function handlePrimaryAction() {
+      // Add current resolution to history before resetting
+      if (resolution) {
+         resolutionHistory = [...resolutionHistory, { 
+            actor: resolution.actorName, 
+            outcome: resolution.outcome 
+         }];
+      }
+      
+      // Dispatch the primary action event to parent
       dispatch('primaryAction', { checkId: id, checkType });
+      
+      // For player actions, reset state to allow other players to use the action
+      // (Events and Incidents don't use CheckCard, so this only affects actions)
+      resolved = false;
+      resolution = undefined;
+      localUsedSkill = '';
+      
+      // Collapse the card to show the default state
+      expanded = false;
    }
    
    function handleCancel() {
       dispatch('cancel', { checkId: id, checkType });
+      
+      // Reset resolution state when cancelled
+      resolved = false;
+      resolution = undefined;
+      localUsedSkill = '';
    }
    
    // Format possible outcomes for display
@@ -136,6 +162,37 @@
    
    // Get card state class
    $: cardStateClass = resolved ? 'resolved result-state' : 'select-state';
+   
+   // Helper to format outcome for badge display
+   function getOutcomeBadgeClass(outcome: string): string {
+      switch (outcome) {
+         case 'criticalSuccess':
+            return 'badge-crit-success';
+         case 'success':
+            return 'badge-success';
+         case 'failure':
+            return 'badge-failure';
+         case 'criticalFailure':
+            return 'badge-crit-failure';
+         default:
+            return 'badge-neutral';
+      }
+   }
+   
+   function getOutcomeBadgeLabel(outcome: string): string {
+      switch (outcome) {
+         case 'criticalSuccess':
+            return 'Crit Success';
+         case 'success':
+            return 'Success';
+         case 'failure':
+            return 'Failure';
+         case 'criticalFailure':
+            return 'Crit Fail';
+         default:
+            return outcome;
+      }
+   }
 </script>
 
 <div class="check-card {checkType}-card {!available ? 'not-available' : ''} {expanded ? 'expanded' : ''} {cardStateClass}">
@@ -161,6 +218,15 @@
                   </span>
                {/if}
             </strong>
+            {#if resolutionHistory.length > 0 && !expanded}
+               <div class="resolution-history-badges">
+                  {#each resolutionHistory as res}
+                     <span class="history-badge {getOutcomeBadgeClass(res.outcome)}">
+                        {res.actor} - {getOutcomeBadgeLabel(res.outcome)}
+                     </span>
+                  {/each}
+               </div>
+            {/if}
             {#if brief}
                <span class="card-brief">{brief}</span>
             {/if}
@@ -489,6 +555,54 @@
                i {
                   font-size: 12px;
                }
+            }
+         }
+         
+         .resolution-history-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+         }
+         
+         .history-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: var(--font-xs);
+            font-weight: var(--font-weight-medium);
+            line-height: 1.2;
+            border: 1px solid;
+            
+            &.badge-crit-success {
+               background: rgba(34, 197, 94, 0.15);
+               border-color: rgba(34, 197, 94, 0.4);
+               color: var(--color-green);
+            }
+            
+            &.badge-success {
+               background: rgba(34, 197, 94, 0.1);
+               border-color: rgba(34, 197, 94, 0.3);
+               color: var(--color-green-light);
+            }
+            
+            &.badge-failure {
+               background: rgba(249, 115, 22, 0.1);
+               border-color: rgba(249, 115, 22, 0.3);
+               color: var(--color-orange);
+            }
+            
+            &.badge-crit-failure {
+               background: rgba(239, 68, 68, 0.15);
+               border-color: rgba(239, 68, 68, 0.4);
+               color: var(--color-red);
+            }
+            
+            &.badge-neutral {
+               background: rgba(100, 116, 139, 0.1);
+               border-color: rgba(100, 116, 139, 0.3);
+               color: var(--text-secondary);
             }
          }
          

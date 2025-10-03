@@ -408,21 +408,14 @@
       actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
     }
     
-    // Get character for roll
-    let actingCharacter = selectedCharacter;
+    // Get character for roll - prioritize assigned character
+    let actingCharacter = getCurrentUserCharacter();
+    
     if (!actingCharacter) {
-      actingCharacter = getCurrentUserCharacter();
-      
+      // Fallback - show character selection dialog
+      actingCharacter = await showCharacterSelectionDialog();
       if (!actingCharacter) {
-        // Show character selection dialog
-        actingCharacter = await showCharacterSelectionDialog();
-        if (!actingCharacter) {
-          return; // User cancelled selection
-        }
-        
-        // Update selected character
-        selectedCharacter = actingCharacter;
-        selectedCharacterId = actingCharacter.id;
+        return; // User cancelled selection
       }
     }
     
@@ -462,24 +455,14 @@
       return;
     }
     
-    let actingCharacter = selectedCharacter;
+    // For rerolls, use the player's assigned character
+    let actingCharacter = getCurrentUserCharacter();
+    
     if (!actingCharacter) {
-      const resolution = resolvedActions.get(checkId);
-      if (resolution?.actorName) {
-        // Try to find the character by name
-        const players = getPlayerCharacters();
-        const player = players.find((p: any) => p.character?.name === resolution.actorName);
-        if (player?.character) {
-          actingCharacter = player.character;
-        }
-      }
-      
+      // Fallback - show character selection dialog
+      actingCharacter = await showCharacterSelectionDialog();
       if (!actingCharacter) {
-        // Show character selection dialog
-        actingCharacter = await showCharacterSelectionDialog();
-        if (!actingCharacter) {
-          return; // User cancelled selection
-        }
+        return; // User cancelled selection
       }
     }
     

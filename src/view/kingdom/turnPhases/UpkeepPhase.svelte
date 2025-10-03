@@ -23,9 +23,9 @@
    
    // Reactive UI state - use currentPhaseSteps array
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
-   $: consumeCompleted = currentSteps.find(s => s.id === 'feed-settlements')?.completed || false;
-   $: militaryCompleted = currentSteps.find(s => s.id === 'support-military')?.completed || false;
-   $: buildCompleted = currentSteps.find(s => s.id === 'process-builds')?.completed || false;
+   $: consumeCompleted = currentSteps[0]?.completed || false;
+   $: militaryCompleted = currentSteps[1]?.completed || false;
+   $: buildCompleted = currentSteps[2]?.completed || false;
    
    // Phase automatically completes when all steps are done - no manual intervention needed
    $: allStepsComplete = currentSteps.length > 0 && currentSteps.every(step => step.completed);
@@ -50,7 +50,9 @@
       unsupportedCount: 0,
       foodRemainingForArmies: 0,
       armyFoodShortage: 0,
-      settlementFoodShortage: 0
+      settlementFoodShortage: 0,
+      unfedSettlements: [],
+      unfedUnrest: 0
    };
    
    // Update display data when kingdom data or controller changes
@@ -70,8 +72,13 @@
       unsupportedCount,
       foodRemainingForArmies,
       armyFoodShortage,
-      settlementFoodShortage
+      settlementFoodShortage,
+      unfedSettlements,
+      unfedUnrest
    } = displayData);
+   
+   // UI state for unfed settlements dropdown
+   let showUnfedSettlements = false;
    
    // Initialize phase when component mounts
    onMount(async () => {
@@ -198,12 +205,33 @@
                </div>
             </div>
             
-            {#if settlementFoodShortage > 0 && !consumeCompleted}
+            {#if unfedSettlements.length > 0 && !consumeCompleted}
                <div class="warning-box warning-stacked">
                   <i class="fas fa-exclamation-triangle"></i>
-                  <div class="warning-title">Food shortage: Need {settlementFoodShortage} more food</div>
-                  <div class="warning-message">Unfed settlements will not generate gold next turn and cause +{settlementFoodShortage} Unrest.</div>
+                  <div class="warning-title">Food shortage: {unfedSettlements.length} settlement{unfedSettlements.length > 1 ? 's' : ''} will be unfed</div>
+                  <div class="warning-message">Unfed settlements generate unrest based on their tier and will not generate gold next turn. Total unrest: +{unfedUnrest}.</div>
                </div>
+               
+               <!-- Collapsible unfed settlements list -->
+               <button 
+                  class="unfed-dropdown-toggle" 
+                  on:click={() => showUnfedSettlements = !showUnfedSettlements}
+               >
+                  <i class="fas fa-chevron-{showUnfedSettlements ? 'up' : 'down'}"></i>
+                  {showUnfedSettlements ? 'Hide' : 'Show'} unfed settlements
+               </button>
+               
+               {#if showUnfedSettlements}
+                  <div class="unfed-settlements-list">
+                     {#each unfedSettlements as settlement}
+                        <div class="unfed-settlement-item">
+                           <span class="settlement-name">{settlement.name}</span>
+                           <span class="settlement-tier">({settlement.tier})</span>
+                           <span class="settlement-unrest">+{settlement.unrest} Unrest</span>
+                        </div>
+                     {/each}
+                  </div>
+               {/if}
             {:else if !consumeCompleted}
                <div class="info-text">Settlements require {settlementConsumption} food this turn</div>
             {/if}
@@ -956,6 +984,70 @@
       i {
          color: var(--text-tertiary);
          opacity: 0.7;
+      }
+   }
+   
+   // Unfed settlements dropdown
+   .unfed-dropdown-toggle {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--color-amber);
+      border-radius: var(--radius-sm);
+      color: var(--color-amber-light);
+      font-size: var(--font-sm);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      
+      &:hover {
+         background: rgba(245, 158, 11, 0.25);
+         border-color: var(--color-amber-light);
+      }
+      
+      i {
+         font-size: 12px;
+      }
+   }
+   
+   .unfed-settlements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+   }
+   
+   .unfed-settlement-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
+      
+      .settlement-name {
+         flex: 1;
+         color: var(--text-primary);
+         font-weight: var(--font-weight-medium);
+      }
+      
+      .settlement-tier {
+         color: var(--text-tertiary);
+         font-size: var(--font-xs);
+      }
+      
+      .settlement-unrest {
+         color: var(--color-red);
+         font-weight: var(--font-weight-semibold);
+         font-size: var(--font-sm);
       }
    }
    

@@ -127,16 +127,17 @@ export async function createUpkeepPhaseController() {
 
     /**
      * Process food consumption for settlements
+     * 
+     * NEW: Settlements fed by tier priority (highest first: Metropolis → City → Town → Village)
+     * Unfed settlements generate unrest equal to their tier level
      */
     async processFoodConsumption() {
       const { kingdomData } = await import('../stores/KingdomStore');
-      const { calculateConsumption } = await import('../services/economics/consumption');
+      const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       const kingdom = get(kingdomData);
       
-      // Use proper consumption service with settlement tier-based calculations
       const settlements = kingdom.settlements || [];
       const armies = kingdom.armies || [];
-      const consumption = calculateConsumption(settlements, armies);
       const currentFood = kingdom.resources?.food || 0;
       
       const actor = getKingdomActor();
@@ -145,30 +146,79 @@ export async function createUpkeepPhaseController() {
         return;
       }
       
-      if (currentFood >= consumption.totalFood) {
-        // Sufficient food - mark all settlements as fed
-        await actor.updateKingdom((kingdom) => {
-          kingdom.resources.food = currentFood - consumption.totalFood;
-          kingdom.settlements.forEach(settlement => {
-            settlement.wasFedLastTurn = true;
-          });
-        });
+      // Map settlement tier enum to numeric values for sorting and unrest calculation
+      const tierToNumber = (tier: typeof SettlementTier[keyof typeof SettlementTier]): number => {
+        switch (tier) {
+          case SettlementTier.VILLAGE: return 1;
+          case SettlementTier.TOWN: return 2;
+          case SettlementTier.CITY: return 3;
+          case SettlementTier.METROPOLIS: return 4;
+          default: return 1;
+        }
+      };
+      
+      // Sort settlements by tier (descending: 4 → 3 → 2 → 1)
+      const sortedSettlements = [...settlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      
+      let availableFood = currentFood;
+      let totalUnrest = 0;
+      const fedSettlements: string[] = [];
+      const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
+      
+      // Feed settlements in priority order
+      for (const settlement of sortedSettlements) {
+        const config = SettlementTierConfig[settlement.tier];
+        const required = config ? config.foodConsumption : 0;
+        const tierNum = tierToNumber(settlement.tier);
         
-        console.log(`🍞 [UpkeepPhaseController] Consumed ${consumption.totalFood} food (${consumption.settlementFood} settlements + ${consumption.armyFood} armies)`);
-        console.log(`✅ [UpkeepPhaseController] All ${settlements.length} settlements fed successfully`);
+        if (availableFood >= required) {
+          availableFood -= required;
+          settlement.wasFedLastTurn = true;
+          fedSettlements.push(`${settlement.name} (${settlement.tier})`);
+          console.log(`🍞 [UpkeepPhaseController] Fed: ${settlement.name} (${settlement.tier}, ${required} food)`);
+        } else {
+          settlement.wasFedLastTurn = false;
+          totalUnrest += tierNum;
+          unfedSettlements.push({ name: settlement.name, tier: settlement.tier, tierNum, unrest: tierNum });
+          console.log(`❌ [UpkeepPhaseController] Unfed: ${settlement.name} (${settlement.tier}) → +${tierNum} Unrest`);
+        }
+      }
+      
+      // Feed armies with remaining food
+      const armyFood = armies.length;
+      let armyUnrest = 0;
+      
+      if (availableFood >= armyFood) {
+        availableFood -= armyFood;
+        console.log(`⚔️ [UpkeepPhaseController] Fed ${armies.length} armies (${armyFood} food)`);
       } else {
-        // Food shortage - generate unrest and mark settlements as unfed
-        const shortage = consumption.totalFood - currentFood;
-        await actor.updateKingdom((kingdom) => {
-          kingdom.resources.food = 0;
-          kingdom.unrest += shortage;
-          kingdom.settlements.forEach(settlement => {
-            settlement.wasFedLastTurn = false;
-          });
-        });
+        armyUnrest = armyFood - availableFood;
+        totalUnrest += armyUnrest;
+        availableFood = 0;
+        console.log(`❌ [UpkeepPhaseController] Army food shortage: ${armyUnrest} missing → +${armyUnrest} Unrest`);
+      }
+      
+      // Update kingdom state
+      await actor.updateKingdom((kingdom) => {
+        kingdom.resources.food = availableFood;
+        kingdom.unrest += totalUnrest;
         
-        console.log(`⚠️ [UpkeepPhaseController] Food shortage: ${shortage} unrest generated (needed ${consumption.totalFood}, had ${currentFood})`);
-        console.log(`❌ [UpkeepPhaseController] ${settlements.length} settlements unfed - will not generate gold next turn`);
+        // Update settlement fed status
+        sortedSettlements.forEach((sorted, index) => {
+          const original = kingdom.settlements.find(s => s.name === sorted.name);
+          if (original) {
+            original.wasFedLastTurn = sorted.wasFedLastTurn;
+          }
+        });
+      });
+      
+      // Summary logging
+      console.log(`✅ [UpkeepPhaseController] Feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
+      if (totalUnrest > 0) {
+        console.log(`⚠️ [UpkeepPhaseController] Total unrest generated: +${totalUnrest} (${unfedSettlements.length} settlements + ${armyUnrest} army shortage)`);
+      }
+      if (unfedSettlements.length > 0) {
+        console.log(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
       }
     },
 
@@ -259,6 +309,8 @@ export async function createUpkeepPhaseController() {
           foodRemainingForArmies: 0,
           armyFoodShortage: 0,
           settlementFoodShortage: 0,
+          unfedSettlements: [],
+          unfedUnrest: 0,
           stepsCompleted: {
             feedSettlements: false,
             supportMilitary: false,
@@ -269,6 +321,7 @@ export async function createUpkeepPhaseController() {
 
       // Use proper consumption service
       const { calculateConsumption, calculateArmySupportCapacity, calculateUnsupportedArmies } = await import('../services/economics/consumption');
+      const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       
       const settlements = kingdomData.settlements || [];
       const armies = kingdomData.armies || [];
@@ -279,7 +332,42 @@ export async function createUpkeepPhaseController() {
       const currentFood = kingdomData.resources?.food || 0;
       const armyCount = armies.length;
       
-      const foodRemainingForArmies = Math.max(0, currentFood - consumption.settlementFood);
+      // Map settlement tier enum to numeric values
+      const tierToNumber = (tier: typeof SettlementTier[keyof typeof SettlementTier]): number => {
+        switch (tier) {
+          case SettlementTier.VILLAGE: return 1;
+          case SettlementTier.TOWN: return 2;
+          case SettlementTier.CITY: return 3;
+          case SettlementTier.METROPOLIS: return 4;
+          default: return 1;
+        }
+      };
+      
+      // Calculate which settlements would be fed/unfed based on current food (simulation)
+      const sortedSettlements = [...settlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      let availableFood = currentFood;
+      const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
+      let unfedUnrest = 0;
+      
+      for (const settlement of sortedSettlements) {
+        const config = SettlementTierConfig[settlement.tier];
+        const required = config ? config.foodConsumption : 0;
+        const tierNum = tierToNumber(settlement.tier);
+        
+        if (availableFood >= required) {
+          availableFood -= required;
+        } else {
+          unfedSettlements.push({ 
+            name: settlement.name, 
+            tier: settlement.tier, 
+            tierNum,
+            unrest: tierNum 
+          });
+          unfedUnrest += tierNum;
+        }
+      }
+      
+      const foodRemainingForArmies = Math.max(0, availableFood);
       const settlementFoodShortage = Math.max(0, consumption.settlementFood - currentFood);
       const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
       
@@ -295,6 +383,8 @@ export async function createUpkeepPhaseController() {
         foodRemainingForArmies,
         armyFoodShortage,
         settlementFoodShortage,
+        unfedSettlements,
+        unfedUnrest,
         stepsCompleted: {
           feedSettlements: await isStepCompletedByIndex(0), // Step 0 = feed-settlements
           supportMilitary: await isStepCompletedByIndex(1), // Step 1 = support-military

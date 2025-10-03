@@ -15,6 +15,7 @@
    export let compact: boolean = false;
    export let showFameReroll: boolean = true; // New prop to control fame reroll visibility
    export let showCancel: boolean = true; // New prop to control cancel button visibility
+   export let applied: boolean = false; // New prop to auto-hide buttons when outcome is applied
    
    const dispatch = createEventDispatcher();
    
@@ -23,6 +24,11 @@
    
    // Get outcome display properties
    $: outcomeProps = getOutcomeProps(outcome);
+   
+   // Automatically derive button visibility based on applied state
+   $: showCancelButton = showCancel && !applied;
+   $: showFameRerollButton = showFameReroll && !applied;
+   $: effectivePrimaryLabel = applied ? '' : primaryButtonLabel;
    
    function getOutcomeProps(outcomeType: string) {
       switch(outcomeType) {
@@ -205,9 +211,9 @@
       {/if}
    </div>
    
-   {#if showCancel || showFameReroll || primaryButtonLabel}
+   {#if showCancelButton || showFameRerollButton || effectivePrimaryLabel}
       <div class="resolution-actions">
-         {#if showCancel}
+         {#if showCancelButton}
             <Button
                variant="outline"
                on:click={handleCancel}
@@ -218,7 +224,7 @@
             </Button>
          {/if}
          <div class="resolution-actions-main">
-            {#if showFameReroll}
+            {#if showFameRerollButton}
                <Button
                   variant="secondary"
                   disabled={currentFame === 0}
@@ -230,14 +236,14 @@
                   <span class="fame-count">({currentFame} left)</span>
                </Button>
             {/if}
-            {#if primaryButtonLabel}
+            {#if effectivePrimaryLabel}
                <Button
                   variant="secondary"
                   on:click={handlePrimary}
                   icon="fas fa-check"
                   iconPosition="left"
                >
-                  {primaryButtonLabel}
+                  {effectivePrimaryLabel}
                </Button>
             {/if}
          </div>
