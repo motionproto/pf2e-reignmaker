@@ -1,7 +1,7 @@
 {
   "id": "rising-tensions",
   "name": "Rising Tensions",
-  "tier": "MINOR",
+  "tier": "minor",
   "description": "General tensions rise throughout your kingdom",
   "skills": [
     {
@@ -24,15 +24,32 @@
   "effects": {
     "success": {
       "msg": "Tensions ease, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "+1 Unrest",
-      "modifiers": []
+      "msg": "Gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Rising Tensions Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "+2 Unrest",
-      "modifiers": []
+      "msg": "Gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Rising Tensions Critical Unrest",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "disease-outbreak",
   "name": "Disease Outbreak",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "A dangerous disease spreads through your settlements",
   "skills": [
     {
@@ -20,15 +20,47 @@
   "effects": {
     "success": {
       "msg": "Disease contained, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4 Food (feeding the sick), +1 Unrest",
-      "modifiers": []
+      "msg": "Lose {food} food (feeding the sick) and gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Disease Outbreak Food Loss",
+          "resource": "food",
+          "value": "-1d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Disease Outbreak Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Food, one Medicine or Faith structure becomes damaged, +1 Unrest",
-      "modifiers": []
+      "msg": "Lose {food} food and gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Disease Outbreak Critical Food Loss",
+          "resource": "food",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Disease Outbreak Critical Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for one Medicine or Faith structure. Mark that structure as damaged"
+      ],
+      "endsEvent": true
     }
   }
 }

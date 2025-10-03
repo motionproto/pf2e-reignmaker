@@ -1,7 +1,7 @@
 {
   "id": "guerrilla-movement",
   "name": "Guerrilla Movement",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Armed rebels seize control of kingdom territory",
   "skills": [
     {
@@ -24,15 +24,25 @@
   "effects": {
     "success": {
       "msg": "Rebellion dispersed",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Rebels seize 1d3 hexes",
-      "modifiers": []
+      "msg": "Rebels seize territory in your kingdom",
+      "modifiers": [],
+      "manualEffects": [
+        "Roll 1d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)"
+      ],
+      "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Rebels seize 2d3 hexes and gain an army (kingdom level -1)",
-      "modifiers": []
+      "msg": "Rebels establish a stronghold and raise an army against you",
+      "modifiers": [],
+      "manualEffects": [
+        "Roll 2d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)",
+        "Rebels raise an army with level = (your kingdom level - 1). Track this army as an enemy force"
+      ],
+      "endsEvent": false
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "tax-revolt",
   "name": "Tax Revolt",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "Citizens revolt against tax collection",
   "skills": [
     {
@@ -24,15 +24,38 @@
   "effects": {
     "success": {
       "msg": "Taxes collected normally",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4 Gold (reduced tax collection)",
-      "modifiers": []
+      "msg": "Lose {gold} gold (reduced tax collection)",
+      "modifiers": [
+        {
+          "name": "Tax Revolt Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold, +1 Unrest",
-      "modifiers": []
+      "msg": "Lose {gold} gold and gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Tax Revolt Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Tax Revolt Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

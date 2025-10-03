@@ -1,7 +1,7 @@
 {
   "id": "prison-breaks",
   "name": "Prison Breaks",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Mass prison breaks release dangerous criminals",
   "skills": [
     {
@@ -20,15 +20,26 @@
   "effects": {
     "success": {
       "msg": "Break prevented, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Half imprisoned unrest becomes regular unrest, the justice structure is damaged",
-      "modifiers": []
+      "msg": "Mass prison break releases many criminals",
+      "modifiers": [],
+      "manualEffects": [
+        "Convert half of your imprisoned unrest to regular unrest (round down)",
+        "Mark your highest tier justice structure as damaged"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "All imprisoned unrest becomes regular unrest, the justice structure is destroyed",
-      "modifiers": []
+      "msg": "Complete prison break releases all criminals and destroys your justice system",
+      "modifiers": [],
+      "manualEffects": [
+        "Convert ALL of your imprisoned unrest to regular unrest",
+        "Reduce your highest tier justice structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      ],
+      "endsEvent": true
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "corruption-scandal",
   "name": "Corruption Scandal",
-  "tier": "MINOR",
+  "tier": "minor",
   "description": "Corruption among your officials is exposed",
   "skills": [
     {
@@ -24,15 +24,38 @@
   "effects": {
     "success": {
       "msg": "Scandal contained, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4 Gold (embezzlement/graft discovered)",
-      "modifiers": []
+      "msg": "Lose {gold} gold (embezzlement/graft discovered)",
+      "modifiers": [
+        {
+          "name": "Corruption Scandal Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold, -1 Fame (major corruption exposed publicly)",
-      "modifiers": []
+      "msg": "Lose {gold} gold and {fame} fame (major corruption exposed publicly)",
+      "modifiers": [
+        {
+          "name": "Corruption Scandal Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Corruption Scandal Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

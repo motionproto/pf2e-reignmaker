@@ -1,7 +1,7 @@
 {
   "id": "diplomatic-incident",
   "name": "Diplomatic Incident",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "A serious diplomatic incident threatens relations",
   "skills": [
     {
@@ -20,15 +20,24 @@
   "effects": {
     "success": {
       "msg": "Relations maintained, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "One neighbouring kingdom's attitude worsens by 1 step",
-      "modifiers": []
+      "msg": "One neighbouring kingdom's attitude worsens",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 1 step (e.g., Friendly → Indifferent)"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Two random kingdoms' attitudes worsen by 1 step",
-      "modifiers": []
+      "msg": "Multiple kingdoms turn against you",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 1 step (e.g., Friendly → Indifferent)"
+      ],
+      "endsEvent": true
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "id": "international-crisis",
   "name": "International Crisis",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Multiple kingdoms turn against you due to internal chaos",
   "skills": [
     {
@@ -24,15 +24,31 @@
   "effects": {
     "success": {
       "msg": "Crisis contained, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "One kingdom's attitude worsens by 2 steps",
-      "modifiers": []
+      "msg": "Diplomatic relations severely damaged",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 2 steps (e.g., Friendly → Indifferent → Unfriendly)"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Two kingdoms' attitudes worsen by 2 steps, -1 fame",
-      "modifiers": []
+      "msg": "Multiple kingdoms turn against you",
+      "modifiers": [
+        {
+          "name": "International Crisis Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 2 steps (e.g., Friendly → Indifferent → Unfriendly)"
+      ],
+      "endsEvent": true
     }
   }
 }

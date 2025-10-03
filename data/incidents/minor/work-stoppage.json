@@ -1,7 +1,7 @@
 {
   "id": "work-stoppage",
   "name": "Work Stoppage",
-  "tier": "MINOR",
+  "tier": "minor",
   "description": "Workers in your kingdom refuse to continue their labor",
   "skills": [
     {
@@ -24,15 +24,31 @@
   "effects": {
     "success": {
       "msg": "Workers return, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "One random worksite produces nothing this turn",
-      "modifiers": []
+      "msg": "Work stoppage halts one project",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose or roll for one random ongoing worksite. That worksite produces nothing this turn (loses 1 turn of progress)"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Two worksites produce nothing, +1 Unrest",
-      "modifiers": []
+      "msg": "Widespread work stoppage causes chaos",
+      "modifiers": [
+        {
+          "name": "Work Stoppage Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for two random ongoing worksites. Each worksite produces nothing this turn (each loses 1 turn of progress)"
+      ],
+      "endsEvent": true
     }
   }
 }

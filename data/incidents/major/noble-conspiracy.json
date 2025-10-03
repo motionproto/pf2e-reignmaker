@@ -1,7 +1,7 @@
 {
   "id": "noble-conspiracy",
   "name": "Noble Conspiracy",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Nobles plot to overthrow the kingdom's leadership",
   "skills": [
     {
@@ -24,10 +24,11 @@
   "effects": {
     "success": {
       "msg": "Conspiracy exposed and dealt with, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose {gold} gold, -{fame} fame",
+      "msg": "The conspiracy damages your kingdom's stability and reputation",
       "modifiers": [
         {
           "name": "Noble Conspiracy Gold Loss",
@@ -41,10 +42,11 @@
           "value": -1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose {gold} gold, -{fame} fame, one random PC loses kingdom action this turn, +{unrest} unrest",
+      "msg": "The conspiracy strikes a devastating blow to your kingdom",
       "modifiers": [
         {
           "name": "Noble Conspiracy Critical Gold Loss",
@@ -64,7 +66,11 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Choose or roll for one random PC leader. That PC loses their kingdom action this turn (they are dealing with the conspiracy)"
+      ],
+      "endsEvent": true
     }
   }
 }

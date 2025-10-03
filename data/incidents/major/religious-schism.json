@@ -1,7 +1,7 @@
 {
   "id": "religious-schism",
   "name": "Religious Schism",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Religious divisions tear your kingdom apart",
   "skills": [
     {
@@ -24,10 +24,11 @@
   "effects": {
     "success": {
       "msg": "Schism averted, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Church factions form, lose {gold} gold, your highest tier religious structure is damaged",
+      "msg": "Religious divisions weaken your kingdom's faith institutions",
       "modifiers": [
         {
           "name": "Religious Schism Gold Loss",
@@ -35,10 +36,14 @@
           "value": "-2d6",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Mark your highest tier religious structure as damaged"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Church splits, lose {gold} gold, your highest tier religious structure is destroyed",
+      "msg": "The church splits entirely, destroying religious unity",
       "modifiers": [
         {
           "name": "Religious Schism Critical Gold Loss",
@@ -46,7 +51,11 @@
           "value": "-4d6",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Reduce your highest tier religious structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      ],
+      "endsEvent": true
     }
   }
 }

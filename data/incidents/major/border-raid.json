@@ -1,7 +1,7 @@
 {
   "id": "border-raid",
   "name": "Border Raid",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Enemy forces raid your border territories",
   "skills": [
     {
@@ -24,10 +24,11 @@
   "effects": {
     "success": {
       "msg": "Raiders repelled, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1 border hex permanently, lose {gold} gold (pillaging)",
+      "msg": "Raiders pillage border territories, causing loss of gold and land",
       "modifiers": [
         {
           "name": "Border Raid Gold Loss",
@@ -35,10 +36,14 @@
           "value": "-1d4",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Remove 1 border hex from your kingdom map"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 1d3 border hexes permanently, lose {gold} gold",
+      "msg": "Raiders devastate border regions, causing massive losses",
       "modifiers": [
         {
           "name": "Border Raid Critical Gold Loss",
@@ -46,7 +51,11 @@
           "value": "-2d4",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Roll 1d3 and remove that many border hexes from your kingdom map"
+      ],
+      "endsEvent": true
     }
   }
 }

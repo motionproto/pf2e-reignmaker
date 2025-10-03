@@ -1,7 +1,7 @@
 {
   "id": "economic-crash",
   "name": "Economic Crash",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "A severe economic downturn threatens your kingdom's prosperity",
   "skills": [
     {
@@ -24,10 +24,11 @@
   "effects": {
     "success": {
       "msg": "Economy stabilized, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose {gold} gold, your highest tier commerce structure is damaged",
+      "msg": "Economic downturn causes significant losses",
       "modifiers": [
         {
           "name": "Economic Crash Gold Loss",
@@ -35,10 +36,14 @@
           "value": "-2d6",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Mark your highest tier commerce structure as damaged"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose {gold} gold, your highest tier commerce structure is destroyed",
+      "msg": "Economic collapse devastates your kingdom",
       "modifiers": [
         {
           "name": "Economic Crash Critical Gold Loss",
@@ -46,7 +51,11 @@
           "value": "-4d6",
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Reduce your highest tier commerce structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      ],
+      "endsEvent": true
     }
   }
 }

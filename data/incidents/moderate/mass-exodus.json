@@ -1,7 +1,7 @@
 {
   "id": "mass-exodus",
   "name": "Mass Exodus",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "Large numbers of citizens flee your kingdom",
   "skills": [
     {
@@ -20,15 +20,44 @@
   "effects": {
     "success": {
       "msg": "Population remains, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1 worksite permanently, +1 Unrest",
-      "modifiers": []
+      "msg": "Citizens abandon projects and cause social unrest",
+      "modifiers": [
+        {
+          "name": "Mass Exodus Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 1 worksite permanently, +1 Unrest, -1 Fame",
-      "modifiers": []
+      "msg": "Mass exodus damages your kingdom's reputation and stability",
+      "modifiers": [
+        {
+          "name": "Mass Exodus Critical Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        },
+        {
+          "name": "Mass Exodus Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+      ],
+      "endsEvent": true
     }
   }
 }

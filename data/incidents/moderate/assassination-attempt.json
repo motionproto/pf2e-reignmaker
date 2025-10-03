@@ -1,7 +1,7 @@
 {
   "id": "assassination-attempt",
   "name": "Assassination Attempt",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "An assassin targets one of your kingdom's leaders",
   "skills": [
     {
@@ -20,15 +20,35 @@
   "effects": {
     "success": {
       "msg": "Assassination prevented, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Leader escapes; +1 Unrest",
-      "modifiers": []
+      "msg": "Leader escapes; gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Assassination Attempt Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
-      "modifiers": []
+      "msg": "Leader wounded; gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Assassination Attempt Critical Unrest",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for one random PC leader. That PC cannot take a Kingdom Action this turn (they are recovering from wounds)"
+      ],
+      "endsEvent": true
     }
   }
 }

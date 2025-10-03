@@ -1,7 +1,7 @@
 {
   "id": "protests",
   "name": "Protests",
-  "tier": "MINOR",
+  "tier": "minor",
   "description": "Citizens take to the streets in organized protests",
   "skills": [
     {
@@ -24,15 +24,38 @@
   "effects": {
     "success": {
       "msg": "Peaceful resolution, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4 Gold (property damage, lost productivity)",
-      "modifiers": []
+      "msg": "Lose {gold} gold (property damage, lost productivity)",
+      "modifiers": [
+        {
+          "name": "Protests Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold, -1 Fame",
-      "modifiers": []
+      "msg": "Lose {gold} gold and {fame} fame",
+      "modifiers": [
+        {
+          "name": "Protests Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Protests Fame Loss",
+          "resource": "fame",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

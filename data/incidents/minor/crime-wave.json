@@ -1,7 +1,7 @@
 {
   "id": "crime-wave",
   "name": "Crime Wave",
-  "tier": "MINOR",
+  "tier": "minor",
   "description": "Criminal activity surges throughout your settlements",
   "skills": [
     {
@@ -24,15 +24,38 @@
   "effects": {
     "success": {
       "msg": "Crime suppressed, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4 Gold",
-      "modifiers": []
+      "msg": "Lose {gold} gold",
+      "modifiers": [
+        {
+          "name": "Crime Wave Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold, +1 Unrest",
-      "modifiers": []
+      "msg": "Lose {gold} gold and gain {unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Crime Wave Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Crime Wave Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

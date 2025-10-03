@@ -1,7 +1,7 @@
 {
   "id": "infrastructure-damage",
   "name": "Infrastructure Damage",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "Critical infrastructure is damaged or sabotaged",
   "skills": [
     {
@@ -24,15 +24,31 @@
   "effects": {
     "success": {
       "msg": "Damage prevented, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "One random structure in a random settlement becomes damaged",
-      "modifiers": []
+      "msg": "Infrastructure damage impacts your kingdom",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose or roll for one random structure in a random settlement. Mark that structure as damaged"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "1d3 random structures become damaged (random settlements), +1 unrest",
-      "modifiers": []
+      "msg": "Widespread infrastructure damage causes chaos",
+      "modifiers": [
+        {
+          "name": "Infrastructure Damage Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Roll 1d3. Mark that many random structures as damaged (choose or roll for random settlements)"
+      ],
+      "endsEvent": true
     }
   }
 }

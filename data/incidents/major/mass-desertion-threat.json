@@ -1,7 +1,7 @@
 {
   "id": "mass-desertion-threat",
   "name": "Mass Desertion Threat",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "Your armies threaten mass desertion",
   "skills": [
     {
@@ -20,15 +20,26 @@
   "effects": {
     "success": {
       "msg": "Troops remain loyal, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "1 army makes morale checks, highest tier military structure is damaged",
-      "modifiers": []
+      "msg": "Military morale crisis damages your forces",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose 1 army. That army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",
+        "Mark your highest tier military structure as damaged"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "2 armies make morale checks, highest tier military structure is destroyed",
-      "modifiers": []
+      "msg": "Widespread desertion devastates your military",
+      "modifiers": [],
+      "manualEffects": [
+        "Choose 2 armies. Each army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",
+        "Reduce your highest tier military structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      ],
+      "endsEvent": true
     }
   }
 }

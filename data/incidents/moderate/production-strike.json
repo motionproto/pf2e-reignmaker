@@ -1,7 +1,7 @@
 {
   "id": "production-strike",
   "name": "Production Strike",
-  "tier": "MODERATE",
+  "tier": "moderate",
   "description": "Workers strike, halting resource production",
   "skills": [
     {
@@ -24,15 +24,32 @@
   "effects": {
     "success": {
       "msg": "Strike ends, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Lose 1d4+1 of a random resource (Lumber, Ore, Stone)",
-      "modifiers": []
+      "msg": "Strike causes resource losses",
+      "modifiers": [
+        {
+          "name": "Production Strike Resource Loss",
+          "resource": ["lumber", "ore", "stone"],
+          "value": "-1d4-1",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose 2d4+1 of a random resource (Lumber, Ore, Stone)",
-      "modifiers": []
+      "msg": "Prolonged strike devastates production",
+      "modifiers": [
+        {
+          "name": "Production Strike Critical Resource Loss",
+          "resource": ["lumber", "ore", "stone"],
+          "value": "-2d4-1",
+          "duration": "immediate"
+        }
+      ],
+      "endsEvent": true
     }
   }
 }

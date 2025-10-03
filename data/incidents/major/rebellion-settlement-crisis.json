@@ -1,7 +1,7 @@
 {
   "id": "rebellion-settlement-crisis",
   "name": "Settlement Crisis",
-  "tier": "MAJOR",
+  "tier": "major",
   "description": "A major settlement faces total collapse",
   "skills": [
     {
@@ -20,14 +20,15 @@
   "effects": {
     "success": {
       "msg": "Settlement stabilized, no effect",
-      "modifiers": []
+      "modifiers": [],
+      "endsEvent": true
     },
     "failure": {
-      "msg": "Random settlement: choose one:",
+      "msg": "Choose how to handle the settlement crisis:",
       "modifiers": [],
       "choices": [
         {
-          "label": "Lose {gold} gold",
+          "label": "Pay for emergency aid - lose {gold} gold",
           "modifiers": [
             {
               "name": "Settlement Crisis Gold Loss",
@@ -38,13 +39,17 @@
           ]
         },
         {
-          "label": "2 structures damaged",
+          "label": "Let the settlement suffer - 2 structures damaged",
           "modifiers": []
         }
-      ]
+      ],
+      "manualEffects": [
+        "Choose or roll for one random settlement. If you chose 'structures damaged', damage 2 random structures in that settlement"
+      ],
+      "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Random settlement loses one level (minimum level 1), 1 structure destroyed, +{unrest} unrest",
+      "msg": "A settlement collapses under the crisis",
       "modifiers": [
         {
           "name": "Settlement Crisis Critical Unrest",
@@ -52,7 +57,12 @@
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "manualEffects": [
+        "Choose or roll for one random settlement. That settlement loses one level (minimum level 1)",
+        "Reduce 1 random structure's tier in that settlement by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      ],
+      "endsEvent": true
     }
   }
 }
