@@ -1,7 +1,7 @@
 // Player Actions data model for PF2e Kingdom Lite
-// Loads data from dist/player-actions.json
+// Now uses the centralized ActionLoader for consistency
 
-import playerActionsData from '../../dist/player-actions.json';
+import { actionLoader } from '../controllers/actions/action-loader';
 import type {
   SkillOption,
   ActionEffect,
@@ -21,6 +21,7 @@ export type {
 
 /**
  * Player Actions data management
+ * Delegates to ActionLoader for data access
  */
 export const PlayerActionsData = {
   // Category display names
@@ -44,56 +45,18 @@ export const PlayerActionsData = {
   ]),
   
   /**
-   * Convert JSON action to PlayerAction interface
-   */
-  convertJsonToAction(json: PlayerActionJson): PlayerAction {
-    const action: PlayerAction = {
-      id: json.id,
-      name: json.name,
-      category: json.category,
-      brief: json.brief,
-      description: json.description,
-      skills: json.skills,
-      criticalSuccess: json.effects.criticalSuccess || { description: 'No effect' },
-      success: json.effects.success || { description: 'No effect' },
-      failure: json.effects.failure || { description: 'No effect' },
-      criticalFailure: json.effects.criticalFailure || { description: 'No effect' },
-      special: json.special || null,
-      failureCausesUnrest: json.failureCausesUnrest,
-      requirements: json.requirements
-    };
-    
-    // Convert proficiencyScaling if present
-    if (json.proficiencyScaling) {
-      action.proficiencyScaling = new Map(Object.entries(json.proficiencyScaling));
-    }
-    
-    // Convert costs if present
-    if (json.costs) {
-      action.cost = new Map(Object.entries(json.costs));
-    }
-    
-    return action;
-  },
-  
-  /**
-   * Get all available player actions from JSON data
+   * Get all available player actions (delegates to ActionLoader)
    */
   getAllActions(): PlayerAction[] {
-    // Convert JSON data to PlayerAction format
-    return (playerActionsData as PlayerActionJson[]).map(json => this.convertJsonToAction(json));
+    return actionLoader.getAllActions();
   },
   
   /**
-   * Get actions by category - now using JSON data
+   * Get actions by category (delegates to ActionLoader)
    */
   getActionsByCategory(category: string): PlayerAction[] {
-    return this.getAllActions().filter(action => {
-      // Map category variations to standard names
-      const normalizedCategory = this.normalizeCategoryId(action.category);
-      const requestedCategory = this.normalizeCategoryId(category);
-      return normalizedCategory === requestedCategory;
-    });
+    const normalizedCategory = this.normalizeCategoryId(category);
+    return actionLoader.getActionsByCategory(normalizedCategory);
   },
   
   /**

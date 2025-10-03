@@ -25,21 +25,33 @@
   "effects": {
     "criticalSuccess": {
       "description": "Build roads +1 hex",
-      "modifiers": {
-        "roadsBuilt": 2
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "buildRoads",
+          "hexCount": "standard"
+        }
+      ]
     },
     "success": {
       "description": "Build roads",
-      "modifiers": {
-        "roadsBuilt": 1
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "buildRoads",
+          "hexCount": "standard"
+        }
+      ]
     },
     "failure": {
-      "description": "no effect"
+      "description": "no effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     }
   }
 }

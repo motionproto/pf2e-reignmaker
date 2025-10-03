@@ -29,30 +29,59 @@
   "effects": {
     "criticalSuccess": {
       "description": "People welcome them home with honours!, -2 Unrest",
-      "modifiers": {
-        "militaryUnits": -1,
-        "unrest": -2
-      }
+      "modifiers": [
+        {
+          "name": "Disband Army",
+          "resource": "unrest",
+          "value": -2,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "success": {
       "description": "Army disbands, -1 Unrest",
-      "modifiers": {
-        "militaryUnits": -1,
-        "unrest": -1
-      }
+      "modifiers": [
+        {
+          "name": "Disband Army",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": [
+        {
+          "type": "disbandArmy",
+          "targetArmy": "selected"
+        }
+      ]
     },
     "failure": {
       "description": "Army disbands",
-      "modifiers": {
-        "militaryUnits": -1
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "disbandArmy",
+          "targetArmy": "selected"
+        }
+      ]
     },
     "criticalFailure": {
       "description": "Army disbands, +1 Unrest",
-      "modifiers": {
-        "militaryUnits": -1,
-        "unrest": 1
-      }
+      "modifiers": [
+        {
+          "name": "Disband Army",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": [
+        {
+          "type": "disbandArmy",
+          "targetArmy": "selected"
+        }
+      ]
     }
   },
   "failureCausesUnrest": true

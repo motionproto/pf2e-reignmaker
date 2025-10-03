@@ -29,30 +29,51 @@
   "effects": {
     "criticalSuccess": {
       "description": "Convert 8 Unrest to imprisoned Unrest (up to structure capacity)",
-      "modifiers": {
-        "imprisonedUnrest": 8,
-        "unrest": -8
-      }
+      "modifiers": [
+        {
+          "name": "Arrest Dissidents",
+          "resource": "unrest",
+          "value": -8,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "success": {
       "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
-      "modifiers": {
-        "imprisonedUnrest": 4,
-        "unrest": -4
-      }
+      "modifiers": [
+        {
+          "name": "Arrest Dissidents",
+          "resource": "unrest",
+          "value": -4,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "failure": {
       "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
-      "modifiers": {
-        "imprisonedUnrest": 2,
-        "unrest": -2
-      }
+      "modifiers": [
+        {
+          "name": "Arrest Dissidents",
+          "resource": "unrest",
+          "value": -2,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "Botched arrests cause riots; gain 1 Unrest",
-      "modifiers": {
-        "unrest": 1
-      }
+      "modifiers": [
+        {
+          "name": "Arrest Dissidents",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     }
   },
   "failureCausesUnrest": true,

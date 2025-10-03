@@ -29,27 +29,48 @@
   "effects": {
     "criticalSuccess": {
       "description": "The adventurers resolve one ongoing Event entirely",
-      "modifiers": {
-        "eventResolved": true
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "hireAdventurers",
+          "mode": "resolve-event"
+        }
+      ]
     },
     "success": {
       "description": "Roll to resolve an Event with a +2 circumstance bonus",
-      "modifiers": {
-        "eventBonus": 2
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "hireAdventurers",
+          "mode": "bonus-to-event",
+          "bonus": 2
+        }
+      ]
     },
     "failure": {
       "description": "The adventurers cause trouble. Gain +1 Unrest",
-      "modifiers": {
-        "unrest": 1
-      }
+      "modifiers": [
+        {
+          "name": "Hire Adventurers",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "The adventurers vanish or turn rogue. Gain +2 Unrest",
-      "modifiers": {
-        "unrest": 2
-      }
+      "modifiers": [
+        {
+          "name": "Hire Adventurers",
+          "resource": "unrest",
+          "value": 2,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     }
   },
   "failureCausesUnrest": true,

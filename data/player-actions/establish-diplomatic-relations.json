@@ -33,22 +33,33 @@
   "effects": {
     "criticalSuccess": {
       "description": "Allies + request aid",
-      "modifiers": {
-        "diplomaticRelations": 2,
-        "canRequestAid": true
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "establishDiplomaticRelations",
+          "targetNation": "selected"
+        }
+      ]
     },
     "success": {
       "description": "Allies",
-      "modifiers": {
-        "diplomaticRelations": 1
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "establishDiplomaticRelations",
+          "targetNation": "selected"
+        }
+      ]
     },
     "failure": {
-      "description": "no effect"
+      "description": "no effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     }
   }
 }

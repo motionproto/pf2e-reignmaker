@@ -14,11 +14,23 @@ export interface SkillOption {
 }
 
 /**
+ * Represents a modifier from an action outcome (aligned with EventModifier)
+ */
+export interface ActionModifier {
+  name: string;
+  resource: string; // Resource type (gold, food, lumber, stone, ore, unrest, fame, etc.)
+  value: number;
+  duration: 'immediate' | 'ongoing' | 'permanent' | 'turns';
+  turns?: number; // Required if duration === 'turns'
+}
+
+/**
  * Represents the effect of an action outcome
  */
 export interface ActionEffect {
   description: string;
-  modifiers?: any; // Can be Map or object
+  modifiers?: ActionModifier[]; // Resource changes (gold, food, unrest, etc.)
+  gameEffects?: import('./game-effects').GameEffect[]; // Gameplay effects (claim hexes, build structures, etc.)
 }
 
 /**
@@ -26,7 +38,8 @@ export interface ActionEffect {
  */
 export interface ActionEffectJson {
   description: string;
-  modifiers?: any;
+  modifiers?: ActionModifier[];
+  gameEffects?: import('./game-effects').GameEffect[];
 }
 
 /**

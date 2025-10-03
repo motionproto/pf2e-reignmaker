@@ -142,7 +142,8 @@ export class ActionExecutionService {
     }
     
     /**
-     * Parse action outcome text to extract state changes
+     * Parse action outcome to extract state changes
+     * Now uses structured ActionModifier array + description parsing for special effects
      */
     parseActionOutcome(
         action: PlayerAction,
@@ -151,37 +152,38 @@ export class ActionExecutionService {
         const effect = action[outcome];
         const parsed: ParsedActionEffect = {};
         
-        if (!effect?.description) return parsed;
+        if (!effect) return parsed;
         
-        const description = effect.description.toLowerCase();
+        // First: Process structured modifiers (new EventModifier format)
+        if (effect.modifiers && Array.isArray(effect.modifiers)) {
+            for (const modifier of effect.modifiers) {
+                // Map resource to parsed effect field
+                const resource = modifier.resource;
+                if (parsed[resource as keyof ParsedActionEffect] !== undefined) {
+                    // Accumulate if already exists
+                    (parsed as any)[resource] = ((parsed as any)[resource] || 0) + modifier.value;
+                } else {
+                    (parsed as any)[resource] = modifier.value;
+                }
+            }
+        }
         
-        // Parse unrest changes
-        this.parseUnrestChanges(description, parsed);
-        
-        // Parse gold changes
-        this.parseGoldChanges(description, parsed);
-        
-        // Parse resource changes
-        this.parseResourceChanges(description, parsed);
-        
-        // Parse fame changes
-        this.parseFameChanges(description, parsed);
-        
-        // Parse structure-related changes
-        this.parseStructureChanges(description, parsed);
-        
-        // Parse hex and territory changes
-        this.parseHexChanges(description, parsed);
-        
-        // Parse army-related changes
-        this.parseArmyChanges(description, parsed);
-        
-        // Parse imprisoned unrest changes
-        this.parseImprisonedUnrestChanges(description, parsed);
-        
-        // Apply any explicit modifiers from the action
-        if (effect.modifiers) {
-            Object.assign(parsed, effect.modifiers);
+        // Second: Parse description text for special effects not in modifiers
+        // (e.g., eventResolved, hexesClaimed, structuresBuilt, etc.)
+        if (effect.description) {
+            const description = effect.description.toLowerCase();
+            
+            // Parse structure-related changes
+            this.parseStructureChanges(description, parsed);
+            
+            // Parse hex and territory changes
+            this.parseHexChanges(description, parsed);
+            
+            // Parse army-related changes
+            this.parseArmyChanges(description, parsed);
+            
+            // Parse imprisoned unrest changes
+            this.parseImprisonedUnrestChanges(description, parsed);
         }
         
         return parsed;

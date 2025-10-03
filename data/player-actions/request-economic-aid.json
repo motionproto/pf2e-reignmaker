@@ -29,23 +29,37 @@
   "effects": {
     "criticalSuccess": {
       "description": "Gain 3 Resources of your choice OR 3 Gold",
-      "modifiers": {
-        "resources": 3,
-        "gold": 3
-      }
+      "modifiers": [
+        {
+          "name": "Request Economic Aid",
+          "resource": "gold",
+          "value": 3,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "success": {
       "description": "Gain 2 Resources of your choice OR 2 Gold",
-      "modifiers": {
-        "resources": 2,
-        "gold": 2
-      }
+      "modifiers": [
+        {
+          "name": "Request Economic Aid",
+          "resource": "gold",
+          "value": 2,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "failure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "Ally refuses"
+      "description": "Ally refuses",
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "requirements": [

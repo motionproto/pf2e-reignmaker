@@ -41,24 +41,44 @@
   "effects": {
     "criticalSuccess": {
       "description": "Reduce Unrest by 3",
-      "modifiers": {
-        "unrest": -3
-      }
+      "modifiers": [
+        {
+          "name": "Deal with Unrest",
+          "resource": "unrest",
+          "value": -3,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "success": {
       "description": "Reduce Unrest by 2",
-      "modifiers": {
-        "unrest": -2
-      }
+      "modifiers": [
+        {
+          "name": "Deal with Unrest",
+          "resource": "unrest",
+          "value": -2,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "failure": {
       "description": "Reduce Unrest by 1",
-      "modifiers": {
-        "unrest": -1
-      }
+      "modifiers": [
+        {
+          "name": "Deal with Unrest",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "special": "End of Turn Only"

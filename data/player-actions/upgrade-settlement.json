@@ -29,22 +29,32 @@
   "effects": {
     "criticalSuccess": {
       "description": "Increase Level +1 Structure",
-      "modifiers": {
-        "settlementUpgrade": true,
-        "structures": 1
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "upgradeSettlement",
+          "structureBonus": 1
+        }
+      ]
     },
     "success": {
       "description": "Increase Level",
-      "modifiers": {
-        "settlementUpgrade": true
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "upgradeSettlement"
+        }
+      ]
     },
     "failure": {
-      "description": "no effect"
+      "description": "no effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "requirements": [

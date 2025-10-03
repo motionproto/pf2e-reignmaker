@@ -33,21 +33,23 @@
   "effects": {
     "criticalSuccess": {
       "description": "Valuable intel",
-      "modifiers": {
-        "intelligence": 2
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "success": {
       "description": "Broad intel",
-      "modifiers": {
-        "intelligence": 1
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "failure": {
-      "description": "no effect"
+      "description": "no effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "Spies are captured"
+      "description": "Spies are captured",
+      "modifiers": [],
+      "gameEffects": []
     }
   }
 }

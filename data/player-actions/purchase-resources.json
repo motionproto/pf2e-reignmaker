@@ -29,24 +29,23 @@
   "effects": {
     "criticalSuccess": {
       "description": "Establish 1:1 exchange rate (pay 1 gold per resource)",
-      "modifiers": {
-        "exchangeRate": "1:1"
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "success": {
       "description": "Establish 2:1 exchange rate (pay 2 gold per resource)",
-      "modifiers": {
-        "exchangeRate": "2:1"
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "failure": {
-      "description": "No trade available this turn"
+      "description": "No trade available this turn",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "Negotiations fail; lose 1d4 gold",
-      "modifiers": {
-        "goldLoss": "1d4"
-      }
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "special": "Choose a single resource type, then purchase any amount at the determined rate."

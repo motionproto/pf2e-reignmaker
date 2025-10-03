@@ -33,25 +33,23 @@
   "effects": {
     "criticalSuccess": {
       "description": "Gain 1 resource from the hex + identify ideal location (+2 untyped bonus to Create Worksite in this hex)",
-      "modifiers": {
-        "resourceCollected": 1,
-        "worksiteBonus": 2
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "success": {
       "description": "Gain 1 resource from the hex",
-      "modifiers": {
-        "resourceCollected": 1
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "failure": {
-      "description": "No effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "The hex is depleted; it cannot be harvested again next turn",
-      "modifiers": {
-        "hexDepleted": true
-      }
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "special": "May harvest from any controlled hex. Each hex can only be harvested once per turn. Resource type depends on terrain."

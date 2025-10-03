@@ -29,21 +29,23 @@
   "effects": {
     "criticalSuccess": {
       "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
-      "modifiers": {
-        "armyUpgrades": 2
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "success": {
       "description": "Outfit troop",
-      "modifiers": {
-        "armyUpgrades": 1
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "failure": {
-      "description": "No gear"
+      "description": "No gear",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No gear"
+      "description": "No gear",
+      "modifiers": [],
+      "gameEffects": []
     }
   },
   "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"

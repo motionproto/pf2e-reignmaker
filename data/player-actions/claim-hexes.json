@@ -2,55 +2,77 @@
   "id": "claim-hexes",
   "name": "Claim Hexes",
   "category": "expand-borders",
-  "brief": "Add new territory to your kingdom",
-  "description": "Assert sovereignty over new territories, expanding your kingdom's borders into unclaimed lands",
+  "brief": "Expand your kingdom's territorial control",
+  "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control",
   "skills": [
     {
-      "skill": "nature",
-      "description": "harmonize with the land"
-    },
-    {
       "skill": "survival",
-      "description": "establish frontier camps"
+      "description": "wilderness expertise"
     },
     {
-      "skill": "intimidation",
-      "description": "force submission"
+      "skill": "exploration-lore",
+      "description": "surveying knowledge"
     },
     {
-      "skill": "occultism",
-      "description": "mystical claiming rituals"
+      "skill": "society",
+      "description": "administrative control"
     },
     {
-      "skill": "religion",
-      "description": "divine mandate"
+      "skill": "warfare-lore",
+      "description": "military expansion"
     }
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Claim all targeted hexes +1 extra hex",
-      "modifiers": {
-        "hexesClaimed": "proficiency+1"
-      }
+      "description": "Claim hexes based on proficiency (Trained/Expert: 1, Master: 2, Legendary: 3) + 1 extra hex",
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "claimHexes",
+          "count": "proficiency-scaled",
+          "scaling": {
+            "trained": 1,
+            "expert": 1,
+            "master": 2,
+            "legendary": 3
+          },
+          "bonus": 1
+        }
+      ]
     },
     "success": {
-      "description": "Claim targeted hexes (based on proficiency)",
-      "modifiers": {
-        "hexesClaimed": "proficiency"
-      }
+      "description": "Claim hexes based on proficiency (Trained/Expert: 1, Master: 2, Legendary: 3)",
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "claimHexes",
+          "count": "proficiency-scaled",
+          "scaling": {
+            "trained": 1,
+            "expert": 1,
+            "master": 2,
+            "legendary": 3
+          }
+        }
+      ]
     },
     "failure": {
-      "description": "no effect"
+      "description": "No effect",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
-      "description": "No effect"
+      "description": "Failed expansion causes discontent. +1 Unrest",
+      "modifiers": [
+        {
+          "name": "Claim Hexes",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     }
   },
-  "proficiencyScaling": {
-    "trained": 1,
-    "expert": 1,
-    "master": 2,
-    "legendary": 3
-  },
-  "special": "+2 circumstance bonus when claiming hexes adjacent to 3+ controlled hexes"
+  "special": "Can only claim hexes adjacent to existing kingdom territory"
 }

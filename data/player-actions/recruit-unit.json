@@ -29,25 +29,37 @@
   "effects": {
     "criticalSuccess": {
       "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
-      "modifiers": {
-        "militaryUnits": 1,
-        "unrest": -1
-      }
+      "modifiers": [
+        {
+          "name": "Recruit Unit",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     },
     "success": {
       "description": "Recruit a troop equal to the party level",
-      "modifiers": {
-        "militaryUnits": 1
-      }
+      "modifiers": [],
+      "gameEffects": []
     },
     "failure": {
-      "description": "No Recruits"
+      "description": "No Recruits",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "No Recruit; +1 Unrest",
-      "modifiers": {
-        "unrest": 1
-      }
+      "modifiers": [
+        {
+          "name": "Recruit Unit",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     }
   },
   "failureCausesUnrest": true

@@ -29,25 +29,40 @@
   "effects": {
     "criticalSuccess": {
       "description": "The structure is repaired for free",
-      "modifiers": {
-        "structureRepaired": true,
-        "costReduction": 1.0
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "repairStructure",
+          "targetStructure": "damaged"
+        }
+      ]
     },
     "success": {
       "description": "Pay 1d4 gold OR 1/2 the build cost for the structures tier",
-      "modifiers": {
-        "structureRepaired": true
-      }
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "buildStructure",
+          "count": 1
+        }
+      ]
     },
     "failure": {
-      "description": "remains damaged"
+      "description": "remains damaged",
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "Lose 1 gold",
-      "modifiers": {
-        "gold": -1
-      }
+      "modifiers": [
+        {
+          "name": "Repair Structure",
+          "resource": "gold",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ],
+      "gameEffects": []
     }
   }
 }
