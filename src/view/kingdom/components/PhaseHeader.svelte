@@ -9,10 +9,12 @@
   export let icon: string = '';
   export let onNextPhase: (() => void) | undefined = undefined;
   export let isUpkeepPhase: boolean = false;
+  export let isViewingActualPhase: boolean = true;
   // currentTurn is now imported from stores, remove the export
   
   // Use the reactive phaseComplete property from KingdomActor
-  $: currentPhaseComplete = $kingdomData.phaseComplete || false;
+  // But only enable the button if we're viewing the actual current phase
+  $: currentPhaseComplete = ($kingdomData.phaseComplete || false) && isViewingActualPhase;
 
   // Debug phase completion detection
   $: console.log('🔍 [PhaseHeader DEBUG] Phase completion check:', {
@@ -20,6 +22,7 @@
     totalSteps: $kingdomData.currentPhaseSteps?.length || 0,
     completedSteps: $kingdomData.currentPhaseSteps?.filter(s => s.completed).length || 0,
     phaseComplete: $kingdomData.phaseComplete,
+    isViewingActualPhase,
     currentPhaseComplete,
     buttonDisabled: !currentPhaseComplete
   });

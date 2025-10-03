@@ -1,6 +1,6 @@
 <script lang="ts">
   import { currentPhase, setViewingPhase, viewingPhase } from '../../../stores/KingdomStore';
-  import { TurnPhase } from '../../../actors/KingdomActor';
+  import { TurnPhase, PHASE_ORDER } from '../../../actors/KingdomActor';
   import { onMount } from 'svelte';
 
   // Define the phases in order - pure display data
@@ -15,6 +15,14 @@
 
   // Pure UI state - no business logic  
   $: selectedPhase = $viewingPhase || $currentPhase;
+  
+  // Helper function to determine if a phase is completed
+  // A phase is completed if the current phase comes after it in the sequence
+  function isPhaseCompleted(phase: TurnPhase, current: TurnPhase): boolean {
+    const phaseIndex = PHASE_ORDER.indexOf(phase);
+    const currentIndex = PHASE_ORDER.indexOf(current);
+    return currentIndex > phaseIndex;
+  }
   
   // Initialize viewing phase on mount
   onMount(() => {
@@ -42,6 +50,7 @@
         class="phase-item"
         class:active={phase.id === $currentPhase}
         class:selected={phase.id === selectedPhase}
+        class:completed={isPhaseCompleted(phase.id, $currentPhase)}
         on:click={() => handlePhaseClick(phase.id)}
         title={phase.fullName}
       >

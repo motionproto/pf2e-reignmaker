@@ -34,11 +34,13 @@
       stringComparison: displayPhase === 'Upkeep'
    });
    
-   // Initialize viewingPhase to match actual phase when data loads
-   // This is reactive and eliminates timing issues
-   $: if (actualPhase && !$viewingPhase) {
-      setViewingPhase(actualPhase);
-   }
+   // Initialize viewingPhase to match actual phase only on mount
+   // Don't use reactive statement as it interferes with manual phase selection
+   onMount(() => {
+      if (actualPhase && !$viewingPhase) {
+         setViewingPhase(actualPhase);
+      }
+   });
    $: phaseInfo = displayPhase ? TurnPhaseConfig[displayPhase] : TurnPhaseConfig[$kingdomData.currentPhase];
    
    // Safe fallback for phase info
@@ -66,12 +68,14 @@
 
 <div class="turn-management">
    <!-- Phase header with gradient styling -->
+   <!-- Note: Button behavior (onNextPhase, isUpkeepPhase) is always tied to the ACTUAL phase, not the viewing phase -->
    <PhaseHeader 
       title={safePhaseInfo.displayName}
       description={safePhaseInfo.description}
       icon={displayPhaseIcon}
       onNextPhase={handleAdvancePhase}
-      isUpkeepPhase={displayPhase === TurnPhase.UPKEEP}
+      isUpkeepPhase={actualPhase === TurnPhase.UPKEEP}
+      isViewingActualPhase={displayPhase === actualPhase}
    />
    
    <!-- Phase Bar underneath phase header -->

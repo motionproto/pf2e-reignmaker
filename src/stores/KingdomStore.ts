@@ -271,13 +271,27 @@ export function setupFoundrySync(): void {
       if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data']) {
         console.log(`[KingdomActor Store] Kingdom updated by user ${userId}`);
         
+        // Get the old phase before updating
+        const oldKingdom = currentActor.getKingdom();
+        const oldPhase = oldKingdom?.currentPhase;
+        
         // Force store update by triggering reactivity
         kingdomActor.update(a => a);
         
-        // Update viewing phase if current phase changed
+        // Only update viewing phase if the actual current phase changed
+        // AND the user is currently viewing the old active phase (not manually browsing)
         const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
-        if (kingdom && kingdom.currentPhase) {
-          viewingPhase.set(kingdom.currentPhase);
+        const newPhase = kingdom?.currentPhase;
+        const currentViewingPhase = get(viewingPhase);
+        
+        if (kingdom && newPhase && newPhase !== oldPhase) {
+          // Phase actually changed - only update viewing if user was on the old phase
+          if (currentViewingPhase === oldPhase) {
+            console.log(`[KingdomActor Store] Phase changed from ${oldPhase} to ${newPhase}, updating viewing phase`);
+            viewingPhase.set(newPhase);
+          } else {
+            console.log(`[KingdomActor Store] Phase changed but user is browsing ${currentViewingPhase}, keeping viewing phase`);
+          }
         }
       }
     }
