@@ -27,12 +27,55 @@
       "modifiers": []
     },
     "failure": {
-      "msg": "Lose 1d4 Gold OR 1d4+1 Resources (player's choice)",
-      "modifiers": []
+      "msg": "Choose one:",
+      "modifiers": [],
+      "choices": [
+        {
+          "label": "Lose {gold} gold",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Gold Loss",
+              "resource": "gold",
+              "value": "-1d4",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Lose {resources} resources",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Resource Loss",
+              "resource": "resources",
+              "value": "-1d4+1",
+              "duration": "immediate"
+            }
+          ]
+        }
+      ]
     },
     "criticalFailure": {
-      "msg": "Lose 2d4 Gold AND 1d4+1 Resources, +1 Unrest",
-      "modifiers": []
+      "msg": "Lose {gold} gold AND {resources} resources, +{unrest} unrest",
+      "modifiers": [
+        {
+          "name": "Trade Embargo Critical Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
+        },
+        {
+          "name": "Trade Embargo Critical Resource Loss",
+          "resource": "resources",
+          "value": "-1d4+1",
+          "duration": "immediate"
+        },
+        {
+          "name": "Trade Embargo Unrest",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

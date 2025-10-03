@@ -7,7 +7,7 @@ import incidentsData from '../../../dist/incidents.json';
 interface RawIncidentData {
     id: string;
     name: string;
-    tier: string;
+    tier: string;  // "MINOR" | "MODERATE" | "MAJOR" from JSON
     description: string;
     skills: EventSkill[];
     effects: {
@@ -28,7 +28,6 @@ interface RawIncidentData {
             modifiers: any[];
         };
     };
-    severity: string;
 }
 
 /**
@@ -84,7 +83,7 @@ export class IncidentLoader {
                         modifiers: raw.effects.criticalFailure.modifiers || []
                     } : undefined,
                 },
-                severity: raw.severity as 'minor' | 'moderate' | 'major'
+                severity: raw.tier as 'MINOR' | 'MODERATE' | 'MAJOR'
             }));
             
             // Add all incidents to the map
@@ -140,8 +139,9 @@ export class IncidentLoader {
      * Get all incidents for a specific severity level
      */
     getIncidentsBySeverity(severity: 'minor' | 'moderate' | 'major'): KingdomIncident[] {
+        const upperSeverity = severity.toUpperCase() as 'MINOR' | 'MODERATE' | 'MAJOR';
         return Array.from(this.incidents.values()).filter(
-            incident => incident.severity === severity
+            incident => incident.severity === upperSeverity
         );
     }
 
@@ -199,11 +199,11 @@ export class IncidentLoader {
      * Get incident counts by severity (for debugging)
      */
     getIncidentCountsBySeverity(): Record<string, number> {
-        const counts = { minor: 0, moderate: 0, major: 0 };
+        const counts: Record<string, number> = { MINOR: 0, MODERATE: 0, MAJOR: 0 };
         
         for (const incident of this.incidents.values()) {
             if (incident.severity) {
-                counts[incident.severity]++;
+                counts[incident.severity] = (counts[incident.severity] || 0) + 1;
             }
         }
         
@@ -218,7 +218,7 @@ export class IncidentLoader {
             return false;
         }
 
-        return incident.skills.some(s => s.skill === skill);
+        return incident.skills.some((s: EventSkill) => s.skill === skill);
     }
 
     /**

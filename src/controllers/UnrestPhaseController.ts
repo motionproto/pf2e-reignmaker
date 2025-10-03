@@ -368,6 +368,108 @@ export async function createUnrestPhaseController() {
         incidentSeverity: tierInfo.incidentSeverity,
         status: getUnrestStatus(unrest)
       };
+    },
+
+    /**
+     * Check if incident rolling is allowed (business logic)
+     */
+    canRollForIncident(): { allowed: boolean; reason?: string } {
+      const kingdom = get(kingdomData);
+      const unrest = kingdom.unrest || 0;
+      const tier = this.getUnrestTier(unrest);
+      
+      // Check if unrest tier is 0
+      if (tier === 0) {
+        return { allowed: false, reason: 'Unrest tier is 0 - no incidents occur' };
+      }
+      
+      // Check if step is already complete
+      const stepComplete = kingdom.currentPhaseSteps?.[1]?.completed === 1;
+      if (stepComplete) {
+        return { allowed: false, reason: 'Incident check already completed' };
+      }
+      
+      return { allowed: true };
+    },
+
+    /**
+     * Map detailed outcome to simple outcome for controller
+     */
+    mapDetailedOutcomeToSimple(
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+    ): 'success' | 'failure' {
+      return outcome === 'criticalSuccess' || outcome === 'success' ? 'success' : 'failure';
+    },
+
+    /**
+     * Get formatted incident display data for UI
+     */
+    getIncidentDisplayData(incident: any) {
+      const outcomes: Array<{
+        result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+        label: string;
+        description: string;
+      }> = [];
+      
+      if (incident.effects?.success) {
+        outcomes.push({
+          result: 'success' as const,
+          label: 'Success',
+          description: incident.effects.success.msg
+        });
+      }
+      
+      if (incident.effects?.failure) {
+        outcomes.push({
+          result: 'failure' as const,
+          label: 'Failure',
+          description: incident.effects.failure.msg
+        });
+      }
+      
+      if (incident.effects?.criticalFailure) {
+        outcomes.push({
+          result: 'criticalFailure' as const,
+          label: 'Critical Failure',
+          description: incident.effects.criticalFailure.msg
+        });
+      }
+      
+      return { outcomes };
+    },
+
+    /**
+     * Get resolution display data for UI after skill check
+     */
+    getResolutionDisplayData(
+      incident: any,
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+      actorName: string
+    ) {
+      let effect = '';
+      
+      switch (outcome) {
+        case 'criticalSuccess':
+          effect = 'Critical Success! The incident is resolved favorably.';
+          break;
+        case 'success':
+          effect = incident.effects?.success?.msg || 'Success';
+          break;
+        case 'failure':
+          effect = incident.effects?.failure?.msg || 'Failure';
+          break;
+        case 'criticalFailure':
+          effect = incident.effects?.criticalFailure?.msg || 'Critical Failure';
+          break;
+        default:
+          effect = 'Unknown outcome';
+      }
+      
+      return {
+        effect,
+        actorName,
+        stateChanges: {}
+      };
     }
   };
 }

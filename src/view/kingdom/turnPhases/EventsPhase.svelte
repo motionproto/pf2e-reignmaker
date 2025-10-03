@@ -273,6 +273,59 @@
       }
    }
    
+   // Handle fame reroll
+   async function handleRerollWithFame() {
+      if (!currentEvent || !selectedSkill) {
+         console.error('[EventsPhase] Cannot reroll - missing event or skill');
+         return;
+      }
+      
+      // Import shared reroll helpers
+      const { canRerollWithFame, deductFameForReroll, restoreFameAfterFailedReroll } = 
+         await import('../../../controllers/shared/RerollHelpers');
+      
+      // Check if reroll is possible
+      const fameCheck = await canRerollWithFame();
+      if (!fameCheck.canReroll) {
+         ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
+         return;
+      }
+      
+      // Deduct fame
+      const deductResult = await deductFameForReroll();
+      if (!deductResult.success) {
+         ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
+         return;
+      }
+      
+      console.log(`💎 [EventsPhase] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
+      
+      // Reset UI state for new roll
+      showResolutionResult = false;
+      resolutionOutcome = null;
+      outcomeMessage = '';
+      currentEffects = null;
+      pendingEventOutcome = null;
+      outcomeApplied = false;
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger new roll with same skill
+      try {
+         await resolveEventWithSkill(selectedSkill);
+      } catch (error) {
+         console.error('[EventsPhase] Error during reroll:', error);
+         
+         // Restore fame on error
+         if (deductResult.previousFame !== undefined) {
+            await restoreFameAfterFailedReroll(deductResult.previousFame);
+         }
+         
+         ui.notifications?.error('Failed to reroll. Fame has been restored.');
+      }
+   }
+   
    // Apply the pending changes when user clicks OK
    async function completeEventResolution() {
       console.log('[EventsPhase] completeEventResolution() called');
@@ -291,9 +344,6 @@
          console.log('[EventsPhase] applyEventOutcome result:', result);
          
          if (result.success) {
-            // Kingdom state automatically updated via Foundry actor
-            // Step completion is handled by the controller in applyEventOutcome
-            
             // Handle unresolved event if any
             if (result.unresolvedEvent) {
                unresolvedEvent = result.unresolvedEvent;
@@ -304,11 +354,6 @@
             pendingEventOutcome = null;
             
             console.log('✅ [EventsPhase] Event resolution applied successfully');
-            console.log('[EventsPhase] Current step completion:', {
-               step0: $kingdomData.currentPhaseSteps[0]?.completed,
-               step1: $kingdomData.currentPhaseSteps[1]?.completed,
-               phaseComplete: $kingdomData.phaseComplete
-            });
          } else {
             console.error('[EventsPhase] Failed to apply event outcome:', result.error);
          }
@@ -368,13 +413,13 @@
    
    {#if currentEvent}
       <!-- Active Event Card -->
+      {#if showStabilityResult}
+         <div class="event-rolled-banner">
+            <i class="fas fa-dice-d20"></i>
+            <span>Event Triggered! (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})</span>
+         </div>
+      {/if}
       <div class="event-card">
-         {#if showStabilityResult}
-            <div class="event-rolled-banner">
-               <i class="fas fa-dice-d20"></i>
-               <span>Event Triggered! (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})</span>
-            </div>
-         {/if}
          <div class="event-header">
             <h3 class="event-title">{currentEvent.name}</h3>
          </div>
@@ -435,9 +480,11 @@
                      skillName={selectedSkill}
                      effect={outcomeMessage}
                      stateChanges={currentEffects}
-                     primaryButtonLabel="Apply"
+                     primaryButtonLabel="Apply Result"
                      applied={outcomeApplied}
+                     choices={currentEvent?.effects?.[resolutionOutcome]?.choices}
                      on:primary={completeEventResolution}
+                     on:reroll={handleRerollWithFame}
                   />
                </div>
             {/if}
@@ -506,6 +553,25 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+   }
+   
+   .event-rolled-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      margin-bottom: 0.5rem;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid var(--color-amber);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-medium);
+      
+      i {
+         color: var(--color-amber-light);
+      }
    }
    
    .event-card {
@@ -592,8 +658,8 @@
    }
    
    .skill-options {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 10px;
    }
    

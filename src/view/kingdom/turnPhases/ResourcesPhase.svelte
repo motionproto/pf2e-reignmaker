@@ -312,8 +312,10 @@
    
    .resource-dashboard {
       display: flex;
-      gap: 1rem;
       flex-wrap: wrap;
+      gap: 1rem;
+      max-width: 800px;
+      margin: 0 auto;
       justify-content: center;
    }
    
@@ -322,7 +324,7 @@
       align-items: center;
       gap: 0.75rem;
       background: rgba(0, 0, 0, 0.2);
-      padding: 0.75rem 1rem;
+      padding: 0.75rem;
       border-radius: 0.375rem;
       border: 1px solid rgba(255, 255, 255, 0.1);
       cursor: pointer;
@@ -330,6 +332,7 @@
       outline-offset: 2px;
       transition: all 0.2s ease;
       position: relative;
+      flex: 0 0 auto;
       
       &:hover:not(.editing) {
          outline-color: var(--resource-color);
@@ -481,8 +484,9 @@
    }
    
    .production-summary {
-      margin: 15px 0;
+      margin: 15px auto;
       padding: 15px;
+      max-width: 800px;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));
@@ -532,8 +536,9 @@
    }
    
    .gold-income-summary {
-      margin: 15px 0;
+      margin: 15px auto;
       padding: 15px;
+      max-width: 800px;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));
@@ -595,8 +600,9 @@
    }
    
    .manual-collection-section {
-      margin: 20px 0;
+      margin: 20px auto;
       padding: 20px;
+      max-width: 800px;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));

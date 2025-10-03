@@ -43,8 +43,7 @@ export type EventTrait =
 /**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = 
-;
+export type ModifierSelector = string;
 
 /**
  * Event location types
@@ -80,14 +79,23 @@ export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxur
 export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | 'turns';
 
 /**
- * Event modifier details (simplified from actual JSON structure)
+ * Event modifier details
+ * Value can be a number (static) or a dice formula string (e.g., "1d4", "-2d6+1")
  */
 export interface EventModifier {
   name: string;
   resource: ResourceType;
-  value: number;
+  value: number | string;  // Static number (e.g., 5, -10) or dice formula (e.g., "1d4", "-2d6+1")
   duration: ModifierDuration;
   turns?: number;  // Required if duration === 'turns'
+}
+
+/**
+ * Choice button for outcomes with player decisions
+ */
+export interface EventChoice {
+  label: string;        // Button text with {resource} placeholders, e.g., "Lose {gold} Gold"
+  modifiers: EventModifier[]; // Modifiers to apply when chosen (can include dice formulas)
 }
 
 /**
@@ -97,6 +105,7 @@ export interface EventOutcome {
   msg: string;
   endsEvent?: boolean;
   modifiers: EventModifier[];
+  choices?: EventChoice[]; // Optional player choices
 }
 
 /**

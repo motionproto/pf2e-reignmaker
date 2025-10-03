@@ -16,8 +16,16 @@
    export let showFameReroll: boolean = true; // New prop to control fame reroll visibility
    export let showCancel: boolean = true; // New prop to control cancel button visibility
    export let applied: boolean = false; // New prop to auto-hide buttons when outcome is applied
+   export let choices: any[] | undefined = undefined; // Optional choice buttons
    
    const dispatch = createEventDispatcher();
+   
+   // Choice selection state
+   let selectedChoice: number | null = null;
+   let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
+   
+   // Dice formula detection regex
+   const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
    
    // Get fame from kingdom state
    $: currentFame = $kingdomData?.fame || 0;
@@ -25,10 +33,19 @@
    // Get outcome display properties
    $: outcomeProps = getOutcomeProps(outcome);
    
+   // Determine if choices are present and not yet resolved
+   $: hasChoices = choices && choices.length > 0;
+   $: choicesResolved = hasChoices && selectedChoice !== null;
+   
    // Automatically derive button visibility based on applied state
    $: showCancelButton = showCancel && !applied;
-   $: showFameRerollButton = showFameReroll && !applied;
+   $: showFameRerollButton = showFameReroll && !applied && !hasChoices;
    $: effectivePrimaryLabel = applied ? '' : primaryButtonLabel;
+   $: primaryButtonDisabled = hasChoices && !choicesResolved;
+   
+   // Display effective message and state changes (choice result overrides original)
+   $: displayEffect = choiceResult ? choiceResult.effect : effect;
+   $: displayStateChanges = choiceResult ? choiceResult.stateChanges : stateChanges;
    
    function getOutcomeProps(outcomeType: string) {
       switch(outcomeType) {
@@ -167,7 +184,104 @@
    }
    
    function handlePrimary() {
-      dispatch('primary');
+      if (hasChoices && selectedChoice === null) {
+         // Don't allow primary action until a choice is made
+         return;
+      }
+      
+      // If a choice was made, include it in the dispatch
+      if (selectedChoice !== null && choices) {
+         dispatch('primary', { 
+            choiceIndex: selectedChoice,
+            choice: choices[selectedChoice]
+         });
+      } else {
+         dispatch('primary');
+      }
+   }
+   
+   function handleChoiceSelect(index: number) {
+      if (selectedChoice === index) {
+         // Deselect if clicking the same choice
+         selectedChoice = null;
+         choiceResult = null;
+         return;
+      }
+      
+      selectedChoice = index;
+      const choice = choices![index];
+      
+      // Roll all dice formulas in modifiers
+      const resourceValues: Record<string, number> = {};
+      
+      if (choice.modifiers) {
+         for (const modifier of choice.modifiers) {
+            const value = modifier.value;
+            
+            // Check if value is a dice formula
+            if (typeof value === 'string' && DICE_PATTERN.test(value)) {
+               // Roll the dice
+               const rolled = rollDiceFormula(value);
+               resourceValues[modifier.resource] = rolled;
+            } else if (typeof value === 'number') {
+               resourceValues[modifier.resource] = value;
+            }
+         }
+      }
+      
+      // Replace {resource} placeholders in label with rolled values
+      let resultLabel = choice.label;
+      for (const [resource, value] of Object.entries(resourceValues)) {
+         resultLabel = resultLabel.replace(new RegExp(`\\{${resource}\\}`, 'g'), String(Math.abs(value)));
+      }
+      
+      choiceResult = {
+         effect: resultLabel,
+         stateChanges: resourceValues
+      };
+      
+      // Dispatch choice event
+      dispatch('choiceSelected', { 
+         choiceIndex: index,
+         choice: choice,
+         result: choiceResult
+      });
+   }
+   
+   // Dice roller for formulas like "1d4", "2d6+1", "-1d4", "-2d6-1"
+   function rollDiceFormula(formula: string): number {
+      // Handle negative prefix
+      const isNegative = formula.startsWith('-');
+      const cleanFormula = isNegative ? formula.substring(1) : formula;
+      
+      // Parse the dice formula
+      const match = cleanFormula.match(/(\d+)d(\d+)(?:([+-])(\d+))?/i);
+      if (!match) {
+         console.error(`Invalid dice formula: ${formula}`);
+         return 0;
+      }
+      
+      const count = parseInt(match[1]);
+      const sides = parseInt(match[2]);
+      const bonusSign = match[3]; // '+' or '-'
+      const bonusValue = match[4] ? parseInt(match[4]) : 0;
+      
+      // Calculate bonus
+      let bonus = 0;
+      if (bonusSign === '+') {
+         bonus = bonusValue;
+      } else if (bonusSign === '-') {
+         bonus = -bonusValue;
+      }
+      
+      // Roll dice
+      let total = bonus;
+      for (let i = 0; i < count; i++) {
+         total += Math.floor(Math.random() * sides) + 1;
+      }
+      
+      // Apply negative if needed
+      return isNegative ? -total : total;
    }
    
    function handleCancel() {
@@ -189,16 +303,32 @@
    </div>
    
    <div class="resolution-details">
-      {#if effect}
+      {#if displayEffect}
          <div class="resolution-effect">
-            {effect}
+            {displayEffect}
          </div>
       {/if}
       
-      {#if stateChanges && Object.keys(stateChanges).length > 0}
+      {#if hasChoices && !choicesResolved && choices}
+         <div class="choice-buttons">
+            <div class="choice-buttons-header">Choose one:</div>
+            <div class="choice-buttons-list">
+               {#each choices as choice, index}
+                  <button
+                     class="choice-button {selectedChoice === index ? 'selected' : ''}"
+                     on:click={() => handleChoiceSelect(index)}
+                  >
+                     {choice.label}
+                  </button>
+               {/each}
+            </div>
+         </div>
+      {/if}
+      
+      {#if displayStateChanges && Object.keys(displayStateChanges).length > 0}
          <div class="state-changes">
             <div class="state-changes-list">
-               {#each Object.entries(stateChanges) as [key, change]}
+               {#each Object.entries(displayStateChanges) as [key, change]}
                   <div class="state-change-item">
                      <span class="change-label">{formatStateChangeLabel(key)}:</span>
                      <span class="change-value {getChangeClass(change, key)}">
@@ -239,6 +369,7 @@
             {#if effectivePrimaryLabel}
                <Button
                   variant="secondary"
+                  disabled={primaryButtonDisabled}
                   on:click={handlePrimary}
                   icon="fas fa-check"
                   iconPosition="left"
@@ -489,6 +620,53 @@
          :global(.button) {
             flex: 0 1 auto;
             min-width: 120px;
+         }
+      }
+   }
+   
+   .choice-buttons {
+      margin-top: 10px;
+      
+      .choice-buttons-header {
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-primary);
+         margin-bottom: 10px;
+      }
+      
+      .choice-buttons-list {
+         display: flex;
+         flex-wrap: wrap;
+         gap: 10px;
+      }
+      
+      .choice-button {
+         padding: 10px 16px;
+         background: rgba(255, 255, 255, 0.05);
+         border: 2px solid var(--border-medium);
+         border-radius: var(--radius-md);
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-medium);
+         cursor: pointer;
+         transition: all var(--transition-fast);
+         
+         &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+         }
+         
+         &.selected {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: var(--color-blue);
+            color: var(--color-blue);
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+         }
+         
+         &:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
          }
       }
    }

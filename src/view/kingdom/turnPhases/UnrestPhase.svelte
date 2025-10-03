@@ -91,18 +91,18 @@
    
    
    async function rollForIncident() {
-      if (unrestStatus.tier === 0) {
-         console.log('🛑 [UnrestPhase] Cannot roll - unrest tier is 0');
+      // Use controller to check if rolling is allowed
+      const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+      const controller = await createUnrestPhaseController();
+      const canRoll = controller.canRollForIncident();
+      
+      if (!canRoll.allowed) {
+         console.log('🛑 [UnrestPhase] Cannot roll -', canRoll.reason);
          return;
       }
       
       if (phaseExecuting) {
          console.log('🛑 [UnrestPhase] Cannot roll - phase executing');
-         return;
-      }
-      
-      if (stepComplete) {
-         console.log('🛑 [UnrestPhase] Cannot roll - step already complete');
          return;
       }
       
@@ -221,25 +221,20 @@
          // Get the current character info for display
          const { getCurrentUserCharacter } = await import('../../../services/pf2e');
          const character = await getCurrentUserCharacter();
-         rollActor = character?.name || 'Unknown';
+         const actorName = character?.name || 'Unknown';
+         rollActor = actorName;
          
-         // Set the effect based on outcome
-         switch (outcome) {
-            case 'criticalSuccess':
-               rollEffect = 'Critical Success! The incident is resolved favorably.';
-               break;
-            case 'success':
-               rollEffect = currentIncident.effects?.success?.msg || 'Success';
-               break;
-            case 'failure':
-               rollEffect = currentIncident.effects?.failure?.msg || 'Failure';
-               break;
-            case 'criticalFailure':
-               rollEffect = currentIncident.effects?.criticalFailure?.msg || 'Critical Failure';
-               break;
-            default:
-               rollEffect = 'Unknown outcome';
-         }
+         // Use controller to get display data
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         const controller = await createUnrestPhaseController();
+         const displayData = controller.getResolutionDisplayData(
+            currentIncident, 
+            outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+            actorName
+         );
+         
+         rollEffect = displayData.effect;
+         rollStateChanges = displayData.stateChanges;
          
          console.log(`✅ [UnrestPhase] Incident resolution outcome set: ${outcome}`);
       } catch (error) {
@@ -253,9 +248,14 @@
          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
          const controller = await createUnrestPhaseController();
          
+         // Use controller to map outcome
+         const simplifiedOutcome = controller.mapDetailedOutcomeToSimple(
+            rollOutcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+         );
+         
          const result = await controller.resolveIncident(
             currentIncident.id, 
-            rollOutcome === 'criticalSuccess' || rollOutcome === 'success' ? 'success' : 'failure'
+            simplifiedOutcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
          );
          
          if (result.success) {
@@ -280,6 +280,59 @@
       rollEffect = '';
       rollStateChanges = {};
       selectedSkill = '';
+   }
+   
+   // Handle fame reroll for incidents
+   async function handleRerollWithFame() {
+      if (!currentIncident || !selectedSkill) {
+         console.error('[UnrestPhase] Cannot reroll - missing incident or skill');
+         return;
+      }
+      
+      // Import shared reroll helpers
+      const { canRerollWithFame, deductFameForReroll, restoreFameAfterFailedReroll } = 
+         await import('../../../controllers/shared/RerollHelpers');
+      
+      // Check if reroll is possible
+      const fameCheck = await canRerollWithFame();
+      if (!fameCheck.canReroll) {
+         ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
+         return;
+      }
+      
+      // Deduct fame
+      const deductResult = await deductFameForReroll();
+      if (!deductResult.success) {
+         ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
+         return;
+      }
+      
+      console.log(`💎 [UnrestPhase] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
+      
+      // Reset UI state for new roll
+      incidentResolved = false;
+      resolutionApplied = false;
+      rollOutcome = '';
+      rollActor = '';
+      rollEffect = '';
+      rollStateChanges = {};
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger new roll with same skill
+      try {
+         await resolveIncident(selectedSkill);
+      } catch (error) {
+         console.error('[UnrestPhase] Error during reroll:', error);
+         
+         // Restore fame on error
+         if (deductResult.previousFame !== undefined) {
+            await restoreFameAfterFailedReroll(deductResult.previousFame);
+         }
+         
+         ui.notifications?.error('Failed to reroll. Fame has been restored.');
+      }
    }
    
    // Use status class from provider
@@ -409,21 +462,25 @@
                         skillName={selectedSkill}
                         effect={rollEffect}
                         stateChanges={rollStateChanges}
-                        primaryButtonLabel="Apply Resolution"
-                        showFameReroll={false}
+                        primaryButtonLabel="Apply Result"
+                        showFameReroll={true}
                         applied={resolutionApplied}
+                        choices={currentIncident?.effects?.[rollOutcome]?.choices}
                         on:primary={handleResolutionPrimary}
                         on:cancel={handleResolutionCancel}
+                        on:reroll={handleRerollWithFame}
                      />
                   {:else}
-                     <PossibleOutcomes 
-                        outcomes={[
-                           { result: 'success', label: 'Success', description: currentIncident.effects?.success?.msg || 'Success' },
-                           { result: 'failure', label: 'Failure', description: currentIncident.effects?.failure?.msg || 'Failure' },
-                           { result: 'criticalFailure', label: 'Critical Failure', description: currentIncident.effects?.criticalFailure?.msg || 'Critical Failure' }
-                        ]}
-                        showTitle={false}
-                     />
+                     {#await (async () => {
+                        const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+                        const controller = await createUnrestPhaseController();
+                        return controller.getIncidentDisplayData(currentIncident);
+                     })() then displayData}
+                        <PossibleOutcomes 
+                           outcomes={displayData.outcomes}
+                           showTitle={false}
+                        />
+                     {/await}
                   {/if}
                </div>
             {:else}
