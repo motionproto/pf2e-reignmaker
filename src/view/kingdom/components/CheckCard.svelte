@@ -17,6 +17,7 @@
    import PossibleOutcomes from './PossibleOutcomes.svelte';
    import type { PossibleOutcome } from './PossibleOutcomes.svelte';
    import OutcomeDisplay from './OutcomeDisplay.svelte';
+   import { getOutcomeBadgeClass, getOutcomeBadgeLabel } from '../utils/presentation';
    
    // Required props
    export let id: string;
@@ -163,36 +164,6 @@
    // Get card state class
    $: cardStateClass = resolved ? 'resolved result-state' : 'select-state';
    
-   // Helper to format outcome for badge display
-   function getOutcomeBadgeClass(outcome: string): string {
-      switch (outcome) {
-         case 'criticalSuccess':
-            return 'badge-crit-success';
-         case 'success':
-            return 'badge-success';
-         case 'failure':
-            return 'badge-failure';
-         case 'criticalFailure':
-            return 'badge-crit-failure';
-         default:
-            return 'badge-neutral';
-      }
-   }
-   
-   function getOutcomeBadgeLabel(outcome: string): string {
-      switch (outcome) {
-         case 'criticalSuccess':
-            return 'Crit Success';
-         case 'success':
-            return 'Success';
-         case 'failure':
-            return 'Failure';
-         case 'criticalFailure':
-            return 'Crit Fail';
-         default:
-            return outcome;
-      }
-   }
 </script>
 
 <div class="check-card {checkType}-card {!available ? 'not-available' : ''} {expanded ? 'expanded' : ''} {cardStateClass}">

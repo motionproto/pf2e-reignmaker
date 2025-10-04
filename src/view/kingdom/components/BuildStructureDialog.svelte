@@ -8,13 +8,20 @@
   import type { Settlement } from '../../../models/Settlement';
   import CategoryItem from './structures/CategoryItem.svelte';
   import StructureCard from './structures/StructureCard.svelte';
-  import { getCategoryIcon } from '../utils/presentation';
+  import { 
+    getCategoryIcon, 
+    capitalizeSkills, 
+    formatSkillsString 
+  } from '../utils/presentation';
   import {
-    extractCategorySkills,
     groupStructuresByTier,
     separateStructuresByType,
     getUniqueCategories
   } from '../logic/structureLogic';
+  import {
+    getSkillsForCategory,
+    isSkillCategory
+  } from '../logic/BuildStructureDialogLogic';
   
   export let show: boolean = false;
   
@@ -132,35 +139,6 @@
     missingResources = new Map();
   }
   
-  // Helper function to get skills for a category
-  function getSkillsForCategory(category: string): string[] {
-    const categoryStructures = availableStructures.filter(s => {
-      if (!s.category) return false;
-      const displayName = getCategoryDisplayName(s.category);
-      return displayName === category;
-    });
-    return extractCategorySkills(categoryStructures);
-  }
-  
-  // Check if a category is a skill structure category
-  function isSkillCategory(category: string): boolean {
-    return skillCategories.includes(category);
-  }
-  
-  // Helper function to capitalize each word in skills
-  function capitalizeSkills(skills: string[]): string[] {
-    return skills.map(skill => 
-      skill.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ')
-    );
-  }
-  
-  // Helper function to format skills as string
-  function formatSkillsString(skills: string[]): string {
-    return capitalizeSkills(skills).join(', ');
-  }
-  
   function handleClose() {
     show = false;
     dispatch('close');
@@ -235,17 +213,6 @@
     selectedStructure = undefined;
   }
   
-  // Get resource icon
-  function getResourceIcon(resource: string): string {
-    const icons: Record<string, string> = {
-      gold: 'fa-coins',
-      food: 'fa-wheat-awn',
-      lumber: 'fa-tree',
-      stone: 'fa-cube',
-      ore: 'fa-gem'
-    };
-    return icons[resource] || 'fa-box';
-  }
 </script>
 
 {#if show}
@@ -314,7 +281,7 @@
                       <h3 class="section-title">Skill Structures</h3>
                       
                       {#each skillCategories as category}
-                        {@const skills = capitalizeSkills(getSkillsForCategory(category))}
+                        {@const skills = capitalizeSkills(getSkillsForCategory(category, availableStructures))}
                         <CategoryItem 
                           {category}
                           {skills}
@@ -353,8 +320,8 @@
                       <i class="fas {getCategoryIcon(selectedCategory)}"></i>
                       <div class="text-container">
                         <h2>{selectedCategory}</h2>
-                        {#if isSkillCategory(selectedCategory)}
-                          {@const skills = getSkillsForCategory(selectedCategory)}
+                        {#if isSkillCategory(selectedCategory, skillCategories)}
+                          {@const skills = getSkillsForCategory(selectedCategory, availableStructures)}
                           {#if skills.length > 0}
                             <p class="category-skills-label">
                               {formatSkillsString(skills)}

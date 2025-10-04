@@ -67,3 +67,57 @@ export function getResourceColor(resource: string): string {
   };
   return colors[resource] || 'resource-default';
 }
+
+/**
+ * Capitalize each word in skill names
+ */
+export function capitalizeSkills(skills: string[]): string[] {
+  return skills.map(skill => 
+    skill.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ')
+  );
+}
+
+/**
+ * Format skills array as comma-separated string with capitalization
+ */
+export function formatSkillsString(skills: string[]): string {
+  return capitalizeSkills(skills).join(', ');
+}
+
+/**
+ * Get badge class for outcome type
+ */
+export function getOutcomeBadgeClass(outcome: string): string {
+  switch (outcome) {
+    case 'criticalSuccess':
+      return 'badge-crit-success';
+    case 'success':
+      return 'badge-success';
+    case 'failure':
+      return 'badge-failure';
+    case 'criticalFailure':
+      return 'badge-crit-failure';
+    default:
+      return 'badge-neutral';
+  }
+}
+
+/**
+ * Get badge label for outcome type
+ */
+export function getOutcomeBadgeLabel(outcome: string): string {
+  switch (outcome) {
+    case 'criticalSuccess':
+      return 'Crit Success';
+    case 'success':
+      return 'Success';
+    case 'failure':
+      return 'Failure';
+    case 'criticalFailure':
+      return 'Crit Fail';
+    default:
+      return outcome;
+  }
+}

@@ -6,13 +6,20 @@
   import { structureSelection, setStructureCategory } from '../../../stores/ui';
   import CategoryItem from '../components/structures/CategoryItem.svelte';
   import StructureCard from '../components/structures/StructureCard.svelte';
-  import { getCategoryIcon } from '../utils/presentation';
+  import { 
+    getCategoryIcon, 
+    capitalizeSkills, 
+    formatSkillsString 
+  } from '../utils/presentation';
   import {
-    extractCategorySkills,
     groupStructuresByTier,
     separateStructuresByType,
     getUniqueCategories
   } from '../logic/structureLogic';
+  import {
+    getSkillsForCategory,
+    isSkillCategory
+  } from '../logic/BuildStructureDialogLogic';
   
   // State
   let allStructures: Structure[] = [];
@@ -67,32 +74,6 @@
   $: skillCount = skillStructures.length;
   $: supportCount = supportStructures.length;
   
-  // Helper function to get skills for a category
-  function getSkillsForCategory(category: string): string[] {
-    const categoryStructures = allStructures.filter(
-      s => getCategoryDisplayName(s.category) === category
-    );
-    return extractCategorySkills(categoryStructures);
-  }
-  
-  // Check if a category is a skill structure category
-  function isSkillCategory(category: string): boolean {
-    return skillCategories.includes(category);
-  }
-  
-  // Helper function to capitalize each word in skills
-  function capitalizeSkills(skills: string[]): string[] {
-    return skills.map(skill => 
-      skill.split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      ).join(' ')
-    );
-  }
-  
-  // Helper function to format skills as string
-  function formatSkillsString(skills: string[]): string {
-    return capitalizeSkills(skills).join(', ');
-  }
 </script>
 
 <div class="structures-tab">
@@ -107,7 +88,7 @@
           </h3>
           
           {#each skillCategories as category}
-            {@const skills = capitalizeSkills(getSkillsForCategory(category))}
+            {@const skills = capitalizeSkills(getSkillsForCategory(category, allStructures))}
             <CategoryItem 
               {category}
               {skills}
@@ -144,8 +125,8 @@
               <i class="fas {getCategoryIcon($structureSelection.selectedCategory)}"></i>
               <div class="text-container">
                 <h2>{$structureSelection.selectedCategory}</h2>
-                {#if isSkillCategory($structureSelection.selectedCategory)}
-                  {@const skills = getSkillsForCategory($structureSelection.selectedCategory)}
+                {#if isSkillCategory($structureSelection.selectedCategory, skillCategories)}
+                  {@const skills = getSkillsForCategory($structureSelection.selectedCategory, allStructures)}
                   {#if skills.length > 0}
                     <p class="progression-description">
                       {formatSkillsString(skills)}
