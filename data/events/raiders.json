@@ -1,13 +1,7 @@
 {
   "id": "raiders",
-  "name": "Raiders",
-  "description": "Armed raiders threaten settlements and trade routes.",
   "tier": 1,
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Random settlement",
+  "description": "Armed raiders threaten settlements and trade routes.",
   "skills": [
     {
       "skill": "intimidation",
@@ -24,119 +18,67 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Raiders defeated; +{gold} gold (loot), **event ends**",
+      "msg": "Raiders defeated",
       "modifiers": [
         {
-          "name": "Raiders defeated",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Successful raid; -2 Gold, -2 Food, +1 Unrest",
+      "msg": "Successful raid",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
+      "msg": "Event outcome",
       "modifiers": [
         {
-          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         },
         {
-          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
           "resource": "food",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         },
         {
-          "name": "pf2e-reignmaker.events.raiders.stage-0.failure.msg",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major raid; -{gold} gold, -{food} food, +{unrest} unrest, one structure becomes damaged",
+      "msg": "Major raid",
       "modifiers": [
         {
-          "name": "Major raid",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         },
         {
-          "name": "Major raid",
           "resource": "food",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         },
         {
-          "name": "Major raid",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "Major raid",
           "resource": "damage_structure",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Ongoing Raids",
-    "description": "Raiders continue to pillage your borderlands, stealing resources and terrorizing citizens",
-    "tier": 1,
-    "icon": "fas fa-horse",
-    "modifiers": [
-      {
-        "name": "Ongoing Raids",
-        "resource": "gold",
-        "value": -2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Raids",
-        "resource": "food",
-        "value": -1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Raids",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The ongoing raids situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the ongoing raids situation"
-        }
-      }
     }
   }
 }

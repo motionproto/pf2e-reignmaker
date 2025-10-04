@@ -1,12 +1,7 @@
 {
   "id": "food-surplus",
-  "name": "Food Surplus",
-  "description": "Exceptional harvests provide abundant food.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "",
+  "description": "Exceptional harvests provide abundant food.",
   "skills": [
     {
       "skill": "nature",
@@ -23,17 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Massive surplus; +{gold} gold (from selling excess), -{unrest} unrest",
+      "msg": "Massive surplus",
       "modifiers": [
         {
-          "name": "Massive surplus",
           "resource": "gold",
           "value": "1d4+1",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Massive surplus",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -42,36 +34,31 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Good harvest; +{gold} gold",
+      "msg": "Good harvest",
       "modifiers": [
         {
-          "name": "Good harvest",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor surplus; +{gold} gold",
+      "msg": "Minor surplus",
       "modifiers": [
         {
-          "name": "Minor surplus",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Surplus spoils; +{unrest} unrest",
+      "msg": "Surplus spoils",
       "modifiers": [
         {
-          "name": "Surplus spoils",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

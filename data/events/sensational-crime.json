@@ -1,12 +1,7 @@
 {
   "id": "sensational-crime",
-  "name": "Sensational Crime",
-  "description": "A notorious crime captures public attention.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Largest settlement",
+  "description": "A notorious crime captures public attention.",
   "skills": [
     {
       "skill": "intimidation",
@@ -23,10 +18,9 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Criminal caught spectacularly; -{unrest} unrest",
+      "msg": "Criminal caught spectacularly",
       "modifiers": [
         {
-          "name": "Criminal caught spectacularly",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -35,15 +29,14 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Crime solved; no effect",
+      "msg": "Crime solved",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Criminal escapes; +{unrest} unrest",
+      "msg": "Criminal escapes",
       "modifiers": [
         {
-          "name": "Criminal escapes",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -52,49 +45,15 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Copycat crimes; +{unrest} unrest, event may recur",
+      "msg": "Copycat crimes",
       "modifiers": [
         {
-          "name": "Copycat crimes",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Criminal at Large",
-    "description": "The criminal remains free, committing more crimes and mocking authority",
-    "tier": 1,
-    "icon": "fas fa-user-ninja",
-    "modifiers": [
-      {
-        "name": "Criminal at Large",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Criminal at Large",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The criminal at large situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the criminal at large situation"
-        }
-      }
     }
   }
 }

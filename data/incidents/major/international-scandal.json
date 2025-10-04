@@ -1,6 +1,5 @@
 {
   "id": "international-scandal",
-  "name": "International Scandal",
   "tier": "major",
   "description": "A massive scandal ruins your kingdom's reputation",
   "skills": [
@@ -27,13 +26,11 @@
       "msg": "Your kingdom's reputation suffers, losing fame and gold",
       "modifiers": [
         {
-          "name": "International Scandal Fame Loss",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"
         },
         {
-          "name": "International Scandal Gold Loss",
           "resource": "gold",
           "value": "-1d4",
           "duration": "immediate"
@@ -45,13 +42,11 @@
       "msg": "Devastating scandal cripples your kingdom's standing",
       "modifiers": [
         {
-          "name": "International Scandal Critical Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"
         },
         {
-          "name": "International Scandal Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

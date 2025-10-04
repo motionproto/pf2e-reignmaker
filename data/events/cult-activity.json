@@ -1,9 +1,7 @@
 {
   "id": "cult-activity",
-  "name": "Cult Activity",
-  "description": "A dangerous cult has been discovered operating in your kingdom.",
   "tier": 1,
-  "traits": [],
+  "description": "A dangerous cult has been discovered operating in your kingdom.",
   "skills": [
     {
       "skill": "religion",
@@ -23,16 +21,14 @@
       "msg": "You convert the cultists to a productive faith. They become valuable citizens.",
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": -2,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "fame",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
@@ -41,10 +37,9 @@
       "msg": "You successfully disband the cult and arrest its leaders.",
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
@@ -53,10 +48,9 @@
       "msg": "The cult evades your forces and continues recruiting.",
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
@@ -65,52 +59,17 @@
       "msg": "The cult's influence spreads! They gain powerful supporters.",
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": 3,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Cult Influence",
-    "description": "The cult continues to spread its dark influence, corrupting citizens and undermining authority",
-    "tier": 1,
-    "icon": "fas fa-skull",
-    "modifiers": [
-      {
-        "name": "Cult Influence",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Cult Influence",
-        "resource": "gold",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The cult has been disbanded and its members dispersed!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "The cult continues to operate in the shadows"
-        }
-      }
     }
   }
 }

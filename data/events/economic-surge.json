@@ -1,13 +1,7 @@
 {
   "id": "economic-surge",
-  "name": "Economic Surge",
-  "description": "Trade and productivity boom throughout your kingdom.",
   "tier": 1,
-  "traits": [
-    "beneficial",
-    "continuous"
-  ],
-  "location": "Kingdom-wide (check in capital or largest settlement)",
+  "description": "Trade and productivity boom throughout your kingdom.",
   "skills": [
     {
       "skill": "society",
@@ -24,44 +18,39 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Trade bonanza; +{gold} gold this turn",
+      "msg": "Trade bonanza",
       "modifiers": [
         {
-          "name": "Trade bonanza",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "success": {
-      "msg": "Steady growth; +{gold} gold this turn",
+      "msg": "Steady growth",
       "modifiers": [
         {
-          "name": "Steady growth",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "failure": {
-      "msg": "Surge slows; **event ends**",
+      "msg": "Surge slows",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Economic bubble bursts; +{unrest} unrest, **event ends**",
+      "msg": "Economic bubble bursts",
       "modifiers": [
         {
-          "name": "Economic bubble bursts",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true

@@ -2,6 +2,7 @@
    import { createEventDispatcher } from 'svelte';
    import { kingdomData } from '../../../stores/KingdomStore';
    import Button from './baseComponents/Button.svelte';
+   import { formatOutcomeMessage } from '../../../controllers/shared/OutcomeHelpers';
    
    export let outcome: string;
    export let actorName: string;
@@ -19,6 +20,7 @@
    export let showCancel: boolean = true; // New prop to control cancel button visibility
    export let applied: boolean = false; // New prop to auto-hide buttons when outcome is applied
    export let choices: any[] | undefined = undefined; // Optional choice buttons
+   export let rollBreakdown: any = null; // Roll breakdown data from PF2e system
    
    const dispatch = createEventDispatcher();
    
@@ -58,7 +60,8 @@
    $: primaryButtonDisabled = (hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved);
    
    // Display effective message and state changes (choice result overrides original, resource selections augment)
-   $: displayEffect = choiceResult ? choiceResult.effect : effect;
+   // Format the effect message with placeholder replacement
+   $: displayEffect = choiceResult ? choiceResult.effect : formatOutcomeMessage(effect, modifiers);
    $: displayStateChanges = getDisplayStateChanges();
    
    function getDisplayStateChanges() {
@@ -366,7 +369,19 @@
    <div class="resolution-details">
       {#if displayEffect}
          <div class="resolution-effect">
-            {displayEffect}
+            {@html displayEffect}
+         </div>
+      {/if}
+      
+      {#if rollBreakdown}
+         <div class="roll-breakdown">
+            <span class="roll-formula">
+               1d20 ({rollBreakdown.d20Result})
+               {#each rollBreakdown.modifiers.filter(m => m.enabled !== false) as mod}
+                  {mod.modifier >= 0 ? '+' : ''}{mod.modifier}
+               {/each}
+               = {rollBreakdown.total} vs DC {rollBreakdown.dc}
+            </span>
          </div>
       {/if}
       
@@ -807,6 +822,21 @@
                margin-bottom: 0;
             }
          }
+      }
+   }
+   
+   .roll-breakdown {
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      
+      .roll-formula {
+         font-family: var(--font-code, 'Courier New', monospace);
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         display: block;
+         text-align: center;
       }
    }
    

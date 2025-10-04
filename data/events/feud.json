@@ -1,9 +1,7 @@
 {
   "id": "feud",
-  "name": "Feud",
-  "description": "Two prominent families are engaged in a bitter feud that threatens to tear the community apart.",
   "tier": 1,
-  "traits": [],
+  "description": "Two prominent families are engaged in a bitter feud that threatens to tear the community apart.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -24,16 +22,14 @@
       "endsEvent": true,
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": -2,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "fame",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ]
     },
@@ -42,10 +38,9 @@
       "endsEvent": true,
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ]
     },
@@ -54,10 +49,9 @@
       "endsEvent": false,
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ]
     },
@@ -66,51 +60,16 @@
       "endsEvent": false,
       "modifiers": [
         {
-          "name": "",
           "resource": "unrest",
           "value": 3,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "gold",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ]
-    }
-  },
-  "ifUnresolved": {
-    "name": "Ongoing Feud",
-    "description": "The feuding families continue their conflict, disrupting trade and causing civil unrest",
-    "tier": 1,
-    "icon": "fas fa-fist-raised",
-    "modifiers": [
-      {
-        "name": "Ongoing Feud",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Feud",
-        "resource": "gold",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The feud has been settled and peace restored!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "The families remain at each other's throats"
-        }
-      }
     }
   }
 }

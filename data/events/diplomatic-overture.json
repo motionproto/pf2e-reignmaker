@@ -1,12 +1,7 @@
 {
   "id": "diplomatic-overture",
-  "name": "Diplomatic Overture",
-  "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Choose or roll for a neighboring kingdom",
+  "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -23,17 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Relations improve by one step; if now Helpful, +{gold} gold and -{unrest} unrest",
+      "msg": "Relations improve by one step",
       "modifiers": [
         {
-          "name": "Relations improve by one step",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Relations improve by one step",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -47,54 +39,20 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "No change in relations; minor diplomatic friction",
+      "msg": "No change in relations",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Relations worsen by one step; +{unrest} unrest",
+      "msg": "Relations worsen by one step",
       "modifiers": [
         {
-          "name": "Relations worsen by one step",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Diplomatic Tension",
-    "description": "The failed diplomatic overture has strained relations with neighboring kingdoms",
-    "tier": 1,
-    "icon": "fas fa-handshake-slash",
-    "modifiers": [
-      {
-        "name": "Diplomatic Tension",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Diplomatic Tension",
-        "resource": "gold",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The diplomatic tension situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the diplomatic tension situation"
-        }
-      }
     }
   }
 }

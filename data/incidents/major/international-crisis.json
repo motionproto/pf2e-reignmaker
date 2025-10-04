@@ -1,6 +1,5 @@
 {
   "id": "international-crisis",
-  "name": "International Crisis",
   "tier": "major",
   "description": "Multiple kingdoms turn against you due to internal chaos",
   "skills": [
@@ -39,7 +38,6 @@
       "msg": "Multiple kingdoms turn against you",
       "modifiers": [
         {
-          "name": "International Crisis Fame Loss",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"

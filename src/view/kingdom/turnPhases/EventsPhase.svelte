@@ -45,6 +45,7 @@
    let isIgnoringEvent = false;
    let rolledAgainstDC: number = 0; // Store the DC that was actually rolled against
    let outcomeApplied = false; // Track when outcome has been applied
+   let rollBreakdown: any = null; // Roll breakdown data from PF2e system
    let pendingEventOutcome: {
       event: EventData;
       outcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
@@ -99,6 +100,12 @@
          
          if (event.detail.checkType !== 'event') {
             return;
+         }
+         
+         // Capture roll breakdown if available
+         if (event.detail.rollBreakdown) {
+            console.log('📊 [EventsPhase] Roll breakdown received:', event.detail.rollBreakdown);
+            rollBreakdown = event.detail.rollBreakdown;
          }
          
          handleRollResult(event.detail);
@@ -313,6 +320,7 @@
       currentEffects = null;
       pendingEventOutcome = null;
       outcomeApplied = false;
+      rollBreakdown = null;
       
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -374,42 +382,10 @@
       return event.skills || [];
    }
    
-   function buildEventOutcomes(event: EventData): PossibleOutcome[] {
-      const outcomes: PossibleOutcome[] = [];
-      
-      if (event.effects?.criticalSuccess) {
-         outcomes.push({
-            result: 'criticalSuccess',
-            label: 'Critical Success',
-            description: event.effects.criticalSuccess.msg
-         });
-      }
-      
-      if (event.effects?.success) {
-         outcomes.push({
-            result: 'success',
-            label: 'Success',
-            description: event.effects.success.msg
-         });
-      }
-      
-      if (event.effects?.failure) {
-         outcomes.push({
-            result: 'failure',
-            label: 'Failure',
-            description: event.effects.failure.msg
-         });
-      }
-      
-      if (event.effects?.criticalFailure) {
-         outcomes.push({
-            result: 'criticalFailure',
-            label: 'Critical Failure',
-            description: event.effects.criticalFailure.msg
-         });
-      }
-      
-      return outcomes;
+   async function buildEventOutcomes(event: EventData): Promise<PossibleOutcome[]> {
+      // Use shared helper to handle missing outcomes gracefully
+      const { buildPossibleOutcomes } = await import('../../../controllers/shared/OutcomeHelpers');
+      return buildPossibleOutcomes(event.effects);
    }
 </script>
 
@@ -436,10 +412,11 @@
             {#if !showResolutionResult}
                <!-- Show possible outcomes -->
                {#if currentEvent}
-                  {@const eventOutcomes = buildEventOutcomes(currentEvent)}
-                  {#if eventOutcomes.length > 0}
-                     <PossibleOutcomes outcomes={eventOutcomes} showTitle={true} />
-                  {/if}
+                  {#await buildEventOutcomes(currentEvent) then eventOutcomes}
+                     {#if eventOutcomes.length > 0}
+                        <PossibleOutcomes outcomes={eventOutcomes} showTitle={true} />
+                     {/if}
+                  {/await}
                {/if}
                
                <div class="event-resolution">
@@ -487,6 +464,7 @@
                      effect={outcomeMessage}
                      stateChanges={currentEffects}
                      modifiers={currentEvent?.effects?.[resolutionOutcome]?.modifiers}
+                     rollBreakdown={rollBreakdown}
                      primaryButtonLabel="Apply Result"
                      applied={outcomeApplied}
                      choices={currentEvent?.effects?.[resolutionOutcome]?.choices}

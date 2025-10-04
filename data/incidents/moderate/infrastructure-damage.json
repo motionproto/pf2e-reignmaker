@@ -1,6 +1,5 @@
 {
   "id": "infrastructure-damage",
-  "name": "Infrastructure Damage",
   "tier": "moderate",
   "description": "Critical infrastructure is damaged or sabotaged",
   "skills": [
@@ -39,7 +38,6 @@
       "msg": "Widespread infrastructure damage causes chaos",
       "modifiers": [
         {
-          "name": "Infrastructure Damage Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

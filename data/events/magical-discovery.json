@@ -1,12 +1,7 @@
 {
   "id": "magical-discovery",
-  "name": "Magical Discovery",
-  "description": "A powerful magical site or artifact is discovered in your kingdom.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Largest settlement",
+  "description": "A powerful magical site or artifact is discovered in your kingdom.",
   "skills": [
     {
       "skill": "arcana",
@@ -23,15 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major magical boon; gain a free Tier 1 magical structure or upgrade an existing structure to the next tier",
+      "msg": "Major magical boon",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Useful discovery; -{unrest} unrest OR +1 Fame",
+      "msg": "Useful discovery",
       "modifiers": [
         {
-          "name": "Useful discovery",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
@@ -40,10 +34,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Magic proves dangerous; +{unrest} unrest",
+      "msg": "Magic proves dangerous",
       "modifiers": [
         {
-          "name": "Magic proves dangerous",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -52,16 +45,14 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Magical disaster; +{unrest} unrest, one random magical structure becomes damaged in an accident",
+      "msg": "Magical disaster",
       "modifiers": [
         {
-          "name": "Magical disaster",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
-          "name": "Magical disaster",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"

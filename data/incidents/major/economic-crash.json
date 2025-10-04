@@ -1,6 +1,5 @@
 {
   "id": "economic-crash",
-  "name": "Economic Crash",
   "tier": "major",
   "description": "A severe economic downturn threatens your kingdom's prosperity",
   "skills": [
@@ -31,7 +30,6 @@
       "msg": "Economic downturn causes significant losses",
       "modifiers": [
         {
-          "name": "Economic Crash Gold Loss",
           "resource": "gold",
           "value": "-2d6",
           "duration": "immediate"
@@ -46,7 +44,6 @@
       "msg": "Economic collapse devastates your kingdom",
       "modifiers": [
         {
-          "name": "Economic Crash Critical Gold Loss",
           "resource": "gold",
           "value": "-4d6",
           "duration": "immediate"

@@ -1,6 +1,5 @@
 {
   "id": "rebellion-trade-embargo",
-  "name": "Trade Embargo",
   "tier": "major",
   "description": "A complete trade embargo devastates your economy",
   "skills": [
@@ -28,7 +27,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose how to absorb the economic shock:",
+      "msg": "Choose how to absorb the economic shock",
       "modifiers": [],
       "choices": [
         {
@@ -60,19 +59,16 @@
       "msg": "Complete economic isolation devastates your kingdom",
       "modifiers": [
         {
-          "name": "Trade Embargo Critical Gold Loss",
           "resource": "gold",
           "value": "-3d4",
           "duration": "immediate"
         },
         {
-          "name": "Trade Embargo Critical Resource Loss",
           "resource": "resources",
           "value": "-2d4+1",
           "duration": "immediate"
         },
         {
-          "name": "Trade Embargo Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

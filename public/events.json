@@ -40,7 +40,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Major discovery; +2 Gold, -1 Unrest, +1 Fame",
+                "msg": "Major discovery; +{gold}, {unrest}, +{fame}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -67,7 +67,7 @@
                 ]
             },
             "success": {
-                "msg": "Valuable find; +1 Gold",
+                "msg": "Valuable find; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -100,7 +100,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Dangerous site; +1 Unrest",
+                "msg": "Dangerous site; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -162,7 +162,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Leader escapes; +1 Unrest",
+                "msg": "Leader escapes; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -174,7 +174,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Leader wounded; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+                "msg": "Leader wounded; +{unrest}, that PC cannot take a Kingdom Action this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -245,7 +245,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Bandits defeated or recruited; +1 Gold from their loot, **event ends**",
+                "msg": "Bandits defeated or recruited; +{gold} from their loot, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -262,7 +262,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Raids continue; lose 1 Resource this turn, +1 Unrest",
+                "msg": "Raids continue; lose 1 Resource this turn, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -282,7 +282,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Bandits grow bolder; lose 2 Resources, +2 Unrest",
+                "msg": "Bandits grow bolder; lose 2 Resources, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -340,7 +340,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Major growth; +4 Gold",
+                "msg": "Major growth; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -353,7 +353,7 @@
                 ]
             },
             "success": {
-                "msg": "Steady expansion; +2 Gold this turn",
+                "msg": "Steady expansion; +{gold} this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -370,7 +370,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Boom goes bust; +1 Unrest, **event ends**",
+                "msg": "Boom goes bust; +{unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -436,7 +436,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Cult exposed and defeated; -1 Unrest, **event ends**",
+                "msg": "Cult exposed and defeated; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -452,7 +452,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Cult continues; +1 Unrest",
+                "msg": "Cult continues; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -464,7 +464,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Cult grows stronger; +2 Unrest, spreads to another settlement",
+                "msg": "Cult grows stronger; +{unrest}, spreads to another settlement",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -530,7 +530,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Citizens satisfied; -1 Unrest, **event ends**",
+                "msg": "Citizens satisfied; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -546,7 +546,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Citizens unhappy; +1 Unrest",
+                "msg": "Citizens unhappy; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -558,7 +558,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Major dissatisfaction; +2 Unrest",
+                "msg": "Major dissatisfaction; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -624,7 +624,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Citizens convinced; -1 Unrest, **event ends**",
+                "msg": "Citizens convinced; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -640,7 +640,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Protests continue; +1 Unrest, or pay 1 Gold as concessions",
+                "msg": "Protests continue; +{unrest}, or pay 1 Gold as concessions",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -652,7 +652,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Violence erupts; +2 Unrest, event escalates",
+                "msg": "Violence erupts; +{unrest}, event escalates",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -701,7 +701,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Relations improve by one step; if now Helpful, +1 Gold and -1 Unrest",
+                "msg": "Relations improve by one step; if now Helpful, +{gold} and {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -729,7 +729,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Relations worsen by one step; +1 Unrest",
+                "msg": "Relations worsen by one step; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -796,7 +796,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Drug ring destroyed; -1 Unrest, **event ends**",
+                "msg": "Drug ring destroyed; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -820,7 +820,7 @@
                 ]
             },
             "failure": {
-                "msg": "Drug trade spreads; +1 Unrest, -1 Gold",
+                "msg": "Drug trade spreads; +{unrest}, {gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -840,7 +840,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Major drug crisis; +2 Unrest, one structure becomes damaged.",
+                "msg": "Major drug crisis; +{unrest}, one structure becomes damaged.",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -897,7 +897,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Trade bonanza; +2 Gold this turn",
+                "msg": "Trade bonanza; +{gold} this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -910,7 +910,7 @@
                 ]
             },
             "success": {
-                "msg": "Steady growth; +1 Gold this turn",
+                "msg": "Steady growth; +{gold} this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -927,7 +927,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Economic bubble bursts; +1 Unrest, **event ends**",
+                "msg": "Economic bubble bursts; +{unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -976,7 +976,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Great success; Gold equal to Resources brought +1, -1 Unrest",
+                "msg": "Great success; Gold equal to Resources brought +1, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1013,7 +1013,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Diplomatic faux pas; +1 Unrest",
+                "msg": "Diplomatic faux pas; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1079,7 +1079,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Feud ended, rivals become allies; +1 Gold, **event ends**",
+                "msg": "Feud ended, rivals become allies; +{gold}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1096,7 +1096,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Feud disrupts trade; +1 Unrest,",
+                "msg": "Feud disrupts trade; +{unrest},",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1108,7 +1108,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Private war erupts; +2 Unrest, a random structure becomes damaged in one of the settlements",
+                "msg": "Private war erupts; +{unrest}, a random structure becomes damaged in one of the settlements",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1207,7 +1207,7 @@
                 ]
             },
             "failure": {
-                "msg": "Severe shortage; lose 6 Food this turn, +1 Unrest",
+                "msg": "Severe shortage; lose 6 Food this turn, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1227,7 +1227,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Famine threatens; lose 8 Food this turn, +2 Unrest",
+                "msg": "Famine threatens; lose 8 Food this turn, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1287,7 +1287,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Massive surplus; +3 Gold (from selling excess), -1 Unrest",
+                "msg": "Massive surplus; +{gold} (from selling excess), {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1307,7 +1307,7 @@
                 ]
             },
             "success": {
-                "msg": "Good harvest; +2 Gold",
+                "msg": "Good harvest; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1320,7 +1320,7 @@
                 ]
             },
             "failure": {
-                "msg": "Minor surplus; +1 Gold",
+                "msg": "Minor surplus; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1333,7 +1333,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Surplus spoils; +1 Unrest",
+                "msg": "Surplus spoils; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1383,7 +1383,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Weather holds perfectly; +2 Food, -1 Unrest",
+                "msg": "Weather holds perfectly; +{food}, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1403,7 +1403,7 @@
                 ]
             },
             "success": {
-                "msg": "Weather remains good; +2 Food",
+                "msg": "Weather remains good; +{food}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1420,7 +1420,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Weather turns bad; +1 Unrest, **event ends**",
+                "msg": "Weather turns bad; +{unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1469,7 +1469,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Spectacular event; +2 Gold, -1 Unrest, +1 Fame",
+                "msg": "Spectacular event; +{gold}, {unrest}, +{fame}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1496,7 +1496,7 @@
                 ]
             },
             "success": {
-                "msg": "Successful tournament; -1 Unrest",
+                "msg": "Successful tournament; {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1512,7 +1512,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Accident or scandal; +1 Unrest",
+                "msg": "Accident or scandal; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1564,7 +1564,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Major influx; +2 Gold, +2 untyped bonus to Build Structure actions this turn",
+                "msg": "Major influx; +{gold}, +2 untyped bonus to Build Structure actions this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1577,7 +1577,7 @@
                 ]
             },
             "success": {
-                "msg": "Steady immigration; +1 Gold, +1 untyped bonus to Build Structure actions this turn",
+                "msg": "Steady immigration; +{gold}, +1 untyped bonus to Build Structure actions this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1594,7 +1594,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Integration problems; +1 Unrest",
+                "msg": "Integration problems; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1660,7 +1660,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Peacefully resolved; -1 Unrest, **event ends**",
+                "msg": "Peacefully resolved; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1676,7 +1676,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Persecution spreads; +2 Unrest",
+                "msg": "Persecution spreads; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1688,7 +1688,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Violence erupts; +2 Unrest, one structure destroyed",
+                "msg": "Violence erupts; +{unrest}, one structure destroyed",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1745,7 +1745,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Major triumph; -2 Unrest",
+                "msg": "Major triumph; {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1757,7 +1757,7 @@
                 ]
             },
             "success": {
-                "msg": "Justice served; -1 Unrest",
+                "msg": "Justice served; {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1769,7 +1769,7 @@
                 ]
             },
             "failure": {
-                "msg": "Justice with complications; +1 Unrest",
+                "msg": "Justice with complications; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1781,7 +1781,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Miscarriage of justice; +2 Unrest",
+                "msg": "Miscarriage of justice; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1830,7 +1830,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Settlers successfully expand the kingdom; **gain 2 hexes**",
+                "msg": "Settlers successfully expand the kingdom; **gain {hex} hexes**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1842,7 +1842,7 @@
                 ]
             },
             "success": {
-                "msg": "Settlers expand the kingdom; **gain 1 hex**",
+                "msg": "Settlers expand the kingdom; **gain {hex}**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1854,7 +1854,7 @@
                 ]
             },
             "failure": {
-                "msg": "Settlers disperse without helping; +1 Unrest",
+                "msg": "Settlers disperse without helping; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1866,7 +1866,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Violence erupts at border; +2 Unrest",
+                "msg": "Violence erupts at border; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1924,7 +1924,7 @@
                 "modifiers": []
             },
             "success": {
-                "msg": "Limited damage; +1 Unrest",
+                "msg": "Limited damage; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1936,7 +1936,7 @@
                 ]
             },
             "failure": {
-                "msg": "Major damage; one structure becomes damaged, +1 Unrest",
+                "msg": "Major damage; one structure becomes damaged, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -1955,7 +1955,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Catastrophic; one structure is destroyed, +2 Unrest",
+                "msg": "Catastrophic; one structure is destroyed, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2015,7 +2015,7 @@
                 "modifiers": []
             },
             "success": {
-                "msg": "Useful discovery; -2 Unrest OR +1 Fame",
+                "msg": "Useful discovery; {unrest} OR +1 Fame",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2027,7 +2027,7 @@
                 ]
             },
             "failure": {
-                "msg": "Magic proves dangerous; +1 Unrest",
+                "msg": "Magic proves dangerous; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2039,7 +2039,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Magical disaster; +2 Unrest, one random magical structure becomes damaged in an accident",
+                "msg": "Magical disaster; +{unrest}, one random magical structure becomes damaged in an accident",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2095,7 +2095,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -1 Unrest",
+                "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2115,7 +2115,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Training accident; +1 Unrest, one military structure becomes damaged",
+                "msg": "Training accident; +{unrest}, one military structure becomes damaged",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2176,7 +2176,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Monster defeated; trophy worth 2 Gold, -1 Unrest",
+                "msg": "Monster defeated; trophy worth {gold}, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2200,7 +2200,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Monster causes damage; one structure becomes damaged, +1 Unrest",
+                "msg": "Monster causes damage; one structure becomes damaged, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2219,7 +2219,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Monster rampages; one structure becomes destroyed, +2 Unrest",
+                "msg": "Monster rampages; one structure becomes destroyed, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2280,7 +2280,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Minimal damage; citizens impressed by response, -1 Unrest",
+                "msg": "Minimal damage; citizens impressed by response, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2305,7 +2305,7 @@
                 ]
             },
             "failure": {
-                "msg": "Major damage; lose all production from the hex this turn, +1 Unrest",
+                "msg": "Major damage; lose all production from the hex this turn, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2317,7 +2317,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Devastating losses. Any worksites are removed from the hex, +2 Unrest",
+                "msg": "Devastating losses. Any worksites are removed from the hex, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2366,7 +2366,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Inspiring blessing; -2 Unrest, +1 Gold (from increased tourism)",
+                "msg": "Inspiring blessing; {unrest}, +{gold} (from increased tourism)",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2386,7 +2386,7 @@
                 ]
             },
             "success": {
-                "msg": "Pleasant omen; -1 Unrest",
+                "msg": "Pleasant omen; {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2402,7 +2402,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Arguments over meaning; +1 Unrest",
+                "msg": "Arguments over meaning; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2475,7 +2475,7 @@
                 ]
             },
             "failure": {
-                "msg": "Thieves escape; -2 Gold, +1 Unrest",
+                "msg": "Thieves escape; {gold}, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2495,7 +2495,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Crime syndicate exposed; -3 Gold, +2 Unrest, may trigger additional crime events",
+                "msg": "Crime syndicate exposed; {gold}, +{unrest}, may trigger additional crime events",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2552,7 +2552,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Major pilgrimage; +1 Gold, -1 Unrest, +1 Fame",
+                "msg": "Major pilgrimage; +{gold}, {unrest}, +{fame}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2579,7 +2579,7 @@
                 ]
             },
             "success": {
-                "msg": "Peaceful passage; +1 Gold",
+                "msg": "Peaceful passage; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2596,7 +2596,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Religious tensions; +1 Unrest",
+                "msg": "Religious tensions; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2663,7 +2663,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Plague cured; -1 Unrest, **event ends**",
+                "msg": "Plague cured; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2679,7 +2679,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Plague spreads; +1 Unrest, -2 Gold, spreads to a settlement connected by a road",
+                "msg": "Plague spreads; +{unrest}, {gold}, spreads to a settlement connected by a road",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2699,7 +2699,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Devastating outbreak; +2 Unrest, -2 Gold, spreads to all settlements connected by a road",
+                "msg": "Devastating outbreak; +{unrest}, {gold}, spreads to all settlements connected by a road",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2764,7 +2764,7 @@
                 "modifiers": []
             },
             "success": {
-                "msg": "Damage controlled; +1 Unrest",
+                "msg": "Damage controlled; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2776,7 +2776,7 @@
                 ]
             },
             "failure": {
-                "msg": "Public outrage; +2 Unrest",
+                "msg": "Public outrage; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2788,7 +2788,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Leader must lay low; +2 Unrest, that PC cannot take a Kingdom Action this turn",
+                "msg": "Leader must lay low; +{unrest}, that PC cannot take a Kingdom Action this turn",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2856,7 +2856,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Raiders defeated; +1 Gold (loot), **event ends**",
+                "msg": "Raiders defeated; +{gold} (loot), **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2901,7 +2901,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Major raid; -2 Gold, -2 Food, +2 Unrest, one structure becomes damaged",
+                "msg": "Major raid; {gold}, {food}, +{unrest}, one structure becomes damaged",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2977,7 +2977,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Legendary treasure; +4 Gold, -1 Unrest",
+                "msg": "Legendary treasure; +{gold}, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -2997,7 +2997,7 @@
                 ]
             },
             "success": {
-                "msg": "Valuable find; +2 Gold",
+                "msg": "Valuable find; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3010,7 +3010,7 @@
                 ]
             },
             "failure": {
-                "msg": "Modest value; +1 Gold",
+                "msg": "Modest value; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3023,7 +3023,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Treasure cursed or false; +1 Unrest",
+                "msg": "Treasure cursed or false; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3072,7 +3072,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Revolutionary discovery; +2 Gold, +1 Fame, may build one Knowledge structure at half cost",
+                "msg": "Revolutionary discovery; +{gold}, +{fame}, may build one Knowledge structure at half cost",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3092,7 +3092,7 @@
                 ]
             },
             "success": {
-                "msg": "Important findings: +1 Gold OR +1 Fame",
+                "msg": "Important findings: +{gold} OR +1 Fame",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3109,7 +3109,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Academic scandal; +1 Unrest",
+                "msg": "Academic scandal; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3159,7 +3159,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Criminal caught spectacularly; -1 Unrest",
+                "msg": "Criminal caught spectacularly; {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3175,7 +3175,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Criminal escapes; +1 Unrest",
+                "msg": "Criminal escapes; +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3187,7 +3187,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Copycat crimes; +2 Unrest, event may recur",
+                "msg": "Copycat crimes; +{unrest}, event may recur",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3236,7 +3236,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Exclusive deal; +2 Gold",
+                "msg": "Exclusive deal; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3249,7 +3249,7 @@
                 ]
             },
             "success": {
-                "msg": "Standard agreement; +1 Gold",
+                "msg": "Standard agreement; +{gold}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3266,7 +3266,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Trade dispute; -1 Gold, +1 Unrest",
+                "msg": "Trade dispute; {gold}, +{unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3340,7 +3340,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Undead destroyed; -1 Unrest, **event ends**",
+                "msg": "Undead destroyed; {unrest}, **event ends**",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3356,7 +3356,7 @@
                 "modifiers": []
             },
             "failure": {
-                "msg": "Undead spread; +1 Unrest, one structure becomes damaged",
+                "msg": "Undead spread; +{unrest}, one structure becomes damaged",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3375,7 +3375,7 @@
                 ]
             },
             "criticalFailure": {
-                "msg": "Major outbreak; +2 Unrest, one structure destroyed and another damaged",
+                "msg": "Major outbreak; +{unrest}, one structure destroyed and another damaged",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3438,7 +3438,7 @@
         ],
         "effects": {
             "criticalSuccess": {
-                "msg": "Spectacular visit; +2 Gold, -2 Unrest",
+                "msg": "Spectacular visit; +{gold}, {unrest}",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3458,7 +3458,7 @@
                 ]
             },
             "success": {
-                "msg": "Pleasant visit; +1 Gold OR -1 Unrest",
+                "msg": "Pleasant visit; +{gold} OR -1 Unrest",
                 "modifiers": [
                     {
                         "type": "untyped",
@@ -3475,7 +3475,7 @@
                 "modifiers": []
             },
             "criticalFailure": {
-                "msg": "Celebrity offended; +1 Unrest, -2 to next celebrity event",
+                "msg": "Celebrity offended; +{unrest}, -2 to next celebrity event",
                 "modifiers": [
                     {
                         "type": "untyped",

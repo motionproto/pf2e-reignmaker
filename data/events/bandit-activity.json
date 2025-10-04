@@ -1,9 +1,7 @@
 {
   "id": "bandit-activity",
-  "name": "Bandit Activity",
-  "description": "Bandits have been spotted raiding caravans and settlements in your territory.",
   "tier": 1,
-  "traits": [],
+  "description": "Bandits have been spotted raiding caravans and settlements in your territory.",
   "skills": [
     {
       "skill": "intimidation",
@@ -23,16 +21,14 @@
       "msg": "You capture the bandit leaders and turn them into productive citizens. The former bandits become valuable scouts.",
       "modifiers": [
         {
-          "name": "",
           "resource": "gold",
           "value": "1d4",
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
@@ -41,10 +37,9 @@
       "msg": "You successfully drive off the bandits. Trade routes are secure once more.",
       "modifiers": [
         {
-          "name": "",
           "resource": "gold",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
@@ -53,16 +48,14 @@
       "msg": "The bandits evade your forces and continue their raids.",
       "modifiers": [
         {
-          "name": "",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
@@ -71,64 +64,22 @@
       "msg": "Your forces are ambushed! The bandits grow bolder and recruit more members.",
       "modifiers": [
         {
-          "name": "",
           "resource": "gold",
           "value": "-1d4+1",
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "food",
           "value": "-1d4",
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Ongoing Bandit Raids",
-    "description": "Bandits continue to raid your territory, disrupting trade and causing unrest",
-    "tier": 1,
-    "icon": "fas fa-mask",
-    "modifiers": [
-      {
-        "name": "Ongoing Bandit Raids",
-        "resource": "gold",
-        "value": -1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Bandit Raids",
-        "resource": "food",
-        "value": -1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Bandit Raids",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The bandit threat has been eliminated!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to stop the bandits - they continue their raids"
-        }
-      }
     }
   }
 }

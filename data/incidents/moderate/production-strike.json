@@ -1,6 +1,5 @@
 {
   "id": "production-strike",
-  "name": "Production Strike",
   "tier": "moderate",
   "description": "Workers strike, halting resource production",
   "skills": [
@@ -31,8 +30,11 @@
       "msg": "Strike causes resource losses",
       "modifiers": [
         {
-          "name": "Production Strike Resource Loss",
-          "resource": ["lumber", "ore", "stone"],
+          "resource": [
+            "lumber",
+            "ore",
+            "stone"
+          ],
           "value": "-1d4-1",
           "duration": "immediate"
         }
@@ -43,8 +45,11 @@
       "msg": "Prolonged strike devastates production",
       "modifiers": [
         {
-          "name": "Production Strike Critical Resource Loss",
-          "resource": ["lumber", "ore", "stone"],
+          "resource": [
+            "lumber",
+            "ore",
+            "stone"
+          ],
           "value": "-2d4-1",
           "duration": "immediate"
         }

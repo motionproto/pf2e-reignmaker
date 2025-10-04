@@ -1,6 +1,5 @@
 {
   "id": "riot",
-  "name": "Riot",
   "tier": "moderate",
   "description": "Violent riots break out in your settlements",
   "skills": [
@@ -31,7 +30,6 @@
       "msg": "Riot damages property and increases unrest",
       "modifiers": [
         {
-          "name": "Riot Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -46,7 +44,6 @@
       "msg": "Violent riot destroys property and increases unrest",
       "modifiers": [
         {
-          "name": "Riot Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

@@ -1,12 +1,7 @@
 {
   "id": "festive-invitation",
-  "name": "Festive Invitation",
-  "description": "A neighboring kingdom invites your leaders to a grand festival.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "",
+  "description": "A neighboring kingdom invites your leaders to a grand festival.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -23,17 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Great success; Gold equal to Resources brought +1, -{unrest} unrest",
+      "msg": "Great success",
       "modifiers": [
         {
-          "name": "Great success",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Great success",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -42,61 +34,31 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant visit; Gold equal to Resources brought",
+      "msg": "Pleasant visit",
       "modifiers": [
         {
-          "name": "Pleasant visit",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Adequate visit; gifts not reciprocated",
+      "msg": "Adequate visit",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Diplomatic faux pas; +{unrest} unrest",
+      "msg": "Diplomatic faux pas",
       "modifiers": [
         {
-          "name": "Diplomatic faux pas",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Snubbed Nobility",
-    "description": "Your absence from the festivities has offended the nobility who continue to undermine you",
-    "tier": 1,
-    "icon": "fas fa-mask",
-    "modifiers": [
-      {
-        "name": "Snubbed Nobility",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The snubbed nobility situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the snubbed nobility situation"
-        }
-      }
     }
   }
 }

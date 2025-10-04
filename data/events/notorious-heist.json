@@ -1,12 +1,7 @@
 {
   "id": "notorious-heist",
-  "name": "Notorious Heist",
-  "description": "A daring theft threatens your kingdom's security and reputation.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Largest settlement with valuable structures",
+  "description": "A daring theft threatens your kingdom's security and reputation.",
   "skills": [
     {
       "skill": "thievery",
@@ -23,10 +18,9 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Thieves captured with stolen goods; recover losses, convert 2 Unrest to imprisoned unrest",
+      "msg": "Thieves captured with stolen goods",
       "modifiers": [
         {
-          "name": "Thieves captured with stolen goods",
           "resource": "imprisoned_unrest",
           "value": 2,
           "duration": "immediate"
@@ -35,10 +29,9 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Thieves arrested; convert 1 Unrest to imprisoned unrest",
+      "msg": "Thieves arrested",
       "modifiers": [
         {
-          "name": "Thieves arrested",
           "resource": "imprisoned_unrest",
           "value": 1,
           "duration": "immediate"
@@ -47,17 +40,14 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Thieves escape; -{gold} gold, +{unrest} unrest",
+      "msg": "Thieves escape",
       "modifiers": [
         {
-          "name": "Thieves escape",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Thieves escape",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -66,56 +56,20 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Crime syndicate exposed; -{gold} gold, +{unrest} unrest, may trigger additional crime events",
+      "msg": "Crime syndicate exposed",
       "modifiers": [
         {
-          "name": "Crime syndicate exposed",
           "resource": "gold",
           "value": "-1d4+1",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Crime syndicate exposed",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Crime Spree",
-    "description": "The successful heist has emboldened criminals who continue their crime spree",
-    "tier": 1,
-    "icon": "fas fa-user-secret",
-    "modifiers": [
-      {
-        "name": "Crime Spree",
-        "resource": "gold",
-        "value": -2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Crime Spree",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The crime spree situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the crime spree situation"
-        }
-      }
     }
   }
 }

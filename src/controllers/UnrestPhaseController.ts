@@ -41,19 +41,17 @@ export interface UnrestTierInfo {
 export function getUnrestTierInfo(unrest: number): UnrestTierInfo {
   const tier = Math.min(3, Math.floor(unrest / 3));
   
-  // Tier-based thresholds
-  const thresholds = [0, 3, 6, 10, 15];
-  const threshold = unrest <= 2 ? 0 : 
-                    unrest <= 4 ? 3 : 
-                    unrest <= 6 ? 6 : 
-                    unrest <= 8 ? 10 : 15;
+  // D100 thresholds - minimum roll needed to trigger incident
+  // These match the incident tables in Unrest_incidents.md
+  const d100Thresholds = [0, 21, 16, 11]; // Tier 0: N/A, Tier 1: 21+, Tier 2: 16+, Tier 3: 11+
+  const incidentChances = [0, 80, 85, 90]; // Tier 0: 0%, Tier 1: 80%, Tier 2: 85%, Tier 3: 90%
   
-  const tierNames = ['Stable', 'Discontent', 'Unrest', 'Rebellion'];
+  const tierNames = ['Stable', 'Discontent', 'Turmoil', 'Rebellion'];
   const tierDescriptions = [
     'No incidents occur at this level',
-    'Minor incidents possible',
-    'Moderate incidents possible',
-    'Major incidents possible'
+    'Minor incidents possible (80% chance)',
+    'Moderate incidents possible (85% chance)',
+    'Major incidents possible (90% chance)'
   ];
   const statusClasses = ['stable', 'discontent', 'unrest', 'rebellion'];
   
@@ -64,8 +62,8 @@ export function getUnrestTierInfo(unrest: number): UnrestTierInfo {
     tier,
     tierName: tierNames[tier] || 'Stable',
     penalty: tier,
-    incidentThreshold: threshold,
-    incidentChance: threshold > 0 ? Math.round((threshold / 20) * 100) : 0,
+    incidentThreshold: d100Thresholds[tier] || 0,
+    incidentChance: incidentChances[tier] || 0,
     incidentSeverity: severity,
     description: tierDescriptions[tier] || 'No incidents occur at this level',
     statusClass: statusClasses[tier] || 'stable'
@@ -403,38 +401,11 @@ export async function createUnrestPhaseController() {
 
     /**
      * Get formatted incident display data for UI
+     * Uses shared helper to handle missing outcomes (e.g., criticalSuccess = success)
      */
     getIncidentDisplayData(incident: any) {
-      const outcomes: Array<{
-        result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-        label: string;
-        description: string;
-      }> = [];
-      
-      if (incident.effects?.success) {
-        outcomes.push({
-          result: 'success' as const,
-          label: 'Success',
-          description: incident.effects.success.msg
-        });
-      }
-      
-      if (incident.effects?.failure) {
-        outcomes.push({
-          result: 'failure' as const,
-          label: 'Failure',
-          description: incident.effects.failure.msg
-        });
-      }
-      
-      if (incident.effects?.criticalFailure) {
-        outcomes.push({
-          result: 'criticalFailure' as const,
-          label: 'Critical Failure',
-          description: incident.effects.criticalFailure.msg
-        });
-      }
-      
+      const { buildPossibleOutcomes } = require('./shared/OutcomeHelpers');
+      const outcomes = buildPossibleOutcomes(incident.effects);
       return { outcomes };
     },
 

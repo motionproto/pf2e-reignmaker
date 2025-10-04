@@ -1,12 +1,7 @@
 {
   "id": "assassination-attempt",
-  "name": "Assassination Attempt",
-  "description": "Someone attempts to kill one of your leaders.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Random PC",
+  "description": "Someone attempts to kill one of your leaders.",
   "skills": [
     {
       "skill": "stealth",
@@ -23,20 +18,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Assassin captured; gain information about enemies",
+      "msg": "Assassin captured",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Attempt foiled;",
+      "msg": "Attempt foiled",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Leader escapes; +{unrest} unrest",
+      "msg": "Leader escapes",
       "modifiers": [
         {
-          "name": "Leader escapes",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -45,49 +39,15 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Leader wounded; +{unrest} unrest, that PC cannot take a Kingdom Action this turn",
+      "msg": "Leader wounded",
       "modifiers": [
         {
-          "name": "Leader wounded",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Assassination Plot Active",
-    "description": "The assassination attempt failed, but the conspirators remain at large and plotting",
-    "tier": 1,
-    "icon": "fas fa-crosshairs",
-    "modifiers": [
-      {
-        "name": "Assassination Plot Active",
-        "resource": "unrest",
-        "value": 2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Assassination Plot Active",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The assassination plot active situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the assassination plot active situation"
-        }
-      }
     }
   }
 }

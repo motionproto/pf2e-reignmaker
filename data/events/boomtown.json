@@ -1,13 +1,7 @@
 {
   "id": "boomtown",
-  "name": "Boomtown",
-  "description": "A settlement experiences sudden, dramatic growth.",
   "tier": 1,
-  "traits": [
-    "beneficial",
-    "continuous"
-  ],
-  "location": "Random settlement",
+  "description": "A settlement experiences sudden, dramatic growth.",
   "skills": [
     {
       "skill": "society",
@@ -24,44 +18,39 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major growth; +{gold} gold",
+      "msg": "Major growth",
       "modifiers": [
         {
-          "name": "Major growth",
           "resource": "gold",
           "value": "1d6+1",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "success": {
-      "msg": "Steady expansion; +{gold} gold this turn",
+      "msg": "Steady expansion",
       "modifiers": [
         {
-          "name": "Steady expansion",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "failure": {
-      "msg": "Growth stalls; **event ends**",
+      "msg": "Growth stalls",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Boom goes bust; +{unrest} unrest, **event ends**",
+      "msg": "Boom goes bust",
       "modifiers": [
         {
-          "name": "Boom goes bust",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true

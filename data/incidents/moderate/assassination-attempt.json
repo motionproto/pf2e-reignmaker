@@ -1,6 +1,5 @@
 {
   "id": "assassination-attempt",
-  "name": "Assassination Attempt",
   "tier": "moderate",
   "description": "An assassin targets one of your kingdom's leaders",
   "skills": [
@@ -24,10 +23,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Leader escapes; gain {unrest} unrest",
+      "msg": "Leader escapes",
       "modifiers": [
         {
-          "name": "Assassination Attempt Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -36,10 +34,9 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Leader wounded; gain {unrest} unrest",
+      "msg": "Leader wounded",
       "modifiers": [
         {
-          "name": "Assassination Attempt Critical Unrest",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

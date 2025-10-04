@@ -1,12 +1,7 @@
 {
   "id": "grand-tournament",
-  "name": "Grand Tournament",
-  "description": "A martial competition draws competitors from across the realm.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Largest settlement",
+  "description": "A martial competition draws competitors from across the realm.",
   "skills": [
     {
       "skill": "athletics",
@@ -23,23 +18,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Spectacular event; +{gold} gold, -{unrest} unrest, +{fame} fame",
+      "msg": "Spectacular event",
       "modifiers": [
         {
-          "name": "Spectacular event",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Spectacular event",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
         },
         {
-          "name": "Spectacular event",
           "resource": "fame",
           "value": 1,
           "duration": "immediate"
@@ -48,10 +39,9 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Successful tournament; -{unrest} unrest",
+      "msg": "Successful tournament",
       "modifiers": [
         {
-          "name": "Successful tournament",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -60,15 +50,14 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Disappointing turnout;",
+      "msg": "Disappointing turnout",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Accident or scandal; +{unrest} unrest",
+      "msg": "Accident or scandal",
       "modifiers": [
         {
-          "name": "Accident or scandal",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

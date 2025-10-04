@@ -23,6 +23,7 @@
    let rollActor: string = '';
    let rollEffect: string = '';
    let rollStateChanges: any = {};
+   let rollBreakdown: any = null;
    let incidentCheckRoll: number = 0;
    let incidentCheckDC: number = 0;
    let incidentCheckChance: number = 0;
@@ -174,6 +175,11 @@
                const outcome = customEvent.detail.outcome;
                console.log(`🎯 [UnrestPhase] Skill roll result: ${outcome}`);
                
+               // Capture roll breakdown if available
+               if (customEvent.detail.rollBreakdown) {
+                  rollBreakdown = customEvent.detail.rollBreakdown;
+               }
+               
                // Apply the result through the controller
                finishIncidentResolution(outcome);
                
@@ -279,6 +285,7 @@
       rollActor = '';
       rollEffect = '';
       rollStateChanges = {};
+      rollBreakdown = null;
       selectedSkill = '';
    }
    
@@ -316,6 +323,7 @@
       rollActor = '';
       rollEffect = '';
       rollStateChanges = {};
+      rollBreakdown = null;
       
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -456,21 +464,22 @@
                   {/if}
                   
                   {#if incidentResolved}
-                     <OutcomeDisplay
-                        outcome={rollOutcome}
-                        actorName={rollActor}
-                        skillName={selectedSkill}
-                        effect={rollEffect}
-                        stateChanges={rollStateChanges}
-                        modifiers={currentIncident?.effects?.[rollOutcome]?.modifiers}
-                        primaryButtonLabel="Apply Result"
-                        showFameReroll={true}
-                        applied={resolutionApplied}
-                        choices={currentIncident?.effects?.[rollOutcome]?.choices}
-                        on:primary={handleResolutionPrimary}
-                        on:cancel={handleResolutionCancel}
-                        on:reroll={handleRerollWithFame}
-                     />
+                  <OutcomeDisplay
+                     outcome={rollOutcome}
+                     actorName={rollActor}
+                     skillName={selectedSkill}
+                     effect={rollEffect}
+                     stateChanges={rollStateChanges}
+                     modifiers={currentIncident?.effects?.[rollOutcome]?.modifiers}
+                     rollBreakdown={rollBreakdown}
+                     primaryButtonLabel="Apply Result"
+                     showFameReroll={true}
+                     applied={resolutionApplied}
+                     choices={currentIncident?.effects?.[rollOutcome]?.choices}
+                     on:primary={handleResolutionPrimary}
+                     on:cancel={handleResolutionCancel}
+                     on:reroll={handleRerollWithFame}
+                  />
                   {:else}
                      {#await (async () => {
                         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');

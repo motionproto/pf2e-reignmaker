@@ -1,12 +1,7 @@
 {
   "id": "justice-prevails",
-  "name": "Justice Prevails",
-  "description": "Authorities catch a notorious criminal or resolve a major injustice.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Capital or largest settlement",
+  "description": "Authorities catch a notorious criminal or resolve a major injustice.",
   "skills": [
     {
       "skill": "intimidation",
@@ -23,10 +18,9 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major triumph; -{unrest} unrest",
+      "msg": "Major triumph",
       "modifiers": [
         {
-          "name": "Major triumph",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
@@ -35,10 +29,9 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Justice served; -{unrest} unrest",
+      "msg": "Justice served",
       "modifiers": [
         {
-          "name": "Justice served",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -47,10 +40,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Justice with complications; +{unrest} unrest",
+      "msg": "Justice with complications",
       "modifiers": [
         {
-          "name": "Justice with complications",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -59,10 +51,9 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Miscarriage of justice; +{unrest} unrest",
+      "msg": "Miscarriage of justice",
       "modifiers": [
         {
-          "name": "Miscarriage of justice",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

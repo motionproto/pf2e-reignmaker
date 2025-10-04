@@ -1,6 +1,5 @@
 {
   "id": "border-raid",
-  "name": "Border Raid",
   "tier": "major",
   "description": "Enemy forces raid your border territories",
   "skills": [
@@ -31,7 +30,6 @@
       "msg": "Raiders pillage border territories, causing loss of gold and land",
       "modifiers": [
         {
-          "name": "Border Raid Gold Loss",
           "resource": "gold",
           "value": "-1d4",
           "duration": "immediate"
@@ -46,7 +44,6 @@
       "msg": "Raiders devastate border regions, causing massive losses",
       "modifiers": [
         {
-          "name": "Border Raid Critical Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"

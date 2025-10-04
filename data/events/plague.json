@@ -1,13 +1,7 @@
 {
   "id": "plague",
-  "name": "Plague",
-  "description": "Disease spreads rapidly through your settlements.",
   "tier": 1,
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Largest settlement, then spreads",
+  "description": "Disease spreads rapidly through your settlements.",
   "skills": [
     {
       "skill": "medicine",
@@ -24,98 +18,52 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Plague cured; -{unrest} unrest, **event ends**",
+      "msg": "Plague cured",
       "modifiers": [
         {
-          "name": "Plague cured",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Plague contained; **event ends**",
+      "msg": "Plague contained",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Plague spreads; +{unrest} unrest, -{gold} gold, spreads to a settlement connected by a road",
+      "msg": "Plague spreads",
       "modifiers": [
         {
-          "name": "Plague spreads",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "Plague spreads",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Devastating outbreak; +{unrest} unrest, -{gold} gold, spreads to all settlements connected by a road",
+      "msg": "Devastating outbreak",
       "modifiers": [
         {
-          "name": "Devastating outbreak",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "Devastating outbreak",
           "resource": "gold",
           "value": "-1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Plague Outbreak",
-    "description": "Disease continues to spread through your settlements, weakening the population",
-    "tier": 1,
-    "icon": "fas fa-virus",
-    "modifiers": [
-      {
-        "name": "Plague Outbreak",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Plague Outbreak",
-        "resource": "gold",
-        "value": -2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Plague Outbreak",
-        "resource": "food",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The plague has been contained and the sick are recovering!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "The plague continues to ravage your settlements despite your efforts"
-        }
-      }
     }
   }
 }

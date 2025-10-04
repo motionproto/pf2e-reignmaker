@@ -1,6 +1,5 @@
 {
   "id": "rebellion-settlement-crisis",
-  "name": "Settlement Crisis",
   "tier": "major",
   "description": "A major settlement faces total collapse",
   "skills": [
@@ -24,7 +23,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose how to handle the settlement crisis:",
+      "msg": "Choose how to handle the settlement crisis",
       "modifiers": [],
       "choices": [
         {
@@ -52,7 +51,6 @@
       "msg": "A settlement collapses under the crisis",
       "modifiers": [
         {
-          "name": "Settlement Crisis Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

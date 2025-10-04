@@ -636,7 +636,7 @@
                   outcomes={[
                     {
                       type: 'criticalSuccess',
-                      description: action.criticalSuccess?.description || '—'
+                      description: action.criticalSuccess?.description || action.success?.description || '—'
                     },
                     {
                       type: 'success',

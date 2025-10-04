@@ -1,12 +1,7 @@
 {
   "id": "immigration",
-  "name": "Immigration",
-  "description": "New settlers arrive seeking homes in your kingdom.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "",
+  "description": "New settlers arrive seeking homes in your kingdom.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -23,80 +18,42 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major influx; +{gold} gold, +2 untyped bonus to Build Structure actions this turn",
+      "msg": "Major influx",
       "modifiers": [
         {
-          "name": "Major influx",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Steady immigration; +{gold} gold, +1 untyped bonus to Build Structure actions this turn",
+      "msg": "Steady immigration",
       "modifiers": [
         {
-          "name": "Steady immigration",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Few settlers stay; no significant effect",
+      "msg": "Few settlers stay",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Integration problems; +{unrest} unrest",
+      "msg": "Integration problems",
       "modifiers": [
         {
-          "name": "Integration problems",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Immigration Crisis",
-    "description": "The poorly managed immigration has created ongoing integration problems",
-    "tier": 1,
-    "icon": "fas fa-users",
-    "modifiers": [
-      {
-        "name": "Immigration Crisis",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Immigration Crisis",
-        "resource": "food",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The immigration crisis situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the immigration crisis situation"
-        }
-      }
     }
   }
 }

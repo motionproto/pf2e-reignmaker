@@ -1,6 +1,5 @@
 {
   "id": "turmoil-trade-embargo",
-  "name": "Trade Embargo",
   "tier": "moderate",
   "description": "Neighboring kingdoms impose trade restrictions",
   "skills": [
@@ -28,7 +27,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose one:",
+      "msg": "Choose one",
       "modifiers": [],
       "choices": [
         {
@@ -57,22 +56,19 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose {gold} gold AND {resources} resources, gain {unrest} unrest",
+      "msg": "Lose gold AND resources, gain unrest",
       "modifiers": [
         {
-          "name": "Trade Embargo Critical Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"
         },
         {
-          "name": "Trade Embargo Critical Resource Loss",
           "resource": "resources",
           "value": "-1d4+1",
           "duration": "immediate"
         },
         {
-          "name": "Trade Embargo Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

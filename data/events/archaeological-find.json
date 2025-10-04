@@ -1,12 +1,7 @@
 {
   "id": "archaeological-find",
-  "name": "Archaeological Find",
-  "description": "Ancient ruins or artifacts are discovered in your territory.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Largest settlement",
+  "description": "Ancient ruins or artifacts are discovered in your territory.",
   "skills": [
     {
       "skill": "society",
@@ -23,23 +18,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major discovery; +{gold} gold, -{unrest} unrest, +{fame} fame",
+      "msg": "Major discovery",
       "modifiers": [
         {
-          "name": "Major discovery",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Major discovery",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
         },
         {
-          "name": "Major discovery",
           "resource": "fame",
           "value": 1,
           "duration": "immediate"
@@ -48,36 +39,36 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Valuable find; +{gold} gold",
+      "msg": "Valuable find",
       "modifiers": [
         {
-          "name": "Valuable find",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor artifacts; gain 1 of your choice",
+      "msg": "Minor artifacts",
       "modifiers": [
         {
-          "name": "Minor artifacts",
-          "resource": ["food", "lumber", "ore", "stone"],
+          "resource": [
+            "food",
+            "lumber",
+            "ore",
+            "stone"
+          ],
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Dangerous site; +{unrest} unrest",
+      "msg": "Dangerous site",
       "modifiers": [
         {
-          "name": "Dangerous site",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

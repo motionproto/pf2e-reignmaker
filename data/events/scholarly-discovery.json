@@ -1,12 +1,7 @@
 {
   "id": "scholarly-discovery",
-  "name": "Scholarly Discovery",
-  "description": "Researchers in your kingdom make an important academic breakthrough.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Settlement with knowledge structures or largest settlement",
+  "description": "Researchers in your kingdom make an important academic breakthrough.",
   "skills": [
     {
       "skill": "lore",
@@ -23,17 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Revolutionary discovery; +{gold} gold, +{fame} fame, may build one Knowledge structure at half cost",
+      "msg": "Revolutionary discovery",
       "modifiers": [
         {
-          "name": "Revolutionary discovery",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Revolutionary discovery",
           "resource": "fame",
           "value": 1,
           "duration": "immediate"
@@ -42,28 +34,25 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Important findings: +{gold} gold OR +1 Fame",
+      "msg": "Important findings",
       "modifiers": [
         {
-          "name": "Important findings: +1",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Research inconclusive; no benefit",
+      "msg": "Research inconclusive",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Academic scandal; +{unrest} unrest",
+      "msg": "Academic scandal",
       "modifiers": [
         {
-          "name": "Academic scandal",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

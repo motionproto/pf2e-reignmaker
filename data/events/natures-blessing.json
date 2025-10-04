@@ -1,12 +1,7 @@
 {
   "id": "natures-blessing",
-  "name": "Nature's Blessing",
-  "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Largest settlement",
+  "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
   "skills": [
     {
       "skill": "nature",
@@ -23,29 +18,25 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Inspiring blessing; -{unrest} unrest, +{gold} gold (from increased tourism)",
+      "msg": "Inspiring blessing",
       "modifiers": [
         {
-          "name": "Inspiring blessing",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
         },
         {
-          "name": "Inspiring blessing",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant omen; -{unrest} unrest",
+      "msg": "Pleasant omen",
       "modifiers": [
         {
-          "name": "Pleasant omen",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -54,15 +45,14 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Brief wonder; no significant effect",
+      "msg": "Brief wonder",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Arguments over meaning; +{unrest} unrest",
+      "msg": "Arguments over meaning",
       "modifiers": [
         {
-          "name": "Arguments over meaning",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

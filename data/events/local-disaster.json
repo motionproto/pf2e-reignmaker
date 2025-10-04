@@ -1,12 +1,7 @@
 {
   "id": "local-disaster",
-  "name": "Local Disaster",
-  "description": "Fire, flood, or structural collapse strikes a settlement.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Random settlement",
+  "description": "Fire, flood, or structural collapse strikes a settlement.",
   "skills": [
     {
       "skill": "crafting",
@@ -23,15 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Disaster contained; no significant damage",
+      "msg": "Disaster contained",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Limited damage; +{unrest} unrest",
+      "msg": "Limited damage",
       "modifiers": [
         {
-          "name": "Limited damage",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -40,16 +34,14 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Major damage; one structure becomes damaged, +{unrest} unrest",
+      "msg": "Major damage",
       "modifiers": [
         {
-          "name": "Major damage",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
-          "name": "Major damage",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"
@@ -58,55 +50,20 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Catastrophic; one structure is destroyed, +{unrest} unrest",
+      "msg": "Catastrophic",
       "modifiers": [
         {
-          "name": "Catastrophic",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
-          "name": "Catastrophic",
           "resource": "destroy_structure",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Disaster Recovery Needed",
-    "description": "The local disaster has left lasting damage that continues to hamper the kingdom",
-    "tier": 1,
-    "icon": "fas fa-house-damage",
-    "modifiers": [
-      {
-        "name": "Disaster Recovery Needed",
-        "resource": "gold",
-        "value": -2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Disaster Recovery Needed",
-        "resource": "resources",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The disaster recovery needed situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the disaster recovery needed situation"
-        }
-      }
     }
   }
 }

@@ -1,6 +1,5 @@
 {
   "id": "secession-crisis",
-  "name": "Secession Crisis",
   "tier": "major",
   "description": "A settlement declares independence from your kingdom",
   "skills": [
@@ -31,7 +30,6 @@
       "msg": "A settlement revolts against your kingdom",
       "modifiers": [
         {
-          "name": "Secession Crisis Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"
@@ -47,7 +45,6 @@
       "msg": "A settlement successfully declares independence from your kingdom",
       "modifiers": [
         {
-          "name": "Secession Crisis Critical Unrest",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

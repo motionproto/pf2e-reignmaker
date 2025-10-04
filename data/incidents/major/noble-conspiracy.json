@@ -1,6 +1,5 @@
 {
   "id": "noble-conspiracy",
-  "name": "Noble Conspiracy",
   "tier": "major",
   "description": "Nobles plot to overthrow the kingdom's leadership",
   "skills": [
@@ -31,13 +30,11 @@
       "msg": "The conspiracy damages your kingdom's stability and reputation",
       "modifiers": [
         {
-          "name": "Noble Conspiracy Gold Loss",
           "resource": "gold",
           "value": "-1d4",
           "duration": "immediate"
         },
         {
-          "name": "Noble Conspiracy Fame Loss",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"
@@ -49,19 +46,16 @@
       "msg": "The conspiracy strikes a devastating blow to your kingdom",
       "modifiers": [
         {
-          "name": "Noble Conspiracy Critical Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"
         },
         {
-          "name": "Noble Conspiracy Critical Fame Loss",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"
         },
         {
-          "name": "Noble Conspiracy Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

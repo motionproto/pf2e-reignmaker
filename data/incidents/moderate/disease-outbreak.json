@@ -1,6 +1,5 @@
 {
   "id": "disease-outbreak",
-  "name": "Disease Outbreak",
   "tier": "moderate",
   "description": "A dangerous disease spreads through your settlements",
   "skills": [
@@ -24,16 +23,14 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Lose {food} food (feeding the sick) and gain {unrest} unrest",
+      "msg": "Lose food (feeding the sick) and gain unrest",
       "modifiers": [
         {
-          "name": "Disease Outbreak Food Loss",
           "resource": "food",
           "value": "-1d4",
           "duration": "immediate"
         },
         {
-          "name": "Disease Outbreak Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -42,16 +39,14 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose {food} food and gain {unrest} unrest",
+      "msg": "Lose food and gain unrest",
       "modifiers": [
         {
-          "name": "Disease Outbreak Critical Food Loss",
           "resource": "food",
           "value": "-2d4",
           "duration": "immediate"
         },
         {
-          "name": "Disease Outbreak Critical Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

@@ -1,12 +1,7 @@
 {
   "id": "public-scandal",
-  "name": "Public Scandal",
-  "description": "A leader is implicated in an embarrassing or criminal situation.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Random PC",
+  "description": "A leader is implicated in an embarrassing or criminal situation.",
   "skills": [
     {
       "skill": "deception",
@@ -23,15 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Scandal deflected; no effect",
+      "msg": "Scandal deflected",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Damage controlled; +{unrest} unrest",
+      "msg": "Damage controlled",
       "modifiers": [
         {
-          "name": "Damage controlled",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -40,10 +34,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Public outrage; +{unrest} unrest",
+      "msg": "Public outrage",
       "modifiers": [
         {
-          "name": "Public outrage",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
@@ -52,49 +45,15 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Leader must lay low; +{unrest} unrest, that PC cannot take a Kingdom Action this turn",
+      "msg": "Leader must lay low",
       "modifiers": [
         {
-          "name": "Leader must lay low",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Lingering Scandal",
-    "description": "The scandal continues to damage your kingdom's reputation and authority",
-    "tier": 1,
-    "icon": "fas fa-newspaper",
-    "modifiers": [
-      {
-        "name": "Lingering Scandal",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Lingering Scandal",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The lingering scandal situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the lingering scandal situation"
-        }
-      }
     }
   }
 }

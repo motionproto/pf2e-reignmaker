@@ -1,6 +1,5 @@
 {
   "id": "bandit-activity",
-  "name": "Bandit Activity",
   "tier": "minor",
   "description": "Bandit raids threaten your trade routes and settlements",
   "skills": [
@@ -28,10 +27,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Lose {gold} gold to raids",
+      "msg": "Bandit raids",
       "modifiers": [
         {
-          "name": "Bandit Activity Gold Loss",
           "resource": "gold",
           "value": "-1d4",
           "duration": "immediate"
@@ -40,10 +38,9 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose {gold} gold and bandits destroy a random worksite",
+      "msg": "Major bandit raids",
       "modifiers": [
         {
-          "name": "Bandit Activity Critical Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"

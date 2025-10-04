@@ -1,6 +1,5 @@
 {
   "id": "emigration-threat",
-  "name": "Emigration Threat",
   "tier": "minor",
   "description": "Citizens threaten to leave your kingdom permanently",
   "skills": [
@@ -39,7 +38,6 @@
       "msg": "Mass emigration causes chaos and abandoned projects",
       "modifiers": [
         {
-          "name": "Emigration Threat Unrest",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

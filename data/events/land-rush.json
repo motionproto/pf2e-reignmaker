@@ -1,12 +1,7 @@
 {
   "id": "land-rush",
-  "name": "Land Rush",
-  "description": "Settlers attempt to claim wilderness at the kingdom's border.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "",
+  "description": "Settlers attempt to claim wilderness at the kingdom's border.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -23,10 +18,9 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Settlers successfully expand the kingdom; **gain 2 hexes**",
+      "msg": "Settlers successfully expand the kingdom",
       "modifiers": [
         {
-          "name": "Settlers successfully expand the kingdom",
           "resource": "hex",
           "value": 2,
           "duration": "immediate"
@@ -35,10 +29,9 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Settlers expand the kingdom; **gain {hex} hex**",
+      "msg": "Settlers expand the kingdom",
       "modifiers": [
         {
-          "name": "Settlers expand the kingdom",
           "resource": "hex",
           "value": 1,
           "duration": "immediate"
@@ -47,10 +40,9 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Settlers disperse without helping; +{unrest} unrest",
+      "msg": "Settlers disperse without helping",
       "modifiers": [
         {
-          "name": "Settlers disperse without helping",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -59,49 +51,15 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts at border; +{unrest} unrest",
+      "msg": "Violence erupts at border",
       "modifiers": [
         {
-          "name": "Violence erupts at border",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Land Dispute Chaos",
-    "description": "The uncontrolled land rush has created ongoing territorial disputes",
-    "tier": 1,
-    "icon": "fas fa-map-marked",
-    "modifiers": [
-      {
-        "name": "Land Dispute Chaos",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Land Dispute Chaos",
-        "resource": "resources",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The land dispute chaos situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the land dispute chaos situation"
-        }
-      }
     }
   }
 }

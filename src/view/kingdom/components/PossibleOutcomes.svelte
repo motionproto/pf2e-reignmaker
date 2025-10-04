@@ -77,7 +77,7 @@
               {outcome.label || resultLabels[outcome.result]}
             </div>
             <div class="outcome-description">
-              {outcome.description}
+              {@html outcome.description}
             </div>
           </div>
         </div>

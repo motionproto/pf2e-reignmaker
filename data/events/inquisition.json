@@ -1,13 +1,7 @@
 {
   "id": "inquisition",
-  "name": "Inquisition",
-  "description": "Zealots mobilize against a minority group or belief.",
   "tier": 1,
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "Largest settlement",
+  "description": "Zealots mobilize against a minority group or belief.",
   "skills": [
     {
       "skill": "religion",
@@ -24,84 +18,47 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Peacefully resolved; -{unrest} unrest, **event ends**",
+      "msg": "Peacefully resolved",
       "modifiers": [
         {
-          "name": "Peacefully resolved",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Zealots dispersed; **event ends**",
+      "msg": "Zealots dispersed",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Persecution spreads; +{unrest} unrest",
+      "msg": "Persecution spreads",
       "modifiers": [
         {
-          "name": "Persecution spreads",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts; +{unrest} unrest, one structure destroyed",
+      "msg": "Violence erupts",
       "modifiers": [
         {
-          "name": "Violence erupts",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         },
         {
-          "name": "Violence erupts",
           "resource": "destroy_structure",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Ongoing Persecution",
-    "description": "Religious zealots continue their persecution, creating fear and division",
-    "tier": 1,
-    "icon": "fas fa-fire",
-    "modifiers": [
-      {
-        "name": "Ongoing Persecution",
-        "resource": "unrest",
-        "value": 2,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Ongoing Persecution",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The ongoing persecution situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the ongoing persecution situation"
-        }
-      }
     }
   }
 }

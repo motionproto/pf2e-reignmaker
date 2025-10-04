@@ -1,13 +1,7 @@
 {
   "id": "demand-expansion",
-  "name": "Demand Expansion",
-  "description": "Citizens demand the kingdom claim new territory.",
   "tier": 1,
-  "traits": [
-    "dangerous",
-    "continuous"
-  ],
-  "location": "",
+  "description": "Citizens demand the kingdom claim new territory.",
   "skills": [
     {
       "skill": "diplomacy",
@@ -24,72 +18,42 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Citizens satisfied; -{unrest} unrest, **event ends**",
+      "msg": "Citizens satisfied",
       "modifiers": [
         {
-          "name": "Citizens satisfied",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true
     },
     "success": {
-      "msg": "Citizens satisfied; **event ends**",
+      "msg": "Citizens satisfied",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Citizens unhappy; +{unrest} unrest",
+      "msg": "Citizens unhappy",
       "modifiers": [
         {
-          "name": "Citizens unhappy",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major dissatisfaction; +{unrest} unrest",
+      "msg": "Major dissatisfaction",
       "modifiers": [
         {
-          "name": "Major dissatisfaction",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Expansion Pressure",
-    "description": "Citizens continue demanding territorial expansion, growing increasingly frustrated",
-    "tier": 1,
-    "icon": "fas fa-expand-arrows-alt",
-    "modifiers": [
-      {
-        "name": "Expansion Pressure",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The expansion pressure situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the expansion pressure situation"
-        }
-      }
     }
   }
 }

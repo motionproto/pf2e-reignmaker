@@ -1,13 +1,7 @@
 {
   "id": "good-weather",
-  "name": "Good Weather",
-  "description": "Perfect weather conditions boost morale and productivity.",
   "tier": 1,
-  "traits": [
-    "beneficial",
-    "continuous"
-  ],
-  "location": "",
+  "description": "Perfect weather conditions boost morale and productivity.",
   "skills": [
     {
       "skill": "nature",
@@ -24,50 +18,44 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Weather holds perfectly; +{food} food, -{unrest} unrest",
+      "msg": "Weather holds perfectly",
       "modifiers": [
         {
-          "name": "Weather holds perfectly",
           "resource": "food",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         },
         {
-          "name": "Weather holds perfectly",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "success": {
-      "msg": "Weather remains good; +{food} food",
+      "msg": "Weather remains good",
       "modifiers": [
         {
-          "name": "Weather remains good",
           "resource": "food",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "ongoing"
         }
       ],
       "endsEvent": false
     },
     "failure": {
-      "msg": "Weather changes; **event ends**",
+      "msg": "Weather changes",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Weather turns bad; +{unrest} unrest, **event ends**",
+      "msg": "Weather turns bad",
       "modifiers": [
         {
-          "name": "Weather turns bad",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "ongoing"
         }
       ],
       "endsEvent": true

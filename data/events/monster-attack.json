@@ -1,12 +1,7 @@
 {
   "id": "monster-attack",
-  "name": "Monster Attack",
-  "description": "A dangerous creature attacks a settlement or travellers.",
   "tier": 1,
-  "traits": [
-    "dangerous"
-  ],
-  "location": "Random settlement",
+  "description": "A dangerous creature attacks a settlement or travellers.",
   "skills": [
     {
       "skill": "intimidation",
@@ -23,17 +18,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Monster defeated; trophy worth {gold} gold, -{unrest} unrest",
+      "msg": "Monster defeated",
       "modifiers": [
         {
-          "name": "Monster defeated",
           "resource": "gold",
           "value": "1d4",
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Monster defeated",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -42,21 +34,19 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Monster driven away; no negative effect",
+      "msg": "Monster driven away",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Monster causes damage; one structure becomes damaged, +{unrest} unrest",
+      "msg": "Monster causes damage",
       "modifiers": [
         {
-          "name": "Monster causes damage",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
-          "name": "Monster causes damage",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"
@@ -65,61 +55,20 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Monster rampages; one structure becomes destroyed, +{unrest} unrest",
+      "msg": "Monster rampages",
       "modifiers": [
         {
-          "name": "Monster rampages",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
-          "name": "Monster rampages",
           "resource": "destroy_structure",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Monster Lair Nearby",
-    "description": "The monster has established a lair nearby and continues to threaten your settlements",
-    "tier": 1,
-    "icon": "fas fa-dragon",
-    "modifiers": [
-      {
-        "name": "Monster Lair Nearby",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Monster Lair Nearby",
-        "resource": "food",
-        "value": -1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Monster Lair Nearby",
-        "resource": "gold",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The monster lair nearby situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the monster lair nearby situation"
-        }
-      }
     }
   }
 }

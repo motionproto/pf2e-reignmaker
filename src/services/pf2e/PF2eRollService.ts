@@ -13,6 +13,12 @@ export interface RollEventData {
   checkType: string;
   skillName: string;
   proficiencyRank?: number;
+  rollBreakdown?: {
+    d20Result: number;
+    total: number;
+    dc: number;
+    modifiers: Array<{ label: string; modifier: number; enabled?: boolean }>;
+  };
 }
 
 export class PF2eRollService {
@@ -133,6 +139,29 @@ export class PF2eRollService {
       const dc = message.flags.pf2e.context.dc.value;
       const outcome = this.parseRollOutcome(roll, dc);
       
+      // Extract roll breakdown from PF2e message flags
+      const d20Result = roll.dice[0]?.results[0]?.result || 0;
+      const modifiers = message.flags.pf2e.context.modifiers || [];
+      
+      console.log('📊 [PF2eRollService] Raw PF2e data:', {
+        d20Result,
+        total: roll.total,
+        dc,
+        rawModifiers: modifiers
+      });
+      
+      const rollBreakdown = {
+        d20Result,
+        total: roll.total,
+        dc,
+        modifiers: modifiers.map((m: any) => ({
+          label: m.label || m.name || 'Modifier',
+          modifier: m.modifier || m.value || 0,
+          enabled: m.enabled !== false
+        }))
+      };
+      
+      console.log('📊 [PF2eRollService] Formatted roll breakdown:', rollBreakdown);
       console.log(`🎲 [PF2eRollService] Parsed outcome: ${outcome} for ${pendingCheck.checkId}, dispatching ${pendingCheck.checkType} event...`);
       
       // Dispatch a custom event with the roll result
@@ -144,7 +173,8 @@ export class PF2eRollService {
           actorName: pendingCheck.actorName,
           checkType: pendingCheck.checkType || 'action',
           skillName: pendingCheck.skillName,
-          proficiencyRank: pendingCheck.proficiencyRank
+          proficiencyRank: pendingCheck.proficiencyRank,
+          rollBreakdown
         }
       });
       

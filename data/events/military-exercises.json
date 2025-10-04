@@ -1,12 +1,7 @@
 {
   "id": "military-exercises",
-  "name": "Military Exercises",
-  "description": "Your kingdom conducts large-scale military training maneuvers.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Settlement with military structures or the largest settlement",
+  "description": "Your kingdom conducts large-scale military training maneuvers.",
   "skills": [
     {
       "skill": "athletics",
@@ -23,10 +18,9 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Elite forces trained; +2 untyped bonus to military kingdom actions this turn, -{unrest} unrest",
+      "msg": "Elite forces trained",
       "modifiers": [
         {
-          "name": "Elite forces trained",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -35,26 +29,24 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "pf2e-reignmaker.events.military-exercises.stage-0.success.msg",
+      "msg": "Event outcome",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Training is ineffective;",
+      "msg": "Training is ineffective",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Training accident; +{unrest} unrest, one military structure becomes damaged",
+      "msg": "Training accident",
       "modifiers": [
         {
-          "name": "Training accident",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
-          "name": "Training accident",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"

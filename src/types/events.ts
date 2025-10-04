@@ -43,7 +43,8 @@ export type EventTrait =
 /**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = string;
+export type ModifierSelector = 
+;
 
 /**
  * Event location types
@@ -79,24 +80,14 @@ export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxur
 export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | 'turns';
 
 /**
- * Event modifier details
- * Value can be a number (static) or a dice formula string (e.g., "1d4", "-2d6+1")
- * Resource can be a single type or an array (for player choice)
+ * Event modifier details (simplified from actual JSON structure)
  */
 export interface EventModifier {
   name: string;
-  resource: ResourceType | ResourceType[];  // Single resource OR array for player choice
-  value: number | string;  // Static number (e.g., 5, -10) or dice formula (e.g., "1d4", "-2d6+1")
+  resource: ResourceType;
+  value: number;
   duration: ModifierDuration;
   turns?: number;  // Required if duration === 'turns'
-}
-
-/**
- * Choice button for outcomes with player decisions
- */
-export interface EventChoice {
-  label: string;        // Button text with {resource} placeholders, e.g., "Lose {gold} Gold"
-  modifiers: EventModifier[]; // Modifiers to apply when chosen (can include dice formulas)
 }
 
 /**
@@ -104,10 +95,8 @@ export interface EventChoice {
  */
 export interface EventOutcome {
   msg: string;
-  endsEvent?: boolean;           // Does this outcome end the event (vs. persist as ongoing)?
-  modifiers: EventModifier[];    // Only actual resource/state changes
-  manualEffects?: string[];      // Effects requiring manual GM application (e.g., "Lose 1d3 hexes")
-  choices?: EventChoice[];       // Optional player choices
+  endsEvent?: boolean;
+  modifiers: EventModifier[];
 }
 
 /**

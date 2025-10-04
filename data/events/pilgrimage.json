@@ -1,12 +1,7 @@
 {
   "id": "pilgrimage",
-  "name": "Pilgrimage",
-  "description": "Religious pilgrims seek passage or sanctuary in your kingdom.",
   "tier": 1,
-  "traits": [
-    "beneficial"
-  ],
-  "location": "Largest settlement",
+  "description": "Religious pilgrims seek passage or sanctuary in your kingdom.",
   "skills": [
     {
       "skill": "religion",
@@ -23,23 +18,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major pilgrimage; +{gold} gold, -{unrest} unrest, +{fame} fame",
+      "msg": "Major pilgrimage",
       "modifiers": [
         {
-          "name": "Major pilgrimage",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         },
         {
-          "name": "Major pilgrimage",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
         },
         {
-          "name": "Major pilgrimage",
           "resource": "fame",
           "value": 1,
           "duration": "immediate"
@@ -48,67 +39,31 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Peaceful passage; +{gold} gold",
+      "msg": "Peaceful passage",
       "modifiers": [
         {
-          "name": "Peaceful passage",
           "resource": "gold",
           "value": 1,
-          "duration": "turns",
-          "turns": 1
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor disruption; no significant effect",
+      "msg": "Minor disruption",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Religious tensions; +{unrest} unrest",
+      "msg": "Religious tensions",
       "modifiers": [
         {
-          "name": "Religious tensions",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         }
       ],
       "endsEvent": false
-    }
-  },
-  "ifUnresolved": {
-    "name": "Religious Unrest",
-    "description": "The disrupted pilgrimage has angered the faithful who grow increasingly discontent",
-    "tier": 1,
-    "icon": "fas fa-praying-hands",
-    "modifiers": [
-      {
-        "name": "Religious Unrest",
-        "resource": "unrest",
-        "value": 1,
-        "duration": "ongoing"
-      },
-      {
-        "name": "Religious Unrest",
-        "resource": "fame",
-        "value": -1,
-        "duration": "ongoing"
-      }
-    ],
-    "resolvedWhen": {
-      "type": "skill",
-      "skillResolution": {
-        "dcAdjustment": 0,
-        "onSuccess": {
-          "msg": "The religious unrest situation has been resolved!",
-          "removeAllModifiers": true
-        },
-        "onFailure": {
-          "msg": "Failed to resolve the religious unrest situation"
-        }
-      }
     }
   }
 }

@@ -1,6 +1,5 @@
 {
   "id": "religious-schism",
-  "name": "Religious Schism",
   "tier": "major",
   "description": "Religious divisions tear your kingdom apart",
   "skills": [
@@ -31,7 +30,6 @@
       "msg": "Religious divisions weaken your kingdom's faith institutions",
       "modifiers": [
         {
-          "name": "Religious Schism Gold Loss",
           "resource": "gold",
           "value": "-2d6",
           "duration": "immediate"
@@ -46,7 +44,6 @@
       "msg": "The church splits entirely, destroying religious unity",
       "modifiers": [
         {
-          "name": "Religious Schism Critical Gold Loss",
           "resource": "gold",
           "value": "-4d6",
           "duration": "immediate"
