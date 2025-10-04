@@ -498,60 +498,47 @@ onMount(async () => {
 </script>
 ```
 
-### 3. Adding New Features
+### 3. View Layer Code Placement
 
-#### For UI Components:
-1. **Presentation only** - handle user interaction, display data, manage UI state
-2. **Subscribe to reactive stores** for data display
-3. **Delegate to controllers** - never implement business logic directly
-4. **Handle UI errors gracefully** - show user-friendly messages
+**Decision Tree:**
+```
+Is this code for a Phase Component (turnPhases/)?
+├─ YES → Use Phase Controller (src/controllers/[Phase]PhaseController.ts)
+│
+└─ NO → Is this a Reusable Component?
+    ├─ UI helper (icons, colors, formatters)
+    │   └─ src/view/kingdom/utils/presentation.ts
+    │
+    └─ Data transformation (filter, group, format)
+        └─ src/view/kingdom/logic/[Component]Logic.ts
+```
 
-#### For Controllers:
-1. **Business logic only** - implement game rules, phase operations, calculations
-2. **Return results** - use `{ success: boolean, error?: string }` pattern
-3. **Use clear console logging** - for debugging transparency
-4. **No UI concerns** - don't manage UI state or presentation
-
-#### For Services:
-1. **Complex operations** - calculations, integrations, utilities
-2. **Reusable logic** - shared between multiple controllers
-3. **Stateless when possible** - easier to test and reason about
+**Key Rules:**
+- **Components** (`*.svelte`) - UI only, delegate all logic
+- **Presentation Utils** - Stateless helpers (no data processing)
+- **Logic Files** - Transform data for display (no state changes)
+- **Controllers** - Game rules + state modification (phases only)
 
 ## Key Principles
 
 ### 1. Single Source of Truth
-- KingdomActor is the ONLY persistent data source
-- All writes go through KingdomActor methods
-- Stores are derived/reactive, never written to directly
+**KingdomActor** is the ONLY persistent data source. All state writes go through KingdomActor methods. Stores are reactive bridges, never written to directly.
 
-### 2. Reactive Bridge Pattern
-- Stores provide reactive access, not data storage
-- Components read from stores, write to KingdomActor
-- Automatic updates when KingdomActor changes
+### 2. Clear Separation of Concerns
+- **Components** - UI only (presentation, user interaction)
+- **Presentation Utils** - Stateless UI helpers (icons, colors)
+- **Logic Files** - Data prep for display (filter, group, format)
+- **Phase Controllers** - Game rules + state modification
+- **Services** - Complex reusable operations
 
-### 3. Business Logic Separation
-- **Svelte components are for presentation only** - UI, user interaction, display logic
-- **Controllers handle business logic** - phase operations, data manipulation, game rules
-- **Services handle complex operations** - calculations, integrations, utilities
-- **No business logic in Svelte files** - components delegate to controllers/services
+### 3. Phase Self-Execution
+**TurnManager** only handles progression. Phase components mount and call `controller.startPhase()` automatically. NO triggering from TurnManager.
 
-### 4. Phase Management Pattern
-- **TurnManager** = ONLY turn/phase progression (no orchestration)
-- **Phase Components** = Mount when active, call `controller.startPhase()` 
-- **Phase Controllers** = Execute phase business logic, mark completion
-- **NO triggering from TurnManager** - phases are self-executing when mounted
+### 4. Reactive Bridge Pattern
+Stores provide reactive access, not storage. Components read from stores, write to KingdomActor. UI auto-updates when KingdomActor changes.
 
 ### 5. Direct Simplicity
-- Direct function calls instead of complex patterns
-- Simple async operations
-- Clear console logging with emoji indicators
-- Minimal abstractions, maximum clarity
-- Use `startPhase()` not misleading names like "automation"
-
-### 5. Foundry-First Design
-- Use actor flags for persistence
-- Use Foundry hooks for reactivity
-- Use Foundry's networking for multiplayer sync
+Direct function calls, clear emoji logging, minimal abstractions, maximum clarity.
 
 ## Event & Incident System
 
@@ -683,7 +670,15 @@ src/
 │   └── ModifierService.ts     # Modifier lifecycle management
 ├── view/                      # Svelte UI components (presentation only)
 │   └── kingdom/
-│       └── turnPhases/        # Phase-specific UI components
+│       ├── turnPhases/        # Phase-specific UI components
+│       ├── components/        # Reusable UI components
+│       ├── tabs/              # Tab view components
+│       ├── utils/             # Presentation utilities (shared)
+│       │   └── presentation.ts # Icons, colors, formatters (UI-only)
+│       └── logic/             # Component-specific business logic
+│           ├── OutcomeDisplayLogic.ts
+│           ├── BuildStructureDialogLogic.ts
+│           └── structureLogic.ts
 ├── types/                     # TypeScript type definitions
 │   └── events.ts              # Event/incident types
 └── utils/                     # Utility functions
@@ -695,6 +690,72 @@ data/
 ├── player-actions/            # 29 action JSON files (structured effects)
 ├── events/                    # Event definitions (resource modifiers)
 └── incidents/                 # Incident definitions (resource modifiers)
+```
+
+## View Layer Code Examples
+
+### Presentation Utilities (UI Helpers)
+```typescript
+// src/view/kingdom/utils/presentation.ts
+export function getCategoryIcon(category: string): string {
+  const icons = { 'Military & Training': 'fa-shield-alt' };
+  return icons[category] || 'fa-building';
+}
+
+export function capitalizeSkills(skills: string[]): string[] {
+  return skills.map(s => s.split(' ').map(w => 
+    w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' '));
+}
+```
+
+### Component Logic (Data Transformation)
+```typescript
+// src/view/kingdom/logic/BuildStructureDialogLogic.ts
+export function getSkillsForCategory(category: string, structures: Structure[]): string[] {
+  return structures
+    .filter(s => getCategoryDisplayName(s.category) === category)
+    .flatMap(s => s.skills);
+}
+
+export function separateBuiltAndAvailable(
+  structures: Structure[], 
+  settlement: Settlement
+): { built: Structure[], available: Structure[] } {
+  return {
+    built: structures.filter(s => settlement.structureIds.includes(s.id)),
+    available: structures.filter(s => !settlement.structureIds.includes(s.id))
+  };
+}
+```
+
+### Phase Controllers (Game Rules)
+```typescript
+// src/controllers/ResourcePhaseController.ts
+export async function createResourcePhaseController() {
+  return {
+    async collectResources() {
+      // Game rule: collect resources from worksites
+      await updateKingdom(k => {
+        k.resources.gold += calculateIncome(k);
+      });
+    }
+  };
+}
+```
+
+**Usage Pattern:**
+```svelte
+<script>
+// Import appropriate helpers
+import { getCategoryIcon } from '../utils/presentation';
+import { getSkillsForCategory } from '../logic/BuildStructureDialogLogic';
+import { createPhaseController } from '../../../controllers/PhaseController'; // Phases only
+
+// Use in component
+$: icon = getCategoryIcon(category);
+$: skills = getSkillsForCategory(category, structures);
+</script>
 ```
 
 ## Common Operations
