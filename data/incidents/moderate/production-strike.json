@@ -1,5 +1,6 @@
 {
   "id": "production-strike",
+  "name": "Production Strike",
   "tier": "moderate",
   "description": "Workers strike, halting resource production",
   "skills": [

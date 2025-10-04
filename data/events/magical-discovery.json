@@ -1,5 +1,6 @@
 {
   "id": "magical-discovery",
+  "name": "Magical Discovery",
   "tier": 1,
   "description": "A powerful magical site or artifact is discovered in your kingdom.",
   "skills": [

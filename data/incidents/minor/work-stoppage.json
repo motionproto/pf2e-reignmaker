@@ -1,5 +1,6 @@
 {
   "id": "work-stoppage",
+  "name": "Work Stoppage",
   "tier": "minor",
   "description": "Workers in your kingdom refuse to continue their labor",
   "skills": [

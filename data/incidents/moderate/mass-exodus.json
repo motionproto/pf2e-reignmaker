@@ -1,5 +1,6 @@
 {
   "id": "mass-exodus",
+  "name": "Mass Exodus",
   "tier": "moderate",
   "description": "Large numbers of citizens flee your kingdom",
   "skills": [

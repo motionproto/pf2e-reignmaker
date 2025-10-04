@@ -1,5 +1,6 @@
 import type { ActiveModifier } from '../../models/Modifiers';
 import type { EventSkill, EventOutcome, EventModifier, EventEffects } from '../../types/events';
+import { getEventDisplayName } from '../../types/event-helpers';
 import eventsData from '../../../dist/events.json';
 
 
@@ -35,20 +36,14 @@ export interface UnresolvedEvent {
 }
 
 /**
- * Event representation from the JSON data (flattened structure)
+ * Event representation from the JSON data (simplified structure)
  */
 export interface EventData {
     id: string;
-    name: string;
+    tier: 'event' | 'minor' | 'moderate' | 'major' | number;
     description: string;
-    traits?: string[];
-    location?: string;
-    modifier?: number;
-    resolvedOn?: string[];
-    skills?: EventSkill[];  // Now at top level
-    effects: EventEffects;   // Now at top level
-    special?: string;
-    ifUnresolved?: UnresolvedEvent;
+    skills?: EventSkill[];
+    effects: EventEffects;
 }
 
 /**
@@ -82,7 +77,7 @@ export class EventService {
             console.log(`Successfully loaded ${this.events.size} events`);
             
             // Log all event names for verification
-            const eventNames = Array.from(this.events.values()).map(e => e.name);
+            const eventNames = Array.from(this.events.values()).map(e => getEventDisplayName(e));
             console.log('Events loaded:', eventNames);
         } catch (error) {
             console.error('Failed to load events:', error);
@@ -110,7 +105,7 @@ export class EventService {
 
         const randomIndex = Math.floor(Math.random() * eventArray.length);
         const selectedEvent = eventArray[randomIndex];
-        console.log(`Selected event: ${selectedEvent.name} (${selectedEvent.id})`);
+        console.log(`Selected event: ${getEventDisplayName(selectedEvent)} (${selectedEvent.id})`);
         
         return selectedEvent;
     }
@@ -161,7 +156,9 @@ export class EventService {
         if (outcome.modifiers && Array.isArray(outcome.modifiers)) {
             for (const modifier of outcome.modifiers) {
                 if (modifier.resource) {
-                    appliedEffects[modifier.resource] = (appliedEffects[modifier.resource] || 0) + modifier.value;
+                    // Handle both numeric and string (dice formula) values
+                    const value = typeof modifier.value === 'number' ? modifier.value : 0;
+                    appliedEffects[modifier.resource] = (appliedEffects[modifier.resource] || 0) + value;
                 }
             }
         }
@@ -231,7 +228,7 @@ export class EventService {
     ): ActiveModifier {
         const modifier: ActiveModifier = {
             id: `event-${event.id}-${currentTurn}`,
-            name: template.name || event.name,
+            name: template.name || getEventDisplayName(event),
             description: template.description || event.description,
             icon: template.icon,
             tier: 1, // Events typically start at tier 1
@@ -239,7 +236,7 @@ export class EventService {
             // Source tracking (new format)
             sourceType: 'event',
             sourceId: event.id,
-            sourceName: event.name,
+            sourceName: getEventDisplayName(event),
             
             // Timing
             startTurn: currentTurn,
@@ -305,24 +302,6 @@ export class EventService {
     }
 
     /**
-     * Get all events that can become continuous modifiers
-     */
-    getContinuousEvents(): EventData[] {
-        return Array.from(this.events.values()).filter(
-            event => event.ifUnresolved?.type === 'continuous'
-        );
-    }
-
-    /**
-     * Get all events that expire
-     */
-    getExpiringEvents(): EventData[] {
-        return Array.from(this.events.values()).filter(
-            event => event.ifUnresolved?.type === 'expires'
-        );
-    }
-
-    /**
      * Check if an event can be resolved with a given skill
      */
     canResolveWithSkill(event: EventData, skill: string): boolean {
@@ -331,19 +310,6 @@ export class EventService {
         }
 
         return event.skills.some(s => s.skill === skill);
-    }
-
-    /**
-     * Get resolution DC for an event
-     */
-    getResolutionDC(event: EventData): number {
-        // Check if event has custom resolution DC in unresolved section
-        if (event.ifUnresolved?.continuous?.modifierTemplate?.resolution?.dc) {
-            return event.ifUnresolved.continuous.modifierTemplate.resolution.dc;
-        }
-
-        // Otherwise use modifier value or default
-        return event.modifier || 0;
     }
 
     /**

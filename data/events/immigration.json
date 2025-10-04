@@ -1,5 +1,6 @@
 {
   "id": "immigration",
+  "name": "Immigration",
   "tier": 1,
   "description": "New settlers arrive seeking homes in your kingdom.",
   "skills": [

@@ -1,5 +1,6 @@
 {
   "id": "good-weather",
+  "name": "Good Weather",
   "tier": 1,
   "description": "Perfect weather conditions boost morale and productivity.",
   "skills": [

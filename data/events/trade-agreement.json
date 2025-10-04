@@ -1,5 +1,6 @@
 {
   "id": "trade-agreement",
+  "name": "Trade Agreement",
   "tier": 1,
   "description": "Merchants propose a lucrative trade arrangement.",
   "skills": [

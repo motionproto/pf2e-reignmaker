@@ -1,5 +1,6 @@
 {
   "id": "pilgrimage",
+  "name": "Pilgrimage",
   "tier": 1,
   "description": "Religious pilgrims seek passage or sanctuary in your kingdom.",
   "skills": [

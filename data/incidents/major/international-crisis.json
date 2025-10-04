@@ -1,5 +1,6 @@
 {
   "id": "international-crisis",
+  "name": "International Crisis",
   "tier": "major",
   "description": "Multiple kingdoms turn against you due to internal chaos",
   "skills": [

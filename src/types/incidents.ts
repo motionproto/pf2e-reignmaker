@@ -35,13 +35,11 @@ export type {
  */
 export interface KingdomIncident {
   id: string;
-  name: string;
+  name: string;  // Display name for UI
+  tier: 'minor' | 'moderate' | 'major';
   description: string;
-  tier: EventTier;  // Severity tier (minor, moderate, major)
   skills?: EventSkill[];
   effects: EventEffects;
-  special?: string;
-  ifUnresolved?: any;  // TODO: Define proper structure when needed
 }
 
 /**
@@ -56,4 +54,14 @@ export function isKingdomIncident(obj: any): obj is KingdomIncident {
     typeof obj.tier === 'string' &&
     typeof obj.effects === 'object'
   );
+}
+
+/**
+ * Helper to generate display name from incident ID
+ */
+export function getIncidentDisplayName(incident: KingdomIncident): string {
+  return incident.id
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }

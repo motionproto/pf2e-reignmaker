@@ -1,5 +1,6 @@
 {
   "id": "corruption-scandal",
+  "name": "Corruption Scandal",
   "tier": "minor",
   "description": "Corruption among your officials is exposed",
   "skills": [

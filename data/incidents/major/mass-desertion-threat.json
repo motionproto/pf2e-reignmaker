@@ -1,5 +1,6 @@
 {
   "id": "mass-desertion-threat",
+  "name": "Mass Desertion Threat",
   "tier": "major",
   "description": "Your armies threaten mass desertion",
   "skills": [

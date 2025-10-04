@@ -1,5 +1,6 @@
 {
   "id": "inquisition",
+  "name": "Inquisition",
   "tier": 1,
   "description": "Zealots mobilize against a minority group or belief.",
   "skills": [

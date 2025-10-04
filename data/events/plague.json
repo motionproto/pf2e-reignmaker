@@ -1,5 +1,6 @@
 {
   "id": "plague",
+  "name": "Plague",
   "tier": 1,
   "description": "Disease spreads rapidly through your settlements.",
   "skills": [

@@ -1,5 +1,6 @@
 {
   "id": "diplomatic-incident",
+  "name": "Diplomatic Incident",
   "tier": "moderate",
   "description": "A serious diplomatic incident threatens relations",
   "skills": [

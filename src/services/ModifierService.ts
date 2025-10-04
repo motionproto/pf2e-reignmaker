@@ -9,7 +9,7 @@
  */
 
 import type { ActiveModifier, ResolutionResult } from '../models/Modifiers';
-import type { KingdomEvent, EventModifier, EventTier } from '../types/events';
+import type { KingdomEvent, EventModifier, EventTier , getEventDisplayName } from '../types/events';
 import { updateKingdom } from '../stores/KingdomStore';
 
 /**
@@ -47,12 +47,12 @@ export async function createModifierService() {
       // Create a basic modifier using event data
       return {
         id: `event-${event.id}-${currentTurn}`,
-        name: event.name,
+        name: getEventDisplayName(event),
         description: event.description,
         tier: tierToNumber(event.tier),
         sourceType: 'event',
         sourceId: event.id,
-        sourceName: event.name,
+        sourceName: getEventDisplayName(event),
         startTurn: currentTurn,
         modifiers: [] // TODO: Extract from ifUnresolved when structure is defined
       };

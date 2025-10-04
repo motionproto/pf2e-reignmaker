@@ -1,5 +1,6 @@
 {
   "id": "local-disaster",
+  "name": "Local Disaster",
   "tier": 1,
   "description": "Fire, flood, or structural collapse strikes a settlement.",
   "skills": [

@@ -1,5 +1,6 @@
 {
   "id": "cult-activity",
+  "name": "Cult Activity",
   "tier": 1,
   "description": "A dangerous cult has been discovered operating in your kingdom.",
   "skills": [

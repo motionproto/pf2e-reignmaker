@@ -1,5 +1,6 @@
 {
   "id": "raiders",
+  "name": "Raiders",
   "tier": 1,
   "description": "Armed raiders threaten settlements and trade routes.",
   "skills": [

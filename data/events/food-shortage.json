@@ -1,5 +1,6 @@
 {
   "id": "food-shortage",
+  "name": "Food Shortage",
   "tier": 1,
   "description": "Disease, weather, or pests destroy agricultural production.",
   "skills": [

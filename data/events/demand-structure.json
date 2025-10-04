@@ -1,5 +1,6 @@
 {
   "id": "demand-structure",
+  "name": "Demand Structure",
   "tier": 1,
   "description": "Citizens demand that a specific structure be built.",
   "skills": [

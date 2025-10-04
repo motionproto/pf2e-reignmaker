@@ -1,5 +1,6 @@
 {
   "id": "emigration-threat",
+  "name": "Emigration Threat",
   "tier": "minor",
   "description": "Citizens threaten to leave your kingdom permanently",
   "skills": [

@@ -5,6 +5,7 @@
  * and unresolved event handling for the kingdom game.
  */
 
+import { getEventDisplayName } from '../../types/event-helpers';
 import { diceService, type D20Result } from '../../services/domain/DiceService';
 import type { EventService, EventData } from './event-loader';
 import type { EventOutcome, EventModifier, OngoingEffect } from './event-types';
@@ -160,7 +161,7 @@ export class EventResolver {
                 ongoingEffect,
                 'event',
                 event.id,
-                event.name,
+                getEventDisplayName(event),
                 currentTurn
             );
         }

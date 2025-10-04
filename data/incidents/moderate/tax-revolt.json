@@ -1,5 +1,6 @@
 {
   "id": "tax-revolt",
+  "name": "Tax Revolt",
   "tier": "moderate",
   "description": "Citizens revolt against tax collection",
   "skills": [

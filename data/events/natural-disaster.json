@@ -1,5 +1,6 @@
 {
   "id": "natural-disaster",
+  "name": "Natural Disaster",
   "tier": 1,
   "description": "Earthquake, tornado, wildfire, or severe flooding strikes the kingdom.",
   "skills": [

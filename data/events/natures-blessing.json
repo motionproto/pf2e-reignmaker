@@ -1,5 +1,6 @@
 {
   "id": "natures-blessing",
+  "name": "Natures Blessing",
   "tier": 1,
   "description": "A natural wonder appears in your kingdom - rare flowers, aurora, or returning wildlife.",
   "skills": [

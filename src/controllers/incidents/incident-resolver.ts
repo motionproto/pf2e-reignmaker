@@ -6,7 +6,7 @@
  * resource changes, and modifier creation.
  */
 
-import type { KingdomIncident, EventOutcome } from '../../types/incidents';
+import type { KingdomIncident, EventOutcome , getIncidentDisplayName } from '../../types/incidents';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActiveModifier } from '../../models/Modifiers';
 import {
@@ -90,7 +90,7 @@ export class IncidentResolver {
       incident.ifUnresolved,
       'incident',
       incident.id,
-      incident.name,
+      getIncidentDisplayName(incident),
       currentTurn
     );
   }

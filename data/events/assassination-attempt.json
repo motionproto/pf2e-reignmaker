@@ -1,5 +1,6 @@
 {
   "id": "assassination-attempt",
+  "name": "Assassination Attempt",
   "tier": 1,
   "description": "Someone attempts to kill one of your leaders.",
   "skills": [

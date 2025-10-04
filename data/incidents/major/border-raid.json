@@ -1,5 +1,6 @@
 {
   "id": "border-raid",
+  "name": "Border Raid",
   "tier": "major",
   "description": "Enemy forces raid your border territories",
   "skills": [

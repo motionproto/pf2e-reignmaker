@@ -1,5 +1,6 @@
 {
   "id": "economic-crash",
+  "name": "Economic Crash",
   "tier": "major",
   "description": "A severe economic downturn threatens your kingdom's prosperity",
   "skills": [

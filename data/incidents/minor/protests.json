@@ -1,5 +1,6 @@
 {
   "id": "protests",
+  "name": "Protests",
   "tier": "minor",
   "description": "Citizens take to the streets in organized protests",
   "skills": [

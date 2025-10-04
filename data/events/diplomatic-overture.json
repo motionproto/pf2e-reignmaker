@@ -1,5 +1,6 @@
 {
   "id": "diplomatic-overture",
+  "name": "Diplomatic Overture",
   "tier": 1,
   "description": "A neighboring kingdom reaches out to establish or improve diplomatic relations.",
   "skills": [

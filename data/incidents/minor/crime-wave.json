@@ -1,5 +1,6 @@
 {
   "id": "crime-wave",
+  "name": "Crime Wave",
   "tier": "minor",
   "description": "Criminal activity surges throughout your settlements",
   "skills": [

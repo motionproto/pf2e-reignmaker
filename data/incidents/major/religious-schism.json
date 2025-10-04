@@ -1,5 +1,6 @@
 {
   "id": "religious-schism",
+  "name": "Religious Schism",
   "tier": "major",
   "description": "Religious divisions tear your kingdom apart",
   "skills": [

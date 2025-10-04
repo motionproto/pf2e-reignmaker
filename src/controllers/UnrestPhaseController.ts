@@ -7,6 +7,7 @@
  * - Step 2: Resolve Incident (CONDITIONAL - auto if no incident, manual if incident)
  */
 
+import { getIncidentDisplayName } from '../types/event-helpers';
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
@@ -252,7 +253,7 @@ export async function createUnrestPhaseController() {
         const result = await gameEffectsService.applyOutcome({
           type: 'incident',
           sourceId: incident.id,
-          sourceName: incident.name,
+          sourceName: getIncidentDisplayName(incident),
           outcome: outcome,
           modifiers: effectOutcome.modifiers || [],
           createOngoingModifier: false // Handle separately below

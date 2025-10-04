@@ -1,5 +1,6 @@
 {
   "id": "infrastructure-damage",
+  "name": "Infrastructure Damage",
   "tier": "moderate",
   "description": "Critical infrastructure is damaged or sabotaged",
   "skills": [

@@ -1,5 +1,6 @@
 {
   "id": "rebellion-trade-embargo",
+  "name": "Rebellion Trade Embargo",
   "tier": "major",
   "description": "A complete trade embargo devastates your economy",
   "skills": [

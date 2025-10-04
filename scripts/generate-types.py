@@ -109,29 +109,28 @@ export type EventLocation =
     
     # Add main event interfaces
     ts_content += """/**
- * Event tier types (standardized: all events are 'minor', incidents vary)
+ * Event tier types (events use 'event', incidents vary)
  */
-export type EventTier = 'minor' | 'moderate' | 'major';
+export type EventTier = 'event' | 'minor' | 'moderate' | 'major' | number;
 
 /**
  * Resource types that can be modified
  */
-export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame';
+export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame' | 'imprisoned_unrest' | 'damage_structure';
 
 /**
- * Modifier duration types
+ * Modifier duration types (can be string or number for turn count)
  */
-export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | 'turns';
+export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | number;
 
 /**
- * Event modifier details (simplified from actual JSON structure)
+ * Event modifier details (unified format)
  */
 export interface EventModifier {
-  name: string;
   resource: ResourceType;
-  value: number;
-  duration: ModifierDuration;
-  turns?: number;  // Required if duration === 'turns'
+  value: number | string;  // Can be number or dice formula (e.g., "1d4")
+  type?: string;  // Optional modifier type (e.g., "untyped")
+  duration?: ModifierDuration;  // Optional duration
 }
 
 /**
@@ -140,7 +139,8 @@ export interface EventModifier {
 export interface EventOutcome {
   msg: string;
   endsEvent?: boolean;
-  modifiers: EventModifier[];
+  modifiers?: EventModifier[];
+  manualEffects?: string[];  // Optional manual effects to display
 }
 
 /**
@@ -154,28 +154,22 @@ export interface EventEffects {
 }
 
 /**
- * Kingdom Event data structure (matches actual JSON structure)
+ * Kingdom Event data structure (simplified, unified format)
  */
 export interface KingdomEvent {
   id: string;
-  name: string;
-  description: string;
+  name: string;  // Display name for UI
   tier: EventTier;
-  traits?: EventTrait[];
-  location?: EventLocation | string;
-  modifier?: number;
-  resolvedOn?: string[];
+  description: string;
   skills?: EventSkill[];
   effects: EventEffects;
-  special?: string;
-  ifUnresolved?: any;  // TODO: Define proper structure when needed
 }
 
 /**
- * Kingdom Incident (same structure as event with tier variations)
+ * Kingdom Incident (same structure as event)
  */
 export interface KingdomIncident extends KingdomEvent {
-  tier: EventTier;  // 'minor' | 'moderate' | 'major'
+  tier: 'minor' | 'moderate' | 'major';
 }
 
 /**
@@ -189,6 +183,16 @@ export function isKingdomEvent(obj: any): obj is KingdomEvent {
     typeof obj.description === 'string' &&
     typeof obj.effects === 'object'
   );
+}
+
+/**
+ * Helper to generate display name from event ID
+ */
+export function getEventDisplayName(event: KingdomEvent): string {
+  return event.id
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 """
     
@@ -238,13 +242,11 @@ export type {
  */
 export interface KingdomIncident {
   id: string;
-  name: string;
+  name: string;  // Display name for UI
+  tier: 'minor' | 'moderate' | 'major';
   description: string;
-  tier: EventTier;  // Severity tier (minor, moderate, major)
   skills?: EventSkill[];
   effects: EventEffects;
-  special?: string;
-  ifUnresolved?: any;  // TODO: Define proper structure when needed
 }
 
 /**
@@ -259,6 +261,16 @@ export function isKingdomIncident(obj: any): obj is KingdomIncident {
     typeof obj.tier === 'string' &&
     typeof obj.effects === 'object'
   );
+}
+
+/**
+ * Helper to generate display name from incident ID
+ */
+export function getIncidentDisplayName(incident: KingdomIncident): string {
+  return incident.id
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 """
     

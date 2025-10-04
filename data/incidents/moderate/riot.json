@@ -1,5 +1,6 @@
 {
   "id": "riot",
+  "name": "Riot",
   "tier": "moderate",
   "description": "Violent riots break out in your settlements",
   "skills": [

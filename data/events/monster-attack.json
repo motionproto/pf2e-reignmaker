@@ -1,5 +1,6 @@
 {
   "id": "monster-attack",
+  "name": "Monster Attack",
   "tier": 1,
   "description": "A dangerous creature attacks a settlement or travellers.",
   "skills": [

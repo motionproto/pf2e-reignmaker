@@ -1,5 +1,6 @@
 {
   "id": "turmoil-trade-embargo",
+  "name": "Turmoil Trade Embargo",
   "tier": "moderate",
   "description": "Neighboring kingdoms impose trade restrictions",
   "skills": [

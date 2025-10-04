@@ -5,6 +5,7 @@
  * Changed "stability roll" terminology to clearer "event check".
  */
 
+import { getEventDisplayName } from '../types/event-helpers';
 import { EventResolver } from './events/event-resolver';
 import { eventService } from './events/event-loader';
 import type { EventData } from './events/event-loader';
@@ -141,7 +142,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 
                 if (event) {
                     state.currentEvent = event;
-                    console.log(`✨ [EventPhaseController] Event triggered: "${event.name}" (${event.id})`);
+                    console.log(`✨ [EventPhaseController] Event triggered: "${getEventDisplayName(event)}" (${event.id})`);
                     
                     // Store event in kingdom state
                     const { getKingdomActor } = await import('../stores/KingdomStore');
@@ -212,7 +213,7 @@ export async function createEventPhaseController(_eventService?: any) {
             unresolvedEvent: EventData | null;
             error?: string;
         }> {
-            console.log(`🎯 [EventPhaseController] Applying event outcome: ${event.name} -> ${outcome}`);
+            console.log(`🎯 [EventPhaseController] Applying event outcome: ${getEventDisplayName(event)} -> ${outcome}`);
             
             try {
                 // Get the outcome effects from the event
@@ -225,7 +226,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 const result = await gameEffectsService.applyOutcome({
                     type: 'event',
                     sourceId: event.id,
-                    sourceName: event.name,
+                    sourceName: getEventDisplayName(event),
                     outcome: outcome,
                     modifiers: effectOutcome.modifiers || [],
                     createOngoingModifier: false // Handle separately below
@@ -331,7 +332,7 @@ export async function createEventPhaseController(_eventService?: any) {
             effects: Map<string, any>;
             modifier?: ActiveModifier;
         }> {
-            console.log(`🚫 [EventPhaseController] Ignoring event: ${event.name}`);
+            console.log(`🚫 [EventPhaseController] Ignoring event: ${getEventDisplayName(event)}`);
             
             // Apply failure effects
             const failureEffects = eventResolver.calculateResourceChanges(event, 'failure');

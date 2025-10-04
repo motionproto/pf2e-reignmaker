@@ -1,5 +1,6 @@
 {
   "id": "military-exercises",
+  "name": "Military Exercises",
   "tier": 1,
   "description": "Your kingdom conducts large-scale military training maneuvers.",
   "skills": [

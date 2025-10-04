@@ -1,5 +1,6 @@
 {
   "id": "scholarly-discovery",
+  "name": "Scholarly Discovery",
   "tier": 1,
   "description": "Researchers in your kingdom make an important academic breakthrough.",
   "skills": [

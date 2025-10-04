@@ -1,5 +1,6 @@
 {
   "id": "bandit-activity",
+  "name": "Bandit Activity",
   "tier": 1,
   "description": "Bandits have been spotted raiding caravans and settlements in your territory.",
   "skills": [

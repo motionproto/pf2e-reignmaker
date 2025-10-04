@@ -1,5 +1,6 @@
 {
   "id": "demand-expansion",
+  "name": "Demand Expansion",
   "tier": 1,
   "description": "Citizens demand the kingdom claim new territory.",
   "skills": [

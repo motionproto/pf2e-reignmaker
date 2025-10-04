@@ -1,5 +1,6 @@
 {
   "id": "grand-tournament",
+  "name": "Grand Tournament",
   "tier": 1,
   "description": "A martial competition draws competitors from across the realm.",
   "skills": [

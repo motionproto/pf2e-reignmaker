@@ -1,5 +1,6 @@
 {
   "id": "settlement-crisis",
+  "name": "Settlement Crisis",
   "tier": "moderate",
   "description": "One of your settlements faces a major crisis",
   "skills": [

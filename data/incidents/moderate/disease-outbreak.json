@@ -1,5 +1,6 @@
 {
   "id": "disease-outbreak",
+  "name": "Disease Outbreak",
   "tier": "moderate",
   "description": "A dangerous disease spreads through your settlements",
   "skills": [

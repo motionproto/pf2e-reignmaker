@@ -1,5 +1,6 @@
 {
   "id": "food-surplus",
+  "name": "Food Surplus",
   "tier": 1,
   "description": "Exceptional harvests provide abundant food.",
   "skills": [

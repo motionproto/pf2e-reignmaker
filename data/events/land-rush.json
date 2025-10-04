@@ -1,5 +1,6 @@
 {
   "id": "land-rush",
+  "name": "Land Rush",
   "tier": 1,
   "description": "Settlers attempt to claim wilderness at the kingdom's border.",
   "skills": [
