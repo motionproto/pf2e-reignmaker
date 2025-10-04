@@ -4,7 +4,7 @@
     getTierLabel, 
     getResourceIcon, 
     getResourceColor 
-  } from '../../utils/structure-presentation';
+  } from '../../utils/presentation';
   
   export let structure: Structure;
   export let tier: number;

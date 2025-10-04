@@ -8,13 +8,13 @@
   import type { Settlement } from '../../../models/Settlement';
   import CategoryItem from './structures/CategoryItem.svelte';
   import StructureCard from './structures/StructureCard.svelte';
+  import { getCategoryIcon } from '../utils/presentation';
   import {
-    getCategoryIcon,
     extractCategorySkills,
     groupStructuresByTier,
     separateStructuresByType,
     getUniqueCategories
-  } from '../utils/structure-presentation';
+  } from '../logic/structureLogic';
   
   export let show: boolean = false;
   

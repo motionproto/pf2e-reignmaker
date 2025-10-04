@@ -6,13 +6,13 @@
   import { structureSelection, setStructureCategory } from '../../../stores/ui';
   import CategoryItem from '../components/structures/CategoryItem.svelte';
   import StructureCard from '../components/structures/StructureCard.svelte';
+  import { getCategoryIcon } from '../utils/presentation';
   import {
-    getCategoryIcon,
     extractCategorySkills,
     groupStructuresByTier,
     separateStructuresByType,
     getUniqueCategories
-  } from '../utils/structure-presentation';
+  } from '../logic/structureLogic';
   
   // State
   let allStructures: Structure[] = [];

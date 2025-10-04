@@ -11,7 +11,7 @@
       processChoiceSelection,
       detectResourceArrayModifiers,
       computeDisplayStateChanges
-   } from '../../../controllers/shared/OutcomeDisplayLogic';
+   } from '../logic/OutcomeDisplayLogic';
    
    export let outcome: string;
    export let actorName: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCategoryIcon } from '../../utils/structure-presentation';
+  import { getCategoryIcon } from '../../utils/presentation';
   
   export let category: string;
   export let skills: string[] = [];
