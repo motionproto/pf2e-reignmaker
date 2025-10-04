@@ -21,14 +21,15 @@
    let processingBuild = false;
    let processingEndTurn = false;
    
-   // Reactive UI state - use currentPhaseSteps array
+   // Reactive UI state - use shared helpers for step completion
+   import { getStepCompletion, areAllStepsComplete } from '../../../controllers/shared/PhaseHelpers';
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
-   $: consumeCompleted = currentSteps[0]?.completed || false;
-   $: militaryCompleted = currentSteps[1]?.completed || false;
-   $: buildCompleted = currentSteps[2]?.completed || false;
+   $: consumeCompleted = getStepCompletion(currentSteps, 0); // Step 0 = consume-food
+   $: militaryCompleted = getStepCompletion(currentSteps, 1); // Step 1 = military-support
+   $: buildCompleted = getStepCompletion(currentSteps, 2); // Step 2 = build-queue
    
-   // Phase automatically completes when all steps are done - no manual intervention needed
-   $: allStepsComplete = currentSteps.length > 0 && currentSteps.every(step => step.completed);
+   // Phase automatically completes when all steps are done
+   $: allStepsComplete = areAllStepsComplete(currentSteps);
    
    // Debug step completion states
    $: console.log('🔍 [UpkeepPhase DEBUG] Step completion status:', {

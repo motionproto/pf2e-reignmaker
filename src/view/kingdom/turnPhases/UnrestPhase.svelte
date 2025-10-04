@@ -28,8 +28,9 @@
    let incidentCheckDC: number = 0;
    let incidentCheckChance: number = 0;
    
-   // Reactive UI state using new index-based system
-   $: stepComplete = $kingdomData.currentPhaseSteps?.[1]?.completed === 1; // Step 1 = incident check
+   // Reactive UI state using shared helper for step completion
+   import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
+   $: stepComplete = getStepCompletion($kingdomData.currentPhaseSteps, 1); // Step 1 = incident check
    $: incidentWasTriggered = $kingdomData.incidentTriggered ?? null;
    $: unrestStatus = $unrest !== undefined ? (() => {
       const unrestValue = $unrest || 0;
@@ -292,58 +293,25 @@
       selectedSkill = '';
    }
    
-   // Handle fame reroll for incidents
+   // Handle fame reroll using shared utility
    async function handleRerollWithFame() {
-      if (!currentIncident || !selectedSkill) {
-         console.error('[UnrestPhase] Cannot reroll - missing incident or skill');
-         return;
-      }
+      const { handleRerollWithFame: sharedReroll } = await import('../../../controllers/shared/RerollHelpers');
       
-      // Import shared reroll helpers
-      const { canRerollWithFame, deductFameForReroll, restoreFameAfterFailedReroll } = 
-         await import('../../../controllers/shared/RerollHelpers');
-      
-      // Check if reroll is possible
-      const fameCheck = await canRerollWithFame();
-      if (!fameCheck.canReroll) {
-         ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
-         return;
-      }
-      
-      // Deduct fame
-      const deductResult = await deductFameForReroll();
-      if (!deductResult.success) {
-         ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
-         return;
-      }
-      
-      console.log(`💎 [UnrestPhase] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
-      
-      // Reset UI state for new roll
-      incidentResolved = false;
-      resolutionApplied = false;
-      rollOutcome = '';
-      rollActor = '';
-      rollEffect = '';
-      rollStateChanges = {};
-      rollBreakdown = null;
-      
-      // Small delay to ensure UI updates
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Trigger new roll with same skill
-      try {
-         await resolveIncident(selectedSkill);
-      } catch (error) {
-         console.error('[UnrestPhase] Error during reroll:', error);
-         
-         // Restore fame on error
-         if (deductResult.previousFame !== undefined) {
-            await restoreFameAfterFailedReroll(deductResult.previousFame);
-         }
-         
-         ui.notifications?.error('Failed to reroll. Fame has been restored.');
-      }
+      await sharedReroll({
+         currentItem: currentIncident,
+         selectedSkill,
+         phaseName: 'UnrestPhase',
+         resetUiState: () => {
+            incidentResolved = false;
+            resolutionApplied = false;
+            rollOutcome = '';
+            rollActor = '';
+            rollEffect = '';
+            rollStateChanges = {};
+            rollBreakdown = null;
+         },
+         triggerRoll: resolveIncident
+      });
    }
    
    // Use status class from provider

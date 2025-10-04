@@ -118,3 +118,58 @@ export function validateRerollContext(context: Partial<RerollContext>): { valid:
   
   return { valid: true };
 }
+
+/**
+ * Generic reroll handler for Svelte components
+ * Handles the complete reroll flow: fame check, deduction, UI reset, roll, and error recovery
+ */
+export async function handleRerollWithFame(options: {
+  currentItem: any;
+  selectedSkill: string;
+  phaseName: string;
+  resetUiState: () => void;
+  triggerRoll: (skill: string) => Promise<void>;
+}): Promise<void> {
+  const { currentItem, selectedSkill, phaseName, resetUiState, triggerRoll } = options;
+  
+  if (!currentItem || !selectedSkill) {
+    console.error(`[${phaseName}] Cannot reroll - missing item or skill`);
+    return;
+  }
+  
+  // Check if reroll is possible
+  const fameCheck = await canRerollWithFame();
+  if (!fameCheck.canReroll) {
+    ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
+    return;
+  }
+  
+  // Deduct fame
+  const deductResult = await deductFameForReroll();
+  if (!deductResult.success) {
+    ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
+    return;
+  }
+  
+  console.log(`💎 [${phaseName}] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
+  
+  // Reset UI state for new roll
+  resetUiState();
+  
+  // Small delay to ensure UI updates
+  await new Promise(resolve => setTimeout(resolve, 100));
+  
+  // Trigger new roll with same skill
+  try {
+    await triggerRoll(selectedSkill);
+  } catch (error) {
+    console.error(`[${phaseName}] Error during reroll:`, error);
+    
+    // Restore fame on error
+    if (deductResult.previousFame !== undefined) {
+      await restoreFameAfterFailedReroll(deductResult.previousFame);
+    }
+    
+    ui.notifications?.error('Failed to reroll. Fame has been restored.');
+  }
+}

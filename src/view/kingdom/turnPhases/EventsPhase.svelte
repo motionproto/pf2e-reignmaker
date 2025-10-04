@@ -52,10 +52,11 @@
       effects: Map<string, any>;
    } | null = null;
    
-   // Computed UI state - use currentPhaseSteps array with index-based approach
+   // Computed UI state - use shared helper for step completion
+   import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
-   $: eventChecked = currentSteps[0]?.completed === 1; // Step 0 = event-check
-   $: eventResolved = currentSteps[1]?.completed === 1; // Step 1 = resolve-event
+   $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
+   $: eventResolved = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC;
    $: activeModifiers = $kingdomData.activeModifiers || [];
    $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
@@ -296,58 +297,25 @@
       }
    }
    
-   // Handle fame reroll
+   // Handle fame reroll using shared utility
    async function handleRerollWithFame() {
-      if (!currentEvent || !selectedSkill) {
-         console.error('[EventsPhase] Cannot reroll - missing event or skill');
-         return;
-      }
+      const { handleRerollWithFame: sharedReroll } = await import('../../../controllers/shared/RerollHelpers');
       
-      // Import shared reroll helpers
-      const { canRerollWithFame, deductFameForReroll, restoreFameAfterFailedReroll } = 
-         await import('../../../controllers/shared/RerollHelpers');
-      
-      // Check if reroll is possible
-      const fameCheck = await canRerollWithFame();
-      if (!fameCheck.canReroll) {
-         ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
-         return;
-      }
-      
-      // Deduct fame
-      const deductResult = await deductFameForReroll();
-      if (!deductResult.success) {
-         ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
-         return;
-      }
-      
-      console.log(`💎 [EventsPhase] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
-      
-      // Reset UI state for new roll
-      showResolutionResult = false;
-      resolutionOutcome = null;
-      outcomeMessage = '';
-      currentEffects = null;
-      pendingEventOutcome = null;
-      outcomeApplied = false;
-      rollBreakdown = null;
-      
-      // Small delay to ensure UI updates
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Trigger new roll with same skill
-      try {
-         await resolveEventWithSkill(selectedSkill);
-      } catch (error) {
-         console.error('[EventsPhase] Error during reroll:', error);
-         
-         // Restore fame on error
-         if (deductResult.previousFame !== undefined) {
-            await restoreFameAfterFailedReroll(deductResult.previousFame);
-         }
-         
-         ui.notifications?.error('Failed to reroll. Fame has been restored.');
-      }
+      await sharedReroll({
+         currentItem: currentEvent,
+         selectedSkill,
+         phaseName: 'EventsPhase',
+         resetUiState: () => {
+            showResolutionResult = false;
+            resolutionOutcome = null;
+            outcomeMessage = '';
+            currentEffects = null;
+            pendingEventOutcome = null;
+            outcomeApplied = false;
+            rollBreakdown = null;
+         },
+         triggerRoll: resolveEventWithSkill
+      });
    }
    
    // Apply the pending changes when user clicks OK
