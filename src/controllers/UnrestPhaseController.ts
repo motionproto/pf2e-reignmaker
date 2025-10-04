@@ -317,7 +317,7 @@ export async function createUnrestPhaseController() {
      */
     async isPhaseComplete(): Promise<boolean> {
       const { TurnManager } = await import('../models/turn-manager');
-      const turnManager = new TurnManager();
+      const turnManager = TurnManager.getInstance();
       return await turnManager.isCurrentPhaseComplete();
     },
 
@@ -405,7 +405,7 @@ export async function createUnrestPhaseController() {
      * Uses shared helper to handle missing outcomes (e.g., criticalSuccess = success)
      */
     getIncidentDisplayData(incident: any) {
-      const { buildPossibleOutcomes } = require('./shared/OutcomeHelpers');
+      const { buildPossibleOutcomes } = require('./shared/PossibleOutcomeHelpers');
       const outcomes = buildPossibleOutcomes(incident.effects);
       return { outcomes };
     },

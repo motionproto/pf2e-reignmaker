@@ -394,7 +394,7 @@
    
    async function buildEventOutcomes(event: EventData): Promise<PossibleOutcome[]> {
       // Use shared helper to handle missing outcomes gracefully
-      const { buildPossibleOutcomes } = await import('../../../controllers/shared/OutcomeHelpers');
+      const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
       return buildPossibleOutcomes(event.effects);
    }
 </script>

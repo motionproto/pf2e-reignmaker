@@ -20,9 +20,12 @@ interface PlayerAction {
 }
 
 /**
- * Central turn and player action coordinator
+ * Central turn and player action coordinator (Singleton)
  */
 export class TurnManager {
+    // Singleton instance
+    private static instance: TurnManager | null = null;
+    
     // Turn progression callbacks for UI updates
     onTurnChanged?: (turn: number) => void;
     onPhaseChanged?: (phase: TurnPhase) => void;
@@ -31,9 +34,26 @@ export class TurnManager {
     // Player action state (in-memory, turn-scoped)
     private playerActions: Map<string, PlayerAction> = new Map();
     
-    constructor() {
-        console.log('[TurnManager] Initialized - central turn and player coordinator');
+    private constructor() {
+        console.log('[TurnManager] Initialized - central turn and player coordinator (singleton)');
         this.initializePlayers();
+    }
+    
+    /**
+     * Get the singleton instance
+     */
+    static getInstance(): TurnManager {
+        if (!TurnManager.instance) {
+            TurnManager.instance = new TurnManager();
+        }
+        return TurnManager.instance;
+    }
+    
+    /**
+     * Reset the singleton instance (for testing/cleanup)
+     */
+    static resetInstance(): void {
+        TurnManager.instance = null;
     }
     
     // === PLAYER ACTION MANAGEMENT ===
@@ -323,16 +343,9 @@ export class TurnManager {
             kingdom.currentPhaseStepIndex = 0;
             kingdom.oncePerTurnActions = [];
             
-            // Decrement modifier durations
-            kingdom.modifiers = kingdom.modifiers.filter((modifier) => {
-                if (typeof modifier.duration === 'number' && modifier.duration > 0) {
-                    const remainingTurns = (modifier as any).remainingTurns || modifier.duration;
-                    const newRemaining = remainingTurns - 1;
-                    (modifier as any).remainingTurns = newRemaining;
-                    return newRemaining > 0;
-                }
-                return true; // Keep permanent and until-resolved modifiers
-            });
+            // Active modifiers are now managed by ModifierService
+            // Duration is handled in the EventModifier format within each modifier's modifiers array
+            // Cleanup is handled by ModifierService.cleanupExpiredModifiers() during Status phase
         });
         
         this.onTurnChanged?.(currentKingdom.currentTurn + 1);

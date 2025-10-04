@@ -275,34 +275,10 @@ export async function createEventPhaseController(_eventService?: any) {
                 }
                 
                 // Complete steps 1 & 2 (resolve-event & apply-modifiers)
+                // Using singleton TurnManager ensures consistent state without timing workarounds
                 console.log('[EventPhaseController] Marking steps 1 & 2 as complete...');
                 await completePhaseStepByIndex(1);
                 await completePhaseStepByIndex(2);
-                
-                // Wait for actor updates to propagate
-                await new Promise(resolve => setTimeout(resolve, 50));
-                
-                // Verify steps are actually marked complete (handles reroll edge cases)
-                const step1Complete = await isStepCompletedByIndex(1);
-                const step2Complete = await isStepCompletedByIndex(2);
-                
-                if (!step1Complete || !step2Complete) {
-                    console.warn('⚠️ [EventPhaseController] Steps not marked complete after first attempt, retrying...');
-                    
-                    // Force-complete if verification fails
-                    if (!step1Complete) {
-                        console.log('[EventPhaseController] Force-completing step 1...');
-                        await completePhaseStepByIndex(1);
-                    }
-                    
-                    if (!step2Complete) {
-                        console.log('[EventPhaseController] Force-completing step 2...');
-                        await completePhaseStepByIndex(2);
-                    }
-                    
-                    // Wait again for updates
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
                 
                 console.log('✅ [EventPhaseController] Event resolution & modifier application completed');
                 

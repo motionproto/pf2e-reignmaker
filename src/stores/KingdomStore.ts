@@ -35,14 +35,11 @@ export const expandedSections = writable<Set<string>>(new Set());
 // Initialization state - components can wait for this to be true
 export const isInitialized = writable<boolean>(false);
 
-// Turn management - simple instance, no store wrapper needed
-let turnManagerInstance: TurnManager | null = null;
-
 /**
- * Get the TurnManager instance
+ * Get the TurnManager singleton instance
  */
-export function getTurnManager(): TurnManager | null {
-  return turnManagerInstance;
+export function getTurnManager(): TurnManager {
+  return TurnManager.getInstance();
 }
 
 /**
@@ -67,10 +64,10 @@ export function initializeKingdomActor(actor: KingdomActor): void {
  * Initialize TurnManager - simplified for new phase architecture
  */
 function initializeTurnManager(): void {
-  // Create TurnManager directly - no store needed, just a simple instance
-  turnManagerInstance = new TurnManager();
+  // Get singleton instance - will create if doesn't exist
+  const turnManager = TurnManager.getInstance();
   
-  console.log('✅ [KingdomActor Store] TurnManager initialized - phases are self-executing');
+  console.log('✅ [KingdomActor Store] TurnManager singleton ready - phases are self-executing');
 }
 
 /**
@@ -120,15 +117,11 @@ export async function updateKingdom(updater: (kingdom: KingdomData) => void): Pr
  */
 
 export async function advancePhase(): Promise<void> {
-  // Use TurnManager for phase advancement
+  // Use TurnManager singleton for phase advancement
   try {
-    if (turnManagerInstance) {
-      await turnManagerInstance.nextPhase();
-      console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
-    } else {
-      console.warn('[KingdomActor Store] No TurnManager available - cannot advance phase');
-      return;
-    }
+    const turnManager = getTurnManager();
+    await turnManager.nextPhase();
+    console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
     
     // Update viewing phase to match new current phase
     const actor = get(kingdomActor);
