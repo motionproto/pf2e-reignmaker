@@ -32,6 +32,9 @@ export async function createStatusPhaseController() {
         // Set Fame to 1 (initial condition for each turn)
         await this.initializeFame();
         
+        // Apply permanent modifiers from structures
+        await this.applyPermanentModifiers();
+        
         // Auto-complete the single step immediately
         await completePhaseStepByIndex(0);
         
@@ -82,6 +85,64 @@ export async function createStatusPhaseController() {
           kingdom.fame = 1;
         });
         console.log('✨ [StatusPhaseController] Fame initialized to 1');
+      }
+    },
+
+    /**
+     * Apply permanent modifiers from structures
+     * 
+     * Permanent modifiers come from built structures and are applied each turn.
+     * This is different from immediate/ongoing/turn-based modifiers from events/incidents.
+     */
+    async applyPermanentModifiers() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      // Get active modifiers with permanent duration
+      const kingdom = actor.getKingdom();
+      if (!kingdom) {
+        console.error('❌ [StatusPhaseController] No kingdom data available');
+        return;
+      }
+
+      const permanentModifiers = (kingdom.activeModifiers || []).filter(
+        (mod: any) => mod.modifiers?.some((m: any) => m.duration === 'permanent')
+      );
+
+      if (permanentModifiers.length === 0) {
+        return;
+      }
+
+      console.log(`🏛️ [StatusPhaseController] Applying ${permanentModifiers.length} permanent modifiers`);
+
+      // Apply each permanent modifier's effects
+      for (const modifier of permanentModifiers) {
+        for (const mod of modifier.modifiers || []) {
+          if (mod.duration === 'permanent') {
+            const resource = mod.resource;
+            const value = typeof mod.value === 'string' ? parseInt(mod.value, 10) : mod.value;
+            
+            if (isNaN(value)) {
+              console.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${mod.value}`);
+              continue;
+            }
+
+            await actor.updateKingdom((kingdom) => {
+              if (!kingdom.resources) {
+                kingdom.resources = {};
+              }
+
+              const currentValue = kingdom.resources[resource] || 0;
+              const newValue = Math.max(0, currentValue + value);
+              kingdom.resources[resource] = newValue;
+
+              console.log(`  ✓ ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+            });
+          }
+        }
       }
     }
   };

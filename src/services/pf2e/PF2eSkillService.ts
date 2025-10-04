@@ -172,14 +172,14 @@ export class PF2eSkillService {
     
     // Add unrest penalty if applicable
     const unrest = currentKingdomState?.unrest || 0;
-    if (unrest >= 5) {
+    if (unrest >= 3) {
       let penalty = 0;
-      if (unrest >= 15) {
-        penalty = -4; // Rebellion
-      } else if (unrest >= 10) {
-        penalty = -2; // Unrest
-      } else if (unrest >= 5) {
+      if (unrest >= 3 && unrest <= 5) {
         penalty = -1; // Discontent
+      } else if (unrest >= 6 && unrest <= 8) {
+        penalty = -2; // Turmoil
+      } else if (unrest >= 9) {
+        penalty = -3; // Rebellion (capped at -3)
       }
       
       if (penalty < 0) {

@@ -231,32 +231,55 @@ export function detectResourceArrayModifiers(modifiers: any[] | undefined): any[
 }
 
 /**
- * Compute display state changes by merging base changes with resource selections
+ * Detect modifiers with dice formula values (requiring player to roll)
+ */
+export function detectDiceModifiers(modifiers: any[] | undefined): any[] {
+  if (!modifiers) return [];
+  return modifiers
+    .map((m, index) => ({ ...m, originalIndex: index }))
+    .filter(m => typeof m.value === 'string' && DICE_PATTERN.test(m.value));
+}
+
+/**
+ * Compute display state changes by merging base changes with resource selections and dice rolls
  */
 export function computeDisplayStateChanges(
   baseStateChanges: Record<string, any> | undefined,
   choiceResult: { stateChanges: Record<string, any> } | null,
   resourceArrayModifiers: any[],
   selectedResources: Map<number, string>,
-  resourceArraysResolved: boolean
+  resourceArraysResolved: boolean,
+  diceModifiers?: any[],
+  resolvedDice?: Map<number, number>
 ): Record<string, any> | undefined {
   // If we have a choice result, use it exclusively
   if (choiceResult) {
     return choiceResult.stateChanges;
   }
   
-  // If we have resource array selections, merge them with base state changes
+  // Start with base state changes
+  let result = baseStateChanges ? { ...baseStateChanges } : {};
+  
+  // Merge resource array selections
   if (resourceArrayModifiers.length > 0 && resourceArraysResolved) {
-    const merged = { ...(baseStateChanges || {}) };
     resourceArrayModifiers.forEach((modifier, idx) => {
       const selectedResource = selectedResources.get(idx);
       if (selectedResource) {
-        merged[selectedResource] = (merged[selectedResource] || 0) + modifier.value;
+        result[selectedResource] = (result[selectedResource] || 0) + modifier.value;
       }
     });
-    return merged;
   }
   
-  // Otherwise, return base state changes
-  return baseStateChanges;
+  // Merge resolved dice rolls
+  if (diceModifiers && diceModifiers.length > 0 && resolvedDice) {
+    diceModifiers.forEach((modifier) => {
+      const rolledValue = resolvedDice.get(modifier.originalIndex);
+      if (rolledValue !== undefined) {
+        result[modifier.resource] = (result[modifier.resource] || 0) + rolledValue;
+      }
+    });
+  }
+  
+  // Return undefined if empty, otherwise return the merged result
+  return Object.keys(result).length > 0 ? result : undefined;
 }

@@ -10,7 +10,7 @@
    // Import UI components
    import SkillTag from '../../kingdom/components/SkillTag.svelte';
    import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
-   import OutcomeDisplay from '../components/OutcomeDisplay.svelte';
+   import OutcomeDisplay from '../components/OutcomeDisplay/OutcomeDisplay.svelte';
    
    // UI State only - no business logic
    let phaseExecuting = false;

@@ -18,7 +18,7 @@
    import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
    import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
    import SkillTag from '../components/SkillTag.svelte';
-   import OutcomeDisplay from '../components/OutcomeDisplay.svelte';
+   import OutcomeDisplay from '../components/OutcomeDisplay/OutcomeDisplay.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import { 
       performKingdomSkillCheck,

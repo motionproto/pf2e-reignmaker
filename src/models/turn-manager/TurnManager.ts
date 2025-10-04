@@ -412,26 +412,6 @@ export class TurnManager {
     }
     
     /**
-     * Get unrest penalty for kingdom checks
-     */
-    async getUnrestPenalty(): Promise<number> {
-        const { kingdomData } = await import('../../stores/KingdomStore');
-        const { get } = await import('svelte/store');
-        const currentKingdom = get(kingdomData);
-        const unrest = currentKingdom.unrest;
-        
-        if (unrest >= 0 && unrest <= 2) {
-            return 0;
-        } else if (unrest >= 3 && unrest <= 5) {
-            return -1;
-        } else if (unrest >= 6 && unrest <= 8) {
-            return -2;
-        } else {
-            return -3;
-        }
-    }
-    
-    /**
      * Spend fame to reroll
      */
     async spendFameForReroll(): Promise<boolean> {

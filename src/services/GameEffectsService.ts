@@ -116,6 +116,12 @@ export async function createGameEffectsService() {
 
     /**
      * Apply a single modifier
+     * 
+     * Application rules:
+     * - immediate: Apply once, right now
+     * - permanent: Only applied during Status phase (structures only)
+     * - turns: Apply immediately + track for continued application each turn
+     * - ongoing: Apply immediately + track for continued application each turn
      */
     async applyModifier(
       modifier: EventModifier,
@@ -124,14 +130,41 @@ export async function createGameEffectsService() {
     ): Promise<void> {
       const { resource, value, duration } = modifier;
 
-      // Only apply immediate and permanent effects here
-      // Ongoing effects are handled by ModifierService during Status phase
-      if (duration === 'immediate' || duration === 'permanent') {
-        await this.applyResourceChange(resource, value, modifier.name, result);
-      } else if (duration === 'turns') {
-        // Turn-based modifiers are applied immediately but tracked for cleanup
-        await this.applyResourceChange(resource, value, modifier.name, result);
+      // Apply all modifiers EXCEPT permanent immediately
+      // Permanent modifiers are only applied during Status phase (for structures)
+      if (duration !== 'permanent') {
+        // Convert dice formula strings to numbers if needed (for now, evaluate simple formulas)
+        const numericValue = typeof value === 'string' ? this.evaluateDiceFormula(value) : value;
+        const modifierLabel = `${params.sourceName} (${params.outcome})`;
+        await this.applyResourceChange(resource, numericValue, modifierLabel, result);
+      } else {
+        console.log(`⏭️ [GameEffects] Skipping permanent modifier (applied during Status phase): ${resource}`);
       }
+      
+      // Note: Ongoing/turn-based modifiers are also added to activeModifiers
+      // by the controller (not here) for continued tracking and application
+    },
+
+    /**
+     * Evaluate dice formula (simple implementation for now)
+     * TODO: Integrate with Foundry VTT's dice roller
+     */
+    evaluateDiceFormula(formula: string): number {
+      // For now, just parse simple dice formulas like "1d4" or return 0
+      const match = formula.match(/^(\d+)d(\d+)$/);
+      if (match) {
+        const [, numDice, diceSides] = match.map(Number);
+        // Roll the dice (simple random)
+        let total = 0;
+        for (let i = 0; i < numDice; i++) {
+          total += Math.floor(Math.random() * diceSides) + 1;
+        }
+        console.log(`🎲 [GameEffects] Rolled ${formula}: ${total}`);
+        return total;
+      }
+      // If it's not a dice formula, try parsing as a number
+      const num = parseInt(formula, 10);
+      return isNaN(num) ? 0 : num;
     },
 
     /**

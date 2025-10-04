@@ -7,10 +7,10 @@
   } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
   import { PlayerActionsData } from "../../../models/PlayerActions";
-  import CheckCard from "../../kingdom/components/CheckCard.svelte";
+  import CheckCard from "../../kingdom/components/CheckCard/CheckCard.svelte";
   import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
-  import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog.svelte";
+  import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,
