@@ -37,13 +37,16 @@ export interface UnresolvedEvent {
 
 /**
  * Event representation from the JSON data (simplified structure)
+ * This should match KingdomEvent from types/events.ts
  */
 export interface EventData {
     id: string;
+    name: string;
     tier: 'event' | 'minor' | 'moderate' | 'major' | number;
     description: string;
     skills?: EventSkill[];
     effects: EventEffects;
+    ifUnresolved?: UnresolvedEvent;
 }
 
 /**
@@ -283,16 +286,10 @@ export class EventService {
         for (const [key, resource] of Object.entries(resourceMappings)) {
             if (effects[key] !== undefined && effects[key] !== 0) {
                 const modifier: EventModifier = {
-                    name: `${key} modifier`,
                     resource: resource,
                     value: effects[key],
-                    duration: typeof duration === 'number' ? 'turns' : (duration as any)
+                    duration: duration as any  // ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | number
                 };
-                
-                // Add turns field only if duration is 'turns'
-                if (modifier.duration === 'turns' && typeof duration === 'number') {
-                    modifier.turns = duration;
-                }
                 
                 modifiers.push(modifier);
             }

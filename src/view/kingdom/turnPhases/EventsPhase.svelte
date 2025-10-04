@@ -257,6 +257,8 @@
          const effects = currentEvent.effects?.failure;
          const previewEffects = new Map<string, any>();
          
+         console.log('[EventsPhase] ignoreEvent() - failure modifiers:', effects?.modifiers);
+         
          if (effects && effects.modifiers) {
             // Parse modifiers array to extract resource changes
             for (const modifier of effects.modifiers) {
@@ -264,6 +266,8 @@
                // Skip modifiers with resource arrays (they require player choice)
                if (!Array.isArray(modifier.resource)) {
                   previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
+               } else {
+                  console.log('[EventsPhase] Skipping resource array modifier - requires user selection:', modifier);
                }
             }
          }
@@ -276,7 +280,13 @@
          };
          
          currentEffects = Object.fromEntries(previewEffects);
-         outcomeMessage = currentEvent.effects?.failure?.msg || `Event "${currentEvent.name}" was ignored - failure effects applied`;
+         
+         // Import the display name helper
+         const { getEventDisplayName } = await import('../../../types/event-helpers');
+         const eventName = getEventDisplayName(currentEvent);
+         outcomeMessage = currentEvent.effects?.failure?.msg || `Event "${eventName}" was ignored - failure effects applied`;
+         
+         console.log('[EventsPhase] Setting resolutionOutcome to failure, modifiers will be:', currentEvent.effects?.failure?.modifiers);
          
          // Show resolution result
          resolutionOutcome = 'failure';

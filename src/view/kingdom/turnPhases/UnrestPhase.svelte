@@ -115,33 +115,36 @@
          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
          const controller = await createUnrestPhaseController();
          
-         console.log('🎮 [UnrestPhase] Controller created, calling checkForIncidents...');
-         
-         // Call the manual incident check method that completes the step
-         const result = await controller.checkForIncidents();
-         
-         console.log('🎲 [UnrestPhase] Incident check result:', result);
-         
-         // Store roll results for display
-         incidentCheckRoll = result.roll || 0;
-         incidentCheckDC = result.chance || 0;
-         incidentCheckChance = result.chance || 0;
-         
-         // Force trigger reactivity by setting to false first, then true
-         showIncidentResult = false;
-         await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure reactivity
-         
-         // The controller already handles setting the incident ID, we just need to log it
-         if (result.incidentTriggered) {
-            console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
-         } else {
-            console.log('✅ [UnrestPhase] No incident occurred');
-            // Controller already cleared the incident ID (no need for component to do it)
-         }
-         
-         // Now show the result section
-         showIncidentResult = true;
-         console.log('👁️ [UnrestPhase] showIncidentResult set to true');
+      console.log('🎮 [UnrestPhase] Controller created, calling checkForIncidents...');
+      
+      // Call the manual incident check method that completes the step
+      const result = await controller.checkForIncidents();
+      
+      console.log('🎲 [UnrestPhase] Incident check result:', result);
+      
+      // Store roll results for display
+      incidentCheckRoll = result.roll || 0;
+      incidentCheckDC = result.chance || 0;
+      incidentCheckChance = result.chance || 0;
+      
+      // Force trigger reactivity by setting to false first, then true
+      showIncidentResult = false;
+      await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure reactivity
+      
+      // The controller already handles setting the incident ID, now explicitly load it
+      if (result.incidentTriggered && result.incidentId) {
+         console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
+         // Explicitly load the incident before showing results
+         await loadIncident(result.incidentId);
+      } else {
+         console.log('✅ [UnrestPhase] No incident occurred');
+         // Ensure incident is cleared
+         currentIncident = null;
+      }
+      
+      // Now show the result section (after incident is loaded)
+      showIncidentResult = true;
+      console.log('👁️ [UnrestPhase] showIncidentResult set to true, currentIncident:', currentIncident?.name || 'null');
          
       } catch (error) {
          console.error('❌ [UnrestPhase] Error rolling for incident:', error);

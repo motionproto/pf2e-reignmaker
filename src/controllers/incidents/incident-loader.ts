@@ -1,4 +1,4 @@
-import type { KingdomIncident, EventSkill, EventOutcome } from './incident-types';
+import type { KingdomIncident, EventSkill, EventOutcome } from '../../types/incidents';
 import incidentsData from '../../../dist/incidents.json';
 
 /**
@@ -58,8 +58,7 @@ export class IncidentLoader {
                 id: raw.id,
                 name: raw.name,
                 description: raw.description,
-                tier: parseInt(raw.tier) || 1,
-                traits: [],
+                tier: raw.tier as 'minor' | 'moderate' | 'major', // Use tier from JSON (lowercase)
                 skills: raw.skills,
                 effects: {
                     criticalSuccess: raw.effects.criticalSuccess ? {
@@ -82,8 +81,7 @@ export class IncidentLoader {
                         endsEvent: true,
                         modifiers: raw.effects.criticalFailure.modifiers || []
                     } : undefined,
-                },
-                severity: raw.tier as 'MINOR' | 'MODERATE' | 'MAJOR'
+                }
             }));
             
             // Add all incidents to the map
@@ -136,12 +134,11 @@ export class IncidentLoader {
     }
 
     /**
-     * Get all incidents for a specific severity level
+     * Get all incidents for a specific tier level
      */
-    getIncidentsBySeverity(severity: 'minor' | 'moderate' | 'major'): KingdomIncident[] {
-        const upperSeverity = severity.toUpperCase() as 'MINOR' | 'MODERATE' | 'MAJOR';
+    getIncidentsBySeverity(tier: 'minor' | 'moderate' | 'major'): KingdomIncident[] {
         return Array.from(this.incidents.values()).filter(
-            incident => incident.severity === upperSeverity
+            incident => incident.tier === tier
         );
     }
 
@@ -196,14 +193,14 @@ export class IncidentLoader {
     }
 
     /**
-     * Get incident counts by severity (for debugging)
+     * Get incident counts by tier (for debugging)
      */
     getIncidentCountsBySeverity(): Record<string, number> {
-        const counts: Record<string, number> = { MINOR: 0, MODERATE: 0, MAJOR: 0 };
+        const counts: Record<string, number> = { minor: 0, moderate: 0, major: 0 };
         
         for (const incident of this.incidents.values()) {
-            if (incident.severity) {
-                counts[incident.severity] = (counts[incident.severity] || 0) + 1;
+            if (incident.tier) {
+                counts[incident.tier] = (counts[incident.tier] || 0) + 1;
             }
         }
         

@@ -141,27 +141,18 @@ export class PF2eRollService {
       
       // Extract roll breakdown from PF2e message flags
       const d20Result = roll.dice[0]?.results[0]?.result || 0;
-      const modifiers = message.flags.pf2e.context.modifiers || [];
-      
-      console.log('📊 [PF2eRollService] Raw PF2e data:', {
-        d20Result,
-        total: roll.total,
-        dc,
-        rawModifiers: modifiers
-      });
+      const modifiers = message.flags.pf2e.modifiers || [];
       
       const rollBreakdown = {
         d20Result,
         total: roll.total,
         dc,
         modifiers: modifiers.map((m: any) => ({
-          label: m.label || m.name || 'Modifier',
-          modifier: m.modifier || m.value || 0,
+          label: m.label || 'Modifier',
+          modifier: m.modifier || 0,
           enabled: m.enabled !== false
         }))
       };
-      
-      console.log('📊 [PF2eRollService] Formatted roll breakdown:', rollBreakdown);
       console.log(`🎲 [PF2eRollService] Parsed outcome: ${outcome} for ${pendingCheck.checkId}, dispatching ${pendingCheck.checkType} event...`);
       
       // Dispatch a custom event with the roll result
