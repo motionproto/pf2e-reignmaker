@@ -72,5 +72,8 @@
       ],
       "endsEvent": false
     }
-  }
+  },
+  "traits": [
+    "dangerous"
+  ]
 }

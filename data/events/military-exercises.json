@@ -55,5 +55,8 @@
       ],
       "endsEvent": false
     }
-  }
+  },
+  "traits": [
+    "beneficial"
+  ]
 }

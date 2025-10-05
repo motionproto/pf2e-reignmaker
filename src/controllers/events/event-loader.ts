@@ -1,5 +1,5 @@
 import type { ActiveModifier } from '../../models/Modifiers';
-import type { EventSkill, EventOutcome, EventModifier, EventEffects } from '../../types/events';
+import type { EventSkill, EventOutcome, EventModifier, EventEffects, EventTrait } from '../../types/events';
 import { getEventDisplayName } from '../../types/event-helpers';
 import eventsData from '../../../dist/events.json';
 
@@ -8,8 +8,8 @@ import eventsData from '../../../dist/events.json';
  * Unresolved event configuration (cleaned up - no legacy severity/escalation/priority)
  */
 export interface UnresolvedEvent {
-    type: 'continuous' | 'auto-resolve' | 'expires';
-    continuous?: {
+    type: 'ongoing' | 'auto-resolve' | 'expires';
+    ongoing?: {
         becomesModifier: boolean;
         modifierTemplate?: {
             name: string;
@@ -46,7 +46,8 @@ export interface EventData {
     description: string;
     skills?: EventSkill[];
     effects: EventEffects;
-    ifUnresolved?: UnresolvedEvent;
+    traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
+    ifUnresolved?: UnresolvedEvent;  // DEPRECATED: kept for backward compatibility
 }
 
 /**
@@ -190,10 +191,10 @@ export class EventService {
         const unresolved = event.ifUnresolved;
 
         switch (unresolved.type) {
-            case 'continuous':
+            case 'ongoing':
                 // Event becomes a modifier until resolved
-                if (unresolved.continuous?.becomesModifier && unresolved.continuous.modifierTemplate) {
-                    return this.createModifierFromEvent(event, unresolved.continuous.modifierTemplate, currentTurn);
+                if (unresolved.ongoing?.becomesModifier && unresolved.ongoing.modifierTemplate) {
+                    return this.createModifierFromEvent(event, unresolved.ongoing.modifierTemplate, currentTurn);
                 }
                 break;
 

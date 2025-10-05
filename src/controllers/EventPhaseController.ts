@@ -206,7 +206,8 @@ export async function createEventPhaseController(_eventService?: any) {
             event: EventData,
             outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
             kingdomData: KingdomData,
-            currentTurn: number
+            currentTurn: number,
+            preRolledValues?: Map<number, number>
         ): Promise<{
             success: boolean;
             effects: Map<string, any>;
@@ -229,7 +230,8 @@ export async function createEventPhaseController(_eventService?: any) {
                     sourceName: getEventDisplayName(event),
                     outcome: outcome,
                     modifiers: effectOutcome.modifiers || [],
-                    createOngoingModifier: false // Handle separately below
+                    createOngoingModifier: false, // Handle separately below
+                    preRolledValues: preRolledValues // Pass through pre-rolled values from UI
                 });
                 
                 if (!result.success) {
@@ -277,10 +279,26 @@ export async function createEventPhaseController(_eventService?: any) {
                 // Complete steps 1 & 2 (resolve-event & apply-modifiers)
                 // Using singleton TurnManager ensures consistent state without timing workarounds
                 console.log('[EventPhaseController] Marking steps 1 & 2 as complete...');
-                await completePhaseStepByIndex(1);
-                await completePhaseStepByIndex(2);
                 
-                console.log('✅ [EventPhaseController] Event resolution & modifier application completed');
+                const step1Result = await completePhaseStepByIndex(1);
+                console.log('[EventPhaseController] Step 1 completion result:', step1Result);
+                
+                const step2Result = await completePhaseStepByIndex(2);
+                console.log('[EventPhaseController] Step 2 completion result:', step2Result);
+                
+                // Verify phase completion
+                const phaseComplete = await this.isCurrentPhaseComplete();
+                console.log(`[EventPhaseController] Phase complete status: ${phaseComplete}`);
+                
+                if (!phaseComplete) {
+                    console.warn('⚠️ [EventPhaseController] Steps marked complete but phase not complete! Checking state...');
+                    const { kingdomData } = await import('../stores/KingdomStore');
+                    const { get } = await import('svelte/store');
+                    const kingdom = get(kingdomData);
+                    console.log('[EventPhaseController] Current phase steps:', kingdom.currentPhaseSteps);
+                } else {
+                    console.log('✅ [EventPhaseController] Event resolution & modifier application completed - phase is complete');
+                }
                 
                 return {
                     success: true,
@@ -461,6 +479,23 @@ export async function createEventPhaseController(_eventService?: any) {
          */
         clearUnresolvedEvent(): void {
             state.unresolvedEvent = null;
+        },
+        
+        /**
+         * Check if current phase is complete
+         */
+        async isCurrentPhaseComplete(): Promise<boolean> {
+            const { kingdomData } = await import('../stores/KingdomStore');
+            const { get } = await import('svelte/store');
+            const kingdom = get(kingdomData);
+            if (!kingdom) return false;
+
+            const totalSteps = kingdom.currentPhaseSteps.length;
+            const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+            const allComplete = totalSteps > 0 && completedCount === totalSteps;
+
+            console.log(`[EventPhaseController] Phase ${kingdom.currentPhase} completion: ${completedCount}/${totalSteps} steps`);
+            return allComplete;
         }
     };
 }

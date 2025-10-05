@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import SkillTag from '../../SkillTag.svelte';
+  import SkillTag from './SkillTag.svelte';
   
   export let skills: Array<{ skill: string; description?: string }> = [];
   export let skillSectionTitle: string = 'Choose Skill:';

@@ -6,7 +6,8 @@
  * resource changes, and modifier creation.
  */
 
-import type { KingdomIncident, EventOutcome , getIncidentDisplayName } from '../../types/incidents';
+import type { KingdomIncident, EventOutcome } from '../../types/incidents';
+import { getIncidentDisplayName } from '../../types/incidents';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActiveModifier } from '../../models/Modifiers';
 import {
@@ -31,7 +32,8 @@ export class IncidentResolver {
   applyIncidentOutcome(
     incident: KingdomIncident,
     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-    currentTurn: number = 0
+    currentTurn: number = 0,
+    currentState?: KingdomData
   ): IncidentResolutionResult {
     let unresolvedModifier: ActiveModifier | undefined;
     
@@ -49,14 +51,25 @@ export class IncidentResolver {
       ? aggregateResourceChanges(effect.modifiers)
       : new Map<string, number>();
     
-    // Handle unresolved incidents (create continuous modifier)
-    if ((outcome === 'failure' || outcome === 'criticalFailure') && incident.ifUnresolved) {
-      unresolvedModifier = this.createUnresolvedModifier(incident, currentTurn);
+    let message = effect.msg;
+    
+    // Check for resource shortage if we have current state
+    if (currentState) {
+      const { hadShortage } = prepareStateChanges(currentState, resourceChanges);
+      if (hadShortage) {
+        // Add shortage penalty
+        const currentUnrest = resourceChanges.get('unrest') || 0;
+        resourceChanges.set('unrest', currentUnrest + 1);
+        message += '\nYou gained 1 unrest from shortage.';
+      }
     }
+    
+    // Note: Incidents don't currently have ifUnresolved modifiers in their structure
+    // They apply their effects immediately and don't persist
     
     return { 
       outcome,
-      message: effect.msg,
+      message,
       resourceChanges,
       unresolvedModifier 
     };
@@ -77,23 +90,6 @@ export class IncidentResolver {
     return aggregateResourceChanges(effect.modifiers);
   }
 
-  /**
-   * Create an unresolved modifier from an incident
-   */
-  createUnresolvedModifier(incident: KingdomIncident, currentTurn: number): ActiveModifier {
-    if (!incident.ifUnresolved) {
-      throw new Error('Incident does not have unresolved configuration');
-    }
-    
-    // Use shared utility for modifier creation
-    return createUnresolvedModifierShared(
-      incident.ifUnresolved,
-      'incident',
-      incident.id,
-      getIncidentDisplayName(incident),
-      currentTurn
-    );
-  }
 
   /**
    * Check if an incident can be resolved with a specific skill
@@ -119,7 +115,8 @@ export class IncidentResolver {
     resourceChanges: Map<string, number>
   ): Partial<KingdomData> {
     // Use shared state preparation utility
-    return prepareStateChanges(currentState, resourceChanges);
+    const { updates } = prepareStateChanges(currentState, resourceChanges);
+    return updates;
   }
 }
 

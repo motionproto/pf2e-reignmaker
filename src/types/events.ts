@@ -36,7 +36,9 @@ export type KingdomSkill =
  * Event trait types
  */
 export type EventTrait = 
-;
+  | "beneficial"
+  | "dangerous"
+  | "ongoing";
 
 /**
  * Modifier selector types (what the modifier affects)
@@ -105,6 +107,7 @@ export interface KingdomEvent {
   description: string;
   skills?: EventSkill[];
   effects: EventEffects;
+  traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
 }
 
 /**

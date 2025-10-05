@@ -220,7 +220,8 @@ export async function createUnrestPhaseController() {
      */
     async resolveIncident(
       incidentId: string, 
-      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+      preRolledValues?: Map<number, number>
     ) {
       const actor = getKingdomActor();
       if (!actor) {
@@ -256,7 +257,8 @@ export async function createUnrestPhaseController() {
           sourceName: getIncidentDisplayName(incident),
           outcome: outcome,
           modifiers: effectOutcome.modifiers || [],
-          createOngoingModifier: false // Handle separately below
+          createOngoingModifier: false, // Handle separately below
+          preRolledValues: preRolledValues // Pass through pre-rolled values from UI
         });
 
         if (!result.success) {
@@ -404,8 +406,8 @@ export async function createUnrestPhaseController() {
      * Get formatted incident display data for UI
      * Uses shared helper to handle missing outcomes (e.g., criticalSuccess = success)
      */
-    getIncidentDisplayData(incident: any) {
-      const { buildPossibleOutcomes } = require('./shared/PossibleOutcomeHelpers');
+    async getIncidentDisplayData(incident: any) {
+      const { buildPossibleOutcomes } = await import('./shared/PossibleOutcomeHelpers');
       const outcomes = buildPossibleOutcomes(incident.effects);
       return { outcomes };
     },
@@ -418,29 +420,66 @@ export async function createUnrestPhaseController() {
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
       actorName: string
     ) {
+      const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+      
       let effect = '';
+      let effectOutcome = null;
       
       switch (outcome) {
         case 'criticalSuccess':
-          effect = 'Critical Success! The incident is resolved favorably.';
+          // For incidents, critical success uses success message (fallback pattern)
+          effectOutcome = incident.effects?.success;
+          effect = effectOutcome?.msg || 'Critical Success! The incident is resolved favorably.';
           break;
         case 'success':
-          effect = incident.effects?.success?.msg || 'Success';
+          effectOutcome = incident.effects?.success;
+          effect = effectOutcome?.msg || 'Success';
           break;
         case 'failure':
-          effect = incident.effects?.failure?.msg || 'Failure';
+          effectOutcome = incident.effects?.failure;
+          effect = effectOutcome?.msg || 'Failure';
           break;
         case 'criticalFailure':
-          effect = incident.effects?.criticalFailure?.msg || 'Critical Failure';
+          effectOutcome = incident.effects?.criticalFailure;
+          effect = effectOutcome?.msg || 'Critical Failure';
           break;
         default:
           effect = 'Unknown outcome';
       }
       
+      // Inline the state changes calculation to avoid import issues
+      // (extracted from shared/OutcomeHelpers.ts)
+      // IMPORTANT: Preserves dice formulas for dice roller UI
+      const modifiers = effectOutcome?.modifiers;
+      const stateChanges: Record<string, any> = {};
+      
+      if (modifiers && modifiers.length > 0) {
+        const changes = new Map<string, any>();
+        
+        for (const modifier of modifiers) {
+          // Skip modifiers with resource arrays (they require player choice)
+          if (!Array.isArray(modifier.resource)) {
+            const value = modifier.value;
+            
+            // Check if value is a dice formula
+            if (typeof value === 'string' && DICE_PATTERN.test(value)) {
+              // Preserve dice formulas as strings for dice roller UI
+              changes.set(modifier.resource, value);
+            } else {
+              // Aggregate numeric values
+              const currentValue = changes.get(modifier.resource) || 0;
+              changes.set(modifier.resource, currentValue + value);
+            }
+          }
+        }
+        
+        Object.assign(stateChanges, Object.fromEntries(changes));
+      }
+      
       return {
         effect,
         actorName,
-        stateChanges: {}
+        stateChanges
       };
     }
   };

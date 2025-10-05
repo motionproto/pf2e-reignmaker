@@ -241,6 +241,18 @@ export function detectDiceModifiers(modifiers: any[] | undefined): any[] {
 }
 
 /**
+ * Detect dice formulas in stateChanges (requiring player to roll)
+ * Returns array of { key: string, formula: string } objects
+ */
+export function detectStateChangeDice(stateChanges: Record<string, any> | undefined): { key: string; formula: string }[] {
+  if (!stateChanges) return [];
+  
+  return Object.entries(stateChanges)
+    .filter(([_, value]) => typeof value === 'string' && DICE_PATTERN.test(value))
+    .map(([key, formula]) => ({ key, formula }));
+}
+
+/**
  * Compute display state changes by merging base changes with resource selections and dice rolls
  */
 export function computeDisplayStateChanges(
@@ -250,7 +262,7 @@ export function computeDisplayStateChanges(
   selectedResources: Map<number, string>,
   resourceArraysResolved: boolean,
   diceModifiers?: any[],
-  resolvedDice?: Map<number, number>
+  resolvedDice?: Map<number | string, number>
 ): Record<string, any> | undefined {
   // If we have a choice result, use it exclusively
   if (choiceResult) {

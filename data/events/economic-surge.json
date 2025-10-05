@@ -56,5 +56,9 @@
       ],
       "endsEvent": true
     }
-  }
+  },
+  "traits": [
+    "beneficial",
+    "ongoing"
+  ]
 }

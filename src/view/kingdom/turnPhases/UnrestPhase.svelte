@@ -8,25 +8,18 @@
    export let isViewingCurrentPhase: boolean = true;
    
    // Import UI components
-   import SkillTag from '../../kingdom/components/SkillTag.svelte';
-   import PossibleOutcomes from '../../kingdom/components/PossibleOutcomes.svelte';
-   import OutcomeDisplay from '../components/OutcomeDisplay/OutcomeDisplay.svelte';
+   import CheckCard from '../components/CheckCard.svelte';
+   import DebugEventSelector from '../components/DebugEventSelector.svelte';
    
    // UI State only - no business logic
    let phaseExecuting = false;
    let showIncidentResult = false;
-   let selectedSkill = '';
    let isRolling = false;
-   let incidentResolved = false;
-   let resolutionApplied = false; // Track if resolution has been applied
-   let rollOutcome: string = '';
-   let rollActor: string = '';
-   let rollEffect: string = '';
-   let rollStateChanges: any = {};
-   let rollBreakdown: any = null;
    let incidentCheckRoll: number = 0;
    let incidentCheckDC: number = 0;
    let incidentCheckChance: number = 0;
+   let unrestPhaseController: any;
+   let possibleOutcomes: any[] = [];
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -48,12 +41,20 @@
    // Current incident from kingdom data - get real incident
    let currentIncident: any = null;
    
-   // Load incident when incident ID changes, but preserve it if already resolved
-   $: if ($kingdomData.currentIncidentId && !incidentResolved) {
-      loadIncident($kingdomData.currentIncidentId);
-   } else if (!$kingdomData.currentIncidentId && !incidentResolved) {
-      currentIncident = null;
+   // Track the last loaded incident ID to prevent unnecessary reloads
+   let lastLoadedIncidentId: string | null = null;
+   
+   // Load incident when incident ID changes
+   $: if ($kingdomData.currentIncidentId) {
+      // Only reload if the incident ID actually changed
+      if ($kingdomData.currentIncidentId !== lastLoadedIncidentId) {
+         loadIncident($kingdomData.currentIncidentId);
+         lastLoadedIncidentId = $kingdomData.currentIncidentId;
+      }
    }
+   // NOTE: We do NOT clear currentIncident when currentIncidentId becomes null
+   // This is because the incident ID is cleared after resolution, but we want to
+   // preserve the incident display so the user can still see what was resolved
    
    async function loadIncident(incidentId: string) {
       try {
@@ -75,18 +76,23 @@
       }
    }
    
+   // Build possible outcomes for the incident
+   $: if (currentIncident) {
+      (async () => {
+         const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
+         possibleOutcomes = buildPossibleOutcomes(currentIncident.effects);
+      })();
+   }
+   
    // Initialize phase steps when component mounts
    onMount(async () => {
       console.log('🟡 [UnrestPhase] Component mounted, initializing phase...');
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-      const controller = await createUnrestPhaseController();
-      await controller.startPhase();
+      unrestPhaseController = await createUnrestPhaseController();
+      await unrestPhaseController.startPhase();
       console.log('✅ [UnrestPhase] Phase initialized with controller');
-      
-      // Component mounted - incident checks are manual
-      console.log('🟡 [UnrestPhase] Component ready - incident checks are manual');
    });
    
    // Helper functions removed - now using UnrestIncidentProvider
@@ -157,168 +163,15 @@
       }
    }
    
-   async function resolveIncident(skill: string) {
-      if (!currentIncident) return;
-      
-      selectedSkill = skill;
-      isRolling = true;
-      
-      try {
-         console.log(`🎲 [UnrestPhase] Rolling ${skill} check for incident: ${currentIncident.name}`);
-         
-         // Import PF2e integration for skill rolling
-         const { performKingdomSkillCheck, initializeRollResultHandler } = await import('../../../services/pf2e');
-         
-         // Initialize the roll result handler
-         initializeRollResultHandler();
-         
-         // Set up event listener for roll completion
-         const handleRollComplete = (event: Event) => {
-            const customEvent = event as CustomEvent;
-            if (customEvent.detail?.checkId === currentIncident.id && customEvent.detail?.checkType === 'incident') {
-               const outcome = customEvent.detail.outcome;
-               console.log(`🎯 [UnrestPhase] Skill roll result: ${outcome}`);
-               
-               // Capture roll breakdown if available
-               if (customEvent.detail.rollBreakdown) {
-                  rollBreakdown = customEvent.detail.rollBreakdown;
-               }
-               
-               // Apply the result through the controller
-               finishIncidentResolution(outcome);
-               
-               // Remove the event listener
-               window.removeEventListener('kingdomRollComplete', handleRollComplete);
-            }
-         };
-         
-         // Add event listener for roll completion
-         window.addEventListener('kingdomRollComplete', handleRollComplete);
-         
-         // Trigger PF2e skill roll through the existing system
-         const rollResult = await performKingdomSkillCheck(
-            skill,
-            'incident',
-            currentIncident.name,
-            currentIncident.id,
-            {
-               successEffect: currentIncident.effects?.success?.msg || 'Success',
-               failureEffect: currentIncident.effects?.failure?.msg || 'Failure',
-               criticalFailureEffect: currentIncident.effects?.criticalFailure?.msg || 'Critical Failure'
-            }
-         );
-         
-         if (!rollResult) {
-            console.log('🚫 [UnrestPhase] Skill roll was cancelled');
-            window.removeEventListener('kingdomRollComplete', handleRollComplete);
-            return;
-         }
-         
-      } catch (error) {
-         console.error('❌ [UnrestPhase] Error resolving incident:', error);
-         ui.notifications?.error('Failed to roll skill check. Make sure you have a character selected.');
-      } finally {
-         isRolling = false;
-      }
-   }
-   
-   async function finishIncidentResolution(outcome: string) {
-      try {
-         // Just set the UI state for displaying the outcome - don't call controller.resolveIncident yet
-         incidentResolved = true;
-         rollOutcome = outcome;
-         
-         // Get the current character info for display
-         const { getCurrentUserCharacter } = await import('../../../services/pf2e');
-         const character = await getCurrentUserCharacter();
-         const actorName = character?.name || 'Unknown';
-         rollActor = actorName;
-         
-         // Use controller to get display data
-         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-         const controller = await createUnrestPhaseController();
-         const displayData = controller.getResolutionDisplayData(
-            currentIncident, 
-            outcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-            actorName
-         );
-         
-         rollEffect = displayData.effect;
-         rollStateChanges = displayData.stateChanges;
-         
-         console.log(`✅ [UnrestPhase] Incident resolution outcome set: ${outcome}`);
-      } catch (error) {
-         console.error('❌ [UnrestPhase] Error finishing incident resolution:', error);
-      }
-   }
-   
-   async function handleResolutionPrimary() {
-      try {
-         // Now apply the actual resolution through the controller
-         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-         const controller = await createUnrestPhaseController();
-         
-         // Use controller to map outcome
-         const simplifiedOutcome = controller.mapDetailedOutcomeToSimple(
-            rollOutcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
-         );
-         
-         const result = await controller.resolveIncident(
-            currentIncident.id, 
-            simplifiedOutcome as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
-         );
-         
-         if (result.success) {
-            console.log(`✅ [UnrestPhase] Incident ${currentIncident.id} resolved through controller`);
-            // Mark that the resolution has been applied to hide buttons
-            resolutionApplied = true;
-            // The controller will mark the step as complete and clear the incident
-         } else {
-            console.error('❌ [UnrestPhase] Incident resolution failed');
-         }
-      } catch (error) {
-         console.error('❌ [UnrestPhase] Error applying incident resolution:', error);
-      }
-   }
-   
-   function handleResolutionCancel() {
-      // Reset the resolution state to allow re-rolling
-      incidentResolved = false;
-      resolutionApplied = false;
-      rollOutcome = '';
-      rollActor = '';
-      rollEffect = '';
-      rollStateChanges = {};
-      rollBreakdown = null;
-      selectedSkill = '';
-   }
-   
-   // Handle fame reroll using shared utility
-   async function handleRerollWithFame() {
-      const { handleRerollWithFame: sharedReroll } = await import('../../../controllers/shared/RerollHelpers');
-      
-      await sharedReroll({
-         currentItem: currentIncident,
-         selectedSkill,
-         phaseName: 'UnrestPhase',
-         resetUiState: () => {
-            incidentResolved = false;
-            resolutionApplied = false;
-            rollOutcome = '';
-            rollActor = '';
-            rollEffect = '';
-            rollStateChanges = {};
-            rollBreakdown = null;
-         },
-         triggerRoll: resolveIncident
-      });
-   }
    
    // Use status class from provider
    $: tierClass = unrestStatus.statusClass;
 </script>
 
 <div class="unrest-phase">
+   <!-- Debug Incident Selector -->
+   <DebugEventSelector type="incident" currentItemId={$kingdomData.currentIncidentId || null} />
+   
    <!-- Step 1: Unrest Dashboard -->
    <div class="unrest-dashboard">
       <div class="unrest-split-view">
@@ -416,53 +269,14 @@
                      {/if}
                   </div>
                   
-                  {#if !incidentResolved && currentIncident.skills && currentIncident.skills.length > 0}
-                     <div class="skill-options">
-                        <div class="skill-options-title">Choose Resolution Approach:</div>
-                        <div class="skill-tags">
-                           {#each currentIncident.skills as option}
-                              <SkillTag
-                                 skill={option.skill}
-                                 description={option.description}
-                                 selected={selectedSkill === option.skill}
-                                 disabled={incidentResolved || isRolling}
-                                 loading={isRolling && selectedSkill === option.skill}
-                                 on:execute={() => resolveIncident(option.skill)}
-                              />
-                           {/each}
-                        </div>
-                     </div>
-                  {/if}
-                  
-                  {#if incidentResolved}
-                  <OutcomeDisplay
-                     outcome={rollOutcome}
-                     actorName={rollActor}
-                     skillName={selectedSkill}
-                     effect={rollEffect}
-                     stateChanges={rollStateChanges}
-                     modifiers={currentIncident?.effects?.[rollOutcome]?.modifiers}
-                     rollBreakdown={rollBreakdown}
-                     primaryButtonLabel="Apply Result"
-                     showFameReroll={true}
-                     applied={resolutionApplied}
-                     choices={currentIncident?.effects?.[rollOutcome]?.choices}
-                     on:primary={handleResolutionPrimary}
-                     on:cancel={handleResolutionCancel}
-                     on:reroll={handleRerollWithFame}
+                  <!-- Use CheckCard for incident resolution -->
+                  <CheckCard
+                     checkType="incident"
+                     item={currentIncident}
+                     {isViewingCurrentPhase}
+                     controller={unrestPhaseController}
+                     {possibleOutcomes}
                   />
-                  {:else}
-                     {#await (async () => {
-                        const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-                        const controller = await createUnrestPhaseController();
-                        return controller.getIncidentDisplayData(currentIncident);
-                     })() then displayData}
-                        <PossibleOutcomes 
-                           outcomes={displayData.outcomes}
-                           showTitle={false}
-                        />
-                     {/await}
-                  {/if}
                </div>
             {:else}
                <div class="no-incident">
@@ -860,25 +674,6 @@
             border: 1px solid var(--color-red);
          }
       }
-   }
-   
-   .skill-options {
-      margin: 20px 0;
-      
-      .skill-options-title {
-         font-size: var(--font-xl);
-         font-weight: var(--font-weight-semibold);
-         line-height: 1.4;
-         color: var(--text-primary);
-         margin-bottom: 15px;
-      }
-   }
-   
-   .skill-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 10px;
    }
    
    

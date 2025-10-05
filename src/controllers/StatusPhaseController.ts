@@ -26,6 +26,9 @@ export async function createStatusPhaseController() {
         
         await initializePhaseSteps(steps);
         
+        // Clear previous turn's incident
+        await this.clearPreviousIncident();
+        
         // Process resource decay from previous turn (moved from Upkeep)
         await this.processResourceDecay();
         
@@ -45,6 +48,21 @@ export async function createStatusPhaseController() {
       } catch (error) {
         reportPhaseError('StatusPhaseController', error instanceof Error ? error : new Error(String(error)));
         return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error');
+      }
+    },
+
+    /**
+     * Clear previous turn's incident data
+     */
+    async clearPreviousIncident() {
+      const actor = getKingdomActor();
+      if (actor) {
+        await actor.updateKingdom((kingdom) => {
+          kingdom.currentIncidentId = null;
+          kingdom.incidentTriggered = false;
+          kingdom.incidentRoll = 0;
+        });
+        console.log('🧹 [StatusPhaseController] Cleared previous turn incident');
       }
     },
 

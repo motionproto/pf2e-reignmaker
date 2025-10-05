@@ -1,29 +1,174 @@
 <script lang="ts">
-  import { formatStateChangeLabel, formatStateChangeValue, getChangeClass } from '../logic/OutcomeDisplayLogic';
+  import { createEventDispatcher } from 'svelte';
+  import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../logic/OutcomeDisplayLogic';
   
   export let stateChanges: Record<string, any> | undefined = undefined;
+  export let modifiers: any[] | undefined = undefined;
+  export let resolvedDice: Map<number | string, number> = new Map();
+  export let manualEffects: string[] | undefined = undefined;
+  
+  const dispatch = createEventDispatcher();
+  const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
   
   $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
+  $: hasManualEffects = manualEffects && manualEffects.length > 0;
+  $: hasAnyContent = hasStateChanges || hasManualEffects;
+  
+  // Detect if a value is a dice formula
+  function isDiceFormula(value: any): boolean {
+    return typeof value === 'string' && DICE_PATTERN.test(value);
+  }
+  
+  // Get the resolved value for a dice formula (from modifiers or stateChanges)
+  function getResolvedValue(key: string): number | null {
+    // First check if it's resolved via modifier index
+    if (modifiers) {
+      const modifierIndex = modifiers.findIndex(m => 
+        m.resource === key && typeof m.value === 'string' && DICE_PATTERN.test(m.value)
+      );
+      
+      if (modifierIndex !== -1) {
+        const resolved = resolvedDice.get(modifierIndex);
+        if (resolved !== undefined) return resolved;
+      }
+    }
+    
+    // Check if it's resolved via stateChange key (prefixed with "state:")
+    const stateResolved = resolvedDice.get(`state:${key}`);
+    return stateResolved ?? null;
+  }
+  
+  // Handle dice roll
+  function handleDiceRoll(key: string, formula: string) {
+    // Check if this dice is from modifiers
+    if (modifiers) {
+      const modifierIndex = modifiers.findIndex(m => 
+        m.resource === key && m.value === formula
+      );
+      
+      if (modifierIndex !== -1) {
+        const result = rollDiceFormula(formula);
+        
+        dispatch('roll', {
+          modifierIndex,
+          formula,
+          result,
+          resource: key
+        });
+        return;
+      }
+    }
+    
+    // Otherwise it's from stateChanges - use string key with "state:" prefix
+    const result = rollDiceFormula(formula);
+    
+    dispatch('roll', {
+      modifierIndex: `state:${key}`,
+      formula,
+      result,
+      resource: key
+    });
+  }
 </script>
 
-{#if hasStateChanges && stateChanges}
+{#if hasAnyContent}
   <div class="state-changes">
-    <div class="state-changes-list">
+    {#if hasManualEffects && manualEffects}
+      <div class="manual-effects">
+        <div class="manual-effects-header">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span>Manual Effects - Apply Yourself</span>
+        </div>
+        <ul class="manual-effects-list">
+          {#each manualEffects as effect}
+            <li>{effect}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
+    
+    {#if hasStateChanges && stateChanges}
+      <div class="state-changes-list">
       {#each Object.entries(stateChanges) as [key, change]}
+        {@const resolvedValue = getResolvedValue(key)}
+        {@const isDice = isDiceFormula(change)}
+        
         <div class="state-change-item">
           <span class="change-label">{formatStateChangeLabel(key)}:</span>
-          <span class="change-value {getChangeClass(change, key)}">
-            {formatStateChangeValue(change)}
-          </span>
+          
+          {#if isDice && resolvedValue === null}
+            <!-- Unrolled dice - show button -->
+            <button 
+              class="dice-button"
+              on:click={() => handleDiceRoll(key, change)}
+            >
+              <i class="fas fa-dice-d20"></i>
+              {change}
+            </button>
+          {:else if isDice && resolvedValue !== null}
+            <!-- Rolled dice - show result -->
+            <span class="change-value {getChangeClass(resolvedValue, key)}">
+              {formatStateChangeValue(resolvedValue)}
+            </span>
+          {:else}
+            <!-- Regular value -->
+            <span class="change-value {getChangeClass(change, key)}">
+              {formatStateChangeValue(change)}
+            </span>
+          {/if}
         </div>
       {/each}
-    </div>
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style lang="scss">
   .state-changes {
     margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .manual-effects {
+    padding: 14px 16px;
+    background: linear-gradient(135deg, 
+      rgba(251, 146, 60, 0.15),
+      rgba(251, 146, 60, 0.05));
+    border: 2px solid rgba(251, 146, 60, 0.4);
+    border-radius: var(--radius-sm);
+    
+    .manual-effects-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: rgba(251, 146, 60, 1);
+      margin-bottom: 10px;
+      
+      i {
+        font-size: 18px;
+      }
+    }
+    
+    .manual-effects-list {
+      margin: 0;
+      padding-left: 24px;
+      list-style-type: disc;
+      
+      li {
+        color: var(--text-primary);
+        font-size: var(--font-md);
+        line-height: 1.6;
+        margin-bottom: 6px;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
   }
   
   .state-changes-list {
@@ -71,6 +216,37 @@
         color: var(--text-primary);
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--border-subtle);
+      }
+    }
+    
+    .dice-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-code, monospace);
+      font-size: calc(var(--font-md) * 1.05);
+      font-weight: var(--font-weight-bold);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: var(--border-default);
+        transform: translateY(-1px);
+      }
+      
+      &:active {
+        transform: translateY(0);
+      }
+      
+      i {
+        font-size: 14px;
+        color: var(--text-primary);
       }
     }
   }

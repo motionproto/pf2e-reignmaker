@@ -77,7 +77,8 @@ export class EventResolver {
     applyEventOutcome(
         event: EventData,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        currentTurn: number = 0
+        currentTurn: number = 0,
+        currentState?: KingdomData
     ): EventOutcomeApplication {
         const messages: string[] = [];
         let unresolvedModifier: ActiveModifier | undefined;
@@ -92,15 +93,41 @@ export class EventResolver {
             ? aggregateResourceChanges(effect.modifiers)
             : new Map<string, number>();
         
-        // Handle unresolved events (create continuous modifier)
-        // Only create modifier if event has proper ifUnresolved configuration with continuous type
-        if ((outcome === 'failure' || outcome === 'criticalFailure') && 
-            event.ifUnresolved?.type === 'continuous' && 
-            event.ifUnresolved.continuous?.modifierTemplate) {
-            try {
-                unresolvedModifier = this.createUnresolvedModifier(event, currentTurn);
-            } catch (error) {
-                console.warn('[EventResolver] Could not create unresolved modifier:', error);
+        // Check for resource shortage if we have current state
+        if (currentState) {
+            const { hadShortage } = prepareStateChanges(currentState, resourceChanges);
+            if (hadShortage) {
+                // Add shortage penalty
+                const currentUnrest = resourceChanges.get('unrest') || 0;
+                resourceChanges.set('unrest', currentUnrest + 1);
+                messages.push('You gained 1 unrest from shortage.');
+            }
+        }
+        
+        // Handle unresolved events (create ongoing modifier)
+        // NEW LOGIC: Only create modifier if:
+        // 1. Event has "ongoing" trait AND
+        // 2. Event is dangerous OR (beneficial AND ongoing)
+        // This means beneficial non-ongoing events simply expire when ignored
+        if ((outcome === 'failure' || outcome === 'criticalFailure')) {
+            const isOngoing = event.traits?.includes('ongoing');
+            const isBeneficial = event.traits?.includes('beneficial');
+            const isDangerous = event.traits?.includes('dangerous');
+            
+            // Only create modifier for ongoing events
+            // Beneficial non-ongoing events just expire without creating modifiers
+            if (isOngoing) {
+                // Both dangerous and beneficial ongoing events can create modifiers
+                console.log(`[EventResolver] Creating ongoing modifier for ${event.id} (beneficial: ${isBeneficial}, dangerous: ${isDangerous})`);
+                try {
+                    unresolvedModifier = this.createUnresolvedModifierFromTraits(event, currentTurn);
+                } catch (error) {
+                    console.warn('[EventResolver] Could not create unresolved modifier:', error);
+                }
+            } else if (isBeneficial) {
+                // Beneficial non-ongoing events expire without penalty
+                console.log(`[EventResolver] Beneficial non-ongoing event ${event.id} expires without creating modifier`);
+                messages.push(`The opportunity has passed.`);
             }
         }
         
@@ -125,7 +152,49 @@ export class EventResolver {
     }
 
     /**
-     * Create an unresolved modifier from an event
+     * Create an unresolved modifier from an event using the new traits system
+     */
+    private createUnresolvedModifierFromTraits(event: EventData, currentTurn: number): ActiveModifier {
+        // For ongoing events, we use the failure outcome modifiers as the ongoing effect
+        const failureOutcome = event.effects?.failure || event.effects?.criticalFailure;
+        if (!failureOutcome?.modifiers) {
+            throw new Error('Event does not have failure modifiers to create ongoing effect');
+        }
+        
+        // Create OngoingEffect from failure modifiers
+        const ongoingEffect: OngoingEffect = {
+            name: `${getEventDisplayName(event)} (Ongoing)`,
+            description: event.description,
+            tier: 1,
+            icon: '',
+            modifiers: failureOutcome.modifiers.map(m => ({
+                ...m,
+                name: m.resource,
+                duration: 'ongoing'
+            })),
+            resolvedWhen: {
+                type: 'skill',
+                skillResolution: {
+                    dcAdjustment: 0,
+                    onSuccess: {
+                        msg: 'Event resolved successfully',
+                        removeAllModifiers: true
+                    }
+                }
+            }
+        };
+        
+        return createUnresolvedModifierShared(
+            ongoingEffect,
+            'event',
+            event.id,
+            getEventDisplayName(event),
+            currentTurn
+        );
+    }
+
+    /**
+     * Create an unresolved modifier from an event (DEPRECATED - uses old ifUnresolved structure)
      */
     private createUnresolvedModifier(event: EventData, currentTurn: number): ActiveModifier {
         if (!event.ifUnresolved) {
@@ -135,8 +204,8 @@ export class EventResolver {
         const unresolved = event.ifUnresolved;
         
         // EventData uses legacy UnresolvedEvent structure, need to convert
-        if (unresolved.type === 'continuous' && unresolved.continuous?.modifierTemplate) {
-            const template = unresolved.continuous.modifierTemplate;
+        if (unresolved.type === 'ongoing' && unresolved.ongoing?.modifierTemplate) {
+            const template = unresolved.ongoing.modifierTemplate;
             
             // Convert to OngoingEffect format
             const ongoingEffect: OngoingEffect = {
@@ -166,7 +235,7 @@ export class EventResolver {
             );
         }
         
-        throw new Error('Event does not have continuous modifier template');
+        throw new Error('Event does not have ongoing modifier template');
     }
     
     /**
@@ -240,17 +309,26 @@ export class EventResolver {
     }
 
     /**
-     * Get events that are currently continuous
+     * Get events that are currently ongoing (using new traits system)
      */
-    getContinuousEvents(events: EventData[]): EventData[] {
-        return events.filter(e => e.ifUnresolved?.type === 'continuous');
+    getOngoingEvents(events: EventData[]): EventData[] {
+        return events.filter(e => e.traits?.includes('ongoing'));
     }
 
     /**
-     * Get events that will expire
+     * Get events that are currently ongoing (DEPRECATED - kept for backward compatibility)
+     * @deprecated Use getOngoingEvents instead
+     */
+    getContinuousEvents(events: EventData[]): EventData[] {
+        return this.getOngoingEvents(events);
+    }
+
+    /**
+     * Get events that will expire (DEPRECATED - no longer used with traits system)
+     * @deprecated Events without 'ongoing' trait will simply expire
      */
     getExpiringEvents(events: EventData[]): EventData[] {
-        return events.filter(e => e.ifUnresolved?.type === 'expires');
+        return events.filter(e => !e.traits?.includes('ongoing'));
     }
 
     /**
@@ -262,7 +340,8 @@ export class EventResolver {
         resourceChanges: Map<string, number>
     ): Partial<KingdomData> {
         // Use shared state preparation utility
-        return prepareStateChanges(currentState, resourceChanges);
+        const { updates } = prepareStateChanges(currentState, resourceChanges);
+        return updates;
     }
 }
 

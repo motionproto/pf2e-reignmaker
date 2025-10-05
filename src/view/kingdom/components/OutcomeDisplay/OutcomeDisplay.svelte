@@ -6,20 +6,22 @@
     processChoiceSelection,
     detectResourceArrayModifiers,
     detectDiceModifiers,
+    detectStateChangeDice,
     rollDiceFormula,
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
+  import { outcomeResolutionService } from './logic/OutcomeResolutionService';
   
   // Import extracted components
   import OutcomeHeader from './components/OutcomeHeader.svelte';
   import OutcomeMessage from './components/OutcomeMessage.svelte';
   import RollBreakdown from './components/RollBreakdown.svelte';
-  import ManualEffects from './components/ManualEffects.svelte';
   import DiceRoller from './components/DiceRoller.svelte';
   import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
   import StateChanges from './components/StateChanges.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
+  import DebugResultSelector from './components/DebugResultSelector.svelte';
   
   // Props
   export let outcome: string;
@@ -39,21 +41,28 @@
   export let applied: boolean = false;
   export let choices: any[] | undefined = undefined;
   export let rollBreakdown: any = null;
+  export let debugMode: boolean = false;
   
   const dispatch = createEventDispatcher();
-  const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+  const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
+  
+  type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   
   // State
   let selectedChoice: number | null = null;
   let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
   let selectedResources: Map<number, string> = new Map();
-  let resolvedDice: Map<number, number> = new Map();
+  let resolvedDice: Map<number | string, number> = new Map();
+  let debugOutcome: OutcomeType = outcome as OutcomeType;
   
   // Get fame from kingdom state
   $: currentFame = $kingdomData?.fame || 0;
   
+  // Use debug outcome if in debug mode, otherwise use the prop
+  $: effectiveOutcome = debugMode ? debugOutcome : outcome;
+  
   // Get outcome display properties
-  $: outcomeProps = getOutcomeDisplayProps(outcome);
+  $: outcomeProps = getOutcomeDisplayProps(effectiveOutcome);
   
   // Detect resource-array modifiers
   $: resourceArrayModifiers = detectResourceArrayModifiers(modifiers);
@@ -65,6 +74,11 @@
   $: hasDiceModifiers = diceModifiers.length > 0;
   $: diceResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
   
+  // Detect dice formulas in stateChanges
+  $: stateChangeDice = detectStateChangeDice(stateChanges);
+  $: hasStateChangeDice = stateChangeDice.length > 0;
+  $: stateChangeDiceResolved = hasStateChangeDice && stateChangeDice.every(d => resolvedDice.has(`state:${d.key}`));
+  
   // Determine if choices are present
   $: hasChoices = choices && choices.length > 0;
   $: choicesResolved = hasChoices && selectedChoice !== null;
@@ -73,7 +87,7 @@
   $: showCancelButton = showCancel && !applied;
   $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers;
   $: effectivePrimaryLabel = applied ? '' : primaryButtonLabel;
-  $: primaryButtonDisabled = (hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved);
+  $: primaryButtonDisabled = (hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved) || (hasStateChangeDice && !stateChangeDiceResolved);
   
   // Display effective message and state changes
   $: displayEffect = choiceResult ? choiceResult.effect : effect;
@@ -97,22 +111,19 @@
       return;
     }
     
-    const eventData: any = {};
+    // Build standardized resolution data using the service
+    const resolutionData = outcomeResolutionService.buildResolutionData({
+      resolvedDice,
+      selectedResources,
+      selectedChoice,
+      choices,
+      choiceResult
+    });
     
-    if (selectedChoice !== null && choices) {
-      eventData.choiceIndex = selectedChoice;
-      eventData.choice = choices[selectedChoice];
-    }
+    // Convert to plain object for event dispatch
+    const eventDetail = outcomeResolutionService.toEventDetail(resolutionData);
     
-    if (hasResourceArrays && resourceArraysResolved) {
-      eventData.resourceSelections = Object.fromEntries(selectedResources);
-    }
-    
-    if (hasDiceModifiers && diceResolved) {
-      eventData.diceRolls = Object.fromEntries(resolvedDice);
-    }
-    
-    dispatch('primary', eventData);
+    dispatch('primary', eventDetail);
   }
   
   function handleResourceSelect(event: CustomEvent) {
@@ -184,19 +195,38 @@
   function handleCancel() {
     dispatch('cancel');
   }
+  
+  function handleDebugOutcomeChange(event: CustomEvent) {
+    const newOutcome = event.detail.outcome as OutcomeType;
+    debugOutcome = newOutcome;
+    
+    // Reset state when outcome changes
+    selectedChoice = null;
+    choiceResult = null;
+    selectedResources = new Map();
+    resolvedDice = new Map();
+    
+    // Dispatch event to parent so they can update modifiers/effects
+    dispatch('debugOutcomeChanged', { outcome: newOutcome });
+  }
 </script>
 
 <div class="resolution-display {outcomeProps.colorClass} {compact ? 'compact' : ''}">
-  <OutcomeHeader {outcome} {actorName} {skillName} />
+  {#if debugMode}
+    <DebugResultSelector 
+      currentOutcome={debugOutcome} 
+      on:outcomeSelected={handleDebugOutcomeChange} 
+    />
+  {/if}
+  
+  <OutcomeHeader outcome={effectiveOutcome} {actorName} {skillName} />
   
   <div class="resolution-details">
     <OutcomeMessage effect={displayEffect} />
     <RollBreakdown {rollBreakdown} />
-    <ManualEffects {manualEffects} />
-    <DiceRoller {modifiers} {resolvedDice} on:roll={handleDiceRoll} />
     <ResourceSelector {modifiers} {selectedResources} on:select={handleResourceSelect} />
     <ChoiceButtons {choices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
-    <StateChanges stateChanges={displayStateChanges} />
+    <StateChanges stateChanges={displayStateChanges} {modifiers} {resolvedDice} {manualEffects} on:roll={handleDiceRoll} />
   </div>
   
   <OutcomeActions

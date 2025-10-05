@@ -15,42 +15,17 @@
    import type { EventSkill } from '../../../types/events';
    import { eventService } from '../../../controllers/events/event-loader';
    import Button from '../components/baseComponents/Button.svelte';
-   import PossibleOutcomes from '../components/PossibleOutcomes.svelte';
-   import type { PossibleOutcome } from '../components/PossibleOutcomes.svelte';
-   import SkillTag from '../components/SkillTag.svelte';
-   import OutcomeDisplay from '../components/OutcomeDisplay/OutcomeDisplay.svelte';
+   import CheckCard from '../components/CheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
-   import { 
-      performKingdomSkillCheck,
-      getCurrentUserCharacter,
-      showCharacterSelectionDialog,
-      initializeRollResultHandler
-   } from '../../../services/pf2e';
+   import DebugEventSelector from '../components/DebugEventSelector.svelte';
    
    // Initialize controller
    let eventPhaseController: any;
    
    // UI State (no business logic)
    let isRolling = false;
-   let selectedSkill = '';
-   let resolutionRoll: number = 0;
-   let showResolutionResult = false;
    let currentEvent: EventData | null = null;
-   let resolutionOutcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure' | null = null;
-   let outcomeMessage: string = '';
-   let currentEffects: any = null;
-   let unresolvedEvent: EventData | null = null;
-   let resolvedActor: string = '';
-   let character: any = null;
-   let isIgnoringEvent = false;
-   let rolledAgainstDC: number = 0; // Store the DC that was actually rolled against
-   let outcomeApplied = false; // Track when outcome has been applied
-   let rollBreakdown: any = null; // Roll breakdown data from PF2e system
-   let pendingEventOutcome: {
-      event: EventData;
-      outcome: 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
-      effects: Map<string, any>;
-   } | null = null;
+   let possibleOutcomes: any[] = [];
    
    // Computed UI state - use shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -64,110 +39,35 @@
    $: rolledAgainstDC = $kingdomData.eventRollDC || eventDC;
    $: eventWasTriggered = $kingdomData.eventTriggered ?? null;
    
-   onMount(() => {
-      const initAsync = async () => {
-         // Initialize the controller - no need for eventService parameter
-         eventPhaseController = await createEventPhaseController(null);
-         
-         // Initialize the phase (this sets up currentPhaseSteps!)
-         await eventPhaseController.startPhase();
-         console.log('[EventsPhase] Phase initialized with controller');
-         
-         // Check if an event was already rolled by another client
-         if ($kingdomData.currentEventId) {
-            console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
-            const event = eventService.getEventById($kingdomData.currentEventId);
-            if (event) {
-               currentEvent = event;
-            }
-         } else if ($kingdomData.currentEventId === null && eventChecked) {
-            // Another client rolled and got no event - we should show that
-            console.log('[EventsPhase] No event was rolled by another client');
-            // The values should be synced via Foundry actor
-         }
-         
-         if (typeof (window as any).game !== 'undefined') {
-            initializeRollResultHandler();
-         }
-      };
-      
-      initAsync();
-      
-      // Listen for kingdom roll complete events
-      const handleKingdomRoll = (event: CustomEvent) => {
-         if (!currentEvent || event.detail.checkId !== currentEvent.id) {
-            return;
-         }
-         
-         if (event.detail.checkType !== 'event') {
-            return;
-         }
-         
-         // Capture roll breakdown if available
-         if (event.detail.rollBreakdown) {
-            console.log('📊 [EventsPhase] Roll breakdown received:', event.detail.rollBreakdown);
-            rollBreakdown = event.detail.rollBreakdown;
-         }
-         
-         handleRollResult(event.detail);
-      };
-      
-      window.addEventListener('kingdomRollComplete', handleKingdomRoll as EventListener);
-      
-      return () => {
-         window.removeEventListener('kingdomRollComplete', handleKingdomRoll as EventListener);
-      };
-   });
-   
-   // Handle roll result but DON'T apply changes yet
-   async function handleRollResult(data: { outcome: string, actorName: string, skillName: string }) {
-      if (!currentEvent || !eventPhaseController) return;
-      
-      const outcome = data.outcome as 'success' | 'failure' | 'criticalSuccess' | 'criticalFailure';
-      
-      // Update UI state
-      resolutionOutcome = outcome;
-      resolvedActor = data.actorName || resolvedActor;
-      selectedSkill = data.skillName || selectedSkill;
-      
-      // Spend the player's action
-      const game = (window as any).game;
-      if (game?.user?.id) {
-         const turnManager = getTurnManager();
-         if (turnManager) {
-            turnManager.spendPlayerAction(game.user.id, TurnPhase.EVENTS);
-         }
+   // Reactively load event when currentEventId changes (for debug selector)
+   $: if ($kingdomData.currentEventId) {
+      const event = eventService.getEventById($kingdomData.currentEventId);
+      if (event) {
+         currentEvent = event;
+         console.log('[EventsPhase] Event updated via reactive statement:', event.name);
       }
-      
-      // Calculate preview of effects without applying
-      const effects = currentEvent.effects?.[outcome];
-      const previewEffects = new Map<string, any>();
-      
-      if (effects && effects.modifiers) {
-         // Parse modifiers array to extract resource changes
-         for (const modifier of effects.modifiers) {
-            // EventModifier has resource property, not selector
-            // Skip modifiers with resource arrays (they require player choice)
-            if (!Array.isArray(modifier.resource)) {
-               previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
-            }
-         }
-      }
-      
-      // Store pending outcome for later application
-      pendingEventOutcome = {
-         event: currentEvent,
-         outcome,
-         effects: previewEffects
-      };
-      
-      // Update UI with the pending changes for preview
-      outcomeMessage = currentEvent.effects?.[outcome]?.msg || '';
-      currentEffects = Object.fromEntries(previewEffects);
-      
-      showResolutionResult = true;
-      isRolling = false;
+   } else if ($kingdomData.currentEventId === null) {
+      currentEvent = null;
+      console.log('[EventsPhase] Event cleared via reactive statement');
    }
+   
+   onMount(async () => {
+      // Initialize the controller
+      eventPhaseController = await createEventPhaseController(null);
+      
+      // Initialize the phase (this sets up currentPhaseSteps!)
+      await eventPhaseController.startPhase();
+      console.log('[EventsPhase] Phase initialized with controller');
+      
+      // Check if an event was already rolled by another client
+      if ($kingdomData.currentEventId) {
+         console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
+         const event = eventService.getEventById($kingdomData.currentEventId);
+         if (event) {
+            currentEvent = event;
+         }
+      }
+   });
    
    // Use controller for event check logic
    async function performEventCheck() {
@@ -207,167 +107,19 @@
       }, 1000);
    }
    
-   async function resolveEventWithSkill(skill: string) {
-      if (!currentEvent) return;
-      
-      selectedSkill = skill;
-      showResolutionResult = false;
-      isRolling = true;
-      
-      try {
-         const outcomes = {
-            criticalSuccess: currentEvent.effects?.criticalSuccess || null,
-            success: currentEvent.effects?.success || null,
-            failure: currentEvent.effects?.failure || null,
-            criticalFailure: currentEvent.effects?.criticalFailure || null
-         };
-         
-         await performKingdomSkillCheck(
-            skill,
-            'event',
-            currentEvent.name,
-            currentEvent.id,
-            outcomes
-         );
-         
-         // Don't mark as complete here - wait for the OK button
-         
-      } catch (error) {
-         console.error("Error resolving event with skill:", error);
-      } finally {
-         isRolling = false;
-      }
-   }
-   
-   async function ignoreEvent() {
-      if (!currentEvent || !eventPhaseController || isIgnoringEvent) return;
-      
-      isIgnoringEvent = true;
-      
-      // Spend the player's action for ignoring the event
-      const game = (window as any).game;
-      if (game?.user?.id) {
-         const turnManager = getTurnManager();
-         if (turnManager) {
-            turnManager.spendPlayerAction(game.user.id, TurnPhase.EVENTS);
-         }
-      }
-      
-      try {
-         // Calculate preview effects for failure outcome
-         const effects = currentEvent.effects?.failure;
-         const previewEffects = new Map<string, any>();
-         
-         console.log('[EventsPhase] ignoreEvent() - failure modifiers:', effects?.modifiers);
-         
-         if (effects && effects.modifiers) {
-            // Parse modifiers array to extract resource changes
-            for (const modifier of effects.modifiers) {
-               // EventModifier has resource property, not selector
-               // Skip modifiers with resource arrays (they require player choice)
-               if (!Array.isArray(modifier.resource)) {
-                  previewEffects.set(modifier.resource, (previewEffects.get(modifier.resource) || 0) + modifier.value);
-               } else {
-                  console.log('[EventsPhase] Skipping resource array modifier - requires user selection:', modifier);
-               }
-            }
-         }
-         
-         // Store pending outcome for later application
-         pendingEventOutcome = {
-            event: currentEvent,
-            outcome: 'failure',
-            effects: previewEffects
-         };
-         
-         currentEffects = Object.fromEntries(previewEffects);
-         
-         // Import the display name helper
-         const { getEventDisplayName } = await import('../../../types/event-helpers');
-         const eventName = getEventDisplayName(currentEvent);
-         outcomeMessage = currentEvent.effects?.failure?.msg || `Event "${eventName}" was ignored - failure effects applied`;
-         
-         console.log('[EventsPhase] Setting resolutionOutcome to failure, modifiers will be:', currentEvent.effects?.failure?.modifiers);
-         
-         // Show resolution result
-         resolutionOutcome = 'failure';
-         showResolutionResult = true;
-      } finally {
-         isIgnoringEvent = false;
-      }
-   }
-   
-   // Handle fame reroll using shared utility
-   async function handleRerollWithFame() {
-      const { handleRerollWithFame: sharedReroll } = await import('../../../controllers/shared/RerollHelpers');
-      
-      await sharedReroll({
-         currentItem: currentEvent,
-         selectedSkill,
-         phaseName: 'EventsPhase',
-         resetUiState: () => {
-            showResolutionResult = false;
-            resolutionOutcome = null;
-            outcomeMessage = '';
-            currentEffects = null;
-            pendingEventOutcome = null;
-            outcomeApplied = false;
-            rollBreakdown = null;
-         },
-         triggerRoll: resolveEventWithSkill
-      });
-   }
-   
-   // Apply the pending changes when user clicks OK
-   async function completeEventResolution() {
-      console.log('[EventsPhase] completeEventResolution() called');
-      
-      // Apply the pending changes if they exist
-      if (pendingEventOutcome && eventPhaseController) {
-         console.log('[EventsPhase] Applying pending outcome:', pendingEventOutcome.outcome);
-         
-         const result = await eventPhaseController.applyEventOutcome(
-            pendingEventOutcome.event,
-            pendingEventOutcome.outcome,
-            get(kingdomData),
-            $kingdomData.currentTurn || 1
-         );
-         
-         console.log('[EventsPhase] applyEventOutcome result:', result);
-         
-         if (result.success) {
-            // Handle unresolved event if any
-            if (result.unresolvedEvent) {
-               unresolvedEvent = result.unresolvedEvent;
-            }
-            
-            // Keep the outcome visible but mark it as applied
-            outcomeApplied = true;
-            pendingEventOutcome = null;
-            
-            console.log('✅ [EventsPhase] Event resolution applied successfully');
-         } else {
-            console.error('[EventsPhase] Failed to apply event outcome:', result.error);
-         }
-      } else {
-         console.warn('[EventsPhase] No pending outcome or controller not available');
-      }
-   }
-   
-   // Helper functions that only format data for display
-   function getEventSkills(event: EventData): EventSkill[] {
-      // All events now use the consistent new format with skill objects
-      return event.skills || [];
-   }
-   
-   async function buildEventOutcomes(event: EventData): Promise<PossibleOutcome[]> {
-      // Use shared helper to handle missing outcomes gracefully
-      const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
-      return buildPossibleOutcomes(event.effects);
+   // Build possible outcomes for the event
+   $: if (currentEvent) {
+      (async () => {
+         const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
+         possibleOutcomes = buildPossibleOutcomes(currentEvent.effects);
+      })();
    }
 </script>
 
 <div class="events-phase">
+   <!-- Debug Event Selector -->
+   <DebugEventSelector type="event" currentItemId={$kingdomData.currentEventId || null} />
+   
    <!-- Player Action Tracker -->
    <PlayerActionTracker compact={true} />
    
@@ -387,70 +139,14 @@
          <div class="event-body">
             <p class="event-description">{currentEvent.description}</p>
             
-            {#if !showResolutionResult}
-               <!-- Show possible outcomes -->
-               {#if currentEvent}
-                  {#await buildEventOutcomes(currentEvent) then eventOutcomes}
-                     {#if eventOutcomes.length > 0}
-                        <PossibleOutcomes outcomes={eventOutcomes} showTitle={true} />
-                     {/if}
-                  {/await}
-               {/if}
-               
-               <div class="event-resolution">
-                  <h4>Choose Your Response:</h4>
-                  <div class="skill-options">
-                     {#each getEventSkills(currentEvent) as skillOption}
-                        <SkillTag
-                           skill={skillOption.skill}
-                           description={skillOption.description}
-                           selected={selectedSkill === skillOption.skill}
-                           disabled={!isViewingCurrentPhase || eventResolved}
-                           on:execute={(e) => resolveEventWithSkill(e.detail.skill)}
-                        />
-                     {/each}
-                  </div>
-                  
-                  <div class="ignore-event-section">
-                     <div class="divider-text">or</div>
-                     <Button 
-                        variant="secondary"
-                        on:click={ignoreEvent}
-                        disabled={!isViewingCurrentPhase || isIgnoringEvent || eventResolved}
-                        icon="fas fa-times-circle"
-                        iconPosition="left"
-                     >
-                        {#if isIgnoringEvent}
-                           Ignoring Event...
-                        {:else}
-                           Ignore Event
-                        {/if}
-                     </Button>
-                     {#if currentEvent.effects?.failure}
-                        <p class="ignore-warning">Failure effects will be applied</p>
-                     {/if}
-                  </div>
-               </div>
-            {/if}
-            
-            {#if showResolutionResult && resolutionOutcome}
-               <div class="event-result-display">
-                  <OutcomeDisplay
-                     outcome={resolutionOutcome}
-                     actorName={resolvedActor || "The Kingdom"}
-                     skillName={selectedSkill}
-                     effect={outcomeMessage}
-                     stateChanges={currentEffects}
-                     modifiers={currentEvent?.effects?.[resolutionOutcome]?.modifiers}
-                     rollBreakdown={rollBreakdown}
-                     primaryButtonLabel="Apply Result"
-                     applied={outcomeApplied}
-                     choices={currentEvent?.effects?.[resolutionOutcome]?.choices}
-                     on:primary={completeEventResolution}
-                     on:reroll={handleRerollWithFame}
-                  />
-               </div>
-            {/if}
+            <!-- Use CheckCard for event resolution -->
+            <CheckCard
+               checkType="event"
+               item={currentEvent}
+               {isViewingCurrentPhase}
+               controller={eventPhaseController}
+               {possibleOutcomes}
+            />
          </div>
       </div>
    {:else}
@@ -489,12 +185,45 @@
       </div>
    {/if}
    
-   <!-- Active Modifiers Display -->
-   {#if activeModifiers.length > 0}
+   <!-- Ongoing Events (modifiers with originalEventData) -->
+   {#if activeModifiers.some(m => m.originalEventData)}
+      <div class="ongoing-events-section">
+         <h4>Ongoing Events</h4>
+         <div class="ongoing-events-list">
+            {#each activeModifiers.filter(m => m.originalEventData) as modifier}
+               {@const ongoingEvent = modifier.originalEventData}
+               {#await (async () => {
+                  const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
+                  return buildPossibleOutcomes(ongoingEvent.effects);
+               })() then ongoingOutcomes}
+                  <div class="ongoing-event-card">
+                     <div class="ongoing-event-header">
+                        <h3 class="ongoing-event-title">{ongoingEvent.name}</h3>
+                        <span class="ongoing-badge">Ongoing</span>
+                     </div>
+                     <div class="ongoing-event-body">
+                        <p class="ongoing-event-description">{ongoingEvent.description}</p>
+                        <CheckCard
+                           checkType="event"
+                           item={ongoingEvent}
+                           {isViewingCurrentPhase}
+                           controller={eventPhaseController}
+                           possibleOutcomes={ongoingOutcomes}
+                        />
+                     </div>
+                  </div>
+               {/await}
+            {/each}
+         </div>
+      </div>
+   {/if}
+   
+   <!-- Other Active Modifiers (without originalEventData) -->
+   {#if activeModifiers.some(m => !m.originalEventData)}
       <div class="modifiers-section">
          <h4>Active Modifiers</h4>
          <div class="modifiers-list">
-            {#each activeModifiers as modifier}
+            {#each activeModifiers.filter(m => !m.originalEventData) as modifier}
                <div class="modifier-item">
                   <div class="modifier-header">
                      <span class="modifier-name">{modifier.name}</span>
@@ -578,7 +307,7 @@
       color: var(--text-secondary);
       border: 1px solid var(--border-subtle);
       
-      &.trait-continuous {
+      &.trait-ongoing {
          background: rgba(251, 191, 36, 0.2);
          color: var(--color-amber-light);
          border-color: var(--color-amber);
@@ -725,6 +454,73 @@
             opacity: 0.9;
          }
       }
+   }
+   
+   .ongoing-events-section {
+      background: rgba(251, 191, 36, 0.05);
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-amber);
+      
+      h4 {
+         margin: 0 0 15px 0;
+         color: var(--text-primary);
+         font-size: var(--font-lg);
+      }
+   }
+   
+   .ongoing-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+   }
+   
+   .ongoing-event-card {
+      background: linear-gradient(135deg,
+         rgba(31, 31, 35, 0.6),
+         rgba(15, 15, 17, 0.4));
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-medium);
+      overflow: hidden;
+   }
+   
+   .ongoing-event-header {
+      padding: 15px 20px;
+      background: rgba(251, 191, 36, 0.1);
+      border-bottom: 1px solid var(--color-amber);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+   }
+   
+   .ongoing-event-title {
+      margin: 0;
+      font-size: var(--font-2xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
+      color: var(--text-primary);
+   }
+   
+   .ongoing-badge {
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--color-amber-light);
+      border: 1px solid var(--color-amber);
+   }
+   
+   .ongoing-event-body {
+      padding: 20px;
+   }
+   
+   .ongoing-event-description {
+      font-size: var(--font-md);
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
    }
    
    .modifiers-section {

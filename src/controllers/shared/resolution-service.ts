@@ -70,17 +70,19 @@ export function aggregateResourceChanges(
 
 /**
  * Apply resource changes to kingdom state with bounds checking
- * Returns partial kingdom data for updating
+ * Returns partial kingdom data for updating and shortage detection flag
  */
 export function prepareStateChanges(
   currentState: KingdomData,
   resourceChanges: Map<string, number>
-): Partial<KingdomData> {
+): { updates: Partial<KingdomData>; hadShortage: boolean } {
   const updates: Partial<KingdomData> = {
     resources: { ...currentState.resources }
   };
   
-  // Apply resource changes with bounds checking
+  let hadShortage = false;
+  
+  // Apply resource changes with bounds checking and shortage detection
   for (const [resource, change] of resourceChanges) {
     if (resource === 'unrest') {
       // Unrest has minimum of 0
@@ -91,11 +93,18 @@ export function prepareStateChanges(
     } else if (updates.resources) {
       // Standard resources have minimum of 0
       const current = updates.resources[resource] || 0;
-      updates.resources[resource] = Math.max(0, current + change);
+      const newValue = current + change;
+      
+      // Detect shortage: if change is negative and would go below 0
+      if (change < 0 && newValue < 0) {
+        hadShortage = true;
+      }
+      
+      updates.resources[resource] = Math.max(0, newValue);
     }
   }
   
-  return updates;
+  return { updates, hadShortage };
 }
 
 /**
@@ -223,7 +232,7 @@ export function applyMultipleStateChanges(
   let finalUpdates: Partial<KingdomData> = {};
   
   for (const changes of changeSequence) {
-    const updates = prepareStateChanges(cumulative, changes);
+    const { updates } = prepareStateChanges(cumulative, changes);
     
     // Merge updates
     cumulative = {

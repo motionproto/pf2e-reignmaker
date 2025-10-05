@@ -40,6 +40,7 @@ export interface KingdomIncident {
   description: string;
   skills?: EventSkill[];
   effects: EventEffects;
+  traits?: EventTrait[];  // Event traits (beneficial, dangerous, ongoing)
 }
 
 /**

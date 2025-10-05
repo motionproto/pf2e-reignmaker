@@ -93,7 +93,7 @@ export interface KingdomData {
   
   // Events & Modifiers
   currentEvent: any | null;  // Event data (simplified)
-  continuousEvents: any[];    // Event data array (simplified)
+  ongoingEvents: any[];    // Event data array (simplified)
   activeModifiers: ActiveModifier[];  // Renamed from 'modifiers'
   
   // Simplified phase management with step arrays - single source of truth
@@ -186,7 +186,7 @@ export class KingdomActor extends Actor {
       fame: 0,
       isAtWar: false,
       currentEvent: null,
-      continuousEvents: [],
+      ongoingEvents: [],
       activeModifiers: [],
       currentPhaseSteps: [],
       phaseComplete: false,
@@ -342,7 +342,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     fame: 0,
     isAtWar: false,
       currentEvent: null,
-      continuousEvents: [],
+      ongoingEvents: [],
       activeModifiers: [],
       currentPhaseSteps: [],
     phaseComplete: false,

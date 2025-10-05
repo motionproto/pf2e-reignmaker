@@ -56,5 +56,8 @@
       ],
       "endsEvent": false
     }
-  }
+  },
+  "traits": [
+    "dangerous"
+  ]
 }

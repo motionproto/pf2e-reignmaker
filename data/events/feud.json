@@ -72,5 +72,9 @@
         }
       ]
     }
-  }
+  },
+  "traits": [
+    "dangerous",
+    "ongoing"
+  ]
 }

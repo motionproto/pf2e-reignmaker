@@ -19,7 +19,8 @@ export interface OutcomeEffects {
 /**
  * Capitalize first letter of a string
  */
-function capitalize(str: string): string {
+function capitalize(str: string | undefined | null): string {
+  if (!str || typeof str !== 'string') return '';
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
@@ -70,7 +71,9 @@ function generateEffectText(modifiers?: any[]): string {
   const effects: string[] = [];
   
   for (const modifier of modifiers) {
-    const resource = capitalize(modifier.resource || '');
+    const resource = capitalize(modifier.resource);
+    if (!resource) continue; // Skip if no valid resource
+    
     let value = String(modifier.value || 0);
     
     // Add + prefix for positive numbers (if not already present)

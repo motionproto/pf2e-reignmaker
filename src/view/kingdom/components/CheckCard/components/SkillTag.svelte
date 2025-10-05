@@ -77,18 +77,18 @@
       &:hover:not(.disabled):not(.selected) {
          transform: translateY(-1px);
          border-color: var(--border-strong);
-         background: rgba(255, 255, 255, 0.08);
+         background:   var(--btn-secondary-hover);
          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
          
          .skill-label {
-            color: var(--color-amber-light);
+            color: white;
          }
       }
       
       &.selected {
-         background: var(--color-amber);
-         border-color: var(--color-amber);
-         box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+         background: var(--color-gray-900);
+         border-color: var(--color-gray-400);
+         box-shadow: 0 2px 8px hsla(0, 0%, 46%, 0.3);
          
          .skill-label {
             color: var(--color-black);

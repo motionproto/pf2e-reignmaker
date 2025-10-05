@@ -50,6 +50,7 @@ export interface ApplyOutcomeParams {
   modifiers: EventModifier[];
   context?: OutcomeContext;
   createOngoingModifier?: boolean;  // If true, creates a modifier for ongoing effects
+  preRolledValues?: Map<number, number>;  // Pre-rolled dice values from UI (index → value)
 }
 
 /**
@@ -93,9 +94,9 @@ export async function createGameEffectsService() {
       };
 
       try {
-        // Apply all modifiers
-        for (const modifier of params.modifiers) {
-          await this.applyModifier(modifier, params, result);
+        // Apply all modifiers with their indices
+        for (let i = 0; i < params.modifiers.length; i++) {
+          await this.applyModifier(params.modifiers[i], params, result, i);
         }
 
         // Create ongoing modifier if requested
@@ -126,15 +127,23 @@ export async function createGameEffectsService() {
     async applyModifier(
       modifier: EventModifier,
       params: ApplyOutcomeParams,
-      result: ApplyOutcomeResult
+      result: ApplyOutcomeResult,
+      modifierIndex: number
     ): Promise<void> {
       const { resource, value, duration } = modifier;
 
       // Apply all modifiers EXCEPT permanent immediately
       // Permanent modifiers are only applied during Status phase (for structures)
       if (duration !== 'permanent') {
-        // Convert dice formula strings to numbers if needed (for now, evaluate simple formulas)
-        const numericValue = typeof value === 'string' ? this.evaluateDiceFormula(value) : value;
+        // Use pre-rolled value if available, otherwise evaluate/roll
+        let numericValue: number;
+        if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
+          numericValue = params.preRolledValues.get(modifierIndex)!;
+          console.log(`🎲 [GameEffects] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
+        } else {
+          numericValue = typeof value === 'string' ? this.evaluateDiceFormula(value) : value;
+        }
+        
         const modifierLabel = `${params.sourceName} (${params.outcome})`;
         await this.applyResourceChange(resource, numericValue, modifierLabel, result);
       } else {
@@ -234,7 +243,7 @@ export async function createGameEffectsService() {
     },
 
     /**
-     * Create an ongoing modifier for continuous effects
+     * Create an ongoing modifier for ongoing effects
      * 
      * This delegates to ModifierService for tracking and applying effects each turn.
      */

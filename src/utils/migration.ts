@@ -92,8 +92,8 @@ export function migrateKingdomState(oldState: any): KingdomData {
       newKingdom.buildQueue = [...oldState.buildQueue];
     }
     
-    if (Array.isArray(oldState.continuousEvents)) {
-      newKingdom.continuousEvents = [...oldState.continuousEvents];
+    if (Array.isArray(oldState.ongoingEvents)) {
+      newKingdom.ongoingEvents = [...oldState.ongoingEvents];
     }
     
     if (Array.isArray(oldState.modifiers)) {

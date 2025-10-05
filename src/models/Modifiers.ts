@@ -39,6 +39,9 @@ export interface ActiveModifier {
   
   // Resolution (optional - only for resolvable modifiers)
   resolvedWhen?: ResolutionCondition;
+  
+  // Original event/incident data (for ongoing events that need skill resolution)
+  originalEventData?: any;
 }
 
 /**

@@ -46,9 +46,9 @@
     margin-top: 10px;
     padding: 14px 16px;
     background: linear-gradient(135deg, 
-      rgba(168, 85, 247, 0.15),
-      rgba(168, 85, 247, 0.05));
-    border: 2px solid rgba(168, 85, 247, 0.4);
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.03));
+    border: 2px solid var(--border-medium);
     border-radius: var(--radius-sm);
     
     .dice-rollers-header {
@@ -57,7 +57,7 @@
       gap: 8px;
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
-      color: rgba(168, 85, 247, 1);
+      color: var(--text-primary);
       margin-bottom: 10px;
       
       i {
@@ -70,8 +70,8 @@
     width: 100%;
     padding: 12px 16px;
     margin-bottom: 8px;
-    background: rgba(168, 85, 247, 0.1);
-    border: 2px solid rgba(168, 85, 247, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-md);
@@ -87,10 +87,10 @@
     }
     
     &:hover {
-      background: rgba(168, 85, 247, 0.2);
-      border-color: rgba(168, 85, 247, 0.5);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-default);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     
     &:active {
@@ -98,7 +98,7 @@
     }
     
     i.fa-dice-d20 {
-      color: rgba(168, 85, 247, 1);
+      color: var(--text-primary);
       font-size: 20px;
     }
     
@@ -106,9 +106,9 @@
       font-family: var(--font-code, monospace);
       font-size: var(--font-lg);
       font-weight: var(--font-weight-bold);
-      color: rgba(168, 85, 247, 1);
+      color: var(--text-primary);
       padding: 2px 8px;
-      background: rgba(168, 85, 247, 0.15);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-xs);
     }
     

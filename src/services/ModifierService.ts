@@ -45,6 +45,7 @@ export async function createModifierService() {
       }
       
       // Create a basic modifier using event data
+      // IMPORTANT: Preserve original event data for ongoing events that need skill resolution
       return {
         id: `event-${event.id}-${currentTurn}`,
         name: getEventDisplayName(event),
@@ -54,7 +55,8 @@ export async function createModifierService() {
         sourceId: event.id,
         sourceName: getEventDisplayName(event),
         startTurn: currentTurn,
-        modifiers: [] // TODO: Extract from ifUnresolved when structure is defined
+        modifiers: [], // TODO: Extract from ifUnresolved when structure is defined
+        originalEventData: event // Preserve event for skill resolution in CheckCard
       };
     },
     

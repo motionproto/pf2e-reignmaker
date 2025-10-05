@@ -361,7 +361,7 @@ export class ActionResolver {
         
         // Hire Adventurers might resolve events
         if (action.id === 'hire-adventurers' && outcome === 'criticalSuccess') {
-            sideEffects.push('Resolves one continuous event');
+            sideEffects.push('Resolves one ongoing event');
         }
         
         // Deal with Unrest has scaling effects
