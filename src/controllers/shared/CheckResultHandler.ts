@@ -38,6 +38,19 @@ export class CheckResultHandler {
   ): Promise<DisplayData> {
     console.log(`📊 [CheckResultHandler] Getting display data for ${this.checkType} - ${outcome}`);
 
+    // Check if controller is initialized
+    if (!this.controller) {
+      console.error(`❌ [CheckResultHandler] Controller is undefined for ${this.checkType}`);
+      // Fallback - construct basic display data from item effects
+      const effects = item.effects?.[outcome];
+      return {
+        effect: effects?.msg || `${outcome} outcome`,
+        stateChanges: this.calculateBasicStateChanges(effects?.modifiers || []),
+        modifiers: effects?.modifiers || [],
+        manualEffects: effects?.manualEffects || []
+      };
+    }
+
     // Delegate to the phase-specific controller
     if (this.checkType === 'event') {
       return this.controller.getResolutionDisplayData(item, outcome, actorName);

@@ -50,7 +50,7 @@ export interface ApplyOutcomeParams {
   modifiers: EventModifier[];
   context?: OutcomeContext;
   createOngoingModifier?: boolean;  // If true, creates a modifier for ongoing effects
-  preRolledValues?: Map<number, number>;  // Pre-rolled dice values from UI (index → value)
+  preRolledValues?: Map<number | string, number>;  // Pre-rolled dice values from UI (index → value OR "state:resource" → value)
 }
 
 /**
@@ -137,10 +137,19 @@ export async function createGameEffectsService() {
       if (duration !== 'permanent') {
         // Use pre-rolled value if available, otherwise evaluate/roll
         let numericValue: number;
+        
+        // Check for pre-rolled value by modifier index (numeric)
         if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
           numericValue = params.preRolledValues.get(modifierIndex)!;
           console.log(`🎲 [GameEffects] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
-        } else {
+        }
+        // Check for pre-rolled value by state key (string like "state:food")
+        else if (params.preRolledValues && params.preRolledValues.has(`state:${resource}`)) {
+          numericValue = params.preRolledValues.get(`state:${resource}`)!;
+          console.log(`🎲 [GameEffects] Using pre-rolled state value for ${resource}: ${numericValue}`);
+        }
+        // Otherwise evaluate/roll the dice
+        else {
           numericValue = typeof value === 'string' ? this.evaluateDiceFormula(value) : value;
         }
         

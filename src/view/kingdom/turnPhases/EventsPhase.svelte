@@ -140,13 +140,15 @@
             <p class="event-description">{currentEvent.description}</p>
             
             <!-- Use CheckCard for event resolution -->
-            <CheckCard
-               checkType="event"
-               item={currentEvent}
-               {isViewingCurrentPhase}
-               controller={eventPhaseController}
-               {possibleOutcomes}
-            />
+            {#if eventPhaseController}
+               <CheckCard
+                  checkType="event"
+                  item={currentEvent}
+                  {isViewingCurrentPhase}
+                  controller={eventPhaseController}
+                  {possibleOutcomes}
+               />
+            {/if}
          </div>
       </div>
    {:else}
@@ -203,13 +205,15 @@
                      </div>
                      <div class="ongoing-event-body">
                         <p class="ongoing-event-description">{ongoingEvent.description}</p>
-                        <CheckCard
-                           checkType="event"
-                           item={ongoingEvent}
-                           {isViewingCurrentPhase}
-                           controller={eventPhaseController}
-                           possibleOutcomes={ongoingOutcomes}
-                        />
+                        {#if eventPhaseController}
+                           <CheckCard
+                              checkType="event"
+                              item={ongoingEvent}
+                              {isViewingCurrentPhase}
+                              controller={eventPhaseController}
+                              possibleOutcomes={ongoingOutcomes}
+                           />
+                        {/if}
                      </div>
                   </div>
                {/await}

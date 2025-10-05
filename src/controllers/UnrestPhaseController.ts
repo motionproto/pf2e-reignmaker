@@ -221,7 +221,7 @@ export async function createUnrestPhaseController() {
     async resolveIncident(
       incidentId: string, 
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      preRolledValues?: Map<number, number>
+      preRolledValues?: Map<number | string, number>
     ) {
       const actor = getKingdomActor();
       if (!actor) {
@@ -479,7 +479,8 @@ export async function createUnrestPhaseController() {
       return {
         effect,
         actorName,
-        stateChanges
+        stateChanges,
+        manualEffects: effectOutcome?.manualEffects || []
       };
     }
   };

@@ -88,7 +88,7 @@
       &.selected {
          background: var(--color-gray-900);
          border-color: var(--color-gray-400);
-         box-shadow: 0 2px 8px hsla(0, 0%, 46%, 0.3);
+       
          
          .skill-label {
             color: var(--color-black);
@@ -124,8 +124,21 @@
          cursor: wait;
          
          .fa-spin {
+            color: var(--text-primary);
             animation: spin 1s linear infinite;
             margin-right: 4px;
+         }
+         
+         .skill-label {
+            color: var(--color-gray-200);
+         }
+         
+         .skill-description {
+            color: var(--color-gray-400);
+         }
+         
+         .skill-divider {
+            color: var(--color-gray-400);
          }
       }
       

@@ -33,10 +33,19 @@ The entire flow from roll creation through skill card interaction to result appl
   - ✅ All choices made
   - ✅ All resource selections made
 
+**Dice Roll Handling:**
+- Modifier dice (from `modifiers` array): Stored with numeric index keys (0, 1, 2...)
+- State change dice (from `stateChanges` object): Stored with string keys ("state:food", "state:gold"...)
+- Both types are collected in the same `resolvedDice` Map with mixed key types
+
 ### 4. **Application** (CheckResultHandler.applyResolution)
 - Collects all rolled values, choices, and selections from UI
 - Standardizes data through `OutcomeResolutionService`
+- **Pre-rolled dice values** are passed with mixed key types (number | string)
 - Passes to `GameEffectsService` for consistent application
+- `GameEffectsService` checks both:
+  - Numeric keys for modifier-based dice (`preRolledValues.get(modifierIndex)`)
+  - String keys for state change dice (`preRolledValues.get("state:resource")`)
 - Updates `KingdomActor` with final values
 - Creates ongoing modifiers if applicable (from failed events/incidents)
 - Marks phase step as complete
@@ -83,12 +92,35 @@ CheckResultHandler.getDisplayData() → OutcomeDisplay
             ↓
     User Interactions (dice/choices/resources)
             ↓
+         resolvedDice Map (mixed keys: number | string)
+            ↓
+OutcomeResolutionService.buildResolutionData()
+            ↓
 CheckResultHandler.applyResolution() → GameEffectsService
+            ↓
+    GameEffectsService.applyModifier() (checks both key types)
             ↓
        KingdomActor Update
             ↓
    Phase Step Completion
 ```
+
+## Dice Roll Key Types
+
+The system supports two types of dice roll keys:
+
+1. **Modifier Index Keys (numeric)**: Used when dice formulas are in the `modifiers` array
+   - Key format: `0`, `1`, `2`, etc.
+   - Example: Modifier at index 0 with value `"1d4"` → stored as `resolvedDice.set(0, 3)`
+
+2. **State Change Keys (string)**: Used when dice formulas are in the `stateChanges` object
+   - Key format: `"state:resource"` (e.g., `"state:food"`, `"state:gold"`)
+   - Example: State change `{ food: "-1d4" }` → stored as `resolvedDice.set("state:food", -2)`
+
+The `GameEffectsService` checks both key types when applying modifiers:
+- First checks numeric index: `preRolledValues.get(modifierIndex)`
+- Then checks state key: `preRolledValues.get("state:" + resource)`
+- Falls back to rolling if neither exists
 
 ## Unified Pipeline
 

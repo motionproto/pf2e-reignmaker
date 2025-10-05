@@ -64,22 +64,26 @@ export class IncidentLoader {
                     criticalSuccess: raw.effects.criticalSuccess ? {
                         msg: raw.effects.criticalSuccess.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.criticalSuccess.modifiers || []
+                        modifiers: raw.effects.criticalSuccess.modifiers || [],
+                        manualEffects: (raw.effects.criticalSuccess as any).manualEffects || []
                     } : undefined,
                     success: raw.effects.success ? {
                         msg: raw.effects.success.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.success.modifiers || []
+                        modifiers: raw.effects.success.modifiers || [],
+                        manualEffects: (raw.effects.success as any).manualEffects || []
                     } : undefined,
                     failure: raw.effects.failure ? {
                         msg: raw.effects.failure.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.failure.modifiers || []
+                        modifiers: raw.effects.failure.modifiers || [],
+                        manualEffects: (raw.effects.failure as any).manualEffects || []
                     } : undefined,
                     criticalFailure: raw.effects.criticalFailure ? {
                         msg: raw.effects.criticalFailure.msg,
                         endsEvent: true,
-                        modifiers: raw.effects.criticalFailure.modifiers || []
+                        modifiers: raw.effects.criticalFailure.modifiers || [],
+                        manualEffects: (raw.effects.criticalFailure as any).manualEffects || []
                     } : undefined,
                 }
             }));

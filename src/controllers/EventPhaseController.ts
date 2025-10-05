@@ -482,6 +482,56 @@ export async function createEventPhaseController(_eventService?: any) {
         },
         
         /**
+         * Get resolution display data for UI after skill check
+         * This method is called by CheckResultHandler to prepare outcome data for OutcomeDisplay
+         */
+        getResolutionDisplayData(
+            event: any,
+            outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+            actorName: string
+        ) {
+            const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+            
+            // Get the outcome effects from the event
+            const effectOutcome = event.effects?.[outcome];
+            const effect = effectOutcome?.msg || `${outcome}`;
+            
+            // Calculate state changes, preserving dice formulas and skipping resource arrays
+            const modifiers = effectOutcome?.modifiers;
+            const stateChanges: Record<string, any> = {};
+            
+            if (modifiers && modifiers.length > 0) {
+                const changes = new Map<string, any>();
+                
+                for (const modifier of modifiers) {
+                    // Skip modifiers with resource arrays (they require player choice)
+                    if (!Array.isArray(modifier.resource)) {
+                        const value = modifier.value;
+                        
+                        // Preserve dice formulas as strings for dice roller UI
+                        if (typeof value === 'string' && DICE_PATTERN.test(value)) {
+                            changes.set(modifier.resource, value);
+                        } else {
+                            // Aggregate numeric values
+                            const currentValue = changes.get(modifier.resource) || 0;
+                            changes.set(modifier.resource, currentValue + value);
+                        }
+                    }
+                }
+                
+                Object.assign(stateChanges, Object.fromEntries(changes));
+            }
+            
+            return {
+                effect,
+                actorName,
+                stateChanges,
+                modifiers: effectOutcome?.modifiers || [], // Pass through full modifiers for UI
+                manualEffects: effectOutcome?.manualEffects || []
+            };
+        },
+
+        /**
          * Check if current phase is complete
          */
         async isCurrentPhaseComplete(): Promise<boolean> {

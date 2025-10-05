@@ -13,8 +13,8 @@
  * Complete resolution data from user interactions
  */
 export interface OutcomeResolutionData {
-  /** Dice rolls keyed by modifier index */
-  diceRolls?: Map<number, number>;
+  /** Dice rolls keyed by modifier index or state change key (e.g., "state:food") */
+  diceRolls?: Map<number | string, number>;
   
   /** Resource selections keyed by modifier index */
   resourceSelections?: Map<number, string>;
@@ -34,7 +34,7 @@ export interface OutcomeResolutionData {
  * Input data from OutcomeDisplay component state
  */
 interface ResolutionInput {
-  resolvedDice: Map<number, number>;
+  resolvedDice: Map<number | string, number>;
   selectedResources: Map<number, string>;
   selectedChoice: number | null;
   choices?: any[];
@@ -136,7 +136,11 @@ export function createOutcomeResolutionService() {
       
       if (detail.diceRolls) {
         data.diceRolls = new Map(
-          Object.entries(detail.diceRolls).map(([k, v]) => [parseInt(k), v as number])
+          Object.entries(detail.diceRolls).map(([k, v]) => {
+            // Handle both numeric indices and string keys (e.g., "state:food")
+            const key = k.startsWith('state:') ? k : parseInt(k);
+            return [key, v as number];
+          })
         );
       }
       
