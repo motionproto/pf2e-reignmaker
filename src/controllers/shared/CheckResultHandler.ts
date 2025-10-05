@@ -20,6 +20,10 @@ export interface ResolutionResult {
   success: boolean;
   error?: string;
   unresolvedEvent?: any;
+  applied?: {
+    resources: Array<{ resource: string; value: number }>;
+    specialEffects: string[];
+  };
 }
 
 export class CheckResultHandler {

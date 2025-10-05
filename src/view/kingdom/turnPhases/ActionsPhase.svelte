@@ -139,8 +139,14 @@
       | "failure"
       | "criticalFailure";
     
-    // Use controller to parse the outcome for preview
-    const stateChanges = controller.parseActionOutcome(action, outcomeType);
+    // Get modifiers from the action for preview
+    const modifiers = controller.getActionModifiers(action, outcomeType);
+    
+    // Convert modifiers to stateChanges format for preview display
+    const stateChanges = new Map<string, any>();
+    modifiers.forEach((mod: any) => {
+      stateChanges.set(mod.resource, mod.value);
+    });
     
     // Special handling for Aid Another action - calculate actual bonus
     if (action.id === 'aid-another' && stateChanges.get('meta')) {
@@ -217,13 +223,13 @@
       return;
     }
 
-    // Use the controller to execute the action
+    // Use the controller to execute the action (now uses GameEffectsService)
     const result = await controller.executeAction(
       action,
       resolution.outcome,
       $kingdomData,
       $currentTurn || 1,
-      undefined, // rollTotal - not tracked in current UI
+      undefined, // preRolledValues - not used for now (actions don't have dice rolls in UI yet)
       resolution.actorName,
       resolution.skillName,
       currentUserId || undefined
@@ -232,6 +238,14 @@
     if (!result.success) {
       // Show error to user about requirements not being met
       ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
+    } else {
+      // Show success notification with applied effects
+      const effectsMsg = result.applied?.resources
+        .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
+        .join(', ');
+      if (effectsMsg) {
+        ui.notifications?.info(`${action.name}: ${effectsMsg}`);
+      }
     }
   }
 
@@ -336,7 +350,7 @@
     
     // Add specific missing resources
     if (requirements.missingResources) {
-      requirements.missingResources.forEach((amount, resource) => {
+      requirements.missingResources.forEach((amount: any, resource: any) => {
         const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
         missing.push(`${amount} more ${resourceName}`);
       });
@@ -623,7 +637,7 @@
               {@const isResolved = isActionResolvedHelper(action.id)}
               {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
               {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
-              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId) : []}
+              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter((r: any) => r.playerId !== currentUserId) : []}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}`}

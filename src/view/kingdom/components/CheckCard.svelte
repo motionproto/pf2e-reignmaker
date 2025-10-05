@@ -34,6 +34,7 @@
   let stateChanges: Record<string, any> = {};
   let modifiers: any[] = [];
   let manualEffects: string[] = [];
+  let shortfallResources: string[] = [];
   let rollBreakdown: any = null;
   let pendingOutcome: {
     item: any;
@@ -137,6 +138,19 @@
     
     if (result.success) {
       console.log(`✅ [CheckCard] ${checkType} resolution applied successfully`);
+      
+      // Parse shortfall information from special effects
+      const shortfalls: string[] = [];
+      if (result.applied?.specialEffects) {
+        for (const effect of result.applied.specialEffects) {
+          if (effect.startsWith('shortage_penalty:')) {
+            const resource = effect.split(':')[1];
+            shortfalls.push(resource);
+          }
+        }
+      }
+      
+      shortfallResources = shortfalls;
       applied = true;
       pendingOutcome = null;
     } else {
@@ -227,7 +241,7 @@
     {/if}
   {:else if outcome}
     <!-- After roll: Show OutcomeDisplay -->
-    <OutcomeDisplay
+      <OutcomeDisplay
       {outcome}
       {actorName}
       skillName={selectedSkill}
@@ -235,6 +249,7 @@
       {stateChanges}
       {modifiers}
       {manualEffects}
+      {shortfallResources}
       {rollBreakdown}
       {applied}
       primaryButtonLabel="Apply Result"

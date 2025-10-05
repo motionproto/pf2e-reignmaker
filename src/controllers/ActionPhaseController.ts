@@ -202,20 +202,10 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Parse action outcome
+     * Get action outcome modifiers
      */
-    parseActionOutcome(action: PlayerAction, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      const parsed = actionResolver.parseActionOutcome(action, outcome)
-      const stateChanges = new Map<string, any>()
-      
-      // Convert parsed effects to state changes Map
-      for (const [key, value] of Object.entries(parsed)) {
-        if (value !== undefined) {
-          stateChanges.set(key, value)
-        }
-      }
-      
-      return stateChanges
+    getActionModifiers(action: PlayerAction, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
+      return actionResolver.getOutcomeModifiers(action, outcome)
     },
 
     /**
@@ -226,14 +216,14 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Execute an action
+     * Execute an action with optional pre-rolled dice values
      */
     async executeAction(
       action: PlayerAction,
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
       kingdomData: KingdomData,
       currentTurn: number,
-      rollTotal?: number,
+      preRolledValues?: Map<number | string, number>,
       actorName?: string,
       skillName?: string,
       playerId?: string
@@ -245,32 +235,10 @@ export async function createActionPhaseController() {
           return { success: false, error: requirements.reason || 'Action requirements not met' }
         }
 
-        // Execute the action
-        const result = actionResolver.executeAction(action, outcome, kingdomData)
+        // Execute the action using ActionResolver (which now uses GameEffectsService)
+        const result = await actionResolver.executeAction(action, outcome, kingdomData, preRolledValues)
         
-        // Apply state changes to kingdom
-        const actor = getKingdomActor()
-        if (actor && result.stateChanges.size > 0) {
-          await actor.updateKingdom((kingdom) => {
-            for (const [key, value] of result.stateChanges.entries()) {
-              if (key === 'unrest') {
-                kingdom.unrest = Math.max(0, (kingdom.unrest || 0) + value)
-              } else if (['gold', 'food', 'lumber', 'stone', 'ore'].includes(key)) {
-                // All resources are stored in the resources object
-                const current = kingdom.resources[key] || 0
-                const newValue = Math.max(0, current + value)
-                kingdom.resources[key] = newValue
-              } else if (key === 'fame') {
-                kingdom.fame = Math.max(0, (kingdom.fame || 0) + value)
-              } else if (key === 'imprisonedUnrest') {
-                kingdom.imprisonedUnrest = Math.max(0, (kingdom.imprisonedUnrest || 0) + value)
-              }
-              // Add other resource types as needed
-            }
-          })
-        }
-
-        return { success: true, stateChanges: result.stateChanges, messages: result.messages }
+        return result
       } catch (error) {
         console.error('Error executing action:', error)
         return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }

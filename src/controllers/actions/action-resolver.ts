@@ -1,17 +1,17 @@
 /**
  * ActionResolver - Handles player action resolution and validation
  * 
- * This service manages action requirements, outcome parsing, and state changes
- * for kingdom actions according to the Reignmaker Lite rules.
+ * This service manages action requirements and delegates outcome application
+ * to the unified GameEffectsService.
  */
 
-import { diceService } from '../../services/domain/DiceService';
 import type { PlayerAction } from '../../models/PlayerActions';
 import type { KingdomData } from '../../actors/KingdomActor';
 import {
     getLevelBasedDC,
     hasRequiredResources
 } from '../shared/resolution-service';
+import { createGameEffectsService, type OutcomeDegree } from '../../services/GameEffectsService';
 
 export interface ActionRequirement {
     met: boolean;
@@ -20,31 +20,14 @@ export interface ActionRequirement {
     missingResources?: Map<string, number>;
 }
 
-export interface ParsedActionEffect {
-    unrest?: number;
-    gold?: number;
-    resources?: number;
-    food?: number;
-    lumber?: number;
-    stone?: number;
-    ore?: number;
-    fame?: number;
-    hexesClaimed?: number | string;
-    structuresBuilt?: number;
-    roadsBuilt?: string;
-    armyRecruited?: boolean;
-    structureCostReduction?: string;
-    imprisonedUnrest?: number;
-    imprisonedUnrestRemoved?: number | string;
-    settlementFounded?: boolean;
-    armyLevel?: number;
-    meta?: { nextActionBonus?: number };
-}
-
 export interface ActionOutcome {
-    stateChanges: Map<string, any>;
+    success: boolean;
+    error?: string;
+    applied?: {
+        resources: Array<{ resource: string; value: number }>;
+        specialEffects: string[];
+    };
     messages: string[];
-    sideEffects?: string[];
 }
 
 export class ActionResolver {
@@ -142,237 +125,69 @@ export class ActionResolver {
     }
     
     /**
-     * Parse action outcome to extract state changes
-     * Now uses structured ActionModifier array + description parsing for special effects
+     * Get the modifiers for an action outcome
+     * Returns the structured EventModifier array from the action data
      */
-    parseActionOutcome(
+    getOutcomeModifiers(
         action: PlayerAction,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
-    ): ParsedActionEffect {
+    ) {
         const effect = action[outcome];
-        const parsed: ParsedActionEffect = {};
-        
-        if (!effect) return parsed;
-        
-        // First: Process structured modifiers (new EventModifier format)
-        if (effect.modifiers && Array.isArray(effect.modifiers)) {
-            for (const modifier of effect.modifiers) {
-                // Map resource to parsed effect field
-                const resource = modifier.resource;
-                if (parsed[resource as keyof ParsedActionEffect] !== undefined) {
-                    // Accumulate if already exists
-                    (parsed as any)[resource] = ((parsed as any)[resource] || 0) + modifier.value;
-                } else {
-                    (parsed as any)[resource] = modifier.value;
-                }
-            }
-        }
-        
-        // Second: Parse description text for special effects not in modifiers
-        // (e.g., eventResolved, hexesClaimed, structuresBuilt, etc.)
-        if (effect.description) {
-            const description = effect.description.toLowerCase();
-            
-            // Parse structure-related changes
-            this.parseStructureChanges(description, parsed);
-            
-            // Parse hex and territory changes
-            this.parseHexChanges(description, parsed);
-            
-            // Parse army-related changes
-            this.parseArmyChanges(description, parsed);
-            
-            // Parse imprisoned unrest changes
-            this.parseImprisonedUnrestChanges(description, parsed);
-        }
-        
-        return parsed;
-    }
-    
-    private parseUnrestChanges(description: string, parsed: ParsedActionEffect): void {
-        // Reduction patterns
-        const reduceMatch = description.match(/reduce (?:current )?unrest by (\d+)/);
-        if (reduceMatch) {
-            parsed.unrest = -parseInt(reduceMatch[1]);
-            return;
-        }
-        
-        // Addition patterns
-        if (description.includes('+1 unrest')) {
-            parsed.unrest = 1;
-        } else if (description.includes('+2 unrest')) {
-            parsed.unrest = 2;
-        } else if (description.includes('+1d4 unrest')) {
-            parsed.unrest = diceService.rollD4();
-        } else if (description.includes('gain 1 unrest')) {
-            parsed.unrest = 1;
-        } else if (description.includes('gain 1 current unrest')) {
-            parsed.unrest = 1;
-        }
-    }
-    
-    private parseGoldChanges(description: string, parsed: ParsedActionEffect): void {
-        // Gain patterns
-        const gainMatch = description.match(/gain (\d+) gold/);
-        if (gainMatch) {
-            parsed.gold = parseInt(gainMatch[1]);
-            return;
-        }
-        
-        if (description.includes('gain double')) {
-            parsed.gold = 'double amount' as any;
-            return;
-        }
-        
-        // Loss patterns
-        const loseMatch = description.match(/lose (\d+) gold/);
-        if (loseMatch) {
-            parsed.gold = -parseInt(loseMatch[1]);
-            return;
-        }
-        
-        // Conversion patterns
-        if (description.includes('→ 1 gold')) {
-            parsed.gold = 1;
-        } else if (description.includes('→ 2 gold')) {
-            parsed.gold = 2;
-        }
-    }
-    
-    private parseResourceChanges(description: string, parsed: ParsedActionEffect): void {
-        const resourceMatch = description.match(/gain (\d+) (?:resource|resources)/);
-        if (resourceMatch) {
-            parsed.resources = parseInt(resourceMatch[1]);
-        }
-        
-        // Specific resource types
-        const types = ['food', 'lumber', 'stone', 'ore'];
-        for (const type of types) {
-            const typeMatch = description.match(new RegExp(`gain (\\d+) ${type}`));
-            if (typeMatch) {
-                parsed[type as keyof ParsedActionEffect] = parseInt(typeMatch[1]) as any;
-            }
-        }
-    }
-    
-    private parseFameChanges(description: string, parsed: ParsedActionEffect): void {
-        if (description.includes('-1 fame')) {
-            parsed.fame = -1;
-        } else if (description.includes('+1 fame')) {
-            parsed.fame = 1;
-        }
-    }
-    
-    private parseStructureChanges(description: string, parsed: ParsedActionEffect): void {
-        if (description.includes('+1 structure')) {
-            parsed.structuresBuilt = 1;
-        } else if (description.includes('build structures for half cost')) {
-            parsed.structureCostReduction = '50%';
-        } else if (description.includes('build 1 structure')) {
-            parsed.structuresBuilt = 1;
-        }
-    }
-    
-    private parseHexChanges(description: string, parsed: ParsedActionEffect): void {
-        const claimMatch = description.match(/claim.*?(\d+).*?hex/);
-        if (claimMatch) {
-            parsed.hexesClaimed = parseInt(claimMatch[1]);
-        } else if (description.includes('claim targeted hexes')) {
-            parsed.hexesClaimed = 'varies by proficiency';
-        } else if (description.includes('+1 extra hex')) {
-            parsed.hexesClaimed = '+1 extra';
-        }
-        
-        // Road building
-        if (description.includes('build roads')) {
-            if (description.includes('+1 hex')) {
-                parsed.roadsBuilt = '+1 hex';
-            } else {
-                parsed.roadsBuilt = 'standard';
-            }
-        }
-    }
-    
-    private parseArmyChanges(description: string, parsed: ParsedActionEffect): void {
-        if (description.includes('recruit')) {
-            parsed.armyRecruited = true;
-        }
-    }
-    
-    private parseImprisonedUnrestChanges(description: string, parsed: ParsedActionEffect): void {
-        const convertMatch = description.match(/convert (\d+) unrest to imprisoned/);
-        if (convertMatch) {
-            parsed.unrest = -parseInt(convertMatch[1]);
-            parsed.imprisonedUnrest = parseInt(convertMatch[1]);
-        } else if (description.includes('remove all imprisoned unrest')) {
-            parsed.imprisonedUnrestRemoved = 'all';
-        } else if (description.includes('remove 1d4 imprisoned unrest')) {
-            parsed.imprisonedUnrestRemoved = diceService.rollD4();
-        }
+        // ActionModifier is compatible with EventModifier - resource is always a ResourceType in practice
+        return (effect?.modifiers || []) as any[];
     }
     
     /**
-     * Execute an action and calculate state changes
+     * Execute an action and apply its effects using GameEffectsService
      */
-    executeAction(
+    async executeAction(
         action: PlayerAction,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        kingdomData: KingdomData
-    ): ActionOutcome {
-        const parsedEffects = this.parseActionOutcome(action, outcome);
-        const stateChanges = new Map<string, any>();
+        kingdomData: KingdomData,
+        preRolledValues?: Map<number | string, number>
+    ): Promise<ActionOutcome> {
         const messages: string[] = [];
-        const sideEffects: string[] = [];
         
-        // Convert parsed effects to state changes
-        for (const [key, value] of Object.entries(parsedEffects)) {
-            if (value !== undefined) {
-                stateChanges.set(key, value);
-            }
-        }
-        
-        // Add outcome message
+        // Get outcome message
         const effect = action[outcome];
         if (effect?.description) {
             messages.push(effect.description);
         }
         
-        // Handle special action-specific logic
-        this.applySpecialActionEffects(action, outcome, stateChanges, sideEffects);
+        // Get modifiers for this outcome
+        const modifiers = this.getOutcomeModifiers(action, outcome);
         
-        return { stateChanges, messages, sideEffects };
+        if (modifiers.length === 0) {
+            // No modifiers - action has no mechanical effects
+            return {
+                success: true,
+                messages,
+                applied: {
+                    resources: [],
+                    specialEffects: []
+                }
+            };
+        }
+        
+        // Use GameEffectsService to apply the outcome
+        const gameEffects = await createGameEffectsService();
+        const result = await gameEffects.applyOutcome({
+            type: 'action',
+            sourceId: action.id,
+            sourceName: action.name,
+            outcome: outcome as OutcomeDegree,
+            modifiers,
+            preRolledValues
+        });
+        
+        return {
+            success: result.success,
+            error: result.error,
+            applied: result.applied,
+            messages
+        };
     }
     
-    /**
-     * Apply special action-specific effects
-     */
-    private applySpecialActionEffects(
-        action: PlayerAction,
-        outcome: string,
-        stateChanges: Map<string, any>,
-        sideEffects: string[]
-    ): void {
-        // Aid Another provides a bonus to the aided action
-        if (action.id === 'aid-another' && (outcome === 'success' || outcome === 'criticalSuccess')) {
-            const bonusValue = outcome === 'criticalSuccess' ? 'proficiency+reroll' : 'proficiency';
-            stateChanges.set('meta', { aidBonus: bonusValue });
-            sideEffects.push('Aided action gains a bonus based on your proficiency');
-        }
-        
-        // Hire Adventurers might resolve events
-        if (action.id === 'hire-adventurers' && outcome === 'criticalSuccess') {
-            sideEffects.push('Resolves one ongoing event');
-        }
-        
-        // Deal with Unrest has scaling effects
-        if (action.id === 'deal-with-unrest') {
-            const currentUnrest = stateChanges.get('unrest') || 0;
-            if (outcome === 'criticalSuccess' && currentUnrest < -2) {
-                // Cap unrest reduction at -3 for critical success
-                stateChanges.set('unrest', -3);
-            }
-        }
-    }
     
     /**
      * Get available actions for a category

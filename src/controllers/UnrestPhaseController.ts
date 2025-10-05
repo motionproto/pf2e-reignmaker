@@ -303,7 +303,8 @@ export async function createUnrestPhaseController() {
           success: true, 
           outcome: outcome,
           message: effectOutcome.msg,
-          resourceChanges: appliedChanges
+          resourceChanges: appliedChanges,
+          applied: result.applied  // Pass through shortfall data for UI
         };
       } catch (error) {
         console.error('❌ [UnrestPhaseController] Error resolving incident:', error);

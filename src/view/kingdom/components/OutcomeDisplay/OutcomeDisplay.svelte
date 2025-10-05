@@ -22,6 +22,7 @@
   import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
   import StateChanges from './components/StateChanges.svelte';
+  import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
   import DebugResultSelector from './components/DebugResultSelector.svelte';
   
@@ -44,6 +45,7 @@
   export let choices: any[] | undefined = undefined;
   export let rollBreakdown: any = null;
   export let debugMode: boolean = false;
+  export let shortfallResources: string[] = [];
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
@@ -227,6 +229,7 @@
   <div class="resolution-details">
     <OutcomeMessage effect={displayEffect} />
     <RollBreakdown {rollBreakdown} />
+    <ShortageWarning {shortfallResources} />
     <ResourceSelector {modifiers} {selectedResources} on:select={handleResourceSelect} />
     <ChoiceButtons {choices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
     <StateChanges stateChanges={displayStateChanges} {modifiers} {resolvedDice} {manualEffects} on:roll={handleDiceRoll} />

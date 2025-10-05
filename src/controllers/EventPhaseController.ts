@@ -213,6 +213,10 @@ export async function createEventPhaseController(_eventService?: any) {
             effects: Map<string, any>;
             unresolvedEvent: EventData | null;
             error?: string;
+            applied?: {
+                resources: Array<{ resource: string; value: number }>;
+                specialEffects: string[];
+            };
         }> {
             console.log(`🎯 [EventPhaseController] Applying event outcome: ${getEventDisplayName(event)} -> ${outcome}`);
             
@@ -238,7 +242,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     throw new Error(result.error || 'Failed to apply outcome');
                 }
                 
-                // Convert applied resources to Map for compatibility
+                // Convert applied resources to Map for compatibility (legacy format)
                 const appliedChanges = new Map<string, any>();
                 for (const { resource, value } of result.applied.resources) {
                     appliedChanges.set(resource, value);
@@ -303,7 +307,8 @@ export async function createEventPhaseController(_eventService?: any) {
                 return {
                     success: true,
                     effects: state.appliedEffects,
-                    unresolvedEvent: state.unresolvedEvent
+                    unresolvedEvent: state.unresolvedEvent,
+                    applied: result.applied  // Pass through the applied field from GameEffectsService
                 };
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';

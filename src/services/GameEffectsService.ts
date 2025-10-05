@@ -206,17 +206,33 @@ export async function createGameEffectsService() {
       }
 
       // Handle standard resources (gold, food, lumber, stone, ore, luxuries)
+      let hasShortfall = false;
+      
       await updateKingdom(kingdom => {
         if (!kingdom.resources) {
           kingdom.resources = {};
         }
 
         const currentValue = kingdom.resources[resource] || 0;
-        const newValue = Math.max(0, currentValue + value); // Resources can't go negative
+        const targetValue = currentValue + value;
+        
+        // Detect shortfall (trying to spend more than we have)
+        if (value < 0 && targetValue < 0) {
+          hasShortfall = true;
+        }
+        
+        const newValue = Math.max(0, targetValue); // Resources can't go negative
         kingdom.resources[resource] = newValue;
 
-        console.log(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+        console.log(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})${hasShortfall ? ' [SHORTFALL]' : ''}`);
       });
+
+      // Apply shortfall penalty per Kingdom Rules
+      if (hasShortfall) {
+        console.warn(`  ⚠️ Shortfall detected for ${resource}: gained +1 unrest`);
+        await this.applyUnrestChange(1, `${modifierName} (shortage)`, result);
+        result.applied.specialEffects.push(`shortage_penalty:${resource}`);
+      }
 
       result.applied.resources.push({ resource, value });
     },
