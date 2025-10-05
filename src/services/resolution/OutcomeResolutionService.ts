@@ -47,7 +47,7 @@ interface ResolutionInput {
 /**
  * Create the outcome resolution service
  */
-export function createOutcomeResolutionService() {
+export async function createOutcomeResolutionService() {
   return {
     /**
      * Build complete resolution data from UI state
@@ -159,7 +159,4 @@ export function createOutcomeResolutionService() {
   };
 }
 
-/**
- * Singleton instance for convenience
- */
-export const outcomeResolutionService = createOutcomeResolutionService();
+export type OutcomeResolutionService = Awaited<ReturnType<typeof createOutcomeResolutionService>>;

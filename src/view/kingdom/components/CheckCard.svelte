@@ -124,8 +124,9 @@
     console.log(`📝 [CheckCard] Applying ${checkType} result:`, outcome);
     
     // Parse resolution data
-    const { outcomeResolutionService } = await import('./OutcomeDisplay/logic/OutcomeResolutionService');
-    const resolutionData = outcomeResolutionService.fromEventDetail(event.detail);
+    const { createOutcomeResolutionService } = await import('../../../services/resolution');
+    const resolutionService = await createOutcomeResolutionService();
+    const resolutionData = resolutionService.fromEventDetail(event.detail);
     
     // Apply through controller
     const result = await resultHandler.applyResolution(

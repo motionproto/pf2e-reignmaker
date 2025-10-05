@@ -7,7 +7,7 @@
 
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
-import type { OutcomeResolutionData } from '../../view/kingdom/components/OutcomeDisplay/logic/OutcomeResolutionService';
+import type { OutcomeResolutionData } from '../../services/resolution';
 
 export interface DisplayData {
   effect: string;

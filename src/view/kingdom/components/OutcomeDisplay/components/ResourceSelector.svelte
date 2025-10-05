@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { detectResourceArrayModifiers, formatStateChangeLabel } from '../logic/OutcomeDisplayLogic';
+  import { formatStateChangeLabel } from '../../../../../services/resolution';
+  import { detectResourceArrayModifiers } from '../logic/OutcomeDisplayLogic';
   
   export let modifiers: any[] | undefined = undefined;
   export let selectedResources: Map<number, string> = new Map();

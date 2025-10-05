@@ -2,15 +2,17 @@
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../stores/KingdomStore';
   import {
-    getOutcomeDisplayProps,
     processChoiceSelection,
     detectResourceArrayModifiers,
-    detectDiceModifiers,
-    detectStateChangeDice,
-    rollDiceFormula,
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
-  import { outcomeResolutionService } from './logic/OutcomeResolutionService';
+  import { 
+    getOutcomeDisplayProps,
+    detectDiceModifiers,
+    detectStateChangeDice,
+    rollDiceFormula
+  } from '../../../../services/resolution';
+  import { createOutcomeResolutionService } from '../../../../services/resolution';
   
   // Import extracted components
   import OutcomeHeader from './components/OutcomeHeader.svelte';
@@ -106,13 +108,14 @@
     dispatch('reroll');
   }
   
-  function handlePrimary() {
+  async function handlePrimary() {
     if ((hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved)) {
       return;
     }
     
     // Build standardized resolution data using the service
-    const resolutionData = outcomeResolutionService.buildResolutionData({
+    const resolutionService = await createOutcomeResolutionService();
+    const resolutionData = resolutionService.buildResolutionData({
       resolvedDice,
       selectedResources,
       selectedChoice,
@@ -121,7 +124,7 @@
     });
     
     // Convert to plain object for event dispatch
-    const eventDetail = outcomeResolutionService.toEventDetail(resolutionData);
+    const eventDetail = resolutionService.toEventDetail(resolutionData);
     
     dispatch('primary', eventDetail);
   }

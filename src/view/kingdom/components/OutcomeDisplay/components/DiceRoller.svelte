@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { detectDiceModifiers, rollDiceFormula, formatStateChangeLabel } from '../logic/OutcomeDisplayLogic';
+  import { detectDiceModifiers, rollDiceFormula, formatStateChangeLabel } from '../../../../../services/resolution';
   
   export let modifiers: any[] | undefined;
   export let resolvedDice: Map<number, number>;

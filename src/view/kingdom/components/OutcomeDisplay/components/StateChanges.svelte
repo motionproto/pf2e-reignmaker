@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../logic/OutcomeDisplayLogic';
+  import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../../../../../services/resolution';
   
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
