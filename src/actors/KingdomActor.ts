@@ -113,7 +113,6 @@ export interface KingdomData {
   // Event/incident tracking
   currentEventId?: string | null;
   currentIncidentId?: string | null;
-  ongoingEvents?: string[];
   incidentRoll?: number | null;
   eventStabilityRoll?: number | null;
   eventRollDC?: number | null;

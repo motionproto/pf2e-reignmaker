@@ -105,8 +105,16 @@ export async function createUnrestPhaseController() {
         // Step 0: Auto-complete unrest calculation immediately
         await completePhaseStepByIndex(0); // Step 0: Calculate Unrest
         
-        // Step 1: Check for Incidents - MANUAL (user must roll)
-        // Do NOT auto-complete - user must manually trigger incident check
+        // Step 1: Check for Incidents - CONDITIONAL
+        // Auto-complete if tier 0 (stable kingdom - no incidents possible)
+        // Otherwise MANUAL (user must roll)
+        const tier = this.getUnrestTier(kingdom.unrest || 0);
+        if (tier === 0) {
+          await completePhaseStepByIndex(1); // Auto-complete if stable
+          console.log('✅ [UnrestPhaseController] Incident check auto-completed (stable kingdom - tier 0)');
+        } else {
+          console.log('⚠️ [UnrestPhaseController] Incident check requires manual roll (tier', tier, ')');
+        }
         
         // Step 2: Resolve Incident - CONDITIONAL
         // Only auto-complete if no active incident exists
@@ -117,7 +125,7 @@ export async function createUnrestPhaseController() {
           console.log('⚠️ [UnrestPhaseController] Incident resolution requires manual completion');
         }
         
-        console.log('✅ [UnrestPhaseController] Unrest calculation auto-completed, incident check requires user action');
+        console.log('✅ [UnrestPhaseController] Phase initialization complete');
         
         return createPhaseResult(true)
       } catch (error) {
@@ -269,24 +277,6 @@ export async function createUnrestPhaseController() {
         const appliedChanges = new Map<string, any>();
         for (const { resource, value } of result.applied.resources) {
           appliedChanges.set(resource, value);
-        }
-
-        // Handle unresolved modifier creation if applicable
-        if (incident.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
-          const { createModifierService } = await import('../services/ModifierService');
-          const modifierService = await createModifierService();
-          
-          const kingdom = get(kingdomData);
-          const unresolvedModifier = modifierService.createFromUnresolvedEvent(incident as any, kingdom.currentTurn || 1);
-          
-          if (unresolvedModifier) {
-            await actor.updateKingdom(kingdom => {
-              if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-              kingdom.activeModifiers.push(unresolvedModifier);
-            });
-            appliedChanges.set('modifier', unresolvedModifier);
-            console.log(`📋 [UnrestPhaseController] Created ongoing modifier: ${unresolvedModifier.name}`);
-          }
         }
 
         // Clear the current incident

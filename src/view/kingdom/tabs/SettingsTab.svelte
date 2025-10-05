@@ -1,9 +1,9 @@
 <script lang="ts">
    import { onMount } from 'svelte';
-   import { kingdomData, updateKingdom } from '../../../stores/KingdomStore';
-   import { TurnPhase } from '../../../actors/KingdomActor';
+   import { kingdomData } from '../../../stores/KingdomStore';
    import { KingdomSettings } from '../../../api/foundry';
    import { isKingmakerInstalled, getKingmakerRealmData } from '../../../api/kingmaker';
+   import { ResetKingdomDialog } from '../../../ui/ResetKingdomDialog';
    
    // Local state for settings
    let autoAdvancePhase = localStorage.getItem('autoAdvancePhase') === 'true';
@@ -81,30 +81,9 @@
       saveSetting('confirmActions', confirmActions);
    }
    
-   // Reset kingdom data
+   // Reset kingdom data - now uses the proper ResetKingdomDialog
    async function resetKingdom() {
-      if (confirm('Are you sure you want to reset all kingdom data? This cannot be undone!')) {
-         // Reset kingdom state using the new architecture
-         await updateKingdom(kingdom => {
-            kingdom.currentTurn = 1;
-            kingdom.currentPhase = TurnPhase.STATUS;
-            kingdom.fame = 0;
-            kingdom.unrest = 0;
-            kingdom.imprisonedUnrest = 0;
-            kingdom.resources = { gold: 0, food: 0, lumber: 0, stone: 0, ore: 0 };
-            kingdom.hexes = [];
-            kingdom.settlements = [];
-            kingdom.armies = [];
-            kingdom.buildQueue = [];
-            kingdom.currentPhaseSteps = [];
-         });
-         
-         // Clear localStorage
-         localStorage.removeItem('kingdomWarStatus');
-         localStorage.removeItem('kingdomName');
-         
-         alert('Kingdom data has been reset.');
-      }
+      await ResetKingdomDialog.show();
    }
 </script>
 

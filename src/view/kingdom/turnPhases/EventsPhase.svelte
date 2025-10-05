@@ -18,6 +18,7 @@
    import CheckCard from '../components/CheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
+   import OngoingEventCard from '../components/OngoingEventCard.svelte';
    
    // Initialize controller
    let eventPhaseController: any;
@@ -187,56 +188,17 @@
       </div>
    {/if}
    
-   <!-- Ongoing Events (modifiers with originalEventData) -->
-   {#if activeModifiers.some(m => m.originalEventData)}
+   <!-- Ongoing Events - All event modifiers displayed as collapsible cards -->
+   {#if activeModifiers.length > 0}
       <div class="ongoing-events-section">
          <h4>Ongoing Events</h4>
          <div class="ongoing-events-list">
-            {#each activeModifiers.filter(m => m.originalEventData) as modifier}
-               {@const ongoingEvent = modifier.originalEventData}
-               {#await (async () => {
-                  const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
-                  return buildPossibleOutcomes(ongoingEvent.effects);
-               })() then ongoingOutcomes}
-                  <div class="ongoing-event-card">
-                     <div class="ongoing-event-header">
-                        <h3 class="ongoing-event-title">{ongoingEvent.name}</h3>
-                        <span class="ongoing-badge">Ongoing</span>
-                     </div>
-                     <div class="ongoing-event-body">
-                        <p class="ongoing-event-description">{ongoingEvent.description}</p>
-                        {#if eventPhaseController}
-                           <CheckCard
-                              checkType="event"
-                              item={ongoingEvent}
-                              {isViewingCurrentPhase}
-                              controller={eventPhaseController}
-                              possibleOutcomes={ongoingOutcomes}
-                           />
-                        {/if}
-                     </div>
-                  </div>
-               {/await}
-            {/each}
-         </div>
-      </div>
-   {/if}
-   
-   <!-- Other Active Modifiers (without originalEventData) -->
-   {#if activeModifiers.some(m => !m.originalEventData)}
-      <div class="modifiers-section">
-         <h4>Active Modifiers</h4>
-         <div class="modifiers-list">
-            {#each activeModifiers.filter(m => !m.originalEventData) as modifier}
-               <div class="modifier-item">
-                  <div class="modifier-header">
-                     <span class="modifier-name">{modifier.name}</span>
-                     <span class="modifier-tier">Tier {modifier.tier}</span>
-                  </div>
-                  {#if modifier.description}
-                     <p class="modifier-description">{modifier.description}</p>
-                  {/if}
-               </div>
+            {#each activeModifiers as modifier}
+               <OngoingEventCard
+                  {modifier}
+                  controller={eventPhaseController}
+                  {isViewingCurrentPhase}
+               />
             {/each}
          </div>
       </div>
@@ -479,103 +441,4 @@
       gap: 15px;
    }
    
-   .ongoing-event-card {
-      background: linear-gradient(135deg,
-         rgba(31, 31, 35, 0.6),
-         rgba(15, 15, 17, 0.4));
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border-medium);
-      overflow: hidden;
-   }
-   
-   .ongoing-event-header {
-      padding: 15px 20px;
-      background: rgba(251, 191, 36, 0.1);
-      border-bottom: 1px solid var(--color-amber);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-   }
-   
-   .ongoing-event-title {
-      margin: 0;
-      font-size: var(--font-2xl);
-      font-weight: var(--font-weight-semibold);
-      line-height: 1.3;
-      color: var(--text-primary);
-   }
-   
-   .ongoing-badge {
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      text-transform: uppercase;
-      background: rgba(251, 191, 36, 0.2);
-      color: var(--color-amber-light);
-      border: 1px solid var(--color-amber);
-   }
-   
-   .ongoing-event-body {
-      padding: 20px;
-   }
-   
-   .ongoing-event-description {
-      font-size: var(--font-md);
-      line-height: 1.5;
-      color: var(--text-secondary);
-      margin-bottom: 15px;
-   }
-   
-   .modifiers-section {
-      background: rgba(0, 0, 0, 0.05);
-      padding: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      
-      h4 {
-         margin: 0 0 15px 0;
-         color: var(--text-primary);
-         font-size: var(--font-lg);
-      }
-   }
-   
-   .modifiers-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-   }
-   
-   .modifier-item {
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      border-left: 3px solid var(--color-blue);
-      
-      .modifier-header {
-         display: flex;
-         justify-content: space-between;
-         align-items: center;
-         margin-bottom: 5px;
-      }
-      
-      .modifier-name {
-         color: var(--text-primary);
-         font-weight: var(--font-weight-medium);
-      }
-      
-      .modifier-duration {
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-         opacity: 0.8;
-      }
-      
-      .modifier-description {
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-         margin: 0;
-         line-height: 1.4;
-      }
-   }
 </style>

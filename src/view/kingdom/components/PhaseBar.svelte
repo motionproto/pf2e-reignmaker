@@ -99,22 +99,22 @@
     align-items: center;
     justify-content: center;
     padding: 0.6rem 1rem;
-    background: var(--color-gray-600);
-    border: 1px solid rgba(180, 170, 150, 0.3);
+    background: var(--btn-secondary-bg);
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     min-width: 100px;
     position: relative;
-    color: var(--color-text-secondary);
+    color: var(--text-primary);
     font-family: var(--base-font);
   }
 
   .phase-item:hover {
-    background:  var(--color-gray-700);
+    background: var(--btn-secondary-hover);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-color: rgba(180, 170, 150, 0.5);
+    border-color: var(--border-strong);
   }
 
   .phase-item.completed {

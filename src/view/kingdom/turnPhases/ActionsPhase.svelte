@@ -637,7 +637,7 @@
               {@const isResolved = isActionResolvedHelper(action.id)}
               {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
               {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
-              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter((r: any) => r.playerId !== currentUserId) : []}
+              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId) : []}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}`}

@@ -13,6 +13,7 @@ import { initializeKingdomSystem, getKingdomActor } from './main.kingdom';
 import { get } from 'svelte/store';
 import { kingdomData } from './stores/KingdomStore';
 import { KingdomApp } from './view/kingdom/KingdomApp';
+import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
 
 // Extend module type for our API
 declare global {
@@ -66,6 +67,27 @@ function registerModuleSettings() {
         config: false,
         type: String,
         default: 'New Kingdom',
+    });
+    
+    // Register reset kingdom button setting
+    // Using a dummy boolean setting to create a button in the UI
+    // @ts-ignore - Foundry globals
+    game.settings.register('pf2e-reignmaker', 'resetKingdomData', {
+        name: 'Reset Kingdom Data',
+        hint: 'Click the button below to reset all kingdom data to default state (turn 0, empty resources, etc.). This action cannot be undone!',
+        scope: 'world',
+        config: true,  // Show in module settings
+        type: Boolean,
+        default: false,
+        onChange: async (value: unknown) => {
+            if (value === true) {
+                // Show confirmation dialog
+                await ResetKingdomDialog.show();
+                // Reset the setting back to false
+                // @ts-ignore
+                await game.settings.set('pf2e-reignmaker', 'resetKingdomData', false);
+            }
+        }
     });
     
     console.log('PF2E ReignMaker | Settings registered');
