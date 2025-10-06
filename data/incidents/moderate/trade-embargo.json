@@ -29,62 +29,18 @@
     },
     "failure": {
       "msg": "Choose one",
-      "modifiers": [],
-      "choices": [
+      "modifiers": [
         {
-          "label": "Lose {gold} gold",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Gold Loss",
-              "resource": "gold",
-              "value": "-1d4",
-              "duration": "immediate"
-            }
-          ]
+          "name": "Trade Embargo Gold Loss",
+          "resource": "gold",
+          "value": "-1d4",
+          "duration": "immediate"
         },
         {
-          "label": "Lose {lumber} lumber",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Lumber Loss",
-              "resource": "lumber",
-              "value": "-(1d4+1)",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Lose {ore} ore",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Ore Loss",
-              "resource": "ore",
-              "value": "-(1d4+1)",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Lose {food} food",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Food Loss",
-              "resource": "food",
-              "value": "-(1d4+1)",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Lose {stone} stone",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Stone Loss",
-              "resource": "stone",
-              "value": "-(1d4+1)",
-              "duration": "immediate"
-            }
-          ]
+          "name": "Trade Embargo Resource Loss",
+          "resource": ["lumber", "ore", "food", "stone"],
+          "value": "-(1d4+1)",
+          "duration": "immediate"
         }
       ],
       "endsEvent": true

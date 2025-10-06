@@ -6,6 +6,7 @@
   import SkillTag from './CheckCard/components/SkillTag.svelte';
   import PossibleOutcomes from './PossibleOutcomes.svelte';
   import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
+  import ActionConfirmDialog from './ActionConfirmDialog.svelte';
   
   // Props
   export let checkType: 'event' | 'incident' | 'action';
@@ -42,6 +43,10 @@
     outcome: string;
     effects: Map<string, any>;
   } | null = null;
+  
+  // Action confirmation state
+  let showActionConfirm = false;
+  let pendingSkill = '';
   
   onMount(() => {
     checkHandler = createCheckHandler();
@@ -111,6 +116,30 @@
   }
   
   async function handleSkillClick(skill: string) {
+    if (!displayItem || isRolling || !isViewingCurrentPhase) return;
+    
+    // Check if player has already performed actions (skip for incidents)
+    if (checkType !== 'incident') {
+      const currentUser = (window as any).game?.user;
+      if (currentUser) {
+        const { createGameEffectsService } = await import('../../../services/GameEffectsService');
+        const gameEffects = await createGameEffectsService();
+        const actionCount = gameEffects.getPlayerActionCount(currentUser.id);
+        
+        if (actionCount > 0) {
+          // Show confirmation dialog
+          pendingSkill = skill;
+          showActionConfirm = true;
+          return;  // Wait for user confirmation
+        }
+      }
+    }
+    
+    // Continue with roll
+    await executeSkillCheck(skill);
+  }
+  
+  async function executeSkillCheck(skill: string) {
     if (!displayItem || isRolling || !isViewingCurrentPhase) return;
     
     await checkHandler.executeCheck({
@@ -344,6 +373,18 @@
   });
 </script>
 
+<ActionConfirmDialog
+  bind:show={showActionConfirm}
+  on:confirm={() => {
+    showActionConfirm = false;
+    executeSkillCheck(pendingSkill);
+  }}
+  on:cancel={() => {
+    showActionConfirm = false;
+    pendingSkill = '';
+  }}
+/>
+
 <div class="check-card">
   {#if !showResult}
     <!-- Before roll: Show skills and possible outcomes -->
@@ -353,7 +394,20 @@
     
     {#if displayItem?.skills && displayItem.skills.length > 0}
       <div class="skill-options">
-        <div class="skill-options-title">Choose Your Response:</div>
+        <div class="skill-options-header">
+          <div class="skill-options-title">Choose Your Response:</div>
+          {#if checkType === 'event'}
+            <button
+              class="ignore-button-inline"
+              disabled={isRolling || !isViewingCurrentPhase || applied}
+              on:click={handleIgnoreEvent}
+              title="Ignore this event and apply failure effects"
+            >
+              <i class="fas fa-times-circle"></i>
+              Ignore Event
+            </button>
+          {/if}
+        </div>
         <div class="skill-tags">
           {#each displayItem.skills as skillOption}
             <SkillTag
@@ -368,29 +422,10 @@
         </div>
       </div>
       
-      <!-- Ignore Event button (events only) -->
-      {#if checkType === 'event'}
-        <div class="ignore-section">
-          <div class="divider">
-            <span>or</span>
-          </div>
-          <button
-            class="ignore-button"
-            disabled={isRolling || !isViewingCurrentPhase || applied}
-            on:click={handleIgnoreEvent}
-          >
-            <i class="fas fa-times-circle"></i>
-            Ignore Event
-          </button>
-          <p class="ignore-warning">
-            Ignoring this event will apply the failure condition
-          </p>
-        </div>
-      {/if}
     {/if}
   {:else if outcome}
     <!-- After roll: Show OutcomeDisplay -->
-      <OutcomeDisplay
+    <OutcomeDisplay
       {outcome}
       {actorName}
       skillName={selectedSkill}
@@ -422,12 +457,51 @@
   .skill-options {
     margin: 20px 0;
     
+    .skill-options-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      gap: 15px;
+    }
+    
     .skill-options-title {
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
       line-height: 1.4;
       color: var(--text-primary);
-      margin-bottom: 15px;
+      flex: 1;
+    }
+    
+    .ignore-button-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: var(--radius-md);
+      color: var(--color-red);
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      
+      i {
+        font-size: var(--font-md);
+      }
+      
+      &:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.25);
+        border-color: rgba(239, 68, 68, 0.6);
+        transform: translateY(-1px);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
   }
   

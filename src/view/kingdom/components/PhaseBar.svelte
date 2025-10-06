@@ -71,7 +71,6 @@
     padding: 1.5rem 1rem; /* Symmetrical top/bottom padding for even spacing */
     font-family: var(--base-font);
     margin-top: -0.4rem;
-    margin-bottom: 0.5rem; /* Add small bottom margin for separation from content */
   }
 
   .phase-bar-inner {

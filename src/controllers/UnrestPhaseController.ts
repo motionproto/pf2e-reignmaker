@@ -212,23 +212,20 @@ export async function createUnrestPhaseController() {
       } else {
         console.log('✅ [UnrestPhaseController] No incident occurred');
         
-        // ATOMIC UPDATE: Update turnState AND complete step 2 in single write
+        // Update turnState
         await actor.updateKingdom((kingdom) => {
-          // Update turnState
           if (kingdom.turnState) {
             kingdom.turnState.unrestPhase.incidentRolled = true;
             kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
             kingdom.turnState.unrestPhase.incidentTriggered = false;
             kingdom.turnState.unrestPhase.incidentId = null;
           }
-          
-          // Complete step 2 in same transaction (no incident = auto-complete)
-          if (kingdom.currentPhaseSteps.length >= 3) {
-            kingdom.currentPhaseSteps[2].completed = 1; // Resolve Incident
-          }
         });
         
-        console.log('✅ [UnrestPhaseController] No incident - turnState + step 2 completed atomically');
+        // Complete step 2 using proper helper (ensures phaseComplete is updated)
+        await completePhaseStepByIndex(2); // Resolve Incident
+        
+        console.log('✅ [UnrestPhaseController] No incident - turnState updated, step 2 completed via helper');
       }
       
       // Complete step 1 (incident check)
@@ -400,15 +397,6 @@ export async function createUnrestPhaseController() {
       }
       
       return { allowed: true };
-    },
-
-    /**
-     * Map detailed outcome to simple outcome for controller
-     */
-    mapDetailedOutcomeToSimple(
-      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
-    ): 'success' | 'failure' {
-      return outcome === 'criticalSuccess' || outcome === 'success' ? 'success' : 'failure';
     },
 
     /**

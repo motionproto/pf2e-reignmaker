@@ -18,8 +18,9 @@ import {
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
 import { actionResolver } from './actions/action-resolver'
-import type { PlayerAction } from '../models/PlayerActions'
+import type { PlayerAction } from './actions/action-types'
 import type { KingdomData } from '../actors/KingdomActor'
+import { TurnPhase } from '../actors/KingdomActor'
 
 export async function createActionPhaseController() {
   // Store for action resolutions
@@ -237,6 +238,32 @@ export async function createActionPhaseController() {
 
         // Execute the action using ActionResolver (which now uses GameEffectsService)
         const result = await actionResolver.executeAction(action, outcome, kingdomData, preRolledValues)
+        
+        // Track player action if successful and we have player info
+        if (result.success && playerId) {
+          try {
+            const { createGameEffectsService } = await import('../services/GameEffectsService')
+            const gameEffects = await createGameEffectsService()
+            
+            // Get player name from game
+            const game = (window as any).game
+            const user = game?.users?.get(playerId)
+            const playerName = user?.name || 'Unknown Player'
+            
+            await gameEffects.trackPlayerAction(
+              playerId,
+              playerName,
+              actorName || playerName,
+              `${action.id}-${outcome}`,
+              TurnPhase.ACTIONS
+            )
+            
+            console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${action.id}-${outcome}`)
+          } catch (trackingError) {
+            console.error('[ActionPhaseController] Failed to track action:', trackingError)
+            // Don't fail the whole action if tracking fails
+          }
+        }
         
         return result
       } catch (error) {

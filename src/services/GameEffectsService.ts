@@ -15,9 +15,11 @@
  * - Used by controllers and components
  */
 
-import { updateKingdom } from '../stores/KingdomStore';
+import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
 import type { EventModifier, ResourceType } from '../types/events';
 import { createModifierService } from './ModifierService';
+import type { ActionLogEntry } from '../models/TurnState';
+import type { TurnPhase } from '../actors/KingdomActor';
 
 /**
  * Source type for the outcome
@@ -72,6 +74,65 @@ export async function createGameEffectsService() {
   const modifierService = await createModifierService();
 
   return {
+    /**
+     * Track a player action in the turn's action log
+     * 
+     * This should be called whenever a player performs an action (events or actions, NOT incidents).
+     */
+    async trackPlayerAction(
+      playerId: string,
+      playerName: string,
+      characterName: string,
+      actionName: string,  // Format: "event_id-outcome" or "action_id-outcome"
+      phase: TurnPhase
+    ): Promise<void> {
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.warn('[GameEffects] Cannot track action - no kingdom actor');
+        return;
+      }
+
+      await actor.updateKingdom(kingdom => {
+        if (!kingdom.turnState) {
+          console.warn('[GameEffects] Cannot track action - no turnState');
+          return;
+        }
+        
+        if (!kingdom.turnState.actionLog) {
+          kingdom.turnState.actionLog = [];
+        }
+
+        const entry: ActionLogEntry = {
+          playerId,
+          playerName,
+          characterName,
+          actionName,
+          phase,
+          timestamp: Date.now()
+        };
+
+        kingdom.turnState.actionLog.push(entry);
+        
+        console.log(`📝 [GameEffects] Tracked action: ${characterName} performed ${actionName} in ${phase}`);
+      });
+    },
+
+    /**
+     * Get the number of actions a player has performed this turn
+     */
+    getPlayerActionCount(playerId: string): number {
+      const actor = getKingdomActor();
+      const kingdom = actor?.getKingdom();
+      
+      if (!kingdom?.turnState?.actionLog) {
+        return 0;
+      }
+
+      return kingdom.turnState.actionLog.filter(
+        entry => entry.playerId === playerId
+      ).length;
+    },
+
     /**
      * Apply an outcome from an event, incident, or action
      * 

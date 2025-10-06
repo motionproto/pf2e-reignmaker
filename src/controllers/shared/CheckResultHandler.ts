@@ -112,12 +112,10 @@ export class CheckResultHandler {
           resolutionData.diceRolls
         );
       } else if (this.checkType === 'incident') {
-        // Map detailed outcome to simple for incident resolution
-        const simplifiedOutcome = this.controller.mapDetailedOutcomeToSimple?.(outcome) || outcome;
-        
+        // Pass detailed outcome directly to controller
         result = await this.controller.resolveIncident(
           item.id,
-          simplifiedOutcome,
+          outcome,
           resolutionData.diceRolls
         );
       } else if (this.checkType === 'action') {
@@ -138,6 +136,11 @@ export class CheckResultHandler {
       // If successful, persist the applied outcome (centralized logic)
       if (result.success) {
         await this.saveAppliedOutcome(item, outcome, displayData);
+        
+        // Track player action (events and actions, NOT incidents)
+        if (this.checkType === 'event' || this.checkType === 'action') {
+          await this.trackPlayerAction(item, outcome, resolutionData);
+        }
       }
       
       return result;
@@ -201,6 +204,58 @@ export class CheckResultHandler {
       console.log(`💾 [CheckResultHandler] Saved incident outcome for: ${getIncidentDisplayName(item)}`);
     }
     // Actions don't need persistence (they're one-time activities)
+  }
+
+  /**
+   * Track player action in the action log
+   * Only for events and actions (NOT incidents)
+   */
+  private async trackPlayerAction(
+    item: any,
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+    resolutionData: OutcomeResolutionData
+  ): Promise<void> {
+    try {
+      // Get player info from game
+      const currentUser = (window as any).game?.user;
+      if (!currentUser) {
+        console.warn('[CheckResultHandler] Cannot track action - no current user');
+        return;
+      }
+
+      const playerId = currentUser.id;
+      const playerName = currentUser.name || 'Unknown Player';
+      
+      // Get character name from player's assigned character
+      let characterName = playerName; // Fallback to player name
+      if (currentUser.character) {
+        characterName = currentUser.character.name || playerName;
+      }
+      
+      // Format action name: "item_id-outcome"
+      const actionName = `${item.id}-${outcome}`;
+      
+      // Get current phase
+      const kingdom = get(kingdomData);
+      const currentPhase = kingdom.currentPhase;
+      
+      // Track the action using GameEffectsService
+      const { createGameEffectsService } = await import('../../services/GameEffectsService');
+      const gameEffects = await createGameEffectsService();
+      
+      await gameEffects.trackPlayerAction(
+        playerId,
+        playerName,
+        characterName,
+        actionName,
+        currentPhase
+      );
+      
+      console.log(`📝 [CheckResultHandler] Tracked ${this.checkType} action: ${characterName} - ${actionName}`);
+    } catch (error) {
+      console.error('[CheckResultHandler] Failed to track player action:', error);
+      // Don't fail the whole resolution if tracking fails
+    }
   }
 
   /**

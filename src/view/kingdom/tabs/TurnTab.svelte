@@ -6,6 +6,7 @@
    // Components
    import PhaseBar from '../components/PhaseBar.svelte';
    import PhaseHeader from '../components/PhaseHeader.svelte';
+   import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    
    // Phase components - Using refactored versions for clean architecture
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
@@ -80,6 +81,9 @@
    
    <!-- Phase Bar underneath phase header -->
    <PhaseBar />
+   
+   <!-- Player Action Tracker underneath phase bar -->
+   <PlayerActionTracker />
    
    <div class="phase-content">
       {#if displayPhase === TurnPhase.STATUS}

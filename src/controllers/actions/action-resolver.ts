@@ -5,7 +5,7 @@
  * to the unified GameEffectsService.
  */
 
-import type { PlayerAction } from '../../models/PlayerActions';
+import type { PlayerAction } from './action-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import {
     getLevelBasedDC,

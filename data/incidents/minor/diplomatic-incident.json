@@ -1,6 +1,6 @@
 {
-  "id": "minor-diplomatic-incident",
-  "name": "Minor Diplomatic Incident",
+  "id": "diplomatic-incident",
+  "name": "Diplomatic Incident",
   "tier": "minor",
   "description": "A diplomatic misstep strains relations with neighbors",
   "skills": [

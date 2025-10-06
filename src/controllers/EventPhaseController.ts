@@ -190,7 +190,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 newDC = Math.max(6, currentDC - 5);
                 console.log(`📉 [EventPhaseController] No event, DC reduced from ${currentDC} to ${newDC}`);
                 
-                // ATOMIC UPDATE: Update persistent DC, turnState, AND complete steps in single write
+                // Update persistent DC and turnState
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
@@ -205,16 +205,14 @@ export async function createEventPhaseController(_eventService?: any) {
                             kingdom.turnState.eventsPhase.eventTriggered = false;
                             kingdom.turnState.eventsPhase.eventId = null;
                         }
-                        
-                        // Complete steps 1 & 2 in same transaction (no event = auto-complete)
-                        if (kingdom.currentPhaseSteps.length >= 3) {
-                            kingdom.currentPhaseSteps[1].completed = 1; // Resolve Event
-                            kingdom.currentPhaseSteps[2].completed = 1; // Apply Modifiers
-                        }
                     });
                 }
                 
-                console.log('✅ [EventPhaseController] No event - turnState + steps 1 & 2 completed atomically');
+                // Complete steps 1 & 2 using proper helpers (ensures phaseComplete is updated)
+                await completePhaseStepByIndex(1); // Resolve Event
+                await completePhaseStepByIndex(2); // Apply Modifiers
+                
+                console.log('✅ [EventPhaseController] No event - turnState updated, steps 1 & 2 completed via helpers');
             }
             
             state.eventDC = newDC;

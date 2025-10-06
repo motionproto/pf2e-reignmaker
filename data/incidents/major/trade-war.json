@@ -29,62 +29,18 @@
     },
     "failure": {
       "msg": "Choose how to absorb the economic shock",
-      "modifiers": [],
-      "choices": [
+      "modifiers": [
         {
-          "label": "Pay the cost - lose {gold} gold",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Gold Loss",
-              "resource": "gold",
-              "value": "-2d4",
-              "duration": "immediate"
-            }
-          ]
+          "name": "Trade War Gold Loss",
+          "resource": "gold",
+          "value": "-2d4",
+          "duration": "immediate"
         },
         {
-          "label": "Use lumber reserves - lose {lumber} lumber",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Lumber Loss",
-              "resource": "lumber",
-              "value": "-2d4+1",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Use ore reserves - lose {ore} ore",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Ore Loss",
-              "resource": "ore",
-              "value": "-2d4+1",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Use food reserves - lose {food} food",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Food Loss",
-              "resource": "food",
-              "value": "-2d4+1",
-              "duration": "immediate"
-            }
-          ]
-        },
-        {
-          "label": "Use stone reserves - lose {stone} stone",
-          "modifiers": [
-            {
-              "name": "Trade Embargo Stone Loss",
-              "resource": "stone",
-              "value": "-2d4+1",
-              "duration": "immediate"
-            }
-          ]
+          "name": "Trade War Resource Loss",
+          "resource": ["lumber", "ore", "food", "stone"],
+          "value": "-(2d4+1)",
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -99,7 +55,7 @@
         },
         {
           "resource": ["lumber", "ore", "food", "stone"],
-          "value": "-2d4+1",
+          "value": "-(2d4+1)",
           "duration": "immediate"
         },
         {

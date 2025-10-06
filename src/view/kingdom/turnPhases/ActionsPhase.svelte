@@ -6,9 +6,8 @@
     getPlayerAction
   } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
-  import { PlayerActionsData } from "../../../models/PlayerActions";
-  import CheckCard from "../../kingdom/components/CheckCard/CheckCard.svelte";
-  import PlayerActionTracker from "../../kingdom/components/PlayerActionTracker.svelte";
+  import { actionLoader } from "../../../controllers/actions/action-loader";
+  import CheckCard from "../components/CheckCard/CheckCard.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
@@ -17,7 +16,6 @@
     getCurrentUserCharacter,
     initializeRollResultHandler,
     performKingdomActionRoll,
-    getKingdomActionDC,
     showCharacterSelectionDialog
   } from "../../../services/pf2e";
   import { onMount, onDestroy, tick } from "svelte";
@@ -25,7 +23,7 @@
   // Props
   export let isViewingCurrentPhase: boolean = true;
 
-  // Import controller instead of services/commands directly
+  // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
 
   // Initialize controller
@@ -33,17 +31,15 @@
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
-  let selectedCharacterId: string = "";
-  let playerCharacters: any[] = [];
-  let selectedCharacter: any = null;
   let showActionConfirm: boolean = false;
   let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
   let showBuildStructureDialog: boolean = false;
 
   // Simple action resolution tracking
   let resolvedActions = new Map<string, any>();
+  
+  // Count of players who have acted
   $: actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
-  const MAX_ACTIONS = 4;
   
   // Force UI update when resolvedActions changes
   $: resolvedActionsSize = resolvedActions.size;
@@ -123,7 +119,7 @@
     }
 
     // Find the action
-    const action = PlayerActionsData.getAllActions().find(
+    const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
     );
     if (!action) {
@@ -211,7 +207,7 @@
 
   // Apply the actual state changes when user confirms the resolution
   async function applyActionEffects(actionId: string) {
-    const action = PlayerActionsData.getAllActions().find(
+    const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
     );
     if (!action) {
@@ -292,16 +288,6 @@
     );
     initializeRollResultHandler();
 
-    // Load player characters
-    playerCharacters = getPlayerCharacters();
-
-    // Set current user character
-    const currentUserChar = getCurrentUserCharacter();
-    if (currentUserChar) {
-      selectedCharacter = currentUserChar;
-      selectedCharacterId = currentUserChar.id;
-    }
-
     // Wait for store initialization before accessing player data
     console.log('[ActionsPhase] Component mounted, waiting for store initialization...');
   });
@@ -318,17 +304,9 @@
     }
   });
 
-  // Update selected character when ID changes
-  $: if (selectedCharacterId) {
-    const player = playerCharacters.find(
-      (p) => p.character?.id === selectedCharacterId
-    );
-    selectedCharacter = player?.character || null;
-  }
-
   // Helper functions delegating to controller
   function getActionsByCategory(categoryId: string) {
-    return PlayerActionsData.getActionsByCategory(categoryId);
+    return actionLoader.getActionsByCategory(categoryId);
   }
 
   function isActionAvailable(action: any): boolean {
@@ -422,11 +400,11 @@
       actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
     }
     
-    // Get character for roll - prioritize assigned character
+    // Get character for roll
     let actingCharacter = getCurrentUserCharacter();
     
     if (!actingCharacter) {
-      // Fallback - show character selection dialog
+      // Show character selection dialog
       actingCharacter = await showCharacterSelectionDialog();
       if (!actingCharacter) {
         return; // User cancelled selection
@@ -469,11 +447,11 @@
       return;
     }
     
-    // For rerolls, use the player's assigned character
+    // Get character for reroll
     let actingCharacter = getCurrentUserCharacter();
     
     if (!actingCharacter) {
-      // Fallback - show character selection dialog
+      // Show character selection dialog
       actingCharacter = await showCharacterSelectionDialog();
       if (!actingCharacter) {
         return; // User cancelled selection
@@ -566,56 +544,16 @@
     // Show success notification
     ui.notifications?.info(`Structure queued successfully!`);
   }
+  
+  // Get other players' resolutions for an action (helper to avoid inline type annotation)
+  function getOtherPlayersResolutions(actionId: string): any[] {
+    if (!controller) return [];
+    return controller.getAllPlayersResolutions(actionId).filter((r: any) => r.playerId !== currentUserId);
+  }
 
 </script>
 
 <div class="actions-phase">
-  <!-- Player Action Tracker -->
-  <PlayerActionTracker compact={false} />
-  
-  <!-- Fixed Header with action counter and character selection -->
-  <div class="actions-header-fixed">
-    <div class="actions-header">
-      <div class="actions-title">
-        <i class="fas fa-users"></i>
-        <span>Perform Kingdom Actions</span>
-      </div>
-
-      <!-- Character Selection -->
-      <div class="character-selection">
-        <label for="character-select">Acting Character:</label>
-        <select
-          id="character-select"
-          bind:value={selectedCharacterId}
-          class="character-dropdown"
-          disabled={playerCharacters.length === 0}
-        >
-          {#if playerCharacters.length === 0}
-            <option value="">No characters available</option>
-          {:else}
-            <option value="">Select a character...</option>
-            {#each playerCharacters as player}
-              {#if player.character}
-                <option value={player.character.id}>
-                  {player.character.name} ({player.userName})
-                </option>
-              {/if}
-            {/each}
-          {/if}
-        </select>
-      </div>
-
-      <div class="actions-counter">
-        <span class="counter-text">Kingdom Actions Taken:</span>
-        <div class="counter-dots">
-          {#each Array(MAX_ACTIONS) as _, i}
-            <span class="action-dot {i < actionsUsed ? 'used' : ''}"></span>
-          {/each}
-        </div>
-        <span class="counter-remaining">{actionsUsed} / {MAX_ACTIONS}</span>
-      </div>
-    </div>
-  </div>
 
   <!-- Scrollable content area -->
   <div class="actions-content">
@@ -637,7 +575,7 @@
               {@const isResolved = isActionResolvedHelper(action.id)}
               {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
               {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
-              {@const otherPlayersResolutions = controller ? controller.getAllPlayersResolutions(action.id).filter(r => r.playerId !== currentUserId) : []}
+              {@const otherPlayersResolutions = getOtherPlayersResolutions(action.id)}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}`}
@@ -673,7 +611,7 @@
                   {missingRequirements}
                   resolved={isResolved}
                   {resolution}
-                  canPerformMore={actionsUsed < MAX_ACTIONS && !isResolved}
+                  canPerformMore={actionsUsed < 4 && !isResolved}
                   currentFame={$kingdomData?.fame || 0}
                   showFameReroll={true}
                   resolvedBadgeText="Resolved"
@@ -777,84 +715,6 @@
 
     i {
       color: var(--color-amber);
-    }
-  }
-
-  .character-selection {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 200px;
-
-    label {
-      color: var(--text-secondary);
-      font-size: var(--font-md);
-      line-height: 1.5;
-      white-space: nowrap;
-    }
-
-    .character-dropdown {
-      flex: 1;
-      padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-size: var(--font-md);
-
-      &:hover:not(:disabled) {
-        border-color: var(--border-strong);
-      }
-
-      &:focus {
-        outline: none;
-        border-color: var(--color-amber);
-        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
-      }
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  .actions-counter {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .counter-text {
-      color: var(--text-secondary);
-      font-size: var(--font-md);
-      line-height: 1.5;
-    }
-
-    .counter-dots {
-      display: flex;
-      gap: 8px;
-    }
-
-    .action-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--border-default);
-      transition: all 0.3s ease;
-
-      &.used {
-        background: var(--color-amber);
-        border-color: var(--color-amber);
-        box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
-      }
-    }
-
-    .counter-remaining {
-      color: var(--text-primary);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-semibold);
     }
   }
 

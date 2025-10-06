@@ -9,6 +9,18 @@
 import type { TurnPhase } from '../actors/KingdomActor';
 
 /**
+ * Action log entry - tracks individual actions performed by players during a turn
+ */
+export interface ActionLogEntry {
+  playerId: string;
+  playerName: string;
+  characterName: string;  // Character who made the roll
+  actionName: string;     // Format: "event_id-outcome" or "action_id-outcome"
+  phase: TurnPhase;
+  timestamp: number;
+}
+
+/**
  * Complete state for the Status phase
  */
 export interface StatusPhaseState {
@@ -106,6 +118,9 @@ export interface TurnState {
   // Turn metadata
   turnNumber: number;
   
+  // Action tracking across all phases
+  actionLog: ActionLogEntry[];
+  
   // Phase-specific state objects
   statusPhase: StatusPhaseState;
   resourcesPhase: ResourcesPhaseState;
@@ -121,6 +136,7 @@ export interface TurnState {
 export function createDefaultTurnState(turnNumber: number): TurnState {
   return {
     turnNumber,
+    actionLog: [],
     
     statusPhase: {
       completed: false,
