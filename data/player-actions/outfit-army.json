@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
       "modifiers": []
     },
     "success": {
+      "description": "Outfit troop",
       "modifiers": []
     },
     "failure": {
+      "description": "No gear",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No gear",
       "modifiers": []
     }
   },

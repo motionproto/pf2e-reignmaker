@@ -59,15 +59,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "+2/+3/+4 circumstance bonus (based on proficiency) + aided PC may reroll if they fail",
       "modifiers": []
     },
     "success": {
+      "description": "+2/+3/+4 circumstance bonus (based on proficiency)",
       "modifiers": []
     },
     "failure": {
+      "description": "+1 circumstance bonus",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "-1 circumstance penalty",
       "modifiers": []
     }
   },

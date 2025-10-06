@@ -28,6 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
       "modifiers": [
         {
           "name": "Recruit Unit",
@@ -38,12 +39,15 @@
       ]
     },
     "success": {
+      "description": "Recruit a troop equal to the party level",
       "modifiers": []
     },
     "failure": {
+      "description": "No Recruits",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No Recruit; +1 Unrest",
       "modifiers": [
         {
           "name": "Recruit Unit",

@@ -32,15 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Valuable intel",
       "modifiers": []
     },
     "success": {
+      "description": "Broad intel",
       "modifiers": []
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "Spies are captured",
       "modifiers": []
     }
   }

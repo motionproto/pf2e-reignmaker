@@ -28,6 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
           "name": "Arrest Dissidents",
@@ -38,6 +39,7 @@
       ]
     },
     "success": {
+      "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
           "name": "Arrest Dissidents",
@@ -48,6 +50,7 @@
       ]
     },
     "failure": {
+      "description": "No effect",
       "modifiers": [
         {
           "name": "Arrest Dissidents",
@@ -58,6 +61,7 @@
       ]
     },
     "criticalFailure": {
+      "description": "Botched arrests cause riots; gain 1 Unrest",
       "modifiers": [
         {
           "name": "Arrest Dissidents",

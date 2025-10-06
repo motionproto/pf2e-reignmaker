@@ -24,15 +24,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Claim all targeted hexes +1 extra hex",
       "modifiers": []
     },
     "success": {
+      "description": "Claim targeted hexes (based on proficiency)",
       "modifiers": []
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": [
         {
           "name": "Claim Hexes",

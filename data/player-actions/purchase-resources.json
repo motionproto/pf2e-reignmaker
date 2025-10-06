@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Establish 1:1 exchange rate (pay 1 gold per resource)",
       "modifiers": []
     },
     "success": {
+      "description": "Establish 2:1 exchange rate (pay 2 gold per resource)",
       "modifiers": []
     },
     "failure": {
+      "description": "No trade available this turn",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "Negotiations fail; lose 1d4 gold",
       "modifiers": []
     }
   },

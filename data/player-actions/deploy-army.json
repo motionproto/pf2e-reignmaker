@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Move, claim hex after battle",
       "modifiers": []
     },
     "success": {
+      "description": "Move",
       "modifiers": []
     },
     "failure": {
+      "description": "Move but -2 initiative, and troop is fatigued",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "Your troop is lost they arrive at a Random nearby hex (1d6 for direction, 1-3 for offset); troop has -2 initiative, is fatigued and enfeebled 1; +1 Unrest",
       "modifiers": [
         {
           "name": "Deploy Army",

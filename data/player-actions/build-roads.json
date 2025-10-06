@@ -24,15 +24,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Build roads +1 hex",
       "modifiers": []
     },
     "success": {
+      "description": "Build roads",
       "modifiers": []
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": []
     }
   }

@@ -28,6 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "People welcome them home with honours!, -2 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",
@@ -38,6 +39,7 @@
       ]
     },
     "success": {
+      "description": "Army disbands, -1 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",
@@ -48,9 +50,11 @@
       ]
     },
     "failure": {
+      "description": "Army disbands",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "Army disbands, +1 Unrest",
       "modifiers": [
         {
           "name": "Disband Army",

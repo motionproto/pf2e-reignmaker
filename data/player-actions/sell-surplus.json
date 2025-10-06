@@ -36,6 +36,7 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Trade 2 Resources → 2 Gold",
       "modifiers": [
         {
           "name": "Sell Surplus",
@@ -46,6 +47,7 @@
       ]
     },
     "success": {
+      "description": "Trade 2 Resources → 1 Gold",
       "modifiers": [
         {
           "name": "Sell Surplus",
@@ -56,9 +58,11 @@
       ]
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": []
     }
   },

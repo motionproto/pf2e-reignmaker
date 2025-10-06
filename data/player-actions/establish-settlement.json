@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Found village +1 Structure",
       "modifiers": []
     },
     "success": {
+      "description": "Found village",
       "modifiers": []
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": []
     }
   },

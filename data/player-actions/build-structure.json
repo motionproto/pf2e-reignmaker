@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Build Structures for half cost",
       "modifiers": []
     },
     "success": {
+      "description": "Build 1 Structure",
       "modifiers": []
     },
     "failure": {
+      "description": "No progress",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No progress",
       "modifiers": []
     }
   }

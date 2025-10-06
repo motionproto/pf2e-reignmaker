@@ -36,12 +36,15 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Gain double the listed amount",
       "modifiers": []
     },
     "success": {
+      "description": "Gain the listed amount",
       "modifiers": []
     },
     "failure": {
+      "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
       "modifiers": [
         {
           "name": "Collect Stipend",
@@ -52,6 +55,7 @@
       ]
     },
     "criticalFailure": {
+      "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
       "modifiers": [
         {
           "name": "Collect Stipend",

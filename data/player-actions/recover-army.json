@@ -32,15 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Troop recovers completely",
       "modifiers": []
     },
     "success": {
+      "description": "Troop recovers 1 segment",
       "modifiers": []
     },
     "failure": {
+      "description": "No recovery",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No recovery",
       "modifiers": []
     }
   }

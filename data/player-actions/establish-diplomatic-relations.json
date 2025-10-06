@@ -32,15 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Allies + request aid",
       "modifiers": []
     },
     "success": {
+      "description": "Allies",
       "modifiers": []
     },
     "failure": {
+      "description": "No effect",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": []
     }
   }

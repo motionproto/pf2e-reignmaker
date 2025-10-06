@@ -32,15 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Learn about 2 hexes",
       "modifiers": []
     },
     "success": {
+      "description": "Learn about 1 hex",
       "modifiers": []
     },
     "failure": {
+      "description": "No report",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "Scouts lost",
       "modifiers": []
     }
   }

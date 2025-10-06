@@ -28,6 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Fortify, reduce Unrest by 1",
       "modifiers": [
         {
           "name": "Fortify Hex",
@@ -38,12 +39,15 @@
       ]
     },
     "success": {
+      "description": "Fortify",
       "modifiers": []
     },
     "failure": {
+      "description": "Fail",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No effect",
       "modifiers": []
     }
   },

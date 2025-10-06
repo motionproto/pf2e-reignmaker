@@ -28,15 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
+      "description": "Troop is promoted up to party level",
       "modifiers": []
     },
     "success": {
+      "description": "+1 level (max party level)",
       "modifiers": []
     },
     "failure": {
+      "description": "No change",
       "modifiers": []
     },
     "criticalFailure": {
+      "description": "No change",
       "modifiers": []
     }
   }
