@@ -8,17 +8,46 @@
   export let resolved: boolean = false;
   export let isRolling: boolean = false;
   export let localUsedSkill: string = '';
+  export let showAidButton: boolean = false;
+  export let aidResult: { outcome: string; bonus: number } | null = null;
   
   const dispatch = createEventDispatcher();
   
   function handleExecute(event: CustomEvent) {
     dispatch('execute', event.detail);
   }
+  
+  function handleAidClick() {
+    dispatch('aid');
+  }
 </script>
 
 <div class="skills-section">
   <h4 class="section-title">{skillSectionTitle}</h4>
   <div class="skills-tags">
+    <!-- Aid Another button/badge as first item if enabled -->
+    {#if showAidButton && !resolved}
+      {#if aidResult}
+        <!-- Aid result badge - shown after aid check completes -->
+        <div class="aid-result-badge-inline {aidResult.outcome === 'criticalSuccess' ? 'critical-success' : aidResult.outcome === 'success' ? 'success' : 'failure'}">
+          <i class="fas fa-hands-helping"></i>
+          <span>
+            Aid - {aidResult.outcome === 'criticalSuccess' ? `Critical (+${aidResult.bonus}, keep higher)` : `+${aidResult.bonus}`}
+          </span>
+        </div>
+      {:else}
+        <!-- Aid Another button - shown before aid check -->
+        <button 
+          class="aid-button-inline"
+          on:click={handleAidClick}
+          disabled={!canPerformMore}
+        >
+          <i class="fas fa-hands-helping"></i>
+          Aid Another
+        </button>
+      {/if}
+    {/if}
+    
     {#each skills as skillOption}
       {@const isDisabled = !canPerformMore || resolved}
       <SkillTag
@@ -54,5 +83,65 @@
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
+  }
+  
+  .aid-button-inline {
+    padding: 10px 16px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    border-radius: var(--radius-sm);
+    color: rgb(147, 197, 253);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  
+  .aid-button-inline:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(96, 165, 250, 0.7);
+    color: rgb(191, 219, 254);
+    transform: translateY(-1px);
+  }
+  
+  .aid-button-inline:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .aid-result-badge-inline {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+  
+  .aid-result-badge-inline.critical-success {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: rgb(59, 130, 246);
+  }
+  
+  .aid-result-badge-inline.success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: rgb(34, 197, 94);
+  }
+  
+  .aid-result-badge-inline.failure {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: rgb(239, 68, 68);
   }
 </style>

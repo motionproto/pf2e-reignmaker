@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentPhase, setViewingPhase, viewingPhase } from '../../../stores/KingdomStore';
+  import { currentPhase, setViewingPhase, viewingPhase, phaseViewLocked, togglePhaseViewLock } from '../../../stores/KingdomStore';
   import { TurnPhase, PHASE_ORDER } from '../../../actors/KingdomActor';
   import { onMount } from 'svelte';
 
@@ -35,6 +35,11 @@
   function handlePhaseClick(phase: TurnPhase) {
     setViewingPhase(phase);
   }
+  
+  // Lock toggle handler
+  function handleLockToggle() {
+    togglePhaseViewLock();
+  }
 </script>
 
 <div class="phase-bar">
@@ -61,6 +66,16 @@
         <span class="phase-label">{phase.label}</span>
       </button>
     {/each}
+    
+    <!-- Lock icon button -->
+    <button
+      class="lock-button"
+      class:locked={$phaseViewLocked}
+      on:click={handleLockToggle}
+      title={$phaseViewLocked ? 'View locked to current phase - click to unlock' : 'View unlocked - click to lock to current phase'}
+    >
+      <i class="fas {$phaseViewLocked ? 'fa-lock' : 'fa-unlock'}"></i>
+    </button>
   </div>
 </div>
 
@@ -264,6 +279,36 @@
     opacity: 1;
   }
 
+  .lock-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    padding: 0;
+  }
+
+  .lock-button:hover {
+    transform: scale(1.1);
+  }
+
+  .lock-button.locked {
+    color: var(--color-secondary);
+  }
+
+  .lock-button.locked:hover {
+    color: var(--color-secondary-light);
+  }
+  
+  .lock-button:not(.locked) i {
+    transform: rotate(-30deg);
+  }
+
   /* Responsive design */
   @media (max-width: 768px) {
     .phase-bar {
@@ -293,6 +338,10 @@
       height: 8px;
       top: -2px;
       right: -2px;
+    }
+    
+    .lock-button {
+      font-size: 1rem;
     }
   }
 </style>

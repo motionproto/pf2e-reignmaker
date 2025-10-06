@@ -14,6 +14,7 @@ import { get } from 'svelte/store';
 import { kingdomData } from './stores/KingdomStore';
 import { KingdomApp } from './view/kingdom/KingdomApp';
 import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
+import { initializeSocketService } from './services/SocketService';
 
 // Extend module type for our API
 declare global {
@@ -101,6 +102,11 @@ Hooks.once('init', () => {
     
     // Register module settings
     registerModuleSettings();
+    
+    // Initialize socket service SYNCHRONOUSLY so it can register for socketlib.ready hook
+    // This must happen before socketlib.ready fires (which is also during init)
+    initializeSocketService();
+    console.log('PF2E ReignMaker | Socket service hook registered (waiting for socketlib.ready)');
     
     // Register the hook to add Kingdom icons to party actors
     registerKingdomIconHook();

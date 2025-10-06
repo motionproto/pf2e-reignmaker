@@ -149,8 +149,9 @@ export class PF2eSkillService {
 
   /**
    * Get kingdom modifiers for skill checks
+   * @param actionId - Optional action ID to retrieve aid bonuses for that specific action
    */
-  private getKingdomModifiers(): any[] {
+  private getKingdomModifiers(actionId?: string): any[] {
     const currentKingdomState = get(kingdomData);
     const kingdomModifiers: any[] = [];
     
@@ -192,7 +193,44 @@ export class PF2eSkillService {
       }
     }
     
+    // Add aid bonuses for this specific action
+    if (actionId && currentKingdomState?.turnState?.actionsPhase?.activeAids) {
+      const aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
+        aid => aid.targetActionId === actionId
+      );
+      
+      for (const aid of aids) {
+        if (aid.bonus > 0) {
+          kingdomModifiers.push({
+            name: `Aid from ${aid.characterName} (${aid.skillUsed})`,
+            value: aid.bonus,
+            type: 'circumstance',
+            enabled: true
+          });
+        }
+      }
+    }
+    
     return kingdomModifiers;
+  }
+
+  /**
+   * Check if an action has a critical success aid that grants keep higher
+   * @param actionId - The action ID to check
+   * @returns true if the action should use rollTwice: "keep-higher"
+   */
+  private shouldUseKeepHigher(actionId?: string): boolean {
+    if (!actionId) return false;
+    
+    const currentKingdomState = get(kingdomData);
+    if (!currentKingdomState?.turnState?.actionsPhase?.activeAids) return false;
+    
+    const aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
+      aid => aid.targetActionId === actionId
+    );
+    
+    // Return true if any aid grants keep higher
+    return aids.some(aid => aid.grantKeepHigher);
   }
 
   /**
@@ -204,7 +242,8 @@ export class PF2eSkillService {
     checkType: 'action' | 'event' | 'incident',
     checkName: string,
     checkId: string,
-    checkEffects?: any
+    checkEffects?: any,
+    actionId?: string  // Optional action ID for aid bonuses
   ): Promise<any> {
     try {
       console.log('🎲 [PF2eSkillService] Starting kingdom skill check:', {
@@ -235,8 +274,8 @@ export class PF2eSkillService {
       const characterLevel = this.characterService.getCharacterLevel(actor);
       const dc = this.getKingdomActionDC(characterLevel);
       
-      // Get kingdom modifiers
-      const kingdomModifiers = this.getKingdomModifiers();
+      // Get kingdom modifiers (including aids for this action)
+      const kingdomModifiers = this.getKingdomModifiers(actionId || checkId);
       
       // Convert to PF2e format
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
@@ -262,11 +301,15 @@ export class PF2eSkillService {
                          checkType === 'event' ? 'Kingdom Event' : 
                          'Kingdom Incident';
       
+      // Check if we should use rollTwice (keep higher) for this action
+      const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId);
+      
       // Trigger the PF2e system roll with DC and modifiers
       const rollResult = await skill.roll({
         dc: { value: dc },
         label: `${labelPrefix}: ${checkName}`,
         modifiers: pf2eModifiers,
+        rollTwice: useKeepHigher ? 'keep-higher' : false,
         extraRollOptions: [
           `${checkType}:kingdom`,
           `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
@@ -293,7 +336,8 @@ export class PF2eSkillService {
     dc: number,
     actionName: string,
     actionId: string,
-    actionEffects: any
+    actionEffects: any,
+    targetActionId?: string  // NEW: Optional parameter for aid rolls to specify the action being aided
   ): Promise<any> {
     // If an actor was provided, temporarily set it as the user's character
     const originalCharacter = this.characterService.getCurrentUserCharacter();
@@ -302,12 +346,14 @@ export class PF2eSkillService {
     }
     
     // Perform the skill check
+    // Use targetActionId if provided (for aid rolls), otherwise use actionId
     const result = await this.performKingdomSkillCheck(
       skillName,
       'action',
       actionName,
       actionId,
-      actionEffects
+      actionEffects,
+      targetActionId || actionId  // Pass the target action ID for aid bonuses
     );
     
     // Restore original character if we changed it
@@ -377,8 +423,9 @@ export const performKingdomActionRoll = (
   dc: number,
   actionName: string,
   actionId: string,
-  actionEffects: any
-) => pf2eSkillService.performKingdomActionRoll(actor, skillName, dc, actionName, actionId, actionEffects);
+  actionEffects: any,
+  targetActionId?: string
+) => pf2eSkillService.performKingdomActionRoll(actor, skillName, dc, actionName, actionId, actionEffects, targetActionId);
 
 export const getKingdomActionDC = (characterLevel?: number) => 
   pf2eSkillService.getKingdomActionDC(characterLevel);

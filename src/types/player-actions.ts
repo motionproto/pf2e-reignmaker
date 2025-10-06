@@ -20,7 +20,6 @@ export type ActionCategory =
   | "economic-resources"
   | "expand-borders"
   | "foreign-affairs"
-  | "leadership"
   | "military"
   | "military-operations"
   | "uphold-stability"

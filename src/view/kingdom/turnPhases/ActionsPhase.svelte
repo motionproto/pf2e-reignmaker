@@ -9,6 +9,7 @@
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import CheckCard from "../components/CheckCard/CheckCard.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
+  import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
@@ -34,6 +35,8 @@
   let showActionConfirm: boolean = false;
   let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
   let showBuildStructureDialog: boolean = false;
+  let showAidSelectionDialog: boolean = false;
+  let pendingAidAction: { id: string; name: string } | null = null;
 
   // Simple action resolution tracking
   let resolvedActions = new Map<string, any>();
@@ -43,6 +46,9 @@
   
   // Force UI update when resolvedActions changes
   $: resolvedActionsSize = resolvedActions.size;
+  
+  // Force UI update when active aids change
+  $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
   
   // Track current user ID
   let currentUserId: string | null = null;
@@ -545,10 +551,186 @@
     ui.notifications?.info(`Structure queued successfully!`);
   }
   
+  // Handle Aid Another button click - open dialog for skill selection
+  function handleAid(event: CustomEvent) {
+    const { actionId, actionName } = event.detail;
+    
+    console.log('[ActionsPhase] Aid Another clicked:', { actionId, actionName });
+    
+    pendingAidAction = { id: actionId, name: actionName };
+    showAidSelectionDialog = true;
+  }
+  
+  // Handle aid dialog confirmation
+  async function handleAidConfirm(event: CustomEvent) {
+    if (!pendingAidAction) return;
+    
+    const { skill } = event.detail;
+    showAidSelectionDialog = false;
+    
+    console.log('[ActionsPhase] Aid skill selected:', skill);
+    
+    // Check if player has already acted - show confirmation dialog
+    if (actionsUsed > 0) {
+      pendingSkillExecution = { 
+        event: new CustomEvent('executeSkill', { detail: { skill, checkId: `aid-${pendingAidAction.id}`, checkName: `Aid Another: ${pendingAidAction.name}` } }), 
+        action: { id: `aid-${pendingAidAction.id}`, name: `Aid Another: ${pendingAidAction.name}` }
+      };
+      showActionConfirm = true;
+      return;
+    }
+    
+    // Proceed with aid roll
+    await executeAidRoll(skill, pendingAidAction.id, pendingAidAction.name);
+    pendingAidAction = null;
+  }
+  
+  // Handle aid dialog cancellation
+  function handleAidCancel() {
+    showAidSelectionDialog = false;
+    pendingAidAction = null;
+  }
+  
+  // Execute aid roll
+  async function executeAidRoll(skill: string, targetActionId: string, targetActionName: string) {
+    const game = (window as any).game;
+    
+    // Spend player's action
+    if (game?.user?.id) {
+      spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
+      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
+    }
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        return; // User cancelled
+      }
+    }
+    
+    // Declare aidRollListener outside try block so it can be referenced in catch
+    let aidRollListener: ((e: any) => Promise<void>) | null = null;
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      const skillSlug = skill.toLowerCase();
+      const skillData = actingCharacter.skills?.[skillSlug];
+      const proficiencyRank = skillData?.rank || 0;
+      
+      // Listen for the roll completion BEFORE starting the roll
+      aidRollListener = async (e: any) => {
+        const { checkId, outcome, actorName } = e.detail;
+        
+        console.log('[ActionsPhase] kingdomRollComplete received:', checkId, 'Looking for:', `aid-${targetActionId}`);
+        
+        if (checkId === `aid-${targetActionId}`) {
+          window.removeEventListener('kingdomRollComplete', aidRollListener);
+          
+          // Calculate bonus based on outcome and proficiency
+          let bonus = 0;
+          let grantKeepHigher = false;
+          
+          if (outcome === 'criticalSuccess') {
+            bonus = 4;
+            grantKeepHigher = true;
+          } else if (outcome === 'success') {
+            // Calculate based on proficiency
+            if (proficiencyRank === 0) bonus = 1; // Untrained
+            else if (proficiencyRank <= 2) bonus = 2; // Trained/Expert
+            else if (proficiencyRank === 3) bonus = 3; // Master
+            else bonus = 4; // Legendary
+          }
+          
+          console.log('[ActionsPhase] Aid stored for', targetActionId, '- outcome:', outcome, 'bonus:', bonus);
+          
+          // Store aid in turnState (shared state - all players will see this)
+          // Store ALL aid attempts, not just successful ones (bonus > 0)
+          const actor = getKingdomActor();
+          if (actor) {
+            await actor.updateKingdom((kingdom) => {
+              if (!kingdom.turnState) return;
+              if (!kingdom.turnState.actionsPhase.activeAids) {
+                kingdom.turnState.actionsPhase.activeAids = [];
+              }
+              
+              kingdom.turnState.actionsPhase.activeAids.push({
+                playerId: game.user.id,
+                playerName: game.user.name,
+                characterName: actorName,
+                targetActionId,
+                skillUsed: skill,
+                outcome: outcome as any,
+                bonus,
+                grantKeepHigher,
+                timestamp: Date.now()
+              });
+            });
+            
+            if (bonus > 0) {
+              ui.notifications?.info(`You are now aiding ${targetActionName} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
+            } else {
+              ui.notifications?.warn(`Your aid attempt for ${targetActionName} failed.`);
+            }
+          }
+        }
+      };
+      
+      window.addEventListener('kingdomRollComplete', aidRollListener);
+      
+      // Perform the roll - pass targetActionId so modifiers can be applied
+      await performKingdomActionRoll(
+        actingCharacter,
+        skill,
+        dc,
+        `Aid Another: ${targetActionName}`,
+        `aid-${targetActionId}`,
+        {
+          criticalSuccess: { description: 'You provide exceptional aid (+4 bonus and keep higher roll)' },
+          success: { description: 'You provide helpful aid (bonus based on proficiency)' },
+          failure: { description: 'Your aid has no effect' },
+          criticalFailure: { description: 'Your aid has no effect' }
+        },
+        targetActionId  // Pass the target action ID so aid modifiers are applied to the correct action
+      );
+      
+    } catch (error) {
+      // Clean up listener on error
+      if (aidRollListener) {
+        window.removeEventListener('kingdomRollComplete', aidRollListener);
+      }
+      console.error('Error performing aid roll:', error);
+      ui.notifications?.error(`Failed to perform aid: ${error}`);
+    }
+  }
+  
   // Get other players' resolutions for an action (helper to avoid inline type annotation)
   function getOtherPlayersResolutions(actionId: string): any[] {
     if (!controller) return [];
     return controller.getAllPlayersResolutions(actionId).filter((r: any) => r.playerId !== currentUserId);
+  }
+  
+  // Get aid result for an action from shared kingdom state
+  function getAidResultForAction(actionId: string): { outcome: string; bonus: number } | null {
+    const activeAids = $kingdomData?.turnState?.actionsPhase?.activeAids;
+    if (!activeAids || activeAids.length === 0) return null;
+    
+    // Find the most recent aid for this action
+    const aidsForAction = activeAids.filter((aid: any) => aid.targetActionId === actionId);
+    if (aidsForAction.length === 0) return null;
+    
+    // Return the most recent aid (highest timestamp)
+    const mostRecentAid = aidsForAction.reduce((latest: any, current: any) => 
+      current.timestamp > latest.timestamp ? current : latest
+    );
+    
+    return {
+      outcome: mostRecentAid.outcome,
+      bonus: mostRecentAid.bonus
+    };
   }
 
 </script>
@@ -578,7 +760,7 @@
               {@const otherPlayersResolutions = getOtherPlayersResolutions(action.id)}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${resolvedActionsSize}`}
+              {#key `${action.id}-${resolvedActionsSize}-${activeAidsCount}`}
                 <CheckCard
                   id={action.id}
                   name={action.name}
@@ -614,12 +796,15 @@
                   canPerformMore={actionsUsed < 4 && !isResolved}
                   currentFame={$kingdomData?.fame || 0}
                   showFameReroll={true}
+                  showAidButton={true}
+                  aidResult={getAidResultForAction(action.id)}
                   resolvedBadgeText="Resolved"
                   primaryButtonLabel="OK"
                   skillSectionTitle="Choose Skill:"
                   on:toggle={() => toggleAction(action.id)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
                   on:rerollWithFame={(e) => handleRerollWithFame(e, action)}
+                  on:aid={handleAid}
                   on:primaryAction={(e) => {
                     // Apply the effects and clear the resolved state
                     applyActionEffects(e.detail.checkId);
@@ -655,6 +840,14 @@
 <BuildStructureDialog
   bind:show={showBuildStructureDialog}
   on:structureQueued={handleStructureQueued}
+/>
+
+<!-- Aid Selection Dialog -->
+<AidSelectionDialog
+  bind:show={showAidSelectionDialog}
+  actionName={pendingAidAction?.name || ''}
+  on:confirm={handleAidConfirm}
+  on:cancel={handleAidCancel}
 />
 
 <style lang="scss">

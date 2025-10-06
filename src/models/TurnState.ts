@@ -87,6 +87,21 @@ export interface EventsPhaseState {
 }
 
 /**
+ * Aid Another entry - tracks aids provided by players
+ */
+export interface AidEntry {
+  playerId: string;
+  playerName: string;
+  characterName: string;
+  targetActionId: string;
+  skillUsed: string;
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+  bonus: number;  // Calculated bonus based on outcome and proficiency
+  grantKeepHigher: boolean;  // Critical success grants keep higher roll (fortune effect)
+  timestamp: number;
+}
+
+/**
  * Complete state for the Actions phase
  */
 export interface ActionsPhaseState {
@@ -98,6 +113,7 @@ export interface ActionsPhaseState {
     actionSpent: boolean;
     spentInPhase?: TurnPhase;
   }>;
+  activeAids: AidEntry[];  // Aid bonuses available for actions this turn
 }
 
 /**
@@ -171,7 +187,8 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
     
     actionsPhase: {
       completed: false,
-      playerActions: {}
+      playerActions: {},
+      activeAids: []
     },
     
     upkeepPhase: {

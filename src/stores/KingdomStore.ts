@@ -29,6 +29,7 @@ export const fame = derived(kingdomData, $data => $data.fame);
 
 // UI-only state (no persistence needed)
 export const viewingPhase = writable<TurnPhase>(TurnPhase.STATUS);
+export const phaseViewLocked = writable<boolean>(true); // Lock viewing phase to current phase
 export const selectedSettlement = writable<string | null>(null);
 export const expandedSections = writable<Set<string>>(new Set());
 
@@ -203,6 +204,25 @@ export function setViewingPhase(phase: TurnPhase): void {
   viewingPhase.set(phase);
 }
 
+export function togglePhaseViewLock(): void {
+  phaseViewLocked.update(locked => {
+    const newLockState = !locked;
+    
+    // If we're locking (newLockState = true), sync viewing phase to current phase
+    if (newLockState) {
+      const data = get(kingdomData);
+      if (data.currentPhase) {
+        console.log(`[KingdomStore] Lock engaged, syncing view to current phase: ${data.currentPhase}`);
+        viewingPhase.set(data.currentPhase);
+      }
+    } else {
+      console.log(`[KingdomStore] Lock disengaged, viewing phase will stay at: ${get(viewingPhase)}`);
+    }
+    
+    return newLockState;
+  });
+}
+
 /**
  * Turn management functions - delegated to TurnManager
  */
@@ -264,26 +284,23 @@ export function setupFoundrySync(): void {
       if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data']) {
         console.log(`[KingdomActor Store] Kingdom updated by user ${userId}`);
         
-        // Get the old phase before updating
-        const oldKingdom = currentActor.getKingdom();
-        const oldPhase = oldKingdom?.currentPhase;
+        // Refresh the actor reference in the store
+        kingdomActor.set(actor as KingdomActor);
         
-        // Force store update by triggering reactivity
-        kingdomActor.update(a => a);
-        
-        // Only update viewing phase if the actual current phase changed
-        // AND the user is currently viewing the old active phase (not manually browsing)
+        // Get the new kingdom data from the updated actor
         const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
         const newPhase = kingdom?.currentPhase;
-        const currentViewingPhase = get(viewingPhase);
         
-        if (kingdom && newPhase && newPhase !== oldPhase) {
-          // Phase actually changed - only update viewing if user was on the old phase
-          if (currentViewingPhase === oldPhase) {
-            console.log(`[KingdomActor Store] Phase changed from ${oldPhase} to ${newPhase}, updating viewing phase`);
+        if (kingdom && newPhase) {
+          const isLocked = get(phaseViewLocked);
+          const currentViewingPhase = get(viewingPhase);
+          
+          console.log(`[KingdomActor Store] Phase sync check - Current: ${newPhase}, Viewing: ${currentViewingPhase}, Lock: ${isLocked ? 'LOCKED' : 'UNLOCKED'}`);
+          
+          // If locked and viewing phase doesn't match current phase, sync them
+          if (isLocked && currentViewingPhase !== newPhase) {
+            console.log(`[KingdomActor Store] Lock engaged, syncing view from ${currentViewingPhase} to ${newPhase}`);
             viewingPhase.set(newPhase);
-          } else {
-            console.log(`[KingdomActor Store] Phase changed but user is browsing ${currentViewingPhase}, keeping viewing phase`);
           }
         }
       }

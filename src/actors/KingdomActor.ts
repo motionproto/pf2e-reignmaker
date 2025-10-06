@@ -142,6 +142,7 @@ export class KingdomActor extends Actor {
   
   /**
    * Update kingdom data with a function - similar to Svelte store pattern
+   * Automatically routes through GM via socketlib if player lacks permission
    */
   async updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
     const kingdom = this.getKingdom();
@@ -150,11 +151,69 @@ export class KingdomActor extends Actor {
       return;
     }
     
+    // Check if the current user has permission to update this actor
+    if (!this.canUserModify(game.user, 'update')) {
+      // Route through socketlib to execute on GM's client (silent for normal operation)
+      try {
+        const { socketService } = await import('../services/SocketService');
+        
+        if (!socketService.isAvailable()) {
+          const errorMsg = 'Socket communication not available. Please ensure socketlib module is installed and enabled.';
+          console.error('[KingdomActor]', errorMsg);
+          ui.notifications?.error(errorMsg);
+          throw new Error(errorMsg);
+        }
+        
+        await socketService.executeAsGM(this.id, updater);
+        return;
+      } catch (error) {
+        console.error('[KingdomActor] Failed to update kingdom via socket:', error);
+        ui.notifications?.error('Failed to update kingdom. Please contact your GM.');
+        throw error;
+      }
+    }
+    
+    // User has permission - execute directly
     // Apply the update
     updater(kingdom);
     
     // Save back to flags - triggers automatic sync
     await this.setKingdom(kingdom);
+  }
+  
+  /**
+   * Check if the current user can modify this kingdom
+   */
+  canCurrentUserModify(): boolean {
+    return this.canUserModify(game.user, 'update');
+  }
+  
+  /**
+   * Ensure all players have OWNER permission on this kingdom actor
+   * This should be called by a GM when setting up a kingdom for collaborative play
+   */
+  async ensurePlayerOwnership(): Promise<void> {
+    if (!game.user?.isGM) {
+      ui.notifications?.error('Only a GM can modify actor permissions.');
+      return;
+    }
+    
+    const ownership: Record<string, number> = {};
+    
+    // Set all players to OWNER (level 3)
+    for (const user of game.users!) {
+      if (!user.isGM) {
+        ownership[user.id] = CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+      }
+    }
+    
+    // Keep default for everyone else
+    ownership.default = CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE;
+    
+    await this.update({ ownership });
+    
+    ui.notifications?.info(`Kingdom actor permissions updated. All players now have OWNER access.`);
+    console.log('[KingdomActor] Updated ownership:', ownership);
   }
   
   /**

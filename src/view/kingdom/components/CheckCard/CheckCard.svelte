@@ -61,6 +61,8 @@
   export let primaryButtonLabel: string = 'OK';
   export let skillSectionTitle: string = 'Choose Skill:';
   export const hideCharacterHint: boolean = false; // Unused - marked as const
+  export let showAidButton: boolean = false;  // Show aid button before skills
+  export let aidResult: { outcome: string; bonus: number } | null = null;
   
   const dispatch = createEventDispatcher();
   
@@ -100,6 +102,14 @@
     });
     
     isRolling = false;
+  }
+  
+  function handleAidClick() {
+    // Delegate aid logic to parent (no skill selection here)
+    dispatch('aid', {
+      actionId: id,
+      actionName: name
+    });
   }
   
   function formatOutcome(outcomeType: string): string {
@@ -206,7 +216,10 @@
           {resolved}
           {isRolling}
           {localUsedSkill}
+          {showAidButton}
+          {aidResult}
           on:execute={handleSkillExecute}
+          on:aid={handleAidClick}
         />
         
         <!-- Outcomes section - only show when not resolved -->
@@ -384,4 +397,5 @@
       transform: scale(1);
     }
   }
+  
 </style>

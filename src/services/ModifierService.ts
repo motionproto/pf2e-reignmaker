@@ -174,7 +174,11 @@ export async function createModifierService() {
      * Get summary of active modifiers
      */
     getActiveModifiers(): ActiveModifier[] {
-      const kingdom = (window as any).game?.actors?.find((a: any) => a.type === 'kingdom')?.getKingdom();
+      const { getKingdomActor } = require('../stores/KingdomStore');
+      const actor = getKingdomActor();
+      if (!actor) return [];
+      
+      const kingdom = actor.getKingdom();
       return kingdom?.activeModifiers || [];
     }
   };
