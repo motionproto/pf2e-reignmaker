@@ -460,8 +460,9 @@ export async function createUnrestPhaseController() {
             
             // Check if value is a dice formula
             if (typeof value === 'string' && DICE_PATTERN.test(value)) {
-              // Preserve dice formulas as strings for dice roller UI
-              changes.set(modifier.resource, value);
+              // SKIP dice formulas - they should only be in modifiers array
+              // OutcomeDisplay will merge rolled values via computeDisplayStateChanges
+              continue;
             } else {
               // Aggregate numeric values
               const currentValue = changes.get(modifier.resource) || 0;

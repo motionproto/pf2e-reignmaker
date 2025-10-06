@@ -55,6 +55,29 @@
    // NOTE: Incident data persists in turnState for entire turn
    // Applied outcomes are stored in turnState.unrestPhase.appliedOutcome
    
+   // FIX: Make showIncidentResult reactive to kingdom data state
+   // This ensures all connected clients show the incident section when synced from Foundry
+   $: if ($kingdomData.turnState?.unrestPhase?.incidentRolled) {
+      // Incident check has been performed - show the result section
+      showIncidentResult = true;
+      
+      // Also restore roll values for display
+      if ($kingdomData.turnState.unrestPhase.incidentRoll !== undefined) {
+         incidentCheckRoll = $kingdomData.turnState.unrestPhase.incidentRoll;
+         incidentCheckDC = $kingdomData.turnState.unrestPhase.incidentRoll; // Use same value for both
+      }
+      
+      // Ensure controller exists when showing incident result section
+      // This is important for other clients that didn't click the roll button
+      if (!unrestPhaseController) {
+         (async () => {
+            const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+            unrestPhaseController = await createUnrestPhaseController();
+            console.log('🔄 [UnrestPhase] Controller initialized for synced incident display');
+         })();
+      }
+   }
+   
    async function loadIncident(incidentId: string) {
       try {
          const { incidentLoader } = await import('../../../controllers/incidents/incident-loader');
@@ -268,14 +291,20 @@
                      {/if}
                   </div>
                   
-                  <!-- Use CheckCard for incident resolution -->
-                  <CheckCard
-                     checkType="incident"
-                     item={currentIncident}
-                     {isViewingCurrentPhase}
-                     controller={unrestPhaseController}
-                     {possibleOutcomes}
-                  />
+                  <!-- Use CheckCard for incident resolution - only show when controller is ready -->
+                  {#if unrestPhaseController}
+                     <CheckCard
+                        checkType="incident"
+                        item={currentIncident}
+                        {isViewingCurrentPhase}
+                        controller={unrestPhaseController}
+                        {possibleOutcomes}
+                     />
+                  {:else}
+                     <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                     </div>
+                  {/if}
                </div>
             {:else}
                <div class="no-incident">

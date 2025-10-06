@@ -42,7 +42,7 @@
     "criticalSuccess": {
       "modifiers": [
         {
-          "name": "Deal with Unrest",
+          "name": "Widespread Support",
           "resource": "unrest",
           "value": -3,
           "duration": "immediate"
@@ -52,7 +52,7 @@
     "success": {
       "modifiers": [
         {
-          "name": "Deal with Unrest",
+          "name": "The People Listen",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
@@ -62,7 +62,7 @@
     "failure": {
       "modifiers": [
         {
-          "name": "Deal with Unrest",
+          "name": "can we just get along?",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -70,7 +70,14 @@
       ]
     },
     "criticalFailure": {
-      "modifiers": []
+      "modifiers": [
+        {
+          "name": "No one listens",
+          "resource": "unrest",
+          "value": 0,
+          "duration": "immediate"
+        }
+      ]
     }
   },
   "special": "End of Turn Only"
