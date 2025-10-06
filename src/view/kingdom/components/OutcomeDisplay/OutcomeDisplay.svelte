@@ -48,7 +48,7 @@
   export let shortfallResources: string[] = [];
   
   const dispatch = createEventDispatcher();
-  const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
+  const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
   
   type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   
@@ -78,7 +78,8 @@
   $: hasDiceModifiers = diceModifiers.length > 0;
   $: diceResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
   
-  // Detect dice formulas in stateChanges
+  // Detect dice formulas in ORIGINAL stateChanges (not computed displayStateChanges)
+  // This prevents circular dependency: displayStateChanges depends on resolvedDice
   $: stateChangeDice = detectStateChangeDice(stateChanges);
   $: hasStateChangeDice = stateChangeDice.length > 0;
   $: stateChangeDiceResolved = hasStateChangeDice && stateChangeDice.every(d => resolvedDice.has(`state:${d.key}`));
@@ -87,11 +88,36 @@
   $: hasChoices = choices && choices.length > 0;
   $: choicesResolved = hasChoices && selectedChoice !== null;
   
-  // Button visibility
+  // Button visibility and state
   $: showCancelButton = showCancel && !applied;
   $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers;
-  $: effectivePrimaryLabel = applied ? '' : primaryButtonLabel;
-  $: primaryButtonDisabled = (hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved) || (hasStateChangeDice && !stateChangeDiceResolved);
+  $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
+  
+  // Validation logic with debug logging
+  let primaryButtonDisabled = false;
+  $: {
+    const validationState = {
+      applied,
+      hasChoices,
+      choicesResolved,
+      hasResourceArrays,
+      resourceArraysResolved,
+      hasDiceModifiers,
+      diceResolved,
+      hasStateChangeDice,
+      stateChangeDiceResolved,
+      resolvedDiceKeys: Array.from(resolvedDice.keys()),
+      stateChangeDiceKeys: stateChangeDice.map(d => `state:${d.key}`)
+    };
+    
+    console.log('🔍 [OutcomeDisplay] Validation state:', validationState);
+    
+    primaryButtonDisabled = applied || 
+      (hasChoices && !choicesResolved) || 
+      (hasResourceArrays && !resourceArraysResolved) || 
+      (hasDiceModifiers && !diceResolved) || 
+      (hasStateChangeDice && !stateChangeDiceResolved);
+  }
   
   // Display effective message and state changes
   $: displayEffect = choiceResult ? choiceResult.effect : effect;
@@ -102,7 +128,8 @@
     selectedResources,
     resourceArraysResolved,
     diceModifiers,
-    resolvedDice
+    resolvedDice,
+    stateChangeDice
   );
   
   // Event handlers
@@ -111,7 +138,7 @@
   }
   
   async function handlePrimary() {
-    if ((hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved)) {
+    if ((hasChoices && !choicesResolved) || (hasResourceArrays && !resourceArraysResolved) || (hasDiceModifiers && !diceResolved) || (hasStateChangeDice && !stateChangeDiceResolved)) {
       return;
     }
     
@@ -155,7 +182,7 @@
   }
   
   function handleChoiceSelect(event: CustomEvent) {
-    const { index } = event.detail;
+    const { index, rolledValues } = event.detail;
     
     if (selectedChoice === index) {
       selectedChoice = null;
@@ -165,24 +192,14 @@
     
     selectedChoice = index;
     const choice = choices![index];
-    const resourceValues: Record<string, number> = {};
     
-    if (choice.modifiers) {
-      for (const modifier of choice.modifiers) {
-        const value = modifier.value;
-        
-        if (typeof value === 'string' && DICE_PATTERN.test(value)) {
-          const rolled = rollDiceFormula(value);
-          resourceValues[modifier.resource] = rolled;
-        } else if (typeof value === 'number') {
-          resourceValues[modifier.resource] = value;
-        }
-      }
-    }
+    // Use the pre-rolled values from ChoiceButtons
+    const resourceValues = rolledValues || {};
     
+    // Build result label with rolled values
     let resultLabel = choice.label;
     for (const [resource, value] of Object.entries(resourceValues)) {
-      resultLabel = resultLabel.replace(new RegExp(`\\{${resource}\\}`, 'g'), String(Math.abs(value)));
+      resultLabel = resultLabel.replace(new RegExp(`\\{${resource}\\}`, 'g'), String(Math.abs(value as number)));
     }
     
     choiceResult = {
@@ -232,7 +249,7 @@
     <ShortageWarning {shortfallResources} />
     <ResourceSelector {modifiers} {selectedResources} on:select={handleResourceSelect} />
     <ChoiceButtons {choices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
-    <StateChanges stateChanges={displayStateChanges} {modifiers} {resolvedDice} {manualEffects} on:roll={handleDiceRoll} />
+    <StateChanges stateChanges={displayStateChanges} {modifiers} {resolvedDice} {manualEffects} outcome={effectiveOutcome} on:roll={handleDiceRoll} />
   </div>
   
   <OutcomeActions

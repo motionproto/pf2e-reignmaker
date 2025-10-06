@@ -90,7 +90,16 @@ export async function createUnrestPhaseController() {
       
       try {
         const kingdom = get(kingdomData);
-        const hasActiveIncident = kingdom.currentIncidentId !== null;
+        const hasActiveIncident = kingdom.turnState?.unrestPhase?.incidentId !== null && 
+                                   kingdom.turnState?.unrestPhase?.incidentId !== undefined;
+        
+        // Check if phase is already initialized (prevent re-initialization on component remount)
+        const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
+        
+        if (hasSteps && kingdom?.currentPhase === 'Unrest') {
+          console.log('⏭️ [UnrestPhaseController] Phase already initialized, skipping re-initialization');
+          return createPhaseResult(true);
+        }
         
         // Initialize steps with intelligent auto-completion using shared helpers
         const steps = [
@@ -186,11 +195,14 @@ export async function createUnrestPhaseController() {
           
           console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name);
           
-          // Set the incident (DON'T manipulate currentPhaseSteps directly)
+          // Set the incident - write to turnState ONLY (simplified migration)
           await actor.updateKingdom((kingdom) => {
-            kingdom.currentIncidentId = incidentId;
-            kingdom.incidentRoll = Math.round(roll * 100);
-            kingdom.incidentTriggered = true;
+            if (kingdom.turnState) {
+              kingdom.turnState.unrestPhase.incidentRolled = true;
+              kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
+              kingdom.turnState.unrestPhase.incidentTriggered = true;
+              kingdom.turnState.unrestPhase.incidentId = incidentId;
+            }
           });
           
           console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 will require manual resolution');
@@ -200,15 +212,23 @@ export async function createUnrestPhaseController() {
       } else {
         console.log('✅ [UnrestPhaseController] No incident occurred');
         
-        // Ensure no incident is set (DON'T manipulate currentPhaseSteps directly)
+        // ATOMIC UPDATE: Update turnState AND complete step 2 in single write
         await actor.updateKingdom((kingdom) => {
-          kingdom.currentIncidentId = null;
-          kingdom.incidentRoll = Math.round(roll * 100);
-          kingdom.incidentTriggered = false;
+          // Update turnState
+          if (kingdom.turnState) {
+            kingdom.turnState.unrestPhase.incidentRolled = true;
+            kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
+            kingdom.turnState.unrestPhase.incidentTriggered = false;
+            kingdom.turnState.unrestPhase.incidentId = null;
+          }
+          
+          // Complete step 2 in same transaction (no incident = auto-complete)
+          if (kingdom.currentPhaseSteps.length >= 3) {
+            kingdom.currentPhaseSteps[2].completed = 1; // Resolve Incident
+          }
         });
         
-        // Auto-complete step 2 since no incident (using PhaseHandler)
-        await completePhaseStepByIndex(2);
+        console.log('✅ [UnrestPhaseController] No incident - turnState + step 2 completed atomically');
       }
       
       // Complete step 1 (incident check)
@@ -279,10 +299,8 @@ export async function createUnrestPhaseController() {
           appliedChanges.set(resource, value);
         }
 
-        // Clear the current incident
-        await actor.updateKingdom((kingdom) => {
-          kingdom.currentIncidentId = null;
-        });
+        // Clear the current incident - no longer needed
+        // (turnState is reset when turn advances in StatusPhaseController)
 
         console.log(`✅ [UnrestPhaseController] Incident resolved: ${effectOutcome.msg}`);
         
@@ -471,6 +489,7 @@ export async function createUnrestPhaseController() {
         effect,
         actorName,
         stateChanges,
+        modifiers: effectOutcome?.modifiers || [], // Include modifiers for UI (dice rollers, resource selectors)
         manualEffects: effectOutcome?.manualEffects || []
       };
     }

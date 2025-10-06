@@ -6,13 +6,15 @@
   export let modifiers: any[] | undefined = undefined;
   export let resolvedDice: Map<number | string, number> = new Map();
   export let manualEffects: string[] | undefined = undefined;
+  export let outcome: string | undefined = undefined;
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
   
   $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
-  $: hasAnyContent = hasStateChanges || hasManualEffects;
+  $: showCriticalSuccessFame = outcome === 'criticalSuccess';
+  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame;
   
   // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
@@ -73,6 +75,13 @@
 
 {#if hasAnyContent}
   <div class="state-changes">
+    {#if showCriticalSuccessFame}
+      <div class="critical-success-fame">
+        <i class="fas fa-star"></i>
+        <span>Fame increased by 1</span>
+      </div>
+    {/if}
+    
     {#if hasManualEffects && manualEffects}
       <div class="manual-effects">
         <div class="manual-effects-header">
@@ -129,6 +138,31 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+  
+  .critical-success-fame {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, 
+      rgba(34, 197, 94, 0.2),
+      rgba(34, 197, 94, 0.1));
+    border: 2px solid rgba(34, 197, 94, 0.5);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-green);
+    
+    i {
+      font-size: 20px;
+      color: #fbbf24;
+      text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+    }
+    
+    span {
+      flex: 1;
+    }
   }
   
   .manual-effects {

@@ -76,8 +76,22 @@ export class ResetKingdomDialog {
       // STEP 2: Initialize fresh kingdom data
       await actor.initializeKingdom('New Kingdom');
       
+      // STEP 3: Refresh Kingdom information from Kingmaker module
+      console.log('PF2E ReignMaker | Refreshing territory data from Kingmaker module...');
       // @ts-ignore
-      ui.notifications?.info('Kingdom data has been completely reset (all legacy data cleared)');
+      ui.notifications?.info('Kingdom reset - loading territory data from Kingmaker module...');
+      
+      try {
+        const { loadTerritoryData } = await import('../hooks/kingdomSync');
+        await loadTerritoryData();
+        
+        // @ts-ignore
+        ui.notifications?.success('Kingdom data reset complete with territory data loaded');
+      } catch (territoryError) {
+        console.warn('PF2E ReignMaker | Could not load territory data:', territoryError);
+        // @ts-ignore
+        ui.notifications?.info('Kingdom data has been reset (territory data not available)');
+      }
       
       console.log('PF2E ReignMaker | Kingdom data reset successfully - all legacy fields removed');
     } catch (error) {

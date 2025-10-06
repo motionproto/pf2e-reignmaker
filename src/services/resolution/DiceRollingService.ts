@@ -8,15 +8,24 @@
  * Single source of truth for dice operations across the application.
  */
 
-// Dice formula detection regex
-const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+// Dice formula detection regex - supports parentheses: -(1d4+1) or simple: -1d4+1
+const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
 
 /**
- * Roll a dice formula (e.g., "1d4", "2d6+1", "-1d4", "-2d6-1")
+ * Roll a dice formula
+ * Supports: "1d4", "2d6+1", "-1d4", "-(1d4+1)", etc.
  */
 export function rollDiceFormula(formula: string): number {
-  // Handle negative prefix
-  const isNegative = formula.startsWith('-');
+  // Handle parenthetical negative: -(XdY+Z)
+  const parentheticalMatch = formula.match(/^-\((\d+d\d+(?:[+-]\d+)?)\)$/);
+  if (parentheticalMatch) {
+    const innerFormula = parentheticalMatch[1];
+    const innerResult = rollDiceFormula(innerFormula);
+    return -innerResult;
+  }
+  
+  // Handle simple negative prefix: -XdY or -XdY+Z
+  const isNegative = formula.startsWith('-') && !formula.startsWith('-(');
   const cleanFormula = isNegative ? formula.substring(1) : formula;
   
   // Parse the dice formula

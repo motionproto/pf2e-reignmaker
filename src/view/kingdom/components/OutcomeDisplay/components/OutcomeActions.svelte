@@ -55,7 +55,7 @@
           variant="secondary"
           disabled={primaryButtonDisabled}
           on:click={handlePrimary}
-          icon="fas fa-check"
+          icon={effectivePrimaryLabel === '✓ Applied' ? 'fas fa-check-circle' : 'fas fa-check'}
           iconPosition="left"
         >
           {effectivePrimaryLabel}

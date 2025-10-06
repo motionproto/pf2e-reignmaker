@@ -71,6 +71,17 @@ export async function createEventPhaseController(_eventService?: any) {
             reportPhaseStart('EventPhaseController');
             
             try {
+                // Check if phase is already initialized (prevent re-initialization on component remount)
+                const { getKingdomActor } = await import('../stores/KingdomStore');
+                const actor = getKingdomActor();
+                const kingdom = actor?.getKingdom();
+                const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
+                
+                if (hasSteps && kingdom?.currentPhase === 'Events') {
+                    console.log('⏭️ [EventPhaseController] Phase already initialized, skipping re-initialization');
+                    return createPhaseResult(true);
+                }
+                
                 // Initialize phase with 3-step structure
                 await initializePhaseSteps(EVENTS_PHASE_STEPS);
                 
@@ -82,19 +93,13 @@ export async function createEventPhaseController(_eventService?: any) {
                 // Step 2: Apply Modifiers - CONDITIONAL (auto-complete when steps 0 & 1 complete)
                 
                 // Check if there's a pre-existing event that needs resolution
-                const { getKingdomActor } = await import('../stores/KingdomStore');
-                const actor = getKingdomActor();
-                const kingdom = actor?.getKingdom();
-                const hasActiveEvent = kingdom?.currentEventId !== null;
+                const hasActiveEvent = kingdom?.turnState?.eventsPhase?.eventId !== null;
                 
                 if (hasActiveEvent) {
                     console.log('⚠️ [EventPhaseController] Pre-existing event requires resolution');
                 } else {
                     console.log('🟡 [EventPhaseController] Event roll required (step 0)');
                 }
-                
-                // Don't auto-complete any steps at initialization
-                // All steps start as incomplete and are completed by performEventCheck() or applyEventOutcome()
                 
                 reportPhaseComplete('EventPhaseController');
                 return createPhaseResult(true);
@@ -116,6 +121,20 @@ export async function createEventPhaseController(_eventService?: any) {
             // Check if step 0 (event-check) is already completed
             if (await isStepCompletedByIndex(0)) {
                 console.log('🟡 [EventPhaseController] Event check already completed');
+                
+                // If no event was triggered, ensure steps 1 & 2 are completed
+                // (handles case where UI was closed before steps completed)
+                const { getKingdomActor } = await import('../stores/KingdomStore');
+                const actor = getKingdomActor();
+                const kingdom = actor?.getKingdom();
+                const eventTriggered = kingdom?.turnState?.eventsPhase?.eventTriggered ?? false;
+                
+                if (!eventTriggered) {
+                    console.log('🔧 [EventPhaseController] No event was triggered, ensuring steps 1 & 2 are complete');
+                    await completePhaseStepByIndex(1);
+                    await completePhaseStepByIndex(2);
+                }
+                
                 return {
                     triggered: !!state.currentEvent,
                     event: state.currentEvent,
@@ -144,16 +163,21 @@ export async function createEventPhaseController(_eventService?: any) {
                     state.currentEvent = event;
                     console.log(`✨ [EventPhaseController] Event triggered: "${getEventDisplayName(event)}" (${event.id})`);
                     
-                    // Store event in kingdom state
+                    // Store event in kingdom state (both persistent DC and turnState)
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
                     if (actor) {
                         await actor.updateKingdom((kingdom) => {
-                            kingdom.currentEventId = event!.id;
+                            // Update persistent DC (survives across turns)
                             kingdom.eventDC = newDC;
-                            kingdom.eventStabilityRoll = roll;
-                            kingdom.eventRollDC = currentDC;
-                            kingdom.eventTriggered = true;
+                            
+                            // Update turnState (for current turn display)
+                            if (kingdom.turnState) {
+                                kingdom.turnState.eventsPhase.eventRolled = true;
+                                kingdom.turnState.eventsPhase.eventRoll = roll;
+                                kingdom.turnState.eventsPhase.eventTriggered = true;
+                                kingdom.turnState.eventsPhase.eventId = event!.id;
+                            }
                         });
                     }
                     
@@ -166,23 +190,31 @@ export async function createEventPhaseController(_eventService?: any) {
                 newDC = Math.max(6, currentDC - 5);
                 console.log(`📉 [EventPhaseController] No event, DC reduced from ${currentDC} to ${newDC}`);
                 
-                // Update kingdom state with new DC
+                // ATOMIC UPDATE: Update persistent DC, turnState, AND complete steps in single write
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
                     await actor.updateKingdom((kingdom) => {
+                        // Update persistent DC (survives across turns)
                         kingdom.eventDC = newDC;
-                        kingdom.currentEventId = null;
-                        kingdom.eventStabilityRoll = roll;
-                        kingdom.eventRollDC = currentDC;
-                        kingdom.eventTriggered = false;
+                        
+                        // Update turnState (for current turn display)
+                        if (kingdom.turnState) {
+                            kingdom.turnState.eventsPhase.eventRolled = true;
+                            kingdom.turnState.eventsPhase.eventRoll = roll;
+                            kingdom.turnState.eventsPhase.eventTriggered = false;
+                            kingdom.turnState.eventsPhase.eventId = null;
+                        }
+                        
+                        // Complete steps 1 & 2 in same transaction (no event = auto-complete)
+                        if (kingdom.currentPhaseSteps.length >= 3) {
+                            kingdom.currentPhaseSteps[1].completed = 1; // Resolve Event
+                            kingdom.currentPhaseSteps[2].completed = 1; // Apply Modifiers
+                        }
                     });
                 }
                 
-                // Auto-complete steps 1 & 2 since no event to resolve or modifiers to apply
-                await completePhaseStepByIndex(1);
-                await completePhaseStepByIndex(2);
-                console.log('✅ [EventPhaseController] No event - steps 1 & 2 auto-completed');
+                console.log('✅ [EventPhaseController] No event - turnState + steps 1 & 2 completed atomically');
             }
             
             state.eventDC = newDC;
@@ -248,36 +280,28 @@ export async function createEventPhaseController(_eventService?: any) {
                     appliedChanges.set(resource, value);
                 }
                 
-                // Handle unresolved modifier creation if applicable
-                let unresolvedModifier: ActiveModifier | undefined;
-                if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
-                    unresolvedModifier = modifierService.createFromUnresolvedEvent(event as any, currentTurn);
-                    if (unresolvedModifier) {
-                        await updateKingdom(kingdom => {
-                            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                            kingdom.activeModifiers.push(unresolvedModifier!);
-                        });
-                        appliedChanges.set('modifier', unresolvedModifier);
-                        console.log(`📋 [EventPhaseController] Created ongoing modifier: ${unresolvedModifier.name}`);
-                    }
-                }
-                
-                // Clear current event
-                await updateKingdom(kingdom => {
-                    kingdom.currentEventId = null;
-                });
+                // DON'T clear currentEventId here - CheckCard needs it to restore the applied outcome
+                // Event will be cleared when advancing to next phase or rolling for a new event
                 
                 state.resolutionOutcome = outcome;
                 state.appliedEffects = appliedChanges;
                 
-                // Handle ongoing events list
-                if (event.ifUnresolved && (outcome === 'failure' || outcome === 'criticalFailure')) {
+                // Handle ongoing events list based on outcome
+                // Check if event should remain ongoing based on the same rules as ignoreEvent
+                const hasOngoingTrait = event.traits?.includes('ongoing') ?? false;
+                const isBeneficial = event.traits?.includes('beneficial') ?? false;
+                const outcomeEndsEvent = effectOutcome.endsEvent ?? true;
+                
+                if ((outcome === 'failure' || outcome === 'criticalFailure') && hasOngoingTrait && !outcomeEndsEvent && !isBeneficial) {
+                    console.log(`📋 [EventPhaseController] Event failed and is ongoing - adding to ongoing events`);
                     await this.addToOngoingEvents(event.id);
                     state.unresolvedEvent = event;
                 } else {
+                    // Success outcomes or events that end on failure - remove from ongoing
                     if (effectOutcome?.msg && effectOutcome.msg.includes('<EVENT ENDS>')) {
                         await this.removeFromOngoingEvents(event.id);
                     }
+                    state.unresolvedEvent = null;
                 }
                 
                 // Complete steps 1 & 2 (resolve-event & apply-modifiers)
@@ -324,50 +348,91 @@ export async function createEventPhaseController(_eventService?: any) {
         },
 
         /**
-         * Handle event ignored (applies failure outcome and creates modifier if needed)
+         * Handle event ignored (applies failure outcome and adds to ongoing events if needed)
          */
         async ignoreEvent(event: EventData, currentTurn: number): Promise<{
             success: boolean;
             effects: Map<string, any>;
-            modifier?: ActiveModifier;
+            error?: string;
+            applied?: {
+                resources: Array<{ resource: string; value: number }>;
+                specialEffects: string[];
+            };
         }> {
             console.log(`🚫 [EventPhaseController] Ignoring event: ${getEventDisplayName(event)}`);
             
-            // Apply failure effects
-            const failureEffects = eventResolver.calculateResourceChanges(event, 'failure');
-            
-            // Create ongoing modifier if event has ifUnresolved configuration
-            let modifier: ActiveModifier | undefined;
-            if (event.ifUnresolved) {
-                // Event already has tier at the top level, use it directly
-                modifier = modifierService.createFromUnresolvedEvent(event as any, currentTurn);
-                if (modifier) {
-                    await updateKingdom(kingdom => {
-                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                        kingdom.activeModifiers.push(modifier!);
-                    });
-                    await this.addToOngoingEvents(event.id);
-                    console.log(`📋 [EventPhaseController] Created ongoing modifier for ignored event: ${modifier.name}`);
+            try {
+                // Get failure outcome effects
+                const failureOutcome = event.effects?.failure;
+                if (!failureOutcome) {
+                    throw new Error('No failure effects defined for event');
                 }
-            }
-            
-            // Clear current event
-            state.currentEvent = null;
-            
-            // Update kingdom state
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (actor) {
-                await actor.updateKingdom((kingdom) => {
-                    kingdom.currentEventId = null;
+                
+                // Use GameEffectsService to apply failure outcome (same as normal resolution)
+                const result = await gameEffectsService.applyOutcome({
+                    type: 'event',
+                    sourceId: event.id,
+                    sourceName: getEventDisplayName(event),
+                    outcome: 'failure',
+                    modifiers: failureOutcome.modifiers || [],
+                    createOngoingModifier: false  // Handle separately below
                 });
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to apply failure effects');
+                }
+                
+                // Convert applied resources to Map for compatibility
+                const appliedChanges = new Map<string, any>();
+                for (const { resource, value } of result.applied.resources) {
+                    appliedChanges.set(resource, value);
+                }
+                
+                // Check if event should remain ongoing
+                // Rules: Event stays in ongoing list if:
+                // 1. Has 'ongoing' trait
+                // 2. Failure doesn't end event (endsEvent: false)
+                // 3. Event is NOT beneficial
+                const hasOngoingTrait = event.traits?.includes('ongoing') ?? false;
+                const isBeneficial = event.traits?.includes('beneficial') ?? false;
+                const failureEndsEvent = failureOutcome.endsEvent ?? true;
+                
+                if (hasOngoingTrait && !failureEndsEvent && !isBeneficial) {
+                    console.log(`📋 [EventPhaseController] Event is ongoing & dangerous - adding to ongoing events`);
+                    await this.addToOngoingEvents(event.id);
+                    console.log(`✅ [EventPhaseController] Added to ongoing events: ${getEventDisplayName(event)}`);
+                } else {
+                    console.log(`🔵 [EventPhaseController] Event does not become ongoing (beneficial: ${isBeneficial}, endsEvent: ${failureEndsEvent})`);
+                }
+                
+                // Event cleared automatically when turn advances
+                // turnState.eventsPhase resets in StatusPhaseController
+                
+                state.currentEvent = null;
+                state.resolutionOutcome = 'failure';
+                state.appliedEffects = appliedChanges;
+                
+                // Complete phase steps (same as normal resolution)
+                await completePhaseStepByIndex(1);  // Resolve Event
+                await completePhaseStepByIndex(2);  // Apply Modifiers
+                
+                console.log('✅ [EventPhaseController] Event ignored - steps 1 & 2 completed');
+                
+                return {
+                    success: true,
+                    effects: appliedChanges,
+                    applied: result.applied
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+                console.error('❌ [EventPhaseController] Failed to ignore event:', error);
+                
+                return {
+                    success: false,
+                    effects: new Map(),
+                    error: errorMessage
+                };
             }
-            
-            return {
-                success: true,
-                effects: failureEffects,
-                modifier
-            };
         },
 
 

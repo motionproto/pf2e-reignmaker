@@ -34,7 +34,7 @@
       "modifiers": [
         {
           "resource": "food",
-          "value": "-1d6+1",
+          "value": "-(1d6+1)",
           "duration": "ongoing"
         }
       ],
@@ -61,7 +61,7 @@
       "modifiers": [
         {
           "resource": "food",
-          "value": "-2d6+1",
+          "value": "-(2d6+1)",
           "duration": "ongoing"
         },
         {

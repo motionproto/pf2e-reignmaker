@@ -27,6 +27,8 @@ export interface ResolutionResult {
 }
 
 export class CheckResultHandler {
+  private lastSkillUsed = 'unknown';
+  
   constructor(
     private checkType: 'event' | 'incident' | 'action',
     private controller: any
@@ -81,6 +83,7 @@ export class CheckResultHandler {
 
   /**
    * Apply the resolution through the appropriate controller
+   * IMPORTANT: This method now handles persistence centrally
    */
   async applyResolution(
     item: any,
@@ -89,9 +92,19 @@ export class CheckResultHandler {
   ): Promise<ResolutionResult> {
     console.log(`✅ [CheckResultHandler] Applying ${this.checkType} resolution - ${outcome}`);
 
+    // Track which skill was used (Phase 2 of TurnState Migration)
+    if (resolutionData.skillUsed) {
+      this.lastSkillUsed = resolutionData.skillUsed;
+    }
+
     try {
+      // Get display data before applying (we'll need it for persistence)
+      const displayData = await this.getDisplayData(item, outcome, item.name || 'Unknown');
+      
+      let result: ResolutionResult;
+      
       if (this.checkType === 'event') {
-        return await this.controller.applyEventOutcome(
+        result = await this.controller.applyEventOutcome(
           item,
           outcome,
           get(kingdomData),
@@ -102,7 +115,7 @@ export class CheckResultHandler {
         // Map detailed outcome to simple for incident resolution
         const simplifiedOutcome = this.controller.mapDetailedOutcomeToSimple?.(outcome) || outcome;
         
-        return await this.controller.resolveIncident(
+        result = await this.controller.resolveIncident(
           item.id,
           simplifiedOutcome,
           resolutionData.diceRolls
@@ -110,17 +123,24 @@ export class CheckResultHandler {
       } else if (this.checkType === 'action') {
         // Player actions might have different application method
         if (this.controller.applyActionResult) {
-          return await this.controller.applyActionResult(
+          result = await this.controller.applyActionResult(
             item,
             outcome,
             resolutionData
           );
+        } else {
+          result = { success: true };
         }
-        // Fallback
-        return { success: true };
+      } else {
+        return { success: false, error: `Unknown check type: ${this.checkType}` };
       }
-
-      return { success: false, error: `Unknown check type: ${this.checkType}` };
+      
+      // If successful, persist the applied outcome (centralized logic)
+      if (result.success) {
+        await this.saveAppliedOutcome(item, outcome, displayData);
+      }
+      
+      return result;
     } catch (error) {
       console.error(`❌ [CheckResultHandler] Error applying ${this.checkType} resolution:`, error);
       return { 
@@ -128,6 +148,59 @@ export class CheckResultHandler {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  }
+
+  /**
+   * Save applied outcome to KingdomActor for UI persistence
+   * Centralized logic for all check types
+   */
+  private async saveAppliedOutcome(
+    item: any,
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+    displayData: DisplayData
+  ): Promise<void> {
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    const { getEventDisplayName } = await import('../../types/event-helpers');
+    const { getIncidentDisplayName } = await import('../../types/event-helpers');
+    
+    if (this.checkType === 'event') {
+      await updateKingdom(kingdom => {
+        // Write ONLY to turnState (simplified migration)
+        if (kingdom.turnState) {
+          kingdom.turnState.eventsPhase.appliedOutcomes.push({
+            eventId: item.id,
+            eventName: getEventDisplayName(item),
+            outcome: outcome,
+            skillUsed: this.lastSkillUsed,
+            effect: displayData.effect,
+            stateChanges: displayData.stateChanges || {},
+            modifiers: displayData.modifiers || [],
+            manualEffects: displayData.manualEffects || []
+          });
+          kingdom.turnState.eventsPhase.eventResolved = true;
+        }
+      });
+      console.log(`💾 [CheckResultHandler] Saved event outcome for: ${getEventDisplayName(item)}`);
+    } else if (this.checkType === 'incident') {
+      await updateKingdom(kingdom => {
+        // Write ONLY to turnState (simplified migration)
+        if (kingdom.turnState) {
+          kingdom.turnState.unrestPhase.appliedOutcome = {
+            incidentId: item.id,
+            incidentName: getIncidentDisplayName(item),
+            outcome: outcome,
+            skillUsed: this.lastSkillUsed,
+            effect: displayData.effect,
+            stateChanges: displayData.stateChanges || {},
+            modifiers: displayData.modifiers || [],
+            manualEffects: displayData.manualEffects || []
+          };
+          kingdom.turnState.unrestPhase.incidentResolved = true;
+        }
+      });
+      console.log(`💾 [CheckResultHandler] Saved incident outcome for: ${getIncidentDisplayName(item)}`);
+    }
+    // Actions don't need persistence (they're one-time activities)
   }
 
   /**

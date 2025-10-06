@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { createCheckHandler, type CheckConfig, type CheckResult } from '../../../controllers/shared/CheckHandler';
   import { createCheckResultHandler, type DisplayData } from '../../../controllers/shared/CheckResultHandler';
+  import { kingdomData } from '../../../stores/KingdomStore';
   import SkillTag from './CheckCard/components/SkillTag.svelte';
   import PossibleOutcomes from './PossibleOutcomes.svelte';
   import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
@@ -47,9 +48,66 @@
     resultHandler = createCheckResultHandler(checkType, controller);
   });
   
-  // Preserve item when first set or when it changes (unless we're showing an applied result)
-  $: if (item && (!displayItem || !applied)) {
-    displayItem = item;
+  // Check for persisted applied outcomes in kingdom data
+  // IMPORTANT: Always check persisted data first, even if locally applied = true
+  // Simplified migration: Read ONLY from turnState
+  $: if ($kingdomData?.turnState && item) {
+    // For events: Read from turnState.eventsPhase.appliedOutcomes
+    if (checkType === 'event') {
+      const appliedOutcome = $kingdomData.turnState.eventsPhase?.appliedOutcomes?.find(
+        ao => ao.eventId === item.id
+      );
+      
+      if (appliedOutcome) {
+        // Restore from persisted outcome (always takes priority)
+        displayItem = item;
+        showResult = true;
+        applied = true;
+        outcome = appliedOutcome.outcome;
+        actorName = appliedOutcome.eventName;
+        effectMessage = appliedOutcome.effect;
+        stateChanges = appliedOutcome.stateChanges;
+        modifiers = appliedOutcome.modifiers;
+        manualEffects = appliedOutcome.manualEffects;
+        pendingOutcome = null;
+      } else if (!showResult) {
+        // No persisted outcome and not showing a result - reset to fresh state
+        displayItem = item;
+        applied = false;
+      } else if (!displayItem) {
+        // Just preserve the item if we don't have it
+        displayItem = item;
+      }
+    }
+    // For incidents: Read from turnState.unrestPhase.appliedOutcome
+    else if (checkType === 'incident') {
+      const appliedOutcome = $kingdomData.turnState.unrestPhase?.appliedOutcome;
+      
+      if (appliedOutcome && appliedOutcome.incidentId === item.id) {
+        // Restore from persisted outcome (always takes priority)
+        displayItem = item;
+        showResult = true;
+        applied = true;
+        outcome = appliedOutcome.outcome;
+        actorName = appliedOutcome.incidentName;
+        effectMessage = appliedOutcome.effect;
+        stateChanges = appliedOutcome.stateChanges;
+        modifiers = appliedOutcome.modifiers;
+        manualEffects = appliedOutcome.manualEffects;
+        pendingOutcome = null;
+      } else if (!showResult) {
+        // No persisted outcome and not showing a result - reset to fresh state
+        displayItem = item;
+        applied = false;
+      } else if (!displayItem) {
+        // Just preserve the item if we don't have it
+        displayItem = item;
+      }
+    }
+    // For other types, preserve item normally
+    else if (!displayItem) {
+      displayItem = item;
+    }
   }
   
   async function handleSkillClick(skill: string) {
@@ -210,6 +268,77 @@
     };
   }
   
+  async function handleIgnoreEvent() {
+    if (!displayItem || isRolling || !isViewingCurrentPhase || applied) return;
+    
+    console.log(`🚫 [CheckCard] Ignoring event: ${displayItem.name}`);
+    
+    // Get current turn from kingdom data
+    const { kingdomData } = await import('../../../stores/KingdomStore');
+    const { get } = await import('svelte/store');
+    const kingdom = get(kingdomData);
+    const currentTurn = kingdom.currentTurn || 1;
+    
+    // Call controller's ignoreEvent method
+    const result = await controller.ignoreEvent(displayItem, currentTurn);
+    
+    if (result.success) {
+      console.log(`✅ [CheckCard] Event ignored successfully`);
+      ui?.notifications?.info(`Event ignored - failure effects applied`);
+      
+      // Show the outcome as applied
+      showResult = true;
+      outcome = 'failure';
+      selectedSkill = 'ignored';
+      applied = true;
+      
+      // Get display data for ignored event (failure outcome)
+      const displayData = await resultHandler.getDisplayData(displayItem, 'failure', 'Ignored');
+      effectMessage = displayData.effect;
+      stateChanges = displayData.stateChanges || {};
+      modifiers = displayData.modifiers || [];
+      manualEffects = displayData.manualEffects || [];
+      
+      // Save applied outcome for UI persistence (since ignoreEvent is called directly, not through CheckResultHandler)
+      // Simplified migration: Write ONLY to turnState
+      const { updateKingdom } = await import('../../../stores/KingdomStore');
+      const { getEventDisplayName } = await import('../../../types/event-helpers');
+      await updateKingdom(kingdom => {
+        if (kingdom.turnState) {
+          kingdom.turnState.eventsPhase.appliedOutcomes.push({
+            eventId: displayItem.id,
+            eventName: getEventDisplayName(displayItem),
+            outcome: 'failure' as 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+            skillUsed: 'ignored',
+            effect: displayData.effect,
+            stateChanges: displayData.stateChanges || {},
+            modifiers: displayData.modifiers || [],
+            manualEffects: displayData.manualEffects || []
+          });
+          kingdom.turnState.eventsPhase.eventResolved = true;
+        }
+      });
+      console.log(`💾 [CheckCard] Saved ignored event outcome for: ${getEventDisplayName(displayItem)}`);
+      
+      // Parse shortfall information if any
+      const shortfalls: string[] = [];
+      if (result.applied?.specialEffects) {
+        for (const effect of result.applied.specialEffects) {
+          if (effect.startsWith('shortage_penalty:')) {
+            const resource = effect.split(':')[1];
+            shortfalls.push(resource);
+          }
+        }
+      }
+      shortfallResources = shortfalls;
+      
+      pendingOutcome = null;  // Clear pending since we've already applied
+    } else {
+      console.error(`❌ [CheckCard] Failed to ignore event:`, result.error);
+      ui?.notifications?.error(`Failed to ignore event: ${result.error || 'Unknown error'}`);
+    }
+  }
+  
   onDestroy(() => {
     checkHandler?.cleanup();
   });
@@ -238,6 +367,26 @@
           {/each}
         </div>
       </div>
+      
+      <!-- Ignore Event button (events only) -->
+      {#if checkType === 'event'}
+        <div class="ignore-section">
+          <div class="divider">
+            <span>or</span>
+          </div>
+          <button
+            class="ignore-button"
+            disabled={isRolling || !isViewingCurrentPhase || applied}
+            on:click={handleIgnoreEvent}
+          >
+            <i class="fas fa-times-circle"></i>
+            Ignore Event
+          </button>
+          <p class="ignore-warning">
+            Ignoring this event will apply the failure condition
+          </p>
+        </div>
+      {/if}
     {/if}
   {:else if outcome}
     <!-- After roll: Show OutcomeDisplay -->
@@ -286,5 +435,75 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  
+  .ignore-section {
+    margin-top: 20px;
+    padding-top: 20px;
+    text-align: center;
+    
+    .divider {
+      position: relative;
+      margin-bottom: 15px;
+      
+      span {
+        position: relative;
+        padding: 0 10px;
+        color: var(--text-tertiary);
+        font-size: var(--font-sm);
+        font-style: italic;
+        background: var(--surface-primary);
+        z-index: 1;
+      }
+      
+      &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border-subtle);
+      }
+    }
+    
+    .ignore-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-md);
+      color: var(--color-red);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      i {
+        font-size: var(--font-lg);
+      }
+      
+      &:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.5);
+        transform: translateY(-1px);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    
+    .ignore-warning {
+      margin-top: 10px;
+      margin-bottom: 0;
+      font-size: var(--font-sm);
+      color: var(--text-tertiary);
+      font-style: italic;
+      opacity: 0.8;
+    }
   }
 </style>

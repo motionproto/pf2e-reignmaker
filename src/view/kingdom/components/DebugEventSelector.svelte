@@ -67,10 +67,17 @@
    
    async function setActiveItem(itemId: string | null) {
       await updateKingdom(kingdom => {
+         if (!kingdom.turnState) {
+            console.warn('[DebugEventSelector] No turnState found, cannot set item');
+            return;
+         }
+         
          if (type === 'event') {
-            kingdom.currentEventId = itemId;
+            kingdom.turnState.eventsPhase.eventId = itemId;
+            kingdom.turnState.eventsPhase.eventTriggered = itemId !== null;
          } else {
-            kingdom.currentIncidentId = itemId;
+            kingdom.turnState.unrestPhase.incidentId = itemId;
+            kingdom.turnState.unrestPhase.incidentTriggered = itemId !== null;
          }
       });
    }

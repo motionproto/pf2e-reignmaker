@@ -94,6 +94,12 @@ export async function createGameEffectsService() {
       };
 
       try {
+        // Apply critical success fame bonus (applies to all rolls)
+        if (params.outcome === 'criticalSuccess') {
+          await this.applyFameChange(1, 'Critical Success Bonus', result);
+          result.applied.specialEffects.push('critical_success_fame');
+        }
+
         // Apply all modifiers with their indices
         for (let i = 0; i < params.modifiers.length; i++) {
           await this.applyModifier(params.modifiers[i], params, result, i);

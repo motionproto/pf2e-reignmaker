@@ -28,6 +28,9 @@ export interface OutcomeResolutionData {
       stateChanges: Record<string, any>;
     };
   };
+  
+  /** Phase 2 of TurnState Migration: track which skill was used for the resolution */
+  skillUsed?: string;
 }
 
 /**

@@ -33,7 +33,7 @@
       "msg": "Some damage",
       "modifiers": [
         {
-          "resource": "resources",
+          "resource": ["lumber", "ore", "food", "stone"],
           "value": -1,
           "duration": "immediate"
         }

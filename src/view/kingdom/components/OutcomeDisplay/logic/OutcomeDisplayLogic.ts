@@ -62,7 +62,8 @@ export function computeDisplayStateChanges(
   selectedResources: Map<number, string>,
   resourceArraysResolved: boolean,
   diceModifiers?: any[],
-  resolvedDice?: Map<number | string, number>
+  resolvedDice?: Map<number | string, number>,
+  stateChangeDice?: { key: string; formula: string }[]
 ): Record<string, any> | undefined {
   // If we have a choice result, use it exclusively
   if (choiceResult) {
@@ -82,12 +83,24 @@ export function computeDisplayStateChanges(
     });
   }
   
-  // Merge resolved dice rolls
+  // Merge resolved dice rolls from modifiers array
   if (diceModifiers && diceModifiers.length > 0 && resolvedDice) {
     diceModifiers.forEach((modifier) => {
       const rolledValue = resolvedDice.get(modifier.originalIndex);
       if (rolledValue !== undefined) {
         result[modifier.resource] = (result[modifier.resource] || 0) + rolledValue;
+      }
+    });
+  }
+  
+  // Merge resolved dice rolls from stateChanges object
+  // This replaces dice formulas (e.g., "1d6") with their rolled values
+  if (stateChangeDice && stateChangeDice.length > 0 && resolvedDice) {
+    stateChangeDice.forEach((dice) => {
+      const rolledValue = resolvedDice.get(`state:${dice.key}`);
+      if (rolledValue !== undefined) {
+        // Replace formula with rolled value
+        result[dice.key] = rolledValue;
       }
     });
   }

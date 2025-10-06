@@ -1,8 +1,8 @@
 {
-  "id": "diplomatic-incident",
-  "name": "Diplomatic Incident",
+  "id": "diplomatic-crisis",
+  "name": "Diplomatic Crisis",
   "tier": "moderate",
-  "description": "A serious diplomatic incident threatens relations",
+  "description": "A serious diplomatic crisis threatens relations",
   "skills": [
     {
       "skill": "diplomacy",

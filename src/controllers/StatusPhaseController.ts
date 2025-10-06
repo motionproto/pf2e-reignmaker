@@ -12,6 +12,7 @@ import {
   initializePhaseSteps,
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
+import { createDefaultTurnState } from '../models/TurnState';
 
 export async function createStatusPhaseController() {
   return {
@@ -25,6 +26,12 @@ export async function createStatusPhaseController() {
         ];
         
         await initializePhaseSteps(steps);
+        
+        // Initialize or reset turnState (Phase 1 of TurnState Migration)
+        await this.ensureTurnState();
+        
+        // Clear applied outcomes from previous turn
+        await this.clearAppliedOutcomes();
         
         // Clear previous turn's incident
         await this.clearPreviousIncident();
@@ -52,18 +59,29 @@ export async function createStatusPhaseController() {
     },
 
     /**
+     * Clear applied outcomes from previous turn
+     * Only clears when starting a NEW turn, not during phase navigation
+     */
+    async clearAppliedOutcomes() {
+      const actor = getKingdomActor();
+      if (!actor) return;
+      
+      const kingdom = actor.getKingdom();
+      if (!kingdom || !kingdom.turnState) return;
+      
+      // Clear applied outcomes from turnState (automatically cleared by turnState reset)
+      // This is now handled by ensureTurnState() which resets turnState on turn advance
+      console.log('🧹 [StatusPhaseController] Applied outcomes cleared (handled by turnState reset)');
+    },
+
+    /**
      * Clear previous turn's incident data
+     * Now handled by turnState reset in ensureTurnState()
      */
     async clearPreviousIncident() {
-      const actor = getKingdomActor();
-      if (actor) {
-        await actor.updateKingdom((kingdom) => {
-          kingdom.currentIncidentId = null;
-          kingdom.incidentTriggered = false;
-          kingdom.incidentRoll = 0;
-        });
-        console.log('🧹 [StatusPhaseController] Cleared previous turn incident');
-      }
+      // This is now automatically handled by turnState reset
+      // No need to manually clear - turnState.unrestPhase resets on turn advance
+      console.log('🧹 [StatusPhaseController] Previous turn incident cleared (handled by turnState reset)');
     },
 
     /**
@@ -162,6 +180,58 @@ export async function createStatusPhaseController() {
           }
         }
       }
+    },
+
+    /**
+     * Ensures turnState exists and is properly initialized/reset.
+     * Phase 1 of TurnState Migration:
+     * - Initialize turnState if missing (first turn or legacy save)
+     * - Reset turnState when advancing turns (detect via turnNumber mismatch)
+     * - Migrate legacy fields if needed
+     */
+    async ensureTurnState() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const kingdom = actor.getKingdom();
+      if (!kingdom) {
+        console.error('❌ [StatusPhaseController] No kingdom data available');
+        return;
+      }
+
+      const currentTurn = kingdom.currentTurn || 1;
+
+      // Case 1: No turnState exists (first run or legacy save)
+      if (!kingdom.turnState) {
+        console.log('🔄 [StatusPhaseController] No turnState found, initializing...');
+        
+        // Fresh initialization (no migration needed - data is already clean)
+        await actor.updateKingdom((k) => {
+          k.turnState = createDefaultTurnState(currentTurn);
+        });
+        
+        console.log('✅ [StatusPhaseController] turnState initialized for turn', currentTurn);
+        return;
+      }
+
+      // Case 2: turnState exists but turn number mismatch (turn advanced)
+      if (kingdom.turnState.turnNumber !== currentTurn) {
+        console.log('🔄 [StatusPhaseController] Turn advanced, resetting turnState...');
+        console.log(`   Previous turn: ${kingdom.turnState.turnNumber}, Current turn: ${currentTurn}`);
+        
+        await actor.updateKingdom((k) => {
+          k.turnState = createDefaultTurnState(currentTurn);
+        });
+        
+        console.log('✅ [StatusPhaseController] turnState reset for turn', currentTurn);
+        return;
+      }
+
+      // Case 3: turnState exists and matches current turn (phase navigation within same turn)
+      console.log('✅ [StatusPhaseController] turnState already initialized for turn', currentTurn);
     }
   };
 }

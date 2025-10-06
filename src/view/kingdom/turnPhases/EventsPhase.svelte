@@ -33,21 +33,21 @@
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
    $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
    $: eventResolved = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
-   $: eventDC = $kingdomData.eventDC;
+   $: eventDC = $kingdomData.eventDC || 15;
    $: activeModifiers = $kingdomData.activeModifiers || [];
-   $: stabilityRoll = $kingdomData.eventStabilityRoll || 0;
-   $: showStabilityResult = $kingdomData.eventStabilityRoll !== null;
-   $: rolledAgainstDC = $kingdomData.eventRollDC || eventDC;
-   $: eventWasTriggered = $kingdomData.eventTriggered ?? null;
+   $: stabilityRoll = $kingdomData.turnState?.eventsPhase?.eventRoll || 0;
+   $: showStabilityResult = $kingdomData.turnState?.eventsPhase?.eventRoll !== null;
+   $: rolledAgainstDC = eventDC;
+   $: eventWasTriggered = $kingdomData.turnState?.eventsPhase?.eventTriggered ?? null;
    
-   // Reactively load event when currentEventId changes (for debug selector)
-   $: if ($kingdomData.currentEventId) {
-      const event = eventService.getEventById($kingdomData.currentEventId);
+   // Reactively load event when eventId changes (from turnState)
+   $: if ($kingdomData.turnState?.eventsPhase?.eventId) {
+      const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
       if (event) {
          currentEvent = event;
          console.log('[EventsPhase] Event updated via reactive statement:', event.name);
       }
-   } else if ($kingdomData.currentEventId === null) {
+   } else if ($kingdomData.turnState?.eventsPhase?.eventId === null) {
       currentEvent = null;
       console.log('[EventsPhase] Event cleared via reactive statement');
    }
@@ -61,9 +61,9 @@
       console.log('[EventsPhase] Phase initialized with controller');
       
       // Check if an event was already rolled by another client
-      if ($kingdomData.currentEventId) {
-         console.log('[EventsPhase] Loading existing event from kingdomData:', $kingdomData.currentEventId);
-         const event = eventService.getEventById($kingdomData.currentEventId);
+      if ($kingdomData.turnState?.eventsPhase?.eventId) {
+         console.log('[EventsPhase] Loading existing event from turnState:', $kingdomData.turnState.eventsPhase.eventId);
+         const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
             currentEvent = event;
          }
@@ -75,10 +75,10 @@
       if (!eventPhaseController) return;
       
       // Check if another client already rolled for an event
-      if ($kingdomData.currentEventId) {
+      if ($kingdomData.turnState?.eventsPhase?.eventId) {
          console.log('[EventsPhase] Event already rolled by another client, loading existing event');
          // Load the event by ID
-         const event = eventService.getEventById($kingdomData.currentEventId);
+         const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
             currentEvent = event;
          }
@@ -119,7 +119,7 @@
 
 <div class="events-phase">
    <!-- Debug Event Selector -->
-   <DebugEventSelector type="event" currentItemId={$kingdomData.currentEventId || null} />
+   <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
    
    <!-- Player Action Tracker -->
    <PlayerActionTracker compact={true} />
@@ -181,7 +181,7 @@
             <div class="check-result-display">
                <div class="roll-result failure">
                   <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
-                  <div>DC reduced to {$kingdomData.eventDC} for next turn.</div>
+                  <div>DC reduced to {eventDC} for next turn.</div>
                </div>
             </div>
          {/if}

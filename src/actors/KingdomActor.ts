@@ -6,6 +6,7 @@
 import type { Settlement } from '../models/Settlement';
 import type { BuildProject, Army } from '../models/BuildProject';
 import type { ActiveModifier } from '../models/Modifiers';
+import type { TurnState } from '../models/TurnState';
 
 // Turn phases based on Reignmaker Lite rules - using semantic names
 export enum TurnPhase {
@@ -91,10 +92,10 @@ export interface KingdomData {
   fame: number;
   isAtWar: boolean;
   
-  // Events & Modifiers
-  currentEvent: any | null;  // Event data (simplified)
-  ongoingEvents: any[];    // Event data array (simplified)
-  activeModifiers: ActiveModifier[];  // Renamed from 'modifiers'
+  // Events & Modifiers (persistent across turns)
+  ongoingEvents: string[];  // Event IDs that persist across turns
+  activeModifiers: ActiveModifier[];  // Active modifiers from events/structures
+  eventDC: number;  // Event DC that persists across turns (15 default, -5 when no event, min 6)
   
   // Simplified phase management with step arrays - single source of truth
   currentPhaseSteps: PhaseStep[];
@@ -110,15 +111,14 @@ export interface KingdomData {
     spentInPhase?: TurnPhase;
   }>;
   
-  // Event/incident tracking
-  currentEventId?: string | null;
-  currentIncidentId?: string | null;
-  incidentRoll?: number | null;
-  eventStabilityRoll?: number | null;
-  eventRollDC?: number | null;
-  eventTriggered?: boolean | null;
-  eventDC: number;
-  incidentTriggered?: boolean | null;
+  // Legacy event/incident fields removed - now in turnState (Phase 7 cleanup)
+  // All event/incident state is now in:
+  // - turnState.eventsPhase (events)
+  // - turnState.unrestPhase (incidents)
+  
+  // NEW: Comprehensive turn state - single source of truth for UI behavior
+  // Optional during migration from scattered fields to consolidated turnState
+  turnState?: TurnState;
 }
 
 export class KingdomActor extends Actor {
@@ -184,14 +184,13 @@ export class KingdomActor extends Actor {
       imprisonedUnrest: 0,
       fame: 0,
       isAtWar: false,
-      currentEvent: null,
       ongoingEvents: [],
       activeModifiers: [],
+      eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],
       phaseComplete: false,
       oncePerTurnActions: [],
-      playerActions: {},
-      eventDC: 15
+      playerActions: {}
     };
     
     await this.setKingdom(defaultKingdom);
@@ -340,13 +339,12 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     imprisonedUnrest: 0,
     fame: 0,
     isAtWar: false,
-      currentEvent: null,
-      ongoingEvents: [],
-      activeModifiers: [],
-      currentPhaseSteps: [],
+    ongoingEvents: [],
+    activeModifiers: [],
+    eventDC: 15,  // Default event DC per rules
+    currentPhaseSteps: [],
     phaseComplete: false,
     oncePerTurnActions: [],
-    playerActions: {},
-    eventDC: 15
+    playerActions: {}
   };
 }

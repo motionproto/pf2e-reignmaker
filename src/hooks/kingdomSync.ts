@@ -137,8 +137,9 @@ export function getCurrentKingdomActor(): any | null {
 
 /**
  * Load territory data from Kingmaker module
+ * Exported for use in reset operations and manual syncing
  */
-async function loadTerritoryData(): Promise<void> {
+export async function loadTerritoryData(): Promise<void> {
   try {
     const { territoryService } = await import('../services/territory');
     

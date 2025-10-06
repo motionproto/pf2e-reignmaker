@@ -1,8 +1,8 @@
 {
-  "id": "rebellion-trade-embargo",
-  "name": "Rebellion Trade Embargo",
+  "id": "trade-war",
+  "name": "Trade War",
   "tier": "major",
-  "description": "A complete trade embargo devastates your economy",
+  "description": "A trade war devastates your economy",
   "skills": [
     {
       "skill": "diplomacy",
@@ -43,11 +43,44 @@
           ]
         },
         {
-          "label": "Use reserves - lose {resources} resources",
+          "label": "Use lumber reserves - lose {lumber} lumber",
           "modifiers": [
             {
-              "name": "Trade Embargo Resource Loss",
-              "resource": "resources",
+              "name": "Trade Embargo Lumber Loss",
+              "resource": "lumber",
+              "value": "-2d4+1",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Use ore reserves - lose {ore} ore",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Ore Loss",
+              "resource": "ore",
+              "value": "-2d4+1",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Use food reserves - lose {food} food",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Food Loss",
+              "resource": "food",
+              "value": "-2d4+1",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Use stone reserves - lose {stone} stone",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Stone Loss",
+              "resource": "stone",
               "value": "-2d4+1",
               "duration": "immediate"
             }
@@ -65,7 +98,7 @@
           "duration": "immediate"
         },
         {
-          "resource": "resources",
+          "resource": ["lumber", "ore", "food", "stone"],
           "value": "-2d4+1",
           "duration": "immediate"
         },

@@ -43,12 +43,45 @@
           ]
         },
         {
-          "label": "Lose {resources} resources",
+          "label": "Lose {lumber} lumber",
           "modifiers": [
             {
-              "name": "Trade Embargo Resource Loss",
-              "resource": "resources",
-              "value": "-1d4+1",
+              "name": "Trade Embargo Lumber Loss",
+              "resource": "lumber",
+              "value": "-(1d4+1)",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Lose {ore} ore",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Ore Loss",
+              "resource": "ore",
+              "value": "-(1d4+1)",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Lose {food} food",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Food Loss",
+              "resource": "food",
+              "value": "-(1d4+1)",
+              "duration": "immediate"
+            }
+          ]
+        },
+        {
+          "label": "Lose {stone} stone",
+          "modifiers": [
+            {
+              "name": "Trade Embargo Stone Loss",
+              "resource": "stone",
+              "value": "-(1d4+1)",
               "duration": "immediate"
             }
           ]
@@ -65,8 +98,8 @@
           "duration": "immediate"
         },
         {
-          "resource": "resources",
-          "value": "-1d4+1",
+          "resource": ["lumber", "ore", "food", "stone"],
+          "value": "-(1d4+1)",
           "duration": "immediate"
         },
         {

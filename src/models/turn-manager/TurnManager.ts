@@ -15,6 +15,7 @@ import { TurnPhase, type PhaseStep } from '../../actors/KingdomActor';
 interface PlayerAction {
     playerId: string;
     playerName: string;
+    playerColor: string;
     actionSpent: boolean;
     spentInPhase?: TurnPhase;
 }
@@ -31,8 +32,7 @@ export class TurnManager {
     onPhaseChanged?: (phase: TurnPhase) => void;
     onTurnEnded?: (turn: number) => void;
     
-    // Player action state (in-memory, turn-scoped)
-    private playerActions: Map<string, PlayerAction> = new Map();
+    // Player action state moved to turnState.actionsPhase.playerActions (Phase 6 migration)
     
     private constructor() {
         console.log('[TurnManager] Initialized - central turn and player coordinator (singleton)');
@@ -60,8 +60,9 @@ export class TurnManager {
     
     /**
      * Initialize all current players in the game
+     * Now writes to turnState.actionsPhase.playerActions (Phase 6 migration)
      */
-    private initializePlayers(): void {
+    private async initializePlayers(): Promise<void> {
         const game = (window as any).game;
         if (!game?.users) {
             console.warn('[TurnManager] Game not available, cannot initialize players');
@@ -69,21 +70,35 @@ export class TurnManager {
         }
 
         const initializedPlayers: string[] = [];
-        
-        // Clear existing actions for fresh start
-        this.playerActions.clear();
+        const playerActionsToInit: Record<string, PlayerAction> = {};
         
         // Initialize all users
         for (const user of game.users) {
-            const playerAction: PlayerAction = {
+            const playerAction = {
                 playerId: user.id,
                 playerName: user.name || 'Unknown Player',
+                playerColor: user.color || '#ffffff',
                 actionSpent: false,
                 spentInPhase: undefined
             };
             
-            this.playerActions.set(user.id, playerAction);
+            playerActionsToInit[user.id] = playerAction;
             initializedPlayers.push(user.name);
+        }
+        
+        // Write to turnState
+        try {
+            const { getKingdomActor } = await import('../../stores/KingdomStore');
+            const actor = getKingdomActor();
+            if (actor) {
+                await actor.updateKingdom(kingdom => {
+                    if (kingdom.turnState) {
+                        kingdom.turnState.actionsPhase.playerActions = playerActionsToInit;
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn('[TurnManager] Could not initialize players in turnState:', error);
         }
         
         console.log(`[TurnManager] Initialized player actions for: ${initializedPlayers.join(', ')}`);
@@ -91,54 +106,90 @@ export class TurnManager {
     
     /**
      * Spend a player action in a specific phase
+     * Now writes to turnState.actionsPhase.playerActions (Phase 6 migration)
      */
-    spendPlayerAction(playerId: string, phase: TurnPhase): boolean {
-        const playerAction = this.playerActions.get(playerId) || {
-            playerId,
-            playerName: (window as any).game?.users?.get(playerId)?.name || 'Unknown',
-            actionSpent: false,
-            spentInPhase: undefined
-        };
+    async spendPlayerAction(playerId: string, phase: TurnPhase): Promise<boolean> {
+        const { getKingdomActor } = await import('../../stores/KingdomStore');
+        const actor = getKingdomActor();
+        if (!actor) return false;
+        
+        const kingdom = actor.getKingdom();
+        const playerAction = kingdom?.turnState?.actionsPhase?.playerActions?.[playerId];
+        if (!playerAction) return false;
         
         if (!playerAction.actionSpent) {
-            playerAction.actionSpent = true;
-            playerAction.spentInPhase = phase;
-            this.playerActions.set(playerId, playerAction);
-            console.log(`[TurnManager] Player ${playerAction.playerName} spent action in ${phase}`);
+            await actor.updateKingdom(k => {
+                if (k.turnState) {
+                    k.turnState.actionsPhase.playerActions[playerId] = {
+                        ...playerAction,
+                        actionSpent: true,
+                        spentInPhase: phase
+                    };
+                }
+            });
             return true;
         }
-        
         return false;
     }
     
     /**
      * Reset a player's action for the turn
+     * Now writes to turnState.actionsPhase.playerActions (Phase 6 migration)
      */
-    resetPlayerAction(playerId: string): void {
-        const playerAction = this.playerActions.get(playerId);
+    async resetPlayerAction(playerId: string): Promise<void> {
+        const { getKingdomActor } = await import('../../stores/KingdomStore');
+        const actor = getKingdomActor();
+        if (!actor) return;
+        
+        const kingdom = actor.getKingdom();
+        const playerAction = kingdom?.turnState?.actionsPhase?.playerActions?.[playerId];
         if (playerAction) {
-            playerAction.actionSpent = false;
-            playerAction.spentInPhase = undefined;
-            this.playerActions.set(playerId, playerAction);
-            console.log(`[TurnManager] Reset action for player ${playerAction.playerName}`);
+            await actor.updateKingdom(k => {
+                if (k.turnState) {
+                    k.turnState.actionsPhase.playerActions[playerId] = {
+                        ...playerAction,
+                        actionSpent: false,
+                        spentInPhase: undefined
+                    };
+                }
+            });
         }
     }
     
     /**
      * Get a player's action state
+     * Now reads from turnState.actionsPhase.playerActions (Phase 6 migration)
      */
-    getPlayerAction(playerId: string): PlayerAction | undefined {
-        return this.playerActions.get(playerId);
+    async getPlayerAction(playerId: string): Promise<PlayerAction | undefined> {
+        const { getKingdomActor } = await import('../../stores/KingdomStore');
+        const actor = getKingdomActor();
+        if (!actor) return undefined;
+        
+        const kingdom = actor.getKingdom();
+        return kingdom?.turnState?.actionsPhase?.playerActions?.[playerId];
     }
     
     /**
      * Reset all player actions (called at turn end)
+     * Now writes to turnState.actionsPhase.playerActions (Phase 6 migration)
      */
-    private resetAllPlayerActions(): void {
-        for (const [playerId, playerAction] of this.playerActions) {
-            playerAction.actionSpent = false;
-            playerAction.spentInPhase = undefined;
-        }
+    private async resetAllPlayerActions(): Promise<void> {
+        const { getKingdomActor } = await import('../../stores/KingdomStore');
+        const actor = getKingdomActor();
+        if (!actor) return;
+        
+        await actor.updateKingdom(kingdom => {
+            if (kingdom.turnState) {
+                const players = kingdom.turnState.actionsPhase.playerActions;
+                for (const playerId in players) {
+                    players[playerId] = {
+                        ...players[playerId],
+                        actionSpent: false,
+                        spentInPhase: undefined
+                    };
+                }
+            }
+        });
         console.log('[TurnManager] Reset all player actions for new turn');
     }
     

@@ -61,7 +61,7 @@
       "modifiers": [
         {
           "resource": "gold",
-          "value": "-1d4+1",
+          "value": "-(1d4+1)",
           "duration": "immediate"
         },
         {

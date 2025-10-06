@@ -24,7 +24,7 @@
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    $: stepComplete = getStepCompletion($kingdomData.currentPhaseSteps, 1); // Step 1 = incident check
-   $: incidentWasTriggered = $kingdomData.incidentTriggered ?? null;
+   $: incidentWasTriggered = $kingdomData.turnState?.unrestPhase?.incidentTriggered ?? null;
    $: unrestStatus = $unrest !== undefined ? (() => {
       const unrestValue = $unrest || 0;
       const tierInfo = getUnrestTierInfo(unrestValue);
@@ -44,17 +44,16 @@
    // Track the last loaded incident ID to prevent unnecessary reloads
    let lastLoadedIncidentId: string | null = null;
    
-   // Load incident when incident ID changes
-   $: if ($kingdomData.currentIncidentId) {
+   // Load incident when incident ID changes (from turnState)
+   $: if ($kingdomData.turnState?.unrestPhase?.incidentId) {
       // Only reload if the incident ID actually changed
-      if ($kingdomData.currentIncidentId !== lastLoadedIncidentId) {
-         loadIncident($kingdomData.currentIncidentId);
-         lastLoadedIncidentId = $kingdomData.currentIncidentId;
+      if ($kingdomData.turnState.unrestPhase.incidentId !== lastLoadedIncidentId) {
+         loadIncident($kingdomData.turnState.unrestPhase.incidentId);
+         lastLoadedIncidentId = $kingdomData.turnState.unrestPhase.incidentId;
       }
    }
-   // NOTE: We do NOT clear currentIncident when currentIncidentId becomes null
-   // This is because the incident ID is cleared after resolution, but we want to
-   // preserve the incident display so the user can still see what was resolved
+   // NOTE: Incident data persists in turnState for entire turn
+   // Applied outcomes are stored in turnState.unrestPhase.appliedOutcome
    
    async function loadIncident(incidentId: string) {
       try {
@@ -170,7 +169,7 @@
 
 <div class="unrest-phase">
    <!-- Debug Incident Selector -->
-   <DebugEventSelector type="incident" currentItemId={$kingdomData.currentIncidentId || null} />
+   <DebugEventSelector type="incident" currentItemId={$kingdomData.turnState?.unrestPhase?.incidentId || null} />
    
    <!-- Step 1: Unrest Dashboard -->
    <div class="unrest-dashboard">
