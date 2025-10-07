@@ -149,9 +149,10 @@ export class PF2eSkillService {
 
   /**
    * Get kingdom modifiers for skill checks
-   * @param actionId - Optional action ID to retrieve aid bonuses for that specific action
+   * @param actionId - Optional action ID to retrieve aid bonuses for that specific action/event
+   * @param checkType - Optional check type to determine which phase aids to check
    */
-  private getKingdomModifiers(actionId?: string): any[] {
+  private getKingdomModifiers(actionId?: string, checkType?: 'action' | 'event' | 'incident'): any[] {
     const currentKingdomState = get(kingdomData);
     const kingdomModifiers: any[] = [];
     
@@ -193,11 +194,22 @@ export class PF2eSkillService {
       }
     }
     
-    // Add aid bonuses for this specific action
-    if (actionId && currentKingdomState?.turnState?.actionsPhase?.activeAids) {
-      const aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
-        aid => aid.targetActionId === actionId
-      );
+    // Add aid bonuses based on check type
+    if (actionId && currentKingdomState?.turnState) {
+      let aids: any[] = [];
+      
+      // Check for event aids
+      if (checkType === 'event' && currentKingdomState.turnState.eventsPhase?.activeAids) {
+        aids = currentKingdomState.turnState.eventsPhase.activeAids.filter(
+          aid => aid.targetActionId === actionId
+        );
+      }
+      // Check for action aids
+      else if (currentKingdomState.turnState.actionsPhase?.activeAids) {
+        aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
+          aid => aid.targetActionId === actionId
+        );
+      }
       
       for (const aid of aids) {
         if (aid.bonus > 0) {
@@ -215,19 +227,31 @@ export class PF2eSkillService {
   }
 
   /**
-   * Check if an action has a critical success aid that grants keep higher
-   * @param actionId - The action ID to check
-   * @returns true if the action should use rollTwice: "keep-higher"
+   * Check if an action/event has a critical success aid that grants keep higher
+   * @param actionId - The action/event ID to check
+   * @param checkType - The type of check to determine which phase aids to check
+   * @returns true if the check should use rollTwice: "keep-higher"
    */
-  private shouldUseKeepHigher(actionId?: string): boolean {
+  private shouldUseKeepHigher(actionId?: string, checkType?: 'action' | 'event' | 'incident'): boolean {
     if (!actionId) return false;
     
     const currentKingdomState = get(kingdomData);
-    if (!currentKingdomState?.turnState?.actionsPhase?.activeAids) return false;
+    if (!currentKingdomState?.turnState) return false;
     
-    const aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
-      aid => aid.targetActionId === actionId
-    );
+    let aids: any[] = [];
+    
+    // Check for event aids
+    if (checkType === 'event' && currentKingdomState.turnState.eventsPhase?.activeAids) {
+      aids = currentKingdomState.turnState.eventsPhase.activeAids.filter(
+        aid => aid.targetActionId === actionId
+      );
+    }
+    // Check for action aids
+    else if (currentKingdomState.turnState.actionsPhase?.activeAids) {
+      aids = currentKingdomState.turnState.actionsPhase.activeAids.filter(
+        aid => aid.targetActionId === actionId
+      );
+    }
     
     // Return true if any aid grants keep higher
     return aids.some(aid => aid.grantKeepHigher);
@@ -274,8 +298,8 @@ export class PF2eSkillService {
       const characterLevel = this.characterService.getCharacterLevel(actor);
       const dc = this.getKingdomActionDC(characterLevel);
       
-      // Get kingdom modifiers (including aids for this action)
-      const kingdomModifiers = this.getKingdomModifiers(actionId || checkId);
+      // Get kingdom modifiers (including aids for this action/event)
+      const kingdomModifiers = this.getKingdomModifiers(actionId || checkId, checkType);
       
       // Convert to PF2e format
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
@@ -301,8 +325,8 @@ export class PF2eSkillService {
                          checkType === 'event' ? 'Kingdom Event' : 
                          'Kingdom Incident';
       
-      // Check if we should use rollTwice (keep higher) for this action
-      const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId);
+      // Check if we should use rollTwice (keep higher) for this action/event
+      const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId, checkType);
       
       // Trigger the PF2e system roll with DC and modifiers
       const rollResult = await skill.roll({

@@ -84,6 +84,7 @@ export interface EventsPhaseState {
     modifiers: any[];
     manualEffects: string[];
   }>;
+  activeAids: AidEntry[];  // Aid bonuses available for the current event
 }
 
 /**
@@ -182,7 +183,8 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       eventTriggered: false,
       eventId: null,
       eventResolved: false,
-      appliedOutcomes: []
+      appliedOutcomes: [],
+      activeAids: []
     },
     
     actionsPhase: {

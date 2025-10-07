@@ -33,7 +33,7 @@
         {
           "name": "Arrest Dissidents",
           "resource": "unrest",
-          "value": -8,
+          "value": -6,
           "duration": "immediate"
         }
       ]

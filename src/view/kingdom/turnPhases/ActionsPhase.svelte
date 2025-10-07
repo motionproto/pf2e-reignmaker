@@ -397,9 +397,13 @@
       return;
     }
     
-    // Check if ANY player has already performed an action (kingdom has used actions)
-    if (actionsUsed > 0 && !resolvedActions.has(action.id)) {
-      // At least one action has been performed - show confirmation dialog
+    // Check if THIS PLAYER has already performed an action
+    const game = (window as any).game;
+    const currentPlayerAction = game?.user?.id ? getPlayerAction(game.user.id) : null;
+    const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+    
+    if (hasPlayerActed && !resolvedActions.has(action.id)) {
+      // This player has already performed an action - show confirmation dialog
       pendingSkillExecution = { event, action };
       showActionConfirm = true;
       return;
@@ -594,8 +598,12 @@
     
     console.log('[ActionsPhase] Aid skill selected:', skill);
     
-    // Check if player has already acted - show confirmation dialog
-    if (actionsUsed > 0) {
+    // Check if THIS PLAYER has already acted - show confirmation dialog
+    const game = (window as any).game;
+    const currentPlayerAction = game?.user?.id ? getPlayerAction(game.user.id) : null;
+    const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+    
+    if (hasPlayerActed) {
       pendingSkillExecution = { 
         event: new CustomEvent('executeSkill', { detail: { skill, checkId: `aid-${pendingAidAction.id}`, checkName: `Aid Another: ${pendingAidAction.name}` } }), 
         action: { id: `aid-${pendingAidAction.id}`, name: `Aid Another: ${pendingAidAction.name}` }

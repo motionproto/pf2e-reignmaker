@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { onMount } from 'svelte';
+   import { onMount, onDestroy } from 'svelte';
    import { kingdomData, getKingdomActor, updateKingdom, getTurnManager } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
    import { get } from 'svelte/store';
@@ -19,9 +19,18 @@
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
+   import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
+   import ActionConfirmDialog from '../components/ActionConfirmDialog.svelte';
+   import { createGameEffectsService } from '../../../services/GameEffectsService';
+   import {
+     getCurrentUserCharacter,
+     showCharacterSelectionDialog,
+     performKingdomActionRoll
+   } from '../../../services/pf2e';
    
-   // Initialize controller
+   // Initialize controller and service
    let eventPhaseController: any;
+   let gameEffectsService: any;
    
    // UI State (no business logic)
    let isRolling = false;
@@ -39,6 +48,7 @@
    $: showStabilityResult = $kingdomData.turnState?.eventsPhase?.eventRoll !== null;
    $: rolledAgainstDC = eventDC;
    $: eventWasTriggered = $kingdomData.turnState?.eventsPhase?.eventTriggered ?? null;
+   $: activeAidsCount = $kingdomData?.turnState?.eventsPhase?.activeAids?.length || 0;
    
    // Reactively load event when eventId changes (from turnState)
    $: if ($kingdomData.turnState?.eventsPhase?.eventId) {
@@ -53,8 +63,9 @@
    }
    
    onMount(async () => {
-      // Initialize the controller
+      // Initialize the controller and service
       eventPhaseController = await createEventPhaseController(null);
+      gameEffectsService = await createGameEffectsService();
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       await eventPhaseController.startPhase();
@@ -68,6 +79,13 @@
             currentEvent = event;
          }
       }
+      
+      // Listen for roll completion to clear aids
+      window.addEventListener('kingdomRollComplete', handleRollComplete as any);
+   });
+   
+   onDestroy(() => {
+      window.removeEventListener('kingdomRollComplete', handleRollComplete as any);
    });
    
    // Use controller for event check logic
@@ -115,6 +133,57 @@
          possibleOutcomes = buildPossibleOutcomes(currentEvent.effects);
       })();
    }
+   
+   // NOTE: Aid handling is now fully delegated to CheckCard component
+   // CheckCard shows AidSelectionDialog and handles the entire aid flow including player action checks
+   
+   // Handle roll completion to clear aids
+   async function handleRollComplete(event: CustomEvent) {
+      const { checkId, checkType } = event.detail;
+      
+      if (checkType === 'event') {
+         // Clear aid modifiers for this specific event after roll completes
+         const actor = getKingdomActor();
+         if (actor) {
+            await actor.updateKingdom((kingdom) => {
+               if (kingdom.turnState?.eventsPhase?.activeAids) {
+                  const beforeCount = kingdom.turnState.eventsPhase.activeAids.length;
+                  kingdom.turnState.eventsPhase.activeAids = 
+                     kingdom.turnState.eventsPhase.activeAids.filter(
+                        aid => aid.targetActionId !== checkId
+                     );
+                  const afterCount = kingdom.turnState.eventsPhase.activeAids.length;
+                  
+                  if (beforeCount > afterCount) {
+                     console.log(`🧹 [EventsPhase] Cleared ${beforeCount - afterCount} aid(s) for event: ${checkId}`);
+                  }
+               }
+            });
+         }
+      }
+   }
+   
+   // Get aid result for the current event
+   $: aidResultForEvent = (() => {
+      if (!currentEvent) return null;
+      
+      const activeAids = $kingdomData?.turnState?.eventsPhase?.activeAids;
+      if (!activeAids || activeAids.length === 0) return null;
+      
+      // Find the most recent aid for this event
+      const aidsForEvent = activeAids.filter((aid: any) => aid.targetActionId === currentEvent.id);
+      if (aidsForEvent.length === 0) return null;
+      
+      // Return the most recent aid (highest timestamp)
+      const mostRecentAid = aidsForEvent.reduce((latest: any, current: any) => 
+         current.timestamp > latest.timestamp ? current : latest
+      );
+      
+      return {
+         outcome: mostRecentAid.outcome,
+         bonus: mostRecentAid.bonus
+      };
+   })();
 </script>
 
 <div class="events-phase">
@@ -141,14 +210,18 @@
             <p class="event-description">{currentEvent.description}</p>
             
             <!-- Use CheckCard for event resolution -->
-            {#if eventPhaseController}
-               <CheckCard
-                  checkType="event"
-                  item={currentEvent}
-                  {isViewingCurrentPhase}
-                  controller={eventPhaseController}
-                  {possibleOutcomes}
-               />
+            {#if eventPhaseController && currentEvent}
+               {#key `${currentEvent.id}-${activeAidsCount}`}
+                  <CheckCard
+                     checkType="event"
+                     item={currentEvent}
+                     {isViewingCurrentPhase}
+                     controller={eventPhaseController}
+                     {possibleOutcomes}
+                     showAidButton={false}
+                     aidResult={aidResultForEvent}
+                  />
+               {/key}
             {/if}
          </div>
       </div>
@@ -204,6 +277,7 @@
       </div>
    {/if}
 </div>
+
 
 <style lang="scss">
    /* Styles remain the same - only logic has changed */

@@ -15,6 +15,8 @@
   export let controller: any;  // Phase-specific controller
   export let showPossibleOutcomes: boolean = true;
   export let possibleOutcomes: any[] = [];
+  export let showAidButton: boolean = false;  // Show aid button before skills
+  export let aidResult: { outcome: string; bonus: number } | null = null;  // Aid result display
   
   // Check handlers
   let checkHandler: ReturnType<typeof createCheckHandler>;
@@ -47,6 +49,14 @@
   // Action confirmation state
   let showActionConfirm = false;
   let pendingSkill = '';
+  
+  // Aid button handler
+  import { createEventDispatcher } from 'svelte';
+  const dispatch = createEventDispatcher();
+  
+  function handleAidClick() {
+    dispatch('aid');
+  }
   
   onMount(() => {
     checkHandler = createCheckHandler();
@@ -118,16 +128,16 @@
   async function handleSkillClick(skill: string) {
     if (!displayItem || isRolling || !isViewingCurrentPhase) return;
     
-    // Check if player has already performed actions (skip for incidents)
+    // Check if THIS PLAYER has already performed an action (skip for incidents)
     if (checkType !== 'incident') {
       const currentUser = (window as any).game?.user;
       if (currentUser) {
-        const { createGameEffectsService } = await import('../../../services/GameEffectsService');
-        const gameEffects = await createGameEffectsService();
-        const actionCount = gameEffects.getPlayerActionCount(currentUser.id);
+        const { getPlayerAction } = await import('../../../stores/KingdomStore');
+        const currentPlayerAction = getPlayerAction(currentUser.id);
+        const hasPlayerActed = currentPlayerAction?.actionSpent || false;
         
-        if (actionCount > 0) {
-          // Show confirmation dialog
+        if (hasPlayerActed) {
+          // This player has already performed an action - show confirmation dialog
           pendingSkill = skill;
           showActionConfirm = true;
           return;  // Wait for user confirmation
@@ -409,6 +419,29 @@
           {/if}
         </div>
         <div class="skill-tags">
+          <!-- Aid Another button/badge as first item if enabled -->
+          {#if showAidButton}
+            {#if aidResult}
+              <!-- Aid result badge - shown after aid check completes -->
+              <div class="aid-result-badge-inline {aidResult.outcome === 'criticalSuccess' ? 'critical-success' : aidResult.outcome === 'success' ? 'success' : 'failure'}">
+                <i class="fas fa-hands-helping"></i>
+                <span>
+                  Aid - {aidResult.outcome === 'criticalSuccess' ? `Critical (+${aidResult.bonus}, keep higher)` : `+${aidResult.bonus}`}
+                </span>
+              </div>
+            {:else}
+              <!-- Aid Another button - shown before aid check -->
+              <button 
+                class="aid-button-inline"
+                on:click={handleAidClick}
+                disabled={isRolling || !isViewingCurrentPhase || applied}
+              >
+                <i class="fas fa-hands-helping"></i>
+                Aid Another
+              </button>
+            {/if}
+          {/if}
+          
           {#each displayItem.skills as skillOption}
             <SkillTag
               skill={skillOption.skill}
@@ -509,6 +542,66 @@
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  
+  .aid-button-inline {
+    padding: 10px 16px;
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.5);
+    border-radius: var(--radius-sm);
+    color: rgb(147, 197, 253);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  
+  .aid-button-inline:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(96, 165, 250, 0.7);
+    color: rgb(191, 219, 254);
+    transform: translateY(-1px);
+  }
+  
+  .aid-button-inline:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  
+  .aid-result-badge-inline {
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+  
+  .aid-result-badge-inline.critical-success {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    color: rgb(59, 130, 246);
+  }
+  
+  .aid-result-badge-inline.success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: rgb(34, 197, 94);
+  }
+  
+  .aid-result-badge-inline.failure {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: rgb(239, 68, 68);
   }
   
   .ignore-section {
