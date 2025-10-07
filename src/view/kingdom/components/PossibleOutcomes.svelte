@@ -3,6 +3,7 @@
     result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     label: string;
     description: string;
+    modifiers?: Array<{ resource: string; value: number }>; // Resource changes for this outcome
   }
 </script>
 
@@ -79,6 +80,20 @@
             <div class="outcome-description">
               {@html outcome.description}
             </div>
+            
+            <!-- Show modifiers if present -->
+            {#if outcome.modifiers && outcome.modifiers.length > 0}
+              <div class="outcome-modifiers">
+                {#each outcome.modifiers as modifier}
+                  {@const resourceName = typeof modifier.resource === 'string' 
+                    ? modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)
+                    : 'Unknown'}
+                  <span class="modifier-badge">
+                    {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
+                  </span>
+                {/each}
+              </div>
+            {/if}
           </div>
         </div>
       </div>
@@ -150,6 +165,10 @@
       .outcome-label {
         color: var(--color-green);
       }
+      
+      .modifier-badge {
+        border-color: hsla(142, 71%, 45%, 0.5);
+      }
     }
     
     &.outcome-success {
@@ -162,6 +181,10 @@
       
       .outcome-label {
         color: var(--color-green-light);
+      }
+      
+      .modifier-badge {
+        border-color: hsla(122, 39%, 49%, 0.5);
       }
     }
     
@@ -176,6 +199,10 @@
       .outcome-label {
         color: var(--color-orange);
       }
+      
+      .modifier-badge {
+        border-color: hsla(36, 100%, 50%, 0.5);
+      }
     }
     
     &.outcome-criticalFailure {
@@ -188,6 +215,10 @@
       
       .outcome-label {
         color: var(--color-red);
+      }
+      
+      .modifier-badge {
+        border-color: hsla(4, 66%, 58%, 0.5);
       }
     }
   }
@@ -210,17 +241,39 @@
   }
   
   .outcome-label {
-    font-size: var(--font-xs);
+    font-size: var(--font-s);
     font-weight: var(--font-weight-medium);
     line-height: 1.4;
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    margin-bottom: 2px;
+    margin-bottom: .25rem;
   }
   
   .outcome-description {
     color: var(--text-secondary);
     font-size: var(--font-md);
-    line-height: 1.5;
+    line-height: ver(--line-height-snug);
+    margin-bottom: .5rem;
+  }
+  
+  .outcome-modifiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  
+  .modifier-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: .25rem .5rem;
+    border-radius: .5rem;
+    font-size: var(--font-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.3;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-medium);
   }
 </style>

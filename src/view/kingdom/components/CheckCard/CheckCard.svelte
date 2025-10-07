@@ -15,6 +15,7 @@
   import { createEventDispatcher } from 'svelte';
   import CheckCardHeader from './components/CheckCardHeader.svelte';
   import CheckCardDescription from './components/CheckCardDescription.svelte';
+  import CompletionNotifications from './components/CompletionNotifications.svelte';
   import SkillsSection from './components/SkillsSection.svelte';
   import OutcomesSection from './components/OutcomesSection.svelte';
   import AdditionalInfo from './components/AdditionalInfo.svelte';
@@ -29,6 +30,7 @@
   export let outcomes: Array<{
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     description: string;
+    modifiers?: Array<{ resource: string; value: number }>;
   }>;
   
   // Optional props for different check types
@@ -48,12 +50,12 @@
     skillName?: string,
     stateChanges?: Record<string, any>
   } | undefined = undefined;
+  
+  // Removed: completions array - now handled internally by CompletionNotifications
   export const character: any = null; // Unused - marked as const
   export let canPerformMore: boolean = true;
   export let currentFame: number = 0;
   
-  // Track resolution history for player actions (multiple players can do the same action)
-  let resolutionHistory: Array<{ actor: string; outcome: string }> = [];
   
   // UI customization props
   export let showFameReroll: boolean = checkType === 'action';
@@ -131,25 +133,17 @@
   }
   
   function handlePrimaryAction() {
-    // Add current resolution to history before resetting
-    if (resolution) {
-      resolutionHistory = [...resolutionHistory, { 
-        actor: resolution.actorName, 
-        outcome: resolution.outcome 
-      }];
-    }
-    
     // Dispatch the primary action event to parent
     dispatch('primaryAction', { checkId: id, checkType });
     
-    // For player actions, reset state to allow other players to use the action
+    // For player actions, reset resolution state to allow other players to use the action
+    // The completion will be added to the completions array by the parent
     // (Events and Incidents don't use CheckCard, so this only affects actions)
     resolved = false;
     resolution = undefined;
     localUsedSkill = '';
     
-    // Collapse the card to show the default state
-    expanded = false;
+    // Keep the card expanded so notifications are visible
   }
   
   function handleCancel() {
@@ -167,11 +161,12 @@
     label: o.type === 'criticalSuccess' ? 'Critical Success' :
            o.type === 'success' ? 'Success' :
            o.type === 'failure' ? 'Failure' : 'Critical Failure',
-    description: o.description
+    description: o.description,
+    modifiers: o.modifiers || []
   }));
   
-  // Get card state class
-  $: cardStateClass = resolved ? 'resolved result-state' : 'select-state';
+  // Get card state class - never show as fully resolved
+  $: cardStateClass = resolved ? 'result-state' : 'select-state';
   
 </script>
 
@@ -184,7 +179,6 @@
     {expanded}
     {resolvedBadgeText}
     {missingRequirements}
-    {resolutionHistory}
     on:toggle={toggleExpanded}
   />
   
@@ -192,6 +186,9 @@
     <div class="card-details">
       <!-- Description -->
       <CheckCardDescription {description} />
+      
+      <!-- Completion notifications (stacked results from all players) -->
+      <CompletionNotifications actionId={id} />
       
       <!-- Outcome display if resolved -->
       {#if resolved && resolution}

@@ -70,8 +70,8 @@ export async function createStatusPhaseController() {
       if (!kingdom || !kingdom.turnState) return;
       
       // Clear applied outcomes from turnState (automatically cleared by turnState reset)
-      // This is now handled by ensureTurnState() which resets turnState on turn advance
-      console.log('🧹 [StatusPhaseController] Applied outcomes cleared (handled by turnState reset)');
+      // This is now handled by TurnManager.endTurn() which resets turnState
+      console.log('🧹 [StatusPhaseController] Applied outcomes cleared (handled by TurnManager.endTurn())');
     },
 
     /**

@@ -386,6 +386,9 @@ export class TurnManager {
         // Reset player actions for new turn
         this.resetAllPlayerActions();
         
+        // Import TurnState utilities
+        const { createDefaultTurnState } = await import('../TurnState');
+        
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             kingdom.currentTurn++;
@@ -393,6 +396,10 @@ export class TurnManager {
             kingdom.currentPhaseSteps = [];
             kingdom.currentPhaseStepIndex = 0;
             kingdom.oncePerTurnActions = [];
+            
+            // ✅ Reset turnState for new turn - clears all phase-specific data
+            // including completionsByAction, activeAids, appliedOutcomes, etc.
+            kingdom.turnState = createDefaultTurnState(kingdom.currentTurn);
             
             // Active modifiers are now managed by ModifierService
             // Duration is handled in the EventModifier format within each modifier's modifiers array

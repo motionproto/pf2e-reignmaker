@@ -42,7 +42,7 @@
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
 
-  // Simple action resolution tracking
+  // Track current player's resolution (temporary until confirmed)
   let resolvedActions = new Map<string, any>();
   
   // Count of players who have acted
@@ -53,6 +53,8 @@
   
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
+  
+  // Removed: completionsByAction - now using actionLog directly in CompletionNotifications
   
   // Track current user ID
   let currentUserId: string | null = null;
@@ -202,7 +204,7 @@
     
     controller.storeResolution(resolution);
     
-    // Also store locally for UI reactivity (until we have proper reactive controller)
+    // Store temporary resolution for current player (shows the OK/Cancel dialog)
     resolvedActions.set(action.id, {
       outcome: outcomeType,
       actorName,
@@ -216,18 +218,25 @@
   }
 
   // Apply the actual state changes when user confirms the resolution
+  // Also add to completions array
   async function applyActionEffects(actionId: string) {
+    console.log('🔵 [applyActionEffects] Called for action:', actionId);
+    
     const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
     );
     if (!action) {
+      console.error('❌ [applyActionEffects] Action not found:', actionId);
       return;
     }
 
     const resolution = resolvedActions.get(actionId);
     if (!resolution) {
+      console.error('❌ [applyActionEffects] Resolution not found for action:', actionId);
       return;
     }
+    
+    console.log('📋 [applyActionEffects] Resolution:', resolution);
 
     // Use the controller to execute the action (now uses GameEffectsService)
     const result = await controller.executeAction(
@@ -240,6 +249,8 @@
       resolution.skillName,
       currentUserId || undefined
     );
+    
+    console.log('📊 [applyActionEffects] Result:', result);
 
     if (!result.success) {
       // Show error to user about requirements not being met
@@ -252,6 +263,8 @@
       if (effectsMsg) {
         ui.notifications?.info(`${action.name}: ${effectsMsg}`);
       }
+      
+      // Note: Completion tracking is now handled by actionLog via GameEffectsService.trackPlayerAction()
     }
   }
 
@@ -373,20 +386,16 @@
     return controller.isActionResolved(actionId, currentUserId || undefined);
   }
   
-  // Check if any player has resolved this action
-  function isActionResolvedByAnyHelper(actionId: string): boolean {
-    // Use local resolvedActions data instead of controller
+  // Check if current player has a pending resolution for this action
+  function isActionResolvedByCurrentPlayer(actionId: string): boolean {
     return resolvedActions.has(actionId);
   }
 
-  function getActionResolutionHelper(actionId: string) {
-    // Use local resolvedActions data instead of controller
-    const resolution = resolvedActions.get(actionId);
-    if (!resolution) return undefined;
-    
-    // Return the resolution directly since it's already in the correct format
-    return resolution;
+  function getCurrentPlayerResolution(actionId: string) {
+    return resolvedActions.get(actionId);
   }
+  
+  // Removed: getActionCompletions - completions now handled by CompletionNotifications component
 
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
@@ -553,7 +562,7 @@
   
   // Handle canceling an action result
   function handleActionResultCancel(actionId: string) {
-    // Reset the action without applying effects
+    // Reset the action without applying effects (no completion added yet)
     resolvedActions.delete(actionId);
     resolvedActions = resolvedActions; // Trigger reactivity
     
@@ -797,10 +806,8 @@
 
           <div class="actions-list">
             {#each actions as action (action.id)}
-              {@const isResolved = isActionResolvedHelper(action.id)}
-              {@const isResolvedByAny = isActionResolvedByAnyHelper(action.id)}
-              {@const resolution = isResolved ? getActionResolutionHelper(action.id) : undefined}
-              {@const otherPlayersResolutions = getOtherPlayersResolutions(action.id)}
+              {@const isResolved = isActionResolvedByCurrentPlayer(action.id)}
+              {@const resolution = isResolved ? getCurrentPlayerResolution(action.id) : undefined}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
               {#key `${action.id}-${resolvedActionsSize}-${activeAidsCount}`}
@@ -813,19 +820,23 @@
                   outcomes={[
                     {
                       type: 'criticalSuccess',
-                      description: action.criticalSuccess?.description || action.success?.description || '—'
+                      description: action.criticalSuccess?.description || action.success?.description || '—',
+                      modifiers: action.criticalSuccess?.modifiers || []
                     },
                     {
                       type: 'success',
-                      description: action.success?.description || '—'
+                      description: action.success?.description || '—',
+                      modifiers: action.success?.modifiers || []
                     },
                     {
                       type: 'failure',
-                      description: action.failure?.description || '—'
+                      description: action.failure?.description || '—',
+                      modifiers: action.failure?.modifiers || []
                     },
                     {
                       type: 'criticalFailure',
-                      description: action.criticalFailure?.description || '—'
+                      description: action.criticalFailure?.description || '—',
+                      modifiers: action.criticalFailure?.modifiers || []
                     }
                   ]}
                   checkType="action"
@@ -849,19 +860,15 @@
                   on:rerollWithFame={(e) => handleRerollWithFame(e, action)}
                   on:aid={handleAid}
                   on:primaryAction={(e) => {
-                    // Apply the effects and clear the resolved state
+                    // Apply the effects (this also adds to completions array)
                     applyActionEffects(e.detail.checkId);
-                    // Clear the resolved state so other players can use this action
+                    // Clear the current player's resolved state
                     resolvedActions.delete(e.detail.checkId);
                     resolvedActions = resolvedActions; // Trigger reactivity
-                    // Collapse the card
-                    toggleAction('');
+                    // Keep the card expanded to show completion notifications
                   }}
                   on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
                 />
-                {#if otherPlayersResolutions.length > 0}
-                  <OtherPlayersActions resolutions={otherPlayersResolutions} compact={true} />
-                {/if}
               {/key}
             {/each}
           </div>

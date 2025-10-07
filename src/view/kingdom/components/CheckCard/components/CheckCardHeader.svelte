@@ -9,7 +9,6 @@
   export let expanded: boolean = false;
   export let resolvedBadgeText: string = 'Resolved';
   export let missingRequirements: string[] = [];
-  export let resolutionHistory: Array<{ actor: string; outcome: string }> = [];
   
   const dispatch = createEventDispatcher();
   
@@ -42,9 +41,6 @@
           </span>
         {/if}
       </strong>
-      {#if resolutionHistory.length > 0 && !expanded}
-        <ResolutionHistoryBadges {resolutionHistory} />
-      {/if}
       {#if brief}
         <span class="card-brief">{brief}</span>
       {/if}

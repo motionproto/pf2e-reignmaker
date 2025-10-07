@@ -14,7 +14,17 @@
   $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
-  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame;
+  
+  // Extract dice modifiers that should be shown as rollers
+  // These are modifiers with dice formulas that are NOT part of resource arrays
+  $: diceModifiersToShow = modifiers?.filter(m => 
+    !Array.isArray(m.resource) && 
+    typeof m.value === 'string' && 
+    DICE_PATTERN.test(m.value)
+  ) || [];
+  $: hasDiceModifiers = diceModifiersToShow.length > 0;
+  
+  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame || hasDiceModifiers;
   
   // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
@@ -96,38 +106,54 @@
       </div>
     {/if}
     
-    {#if hasStateChanges && stateChanges}
+    {#if hasDiceModifiers}
+      <!-- Show dice rollers from modifiers array -->
       <div class="state-changes-list">
-      {#each Object.entries(stateChanges) as [key, change]}
-        {@const resolvedValue = getResolvedValue(key)}
-        {@const isDice = isDiceFormula(change)}
+      {#each diceModifiersToShow as modifier, index}
+        {@const modifierIndex = modifiers?.indexOf(modifier) ?? index}
+        {@const resolvedValue = resolvedDice.get(modifierIndex)}
         
         <div class="state-change-item">
-          <span class="change-label">{formatStateChangeLabel(key)}:</span>
+          <span class="change-label">{formatStateChangeLabel(modifier.resource)}:</span>
           
-          {#if isDice && resolvedValue === null}
+          {#if resolvedValue === undefined}
             <!-- Unrolled dice - show button -->
             <button 
               class="dice-button"
-              on:click={() => handleDiceRoll(key, change)}
+              on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
             >
               <i class="fas fa-dice-d20"></i>
-              {change}
+              {modifier.value}
             </button>
-          {:else if isDice && resolvedValue !== null}
-            <!-- Rolled dice - show result -->
-            <span class="change-value {getChangeClass(resolvedValue, key)}">
-              {formatStateChangeValue(resolvedValue)}
-            </span>
           {:else}
-            <!-- Regular value -->
-            <span class="change-value {getChangeClass(change, key)}">
-              {formatStateChangeValue(change)}
+            <!-- Rolled dice - show result -->
+            <span class="change-value {getChangeClass(resolvedValue, modifier.resource)}">
+              {formatStateChangeValue(resolvedValue)}
             </span>
           {/if}
         </div>
       {/each}
       </div>
+    {/if}
+    
+    {#if hasStateChanges && stateChanges}
+      <!-- Show numeric state changes (non-dice) -->
+      <!-- Filter out resources that are already shown in dice section -->
+      {@const diceResources = new Set(diceModifiersToShow.map(m => m.resource))}
+      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !diceResources.has(key))}
+      
+      {#if nonDiceStateChanges.length > 0}
+        <div class="state-changes-list">
+        {#each nonDiceStateChanges as [key, change]}
+          <div class="state-change-item">
+            <span class="change-label">{formatStateChangeLabel(key)}:</span>
+            <span class="change-value {getChangeClass(change, key)}">
+              {formatStateChangeValue(change)}
+            </span>
+          </div>
+        {/each}
+        </div>
+      {/if}
     {/if}
   </div>
 {/if}

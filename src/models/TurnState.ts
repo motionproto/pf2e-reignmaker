@@ -115,6 +115,7 @@ export interface ActionsPhaseState {
     spentInPhase?: TurnPhase;
   }>;
   activeAids: AidEntry[];  // Aid bonuses available for actions this turn
+  // Removed: completionsByAction - now using actionLog instead
 }
 
 /**

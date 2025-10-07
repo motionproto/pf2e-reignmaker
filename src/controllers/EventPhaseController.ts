@@ -493,78 +493,24 @@ export async function createEventPhaseController(_eventService?: any) {
         },
         
         /**
-         * Check if event can be resolved with a specific skill
-         */
-        canResolveWithSkill(event: EventData, skill: string): boolean {
-            return eventResolver.canResolveWithSkill(event, skill);
-        },
-        
-        /**
-         * Get the DC for resolving an event
-         */
-        getEventResolutionDC(kingdomLevel: number): number {
-            return eventResolver.getResolutionDC(kingdomLevel);
-        },
-        
-        /**
-         * Determine outcome based on roll result
-         */
-        determineOutcome(roll: number, modifier: number, dc: number): 
-            'criticalSuccess' | 'success' | 'failure' | 'criticalFailure' {
-            return eventResolver.determineOutcome(roll, modifier, dc);
-        },
-        
-        /**
-         * Reset controller state for next phase
-         */
-        resetState(): void {
-            state = createInitialState();
-        },
-        
-        /**
-         * Get current controller state
-         */
-        getState(): EventPhaseState {
-            return { ...state };
-        },
-        
-        /**
-         * Check if there are any unresolved events
-         */
-        hasUnresolvedEvents(): boolean {
-            return state.unresolvedEvent !== null;
-        },
-        
-        /**
-         * Get unresolved event for processing in upkeep phase
-         */
-        getUnresolvedEvent(): EventData | null {
-            return state.unresolvedEvent;
-        },
-        
-        /**
-         * Clear unresolved event after processing
-         */
-        clearUnresolvedEvent(): void {
-            state.unresolvedEvent = null;
-        },
-        
-        /**
          * Get resolution display data for UI after skill check
          * This method is called by CheckResultHandler to prepare outcome data for OutcomeDisplay
+         * 
+         * IMPORTANT: Dice formulas should ONLY be in modifiers array, NOT in stateChanges.
+         * stateChanges should only contain resolved numeric values.
          */
         getResolutionDisplayData(
             event: any,
             outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
             actorName: string
         ) {
-            const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
+            const DICE_PATTERN = /^-?\\d+d\\d+([+-]\\d+)?$/;
             
             // Get the outcome effects from the event
             const effectOutcome = event.effects?.[outcome];
             const effect = effectOutcome?.msg || `${outcome}`;
             
-            // Calculate state changes, preserving dice formulas and skipping resource arrays
+            // Calculate state changes - ONLY numeric values, NO dice formulas
             const modifiers = effectOutcome?.modifiers;
             const stateChanges: Record<string, any> = {};
             
@@ -576,14 +522,13 @@ export async function createEventPhaseController(_eventService?: any) {
                     if (!Array.isArray(modifier.resource)) {
                         const value = modifier.value;
                         
-                        // Preserve dice formulas as strings for dice roller UI
-                        if (typeof value === 'string' && DICE_PATTERN.test(value)) {
-                            changes.set(modifier.resource, value);
-                        } else {
-                            // Aggregate numeric values
+                        // ONLY add numeric values to stateChanges
+                        // Dice formulas are handled by the modifiers array for DiceRoller component
+                        if (typeof value === 'number') {
                             const currentValue = changes.get(modifier.resource) || 0;
                             changes.set(modifier.resource, currentValue + value);
                         }
+                        // Skip dice formulas - they'll be rolled via modifiers array
                     }
                 }
                 
@@ -597,6 +542,13 @@ export async function createEventPhaseController(_eventService?: any) {
                 modifiers: effectOutcome?.modifiers || [], // Pass through full modifiers for UI
                 manualEffects: effectOutcome?.manualEffects || []
             };
+        },
+        
+        /**
+         * Clear unresolved event after processing
+         */
+        clearUnresolvedEvent(): void {
+            state.unresolvedEvent = null;
         },
 
         /**
