@@ -18,6 +18,7 @@
    import TurnTab         from './tabs/TurnTab.svelte';
    import TerritoryTab    from './tabs/TerritoryTab.svelte';
    import SettlementsTab  from './tabs/SettlementsTab.svelte';
+   import ArmiesTab       from './tabs/ArmiesTab.svelte';
    import StructuresTab   from './tabs/StructuresTab.svelte';
    import FactionsTab     from './tabs/FactionsTab.svelte';
    import ModifiersTab    from './tabs/ModifiersTab.svelte';
@@ -271,6 +272,8 @@
                <TerritoryTab />
             {:else if $uiState.selectedTab === 'settlements'}
                <SettlementsTab />
+            {:else if $uiState.selectedTab === 'armies'}
+               <ArmiesTab />
             {:else if $uiState.selectedTab === 'structures'}
                <StructuresTab />
             {:else if $uiState.selectedTab === 'factions'}

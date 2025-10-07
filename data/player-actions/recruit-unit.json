@@ -31,31 +31,47 @@
       "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
       "modifiers": [
         {
-          "name": "Recruit Unit",
+          "name": "Recruit Unit (Patriotic Response)",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
+        }
+      ],
+      "gameEffects": [
+        {
+          "type": "recruitArmy",
+          "level": "kingdom-level",
+          "description": "Create new army unit at party level"
         }
       ]
     },
     "success": {
       "description": "Recruit a troop equal to the party level",
-      "modifiers": []
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "recruitArmy",
+          "level": "kingdom-level",
+          "description": "Create new army unit at party level"
+        }
+      ]
     },
     "failure": {
       "description": "No Recruits",
-      "modifiers": []
+      "modifiers": [],
+      "gameEffects": []
     },
     "criticalFailure": {
       "description": "No Recruit; +1 Unrest",
       "modifiers": [
         {
-          "name": "Recruit Unit",
+          "name": "Recruit Unit (Failed Recruitment)",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         }
-      ]
+      ],
+      "gameEffects": []
     }
   },
   "failureCausesUnrest": true

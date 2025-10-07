@@ -3,7 +3,7 @@ import type { Settlement } from '../models/Settlement';
 
 // UI State for navigation and display
 export interface UIState {
-    selectedTab: 'turn' | 'territory' | 'settlements' | 'structures' | 'factions' | 'modifiers' | 'notes';
+    selectedTab: 'turn' | 'territory' | 'settlements' | 'armies' | 'structures' | 'factions' | 'modifiers' | 'notes';
     isPhasePanelExpanded: boolean;
     isResourcePanelExpanded: boolean;
     isSaving: boolean;

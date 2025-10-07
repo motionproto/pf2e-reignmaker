@@ -28,6 +28,8 @@ export interface Army {
   level: number;
   isSupported: boolean;
   turnsUnsupported: number;
+  actorId?: string; // Reference to the NPC actor in Foundry
+  supportedBySettlementId?: string; // Settlement providing support
 }
 
 /**
