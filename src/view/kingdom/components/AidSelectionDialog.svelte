@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import { getSkillBonuses } from '../../../services/pf2e';
 
   export let show: boolean = false;
   export let actionName: string = '';
@@ -12,8 +13,10 @@
   const PLACEHOLDER = '__pick';
   let selectedSkill = PLACEHOLDER;
 
-  // Reset to placeholder when dialog opens if somehow empty
-  $: if (show && selectedSkill === '') selectedSkill = PLACEHOLDER;
+  // Reset to placeholder when dialog opens
+  $: if (show) {
+    selectedSkill = PLACEHOLDER;
+  }
 
   // Reactive statement to log the current selection for debugging
   $: console.log('[AidSelectionDialog] selectedSkill:', selectedSkill);
@@ -37,6 +40,25 @@
     { value: 'survival', label: 'Survival' },
     { value: 'thievery', label: 'Thievery' }
   ];
+
+  // Get skill bonuses for the current user's character
+  $: skillBonuses = getSkillBonuses(skills.map(s => s.value));
+
+  // Create enhanced skills with bonuses for display
+  $: skillsWithBonuses = skills.map(skill => {
+    const bonus = skillBonuses.get(skill.value) ?? null;
+    const displayLabel = bonus !== null 
+      ? `${skill.label} (${bonus >= 0 ? '+' : ''}${bonus})`
+      : skill.label;
+    return {
+      ...skill,
+      bonus,
+      displayLabel
+    };
+  });
+
+  // Get display label for selected skill (with bonus if available)
+  $: selectedLabel = skillsWithBonuses.find(s => s.value === selectedSkill)?.displayLabel || 'Pick a skill';
 
   function handleConfirm() {
     dispatch('confirm', { skill: selectedSkill });
@@ -80,14 +102,24 @@
           </p>
           <div class="skill-select-group">
             <label for="skill-select">Skill:</label>
-            <select id="skill-select" bind:value={selectedSkill} class="skill-select">
-              <option value={PLACEHOLDER} disabled>Pick a skill</option>
-              {#each skills as skill}
-                <option value={skill.value}>
-                  {skill.label}
-                </option>
-              {/each}
-            </select>
+            <div class="custom-select-wrapper">
+              <select 
+                id="skill-select" 
+                bind:value={selectedSkill} 
+                class="skill-select"
+                data-placeholder={selectedSkill === PLACEHOLDER}
+              >
+                <option value={PLACEHOLDER} disabled>Pick a skill</option>
+                {#each skillsWithBonuses as skill}
+                  <option value={skill.value}>
+                    {skill.displayLabel}
+                  </option>
+                {/each}
+              </select>
+              <div class="select-display">
+                {selectedLabel}
+              </div>
+            </div>
           </div>
         </div>
         <div class="dialog-footer">
@@ -186,19 +218,24 @@
     font-size: 0.95rem;
   }
 
+  .custom-select-wrapper {
+    position: relative;
+  }
+
   .skill-select {
+    width: 100%;
     padding: 1rem;
-    padding-right: 2.5rem; /* Add space for the dropdown arrow */
+    padding-right: 2.5rem;
     border: 1px solid var(--border-default, #3a3a3d);
     border-radius: var(--radius-sm, 4px);
-    background: var(--color-gray-900, #3f3f46) !important;
-    color: #ffffff !important;
-    font-size: 1rem !important;
+    background: var(--color-gray-900, #3f3f46);
+    color: transparent;
+    font-size: 1rem;
     cursor: pointer;
     font-family: inherit;
-    -webkit-appearance: menulist !important;
-    -moz-appearance: menulist !important;
-    appearance: menulist !important;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    appearance: menulist;
   }
 
   .skill-select:focus {
@@ -208,9 +245,29 @@
   }
 
   .skill-select option {
-    background: var(--color-gray-800, #27272a) !important;
-    color: #ffffff !important;
+    background: var(--color-gray-800, #27272a);
+    color: #ffffff;
     padding: 0.5rem;
+  }
+
+  .select-display {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 2.5rem;
+    padding: 0 1rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 1rem;
+    line-height: 1;
+    color: #ffffff;
+    font-style: normal;
+  }
+
+  /* Apply placeholder styling based on selectedSkill value */
+  .custom-select-wrapper:has(.skill-select[data-placeholder="true"]) .select-display {
+    color: var(--text-tertiary, #6b7280);
+    font-style: italic;
   }
 
   .dialog-footer {

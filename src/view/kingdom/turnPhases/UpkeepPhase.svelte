@@ -184,7 +184,7 @@
          <div class="card-header">
             <h4 class="text-heading-secondary">
                <i class="fas fa-home step-icon"></i>
-               1. Feed Settlements
+               Feed Settlements
             </h4>
             {#if consumeCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -259,7 +259,7 @@
          <div class="card-header">
             <h4 class="text-heading-secondary">
                <i class="fas fa-shield-alt step-icon"></i>
-               2. Military Support
+               Military Support
             </h4>
             {#if militaryCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -355,7 +355,7 @@
          <div class="card-header">
             <h4 class="text-heading-secondary">
                <i class="fas fa-hammer step-icon"></i>
-               3. Build Queue
+               Build Queue
             </h4>
             {#if buildCompleted}
                <i class="fas fa-check-circle phase-complete-indicator"></i>
@@ -530,19 +530,6 @@
             rgba(40, 40, 45, 0.3));
          border-color: var(--border-subtle);
          opacity: 0.9;
-         
-         &::after {
-            content: '';
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--color-green);
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-            animation: pulse 2s infinite;
-         }
       }
    }
    
