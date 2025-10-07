@@ -3,6 +3,7 @@
    
    export let skill: string;
    export let description: string = '';
+   export let bonus: number | null = null;
    export let selected: boolean = false;
    export let disabled: boolean = false;
    export let loading: boolean = false;
@@ -27,7 +28,12 @@
    {#if loading}
       <i class="fas fa-dice-d20 fa-spin"></i>
    {/if}
-   <span class="skill-label">{skill}</span>
+   <span class="skill-label">
+      {skill}
+      {#if bonus !== null}
+         <span class="skill-bonus">({bonus >= 0 ? '+' : ''}{bonus})</span>
+      {/if}
+   </span>
    {#if description}
       <span class="skill-divider">·</span>
       <span class="skill-description">{description}</span>
@@ -61,6 +67,15 @@
       .skill-label {
          color: var(--text-primary);
          font-weight: var(--font-weight-medium);
+         display: flex;
+         align-items: center;
+         gap: 4px;
+      }
+      
+      .skill-bonus {
+         color: var(--text-secondary);
+         font-size: 0.9em;
+         opacity: 0.8;
       }
       
       .skill-divider {

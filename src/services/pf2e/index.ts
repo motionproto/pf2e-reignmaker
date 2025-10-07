@@ -6,6 +6,7 @@ import { PF2eRollService } from './PF2eRollService';
 export { PF2eCharacterService, pf2eCharacterService } from './PF2eCharacterService';
 export { PF2eSkillService, pf2eSkillService } from './PF2eSkillService';
 export { PF2eRollService, pf2eRollService } from './PF2eRollService';
+export { PF2eSkillBonusService, pf2eSkillBonusService } from './PF2eSkillBonusService';
 
 // Character Service exports
 export { 
@@ -22,6 +23,13 @@ export {
   performKingdomActionRoll,
   getKingdomActionDC 
 } from './PF2eSkillService';
+
+// Skill Bonus Service exports
+export {
+  getSkillBonus,
+  getSkillBonuses,
+  hasCharacterAssigned
+} from './PF2eSkillBonusService';
 
 // Roll Service exports
 export { 

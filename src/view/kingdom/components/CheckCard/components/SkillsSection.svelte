@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import SkillTag from './SkillTag.svelte';
+  import { getSkillBonuses } from '../../../../../services/pf2e';
   
   export let skills: Array<{ skill: string; description?: string }> = [];
   export let skillSectionTitle: string = 'Choose Skill:';
@@ -12,6 +13,9 @@
   export let aidResult: { outcome: string; bonus: number } | null = null;
   
   const dispatch = createEventDispatcher();
+  
+  // Get skill bonuses for all skills in this section
+  $: skillBonuses = getSkillBonuses(skills.map(s => s.skill));
   
   function handleExecute(event: CustomEvent) {
     dispatch('execute', event.detail);
@@ -50,9 +54,11 @@
     
     {#each skills as skillOption}
       {@const isDisabled = !canPerformMore || resolved}
+      {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
       <SkillTag
         skill={skillOption.skill}
         description={skillOption.description || ''} 
+        bonus={bonus}
         selected={false}
         disabled={isDisabled}
         loading={isRolling && skillOption.skill === localUsedSkill}

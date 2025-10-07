@@ -26,9 +26,13 @@
 
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
+  
+  // Import GameEffectsService for action tracking
+  import { createGameEffectsService } from '../../../services/GameEffectsService';
 
-  // Initialize controller
+  // Initialize controller and service
   let controller: any = null;
+  let gameEffectsService: any = null;
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -266,18 +270,38 @@
   }
 
   // Listen for roll completion events
-  function handleRollComplete(event: CustomEvent) {
+  async function handleRollComplete(event: CustomEvent) {
     const { checkId, outcome, actorName, checkType, skillName, proficiencyRank } = event.detail;
 
     if (checkType === "action") {
-      onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank);
+      await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank);
+      
+      // Clear aid modifiers for this specific action after roll completes
+      const actor = getKingdomActor();
+      if (actor) {
+        await actor.updateKingdom((kingdom) => {
+          if (kingdom.turnState?.actionsPhase?.activeAids) {
+            const beforeCount = kingdom.turnState.actionsPhase.activeAids.length;
+            kingdom.turnState.actionsPhase.activeAids = 
+              kingdom.turnState.actionsPhase.activeAids.filter(
+                aid => aid.targetActionId !== checkId
+              );
+            const afterCount = kingdom.turnState.actionsPhase.activeAids.length;
+            
+            if (beforeCount > afterCount) {
+              console.log(`🧹 [ActionsPhase] Cleared ${beforeCount - afterCount} aid(s) for action: ${checkId}`);
+            }
+          }
+        });
+      }
     }
   }
 
   // Component lifecycle
   onMount(async () => {
-    // Initialize controller
+    // Initialize controller and service
     controller = await createActionPhaseController();
+    gameEffectsService = await createGameEffectsService();
     
     // Initialize the phase (this auto-completes immediately to allow players to skip actions)
     await controller.startPhase();
@@ -290,7 +314,7 @@
     
     window.addEventListener(
       "kingdomRollComplete",
-      handleRollComplete as EventListener
+      handleRollComplete as any
     );
     initializeRollResultHandler();
 
@@ -301,7 +325,7 @@
   onDestroy(() => {
     window.removeEventListener(
       "kingdomRollComplete",
-      handleRollComplete as EventListener
+      handleRollComplete as any
     );
     
     // Reset controller state for next phase
@@ -628,7 +652,7 @@
         console.log('[ActionsPhase] kingdomRollComplete received:', checkId, 'Looking for:', `aid-${targetActionId}`);
         
         if (checkId === `aid-${targetActionId}`) {
-          window.removeEventListener('kingdomRollComplete', aidRollListener);
+          window.removeEventListener('kingdomRollComplete', aidRollListener as any);
           
           // Calculate bonus based on outcome and proficiency
           let bonus = 0;
@@ -670,6 +694,17 @@
               });
             });
             
+            // Track the aid check in the action log
+            if (gameEffectsService) {
+              await gameEffectsService.trackPlayerAction(
+                game.user.id,
+                game.user.name,
+                actorName,
+                `aid-${targetActionId}-${outcome}`,
+                TurnPhase.ACTIONS
+              );
+            }
+            
             if (bonus > 0) {
               ui.notifications?.info(`You are now aiding ${targetActionName} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
             } else {
@@ -700,7 +735,7 @@
     } catch (error) {
       // Clean up listener on error
       if (aidRollListener) {
-        window.removeEventListener('kingdomRollComplete', aidRollListener);
+        window.removeEventListener('kingdomRollComplete', aidRollListener as any);
       }
       console.error('Error performing aid roll:', error);
       ui.notifications?.error(`Failed to perform aid: ${error}`);
