@@ -14,7 +14,7 @@ import { get } from 'svelte/store';
 import { kingdomData } from './stores/KingdomStore';
 import { KingdomApp } from './view/kingdom/KingdomApp';
 import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
-import { initializeSocketService } from './services/SocketService';
+import { initializeActionDispatcher } from './services/ActionDispatcher';
 
 // Extend module type for our API
 declare global {
@@ -103,14 +103,21 @@ Hooks.once('init', () => {
     // Register module settings
     registerModuleSettings();
     
-    // Initialize socket service SYNCHRONOUSLY so it can register for socketlib.ready hook
-    // This must happen before socketlib.ready fires (which is also during init)
-    console.log('PF2E ReignMaker | Calling initializeSocketService()...');
+    // Initialize action dispatcher for player-to-GM communication
+    console.log('PF2E ReignMaker | Calling initializeActionDispatcher()...');
     try {
-        initializeSocketService();
-        console.log('PF2E ReignMaker | initializeSocketService() completed');
+        initializeActionDispatcher();
+        console.log('PF2E ReignMaker | initializeActionDispatcher() completed');
+        
+        // Register operation handlers
+        import('./services/army/handlers').then(({ registerArmyHandlers }) => {
+            registerArmyHandlers();
+        });
+        import('./services/kingdom/handlers').then(({ registerKingdomHandlers }) => {
+            registerKingdomHandlers();
+        });
     } catch (error) {
-        console.error('PF2E ReignMaker | Failed to initialize socket service:', error);
+        console.error('PF2E ReignMaker | Failed to initialize action dispatcher:', error);
     }
     
     // Register the hook to add Kingdom icons to party actors

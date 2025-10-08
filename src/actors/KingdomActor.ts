@@ -142,7 +142,7 @@ export class KingdomActor extends Actor {
   
   /**
    * Update kingdom data with a function - similar to Svelte store pattern
-   * Automatically routes through GM via socketlib if player lacks permission
+   * Automatically routes through GM via ActionDispatcher if player lacks permission
    */
   async updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
     const kingdom = this.getKingdom();
@@ -153,21 +153,30 @@ export class KingdomActor extends Actor {
     
     // Check if the current user has permission to update this actor
     if (!this.canUserModify(game.user, 'update')) {
-      // Route through socketlib to execute on GM's client (silent for normal operation)
+      // Route through ActionDispatcher to execute on GM's client
       try {
-        const { socketService } = await import('../services/SocketService');
+        const { actionDispatcher } = await import('../services/ActionDispatcher');
         
-        if (!socketService.isAvailable()) {
-          const errorMsg = 'Socket communication not available. Please ensure socketlib module is installed and enabled.';
+        if (!actionDispatcher.isAvailable()) {
+          const errorMsg = 'Action dispatcher not initialized. Please reload the game.';
           console.error('[KingdomActor]', errorMsg);
           ui.notifications?.error(errorMsg);
           throw new Error(errorMsg);
         }
         
-        await socketService.executeAsGM(this.id, updater);
+        // Apply updater locally to get the updated state
+        const updatedKingdom = JSON.parse(JSON.stringify(kingdom));
+        updater(updatedKingdom);
+        
+        // Send to GM for execution
+        await actionDispatcher.dispatch('updateKingdom', {
+          actorId: this.id,
+          updatedKingdom
+        });
+        
         return;
       } catch (error) {
-        console.error('[KingdomActor] Failed to update kingdom via socket:', error);
+        console.error('[KingdomActor] Failed to update kingdom via dispatcher:', error);
         ui.notifications?.error('Failed to update kingdom. Please contact your GM.');
         throw error;
       }

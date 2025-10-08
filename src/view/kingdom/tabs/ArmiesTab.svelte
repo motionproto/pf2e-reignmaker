@@ -23,26 +23,20 @@
    let newArmyLevel = 1;
    let isCreatingArmy = false;
    
-   // Get party level for validation (fail-fast)
-   $: partyLevel = (() => {
+   // Get current user's character level for validation
+   $: userCharacterLevel = (() => {
       const game = (globalThis as any).game;
       
-      if (!game?.actors) {
-         throw new Error('Foundry VTT not initialized - cannot access actors');
+      if (!game?.user?.character) {
+         // No assigned character - default to level 1, user can edit
+         return 1;
       }
       
-      const partyActors = Array.from(game.actors).filter((a: any) => 
-         a.type === 'character' && a.hasPlayerOwner
-      );
-      
-      if (partyActors.length === 0) {
-         throw new Error('No party characters found - cannot determine party level');
-      }
-      
-      const level = (partyActors[0] as any).level;
+      const character = game.user.character;
+      const level = character.level;
       
       if (typeof level !== 'number' || level < 1) {
-         throw new Error(`Invalid party level: ${level}`);
+         return 1;
       }
       
       return level;
@@ -211,7 +205,7 @@
    function startCreating() {
       isCreating = true;
       newArmyName = '';
-      newArmyLevel = partyLevel;
+      newArmyLevel = userCharacterLevel;
    }
    
    function cancelCreating() {
@@ -235,10 +229,11 @@
          // @ts-ignore
          ui.notifications?.info(`Created ${newArmyName}`);
       } catch (error) {
-         console.error('Failed to create army:', error);
-         // @ts-ignore
+         // Error message already shown by ActionDispatcher or lower-level service
+         // Just show user-friendly notification
          const errorMessage = error instanceof Error ? error.message : 'Failed to create army';
-         ui.notifications?.error(`Failed to create army: ${errorMessage}`);
+         // @ts-ignore
+         ui.notifications?.error(errorMessage);
       } finally {
          isCreatingArmy = false;
       }
@@ -319,12 +314,22 @@
       try {
          const { armyService } = await import('../../../services/army');
          const result = await armyService.disbandArmy(armyId);
-         // @ts-ignore
-         ui.notifications?.info(`Disbanded ${result.armyName}`);
+         
+         // For players, result may be undefined (fire-and-forget)
+         // The operation still succeeds on GM side and syncs back
+         if (result) {
+            // @ts-ignore
+            ui.notifications?.info(`Disbanded ${result.armyName}`);
+         } else {
+            // @ts-ignore
+            ui.notifications?.info(`Army disbanded successfully`);
+         }
       } catch (error) {
-         console.error('Failed to disband army:', error);
+         // Error message already shown by ActionDispatcher or lower-level service
+         // Just show user-friendly notification
+         const errorMessage = error instanceof Error ? error.message : 'Failed to disband army';
          // @ts-ignore
-         ui.notifications?.error('Failed to disband army');
+         ui.notifications?.error(errorMessage);
       }
    }
    
@@ -434,7 +439,7 @@
                         type="number" 
                         bind:value={newArmyLevel}
                         min="1"
-                        max={partyLevel}
+                        max="20"
                         class="inline-input"
                         disabled={isCreatingArmy}
                      />
@@ -515,7 +520,7 @@
                               bind:value={editedValue}
                               on:keydown={(e) => handleKeydown(e, army.id)}
                               min="1"
-                              max={partyLevel}
+                              max="20"
                               class="inline-input"
                               disabled={isSaving}
                            />

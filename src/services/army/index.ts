@@ -9,7 +9,7 @@ import type { KingdomData } from '../../actors/KingdomActor';
 
 export class ArmyService {
   /**
-   * Create a new army with NPC actor (routes through GM via socketlib)
+   * Create a new army with NPC actor (routes through GM via ActionDispatcher)
    * Auto-assigns to random settlement with available capacity
    * 
    * @param name - Army name
@@ -18,21 +18,17 @@ export class ArmyService {
    * @returns Created army with actorId
    */
   async createArmy(name: string, level: number, actorData?: any): Promise<Army> {
-    const game = (globalThis as any).game;
+    const { actionDispatcher } = await import('../ActionDispatcher');
     
-    // If user is GM, can execute directly (but still use socket for consistency)
-    if (game?.user?.isGM) {
-      return await this._createArmyInternal(name, level, actorData);
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
     }
     
-    // Non-GM users must route through socketlib
-    const { socketService } = await import('../SocketService');
-    
-    if (!socketService.isAvailable()) {
-      throw new Error('Socket service not available. Please ensure socketlib module is installed and enabled.');
-    }
-    
-    return await socketService.executeOperation('createArmy', name, level, actorData);
+    return await actionDispatcher.dispatch('createArmy', {
+      name,
+      level,
+      actorData
+    });
   }
 
   /**
@@ -90,7 +86,7 @@ export class ArmyService {
   }
   
   /**
-   * Disband an army (routes through GM via socketlib)
+   * Disband an army (routes through GM via ActionDispatcher)
    * 
    * @param armyId - ID of army to disband
    * @returns Refund amount and army details
@@ -100,21 +96,13 @@ export class ArmyService {
     refund: number;
     actorId?: string;
   }> {
-    const game = (globalThis as any).game;
+    const { actionDispatcher } = await import('../ActionDispatcher');
     
-    // If user is GM, can execute directly (but still use socket for consistency)
-    if (game?.user?.isGM) {
-      return await this._disbandArmyInternal(armyId);
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
     }
     
-    // Non-GM users must route through socketlib
-    const { socketService } = await import('../SocketService');
-    
-    if (!socketService.isAvailable()) {
-      throw new Error('Socket service not available. Please ensure socketlib module is installed and enabled.');
-    }
-    
-    return await socketService.executeOperation('disbandArmy', armyId);
+    return await actionDispatcher.dispatch('disbandArmy', { armyId });
   }
 
   /**

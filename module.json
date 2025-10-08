@@ -28,15 +28,6 @@
                     "minimum": "7.2.0"
                 }
             }
-        ],
-        "requires": [
-            {
-                "id": "socketlib",
-                "type": "module",
-                "compatibility": {
-                    "minimum": "1.0.0"
-                }
-            }
         ]
     },
     "compatibility": {
