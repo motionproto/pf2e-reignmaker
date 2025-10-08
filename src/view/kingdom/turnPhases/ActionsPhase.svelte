@@ -7,7 +7,7 @@
   } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
   import { actionLoader } from "../../../controllers/actions/action-loader";
-  import CheckCard from "../components/CheckCard/CheckCard.svelte";
+  import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
@@ -361,6 +361,7 @@
   function getMissingRequirements(action: any): string[] {
     // Delegate to controller for business logic
     if (!controller) return [];
+    
     const requirements = controller.getActionRequirements(action, $kingdomData as any);
     const missing: string[] = [];
     
@@ -590,11 +591,11 @@
   
   // Handle Aid Another button click - open dialog for skill selection
   function handleAid(event: CustomEvent) {
-    const { actionId, actionName } = event.detail;
+    const { checkId, checkName } = event.detail;
     
-    console.log('[ActionsPhase] Aid Another clicked:', { actionId, actionName });
+    console.log('[ActionsPhase] Aid Another clicked:', { checkId, checkName });
     
-    pendingAidAction = { id: actionId, name: actionName };
+    pendingAidAction = { id: checkId, name: checkName };
     showAidSelectionDialog = true;
   }
   
@@ -809,9 +810,9 @@
               {@const isResolved = isActionResolvedByCurrentPlayer(action.id)}
               {@const resolution = isResolved ? getCurrentPlayerResolution(action.id) : undefined}
               {@const isAvailable = isActionAvailable(action)}
-              {@const missingRequirements = !isAvailable ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${resolvedActionsSize}-${activeAidsCount}`}
-                <CheckCard
+              {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
+              {#key `${action.id}-${resolvedActionsSize}-${activeAidsCount}-${controller ? 'ready' : 'loading'}`}
+                <BaseCheckCard
                   id={action.id}
                   name={action.name}
                   description={action.description}
@@ -840,6 +841,11 @@
                     }
                   ]}
                   checkType="action"
+                  expandable={true}
+                  showCompletions={true}
+                  showAvailability={true}
+                  showSpecial={true}
+                  showIgnoreButton={false}
                   special={action.special}
                   cost={action.cost}
                   expanded={expandedActions.has(action.id)}
@@ -855,11 +861,12 @@
                   resolvedBadgeText="Resolved"
                   primaryButtonLabel="OK"
                   skillSectionTitle="Choose Skill:"
+                  isViewingCurrentPhase={isViewingCurrentPhase}
                   on:toggle={() => toggleAction(action.id)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
-                  on:rerollWithFame={(e) => handleRerollWithFame(e, action)}
+                  on:reroll={(e) => handleRerollWithFame(e, action)}
                   on:aid={handleAid}
-                  on:primaryAction={(e) => {
+                  on:primary={(e) => {
                     // Apply the effects (this also adds to completions array)
                     applyActionEffects(e.detail.checkId);
                     // Clear the current player's resolved state

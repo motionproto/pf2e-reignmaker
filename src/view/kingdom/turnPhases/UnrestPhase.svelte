@@ -8,8 +8,11 @@
    export let isViewingCurrentPhase: boolean = true;
    
    // Import UI components
-   import CheckCard from '../components/CheckCard.svelte';
+   import EventCard from '../components/EventCard.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
+   import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
+   import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
+   import { spendPlayerAction, getPlayerAction, resetPlayerAction } from '../../../stores/KingdomStore';
    
    // UI State only - no business logic
    let phaseExecuting = false;
@@ -19,7 +22,26 @@
    let incidentCheckDC: number = 0;
    let incidentCheckChance: number = 0;
    let unrestPhaseController: any;
+   let checkHandler: any;
+   let resultHandler: any;
    let possibleOutcomes: any[] = [];
+   
+   // Resolution state for current incident
+   let incidentResolution: {
+     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+     actorName: string;
+     skillName: string;
+     effect: string;
+     stateChanges?: Record<string, any>;
+     modifiers?: any[];
+     manualEffects?: string[];
+     shortfallResources?: string[];
+     rollBreakdown?: any;
+   } | null = null;
+   let incidentResolved = false;
+   
+   // Current user ID
+   let currentUserId: string | null = null;
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
@@ -113,8 +135,32 @@
       // Initialize the phase (this sets up currentPhaseSteps!)
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
+      checkHandler = createCheckHandler();
+      resultHandler = createCheckResultHandler('incident', unrestPhaseController);
       await unrestPhaseController.startPhase();
       console.log('✅ [UnrestPhase] Phase initialized with controller');
+      
+      // Store current user ID
+      const game = (window as any).game;
+      currentUserId = game?.user?.id || null;
+      
+      // Check for persisted applied outcome
+      if ($kingdomData?.turnState?.unrestPhase?.appliedOutcome) {
+         const appliedOutcome = $kingdomData.turnState.unrestPhase.appliedOutcome;
+         if (currentIncident && appliedOutcome.incidentId === currentIncident.id) {
+            // Restore resolved state
+            incidentResolved = true;
+            incidentResolution = {
+               outcome: appliedOutcome.outcome,
+               actorName: appliedOutcome.incidentName,
+               skillName: appliedOutcome.skillUsed,
+               effect: appliedOutcome.effect,
+               stateChanges: appliedOutcome.stateChanges,
+               modifiers: appliedOutcome.modifiers,
+               manualEffects: appliedOutcome.manualEffects
+            };
+         }
+      }
    });
    
    // Helper functions removed - now using UnrestIncidentProvider
@@ -185,6 +231,179 @@
       }
    }
    
+   
+   // Event handler - execute skill check
+   async function handleExecuteSkill(event: CustomEvent) {
+      if (!currentIncident || !checkHandler) return;
+      
+      const { skill } = event.detail;
+      
+      // Check if THIS PLAYER has already performed an action
+      const currentPlayerAction = currentUserId ? getPlayerAction(currentUserId) : null;
+      const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+      
+      if (hasPlayerActed) {
+         // For incidents, we don't show confirmation - just notify
+         ui?.notifications?.warn('You have already performed an action this phase.');
+         return;
+      }
+      
+      // Execute the skill check
+      await executeSkillCheck(skill);
+   }
+   
+   async function executeSkillCheck(skill: string) {
+      if (!currentIncident || !checkHandler || !resultHandler) return;
+      
+      // Spend player action
+      if (currentUserId) {
+         spendPlayerAction(currentUserId, TurnPhase.UNREST);
+      }
+      
+      await checkHandler.executeCheck({
+         checkType: 'incident',
+         item: currentIncident,
+         skill,
+         
+         onStart: () => {
+            console.log(`🎬 [UnrestPhase] Starting incident check with skill: ${skill}`);
+            isRolling = true;
+         },
+         
+         onComplete: async (result: any) => {
+            console.log(`✅ [UnrestPhase] Incident check completed:`, result.outcome);
+            isRolling = false;
+            
+            // Get display data from controller
+            const displayData = await resultHandler.getDisplayData(
+               currentIncident,
+               result.outcome,
+               result.actorName
+            );
+            
+            // Set resolution state
+            incidentResolution = {
+               outcome: result.outcome,
+               actorName: result.actorName,
+               skillName: skill,
+               effect: displayData.effect,
+               stateChanges: displayData.stateChanges || {},
+               modifiers: displayData.modifiers || [],
+               manualEffects: displayData.manualEffects || [],
+               rollBreakdown: result.rollBreakdown
+            };
+            incidentResolved = true;
+         },
+         
+         onCancel: () => {
+            console.log(`🚫 [UnrestPhase] Incident check cancelled - resetting state`);
+            isRolling = false;
+            incidentResolution = null;
+            incidentResolved = false;
+            
+            // Restore player action
+            if (currentUserId) {
+               resetPlayerAction(currentUserId);
+            }
+         },
+         
+         onError: (error: Error) => {
+            console.error(`❌ [UnrestPhase] Error in incident check:`, error);
+            isRolling = false;
+            ui?.notifications?.error(`Failed to perform incident check: ${error.message}`);
+         }
+      });
+   }
+   
+   // Event handler - apply result
+   async function handleApplyResult(event: CustomEvent) {
+      if (!incidentResolution || !currentIncident || !resultHandler) return;
+      
+      console.log(`📝 [UnrestPhase] Applying incident result:`, incidentResolution.outcome);
+      
+      // Parse resolution data
+      const { createOutcomeResolutionService } = await import('../../../services/resolution');
+      const resolutionService = await createOutcomeResolutionService();
+      const resolutionData = resolutionService.fromEventDetail(event.detail);
+      
+      // Apply through controller
+      const result = await resultHandler.applyResolution(
+         currentIncident,
+         incidentResolution.outcome,
+         resolutionData
+      );
+      
+      if (result.success) {
+         console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
+         ui?.notifications?.info(`Incident resolved: ${currentIncident.name}`);
+         
+         // Parse shortfall information
+         const shortfalls: string[] = [];
+         if (result.applied?.specialEffects) {
+            for (const effect of result.applied.specialEffects) {
+               if (effect.startsWith('shortage_penalty:')) {
+                  shortfalls.push(effect.split(':')[1]);
+               }
+            }
+         }
+         
+         if (shortfalls.length > 0) {
+            incidentResolution.shortfallResources = shortfalls;
+         }
+      } else {
+         console.error(`❌ [UnrestPhase] Failed to apply incident resolution:`, result.error);
+         ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
+      }
+   }
+   
+   // Event handler - cancel resolution
+   function handleCancel() {
+      console.log(`🔄 [UnrestPhase] User cancelled outcome - resetting for re-roll`);
+      incidentResolution = null;
+      incidentResolved = false;
+      
+      // Restore player action
+      if (currentUserId) {
+         resetPlayerAction(currentUserId);
+      }
+   }
+   
+   // Event handler - reroll with fame
+   async function handleReroll(event: CustomEvent) {
+      if (!currentIncident || !incidentResolution) return;
+      
+      console.log(`🔁 [UnrestPhase] Rerolling incident with fame`);
+      const { handleRerollWithFame } = await import('../../../controllers/shared/RerollHelpers');
+      
+      await handleRerollWithFame({
+         currentItem: currentIncident,
+         selectedSkill: incidentResolution.skillName,
+         phaseName: 'unrestPhase',
+         resetUiState: handleCancel,
+         triggerRoll: async (skill: string) => {
+            await executeSkillCheck(skill);
+         }
+      });
+   }
+   
+   // Event handler - debug outcome change
+   async function handleDebugOutcomeChanged(event: CustomEvent) {
+      if (!currentIncident || !resultHandler || !incidentResolution) return;
+      
+      const newOutcome = event.detail.outcome;
+      console.log(`🐛 [UnrestPhase] Debug outcome changed to: ${newOutcome}`);
+      
+      // Recalculate display data
+      const displayData = await resultHandler.getDisplayData(currentIncident, newOutcome, incidentResolution.actorName);
+      incidentResolution = {
+         ...incidentResolution,
+         outcome: newOutcome,
+         effect: displayData.effect,
+         stateChanges: displayData.stateChanges || {},
+         modifiers: displayData.modifiers || [],
+         manualEffects: displayData.manualEffects || []
+      };
+   }
    
    // Use status class from provider
    $: tierClass = unrestStatus.statusClass;
@@ -291,14 +510,22 @@
                      {/if}
                   </div>
                   
-                  <!-- Use CheckCard for incident resolution - only show when controller is ready -->
+                  <!-- Use EventCard for incident resolution - only show when controller is ready -->
                   {#if unrestPhaseController}
-                     <CheckCard
+                     <EventCard
                         checkType="incident"
                         item={currentIncident}
                         {isViewingCurrentPhase}
-                        controller={unrestPhaseController}
                         {possibleOutcomes}
+                        showIgnoreButton={false}
+                        showAidButton={false}
+                        resolved={incidentResolved}
+                        resolution={incidentResolution}
+                        on:executeSkill={handleExecuteSkill}
+                        on:applyResult={handleApplyResult}
+                        on:cancel={handleCancel}
+                        on:reroll={handleReroll}
+                        on:debugOutcomeChanged={handleDebugOutcomeChanged}
                      />
                   {:else}
                      <div style="text-align: center; padding: 20px; color: var(--text-secondary);">

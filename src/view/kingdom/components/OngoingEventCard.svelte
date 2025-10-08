@@ -1,6 +1,6 @@
 <script lang="ts">
   import { buildPossibleOutcomes, formatOutcomeMessage } from '../../../controllers/shared/PossibleOutcomeHelpers';
-  import CheckCard from './CheckCard.svelte';
+  import EventCard from './EventCard.svelte';
   
   // Props
   export let modifier: any;                    // ActiveModifier with originalEventData
@@ -58,12 +58,19 @@
       {#if canResolve}
         <p class="event-description">{event.description}</p>
         
-        <CheckCard
+        <EventCard
           checkType="event"
           item={event}
           {isViewingCurrentPhase}
-          {controller}
           {possibleOutcomes}
+          showIgnoreButton={false}
+          resolved={false}
+          resolution={null}
+          on:executeSkill
+          on:applyResult
+          on:cancel
+          on:reroll
+          on:debugOutcomeChanged
         />
       {:else}
         <p class="event-description">{modifier.description || 'No description available'}</p>

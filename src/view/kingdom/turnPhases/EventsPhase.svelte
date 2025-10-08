@@ -15,7 +15,7 @@
    import type { EventSkill } from '../../../types/events';
    import { eventService } from '../../../controllers/events/event-loader';
    import Button from '../components/baseComponents/Button.svelte';
-   import CheckCard from '../components/CheckCard.svelte';
+   import EventCard from '../components/EventCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
@@ -25,23 +25,52 @@
    import {
      getCurrentUserCharacter,
      showCharacterSelectionDialog,
-     performKingdomActionRoll
+     performKingdomActionRoll,
+     initializeRollResultHandler
    } from '../../../services/pf2e';
+   import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
+   import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
+   import { spendPlayerAction, getPlayerAction, resetPlayerAction } from '../../../stores/KingdomStore';
    
    // Initialize controller and service
    let eventPhaseController: any;
    let gameEffectsService: any;
+   let checkHandler: any;
+   let resultHandler: any;
    
    // UI State (no business logic)
    let isRolling = false;
    let currentEvent: EventData | null = null;
    let possibleOutcomes: any[] = [];
    
+   // Resolution state for current event
+   let eventResolution: {
+     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+     actorName: string;
+     skillName: string;
+     effect: string;
+     stateChanges?: Record<string, any>;
+     modifiers?: any[];
+     manualEffects?: string[];
+     shortfallResources?: string[];
+     rollBreakdown?: any;
+   } | null = null;
+   let eventResolved = false;
+   
+   // Aid dialog state
+   let showAidSelectionDialog = false;
+   let showActionConfirm = false;
+   let pendingAidSkill = '';
+   let pendingSkillExecution: { skill: string } | null = null;
+   
+   // Current user ID
+   let currentUserId: string | null = null;
+   
    // Computed UI state - use shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
    $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
-   $: eventResolved = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
+   $: eventResolvedFromState = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC || 15;
    $: activeModifiers = $kingdomData.activeModifiers || [];
    $: stabilityRoll = $kingdomData.turnState?.eventsPhase?.eventRoll || 0;
@@ -66,10 +95,16 @@
       // Initialize the controller and service
       eventPhaseController = await createEventPhaseController(null);
       gameEffectsService = await createGameEffectsService();
+      checkHandler = createCheckHandler();
+      resultHandler = createCheckResultHandler('event', eventPhaseController);
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       await eventPhaseController.startPhase();
       console.log('[EventsPhase] Phase initialized with controller');
+      
+      // Store current user ID
+      const game = (window as any).game;
+      currentUserId = game?.user?.id || null;
       
       // Check if an event was already rolled by another client
       if ($kingdomData.turnState?.eventsPhase?.eventId) {
@@ -80,12 +115,32 @@
          }
       }
       
+      // Check for persisted applied outcomes
+      if ($kingdomData?.turnState?.eventsPhase?.appliedOutcomes?.length > 0) {
+         const appliedOutcome = $kingdomData?.turnState?.eventsPhase.appliedOutcomes[0];
+         if (currentEvent && appliedOutcome && appliedOutcome.eventId === currentEvent.id) {
+            // Restore resolved state
+            eventResolved = true;
+            eventResolution = {
+               outcome: appliedOutcome.outcome,
+               actorName: appliedOutcome.eventName,
+               skillName: appliedOutcome.skillUsed,
+               effect: appliedOutcome.effect,
+               stateChanges: appliedOutcome.stateChanges,
+               modifiers: appliedOutcome.modifiers,
+               manualEffects: appliedOutcome.manualEffects
+            };
+         }
+      }
+      
       // Listen for roll completion to clear aids
       window.addEventListener('kingdomRollComplete', handleRollComplete as any);
+      initializeRollResultHandler();
    });
    
    onDestroy(() => {
       window.removeEventListener('kingdomRollComplete', handleRollComplete as any);
+      checkHandler?.cleanup();
    });
    
    // Use controller for event check logic
@@ -134,8 +189,348 @@
       })();
    }
    
-   // NOTE: Aid handling is now fully delegated to CheckCard component
-   // CheckCard shows AidSelectionDialog and handles the entire aid flow including player action checks
+   // Event handler - execute skill check
+   async function handleExecuteSkill(event: CustomEvent) {
+      if (!currentEvent || !checkHandler) return;
+      
+      const { skill } = event.detail;
+      
+      // Check if THIS PLAYER has already performed an action
+      const currentPlayerAction = currentUserId ? getPlayerAction(currentUserId) : null;
+      const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+      
+      if (hasPlayerActed) {
+         // Show confirmation dialog
+         pendingSkillExecution = { skill };
+         showActionConfirm = true;
+         return;
+      }
+      
+      // Execute the skill check
+      await executeSkillCheck(skill);
+   }
+   
+   async function executeSkillCheck(skill: string) {
+      if (!currentEvent || !checkHandler || !resultHandler) return;
+      
+      // Spend player action
+      if (currentUserId) {
+         spendPlayerAction(currentUserId, TurnPhase.EVENTS);
+      }
+      
+      await checkHandler.executeCheck({
+         checkType: 'event',
+         item: currentEvent,
+         skill,
+         
+         onStart: () => {
+            console.log(`🎬 [EventsPhase] Starting event check with skill: ${skill}`);
+            isRolling = true;
+         },
+         
+         onComplete: async (result: any) => {
+            console.log(`✅ [EventsPhase] Event check completed:`, result.outcome);
+            isRolling = false;
+            
+            // Get display data from controller
+            const displayData = await resultHandler.getDisplayData(
+               currentEvent,
+               result.outcome,
+               result.actorName
+            );
+            
+            // Set resolution state
+            eventResolution = {
+               outcome: result.outcome,
+               actorName: result.actorName,
+               skillName: skill,
+               effect: displayData.effect,
+               stateChanges: displayData.stateChanges || {},
+               modifiers: displayData.modifiers || [],
+               manualEffects: displayData.manualEffects || [],
+               rollBreakdown: result.rollBreakdown
+            };
+            eventResolved = true;
+         },
+         
+         onCancel: () => {
+            console.log(`🚫 [EventsPhase] Event check cancelled - resetting state`);
+            isRolling = false;
+            eventResolution = null;
+            eventResolved = false;
+            
+            // Restore player action
+            if (currentUserId) {
+               resetPlayerAction(currentUserId);
+            }
+         },
+         
+         onError: (error: Error) => {
+            console.error(`❌ [EventsPhase] Error in event check:`, error);
+            isRolling = false;
+            ui?.notifications?.error(`Failed to perform event check: ${error.message}`);
+         }
+      });
+   }
+   
+   // Event handler - apply result
+   async function handleApplyResult(event: CustomEvent) {
+      if (!eventResolution || !currentEvent || !resultHandler) return;
+      
+      console.log(`📝 [EventsPhase] Applying event result:`, eventResolution.outcome);
+      
+      // Parse resolution data
+      const { createOutcomeResolutionService } = await import('../../../services/resolution');
+      const resolutionService = await createOutcomeResolutionService();
+      const resolutionData = resolutionService.fromEventDetail(event.detail);
+      
+      // Apply through controller
+      const result = await resultHandler.applyResolution(
+         currentEvent,
+         eventResolution.outcome,
+         resolutionData
+      );
+      
+      if (result.success) {
+         console.log(`✅ [EventsPhase] Event resolution applied successfully`);
+         ui?.notifications?.info(`Event resolved: ${currentEvent.name}`);
+         
+         // Parse shortfall information
+         const shortfalls: string[] = [];
+         if (result.applied?.specialEffects) {
+            for (const effect of result.applied.specialEffects) {
+               if (effect.startsWith('shortage_penalty:')) {
+                  shortfalls.push(effect.split(':')[1]);
+               }
+            }
+         }
+         
+         if (shortfalls.length > 0) {
+            eventResolution.shortfallResources = shortfalls;
+         }
+      } else {
+         console.error(`❌ [EventsPhase] Failed to apply event resolution:`, result.error);
+         ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
+      }
+   }
+   
+   // Event handler - cancel resolution
+   function handleCancel() {
+      console.log(`🔄 [EventsPhase] User cancelled outcome - resetting for re-roll`);
+      eventResolution = null;
+      eventResolved = false;
+      
+      // Restore player action
+      if (currentUserId) {
+         resetPlayerAction(currentUserId);
+      }
+   }
+   
+   // Event handler - reroll with fame
+   async function handleReroll(event: CustomEvent) {
+      if (!currentEvent || !eventResolution) return;
+      
+      console.log(`🔁 [EventsPhase] Rerolling event with fame`);
+      const { handleRerollWithFame } = await import('../../../controllers/shared/RerollHelpers');
+      
+      await handleRerollWithFame({
+         currentItem: currentEvent,
+         selectedSkill: eventResolution.skillName,
+         phaseName: 'eventsPhase',
+         resetUiState: handleCancel,
+         triggerRoll: async (skill: string) => {
+            await executeSkillCheck(skill);
+         }
+      });
+   }
+   
+   // Event handler - ignore event
+   async function handleIgnore() {
+      if (!currentEvent || !eventPhaseController) return;
+      
+      console.log(`🚫 [EventsPhase] Ignoring event: ${currentEvent.name}`);
+      
+      const currentTurn = $kingdomData.currentTurn || 1;
+      const result = await eventPhaseController.ignoreEvent(currentEvent, currentTurn);
+      
+      if (result.success) {
+         console.log(`✅ [EventsPhase] Event ignored successfully`);
+         ui?.notifications?.info(`Event ignored - failure effects applied`);
+         
+         // Show as resolved with failure outcome
+         const displayData = await resultHandler.getDisplayData(currentEvent, 'failure', 'Ignored');
+         eventResolution = {
+            outcome: 'failure',
+            actorName: 'Ignored',
+            skillName: 'ignored',
+            effect: displayData.effect,
+            stateChanges: displayData.stateChanges || {},
+            modifiers: displayData.modifiers || [],
+            manualEffects: displayData.manualEffects || []
+         };
+         eventResolved = true;
+      } else {
+         console.error(`❌ [EventsPhase] Failed to ignore event:`, result.error);
+         ui?.notifications?.error(`Failed to ignore event: ${result.error || 'Unknown error'}`);
+      }
+   }
+   
+   // Event handler - aid another
+   function handleAid() {
+      if (!currentEvent) return;
+      showAidSelectionDialog = true;
+   }
+   
+   // Aid dialog confirmation
+   async function handleAidConfirm(event: CustomEvent) {
+      showAidSelectionDialog = false;
+      const { skill } = event.detail;
+      
+      // Execute aid roll similar to ActionsPhase pattern
+      await executeAidRoll(skill);
+   }
+   
+   // Aid dialog cancellation
+   function handleAidCancel() {
+      showAidSelectionDialog = false;
+   }
+   
+   // Execute aid roll
+   async function executeAidRoll(skill: string) {
+      if (!currentEvent) return;
+      
+      const game = (window as any).game;
+      
+      // Spend player action
+      if (game?.user?.id) {
+         spendPlayerAction(game.user.id, TurnPhase.EVENTS);
+      }
+      
+      // Get character for roll
+      let actingCharacter = getCurrentUserCharacter();
+      
+      if (!actingCharacter) {
+         actingCharacter = await showCharacterSelectionDialog();
+         if (!actingCharacter) {
+            return; // User cancelled
+         }
+      }
+      
+      // Listen for roll completion
+      const aidRollListener = async (e: any) => {
+         const { checkId, outcome, actorName } = e.detail;
+         
+         if (checkId === `aid-${currentEvent.id}`) {
+            window.removeEventListener('kingdomRollComplete', aidRollListener as any);
+            
+            // Calculate bonus
+            const skillSlug = skill.toLowerCase();
+            const skillData = actingCharacter.skills?.[skillSlug];
+            const proficiencyRank = skillData?.rank || 0;
+            
+            let bonus = 0;
+            let grantKeepHigher = false;
+            
+            if (outcome === 'criticalSuccess') {
+               bonus = 4;
+               grantKeepHigher = true;
+            } else if (outcome === 'success') {
+               if (proficiencyRank === 0) bonus = 1;
+               else if (proficiencyRank <= 2) bonus = 2;
+               else if (proficiencyRank === 3) bonus = 3;
+               else bonus = 4;
+            }
+            
+            // Store aid in turnState
+            const actor = getKingdomActor();
+            if (actor && currentEvent) {
+               await actor.updateKingdom((kingdom) => {
+                  if (!kingdom.turnState?.eventsPhase) return;
+                  if (!kingdom.turnState.eventsPhase.activeAids) {
+                     kingdom.turnState.eventsPhase.activeAids = [];
+                  }
+                  
+                  kingdom.turnState.eventsPhase.activeAids.push({
+                     playerId: game.user.id,
+                     playerName: game.user.name,
+                     characterName: actorName,
+                     targetActionId: currentEvent.id,
+                     skillUsed: skill,
+                     outcome: outcome as any,
+                     bonus,
+                     grantKeepHigher,
+                     timestamp: Date.now()
+                  });
+               });
+               
+               if (bonus > 0 && currentEvent) {
+                  ui?.notifications?.info(`You are now aiding ${currentEvent.name} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
+               } else {
+                  ui?.notifications?.warn(`Your aid attempt failed.`);
+               }
+            }
+         }
+      };
+      
+      window.addEventListener('kingdomRollComplete', aidRollListener as any);
+      
+      try {
+         const characterLevel = actingCharacter.level || 1;
+         const dc = eventPhaseController.getEventDC?.(characterLevel) || 15;
+         
+         await performKingdomActionRoll(
+            actingCharacter,
+            skill,
+            dc,
+            `Aid Another: ${currentEvent?.name || 'Event'}`,
+            `aid-${currentEvent?.id || 'unknown'}`,
+            {
+               criticalSuccess: { description: 'Exceptional aid (+4 bonus and keep higher roll)' },
+               success: { description: 'Helpful aid (bonus based on proficiency)' },
+               failure: { description: 'No effect' },
+               criticalFailure: { description: 'No effect' }
+            },
+            currentEvent?.id
+         );
+      } catch (error) {
+         window.removeEventListener('kingdomRollComplete', aidRollListener as any);
+         console.error('Error performing aid roll:', error);
+         ui?.notifications?.error(`Failed to perform aid: ${error}`);
+      }
+   }
+   
+   // Event handler - debug outcome change
+   async function handleDebugOutcomeChanged(event: CustomEvent) {
+      if (!currentEvent || !resultHandler || !eventResolution) return;
+      
+      const newOutcome = event.detail.outcome;
+      console.log(`🐛 [EventsPhase] Debug outcome changed to: ${newOutcome}`);
+      
+      // Recalculate display data
+      const displayData = await resultHandler.getDisplayData(currentEvent, newOutcome, eventResolution.actorName);
+      eventResolution = {
+         ...eventResolution,
+         outcome: newOutcome,
+         effect: displayData.effect,
+         stateChanges: displayData.stateChanges || {},
+         modifiers: displayData.modifiers || [],
+         manualEffects: displayData.manualEffects || []
+      };
+   }
+   
+   // Action confirmation dialog handlers
+   function handleActionConfirm() {
+      if (pendingSkillExecution) {
+         executeSkillCheck(pendingSkillExecution.skill);
+         pendingSkillExecution = null;
+      }
+      showActionConfirm = false;
+   }
+   
+   function handleActionCancelDialog() {
+      pendingSkillExecution = null;
+      showActionConfirm = false;
+   }
    
    // Handle roll completion to clear aids
    async function handleRollComplete(event: CustomEvent) {
@@ -209,17 +604,26 @@
          <div class="event-body">
             <p class="event-description">{currentEvent.description}</p>
             
-            <!-- Use CheckCard for event resolution -->
-            {#if eventPhaseController && currentEvent}
+            <!-- Use EventCard for event resolution -->
+            {#if currentEvent}
                {#key `${currentEvent.id}-${activeAidsCount}`}
-                  <CheckCard
+                  <EventCard
                      checkType="event"
                      item={currentEvent}
                      {isViewingCurrentPhase}
-                     controller={eventPhaseController}
                      {possibleOutcomes}
                      showAidButton={false}
                      aidResult={aidResultForEvent}
+                     showIgnoreButton={true}
+                     resolved={eventResolved}
+                     resolution={eventResolution}
+                     on:executeSkill={handleExecuteSkill}
+                     on:applyResult={handleApplyResult}
+                     on:cancel={handleCancel}
+                     on:reroll={handleReroll}
+                     on:ignore={handleIgnore}
+                     on:aid={handleAid}
+                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
                   />
                {/key}
             {/if}
@@ -278,6 +682,20 @@
    {/if}
 </div>
 
+<!-- Aid Selection Dialog -->
+<AidSelectionDialog
+   bind:show={showAidSelectionDialog}
+   actionName={currentEvent?.name || ''}
+   on:confirm={handleAidConfirm}
+   on:cancel={handleAidCancel}
+/>
+
+<!-- Action Confirmation Dialog -->
+<ActionConfirmDialog
+   bind:show={showActionConfirm}
+   on:confirm={handleActionConfirm}
+   on:cancel={handleActionCancelDialog}
+/>
 
 <style lang="scss">
    /* Styles remain the same - only logic has changed */

@@ -25,9 +25,9 @@
   disabled={false}
 >
   <div class="card-header-content">
-    <div class="card-main">
-      <strong class="card-name">
-        {name}
+    <div class="card-title-row">
+      <strong class="card-name">{name}</strong>
+      <div class="card-badges">
         {#if resolved}
           <span class="resolved-badge">
             <i class="fas fa-check-circle"></i>
@@ -37,15 +37,15 @@
         {#if !available && missingRequirements.length > 0}
           <span class="requirements-badge">
             <i class="fas fa-exclamation-triangle"></i>
-            Requires: {missingRequirements.join(', ')}
+            {missingRequirements.join(', ')}
           </span>
         {/if}
-      </strong>
-      {#if brief}
-        <span class="card-brief">{brief}</span>
-      {/if}
+        <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
+      </div>
     </div>
-    <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
+    {#if brief}
+      <span class="card-brief">{brief}</span>
+    {/if}
   </div>
 </button>
 
@@ -75,18 +75,16 @@
   
   .card-header-content {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
+    flex-direction: column;
+    gap: 4px;
     width: 100%;
     
-    .card-main {
-      flex: 1;
+    .card-title-row {
       display: flex;
-      flex-direction: column;
-      gap: 4px;
-      text-align: left;
-      min-width: 0;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
       
       .card-name {
         color: var(--text-primary);
@@ -94,9 +92,14 @@
         font-weight: var(--font-weight-semibold);
         line-height: 1.3;
         text-align: left;
+        flex: 1;
+      }
+      
+      .card-badges {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
+        flex-shrink: 0;
         
         .resolved-badge {
           display: inline-flex;
@@ -106,7 +109,7 @@
           background: rgba(34, 197, 94, 0.15);
           border: 1px solid rgba(34, 197, 94, 0.3);
           border-radius: var(--radius-sm);
-          font-size: var(--font-xs);
+          font-size: var(--font-sm);
           font-weight: var(--font-weight-medium);
           line-height: 1.2;
           letter-spacing: 0.05em;
@@ -126,7 +129,7 @@
           background: rgba(251, 191, 36, 0.15);
           border: 1px solid rgba(251, 191, 36, 0.3);
           border-radius: var(--radius-sm);
-          font-size: var(--font-xs);
+          font-size: var(--font-sm);
           font-weight: var(--font-weight-medium);
           line-height: 1.2;
           letter-spacing: 0.05em;
@@ -137,25 +140,22 @@
             font-size: 12px;
           }
         }
-      }
-      
-      .card-brief {
-        color: var(--text-secondary);
-        font-size: var(--font-md);
-        line-height: 1.5;
-        opacity: 0.8;
-        text-align: left;
-        display: block;
+        
+        .expand-icon {
+          color: var(--text-tertiary);
+          transition: transform 0.3s ease;
+          font-size: 14px;
+        }
       }
     }
     
-    .expand-icon {
-      color: var(--text-tertiary);
-      transition: transform 0.3s ease;
-      flex-shrink: 0;
-      font-size: 14px;
-      margin-top: 4px;
-      margin-left: auto;
+    .card-brief {
+      color: var(--text-secondary);
+      font-size: var(--font-md);
+      line-height: 1.5;
+      opacity: 0.8;
+      text-align: left;
+      display: block;
     }
   }
 </style>
