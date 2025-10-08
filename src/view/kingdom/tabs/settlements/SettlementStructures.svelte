@@ -31,7 +31,7 @@
 </div>
 
 <style lang="scss">
-   @import './settlements-shared.scss';
+   @use './settlements-shared.scss';
    
    .detail-section {
       h4 {

@@ -95,7 +95,7 @@
 </div>
 
 <style lang="scss">
-   @import './settlements-shared.scss';
+   @use './settlements-shared.scss';
    
    .settlements-list-panel {
       flex: 0 0 400px;

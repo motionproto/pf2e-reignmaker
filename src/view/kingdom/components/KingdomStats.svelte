@@ -500,10 +500,6 @@
       color: var(--color-success);
    }
    
-   .stat-value.imprisoned {
-      color: var(--color-gray-500);
-   }
-   
    .fame-controls {
       display: flex;
       align-items: center;

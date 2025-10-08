@@ -470,7 +470,6 @@
                               on:keydown={(e) => handleKeydown(e, army.id)}
                               class="inline-input"
                               disabled={isSaving}
-                              autofocus
                            />
                            <button 
                               class="save-btn" 
@@ -490,13 +489,13 @@
                            </button>
                         </div>
                      {:else}
-                        <span 
+                        <button
                            class="editable-cell" 
                            on:click={() => startEdit(army, 'name')}
                            title="Click to edit"
                         >
                            {army.name}
-                        </span>
+                        </button>
                      {/if}
                   </td>
                   
@@ -512,7 +511,6 @@
                               max={partyLevel}
                               class="inline-input"
                               disabled={isSaving}
-                              autofocus
                            />
                            <button 
                               class="save-btn" 
@@ -532,13 +530,20 @@
                            </button>
                         </div>
                      {:else}
-                        <span 
+                        <button
+                           class="editable-cell" 
+                           on:click={() => startEdit(army, 'name')}
+                           title="Click to edit"
+                        >
+                           {army.name}
+                        </button>
+                        <button
                            class="editable-cell level-badge" 
                            on:click={() => startEdit(army, 'level')}
                            title="Click to edit"
                         >
                            {army.level}
-                        </span>
+                        </button>
                      {/if}
                   </td>
                   
@@ -646,8 +651,9 @@
             </div>
             <div class="card-body">
                <div class="card-field">
-                  <label>Name</label>
+                  <label for="new-army-name">Name</label>
                   <input 
+                     id="new-army-name"
                      type="text" 
                      bind:value={newArmyName}
                      placeholder="Army name"
@@ -656,8 +662,9 @@
                   />
                </div>
                <div class="card-field">
-                  <label>Level</label>
+                  <label for="new-army-level">Level</label>
                   <input 
+                     id="new-army-level"
                      type="number" 
                      bind:value={newArmyLevel}
                      min="1"
@@ -686,7 +693,7 @@
             </div>
             <div class="card-body">
                <div class="card-field">
-                  <label>Support Status</label>
+                  <span class="card-field-label">Support Status</span>
                   <span class="support-status {getSupportStatusColor(army)}">
                      <i class="fas {getSupportStatusIcon(army)}"></i>
                      {getSupportStatusText(army)}
@@ -1155,16 +1162,17 @@
             gap: 0.75rem;
             margin-bottom: 1rem;
             
-            .card-field {
-               display: flex;
-               flex-direction: column;
-               gap: 0.25rem;
-               
-               label {
-                  font-size: 0.875rem;
-                  color: var(--color-text-dark-secondary, #7a7971);
+               .card-field {
+                  display: flex;
+                  flex-direction: column;
+                  gap: 0.25rem;
+                  
+                  label {
+                     font-size: 0.875rem;
+                     color: var(--color-text-dark-secondary, #7a7971);
+                     cursor: pointer;
+                  }
                }
-            }
          }
          
          .card-actions {

@@ -37,7 +37,17 @@
 {/if}
 
 <style lang="scss">
-   @import './settlements-shared.scss';
+   .detail-section {
+      margin-bottom: 1.5rem;
+      
+      h4 {
+         margin: 0 0 0.75rem 0;
+         color: var(--color-accent);
+         font-size: var(--font-lg);
+         font-weight: var(--font-weight-semibold);
+         font-family: var(--base-font);
+      }
+   }
    
    .status-list {
       .status-item {

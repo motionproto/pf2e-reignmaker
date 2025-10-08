@@ -211,10 +211,6 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      
-      i {
-        opacity: 0.8;
-      }
     }
   }
   

@@ -68,7 +68,9 @@
 </div>
 
 <style lang="scss">
-   @import './settlements-shared.scss';
+   .detail-section {
+      margin-bottom: 1.5rem;
+   }
    
    .settlement-image {
       img {
