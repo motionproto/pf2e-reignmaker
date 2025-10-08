@@ -62,6 +62,9 @@ export interface Settlement {
   // Tracking
   wasFedLastTurn: boolean; // For gold generation tracking
   
+  // Optional image
+  imagePath?: string;
+  
   // Computed properties (calculated by services dynamically)
   foodConsumption?: number;
   armySupport?: number;

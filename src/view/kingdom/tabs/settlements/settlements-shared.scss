@@ -1,0 +1,92 @@
+// Shared styles for settlements components
+
+.detail-section {
+   margin-bottom: 1.5rem;
+   
+   h4 {
+      margin: 0 0 0.75rem 0;
+      color: var(--color-accent);
+      font-size: var(--font-lg);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--base-font);
+   }
+}
+
+.detail-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 1rem;
+   
+   .detail-item {
+      .label {
+         display: block;
+         font-size: var(--font-md);
+         color: var(--text-secondary);
+         margin-bottom: 0.5rem;
+           font-family: var(--base-font);
+      }
+      
+      .value {
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         
+         i {
+            margin-right: 0.5rem;
+         }
+      }
+   }
+}
+
+// Tier badge styling (used in multiple components)
+.tier-badge {
+   padding: 0.125rem 0.5rem;
+   border-radius: var(--radius-md);
+   font-size: var(--font-md);
+   font-weight: var(--font-weight-medium);
+   
+   &.tier-village { 
+      background: rgba(139, 115, 85, 0.2); 
+      color: #8b7355;
+   }
+   &.tier-town { 
+      background: rgba(205, 133, 63, 0.2); 
+      color: #cd853f;
+   }
+   &.tier-city { 
+      background: rgba(255, 215, 0, 0.2); 
+      color: #ffd700;
+   }
+   &.tier-metropolis { 
+      background: rgba(255, 99, 71, 0.2); 
+      color: #ff6347;
+   }
+}
+
+// Empty state styling
+.empty-state {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   padding: 2rem;
+   text-align: center;
+   color: var(--text-secondary);
+   
+   i {
+      font-size: var(--font-3xl);
+      margin-bottom: 1rem;
+      opacity: var(--opacity-muted);
+   }
+   
+   p {
+      margin: 0.5rem 0;
+      font-size: var(--font-md);
+      
+      
+      &.hint {
+         font-size: var(--font-md);
+         font-style: italic;
+         opacity: var(--opacity-muted);
+      }
+   }
+}

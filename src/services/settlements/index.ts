@@ -145,8 +145,9 @@ export class SettlementService {
   
   /**
    * Check if a settlement can be upgraded
+   * Based on Reignmaker Lite rules: level + structure requirements
    */
-  canUpgradeSettlement(settlement: Settlement, partyLevel: number): {
+  canUpgradeSettlement(settlement: Settlement): {
     canUpgrade: boolean,
     nextTier: SettlementTier | null,
     requirements: string[]
@@ -157,18 +158,18 @@ export class SettlementService {
     switch (settlement.tier) {
       case SettlementTier.VILLAGE:
         nextTier = SettlementTier.TOWN;
-        if (partyLevel < 2) requirements.push('Party level 2+ required');
-        if (settlement.structureIds.length < 2) requirements.push('2+ structures required');
+        if (settlement.level < 2) requirements.push('Settlement level 2 required');
+        if (settlement.structureIds.length < 2) requirements.push('2 structures required');
         break;
       case SettlementTier.TOWN:
         nextTier = SettlementTier.CITY;
-        if (partyLevel < 5) requirements.push('Party level 5+ required');
-        if (settlement.structureIds.length < 4) requirements.push('4+ structures required');
+        if (settlement.level < 5) requirements.push('Settlement level 5 required');
+        if (settlement.structureIds.length < 4) requirements.push('4 structures required');
         break;
       case SettlementTier.CITY:
         nextTier = SettlementTier.METROPOLIS;
-        if (partyLevel < 8) requirements.push('Party level 8+ required');
-        if (settlement.structureIds.length < 8) requirements.push('8+ structures required');
+        if (settlement.level < 8) requirements.push('Settlement level 8 required');
+        if (settlement.structureIds.length < 8) requirements.push('8 structures required');
         break;
       case SettlementTier.METROPOLIS:
         // Already at max tier
@@ -180,6 +181,169 @@ export class SettlementService {
       nextTier,
       requirements
     };
+  }
+  
+  /**
+   * Update settlement properties
+   * 
+   * @param settlementId - Settlement ID
+   * @param updates - Partial settlement updates
+   */
+  async updateSettlement(settlementId: string, updates: Partial<Settlement>): Promise<void> {
+    console.log(`🏰 [SettlementService] Updating settlement: ${settlementId}`);
+    
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    
+    await updateKingdom(kingdom => {
+      const settlement = kingdom.settlements.find(s => s.id === settlementId);
+      if (settlement) {
+        Object.assign(settlement, updates);
+        console.log(`✅ [SettlementService] Updated ${settlement.name}`);
+      } else {
+        console.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
+      }
+    });
+  }
+  
+  /**
+   * Delete a settlement
+   * Marks supported armies as unsupported and removes structures
+   * 
+   * @param settlementId - Settlement ID
+   * @returns Settlement details and counts
+   */
+  async deleteSettlement(settlementId: string): Promise<{
+    name: string;
+    structuresRemoved: number;
+    armiesMarkedUnsupported: number;
+  }> {
+    console.log(`🏰 [SettlementService] Deleting settlement: ${settlementId}`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    const structuresRemoved = settlement.structureIds.length;
+    const armiesMarkedUnsupported = settlement.supportedUnits.length;
+    const settlementName = settlement.name;
+    
+    // Delete settlement and mark armies as unsupported
+    await updateKingdom(k => {
+      // Mark armies as unsupported
+      settlement.supportedUnits.forEach(armyId => {
+        const army = k.armies.find(a => a.id === armyId);
+        if (army) {
+          army.supportedBySettlementId = undefined;
+          army.isSupported = false;
+          // Don't increment turnsUnsupported yet - happens during Upkeep phase
+        }
+      });
+      
+      // Remove settlement
+      k.settlements = k.settlements.filter(s => s.id !== settlementId);
+    });
+    
+    console.log(`✅ [SettlementService] Deleted ${settlementName}: ${structuresRemoved} structures, ${armiesMarkedUnsupported} armies unsupported`);
+    
+    return {
+      name: settlementName,
+      structuresRemoved,
+      armiesMarkedUnsupported
+    };
+  }
+  
+  /**
+   * Upgrade settlement to next tier
+   * Validates requirements before upgrading
+   * 
+   * @param settlementId - Settlement ID
+   */
+  async upgradeSettlement(settlementId: string): Promise<void> {
+    console.log(`🏰 [SettlementService] Upgrading settlement: ${settlementId}`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    // Validate upgrade requirements
+    const { canUpgrade, nextTier, requirements } = this.canUpgradeSettlement(settlement);
+    
+    if (!canUpgrade) {
+      throw new Error(`Cannot upgrade ${settlement.name}: ${requirements.join(', ')}`);
+    }
+    
+    if (!nextTier) {
+      throw new Error(`${settlement.name} is already at maximum tier`);
+    }
+    
+    // Perform upgrade
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s) {
+        s.tier = nextTier;
+      }
+    });
+    
+    console.log(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
+  }
+  
+  /**
+   * Update settlement image
+   * 
+   * @param settlementId - Settlement ID
+   * @param imagePath - Path to image file
+   */
+  async updateSettlementImage(settlementId: string, imagePath: string): Promise<void> {
+    console.log(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
+    
+    await this.updateSettlement(settlementId, { imagePath });
+    
+    console.log(`✅ [SettlementService] Updated settlement image`);
+  }
+  
+  /**
+   * Update settlement level
+   * 
+   * @param settlementId - Settlement ID
+   * @param newLevel - New settlement level (1-20)
+   */
+  async updateSettlementLevel(settlementId: string, newLevel: number): Promise<void> {
+    console.log(`🏰 [SettlementService] Updating settlement level: ${settlementId} → ${newLevel}`);
+    
+    // Validate level range
+    if (newLevel < 1 || newLevel > 20) {
+      throw new Error(`Invalid settlement level: ${newLevel} (must be 1-20)`);
+    }
+    
+    await this.updateSettlement(settlementId, { level: newLevel });
+    
+    console.log(`✅ [SettlementService] Settlement level updated to ${newLevel}`);
   }
 }
 

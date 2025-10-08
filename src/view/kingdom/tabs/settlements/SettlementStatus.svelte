@@ -1,0 +1,65 @@
+<script lang="ts">
+   import type { Settlement } from '../../../../models/Settlement';
+   
+   export let settlement: Settlement;
+</script>
+
+{#if settlement.wasFedLastTurn !== undefined}
+   <div class="detail-section">
+      <h4>Status</h4>
+      <div class="status-list">
+         <div class="status-item">
+            {#if settlement.wasFedLastTurn}
+               <i class="fas fa-check-circle status-good"></i>
+               <span>Fed last turn (generates gold)</span>
+            {:else}
+               <i class="fas fa-exclamation-triangle status-warning"></i>
+               <span>Not fed last turn (no gold generation)</span>
+            {/if}
+         </div>
+         <div class="status-item">
+            {#if settlement.connectedByRoads}
+               <i class="fas fa-check-circle status-good"></i>
+               <span>Connected by roads</span>
+            {:else}
+               <i class="fas fa-times-circle status-bad"></i>
+               <span>Not connected by roads</span>
+            {/if}
+         </div>
+         {#if settlement.supportedUnits.length > 0}
+            <div class="status-item">
+               <i class="fas fa-shield-alt"></i>
+               <span>Supporting {settlement.supportedUnits.length} army unit(s)</span>
+            </div>
+         {/if}
+      </div>
+   </div>
+{/if}
+
+<style lang="scss">
+   @import './settlements-shared.scss';
+   
+   .status-list {
+      .status-item {
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+         padding: 0.5rem 0;
+         font-size: var(--font-md);
+         
+         i {
+            &.status-good {
+               color: var(--color-success);
+            }
+            
+            &.status-warning {
+               color: var(--color-warning);
+            }
+            
+            &.status-bad {
+               color: var(--color-danger);
+            }
+         }
+      }
+   }
+</style>
