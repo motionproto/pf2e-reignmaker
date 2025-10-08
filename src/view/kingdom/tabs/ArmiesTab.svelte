@@ -2,6 +2,7 @@
    import { kingdomData } from '../../../stores/KingdomStore';
    import type { Army } from '../../../models/BuildProject';
    import { SettlementTierConfig } from '../../../models/Settlement';
+   import Button from '../components/baseComponents/Button.svelte';
 
    // Table state
    let searchTerm = '';
@@ -236,7 +237,8 @@
       } catch (error) {
          console.error('Failed to create army:', error);
          // @ts-ignore
-         ui.notifications?.error('Failed to create army');
+         const errorMessage = error instanceof Error ? error.message : 'Failed to create army';
+         ui.notifications?.error(`Failed to create army: ${errorMessage}`);
       } finally {
          isCreatingArmy = false;
       }
@@ -307,7 +309,7 @@
       // @ts-ignore
       const confirmed = await Dialog.confirm({
          title: 'Disband Army',
-         content: `<p>Are you sure you want to disband <strong>${army.name}</strong>?</p><p>This will refund some gold.</p>`,
+         content: `<p>Are you sure you want to disband <strong>${army.name}</strong>?</p><p>This action cannot be undone.</p>`,
          yes: () => true,
          no: () => false
       });
@@ -318,7 +320,7 @@
          const { armyService } = await import('../../../services/army');
          const result = await armyService.disbandArmy(armyId);
          // @ts-ignore
-         ui.notifications?.info(`Disbanded ${result.armyName}, refunded ${result.refund} gold`);
+         ui.notifications?.info(`Disbanded ${result.armyName}`);
       } catch (error) {
          console.error('Failed to disband army:', error);
          // @ts-ignore
@@ -351,10 +353,15 @@
          <h2>Armies</h2>
          <span class="army-count">({totalArmies} total)</span>
       </div>
-      <button class="create-button" on:click={startCreating} disabled={isCreating}>
-         <i class="fas fa-plus"></i>
+      <Button 
+         variant="primary" 
+         icon="fas fa-plus" 
+         iconPosition="left"
+         disabled={isCreating}
+         on:click={startCreating}
+      >
          Create Army
-      </button>
+      </Button>
    </div>
    
    <!-- Summary Stats -->
@@ -397,8 +404,8 @@
       </select>
    </div>
    
-   <!-- Table (Desktop) -->
-   <div class="armies-table-container desktop-only">
+   <!-- Table -->
+   <div class="armies-table-container">
       <table class="armies-table">
          <thead>
             <tr>
@@ -532,13 +539,6 @@
                      {:else}
                         <button
                            class="editable-cell" 
-                           on:click={() => startEdit(army, 'name')}
-                           title="Click to edit"
-                        >
-                           {army.name}
-                        </button>
-                        <button
-                           class="editable-cell level-badge" 
                            on:click={() => startEdit(army, 'level')}
                            title="Click to edit"
                         >
@@ -642,97 +642,6 @@
       </table>
    </div>
    
-   <!-- Card List (Mobile) -->
-   <div class="armies-cards mobile-only">
-      {#if isCreating}
-         <div class="army-card create-card">
-            <div class="card-header">
-               <h4>New Army</h4>
-            </div>
-            <div class="card-body">
-               <div class="card-field">
-                  <label for="new-army-name">Name</label>
-                  <input 
-                     id="new-army-name"
-                     type="text" 
-                     bind:value={newArmyName}
-                     placeholder="Army name"
-                     class="inline-input"
-                     disabled={isCreatingArmy}
-                  />
-               </div>
-               <div class="card-field">
-                  <label for="new-army-level">Level</label>
-                  <input 
-                     id="new-army-level"
-                     type="number" 
-                     bind:value={newArmyLevel}
-                     min="1"
-                     max={partyLevel}
-                     class="inline-input"
-                     disabled={isCreatingArmy}
-                  />
-               </div>
-            </div>
-            <div class="card-actions">
-               <button class="save-btn" on:click={createArmy} disabled={isCreatingArmy}>
-                  <i class="fas fa-check"></i> Create
-               </button>
-               <button class="cancel-btn" on:click={cancelCreating} disabled={isCreatingArmy}>
-                  <i class="fas fa-times"></i> Cancel
-               </button>
-            </div>
-         </div>
-      {/if}
-      
-      {#each paginatedArmies as army}
-         <div class="army-card">
-            <div class="card-header">
-               <h4>{army.name}</h4>
-               <span class="level-badge">Level {army.level}</span>
-            </div>
-            <div class="card-body">
-               <div class="card-field">
-                  <span class="card-field-label">Support Status</span>
-                  <span class="support-status {getSupportStatusColor(army)}">
-                     <i class="fas {getSupportStatusIcon(army)}"></i>
-                     {getSupportStatusText(army)}
-                  </span>
-               </div>
-               {#if army.actorId}
-                  <div class="card-field">
-                     <button class="actor-link full-width" on:click={() => openActorSheet(army)}>
-                        <i class="fas fa-external-link-alt"></i>
-                        Open Character Sheet
-                     </button>
-                  </div>
-               {/if}
-            </div>
-            <div class="card-actions">
-               <button class="edit-btn" on:click={() => startEdit(army, 'name')}>
-                  <i class="fas fa-edit"></i> Edit
-               </button>
-               <button class="delete-btn" on:click={() => deleteArmy(army.id)}>
-                  <i class="fas fa-trash"></i> Disband
-               </button>
-            </div>
-         </div>
-      {/each}
-      
-      {#if paginatedArmies.length === 0 && !isCreating}
-         <div class="empty-state">
-            {#if searchTerm || filterSupport !== 'all'}
-               <i class="fas fa-search"></i>
-               <p>No armies match your filters</p>
-            {:else}
-               <i class="fas fa-shield-alt"></i>
-               <p>No armies recruited yet</p>
-               <p class="hint">Click "Create Army" to get started</p>
-            {/if}
-         </div>
-      {/if}
-   </div>
-   
    <!-- Pagination -->
    {#if totalPages > 1}
       <div class="pagination">
@@ -829,7 +738,7 @@
          
          i {
             font-size: 1.5rem;
-            color: var(--color-primary, #5e0000);
+            color: var(--color-white, #ffffff);
             
             &.status-supported {
                color: #90ee90;
@@ -848,7 +757,7 @@
          
          .summary-label {
             font-size: 0.875rem;
-            color: var(--color-text-dark-secondary, #7a7971);
+            color: var(--text-medium-light, #9e9b8f);
          }
       }
    }
@@ -951,15 +860,12 @@
       border-radius: 0.25rem;
       transition: all 0.2s;
       display: inline-block;
+      background: transparent;
+      border: none;
+      color: var(--color-text-dark-primary, #b5b3a4);
       
       &:hover {
          background: rgba(255, 255, 255, 0.1);
-      }
-      
-      &.level-badge {
-         background: rgba(94, 0, 0, 0.2);
-         color: var(--color-primary, #5e0000);
-         font-weight: var(--font-weight-medium);
       }
    }
    
@@ -1036,11 +942,11 @@
    }
    
    .actor-link {
-      background: rgba(94, 0, 0, 0.2);
-      color: var(--color-primary, #5e0000);
+      background: transparent;
+      color: var(--color-text-dark-primary, #b5b3a4);
       
       &:hover:not(:disabled) {
-         background: rgba(94, 0, 0, 0.3);
+         background: rgba(255, 255, 255, 0.1);
       }
       
       &.full-width {
@@ -1119,96 +1025,6 @@
       color: var(--color-text-dark-secondary, #7a7971);
    }
    
-   /* Mobile Cards */
-   .armies-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      
-      .army-card {
-         background: rgba(0, 0, 0, 0.2);
-         border: 1px solid rgba(255, 255, 255, 0.1);
-         border-radius: 0.375rem;
-         padding: 1rem;
-         
-         &.create-card {
-            border-color: var(--color-primary, #5e0000);
-         }
-         
-         .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            
-            h4 {
-               margin: 0;
-               color: var(--color-text-dark-primary, #b5b3a4);
-            }
-            
-            .level-badge {
-               padding: 0.25rem 0.5rem;
-               background: rgba(94, 0, 0, 0.2);
-               color: var(--color-primary, #5e0000);
-               border-radius: 0.25rem;
-               font-size: 0.875rem;
-               font-weight: var(--font-weight-medium);
-            }
-         }
-         
-         .card-body {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            
-               .card-field {
-                  display: flex;
-                  flex-direction: column;
-                  gap: 0.25rem;
-                  
-                  label {
-                     font-size: 0.875rem;
-                     color: var(--color-text-dark-secondary, #7a7971);
-                     cursor: pointer;
-                  }
-               }
-         }
-         
-         .card-actions {
-            display: flex;
-            gap: 0.5rem;
-            
-            button {
-               flex: 1;
-               padding: 0.5rem;
-               justify-content: center;
-            }
-         }
-      }
-      
-      .empty-state {
-         padding: 3rem;
-         text-align: center;
-         color: var(--color-text-dark-secondary, #7a7971);
-         
-         i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-         }
-         
-         p {
-            margin: 0.5rem 0;
-            
-            &.hint {
-               font-size: 0.875rem;
-               font-style: italic;
-            }
-         }
-      }
-   }
-   
    /* Pagination */
    .pagination {
       display: flex;
@@ -1240,22 +1056,4 @@
       }
    }
    
-   /* Responsive */
-   .desktop-only {
-      display: block;
-   }
-   
-   .mobile-only {
-      display: none;
-   }
-   
-   @media (max-width: 768px) {
-      .desktop-only {
-         display: none;
-      }
-      
-      .mobile-only {
-         display: flex;
-      }
-   }
 </style>

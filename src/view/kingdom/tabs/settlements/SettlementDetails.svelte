@@ -186,10 +186,10 @@
    }
    
    .status-wrapper {
-      border: 2px solid var(--color-accent);
+      border: 1px solid var(--color-accent);
       border-radius: var(--radius-lg);
       padding: 0.75rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
    }
    
    .empty-selection {

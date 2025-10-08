@@ -9,7 +9,7 @@ import type { KingdomData } from '../../actors/KingdomActor';
 
 export class ArmyService {
   /**
-   * Create a new army with NPC actor
+   * Create a new army with NPC actor (routes through GM via socketlib)
    * Auto-assigns to random settlement with available capacity
    * 
    * @param name - Army name
@@ -18,6 +18,31 @@ export class ArmyService {
    * @returns Created army with actorId
    */
   async createArmy(name: string, level: number, actorData?: any): Promise<Army> {
+    const game = (globalThis as any).game;
+    
+    // If user is GM, can execute directly (but still use socket for consistency)
+    if (game?.user?.isGM) {
+      return await this._createArmyInternal(name, level, actorData);
+    }
+    
+    // Non-GM users must route through socketlib
+    const { socketService } = await import('../SocketService');
+    
+    if (!socketService.isAvailable()) {
+      throw new Error('Socket service not available. Please ensure socketlib module is installed and enabled.');
+    }
+    
+    return await socketService.executeOperation('createArmy', name, level, actorData);
+  }
+
+  /**
+   * Internal method - Create army with direct GM permissions
+   * This is called by the socket handler on the GM's client
+   * DO NOT call this directly from UI - use createArmy() instead
+   * 
+   * @internal
+   */
+  async _createArmyInternal(name: string, level: number, actorData?: any): Promise<Army> {
     console.log(`🪖 [ArmyService] Creating army: ${name} (Level ${level})`);
     
     // Generate unique army ID
@@ -65,12 +90,41 @@ export class ArmyService {
   }
   
   /**
-   * Disband an army and refund resources
+   * Disband an army (routes through GM via socketlib)
    * 
    * @param armyId - ID of army to disband
    * @returns Refund amount and army details
    */
   async disbandArmy(armyId: string): Promise<{ 
+    armyName: string; 
+    refund: number;
+    actorId?: string;
+  }> {
+    const game = (globalThis as any).game;
+    
+    // If user is GM, can execute directly (but still use socket for consistency)
+    if (game?.user?.isGM) {
+      return await this._disbandArmyInternal(armyId);
+    }
+    
+    // Non-GM users must route through socketlib
+    const { socketService } = await import('../SocketService');
+    
+    if (!socketService.isAvailable()) {
+      throw new Error('Socket service not available. Please ensure socketlib module is installed and enabled.');
+    }
+    
+    return await socketService.executeOperation('disbandArmy', armyId);
+  }
+
+  /**
+   * Internal method - Disband army with direct GM permissions
+   * This is called by the socket handler on the GM's client
+   * DO NOT call this directly from UI - use disbandArmy() instead
+   * 
+   * @internal
+   */
+  async _disbandArmyInternal(armyId: string): Promise<{ 
     armyName: string; 
     refund: number;
     actorId?: string;
@@ -93,27 +147,35 @@ export class ArmyService {
       throw new Error(`Army with ID ${armyId} not found`);
     }
     
-    // Calculate refund (simple formula - can be enhanced)
-    const refundGold = Math.floor(army.level * 10);
+    const actorId = army.actorId;
     
-    // Remove army and add refund
+    // Remove army from kingdom (no refund)
     await updateKingdom(kingdom => {
       kingdom.armies = kingdom.armies.filter(a => a.id !== armyId);
       
-      if (refundGold > 0) {
-        kingdom.resources.gold = (kingdom.resources.gold || 0) + refundGold;
-      }
+      // Also remove from any settlement's supportedUnits
+      kingdom.settlements.forEach(s => {
+        s.supportedUnits = s.supportedUnits.filter(id => id !== armyId);
+      });
     });
     
-    console.log(`✅ [ArmyService] Army disbanded: ${army.name}, refunded ${refundGold} gold`);
+    // Delete the NPC actor if it exists
+    if (actorId) {
+      const game = (globalThis as any).game;
+      const npcActor = game?.actors?.get(actorId);
+      
+      if (npcActor) {
+        await npcActor.delete();
+        console.log(`🗑️ [ArmyService] Deleted NPC actor: ${actorId}`);
+      }
+    }
     
-    // TODO: Optionally delete NPC actor (or mark as disbanded)
-    // For now, we leave the actor in case players want to keep it
+    console.log(`✅ [ArmyService] Army disbanded: ${army.name}`);
     
     return {
       armyName: army.name,
-      refund: refundGold,
-      actorId: army.actorId
+      refund: 0,
+      actorId: actorId
     };
   }
   
@@ -149,7 +211,11 @@ export class ArmyService {
         name: folderName,
         type: "Actor",
         color: "#5e0000", // Kingdom theme color
-        img: "icons/svg/castle.svg" // Placeholder icon
+        img: "icons/svg/castle.svg", // Placeholder icon
+        // Set default ownership so players can see armies
+        ownership: {
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER
+        }
       });
       
       if (!folder) {
@@ -164,6 +230,10 @@ export class ArmyService {
       name: name,
       type: 'npc',
       folder: folder.id, // Place in folder
+      // Set ownership so all players can see/edit the army actor
+      ownership: {
+        default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+      },
       system: {
         details: {
           level: { value: level },

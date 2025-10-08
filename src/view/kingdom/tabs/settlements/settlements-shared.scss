@@ -23,12 +23,13 @@
          font-size: var(--font-md);
          color: var(--text-secondary);
          margin-bottom: 0.5rem;
-           font-family: var(--base-font);
+         font-family: var(--base-font);
+         font-weight: var(--font-weight-light);
       }
       
       .value {
          color: var(--text-primary);
-         font-size: var(--font-md);
+         font-size: var(--font-lg);
          
          i {
             margin-right: 0.5rem;

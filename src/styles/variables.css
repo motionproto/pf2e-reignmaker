@@ -17,8 +17,8 @@
   --color-gray-950: hsla(229, 6%, 6%, 1);   /* Darkest - unchanged */
   
   /* Accent Colors */
-  --color-crimson: hsl(0, 64%, 35%);
-  --color-crimson-light: hsl(0, 69%, 49%);
+  --color-crimson: hsl(0, 58%, 50%);
+  --color-crimson-light: hsl(0, 78%, 57%);
   --color-crimson-dark: hsla(0, 90%, 25%, 1);
   --color-burgundy: hsla(0, 100%, 18%, 1);
   --color-burgundy-dark: hsla(0, 100%, 11%, 1);
@@ -40,9 +40,9 @@
   --color-green-border: hsla(133, 29%, 32%, 1);
   --color-green-hover: hsla(132, 27%, 31%, 1);
   
-  --color-blue: hsla(207, 90%, 54%, 1);
+  --color-blue: hsl(217, 100%, 80%);
   --color-blue-light: hsla(217, 100%, 65%, 1);
-  --color-blue-bg: hsla(207, 90%, 54%, 0.1);
+  --color-blue-bg: hsla(217, 100%, 30%, 1);
   
   --color-orange: hsla(36, 100%, 50%, 1);
   --color-orange-bg: hsla(46, 100%, 51%, 0.1);
@@ -78,6 +78,7 @@
   --color-success: var(--color-green-light);
   --color-danger: var(--color-crimson-light);
   --color-warning: var(--color-amber);
+  --color-info: var(--color-blue);
   
   /* Status Colors */
   --status-critical-success: var(--color-blue-light);

@@ -105,8 +105,13 @@ Hooks.once('init', () => {
     
     // Initialize socket service SYNCHRONOUSLY so it can register for socketlib.ready hook
     // This must happen before socketlib.ready fires (which is also during init)
-    initializeSocketService();
-    console.log('PF2E ReignMaker | Socket service hook registered (waiting for socketlib.ready)');
+    console.log('PF2E ReignMaker | Calling initializeSocketService()...');
+    try {
+        initializeSocketService();
+        console.log('PF2E ReignMaker | initializeSocketService() completed');
+    } catch (error) {
+        console.error('PF2E ReignMaker | Failed to initialize socket service:', error);
+    }
     
     // Register the hook to add Kingdom icons to party actors
     registerKingdomIconHook();

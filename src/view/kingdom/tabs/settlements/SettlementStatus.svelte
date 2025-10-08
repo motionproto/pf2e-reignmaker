@@ -26,19 +26,13 @@
                <span>Not connected by roads</span>
             {/if}
          </div>
-         {#if settlement.supportedUnits.length > 0}
-            <div class="status-item">
-               <i class="fas fa-shield-alt"></i>
-               <span>Supporting {settlement.supportedUnits.length} army unit(s)</span>
-            </div>
-         {/if}
       </div>
    </div>
 {/if}
 
 <style lang="scss">
    .detail-section {
-      margin-bottom: 1.5rem;
+      margin-bottom: .25rem;
       
       h4 {
          margin: 0 0 0.75rem 0;
@@ -57,6 +51,22 @@
          padding: 0.5rem 0;
          font-size: var(--font-md);
          
+         &.expandable {
+            cursor: pointer;
+            transition: var(--transition-base);
+            
+            &:hover {
+               background: rgba(255, 255, 255, 0.05);
+               border-radius: var(--radius-md);
+            }
+            
+            .expand-icon {
+               margin-left: auto;
+               color: var(--text-secondary);
+               font-size: var(--font-sm);
+            }
+         }
+         
          i {
             &.status-good {
                color: var(--color-success);
@@ -71,5 +81,6 @@
             }
          }
       }
+      
    }
 </style>
