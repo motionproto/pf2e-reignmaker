@@ -102,14 +102,7 @@ export interface KingdomData {
   phaseComplete: boolean;
   oncePerTurnActions: string[];
   
-  // Player actions - simple object instead of Map
-  playerActions: Record<string, {
-    playerId: string;
-    playerName: string;
-    playerColor: string;
-    actionSpent: boolean;
-    spentInPhase?: TurnPhase;
-  }>;
+  // Player actions REMOVED - now using turnState.actionLog instead
   
   // Legacy event/incident fields removed - now in turnState (Phase 7 cleanup)
   // All event/incident state is now in:
@@ -257,8 +250,7 @@ export class KingdomActor extends Actor {
       eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],
       phaseComplete: false,
-      oncePerTurnActions: [],
-      playerActions: {}
+      oncePerTurnActions: []
     };
     
     await this.setKingdom(defaultKingdom);
@@ -410,9 +402,8 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     ongoingEvents: [],
     activeModifiers: [],
     eventDC: 15,  // Default event DC per rules
-    currentPhaseSteps: [],
-    phaseComplete: false,
-    oncePerTurnActions: [],
-    playerActions: {}
-  };
+      currentPhaseSteps: [],
+      phaseComplete: false,
+      oncePerTurnActions: []
+    };
 }

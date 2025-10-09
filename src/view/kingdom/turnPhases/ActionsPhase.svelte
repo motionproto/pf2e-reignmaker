@@ -1,11 +1,7 @@
 <script lang="ts">
   import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
-  import { 
-    spendPlayerAction,
-    resetPlayerAction,
-    getPlayerAction
-  } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
+  import { createGameEffectsService } from '../../../services/GameEffectsService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
@@ -26,9 +22,6 @@
 
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
-  
-  // Import GameEffectsService for action tracking
-  import { createGameEffectsService } from '../../../services/GameEffectsService';
 
   // Initialize controller and service
   let controller: any = null;
@@ -45,8 +38,10 @@
   // Track current player's resolution (temporary until confirmed)
   let resolvedActions = new Map<string, any>();
   
-  // Count of players who have acted
-  $: actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
+  // Count of players who have acted (from actionLog)
+  $: actionsUsed = ($kingdomData.turnState?.actionLog || []).filter((entry: any) => 
+    entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS
+  ).length;
   
   // Force UI update when resolvedActions changes
   $: resolvedActionsSize = resolvedActions.size;
@@ -273,13 +268,8 @@
     // Use the controller to reset the action
     await controller.resetAction(actionId, $kingdomData as any, currentUserId || undefined);
 
-    // Also reset the player action in gameState (unless it's a reroll)
-    if (!skipPlayerActionReset) {
-      const game = (window as any).game;
-      if (game?.user?.id) {
-        resetPlayerAction(game.user.id);
-      }
-    }
+    // Note: Player action resets are handled via actionLog
+    // When a player rerolls, they don't add another actionLog entry
   }
 
   // Listen for roll completion events
@@ -408,12 +398,26 @@
     }
     
     // Check if THIS PLAYER has already performed an action
+    // READ from reactive store (Single Source of Truth) - use actionLog
     const game = (window as any).game;
-    const currentPlayerAction = game?.user?.id ? getPlayerAction(game.user.id) : null;
-    const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+    const actionLog = $kingdomData.turnState?.actionLog || [];
+    // Check if this player has any action entries (actions or events, not incidents)
+    const hasPlayerActed = actionLog.some((entry: any) => 
+      entry.playerId === game?.user?.id && 
+      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+    );
+    
+    console.log('[ActionsPhase] Action tracking check:', {
+      userId: game?.user?.id,
+      actionLogEntries: actionLog.filter((e: any) => e.playerId === game?.user?.id).length,
+      hasPlayerActed,
+      resolvedForThisAction: resolvedActions.has(action.id),
+      actionId: action.id
+    });
     
     if (hasPlayerActed && !resolvedActions.has(action.id)) {
       // This player has already performed an action - show confirmation dialog
+      console.log('[ActionsPhase] Player has already acted - showing confirmation dialog');
       pendingSkillExecution = { event, action };
       showActionConfirm = true;
       return;
@@ -427,22 +431,8 @@
   async function executeSkillAction(event: CustomEvent, action: any) {
     const { skill, checkId, checkName } = event.detail;
     
-    // Spend the player's action when they start a roll (not when it completes)
-    const game = (window as any).game;
-    if (game?.user?.id && !resolvedActions.has(action.id)) {
-            // Ensure player exists before spending
-            let playerAction = getPlayerAction(game.user.id);
-            if (!playerAction) {
-               // Initialize just this player if not found - delegate to store
-               // Note: This would be handled by the KingdomStore initialization
-               console.warn('[ActionsPhase] Player action not found for user:', game.user.id);
-            }
-      
-      const success = spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
-      
-      // Manually update actionsUsed since reactive statement isn't updating immediately
-      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
-    }
+    // Note: Action spending is now handled by GameEffectsService.trackPlayerAction()
+    // which adds an entry to actionLog when the roll completes
     
     // Get character for roll
     let actingCharacter = getCurrentUserCharacter();
@@ -551,13 +541,26 @@
   function handleActionConfirm() {
     if (pendingSkillExecution) {
       const { event, action } = pendingSkillExecution;
-      // User confirmed they want to use another action - execute (action will be spent in executeSkillAction)
+      
+      // Check if this is an aid action confirmation (happens before skill selection)
+      if (action.id === 'aid-pending' && pendingAidAction) {
+        // User confirmed - now show the skill selection dialog
+        showAidSelectionDialog = true;
+        pendingSkillExecution = null;
+        return;
+      }
+      
+      // Regular action - execute (action will be spent in executeSkillAction)
       executeSkillAction(event, action);
       pendingSkillExecution = null;
     }
   }
   
   function handleActionCancel() {
+    // If canceling aid confirmation, also clear the pending aid action
+    if (pendingSkillExecution?.action?.id === 'aid-pending') {
+      pendingAidAction = null;
+    }
     pendingSkillExecution = null;
   }
   
@@ -567,39 +570,71 @@
     resolvedActions.delete(actionId);
     resolvedActions = resolvedActions; // Trigger reactivity
     
-    // Restore the player's action since they're canceling
-    const game = (window as any).game;
-    if (game?.user?.id) {
-      resetPlayerAction(game.user.id);
-    }
+    // Note: Canceling doesn't add to actionLog, so player can still act
   }
   
   // Handle when a structure is successfully queued
-  function handleStructureQueued(event: CustomEvent) {
+  async function handleStructureQueued(event: CustomEvent) {
     const { structureId, settlementId, project } = event.detail;
     
-    // Mark the build-structure action as used for this player
+    // Track the build-structure action in actionLog
     const game = (window as any).game;
-    if (game?.user?.id) {
-      spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
-      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
+    if (game?.user?.id && gameEffectsService) {
+      const actingCharacter = getCurrentUserCharacter();
+      await gameEffectsService.trackPlayerAction(
+        game.user.id,
+        game.user.name,
+        actingCharacter?.name || 'Unknown',
+        'build-structure',
+        TurnPhase.ACTIONS
+      );
     }
     
     // Show success notification
     ui.notifications?.info(`Structure queued successfully!`);
   }
   
-  // Handle Aid Another button click - open dialog for skill selection
+  // Handle Aid Another button click - check if player has acted, then open skill selection dialog
   function handleAid(event: CustomEvent) {
     const { checkId, checkName } = event.detail;
     
     console.log('[ActionsPhase] Aid Another clicked:', { checkId, checkName });
     
+    // Check if THIS PLAYER has already acted - show confirmation dialog
+    // READ from reactive store (Single Source of Truth) - use actionLog
+    const game = (window as any).game;
+    const actionLog = $kingdomData.turnState?.actionLog || [];
+    // Check if this player has any action entries (actions or events, not incidents)
+    const hasPlayerActed = actionLog.some((entry: any) => 
+      entry.playerId === game?.user?.id && 
+      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+    );
+    
+    console.log('[ActionsPhase] Aid action tracking check (before skill selection):', {
+      userId: game?.user?.id,
+      actionLogEntries: actionLog.filter((e: any) => e.playerId === game?.user?.id).length,
+      hasPlayerActed
+    });
+    
+    if (hasPlayerActed) {
+      console.log('[ActionsPhase] Player has already acted - showing confirmation dialog before skill selection');
+      // Store pending aid action so we can open skill selection after confirmation
+      pendingAidAction = { id: checkId, name: checkName };
+      // Create a fake event to pass to the confirmation handler
+      pendingSkillExecution = {
+        event: new CustomEvent('aid', { detail: { checkId, checkName } }),
+        action: { id: `aid-pending`, name: `Aid Another: ${checkName}` }
+      };
+      showActionConfirm = true;
+      return;
+    }
+    
+    // No warning needed - proceed directly to skill selection
     pendingAidAction = { id: checkId, name: checkName };
     showAidSelectionDialog = true;
   }
   
-  // Handle aid dialog confirmation
+  // Handle aid dialog confirmation - skill has been selected
   async function handleAidConfirm(event: CustomEvent) {
     if (!pendingAidAction) return;
     
@@ -608,21 +643,7 @@
     
     console.log('[ActionsPhase] Aid skill selected:', skill);
     
-    // Check if THIS PLAYER has already acted - show confirmation dialog
-    const game = (window as any).game;
-    const currentPlayerAction = game?.user?.id ? getPlayerAction(game.user.id) : null;
-    const hasPlayerActed = currentPlayerAction?.actionSpent || false;
-    
-    if (hasPlayerActed) {
-      pendingSkillExecution = { 
-        event: new CustomEvent('executeSkill', { detail: { skill, checkId: `aid-${pendingAidAction.id}`, checkName: `Aid Another: ${pendingAidAction.name}` } }), 
-        action: { id: `aid-${pendingAidAction.id}`, name: `Aid Another: ${pendingAidAction.name}` }
-      };
-      showActionConfirm = true;
-      return;
-    }
-    
-    // Proceed with aid roll
+    // Proceed with aid roll (action tracking already checked in handleAid)
     await executeAidRoll(skill, pendingAidAction.id, pendingAidAction.name);
     pendingAidAction = null;
   }
@@ -637,11 +658,8 @@
   async function executeAidRoll(skill: string, targetActionId: string, targetActionName: string) {
     const game = (window as any).game;
     
-    // Spend player's action
-    if (game?.user?.id) {
-      spendPlayerAction(game.user.id, TurnPhase.ACTIONS);
-      actionsUsed = Object.values($kingdomData.playerActions || {}).filter((pa: any) => pa.actionSpent).length;
-    }
+    // Note: Aid action spending is handled by GameEffectsService.trackPlayerAction()
+    // after the roll completes (see aidRollListener below)
     
     // Get character for roll
     let actingCharacter = getCurrentUserCharacter();

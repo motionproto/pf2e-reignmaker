@@ -15,7 +15,7 @@
    import type { EventSkill } from '../../../types/events';
    import { eventService } from '../../../controllers/events/event-loader';
    import Button from '../components/baseComponents/Button.svelte';
-   import EventCard from '../components/EventCard.svelte';
+   import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
@@ -30,7 +30,7 @@
    } from '../../../services/pf2e';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
    import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
-   import { spendPlayerAction, getPlayerAction, resetPlayerAction } from '../../../stores/KingdomStore';
+   // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
    
    // Initialize controller and service
    let eventPhaseController: any;
@@ -189,15 +189,54 @@
       })();
    }
    
+   // Build outcomes array for BaseCheckCard
+   $: eventOutcomes = currentEvent ? (() => {
+      const outcomes: Array<{
+         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+         description: string;
+         modifiers?: Array<{ resource: string; value: number }>;
+      }> = [];
+      
+      if (currentEvent.effects.criticalSuccess) {
+         outcomes.push({
+            type: 'criticalSuccess',
+            description: currentEvent.effects.criticalSuccess.msg
+         });
+      }
+      if (currentEvent.effects.success) {
+         outcomes.push({
+            type: 'success',
+            description: currentEvent.effects.success.msg
+         });
+      }
+      if (currentEvent.effects.failure) {
+         outcomes.push({
+            type: 'failure',
+            description: currentEvent.effects.failure.msg
+         });
+      }
+      if (currentEvent.effects.criticalFailure) {
+         outcomes.push({
+            type: 'criticalFailure',
+            description: currentEvent.effects.criticalFailure.msg
+         });
+      }
+      
+      return outcomes;
+   })() : [];
+   
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
       if (!currentEvent || !checkHandler) return;
       
       const { skill } = event.detail;
       
-      // Check if THIS PLAYER has already performed an action
-      const currentPlayerAction = currentUserId ? getPlayerAction(currentUserId) : null;
-      const hasPlayerActed = currentPlayerAction?.actionSpent || false;
+      // Check if THIS PLAYER has already performed an action using actionLog
+      const actionLog = $kingdomData.turnState?.actionLog || [];
+      const hasPlayerActed = actionLog.some((entry: any) => 
+         entry.playerId === currentUserId && 
+         (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      );
       
       if (hasPlayerActed) {
          // Show confirmation dialog
@@ -213,10 +252,8 @@
    async function executeSkillCheck(skill: string) {
       if (!currentEvent || !checkHandler || !resultHandler) return;
       
-      // Spend player action
-      if (currentUserId) {
-         spendPlayerAction(currentUserId, TurnPhase.EVENTS);
-      }
+      // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
+      // when the result is applied
       
       await checkHandler.executeCheck({
          checkType: 'event',
@@ -259,10 +296,7 @@
             eventResolution = null;
             eventResolved = false;
             
-            // Restore player action
-            if (currentUserId) {
-               resetPlayerAction(currentUserId);
-            }
+            // Note: Canceling doesn't add to actionLog, so player can still act
          },
          
          onError: (error: Error) => {
@@ -293,7 +327,6 @@
       
       if (result.success) {
          console.log(`✅ [EventsPhase] Event resolution applied successfully`);
-         ui?.notifications?.info(`Event resolved: ${currentEvent.name}`);
          
          // Parse shortfall information
          const shortfalls: string[] = [];
@@ -320,10 +353,7 @@
       eventResolution = null;
       eventResolved = false;
       
-      // Restore player action
-      if (currentUserId) {
-         resetPlayerAction(currentUserId);
-      }
+      // Note: Canceling doesn't add to actionLog, so player can still act
    }
    
    // Event handler - reroll with fame
@@ -401,10 +431,8 @@
       
       const game = (window as any).game;
       
-      // Spend player action
-      if (game?.user?.id) {
-         spendPlayerAction(game.user.id, TurnPhase.EVENTS);
-      }
+      // Note: Aid action spending is handled by GameEffectsService.trackPlayerAction()
+      // when the aid is stored (see aidRollListener below)
       
       // Get character for roll
       let actingCharacter = getCurrentUserCharacter();
@@ -596,39 +624,40 @@
             <span>Event Triggered! (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})</span>
          </div>
       {/if}
-      <div class="event-card">
-         <div class="event-header">
-            <h3 class="event-title">{currentEvent.name}</h3>
-         </div>
-         
-         <div class="event-body">
-            <p class="event-description">{currentEvent.description}</p>
-            
-            <!-- Use EventCard for event resolution -->
-            {#if currentEvent}
-               {#key `${currentEvent.id}-${activeAidsCount}`}
-                  <EventCard
-                     checkType="event"
-                     item={currentEvent}
-                     {isViewingCurrentPhase}
-                     {possibleOutcomes}
-                     showAidButton={false}
-                     aidResult={aidResultForEvent}
-                     showIgnoreButton={true}
-                     resolved={eventResolved}
-                     resolution={eventResolution}
-                     on:executeSkill={handleExecuteSkill}
-                     on:applyResult={handleApplyResult}
-                     on:cancel={handleCancel}
-                     on:reroll={handleReroll}
-                     on:ignore={handleIgnore}
-                     on:aid={handleAid}
-                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
-                  />
-               {/key}
-            {/if}
-         </div>
-      </div>
+      <!-- Use BaseCheckCard for event resolution -->
+      {#if currentEvent}
+         {#key `${currentEvent.id}-${activeAidsCount}`}
+            <BaseCheckCard
+               id={currentEvent.id}
+               name={currentEvent.name}
+               description={currentEvent.description}
+               skills={currentEvent.skills}
+               outcomes={eventOutcomes}
+               traits={currentEvent.traits || []}
+               checkType="event"
+               expandable={false}
+               showCompletions={false}
+               showAvailability={false}
+               showSpecial={false}
+               showIgnoreButton={true}
+               {isViewingCurrentPhase}
+               {possibleOutcomes}
+               showAidButton={false}
+               aidResult={aidResultForEvent}
+               resolved={eventResolved}
+               resolution={eventResolution}
+               primaryButtonLabel="Apply Result"
+               skillSectionTitle="Choose Your Response:"
+               on:executeSkill={handleExecuteSkill}
+               on:primary={handleApplyResult}
+               on:cancel={handleCancel}
+               on:reroll={handleReroll}
+               on:ignore={handleIgnore}
+               on:aid={handleAid}
+               on:debugOutcomeChanged={handleDebugOutcomeChanged}
+            />
+         {/key}
+      {/if}
    {:else}
       <!-- Event Check Section -->
       <div class="event-check-section">
@@ -747,41 +776,32 @@
       color: var(--text-primary);
    }
    
+   .header-content {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+   }
+   
    .event-traits {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
    }
    
-   .event-trait {
-      padding: 4px 10px;
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
+   .trait-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: rgba(100, 116, 139, 0.1);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
       letter-spacing: 0.05em;
-      text-transform: uppercase;
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-subtle);
-      
-      &.trait-ongoing {
-         background: rgba(251, 191, 36, 0.2);
-         color: var(--color-amber-light);
-         border-color: var(--color-amber);
-      }
-      
-      &.trait-auto-resolve {
-         background: rgba(59, 130, 246, 0.2);
-         color: var(--color-blue);
-         border-color: var(--color-blue);
-      }
-      
-      &.trait-expires {
-         background: rgba(100, 116, 139, 0.2);
-         color: var(--text-secondary);
-         border-color: var(--border-medium);
-      }
+      color: var(--text-tertiary);
+      text-transform: capitalize;
    }
    
    .event-body {

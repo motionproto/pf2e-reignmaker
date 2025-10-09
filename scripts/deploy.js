@@ -55,13 +55,11 @@ if (!fs.existsSync(TARGET_DIR)) {
 const filesToCopy = [
     'module.json',
     'LICENSE',
-    'README.md',
-    'OpenGameLicense.md'
+    'README.md'
 ];
 
 const directoriesToCopy = [
     'dist',
-    'lang',
     'data',
     'img'
 ];

@@ -41,6 +41,7 @@
     modifiers?: Array<{ resource: string; value: number }>;
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
+  export let traits: string[] = [];  // For events/incidents
   
   // Feature flags
   export let expandable: boolean = false;  // Actions only
@@ -78,7 +79,7 @@
   export let aidResult: { outcome: string; bonus: number } | null = null;
   
   // UI customization props
-  export let canPerformMore: boolean = true;
+  export let canPerformMore: boolean = true;  // NOT used for blocking, only for parent logic
   export let currentFame: number = 0;
   export let showFameReroll: boolean = true;
   export let resolvedBadgeText: string = 'Resolved';
@@ -95,6 +96,7 @@
   // UI state only (not business logic)
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
+  let outcomeApplied: boolean = false;  // Track if outcome has been applied
   
   // Get the skill that was used
   $: usedSkill = resolution?.skillName || localUsedSkill || '';
@@ -157,6 +159,9 @@
       resolved = false;
       resolution = null;
       localUsedSkill = '';
+    } else {
+      // For events/incidents, mark as applied (one-time only)
+      outcomeApplied = true;
     }
   }
   
@@ -201,29 +206,24 @@
 </script>
 
 <div class="base-check-card {checkType}-card {!available ? 'not-available' : ''} {expandable && expanded ? 'expanded' : ''} {cardStateClass}">
-  {#if expandable}
-    <!-- Expandable header (actions only) -->
-    <CheckCardHeader
-      {name}
-      {brief}
-      {resolved}
-      {available}
-      {expanded}
-      {resolvedBadgeText}
-      {missingRequirements}
-      on:toggle={toggleExpanded}
-    />
-  {/if}
+  <!-- Header for all card types -->
+  <CheckCardHeader
+    {name}
+    {brief}
+    {resolved}
+    {available}
+    {expanded}
+    {resolvedBadgeText}
+    {missingRequirements}
+    {traits}
+    {expandable}
+    on:toggle={toggleExpanded}
+  />
   
   {#if !expandable || expanded}
     <div class="card-details" class:no-border={!expandable}>
-      {#if !expandable}
-        <!-- Non-expandable cards show description inline -->
-        <CheckCardDescription {description} />
-      {:else}
-        <!-- Expandable cards show description -->
-        <CheckCardDescription {description} />
-      {/if}
+      <!-- Description -->
+      <CheckCardDescription {description} />
       
       <!-- Completion notifications (actions only, stacked results from all players) -->
       {#if showCompletions}
@@ -242,7 +242,7 @@
           manualEffects={resolution.manualEffects || []}
           shortfallResources={resolution.shortfallResources || []}
           rollBreakdown={resolution.rollBreakdown}
-          applied={false}
+          applied={outcomeApplied}
           {primaryButtonLabel}
           {showFameReroll}
           {debugMode}
@@ -318,7 +318,7 @@
                   skill={skillOption.skill}
                   description={skillOption.description || ''}
                   selected={localUsedSkill === skillOption.skill}
-                  disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || (!canPerformMore && checkType === 'action')}
+                  disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability)}
                   loading={isRolling && localUsedSkill === skillOption.skill}
                   on:execute={() => handleSkillClick(skillOption.skill)}
                 />
@@ -397,19 +397,6 @@
         rgba(20, 20, 23, 0.7),
         rgba(15, 15, 17, 0.5));
       border-color: var(--border-subtle);
-      
-      &::after {
-        content: '';
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--color-green);
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-        animation: pulse 2s infinite;
-      }
     }
     
     // Hover states for select state
@@ -606,6 +593,30 @@
     background: rgba(239, 68, 68, 0.15);
     border: 1px solid rgba(239, 68, 68, 0.4);
     color: rgb(239, 68, 68);
+  }
+  
+  .traits-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .trait-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    color: var(--text-tertiary);
+    text-transform: capitalize;
   }
   
   @keyframes pulse {

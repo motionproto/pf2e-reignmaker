@@ -187,22 +187,22 @@ export class ArmyService {
       throw new Error('Foundry VTT not initialized - cannot create actors');
     }
     
-    // Find or create "Kingdom Armies" folder
+    // Find "Kingdom Armies" folder (should be created by initialization hook)
     const folderName = "Kingdom Armies";
     let folder = game.folders.find((f: any) => 
       f.type === "Actor" && f.name === folderName
     );
     
     if (!folder) {
-      console.log(`📁 [ArmyService] Creating "${folderName}" folder...`);
+      // Fallback: Create folder if it doesn't exist (shouldn't happen if hooks ran properly)
+      console.warn(`📁 [ArmyService] "${folderName}" folder not found, creating as fallback...`);
       folder = await game.folders.documentClass.create({
         name: folderName,
         type: "Actor",
-        color: "#5e0000", // Kingdom theme color
-        img: "icons/svg/castle.svg", // Placeholder icon
-        // Set default ownership so players can see armies
+        color: "#5e0000",
+        img: "icons/svg/castle.svg",
         ownership: {
-          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER // Allow all players to create armies
         }
       });
       
@@ -210,7 +210,7 @@ export class ArmyService {
         throw new Error(`Failed to create "${folderName}" folder`);
       }
       
-      console.log(`✅ [ArmyService] Created "${folderName}" folder`);
+      console.log(`✅ [ArmyService] Created "${folderName}" folder with OWNER permissions`);
     }
     
     // Default NPC actor data

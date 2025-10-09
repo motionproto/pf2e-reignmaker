@@ -57,9 +57,23 @@ export class PhaseHandler {
     }
 
     // Complete the step - use KingdomActor data methods only
+    // IMPORTANT: Do this in ONE atomic update to prevent race conditions
+    let stepName = 'Unknown Step';
+    let totalSteps = 0;
+    let completedCount = 0;
+    let phaseComplete = false;
+    
     await updateKingdom(kingdom => {
       // Mark step as completed
       kingdom.currentPhaseSteps[stepIndex].completed = 1;
+      
+      // Calculate completion status
+      totalSteps = kingdom.currentPhaseSteps.length;
+      completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+      phaseComplete = totalSteps > 0 && completedCount === totalSteps;
+      
+      // Update phaseComplete flag atomically
+      kingdom.phaseComplete = phaseComplete;
       
       // Find next incomplete step
       const nextIncompleteIndex = kingdom.currentPhaseSteps.findIndex((s, i) => 
@@ -71,26 +85,16 @@ export class PhaseHandler {
         kingdom.currentPhaseStepIndex = nextIncompleteIndex;
         kingdom.currentStepName = kingdom.currentPhaseSteps[nextIncompleteIndex].name;
       } else {
-        // No more steps - phase might be complete
+        // No more steps - phase is complete
         kingdom.currentPhaseStepIndex = kingdom.currentPhaseSteps.length;
         kingdom.currentStepName = 'Phase Complete';
       }
+      
+      // Store step name for logging
+      stepName = kingdom.currentPhaseSteps[stepIndex]?.name || 'Unknown Step';
     });
 
-    // Get updated kingdom data to check completion
-    const updatedKingdom = actor.getKingdom();
-    const stepName = updatedKingdom?.currentPhaseSteps[stepIndex]?.name || 'Unknown Step';
     console.log(`[PhaseHandler] Completed step ${stepIndex}: '${stepName}'`);
-
-    // Check if all steps are completed
-    const totalSteps = updatedKingdom?.currentPhaseSteps.length || 0;
-    const completedCount = updatedKingdom?.currentPhaseSteps.filter(s => s.completed === 1).length || 0;
-    const phaseComplete = totalSteps > 0 && completedCount === totalSteps;
-
-    // Update the phaseComplete property in KingdomActor
-    await updateKingdom(kingdom => {
-      kingdom.phaseComplete = phaseComplete;
-    });
 
     if (phaseComplete) {
       console.log(`✅ [PhaseHandler] All ${totalSteps} steps completed for phase - phaseComplete set to true`);

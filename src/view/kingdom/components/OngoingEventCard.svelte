@@ -1,6 +1,6 @@
 <script lang="ts">
   import { buildPossibleOutcomes, formatOutcomeMessage } from '../../../controllers/shared/PossibleOutcomeHelpers';
-  import EventCard from './EventCard.svelte';
+  import BaseCheckCard from './BaseCheckCard.svelte';
   
   // Props
   export let modifier: any;                    // ActiveModifier with originalEventData
@@ -13,6 +13,42 @@
   // Extract event data
   $: event = modifier.originalEventData;
   $: possibleOutcomes = event ? buildPossibleOutcomes(event.effects) : [];
+  
+  // Build outcomes array for BaseCheckCard
+  $: eventOutcomes = event ? (() => {
+    const outcomes: Array<{
+      type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+      description: string;
+      modifiers?: Array<{ resource: string; value: number }>;
+    }> = [];
+    
+    if (event.effects.criticalSuccess) {
+      outcomes.push({
+        type: 'criticalSuccess',
+        description: event.effects.criticalSuccess.msg
+      });
+    }
+    if (event.effects.success) {
+      outcomes.push({
+        type: 'success',
+        description: event.effects.success.msg
+      });
+    }
+    if (event.effects.failure) {
+      outcomes.push({
+        type: 'failure',
+        description: event.effects.failure.msg
+      });
+    }
+    if (event.effects.criticalFailure) {
+      outcomes.push({
+        type: 'criticalFailure',
+        description: event.effects.criticalFailure.msg
+      });
+    }
+    
+    return outcomes;
+  })() : [];
   
   // Check if this modifier can be resolved (has original event data)
   $: canResolve = !!event;
@@ -58,16 +94,28 @@
       {#if canResolve}
         <p class="event-description">{event.description}</p>
         
-        <EventCard
+        <BaseCheckCard
+          id={event.id}
+          name={event.name}
+          description={event.description}
+          skills={event.skills}
+          outcomes={eventOutcomes}
+          traits={event.traits || []}
           checkType="event"
-          item={event}
+          expandable={false}
+          showCompletions={false}
+          showAvailability={false}
+          showSpecial={false}
+          showIgnoreButton={false}
           {isViewingCurrentPhase}
           {possibleOutcomes}
-          showIgnoreButton={false}
+          showAidButton={false}
           resolved={false}
           resolution={null}
+          primaryButtonLabel="Apply Result"
+          skillSectionTitle="Choose Your Response:"
           on:executeSkill
-          on:applyResult
+          on:primary
           on:cancel
           on:reroll
           on:debugOutcomeChanged

@@ -1,5 +1,7 @@
 <script lang="ts">
   /**
+   * @deprecated This component has been replaced by BaseCheckCard.svelte
+   * 
    * EventCard - Pure presentation component for event/incident resolution
    * 
    * This component handles the common UI pattern of:
@@ -8,6 +10,13 @@
    * - Result display after resolution
    * 
    * All business logic is handled by the parent component through events
+   * 
+   * **Migration Path:**
+   * - Replace EventCard usage with BaseCheckCard
+   * - Map props: item → id, name, description, skills
+   * - Build outcomes array from item.effects
+   * - Change on:applyResult → on:primary
+   * - See EventsPhase.svelte, UnrestPhase.svelte, or OngoingEventCard.svelte for examples
    */
   
   import { createEventDispatcher } from 'svelte';

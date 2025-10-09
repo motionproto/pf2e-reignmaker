@@ -8,11 +8,11 @@
    export let isViewingCurrentPhase: boolean = true;
    
    // Import UI components
-   import EventCard from '../components/EventCard.svelte';
+   import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
    import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
-   import { spendPlayerAction, getPlayerAction, resetPlayerAction } from '../../../stores/KingdomStore';
+   // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
    
    // UI State only - no business logic
    let phaseExecuting = false;
@@ -128,6 +128,42 @@
       })();
    }
    
+   // Build outcomes array for BaseCheckCard
+   $: incidentOutcomes = currentIncident ? (() => {
+      const outcomes: Array<{
+         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+         description: string;
+         modifiers?: Array<{ resource: string; value: number }>;
+      }> = [];
+      
+      if (currentIncident.effects.criticalSuccess) {
+         outcomes.push({
+            type: 'criticalSuccess',
+            description: currentIncident.effects.criticalSuccess.msg
+         });
+      }
+      if (currentIncident.effects.success) {
+         outcomes.push({
+            type: 'success',
+            description: currentIncident.effects.success.msg
+         });
+      }
+      if (currentIncident.effects.failure) {
+         outcomes.push({
+            type: 'failure',
+            description: currentIncident.effects.failure.msg
+         });
+      }
+      if (currentIncident.effects.criticalFailure) {
+         outcomes.push({
+            type: 'criticalFailure',
+            description: currentIncident.effects.criticalFailure.msg
+         });
+      }
+      
+      return outcomes;
+   })() : [];
+   
    // Initialize phase steps when component mounts
    onMount(async () => {
       console.log('🟡 [UnrestPhase] Component mounted, initializing phase...');
@@ -238,16 +274,7 @@
       
       const { skill } = event.detail;
       
-      // Check if THIS PLAYER has already performed an action
-      const currentPlayerAction = currentUserId ? getPlayerAction(currentUserId) : null;
-      const hasPlayerActed = currentPlayerAction?.actionSpent || false;
-      
-      if (hasPlayerActed) {
-         // For incidents, we don't show confirmation - just notify
-         ui?.notifications?.warn('You have already performed an action this phase.');
-         return;
-      }
-      
+      // Note: Incidents don't consume player actions - they're separate checks
       // Execute the skill check
       await executeSkillCheck(skill);
    }
@@ -255,10 +282,7 @@
    async function executeSkillCheck(skill: string) {
       if (!currentIncident || !checkHandler || !resultHandler) return;
       
-      // Spend player action
-      if (currentUserId) {
-         spendPlayerAction(currentUserId, TurnPhase.UNREST);
-      }
+      // Note: Incidents don't consume player actions - they're separate checks
       
       await checkHandler.executeCheck({
          checkType: 'incident',
@@ -301,10 +325,7 @@
             incidentResolution = null;
             incidentResolved = false;
             
-            // Restore player action
-            if (currentUserId) {
-               resetPlayerAction(currentUserId);
-            }
+            // Note: Incidents don't consume player actions
          },
          
          onError: (error: Error) => {
@@ -335,7 +356,6 @@
       
       if (result.success) {
          console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
-         ui?.notifications?.info(`Incident resolved: ${currentIncident.name}`);
          
          // Parse shortfall information
          const shortfalls: string[] = [];
@@ -362,10 +382,7 @@
       incidentResolution = null;
       incidentResolved = false;
       
-      // Restore player action
-      if (currentUserId) {
-         resetPlayerAction(currentUserId);
-      }
+      // Note: Incidents don't consume player actions
    }
    
    // Event handler - reroll with fame
@@ -496,52 +513,47 @@
    
    <!-- Step 2: Incident Results -->
    {#if showIncidentResult}
-      <div class="incident-section">
-         <div class="incident-result-container">
-            {#if currentIncident}
-               <div class="incident-display">
-                  <div class="incident-info">
-                     <div class="incident-name">{currentIncident.name}</div>
-                     <div class="incident-description">{currentIncident.description}</div>
-                     {#if currentIncident.severity}
-                        <div class="incident-level-badge level-{currentIncident.severity}">
-                           {currentIncident.severity.toUpperCase()}
-                        </div>
-                     {/if}
-                  </div>
-                  
-                  <!-- Use EventCard for incident resolution - only show when controller is ready -->
-                  {#if unrestPhaseController}
-                     <EventCard
-                        checkType="incident"
-                        item={currentIncident}
-                        {isViewingCurrentPhase}
-                        {possibleOutcomes}
-                        showIgnoreButton={false}
-                        showAidButton={false}
-                        resolved={incidentResolved}
-                        resolution={incidentResolution}
-                        on:executeSkill={handleExecuteSkill}
-                        on:applyResult={handleApplyResult}
-                        on:cancel={handleCancel}
-                        on:reroll={handleReroll}
-                        on:debugOutcomeChanged={handleDebugOutcomeChanged}
-                     />
-                  {:else}
-                     <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
-                        <i class="fas fa-spinner fa-spin"></i> Loading...
-                     </div>
-                  {/if}
-               </div>
-            {:else}
-               <div class="no-incident">
-                  <i class="fas fa-shield-alt no-incident-icon"></i>
-                  <div class="no-incident-text">No Incident</div>
-                  <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
-               </div>
-            {/if}
+      {#if currentIncident}
+         <!-- Use BaseCheckCard for incident resolution - only show when controller is ready -->
+         {#if unrestPhaseController}
+            <BaseCheckCard
+                     id={currentIncident.id}
+                     name={currentIncident.name}
+                     description={currentIncident.description}
+                     skills={currentIncident.skills}
+                     outcomes={incidentOutcomes}
+                     traits={currentIncident.traits || []}
+                     checkType="incident"
+                     expandable={false}
+                     showCompletions={false}
+                     showAvailability={false}
+                     showSpecial={false}
+                     showIgnoreButton={false}
+                     {isViewingCurrentPhase}
+                     {possibleOutcomes}
+                     showAidButton={false}
+                     resolved={incidentResolved}
+                     resolution={incidentResolution}
+                     primaryButtonLabel="Apply Result"
+                     skillSectionTitle="Choose Your Response:"
+                     on:executeSkill={handleExecuteSkill}
+                     on:primary={handleApplyResult}
+                     on:cancel={handleCancel}
+                     on:reroll={handleReroll}
+                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
+                  />
+         {:else}
+            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+               <i class="fas fa-spinner fa-spin"></i> Loading...
+            </div>
+         {/if}
+      {:else}
+         <div class="no-incident">
+            <i class="fas fa-shield-alt no-incident-icon"></i>
+            <div class="no-incident-text">No Incident</div>
+            <div class="no-incident-desc">The kingdom avoids crisis this turn</div>
          </div>
-      </div>
+      {/if}
    {/if}
 </div>
 

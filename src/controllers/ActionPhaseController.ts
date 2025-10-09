@@ -108,57 +108,80 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Check if a specific player has spent their action
+     * Check if a specific player has spent their action (using actionLog)
      */
     hasPlayerActed(playerId: string): boolean {
-      const { getTurnManager } = require('../stores/KingdomStore')
-      const manager = getTurnManager()
-      if (!manager) return false
-      
-      const playerAction = manager.getPlayerAction(playerId)
-      return playerAction?.actionSpent === true
+      const kingdom = get(kingdomData)
+      const actionLog = kingdom.turnState?.actionLog || []
+      return actionLog.some((entry: any) => 
+        entry.playerId === playerId && 
+        (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      )
     },
 
     /**
-     * Get all players who have spent their actions
+     * Get all players who have spent their actions (using actionLog)
      */
     getPlayersWhoActed(): string[] {
       const kingdom = get(kingdomData)
-      return Object.values(kingdom.playerActions || {})
-        .filter((action: any) => action.actionSpent)
-        .map((action: any) => action.playerId)
+      const actionLog = kingdom.turnState?.actionLog || []
+      const actedPlayerIds = new Set<string>()
+      actionLog.forEach((entry: any) => {
+        if (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS) {
+          actedPlayerIds.add(entry.playerId)
+        }
+      })
+      return Array.from(actedPlayerIds)
     },
 
     /**
-     * Get all players who haven't spent their actions
+     * Get all players who haven't spent their actions (using actionLog)
      */
     getPlayersWhoHaventActed(): string[] {
       const kingdom = get(kingdomData)
-      return Object.values(kingdom.playerActions || {})
-        .filter((action: any) => !action.actionSpent)
-        .map((action: any) => action.playerId)
+      const actionLog = kingdom.turnState?.actionLog || []
+      const game = (window as any).game
+      
+      const allPlayerIds = game?.users?.filter((u: any) => !u.isGM).map((u: any) => u.id) || []
+      const actedPlayerIds = new Set<string>()
+      actionLog.forEach((entry: any) => {
+        if (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS) {
+          actedPlayerIds.add(entry.playerId)
+        }
+      })
+      
+      return allPlayerIds.filter((id: string) => !actedPlayerIds.has(id))
     },
 
     /**
-     * Check if all players have taken their actions
+     * Check if all players have taken their actions (using actionLog)
      */
     haveAllPlayersActed(): boolean {
       const kingdom = get(kingdomData)
-      const playerActions = Object.values(kingdom.playerActions)
+      const actionLog = kingdom.turnState?.actionLog || []
+      const game = (window as any).game
+      const totalPlayers = game?.users?.filter((u: any) => !u.isGM)?.length || 0
       
-      if (playerActions.length === 0) return false
+      if (totalPlayers === 0) return false
       
-      return playerActions.every(action => action.actionSpent)
+      const actedPlayerIds = new Set<string>()
+      actionLog.forEach((entry: any) => {
+        if (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS) {
+          actedPlayerIds.add(entry.playerId)
+        }
+      })
+      
+      return actedPlayerIds.size === totalPlayers
     },
 
     /**
-     * Get display data for the UI
+     * Get display data for the UI (using actionLog)
      */
     getDisplayData() {
       const kingdom = get(kingdomData)
-      const playerActions = Object.values(kingdom.playerActions)
-      const actedCount = playerActions.filter(action => action.actionSpent).length
-      const totalPlayers = playerActions.length
+      const game = (window as any).game
+      const totalPlayers = game?.users?.filter((u: any) => !u.isGM)?.length || 0
+      const actedCount = this.getPlayersWhoActed().length
       
       return {
         totalPlayers,
@@ -167,24 +190,17 @@ export async function createActionPhaseController() {
         allPlayersActed: actedCount === totalPlayers && totalPlayers > 0,
         playersWhoActed: this.getPlayersWhoActed(),
         playersWhoHaventActed: this.getPlayersWhoHaventActed(),
-        actionsCompleted: isStepCompletedByIndex(0)  // Step 0 = perform-actions
+        actionsCompleted: isStepCompletedByIndex(0)
       }
     },
 
     /**
-     * Reset player actions for the turn (called by TurnManager)
+     * Reset player actions - no longer needed, handled by turnState reset
      */
     async resetPlayerActions() {
-      const actor = getKingdomActor()
-      if (actor) {
-        await actor.updateKingdom((kingdom) => {
-          Object.values(kingdom.playerActions).forEach(action => {
-            action.actionSpent = false
-            action.spentInPhase = undefined
-          })
-        })
-        console.log('🔄 [ActionPhaseController] Reset all player actions')
-      }
+      // Player actions are now automatically reset via turnState.actionLog reset
+      // (handled by TurnManager.endTurn() which resets entire turnState)
+      console.log('🔄 [ActionPhaseController] Player actions reset via turnState')
     },
 
     /**

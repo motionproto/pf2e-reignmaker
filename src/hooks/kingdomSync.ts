@@ -53,6 +53,7 @@ function setupGameHooks(): void {
   // Hook for ready state - find or create kingdom actor
   Hooks.on('ready', () => {
     initializeKingdomActor();
+    initializeKingdomArmiesFolder();
   });
 }
 
@@ -76,6 +77,65 @@ async function initializeKingdomActor(): Promise<void> {
   await loadTerritoryData();
   
   console.log(`[Kingdom Sync] Kingdom actor initialized: ${kingdomActor.name}`);
+}
+
+/**
+ * Initialize Kingdom Armies folder with proper permissions
+ * Called during module startup to ensure folder exists before armies are created
+ */
+async function initializeKingdomArmiesFolder(): Promise<void> {
+  try {
+    // Only GMs can create folders
+    if (!game.user?.isGM) {
+      return;
+    }
+
+    const folderName = "Kingdom Armies";
+    
+    // Check if folder already exists
+    let folder = game.folders?.find((f: any) => 
+      f.type === "Actor" && f.name === folderName
+    );
+    
+    if (folder) {
+      // Folder exists - verify and fix permissions if needed
+      const currentOwnership = folder.ownership || {};
+      const needsUpdate = currentOwnership.default !== CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
+      
+      if (needsUpdate) {
+        console.log(`[Kingdom Sync] Updating "${folderName}" folder permissions...`);
+        await folder.update({
+          ownership: {
+            ...currentOwnership,
+            default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+          }
+        });
+        console.log(`✅ [Kingdom Sync] "${folderName}" folder permissions updated to OWNER`);
+      } else {
+        console.log(`[Kingdom Sync] "${folderName}" folder already has correct permissions`);
+      }
+    } else {
+      // Folder doesn't exist - create it
+      console.log(`[Kingdom Sync] Creating "${folderName}" folder...`);
+      folder = await game.folders.documentClass.create({
+        name: folderName,
+        type: "Actor",
+        color: "#5e0000",
+        img: "icons/svg/castle.svg",
+        ownership: {
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+        }
+      });
+      
+      if (folder) {
+        console.log(`✅ [Kingdom Sync] "${folderName}" folder created with OWNER permissions`);
+      } else {
+        console.error(`❌ [Kingdom Sync] Failed to create "${folderName}" folder`);
+      }
+    }
+  } catch (error) {
+    console.error('[Kingdom Sync] Error initializing Kingdom Armies folder:', error);
+  }
 }
 
 /**

@@ -125,14 +125,10 @@ export async function createUnrestPhaseController() {
           console.log('⚠️ [UnrestPhaseController] Incident check requires manual roll (tier', tier, ')');
         }
         
-        // Step 2: Resolve Incident - CONDITIONAL
-        // Only auto-complete if no active incident exists
-        if (!hasActiveIncident) {
-          await completePhaseStepByIndex(2); // Step 2: Auto-complete if no incident
-          console.log('✅ [UnrestPhaseController] Incident resolution auto-completed (no active incident)');
-        } else {
-          console.log('⚠️ [UnrestPhaseController] Incident resolution requires manual completion');
-        }
+        // Step 2: Resolve Incident - Will be completed by:
+        // 1. checkForIncidents() if no incident triggers
+        // 2. resolveIncident() after user applies the result
+        console.log('⚠️ [UnrestPhaseController] Step 2 (Resolve Incident) awaits completion via incident flow');
         
         console.log('✅ [UnrestPhaseController] Phase initialization complete');
         
@@ -254,6 +250,15 @@ export async function createUnrestPhaseController() {
         return { success: false, error: 'No kingdom actor' };
       }
 
+      // DIAGNOSTIC: Check current phase and steps BEFORE applying
+      const kingdom = actor.getKingdom();
+      if (kingdom) {
+        console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - Current state BEFORE resolution:');
+        console.log('  - Current Phase:', kingdom.currentPhase);
+        console.log('  - Current Phase Steps:', kingdom.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
+        console.log('  - Phase Complete Flag:', kingdom.phaseComplete);
+      }
+
       console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`);
 
       try {
@@ -267,7 +272,13 @@ export async function createUnrestPhaseController() {
         }
 
         // Get the outcome effects from the incident
-        const effectOutcome = incident.effects?.[outcome];
+        let effectOutcome = incident.effects?.[outcome];
+        
+        // For incidents: critical success uses success outcome (by design)
+        if (!effectOutcome && outcome === 'criticalSuccess') {
+          effectOutcome = incident.effects?.success;
+        }
+        
         if (!effectOutcome) {
           throw new Error(`No effects defined for outcome: ${outcome}`);
         }
@@ -301,10 +312,35 @@ export async function createUnrestPhaseController() {
 
         console.log(`✅ [UnrestPhaseController] Incident resolved: ${effectOutcome.msg}`);
         
-        // Complete step 2 (resolve incident)
-        await completePhaseStepByIndex(2);
+        // DIAGNOSTIC: Check state AFTER applying effects but BEFORE completing step
+        const kingdomAfterEffects = actor.getKingdom();
+        if (kingdomAfterEffects) {
+          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - State AFTER effects but BEFORE step completion:');
+          console.log('  - Current Phase:', kingdomAfterEffects.currentPhase);
+          console.log('  - Current Phase Steps:', kingdomAfterEffects.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
+        }
         
-        return { 
+        // Complete step 2 (resolve incident)
+        console.log('🔧 [UnrestPhaseController] Calling completePhaseStepByIndex(2)...');
+        const completionResult = await completePhaseStepByIndex(2);
+        console.log(`📋 [UnrestPhaseController] Step 2 completion result:`, completionResult);
+        
+        // DIAGNOSTIC: Check state AFTER completing step
+        const kingdomAfterStep = actor.getKingdom();
+        if (kingdomAfterStep) {
+          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - State AFTER step completion:');
+          console.log('  - Current Phase:', kingdomAfterStep.currentPhase);
+          console.log('  - Current Phase Steps:', kingdomAfterStep.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
+          console.log('  - Phase Complete Flag:', kingdomAfterStep.phaseComplete);
+        }
+        
+        if (completionResult.phaseComplete) {
+          console.log(`🎉 [UnrestPhaseController] Phase marked as complete!`);
+        } else {
+          console.log(`⚠️ [UnrestPhaseController] Phase NOT marked as complete - investigating...`);
+        }
+        
+        return {
           success: true, 
           outcome: outcome,
           message: effectOutcome.msg,

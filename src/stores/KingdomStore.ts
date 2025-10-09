@@ -156,44 +156,17 @@ export function isCurrentPhaseComplete(): boolean {
 // This enforces the Single Source of Truth architecture pattern
 
 /**
- * Player action management - delegated to TurnManager
+ * Player action management - REMOVED (now uses turnState.actionLog)
  */
-
-export function spendPlayerAction(playerId: string, phase: TurnPhase): boolean {
-  const manager = getTurnManager();
-  if (manager) {
-    return manager.spendPlayerAction(playerId, phase);
-  }
-  console.warn('[KingdomStore] No TurnManager available for spendPlayerAction');
-  return false;
-}
-
-export function resetPlayerAction(playerId: string): void {
-  const manager = getTurnManager();
-  if (manager) {
-    manager.resetPlayerAction(playerId);
-  } else {
-    console.warn('[KingdomStore] No TurnManager available for resetPlayerAction');
-  }
-}
-
-export function getPlayerAction(playerId: string): any {
-  const manager = getTurnManager();
-  if (manager) {
-    return manager.getPlayerAction(playerId);
-  }
-  console.warn('[KingdomStore] No TurnManager available for getPlayerAction');
-  return undefined;
-}
 
 /**
- * Initialize all current players - delegated to TurnManager
+ * Initialize all current players
  */
 export function initializeAllPlayers(): void {
-  // TurnManager handles this automatically in constructor
+  // Player tracking is now handled via actionLog in turnState
   // Mark as fully initialized
   isInitialized.set(true);
-  console.log('[KingdomStore] Player initialization delegated to TurnManager');
+  console.log('[KingdomStore] Player tracking uses turnState.actionLog');
 }
 
 /**

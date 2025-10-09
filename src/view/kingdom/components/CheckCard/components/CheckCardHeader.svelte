@@ -9,6 +9,8 @@
   export let expanded: boolean = false;
   export let resolvedBadgeText: string = 'Resolved';
   export let missingRequirements: string[] = [];
+  export let traits: string[] = [];
+  export let expandable: boolean = true;  // Control chevron visibility
   
   const dispatch = createEventDispatcher();
   
@@ -26,13 +28,14 @@
 >
   <div class="card-header-content">
     <div class="card-title-row">
-      <strong class="card-name">{name}</strong>
+      <strong class="card-name" class:unavailable={!available}>{name}</strong>
       <div class="card-badges">
-        {#if resolved}
-          <span class="resolved-badge">
-            <i class="fas fa-check-circle"></i>
-            {resolvedBadgeText}
-          </span>
+        {#if traits && traits.length > 0}
+          <div class="card-traits">
+            {#each traits as trait}
+              <span class="trait-badge">{trait}</span>
+            {/each}
+          </div>
         {/if}
         {#if !available && missingRequirements.length > 0}
           <span class="requirements-badge">
@@ -40,11 +43,13 @@
             {missingRequirements.join(', ')}
           </span>
         {/if}
-        <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
+        {#if expandable}
+          <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
+        {/if}
       </div>
     </div>
     {#if brief}
-      <span class="card-brief">{brief}</span>
+      <span class="card-brief" class:unavailable={!available}>{brief}</span>
     {/if}
   </div>
 </button>
@@ -93,6 +98,11 @@
         line-height: 1.3;
         text-align: left;
         flex: 1;
+        
+        &.unavailable {
+          color: var(--text-secondary);
+          opacity: 0.7;
+        }
       }
       
       .card-badges {
@@ -100,26 +110,6 @@
         align-items: center;
         gap: 8px;
         flex-shrink: 0;
-        
-        .resolved-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          padding: 2px 8px;
-          background: rgba(34, 197, 94, 0.15);
-          border: 1px solid rgba(34, 197, 94, 0.3);
-          border-radius: var(--radius-sm);
-          font-size: var(--font-sm);
-          font-weight: var(--font-weight-medium);
-          line-height: 1.2;
-          letter-spacing: 0.05em;
-          color: var(--color-green);
-          text-transform: uppercase;
-          
-          i {
-            font-size: 12px;
-          }
-        }
         
         .requirements-badge {
           display: inline-flex;
@@ -156,6 +146,34 @@
       opacity: 0.8;
       text-align: left;
       display: block;
+      
+      &.unavailable {
+        color: var(--text-tertiary);
+        opacity: 0.6;
+      }
+    }
+    
+    .card-traits {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    
+    .trait-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: rgba(100, 116, 139, 0.1);
+      border: 1px solid rgba(100, 116, 139, 0.2);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      text-transform: capitalize;
     }
   }
 </style>
