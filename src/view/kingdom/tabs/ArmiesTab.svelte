@@ -3,6 +3,7 @@
    import type { Army } from '../../../models/BuildProject';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import Button from '../components/baseComponents/Button.svelte';
+   import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
 
    // Table state
    let searchTerm = '';
@@ -352,23 +353,6 @@
 </script>
 
 <div class="armies-tab">
-   <!-- Header -->
-   <div class="armies-header">
-      <div class="header-left">
-         <h2>Armies</h2>
-         <span class="army-count">({totalArmies} total)</span>
-      </div>
-      <Button 
-         variant="primary" 
-         icon="fas fa-plus" 
-         iconPosition="left"
-         disabled={isCreating}
-         on:click={startCreating}
-      >
-         Create Army
-      </Button>
-   </div>
-   
    <!-- Summary Stats -->
    <div class="armies-summary">
       <div class="summary-card">
@@ -392,16 +376,19 @@
             <div class="summary-label">Unsupported</div>
          </div>
       </div>
+      <Button 
+         variant="primary" 
+         icon="fas fa-plus" 
+         iconPosition="left"
+         disabled={isCreating}
+         on:click={startCreating}
+      >
+         Create Army
+      </Button>
    </div>
    
    <!-- Filters -->
    <div class="table-controls">
-      <input 
-         type="text" 
-         placeholder="Search armies..." 
-         bind:value={searchTerm}
-         class="search-input"
-      />
       <select bind:value={filterSupport} class="filter-select">
          <option value="all">All Armies</option>
          <option value="supported">Supported Only</option>
@@ -447,24 +434,13 @@
                   <td>—</td>
                   <td>—</td>
                   <td>
-                     <div class="inline-actions">
-                        <button 
-                           class="save-btn" 
-                           on:click={createArmy}
-                           disabled={isCreatingArmy}
-                           title="Create"
-                        >
-                           <i class="fas fa-check"></i>
-                        </button>
-                        <button 
-                           class="cancel-btn" 
-                           on:click={cancelCreating}
-                           disabled={isCreatingArmy}
-                           title="Cancel"
-                        >
-                           <i class="fas fa-times"></i>
-                        </button>
-                     </div>
+                     <InlineEditActions
+                        onSave={createArmy}
+                        onCancel={cancelCreating}
+                        disabled={isCreatingArmy}
+                        saveTitle="Create"
+                        cancelTitle="Cancel"
+                     />
                   </td>
                </tr>
             {/if}
@@ -483,22 +459,11 @@
                               class="inline-input"
                               disabled={isSaving}
                            />
-                           <button 
-                              class="save-btn" 
-                              on:click={() => saveEdit(army.id)}
+                           <InlineEditActions
+                              onSave={() => saveEdit(army.id)}
+                              onCancel={cancelEdit}
                               disabled={isSaving}
-                              title="Save"
-                           >
-                              <i class="fas fa-check"></i>
-                           </button>
-                           <button 
-                              class="cancel-btn" 
-                              on:click={cancelEdit}
-                              disabled={isSaving}
-                              title="Cancel"
-                           >
-                              <i class="fas fa-times"></i>
-                           </button>
+                           />
                         </div>
                      {:else}
                         <button
@@ -524,22 +489,11 @@
                               class="inline-input"
                               disabled={isSaving}
                            />
-                           <button 
-                              class="save-btn" 
-                              on:click={() => saveEdit(army.id)}
+                           <InlineEditActions
+                              onSave={() => saveEdit(army.id)}
+                              onCancel={cancelEdit}
                               disabled={isSaving}
-                              title="Save"
-                           >
-                              <i class="fas fa-check"></i>
-                           </button>
-                           <button 
-                              class="cancel-btn" 
-                              on:click={cancelEdit}
-                              disabled={isSaving}
-                              title="Cancel"
-                           >
-                              <i class="fas fa-times"></i>
-                           </button>
+                           />
                         </div>
                      {:else}
                         <button
@@ -569,22 +523,11 @@
                                  </option>
                               {/each}
                            </select>
-                           <button 
-                              class="save-btn" 
-                              on:click={() => saveEdit(army.id)}
+                           <InlineEditActions
+                              onSave={() => saveEdit(army.id)}
+                              onCancel={cancelEdit}
                               disabled={isSaving}
-                              title="Save"
-                           >
-                              <i class="fas fa-check"></i>
-                           </button>
-                           <button 
-                              class="cancel-btn" 
-                              on:click={cancelEdit}
-                              disabled={isSaving}
-                              title="Cancel"
-                           >
-                              <i class="fas fa-times"></i>
-                           </button>
+                           />
                         </div>
                      {:else}
                         <!-- Display: Click to edit -->
@@ -682,55 +625,11 @@
       padding: 1rem;
    }
    
-   .armies-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      .header-left {
-         display: flex;
-         align-items: baseline;
-         gap: 0.5rem;
-         
-         h2 {
-            margin: 0;
-            color: var(--color-text-dark-primary, #b5b3a4);
-         }
-         
-         .army-count {
-            font-size: 0.875rem;
-            color: var(--color-text-dark-secondary, #7a7971);
-         }
-      }
-      
-      .create-button {
-         padding: 0.5rem 1rem;
-         background: var(--color-primary, #5e0000);
-         border: none;
-         border-radius: 0.375rem;
-         color: white;
-         cursor: pointer;
-         display: flex;
-         align-items: center;
-         gap: 0.5rem;
-         font-weight: var(--font-weight-medium);
-         transition: all 0.2s;
-         
-         &:hover:not(:disabled) {
-            background: rgba(94, 0, 0, 0.8);
-         }
-         
-         &:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-         }
-      }
-   }
-   
    .armies-summary {
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
+      align-items: center;
       
       .summary-card {
          display: flex;
@@ -765,13 +664,16 @@
             color: var(--text-medium-light, #9e9b8f);
          }
       }
+      
+      :global(button) {
+         margin-left: auto;
+      }
    }
    
    .table-controls {
       display: flex;
       gap: 1rem;
       
-      .search-input,
       .filter-select {
          padding: 0.5rem;
          background: rgba(0, 0, 0, 0.3);
@@ -783,10 +685,6 @@
             outline: none;
             border-color: var(--color-primary, #5e0000);
          }
-      }
-      
-      .search-input {
-         flex: 1;
       }
    }
    
@@ -894,13 +792,6 @@
       }
    }
    
-   .inline-actions {
-      display: flex;
-      gap: 0.5rem;
-   }
-   
-   .save-btn,
-   .cancel-btn,
    .delete-btn,
    .actor-link,
    .edit-btn {
@@ -916,24 +807,6 @@
       &:disabled {
          opacity: 0.5;
          cursor: not-allowed;
-      }
-   }
-   
-   .save-btn {
-      background: rgba(144, 238, 144, 0.2);
-      color: #90ee90;
-      
-      &:hover:not(:disabled) {
-         background: rgba(144, 238, 144, 0.3);
-      }
-   }
-   
-   .cancel-btn {
-      background: rgba(255, 107, 107, 0.2);
-      color: #ff6b6b;
-      
-      &:hover:not(:disabled) {
-         background: rgba(255, 107, 107, 0.3);
       }
    }
    

@@ -9,12 +9,25 @@
  * Applied during Status phase each turn.
  */
 
-import type { EventModifier, ResolutionCondition } from '../controllers/events/event-types';
+import type { EventModifier } from '../types/events';
+
+/**
+ * Resolution condition for modifiers that can be resolved
+ */
+export interface ResolutionCondition {
+  type: 'skill' | 'condition';
+  skillResolution?: {
+    dcAdjustment: number;
+  };
+  conditionResolution?: {
+    description: string;
+  };
+}
 
 /**
  * Source types for modifiers
  */
-export type ModifierSourceType = 'event' | 'incident' | 'structure' | 'diplomatic';
+export type ModifierSourceType = 'event' | 'incident' | 'structure' | 'diplomatic' | 'custom';
 
 /**
  * Active modifier affecting the kingdom

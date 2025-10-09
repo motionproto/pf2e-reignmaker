@@ -13,6 +13,7 @@ import {
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
 import { createDefaultTurnState } from '../models/TurnState';
+import { createModifierService } from '../services/ModifierService';
 
 export async function createStatusPhaseController() {
   return {
@@ -44,6 +45,9 @@ export async function createStatusPhaseController() {
         
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
+        
+        // Apply ongoing modifiers (both system and custom)
+        await this.applyOngoingModifiers();
         
         // Auto-complete the single step immediately
         await completePhaseStepByIndex(0);
@@ -122,6 +126,18 @@ export async function createStatusPhaseController() {
         });
         console.log('✨ [StatusPhaseController] Fame initialized to 1');
       }
+    },
+
+    /**
+     * Apply ongoing modifiers using ModifierService
+     * 
+     * This applies ALL ongoing modifiers (both system and custom) each turn.
+     * System modifiers come from events/incidents/structures.
+     * Custom modifiers are created by the user in the ModifiersTab.
+     */
+    async applyOngoingModifiers() {
+      const modifierService = await createModifierService();
+      await modifierService.applyOngoingModifiers();
     },
 
     /**

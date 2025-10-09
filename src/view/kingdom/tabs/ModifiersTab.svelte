@@ -1,211 +1,1094 @@
 <script lang="ts">
    import { kingdomData } from '../../../stores/KingdomStore';
    import type { ActiveModifier } from '../../../models/Modifiers';
+   import type { EventModifier, ResourceType } from '../../../types/events';
+   import Button from '../components/baseComponents/Button.svelte';
+   import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
+   
+   // Filter state
+   let filterSource = 'all'; // 'all', 'event', 'incident', 'structure', 'custom'
+   
+   // Create custom modifier state
+   let isCreatingCustom = false;
+   let newModifierName = '';
+   let newModifierDescription = '';
+   let newModifierEffects: EventModifier[] = [];
+   let isCreating = false;
+   
+   // Edit custom modifier state - open modifier in create view
+   let editingModifierId: string | null = null;
+   
+   // Add effect state (for custom modifiers)
+   let addingEffectToModifier: string | null = null;
+   let newEffectResource: ResourceType = 'gold';
+   let newEffectValue: number = 0;
+   let newEffectDuration: string = 'ongoing';
+   
+   // Resource options for dropdown
+   const resourceOptions: ResourceType[] = [
+      'gold', 'food', 'lumber', 'stone', 'ore', 'unrest', 'fame'
+   ];
+   
+   const durationOptions = [
+      { value: 'immediate', label: 'Immediate' },
+      { value: 'ongoing', label: 'Ongoing' },
+      { value: 'permanent', label: 'Permanent' },
+      { value: '1', label: '1 Turn' },
+      { value: '3', label: '3 Turns' },
+      { value: '5', label: '5 Turns' }
+   ];
    
    // Format duration display
-   function formatDuration(modifier: ActiveModifier, currentTurn: number): string {
-      // ActiveModifier doesn't have duration field - modifiers are removed when expired
-      // This is managed by ModifierService.cleanupExpiredModifiers()
-      return 'Active';
+   function formatDuration(duration: string | number | undefined): string {
+      if (!duration || duration === 'ongoing') return 'Ongoing';
+      if (duration === 'immediate') return 'Immediate';
+      if (duration === 'permanent') return 'Permanent';
+      return `${duration} Turns`;
    }
    
-   // Format effects for display (from EventModifier array)
-   function formatEffects(modifiers: any[]): string[] {
-      const result: string[] = [];
-      
-      if (!modifiers || !Array.isArray(modifiers)) return result;
-      
-      for (const mod of modifiers) {
-         if (mod.type === 'resource') {
-            const sign = mod.value > 0 ? '+' : '';
-            result.push(`${mod.resource}: ${sign}${mod.value}`);
-         } else if (mod.type === 'stat') {
-            const sign = mod.value > 0 ? '+' : '';
-            result.push(`${mod.stat}: ${sign}${mod.value}`);
-         } else if (mod.type === 'skill') {
-            const sign = mod.value > 0 ? '+' : '';
-            result.push(`${sign}${mod.value} to ${mod.skill} checks`);
-         }
+   // Format effects for display
+   function formatEffect(modifier: EventModifier): string {
+      const sign = typeof modifier.value === 'number' && modifier.value > 0 ? '+' : '';
+      const duration = modifier.duration ? ` (${formatDuration(modifier.duration)})` : '';
+      return `${sign}${modifier.value} ${modifier.resource}${duration}`;
+   }
+   
+   // Get icon for source type
+   function getSourceIcon(sourceType: string): string {
+      switch (sourceType) {
+         case 'event': return 'fas fa-calendar-times';
+         case 'incident': return 'fas fa-fire';
+         case 'structure': return 'fas fa-building';
+         case 'custom': return 'fas fa-edit';
+         default: return 'fas fa-question-circle';
       }
-      
-      return result;
+   }
+   
+   // Get color class for source type
+   function getSourceColor(sourceType: string): string {
+      switch (sourceType) {
+         case 'event': return 'source-event';
+         case 'incident': return 'source-incident';
+         case 'structure': return 'source-structure';
+         case 'custom': return 'source-custom';
+         default: return '';
+      }
    }
    
    $: currentTurn = $kingdomData.currentTurn || 1;
    $: activeModifiers = ($kingdomData.activeModifiers || []) as ActiveModifier[];
+   
+   // Separate assigned and custom modifiers
+   $: assignedModifiers = activeModifiers.filter(m => m.sourceType !== 'custom');
+   $: customModifiers = activeModifiers.filter(m => m.sourceType === 'custom');
+   
+   // Apply filters
+   $: filteredAssigned = filterSource === 'all' || filterSource === 'custom'
+      ? assignedModifiers
+      : assignedModifiers.filter(m => m.sourceType === filterSource);
+   
+   $: filteredCustom = filterSource === 'all' || filterSource === 'custom'
+      ? customModifiers
+      : [];
+   
+   // Statistics
+   $: totalModifiers = activeModifiers.length;
+   $: eventModifiers = activeModifiers.filter(m => m.sourceType === 'event').length;
+   $: incidentModifiers = activeModifiers.filter(m => m.sourceType === 'incident').length;
+   $: structureModifiers = activeModifiers.filter(m => m.sourceType === 'structure').length;
+   $: customModifiersCount = customModifiers.length;
+   
+   // Create custom modifier functions
+   function startCreating() {
+      isCreatingCustom = true;
+      newModifierName = '';
+      newModifierDescription = '';
+      newModifierEffects = [];
+   }
+   
+   
+   function addEffectToNew() {
+      newModifierEffects = [
+         ...newModifierEffects,
+         {
+            resource: newEffectResource,
+            value: newEffectValue,
+            duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
+                     newEffectDuration === 'immediate' ? 'immediate' :
+                     newEffectDuration === 'permanent' ? 'permanent' :
+                     parseInt(newEffectDuration)
+         }
+      ];
+      
+      // Reset form
+      newEffectResource = 'gold';
+      newEffectValue = 0;
+      newEffectDuration = 'ongoing';
+   }
+   
+   function removeEffectFromNew(index: number) {
+      newModifierEffects = newModifierEffects.filter((_, i) => i !== index);
+   }
+   
+   async function createOrUpdateCustomModifier() {
+      if (!newModifierName.trim()) {
+         // @ts-ignore
+         ui.notifications?.warn('Modifier name is required');
+         return;
+      }
+      
+      if (newModifierEffects.length === 0) {
+         // @ts-ignore
+         ui.notifications?.warn('At least one effect is required');
+         return;
+      }
+      
+      isCreating = true;
+      try {
+         const { updateKingdom } = await import('../../../stores/KingdomStore');
+         
+         if (editingModifierId) {
+            // Update existing modifier
+            await updateKingdom(k => {
+               const modifier = k.activeModifiers?.find(m => m.id === editingModifierId);
+               if (modifier) {
+                  modifier.name = newModifierName.trim();
+                  modifier.description = newModifierDescription.trim();
+                  modifier.modifiers = newModifierEffects;
+               }
+            });
+            // @ts-ignore
+            ui.notifications?.info(`Updated modifier: ${newModifierName}`);
+         } else {
+            // Create new custom modifier
+            const newModifier: ActiveModifier = {
+               id: `custom-${Date.now()}`,
+               name: newModifierName.trim(),
+               description: newModifierDescription.trim(),
+               icon: 'fas fa-edit',
+               tier: 1,
+               sourceType: 'custom',
+               sourceId: 'custom',
+               sourceName: 'Custom Modifier',
+               startTurn: currentTurn,
+               modifiers: newModifierEffects
+            };
+            
+            await updateKingdom(k => {
+               if (!k.activeModifiers) k.activeModifiers = [];
+               k.activeModifiers.push(newModifier);
+            });
+            // @ts-ignore
+            ui.notifications?.info(`Created custom modifier: ${newModifier.name}`);
+         }
+         
+         cancelCreatingOrEditing();
+      } catch (error) {
+         console.error('Failed to create/update custom modifier:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to create/update custom modifier');
+      } finally {
+         isCreating = false;
+      }
+   }
+   
+   // Edit modifier - open in create view
+   function openModifierInCreateView(modifier: ActiveModifier) {
+      // Populate the create form with the modifier's data
+      isCreatingCustom = true;
+      editingModifierId = modifier.id;
+      newModifierName = modifier.name;
+      newModifierDescription = modifier.description;
+      newModifierEffects = [...modifier.modifiers];
+      
+      // Scroll to top to show the create form
+      const container = document.querySelector('.modifiers-tab');
+      if (container) {
+         container.scrollTop = 0;
+      }
+   }
+   
+   function cancelCreatingOrEditing() {
+      isCreatingCustom = false;
+      editingModifierId = null;
+      newModifierName = '';
+      newModifierDescription = '';
+      newModifierEffects = [];
+   }
+   
+   // Delete custom modifier
+   async function deleteCustomModifier(modifierId: string) {
+      const modifier = customModifiers.find(m => m.id === modifierId);
+      if (!modifier) return;
+      
+      // @ts-ignore
+      const confirmed = await Dialog.confirm({
+         title: 'Delete Custom Modifier',
+         content: `<p>Are you sure you want to delete <strong>${modifier.name}</strong>?</p><p>This action cannot be undone.</p>`,
+         yes: () => true,
+         no: () => false
+      });
+      
+      if (!confirmed) return;
+      
+      try {
+         const { updateKingdom } = await import('../../../stores/KingdomStore');
+         
+         await updateKingdom(k => {
+            if (k.activeModifiers) {
+               k.activeModifiers = k.activeModifiers.filter(m => m.id !== modifierId);
+            }
+         });
+         
+         // @ts-ignore
+         ui.notifications?.info(`Deleted ${modifier.name}`);
+      } catch (error) {
+         console.error('Failed to delete custom modifier:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to delete modifier');
+      }
+   }
+   
+   // Add effect to existing custom modifier
+   function startAddingEffect(modifierId: string) {
+      addingEffectToModifier = modifierId;
+      newEffectResource = 'gold';
+      newEffectValue = 0;
+      newEffectDuration = 'ongoing';
+   }
+   
+   function cancelAddingEffect() {
+      addingEffectToModifier = null;
+   }
+   
+   async function saveNewEffect(modifierId: string) {
+      try {
+         const { updateKingdom } = await import('../../../stores/KingdomStore');
+         
+         await updateKingdom(k => {
+            const modifier = k.activeModifiers?.find(m => m.id === modifierId);
+            if (modifier) {
+               if (!modifier.modifiers) modifier.modifiers = [];
+               modifier.modifiers.push({
+                  resource: newEffectResource,
+                  value: newEffectValue,
+                  duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
+                           newEffectDuration === 'immediate' ? 'immediate' :
+                           newEffectDuration === 'permanent' ? 'permanent' :
+                           parseInt(newEffectDuration)
+               });
+            }
+         });
+         
+         cancelAddingEffect();
+         // @ts-ignore
+         ui.notifications?.info('Effect added');
+      } catch (error) {
+         console.error('Failed to add effect:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to add effect');
+      }
+   }
+   
+   // Remove effect from custom modifier
+   async function removeEffect(modifierId: string, effectIndex: number) {
+      try {
+         const { updateKingdom } = await import('../../../stores/KingdomStore');
+         
+         await updateKingdom(k => {
+            const modifier = k.activeModifiers?.find(m => m.id === modifierId);
+            if (modifier && modifier.modifiers) {
+               modifier.modifiers = modifier.modifiers.filter((_, i) => i !== effectIndex);
+            }
+         });
+      } catch (error) {
+         console.error('Failed to remove effect:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to remove effect');
+      }
+   }
 </script>
 
-<div class="tw-h-full tw-flex tw-flex-col">
-   <div class="tw-mb-4">
-      <h2 class="tw-text-2xl tw-font-bold tw-text-base-content tw-mb-2">Modifiers</h2>
-      <p class="tw-text-base-content/60">Active kingdom modifiers from unresolved events and ongoing effects</p>
+<div class="modifiers-tab">
+   <!-- Summary Stats -->
+   <div class="modifiers-summary">
+      <div class="summary-card">
+         <i class="fas fa-wand-magic-sparkles"></i>
+         <div>
+            <div class="summary-value">{totalModifiers}</div>
+            <div class="summary-label">Total</div>
+         </div>
+      </div>
+      <div class="summary-card assigned">
+         <i class="fas fa-calendar-times"></i>
+         <div>
+            <div class="summary-value">{eventModifiers}</div>
+            <div class="summary-label">Events</div>
+         </div>
+      </div>
+      <div class="summary-card assigned">
+         <i class="fas fa-fire"></i>
+         <div>
+            <div class="summary-value">{incidentModifiers}</div>
+            <div class="summary-label">Incidents</div>
+         </div>
+      </div>
+      <div class="summary-card assigned">
+         <i class="fas fa-building"></i>
+         <div>
+            <div class="summary-value">{structureModifiers}</div>
+            <div class="summary-label">Structures</div>
+         </div>
+      </div>
+      <div class="summary-card custom">
+         <i class="fas fa-edit"></i>
+         <div>
+            <div class="summary-value">{customModifiersCount}</div>
+            <div class="summary-label">Custom</div>
+         </div>
+      </div>
+      <Button 
+         variant="primary" 
+         icon="fas fa-plus" 
+         iconPosition="left"
+         disabled={isCreatingCustom}
+         on:click={startCreating}
+      >
+         Create Modifier
+      </Button>
    </div>
    
-   <!-- Modifiers List -->
-   <div class="tw-flex-1 tw-overflow-y-auto">
-      {#if activeModifiers.length > 0}
-         <div class="tw-grid tw-gap-3">
-            {#each activeModifiers as modifier}
-               <div class="tw-card tw-border-2 tw-shadow-md tw-border-base-300 tw-bg-base-200">
-                  <div class="tw-card-body">
-                     <!-- Header with name and tier -->
-                     <div class="tw-flex tw-justify-between tw-items-start">
-                        <div class="tw-flex-1">
-                           <h4 class="tw-card-title tw-text-lg tw-flex tw-items-center tw-gap-2">
+   <!-- Filters -->
+   <div class="table-controls">
+      <select bind:value={filterSource} class="filter-select">
+         <option value="all">All Modifiers</option>
+         <option value="event">Events Only</option>
+         <option value="incident">Incidents Only</option>
+         <option value="structure">Structures Only</option>
+         <option value="custom">Custom Only</option>
+      </select>
+   </div>
+   
+   <!-- Custom Modifiers Table -->
+   <div class="section">
+      <h3 class="section-title">
+         <i class="fas fa-edit"></i>
+         Custom Modifiers
+      </h3>
+      
+      <div class="modifiers-table-container">
+         <table class="modifiers-table">
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>Effects</th>
+                  <th>Duration</th>
+                  <th>Actions</th>
+               </tr>
+            </thead>
+            <tbody>
+               <!-- Create Row -->
+               {#if isCreatingCustom}
+                  <tr class="create-row">
+                     <td colspan="4">
+                        <div class="create-modifier-form">
+                           <div class="form-row">
+                              <div class="form-field">
+                                 <label>Name</label>
+                                 <input 
+                                    type="text" 
+                                    bind:value={newModifierName}
+                                    placeholder="Modifier name"
+                                    class="inline-input"
+                                    disabled={isCreating}
+                                 />
+                              </div>
+                              <div class="form-field">
+                                 <label>Description</label>
+                                 <input 
+                                    type="text" 
+                                    bind:value={newModifierDescription}
+                                    placeholder="Brief description"
+                                    class="inline-input"
+                                    disabled={isCreating}
+                                 />
+                              </div>
+                           </div>
+                           
+                           <div class="effects-section">
+                              <div class="effects-header">
+                                 <label>Effects</label>
+                              </div>
+                              
+                              <div class="effects-row-builder">
+                                 {#if newModifierEffects.length > 0}
+                                    {#each newModifierEffects as effect, index}
+                                       <div class="effect-item">
+                                          <span class="effect-resource">{effect.resource}:</span>
+                                          <span class="effect-value">{typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}</span>
+                                          <span class="effect-duration">({formatDuration(effect.duration)})</span>
+                                          <button 
+                                             class="remove-effect-btn"
+                                             on:click={() => removeEffectFromNew(index)}
+                                             disabled={isCreating}
+                                             title="Remove effect"
+                                          >
+                                             <i class="fas fa-times"></i>
+                                          </button>
+                                       </div>
+                                    {/each}
+                                 {/if}
+                                 
+                                 <div class="add-effect-inline-builder">
+                                    <select bind:value={newEffectResource} class="effect-select" disabled={isCreating}>
+                                       {#each resourceOptions as resource}
+                                          <option value={resource}>{resource}</option>
+                                       {/each}
+                                    </select>
+                                    <input 
+                                       type="number" 
+                                       bind:value={newEffectValue}
+                                       placeholder="Value"
+                                       class="effect-input"
+                                       disabled={isCreating}
+                                    />
+                                    <select bind:value={newEffectDuration} class="effect-select" disabled={isCreating}>
+                                       {#each durationOptions as option}
+                                          <option value={option.value}>{option.label}</option>
+                                       {/each}
+                                    </select>
+                                    <button 
+                                       class="add-effect-btn" 
+                                       on:click={addEffectToNew}
+                                       disabled={isCreating}
+                                       title="Add effect"
+                                    >
+                                       <i class="fas fa-plus"></i>
+                                    </button>
+                                 </div>
+                              </div>
+                           </div>
+                           
+                           <div class="form-actions">
+                              <InlineEditActions
+                                 onSave={createOrUpdateCustomModifier}
+                                 onCancel={cancelCreatingOrEditing}
+                                 disabled={isCreating}
+                                 saveTitle={editingModifierId ? "Update" : "Create"}
+                                 cancelTitle="Cancel"
+                              />
+                           </div>
+                        </div>
+                     </td>
+                  </tr>
+               {/if}
+               
+               <!-- Data Rows -->
+               {#if filteredCustom.length > 0}
+                  {#each filteredCustom as modifier}
+                     <tr>
+                        <!-- Name Column -->
+                        <td>
+                           <button
+                              class="modifier-name-clickable" 
+                              on:click={() => openModifierInCreateView(modifier)}
+                              title="Click to edit"
+                           >
+                              {modifier.name}
+                           </button>
+                        </td>
+                        
+                        <!-- Effects Column -->
+                        <td>
+                           <div class="effects-tags">
+                              {#if modifier.modifiers && modifier.modifiers.length > 0}
+                                 {#each modifier.modifiers as effect}
+                                    <span class="effect-tag">
+                                       {effect.resource}: {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}
+                                    </span>
+                                 {/each}
+                              {:else}
+                                 <span class="no-effects">No effects</span>
+                              {/if}
+                           </div>
+                        </td>
+                        
+                        <!-- Duration Column -->
+                        <td>
+                           {#if modifier.modifiers && modifier.modifiers[0]?.duration}
+                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration)}</span>
+                           {:else}
+                              <span class="no-effects">—</span>
+                           {/if}
+                        </td>
+                        
+                        <!-- Actions Column -->
+                        <td>
+                           <button 
+                              class="delete-btn" 
+                              on:click={() => deleteCustomModifier(modifier.id)}
+                              title="Delete modifier"
+                           >
+                              <i class="fas fa-trash"></i>
+                           </button>
+                        </td>
+                     </tr>
+                  {/each}
+               {:else if !isCreatingCustom}
+                  <tr>
+                     <td colspan="4" class="empty-state">
+                        <i class="fas fa-edit"></i>
+                        <p>No custom modifiers</p>
+                        <p class="hint">Click "Create Modifier" to add custom effects</p>
+                     </td>
+                  </tr>
+               {/if}
+            </tbody>
+         </table>
+      </div>
+   </div>
+   
+   <!-- Assigned Modifiers Table -->
+   <div class="section">
+      <h3 class="section-title">
+         <i class="fas fa-list"></i>
+         Assigned Modifiers
+      </h3>
+      
+      <div class="modifiers-table-container">
+         <table class="modifiers-table">
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>Source</th>
+                  <th>Effects</th>
+                  <th>Duration</th>
+                  <th>Started</th>
+               </tr>
+            </thead>
+            <tbody>
+               {#if filteredAssigned.length > 0}
+                  {#each filteredAssigned as modifier}
+                     <tr>
+                        <td>
+                           <div class="modifier-name">
                               {#if modifier.icon}
                                  <i class="{modifier.icon}"></i>
                               {/if}
-                              {modifier.name}
-                           </h4>
-                           <p class="tw-text-sm tw-text-base-content/70 tw-mt-1">{modifier.description}</p>
-                           
-                           <!-- Source -->
-                           <div class="tw-text-xs tw-text-base-content/50 tw-mt-2">
-                              Source: {modifier.sourceName} ({modifier.sourceType})
+                              <span class="name">{modifier.name}</span>
                            </div>
-                        </div>
-                        
-                        <!-- Tier Badge -->
-                        <div class="tw-badge tw-badge-lg tw-badge-primary">
-                           Tier {modifier.tier}
-                        </div>
-                     </div>
-                     
-                     <!-- Effects -->
-                     {#if modifier.modifiers && modifier.modifiers.length > 0}
-                        {@const effects = formatEffects(modifier.modifiers)}
-                        {#if effects.length > 0}
-                           <div class="tw-divider tw-my-2"></div>
-                           <div class="tw-flex tw-flex-wrap tw-gap-2">
-                              {#each effects as effect}
-                                 <div class="tw-badge tw-badge-outline tw-badge-sm">
-                                    {effect}
-                                 </div>
-                              {/each}
+                        </td>
+                        <td>
+                           <div class="source-badge {getSourceColor(modifier.sourceType)}">
+                              <i class="{getSourceIcon(modifier.sourceType)}"></i>
+                              {modifier.sourceName}
                            </div>
-                        {/if}
-                     {/if}
-                     
-                     <!-- Resolution Info -->
-                     {#if modifier.resolvedWhen}
-                        <div class="tw-divider tw-my-2"></div>
-                        <div class="tw-text-sm">
-                           <div class="tw-font-semibold tw-text-base-content/80 tw-mb-1">Can be resolved:</div>
-                           {#if modifier.resolvedWhen.type === 'skill' && modifier.resolvedWhen.skillResolution}
-                              <div class="tw-text-xs tw-text-info">
-                                 <i class="fas fa-dice-d20"></i>
-                                 Skill check with DC adjustment: {modifier.resolvedWhen.skillResolution.dcAdjustment > 0 ? '+' : ''}{modifier.resolvedWhen.skillResolution.dcAdjustment}
-                              </div>
+                        </td>
+                        <td>
+                           <div class="effects-tags">
+                              {#if modifier.modifiers && modifier.modifiers.length > 0}
+                                 {#each modifier.modifiers as effect}
+                                    <span class="effect-tag">
+                                       {effect.resource}: {typeof effect.value === 'number' && effect.value > 0 ? '+' : ''}{effect.value}
+                                    </span>
+                                 {/each}
+                              {:else}
+                                 <span class="no-effects">No effects</span>
+                              {/if}
+                           </div>
+                        </td>
+                        <td>
+                           {#if modifier.modifiers && modifier.modifiers[0]?.duration}
+                              <span class="modifier-duration">{formatDuration(modifier.modifiers[0].duration)}</span>
+                           {:else}
+                              <span class="no-effects">—</span>
                            {/if}
-                           {#if modifier.resolvedWhen.type === 'condition' && modifier.resolvedWhen.conditionResolution}
-                              <div class="tw-text-xs tw-text-info tw-mt-1">
-                                 <i class="fas fa-info-circle"></i>
-                                 {modifier.resolvedWhen.conditionResolution.description}
-                              </div>
-                           {/if}
-                        </div>
-                     {/if}
-                     
-                     <!-- Start Turn Info -->
-                     <div class="tw-text-xs tw-text-base-content/50 tw-mt-2">
-                        Started: Turn {modifier.startTurn}
-                     </div>
-                  </div>
-               </div>
-            {/each}
-         </div>
-      {:else}
-         <div class="tw-alert tw-alert-info">
-            <i class="fas fa-info-circle"></i>
-            <div>
-               <h3 class="tw-font-bold">No Active Modifiers</h3>
-               <div class="tw-text-xs">Modifiers can be gained through events, buildings, and kingdom actions.</div>
-            </div>
-         </div>
-         
-         <!-- Modifier Types Info -->
-         <div class="tw-card tw-bg-base-200 tw-mt-4">
-            <div class="tw-card-body">
-               <h3 class="tw-card-title tw-text-lg">Types of Modifiers</h3>
-               <p class="tw-text-sm tw-text-base-content/70 tw-mb-3">
-                  Your kingdom can gain various modifiers that affect gameplay:
-               </p>
-               
-               <div class="tw-grid tw-gap-3 md:tw-grid-cols-2">
-                  <div class="tw-card tw-bg-base-300 tw-card-compact">
-                     <div class="tw-card-body">
-                        <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-calendar-times tw-text-warning"></i>
-                           Unresolved Events
-                        </h4>
-                        <p class="tw-text-xs tw-text-base-content/60">
-                           Events that were failed or ignored
-                        </p>
-                     </div>
-                  </div>
-                  
-                  <div class="tw-card tw-bg-base-300 tw-card-compact">
-                     <div class="tw-card-body">
-                        <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-fire tw-text-error"></i>
-                           Unrest Incidents
-                        </h4>
-                        <p class="tw-text-xs tw-text-base-content/60">
-                           Ongoing effects from unrest incidents
-                        </p>
-                     </div>
-                  </div>
-                  
-                  <div class="tw-card tw-bg-base-300 tw-card-compact">
-                     <div class="tw-card-body">
-                        <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-building tw-text-primary"></i>
-                           Structures
-                        </h4>
-                        <p class="tw-text-xs tw-text-base-content/60">
-                           Ongoing bonuses from kingdom structures
-                        </p>
-                     </div>
-                  </div>
-                  
-                  <div class="tw-card tw-bg-base-300 tw-card-compact">
-                     <div class="tw-card-body">
-                        <h4 class="tw-flex tw-items-center tw-gap-2 tw-font-semibold">
-                           <i class="fas fa-handshake tw-text-success"></i>
-                           Diplomatic Relations
-                        </h4>
-                        <p class="tw-text-xs tw-text-base-content/60">
-                           Effects from alliances and treaties
-                        </p>
-                     </div>
-                  </div>
-               </div>
-            </div>
-         </div>
-      {/if}
-   </div>
-   
-   <!-- Summary Stats -->
-   <div class="tw-divider"></div>
-   <div class="tw-stats tw-shadow tw-bg-base-300 tw-w-full">
-      <div class="tw-stat">
-         <div class="tw-stat-title">Active Modifiers</div>
-         <div class="tw-stat-value tw-text-2xl">{activeModifiers.length}</div>
-         <div class="tw-stat-desc">Currently affecting kingdom</div>
-      </div>
-      <div class="tw-stat">
-         <div class="tw-stat-title">From Events</div>
-         <div class="tw-stat-value tw-text-2xl">
-            {activeModifiers.filter(m => m.sourceType === 'event').length}
-         </div>
-         <div class="tw-stat-desc">Unresolved events</div>
-      </div>
-      <div class="tw-stat">
-         <div class="tw-stat-title">From Incidents</div>
-         <div class="tw-stat-value tw-text-2xl">
-            {activeModifiers.filter(m => m.sourceType === 'incident').length}
-         </div>
-         <div class="tw-stat-desc">Unrest incidents</div>
+                        </td>
+                        <td>
+                           <span class="turn-info">Turn {modifier.startTurn}</span>
+                        </td>
+                     </tr>
+                  {/each}
+               {:else}
+                  <tr>
+                     <td colspan="5" class="empty-state">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No assigned modifiers</p>
+                        <p class="hint">Modifiers are gained from events, incidents, and structures</p>
+                     </td>
+                  </tr>
+               {/if}
+            </tbody>
+         </table>
       </div>
    </div>
 </div>
+
+<style lang="scss">
+   .modifiers-tab {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      height: 100%;
+      padding: 1rem;
+      overflow-y: auto;
+   }
+   
+   .modifiers-summary {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+      
+      .summary-card {
+         display: flex;
+         align-items: center;
+         gap: 0.75rem;
+         background: rgba(0, 0, 0, 0.2);
+         padding: 0.75rem 1rem;
+         border-radius: 0.375rem;
+         border: 1px solid rgba(255, 255, 255, 0.1);
+         
+         i {
+            font-size: 1.5rem;
+            color: var(--color-text-dark-primary, #b5b3a4);
+         }
+         
+         .summary-value {
+            font-size: 1.25rem;
+            font-weight: var(--font-weight-bold);
+            color: var(--color-text-dark-primary, #b5b3a4);
+         }
+         
+         .summary-label {
+            font-size: var(--font-size-medium, 0.875rem);
+            color: var(--text-medium-light, #9e9b8f);
+         }
+         
+         &.assigned .summary-label {
+            color: #ffa500;
+         }
+         
+         &.custom .summary-label {
+            color: #95e1d3;
+         }
+      }
+      
+      :global(button) {
+         margin-left: auto;
+      }
+   }
+   
+   .table-controls {
+      display: flex;
+      gap: 1rem;
+      
+      .filter-select {
+         padding: 0.5rem;
+         background: rgba(0, 0, 0, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.2);
+         border-radius: 0.375rem;
+         color: var(--color-text-dark-primary, #b5b3a4);
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-primary, #5e0000);
+         }
+      }
+   }
+   
+   .section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      .section-header {
+         display: flex;
+         justify-content: space-between;
+         align-items: center;
+      }
+      
+      .section-title {
+         font-size: var(--font-size-large, 1.25rem);
+         font-weight: var(--font-weight-bold);
+         color: var(--color-text-dark-primary, #b5b3a4);
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+         margin: 0;
+         
+         i {
+            color: var(--color-text-dark-primary, #b5b3a4);
+         }
+      }
+   }
+   
+   .modifiers-table-container {
+      overflow: auto;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0.375rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+   }
+   
+   .modifiers-table {
+      width: 100%;
+      border-collapse: collapse;
+      
+      thead {
+         background: rgba(0, 0, 0, 0.3);
+         position: sticky;
+         top: 0;
+         z-index: 1;
+         
+         th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: var(--font-weight-semibold);
+            color: var(--color-text-dark-primary, #b5b3a4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+         }
+      }
+      
+      tbody {
+         tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            
+            &:hover:not(.create-row) {
+               background: rgba(255, 255, 255, 0.05);
+            }
+            
+            &.create-row {
+               background: rgba(94, 0, 0, 0.1);
+            }
+         }
+         
+         td {
+            padding: 0.75rem 1rem;
+            color: var(--color-text-dark-primary, #b5b3a4);
+            font-size: var(--font-size-medium, 0.875rem);
+            
+            &.empty-state {
+               padding: 3rem;
+               text-align: center;
+               color: var(--color-text-dark-secondary, #7a7971);
+               
+               i {
+                  font-size: 2rem;
+                  margin-bottom: 1rem;
+                  opacity: 0.5;
+                  display: block;
+               }
+               
+               p {
+                  margin: 0.5rem 0;
+                  
+                  &.hint {
+                     font-size: 0.875rem;
+                     font-style: italic;
+                  }
+               }
+            }
+         }
+      }
+   }
+   
+   .modifier-name {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+      
+      .name {
+         font-weight: var(--font-weight-semibold);
+         font-size: var(--font-size-large, 1.125rem);
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+   }
+   
+   .source-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      background: rgba(0, 0, 0, 0.3);
+      
+      &.source-event {
+         color: #ffa500;
+      }
+      
+      &.source-incident {
+         color: #ff6b6b;
+      }
+      
+      &.source-structure {
+         color: #4ecdc4;
+      }
+      
+      &.source-custom {
+         color: #95e1d3;
+      }
+   }
+   
+   .effects-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+   }
+   
+   .effects-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+   }
+   
+   .effect-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0.25rem;
+      font-size: var(--font-size-medium, 0.875rem);
+      color: var(--color-text-dark-primary, #b5b3a4);
+      font-weight: var(--font-weight-semibold);
+   }
+   
+   .modifier-duration {
+      display: inline-block;
+      font-size: var(--font-size-medium, 0.875rem);
+      color: var(--color-text-dark-secondary, #7a7971);
+      font-style: italic;
+   }
+   
+   .remove-effect-btn {
+      background: none;
+      border: none;
+      color: #ff6b6b;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 0.25rem;
+      display: flex;
+      align-items: center;
+      
+      &:hover {
+         color: #ff4444;
+      }
+   }
+   
+   .effects-row-builder {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0.25rem;
+   }
+   
+   .add-effect-inline-builder {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+   }
+   
+   .no-effects {
+      color: var(--color-text-dark-secondary, #7a7971);
+      font-style: italic;
+      font-size: 0.875rem;
+   }
+   
+   .turn-info {
+      font-size: 0.875rem;
+      color: var(--color-text-dark-secondary, #7a7971);
+   }
+   
+   .modifier-name-clickable {
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      background: transparent;
+      border: none;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      text-align: left;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-large, 1.125rem);
+      transition: all 0.2s;
+      border-radius: 0.25rem;
+      
+      &:hover {
+         background: rgba(255, 255, 255, 0.1);
+      }
+   }
+   
+   .description-text {
+      color: var(--color-text-dark-secondary, #7a7971);
+      font-size: var(--font-size-medium, 0.875rem);
+   }
+   
+   .inline-edit {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+   }
+   
+   .inline-input {
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--color-primary, #5e0000);
+      border-radius: 0.25rem;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      min-width: 150px;
+      
+      &:focus {
+         outline: none;
+         background: rgba(0, 0, 0, 0.5);
+      }
+   }
+   
+   .delete-btn,
+   .add-effect-icon-btn {
+      padding: 0.25rem 0.5rem;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
+      }
+   }
+   
+   .delete-btn {
+      background: transparent;
+      color: #ff6b6b;
+      
+      &:hover:not(:disabled) {
+         background: rgba(255, 107, 107, 0.1);
+      }
+   }
+   
+   .add-effect-icon-btn {
+      background: transparent;
+      color: var(--color-primary, #5e0000);
+      
+      &:hover:not(:disabled) {
+         background: rgba(94, 0, 0, 0.1);
+      }
+   }
+   
+   // Create modifier form styles
+   .create-modifier-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 0.375rem;
+   }
+   
+   .form-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 1rem;
+   }
+   
+   .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      label {
+         font-size: 0.875rem;
+         font-weight: var(--font-weight-semibold);
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+   }
+   
+   .effects-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+   }
+   
+   .effects-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      
+      label {
+         font-size: 0.875rem;
+         font-weight: var(--font-weight-semibold);
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+   }
+   
+   .effect-select {
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.25rem;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      
+      &:focus {
+         outline: none;
+         border-color: var(--color-primary, #5e0000);
+      }
+      
+      &:disabled {
+         opacity: 0.5;
+      }
+   }
+   
+   .effect-input {
+      padding: 0.25rem 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.25rem;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      width: 100px;
+      
+      &:focus {
+         outline: none;
+         border-color: var(--color-primary, #5e0000);
+      }
+      
+      &:disabled {
+         opacity: 0.5;
+      }
+   }
+   
+   .add-effect-btn {
+      padding: 0.25rem 0.75rem;
+      background: rgba(94, 0, 0, 0.2);
+      border: 1px solid rgba(94, 0, 0, 0.3);
+      border-radius: 0.25rem;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      &:hover:not(:disabled) {
+         background: rgba(94, 0, 0, 0.3);
+      }
+      
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
+      }
+   }
+   
+   .form-actions {
+      display: flex;
+      justify-content: flex-end;
+   }
+</style>

@@ -15,11 +15,12 @@ export interface Faction {
   id: string;
   name: string;
   attitude: AttitudeLevel;
-  goal: string;           // Strategic goal or objective
-  notes: string;          // Additional notes about the faction
+  goal: string;           // Strategic goal or objective (GM-only)
+  notes: string;          // Public notes visible to all players
+  gmNotes: string;        // GM-only private notes
   progressClock: {
-    current: number;      // Current progress toward goal
-    max: number;          // Maximum progress needed
+    current: number;      // Current progress toward goal (GM-only)
+    max: number;          // Maximum progress needed (GM-only)
   };
   
   // Detail page fields
@@ -100,6 +101,7 @@ export function createDefaultFaction(name: string, attitude: AttitudeLevel = 'In
     attitude,
     goal: '',
     notes: '',
+    gmNotes: '',
     progressClock: {
       current: 0,
       max: 4

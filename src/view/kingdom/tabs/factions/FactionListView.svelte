@@ -4,8 +4,12 @@
    import type { Faction, AttitudeLevel } from '../../../../models/Faction';
    import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
    import Button from '../../components/baseComponents/Button.svelte';
+   import InlineEditActions from '../../components/baseComponents/InlineEditActions.svelte';
 
    const dispatch = createEventDispatcher();
+
+   // Check if user is GM
+   $: isGM = (globalThis as any).game?.user?.isGM ?? false;
 
    // Table state
    let searchTerm = '';
@@ -35,8 +39,7 @@
          factions = factions.filter(f => 
             f.name.toLowerCase().includes(term) ||
             f.attitude.toLowerCase().includes(term) ||
-            f.goal.toLowerCase().includes(term) ||
-            f.notes.toLowerCase().includes(term)
+            f.goal.toLowerCase().includes(term)
          );
       }
       
@@ -136,8 +139,6 @@
       try {
          const { factionService } = await import('../../../../services/factions');
          await factionService.updateAttitude(factionId, attitude);
-         // @ts-ignore
-         ui.notifications?.info(`Attitude changed to ${attitude}`);
       } catch (error) {
          console.error('Failed to change attitude:', error);
          // @ts-ignore
@@ -242,23 +243,6 @@
 </script>
 
 <div class="factions-list">
-   <!-- Header -->
-   <div class="factions-header">
-      <div class="header-left">
-         <h2>Factions</h2>
-         <span class="faction-count">({totalFactions} total)</span>
-      </div>
-      <Button 
-         variant="primary" 
-         icon="fas fa-plus" 
-         iconPosition="left"
-         disabled={isCreating}
-         on:click={startCreating}
-      >
-         Add Faction
-      </Button>
-   </div>
-   
    <!-- Summary Stats -->
    <div class="factions-summary">
       {#each ATTITUDE_ORDER as attitude}
@@ -270,16 +254,19 @@
             </div>
          </div>
       {/each}
+      <Button 
+         variant="primary" 
+         icon="fas fa-plus" 
+         iconPosition="left"
+         disabled={isCreating}
+         on:click={startCreating}
+      >
+         Add Faction
+      </Button>
    </div>
    
    <!-- Filters -->
    <div class="table-controls">
-      <input 
-         type="text" 
-         placeholder="Search factions..." 
-         bind:value={searchTerm}
-         class="search-input"
-      />
       <select bind:value={filterAttitude} class="filter-select">
          <option value="all">All Attitudes</option>
          {#each ATTITUDE_ORDER as attitude}
@@ -295,9 +282,10 @@
             <tr>
                <th>Name</th>
                <th colspan="5" class="attitude-header">Attitude</th>
-               <th>Goal</th>
-               <th>Notes</th>
-               <th>Progress</th>
+               {#if isGM}
+                  <th>Goal</th>
+                  <th>Progress</th>
+               {/if}
                <th>Actions</th>
             </tr>
          </thead>
@@ -325,28 +313,18 @@
                         {/each}
                      </select>
                   </td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>—</td>
+                  {#if isGM}
+                     <td>—</td>
+                     <td>—</td>
+                  {/if}
                   <td>
-                     <div class="inline-actions">
-                        <button 
-                           class="save-btn" 
-                           on:click={createFaction}
-                           disabled={isCreatingFaction}
-                           title="Create"
-                        >
-                           <i class="fas fa-check"></i>
-                        </button>
-                        <button 
-                           class="cancel-btn" 
-                           on:click={cancelCreating}
-                           disabled={isCreatingFaction}
-                           title="Cancel"
-                        >
-                           <i class="fas fa-times"></i>
-                        </button>
-                     </div>
+                     <InlineEditActions
+                        onSave={createFaction}
+                        onCancel={cancelCreating}
+                        disabled={isCreatingFaction}
+                        saveTitle="Create"
+                        cancelTitle="Cancel"
+                     />
                   </td>
                </tr>
             {/if}
@@ -379,128 +357,97 @@
                      </td>
                   {/each}
                   
-                  <!-- Goal Column -->
-                  <td>
-                     {#if editingFactionId === faction.id && editingField === 'goal'}
-                        <div class="inline-edit">
-                           <input 
-                              type="text" 
-                              bind:value={editedValue}
-                              on:keydown={(e) => handleKeydown(e, faction.id)}
-                              class="inline-input"
-                              disabled={isSaving}
-                           />
-                           <button 
-                              class="save-btn" 
-                              on:click={() => saveEdit(faction.id)}
-                              disabled={isSaving}
-                              title="Save"
-                           >
-                              <i class="fas fa-check"></i>
-                           </button>
-                           <button 
-                              class="cancel-btn" 
-                              on:click={cancelEdit}
-                              disabled={isSaving}
-                              title="Cancel"
-                           >
-                              <i class="fas fa-times"></i>
-                           </button>
-                        </div>
-                     {:else}
-                        <button
-                           class="editable-cell" 
-                           on:click={() => startEdit(faction, 'goal')}
-                           title="Click to edit"
-                        >
-                           {faction.goal || '—'}
-                        </button>
-                     {/if}
-                  </td>
-                  
-                  <!-- Notes Column -->
-                  <td>
-                     {#if editingFactionId === faction.id && editingField === 'notes'}
-                        <div class="inline-edit">
-                           <input 
-                              type="text" 
-                              bind:value={editedValue}
-                              on:keydown={(e) => handleKeydown(e, faction.id)}
-                              class="inline-input"
-                              disabled={isSaving}
-                           />
-                           <button 
-                              class="save-btn" 
-                              on:click={() => saveEdit(faction.id)}
-                              disabled={isSaving}
-                              title="Save"
-                           >
-                              <i class="fas fa-check"></i>
-                           </button>
-                           <button 
-                              class="cancel-btn" 
-                              on:click={cancelEdit}
-                              disabled={isSaving}
-                              title="Cancel"
-                           >
-                              <i class="fas fa-times"></i>
-                           </button>
-                        </div>
-                     {:else}
-                        <button
-                           class="editable-cell" 
-                           on:click={() => startEdit(faction, 'notes')}
-                           title="Click to edit"
-                        >
-                           {faction.notes || '—'}
-                        </button>
-                     {/if}
-                  </td>
-                  
-                  <!-- Progress Clock Column -->
-                  <td>
-                     <div class="progress-clock">
-                        <button 
-                           class="clock-btn"
-                           on:click={() => decrementProgress(faction.id)}
-                           title="Decrease progress"
-                        >
-                           <i class="fas fa-minus"></i>
-                        </button>
-                        
-                        <span class="clock-value">{faction.progressClock.current}</span>
-                        
-                        <span class="clock-separator">/</span>
-                        
-                        {#if editingFactionId === faction.id && editingField === 'clockMax'}
-                           <input 
-                              type="number" 
-                              bind:value={editedValue}
-                              on:keydown={(e) => handleKeydown(e, faction.id)}
-                              on:blur={() => saveEdit(faction.id)}
-                              class="clock-max-input"
-                              min="1"
-                              disabled={isSaving}
-                           />
+                  {#if isGM}
+                     <!-- Goal Column -->
+                     <td>
+                        {#if editingFactionId === faction.id && editingField === 'goal'}
+                           <div class="inline-edit">
+                              <input 
+                                 type="text" 
+                                 bind:value={editedValue}
+                                 on:keydown={(e) => handleKeydown(e, faction.id)}
+                                 class="inline-input"
+                                 disabled={isSaving}
+                              />
+                              <InlineEditActions
+                                 onSave={() => saveEdit(faction.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
                         {:else}
                            <button
-                              class="clock-max"
-                              on:click={() => startEditClockMax(faction)}
-                              title="Click to change max"
+                              class="editable-cell" 
+                              on:click={() => startEdit(faction, 'goal')}
+                              title="Click to edit"
                            >
-                              {faction.progressClock.max}
+                              {faction.goal || '—'}
                            </button>
                         {/if}
-                        
-                        <button 
-                           class="clock-btn"
-                           on:click={() => incrementProgress(faction.id)}
-                           title="Increase progress"
-                        >
-                           <i class="fas fa-plus"></i>
-                        </button>
-                     </div>
-                  </td>
+                     </td>
+                     
+                     <!-- Progress Clock Column -->
+                     <td>
+                        <div class="progress-clock">
+                           {#if editingFactionId === faction.id && editingField === 'clockMax'}
+                              <label class="clock-edit-label">Number of Steps:</label>
+                              <input 
+                                 type="number" 
+                                 bind:value={editedValue}
+                                 on:keydown={(e) => handleKeydown(e, faction.id)}
+                                 class="clock-max-input"
+                                 min="1"
+                                 disabled={isSaving}
+                              />
+                              <button 
+                                 class="clock-btn small" 
+                                 on:click={() => saveEdit(faction.id)} 
+                                 title="Confirm"
+                                 disabled={isSaving}
+                              >
+                                 <i class="fas fa-check"></i>
+                              </button>
+                              <button 
+                                 class="clock-btn small" 
+                                 on:click={cancelEdit} 
+                                 title="Cancel"
+                                 disabled={isSaving}
+                              >
+                                 <i class="fas fa-times"></i>
+                              </button>
+                           {:else}
+                              <span class="clock-value">{faction.progressClock.current}</span>
+                              
+                              <span class="clock-separator">/</span>
+                              
+                              <button
+                                 class="clock-max"
+                                 on:click={() => startEditClockMax(faction)}
+                                 title="Click to change max"
+                              >
+                                 {faction.progressClock.max}
+                              </button>
+                              
+                              <div class="clock-arrows">
+                                 <button 
+                                    class="clock-arrow-btn up"
+                                    on:click={() => incrementProgress(faction.id)}
+                                    title="Increase progress"
+                                 >
+                                    <i class="fas fa-chevron-up"></i>
+                                 </button>
+                                 <button 
+                                    class="clock-arrow-btn down"
+                                    on:click={() => decrementProgress(faction.id)}
+                                    title="Decrease progress"
+                                 >
+                                    <i class="fas fa-chevron-down"></i>
+                                 </button>
+                              </div>
+                           {/if}
+                        </div>
+                     </td>
+                  {/if}
                   
                   <!-- Actions Column -->
                   <td>
@@ -518,7 +465,7 @@
             <!-- Empty State -->
             {#if paginatedFactions.length === 0 && !isCreating}
                <tr>
-                  <td colspan="10" class="empty-state">
+                  <td colspan={isGM ? 9 : 7} class="empty-state">
                      {#if searchTerm || filterAttitude !== 'all'}
                         <i class="fas fa-search"></i>
                         <p>No factions match your filters</p>
@@ -568,32 +515,11 @@
       height: 100%;
    }
    
-   .factions-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      
-      .header-left {
-         display: flex;
-         align-items: baseline;
-         gap: 0.5rem;
-         
-         h2 {
-            margin: 0;
-            color: var(--color-text-dark-primary, #b5b3a4);
-         }
-         
-         .faction-count {
-            font-size: 0.875rem;
-            color: var(--color-text-dark-secondary, #7a7971);
-         }
-      }
-   }
-   
    .factions-summary {
       display: flex;
       gap: 1rem;
       flex-wrap: wrap;
+      align-items: center;
       
       .summary-card {
          display: flex;
@@ -619,13 +545,16 @@
             color: var(--text-medium-light, #9e9b8f);
          }
       }
+      
+      :global(button) {
+         margin-left: auto;
+      }
    }
    
    .table-controls {
       display: flex;
       gap: 1rem;
       
-      .search-input,
       .filter-select {
          padding: 0.5rem;
          background: rgba(0, 0, 0, 0.3);
@@ -637,10 +566,6 @@
             outline: none;
             border-color: rgba(255, 255, 255, 0.4);
          }
-      }
-      
-      .search-input {
-         flex: 1;
       }
    }
    
@@ -730,7 +655,8 @@
       display: inline-block;
       background: transparent;
       border: none;
-      color: var(--color-text-dark-primary, #b5b3a4);
+      color: var(--text-primary);
+      font-size: var(--font-md);
       text-align: left;
       font-weight: var(--font-weight-semibold);
       text-decoration: underline;
@@ -775,8 +701,8 @@
       }
       
       &.active {
-         transform: scale(1.2);
-         border-color: rgba(255, 255, 255, 0.3);
+         transform: scale(1.25);
+         border-color: var(--border-strong)
       }
       
       &:focus {
@@ -811,12 +737,54 @@
       &:hover {
          background: rgba(255, 255, 255, 0.1);
       }
+      
+      &.small {
+         padding: 0.125rem 0.25rem;
+         font-size: 0.75rem;
+      }
+   }
+   
+   .clock-edit-label {
+      font-size: 0.875rem;
+      font-weight: var(--font-weight-normal);
+      color: var(--color-text-dark-secondary, #7a7971);
+      white-space: nowrap;
    }
    
    .clock-value {
       font-weight: var(--font-weight-bold);
       min-width: 1.5rem;
       text-align: center;
+   }
+   
+   .clock-arrows {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+   }
+   
+   .clock-arrow-btn {
+      padding: 0.125rem 0.25rem;
+      background: transparent;
+      border: none;
+      color: var(--color-text-dark-secondary, #7a7971);
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: 0.5;
+      font-size: 0.625rem;
+      
+      &:hover {
+         color: var(--color-text-dark-primary, #b5b3a4);
+         transform: scale(1.1);
+      }
+      
+      &.up {
+         margin-bottom: -2px;
+      }
+      
+      &.down {
+         margin-top: -2px;
+      }
    }
    
    .clock-separator {
@@ -887,13 +855,6 @@
       }
    }
    
-   .inline-actions {
-      display: flex;
-      gap: 0.5rem;
-   }
-   
-   .save-btn,
-   .cancel-btn,
    .delete-btn {
       padding: 0.25rem 0.5rem;
       border: none;
@@ -907,24 +868,6 @@
       &:disabled {
          opacity: 0.5;
          cursor: not-allowed;
-      }
-   }
-   
-   .save-btn {
-      background: rgba(144, 238, 144, 0.2);
-      color: #90ee90;
-      
-      &:hover:not(:disabled) {
-         background: rgba(144, 238, 144, 0.3);
-      }
-   }
-   
-   .cancel-btn {
-      background: rgba(255, 107, 107, 0.2);
-      color: #ff6b6b;
-      
-      &:hover:not(:disabled) {
-         background: rgba(255, 107, 107, 0.3);
       }
    }
    
