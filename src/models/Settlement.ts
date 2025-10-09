@@ -43,6 +43,14 @@ export const SettlementTierConfig = {
 };
 
 /**
+ * Structure condition states
+ */
+export enum StructureCondition {
+  GOOD = 'good',
+  DAMAGED = 'damaged'
+}
+
+/**
  * Represents a settlement in the kingdom
  */
 export interface Settlement {
@@ -52,6 +60,7 @@ export interface Settlement {
   level: number; // Settlement level (1-20)
   tier: SettlementTier;
   structureIds: string[]; // IDs of built structures
+  structureConditions?: Record<string, StructureCondition>; // Map of structureId -> condition
   connectedByRoads: boolean;
   
   // Resources and state
@@ -74,6 +83,24 @@ export interface Settlement {
 }
 
 /**
+ * Get default image path for settlement tier
+ */
+export function getDefaultSettlementImage(tier: SettlementTier): string {
+  switch (tier) {
+    case SettlementTier.VILLAGE:
+      return 'img/settlements/village.webp';
+    case SettlementTier.TOWN:
+      return 'img/settlements/town.webp';
+    case SettlementTier.CITY:
+      return 'img/settlements/city.webp';
+    case SettlementTier.METROPOLIS:
+      return 'img/settlements/metropolis.webp';
+    default:
+      return 'img/settlements/village.webp';
+  }
+}
+
+/**
  * Create a new settlement with defaults
  */
 export function createSettlement(
@@ -88,10 +115,12 @@ export function createSettlement(
     level: 1,
     tier,
     structureIds: [],
+    structureConditions: {},
     connectedByRoads: false,
     storedFood: 0,
     imprisonedUnrest: 0,
     supportedUnits: [],
-    wasFedLastTurn: true // Assume fed initially
+    wasFedLastTurn: true, // Assume fed initially
+    imagePath: getDefaultSettlementImage(tier) // Pre-populate with default tier image
   };
 }

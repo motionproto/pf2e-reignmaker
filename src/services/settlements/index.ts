@@ -4,7 +4,7 @@
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
-import { SettlementTier, SettlementTierConfig } from '../../models/Settlement';
+import { SettlementTier, SettlementTierConfig, getDefaultSettlementImage } from '../../models/Settlement';
 import { structuresService } from '../structures';
 
 export class SettlementService {
@@ -302,11 +302,21 @@ export class SettlementService {
       throw new Error(`${settlement.name} is already at maximum tier`);
     }
     
+    // Check if settlement is using the old tier's default image
+    const oldDefaultImage = getDefaultSettlementImage(settlement.tier);
+    const isUsingDefaultImage = settlement.imagePath === oldDefaultImage;
+    
     // Perform upgrade
     await updateKingdom(k => {
       const s = k.settlements.find(s => s.id === settlementId);
       if (s) {
         s.tier = nextTier;
+        
+        // Update to new tier's default image if settlement was using old default
+        if (isUsingDefaultImage) {
+          s.imagePath = getDefaultSettlementImage(nextTier);
+          console.log(`🖼️ [SettlementService] Updated default image to ${nextTier} tier`);
+        }
       }
     });
     

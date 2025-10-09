@@ -8,10 +8,50 @@
    async function selectImage() {
       if (!settlement) return;
       
-      // @ts-ignore
+      // @ts-ignore - Check if player has file browser permission
+      const game = (globalThis as any).game;
+      
+      // Check if user has FILES_BROWSE permission
+      if (!game?.user?.hasPermission("FILES_BROWSE")) {
+         // Show helpful message about needing permission
+         // @ts-ignore
+         const dialog = new Dialog({
+            title: "📁 File Browser Permission Required",
+            content: `
+               <div style="text-align: left; line-height: 1.6;">
+                  <p><strong>To upload custom settlement images, you need file browsing permission.</strong></p>
+                  <p>Please ask your GM to:</p>
+                  <ol style="margin-left: 1.5em;">
+                     <li>Open <strong>Configure Settings</strong></li>
+                     <li>Choose <strong>Open Permission Configuration</strong></li>
+                     <li>Check to allow players to <strong>"Upload Files"</strong> and <strong>"Use File Browser"</strong></li>
+                  </ol>
+                  <p style="margin-top: 1em;">Until then, your settlements will use the default tier images based on settlement size.</p>
+               </div>
+            `,
+            buttons: {
+               ok: {
+                  icon: '<i class="fas fa-check"></i>',
+                  label: "OK"
+               }
+            },
+            default: "ok"
+         });
+         dialog.render(true);
+         return;
+      }
+      
+      // User has permission - open FilePicker
+      // @ts-ignore - FilePicker with player-accessible configuration
       const fp = new FilePicker({
          type: "image",
          current: settlement.imagePath || "",
+         // Allow browsing from user data directory (accessible to players)
+         activeSource: "data",
+         // Explicitly set displayMode for better UX
+         displayMode: "tiles",
+         // Allow players to browse their uploads
+         redirectToRoot: ["data"],
          callback: async (path: string) => {
             if (settlement) {
                try {
@@ -26,7 +66,15 @@
             }
          }
       });
-      fp.render(true);
+      
+      // Render the file picker with error handling
+      try {
+         fp.render(true);
+      } catch (error) {
+         console.error('Failed to open file picker:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to open file picker. Please contact your GM if this persists.');
+      }
    }
    
    async function removeImage() {

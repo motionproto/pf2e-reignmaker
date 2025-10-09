@@ -7,6 +7,7 @@ import type { Settlement } from '../models/Settlement';
 import type { BuildProject, Army } from '../models/BuildProject';
 import type { ActiveModifier } from '../models/Modifiers';
 import type { TurnState } from '../models/TurnState';
+import type { Faction } from '../models/Faction';
 
 // Turn phases based on Reignmaker Lite rules - using semantic names
 export enum TurnPhase {
@@ -85,6 +86,9 @@ export interface KingdomData {
   // Military & Construction
   armies: Army[];
   buildQueue: BuildProject[];
+  
+  // Diplomacy
+  factions: Faction[];
   
   // Kingdom stats
   unrest: number;
@@ -241,6 +245,7 @@ export class KingdomActor extends Actor {
       cachedProduction: {},
       armies: [],
       buildQueue: [],
+      factions: [],
       unrest: 0,
       imprisonedUnrest: 0,
       fame: 0,
@@ -393,15 +398,16 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     size: 0,
     worksiteCount: {},
     cachedProduction: {},
-    armies: [],
-    buildQueue: [],
-    unrest: 0,
-    imprisonedUnrest: 0,
-    fame: 0,
-    isAtWar: false,
-    ongoingEvents: [],
-    activeModifiers: [],
-    eventDC: 15,  // Default event DC per rules
+      armies: [],
+      buildQueue: [],
+      factions: [],
+      unrest: 0,
+      imprisonedUnrest: 0,
+      fame: 0,
+      isAtWar: false,
+      ongoingEvents: [],
+      activeModifiers: [],
+      eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],
       phaseComplete: false,
       oncePerTurnActions: []
