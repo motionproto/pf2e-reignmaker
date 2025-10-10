@@ -90,8 +90,6 @@ export async function createUnrestPhaseController() {
       
       try {
         const kingdom = get(kingdomData);
-        const hasActiveIncident = kingdom.turnState?.unrestPhase?.incidentId !== null && 
-                                   kingdom.turnState?.unrestPhase?.incidentId !== undefined;
         
         // Check if phase is already initialized (prevent re-initialization on component remount)
         const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
@@ -101,34 +99,19 @@ export async function createUnrestPhaseController() {
           return createPhaseResult(true);
         }
         
-        // Initialize steps with intelligent auto-completion using shared helpers
+        // Read CURRENT state from turnState (single source of truth)
+        const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;
+        const incidentTriggered = kingdom.turnState?.unrestPhase?.incidentTriggered ?? false;
+        
+        // Initialize steps with CORRECT completion state from the start
+        // No workarounds needed - steps reflect KingdomActor state directly
         const steps = [
-          { name: 'Calculate Unrest' },              // Index 0 - Auto-complete immediately
-          { name: 'Incident Check' },               // Index 1 - Always manual
-          { name: 'Resolve Incident' }              // Index 2 - Conditional
+          { name: 'Calculate Unrest', completed: 1 },  // Always complete
+          { name: 'Incident Check', completed: incidentRolled ? 1 : 0 },
+          { name: 'Resolve Incident', completed: (incidentRolled && !incidentTriggered) ? 1 : 0 }
         ];
         
         await initializePhaseSteps(steps);
-        
-        // CONDITIONAL auto-completion logic
-        // Step 0: Auto-complete unrest calculation immediately
-        await completePhaseStepByIndex(0); // Step 0: Calculate Unrest
-        
-        // Step 1: Check for Incidents - CONDITIONAL
-        // Auto-complete if tier 0 (stable kingdom - no incidents possible)
-        // Otherwise MANUAL (user must roll)
-        const tier = this.getUnrestTier(kingdom.unrest || 0);
-        if (tier === 0) {
-          await completePhaseStepByIndex(1); // Auto-complete if stable
-          console.log('✅ [UnrestPhaseController] Incident check auto-completed (stable kingdom - tier 0)');
-        } else {
-          console.log('⚠️ [UnrestPhaseController] Incident check requires manual roll (tier', tier, ')');
-        }
-        
-        // Step 2: Resolve Incident - Will be completed by:
-        // 1. checkForIncidents() if no incident triggers
-        // 2. resolveIncident() after user applies the result
-        console.log('⚠️ [UnrestPhaseController] Step 2 (Resolve Incident) awaits completion via incident flow');
         
         console.log('✅ [UnrestPhaseController] Phase initialization complete');
         
@@ -295,6 +278,17 @@ export async function createUnrestPhaseController() {
         
         // Complete step 2 (resolve incident)
         await completePhaseStepByIndex(2);
+        
+        // DIAGNOSTIC: Check state AFTER completing step 2
+        const kingdomAfter = actor.getKingdom();
+        if (kingdomAfter) {
+          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - Current state AFTER step 2 completion:');
+          console.log('  - Current Phase:', kingdomAfter.currentPhase);
+          console.log('  - Current Phase Steps:', kingdomAfter.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed === 1 ? 'complete' : 'incomplete'})`));
+          console.log('  - Phase Complete Flag:', kingdomAfter.phaseComplete);
+          console.log('  - Completed Count:', kingdomAfter.currentPhaseSteps?.filter(s => s.completed === 1).length);
+          console.log('  - Total Steps:', kingdomAfter.currentPhaseSteps?.length);
+        }
         
         console.log(`✅ [UnrestPhaseController] Incident resolved successfully`);
         

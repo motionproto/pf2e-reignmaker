@@ -82,24 +82,22 @@ export async function createEventPhaseController(_eventService?: any) {
                     return createPhaseResult(true);
                 }
                 
-                // Initialize phase with 3-step structure
-                await initializePhaseSteps(EVENTS_PHASE_STEPS);
+                // Read CURRENT state from turnState (single source of truth)
+                const eventRolled = kingdom?.turnState?.eventsPhase?.eventRolled ?? false;
+                const eventTriggered = kingdom?.turnState?.eventsPhase?.eventTriggered ?? false;
+                
+                // Initialize steps with CORRECT completion state from the start
+                // No workarounds needed - steps reflect KingdomActor state directly
+                const steps = [
+                    { name: 'Event Roll', completed: eventRolled ? 1 : 0 },
+                    { name: 'Resolve Event', completed: (eventRolled && !eventTriggered) ? 1 : 0 },
+                    { name: 'Apply Modifiers', completed: (eventRolled && !eventTriggered) ? 1 : 0 }
+                ];
+                
+                await initializePhaseSteps(steps);
                 
                 // Initialize the phase state
                 state = createInitialState();
-                
-                // Step 0: Event Roll - MANUAL (never auto-complete)
-                // Step 1: Resolve Event - CONDITIONAL (auto if no event, manual if event exists)
-                // Step 2: Apply Modifiers - CONDITIONAL (auto-complete when steps 0 & 1 complete)
-                
-                // Check if there's a pre-existing event that needs resolution
-                const hasActiveEvent = kingdom?.turnState?.eventsPhase?.eventId !== null;
-                
-                if (hasActiveEvent) {
-                    console.log('⚠️ [EventPhaseController] Pre-existing event requires resolution');
-                } else {
-                    console.log('🟡 [EventPhaseController] Event roll required (step 0)');
-                }
                 
                 reportPhaseComplete('EventPhaseController');
                 return createPhaseResult(true);
@@ -121,20 +119,6 @@ export async function createEventPhaseController(_eventService?: any) {
             // Check if step 0 (event-check) is already completed
             if (await isStepCompletedByIndex(0)) {
                 console.log('🟡 [EventPhaseController] Event check already completed');
-                
-                // If no event was triggered, ensure steps 1 & 2 are completed
-                // (handles case where UI was closed before steps completed)
-                const { getKingdomActor } = await import('../stores/KingdomStore');
-                const actor = getKingdomActor();
-                const kingdom = actor?.getKingdom();
-                const eventTriggered = kingdom?.turnState?.eventsPhase?.eventTriggered ?? false;
-                
-                if (!eventTriggered) {
-                    console.log('🔧 [EventPhaseController] No event was triggered, ensuring steps 1 & 2 are complete');
-                    await completePhaseStepByIndex(1);
-                    await completePhaseStepByIndex(2);
-                }
-                
                 return {
                     triggered: !!state.currentEvent,
                     event: state.currentEvent,

@@ -890,6 +890,57 @@
       border-radius: 0.25rem;
    }
    
+   .effect-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: rgba(200, 200, 200, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0.375rem;
+      font-size: var(--font-size-medium, 0.875rem);
+      color: var(--color-text-dark-primary, #b5b3a4);
+      white-space: nowrap;
+      
+      .effect-resource {
+         font-weight: var(--font-weight-semibold);
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+      
+      .effect-value {
+         font-weight: var(--font-weight-bold);
+         color: var(--color-text-dark-primary, #b5b3a4);
+      }
+      
+      .effect-duration {
+         font-size: 0.8125rem;
+         color: var(--color-text-dark-secondary, #7a7971);
+         font-style: italic;
+      }
+      
+      .remove-effect-btn {
+         background: none;
+         border: none;
+         color: #ff6b6b;
+         cursor: pointer;
+         padding: 0;
+         margin-left: 0.25rem;
+         display: flex;
+         align-items: center;
+         font-size: 0.75rem;
+         transition: color 0.2s;
+         
+         &:hover:not(:disabled) {
+            color: #ff4444;
+         }
+         
+         &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+         }
+      }
+   }
+   
    .add-effect-inline-builder {
       display: flex;
       align-items: center;

@@ -43,14 +43,12 @@ export type EventTrait =
 /**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = 
-;
+export type ModifierSelector = never;  // Not currently used
 
 /**
  * Event location types
  */
-export type EventLocation = 
-;
+export type EventLocation = never;  // Not currently used
 
 /**
  * Event tier types (events use 'event', incidents vary)
@@ -128,6 +126,16 @@ export function isKingdomEvent(obj: any): obj is KingdomEvent {
     typeof obj.description === 'string' &&
     typeof obj.effects === 'object'
   );
+}
+
+/**
+ * Resolution data structure for event/incident outcomes
+ * Contains pre-computed values ready for application
+ */
+export interface ResolutionData {
+  numericModifiers: Array<{ resource: ResourceType; value: number }>;
+  manualEffects: string[];
+  complexActions: any[];  // Future use for complex game actions
 }
 
 /**

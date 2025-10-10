@@ -30,29 +30,19 @@ export async function createUpkeepPhaseController() {
       reportPhaseStart('UpkeepPhaseController');
       
       try {
-        // Initialize phase with predefined steps
-        await initializePhaseSteps(UPKEEP_PHASE_STEPS);
-        
-        // Auto-mark skipped steps as complete (only when there's nothing to process)
+        // Get current kingdom state
         const { kingdomData } = await import('../stores/KingdomStore');
         const kingdom = get(kingdomData);
         
-        // Auto-complete military support ONLY if no armies
-        const armyCount = kingdom.armies?.length || 0;
-        if (armyCount === 0) {
-          await completePhaseStepByIndex(1); // Step 1 = support-military
-          console.log('✅ [UpkeepPhaseController] Military support auto-completed (no armies)');
-        }
+        // Initialize steps with CORRECT completion state from the start
+        // No workarounds needed - steps reflect kingdom state directly
+        const steps = [
+          { name: 'Feed Settlements', completed: 0 },  // Always manual
+          { name: 'Support Military', completed: (kingdom.armies?.length || 0) === 0 ? 1 : 0 },
+          { name: 'Build Queue', completed: (kingdom.buildQueue?.length || 0) === 0 ? 1 : 0 }
+        ];
         
-        // Auto-complete build queue ONLY if no projects
-        const buildQueueCount = kingdom.buildQueue?.length || 0;
-        if (buildQueueCount === 0) {
-          await completePhaseStepByIndex(2); // Step 2 = process-builds
-          console.log('✅ [UpkeepPhaseController] Build queue auto-completed (no projects)');
-        }
-        
-        // Settlement feeding is NEVER auto-completed - always requires user interaction
-        console.log('🟡 [UpkeepPhaseController] Settlement feeding requires manual completion');
+        await initializePhaseSteps(steps);
         
         reportPhaseComplete('UpkeepPhaseController');
         return createPhaseResult(true);
