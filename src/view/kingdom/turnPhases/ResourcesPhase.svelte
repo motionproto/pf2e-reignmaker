@@ -3,6 +3,7 @@
    import { get } from 'svelte/store';
    import { kingdomData, getKingdomActor, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import Button from '../components/baseComponents/Button.svelte';
+   import ResourceCard from '../components/baseComponents/ResourceCard.svelte';
    import { tick } from 'svelte';
    
    // Props
@@ -14,52 +15,11 @@
    // Resource icons and colors - this is presentation configuration, belongs in component
    const resourceConfig: Record<string, { icon: string; color: string }> = {
       food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
+      gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' },
       lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
       stone: { icon: 'fa-cube', color: 'var(--color-gray-500)' },
-      ore: { icon: 'fa-mountain', color: 'var(--color-blue)' },
-      gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
+      ore: { icon: 'fa-mountain', color: 'var(--color-blue)' }
    };
-   
-   // Edit state management
-   let editingResource: string | null = null;
-   let editValue: number = 0;
-   let editInputElement: HTMLInputElement | undefined;
-   
-   async function startEditing(resource: string) {
-      editingResource = resource;
-      editValue = currentResources.get(resource) || 0;
-      await tick();
-      if (editInputElement) {
-         editInputElement.focus();
-         editInputElement.select();
-      }
-   }
-   
-   function saveEdit() {
-      if (editingResource) {
-         const actor = getKingdomActor();
-         if (actor) {
-            const resource = editingResource; // Capture in const to avoid null check issue
-            actor.updateKingdom((kingdom) => {
-               kingdom.resources[resource] = Math.max(0, Math.floor(editValue));
-            });
-         }
-         editingResource = null;
-      }
-   }
-   
-   function cancelEdit() {
-      editingResource = null;
-      editValue = 0;
-   }
-   
-   function handleKeydown(e: KeyboardEvent) {
-      if (e.key === 'Enter') {
-         saveEdit();
-      } else if (e.key === 'Escape') {
-         cancelEdit();
-      }
-   }
    
    // Reactive data from kingdomData store
    $: currentResources = new Map([
@@ -145,50 +105,13 @@
    <!-- Resource Dashboard -->
    <div class="resource-dashboard">
       {#each Object.entries(resourceConfig) as [resource, config]}
-         <!-- svelte-ignore a11y-click-events-have-key-events -->
-         <!-- svelte-ignore a11y-no-static-element-interactions -->
-         <div 
-            class="resource-card" 
-            class:editing={editingResource === resource}
-            style="--resource-color: {config.color};"
-            on:click={() => startEditing(resource)}
-         >
-            <i class="fas {config.icon} resource-icon" style="color: {config.color};"></i>
-            <div class="resource-info">
-               {#if editingResource === resource}
-                  <input
-                     bind:this={editInputElement}
-                     type="number"
-                     bind:value={editValue}
-                     on:keydown={handleKeydown}
-                     on:click|stopPropagation
-                     class="resource-edit-input"
-                     min="0"
-                  />
-                  <div class="edit-buttons">
-                     <button 
-                        class="save-btn" 
-                        on:click|stopPropagation={saveEdit} 
-                        aria-label="Save"
-                        title="Save"
-                     >
-                        <i class="fas fa-check"></i>
-                     </button>
-                     <button 
-                        class="cancel-btn" 
-                        on:click|stopPropagation={cancelEdit} 
-                        aria-label="Cancel"
-                        title="Cancel"
-                     >
-                        <i class="fas fa-times"></i>
-                     </button>
-                  </div>
-               {:else}
-                  <div class="resource-value">{currentResources.get(resource) || 0}</div>
-                  <div class="resource-label">{resource}</div>
-               {/if}
-            </div>
-         </div>
+         <ResourceCard
+            resource={resource}
+            value={currentResources.get(resource) || 0}
+            icon={config.icon}
+            color={config.color}
+            size="normal"
+         />
       {/each}
    </div>
    
