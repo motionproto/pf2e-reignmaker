@@ -11,7 +11,6 @@
    import BaseCheckCard from '../components/BaseCheckCard.svelte';
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
-   import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
    // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
    
    // UI State only - no business logic
@@ -23,7 +22,6 @@
    let incidentCheckChance: number = 0;
    let unrestPhaseController: any;
    let checkHandler: any;
-   let resultHandler: any;
    let possibleOutcomes: any[] = [];
    
    // Resolution state for current incident
@@ -172,7 +170,6 @@
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
       checkHandler = createCheckHandler();
-      resultHandler = createCheckResultHandler('incident', unrestPhaseController);
       await unrestPhaseController.startPhase();
       console.log('✅ [UnrestPhase] Phase initialized with controller');
       
@@ -280,7 +277,7 @@
    }
    
    async function executeSkillCheck(skill: string) {
-      if (!currentIncident || !checkHandler || !resultHandler) return;
+      if (!currentIncident || !checkHandler || !unrestPhaseController) return;
       
       // Note: Incidents don't consume player actions - they're separate checks
       
@@ -298,8 +295,8 @@
             console.log(`✅ [UnrestPhase] Incident check completed:`, result.outcome);
             isRolling = false;
             
-            // Get display data from controller
-            const displayData = await resultHandler.getDisplayData(
+            // Get display data from controller directly
+            const displayData = await unrestPhaseController.getResolutionDisplayData(
                currentIncident,
                result.outcome,
                result.actorName
@@ -408,13 +405,13 @@
    
    // Event handler - debug outcome change
    async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentIncident || !resultHandler || !incidentResolution) return;
+      if (!currentIncident || !unrestPhaseController || !incidentResolution) return;
       
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [UnrestPhase] Debug outcome changed to: ${newOutcome}`);
       
       // Recalculate display data
-      const displayData = await resultHandler.getDisplayData(currentIncident, newOutcome, incidentResolution.actorName);
+      const displayData = await unrestPhaseController.getResolutionDisplayData(currentIncident, newOutcome, incidentResolution.actorName);
       incidentResolution = {
          ...incidentResolution,
          outcome: newOutcome,

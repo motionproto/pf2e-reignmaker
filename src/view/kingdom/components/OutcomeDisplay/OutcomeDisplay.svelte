@@ -12,7 +12,6 @@
     detectStateChangeDice,
     rollDiceFormula
   } from '../../../../services/resolution';
-  import { createOutcomeResolutionService } from '../../../../services/resolution';
   import { getResourceIcon } from '../../../kingdom/utils/presentation';
   import type { ResolutionData, ResourceType } from '../../../../types/events';
   

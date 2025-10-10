@@ -200,11 +200,13 @@
     controller.storeResolution(resolution);
     
     // Store temporary resolution for current player (shows the OK/Cancel dialog)
+    // IMPORTANT: Include modifiers array for OutcomeDisplay to generate ResolutionData
     resolvedActions.set(action.id, {
       outcome: outcomeType,
       actorName,
       skillName,
-      stateChanges: Object.fromEntries(stateChanges)
+      stateChanges: Object.fromEntries(stateChanges),
+      modifiers: modifiers  // Pass modifiers so OutcomeDisplay can generate ResolutionData
     });
     resolvedActions = resolvedActions; // Trigger reactivity
 
@@ -213,9 +215,12 @@
   }
 
   // Apply the actual state changes when user confirms the resolution
-  // Also add to completions array
-  async function applyActionEffects(actionId: string) {
+  // NEW ARCHITECTURE: Receives ResolutionData from OutcomeDisplay via primary event
+  async function applyActionEffects(event: CustomEvent) {
+    const { checkId: actionId, resolution: resolutionData } = event.detail;
+    
     console.log('🔵 [applyActionEffects] Called for action:', actionId);
+    console.log('📋 [applyActionEffects] ResolutionData:', resolutionData);
     
     const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
@@ -230,16 +235,12 @@
       console.error('❌ [applyActionEffects] Resolution not found for action:', actionId);
       return;
     }
-    
-    console.log('📋 [applyActionEffects] Resolution:', resolution);
 
-    // Use the controller to execute the action (now uses GameEffectsService)
-    const result = await controller.executeAction(
-      action,
+    // NEW ARCHITECTURE: Use controller.resolveAction() with ResolutionData
+    const result = await controller.resolveAction(
+      actionId,
       resolution.outcome,
-      $kingdomData,
-      $currentTurn || 1,
-      undefined, // preRolledValues - not used for now (actions don't have dice rolls in UI yet)
+      resolutionData,
       resolution.actorName,
       resolution.skillName,
       currentUserId || undefined
@@ -251,12 +252,14 @@
       // Show error to user about requirements not being met
       ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
     } else {
-      // Show success notification with applied effects
-      const effectsMsg = result.applied?.resources
-        .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
-        .join(', ');
-      if (effectsMsg) {
-        ui.notifications?.info(`${action.name}: ${effectsMsg}`);
+      // Show success notification with applied effects (if any resources were changed)
+      if (result.applied?.resources && result.applied.resources.length > 0) {
+        const effectsMsg = result.applied.resources
+          .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
+          .join(', ');
+        if (effectsMsg) {
+          ui.notifications?.info(`${action.name}: ${effectsMsg}`);
+        }
       }
       
       // Note: Completion tracking is now handled by actionLog via GameEffectsService.trackPlayerAction()
@@ -885,8 +888,8 @@
                   on:reroll={(e) => handleRerollWithFame(e, action)}
                   on:aid={handleAid}
                   on:primary={(e) => {
-                    // Apply the effects (this also adds to completions array)
-                    applyActionEffects(e.detail.checkId);
+                    // Apply the effects using new ResolutionData architecture
+                    applyActionEffects(e);
                     // Clear the current player's resolved state
                     resolvedActions.delete(e.detail.checkId);
                     resolvedActions = resolvedActions; // Trigger reactivity

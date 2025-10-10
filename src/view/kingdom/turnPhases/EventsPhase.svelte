@@ -30,14 +30,12 @@
      initializeRollResultHandler
    } from '../../../services/pf2e';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
-   import { createCheckResultHandler } from '../../../controllers/shared/CheckResultHandler';
-   // Removed: spendPlayerAction, getPlayerAction, resetPlayerAction - now using actionLog
+   // Removed: createCheckResultHandler - now calling controller directly
    
    // Initialize controller and service
    let eventPhaseController: any;
    let gameEffectsService: any;
    let checkHandler: any;
-   let resultHandler: any;
    
    // UI State (no business logic)
    let isRolling = false;
@@ -97,7 +95,6 @@
       eventPhaseController = await createEventPhaseController(null);
       gameEffectsService = await createGameEffectsService();
       checkHandler = createCheckHandler();
-      resultHandler = createCheckResultHandler('event', eventPhaseController);
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       await eventPhaseController.startPhase();
@@ -117,7 +114,7 @@
       }
       
       // Check for persisted applied outcomes
-      if ($kingdomData?.turnState?.eventsPhase?.appliedOutcomes?.length > 0) {
+      if ($kingdomData?.turnState?.eventsPhase?.appliedOutcomes && $kingdomData.turnState.eventsPhase.appliedOutcomes.length > 0) {
          const appliedOutcome = $kingdomData?.turnState?.eventsPhase.appliedOutcomes[0];
          if (currentEvent && appliedOutcome && appliedOutcome.eventId === currentEvent.id) {
             // Restore resolved state
@@ -251,7 +248,7 @@
    }
    
    async function executeSkillCheck(skill: string) {
-      if (!currentEvent || !checkHandler || !resultHandler) return;
+      if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
       // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
       // when the result is applied
@@ -270,8 +267,8 @@
             console.log(`✅ [EventsPhase] Event check completed:`, result.outcome);
             isRolling = false;
             
-            // Get display data from controller
-            const displayData = await resultHandler.getDisplayData(
+            // Get display data from controller directly
+            const displayData = await eventPhaseController.getResolutionDisplayData(
                currentEvent,
                result.outcome,
                result.actorName
@@ -310,18 +307,21 @@
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-      if (!eventResolution || !currentEvent || !resultHandler) return;
+      if (!eventResolution || !currentEvent) return;
       
       console.log(`📝 [EventsPhase] Applying event result:`, eventResolution.outcome);
+      console.log(`🔍 [EventsPhase] Event detail received:`, event.detail);
       
-      // Parse resolution data
-      const { createOutcomeResolutionService } = await import('../../../services/resolution');
-      const resolutionService = await createOutcomeResolutionService();
-      const resolutionData = resolutionService.fromEventDetail(event.detail);
+      // NEW ARCHITECTURE: event.detail.resolution is already ResolutionData from OutcomeDisplay
+      const resolutionData = event.detail.resolution;
+      console.log(`📋 [EventsPhase] ResolutionData:`, resolutionData);
       
-      // Apply through controller
-      const result = await resultHandler.applyResolution(
-         currentEvent,
+      // Call controller directly with ResolutionData
+      const { createEventPhaseController } = await import('../../../controllers/EventPhaseController');
+      const controller = await createEventPhaseController(null);
+      
+      const result = await controller.resolveEvent(
+         currentEvent.id,
          eventResolution.outcome,
          resolutionData
       );
@@ -329,10 +329,10 @@
       if (result.success) {
          console.log(`✅ [EventsPhase] Event resolution applied successfully`);
          
-         // Parse shortfall information
+         // Parse shortfall information from the new result structure
          const shortfalls: string[] = [];
-         if (result.applied?.specialEffects) {
-            for (const effect of result.applied.specialEffects) {
+         if (result.applied?.applied?.specialEffects) {
+            for (const effect of result.applied.applied.specialEffects) {
                if (effect.startsWith('shortage_penalty:')) {
                   shortfalls.push(effect.split(':')[1]);
                }
@@ -389,7 +389,7 @@
          ui?.notifications?.info(`Event ignored - failure effects applied`);
          
          // Show as resolved with failure outcome
-         const displayData = await resultHandler.getDisplayData(currentEvent, 'failure', 'Ignored');
+         const displayData = await eventPhaseController.getResolutionDisplayData(currentEvent, 'failure', 'Ignored');
          eventResolution = {
             outcome: 'failure',
             actorName: 'Ignored',
@@ -430,6 +430,8 @@
    async function executeAidRoll(skill: string) {
       if (!currentEvent) return;
       
+      // Capture currentEvent for closure (prevents null issues)
+      const eventForAid = currentEvent;
       const game = (window as any).game;
       
       // Note: Aid action spending is handled by GameEffectsService.trackPlayerAction()
@@ -449,7 +451,7 @@
       const aidRollListener = async (e: any) => {
          const { checkId, outcome, actorName } = e.detail;
          
-         if (checkId === `aid-${currentEvent.id}`) {
+         if (checkId === `aid-${eventForAid.id}`) {
             window.removeEventListener('kingdomRollComplete', aidRollListener as any);
             
             // Calculate bonus
@@ -472,7 +474,7 @@
             
             // Store aid in turnState
             const actor = getKingdomActor();
-            if (actor && currentEvent) {
+            if (actor) {
                await actor.updateKingdom((kingdom) => {
                   if (!kingdom.turnState?.eventsPhase) return;
                   if (!kingdom.turnState.eventsPhase.activeAids) {
@@ -483,7 +485,7 @@
                      playerId: game.user.id,
                      playerName: game.user.name,
                      characterName: actorName,
-                     targetActionId: currentEvent.id,
+                     targetActionId: eventForAid.id,
                      skillUsed: skill,
                      outcome: outcome as any,
                      bonus,
@@ -492,8 +494,8 @@
                   });
                });
                
-               if (bonus > 0 && currentEvent) {
-                  ui?.notifications?.info(`You are now aiding ${currentEvent.name} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
+               if (bonus > 0) {
+                  ui?.notifications?.info(`You are now aiding ${eventForAid.name} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
                } else {
                   ui?.notifications?.warn(`Your aid attempt failed.`);
                }
@@ -511,15 +513,15 @@
             actingCharacter,
             skill,
             dc,
-            `Aid Another: ${currentEvent?.name || 'Event'}`,
-            `aid-${currentEvent?.id || 'unknown'}`,
+            `Aid Another: ${eventForAid.name}`,
+            `aid-${eventForAid.id}`,
             {
                criticalSuccess: { description: 'Exceptional aid (+4 bonus and keep higher roll)' },
                success: { description: 'Helpful aid (bonus based on proficiency)' },
                failure: { description: 'No effect' },
                criticalFailure: { description: 'No effect' }
             },
-            currentEvent?.id
+            eventForAid.id
          );
       } catch (error) {
          window.removeEventListener('kingdomRollComplete', aidRollListener as any);
@@ -530,13 +532,13 @@
    
    // Event handler - debug outcome change
    async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentEvent || !resultHandler || !eventResolution) return;
+      if (!currentEvent || !eventPhaseController || !eventResolution) return;
       
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [EventsPhase] Debug outcome changed to: ${newOutcome}`);
       
       // Recalculate display data
-      const displayData = await resultHandler.getDisplayData(currentEvent, newOutcome, eventResolution.actorName);
+      const displayData = await eventPhaseController.getResolutionDisplayData(currentEvent, newOutcome, eventResolution.actorName);
       eventResolution = {
          ...eventResolution,
          outcome: newOutcome,
@@ -587,15 +589,14 @@
       }
    }
    
-   // Get aid result for the current event
-   $: aidResultForEvent = (() => {
-      if (!currentEvent) return null;
-      
+   // Get aid result for the current event  
+   $: aidResultForEvent = currentEvent ? (() => {
+      const eventId = currentEvent.id; // Capture for closure
       const activeAids = $kingdomData?.turnState?.eventsPhase?.activeAids;
       if (!activeAids || activeAids.length === 0) return null;
       
       // Find the most recent aid for this event
-      const aidsForEvent = activeAids.filter((aid: any) => aid.targetActionId === currentEvent.id);
+      const aidsForEvent = activeAids.filter((aid: any) => aid.targetActionId === eventId);
       if (aidsForEvent.length === 0) return null;
       
       // Return the most recent aid (highest timestamp)
@@ -607,7 +608,7 @@
          outcome: mostRecentAid.outcome,
          bonus: mostRecentAid.bonus
       };
-   })();
+   })() : null;
 </script>
 
 <div class="events-phase">

@@ -55,7 +55,7 @@ export async function createActionPhaseController() {
      * Execute player actions step
      */
     async executeActions() {
-      if (isStepCompletedByIndex(0)) {
+      if (await isStepCompletedByIndex(0)) {
         console.log('🟡 [ActionPhaseController] Actions already executed')
         return createPhaseResult(false, 'Actions already executed this turn')
       }
@@ -81,7 +81,7 @@ export async function createActionPhaseController() {
      * Resolve action results step
      */
     async resolveResults() {
-      if (!isStepCompletedByIndex(0)) {
+      if (!(await isStepCompletedByIndex(0))) {
         return createPhaseResult(false, 'Must execute actions before resolving results')
       }
 
@@ -233,7 +233,89 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Execute an action with optional pre-rolled dice values
+     * NEW ARCHITECTURE: Resolve action with ResolutionData
+     * Receives pre-computed resolution data from UI (all dice rolled, choices made)
+     */
+    async resolveAction(
+      actionId: string,
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+      resolutionData: import('../types/events').ResolutionData,
+      actorName?: string,
+      skillName?: string,
+      playerId?: string
+    ) {
+      console.log(`🎯 [ActionPhaseController] Resolving action ${actionId} with outcome: ${outcome}`);
+      console.log(`📋 [ActionPhaseController] ResolutionData:`, resolutionData);
+      
+      try {
+        // NEW ARCHITECTURE: ResolutionData already contains final numeric values
+        // No need to filter, transform, or roll - just apply!
+        
+        const { actionLoader } = await import('./actions/action-loader');
+        const action = actionLoader.getAllActions().find(a => a.id === actionId);
+        if (!action) {
+          console.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
+          return { success: false, error: 'Action not found' };
+        }
+        
+        // Check requirements
+        const kingdom = get(kingdomData);
+        const requirements = this.getActionRequirements(action, kingdom);
+        if (!requirements.met) {
+          return { success: false, error: requirements.reason || 'Action requirements not met' };
+        }
+        
+        // Apply numeric modifiers using GameEffectsService
+        const { createGameEffectsService } = await import('../services/GameEffectsService');
+        const gameEffects = await createGameEffectsService();
+        const result = await gameEffects.applyNumericModifiers(resolutionData.numericModifiers);
+        
+        console.log(`✅ [ActionPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
+        
+        // Log manual effects (they're displayed in UI, not executed)
+        if (resolutionData.manualEffects.length > 0) {
+          console.log(`📋 [ActionPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
+        }
+        
+        // Execute complex actions (Phase 3 - stub for now)
+        if (resolutionData.complexActions.length > 0) {
+          console.log(`🔧 [ActionPhaseController] Complex actions to execute:`, resolutionData.complexActions);
+          // await gameEffects.executeComplexActions(resolutionData.complexActions);
+        }
+        
+        // Track player action
+        if (playerId) {
+          const game = (window as any).game;
+          const user = game?.users?.get(playerId);
+          const playerName = user?.name || 'Unknown Player';
+          
+          await gameEffects.trackPlayerAction(
+            playerId,
+            playerName,
+            actorName || playerName,
+            `${actionId}-${outcome}`,
+            TurnPhase.ACTIONS
+          );
+          
+          console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+        }
+        
+        console.log(`✅ [ActionPhaseController] Action resolved successfully`);
+        
+        // Return the result directly (it's already ApplyOutcomeResult with proper structure)
+        return result;
+      } catch (error) {
+        console.error('❌ [ActionPhaseController] Error resolving action:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+    
+    /**
+     * OLD ARCHITECTURE: Execute an action with optional pre-rolled dice values
+     * DEPRECATED: Use resolveAction() instead for new code
      */
     async executeAction(
       action: PlayerAction,

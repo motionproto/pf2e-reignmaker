@@ -8,8 +8,7 @@
 
 export { rollDiceFormula, isDiceFormula, detectDiceModifiers, detectStateChangeDice, evaluateDiceFormula, getDicePattern } from './DiceRollingService';
 
-export { createOutcomeResolutionService } from './OutcomeResolutionService';
-export type { OutcomeResolutionService, OutcomeResolutionData } from './OutcomeResolutionService';
+// OutcomeResolutionService removed - replaced by ResolutionData in OutcomeDisplay
 
 export { createOutcomeFormattingService, getOutcomeDisplayProps, formatStateChangeLabel, formatStateChangeValue, getChangeClass } from './OutcomeFormattingService';
 export type { OutcomeFormattingService } from './OutcomeFormattingService';

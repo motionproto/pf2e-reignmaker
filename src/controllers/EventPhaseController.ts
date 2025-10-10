@@ -229,8 +229,67 @@ export async function createEventPhaseController(_eventService?: any) {
         },
         
         /**
-         * Apply event outcome using GameEffectsService (New Architecture)
+         * NEW ARCHITECTURE: Resolve event with ResolutionData
+         * Receives pre-computed resolution data from UI (all dice rolled, choices made)
+         */
+        async resolveEvent(
+            eventId: string,
+            outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+            resolutionData: import('../types/events').ResolutionData
+        ) {
+            console.log(`🎯 [EventPhaseController] Resolving event ${eventId} with outcome: ${outcome}`);
+            console.log(`📋 [EventPhaseController] ResolutionData:`, resolutionData);
+            
+            try {
+                // NEW ARCHITECTURE: ResolutionData already contains final numeric values
+                // No need to filter, transform, or roll - just apply!
+                
+                const event = eventService.getEventById(eventId);
+                if (!event) {
+                    console.error(`❌ [EventPhaseController] Event ${eventId} not found`);
+                    return { success: false, error: 'Event not found' };
+                }
+                
+                // Apply numeric modifiers using new simplified service method
+                const result = await gameEffectsService.applyNumericModifiers(resolutionData.numericModifiers);
+                
+                console.log(`✅ [EventPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
+                
+                // Log manual effects (they're displayed in UI, not executed)
+                if (resolutionData.manualEffects.length > 0) {
+                    console.log(`📋 [EventPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
+                }
+                
+                // Execute complex actions (Phase 3 - stub for now)
+                if (resolutionData.complexActions.length > 0) {
+                    console.log(`🔧 [EventPhaseController] Complex actions to execute:`, resolutionData.complexActions);
+                    // await gameEffects.executeComplexActions(resolutionData.complexActions);
+                }
+                
+                // Complete steps 1 & 2 (resolve-event & apply-modifiers)
+                await completePhaseStepByIndex(1);
+                await completePhaseStepByIndex(2);
+                
+                console.log(`✅ [EventPhaseController] Event resolved successfully`);
+                
+                return {
+                    success: true,
+                    applied: result
+                };
+            } catch (error) {
+                console.error('❌ [EventPhaseController] Error resolving event:', error);
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                };
+            }
+        },
+        
+        /**
+         * Apply event outcome using GameEffectsService (Old Architecture - DEPRECATED)
          * Includes verification and force-completion logic to ensure phase completes properly
+         * 
+         * NOTE: This method is kept for backward compatibility but should be migrated to resolveEvent()
          */
         async applyEventOutcome(
             event: EventData,
