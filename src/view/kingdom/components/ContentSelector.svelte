@@ -7,12 +7,12 @@
    
    const tabs = [
       { id: 'turn', label: 'Turn', icon: 'fa-hourglass-half' },
-      { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'settlements', label: 'Settlements', icon: 'fa-city' },
       { id: 'armies', label: 'Armies', icon: 'fa-shield-alt' },
-      { id: 'structures', label: 'Structures', icon: 'fa-hammer' },
       { id: 'factions', label: 'Factions', icon: 'fa-users' },
       { id: 'modifiers', label: 'Modifiers', icon: 'fa-magic' },
+      { id: 'territory', label: 'Territory', icon: 'fa-map' },
+      { id: 'structures', label: 'Structures', icon: 'fa-hammer' },
       { id: 'notes', label: 'Notes', icon: 'fa-book' }
    ];
    

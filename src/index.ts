@@ -76,7 +76,7 @@ function registerModuleSettings() {
         name: 'Hexes Per Unrest',
         hint: 'Number of hexes controlled before gaining +1 unrest. Default: 8 for 4 players. Adjust ±1 per player difference (larger parties = lower number for more unrest, smaller parties = higher number for less unrest)',
         scope: 'world',  // GM only
-        config: true,    // Show in module settings
+        config: false,   // Don't show in Foundry module settings - available in Kingdom Settings tab
         type: Number,
         // @ts-ignore - range is supported by Foundry but not in type definitions
         range: {
