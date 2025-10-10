@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { tick } from 'svelte';
+   import { tick, onMount, onDestroy } from 'svelte';
    import { activeEditingCard } from '../../../../stores/EditingStore';
    
    // Props
@@ -44,18 +44,35 @@
          stopEditing();
       }
    }
+   
+   // Click-outside handler for closing edit mode
+   let cardElement: HTMLDivElement;
+   
+   function handleClickOutside(event: MouseEvent) {
+      if (isEditing && cardElement && !cardElement.contains(event.target as Node)) {
+         stopEditing();
+      }
+   }
+   
+   onMount(() => {
+      document.addEventListener('click', handleClickOutside, true);
+   });
+   
+   onDestroy(() => {
+      document.removeEventListener('click', handleClickOutside, true);
+   });
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div 
+   bind:this={cardElement}
    class="fame-card" 
    class:editing={isEditing}
    class:compact={size === 'compact'}
    class:editable
    style="--resource-color: {color};"
    on:click={startEditing}
-   on:blur={handleBlur}
 >
    <i class="fas {icon} fame-icon" style="color: {color};"></i>
    <div class="fame-info">
@@ -197,7 +214,7 @@
       
       .adjust-btn {
          flex: 1;
-         padding: 0.25rem 0.5rem;
+         padding: 0.25rem;
          border: 1px solid var(--border-default);
          background: var(--bg-surface);
          border-radius: 0.25rem;
@@ -208,7 +225,6 @@
          transition: all var(--transition-fast);
          color: var(--text-primary);
          font-size: 0.75rem;
-         min-width: 32px;
          
          i {
             font-size: 0.75rem;

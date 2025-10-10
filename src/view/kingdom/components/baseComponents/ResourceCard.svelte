@@ -209,14 +209,13 @@
       
       /* Normal size (for ResourcesPhase) */
       &:not(.compact) {
-         max-width: 112px;
-         
          .resource-icon {
             font-size: 1.5rem;
          }
          
          .resource-info {
             min-width: 80px;
+            align-items: flex-start;
          }
          
          .resource-value {
@@ -252,6 +251,7 @@
          .resource-info {
             min-width: 0;
             flex: 1;
+            align-items: center;
          }
          
          .resource-value {
@@ -275,7 +275,6 @@
       .resource-info {
          display: flex;
          flex-direction: column;
-         align-items: center;
       }
       
       .resource-edit-input {
