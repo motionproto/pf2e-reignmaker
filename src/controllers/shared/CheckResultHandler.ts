@@ -112,11 +112,12 @@ export class CheckResultHandler {
           resolutionData.diceRolls
         );
       } else if (this.checkType === 'incident') {
-        // Pass detailed outcome directly to controller
+        // Pass detailed outcome directly to controller INCLUDING choice data
         result = await this.controller.resolveIncident(
           item.id,
           outcome,
-          resolutionData.diceRolls
+          resolutionData.diceRolls,
+          resolutionData.choice  // Pass choice data for resource array selections
         );
       } else if (this.checkType === 'action') {
         // Player actions might have different application method

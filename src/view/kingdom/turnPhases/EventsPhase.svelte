@@ -21,6 +21,7 @@
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
    import ActionConfirmDialog from '../components/ActionConfirmDialog.svelte';
+   import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
    import { createGameEffectsService } from '../../../services/GameEffectsService';
    import {
      getCurrentUserCharacter,
@@ -613,9 +614,6 @@
    <!-- Debug Event Selector -->
    <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
    
-   <!-- Player Action Tracker -->
-   <PlayerActionTracker compact={true} />
-   
    {#if currentEvent}
       <!-- Active Event Card -->
       {#if showStabilityResult}
@@ -694,17 +692,23 @@
       </div>
    {/if}
    
-   <!-- Ongoing Events - All event modifiers displayed as collapsible cards -->
+   <!-- Ongoing Events - System events (with originalEventData) and custom modifiers -->
    {#if activeModifiers.length > 0}
       <div class="ongoing-events-section">
-         <h4>Ongoing Events</h4>
+         <h2 class="ongoing-events-header">Ongoing Events</h2>
          <div class="ongoing-events-list">
             {#each activeModifiers as modifier}
-               <OngoingEventCard
-                  {modifier}
-                  controller={eventPhaseController}
-                  {isViewingCurrentPhase}
-               />
+               {#if modifier.originalEventData}
+                  <!-- System-generated event: Can be acted upon -->
+                  <OngoingEventCard
+                     {modifier}
+                     controller={eventPhaseController}
+                     {isViewingCurrentPhase}
+                  />
+            {:else}
+               <!-- Custom modifier: Informational only -->
+               <CustomModifierDisplay {modifier} />
+               {/if}
             {/each}
          </div>
       </div>
@@ -935,16 +939,14 @@
    }
    
    .ongoing-events-section {
-      background: rgba(251, 191, 36, 0.05);
-      padding: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--color-amber);
-      
-      h4 {
-         margin: 0 0 15px 0;
-         color: var(--text-primary);
-         font-size: var(--font-lg);
-      }
+      padding: 20px 0;
+   }
+   
+   .ongoing-events-header {
+      margin: 0 0 15px 0;
+      color: var(--text-accent);
+      font-size: var(--font-base);
+      font-weight: var(--font-weight-normal);
    }
    
    .ongoing-events-list {

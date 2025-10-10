@@ -7,6 +7,7 @@
   export let resolvedDice: Map<number | string, number> = new Map();
   export let manualEffects: string[] | undefined = undefined;
   export let outcome: string | undefined = undefined;
+  export let hideResources: string[] = []; // Resources to hide (handled elsewhere, e.g., in choice buttons)
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
@@ -108,31 +109,34 @@
     
     {#if hasDiceModifiers}
       <!-- Show dice rollers from modifiers array -->
-      <div class="state-changes-list">
-      {#each diceModifiersToShow as modifier, index}
-        {@const modifierIndex = modifiers?.indexOf(modifier) ?? index}
-        {@const resolvedValue = resolvedDice.get(modifierIndex)}
-        
-        <div class="state-change-item">
-          <span class="change-label">{formatStateChangeLabel(modifier.resource)}:</span>
+      <div class="dice-rollers-section">
+        <div class="dice-rollers-header">Roll the outcome:</div>
+        <div class="state-changes-list">
+        {#each diceModifiersToShow as modifier, index}
+          {@const modifierIndex = modifiers?.indexOf(modifier) ?? index}
+          {@const resolvedValue = resolvedDice.get(modifierIndex)}
           
-          {#if resolvedValue === undefined}
-            <!-- Unrolled dice - show button -->
-            <button 
-              class="dice-button"
-              on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
-            >
-              <i class="fas fa-dice-d20"></i>
-              {modifier.value}
-            </button>
-          {:else}
-            <!-- Rolled dice - show result -->
-            <span class="change-value {getChangeClass(resolvedValue, modifier.resource)}">
-              {formatStateChangeValue(resolvedValue)}
-            </span>
-          {/if}
+          <div class="state-change-item">
+            <span class="change-label">{formatStateChangeLabel(modifier.resource)}:</span>
+            
+            {#if resolvedValue === undefined}
+              <!-- Unrolled dice - show button -->
+              <button 
+                class="dice-button"
+                on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
+              >
+                <i class="fas fa-dice-d20"></i>
+                {modifier.value}
+              </button>
+            {:else}
+              <!-- Rolled dice - show result -->
+              <span class="change-value {getChangeClass(resolvedValue, modifier.resource)}">
+                {formatStateChangeValue(resolvedValue)}
+              </span>
+            {/if}
+          </div>
+        {/each}
         </div>
-      {/each}
       </div>
     {/if}
     
@@ -140,7 +144,8 @@
       <!-- Show numeric state changes (non-dice) -->
       <!-- Filter out resources that are already shown in dice section -->
       {@const diceResources = new Set(diceModifiersToShow.map(m => m.resource))}
-      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !diceResources.has(key))}
+      {@const hiddenResources = new Set(hideResources)}
+      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !diceResources.has(key) && !hiddenResources.has(key))}
       
       {#if nonDiceStateChanges.length > 0}
         <div class="state-changes-list">
@@ -164,6 +169,15 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+  
+  .dice-rollers-section {
+    .dice-rollers-header {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
   }
   
   .critical-success-fame {
@@ -232,20 +246,22 @@
   }
   
   .state-changes-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
   
   .state-change-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     padding: 8px 12px;
     background: rgba(0, 0, 0, 0.15);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--font-md);
+    width: auto;
+    min-width: 180px;
     
     .change-label {
       color: var(--text-secondary);

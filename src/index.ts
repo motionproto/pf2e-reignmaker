@@ -70,6 +70,23 @@ function registerModuleSettings() {
         default: 'New Kingdom',
     });
     
+    // Register hexes per unrest setting
+    // @ts-ignore - Foundry globals and range slider support
+    game.settings.register('pf2e-reignmaker', 'hexesPerUnrest', {
+        name: 'Hexes Per Unrest',
+        hint: 'Number of hexes controlled before gaining +1 unrest. Default: 8 for 4 players. Adjust ±1 per player difference (larger parties = lower number for more unrest, smaller parties = higher number for less unrest)',
+        scope: 'world',  // GM only
+        config: true,    // Show in module settings
+        type: Number,
+        // @ts-ignore - range is supported by Foundry but not in type definitions
+        range: {
+            min: 4,
+            max: 12,
+            step: 1
+        },
+        default: 8
+    });
+    
     // Register reset kingdom button setting
     // Using a dummy boolean setting to create a button in the UI
     // @ts-ignore - Foundry globals

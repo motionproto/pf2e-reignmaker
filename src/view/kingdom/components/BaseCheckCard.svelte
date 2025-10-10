@@ -19,6 +19,7 @@
    */
   
   import { createEventDispatcher } from 'svelte';
+  import { getSkillBonuses } from '../../../services/pf2e';
   
   // Sub-components
   import CheckCardHeader from './CheckCard/components/CheckCardHeader.svelte';
@@ -98,6 +99,9 @@
   let localUsedSkill: string = '';
   let outcomeApplied: boolean = false;  // Track if outcome has been applied
   
+  // Get skill bonuses for all skills
+  $: skillBonuses = getSkillBonuses(skills.map(s => s.skill));
+  
   // Get the skill that was used
   $: usedSkill = resolution?.skillName || localUsedSkill || '';
   
@@ -146,11 +150,12 @@
     });
   }
   
-  function handleApplyResult() {
+  function handleApplyResult(event: CustomEvent) {
+    // Forward the resolution data FROM OutcomeDisplay, not the display data
     dispatch('primary', {
       checkId: id,
       checkType,
-      resolution
+      resolution: event.detail  // ✅ Use event detail from OutcomeDisplay (has diceRolls, choice, etc.)
     });
     
     // For player actions, reset resolution state to allow other players
@@ -314,9 +319,11 @@
               {/if}
               
               {#each skills as skillOption}
+                {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
                 <SkillTag
                   skill={skillOption.skill}
                   description={skillOption.description || ''}
+                  bonus={bonus}
                   selected={localUsedSkill === skillOption.skill}
                   disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability)}
                   loading={isRolling && localUsedSkill === skillOption.skill}

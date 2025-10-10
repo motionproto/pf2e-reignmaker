@@ -2,6 +2,7 @@
 import { kingdomData, kingdomActor, isInitialized } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
+import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
@@ -57,27 +58,35 @@ async function initializePhase() {
       </div>
    </div>
 
-   <!-- Active Modifiers Overview -->
-   {#if $kingdomData.modifiers && $kingdomData.modifiers.length > 0}
-      <div class="phase-section active-modifiers">
+   <!-- Status Phase Modifiers (Size, Metropolises) -->
+   {#if $kingdomData.turnState?.statusPhase?.displayModifiers && $kingdomData.turnState.statusPhase.displayModifiers.length > 0}
+      <div class="phase-section status-modifiers">
          <div class="section-header">
-            <i class="fas fa-list"></i>
-            <h3>Active Modifiers</h3>
+            <i class="fas fa-balance-scale"></i>
+            <h3>Status Modifiers</h3>
          </div>
 
-         <div class="modifiers-grid">
-            {#each $kingdomData.modifiers as modifier}
-               <ModifierCard {modifier} />
+         <div class="modifiers-stack">
+            {#each $kingdomData.turnState.statusPhase.displayModifiers as modifier}
+               <CustomModifierDisplay {modifier} />
             {/each}
          </div>
       </div>
-   {:else}
-      <div class="phase-section no-modifiers">
+   {/if}
+
+   <!-- Structure Modifiers (Permanent modifiers from built structures) -->
+   {#if $kingdomData.activeModifiers && $kingdomData.activeModifiers.filter(m => m.sourceType === 'structure' && m.modifiers?.some(mod => mod.duration === 'permanent')).length > 0}
+      <div class="phase-section structure-modifiers">
          <div class="section-header">
-            <i class="fas fa-check-circle"></i>
-            <h3>No Active Modifiers</h3>
+            <i class="fas fa-building"></i>
+            <h3>Structure Modifiers</h3>
          </div>
-         <p>Your kingdom has no active modifiers affecting this turn.</p>
+
+         <div class="modifiers-stack">
+            {#each $kingdomData.activeModifiers.filter(m => m.sourceType === 'structure' && m.modifiers?.some(mod => mod.duration === 'permanent')) as modifier}
+               <CustomModifierDisplay {modifier} />
+            {/each}
+         </div>
       </div>
    {/if}
 </div>
@@ -174,6 +183,13 @@ async function initializePhase() {
          color: var(--text-secondary);
          font-size: var(--font-md);
       }
+   }
+
+   // Status Modifiers Stack (Full Width)
+   .modifiers-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
    }
 
    // Active Modifiers Grid

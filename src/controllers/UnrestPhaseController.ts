@@ -242,7 +242,8 @@ export async function createUnrestPhaseController() {
     async resolveIncident(
       incidentId: string, 
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      preRolledValues?: Map<number | string, number>
+      preRolledValues?: Map<number | string, number>,
+      choice?: { index: number; data: any; result?: { effect: string; stateChanges: Record<string, any> } }
     ) {
       const actor = getKingdomActor();
       if (!actor) {
@@ -283,6 +284,35 @@ export async function createUnrestPhaseController() {
           throw new Error(`No effects defined for outcome: ${outcome}`);
         }
 
+        // Filter modifiers: If choice was made, replace resource array modifier with choice result
+        let modifiersToApply = effectOutcome.modifiers || [];
+        
+        console.log('🔍 [UnrestPhaseController] Checking choice data:', { 
+          hasChoice: !!choice, 
+          hasResult: !!choice?.result, 
+          hasStateChanges: !!choice?.result?.stateChanges,
+          stateChanges: choice?.result?.stateChanges,
+          fullChoice: choice
+        });
+        
+        if (choice?.result?.stateChanges) {
+          console.log('🎯 [UnrestPhaseController] Choice detected - filtering modifiers:', choice);
+          
+          // Filter out resource array modifiers (they're replaced by the choice)
+          modifiersToApply = modifiersToApply.filter((m: any) => !Array.isArray(m.resource));
+          
+          // Add modifiers from the choice result
+          for (const [resource, value] of Object.entries(choice.result.stateChanges)) {
+            modifiersToApply.push({
+              resource: resource,
+              value: value,
+              duration: 'immediate'
+            });
+          }
+          
+          console.log('✅ [UnrestPhaseController] Modified modifiers list:', modifiersToApply);
+        }
+
         // Use GameEffectsService to apply the outcome
         const { createGameEffectsService } = await import('../services/GameEffectsService');
         const gameEffectsService = await createGameEffectsService();
@@ -292,7 +322,7 @@ export async function createUnrestPhaseController() {
           sourceId: incident.id,
           sourceName: getIncidentDisplayName(incident),
           outcome: outcome,
-          modifiers: effectOutcome.modifiers || [],
+          modifiers: modifiersToApply,  // Use filtered/modified modifiers
           createOngoingModifier: false, // Handle separately below
           preRolledValues: preRolledValues // Pass through pre-rolled values from UI
         });

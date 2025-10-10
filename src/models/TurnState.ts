@@ -30,6 +30,7 @@ export interface StatusPhaseState {
   resourceDecayProcessed: boolean;
   previousIncidentCleared: boolean;
   previousOutcomesCleared: boolean;
+  displayModifiers?: any[];  // Display-only modifiers for Status phase UI (size, metropolises, etc.)
 }
 
 /**

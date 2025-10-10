@@ -341,11 +341,15 @@
       if (!incidentResolution || !currentIncident || !resultHandler) return;
       
       console.log(`📝 [UnrestPhase] Applying incident result:`, incidentResolution.outcome);
+      console.log(`🔍 [UnrestPhase] Event detail received:`, event.detail);
+      console.log(`🔍 [UnrestPhase] event.detail.resolution:`, event.detail.resolution);
       
-      // Parse resolution data
+      // Parse resolution data - BaseCheckCard wraps it in {checkId, checkType, resolution}
       const { createOutcomeResolutionService } = await import('../../../services/resolution');
       const resolutionService = await createOutcomeResolutionService();
-      const resolutionData = resolutionService.fromEventDetail(event.detail);
+      const resolutionData = resolutionService.fromEventDetail(event.detail.resolution || event.detail);
+      
+      console.log(`🔍 [UnrestPhase] Resolution data after parsing:`, resolutionData);
       
       // Apply through controller
       const result = await resultHandler.applyResolution(

@@ -11,6 +11,10 @@
   
   // Track rolled dice values per choice
   let rolledDice: Map<number, Map<number, number>> = new Map();
+  // Track rolling state per choice
+  let rollingStates: Map<number, boolean> = new Map();
+  // Force reactivity trigger
+  let rolledDiceVersion = 0;
   
   $: hasChoices = choices && choices.length > 0;
   
@@ -37,50 +41,98 @@
     return choiceRolls.size >= diceCount;
   }
   
-  // Get preview label with rolled values
+  // Get preview label with formula or rolled values
   function getPreviewLabel(choice: any, choiceIndex: number): string {
-    let label = choice.label;
-    const choiceRolls = rolledDice.get(choiceIndex);
-    
-    if (choice.modifiers && choiceRolls) {
-      choice.modifiers.forEach((modifier: any, modIndex: number) => {
-        const rolledValue = choiceRolls.get(modIndex);
-        if (rolledValue !== undefined) {
-          const placeholder = `{${modifier.resource}}`;
-          label = label.replace(new RegExp(placeholder, 'g'), String(Math.abs(rolledValue)));
-        }
-      });
+    if (!choice.modifiers || choice.modifiers.length === 0) {
+      return choice.label;
     }
     
-    return label;
+    const choiceRolls = rolledDice.get(choiceIndex);
+    const modifier = choice.modifiers[0]; // Get first modifier
+    const resource = modifier.resource;
+    const rolledValue = choiceRolls?.get(0);
+    
+    console.log(`📋 [getPreviewLabel] choice ${choiceIndex}, rolledDice has ${Array.from(rolledDice.keys())}, choiceRolls:`, choiceRolls, 'rolledValue:', rolledValue);
+    
+    // Determine action (Lose/Gain)
+    const isNegative = typeof modifier.value === 'string' ? modifier.value.startsWith('-') : modifier.value < 0;
+    const action = isNegative ? 'Lose' : 'Gain';
+    
+    // Capitalize resource name
+    const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
+    
+    if (rolledValue !== undefined) {
+      // Show rolled value: "Lose 7 Lumber"
+      return `${action} ${Math.abs(rolledValue)} ${resourceName}`;
+    } else {
+      // Show formula: "Lose 2d4+1 Lumber"
+      let formula = modifier.value;
+      if (typeof formula === 'string') {
+        if (formula.startsWith('-')) {
+          formula = formula.substring(1);
+        }
+        formula = formula.replace(/^\((.+)\)$/, '$1');
+      }
+      return `${action} ${formula} ${resourceName}`;
+    }
   }
   
-  function handleRoll(choiceIndex: number, modifierIndex: number, formula: string) {
-    const result = rollDiceFormula(formula);
+  async function handleCardClick(choiceIndex: number) {
+    // If already selected, deselect
+    if (selectedChoice === choiceIndex) {
+      dispatch('select', { 
+        index: null,
+        rolledValues: {} 
+      });
+      return;
+    }
     
-    // Update rolled dice map
-    const choiceRolls = rolledDice.get(choiceIndex) || new Map();
-    choiceRolls.set(modifierIndex, result);
-    rolledDice.set(choiceIndex, choiceRolls);
-    rolledDice = rolledDice; // Trigger reactivity
+    // If disabled (another choice selected), ignore
+    if (selectedChoice !== null && selectedChoice !== choiceIndex) {
+      return;
+    }
     
-    console.log(`🎲 [ChoiceButtons] Rolled ${formula} = ${result} for choice ${choiceIndex}, modifier ${modifierIndex}`);
-  }
-  
-  function handleChoiceSelect(index: number) {
-    if (!areAllDiceRolled(index)) return;
+    const choice = choices![choiceIndex];
+    
+    // If choice has dice formulas, roll them all first
+    if (hasDiceFormulas(choice) && !areAllDiceRolled(choiceIndex)) {
+      rollingStates.set(choiceIndex, true);
+      rollingStates = rollingStates;
+      
+      const choiceRolls = new Map();
+      
+      for (let modIndex = 0; modIndex < choice.modifiers.length; modIndex++) {
+        const modifier = choice.modifiers[modIndex];
+        const value = modifier.value;
+        
+        if (typeof value === 'string' && DICE_PATTERN.test(value)) {
+          // Add small delay for visual effect
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const result = rollDiceFormula(value);
+          choiceRolls.set(modIndex, result);
+          console.log(`🎲 [ChoiceButtons] Rolled ${value} = ${result} for choice ${choiceIndex}, modifier ${modIndex}`);
+        }
+      }
+      
+      rolledDice.set(choiceIndex, choiceRolls);
+      rolledDice = rolledDice;
+      rolledDiceVersion++; // Force reactivity
+      
+      rollingStates.set(choiceIndex, false);
+      rollingStates = rollingStates;
+    }
     
     // Build the choice result with rolled values
-    const choice = choices![index];
-    const choiceRolls = rolledDice.get(index);
+    const choiceRolls = rolledDice.get(choiceIndex);
     const resourceValues: Record<string, number> = {};
     
-    if (choice.modifiers && choiceRolls) {
+    if (choice.modifiers) {
       choice.modifiers.forEach((modifier: any, modIndex: number) => {
         const value = modifier.value;
         
         if (typeof value === 'string' && DICE_PATTERN.test(value)) {
-          const rolled = choiceRolls.get(modIndex);
+          const rolled = choiceRolls?.get(modIndex);
           if (rolled !== undefined) {
             resourceValues[modifier.resource] = rolled;
           }
@@ -91,57 +143,37 @@
     }
     
     dispatch('select', { 
-      index,
+      index: choiceIndex,
       rolledValues: resourceValues 
     });
   }
 </script>
 
-{#if hasChoices && !choicesResolved && choices}
+{#if hasChoices && choices}
   <div class="choice-buttons">
     <div class="choice-buttons-header">Choose one:</div>
     <div class="choice-cards">
       {#each choices as choice, choiceIndex}
         {@const hasFormulas = hasDiceFormulas(choice)}
-        {@const allRolled = areAllDiceRolled(choiceIndex)}
         {@const isSelected = selectedChoice === choiceIndex}
-        {@const isDisabled = selectedChoice !== null && selectedChoice !== choiceIndex}
+        {@const isFaded = choicesResolved && selectedChoice !== choiceIndex}
+        {@const isRolling = rollingStates.get(choiceIndex) || false}
         
-        <div class="choice-card {isSelected ? 'selected' : ''} {isDisabled ? 'disabled' : ''}">
-          <div class="choice-label">{getPreviewLabel(choice, choiceIndex)}</div>
-          
-          {#if hasFormulas}
-            <div class="dice-section">
-              {#each choice.modifiers as modifier, modIndex}
-                {#if typeof modifier.value === 'string' && DICE_PATTERN.test(modifier.value)}
-                  {@const rolled = rolledDice.get(choiceIndex)?.get(modIndex)}
-                  <div class="dice-roller">
-                    <span class="dice-formula">{modifier.value}</span>
-                    {#if rolled !== undefined}
-                      <span class="dice-result">= {Math.abs(rolled)}</span>
-                    {:else if !isDisabled}
-                      <button 
-                        class="roll-button"
-                        on:click={() => handleRoll(choiceIndex, modIndex, modifier.value)}
-                        disabled={isDisabled}
-                      >
-                        Roll
-                      </button>
-                    {/if}
-                  </div>
-                {/if}
-              {/each}
-            </div>
-          {/if}
-          
-          <button
-            class="select-button"
-            on:click={() => handleChoiceSelect(choiceIndex)}
-            disabled={!allRolled || isDisabled}
-          >
-            {isSelected ? '✓ Selected' : 'Select This Choice'}
-          </button>
-        </div>
+        <button 
+          class="choice-card {isSelected ? 'selected' : ''} {isFaded ? 'faded' : ''} {isRolling ? 'rolling' : ''}"
+          on:click={() => handleCardClick(choiceIndex)}
+          disabled={choicesResolved || isRolling}
+        >
+          <div class="choice-header">
+            {#if choice.icon}
+              <i class="fas {choice.icon} resource-icon"></i>
+            {/if}
+            <div class="choice-label">{@html ''}{getPreviewLabel(choice, choiceIndex + rolledDiceVersion * 0)}</div>
+            {#if isRolling}
+              <span class="rolling-indicator">🎲</span>
+            {/if}
+          </div>
+        </button>
       {/each}
     </div>
   </div>
@@ -159,8 +191,8 @@
     }
     
     .choice-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
     }
     
@@ -173,21 +205,53 @@
       border: 2px solid var(--border-medium);
       border-radius: var(--radius-md);
       transition: all var(--transition-fast);
+      cursor: pointer;
+      text-align: left;
+      min-width: 200px;
+      width: auto;
       
-      &:hover:not(.disabled) {
+      &:hover:not(.disabled):not(.rolling) {
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
-        background: rgba(59, 130, 246, 0.15);
-        border-color: var(--color-blue);
-        box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--border-strong);
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+        opacity: 1;
       }
       
-      &.disabled {
+      &.faded {
         opacity: 0.4;
+        cursor: not-allowed;
         pointer-events: none;
+      }
+      
+      &.rolling {
+        opacity: 0.7;
+        cursor: wait;
+      }
+      
+      .choice-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        
+        .resource-icon {
+          font-size: var(--font-lg);
+          color: var(--text-primary);
+          flex-shrink: 0;
+        }
+        
+        .rolling-indicator {
+          color: var(--color-blue);
+          font-size: var(--font-lg);
+          animation: spin 1s linear infinite;
+          margin-left: auto;
+        }
       }
       
       .choice-label {
@@ -195,85 +259,18 @@
         font-weight: var(--font-weight-medium);
         color: var(--text-primary);
         line-height: 1.4;
+        flex: 1;
       }
       
-      .dice-section {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        padding: 8px;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: var(--radius-sm);
-        
-        .dice-roller {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: var(--font-sm);
-          
-          .dice-formula {
-            color: var(--text-secondary);
-            font-family: monospace;
-          }
-          
-          .dice-result {
-            color: var(--color-green);
-            font-weight: var(--font-weight-semibold);
-            font-size: var(--font-md);
-          }
-          
-          .roll-button {
-            padding: 4px 10px;
-            background: rgba(59, 130, 246, 0.2);
-            border: 1px solid var(--color-blue);
-            border-radius: var(--radius-sm);
-            color: var(--color-blue);
-            font-size: var(--font-sm);
-            font-weight: var(--font-weight-medium);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            
-            &:hover:not(:disabled) {
-              background: rgba(59, 130, 246, 0.3);
-              transform: translateY(-1px);
-            }
-            
-            &:disabled {
-              opacity: 0.5;
-              cursor: not-allowed;
-            }
-          }
-        }
-      }
-      
-      .select-button {
-        padding: 8px 14px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 2px solid var(--border-medium);
-        border-radius: var(--radius-md);
-        color: var(--text-primary);
-        font-size: var(--font-md);
-        font-weight: var(--font-weight-medium);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        
-        &:hover:not(:disabled) {
-          background: rgba(255, 255, 255, 0.1);
-          border-color: var(--border-strong);
-          transform: translateY(-1px);
-        }
-        
-        &:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-      }
-      
-      &.selected .select-button {
-        background: rgba(34, 197, 94, 0.2);
-        border-color: var(--color-green);
-        color: var(--color-green);
-      }
+    }
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 </style>

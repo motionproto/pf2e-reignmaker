@@ -1,0 +1,34 @@
+[
+  [
+    {
+      "resource": "food",
+      "amount": "-1d4+1"
+    },
+    {
+      "resource": "lumber",
+      "amount": "-1d4+1"
+    },
+    {
+      "resource": "ore",
+      "amount": "-2"
+    }
+  ],
+  [
+    {
+      "resource": "gold",
+      "amount": "-2d6"
+    }
+  ],
+  [
+    {
+      "resource": "fame",
+      "amount": "-4"
+    }
+  ]
+]
+
+This is how i would represent an out come with 3 results/effects
+
+1. players choice: Lose 1d4+1 food, Lose 1d4+1 Lumber, or Lose 2 Ore
+2. Lose 2d6 gold
+3. Lose 4 Fame

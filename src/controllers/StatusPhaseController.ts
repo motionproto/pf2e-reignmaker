@@ -13,7 +13,7 @@ import {
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
 import { createDefaultTurnState } from '../models/TurnState';
-import { createModifierService } from '../services/ModifierService';
+import { SettlementTier } from '../models/Settlement';
 
 export async function createStatusPhaseController() {
   return {
@@ -37,17 +37,11 @@ export async function createStatusPhaseController() {
         // Clear previous turn's incident
         await this.clearPreviousIncident();
         
-        // Process resource decay from previous turn (moved from Upkeep)
-        await this.processResourceDecay();
-        
-        // Set Fame to 1 (initial condition for each turn)
-        await this.initializeFame();
+        // NOTE: Resource decay, Fame init, and base unrest are now handled by TurnManager.prepareTurn()
+        // This ensures they only run once per turn, not on component remount
         
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
-        
-        // Apply ongoing modifiers (both system and custom)
-        await this.applyOngoingModifiers();
         
         // Auto-complete the single step immediately
         await completePhaseStepByIndex(0);
@@ -129,15 +123,85 @@ export async function createStatusPhaseController() {
     },
 
     /**
-     * Apply ongoing modifiers using ModifierService
+     * Apply base unrest from kingdom size and metropolises
      * 
-     * This applies ALL ongoing modifiers (both system and custom) each turn.
-     * System modifiers come from events/incidents/structures.
-     * Custom modifiers are created by the user in the ModifiersTab.
+     * Base unrest sources (per Reignmaker rules):
+     * - Kingdom size: +1 unrest per X hexes (configurable, default 8)
+     * - Metropolis complexity: +1 unrest per Metropolis
      */
-    async applyOngoingModifiers() {
-      const modifierService = await createModifierService();
-      await modifierService.applyOngoingModifiers();
+    async applyBaseUnrest() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const kingdom = actor.getKingdom();
+      if (!kingdom) {
+        console.error('❌ [StatusPhaseController] No kingdom data available');
+        return;
+      }
+
+      // Get setting value (with fallback to 8)
+      // @ts-ignore - Foundry globals
+      let hexesPerUnrest = 8; // default
+      try {
+        hexesPerUnrest = (game.settings.get('pf2e-reignmaker', 'hexesPerUnrest') as number) || 8;
+      } catch (error) {
+        console.warn('⚠️ [StatusPhaseController] Setting not available yet, using default (8)');
+      }
+      
+      // Calculate base unrest sources
+      const hexUnrest = Math.floor(kingdom.size / hexesPerUnrest);
+      const metropolisCount = kingdom.settlements.filter(
+        s => s.tier === SettlementTier.METROPOLIS
+      ).length;
+      
+      const totalBaseUnrest = hexUnrest + metropolisCount;
+
+      if (totalBaseUnrest > 0) {
+        // Create display-only modifiers for Status phase UI
+        const displayModifiers: any[] = [];
+        
+        if (hexUnrest > 0) {
+          displayModifiers.push({
+            id: 'status-size-unrest',
+            name: 'Kingdom Size',
+            description: `Your kingdom's ${kingdom.size} hexes generate unrest as it becomes harder to govern`,
+            sourceType: 'structure',
+            modifiers: [{
+              resource: 'unrest',
+              value: hexUnrest,
+              duration: 'permanent'
+            }]
+          });
+        }
+        
+        if (metropolisCount > 0) {
+          displayModifiers.push({
+            id: 'status-metropolis-unrest',
+            name: 'Metropolis Complexity',
+            description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
+            sourceType: 'structure',
+            modifiers: [{
+              resource: 'unrest',
+              value: metropolisCount,
+              duration: 'permanent'
+            }]
+          });
+        }
+        
+        await actor.updateKingdom((k) => {
+          k.unrest = (k.unrest || 0) + totalBaseUnrest;
+          
+          // Store display modifiers in turnState for Status phase UI
+          if (k.turnState) {
+            k.turnState.statusPhase.displayModifiers = displayModifiers;
+          }
+        });
+        
+        console.log(`📊 [StatusPhaseController] Base unrest applied: +${hexUnrest} (${kingdom.size} hexes ÷ ${hexesPerUnrest}), +${metropolisCount} (metropolises) = +${totalBaseUnrest} total`);
+      }
     },
 
     /**
