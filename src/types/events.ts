@@ -43,14 +43,12 @@ export type EventTrait =
 /**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = 
-;
+export type ModifierSelector = never;  // Currently unused, reserved for future use
 
 /**
  * Event location types
  */
-export type EventLocation = 
-;
+export type EventLocation = never;  // Currently unused, reserved for future use
 
 /**
  * Event tier types (events use 'event', incidents vary)
@@ -78,6 +76,15 @@ export interface EventModifier {
 }
 
 /**
+ * Complex action that can be auto-executed
+ */
+export interface ComplexAction {
+  type: 'damage_structure' | 'destroy_structure' | 'create_army' | 
+        'claim_hex' | 'remove_condition' | 'add_condition';
+  [key: string]: any;  // Type-specific parameters
+}
+
+/**
  * Event outcome with message and modifiers
  */
 export interface EventOutcome {
@@ -85,6 +92,7 @@ export interface EventOutcome {
   endsEvent?: boolean;
   modifiers?: EventModifier[];
   manualEffects?: string[];  // Optional manual effects to display
+  complexActions?: ComplexAction[];  // Optional auto-executable actions
 }
 
 /**
@@ -135,6 +143,31 @@ export function isKingdomEvent(obj: any): obj is KingdomEvent {
  */
 export function getEventDisplayName(event: KingdomEvent): string {
   return event.id
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Resolution data computed by UI and passed to controllers
+ * This is the complete, ready-to-apply data after all user interactions
+ */
+export interface ResolutionData {
+  /** Final numeric modifiers (already rolled, choices resolved) */
+  numericModifiers: Array<{ resource: ResourceType; value: number }>;
+  
+  /** Manual effects to display (not auto-executed) */
+  manualEffects: string[];
+  
+  /** Complex actions to auto-execute */
+  complexActions: ComplexAction[];
+}
+
+/**
+ * Helper to generate display name from incident ID
+ */
+export function getIncidentDisplayName(incident: KingdomIncident): string {
+  return incident.id
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');

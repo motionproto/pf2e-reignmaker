@@ -151,11 +151,14 @@
   }
   
   function handleApplyResult(event: CustomEvent) {
-    // Forward the resolution data FROM OutcomeDisplay, not the display data
+    // NEW ARCHITECTURE: Forward ResolutionData directly from OutcomeDisplay
+    // event.detail is already a ResolutionData object (numericModifiers, manualEffects, complexActions)
+    console.log('📤 [BaseCheckCard] Forwarding ResolutionData:', event.detail);
+    
     dispatch('primary', {
       checkId: id,
       checkType,
-      resolution: event.detail  // ✅ Use event detail from OutcomeDisplay (has diceRolls, choice, etc.)
+      resolution: event.detail  // ResolutionData from OutcomeDisplay
     });
     
     // For player actions, reset resolution state to allow other players

@@ -65,13 +65,14 @@ export function computeDisplayStateChanges(
   resolvedDice?: Map<number | string, number>,
   stateChangeDice?: { key: string; formula: string }[]
 ): Record<string, any> | undefined {
-  // If we have a choice result, use it exclusively
-  if (choiceResult) {
-    return choiceResult.stateChanges;
-  }
-  
   // Start with base state changes
   let result = baseStateChanges ? { ...baseStateChanges } : {};
+  
+  // If we have a choice result, merge it with other modifiers
+  // (Don't replace everything - choices are just one part of the outcome)
+  if (choiceResult) {
+    result = { ...result, ...choiceResult.stateChanges };
+  }
   
   // Merge resource array selections
   if (resourceArrayModifiers.length > 0 && resourceArraysResolved) {

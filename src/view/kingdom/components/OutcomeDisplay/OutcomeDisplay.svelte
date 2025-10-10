@@ -14,6 +14,7 @@
   } from '../../../../services/resolution';
   import { createOutcomeResolutionService } from '../../../../services/resolution';
   import { getResourceIcon } from '../../../kingdom/utils/presentation';
+  import type { ResolutionData, ResourceType } from '../../../../types/events';
   
   // Import extracted components
   import OutcomeHeader from './components/OutcomeHeader.svelte';
@@ -163,6 +164,80 @@
     dispatch('reroll');
   }
   
+  /**
+   * NEW ARCHITECTURE: Compute complete resolution data
+   * This is the single source of truth for what gets applied to the kingdom
+   */
+  function computeResolutionData(): ResolutionData {
+    const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
+    
+    // Case 1: Choice was made (resource arrays are replaced by choice)
+    if (selectedChoice !== null && choiceResult?.stateChanges) {
+      console.log('🔍 [computeResolutionData] Processing choice-based resolution');
+      
+      // Add non-resource-array modifiers (e.g., gold penalty in Trade War)
+      if (modifiers) {
+        for (let i = 0; i < modifiers.length; i++) {
+          const mod = modifiers[i];
+          
+          // Skip resource arrays (they're replaced by the choice)
+          if (Array.isArray(mod.resource)) {
+            console.log(`⏭️ [computeResolutionData] Skipping resource array modifier [${i}]`);
+            continue;
+          }
+          
+          // Get rolled value or use static value
+          const value = resolvedDice.get(i) ?? mod.value;
+          
+          if (typeof value === 'number') {
+            numericModifiers.push({ resource: mod.resource as ResourceType, value });
+            console.log(`✅ [computeResolutionData] Added modifier [${i}]: ${mod.resource} = ${value}`);
+          }
+        }
+      }
+      
+      // Add choice modifiers (already rolled in ChoiceButtons)
+      for (const [resource, value] of Object.entries(choiceResult.stateChanges)) {
+        numericModifiers.push({ resource: resource as ResourceType, value: value as number });
+        console.log(`✅ [computeResolutionData] Added choice modifier: ${resource} = ${value}`);
+      }
+    }
+    // Case 2: No choices, apply all modifiers
+    else {
+      console.log('🔍 [computeResolutionData] Processing standard resolution (no choices)');
+      
+      if (modifiers) {
+        for (let i = 0; i < modifiers.length; i++) {
+          const mod = modifiers[i];
+          
+          // Skip resource arrays if no choice (shouldn't happen, but safety)
+          if (Array.isArray(mod.resource)) {
+            console.warn(`⚠️ [computeResolutionData] Resource array without choice: [${i}]`);
+            continue;
+          }
+          
+          // Get rolled value or use static value
+          let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
+          
+          if (typeof value === 'number') {
+            numericModifiers.push({ resource: mod.resource as ResourceType, value });
+            console.log(`✅ [computeResolutionData] Added modifier [${i}]: ${mod.resource} = ${value}`);
+          }
+        }
+      }
+    }
+    
+    // Build complete resolution data
+    const resolution: ResolutionData = {
+      numericModifiers,
+      manualEffects: manualEffects || [],
+      complexActions: [] // Phase 3 will add support for this
+    };
+    
+    console.log('📋 [computeResolutionData] Final resolution:', resolution);
+    return resolution;
+  }
+  
   async function handlePrimary() {
     console.log('🔵 [handlePrimary] Called', { hasChoices, choicesResolved, applied, primaryButtonDisabled });
     
@@ -179,23 +254,13 @@
       }
     }
     
-    console.log('✅ [handlePrimary] Building resolution data', { selectedChoice, choiceResult });
+    console.log('✅ [handlePrimary] Computing resolution data...');
     
-    // Build standardized resolution data using the service
-    const resolutionService = await createOutcomeResolutionService();
-    const resolutionData = resolutionService.buildResolutionData({
-      resolvedDice,
-      selectedResources,
-      selectedChoice,
-      choices: effectiveChoices,  // Use effectiveChoices (includes auto-generated from resource arrays)
-      choiceResult
-    });
+    // NEW ARCHITECTURE: Compute complete resolution data
+    const resolutionData = computeResolutionData();
     
-    // Convert to plain object for event dispatch
-    const eventDetail = resolutionService.toEventDetail(resolutionData);
-    
-    console.log('📤 [handlePrimary] Dispatching primary event', eventDetail);
-    dispatch('primary', eventDetail);
+    console.log('📤 [handlePrimary] Dispatching primary event with resolution data');
+    dispatch('primary', resolutionData);
   }
   
   function handleResourceSelect(event: CustomEvent) {

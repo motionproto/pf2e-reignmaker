@@ -75,6 +75,38 @@ export async function createGameEffectsService() {
 
   return {
     /**
+     * NEW ARCHITECTURE: Apply numeric modifiers directly
+     * Simpler than applyOutcome - just applies final numeric values
+     */
+    async applyNumericModifiers(
+      modifiers: Array<{ resource: ResourceType; value: number }>
+    ): Promise<ApplyOutcomeResult> {
+      console.log(`🎯 [GameEffects] Applying ${modifiers.length} numeric modifiers`);
+      
+      const result: ApplyOutcomeResult = {
+        success: true,
+        applied: {
+          resources: [],
+          specialEffects: []
+        }
+      };
+      
+      try {
+        for (const { resource, value } of modifiers) {
+          await this.applyResourceChange(resource, value, 'Applied', result);
+        }
+        
+        console.log(`✅ [GameEffects] All modifiers applied successfully`);
+        return result;
+      } catch (error) {
+        console.error(`❌ [GameEffects] Failed to apply modifiers:`, error);
+        result.success = false;
+        result.error = error instanceof Error ? error.message : 'Unknown error';
+        return result;
+      }
+    },
+
+    /**
      * Track a player action in the turn's action log
      * 
      * This should be called whenever a player performs an action (events or actions, NOT incidents).

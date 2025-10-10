@@ -338,22 +338,21 @@
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-      if (!incidentResolution || !currentIncident || !resultHandler) return;
+      if (!incidentResolution || !currentIncident) return;
       
       console.log(`📝 [UnrestPhase] Applying incident result:`, incidentResolution.outcome);
       console.log(`🔍 [UnrestPhase] Event detail received:`, event.detail);
-      console.log(`🔍 [UnrestPhase] event.detail.resolution:`, event.detail.resolution);
       
-      // Parse resolution data - BaseCheckCard wraps it in {checkId, checkType, resolution}
-      const { createOutcomeResolutionService } = await import('../../../services/resolution');
-      const resolutionService = await createOutcomeResolutionService();
-      const resolutionData = resolutionService.fromEventDetail(event.detail.resolution || event.detail);
+      // NEW ARCHITECTURE: event.detail.resolution is already ResolutionData from OutcomeDisplay
+      const resolutionData = event.detail.resolution;
+      console.log(`📋 [UnrestPhase] ResolutionData:`, resolutionData);
       
-      console.log(`🔍 [UnrestPhase] Resolution data after parsing:`, resolutionData);
+      // Call controller directly with ResolutionData
+      const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+      const controller = await createUnrestPhaseController();
       
-      // Apply through controller
-      const result = await resultHandler.applyResolution(
-         currentIncident,
+      const result = await controller.resolveIncident(
+         currentIncident.id,
          incidentResolution.outcome,
          resolutionData
       );
@@ -361,10 +360,10 @@
       if (result.success) {
          console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
          
-         // Parse shortfall information
+         // Parse shortfall information from the new result structure
          const shortfalls: string[] = [];
-         if (result.applied?.specialEffects) {
-            for (const effect of result.applied.specialEffects) {
+         if (result.applied?.applied?.specialEffects) {
+            for (const effect of result.applied.applied.specialEffects) {
                if (effect.startsWith('shortage_penalty:')) {
                   shortfalls.push(effect.split(':')[1]);
                }

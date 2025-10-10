@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { formatStateChangeLabel, formatStateChangeValue, getChangeClass, rollDiceFormula } from '../../../../../services/resolution';
+  import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
@@ -82,6 +83,25 @@
       resource: key
     });
   }
+  
+  // Get label for a modifier (e.g., "Lose 2d4 Food")
+  function getModifierLabel(resource: string, value: any, resolved?: number): string {
+    const isNegative = (typeof value === 'string' && value.startsWith('-')) || 
+                      (typeof value === 'number' && value < 0) ||
+                      (resolved !== undefined && resolved < 0);
+    const action = isNegative ? 'Lose' : 'Gain';
+    const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
+    
+    if (resolved !== undefined) {
+      return `${action} ${Math.abs(resolved)} ${resourceName}`;
+    } else {
+      let displayValue = value;
+      if (typeof displayValue === 'string') {
+        displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
+      }
+      return `${action} ${displayValue} ${resourceName}`;
+    }
+  }
 </script>
 
 {#if hasAnyContent}
@@ -108,55 +128,62 @@
     {/if}
     
     {#if hasDiceModifiers}
-      <!-- Show dice rollers from modifiers array -->
+      <!-- Show dice rollers from modifiers array - card style like choices -->
       <div class="dice-rollers-section">
         <div class="dice-rollers-header">Roll the outcome:</div>
-        <div class="state-changes-list">
+        <div class="outcome-cards">
         {#each diceModifiersToShow as modifier, index}
           {@const modifierIndex = modifiers?.indexOf(modifier) ?? index}
           {@const resolvedValue = resolvedDice.get(modifierIndex)}
+          {@const icon = getResourceIcon(modifier.resource)}
           
-          <div class="state-change-item">
-            <span class="change-label">{formatStateChangeLabel(modifier.resource)}:</span>
-            
-            {#if resolvedValue === undefined}
-              <!-- Unrolled dice - show button -->
-              <button 
-                class="dice-button"
-                on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
-              >
-                <i class="fas fa-dice-d20"></i>
-                {modifier.value}
-              </button>
-            {:else}
-              <!-- Rolled dice - show result -->
-              <span class="change-value {getChangeClass(resolvedValue, modifier.resource)}">
-                {formatStateChangeValue(resolvedValue)}
-              </span>
-            {/if}
-          </div>
+          <button 
+            class="outcome-card {resolvedValue !== undefined ? 'rolled' : ''}"
+            on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
+            disabled={resolvedValue !== undefined}
+          >
+            <div class="card-header">
+              {#if icon}
+                <i class="fas {icon} resource-icon"></i>
+              {/if}
+              <div class="card-label">
+                {getModifierLabel(modifier.resource, modifier.value, resolvedValue)}
+              </div>
+              {#if resolvedValue === undefined}
+                <span class="dice-indicator">🎲</span>
+              {/if}
+            </div>
+          </button>
         {/each}
         </div>
       </div>
     {/if}
     
     {#if hasStateChanges && stateChanges}
-      <!-- Show numeric state changes (non-dice) -->
+      <!-- Show numeric state changes (non-dice) - card style -->
       <!-- Filter out resources that are already shown in dice section -->
       {@const diceResources = new Set(diceModifiersToShow.map(m => m.resource))}
       {@const hiddenResources = new Set(hideResources)}
       {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !diceResources.has(key) && !hiddenResources.has(key))}
       
       {#if nonDiceStateChanges.length > 0}
-        <div class="state-changes-list">
-        {#each nonDiceStateChanges as [key, change]}
-          <div class="state-change-item">
-            <span class="change-label">{formatStateChangeLabel(key)}:</span>
-            <span class="change-value {getChangeClass(change, key)}">
-              {formatStateChangeValue(change)}
-            </span>
+        <div class="dice-rollers-section">
+          <div class="dice-rollers-header">Outcome:</div>
+          <div class="outcome-cards">
+          {#each nonDiceStateChanges as [key, change]}
+            {@const icon = getResourceIcon(key)}
+            <div class="outcome-card static">
+              <div class="card-header">
+                {#if icon}
+                  <i class="fas {icon} resource-icon"></i>
+                {/if}
+                <div class="card-label">
+                  {getModifierLabel(key, change, change)}
+                </div>
+              </div>
+            </div>
+          {/each}
           </div>
-        {/each}
         </div>
       {/if}
     {/if}
@@ -177,6 +204,75 @@
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin-bottom: 12px;
+    }
+  }
+  
+  .outcome-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .outcome-card {
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    min-width: 200px;
+    width: auto;
+    text-align: left;
+    min-height: 54px; /* Ensure consistent height */
+    
+    &:not(.static):not(.rolled):not(:disabled) {
+      cursor: pointer;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--border-strong);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+    }
+    
+    &.rolled {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-strong);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      opacity: 1;
+      cursor: default;
+    }
+    
+    &.static {
+      cursor: default;
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      
+      .resource-icon {
+        font-size: var(--font-lg);
+        color: var(--text-primary);
+        flex-shrink: 0;
+      }
+      
+      .dice-indicator {
+        color: var(--color-blue);
+        font-size: var(--font-lg);
+        margin-left: auto;
+      }
+    }
+    
+    .card-label {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-primary);
+      line-height: 1.4;
+      flex: 1;
     }
   }
   
@@ -241,88 +337,6 @@
         &:last-child {
           margin-bottom: 0;
         }
-      }
-    }
-  }
-  
-  .state-changes-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .state-change-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.15);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    font-size: var(--font-md);
-    width: auto;
-    min-width: 180px;
-    
-    .change-label {
-      color: var(--text-secondary);
-      font-weight: var(--font-weight-medium);
-      font-size: calc(var(--font-md) * 0.95);
-    }
-    
-    .change-value {
-      font-weight: var(--font-weight-bold);
-      font-family: var(--font-code, monospace);
-      font-size: calc(var(--font-md) * 1.1);
-      padding: 2px 6px;
-      border-radius: 3px;
-      
-      &.positive {
-        color: var(--color-green);
-        background: rgba(34, 197, 94, 0.1);
-        border: 1px solid rgba(34, 197, 94, 0.2);
-      }
-      
-      &.negative {
-        color: var(--color-red);
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-      }
-      
-      &.neutral {
-        color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--border-subtle);
-      }
-    }
-    
-    .dice-button {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid var(--border-subtle);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: var(--font-code, monospace);
-      font-size: calc(var(--font-md) * 1.05);
-      font-weight: var(--font-weight-bold);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      
-      &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: var(--border-default);
-        transform: translateY(-1px);
-      }
-      
-      &:active {
-        transform: translateY(0);
-      }
-      
-      i {
-        font-size: 14px;
-        color: var(--text-primary);
       }
     }
   }

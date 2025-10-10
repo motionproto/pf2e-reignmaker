@@ -237,13 +237,12 @@ export async function createUnrestPhaseController() {
 
     /**
      * Resolve a triggered incident (step 2)
-     * Now uses GameEffectsService for consistent outcome application
+     * NEW ARCHITECTURE: Receives ResolutionData with all values already computed
      */
     async resolveIncident(
       incidentId: string, 
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      preRolledValues?: Map<number | string, number>,
-      choice?: { index: number; data: any; result?: { effect: string; stateChanges: Record<string, any> } }
+      resolutionData: import('../types/events').ResolutionData
     ) {
       const actor = getKingdomActor();
       if (!actor) {
@@ -261,9 +260,12 @@ export async function createUnrestPhaseController() {
       }
 
       console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`);
+      console.log(`📋 [UnrestPhaseController] ResolutionData:`, resolutionData);
 
       try {
-        // Load incident data
+        // NEW ARCHITECTURE: ResolutionData already contains final numeric values
+        // No need to filter, transform, or roll - just apply!
+        
         const { incidentLoader } = await import('./incidents/incident-loader');
         const incident = incidentLoader.getIncidentById(incidentId);
         
@@ -272,110 +274,33 @@ export async function createUnrestPhaseController() {
           return { success: false, error: 'Incident not found' };
         }
 
-        // Get the outcome effects from the incident
-        let effectOutcome = incident.effects?.[outcome];
-        
-        // For incidents: critical success uses success outcome (by design)
-        if (!effectOutcome && outcome === 'criticalSuccess') {
-          effectOutcome = incident.effects?.success;
-        }
-        
-        if (!effectOutcome) {
-          throw new Error(`No effects defined for outcome: ${outcome}`);
-        }
-
-        // Filter modifiers: If choice was made, replace resource array modifier with choice result
-        let modifiersToApply = effectOutcome.modifiers || [];
-        
-        console.log('🔍 [UnrestPhaseController] Checking choice data:', { 
-          hasChoice: !!choice, 
-          hasResult: !!choice?.result, 
-          hasStateChanges: !!choice?.result?.stateChanges,
-          stateChanges: choice?.result?.stateChanges,
-          fullChoice: choice
-        });
-        
-        if (choice?.result?.stateChanges) {
-          console.log('🎯 [UnrestPhaseController] Choice detected - filtering modifiers:', choice);
-          
-          // Filter out resource array modifiers (they're replaced by the choice)
-          modifiersToApply = modifiersToApply.filter((m: any) => !Array.isArray(m.resource));
-          
-          // Add modifiers from the choice result
-          for (const [resource, value] of Object.entries(choice.result.stateChanges)) {
-            modifiersToApply.push({
-              resource: resource,
-              value: value,
-              duration: 'immediate'
-            });
-          }
-          
-          console.log('✅ [UnrestPhaseController] Modified modifiers list:', modifiersToApply);
-        }
-
-        // Use GameEffectsService to apply the outcome
+        // Apply numeric modifiers using new simplified service method
         const { createGameEffectsService } = await import('../services/GameEffectsService');
-        const gameEffectsService = await createGameEffectsService();
+        const gameEffects = await createGameEffectsService();
         
-        const result = await gameEffectsService.applyOutcome({
-          type: 'incident',
-          sourceId: incident.id,
-          sourceName: getIncidentDisplayName(incident),
-          outcome: outcome,
-          modifiers: modifiersToApply,  // Use filtered/modified modifiers
-          createOngoingModifier: false, // Handle separately below
-          preRolledValues: preRolledValues // Pass through pre-rolled values from UI
-        });
-
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to apply outcome');
-        }
-
-        // Convert applied resources to Map for compatibility
-        const appliedChanges = new Map<string, any>();
-        for (const { resource, value } of result.applied.resources) {
-          appliedChanges.set(resource, value);
-        }
-
-        // Clear the current incident - no longer needed
-        // (turnState is reset when turn advances in StatusPhaseController)
-
-        console.log(`✅ [UnrestPhaseController] Incident resolved: ${effectOutcome.msg}`);
+        const result = await gameEffects.applyNumericModifiers(resolutionData.numericModifiers);
         
-        // DIAGNOSTIC: Check state AFTER applying effects but BEFORE completing step
-        const kingdomAfterEffects = actor.getKingdom();
-        if (kingdomAfterEffects) {
-          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - State AFTER effects but BEFORE step completion:');
-          console.log('  - Current Phase:', kingdomAfterEffects.currentPhase);
-          console.log('  - Current Phase Steps:', kingdomAfterEffects.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
+        console.log(`✅ [UnrestPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
+        
+        // Log manual effects (they're displayed in UI, not executed)
+        if (resolutionData.manualEffects.length > 0) {
+          console.log(`� [UnrestPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
+        }
+        
+        // Execute complex actions (Phase 3 - stub for now)
+        if (resolutionData.complexActions.length > 0) {
+          console.log(`� [UnrestPhaseController] Complex actions to execute:`, resolutionData.complexActions);
+          // await gameEffects.executeComplexActions(resolutionData.complexActions);
         }
         
         // Complete step 2 (resolve incident)
-        console.log('🔧 [UnrestPhaseController] Calling completePhaseStepByIndex(2)...');
-        const completionResult = await completePhaseStepByIndex(2);
-        console.log(`📋 [UnrestPhaseController] Step 2 completion result:`, completionResult);
+        await completePhaseStepByIndex(2);
         
-        // DIAGNOSTIC: Check state AFTER completing step
-        const kingdomAfterStep = actor.getKingdom();
-        if (kingdomAfterStep) {
-          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - State AFTER step completion:');
-          console.log('  - Current Phase:', kingdomAfterStep.currentPhase);
-          console.log('  - Current Phase Steps:', kingdomAfterStep.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
-          console.log('  - Phase Complete Flag:', kingdomAfterStep.phaseComplete);
-        }
-        
-        if (completionResult.phaseComplete) {
-          console.log(`🎉 [UnrestPhaseController] Phase marked as complete!`);
-        } else {
-          console.log(`⚠️ [UnrestPhaseController] Phase NOT marked as complete - investigating...`);
-        }
+        console.log(`✅ [UnrestPhaseController] Incident resolved successfully`);
         
         return {
-          success: true, 
-          outcome: outcome,
-          message: effectOutcome.msg,
-          resourceChanges: appliedChanges,
-          applied: result.applied  // Pass through shortfall data for UI
+          success: true,
+          applied: result  // Pass through result with shortfall data
         };
       } catch (error) {
         console.error('❌ [UnrestPhaseController] Error resolving incident:', error);
