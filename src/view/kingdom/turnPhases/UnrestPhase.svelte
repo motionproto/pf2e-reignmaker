@@ -267,7 +267,7 @@
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
-      if (!currentIncident || !checkHandler) return;
+      if (!currentIncident || !checkHandler || !unrestPhaseController) return;
       
       const { skill } = event.detail;
       
@@ -295,22 +295,17 @@
             console.log(`✅ [UnrestPhase] Incident check completed:`, result.outcome);
             isRolling = false;
             
-            // Get display data from controller directly
-            const displayData = await unrestPhaseController.getResolutionDisplayData(
-               currentIncident,
-               result.outcome,
-               result.actorName
-            );
+            // ARCHITECTURE: Delegate to controller for outcome data extraction
+            if (!currentIncident) return;
+            const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, result.outcome);
             
-            // Set resolution state
             incidentResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
-               effect: displayData.effect,
-               stateChanges: displayData.stateChanges || {},
-               modifiers: displayData.modifiers || [],
-               manualEffects: displayData.manualEffects || [],
+               effect: outcomeData.msg,
+               modifiers: outcomeData.modifiers,
+               manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
             };
             incidentResolved = true;
@@ -405,20 +400,15 @@
    
    // Event handler - debug outcome change
    async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentIncident || !unrestPhaseController || !incidentResolution) return;
+      if (!currentIncident || !incidentResolution) return;
       
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [UnrestPhase] Debug outcome changed to: ${newOutcome}`);
       
-      // Recalculate display data
-      const displayData = await unrestPhaseController.getResolutionDisplayData(currentIncident, newOutcome, incidentResolution.actorName);
+      // NEW ARCHITECTURE: Just update the outcome, OutcomeDisplay will handle the rest
       incidentResolution = {
          ...incidentResolution,
-         outcome: newOutcome,
-         effect: displayData.effect,
-         stateChanges: displayData.stateChanges || {},
-         modifiers: displayData.modifiers || [],
-         manualEffects: displayData.manualEffects || []
+         outcome: newOutcome
       };
    }
    

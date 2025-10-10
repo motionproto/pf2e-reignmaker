@@ -256,6 +256,20 @@ export async function createUnrestPhaseController() {
 
 
     /**
+     * Get outcome modifiers for an incident
+     * (Follows same pattern as ActionPhaseController.getActionModifiers)
+     */
+    getIncidentModifiers(incident: any, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
+      const outcomeData = incident.effects[outcome];
+      
+      return {
+        msg: outcomeData?.msg || '',
+        modifiers: outcomeData?.modifiers || [],
+        manualEffects: outcomeData?.manualEffects || []
+      };
+    },
+    
+    /**
      * Get display data for the UI (delegates to static helper)
      */
     getDisplayData() {

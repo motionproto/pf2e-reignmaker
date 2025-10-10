@@ -269,6 +269,20 @@ export async function createEventPhaseController(_eventService?: any) {
             }
         },
         /**
+         * Get outcome modifiers for an event
+         * (Follows same pattern as ActionPhaseController.getActionModifiers)
+         */
+        getEventModifiers(event: EventData, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
+            const outcomeData = event.effects[outcome];
+            
+            return {
+                msg: outcomeData?.msg || '',
+                modifiers: outcomeData?.modifiers || [],
+                manualEffects: outcomeData?.manualEffects || []
+            };
+        },
+        
+        /**
          * Add event to ongoing events list
          */
         async addToOngoingEvents(eventId: string): Promise<void> {

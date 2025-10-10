@@ -225,7 +225,7 @@
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
-      if (!currentEvent || !checkHandler) return;
+      if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
       const { skill } = event.detail;
       
@@ -267,22 +267,17 @@
             console.log(`✅ [EventsPhase] Event check completed:`, result.outcome);
             isRolling = false;
             
-            // Get display data from controller directly
-            const displayData = await eventPhaseController.getResolutionDisplayData(
-               currentEvent,
-               result.outcome,
-               result.actorName
-            );
+            // ARCHITECTURE: Delegate to controller for outcome data extraction
+            if (!currentEvent) return;
+            const outcomeData = eventPhaseController.getEventModifiers(currentEvent, result.outcome);
             
-            // Set resolution state
             eventResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
-               effect: displayData.effect,
-               stateChanges: displayData.stateChanges || {},
-               modifiers: displayData.modifiers || [],
-               manualEffects: displayData.manualEffects || [],
+               effect: outcomeData.msg,
+               modifiers: outcomeData.modifiers,
+               manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
             };
             eventResolved = true;
@@ -397,16 +392,13 @@
          console.log(`✅ [EventsPhase] Event ignored successfully`);
          ui?.notifications?.info(`Event ignored - failure effects applied`);
          
-         // Show as resolved with failure outcome
-         const displayData = await eventPhaseController.getResolutionDisplayData(currentEvent, 'failure', 'Ignored');
+         // NEW ARCHITECTURE: Show as resolved with basic state
+         // OutcomeDisplay would normally build this, but for ignore we just mark as done
          eventResolution = {
             outcome: 'failure',
             actorName: 'Ignored',
             skillName: 'ignored',
-            effect: displayData.effect,
-            stateChanges: displayData.stateChanges || {},
-            modifiers: displayData.modifiers || [],
-            manualEffects: displayData.manualEffects || []
+            effect: 'Event ignored - failure effects applied'
          };
          eventResolved = true;
       } else {
@@ -541,20 +533,15 @@
    
    // Event handler - debug outcome change
    async function handleDebugOutcomeChanged(event: CustomEvent) {
-      if (!currentEvent || !eventPhaseController || !eventResolution) return;
+      if (!currentEvent || !eventResolution) return;
       
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [EventsPhase] Debug outcome changed to: ${newOutcome}`);
       
-      // Recalculate display data
-      const displayData = await eventPhaseController.getResolutionDisplayData(currentEvent, newOutcome, eventResolution.actorName);
+      // NEW ARCHITECTURE: Just update the outcome, OutcomeDisplay will handle the rest
       eventResolution = {
          ...eventResolution,
-         outcome: newOutcome,
-         effect: displayData.effect,
-         stateChanges: displayData.stateChanges || {},
-         modifiers: displayData.modifiers || [],
-         manualEffects: displayData.manualEffects || []
+         outcome: newOutcome
       };
    }
    
