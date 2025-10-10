@@ -15,6 +15,7 @@
   import ResourceCard from "./baseComponents/ResourceCard.svelte";
   import FameCard from "./baseComponents/FameCard.svelte";
   import { economicsService } from "../../../services/economics";
+  import { calculateSizeUnrest } from "../../../services/domain/unrest/UnrestService";
 
   // Kingdom name state
   let isEditingName = false;
@@ -58,8 +59,8 @@
     localStorage.setItem("kingdomWarStatus", newWarStatus ? "war" : "peace");
   }
 
-  // Calculate unrest sources
-  $: sizeUnrest = Math.floor($kingdomData.size / 8);
+  // Calculate unrest sources using centralized service
+  $: sizeUnrest = calculateSizeUnrest($kingdomData.size);
   $: warUnrest = isAtWar ? 1 : 0;
   $: structureBonus = 0; // TODO: Calculate from actual structures
 
@@ -128,6 +129,7 @@
     unrest: { icon: "fa-hand-fist", color: "var(--color-danger)" },
     imprisoned: { icon: "fa-dungeon", color: "var(--color-warning)" },
   };
+
 </script>
 
 <div class="kingdom-stats-container">
@@ -170,25 +172,25 @@
           <div class="resource-dashboard-grid">
             <!-- Fame Card -->
             <FameCard
-              value={$fame}
-              icon="fa-star"
-              color="var(--color-amber)"
-              size="compact"
-              minValue={0}
-              maxValue={3}
-              onChange={(newValue) =>
-                updateKingdom((k) => {
-                  k.fame = newValue;
-                })}
-            />
+                value={$fame}
+                icon="fa-star"
+                color="var(--color-amber)"
+                size="compact"
+                minValue={0}
+                maxValue={3}
+                onChange={(newValue) =>
+                  updateKingdom((k) => {
+                    k.fame = newValue;
+                  })}
+              />
             <!-- Gold Card -->
             <ResourceCard
-              resource="gold"
-              value={$resources.gold || 0}
-              icon={resourceConfig.gold.icon}
-              color={resourceConfig.gold.color}
-              size="compact"
-            />
+                resource="gold"
+                value={$resources.gold || 0}
+                icon={resourceConfig.gold.icon}
+                color={resourceConfig.gold.color}
+                size="compact"
+              />
 
             <!-- Unrest Divider -->
             <div class="resource-divider">
@@ -198,28 +200,28 @@
 
             <!-- Unrest Card -->
             <ResourceCard
-              resource="unrest"
-              value={$unrest}
-              icon={statsConfig.unrest.icon}
-              color={statsConfig.unrest.color}
-              size="compact"
-              onChange={(newValue) =>
-                updateKingdom((k) => {
-                  k.unrest = newValue;
-                })}
-            />
+                resource="unrest"
+                value={$unrest}
+                icon={statsConfig.unrest.icon}
+                color={statsConfig.unrest.color}
+                size="compact"
+                onChange={(newValue) =>
+                  updateKingdom((k) => {
+                    k.unrest = newValue;
+                  })}
+              />
             <!-- Imprisoned Unrest Card -->
             <ResourceCard
-              resource="prison"
-              value={$kingdomData.imprisonedUnrest}
-              icon={statsConfig.imprisoned.icon}
-              color={statsConfig.imprisoned.color}
-              size="compact"
-              onChange={(newValue) =>
-                updateKingdom((k) => {
-                  k.imprisonedUnrest = newValue;
-                })}
-            />
+                resource="prison"
+                value={$kingdomData.imprisonedUnrest}
+                icon={statsConfig.imprisoned.icon}
+                color={statsConfig.imprisoned.color}
+                size="compact"
+                onChange={(newValue) =>
+                  updateKingdom((k) => {
+                    k.imprisonedUnrest = newValue;
+                  })}
+              />
 
             <!-- Resources Divider -->
             <div class="resource-divider">
@@ -229,36 +231,36 @@
 
             <!-- Food Card -->
             <ResourceCard
-              resource="food"
-              value={$resources.food || 0}
-              icon={resourceConfig.food.icon}
-              color={resourceConfig.food.color}
-              size="compact"
-            />
+                resource="food"
+                value={$resources.food || 0}
+                icon={resourceConfig.food.icon}
+                color={resourceConfig.food.color}
+                size="compact"
+              />
             <!-- Lumber Card -->
             <ResourceCard
-              resource="lumber"
-              value={$resources.lumber || 0}
-              icon={resourceConfig.lumber.icon}
-              color={resourceConfig.lumber.color}
-              size="compact"
-            />
+                resource="lumber"
+                value={$resources.lumber || 0}
+                icon={resourceConfig.lumber.icon}
+                color={resourceConfig.lumber.color}
+                size="compact"
+              />
             <!-- Stone Card -->
             <ResourceCard
-              resource="stone"
-              value={$resources.stone || 0}
-              icon={resourceConfig.stone.icon}
-              color={resourceConfig.stone.color}
-              size="compact"
-            />
+                resource="stone"
+                value={$resources.stone || 0}
+                icon={resourceConfig.stone.icon}
+                color={resourceConfig.stone.color}
+                size="compact"
+              />
             <!-- Ore Card -->
             <ResourceCard
-              resource="ore"
-              value={$resources.ore || 0}
-              icon={resourceConfig.ore.icon}
-              color={resourceConfig.ore.color}
-              size="compact"
-            />
+                resource="ore"
+                value={$resources.ore || 0}
+                icon={resourceConfig.ore.icon}
+                color={resourceConfig.ore.color}
+                size="compact"
+              />
           </div>
           <div class="stat-item">
             <label for="war-status-select" class="stat-label">War Status:</label
@@ -398,6 +400,7 @@
     border-radius: 0.5rem;
     overflow: hidden;
     color: var(--text-primary);
+    position: relative; /* Required for absolute positioning of animations */
   }
 
   .kingdom-name-header {

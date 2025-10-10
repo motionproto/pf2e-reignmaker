@@ -473,16 +473,21 @@
     }
   }
 
-  // Handle fame reroll from CheckCard (decoupled from component)
-  async function handleRerollWithFame(event: CustomEvent, action: any) {
-    const { checkId, skill } = event.detail;
+  // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
+  async function handlePerformReroll(event: CustomEvent, action: any) {
+    const { skill, previousFame } = event.detail;
     
-    // Check fame and get character
-    const currentFame = $kingdomData?.fame || 0;
-    if (currentFame <= 0) {
-      ui.notifications?.warn("Not enough fame to reroll");
-      return;
-    }
+    console.log(`🔁 [ActionsPhase] Performing reroll with skill: ${skill}`);
+    
+    // Reset action resolution state (clear the UI)
+    resolvedActions.delete(action.id);
+    resolvedActions = resolvedActions;  // Trigger reactivity
+    
+    // Reset in controller (skip player action reset for reroll)
+    await resetAction(action.id, true);
+    
+    // Small delay to ensure UI updates
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Get character for reroll
     let actingCharacter = getCurrentUserCharacter();
@@ -491,23 +496,14 @@
       // Show character selection dialog
       actingCharacter = await showCharacterSelectionDialog();
       if (!actingCharacter) {
-        return; // User cancelled selection
+        // Restore fame if user cancelled
+        const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
+        if (previousFame !== undefined) {
+          await restoreFameAfterFailedReroll(previousFame);
+        }
+        return;
       }
     }
-    
-    // Deduct fame and reset action for reroll  
-    const actor = getKingdomActor();
-    if (actor) {
-      await actor.updateKingdom((kingdom) => {
-        kingdom.fame = currentFame - 1;
-      });
-    }
-    
-    // Reset the action (skip player action reset for reroll)
-    await resetAction(checkId, true);
-    
-    // Small delay to ensure UI updates
-    await new Promise(resolve => setTimeout(resolve, 100));
     
     // Trigger new roll
     try {
@@ -519,7 +515,7 @@
         skill,
         dc,
         action.name,
-        checkId,
+        action.id,
         {
           criticalSuccess: action.criticalSuccess,
           success: action.success,
@@ -528,13 +524,11 @@
         }
       );
     } catch (error) {
-      console.error("Error rerolling with fame:", error);
+      console.error("Error during reroll:", error);
       // Restore fame if the roll failed
-      const actor = getKingdomActor();
-      if (actor) {
-        await actor.updateKingdom((kingdom) => {
-          kingdom.fame = currentFame;
-        });
+      const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
+      if (previousFame !== undefined) {
+        await restoreFameAfterFailedReroll(previousFame);
       }
       ui.notifications?.error(`Failed to reroll: ${error}`);
     }
@@ -885,7 +879,7 @@
                   isViewingCurrentPhase={isViewingCurrentPhase}
                   on:toggle={() => toggleAction(action.id)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
-                  on:reroll={(e) => handleRerollWithFame(e, action)}
+                  on:performReroll={(e) => handlePerformReroll(e, action)}
                   on:aid={handleAid}
                   on:primary={(e) => {
                     // Apply the effects using new ResolutionData architecture

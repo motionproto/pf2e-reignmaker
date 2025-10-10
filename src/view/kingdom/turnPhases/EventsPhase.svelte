@@ -357,22 +357,31 @@
       // Note: Canceling doesn't add to actionLog, so player can still act
    }
    
-   // Event handler - reroll with fame
-   async function handleReroll(event: CustomEvent) {
-      if (!currentEvent || !eventResolution) return;
-      
-      console.log(`🔁 [EventsPhase] Rerolling event with fame`);
-      const { handleRerollWithFame } = await import('../../../controllers/shared/RerollHelpers');
-      
-      await handleRerollWithFame({
-         currentItem: currentEvent,
-         selectedSkill: eventResolution.skillName,
-         phaseName: 'eventsPhase',
-         resetUiState: handleCancel,
-         triggerRoll: async (skill: string) => {
-            await executeSkillCheck(skill);
+   // Event handler - perform reroll (OutcomeDisplay handles fame)
+   async function handlePerformReroll(event: CustomEvent) {
+      if (!currentEvent) return;
+
+      const { skill, previousFame } = event.detail;
+      console.log(`🔁 [EventsPhase] Performing reroll with skill: ${skill}`);
+
+      // Reset UI state for new roll
+      handleCancel();
+
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Trigger new roll
+      try {
+         await executeSkillCheck(skill);
+      } catch (error) {
+         console.error('[EventsPhase] Error during reroll:', error);
+         // Restore fame if the roll failed
+         const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
+         if (previousFame !== undefined) {
+            await restoreFameAfterFailedReroll(previousFame);
          }
-      });
+         ui?.notifications?.error('Failed to reroll. Fame has been restored.');
+      }
    }
    
    // Event handler - ignore event
@@ -650,7 +659,7 @@
                on:executeSkill={handleExecuteSkill}
                on:primary={handleApplyResult}
                on:cancel={handleCancel}
-               on:reroll={handleReroll}
+               on:performReroll={handlePerformReroll}
                on:ignore={handleIgnore}
                on:aid={handleAid}
                on:debugOutcomeChanged={handleDebugOutcomeChanged}

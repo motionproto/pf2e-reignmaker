@@ -3,6 +3,7 @@ import { createModifierService } from '../ModifierService';
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { PF2eCharacterService } from './PF2eCharacterService';
+import { getSkillPenalty } from '../domain/unrest/UnrestService';
 
 export interface SkillCheckOptions {
   skillName: string;
@@ -172,26 +173,17 @@ export class PF2eSkillService {
       }
     }
     
-    // Add unrest penalty if applicable
+    // Add unrest penalty if applicable using centralized service
     const unrest = currentKingdomState?.unrest || 0;
-    if (unrest >= 3) {
-      let penalty = 0;
-      if (unrest >= 3 && unrest <= 5) {
-        penalty = -1; // Discontent
-      } else if (unrest >= 6 && unrest <= 8) {
-        penalty = -2; // Turmoil
-      } else if (unrest >= 9) {
-        penalty = -3; // Rebellion (capped at -3)
-      }
-      
-      if (penalty < 0) {
-        kingdomModifiers.push({
-          name: 'Unrest Penalty',
-          value: penalty,
-          type: 'circumstance',
-          enabled: true
-        });
-      }
+    const penalty = getSkillPenalty(unrest);
+    
+    if (penalty < 0) {
+      kingdomModifiers.push({
+        name: 'Unrest Penalty',
+        value: penalty,
+        type: 'circumstance',
+        enabled: true
+      });
     }
     
     // Add aid bonuses based on check type

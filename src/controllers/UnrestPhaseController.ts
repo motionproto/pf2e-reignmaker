@@ -20,68 +20,17 @@ import {
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
+import { 
+  getUnrestTierInfo,
+  getUnrestStatus,
+  getUnrestTier,
+  getIncidentChance,
+  getIncidentSeverity,
+  type UnrestTierInfo
+} from '../services/domain/unrest/UnrestService'
 
-/**
- * Unrest tier information for display
- */
-export interface UnrestTierInfo {
-  tier: number;
-  tierName: string;
-  penalty: number;
-  incidentThreshold: number;
-  incidentChance: number;
-  incidentSeverity: 'minor' | 'moderate' | 'major';
-  description: string;
-  statusClass: string;
-}
-
-/**
- * Static helper: Get comprehensive unrest tier information for UI display
- * This is the single source of truth for unrest tier calculations
- */
-export function getUnrestTierInfo(unrest: number): UnrestTierInfo {
-  const tier = Math.min(3, Math.floor(unrest / 3));
-  
-  // D100 thresholds - minimum roll needed to trigger incident
-  // These match the incident tables in Unrest_incidents.md
-  const d100Thresholds = [0, 21, 16, 11]; // Tier 0: N/A, Tier 1: 21+, Tier 2: 16+, Tier 3: 11+
-  const incidentChances = [0, 80, 85, 90]; // Tier 0: 0%, Tier 1: 80%, Tier 2: 85%, Tier 3: 90%
-  
-  const tierNames = ['Stable', 'Discontent', 'Turmoil', 'Rebellion'];
-  const tierDescriptions = [
-    'No incidents occur at this level',
-    'Minor incidents possible (80% chance)',
-    'Moderate incidents possible (85% chance)',
-    'Major incidents possible (90% chance)'
-  ];
-  const statusClasses = ['stable', 'discontent', 'unrest', 'rebellion'];
-  
-  const severity: 'minor' | 'moderate' | 'major' = 
-    tier <= 1 ? 'minor' : tier <= 2 ? 'moderate' : 'major';
-  
-  return {
-    tier,
-    tierName: tierNames[tier] || 'Stable',
-    penalty: tier,
-    incidentThreshold: d100Thresholds[tier] || 0,
-    incidentChance: incidentChances[tier] || 0,
-    incidentSeverity: severity,
-    description: tierDescriptions[tier] || 'No incidents occur at this level',
-    statusClass: statusClasses[tier] || 'stable'
-  };
-}
-
-/**
- * Static helper: Get unrest status text based on level
- */
-export function getUnrestStatus(unrest: number): string {
-  if (unrest === 0) return 'stable';
-  if (unrest <= 2) return 'calm';
-  if (unrest <= 4) return 'tense';
-  if (unrest <= 6) return 'troubled';
-  if (unrest <= 8) return 'volatile';
-  return 'critical';
-}
+// Re-export for backwards compatibility
+export { type UnrestTierInfo, getUnrestTierInfo, getUnrestStatus };
 
 export async function createUnrestPhaseController() {
   return {
@@ -154,9 +103,9 @@ export async function createUnrestPhaseController() {
       const kingdom = get(kingdomData);
       const unrest = kingdom.unrest || 0;
       
-      // Get unrest tier and incident chance
-      const tier = this.getUnrestTier(unrest);
-      const incidentChance = this.getIncidentChance(tier);
+      // Get unrest tier and incident chance using centralized service
+      const tier = getUnrestTier(unrest);
+      const incidentChance = getIncidentChance(unrest);
       
       // Roll for incident occurrence
       const roll = Math.random();
@@ -305,45 +254,6 @@ export async function createUnrestPhaseController() {
       }
     },
 
-    /**
-     * Check if phase is complete using new index-based system
-     */
-    async isPhaseComplete(): Promise<boolean> {
-      const { TurnManager } = await import('../models/turn-manager');
-      const turnManager = TurnManager.getInstance();
-      return await turnManager.isCurrentPhaseComplete();
-    },
-
-    /**
-     * Get unrest tier based on current unrest level
-     * Uses the correct formula: Math.min(3, Math.floor(unrest / 3))
-     */
-    getUnrestTier(unrest: number): number {
-      return Math.min(3, Math.floor(unrest / 3));
-    },
-
-    /**
-     * Get incident chance based on tier
-     */
-    getIncidentChance(tier: number): number {
-      switch (tier) {
-        case 0: return 0.0;  // Stable - no incidents
-        case 1: return 0.8;  // Minor - 80% chance
-        case 2: return 0.85; // Moderate - 85% chance
-        case 3: return 0.9;  // Major - 90% chance
-        default: return 0.0;
-      }
-    },
-
-    /**
-     * Get incident severity based on tier (uses correct tier calculation)
-     */
-    getIncidentSeverity(unrest: number): 'minor' | 'moderate' | 'major' {
-      const tier = this.getUnrestTier(unrest);
-      if (tier <= 1) return 'minor';
-      if (tier <= 2) return 'moderate';
-      return 'major';
-    },
 
     /**
      * Get display data for the UI (delegates to static helper)
@@ -368,7 +278,7 @@ export async function createUnrestPhaseController() {
     canRollForIncident(): { allowed: boolean; reason?: string } {
       const kingdom = get(kingdomData);
       const unrest = kingdom.unrest || 0;
-      const tier = this.getUnrestTier(unrest);
+      const tier = getUnrestTier(unrest);
       
       // Check if unrest tier is 0
       if (tier === 0) {

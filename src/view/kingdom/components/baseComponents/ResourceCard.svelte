@@ -2,6 +2,8 @@
    import { tick } from 'svelte';
    import { getKingdomActor } from '../../../../stores/KingdomStore';
    import { activeEditingCard } from '../../../../stores/EditingStore';
+   import FloatingNumber from '../FloatingNumber.svelte';
+   import { getUnrestIconAndColor } from '../../../../services/domain/unrest/UnrestService';
    
    // Props
    export let resource: string;
@@ -14,6 +16,32 @@
    
    // Generate unique card ID
    const cardId = `resource-${resource}-${Math.random().toString(36).substr(2, 9)}`;
+   
+   // Dynamic icon/color for unrest based on level
+   $: isUnrestResource = resource === 'unrest';
+   $: dynamicIconAndColor = isUnrestResource ? getUnrestIconAndColor(value) : { icon, color };
+   $: displayIcon = dynamicIconAndColor.icon;
+   $: displayColor = dynamicIconAndColor.color;
+   
+   // Animation tracking
+   let previousValue: number | undefined = undefined;
+   let showAnimation = false;
+   let animationDelta = 0;
+   
+   // Reactive: detect value changes (skip initial render)
+   $: {
+      if (previousValue !== undefined && value !== previousValue && !isEditing) {
+         animationDelta = value - previousValue;
+         showAnimation = true;
+         console.log(`🎬 [ResourceCard] Animation triggered: ${resource} ${previousValue} → ${value} (Δ${animationDelta})`);
+         
+         // Auto-hide after animation completes (4.6s)
+         setTimeout(() => {
+            showAnimation = false;
+         }, 4600);
+      }
+      previousValue = value;
+   }
    
    // Edit state management
    let editValue: number = value;
@@ -94,7 +122,20 @@
    style="--resource-color: {color};"
    on:click={startEditing}
 >
-   <i class="fas {icon} resource-icon" style="color: {color};"></i>
+   <!-- Floating animation overlay -->
+   {#if showAnimation}
+      <div class="animation-overlay">
+         <FloatingNumber 
+            animationId={`${resource}-${Date.now()}`}
+            resource={resource}
+            delta={animationDelta}
+            startX={0}
+            startY={0}
+         />
+      </div>
+   {/if}
+   
+   <i class="fas {displayIcon} resource-icon" style="color: {displayColor};"></i>
    <div class="resource-info">
       {#if isEditing}
          <input
@@ -146,6 +187,7 @@
       transition: all 0.2s ease;
       position: relative;
       flex: 0 0 auto;
+      overflow: visible; /* Allow animations to escape card bounds */
       
       &.editable {
          cursor: pointer;
@@ -304,5 +346,14 @@
       .cancel-btn:active {
          transform: scale(0.95);
       }
+   }
+   
+   .animation-overlay {
+      position: absolute;
+      top: 50%;
+      right: 1rem;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1000;
    }
 </style>

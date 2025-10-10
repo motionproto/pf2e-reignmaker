@@ -184,10 +184,12 @@
     localUsedSkill = '';
   }
   
-  function handleReroll() {
-    dispatch('reroll', {
+  function handlePerformReroll(event: CustomEvent) {
+    const { skill, previousFame } = event.detail;
+    dispatch('performReroll', {
       checkId: id,
-      skill: usedSkill,
+      skill,
+      previousFame,
       checkType
     });
   }
@@ -256,7 +258,7 @@
           {debugMode}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
-          on:reroll={handleReroll}
+          on:performReroll={handlePerformReroll}
           on:debugOutcomeChanged={handleDebugOutcomeChange}
         />
       {:else}

@@ -14,6 +14,11 @@
   } from '../../../../services/resolution';
   import { getResourceIcon } from '../../../kingdom/utils/presentation';
   import type { ResolutionData, ResourceType } from '../../../../types/events';
+  import { 
+    canRerollWithFame, 
+    deductFameForReroll, 
+    restoreFameAfterFailedReroll 
+  } from '../../../../controllers/shared/RerollHelpers';
   
   // Import extracted components
   import OutcomeHeader from './components/OutcomeHeader.svelte';
@@ -159,8 +164,38 @@
   );
   
   // Event handlers
-  function handleReroll() {
-    dispatch('reroll');
+  async function handleReroll() {
+    console.log('🔁 [OutcomeDisplay] Reroll with Fame initiated');
+    
+    // Check if reroll is possible
+    const fameCheck = await canRerollWithFame();
+    if (!fameCheck.canReroll) {
+      ui.notifications?.warn(fameCheck.error || 'Not enough fame to reroll');
+      return;
+    }
+    
+    // Deduct fame
+    const deductResult = await deductFameForReroll();
+    if (!deductResult.success) {
+      ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
+      return;
+    }
+    
+    console.log(`💎 [OutcomeDisplay] Fame deducted (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
+    
+    // Reset internal UI state
+    selectedChoice = null;
+    choiceResult = null;
+    selectedResources = new Map();
+    resolvedDice = new Map();
+    
+    console.log('🔄 [OutcomeDisplay] UI state reset for reroll');
+    
+    // Dispatch reroll request with skill info and previous fame for error recovery
+    dispatch('performReroll', { 
+      skill: skillName,
+      previousFame: deductResult.previousFame 
+    });
   }
   
   /**
