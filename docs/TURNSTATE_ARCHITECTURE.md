@@ -111,11 +111,6 @@ eventsPhase: {
 **Per-phase** (in `currentPhaseSteps`):
 - ✅ `currentPhaseSteps: PhaseStep[]` - Managed by PhaseHandler
 
-### Legacy Cleanup (Completed)
-- ❌ Removed: `currentEvent`, `currentEventId`, `eventStabilityRoll`, `eventTriggered`
-- ❌ Removed: `currentIncidentId`, `incidentRoll`, `incidentTriggered`
-- ❌ Removed: `appliedEventOutcomes`, `appliedIncidentOutcome`
-- ❌ Removed: Migration function `migrateLegacyToTurnState()`
 
 ## Key Files
 

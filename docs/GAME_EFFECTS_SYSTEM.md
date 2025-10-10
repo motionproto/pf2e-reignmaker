@@ -13,26 +13,7 @@ This provides **complete type safety** and **self-documenting data** without rel
 
 ## Architecture
 
-### Before (Description Parsing) ❌
-
-```json
-{
-  "effects": {
-    "success": {
-      "description": "Claim 2 hexes based on proficiency",
-      "modifiers": {}
-    }
-  }
-}
-```
-
-**Problems:**
-- Game effects hidden in description text
-- Regex parsing required
-- No type safety
-- Brittle and error-prone
-
-### After (Structured Effects) ✅
+### Structured Effects
 
 ```json
 {
@@ -247,22 +228,6 @@ for (const gameEffect of effect.gameEffects) {
 
 ---
 
-## Migration Status
-
-**✅ COMPLETE - All 29 actions migrated!**
-
-**Conversion Examples:**
-- ✅ `claim-hexes.json` - Proficiency-scaled hex claiming
-- ✅ `hire-adventurers.json` - Mode-based event resolution
-- ✅ `aid-another.json` - Complex proficiency-scaled bonuses
-- ✅ `create-worksite.json` - Conditional immediate resources
-- ✅ `build-structure.json` - Cost reduction effects
-- ✅ `disband-army.json` - Combined resource + game effects
-- ✅ `arrest-dissidents.json` - Resource-only actions (gameEffects: [])
-
-**Migration Tools:**
-- `scripts/normalize-action-modifiers.py` - Converted resource modifiers to EventModifier format
-- `scripts/add-game-effects-to-actions.py` - Added structured gameEffects to all actions
 
 ---
 

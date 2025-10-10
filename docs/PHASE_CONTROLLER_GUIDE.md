@@ -501,14 +501,11 @@ createPhaseResult(success: boolean, error?: string): { success: boolean; error?:
 initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
 completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }>
 isStepCompletedByIndex(stepIndex: number): Promise<boolean>
-getRemainingSteps(): Array<{ id: string; name: string; completed: boolean }>
-getAllSteps(): Array<{ id: string; name: string; completed: boolean }>
 ```
 
 ### Key Benefits
 - **Completion Detection**: `completePhaseStepByIndex()` returns `phaseComplete` status
 - **Duplicate Prevention**: `isStepCompletedByIndex()` prevents double-execution
-- **UI Integration**: `getRemainingSteps()` and `getAllSteps()` provide data for progress display
 - **Consistent Logging**: Standard emoji-based console output
 - **Abstraction**: Controllers don't need to know about TurnManager internals
 
@@ -540,7 +537,6 @@ const EVENTS_PHASE_STEPS = [
   // 'resolve-event' added dynamically if event triggered
 ];
 ```
-- Changed from "stability roll" to "event check"
 - Dynamic resolution step
 
 ### Unrest Phase
@@ -607,13 +603,59 @@ getDisplayData() {
 }
 ```
 
-## Migration from Old System
 
-The new system maintains backward compatibility:
-- Old `markPhaseStepCompleted()` calls still work
-- New `completePhaseStep()` is preferred
-- UI components updated to use new step arrays
-- KingdomStore provides compatibility layer
+## Event & Incident Resolution
+
+### Resolution Flow
+
+Events and incidents use a **ResolutionData-based architecture** where all user interactions (dice rolls, choices, resource selections) happen in the UI before the controller is called:
+
+```typescript
+// In the UI (OutcomeDisplay.svelte)
+// 1. User rolls all dice
+// 2. User makes all choices  
+// 3. User selects all resources
+// 4. ResolutionData is built with final numeric values
+
+// In the Controller
+async resolveEvent(
+  eventId: string,
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  resolutionData: ResolutionData
+) {
+  // ResolutionData already contains final numeric values
+  // No need to filter, transform, or roll - just apply!
+  
+  const result = await gameEffectsService.applyNumericModifiers(
+    resolutionData.numericModifiers
+  );
+  
+  // Complete phase steps
+  await completePhaseStepByIndex(1);
+  await completePhaseStepByIndex(2);
+  
+  return { success: true, applied: result };
+}
+```
+
+### ResolutionData Structure
+
+```typescript
+interface ResolutionData {
+  numericModifiers: Array<{
+    resource: string;
+    value: number;  // Already rolled/resolved
+  }>;
+  manualEffects: string[];  // Displayed in UI, not auto-applied
+  complexActions: any[];    // Future: complex game mechanics
+}
+```
+
+### Key Principles
+- **UI does all interaction**: Dice rolling, choices, selections
+- **Controller only applies**: Receives final numeric values
+- **GameEffectsService**: Unified application layer
+- **No legacy paths**: All resolution goes through ResolutionData
 
 ## Working with Modifiers
 
@@ -745,21 +787,6 @@ async handleIncidentResolution(
   }
 }
 ```
-
-### Key Differences from Old System
-
-**Old System (Removed):**
-- ❌ Complex `KingdomModifier` with priority, escalation, effects
-- ❌ `ModifierUtils` class with complex application logic
-- ❌ Event-level duration and fixed DCs
-- ❌ Nested stages structure
-
-**New System (Current):**
-- ✅ Simple `ActiveModifier` with EventModifier array
-- ✅ Direct KingdomActor manipulation via `updateKingdom()`
-- ✅ Duration only in modifiers
-- ✅ Level-based DCs only
-- ✅ Flat skills array
 
 ## Key Improvements
 

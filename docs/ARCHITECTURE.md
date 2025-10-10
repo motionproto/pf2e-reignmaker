@@ -542,7 +542,7 @@ Direct function calls, clear emoji logging, minimal abstractions, maximum clarit
 
 ## Event & Incident System
 
-### Data Structure (Normalized)
+### Data Structure
 
 All events and incidents use a standardized structure stored in `dist/events.json` and `dist/incidents.json`:
 
@@ -563,14 +563,7 @@ interface KingdomEvent {
 }
 ```
 
-**Key Changes from Old System:**
-- ✅ Removed: `escalation`, `priority`, `severity`, fixed DCs
-- ✅ Simplified: `stages` → flat `skills` array
-- ✅ Standardized: All outcomes use `EventModifier[]` format
-- ✅ Duration: Only in modifiers, not at event level
-- ✅ DC: Level-based only (no fixed values)
-
-### Modifier System (Simplified)
+### Modifier System
 
 **Storage Location:** `kingdom.activeModifiers: ActiveModifier[]` in KingdomActor
 
@@ -626,11 +619,10 @@ await modifierService.cleanupExpiredModifiers();
 3. **StatusPhaseController** - Applies ongoing modifiers each turn
 4. **ModifierService** - Handles creation, application, cleanup
 
-**Key Simplifications:**
-- NO complex priority/escalation logic
+**Key Features:**
 - Direct array manipulation via `updateKingdom()`
-- Simple turn-based or ongoing duration
-- Straightforward application during Status phase
+- Turn-based or ongoing duration options
+- Applied automatically during Status phase
 
 ## File Organization
 
@@ -925,21 +917,6 @@ try {
 - **Turn Flow**: Test phase progression with simple scenarios
 - **Actions**: Validate action requirements and outcome parsing
 - **Data Validation**: JSON schema validation for actions/events/incidents
-
-## Migration Notes
-
-**Recent Changes:**
-- ✅ Actions migrated to dual-effect system (modifiers + gameEffects)
-- ✅ Events/incidents normalized with EventModifier format
-- ✅ Removed complex escalation/priority logic from modifiers
-- ✅ TurnManager no longer orchestrates phases (self-executing pattern)
-- ✅ Phase steps now use simple array indexing (no string IDs)
-
-**Breaking Changes:**
-- Old modifier escalation system removed
-- Fixed DCs removed from events (now level-based only)
-- Event stages flattened to simple skill arrays
-- Phase triggering now happens on component mount, not from TurnManager
 
 ---
 

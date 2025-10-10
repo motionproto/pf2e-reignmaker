@@ -2,6 +2,10 @@
 
 This document describes the complete end-to-end flow for roll creation, skill card interaction, and result application in the pf2e-reignmaker system.
 
+## Architecture Overview
+
+The system uses a **ResolutionData-based architecture** where all user interactions (dice rolls, choices, resource selections) happen in the UI before the controller is called. Controllers receive final numeric values and simply apply them - no legacy resolution paths exist.
+
 ## The Complete Flow
 
 The entire flow from roll creation through skill card interaction to result application is a single cohesive system that works consistently across events, incidents, and actions.
@@ -38,18 +42,24 @@ The entire flow from roll creation through skill card interaction to result appl
 - State change dice (from `stateChanges` object): Stored with string keys ("state:food", "state:gold"...)
 - Both types are collected in the same `resolvedDice` Map with mixed key types
 
-### 4. **Application** (CheckResultHandler.applyResolution)
-- Collects all rolled values, choices, and selections from UI
-- Standardizes data through `OutcomeResolutionService`
-- **Pre-rolled dice values** are passed with mixed key types (number | string)
-- Passes to `GameEffectsService` for consistent application
-- `GameEffectsService` checks both:
-  - Numeric keys for modifier-based dice (`preRolledValues.get(modifierIndex)`)
-  - String keys for state change dice (`preRolledValues.get("state:resource")`)
+### 4. **Application** (Controller.resolveEvent / Controller.resolveIncident)
+- Receives `ResolutionData` with all final numeric values
+- Passes to `GameEffectsService.applyNumericModifiers()` for consistent application
 - Updates `KingdomActor` with final values
-- Creates ongoing modifiers if applicable (from failed events/incidents)
-- Marks phase step as complete
+- Marks phase steps as complete (steps 1 & 2)
 - Returns success/failure status
+
+**ResolutionData Structure:**
+```typescript
+interface ResolutionData {
+  numericModifiers: Array<{
+    resource: string;
+    value: number;  // Already rolled/resolved
+  }>;
+  manualEffects: string[];      // Displayed in UI, not auto-applied
+  complexActions: any[];        // Future: complex game mechanics
+}
+```
 
 ### 5. **Persistence & Cleanup**
 - `CheckCard` preserves the result even after applied (using internal `displayItem`)
@@ -88,51 +98,44 @@ User Action → CheckHandler.executeCheck()
             ↓
          Roll Result
             ↓
-CheckResultHandler.getDisplayData() → OutcomeDisplay
+OutcomeDisplay (User Interactions)
             ↓
-    User Interactions (dice/choices/resources)
-            ↓
-         resolvedDice Map (mixed keys: number | string)
+    - Roll all dice
+    - Make all choices  
+    - Select all resources
             ↓
 OutcomeResolutionService.buildResolutionData()
             ↓
-CheckResultHandler.applyResolution() → GameEffectsService
+         ResolutionData (final numeric values)
             ↓
-    GameEffectsService.applyModifier() (checks both key types)
+Controller.resolveEvent/resolveIncident()
+            ↓
+GameEffectsService.applyNumericModifiers()
             ↓
        KingdomActor Update
             ↓
    Phase Step Completion
 ```
 
-## Dice Roll Key Types
-
-The system supports two types of dice roll keys:
-
-1. **Modifier Index Keys (numeric)**: Used when dice formulas are in the `modifiers` array
-   - Key format: `0`, `1`, `2`, etc.
-   - Example: Modifier at index 0 with value `"1d4"` → stored as `resolvedDice.set(0, 3)`
-
-2. **State Change Keys (string)**: Used when dice formulas are in the `stateChanges` object
-   - Key format: `"state:resource"` (e.g., `"state:food"`, `"state:gold"`)
-   - Example: State change `{ food: "-1d4" }` → stored as `resolvedDice.set("state:food", -2)`
-
-The `GameEffectsService` checks both key types when applying modifiers:
-- First checks numeric index: `preRolledValues.get(modifierIndex)`
-- Then checks state key: `preRolledValues.get("state:" + resource)`
-- Falls back to rolling if neither exists
-
 ## Unified Pipeline
 
-Everything flows through the same pipeline whether it's an:
-- **Event** - EventPhaseController
-- **Incident** - UnrestPhaseController  
-- **Action** - ActionPhaseController
+Everything flows through the same ResolutionData-based pipeline whether it's an:
+- **Event** - `EventPhaseController.resolveEvent(eventId, outcome, resolutionData)`
+- **Incident** - `UnrestPhaseController.resolveIncident(incidentId, outcome, resolutionData)`
+- **Action** - `ActionPhaseController.resolveAction(actionId, outcome, resolutionData)` (future)
 
 All use:
-1. Same `CheckCard` component
-2. Same `CheckHandler` for rolls
-3. Same `OutcomeDisplay` for results
-4. Same `GameEffectsService` for application
+1. Same `CheckCard` component for skill checks
+2. Same `CheckHandler` for Foundry dice rolls
+3. Same `OutcomeDisplay` for user interactions (dice, choices, resources)
+4. Same `OutcomeResolutionService` for building ResolutionData
+5. Same `GameEffectsService` for applying final values
+
+## Key Principles
+
+- **UI does all interaction**: Dice rolling, choices, selections happen in OutcomeDisplay
+- **Controller only applies**: Receives final numeric values via ResolutionData
+- **No legacy paths**: All resolution goes through ResolutionData architecture
+- **GameEffectsService**: Unified application layer for consistent state updates
 
 This ensures consistency, maintainability, and a predictable user experience across all check-based interactions in the kingdom management system.

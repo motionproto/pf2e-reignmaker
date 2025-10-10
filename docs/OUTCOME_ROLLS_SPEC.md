@@ -593,53 +593,6 @@ Player sees two dropdowns - one for the +2 resource, one for the +1 resource.
 8. **Manual Effects Are Explicit**: Write clear instructions: `"Remove 1d3 hexes from map"` not `"Hex loss"`
 9. **Separate Concerns**: Keep automated effects in `modifiers`, manual effects in `manualEffects`, control flow in `endsEvent`
 
-## Migration from Old Format
-
-### Old: Magic Number (-999)
-```json
-{
-  "modifiers": [{
-    "resource": "gold",
-    "value": -999
-  }],
-  "diceFormula": "1d4"
-}
-```
-
-### New: Direct Formula
-```json
-{
-  "msg": "Lose {gold} gold",
-  "modifiers": [{
-    "resource": "gold",
-    "value": "-1d4",
-    "duration": "immediate"
-  }]
-}
-```
-
-### Old: Hardcoded Average
-```json
-{
-  "msg": "Lose 6 gold",
-  "modifiers": [{
-    "resource": "gold",
-    "value": -6
-  }]
-}
-```
-
-### New: Proper Dice (if it should be random)
-```json
-{
-  "msg": "Lose {gold} gold",
-  "modifiers": [{
-    "resource": "gold",
-    "value": "-2d4",
-    "duration": "immediate"
-  }]
-}
-```
 
 ## UI System Selection
 
@@ -685,23 +638,3 @@ Potential enhancements:
 **Version**: 2.2 (Separated Manual Effects & Event Persistence)  
 **Last Updated**: 2025-10-04  
 **Status**: Active Specification
-
-## Changelog
-
-### v2.2 (2025-10-04)
-- **BREAKING**: Removed `resource: "manual"` and `resource: "endsEvent"` from ResourceType
-- **NEW**: Added `manualEffects: string[]` to EventOutcome for non-automated effects
-- **CLARIFIED**: `endsEvent?: boolean` controls event persistence (always boolean, never a modifier)
-- Updated TypeScript types to reflect new structure
-- Added examples for manual effects and event persistence
-- Updated validation rules and best practices
-
-### v2.1 (2025-10-03)
-- Added resource arrays for dropdown selectors
-- Documented difference between choice buttons and resource arrays
-- Added examples for multiple resource arrays
-
-### v2.0
-- Direct dice formulas in `value` field
-- Resource-based placeholders in messages
-- Removed magic number system
