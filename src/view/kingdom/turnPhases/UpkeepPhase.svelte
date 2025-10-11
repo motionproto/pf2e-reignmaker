@@ -40,7 +40,21 @@
    });
    
    // Get all display data from controller (now async)
-   let displayData = {
+   let displayData: {
+      currentFood: number;
+      foodConsumption: number;
+      foodShortage: number;
+      settlementConsumption: number;
+      armyConsumption: number;
+      armyCount: number;
+      armySupport: number;
+      unsupportedCount: number;
+      foodRemainingForArmies: number;
+      armyFoodShortage: number;
+      settlementFoodShortage: number;
+      unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}>;
+      unfedUnrest: number;
+   } = {
       currentFood: 0,
       foodConsumption: 0,
       foodShortage: 0,
@@ -192,15 +206,16 @@
          </div>
          
          <div class="card-content">
+            <div class="content-area">
             <div class="consumption-display">
-               <div class="consumption-stat">
+               <div class="consumption-stat required">
                   <i class="fas fa-home"></i>
                   <div class="stat-value">{settlementConsumption}</div>
                   <div class="stat-label">Food Required</div>
                </div>
                
-               <div class="consumption-stat" class:danger={currentFood < settlementConsumption}>
-                  <i class="fas fa-wheat-awn"></i>
+               <div class="consumption-stat available" class:danger={currentFood < settlementConsumption}>
+                  <i class="fas fa-wheat-awn resource-food"></i>
                   <div class="stat-value">{currentFood}</div>
                   <div class="stat-label">Food Available</div>
                </div>
@@ -233,13 +248,14 @@
                      {/each}
                   </div>
                {/if}
-            {:else if !consumeCompleted}
-               <div class="info-text">Settlements require {settlementConsumption} food this turn</div>
             {/if}
+            </div>
             
+            <div class="button-area">
             {#if !consumeCompleted}
                <Button 
-                  variant="secondary" 
+                  variant="secondary"
+                  fullWidth={true}
                   disabled={processingFood}
                   icon={processingFood ? "fas fa-spinner spinning" : "fas fa-utensils"}
                   on:click={handleFeedSettlements}
@@ -251,6 +267,7 @@
                   <i class="fas fa-check"></i> Settlements Fed
                </div>
             {/if}
+            </div>
          </div>
       </div>
       
@@ -267,19 +284,32 @@
          </div>
          
          <div class="card-content">
+            <div class="content-area">
             {#if armyCount > 0}
                <!-- Army Food Consumption -->
                <div class="consumption-display">
-                  <div class="consumption-stat">
+                  <div class="consumption-stat required">
                      <i class="fas fa-utensils"></i>
                      <div class="stat-value">{armyConsumption}</div>
                      <div class="stat-label">Food Required</div>
                   </div>
                   
-                  <div class="consumption-stat" class:danger={armyFoodShortage > 0}>
-                     <i class="fas fa-wheat-awn"></i>
+                  <div class="consumption-stat available" class:danger={armyFoodShortage > 0}>
+                     <i class="fas fa-wheat-awn resource-food"></i>
                      <div class="stat-value">{foodRemainingForArmies}</div>
                      <div class="stat-label">Food Remaining</div>
+                  </div>
+                  
+                  <div class="consumption-stat required">
+                     <i class="fas fa-coins"></i>
+                     <div class="stat-value">{armyCount}</div>
+                     <div class="stat-label">Gold Required</div>
+                  </div>
+                  
+                  <div class="consumption-stat available" class:danger={$resources?.gold < armyCount}>
+                     <i class="fas fa-coins resource-gold"></i>
+                     <div class="stat-value">{$resources?.gold || 0}</div>
+                     <div class="stat-label">Gold Available</div>
                   </div>
                </div>
                
@@ -319,15 +349,22 @@
                      <br><small>Future update: Morale checks will be required.</small>
                   </div>
                {/if}
-               
+            {:else}
+               <div class="info-text">No armies currently fielded</div>
+            {/if}
+            </div>
+            
+            <div class="button-area">
+            {#if armyCount > 0}
                {#if !militaryCompleted}
                   <Button 
-                     variant="secondary" 
+                     variant="secondary"
+                     fullWidth={true}
                      disabled={processingMilitary}
                      icon={processingMilitary ? "fas fa-spinner spinning" : "fas fa-shield-alt"}
                      on:click={handleMilitarySupport}
                   >
-                     {processingMilitary ? "Processing..." : "Process Military Support"}
+                     {processingMilitary ? "Processing..." : "Pay Armies"}
                   </Button>
                {:else}
                   <div class="auto-status">
@@ -335,18 +372,11 @@
                   </div>
                {/if}
             {:else}
-               <div class="info-text">No armies currently fielded</div>
-               <Button 
-                  variant="secondary" 
-                  disabled={true}
-                  icon="fas fa-shield-alt"
-               >
-                  Process Military Support
-               </Button>
                <div class="auto-status">
                   <i class="fas fa-check"></i> Military Support Skipped (No Armies)
                </div>
             {/if}
+            </div>
          </div>
       </div>
       
@@ -363,6 +393,7 @@
          </div>
          
          <div class="card-content">
+            <div class="content-area">
             {#if $kingdomData.buildQueue?.length > 0}
                <div class="build-resources-available">
                   <strong>Available:</strong>
@@ -384,9 +415,17 @@
                   {/each}
                </div>
                
+            {:else}
+               <div class="info-text">No construction projects in queue</div>
+            {/if}
+            </div>
+            
+            <div class="button-area">
+            {#if $kingdomData.buildQueue?.length > 0}
                {#if !buildCompleted}
                   <Button 
-                     variant="secondary" 
+                     variant="secondary"
+                     fullWidth={true}
                      disabled={processingBuild}
                      icon={processingBuild ? "fas fa-spinner spinning" : "fas fa-hammer"}
                      on:click={handleBuildQueue}
@@ -399,18 +438,11 @@
                   </div>
                {/if}
             {:else}
-               <div class="info-text">No construction projects in queue</div>
-               <Button 
-                  variant="secondary" 
-                  disabled={true}
-                  icon="fas fa-hammer"
-               >
-                  Process Build Queue
-               </Button>
                <div class="auto-status">
-                  <i class="fas fa-check"></i> Build Queue Skipped (No Projects)
+                  <i class="fas fa-check"></i> No Projects
                </div>
             {/if}
+            </div>
          </div>
       </div>
    </div>
@@ -453,8 +485,6 @@
          </div>
       </div>
    </div>
-   
-   <!-- End Turn Button removed - using the one in top right navigation instead -->
 </div>
 
 <style lang="scss">
@@ -560,49 +590,30 @@
       font-size: 20px;
    }
    
-   // Button styles (replacing typography.css btn classes)
-   .phase-card .btn {
-      margin: 0 20px 16px 20px;
-      width: calc(100% - 40px); // Full width minus margins
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.2;
-      letter-spacing: 0.025em;
-      padding: 0.5rem 1rem;
-      border-radius: var(--radius-sm);
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      
-      // Secondary button styles
-      &.btn-secondary {
-         background: var(--btn-secondary-bg);
-         border-color: var(--border-medium);
-         color: var(--text-primary);
-         
-         &:hover:not(:disabled) {
-            background: var(--btn-secondary-hover);
-            border-color: var(--border-strong);
-            transform: translateY(-1px);
-         }
-         
-         &:disabled {
-            opacity: var(--opacity-disabled);
-            cursor: not-allowed;
-         }
-      }
-   }
    
    .card-content {
       padding: 0 20px 12px 20px;
       flex: 1;
       display: flex;
       flex-direction: column;
+   }
+   
+   .content-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
+   }
+   
+   .button-area {
+      margin-top: auto;
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      
+      .auto-status {
+         width: 100%;
+      }
    }
    
    @keyframes pulse {
@@ -725,6 +736,22 @@
          font-size: var(--font-3xl);
          color: var(--color-amber);
          margin-bottom: 4px;
+         
+         &.resource-food {
+            color: var(--color-green);
+         }
+         
+         &.resource-gold {
+            color: var(--color-gold);
+         }
+      }
+      
+      &.required i {
+         color: var(--text-secondary);
+      }
+      
+      &.available i:not(.resource-food):not(.resource-gold) {
+         color: var(--color-amber);
       }
       
       .stat-value {
@@ -738,7 +765,7 @@
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
          letter-spacing: 0.025em;
-         color: var(--text-tertiary);
+         color: var(--text-secondary);
          text-transform: uppercase;
       }
       
@@ -931,7 +958,6 @@
    
    // Auto-status section for the new architecture
    .auto-status {
-      margin: 0 20px 16px 20px;
       padding: 0.5rem 1rem;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);

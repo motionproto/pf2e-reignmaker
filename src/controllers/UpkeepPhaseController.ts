@@ -174,20 +174,6 @@ export async function createUpkeepPhaseController() {
         }
       }
       
-      // Feed armies with remaining food
-      const armyFood = armies.length;
-      let armyUnrest = 0;
-      
-      if (availableFood >= armyFood) {
-        availableFood -= armyFood;
-        console.log(`⚔️ [UpkeepPhaseController] Fed ${armies.length} armies (${armyFood} food)`);
-      } else {
-        armyUnrest = armyFood - availableFood;
-        totalUnrest += armyUnrest;
-        availableFood = 0;
-        console.log(`❌ [UpkeepPhaseController] Army food shortage: ${armyUnrest} missing → +${armyUnrest} Unrest`);
-      }
-      
       // Update kingdom state
       await actor.updateKingdom((kingdom) => {
         kingdom.resources.food = availableFood;
@@ -203,9 +189,9 @@ export async function createUpkeepPhaseController() {
       });
       
       // Summary logging
-      console.log(`✅ [UpkeepPhaseController] Feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
+      console.log(`✅ [UpkeepPhaseController] Settlement feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
       if (totalUnrest > 0) {
-        console.log(`⚠️ [UpkeepPhaseController] Total unrest generated: +${totalUnrest} (${unfedSettlements.length} settlements + ${armyUnrest} army shortage)`);
+        console.log(`⚠️ [UpkeepPhaseController] Total unrest from unfed settlements: +${totalUnrest}`);
       }
       if (unfedSettlements.length > 0) {
         console.log(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
@@ -213,7 +199,7 @@ export async function createUpkeepPhaseController() {
     },
 
     /**
-     * Process military support costs
+     * Process military support - Feed armies and pay gold costs
      */
     async processMilitarySupport() {
       const { kingdomData } = await import('../stores/KingdomStore');
@@ -231,23 +217,48 @@ export async function createUpkeepPhaseController() {
         return;
       }
       
-      // Simple military support cost
+      // Feed armies first
+      const armyFood = armyCount;
+      const currentFood = kingdom.resources?.food || 0;
+      let armyFoodUnrest = 0;
+      let foodAfterArmies = currentFood;
+      
+      if (currentFood >= armyFood) {
+        foodAfterArmies = currentFood - armyFood;
+        console.log(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
+      } else {
+        armyFoodUnrest = armyFood - currentFood;
+        foodAfterArmies = 0;
+        console.log(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
+      }
+      
+      // Pay gold support costs
       const supportCost = armyCount;
       const currentGold = kingdom.resources?.gold || 0;
+      let goldUnrest = 0;
       
       if (currentGold >= supportCost) {
         await actor.updateKingdom((kingdom) => {
+          kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = currentGold - supportCost;
+          kingdom.unrest += armyFoodUnrest;
         });
         console.log(`💰 [UpkeepPhaseController] Paid ${supportCost} gold for military support`);
       } else {
         // Can't afford support - generate unrest
-        const shortage = supportCost - currentGold;
+        goldUnrest = supportCost - currentGold;
         await actor.updateKingdom((kingdom) => {
+          kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = 0;
-          kingdom.unrest += shortage;
+          kingdom.unrest += armyFoodUnrest + goldUnrest;
         });
-        console.log(`⚠️ [UpkeepPhaseController] Military support shortage: ${shortage} unrest generated`);
+        console.log(`⚠️ [UpkeepPhaseController] Military gold shortage: ${goldUnrest} unrest generated`);
+      }
+      
+      // Summary
+      const totalUnrest = armyFoodUnrest + goldUnrest;
+      if (totalUnrest > 0) {
+        console.log(`⚠️ [UpkeepPhaseController] Total military unrest: +${totalUnrest} (food: ${armyFoodUnrest}, gold: ${goldUnrest})`);
       }
     },
 

@@ -41,6 +41,9 @@
    // Current user ID
    let currentUserId: string | null = null;
    
+   // Check if current user is GM
+   $: isGM = (globalThis as any).game?.user?.isGM || false;
+   
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
@@ -428,8 +431,10 @@
 </script>
 
 <div class="unrest-phase">
-   <!-- Debug Incident Selector -->
-   <DebugEventSelector type="incident" currentItemId={$kingdomData.turnState?.unrestPhase?.incidentId || null} />
+   <!-- Debug Incident Selector (GM Only) -->
+   {#if isGM}
+      <DebugEventSelector type="incident" currentItemId={$kingdomData.turnState?.unrestPhase?.incidentId || null} />
+   {/if}
    
    <!-- Step 1: Unrest Dashboard -->
    <div class="unrest-dashboard">

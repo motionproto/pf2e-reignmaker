@@ -116,8 +116,8 @@
    </div>
    
    <!-- Manual Collection Controls -->
-   <div class="manual-collection-section">
-      {#if !collectCompleted}
+   {#if !collectCompleted}
+      <div class="manual-collection-section">
          <div class="collection-prompt">
             <h3>Ready to Collect Resources</h3>
             <p>Click the button below to manually collect territory production and settlement gold income.</p>
@@ -138,13 +138,8 @@
                {/if}
             </Button>
          </div>
-      {:else}
-         <div class="collection-completed">
-            <h3>✅ Resources Collected</h3>
-            <p>All territory production and settlement gold have been added to your treasury.</p>
-         </div>
-      {/if}
-   </div>
+      </div>
+   {/if}
    
    <!-- Phase Steps -->
    <div class="phase-steps-container">
@@ -209,16 +204,6 @@
                      All settlements were fed last turn and generate gold
                   </div>
                {/if}
-            </div>
-         {/if}
-         
-         <!-- Collection completed indicator -->
-         {#if collectCompleted}
-            <div class="phase-summary">
-               <div class="summary-title">✅ Resources collected this turn</div>
-               <div class="summary-details">
-                  <span>Territory production and settlement gold have been added to your treasury</span>
-               </div>
             </div>
          {/if}
       </div>

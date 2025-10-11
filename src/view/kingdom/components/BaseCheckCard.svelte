@@ -87,7 +87,11 @@
   export let resolvedBadgeText: string = 'Resolved';
   export let primaryButtonLabel: string = 'OK';
   export let skillSectionTitle: string = 'Choose Skill:';
-  export let debugMode: boolean = true;
+  export let debugMode: boolean = false;
+  
+  // Check if current user is GM
+  $: isGM = (globalThis as any).game?.user?.isGM || false;
+  $: effectiveDebugMode = debugMode || isGM;
   
   // Computed: Don't show aid button on aid actions themselves
   $: isAidAction = id.startsWith('aid-');
@@ -257,7 +261,7 @@
           applied={outcomeApplied}
           {primaryButtonLabel}
           {showFameReroll}
-          {debugMode}
+          debugMode={effectiveDebugMode}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}

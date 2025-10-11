@@ -52,7 +52,11 @@
   
   // UI customization
   export let showFameReroll: boolean = true;
-  export let debugMode: boolean = true;
+  export let debugMode: boolean = false;
+  
+  // Check if current user is GM
+  $: isGM = (globalThis as any).game?.user?.isGM || false;
+  $: effectiveDebugMode = debugMode || isGM;
   
   const dispatch = createEventDispatcher();
   
@@ -207,7 +211,7 @@
       applied={false}
       primaryButtonLabel="Apply Result"
       {showFameReroll}
-      {debugMode}
+      debugMode={effectiveDebugMode}
       on:primary={handleApplyResult}
       on:cancel={handleCancel}
       on:reroll={handleReroll}

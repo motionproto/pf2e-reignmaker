@@ -67,6 +67,9 @@
    // Current user ID
    let currentUserId: string | null = null;
    
+   // Check if current user is GM
+   $: isGM = (globalThis as any).game?.user?.isGM || false;
+   
    // Computed UI state - use shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
    $: currentSteps = $kingdomData.currentPhaseSteps || [];
@@ -640,8 +643,10 @@
 </script>
 
 <div class="events-phase">
-   <!-- Debug Event Selector -->
-   <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
+   <!-- Debug Event Selector (GM Only) -->
+   {#if isGM}
+      <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
+   {/if}
    
    {#if currentEvent}
       <!-- Active Event Card -->

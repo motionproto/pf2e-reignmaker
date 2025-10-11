@@ -8,6 +8,7 @@
    export let tooltip: string | undefined = undefined;
    export let icon: string | undefined = undefined;
    export let iconPosition: 'left' | 'right' = 'left';
+   export let fullWidth: boolean = false;
    
    const dispatch = createEventDispatcher();
    
@@ -21,6 +22,7 @@
 <button 
    {type}
    class="button {variant}"
+   class:full-width={fullWidth}
    {disabled}
    aria-label={ariaLabel}
    data-tooltip={tooltip}
@@ -51,6 +53,11 @@
       transition: all var(--transition-fast);
       position: relative;
       overflow: hidden;
+      
+      &.full-width {
+         width: 100%;
+         display: flex;
+      }
       
       // Shimmer effect
       &::before {

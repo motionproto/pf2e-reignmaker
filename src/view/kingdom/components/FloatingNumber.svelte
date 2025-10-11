@@ -44,19 +44,31 @@
     position: absolute;
     left: var(--start-x);
     top: var(--start-y);
-    font-size: var(--font-xl);
+    transform: translate(-50%, -50%); /* Center the number on its position */
+    font-size: var(--font-3xl);
     font-weight: var(--font-weight-bold);
     color: var(--delta-color);
     pointer-events: none;
     z-index: 1000;
+    /* Outside stroke effect using 8-directional shadows */
     text-shadow: 
-      0 0 2px rgba(0, 0, 0, 0.8),
-      0 0 4px rgba(0, 0, 0, 0.6);
+      /* Stroke outline (8 directions) */
+      -2px -2px 0 rgba(0, 0, 0, 0.8),
+      0 -2px 0 rgba(0, 0, 0, 0.8),
+      2px -2px 0 rgba(0, 0, 0, 0.8),
+      2px 0 0 rgba(0, 0, 0, 0.8),
+      2px 2px 0 rgba(0, 0, 0, 0.8),
+      0 2px 0 rgba(0, 0, 0, 0.8),
+      -2px 2px 0 rgba(0, 0, 0, 0.8),
+      -2px 0 0 rgba(0, 0, 0, 0.8),
+      /* Glow layers for extra visibility */
+      0 0 4px rgba(0, 0, 0, 0.8),
+      0 0 8px rgba(0, 0, 0, 0.7),
+      0 0 12px rgba(0, 0, 0, 0.5);
     
     /* Combined animation */
     animation: 
       pulse 0.6s ease-out,
-      drift-wave 4s ease-in-out 0.6s,
       fade-out 0.5s ease-out 4.1s forwards;
   }
   
@@ -64,34 +76,15 @@
   @keyframes pulse {
     0% {
       opacity: 0;
-      transform: scale(1);
+      transform: translate(-50%, -50%) scale(1);
     }
     50% {
       opacity: 1;
-      transform: scale(1.2);
+      transform: translate(-50%, -50%) scale(1.2);
     }
     100% {
       opacity: 1;
-      transform: scale(1);
-    }
-  }
-  
-  /* Drift wave: move up 24px with ±5px wavy horizontal (0.6-4.6s = 4s duration) */
-  @keyframes drift-wave {
-    0% {
-      transform: translate(0, 0);
-    }
-    25% {
-      transform: translate(5px, -8px);
-    }
-    50% {
-      transform: translate(-5px, -16px);
-    }
-    75% {
-      transform: translate(5px, -24px);
-    }
-    100% {
-      transform: translate(0, -32px);
+      transform: translate(-50%, -50%) scale(1);
     }
   }
   
