@@ -31,9 +31,11 @@
           "label": "Pay for emergency aid - lose {gold} gold",
           "modifiers": [
             {
+              "type": "dice",
               "name": "Settlement Crisis Gold Loss",
               "resource": "gold",
-              "value": "-2d4",
+              "formula": "2d4",
+              "negative": true,
               "duration": "immediate"
             }
           ]

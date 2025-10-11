@@ -7,11 +7,29 @@
 
 import type { PlayerAction } from './action-types';
 import type { KingdomData } from '../../actors/KingdomActor';
-import {
-    getLevelBasedDC,
-    hasRequiredResources
-} from '../shared/resolution-service';
 import { createGameEffectsService, type OutcomeDegree } from '../../services/GameEffectsService';
+
+// TEMPORARY: Inline helpers from deleted resolution-service.ts
+function getLevelBasedDC(level: number): number {
+  const dcByLevel: Record<number, number> = {
+    1: 15, 2: 16, 3: 18, 4: 19, 5: 20,
+    6: 22, 7: 23, 8: 24, 9: 26, 10: 27,
+    11: 28, 12: 30, 13: 31, 14: 32, 15: 34,
+    16: 35, 17: 36, 18: 38, 19: 39, 20: 40
+  };
+  return dcByLevel[level] || 15;
+}
+
+function hasRequiredResources(kingdom: KingdomData, required: Map<string, number>): { valid: boolean; missing?: Map<string, number> } {
+  const missing = new Map<string, number>();
+  for (const [resource, amount] of required.entries()) {
+    const current = kingdom.resources?.[resource] || 0;
+    if (current < amount) {
+      missing.set(resource, amount - current);
+    }
+  }
+  return missing.size > 0 ? { valid: false, missing } : { valid: true };
+}
 
 export interface ActionRequirement {
     met: boolean;

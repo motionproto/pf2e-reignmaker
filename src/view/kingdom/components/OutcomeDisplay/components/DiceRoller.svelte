@@ -3,7 +3,7 @@
   import { detectDiceModifiers, rollDiceFormula, formatStateChangeLabel } from '../../../../../services/resolution';
   
   export let modifiers: any[] | undefined;
-  export let resolvedDice: Map<number, number>;
+  export let resolvedDice: Map<number | string, number>;
   
   const dispatch = createEventDispatcher();
   
@@ -12,13 +12,27 @@
   $: allResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
   
   function handleRoll(modifier: any) {
-    const rolled = rollDiceFormula(modifier.value);
+    // Extract formula from either typed format (formula field) or legacy format (value field)
+    const formula = modifier.formula || modifier.value;
+    
+    // Roll the dice
+    const rolled = rollDiceFormula(formula);
+    
+    // Apply negative flag if present (typed format)
+    const finalResult = modifier.negative ? -rolled : rolled;
+    
     dispatch('roll', {
       modifierIndex: modifier.originalIndex,
-      formula: modifier.value,
-      result: rolled,
+      formula: formula,
+      result: finalResult,
       resource: modifier.resource
     });
+  }
+  
+  // Get display formula (for showing in UI)
+  function getDisplayFormula(modifier: any): string {
+    const formula = modifier.formula || modifier.value;
+    return modifier.negative ? `-${formula}` : formula;
   }
 </script>
 
@@ -32,7 +46,7 @@
       {#if !resolvedDice.has(modifier.originalIndex)}
         <button class="dice-roller-button" on:click={() => handleRoll(modifier)}>
           <i class="fas fa-dice-d20"></i>
-          <span class="dice-formula">{modifier.value}</span>
+          <span class="dice-formula">{getDisplayFormula(modifier)}</span>
           <span class="dice-resource">for {formatStateChangeLabel(modifier.resource)}</span>
           <i class="fas fa-arrow-right"></i>
         </button>

@@ -295,16 +295,11 @@
             if (!currentIncident) return;
             const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, result.outcome);
             
-            // Convert modifiers to stateChanges format (filters out resource arrays)
-            const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
-            const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
-            
             incidentResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
                effect: outcomeData.msg,
-               stateChanges: stateChanges,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
@@ -417,15 +412,12 @@
       
       // Fetch new modifiers for the new outcome
       const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, newOutcome);
-      const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
-      const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
       
       // Update BOTH outcome AND modifiers
       incidentResolution = {
          ...incidentResolution,
          outcome: newOutcome,
          effect: outcomeData.msg,
-         stateChanges: stateChanges,
          modifiers: outcomeData.modifiers,
          manualEffects: outcomeData.manualEffects
       };

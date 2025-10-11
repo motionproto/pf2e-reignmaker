@@ -11,13 +11,80 @@ import type { EventService, EventData } from './event-loader';
 import type { EventOutcome, EventModifier, OngoingEffect } from './event-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActiveModifier } from '../../models/Modifiers';
-import {
-  aggregateResourceChanges,
-  prepareStateChanges,
-  createUnresolvedModifier as createUnresolvedModifierShared,
-  canResolveWithSkill as canResolveWithSkillShared,
-  getLevelBasedDC
-} from '../shared/resolution-service';
+// DEPRECATED: These functions were in resolution-service.ts which was deleted during consolidation
+// EventResolver is likely obsolete - EventPhaseController now handles this logic directly
+// TODO: Remove EventResolver entirely if confirmed unused
+
+// Temporary inline implementations to fix build
+function aggregateResourceChanges(modifiers: EventModifier[]): Map<string, number> {
+  const changes = new Map<string, number>();
+  for (const modifier of modifiers) {
+    if (!Array.isArray(modifier.resource)) {
+      if (modifier.duration === 'immediate' || modifier.duration === 'permanent') {
+        const resourceValue = typeof modifier.value === 'number' ? modifier.value : 0;
+        const current = changes.get(modifier.resource) || 0;
+        changes.set(modifier.resource, current + resourceValue);
+      }
+    }
+  }
+  return changes;
+}
+
+function prepareStateChanges(currentState: KingdomData, resourceChanges: Map<string, number>): { updates: Partial<KingdomData>; hadShortage: boolean } {
+  const updates: Partial<KingdomData> = { resources: { ...currentState.resources } };
+  let hadShortage = false;
+  
+  for (const [resource, change] of resourceChanges) {
+    if (resource === 'unrest') {
+      updates.unrest = Math.max(0, (currentState.unrest || 0) + change);
+    } else if (resource === 'fame') {
+      updates.fame = Math.max(0, Math.min(3, (currentState.fame || 0) + change));
+    } else if (updates.resources) {
+      const current = updates.resources[resource] || 0;
+      const newValue = current + change;
+      if (change < 0 && newValue < 0) hadShortage = true;
+      updates.resources[resource] = Math.max(0, newValue);
+    }
+  }
+  return { updates, hadShortage };
+}
+
+function createUnresolvedModifierShared(
+  ongoingEffect: OngoingEffect,
+  sourceType: 'event' | 'incident',
+  sourceId: string,
+  sourceName: string,
+  currentTurn: number
+): ActiveModifier {
+  return {
+    id: `unresolved-${sourceType}-${sourceId}-${Date.now()}`,
+    name: ongoingEffect.name,
+    description: ongoingEffect.description,
+    icon: ongoingEffect.icon,
+    tier: ongoingEffect.tier,
+    sourceType,
+    sourceId,
+    sourceName,
+    startTurn: currentTurn,
+    modifiers: ongoingEffect.modifiers,
+    resolvedWhen: ongoingEffect.resolvedWhen
+  };
+}
+
+function canResolveWithSkillShared(skills: Array<{ skill: string }> | undefined, targetSkill: string): boolean {
+  if (!skills) return false;
+  return skills.some(s => s.skill === targetSkill);
+}
+
+function getLevelBasedDC(level: number): number {
+  const dcByLevel: Record<number, number> = {
+    1: 15, 2: 16, 3: 18, 4: 19, 5: 20,
+    6: 22, 7: 23, 8: 24, 9: 26, 10: 27,
+    11: 28, 12: 30, 13: 31, 14: 32, 15: 34,
+    16: 35, 17: 36, 18: 38, 19: 39, 20: 40
+  };
+  return dcByLevel[level] || 15;
+}
 
 export interface StabilityCheckResult {
     roll: number;

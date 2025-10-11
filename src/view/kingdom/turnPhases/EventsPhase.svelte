@@ -267,16 +267,11 @@
             if (!currentEvent) return;
             const outcomeData = eventPhaseController.getEventModifiers(currentEvent, result.outcome);
             
-            // Convert modifiers to stateChanges format (filters out resource arrays)
-            const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
-            const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
-            
             eventResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
                effect: outcomeData.msg,
-               stateChanges: stateChanges,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
@@ -541,15 +536,12 @@
       
       // Fetch new modifiers for the new outcome
       const outcomeData = eventPhaseController.getEventModifiers(currentEvent, newOutcome);
-      const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
-      const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
       
       // Update BOTH outcome AND modifiers
       eventResolution = {
          ...eventResolution,
          outcome: newOutcome,
          effect: outcomeData.msg,
-         stateChanges: stateChanges,
          modifiers: outcomeData.modifiers,
          manualEffects: outcomeData.manualEffects
       };

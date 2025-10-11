@@ -6,9 +6,14 @@
  * - GameEffectsService (fallback dice rolling)
  * 
  * Single source of truth for dice operations across the application.
+ * 
+ * NOTE: Uses type guards from types/modifiers.ts for detecting dice modifiers.
  */
 
+import { isDiceModifier } from '../../types/modifiers';
+
 // Dice formula detection regex - supports parentheses: -(1d4+1) or simple: -1d4+1
+// DEPRECATED: Use isDiceModifier() type guard instead for modifier arrays
 const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
 
 /**
@@ -67,12 +72,13 @@ export function isDiceFormula(value: any): boolean {
 
 /**
  * Detect modifiers with dice formula values (requiring player to roll)
+ * NEW ARCHITECTURE: Uses type guard instead of regex
  */
 export function detectDiceModifiers(modifiers: any[] | undefined): any[] {
   if (!modifiers) return [];
   return modifiers
     .map((m, index) => ({ ...m, originalIndex: index }))
-    .filter(m => typeof m.value === 'string' && DICE_PATTERN.test(m.value));
+    .filter(m => isDiceModifier(m));  // Use type guard instead of regex
 }
 
 /**

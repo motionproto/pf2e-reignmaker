@@ -31,8 +31,7 @@
    
    const durationOptions = [
       { value: 'immediate', label: 'Immediate' },
-      { value: 'ongoing', label: 'Ongoing' },
-      { value: 'permanent', label: 'Permanent' },
+      { value: 'ongoing', label: 'Ongoing (Permanent)' },
       { value: '1', label: '1 Turn' },
       { value: '3', label: '3 Turns' },
       { value: '5', label: '5 Turns' }
@@ -111,11 +110,11 @@
       newModifierEffects = [
          ...newModifierEffects,
          {
+            type: 'static',
             resource: newEffectResource,
             value: newEffectValue,
             duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
                      newEffectDuration === 'immediate' ? 'immediate' :
-                     newEffectDuration === 'permanent' ? 'permanent' :
                      parseInt(newEffectDuration)
          }
       ];
@@ -270,11 +269,11 @@
             if (modifier) {
                if (!modifier.modifiers) modifier.modifiers = [];
                modifier.modifiers.push({
+                  type: 'static',
                   resource: newEffectResource,
                   value: newEffectValue,
                   duration: newEffectDuration === 'ongoing' ? 'ongoing' : 
                            newEffectDuration === 'immediate' ? 'immediate' :
-                           newEffectDuration === 'permanent' ? 'permanent' :
                            parseInt(newEffectDuration)
                });
             }

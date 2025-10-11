@@ -6,7 +6,6 @@
  */
 
 import { getEventDisplayName } from '../types/event-helpers';
-import { EventResolver } from './events/event-resolver';
 import { eventService } from './events/event-loader';
 import type { EventData } from './events/event-loader';
 import type { KingdomData } from '../actors/KingdomActor';
@@ -15,7 +14,7 @@ import { updateKingdom } from '../stores/KingdomStore';
 import { createModifierService } from '../services/ModifierService';
 import { createGameEffectsService } from '../services/GameEffectsService';
 import type { ActiveModifier } from '../models/Modifiers';
-import { isStaticModifier } from '../types/modifiers';
+import { isStaticModifier, isOngoingDuration, isDiceModifier } from '../types/modifiers';
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -53,7 +52,6 @@ const EVENTS_PHASE_STEPS = [
 ];
 
 export async function createEventPhaseController(_eventService?: any) {
-    const eventResolver = new EventResolver(eventService);
     const modifierService = await createModifierService();
     const gameEffectsService = await createGameEffectsService();
     
@@ -272,31 +270,66 @@ export async function createEventPhaseController(_eventService?: any) {
         async applyCustomModifiers() {
             const { getKingdomActor } = await import('../stores/KingdomStore');
             const actor = getKingdomActor();
-            if (!actor) return;
+            if (!actor) {
+                console.log('⚠️ [EventPhaseController.applyCustomModifiers] No actor found');
+                return;
+            }
             
             const kingdom = actor.getKingdom();
             if (!kingdom || !kingdom.activeModifiers || kingdom.activeModifiers.length === 0) {
+                console.log('⚠️ [EventPhaseController.applyCustomModifiers] No active modifiers');
                 return;
             }
+            
+            console.log(`🔍 [EventPhaseController.applyCustomModifiers] Total active modifiers: ${kingdom.activeModifiers.length}`);
+            kingdom.activeModifiers.forEach(m => {
+                console.log(`  - ${m.name} (sourceType: ${m.sourceType}, hasOriginalEventData: ${!!m.originalEventData})`);
+            });
             
             // Filter for custom modifiers only (no resolution path, not from structures)
             const customModifiers = kingdom.activeModifiers.filter(m => 
                 !m.originalEventData && m.sourceType === 'custom'
             );
             
-            if (customModifiers.length === 0) return;
+            if (customModifiers.length === 0) {
+                console.log('⚠️ [EventPhaseController.applyCustomModifiers] No custom modifiers found');
+                return;
+            }
             
             console.log(`🔄 [EventPhaseController] Applying ${customModifiers.length} custom modifier(s)...`);
             
             // Batch modifiers by resource to avoid collisions
             const modifiersByResource = new Map<string, number>();
+            const modifiersToDecrement: Array<{ modifierId: string; modifierIndex: number }> = [];
             
             for (const modifier of customModifiers) {
-                for (const mod of modifier.modifiers) {
-                    // Only apply static modifiers with numeric values
-                    if (isStaticModifier(mod)) {
+                console.log(`  📋 Processing modifier: ${modifier.name}`);
+                console.log(`     Modifiers count: ${modifier.modifiers.length}`);
+                
+                for (let i = 0; i < modifier.modifiers.length; i++) {
+                    const mod = modifier.modifiers[i];
+                    let resourceInfo = 'unknown';
+                    if (isStaticModifier(mod) || isDiceModifier(mod)) {
+                        resourceInfo = mod.resource;
+                    } else {
+                        resourceInfo = (mod as any).resources?.join(', ') || 'unknown';
+                    }
+                    console.log(`     - Type: ${mod.type}, Resource: ${resourceInfo}, Value: ${(mod as any).value}, Duration: ${mod.duration}`);
+                    console.log(`     - isStatic: ${isStaticModifier(mod)}, isOngoing: ${isOngoingDuration(mod.duration)}, isTurnCount: ${typeof mod.duration === 'number'}`);
+                    
+                    // Apply static modifiers with ongoing OR numeric duration
+                    if (isStaticModifier(mod) && (isOngoingDuration(mod.duration) || typeof mod.duration === 'number')) {
                         const current = modifiersByResource.get(mod.resource) || 0;
-                        modifiersByResource.set(mod.resource, current + mod.value);
+                        const newValue = current + mod.value;
+                        modifiersByResource.set(mod.resource, newValue);
+                        console.log(`     ✓ Added ${mod.value} to ${mod.resource} (total: ${newValue})`);
+                        
+                        // Track numeric durations for decrementing
+                        if (typeof mod.duration === 'number') {
+                            modifiersToDecrement.push({ modifierId: modifier.id, modifierIndex: i });
+                        }
+                    } else {
+                        console.log(`     ✗ Skipped (not static+ongoing/numeric)`);
                     }
                 }
             }
@@ -307,9 +340,52 @@ export async function createEventPhaseController(_eventService?: any) {
                 value
             }));
             
+            console.log(`📊 [EventPhaseController] Total modifiers to apply: ${numericModifiers.length}`);
+            numericModifiers.forEach(m => console.log(`   ${m.resource}: ${m.value}`));
+            
             if (numericModifiers.length > 0) {
                 await gameEffectsService.applyNumericModifiers(numericModifiers);
-                console.log(`✅ [EventPhaseController] Applied ${customModifiers.length} custom modifiers`);
+                console.log(`✅ [EventPhaseController] Applied ${numericModifiers.length} numeric modifier(s) from ${customModifiers.length} custom modifier(s)`);
+            } else {
+                console.log(`⚠️ [EventPhaseController] No numeric modifiers to apply`);
+            }
+            
+            // Decrement turn-based durations and remove expired modifiers
+            if (modifiersToDecrement.length > 0) {
+                console.log(`⏬ [EventPhaseController] Decrementing ${modifiersToDecrement.length} turn-based modifier(s)...`);
+                
+                await updateKingdom(kingdom => {
+                    const modifiersToRemove: string[] = [];
+                    
+                    for (const { modifierId, modifierIndex } of modifiersToDecrement) {
+                        const modifier = kingdom.activeModifiers?.find(m => m.id === modifierId);
+                        if (modifier && modifier.modifiers[modifierIndex]) {
+                            const mod = modifier.modifiers[modifierIndex];
+                            if (typeof mod.duration === 'number') {
+                                mod.duration -= 1;
+                                console.log(`   Decremented ${modifier.name}.modifiers[${modifierIndex}] to ${mod.duration} turns remaining`);
+                                
+                                // Mark modifier for removal if all its modifiers are expired
+                                if (mod.duration <= 0) {
+                                    const allExpired = modifier.modifiers.every(m => 
+                                        typeof m.duration === 'number' && m.duration <= 0
+                                    );
+                                    if (allExpired && !modifiersToRemove.includes(modifierId)) {
+                                        modifiersToRemove.push(modifierId);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Remove expired modifiers
+                    if (modifiersToRemove.length > 0) {
+                        console.log(`🗑️ [EventPhaseController] Removing ${modifiersToRemove.length} expired modifier(s)`);
+                        kingdom.activeModifiers = kingdom.activeModifiers?.filter(m => 
+                            !modifiersToRemove.includes(m.id)
+                        ) || [];
+                    }
+                });
             }
         },
         

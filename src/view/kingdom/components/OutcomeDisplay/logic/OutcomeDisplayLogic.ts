@@ -61,7 +61,7 @@ export function computeDisplayStateChanges(
   resourceArrayModifiers: any[],
   selectedResources: Map<number, string>,
   resourceArraysResolved: boolean,
-  diceModifiers?: any[],
+  modifiers?: any[],  // CHANGED: Now receives full modifiers array
   resolvedDice?: Map<number | string, number>,
   stateChangeDice?: { key: string; formula: string }[]
 ): Record<string, any> | undefined {
@@ -84,13 +84,23 @@ export function computeDisplayStateChanges(
     });
   }
   
-  // Merge resolved dice rolls from modifiers array
-  if (diceModifiers && diceModifiers.length > 0 && resolvedDice) {
-    diceModifiers.forEach((modifier) => {
-      const rolledValue = resolvedDice.get(modifier.originalIndex);
+  // Process all modifiers (static only - dice are handled by DiceRoller component)
+  if (modifiers && modifiers.length > 0) {
+    modifiers.forEach((modifier, idx) => {
+      // Skip resource arrays (handled separately above)
+      if (Array.isArray(modifier.resource)) return;
+      
+      // Check if this modifier has a rolled value
+      const rolledValue = resolvedDice?.get(idx);
+      
       if (rolledValue !== undefined) {
+        // Use rolled value (from manual roll)
         result[modifier.resource] = (result[modifier.resource] || 0) + rolledValue;
+      } else if (typeof modifier.value === 'number') {
+        // Use static value directly
+        result[modifier.resource] = (result[modifier.resource] || 0) + modifier.value;
       }
+      // Dice modifiers (both legacy and typed) are handled by DiceRoller component
     });
   }
   

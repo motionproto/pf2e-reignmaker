@@ -145,36 +145,6 @@
     // Get modifiers from the action for preview
     const modifiers = controller.getActionModifiers(action, outcomeType);
     
-    // Convert modifiers to stateChanges format for preview display (filters out resource arrays)
-    const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
-    const stateChanges = convertModifiersToStateChanges(modifiers);
-    
-    // Special handling for Aid Another action - calculate actual bonus
-    if (action.id === 'aid-another' && stateChanges.get('meta')) {
-      const meta = stateChanges.get('meta');
-      if (meta.aidBonus === 'proficiency' || meta.aidBonus === 'proficiency+reroll') {
-        // Calculate actual bonus based on proficiency rank
-        // PF2e ranks: 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
-        let bonus = 1; // Default to +1 for untrained
-        if (proficiencyRank !== undefined) {
-          if (proficiencyRank >= 1 && proficiencyRank <= 2) {
-            bonus = 2; // Trained/Expert = +2
-          } else if (proficiencyRank === 3) {
-            bonus = 3; // Master = +3
-          } else if (proficiencyRank >= 4) {
-            bonus = 4; // Legendary = +4
-          }
-        }
-        
-        // Update the meta with calculated bonus
-        const updatedMeta = {
-          aidBonus: bonus,
-          rerollOnFailure: meta.aidBonus === 'proficiency+reroll' || meta.rerollOnFailure
-        };
-        stateChanges.set('meta', updatedMeta);
-      }
-    }
-    
     // Make sure the action is expanded FIRST
     // This ensures the card is already expanded when the resolution is displayed
     if (!expandedActions.has(actionId)) {
@@ -191,8 +161,7 @@
       actorName,
       skillName,
       timestamp: new Date(),
-      playerId: currentUserId || undefined,
-      stateChanges
+      playerId: currentUserId || undefined
     };
     
     controller.storeResolution(resolution);
@@ -203,7 +172,6 @@
       outcome: outcomeType,
       actorName,
       skillName,
-      stateChanges: stateChanges,  // Already an object from convertModifiersToStateChanges
       modifiers: modifiers  // Pass modifiers so OutcomeDisplay can generate ResolutionData
     });
     resolvedActions = resolvedActions; // Trigger reactivity
