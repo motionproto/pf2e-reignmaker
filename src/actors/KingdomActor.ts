@@ -97,8 +97,8 @@ export interface KingdomData {
   isAtWar: boolean;
   
   // Events & Modifiers (persistent across turns)
-  ongoingEvents: string[];  // Event IDs that persist across turns
-  activeModifiers: ActiveModifier[];  // Active modifiers from events/structures
+  ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
+  activeModifiers: ActiveModifier[];  // Active modifiers from events/structures/custom
   eventDC: number;  // Event DC that persists across turns (15 default, -5 when no event, min 6)
   
   // Simplified phase management with step arrays - single source of truth

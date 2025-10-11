@@ -82,6 +82,9 @@ export async function createEventPhaseController(_eventService?: any) {
                     return createPhaseResult(true);
                 }
                 
+                // Apply custom modifiers at the start of Events phase
+                await this.applyCustomModifiers();
+                
                 // Read CURRENT state from turnState (single source of truth)
                 const eventRolled = kingdom?.turnState?.eventsPhase?.eventRolled ?? false;
                 const eventTriggered = kingdom?.turnState?.eventsPhase?.eventTriggered ?? false;
@@ -235,20 +238,12 @@ export async function createEventPhaseController(_eventService?: any) {
                 }
                 
                 // Apply numeric modifiers using new simplified service method
-                const result = await gameEffectsService.applyNumericModifiers(resolutionData.numericModifiers);
+                // Apply outcome using shared service
+                const { applyResolvedOutcome } = await import('../services/resolution');
+                const result = await applyResolvedOutcome(resolutionData, outcome);
                 
-                console.log(`✅ [EventPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
-                
-                // Log manual effects (they're displayed in UI, not executed)
-                if (resolutionData.manualEffects.length > 0) {
-                    console.log(`📋 [EventPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
-                }
-                
-                // Execute complex actions (Phase 3 - stub for now)
-                if (resolutionData.complexActions.length > 0) {
-                    console.log(`🔧 [EventPhaseController] Complex actions to execute:`, resolutionData.complexActions);
-                    // await gameEffects.executeComplexActions(resolutionData.complexActions);
-                }
+                // Note: If event has endsEvent === false, it should be handled by
+                // adding to activeModifiers via the UI or controller
                 
                 // Complete steps 1 & 2 (resolve-event & apply-modifiers)
                 await completePhaseStepByIndex(1);
@@ -269,6 +264,53 @@ export async function createEventPhaseController(_eventService?: any) {
             }
         },
         /**
+         * Apply custom modifiers at the start of Events phase
+         * Custom modifiers have no resolution path (sourceType === 'custom' and no originalEventData)
+         */
+        async applyCustomModifiers() {
+            const { getKingdomActor } = await import('../stores/KingdomStore');
+            const actor = getKingdomActor();
+            if (!actor) return;
+            
+            const kingdom = actor.getKingdom();
+            if (!kingdom || !kingdom.activeModifiers || kingdom.activeModifiers.length === 0) {
+                return;
+            }
+            
+            // Filter for custom modifiers only (no resolution path, not from structures)
+            const customModifiers = kingdom.activeModifiers.filter(m => 
+                !m.originalEventData && m.sourceType === 'custom'
+            );
+            
+            if (customModifiers.length === 0) return;
+            
+            console.log(`🔄 [EventPhaseController] Applying ${customModifiers.length} custom modifier(s)...`);
+            
+            // Batch modifiers by resource to avoid collisions
+            const modifiersByResource = new Map<string, number>();
+            
+            for (const modifier of customModifiers) {
+                for (const mod of modifier.modifiers) {
+                    if (typeof mod.value === 'number') {
+                        const current = modifiersByResource.get(mod.resource) || 0;
+                        modifiersByResource.set(mod.resource, current + mod.value);
+                    }
+                }
+            }
+            
+            // Apply all at once (single batch)
+            const numericModifiers = Array.from(modifiersByResource.entries()).map(([resource, value]) => ({
+                resource: resource as any,
+                value
+            }));
+            
+            if (numericModifiers.length > 0) {
+                await gameEffectsService.applyNumericModifiers(numericModifiers);
+                console.log(`✅ [EventPhaseController] Applied ${customModifiers.length} custom modifiers`);
+            }
+        },
+        
+        /**
          * Get outcome modifiers for an event
          * (Follows same pattern as ActionPhaseController.getActionModifiers)
          */
@@ -282,62 +324,6 @@ export async function createEventPhaseController(_eventService?: any) {
             };
         },
         
-        /**
-         * Add event to ongoing events list
-         */
-        async addToOngoingEvents(eventId: string): Promise<void> {
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (actor) {
-                await actor.updateKingdom((kingdom) => {
-                    if (!kingdom.ongoingEvents) {
-                        kingdom.ongoingEvents = [];
-                    }
-                    if (!kingdom.ongoingEvents.includes(eventId)) {
-                        kingdom.ongoingEvents.push(eventId);
-                    }
-                });
-            }
-        },
-
-        /**
-         * Remove event from ongoing events list
-         */
-        async removeFromOngoingEvents(eventId: string): Promise<void> {
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (actor) {
-                await actor.updateKingdom((kingdom) => {
-                    if (kingdom.ongoingEvents) {
-                        kingdom.ongoingEvents = kingdom.ongoingEvents.filter(id => id !== eventId);
-                    }
-                });
-            }
-        },
-
-        /**
-         * Get ongoing events for display
-         */
-        async getOngoingEvents(): Promise<EventData[]> {
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (!actor) return [];
-            
-            const kingdom = actor.getKingdom();
-            if (!kingdom || !kingdom.ongoingEvents || kingdom.ongoingEvents.length === 0) {
-                return [];
-            }
-            
-            const events: EventData[] = [];
-            for (const eventId of kingdom.ongoingEvents) {
-                const event = eventService.getEventById(eventId);
-                if (event) {
-                    events.push(event);
-                }
-            }
-            
-            return events;
-        },
 
         /**
          * Check if current phase is complete

@@ -206,24 +206,9 @@ export async function createUnrestPhaseController() {
           return { success: false, error: 'Incident not found' };
         }
 
-        // Apply numeric modifiers using new simplified service method
-        const { createGameEffectsService } = await import('../services/GameEffectsService');
-        const gameEffects = await createGameEffectsService();
-        
-        const result = await gameEffects.applyNumericModifiers(resolutionData.numericModifiers);
-        
-        console.log(`✅ [UnrestPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
-        
-        // Log manual effects (they're displayed in UI, not executed)
-        if (resolutionData.manualEffects.length > 0) {
-          console.log(`� [UnrestPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
-        }
-        
-        // Execute complex actions (Phase 3 - stub for now)
-        if (resolutionData.complexActions.length > 0) {
-          console.log(`� [UnrestPhaseController] Complex actions to execute:`, resolutionData.complexActions);
-          // await gameEffects.executeComplexActions(resolutionData.complexActions);
-        }
+        // Apply outcome using shared service
+        const { applyResolvedOutcome } = await import('../services/resolution');
+        const result = await applyResolvedOutcome(resolutionData, outcome);
         
         // Complete step 2 (resolve incident)
         await completePhaseStepByIndex(2);
@@ -258,9 +243,15 @@ export async function createUnrestPhaseController() {
     /**
      * Get outcome modifiers for an incident
      * (Follows same pattern as ActionPhaseController.getActionModifiers)
+     * NOTE: For incidents, criticalSuccess falls back to success (by design)
      */
     getIncidentModifiers(incident: any, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      const outcomeData = incident.effects[outcome];
+      // For incidents, criticalSuccess falls back to success if not defined (by design)
+      const effectiveOutcome = outcome === 'criticalSuccess' && !incident.effects.criticalSuccess 
+        ? 'success' 
+        : outcome;
+      
+      const outcomeData = incident.effects[effectiveOutcome];
       
       return {
         msg: outcomeData?.msg || '',

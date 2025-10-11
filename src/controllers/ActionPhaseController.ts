@@ -265,26 +265,14 @@ export async function createActionPhaseController() {
           return { success: false, error: requirements.reason || 'Action requirements not met' };
         }
         
-        // Apply numeric modifiers using GameEffectsService
-        const { createGameEffectsService } = await import('../services/GameEffectsService');
-        const gameEffects = await createGameEffectsService();
-        const result = await gameEffects.applyNumericModifiers(resolutionData.numericModifiers);
-        
-        console.log(`✅ [ActionPhaseController] Applied ${resolutionData.numericModifiers.length} modifiers`);
-        
-        // Log manual effects (they're displayed in UI, not executed)
-        if (resolutionData.manualEffects.length > 0) {
-          console.log(`📋 [ActionPhaseController] Manual effects for GM:`, resolutionData.manualEffects);
-        }
-        
-        // Execute complex actions (Phase 3 - stub for now)
-        if (resolutionData.complexActions.length > 0) {
-          console.log(`🔧 [ActionPhaseController] Complex actions to execute:`, resolutionData.complexActions);
-          // await gameEffects.executeComplexActions(resolutionData.complexActions);
-        }
+        // Apply outcome using shared service
+        const { applyResolvedOutcome } = await import('../services/resolution');
+        const result = await applyResolvedOutcome(resolutionData, outcome);
         
         // Track player action
         if (playerId) {
+          const { createGameEffectsService } = await import('../services/GameEffectsService');
+          const gameEffects = await createGameEffectsService();
           const game = (window as any).game;
           const user = game?.users?.get(playerId);
           const playerName = user?.name || 'Unknown Player';

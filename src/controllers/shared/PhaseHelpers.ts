@@ -120,3 +120,39 @@ export async function safePhaseInit(
     resolve(unsubscribe);
   });
 }
+
+/**
+ * Convert modifiers to stateChanges, filtering out resource arrays and dice formulas
+ * 
+ * Resource arrays (e.g., ["lumber", "ore", "food"]) become choice buttons 
+ * in OutcomeDisplay, not stateChanges. Dice formulas (e.g., "-2d6") are rolled
+ * via the modifiers array, not stateChanges.
+ * 
+ * Only static numeric modifiers are included in stateChanges.
+ * 
+ * @param modifiers - Array of modifiers with resource and value
+ * @returns Object with resource -> value mappings (excludes arrays and dice)
+ */
+export function convertModifiersToStateChanges(
+  modifiers: Array<{ resource: string | string[]; value: number | string }>
+): Record<string, any> {
+  const stateChanges = new Map<string, any>();
+  const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
+  
+  modifiers.forEach((mod) => {
+    // Skip resource arrays - they're handled by OutcomeDisplay as choices
+    if (Array.isArray(mod.resource)) {
+      return;
+    }
+    
+    // Skip dice formulas - they're handled by OutcomeDisplay's dice roller
+    if (typeof mod.value === 'string' && DICE_PATTERN.test(mod.value)) {
+      return;
+    }
+    
+    // Only include static numeric values
+    stateChanges.set(mod.resource, mod.value);
+  });
+  
+  return Object.fromEntries(stateChanges);
+}

@@ -30,6 +30,7 @@
      initializeRollResultHandler
    } from '../../../services/pf2e';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
+   import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    // Removed: createCheckResultHandler - now calling controller directly
    
    // Initialize controller and service
@@ -179,13 +180,8 @@
       }, 1000);
    }
    
-   // Build possible outcomes for the event
-   $: if (currentEvent) {
-      (async () => {
-         const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
-         possibleOutcomes = buildPossibleOutcomes(currentEvent.effects);
-      })();
-   }
+   // Build possible outcomes for the event (synchronous - must be available for render)
+   $: possibleOutcomes = currentEvent ? buildPossibleOutcomes(currentEvent.effects) : [];
    
    // Build outcomes array for BaseCheckCard
    $: eventOutcomes = currentEvent ? (() => {
@@ -271,11 +267,16 @@
             if (!currentEvent) return;
             const outcomeData = eventPhaseController.getEventModifiers(currentEvent, result.outcome);
             
+            // Convert modifiers to stateChanges format (filters out resource arrays)
+            const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
+            const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
+            
             eventResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
                effect: outcomeData.msg,
+               stateChanges: stateChanges,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
@@ -538,10 +539,19 @@
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [EventsPhase] Debug outcome changed to: ${newOutcome}`);
       
-      // NEW ARCHITECTURE: Just update the outcome, OutcomeDisplay will handle the rest
+      // Fetch new modifiers for the new outcome
+      const outcomeData = eventPhaseController.getEventModifiers(currentEvent, newOutcome);
+      const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
+      const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
+      
+      // Update BOTH outcome AND modifiers
       eventResolution = {
          ...eventResolution,
-         outcome: newOutcome
+         outcome: newOutcome,
+         effect: outcomeData.msg,
+         stateChanges: stateChanges,
+         modifiers: outcomeData.modifiers,
+         manualEffects: outcomeData.manualEffects
       };
    }
    

@@ -77,9 +77,13 @@ export async function createGameEffectsService() {
     /**
      * NEW ARCHITECTURE: Apply numeric modifiers directly
      * Simpler than applyOutcome - just applies final numeric values
+     * 
+     * @param modifiers - Array of resource changes to apply
+     * @param outcome - Outcome degree (for automatic fame bonus on critical success)
      */
     async applyNumericModifiers(
-      modifiers: Array<{ resource: ResourceType; value: number }>
+      modifiers: Array<{ resource: ResourceType; value: number }>,
+      outcome?: OutcomeDegree
     ): Promise<ApplyOutcomeResult> {
       console.log(`🎯 [GameEffects] Applying ${modifiers.length} numeric modifiers`);
       
@@ -92,6 +96,12 @@ export async function createGameEffectsService() {
       };
       
       try {
+        // Apply critical success fame bonus (applies to all rolls)
+        if (outcome === 'criticalSuccess') {
+          await this.applyFameChange(1, 'Critical Success Bonus', result);
+          result.applied.specialEffects.push('critical_success_fame');
+        }
+        
         for (const { resource, value } of modifiers) {
           await this.applyResourceChange(resource, value, 'Applied', result);
         }

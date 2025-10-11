@@ -31,13 +31,11 @@
       "msg": "Choose how to absorb the economic shock",
       "modifiers": [
         {
-          "name": "Trade War Gold Loss",
           "resource": "gold",
           "value": "-2d4",
           "duration": "immediate"
         },
         {
-          "name": "Trade War Resource Loss",
           "resource": ["lumber", "ore", "food", "stone"],
           "value": "-(2d4+1)",
           "duration": "immediate"

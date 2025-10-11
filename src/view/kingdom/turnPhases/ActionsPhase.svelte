@@ -145,11 +145,9 @@
     // Get modifiers from the action for preview
     const modifiers = controller.getActionModifiers(action, outcomeType);
     
-    // Convert modifiers to stateChanges format for preview display
-    const stateChanges = new Map<string, any>();
-    modifiers.forEach((mod: any) => {
-      stateChanges.set(mod.resource, mod.value);
-    });
+    // Convert modifiers to stateChanges format for preview display (filters out resource arrays)
+    const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
+    const stateChanges = convertModifiersToStateChanges(modifiers);
     
     // Special handling for Aid Another action - calculate actual bonus
     if (action.id === 'aid-another' && stateChanges.get('meta')) {
@@ -205,7 +203,7 @@
       outcome: outcomeType,
       actorName,
       skillName,
-      stateChanges: Object.fromEntries(stateChanges),
+      stateChanges: stateChanges,  // Already an object from convertModifiersToStateChanges
       modifiers: modifiers  // Pass modifiers so OutcomeDisplay can generate ResolutionData
     });
     resolvedActions = resolvedActions; // Trigger reactivity

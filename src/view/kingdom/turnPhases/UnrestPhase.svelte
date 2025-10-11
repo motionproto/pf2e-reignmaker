@@ -43,6 +43,7 @@
    
    // Reactive UI state using shared helper for step completion
    import { getStepCompletion } from '../../../controllers/shared/PhaseHelpers';
+   import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
    $: stepComplete = getStepCompletion($kingdomData.currentPhaseSteps, 1); // Step 1 = incident check
    $: incidentWasTriggered = $kingdomData.turnState?.unrestPhase?.incidentTriggered ?? null;
    $: unrestStatus = $unrest !== undefined ? (() => {
@@ -118,13 +119,8 @@
       }
    }
    
-   // Build possible outcomes for the incident
-   $: if (currentIncident) {
-      (async () => {
-         const { buildPossibleOutcomes } = await import('../../../controllers/shared/PossibleOutcomeHelpers');
-         possibleOutcomes = buildPossibleOutcomes(currentIncident.effects);
-      })();
-   }
+   // Build possible outcomes for the incident (synchronous - must be available for render)
+   $: possibleOutcomes = currentIncident ? buildPossibleOutcomes(currentIncident.effects) : [];
    
    // Build outcomes array for BaseCheckCard
    $: incidentOutcomes = currentIncident ? (() => {
@@ -299,11 +295,16 @@
             if (!currentIncident) return;
             const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, result.outcome);
             
+            // Convert modifiers to stateChanges format (filters out resource arrays)
+            const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
+            const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
+            
             incidentResolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
                effect: outcomeData.msg,
+               stateChanges: stateChanges,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
@@ -382,20 +383,29 @@
    
    // Event handler - reroll with fame
    async function handleReroll(event: CustomEvent) {
-      if (!currentIncident || !incidentResolution) return;
+      if (!currentIncident) return;
       
-      console.log(`🔁 [UnrestPhase] Rerolling incident with fame`);
-      const { handleRerollWithFame } = await import('../../../controllers/shared/RerollHelpers');
+      const { skill, previousFame } = event.detail;
+      console.log(`🔁 [UnrestPhase] Performing reroll with skill: ${skill}`);
       
-      await handleRerollWithFame({
-         currentItem: currentIncident,
-         selectedSkill: incidentResolution.skillName,
-         phaseName: 'unrestPhase',
-         resetUiState: handleCancel,
-         triggerRoll: async (skill: string) => {
-            await executeSkillCheck(skill);
+      // Reset UI state for new roll
+      handleCancel();
+      
+      // Small delay to ensure UI updates
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Trigger new roll
+      try {
+         await executeSkillCheck(skill);
+      } catch (error) {
+         console.error('[UnrestPhase] Error during reroll:', error);
+         // Restore fame if the roll failed
+         const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
+         if (previousFame !== undefined) {
+            await restoreFameAfterFailedReroll(previousFame);
          }
-      });
+         ui?.notifications?.error('Failed to reroll. Fame has been restored.');
+      }
    }
    
    // Event handler - debug outcome change
@@ -405,10 +415,19 @@
       const newOutcome = event.detail.outcome;
       console.log(`🐛 [UnrestPhase] Debug outcome changed to: ${newOutcome}`);
       
-      // NEW ARCHITECTURE: Just update the outcome, OutcomeDisplay will handle the rest
+      // Fetch new modifiers for the new outcome
+      const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, newOutcome);
+      const { convertModifiersToStateChanges } = await import('../../../controllers/shared/PhaseHelpers');
+      const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
+      
+      // Update BOTH outcome AND modifiers
       incidentResolution = {
          ...incidentResolution,
-         outcome: newOutcome
+         outcome: newOutcome,
+         effect: outcomeData.msg,
+         stateChanges: stateChanges,
+         modifiers: outcomeData.modifiers,
+         manualEffects: outcomeData.manualEffects
       };
    }
    

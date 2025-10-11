@@ -62,29 +62,37 @@ export async function createModifierService() {
     },
     
     /**
-     * Apply all ongoing modifiers
-     * Called during Status phase
+     * Apply structure modifiers only during Status phase
+     * Custom modifiers are applied during Events phase by EventPhaseController
      */
     async applyOngoingModifiers(): Promise<void> {
-      console.log('🟡 [ModifierService] Applying ongoing modifiers...');
+      console.log('🟡 [ModifierService] Applying structure modifiers...');
       
       await updateKingdom(kingdom => {
         const modifiers = kingdom.activeModifiers || [];
         
-        for (const modifier of modifiers as ActiveModifier[]) {
+        // Filter for structure modifiers only (permanent effects)
+        const structureModifiers = modifiers.filter(m => m.sourceType === 'structure');
+        
+        if (structureModifiers.length === 0) {
+          console.log('  ℹ️ No structure modifiers to apply');
+          return;
+        }
+        
+        for (const modifier of structureModifiers as ActiveModifier[]) {
           for (const mod of modifier.modifiers as EventModifier[]) {
-            if (mod.duration === 'ongoing') {
+            if (mod.duration === 'ongoing' && typeof mod.value === 'number') {
               // Apply resource/stat change
               const current = kingdom.resources[mod.resource] || 0;
               kingdom.resources[mod.resource] = Math.max(0, current + mod.value);
               
-              console.log(`  ✓ Applied ${mod.name}: ${mod.value} ${mod.resource}`);
+              console.log(`  ✓ Applied structure modifier: ${mod.value} ${mod.resource} (from ${modifier.name})`);
             }
           }
         }
       });
       
-      console.log('✅ [ModifierService] Ongoing modifiers applied');
+      console.log('✅ [ModifierService] Structure modifiers applied');
     },
     
     /**

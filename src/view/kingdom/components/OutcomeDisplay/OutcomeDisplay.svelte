@@ -385,9 +385,7 @@
   />
   
   <div class="resolution-details">
-    {#if !hasChoices}
-      <OutcomeMessage effect={displayEffect} />
-    {/if}
+    <OutcomeMessage effect={displayEffect} />
     <RollBreakdown {rollBreakdown} />
     <ShortageWarning {shortfallResources} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
