@@ -1,9 +1,22 @@
 <script context="module" lang="ts">
+  interface StaticModifier {
+    type: 'static';
+    resource: string;
+    value: number;
+  }
+  
+  interface DiceModifier {
+    type: 'dice';
+    resource: string;
+    formula: string;
+    negative: boolean;
+  }
+  
   export interface PossibleOutcome {
     result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     label: string;
     description: string;
-    modifiers?: Array<{ resource: string; value: number }>; // Resource changes for this outcome
+    modifiers?: Array<StaticModifier | DiceModifier>; // Support both static and dice modifiers
   }
 </script>
 
@@ -89,7 +102,11 @@
                     ? modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)
                     : 'Unknown'}
                   <span class="modifier-badge">
-                    {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
+                    {#if modifier.type === 'dice' && modifier.formula}
+                      {modifier.negative ? 'Lose' : 'Gain'} {modifier.formula} {resourceName}
+                    {:else if modifier.type === 'static'}
+                      {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
+                    {/if}
                   </span>
                 {/each}
               </div>

@@ -16,10 +16,12 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers'
+import { TurnPhase } from '../actors/KingdomActor'
 import { 
   getUnrestTierInfo,
   getUnrestStatus,
@@ -38,15 +40,11 @@ export async function createUnrestPhaseController() {
       reportPhaseStart('UnrestPhaseController')
       
       try {
+        // Phase guard - prevents initialization when not in Unrest phase or already initialized
+        const guardResult = checkPhaseGuard(TurnPhase.UNREST, 'UnrestPhaseController');
+        if (guardResult) return guardResult;
+        
         const kingdom = get(kingdomData);
-        
-        // Check if phase is already initialized (prevent re-initialization on component remount)
-        const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
-        
-        if (hasSteps && kingdom?.currentPhase === 'Unrest') {
-          console.log('⏭️ [UnrestPhaseController] Phase already initialized, skipping re-initialization');
-          return createPhaseResult(true);
-        }
         
         // Read CURRENT state from turnState (single source of truth)
         const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;

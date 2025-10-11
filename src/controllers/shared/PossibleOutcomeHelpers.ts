@@ -33,6 +33,14 @@ export function formatOutcomeMessage(message: string, modifiers?: any[]): string
   // Build modifier summary
   const modifierText = modifiers
     .map(mod => {
+      // Handle dice modifiers (type: 'dice', formula: '2d6', negative: true)
+      if (mod.type === 'dice' && mod.formula) {
+        const action = mod.negative ? 'Lose' : 'Gain';
+        const resource = mod.resource || '';
+        return `${action} ${mod.formula} ${resource}`;
+      }
+      
+      // Handle static modifiers (type: 'static', value: number)
       const value = mod.value || 0;
       const sign = value > 0 ? '+' : '';
       const resource = mod.resource || '';

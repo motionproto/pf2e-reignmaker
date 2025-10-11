@@ -9,9 +9,11 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
+import { TurnPhase } from '../actors/KingdomActor';
 import { createDefaultTurnState } from '../models/TurnState';
 import { SettlementTier } from '../models/Settlement';
 
@@ -21,6 +23,10 @@ export async function createStatusPhaseController() {
       reportPhaseStart('StatusPhaseController');
       
       try {
+        // Phase guard - prevents initialization when not in Status phase or already initialized
+        const guardResult = checkPhaseGuard(TurnPhase.STATUS, 'StatusPhaseController');
+        if (guardResult) return guardResult;
+        
         // Initialize single step that handles all status processing
         const steps = [
           { name: 'Status' }

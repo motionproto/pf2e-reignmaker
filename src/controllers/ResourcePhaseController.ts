@@ -1,4 +1,4 @@
-/**
+ /**
  * ResourcePhaseController - Collects territory and settlement resources
  * NEW: Uses simplified step array system with single "collect-resources" step.
  * Any player can complete this step once per turn.
@@ -13,10 +13,12 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
+import { TurnPhase } from '../actors/KingdomActor';
 
 export async function createResourcePhaseController() {
   // Helper function to get active economic modifiers
@@ -38,6 +40,10 @@ export async function createResourcePhaseController() {
       reportPhaseStart('ResourcePhaseController');
       
       try {
+        // Phase guard - prevents initialization when not in Resources phase or already initialized
+        const guardResult = checkPhaseGuard(TurnPhase.RESOURCES, 'ResourcePhaseController');
+        if (guardResult) return guardResult;
+        
         // Initialize single manual step as specified
         const steps = [
           { name: 'Resources' }

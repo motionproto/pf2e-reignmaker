@@ -13,6 +13,7 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
   isStepCompletedByIndex
@@ -31,6 +32,10 @@ export async function createActionPhaseController() {
       reportPhaseStart('ActionPhaseController')
       
       try {
+        // Phase guard - prevents initialization when not in Actions phase or already initialized
+        const guardResult = checkPhaseGuard(TurnPhase.ACTIONS, 'ActionPhaseController');
+        if (guardResult) return guardResult;
+        
         // Initialize steps using shared helpers - auto-complete on init as specified  
         const steps = [
           { name: 'Actions' }  // Single step that auto-completes

@@ -20,10 +20,12 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
+import { TurnPhase } from '../actors/KingdomActor';
 
 export interface EventPhaseState {
     currentEvent: EventData | null;
@@ -71,16 +73,14 @@ export async function createEventPhaseController(_eventService?: any) {
             reportPhaseStart('EventPhaseController');
             
             try {
-                // Check if phase is already initialized (prevent re-initialization on component remount)
+                // Phase guard - prevents initialization when not in Events phase or already initialized
+                const guardResult = checkPhaseGuard(TurnPhase.EVENTS, 'EventPhaseController');
+                if (guardResult) return guardResult;
+                
+                // Get kingdom for step initialization
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 const kingdom = actor?.getKingdom();
-                const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
-                
-                if (hasSteps && kingdom?.currentPhase === 'Events') {
-                    console.log('⏭️ [EventPhaseController] Phase already initialized, skipping re-initialization');
-                    return createPhaseResult(true);
-                }
                 
                 // Apply custom modifiers at the start of Events phase
                 await this.applyCustomModifiers();

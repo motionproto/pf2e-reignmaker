@@ -12,10 +12,12 @@ import {
   reportPhaseComplete, 
   reportPhaseError, 
   createPhaseResult,
+  checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
+import { TurnPhase } from '../actors/KingdomActor';
 
 // Define steps for Upkeep Phase - FIXED structure
 const UPKEEP_PHASE_STEPS = [
@@ -30,6 +32,10 @@ export async function createUpkeepPhaseController() {
       reportPhaseStart('UpkeepPhaseController');
       
       try {
+        // Phase guard - prevents initialization when not in Upkeep phase or already initialized
+        const guardResult = checkPhaseGuard(TurnPhase.UPKEEP, 'UpkeepPhaseController');
+        if (guardResult) return guardResult;
+        
         // Get current kingdom state
         const { kingdomData } = await import('../stores/KingdomStore');
         const kingdom = get(kingdomData);

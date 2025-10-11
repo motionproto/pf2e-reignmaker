@@ -6,6 +6,7 @@
  */
 
 import { getKingdomActor, getTurnManager } from '../../stores/KingdomStore';
+import { TurnPhase } from '../../actors/KingdomActor';
 
 /**
  * Standardized logging for phase start
@@ -37,6 +38,48 @@ export function createPhaseResult(success: boolean, error?: string): { success: 
     result.error = error;
   }
   return result;
+}
+
+/**
+ * Phase guard - prevents phase controllers from initializing when not in their phase
+ * 
+ * @param phaseName - The phase name to guard (e.g., TurnPhase.EVENTS, TurnPhase.UNREST)
+ * @param controllerName - Controller name for logging
+ * @returns null if guard passes (should proceed with initialization), 
+ *          PhaseResult if guard blocks (should return early)
+ */
+export function checkPhaseGuard(
+  phaseName: TurnPhase,
+  controllerName: string
+): { success: boolean; error?: string } | null {
+  const actor = getKingdomActor();
+  const kingdom = actor?.getKingdom();
+  const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
+  
+  // No steps yet - guard passes, allow initialization
+  if (!hasSteps) {
+    return null;
+  }
+  
+  // Steps exist - check if we're in the WRONG phase
+  if (kingdom?.currentPhase !== phaseName) {
+    console.log(`⏭️ [${controllerName}] Not in ${phaseName} phase, skipping initialization`);
+    return createPhaseResult(true);
+  }
+  
+  // Steps exist and we're in the CORRECT phase
+  // Check if we're mid-phase (any steps completed)
+  const hasCompletedSteps = kingdom.currentPhaseSteps?.some(s => s.completed === 1);
+  if (hasCompletedSteps) {
+    // We're mid-phase, don't re-initialize (would clear component state/progress)
+    console.log(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
+    return createPhaseResult(true);
+  }
+  
+  // No completed steps yet - allow initialization
+  // This handles the case where we just navigated to this phase with stale steps
+  console.log(`✅ [${controllerName}] In correct phase, allowing initialization`);
+  return null;
 }
 
 /**
