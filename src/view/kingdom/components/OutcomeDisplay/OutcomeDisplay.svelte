@@ -55,6 +55,7 @@
   export let shortfallResources: string[] = [];
   export let showIgnoreEvent: boolean = false;
   export let ignoreEventDisabled: boolean = false;
+  export let isIgnored: boolean = false;  // Flag to hide reroll button for ignored events
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
@@ -130,7 +131,7 @@
   
   // Button visibility and state
   $: showCancelButton = showCancel && !applied;
-  $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers;
+  $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers && !isIgnored;
   $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
   
   // Validation logic with debug logging

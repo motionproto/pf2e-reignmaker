@@ -2,15 +2,33 @@
 
 ## Overview
 
-This document tracks the implementation of `gameEffects` for all 26 player actions. Each action is categorized by UI complexity and lists the required game effects and custom UI components.
+This document tracks the implementation status of all 26 player actions. Actions currently use the **typed modifier system** (`StaticModifier`, `DiceModifier`, `ChoiceModifier`) for resource changes. Automated `gameEffects` are planned for future implementation.
+
+### Current Implementation Status
+
+**Typed Modifiers:** ✅ All 26 actions use typed modifiers  
+**Game Effects:** ⏳ Planned for future automation (currently handled via UI + manual GM actions)
+
+### Architecture
+
+**What's Implemented:**
+- ✅ Typed modifier system (`type: 'static' | 'dice' | 'choice'`)
+- ✅ Resource changes (gold, food, lumber, unrest, etc.)
+- ✅ Manual effects (displayed as GM instructions)
+- ✅ Outcome display with dice rolling and choice selection
+
+**What's Planned:**
+- ⏳ Automated game effects (recruit army, claim hex, build structure, etc.)
+- ⏳ Custom UI components for complex actions
+- ⏳ Integration with game state (armies, structures, settlements)
 
 ---
 
 ## Progress Summary
 
 **Total Actions:** 26  
-**Completed:** 1 (Recruit Unit)  
-**Remaining:** 25
+**Typed Modifiers:** 26/26 ✅  
+**Game Effects Automation:** 0/26 ⏳
 
 ---
 
@@ -519,19 +537,62 @@ This document tracks the implementation of `gameEffects` for all 26 player actio
 
 ---
 
-## Custom UI Architecture
+## Current Architecture
 
-### Proposed Pattern: Outcome-Specific Components
+### Typed Modifier System (Implemented)
 
-Each action outcome can specify an optional custom component for complex interactions:
+All actions use the typed modifier system from `src/types/modifiers.ts`:
+
+```typescript
+// Event outcome structure (used by all actions)
+interface EventOutcome {
+  msg?: string;
+  modifiers?: EventModifier[];  // StaticModifier | DiceModifier | ChoiceModifier
+  manualEffects?: string[];     // GM instructions
+  endsEvent?: boolean;
+}
+
+// Typed modifiers
+type EventModifier = StaticModifier | DiceModifier | ChoiceModifier;
+
+interface StaticModifier {
+  type: 'static';
+  resource: ResourceType;
+  value: number;
+  duration?: ModifierDuration;
+  name?: string;
+}
+
+interface DiceModifier {
+  type: 'dice';
+  resource: ResourceType;
+  formula: string;
+  negative?: boolean;
+  duration?: ModifierDuration;
+  name?: string;
+}
+
+interface ChoiceModifier {
+  type: 'choice';
+  resources: ResourceType[];
+  value: number | DiceValue;
+  duration?: ModifierDuration;
+  name?: string;
+}
+```
+
+### Proposed Pattern: Game Effects (Planned)
+
+Future automation will add game effects to outcomes:
 
 ```typescript
 interface ActionOutcome {
   description: string;
-  modifiers: ActionModifier[];
-  gameEffects?: GameEffect[];
-  customComponent?: {
-    component: string;  // Component name/path
+  modifiers: EventModifier[];     // Resource changes (implemented)
+  manualEffects?: string[];        // GM instructions (implemented)
+  gameEffects?: GameEffect[];      // Automated actions (planned)
+  customComponent?: {              // Custom UI (planned)
+    component: string;
     props?: Record<string, any>;
   };
 }
@@ -580,13 +641,22 @@ interface ActionOutcome {
 
 ## Implementation Strategy
 
-### Phase 1: Foundation
-1. Design custom UI component architecture
-2. Create base custom components (Army selector, Hex selector, etc.)
-3. Update TypeScript types to support `customComponent` in outcomes
+### ✅ Phase 1: Typed Modifier System (COMPLETE)
+1. ✅ Create typed modifier types (`src/types/modifiers.ts`)
+2. ✅ Migrate all action data to typed modifiers
+3. ✅ Implement OutcomeDisplay to handle all modifier types
+4. ✅ Support dice rolling and choice selection in UI
 
-### Phase 2: Simple Actions (No Custom UI)
-Add gameEffects to actions that only need simple data:
+**Result:** All 26 actions now use typed modifiers for resource changes
+
+### ⏳ Phase 2: Game Effects Foundation (Planned)
+1. Define GameEffect types in `src/types/modifiers.ts`
+2. Create GameEffectsService for automated execution
+3. Update OutcomeApplicationService to process gameEffects
+4. Add gameEffects field to action data files
+
+### ⏳ Phase 3: Simple Actions (No Custom UI)
+Add gameEffects to actions that only need simple automation:
 - Establish Diplomatic Relations
 - Request Military Aid
 - Infiltration
@@ -594,7 +664,7 @@ Add gameEffects to actions that only need simple data:
 - Send Scouts
 - Fortify Hex
 
-### Phase 3: Moderate Actions (Simple Custom UI)
+### ⏳ Phase 4: Moderate Actions (Simple Custom UI)
 Implement actions with straightforward custom components:
 - Train Army
 - Recover Army
@@ -603,7 +673,7 @@ Implement actions with straightforward custom components:
 - Establish Settlement
 - Upgrade Settlement
 
-### Phase 4: Complex Actions (Advanced Custom UI)
+### ⏳ Phase 5: Complex Actions (Advanced Custom UI)
 Tackle actions requiring complex multi-step interactions:
 - Purchase Resources
 - Arrest Dissidents

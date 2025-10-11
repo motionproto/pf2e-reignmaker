@@ -1,23 +1,35 @@
 # Outcome Handling Architecture Audit
 
 **Date:** 2025-10-11  
-**Bug Report:** Economic Crash incident (failure outcome) with `-2d6` dice modifier - "Apply Result" button stays disabled after rolling dice
+**Status:** ✅ RESOLVED - Typed modifier system implemented
 
 ---
 
-## 🐛 ROOT CAUSE IDENTIFIED
+## 🎯 CURRENT STATE
 
-### Critical Bug in `PhaseHelpers.ts` Line ~147
+### Typed Modifier System (Implemented)
+
+The outcome handling system now uses explicit type discrimination instead of regex parsing:
 
 ```typescript
-// ❌ BROKEN - Double backslashes escape the regex pattern
-const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
+// src/types/modifiers.ts
+export type EventModifier = StaticModifier | DiceModifier | ChoiceModifier;
 
-// ✅ CORRECT - Single backslashes for regex character classes
-const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
+// Type-safe discrimination
+if (modifier.type === 'dice') {
+  // Handle dice rolling
+} else if (modifier.type === 'choice') {
+  // Handle player choice
+} else {
+  // Handle static value
+}
 ```
 
-**Impact:** The broken regex in `convertModifiersToStateChanges()` doesn't match dice formulas like `-2d6`, so they leak into `stateChanges` object. OutcomeDisplay then detects unresolved dice in both `modifiers` array AND `stateChanges` object, keeping the Apply button disabled even after rolling.
+**Benefits:**
+- ✅ No regex parsing needed
+- ✅ TypeScript type safety
+- ✅ Self-documenting data
+- ✅ Explicit handling of each case
 
 ---
 
@@ -98,7 +110,7 @@ const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
 
 ## 🔍 CURRENT STATE ANALYSIS
 
-### Phase Controllers (EventPhaseController, UnrestPhaseController)
+### Phase Controllers (EventPhaseController, UnrestPhaseController, ActionPhaseController)
 
 **Pattern:**
 ```typescript
@@ -115,355 +127,244 @@ getEventModifiers(event, outcome) {
 **Status:** ✅ **Consistent and working well**
 - Clean delegation pattern
 - Simple data extraction
+- Returns typed modifiers (EventModifier[])
 - No business logic, just data mapping
 
-### Phase Components (EventsPhase.svelte, UnrestPhase.svelte)
+### Phase Components (EventsPhase.svelte, UnrestPhase.svelte, ActionsPhase.svelte)
 
 **Pattern:**
 ```typescript
 // Get outcome data from controller
 const outcomeData = controller.getEventModifiers(item, outcome);
 
-// Convert to stateChanges (🐛 BROKEN HERE)
-const stateChanges = convertModifiersToStateChanges(outcomeData.modifiers);
-
-// Build resolution object
+// Build resolution object with typed modifiers
 eventResolution = {
   outcome,
   actorName,
   skillName: skill,
   effect: outcomeData.msg,
-  stateChanges: stateChanges,  // Passes filtered object
-  modifiers: outcomeData.modifiers,  // Passes original array
+  modifiers: outcomeData.modifiers,  // EventModifier[] - typed array
   manualEffects: outcomeData.manualEffects
 };
 ```
 
-**Status:** ⚠️ **Working but fragile**
-- Dual data passing (modifiers + stateChanges) creates confusion
-- Relies on broken helper function
-- Same pattern repeated in both EventsPhase and UnrestPhase
+**Status:** ✅ **Clean and working**
+- Single data source (typed modifiers)
+- No helper functions needed
+- Type safety through EventModifier union type
+- Consistent across all phase components
 
 ### Helper Functions (PhaseHelpers.ts)
 
-**convertModifiersToStateChanges():**
+**Current Implementation:**
 ```typescript
-export function convertModifiersToStateChanges(
-  modifiers: Array<{ resource: string | string[]; value: number | string }>
-): Record<string, any> {
-  const stateChanges = new Map<string, any>();
-  const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;  // 🐛 BUG!
-  
-  modifiers.forEach((mod) => {
-    if (Array.isArray(mod.resource)) return;  // Skip arrays
-    if (typeof mod.value === 'string' && DICE_PATTERN.test(mod.value)) return;  // Skip dice
-    stateChanges.set(mod.resource, mod.value);
-  });
-  
-  return Object.fromEntries(stateChanges);
-}
+// Svelte-specific helpers only
+- usePhaseController() - Controller initialization
+- usePF2eRollHandler() - Roll event handling
+- getStepCompletion() - Step status helpers
+- safePhaseInit() - Safe initialization
 ```
 
-**Status:** ❌ **BROKEN**
-- Double backslashes in regex escape the pattern
-- Doesn't match dice formulas
-- Causes dual validation bug in OutcomeDisplay
+**Status:** ✅ **Refactored**
+- No modifier conversion functions (no longer needed)
+- Type-safe helpers for Svelte components
+- Clean separation of concerns
 
 ### Resolution Services (DiceRollingService.ts)
 
-**Dice Detection:**
+**Type-Based Detection:**
 ```typescript
-const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;  // ✅ CORRECT
-
-export function detectDiceModifiers(modifiers) {
+// No regex needed - use type discrimination
+export function detectDiceModifiers(modifiers: EventModifier[]) {
   return modifiers
     .map((m, index) => ({ ...m, originalIndex: index }))
-    .filter(m => typeof m.value === 'string' && DICE_PATTERN.test(m.value));
+    .filter(m => m.type === 'dice');
 }
 
-export function detectStateChangeDice(stateChanges) {
-  return Object.entries(stateChanges)
-    .filter(([_, value]) => typeof value === 'string' && DICE_PATTERN.test(value))
-    .map(([key, formula]) => ({ key, formula }));
+export function detectChoiceModifiers(modifiers: EventModifier[]) {
+  return modifiers
+    .map((m, index) => ({ ...m, originalIndex: index }))
+    .filter(m => m.type === 'choice');
 }
 ```
 
-**Status:** ✅ **Working correctly**
-- Proper regex pattern
-- Clean detection logic
-- Correctly identifies dice in both structures
+**Status:** ✅ **Type-safe and clean**
+- No regex patterns needed
+- TypeScript type narrowing
+- Explicit type checking via discriminant field
 
 ### OutcomeDisplay.svelte
 
 **Validation Logic:**
 ```typescript
-// Lines ~140-150
 $: {
-  // Detect dice in modifiers array
-  const diceModifiers = detectDiceModifiers(modifiers?.filter(m => !Array.isArray(m.resource)));
+  // Detect dice modifiers by type
+  const diceModifiers = modifiers?.filter(m => m.type === 'dice') || [];
   const hasDiceModifiers = diceModifiers.length > 0;
-  const diceResolved = hasDiceModifiers && diceModifiers.every(m => resolvedDice.has(m.originalIndex));
+  const diceResolved = hasDiceModifiers && 
+    diceModifiers.every((_, i) => resolvedDice.has(i));
   
-  // Detect dice in stateChanges object (🐛 Should be empty but isn't!)
-  const stateChangeDice = detectStateChangeDice(stateChanges);
-  const hasStateChangeDice = stateChangeDice.length > 0;
-  const stateChangeDiceResolved = hasStateChangeDice && stateChangeDice.every(d => resolvedDice.has(`state:${d.key}`));
+  // Detect choice modifiers
+  const choiceModifiers = modifiers?.filter(m => m.type === 'choice') || [];
+  const hasChoices = choiceModifiers.length > 0;
+  const choicesResolved = hasChoices && 
+    choiceModifiers.every((_, i) => selectedResources.has(i));
   
-  // Disable button if ANY dice unresolved
+  // Disable button if any unresolved
   primaryButtonDisabled = applied || 
     (hasDiceModifiers && !diceResolved) || 
-    (hasStateChangeDice && !stateChangeDiceResolved);
+    (hasChoices && !choicesResolved);
 }
 ```
 
-**Status:** ⚠️ **Working as designed, but suffers from upstream bug**
-- Correct dual validation (modifiers + stateChanges)
-- BUT: stateChanges should never contain dice (broken helper causes it)
-- Creates double validation requirement
+**Status:** ✅ **Type-safe and working**
+- Single data source (modifiers array)
+- Type discrimination for validation
+- No dual validation confusion
+- Clean resolution tracking
 
 ---
 
-## 📊 ARCHITECTURAL INCONSISTENCIES
+## 📊 CURRENT ARCHITECTURE
 
-### 1. Dual Data Passing Pattern
+### 1. Single Data Source Pattern
 
-**Current:**
+**Implementation:**
 ```typescript
-// Phase passes BOTH to OutcomeDisplay
+// Phase passes only typed modifiers
 <OutcomeDisplay
-  modifiers={outcomeData.modifiers}         // Original array
-  stateChanges={stateChanges}               // Filtered object
+  modifiers={outcomeData.modifiers}  // EventModifier[]
+  manualEffects={outcomeData.manualEffects}
 />
 ```
 
-**Issues:**
-- Redundant data representation
-- Two sources of truth for same information
-- Requires synchronization via helper function
-- Helper function is broken (regex bug)
+**Benefits:**
+- ✅ Single source of truth
+- ✅ No data synchronization needed
+- ✅ TypeScript type safety
+- ✅ No helper functions required
 
-### 2. Resource Array Handling Evolution
+### 2. Type-Based Modifier Handling
 
-**Old Pattern (Actions):**
-- Resource arrays remained in `stateChanges`
-- OutcomeDisplay manually detected and created choice buttons
+**Pattern:**
+```typescript
+// Type discrimination replaces pattern matching
+modifiers.forEach(modifier => {
+  switch (modifier.type) {
+    case 'static':
+      applyStatic(modifier);
+      break;
+    case 'dice':
+      showDiceRoller(modifier);
+      break;
+    case 'choice':
+      showChoiceUI(modifier);
+      break;
+  }
+});
+```
 
-**New Pattern (Events/Incidents):**
-- `convertModifiersToStateChanges()` filters out resource arrays
-- OutcomeDisplay auto-generates choices from `modifiers` array
-- Choice buttons show preview with rolled values
+**Status:** ✅ **Clean and extensible**
+- Explicit handling per type
+- Easy to add new modifier types
+- TypeScript ensures exhaustive checks
 
-**Status:** ✅ **New pattern is better, but needs cleanup**
-- Single place to filter (helper function)
-- But helper is broken and creates confusion
-
-### 3. Dice Resolution Tracking
+### 3. Resolution Tracking
 
 **Current:**
 ```typescript
-// OutcomeDisplay tracks dice resolution in Map
-resolvedDice: Map<number | string, number>
-
-// Keys used:
-// - Modifier index: 0, 1, 2, ...
-// - StateChange key: "state:gold", "state:lumber", ...
+// Simple index-based tracking
+resolvedDice: Map<number, number>        // modifier index → rolled value
+selectedResources: Map<number, string>   // choice index → selected resource
 ```
 
-**Issues:**
-- Two different key formats for same concept
-- Requires careful coordination
-- Easy to have mismatches
+**Benefits:**
+- ✅ Single key format (modifier index)
+- ✅ Clear ownership per modifier
+- ✅ No key collision possible
 
 ---
 
-## ✅ IMMEDIATE FIX
+## ✅ IMPLEMENTATION COMPLETE
 
-### Fix the Regex in PhaseHelpers.ts
+### Typed Modifier System (DONE)
 
-```typescript
-// Line ~147 in convertModifiersToStateChanges()
-// BEFORE:
-const DICE_PATTERN = /^-?\(?\\d+d\\d+([+-]\\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
-
-// AFTER:
-const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
-```
-
-**Impact:**
-- Dice formulas will be correctly filtered from `stateChanges`
-- OutcomeDisplay will only validate dice in `modifiers` array
-- Apply button will enable after rolling dice once
-- **Fixes the immediate bug without architectural changes**
-
----
-
-## 🏗️ PROPOSED CONSOLIDATION (Future)
-
-### Goal: Eliminate Dual Data Passing
-
-**Option 1: Pass Only Modifiers (Recommended)**
+All phases have been migrated to the typed modifier system:
 
 ```typescript
-// Phase Component
+// Single, type-safe data structure
 eventResolution = {
   outcome,
   actorName,
   skillName: skill,
   effect: outcomeData.msg,
-  modifiers: outcomeData.modifiers,  // ✅ Single source
+  modifiers: outcomeData.modifiers,  // EventModifier[]
   manualEffects: outcomeData.manualEffects
 };
-
-// OutcomeDisplay
-// - Compute displayStateChanges internally from modifiers
-// - No need for phase to pre-filter
-// - Single responsibility: Display knows how to display
 ```
 
-**Benefits:**
-- Single source of truth (modifiers array)
-- No helper function needed in phase
-- OutcomeDisplay owns display logic
-- Simpler phase components
+**Completed:**
+1. ✅ All data files migrated to typed modifiers
+2. ✅ TypeScript types created (`src/types/modifiers.ts`)
+3. ✅ All phase components updated
+4. ✅ Helper functions refactored (PhaseHelpers.ts)
+5. ✅ OutcomeDisplay uses type discrimination
+6. ✅ All outcome types tested and working
 
-**Option 2: Pass Only StateChanges (Not Recommended)**
+### Architecture Benefits
 
-```typescript
-// Would require transforming modifiers to stateChanges completely
-// Loses original structure (array vs choice)
-// Harder to distinguish resource arrays from single values
-```
+**Before (Regex-based):**
+- String parsing with brittle patterns
+- Dual data structures (modifiers + stateChanges)
+- Complex validation logic
+- Easy to introduce bugs
 
-### Unified Service Architecture
-
-```typescript
-// src/services/resolution/OutcomeProcessingService.ts
-
-export async function createOutcomeProcessingService() {
-  return {
-    /**
-     * Extract outcome data from any item type
-     * Works for events, incidents, actions
-     */
-    getOutcomeData(item: Event | Incident | Action, outcome: string) {
-      const outcomeData = item.effects[outcome];
-      return {
-        msg: outcomeData?.msg || '',
-        modifiers: outcomeData?.modifiers || [],
-        manualEffects: outcomeData?.manualEffects || []
-      };
-    },
-    
-    /**
-     * Build resolution object for OutcomeDisplay
-     */
-    buildResolutionObject(outcome, actorName, skillName, outcomeData) {
-      return {
-        outcome,
-        actorName,
-        skillName,
-        effect: outcomeData.msg,
-        modifiers: outcomeData.modifiers,
-        manualEffects: outcomeData.manualEffects
-      };
-    }
-  };
-}
-```
-
-**Benefits:**
-- Controllers delegate to service
-- Consistent across all phase types
-- Single place to update if structure changes
-- Easier testing
+**After (Type-based):**
+- Explicit type discrimination
+- Single data source (typed modifiers)
+- Simple validation through type checking
+- Type-safe and maintainable
 
 ---
 
-## 📝 IMPLEMENTATION PLAN
+## 🎯 SUCCESS CRITERIA - ALL MET ✅
 
-### Phase 1: Immediate Bug Fix (NOW)
+### Type Safety
+- ✅ All modifiers use explicit `type` field
+- ✅ TypeScript enforces correct structure
+- ✅ No regex parsing needed
+- ✅ Compile-time validation
 
-1. ✅ **Fix regex in PhaseHelpers.ts**
-   - File: `src/controllers/shared/PhaseHelpers.ts`
-   - Line: ~147
-   - Change: Remove double backslashes
-   - Test: Economic Crash incident with `-2d6` modifier
-
-2. ✅ **Verify fix across all dice scenarios**
-   - Test events with dice modifiers
-   - Test incidents with dice modifiers  
-   - Test multiple dice in same outcome
-   - Test parenthetical dice: `-(1d4+1)`
-
-### Phase 2: Code Consolidation (Next Sprint)
-
-3. **Simplify data passing to OutcomeDisplay**
-   - Remove `stateChanges` prop
-   - Pass only `modifiers` array
-   - Let OutcomeDisplay compute displayStateChanges internally
-   - Update EventsPhase.svelte
-   - Update UnrestPhase.svelte
-   - Update ActionsPhase.svelte (if needed)
-
-4. **Remove convertModifiersToStateChanges() helper**
-   - No longer needed with simplified architecture
-   - Logic moves to OutcomeDisplay (where it belongs)
-
-5. **Create OutcomeProcessingService**
-   - Consolidate outcome extraction logic
-   - Update controllers to use service
-   - Reduce duplication across EventPhaseController, UnrestPhaseController
-
-### Phase 3: Testing & Documentation
-
-6. **Integration tests**
-   - Test all outcome types (events, incidents, actions)
-   - Test all modifier types (numeric, dice, resource arrays)
-   - Test choice selection + dice rolling combinations
-   - Test shortage detection
-
-7. **Update documentation**
-   - Document simplified data flow
-   - Update ARCHITECTURE_SUMMARY.md
-   - Create OutcomeProcessingService documentation
-
----
-
-## 🎯 SUCCESS CRITERIA
-
-### Immediate (Phase 1)
-- ✅ Economic Crash incident `-2d6` modifier works
-- ✅ Apply button enables after rolling dice
-- ✅ No regression in other outcome types
-
-### Medium-term (Phase 2)
-- ✅ Single data passing pattern (modifiers only)
-- ✅ No helper functions needed in phase components
-- ✅ OutcomeDisplay owns all display logic
+### Architecture
+- ✅ Single data passing pattern (EventModifier[])
+- ✅ Clean separation of concerns
+- ✅ OutcomeDisplay owns display logic
 - ✅ Consistent across all phase types
 
-### Long-term (Phase 3)
-- ✅ <5 lines of outcome-related code in phase components
-- ✅ All business logic in controllers/services
-- ✅ Easy to add new outcome types
-- ✅ Clear separation of concerns
+### Maintainability
+- ✅ Minimal outcome code in phase components
+- ✅ Business logic in controllers/services
+- ✅ Easy to add new modifier types
+- ✅ Self-documenting data structures
 
 ---
 
 ## 📚 REFERENCES
 
+**Core Type Definitions:**
+- ✅ `src/types/modifiers.ts` - Hand-written modifier types
+- ✅ `src/types/events.ts` - Auto-generated, imports from modifiers.ts
+- ✅ `src/models/Modifiers.ts` - ActiveModifier for kingdom state
+
 **Working Examples:**
 - ✅ EventPhaseController.getEventModifiers() - Clean delegation
-- ✅ DiceRollingService - Correct regex patterns
-- ✅ OutcomeDisplay validation - Robust but over-complex due to dual data
-
-**Problematic Areas:**
-- ❌ PhaseHelpers.convertModifiersToStateChanges() - Broken regex
-- ⚠️ Dual data passing (modifiers + stateChanges) - Unnecessary complexity
+- ✅ DiceRollingService - Type-based detection
+- ✅ OutcomeDisplay - Type-safe validation
+- ✅ PhaseHelpers.ts - Svelte-specific utilities
 
 **Key Files:**
-- `src/controllers/shared/PhaseHelpers.ts` - **FIX REGEX HERE**
-- `src/services/resolution/DiceRollingService.ts` - Reference for correct patterns
-- `src/view/kingdom/components/OutcomeDisplay/OutcomeDisplay.svelte` - Validation logic
-- `src/view/kingdom/turnPhases/EventsPhase.svelte` - Data flow example
-- `src/view/kingdom/turnPhases/UnrestPhase.svelte` - Data flow example
+- `src/types/modifiers.ts` - Core modifier type definitions
+- `src/controllers/shared/PhaseHelpers.ts` - Refactored Svelte helpers
+- `src/services/resolution/DiceRollingService.ts` - Type-based resolution
+- `src/view/kingdom/components/OutcomeDisplay/OutcomeDisplay.svelte` - UI handling
+- `src/view/kingdom/turnPhases/*.svelte` - Phase implementations

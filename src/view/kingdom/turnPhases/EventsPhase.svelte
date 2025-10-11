@@ -54,6 +54,7 @@
      manualEffects?: string[];
      shortfallResources?: string[];
      rollBreakdown?: any;
+     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
    } | null = null;
    let eventResolved = false;
    
@@ -73,6 +74,39 @@
    $: eventResolvedFromState = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC || 15;
    $: activeModifiers = $kingdomData.activeModifiers || [];
+   $: ongoingEvents = activeModifiers.filter(m => m.originalEventData);
+   $: customModifiers = activeModifiers.filter(m => !m.originalEventData);
+   
+   // Build outcomes for ongoing events
+   $: ongoingEventsWithOutcomes = ongoingEvents.map(modifier => {
+      if (!modifier.originalEventData) return null;
+      const event = modifier.originalEventData;
+      const outcomes: Array<{
+         type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+         description: string;
+      }> = [];
+      
+      if (event.effects.criticalSuccess) {
+         outcomes.push({ type: 'criticalSuccess', description: event.effects.criticalSuccess.msg });
+      }
+      if (event.effects.success) {
+         outcomes.push({ type: 'success', description: event.effects.success.msg });
+      }
+      if (event.effects.failure) {
+         outcomes.push({ type: 'failure', description: event.effects.failure.msg });
+      }
+      if (event.effects.criticalFailure) {
+         outcomes.push({ type: 'criticalFailure', description: event.effects.criticalFailure.msg });
+      }
+      
+      return {
+         modifier,
+         event,
+         outcomes,
+         possibleOutcomes: buildPossibleOutcomes(event.effects)
+      };
+   }).filter(item => item !== null);
+   
    $: stabilityRoll = $kingdomData.turnState?.eventsPhase?.eventRoll || 0;
    $: showStabilityResult = $kingdomData.turnState?.eventsPhase?.eventRoll !== null;
    $: rolledAgainstDC = eventDC;
@@ -375,32 +409,28 @@
       }
    }
    
-   // Event handler - ignore event
+   // Event handler - ignore event (preview only, user must apply)
    async function handleIgnore() {
       if (!currentEvent || !eventPhaseController) return;
       
-      console.log(`🚫 [EventsPhase] Ignoring event: ${currentEvent.name}`);
+      console.log(`🚫 [EventsPhase] Ignoring event (preparing failure preview): ${currentEvent.name}`);
       
-      const currentTurn = $kingdomData.currentTurn || 1;
-      const result = await eventPhaseController.ignoreEvent(currentEvent, currentTurn);
+      // Just prepare the failure outcome preview - don't apply anything yet
+      // User must click "Apply Result" to confirm
+      const outcomeData = eventPhaseController.getEventModifiers(currentEvent, 'failure');
       
-      if (result.success) {
-         console.log(`✅ [EventsPhase] Event ignored successfully`);
-         ui?.notifications?.info(`Event ignored - failure effects applied`);
-         
-         // NEW ARCHITECTURE: Show as resolved with basic state
-         // OutcomeDisplay would normally build this, but for ignore we just mark as done
-         eventResolution = {
-            outcome: 'failure',
-            actorName: 'Ignored',
-            skillName: 'ignored',
-            effect: 'Event ignored - failure effects applied'
-         };
-         eventResolved = true;
-      } else {
-         console.error(`❌ [EventsPhase] Failed to ignore event:`, result.error);
-         ui?.notifications?.error(`Failed to ignore event: ${result.error || 'Unknown error'}`);
-      }
+      eventResolution = {
+         outcome: 'failure',
+         actorName: 'Event Ignored',
+         skillName: '',
+         effect: outcomeData.msg,
+         modifiers: outcomeData.modifiers,
+         manualEffects: outcomeData.manualEffects,
+         isIgnored: true  // Flag to hide reroll button
+      };
+      eventResolved = true;
+      
+      console.log(`✅ [EventsPhase] Failure preview prepared, awaiting user confirmation`);
    }
    
    // Event handler - aid another
@@ -691,23 +721,56 @@
       </div>
    {/if}
    
-   <!-- Ongoing Events - System events (with originalEventData) and custom modifiers -->
-   {#if activeModifiers.length > 0}
+   <!-- Ongoing Events - System-generated events that can be resolved -->
+   {#if ongoingEventsWithOutcomes.length > 0}
       <div class="ongoing-events-section">
          <h2 class="ongoing-events-header">Ongoing Events</h2>
          <div class="ongoing-events-list">
-            {#each activeModifiers as modifier}
-               {#if modifier.originalEventData}
-                  <!-- System-generated event: Can be acted upon -->
-                  <OngoingEventCard
-                     {modifier}
-                     controller={eventPhaseController}
+            {#each ongoingEventsWithOutcomes as item}
+               <div class="ongoing-event-wrapper">
+                  <div class="ongoing-badge-container">
+                     <span class="ongoing-badge">Ongoing Event</span>
+                  </div>
+                  <BaseCheckCard
+                     id={item.event.id}
+                     name={item.event.name}
+                     description={item.event.description}
+                     skills={item.event.skills}
+                     outcomes={item.outcomes}
+                     traits={item.event.traits || []}
+                     checkType="event"
+                     expandable={false}
+                     showCompletions={false}
+                     showAvailability={false}
+                     showSpecial={false}
+                     showIgnoreButton={true}
                      {isViewingCurrentPhase}
+                     possibleOutcomes={item.possibleOutcomes}
+                     showAidButton={false}
+                     resolved={false}
+                     resolution={null}
+                     primaryButtonLabel="Apply Result"
+                     skillSectionTitle="Choose Your Response:"
+                     on:executeSkill={handleExecuteSkill}
+                     on:primary={handleApplyResult}
+                     on:cancel={handleCancel}
+                     on:performReroll={handlePerformReroll}
+                     on:ignore={handleIgnore}
+                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
                   />
-            {:else}
-               <!-- Custom modifier: Informational only -->
+               </div>
+            {/each}
+         </div>
+      </div>
+   {/if}
+   
+   <!-- Custom Modifiers - User-created or informational modifiers -->
+   {#if customModifiers.length > 0}
+      <div class="custom-modifiers-section">
+         <h2 class="custom-modifiers-header">Custom Modifiers</h2>
+         <div class="custom-modifiers-list">
+            {#each customModifiers as modifier}
                <CustomModifierDisplay {modifier} />
-               {/if}
             {/each}
          </div>
       </div>
@@ -944,11 +1007,55 @@
    .ongoing-events-header {
       margin: 0 0 15px 0;
       color: var(--text-accent);
-      font-size: var(--font-base);
+      font-size: var(--font-xl);
       font-weight: var(--font-weight-normal);
    }
    
    .ongoing-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+   }
+   
+   .ongoing-event-wrapper {
+      position: relative;
+   }
+   
+   .ongoing-badge-container {
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      z-index: 10;
+   }
+   
+   .ongoing-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--color-amber-light);
+      border: 1px solid var(--color-amber);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+   }
+   
+   .custom-modifiers-section {
+      padding: 20px 0;
+   }
+   
+   .custom-modifiers-header {
+      margin: 0 0 15px 0;
+      color: var(--text-accent);
+      font-family: var(--base-font);
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-normal);
+   }
+   
+   .custom-modifiers-list {
       display: flex;
       flex-direction: column;
       gap: 15px;

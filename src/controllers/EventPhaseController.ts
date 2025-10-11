@@ -237,13 +237,41 @@ export async function createEventPhaseController(_eventService?: any) {
                     return { success: false, error: 'Event not found' };
                 }
                 
-                // Apply numeric modifiers using new simplified service method
                 // Apply outcome using shared service
                 const { applyResolvedOutcome } = await import('../services/resolution');
                 const result = await applyResolvedOutcome(resolutionData, outcome);
                 
-                // Note: If event has endsEvent === false, it should be handled by
-                // adding to activeModifiers via the UI or controller
+                // Check if event should create an ongoing modifier
+                // (for ignored events or events with endsEvent === false)
+                const isFailureOutcome = outcome === 'failure' || outcome === 'criticalFailure';
+                if (isFailureOutcome && event.ifUnresolved?.ongoing?.becomesModifier && event.ifUnresolved.ongoing.modifierTemplate) {
+                    const { getKingdomActor } = await import('../stores/KingdomStore');
+                    const actor = getKingdomActor();
+                    const kingdom = actor?.getKingdom();
+                    const currentTurn = kingdom?.currentTurn || 1;
+                    
+                    const template = event.ifUnresolved.ongoing.modifierTemplate;
+                    const modifier: ActiveModifier = {
+                        id: `unresolved-${event.id}-${currentTurn}`,
+                        name: template.name || `${event.name} (Unresolved)`,
+                        description: template.description || event.description,
+                        tier: typeof event.tier === 'number' ? event.tier : 1,
+                        sourceType: 'event',
+                        sourceId: event.id,
+                        sourceName: event.name,
+                        startTurn: currentTurn,
+                        modifiers: this.convertEffectsToModifiers(template.effects, template.duration),
+                        originalEventData: event // Keep reference to original event for resolution
+                    };
+                    
+                    // Add to activeModifiers
+                    await updateKingdom(kingdom => {
+                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                        kingdom.activeModifiers.push(modifier);
+                    });
+                    
+                    console.log(`✅ [EventPhaseController] Created ongoing modifier: ${modifier.name}`);
+                }
                 
                 // Complete steps 1 & 2 (resolve-event & apply-modifiers)
                 await completePhaseStepByIndex(1);
@@ -387,6 +415,49 @@ export async function createEventPhaseController(_eventService?: any) {
                     }
                 });
             }
+        },
+        
+        /**
+         * Ignore an event - returns failure outcome data for manual application
+         * (User must still click "Apply Result" to confirm)
+         */
+        async ignoreEvent(event: EventData, currentTurn: number) {
+            console.log(`🚫 [EventPhaseController] Preparing ignored event outcome: ${event.name}`);
+            
+            try {
+                // Just return the failure outcome data - don't apply anything yet
+                // Application happens in resolveEvent() when user clicks "Apply Result"
+                return { 
+                    success: true,
+                    currentTurn // Return current turn for modifier creation later
+                };
+            } catch (error) {
+                console.error('❌ [EventPhaseController] Error preparing ignored event:', error);
+                return {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Unknown error'
+                };
+            }
+        },
+        
+        /**
+         * Convert template effects to EventModifier array
+         */
+        convertEffectsToModifiers(effects: Record<string, any>, duration: string | number): any[] {
+            const modifiers: any[] = [];
+            
+            for (const [resource, value] of Object.entries(effects)) {
+                if (typeof value === 'number' && value !== 0) {
+                    modifiers.push({
+                        type: 'static',
+                        resource,
+                        value,
+                        duration
+                    });
+                }
+            }
+            
+            return modifiers;
         },
         
         /**

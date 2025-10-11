@@ -71,6 +71,7 @@
     manualEffects?: string[];
     shortfallResources?: string[];
     rollBreakdown?: any;
+    isIgnored?: boolean;  // Flag to hide reroll button for ignored events
   } | null = null;
   
   // Display configuration
@@ -252,6 +253,7 @@
           manualEffects={resolution.manualEffects || []}
           shortfallResources={resolution.shortfallResources || []}
           rollBreakdown={resolution.rollBreakdown}
+          isIgnored={resolution.isIgnored || false}
           applied={outcomeApplied}
           {primaryButtonLabel}
           {showFameReroll}

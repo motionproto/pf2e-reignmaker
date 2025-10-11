@@ -104,8 +104,8 @@
   }
 </script>
 
-{#if hasAnyContent}
-  <div class="state-changes">
+<div class="state-changes">
+  {#if hasAnyContent}
     {#if showCriticalSuccessFame}
       <div class="critical-success-fame">
         <i class="fas fa-star"></i>
@@ -187,8 +187,21 @@
         </div>
       {/if}
     {/if}
-  </div>
-{/if}
+  {:else}
+    <!-- Show "No Effect" when there's no content -->
+    <div class="dice-rollers-section">
+      <div class="dice-rollers-header">Outcome:</div>
+      <div class="outcome-cards">
+        <div class="outcome-card static no-effect">
+          <div class="card-header">
+            <i class="fas fa-circle-minus resource-icon"></i>
+            <div class="card-label">No Effect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+</div>
 
 <style lang="scss">
   .state-changes {
@@ -247,6 +260,20 @@
     
     &.static {
       cursor: default;
+    }
+    
+    &.no-effect {
+      background: rgba(128, 128, 128, 0.05);
+      border-color: rgba(128, 128, 128, 0.3);
+      
+      .resource-icon {
+        color: rgba(255, 255, 255, 0.5);
+      }
+      
+      .card-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-style: italic;
+      }
     }
     
     .card-header {

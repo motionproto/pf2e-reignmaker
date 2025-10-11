@@ -50,22 +50,27 @@ This provides **complete type safety** and **self-documenting data** without rel
 
 ### Resource Modifiers
 
-Standard kingdom resources using `EventModifier` format:
+Standard kingdom resources using `EventModifier` format from `src/types/modifiers.ts`:
 
 ```typescript
-interface ActionModifier {
-  name: string;
-  resource: 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'unrest' | 'fame';
+// Static modifier (most common for player actions)
+interface StaticModifier {
+  type: 'static';
+  resource: ResourceType;
   value: number;
-  duration: 'immediate' | 'ongoing' | 'permanent' | 'turns';
-  turns?: number;
+  duration?: ModifierDuration;  // 'immediate' | 'ongoing' | number (turn count)
+  name?: string;
 }
+
+type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 
+                    'unrest' | 'fame' | 'imprisoned_unrest' | 'damage_structure';
 ```
 
 **Example:**
 ```json
 "modifiers": [
   {
+    "type": "static",
     "name": "Disband Army",
     "resource": "unrest",
     "value": -2,
@@ -74,93 +79,70 @@ interface ActionModifier {
 ]
 ```
 
+**Duration Options:**
+- `'immediate'` (or omitted) - Applied once
+- `'ongoing'` - Persists until event resolved
+- `number` - Lasts for specific number of turns (e.g., `3`)
+
 ### Game Effects
 
-Gameplay mechanics defined in `src/controllers/actions/game-effects.ts`:
+**Note:** Game effects system is planned but not yet implemented in player action data files. Current player actions use only `modifiers` for resource changes and include gameplay effects in the `description` field or `special` field for manual GM handling.
 
+**Planned Effect Types:**
 - **Territory:** `claimHexes`, `fortifyHex`, `buildRoads`
 - **Construction:** `buildStructure`, `repairStructure`, `createWorksite`, `foundSettlement`, `upgradeSettlement`
 - **Military:** `recruitArmy`, `trainArmy`, `deployArmy`, `outfitArmy`, `recoverArmy`, `disbandArmy`
 - **Diplomatic:** `establishDiplomaticRelations`, `requestEconomicAid`, `requestMilitaryAid`, `infiltration`
-- **Events:** `resolveEvent`, `hireAdventurers`
-- **Support:** `aidBonus`, `grantReroll`
-- **Unrest:** `arrestDissidents`, `executePrisoners`, `pardonPrisoners`
 
 ---
 
 ## Examples
 
-### Claim Hexes (Proficiency Scaling)
+### Simple Resource Modifier
 
 ```json
-"gameEffects": [
+"modifiers": [
   {
-    "type": "claimHexes",
-    "count": "proficiency-scaled",
-    "scaling": {
-      "trained": 1,
-      "expert": 1,
-      "master": 2,
-      "legendary": 3
-    },
-    "bonus": 1  // Critical success adds +1 extra hex
+    "type": "static",
+    "resource": "unrest",
+    "value": -2,
+    "duration": "immediate",
+    "name": "Deal with Unrest"
   }
 ]
 ```
 
-### Aid Another (Complex Bonus)
+### Dice Modifier
 
 ```json
-"gameEffects": [
+"modifiers": [
   {
-    "type": "aidBonus",
-    "target": "other-pc",
-    "bonusType": "proficiency-scaled",
+    "type": "dice",
+    "resource": "gold",
+    "formula": "2d6",
+    "negative": true,
+    "duration": "immediate"
+  }
+]
+```
+
+### Choice Modifier
+
+```json
+"modifiers": [
+  {
+    "type": "choice",
+    "resources": ["lumber", "ore", "food", "stone"],
     "value": {
-      "trained": 2,
-      "expert": 2,
-      "master": 3,
-      "legendary": 4
+      "formula": "2d4+1",
+      "negative": true
     },
-    "allowReroll": true  // Only on critical success
+    "duration": "immediate"
   }
 ]
 ```
 
-### Hire Adventurers (Mode-Based)
-
-```json
-// Critical Success
-"gameEffects": [
-  {
-    "type": "hireAdventurers",
-    "mode": "resolve-event"
-  }
-]
-
-// Success
-"gameEffects": [
-  {
-    "type": "hireAdventurers",
-    "mode": "bonus-to-event",
-    "bonus": 2
-  }
-]
-```
-
-### Create Worksite (Conditional Effect)
-
-```json
-"gameEffects": [
-  {
-    "type": "createWorksite",
-    "worksiteType": "farm",  // or "mine", "quarry", "lumbermill"
-    "immediateResource": true  // Only on critical success
-  }
-]
-```
-
-### Combined Effects (Resources + Gameplay)
+### Complex Outcome (Multiple Modifiers)
 
 ```json
 {
@@ -168,21 +150,18 @@ Gameplay mechanics defined in `src/controllers/actions/game-effects.ts`:
     "description": "Army disbands smoothly, people welcome them home with honours!",
     "modifiers": [
       {
+        "type": "static",
         "name": "Disband Army",
         "resource": "unrest",
         "value": -2,
         "duration": "immediate"
       }
-    ],
-    "gameEffects": [
-      {
-        "type": "disbandArmy",
-        "targetArmy": "selected"
-      }
     ]
   }
 }
 ```
+
+**Note:** Gameplay effects like "disband army" are currently handled through the UI and manual GM actions, not automated game effects.
 
 ---
 
@@ -190,39 +169,33 @@ Gameplay mechanics defined in `src/controllers/actions/game-effects.ts`:
 
 ### TypeScript Types
 
-All game effects are strongly typed in `src/controllers/actions/game-effects.ts`:
+All modifiers use the typed modifier system from `src/types/modifiers.ts`:
 
 ```typescript
-export type GameEffect =
-  | ClaimHexesEffect
-  | BuildStructureEffect
-  | AidBonusEffect
-  | HireAdventurersEffect
-  | CreateWorksiteEffect
-  | ... // 25+ effect types
+export type EventModifier = StaticModifier | DiceModifier | ChoiceModifier;
 ```
 
 ### Processing
 
-Action execution service processes both effect types:
+Modifiers are processed through the resolution system:
 
 ```typescript
-// 1. Apply resource modifiers (harmonized with events/incidents)
-for (const modifier of effect.modifiers) {
-  applyResourceChange(modifier.resource, modifier.value);
+// 1. Detect modifier type
+if (modifier.type === 'static') {
+  // Apply immediate numeric change
+  await applyResourceChange(modifier.resource, modifier.value);
 }
 
-// 2. Apply game effects (action-specific mechanics)
-for (const gameEffect of effect.gameEffects) {
-  switch (gameEffect.type) {
-    case 'claimHexes':
-      handleClaimHexes(gameEffect);
-      break;
-    case 'aidBonus':
-      handleAidBonus(gameEffect);
-      break;
-    // ... etc
-  }
+// 2. Handle dice modifiers
+if (modifier.type === 'dice') {
+  // Show dice roller UI
+  // Player rolls, then apply result
+}
+
+// 3. Handle choice modifiers
+if (modifier.type === 'choice') {
+  // Show resource selection UI
+  // Player chooses, then resolve value (static or dice)
 }
 ```
 
@@ -253,35 +226,39 @@ for (const gameEffect of effect.gameEffects) {
 
 ## Future Extensions
 
-Adding new effect types is simple:
-
-1. Add type to `game-effects.ts`
-2. Create handler in `action-execution.ts`
-3. Use in action JSON files
-
-Example - adding a new "Trade Route" effect:
+The typed modifier system can be extended with new modifier types as needed:
 
 ```typescript
-// game-effects.ts
-export interface EstablishTradeRouteEffect extends BaseGameEffect {
-  type: 'establishTradeRoute';
-  targetSettlement: string;
-  tradeGood: 'food' | 'luxury' | 'ore';
+// Example: Percentage modifier
+export interface PercentageModifier {
+  type: 'percentage';
+  resource: ResourceType;
+  percent: number;
+  negative?: boolean;
+  duration?: ModifierDuration;
 }
 
-// action-execution.ts
-case 'establishTradeRoute':
-  handleEstablishTradeRoute(gameEffect);
-  break;
+// Example: Conditional modifier
+export interface ConditionalModifier {
+  type: 'conditional';
+  condition: string;
+  modifier: EventModifier;
+  duration?: ModifierDuration;
+}
 ```
 
 ---
 
 ## Summary
 
-The game effects system provides **complete harmonization** across all kingdom data:
+The typed modifier system provides **complete harmonization** across all kingdom data:
 
-- **Events/Incidents** → Resource modifiers only
-- **Player Actions** → Resource modifiers + Game effects
+- **Events/Incidents** → Typed resource modifiers (`StaticModifier`, `DiceModifier`, `ChoiceModifier`)
+- **Player Actions** → Same typed resource modifiers
 
-All effects are now **structured, typed, and validated** - no more string parsing! 🎉
+All modifiers are now **structured, typed, and validated** - no more regex parsing! 🎉
+
+**Current Implementation:**
+- ✅ Resource modifiers (typed and validated)
+- ✅ Manual effects (displayed as GM instructions)
+- ⏳ Game effects (planned for future automation)

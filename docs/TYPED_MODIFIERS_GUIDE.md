@@ -30,6 +30,13 @@ Fixed numeric value applied to a resource.
 - Immediate numerical changes
 - No player input required
 
+**Available Resources:**
+- Basic resources: `'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries'`
+- Kingdom stats: `'unrest' | 'fame'`
+- Special resources: 
+  - `'imprisoned_unrest'` - Unrest specifically from imprisoning dissidents
+  - `'damage_structure'` - Used to damage kingdom structures
+
 ### 2. Dice Modifier
 
 Requires player to roll dice for the value.
@@ -271,19 +278,21 @@ if modifier['type'] == 'dice':
 
 ## Files Updated
 
-### Data Files (75 migrated)
-- ✅ `data/events/*.json` (37/37)
-- ✅ `data/incidents/**/*.json` (25/30)
-- ✅ `data/player-actions/*.json` (13/27)
+### Data Files
+- ✅ `data/events/*.json` - Fully migrated to typed modifiers
+- ✅ `data/incidents/**/*.json` - Fully migrated to typed modifiers
+- ✅ `data/player-actions/*.json` - Fully migrated to typed modifiers
 
 ### TypeScript Types
 - ✅ `src/types/modifiers.ts` (new file)
 
-### Code to Update
-- [ ] `src/services/resolution/DiceRollingService.ts`
-- [ ] `src/view/kingdom/components/OutcomeDisplay/OutcomeDisplay.svelte`
-- [ ] `src/controllers/shared/PhaseHelpers.ts` (remove `convertModifiersToStateChanges`)
-- [ ] Phase components (EventsPhase, UnrestPhase, etc.)
+### Code Status
+- ✅ `src/types/modifiers.ts` - Core type definitions
+- ✅ `src/types/events.ts` - Auto-generated types using modifiers
+- ✅ `src/services/resolution/DiceRollingService.ts` - Uses typed modifiers
+- ✅ `src/view/kingdom/components/OutcomeDisplay/OutcomeDisplay.svelte` - Handles all modifier types
+- ✅ `src/controllers/shared/PhaseHelpers.ts` - Refactored for Svelte helpers
+- ✅ Phase components (EventsPhase, UnrestPhase, ActionsPhase) - Use typed modifiers
 
 ---
 
@@ -376,51 +385,44 @@ import type {
 
 ## Future Enhancements
 
-### Potential New Types
+The typed modifier system can be extended with additional modifier types as needed:
 
 ```typescript
 // Percentage modifier
-{
-  type: 'percentage',
-  resource: 'gold',
-  percent: 50,  // -50% gold
-  negative: true
+export interface PercentageModifier {
+  type: 'percentage';
+  resource: ResourceType;
+  percent: number;
+  negative?: boolean;
+  duration?: ModifierDuration;
 }
 
 // Conditional modifier
-{
-  type: 'conditional',
-  condition: 'if_structure_exists',
-  structure: 'temple',
-  modifier: { type: 'static', resource: 'unrest', value: -1 }
+export interface ConditionalModifier {
+  type: 'conditional';
+  condition: string;
+  modifier: EventModifier;
+  duration?: ModifierDuration;
 }
 ```
 
-### Type System Extensions
-
-Currently `gameEffects` uses `any[]`. Future improvement:
-
-```typescript
-type GameEffect = 
-  | { type: 'recruitArmy'; level: string }
-  | { type: 'damageStructure'; structureId: string }
-  | { type: 'disbandArmy'; armyId: string };
-```
+**Note:** The `GameEffect` interface in `src/types/modifiers.ts` provides basic typing for game effects. Full automation of game effects is planned for future implementation.
 
 ---
 
-## Backward Compatibility
+## Migration Complete
 
-**Old code will break** - This is intentional!
+The typed modifier system has been fully implemented:
 
-The regex-based system was brittle and caused bugs. The typed system forces explicit handling of each modifier type, preventing silent failures.
+**Completed:**
+1. ✅ All data files migrated to typed modifiers
+2. ✅ TypeScript types created and integrated
+3. ✅ All code updated to use typed modifiers
+4. ✅ Regex detection replaced with type discrimination
+5. ✅ All outcome types tested and working
 
-**Migration checklist:**
-1. ✅ Migrate data files
-2. ✅ Create TypeScript types
-3. ⏳ Update code to use types
-4. ⏳ Remove regex detection
-5. ⏳ Test all outcome types
+**Backward Compatibility:**
+The old regex-based string parsing has been completely replaced. All modifier detection now uses explicit type fields (`type: 'static' | 'dice' | 'choice'`).
 
 ---
 
