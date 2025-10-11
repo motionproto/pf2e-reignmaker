@@ -221,9 +221,15 @@ static async isCurrentPhaseComplete(): Promise<boolean>
 - `UnrestPhaseController.ts` - Handle incidents and unrest effects
 - `ResourcePhaseController.ts` - Collect resources from worksites
 - `ActionPhaseController.ts` - Execute player actions
-- `UpkeepPhaseController.ts` - Handle end-of-turn cleanup
+- `UpkeepPhaseController.ts` - End-of-turn cleanup
 
-**Standard Controller Pattern:**
+**Phase Guard System:**
+
+All phase controllers MUST include a phase guard at the start of `startPhase()` to prevent:
+- Cross-phase contamination (wrong-phase controllers running)
+- Component state loss (mid-phase re-initialization)
+- Stale step persistence (incorrect steps from other phases)
+
 ```typescript
 export async function createPhaseController() {
   return {
@@ -231,11 +237,11 @@ export async function createPhaseController() {
       reportPhaseStart('PhaseControllerName')
       
       try {
-        // Initialize phase steps
-        const steps = [
-          { name: 'step-name-1' },
-          { name: 'step-name-2' }
-        ]
+        // ✅ REQUIRED: Phase guard prevents inappropriate initialization
+        const guardResult = checkPhaseGuard(TurnPhase.MY_PHASE, 'PhaseControllerName')
+        if (guardResult) return guardResult
+        
+        // Safe to initialize - we're in the correct phase
         await initializePhaseSteps(steps)
         
         // Execute phase logic
@@ -256,6 +262,26 @@ export async function createPhaseController() {
 }
 ```
 
+**How the Phase Guard Works:**
+
+The guard performs four checks:
+1. **No steps exist** → Allow initialization (fresh phase entry)
+2. **Wrong phase** → Block initialization (prevents EventPhase from running during Unrest)
+3. **Mid-phase with progress** → Block re-initialization (preserves rolled dice, selections)
+4. **Correct phase, no progress** → Allow initialization (fixes stale steps)
+
+**Why This Matters:**
+
+Without the guard, component re-mounts (from navigation or reactive updates) could cause:
+- Wrong-phase controllers to overwrite correct phase steps
+- Loss of user progress (rolled dice values, selected choices)
+- Phase completion buttons becoming inactive
+
+With the guard:
+- Each phase's steps remain isolated and correct
+- Component state persists across re-mounts
+- Phases complete reliably without interference
+
 **Shared Helper Functions:**
 ```typescript
 // From src/controllers/shared/PhaseControllerHelpers.ts
@@ -263,6 +289,7 @@ reportPhaseStart(controllerName: string): void
 reportPhaseComplete(controllerName: string): void
 reportPhaseError(controllerName: string, error: Error): void
 createPhaseResult(success: boolean, error?: string): PhaseResult
+checkPhaseGuard(phaseName: TurnPhase, controllerName: string): PhaseResult | null  // ✅ REQUIRED
 initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
 completePhaseStepByIndex(stepIndex: number): Promise<StepCompletionResult>
 isStepCompletedByIndex(stepIndex: number): Promise<boolean>

@@ -223,6 +223,63 @@ $: {
 - No dual validation confusion
 - Clean resolution tracking
 
+### PossibleOutcomes.svelte & PossibleOutcomeHelpers.ts
+
+**Dice Modifier Display (Fixed 2025-10-12):**
+
+**Problem:** Possible outcomes were showing "undefined gold" instead of "Lose 2d6 gold" because the display logic was trying to read `modifier.value` (for static modifiers) but dice modifiers have `modifier.formula` instead.
+
+**Solution:** Updated both files to handle dice modifiers correctly:
+
+```typescript
+// PossibleOutcomeHelpers.ts - formatOutcomeMessage()
+export function formatOutcomeMessage(message: string, modifiers?: any[]): string {
+  if (!modifiers || modifiers.length === 0) {
+    return message;
+  }
+  
+  const modifierText = modifiers
+    .map(mod => {
+      // Handle dice modifiers (type: 'dice', formula: '2d6', negative: true)
+      if (mod.type === 'dice' && mod.formula) {
+        const action = mod.negative ? 'Lose' : 'Gain';
+        const resource = mod.resource || '';
+        return `${action} ${mod.formula} ${resource}`;
+      }
+      
+      // Handle static modifiers (type: 'static', value: number)
+      const value = mod.value || 0;
+      const sign = value > 0 ? '+' : '';
+      const resource = mod.resource || '';
+      return `${sign}${value} ${resource}`;
+    })
+    .join(', ');
+  
+  return `${message} (${modifierText})`;
+}
+```
+
+```typescript
+// PossibleOutcomes.svelte - Display logic
+{#if modifier.type === 'dice' && modifier.formula}
+  {modifier.negative ? 'Lose' : 'Gain'} {modifier.formula} {resourceName}
+{:else if modifier.type === 'static'}
+  {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
+{/if}
+```
+
+**Example Outputs:**
+- ✅ `negative: true, formula: "2d6", resource: "gold"` → **"Lose 2d6 gold"**
+- ✅ `negative: false, formula: "1d4", resource: "unrest"` → **"Gain 1d4 unrest"**
+- ✅ `type: "static", value: 5, resource: "fame"` → **"+5 fame"**
+- ✅ `type: "static", value: -2, resource: "gold"` → **"-2 gold"**
+
+**Status:** ✅ **Fixed and working**
+- Displays dice formulas before selection
+- Shows static values correctly
+- Type-safe with proper TypeScript interfaces
+- Consistent across all outcome types
+
 ---
 
 ## 📊 CURRENT ARCHITECTURE

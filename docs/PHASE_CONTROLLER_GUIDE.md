@@ -485,6 +485,136 @@ onMount(async () => {
 });
 ```
 
+## Phase Guard System
+
+### Overview
+
+The **Phase Guard** is a critical safety mechanism that prevents phase controllers from interfering with each other. It ensures:
+- Controllers only initialize when in their correct phase
+- Component state (like rolled dice values) persists across re-mounts
+- Steps from one phase don't contaminate another phase
+
+### How It Works
+
+Every controller's `startPhase()` method should begin with a phase guard check:
+
+```typescript
+export async function createPhaseController() {
+  return {
+    async startPhase() {
+      reportPhaseStart('PhaseController');
+      
+      try {
+        // Phase guard - prevents initialization when inappropriate
+        const guardResult = checkPhaseGuard(TurnPhase.MY_PHASE, 'PhaseController');
+        if (guardResult) return guardResult;
+        
+        // Safe to initialize - we're in the correct phase
+        await initializePhaseSteps(PHASE_STEPS);
+        // ... rest of initialization
+      } catch (error) {
+        reportPhaseError('PhaseController', error);
+        return createPhaseResult(false, error.message);
+      }
+    }
+  };
+}
+```
+
+### Three-Check System
+
+The phase guard performs three checks:
+
+1. **No Steps Yet** → Allow initialization
+   - First entry into phase
+   - Clean slate, safe to initialize
+
+2. **Wrong Phase** → Block initialization
+   - Component mounted in different phase
+   - Prevents cross-phase contamination
+   - Example: EventPhaseController blocked when in Unrest phase
+
+3. **Mid-Phase with Progress** → Block re-initialization
+   - Already in correct phase with completed steps
+   - Preserves component state (rolled dice, selections, etc.)
+   - Prevents accidental reset of user progress
+
+4. **Correct Phase, No Progress** → Allow initialization
+   - Fixes stale steps from phase navigation
+   - Replaces incorrect steps with correct ones
+
+### Implementation Details
+
+```typescript
+/**
+ * Phase guard - prevents phase controllers from initializing when inappropriate
+ * 
+ * @param phaseName - The phase to guard (e.g., TurnPhase.EVENTS)
+ * @param controllerName - Controller name for logging
+ * @returns null if should proceed, PhaseResult if should skip
+ */
+export function checkPhaseGuard(
+  phaseName: TurnPhase,
+  controllerName: string
+): { success: boolean; error?: string } | null {
+  const actor = getKingdomActor();
+  const kingdom = actor?.getKingdom();
+  const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
+  
+  // Check 1: No steps yet - allow initialization
+  if (!hasSteps) {
+    return null;
+  }
+  
+  // Check 2: Wrong phase - block initialization
+  if (kingdom?.currentPhase !== phaseName) {
+    console.log(`⏭️ [${controllerName}] Not in ${phaseName} phase, skipping initialization`);
+    return createPhaseResult(true);
+  }
+  
+  // Check 3: Mid-phase with progress - block re-initialization
+  const hasCompletedSteps = kingdom.currentPhaseSteps?.some(s => s.completed === 1);
+  if (hasCompletedSteps) {
+    console.log(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
+    return createPhaseResult(true);
+  }
+  
+  // Check 4: Correct phase, no progress - allow initialization
+  console.log(`✅ [${controllerName}] In correct phase, allowing initialization`);
+  return null;
+}
+```
+
+### Why This Matters
+
+**Without the phase guard:**
+```
+User in Unrest phase → Rolls incident
+Component re-mounts (navigation/reactive update)
+EventPhaseController.startPhase() runs → Overwrites Unrest steps with Event steps
+Incident buttons break → Phase can't complete
+```
+
+**With the phase guard:**
+```
+User in Unrest phase → Rolls incident
+Component re-mounts (navigation/reactive update)
+EventPhaseController.startPhase() runs → Guard blocks (wrong phase)
+UnrestPhaseController.startPhase() runs → Guard blocks (mid-phase with progress)
+Incident buttons work → Phase completes correctly
+```
+
+### Required in All Controllers
+
+Every phase controller MUST include the phase guard:
+
+- ✅ StatusPhaseController (TurnPhase.STATUS)
+- ✅ ResourcePhaseController (TurnPhase.RESOURCES)
+- ✅ EventPhaseController (TurnPhase.EVENTS)
+- ✅ UnrestPhaseController (TurnPhase.UNREST)
+- ✅ ActionPhaseController (TurnPhase.ACTIONS)
+- ✅ UpkeepPhaseController (TurnPhase.UPKEEP)
+
 ## Shared Helper Functions
 
 ### Core Helpers
@@ -496,6 +626,9 @@ reportPhaseError(phaseName: string, error: Error): void
 
 // Results
 createPhaseResult(success: boolean, error?: string): { success: boolean; error?: string }
+
+// Phase Guard (REQUIRED in all controllers)
+checkPhaseGuard(phaseName: TurnPhase, controllerName: string): { success: boolean; error?: string } | null
 
 // Step Management (Creates TurnManager internally)
 initializePhaseSteps(steps: Array<{ name: string }>): Promise<void>
