@@ -22,6 +22,7 @@
       "msg": "Settlers successfully expand the kingdom",
       "modifiers": [
         {
+          "type": "static",
           "resource": "hex",
           "value": 2,
           "duration": "immediate"
@@ -33,6 +34,7 @@
       "msg": "Settlers expand the kingdom",
       "modifiers": [
         {
+          "type": "static",
           "resource": "hex",
           "value": 1,
           "duration": "immediate"
@@ -44,6 +46,7 @@
       "msg": "Settlers disperse without helping",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -55,6 +58,7 @@
       "msg": "Violence erupts at border",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

@@ -23,11 +23,13 @@
       "endsEvent": true,
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -2,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "fame",
           "value": 1,
           "duration": "ongoing"
@@ -39,6 +41,7 @@
       "endsEvent": true,
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -50,6 +53,7 @@
       "endsEvent": false,
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"
@@ -61,11 +65,13 @@
       "endsEvent": false,
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 3,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "gold",
           "value": -1,
           "duration": "ongoing"

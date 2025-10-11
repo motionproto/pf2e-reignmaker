@@ -10,10 +10,12 @@ import { EventResolver } from './events/event-resolver';
 import { eventService } from './events/event-loader';
 import type { EventData } from './events/event-loader';
 import type { KingdomData } from '../actors/KingdomActor';
+import type { ResolutionData } from '../types/modifiers';
 import { updateKingdom } from '../stores/KingdomStore';
 import { createModifierService } from '../services/ModifierService';
 import { createGameEffectsService } from '../services/GameEffectsService';
 import type { ActiveModifier } from '../models/Modifiers';
+import { isStaticModifier } from '../types/modifiers';
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -222,7 +224,7 @@ export async function createEventPhaseController(_eventService?: any) {
         async resolveEvent(
             eventId: string,
             outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-            resolutionData: import('../types/events').ResolutionData
+            resolutionData: ResolutionData
         ) {
             console.log(`🎯 [EventPhaseController] Resolving event ${eventId} with outcome: ${outcome}`);
             console.log(`📋 [EventPhaseController] ResolutionData:`, resolutionData);
@@ -291,7 +293,8 @@ export async function createEventPhaseController(_eventService?: any) {
             
             for (const modifier of customModifiers) {
                 for (const mod of modifier.modifiers) {
-                    if (typeof mod.value === 'number') {
+                    // Only apply static modifiers with numeric values
+                    if (isStaticModifier(mod)) {
                         const current = modifiersByResource.get(mod.resource) || 0;
                         modifiersByResource.set(mod.resource, current + mod.value);
                     }

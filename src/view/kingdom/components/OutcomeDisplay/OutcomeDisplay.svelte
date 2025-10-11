@@ -13,7 +13,9 @@
     rollDiceFormula
   } from '../../../../services/resolution';
   import { getResourceIcon } from '../../../kingdom/utils/presentation';
-  import type { ResolutionData, ResourceType } from '../../../../types/events';
+  import type { ResourceType } from '../../../../types/events';
+  import type { ResolutionData } from '../../../../types/modifiers';
+  import { isStaticModifier, isDiceModifier, isChoiceModifier } from '../../../../types/modifiers';
   import { 
     canRerollWithFame, 
     deductFameForReroll, 

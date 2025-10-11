@@ -32,6 +32,7 @@
       "msg": "Leader escapes",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -43,6 +44,7 @@
       "msg": "Leader wounded",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

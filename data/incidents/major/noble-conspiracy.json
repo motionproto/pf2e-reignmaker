@@ -31,11 +31,14 @@
       "msg": "The conspiracy damages your kingdom's stability and reputation",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"
@@ -47,16 +50,20 @@
       "msg": "The conspiracy strikes a devastating blow to your kingdom",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

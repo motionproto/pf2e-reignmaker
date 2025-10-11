@@ -22,6 +22,7 @@
       "msg": "Minimal damage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -33,7 +34,13 @@
       "msg": "Some damage",
       "modifiers": [
         {
-          "resource": ["lumber", "ore", "food", "stone"],
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "food",
+            "stone"
+          ],
           "value": -1,
           "duration": "immediate"
         }
@@ -44,6 +51,7 @@
       "msg": "Major damage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -55,6 +63,7 @@
       "msg": "Devastating losses. Any worksites are removed from the hex unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

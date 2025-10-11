@@ -22,6 +22,7 @@
       "msg": "Citizens convinced",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -38,6 +39,7 @@
       "msg": "Protests continue",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
@@ -49,6 +51,7 @@
       "msg": "Violence erupts",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"

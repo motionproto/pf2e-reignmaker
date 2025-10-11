@@ -22,11 +22,13 @@
       "msg": "Relations improve by one step",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -48,6 +50,7 @@
       "msg": "Relations worsen by one step",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

@@ -22,6 +22,7 @@
       "msg": "Plague cured",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -38,13 +39,16 @@
       "msg": "Plague spreads",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
         },
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         }
       ],
@@ -54,13 +58,16 @@
       "msg": "Devastating outbreak",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"
         },
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         }
       ],

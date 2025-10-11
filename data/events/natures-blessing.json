@@ -22,11 +22,13 @@
       "msg": "Inspiring blessing",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
@@ -38,6 +40,7 @@
       "msg": "Pleasant omen",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -54,6 +57,7 @@
       "msg": "Arguments over meaning",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

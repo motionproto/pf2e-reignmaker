@@ -31,8 +31,10 @@
       "msg": "A settlement revolts against your kingdom",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -46,6 +48,7 @@
       "msg": "A settlement successfully declares independence from your kingdom",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

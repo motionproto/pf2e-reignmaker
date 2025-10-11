@@ -39,10 +39,11 @@
       "description": "The adventurers cause trouble. Gain +1 Unrest",
       "modifiers": [
         {
-          "name": "Hire Adventurers",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Hire Adventurers"
         }
       ]
     },
@@ -50,10 +51,11 @@
       "description": "The adventurers vanish or turn rogue. Gain +2 Unrest",
       "modifiers": [
         {
-          "name": "Hire Adventurers",
+          "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Hire Adventurers"
         }
       ]
     }

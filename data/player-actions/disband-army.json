@@ -31,10 +31,11 @@
       "description": "People welcome them home with honours!, -2 Unrest",
       "modifiers": [
         {
-          "name": "Disband Army",
+          "type": "static",
           "resource": "unrest",
           "value": -2,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Disband Army"
         }
       ]
     },
@@ -42,10 +43,11 @@
       "description": "Army disbands, -1 Unrest",
       "modifiers": [
         {
-          "name": "Disband Army",
+          "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Disband Army"
         }
       ]
     },
@@ -57,10 +59,11 @@
       "description": "Army disbands, +1 Unrest",
       "modifiers": [
         {
-          "name": "Disband Army",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Disband Army"
         }
       ]
     }

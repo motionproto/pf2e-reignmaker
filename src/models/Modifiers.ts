@@ -9,7 +9,7 @@
  * Applied during Status phase each turn.
  */
 
-import type { EventModifier } from '../types/events';
+import type { EventModifier } from '../types/modifiers';
 
 /**
  * Resolution condition for modifiers that can be resolved

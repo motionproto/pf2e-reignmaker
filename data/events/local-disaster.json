@@ -27,6 +27,7 @@
       "msg": "Limited damage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -38,11 +39,13 @@
       "msg": "Major damage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"
@@ -54,11 +57,13 @@
       "msg": "Catastrophic",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "destroy_structure",
           "value": 1,
           "duration": "immediate"

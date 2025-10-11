@@ -22,6 +22,7 @@
       "msg": "Major triumph",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
@@ -33,6 +34,7 @@
       "msg": "Justice served",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -44,6 +46,7 @@
       "msg": "Justice with complications",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -55,6 +58,7 @@
       "msg": "Miscarriage of justice",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

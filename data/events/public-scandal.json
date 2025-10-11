@@ -27,6 +27,7 @@
       "msg": "Damage controlled",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -38,6 +39,7 @@
       "msg": "Public outrage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
@@ -49,6 +51,7 @@
       "msg": "Leader must lay low",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

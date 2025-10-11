@@ -39,10 +39,11 @@
       "description": "Trade 2 Resources → 2 Gold",
       "modifiers": [
         {
-          "name": "Sell Surplus",
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
-          "duration": "immediate"
+          "formula": "1d4",
+          "duration": "immediate",
+          "name": "Sell Surplus"
         }
       ]
     },
@@ -50,10 +51,11 @@
       "description": "Trade 2 Resources → 1 Gold",
       "modifiers": [
         {
-          "name": "Sell Surplus",
+          "type": "static",
           "resource": "gold",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Sell Surplus"
         }
       ]
     },

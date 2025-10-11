@@ -22,8 +22,9 @@
       "msg": "Exclusive deal",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "immediate"
         }
       ],
@@ -33,6 +34,7 @@
       "msg": "Standard agreement",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
@@ -49,11 +51,13 @@
       "msg": "Trade dispute",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": -1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

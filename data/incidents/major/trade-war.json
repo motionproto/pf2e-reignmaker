@@ -31,13 +31,24 @@
       "msg": "Choose how to absorb the economic shock",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
-          "resource": ["lumber", "ore", "food", "stone"],
-          "value": "-(2d4+1)",
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "food",
+            "stone"
+          ],
+          "value": {
+            "formula": "2d4+1",
+            "negative": true
+          },
           "duration": "immediate"
         }
       ],
@@ -47,16 +58,28 @@
       "msg": "Complete economic isolation devastates your kingdom",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-3d4",
+          "formula": "3d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
-          "resource": ["lumber", "ore", "food", "stone"],
-          "value": "-(2d4+1)",
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "food",
+            "stone"
+          ],
+          "value": {
+            "formula": "2d4+1",
+            "negative": true
+          },
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

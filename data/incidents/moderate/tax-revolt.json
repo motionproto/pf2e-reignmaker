@@ -31,8 +31,10 @@
       "msg": "Lose gold (reduced tax collection)",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -42,11 +44,14 @@
       "msg": "Lose gold and gain unrest",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

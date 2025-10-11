@@ -22,8 +22,9 @@
       "msg": "Trade bonanza",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "ongoing"
         }
       ],
@@ -33,6 +34,7 @@
       "msg": "Steady growth",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "ongoing"
@@ -49,6 +51,7 @@
       "msg": "Economic bubble bursts",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"

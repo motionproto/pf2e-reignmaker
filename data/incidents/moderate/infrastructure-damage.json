@@ -39,6 +39,7 @@
       "msg": "Widespread infrastructure damage causes chaos",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

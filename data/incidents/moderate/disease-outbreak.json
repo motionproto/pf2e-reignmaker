@@ -27,11 +27,14 @@
       "msg": "Lose food (feeding the sick) and gain unrest",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "food",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -43,11 +46,14 @@
       "msg": "Lose food and gain unrest",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "food",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

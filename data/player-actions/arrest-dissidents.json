@@ -31,10 +31,11 @@
       "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
-          "name": "Arrest Dissidents",
+          "type": "static",
           "resource": "unrest",
           "value": -6,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Arrest Dissidents"
         }
       ]
     },
@@ -42,10 +43,11 @@
       "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
-          "name": "Arrest Dissidents",
+          "type": "static",
           "resource": "unrest",
           "value": -4,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Arrest Dissidents"
         }
       ]
     },
@@ -53,10 +55,11 @@
       "description": "No effect",
       "modifiers": [
         {
-          "name": "Arrest Dissidents",
+          "type": "static",
           "resource": "unrest",
           "value": -2,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Arrest Dissidents"
         }
       ]
     },
@@ -64,10 +67,11 @@
       "description": "Botched arrests cause riots; gain 1 Unrest",
       "modifiers": [
         {
-          "name": "Arrest Dissidents",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Arrest Dissidents"
         }
       ]
     }

@@ -27,6 +27,7 @@
       "msg": "Useful discovery",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -2,
           "duration": "immediate"
@@ -38,6 +39,7 @@
       "msg": "Magic proves dangerous",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -49,11 +51,13 @@
       "msg": "Magical disaster",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"

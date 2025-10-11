@@ -43,10 +43,11 @@
       "description": "Widespread Support",
       "modifiers": [
         {
-          "name": "Widespread Support",
+          "type": "static",
           "resource": "unrest",
           "value": -3,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Widespread Support"
         }
       ]
     },
@@ -54,10 +55,11 @@
       "description": "The People Listen",
       "modifiers": [
         {
-          "name": "The People Listen",
+          "type": "static",
           "resource": "unrest",
           "value": -2,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "The People Listen"
         }
       ]
     },
@@ -65,10 +67,11 @@
       "description": "Can we just get along?",
       "modifiers": [
         {
-          "name": "Can we just get along?",
+          "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Can we just get along?"
         }
       ]
     },
@@ -76,10 +79,11 @@
       "description": "No one listens.",
       "modifiers": [
         {
-          "name": "No one listens",
+          "type": "static",
           "resource": "unrest",
           "value": 0,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "No one listens"
         }
       ]
     }

@@ -16,7 +16,9 @@
  */
 
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
-import type { EventModifier, ResourceType } from '../types/events';
+import type { ResourceType } from '../types/events';
+import type { EventModifier } from '../types/modifiers';
+import { isStaticModifier, isDiceModifier, isChoiceModifier } from '../types/modifiers';
 import { createModifierService } from './ModifierService';
 import type { ActionLogEntry } from '../models/TurnState';
 import type { TurnPhase } from '../actors/KingdomActor';
@@ -239,33 +241,48 @@ export async function createGameEffectsService() {
       result: ApplyOutcomeResult,
       modifierIndex: number
     ): Promise<void> {
-      const { resource, value, duration } = modifier;
-
-      // Apply all modifiers EXCEPT permanent immediately
-      // Permanent modifiers are only applied during Status phase (for structures)
-      if (duration !== 'permanent') {
-        // Use pre-rolled value if available, otherwise evaluate/roll
-        let numericValue: number;
+      // Handle different modifier types with type guards
+      if (isStaticModifier(modifier)) {
+        // Static modifier: { type: 'static', resource, value, duration? }
+        const modifierLabel = `${params.sourceName} (${params.outcome})`;
         
-        // Check for pre-rolled value by modifier index (numeric)
+        // Skip permanent modifiers (applied during Status phase for structures)
+        if (modifier.duration === 'ongoing') {
+          console.log(`⏭️ [GameEffects] Skipping ongoing modifier (tracked separately): ${modifier.resource}`);
+          return;
+        }
+        
+        await this.applyResourceChange(modifier.resource, modifier.value, modifierLabel, result);
+        
+      } else if (isDiceModifier(modifier)) {
+        // Dice modifier: { type: 'dice', resource, formula, negative?, duration? }
+        const modifierLabel = `${params.sourceName} (${params.outcome})`;
+        
+        // Check for pre-rolled value
+        let numericValue: number;
         if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
           numericValue = params.preRolledValues.get(modifierIndex)!;
           console.log(`🎲 [GameEffects] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
-        }
-        // Check for pre-rolled value by state key (string like "state:food")
-        else if (params.preRolledValues && params.preRolledValues.has(`state:${resource}`)) {
-          numericValue = params.preRolledValues.get(`state:${resource}`)!;
-          console.log(`🎲 [GameEffects] Using pre-rolled state value for ${resource}: ${numericValue}`);
-        }
-        // Otherwise evaluate/roll the dice
-        else {
-          numericValue = typeof value === 'string' ? this.evaluateDiceFormula(value) : value;
+        } else if (params.preRolledValues && params.preRolledValues.has(`state:${modifier.resource}`)) {
+          numericValue = params.preRolledValues.get(`state:${modifier.resource}`)!;
+          console.log(`🎲 [GameEffects] Using pre-rolled state value for ${modifier.resource}: ${numericValue}`);
+        } else {
+          // Roll the dice
+          numericValue = this.evaluateDiceFormula(modifier.formula);
+          if (modifier.negative) {
+            numericValue = -numericValue;
+          }
         }
         
-        const modifierLabel = `${params.sourceName} (${params.outcome})`;
-        await this.applyResourceChange(resource, numericValue, modifierLabel, result);
+        await this.applyResourceChange(modifier.resource, numericValue, modifierLabel, result);
+        
+      } else if (isChoiceModifier(modifier)) {
+        // Choice modifier: { type: 'choice', resources[], value, duration? }
+        // This should have been resolved by OutcomeDisplay before calling
+        console.warn(`⚠️ [GameEffects] Choice modifier not resolved! This should have been handled by UI.`);
+        
       } else {
-        console.log(`⏭️ [GameEffects] Skipping permanent modifier (applied during Status phase): ${resource}`);
+        console.warn(`⚠️ [GameEffects] Unknown modifier type:`, modifier);
       }
       
       // Note: Ongoing/turn-based modifiers are also added to activeModifiers

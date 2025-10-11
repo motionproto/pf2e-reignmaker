@@ -22,11 +22,13 @@
       "msg": "Legendary treasure",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d6+1",
+          "formula": "1d6+1",
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -38,8 +40,9 @@
       "msg": "Valuable find",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "immediate"
         }
       ],
@@ -49,6 +52,7 @@
       "msg": "Modest value",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
@@ -60,6 +64,7 @@
       "msg": "Treasure cursed or false",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

@@ -31,10 +31,11 @@
       "description": "Fortify, reduce Unrest by 1",
       "modifiers": [
         {
-          "name": "Fortify Hex",
+          "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Fortify Hex"
         }
       ]
     },

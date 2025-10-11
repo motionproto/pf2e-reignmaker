@@ -31,8 +31,13 @@
       "msg": "Work stoppage halts production",
       "modifiers": [
         {
-          "resource": ["lumber", "ore", "stone"],
-          "value": "1",
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "stone"
+          ],
+          "value": 1,
           "duration": "immediate"
         }
       ],
@@ -43,13 +48,19 @@
       "msg": "Widespread work stoppage causes chaos",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
-          "resource": ["lumber", "ore", "stone"],
-          "value": "2",
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "stone"
+          ],
+          "value": 2,
           "duration": "immediate"
         }
       ],
@@ -57,5 +68,7 @@
       "endsEvent": true
     }
   },
-  "traits": ["dangerous"]
+  "traits": [
+    "dangerous"
+  ]
 }

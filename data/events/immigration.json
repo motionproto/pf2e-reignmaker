@@ -22,8 +22,9 @@
       "msg": "Major influx",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "immediate"
         }
       ],
@@ -33,6 +34,7 @@
       "msg": "Steady immigration",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
@@ -49,6 +51,7 @@
       "msg": "Integration problems",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

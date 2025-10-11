@@ -31,10 +31,11 @@
       "description": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
       "modifiers": [
         {
-          "name": "Execute or Pardon Prisoners",
+          "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Execute or Pardon Prisoners"
         }
       ]
     },
@@ -50,10 +51,11 @@
       "description": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
       "modifiers": [
         {
-          "name": "Execute or Pardon Prisoners",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Execute or Pardon Prisoners"
         }
       ]
     }

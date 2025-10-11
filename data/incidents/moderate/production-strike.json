@@ -31,12 +31,16 @@
       "msg": "Strike causes resource losses",
       "modifiers": [
         {
-          "resource": [
+          "type": "choice",
+          "resources": [
             "lumber",
             "ore",
             "stone"
           ],
-          "value": "-1d4-1",
+          "value": {
+            "formula": "1d4-1",
+            "negative": true
+          },
           "duration": "immediate"
         }
       ],
@@ -46,12 +50,16 @@
       "msg": "Prolonged strike devastates production",
       "modifiers": [
         {
-          "resource": [
+          "type": "choice",
+          "resources": [
             "lumber",
             "ore",
             "stone"
           ],
-          "value": "-2d4-1",
+          "value": {
+            "formula": "2d4-1",
+            "negative": true
+          },
           "duration": "immediate"
         }
       ],

@@ -31,6 +31,7 @@
       "msg": "Gain unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -42,6 +43,7 @@
       "msg": "Gain unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

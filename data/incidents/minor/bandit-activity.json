@@ -31,8 +31,10 @@
       "msg": "Bandit raids",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -42,8 +44,10 @@
       "msg": "Major bandit raids",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],

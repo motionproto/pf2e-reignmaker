@@ -39,6 +39,7 @@
       "msg": "Multiple kingdoms turn against you",
       "modifiers": [
         {
+          "type": "static",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"

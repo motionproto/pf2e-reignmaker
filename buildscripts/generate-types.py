@@ -119,19 +119,32 @@ export type EventTier = 'event' | 'minor' | 'moderate' | 'major' | number;
 export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame' | 'imprisoned_unrest' | 'damage_structure';
 
 /**
- * Modifier duration types (can be string or number for turn count)
+ * Import and re-export typed modifier system
+ * (Hand-written in modifiers.ts, not auto-generated)
+ * 
+ * The typed modifier system provides:
+ * - StaticModifier (fixed numeric values)
+ * - DiceModifier (dice formulas)
+ * - ChoiceModifier (player choice of resource)
+ * - Type guards for safe discrimination
  */
-export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | number;
+import type { 
+  EventModifier, 
+  ModifierDuration,
+  StaticModifier,
+  DiceModifier,
+  ChoiceModifier,
+  DiceValue
+} from './modifiers';
 
-/**
- * Event modifier details (unified format)
- */
-export interface EventModifier {
-  resource: ResourceType;
-  value: number | string;  // Can be number or dice formula (e.g., "1d4")
-  type?: string;  // Optional modifier type (e.g., "untyped")
-  duration?: ModifierDuration;  // Optional duration
-}
+export type { 
+  EventModifier, 
+  ModifierDuration,
+  StaticModifier,
+  DiceModifier,
+  ChoiceModifier,
+  DiceValue
+};
 
 /**
  * Event outcome with message and modifiers
@@ -408,6 +421,18 @@ def main():
     
     # Ensure types directory exists
     types_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Verify hand-written modifiers.ts exists
+    modifiers_path = types_dir / 'modifiers.ts'
+    if not modifiers_path.exists():
+        print("❌ ERROR: src/types/modifiers.ts not found!")
+        print("   This hand-written file is required for the typed modifier system.")
+        print("   See docs/TYPED_MODIFIERS_GUIDE.md for more information.")
+        print()
+        return 1
+    else:
+        print("✓ Found hand-written modifiers.ts")
+        print()
     
     # Generate event types
     events_path = dist_dir / 'events.json'

@@ -39,10 +39,11 @@
       "description": "No effect",
       "modifiers": [
         {
-          "name": "Claim Hexes",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Claim Hexes"
         }
       ]
     }

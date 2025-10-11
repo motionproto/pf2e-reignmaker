@@ -43,10 +43,11 @@
       "description": "Your troop is lost they arrive at a Random nearby hex (1d6 for direction, 1-3 for offset); troop has -2 initiative, is fatigued and enfeebled 1; +1 Unrest",
       "modifiers": [
         {
-          "name": "Deploy Army",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Deploy Army"
         }
       ]
     }

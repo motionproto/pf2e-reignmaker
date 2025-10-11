@@ -22,11 +22,13 @@
       "msg": "You capture the bandit leaders and turn them into productive citizens. The former bandits become valuable scouts.",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -38,6 +40,7 @@
       "msg": "You successfully drive off the bandits. Trade routes are secure once more.",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "ongoing"
@@ -49,11 +52,14 @@
       "msg": "The bandits evade your forces and continue their raids.",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
@@ -65,16 +71,21 @@
       "msg": "Your forces are ambushed! The bandits grow bolder and recruit more members.",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-(1d4+1)",
+          "formula": "1d4+1",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "dice",
           "resource": "food",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"

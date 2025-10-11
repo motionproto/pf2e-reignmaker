@@ -22,6 +22,7 @@
       "msg": "Elite forces trained",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -43,11 +44,13 @@
       "msg": "Training accident",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"

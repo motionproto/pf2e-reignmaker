@@ -22,8 +22,9 @@
       "msg": "Major growth",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d6+1",
+          "formula": "1d6+1",
           "duration": "ongoing"
         }
       ],
@@ -33,8 +34,9 @@
       "msg": "Steady expansion",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "ongoing"
         }
       ],
@@ -49,6 +51,7 @@
       "msg": "Boom goes bust",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"

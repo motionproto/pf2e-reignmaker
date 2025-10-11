@@ -22,6 +22,7 @@
       "msg": "Raiders defeated",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "ongoing"
@@ -38,16 +39,21 @@
       "msg": "Event outcome",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "dice",
           "resource": "food",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
@@ -59,21 +65,27 @@
       "msg": "Major raid",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "dice",
           "resource": "food",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "ongoing"

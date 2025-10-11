@@ -22,11 +22,13 @@
       "msg": "Revolutionary discovery",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "fame",
           "value": 1,
           "duration": "immediate"
@@ -38,6 +40,7 @@
       "msg": "Important findings",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
           "value": 1,
           "duration": "immediate"
@@ -54,6 +57,7 @@
       "msg": "Academic scandal",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

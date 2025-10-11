@@ -47,10 +47,11 @@
       "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
       "modifiers": [
         {
-          "name": "Collect Stipend",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Collect Stipend"
         }
       ]
     },
@@ -58,10 +59,11 @@
       "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
       "modifiers": [
         {
-          "name": "Collect Stipend",
+          "type": "dice",
           "resource": "unrest",
-          "value": "1d4",
-          "duration": "immediate"
+          "formula": "1d4",
+          "duration": "immediate",
+          "name": "Collect Stipend"
         }
       ]
     }

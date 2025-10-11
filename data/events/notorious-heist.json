@@ -22,6 +22,7 @@
       "msg": "Thieves captured with stolen goods",
       "modifiers": [
         {
+          "type": "static",
           "resource": "imprisoned_unrest",
           "value": 2,
           "duration": "immediate"
@@ -33,6 +34,7 @@
       "msg": "Thieves arrested",
       "modifiers": [
         {
+          "type": "static",
           "resource": "imprisoned_unrest",
           "value": 1,
           "duration": "immediate"
@@ -44,11 +46,14 @@
       "msg": "Thieves escape",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -60,11 +65,14 @@
       "msg": "Crime syndicate exposed",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-(1d4+1)",
+          "formula": "1d4+1",
+          "negative": true,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"

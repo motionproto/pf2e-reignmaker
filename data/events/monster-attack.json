@@ -22,11 +22,13 @@
       "msg": "Monster defeated",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "immediate"
@@ -43,11 +45,13 @@
       "msg": "Monster causes damage",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "immediate"
@@ -59,11 +63,13 @@
       "msg": "Monster rampages",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "destroy_structure",
           "value": 1,
           "duration": "immediate"

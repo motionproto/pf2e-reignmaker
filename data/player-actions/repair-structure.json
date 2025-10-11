@@ -43,10 +43,11 @@
       "description": "Lose 1 gold",
       "modifiers": [
         {
-          "name": "Repair Structure",
+          "type": "static",
           "resource": "gold",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Repair Structure"
         }
       ]
     }

@@ -31,16 +31,27 @@
       "msg": "Choose one",
       "modifiers": [
         {
-          "name": "Trade Embargo Gold Loss",
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
-          "duration": "immediate"
+          "formula": "1d4",
+          "negative": true,
+          "duration": "immediate",
+          "name": "Trade Embargo Gold Loss"
         },
         {
-          "name": "Trade Embargo Resource Loss",
-          "resource": ["lumber", "ore", "food", "stone"],
-          "value": "-(1d4+1)",
-          "duration": "immediate"
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "food",
+            "stone"
+          ],
+          "value": {
+            "formula": "1d4+1",
+            "negative": true
+          },
+          "duration": "immediate",
+          "name": "Trade Embargo Resource Loss"
         }
       ],
       "endsEvent": true
@@ -49,16 +60,28 @@
       "msg": "Lose gold AND resources, gain unrest",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         },
         {
-          "resource": ["lumber", "ore", "food", "stone"],
-          "value": "-(1d4+1)",
+          "type": "choice",
+          "resources": [
+            "lumber",
+            "ore",
+            "food",
+            "stone"
+          ],
+          "value": {
+            "formula": "1d4+1",
+            "negative": true
+          },
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

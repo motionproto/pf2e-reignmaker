@@ -22,6 +22,7 @@
       "msg": "Undead destroyed",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -38,11 +39,13 @@
       "msg": "Undead spread",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "ongoing"
@@ -54,16 +57,19 @@
       "msg": "Major outbreak",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "destroy_structure",
           "value": 1,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "ongoing"

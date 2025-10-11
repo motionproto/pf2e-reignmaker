@@ -9,7 +9,9 @@
  */
 
 import type { ActiveModifier, ResolutionResult } from '../models/Modifiers';
-import type { KingdomEvent, EventModifier, EventTier } from '../types/events';
+import type { KingdomEvent, EventTier } from '../types/events';
+import type { EventModifier } from '../types/modifiers';
+import { isStaticModifier, isOngoingDuration, isTurnCountDuration } from '../types/modifiers';
 import { getEventDisplayName } from '../types/event-helpers';
 import { updateKingdom } from '../stores/KingdomStore';
 
@@ -81,7 +83,8 @@ export async function createModifierService() {
         
         for (const modifier of structureModifiers as ActiveModifier[]) {
           for (const mod of modifier.modifiers as EventModifier[]) {
-            if (mod.duration === 'ongoing' && typeof mod.value === 'number') {
+            // Only apply static modifiers with ongoing duration
+            if (isStaticModifier(mod) && isOngoingDuration(mod.duration)) {
               // Apply resource/stat change
               const current = kingdom.resources[mod.resource] || 0;
               kingdom.resources[mod.resource] = Math.max(0, current + mod.value);
@@ -104,10 +107,10 @@ export async function createModifierService() {
         const initialCount = kingdom.activeModifiers?.length || 0;
         
         kingdom.activeModifiers = (kingdom.activeModifiers || []).filter((modifier: ActiveModifier) => {
-          // Check if any modifier has expired
+          // Check if any modifier has expired (using turn count duration)
           const hasExpired = modifier.modifiers.some((mod: EventModifier) => {
-            if (mod.duration === 'turns' && mod.turns) {
-              return (currentTurn - modifier.startTurn) >= mod.turns;
+            if (isTurnCountDuration(mod.duration)) {
+              return (currentTurn - modifier.startTurn) >= mod.duration;
             }
             return false;
           });

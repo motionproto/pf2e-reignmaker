@@ -22,11 +22,13 @@
       "msg": "Weather holds perfectly",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "food",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -38,8 +40,9 @@
       "msg": "Weather remains good",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "food",
-          "value": "1d4",
+          "formula": "1d4",
           "duration": "ongoing"
         }
       ],
@@ -54,6 +57,7 @@
       "msg": "Weather turns bad",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"

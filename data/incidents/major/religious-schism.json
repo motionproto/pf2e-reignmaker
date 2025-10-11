@@ -31,8 +31,10 @@
       "msg": "Religious divisions weaken your kingdom's faith institutions",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d6",
+          "formula": "2d6",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -45,8 +47,10 @@
       "msg": "The church splits entirely, destroying religious unity",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-4d6",
+          "formula": "4d6",
+          "negative": true,
           "duration": "immediate"
         }
       ],

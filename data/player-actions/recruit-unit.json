@@ -31,10 +31,11 @@
       "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
       "modifiers": [
         {
-          "name": "Recruit Unit (Patriotic Response)",
+          "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Recruit Unit (Patriotic Response)"
         }
       ],
       "gameEffects": [
@@ -65,10 +66,11 @@
       "description": "No Recruit; +1 Unrest",
       "modifiers": [
         {
-          "name": "Recruit Unit (Failed Recruitment)",
+          "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate"
+          "duration": "immediate",
+          "name": "Recruit Unit (Failed Recruitment)"
         }
       ],
       "gameEffects": []

@@ -31,6 +31,7 @@
       "msg": "Riot damages property and increases unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -45,6 +46,7 @@
       "msg": "Violent riot destroys property and increases unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"

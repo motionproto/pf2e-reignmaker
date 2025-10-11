@@ -22,6 +22,7 @@
       "msg": "Drug ring destroyed",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": -1,
           "duration": "ongoing"
@@ -33,6 +34,7 @@
       "msg": "Major arrests, convert 1 unrest to imprisoned unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "imprisoned_unrest",
           "value": 1,
           "duration": "ongoing"
@@ -44,11 +46,13 @@
       "msg": "Drug trade spreads",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "gold",
           "value": -1,
           "duration": "ongoing"
@@ -60,11 +64,13 @@
       "msg": "Major drug crisis",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 2,
           "duration": "ongoing"
         },
         {
+          "type": "static",
           "resource": "damage_structure",
           "value": 1,
           "duration": "ongoing"

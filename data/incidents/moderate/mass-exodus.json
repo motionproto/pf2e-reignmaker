@@ -27,6 +27,7 @@
       "msg": "Citizens abandon projects and cause social unrest",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
@@ -41,11 +42,13 @@
       "msg": "Mass exodus damages your kingdom's reputation and stability",
       "modifiers": [
         {
+          "type": "static",
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "fame",
           "value": -1,
           "duration": "immediate"

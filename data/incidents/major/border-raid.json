@@ -31,8 +31,10 @@
       "msg": "Raiders pillage border territories, causing loss of gold and land",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-1d4",
+          "formula": "1d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -45,8 +47,10 @@
       "msg": "Raiders devastate border regions, causing massive losses",
       "modifiers": [
         {
+          "type": "dice",
           "resource": "gold",
-          "value": "-2d4",
+          "formula": "2d4",
+          "negative": true,
           "duration": "immediate"
         }
       ],
