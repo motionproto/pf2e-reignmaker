@@ -199,6 +199,7 @@
   {:else if resolution}
     <!-- After resolution: Show OutcomeDisplay -->
     <OutcomeDisplay
+      checkId={item.id}
       outcome={resolution.outcome}
       actorName={resolution.actorName}
       skillName={usedSkill}

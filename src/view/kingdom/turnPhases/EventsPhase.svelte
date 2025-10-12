@@ -92,9 +92,10 @@
    $: activeEventInstances = $kingdomData.activeEventInstances || [];
    $: activeModifiers = $kingdomData.activeModifiers || [];
    $: pendingEventInstances = activeEventInstances.filter(instance => instance.status === 'pending');
+   $: resolvedEventInstances = activeEventInstances.filter(instance => instance.status === 'resolved');
    $: customModifiers = activeModifiers;  // All modifiers are now custom (no event data)
    
-   // Build outcomes for ongoing events from activeEventInstances
+   // Build outcomes for ongoing events from activeEventInstances  
    $: ongoingEventsWithOutcomes = pendingEventInstances.map(instance => {
       const event = instance.eventData;
       const outcomes: Array<{
@@ -291,7 +292,7 @@
       
       // If eventId is provided and it's not the current event, check ongoing events
       if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === eventId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === eventId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
          }
@@ -339,7 +340,7 @@
       
       // Capture the event ID for closure
       const eventId = currentEvent.id;
-      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.event.id === eventId);
+      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.instance.instanceId === eventId);
       
       // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
       // when the result is applied
@@ -437,8 +438,8 @@
       
       // Check if this is an ongoing event or current event
       if (checkId && checkId !== currentEvent?.id) {
-         // Ongoing event
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === checkId);
+         // Ongoing event - look up by instanceId (not event.id!)
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
             resolution = ongoingEvent.instance.appliedOutcome;  // ✅ Get from instance
@@ -536,7 +537,7 @@
       }
    }
    
-   // Event handler - ignore event (preview only, user must apply)
+   // Event handler - ignore event (moves to ongoing immediately, preview state)
    async function handleIgnore(event: CustomEvent) {
       if (!eventPhaseController) return;
       
@@ -547,7 +548,7 @@
       
       // If checkId is provided and it's not the current event, check ongoing events
       if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
-         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === checkId);
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
          }
@@ -558,12 +559,11 @@
          return;
       }
       
-      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.event.id === checkId);
+      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.instance.instanceId === checkId);
       
-      console.log(`🚫 [EventsPhase] Ignoring event (preparing failure preview): ${targetEvent.name}`);
+      console.log(`🚫 [EventsPhase] Ignoring event - moving to ongoing: ${targetEvent.name}`);
       
-      // Just prepare the failure outcome preview - don't apply anything yet
-      // User must click "Apply Result" to confirm
+      // Prepare the failure outcome preview
       const outcomeData = eventPhaseController.getEventModifiers(targetEvent, 'failure');
       
       const resolution = {
@@ -577,7 +577,7 @@
       };
       
       if (isOngoingEvent) {
-         // Store in KingdomActor (synced to all clients!)
+         // Already ongoing, just update the resolution
          await updateKingdom(kingdom => {
             if (!kingdom.activeEventInstances) return;
             const instance = kingdom.activeEventInstances.find(i => i.eventId === checkId);
@@ -588,15 +588,36 @@
             }
          });
       } else {
-         // Store in main event resolution (local state for current event)
-         eventResolution = resolution;
-         eventResolved = true;
-         console.log(`✅ [EventsPhase] Current event ignore preview prepared for ${targetEvent.name}`);
-      }
-      
-      // Temporarily set currentEvent for the apply handler
-      if (targetEvent !== currentEvent) {
-         currentEvent = targetEvent;
+         // Current event - create instance and move to ongoing section
+         const currentTurn = $kingdomData.currentTurn || 1;
+         const newInstanceId = `${targetEvent.id}-${Date.now()}`;
+         
+         await updateKingdom(kingdom => {
+            // Create new instance with preview
+            if (!kingdom.activeEventInstances) kingdom.activeEventInstances = [];
+            kingdom.activeEventInstances.push({
+               instanceId: newInstanceId,
+               eventId: targetEvent.id,
+               eventType: 'event',
+               eventData: targetEvent,
+               createdTurn: currentTurn,
+               status: 'pending',
+               appliedOutcome: resolution,
+               effectsApplied: false  // Preview only, not applied yet
+            });
+            
+            // Clear current event (moves to ongoing section)
+            if (kingdom.turnState?.eventsPhase?.eventId === targetEvent.id) {
+               kingdom.turnState.eventsPhase.eventId = null;
+               kingdom.turnState.eventsPhase.eventTriggered = false;
+            }
+            
+            console.log(`✅ [EventsPhase] Created ignored event instance and moved to ongoing: ${newInstanceId}`);
+         });
+         
+         // Clear local state
+         eventResolution = null;
+         eventResolved = false;
       }
    }
    
@@ -812,50 +833,8 @@
       <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
    {/if}
    
-   {#if currentEvent}
-      <!-- Active Event Card -->
-      {#if showStabilityResult}
-         <div class="event-rolled-banner">
-            <i class="fas fa-dice-d20"></i>
-            <span>Event Triggered! (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})</span>
-         </div>
-      {/if}
-      <!-- Use BaseCheckCard for event resolution -->
-      {#if currentEvent}
-         {#key `${currentEvent.id}-${activeAidsCount}`}
-            <BaseCheckCard
-               id={currentEvent.id}
-               name={currentEvent.name}
-               description={currentEvent.description}
-               skills={currentEvent.skills}
-               outcomes={eventOutcomes}
-               traits={currentEvent.traits || []}
-               checkType="event"
-               expandable={false}
-               showCompletions={false}
-               showAvailability={false}
-               showSpecial={false}
-               showIgnoreButton={true}
-               {isViewingCurrentPhase}
-               {possibleOutcomes}
-               showAidButton={false}
-               aidResult={aidResultForEvent}
-               resolved={eventResolved}
-               resolution={eventResolution}
-               primaryButtonLabel="Apply Result"
-               skillSectionTitle="Choose Your Response:"
-               on:executeSkill={handleExecuteSkill}
-               on:primary={handleApplyResult}
-               on:cancel={handleCancel}
-               on:performReroll={handlePerformReroll}
-               on:ignore={handleIgnore}
-               on:aid={handleAid}
-               on:debugOutcomeChanged={handleDebugOutcomeChanged}
-            />
-         {/key}
-      {/if}
-   {:else}
-      <!-- Event Check Section -->
+   <!-- Event Check Section - Always show if event check hasn't been done, or show result after check -->
+   {#if !eventChecked || showStabilityResult}
       <div class="event-check-section">
          <h3>Event Check</h3>
          <div class="dc-info">
@@ -863,23 +842,30 @@
             <span class="dc-value">{eventDC}</span>
          </div>
          
-         <Button 
-            variant="secondary"
-            on:click={performEventCheck}
-            disabled={!isViewingCurrentPhase || isRolling || eventChecked}
-            icon={eventChecked ? 'fas fa-check' : 'fas fa-dice-d20'}
-            iconPosition="left"
-         >
-            {#if eventChecked}
-               Event Checked
-            {:else if isRolling}
-               Rolling...
-            {:else}
-               Roll for Event
-            {/if}
-         </Button>
-         
-         {#if showStabilityResult && eventChecked && eventWasTriggered === false}
+         {#if !eventChecked}
+            <Button 
+               variant="secondary"
+               on:click={performEventCheck}
+               disabled={!isViewingCurrentPhase || isRolling}
+               icon={isRolling ? 'fas fa-spinner' : 'fas fa-dice-d20'}
+               iconPosition="left"
+            >
+               {#if isRolling}
+                  Rolling...
+               {:else}
+                  Roll for Event
+               {/if}
+            </Button>
+         {:else if eventWasTriggered === true}
+            <!-- Event was triggered - show result banner -->
+            <div class="check-result-display">
+               <div class="roll-result success">
+                  <strong>Event Triggered!</strong> (Rolled {stabilityRoll} ≥ DC {rolledAgainstDC})
+                  <div>Resolve the event below.</div>
+               </div>
+            </div>
+         {:else if eventWasTriggered === false}
+            <!-- No event - show result message -->
             <div class="check-result-display">
                <div class="roll-result failure">
                   <strong>No Event</strong> (Rolled {stabilityRoll} &lt; DC {rolledAgainstDC})
@@ -888,6 +874,41 @@
             </div>
          {/if}
       </div>
+   {/if}
+   
+   <!-- Active Event Card - Show when an event needs to be resolved -->
+   {#if currentEvent}
+      {#key `${currentEvent.id}-${activeAidsCount}`}
+         <BaseCheckCard
+            id={currentEvent.id}
+            name={currentEvent.name}
+            description={currentEvent.description}
+            skills={currentEvent.skills}
+            outcomes={eventOutcomes}
+            traits={currentEvent.traits || []}
+            checkType="event"
+            expandable={false}
+            showCompletions={false}
+            showAvailability={false}
+            showSpecial={false}
+            showIgnoreButton={true}
+            {isViewingCurrentPhase}
+            {possibleOutcomes}
+            showAidButton={false}
+            aidResult={aidResultForEvent}
+            resolved={eventResolved}
+            resolution={eventResolution}
+            primaryButtonLabel="Apply Result"
+            skillSectionTitle="Choose Your Response:"
+            on:executeSkill={handleExecuteSkill}
+            on:primary={handleApplyResult}
+            on:cancel={handleCancel}
+            on:performReroll={handlePerformReroll}
+            on:ignore={handleIgnore}
+            on:aid={handleAid}
+            on:debugOutcomeChanged={handleDebugOutcomeChanged}
+         />
+      {/key}
    {/if}
    
    <!-- Ongoing Events - System-generated events that can be resolved -->
@@ -901,7 +922,7 @@
                      <span class="ongoing-badge">Ongoing Event</span>
                   </div>
                   <BaseCheckCard
-                     id={item.event.id}
+                     id={item.instance.instanceId}
                      name={item.event.name}
                      description={item.event.description}
                      skills={item.event.skills}
@@ -929,6 +950,43 @@
                      on:performReroll={handlePerformReroll}
                      on:ignore={handleIgnore}
                      on:debugOutcomeChanged={handleDebugOutcomeChanged}
+                  />
+               </div>
+            {/each}
+         </div>
+      </div>
+   {/if}
+   
+   <!-- Resolved Events - Completed events showing their outcomes -->
+   {#if resolvedEventInstances.length > 0}
+      <div class="resolved-events-section">
+         <h2 class="resolved-events-header">Resolved Events</h2>
+         <div class="resolved-events-list">
+            {#each resolvedEventInstances as instance}
+               <div class="resolved-event-wrapper">
+                  <div class="resolved-badge-container">
+                     <span class="resolved-badge">Resolved</span>
+                  </div>
+                  <BaseCheckCard
+                     id={instance.eventId}
+                     name={instance.eventData.name}
+                     description={instance.eventData.description}
+                     skills={instance.eventData.skills}
+                     outcomes={[]}
+                     traits={instance.eventData.traits || []}
+                     checkType="event"
+                     expandable={false}
+                     showCompletions={false}
+                     showAvailability={false}
+                     showSpecial={false}
+                     showIgnoreButton={false}
+                     isViewingCurrentPhase={false}
+                     possibleOutcomes={[]}
+                     showAidButton={false}
+                     resolved={true}
+                     resolution={instance.appliedOutcome || null}
+                     primaryButtonLabel="Apply Result"
+                     skillSectionTitle=""
                   />
                </div>
             {/each}
@@ -1213,6 +1271,51 @@
       background: rgba(251, 191, 36, 0.2);
       color: var(--color-amber-light);
       border: 1px solid var(--color-amber);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+   }
+   
+   .resolved-events-section {
+      padding: 20px 0;
+   }
+   
+   .resolved-events-header {
+      margin: 0 0 15px 0;
+      color: var(--text-accent);
+      font-family: var(--base-font);
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-normal);
+   }
+   
+   .resolved-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+   }
+   
+   .resolved-event-wrapper {
+      position: relative;
+      opacity: 0.8;
+   }
+   
+   .resolved-badge-container {
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      z-index: 10;
+   }
+   
+   .resolved-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--color-green);
+      border: 1px solid var(--color-green-border);
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
    }
    

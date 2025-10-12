@@ -80,6 +80,20 @@ export async function createEventPhaseController(_eventService?: any) {
                 // Apply custom modifiers at the start of Events phase
                 await this.applyCustomModifiers();
                 
+                // Clear appliedOutcome from ongoing events (reset to unresolved state each turn)
+                await updateKingdom(kingdom => {
+                    const pendingEvents = kingdom.activeEventInstances?.filter(i => i.status === 'pending') || [];
+                    if (pendingEvents.length > 0) {
+                        console.log(`🔄 [EventPhaseController] Clearing appliedOutcome from ${pendingEvents.length} ongoing event(s)`);
+                        pendingEvents.forEach(instance => {
+                            instance.appliedOutcome = undefined;
+                            instance.effectsApplied = false;
+                            instance.resolutionProgress = undefined;
+                            console.log(`   ✓ Reset: ${instance.eventData.name} (${instance.instanceId})`);
+                        });
+                    }
+                });
+                
         // Read CURRENT state from turnState (single source of truth)
         const eventRolled = kingdom?.turnState?.eventsPhase?.eventRolled ?? false;
         const eventTriggered = kingdom?.turnState?.eventsPhase?.eventTriggered ?? false;
@@ -397,6 +411,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     
                     const instance = kingdom.activeEventInstances.find(i => i.instanceId === targetInstanceId);
                     if (instance) {
+                        // Store outcome for both rolled and ignored events
                         instance.appliedOutcome = {
                             outcome,
                             actorName: actorName || 'Event Ignored',
@@ -406,13 +421,14 @@ export async function createEventPhaseController(_eventService?: any) {
                             manualEffects: outcomeData?.manualEffects || [],
                             shortfallResources: result.applied?.applied?.specialEffects
                                 ?.filter((e: string) => e.startsWith('shortage_penalty:'))
-                                ?.map((e: string) => e.split(':')[1]) || []
+                                ?.map((e: string) => e.split(':')[1]) || [],
+                            effectsApplied: true  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
                         };
-                        instance.effectsApplied = true;  // Mark effects as applied (gates phase completion)
+                        instance.effectsApplied = true;  // DEPRECATED - kept for backward compatibility during migration
                         
                         // Clear resolution progress after successful application
                         instance.resolutionProgress = undefined;
-                        console.log(`✅ [EventPhaseController] Stored appliedOutcome with ${resolvedModifiers.length} resolved modifiers and cleared progress: ${targetInstanceId}`);
+                        console.log(`✅ [EventPhaseController] Stored appliedOutcome with ${resolvedModifiers.length} resolved modifiers${isIgnored ? ' (ignored)' : ''}: ${targetInstanceId}`);
                     }
                 });
             }
@@ -420,11 +436,14 @@ export async function createEventPhaseController(_eventService?: any) {
             // After resolution, mark instance as resolved if it ends the event
             if (!isIgnored && existingInstance && outcomeData?.endsEvent) {
                 await updateKingdom(kingdom => {
-                    kingdom.activeEventInstances = kingdom.activeEventInstances?.filter(
-                        instance => instance.instanceId !== existingInstance.instanceId
-                    ) || [];
+                    const instance = kingdom.activeEventInstances?.find(
+                        i => i.instanceId === existingInstance.instanceId
+                    );
+                    if (instance) {
+                        instance.status = 'resolved';
+                        console.log(`✅ [EventPhaseController] Marked event as resolved: ${existingInstance.instanceId}`);
+                    }
                 });
-                console.log(`✅ [EventPhaseController] Removed resolved event instance: ${existingInstance.instanceId}`);
             }
             
             // Track event as resolved (for phase gate) - only if NOT creating new instance

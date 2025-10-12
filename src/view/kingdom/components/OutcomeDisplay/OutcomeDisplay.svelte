@@ -6,6 +6,11 @@
     detectResourceArrayModifiers,
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
+  import {
+    updateCheckResolutionState,
+    getCheckResolutionState,
+    clearCheckResolutionState
+  } from '../../../../controllers/shared/ResolutionStateHelpers';
   import { 
     getOutcomeDisplayProps,
     detectDiceModifiers,
@@ -34,6 +39,7 @@
   import DebugResultSelector from './components/DebugResultSelector.svelte';
   
   // Props
+  export let checkId: string;  // NEW: Unique identifier for this check instance
   export let outcome: string;
   export let actorName: string;
   export let skillName: string | undefined = undefined;
@@ -62,11 +68,23 @@
   
   type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   
-  // State
-  let selectedChoice: number | null = null;
+  // ✅ READ state from KingdomActor (syncs across all clients)
+  $: resolutionState = getCheckResolutionState(checkId, $kingdomData.turnState);
+  $: selectedChoice = resolutionState.selectedChoice;
+  // Convert string keys back to appropriate types for Maps
+  $: resolvedDice = new Map(
+    Object.entries(resolutionState.resolvedDice || {}).map(([k, v]) => {
+      // Keys can be numbers (modifier index) or strings (e.g., "state:food")
+      const key = k.startsWith('state:') ? k : (isNaN(Number(k)) ? k : Number(k));
+      return [key, v];
+    })
+  );
+  $: selectedResources = new Map(
+    Object.entries(resolutionState.selectedResources || {}).map(([k, v]) => [Number(k), v])
+  );
+  
+  // Local UI-only state
   let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
-  let selectedResources: Map<number, string> = new Map();
-  let resolvedDice: Map<number | string, number> = new Map();
   let debugOutcome: OutcomeType = outcome as OutcomeType;
   
   // Get fame from kingdom state
@@ -130,7 +148,7 @@
   $: choicesResolved = hasChoices && selectedChoice !== null;
   
   // Button visibility and state
-  $: showCancelButton = showCancel && !applied;
+  $: showCancelButton = showCancel && !applied && !isIgnored;
   $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers && !isIgnored;
   $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
   
@@ -217,11 +235,11 @@
     
     console.log(`💎 [OutcomeDisplay] Fame deducted (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
     
-    // Reset internal UI state
-    selectedChoice = null;
+    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
+    await clearCheckResolutionState(checkId);
+    
+    // Reset local UI state
     choiceResult = null;
-    selectedResources = new Map();
-    resolvedDice = new Map();
     
     console.log('🔄 [OutcomeDisplay] UI state reset for reroll');
     
@@ -353,34 +371,41 @@
     });
   }
   
-  function handleDiceRoll(event: CustomEvent) {
+  async function handleDiceRoll(event: CustomEvent) {
     const { modifierIndex, result } = event.detail;
-    const newResolved = new Map(resolvedDice);
-    newResolved.set(modifierIndex, result);
-    resolvedDice = newResolved;
     
-    console.log(`🎲 [OutcomeDisplay] Rolled dice: ${result} for modifier ${modifierIndex}`);
+    // ✅ Store in KingdomActor via helper (syncs to all clients)
+    await updateCheckResolutionState(checkId, {
+      resolvedDice: {
+        ...resolutionState.resolvedDice,
+        [modifierIndex]: result
+      }
+    });
+    
+    console.log(`🎲 [OutcomeDisplay] Rolled dice: ${result} for modifier ${modifierIndex} (checkId: ${checkId})`);
     dispatch('diceRolled', event.detail);
   }
   
-  function handleChoiceSelect(event: CustomEvent) {
+  async function handleChoiceSelect(event: CustomEvent) {
     const { index, rolledValues } = event.detail;
     
+    // Toggle selection
     if (selectedChoice === index) {
-      selectedChoice = null;
+      // ✅ Clear choice in KingdomActor
+      await updateCheckResolutionState(checkId, { selectedChoice: null });
       choiceResult = null;
       return;
     }
     
-    selectedChoice = index;
-    const choice = effectiveChoices[index];
+    // ✅ Store in KingdomActor via helper (syncs to all clients)
+    await updateCheckResolutionState(checkId, { selectedChoice: index });
     
-    // Use the pre-rolled values from ChoiceButtons
+    const choice = effectiveChoices[index];
     const resourceValues = rolledValues || {};
     
-    // Build result - don't need to create effect string since it's shown in button
+    // Build local UI result (for display)
     choiceResult = {
-      effect: effect, // Use original effect, not choice label
+      effect: effect,
       stateChanges: resourceValues
     };
     
@@ -391,19 +416,25 @@
     });
   }
   
-  function handleCancel() {
+  async function handleCancel() {
+    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
+    await clearCheckResolutionState(checkId);
+    
+    // Reset local UI state
+    choiceResult = null;
+    
     dispatch('cancel');
   }
   
-  function handleDebugOutcomeChange(event: CustomEvent) {
+  async function handleDebugOutcomeChange(event: CustomEvent) {
     const newOutcome = event.detail.outcome as OutcomeType;
     debugOutcome = newOutcome;
     
-    // Reset state when outcome changes
-    selectedChoice = null;
+    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
+    await clearCheckResolutionState(checkId);
+    
+    // Reset local UI state
     choiceResult = null;
-    selectedResources = new Map();
-    resolvedDice = new Map();
     
     // Dispatch event to parent so they can update modifiers/effects
     dispatch('debugOutcomeChanged', { outcome: newOutcome });

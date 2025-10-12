@@ -72,6 +72,7 @@
     shortfallResources?: string[];
     rollBreakdown?: any;
     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
+    effectsApplied?: boolean;  // Track if "Apply Result" was clicked (syncs across clients)
   } | null = null;
   
   // Display configuration
@@ -107,7 +108,9 @@
   // UI state only (not business logic)
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
-  let outcomeApplied: boolean = false;  // Track if outcome has been applied
+  
+  // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
+  $: outcomeApplied = resolution?.effectsApplied || false;
   
   // Get skill bonuses for all skills
   $: skillBonuses = getSkillBonuses(skills.map(s => s.skill));
@@ -178,10 +181,9 @@
       resolved = false;
       resolution = null;
       localUsedSkill = '';
-    } else {
-      // For events/incidents, mark as applied (one-time only)
-      outcomeApplied = true;
     }
+    // Note: For events/incidents, effectsApplied is set by the controller
+    // and syncs via resolution.effectsApplied prop
   }
   
   function handleCancel() {
@@ -254,6 +256,7 @@
       {#if resolved && resolution}
         <!-- After resolution: Show OutcomeDisplay -->
         <OutcomeDisplay
+          checkId={id}
           outcome={resolution.outcome}
           actorName={resolution.actorName}
           skillName={usedSkill}

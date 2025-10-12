@@ -3,15 +3,17 @@
   import BaseCheckCard from './BaseCheckCard.svelte';
   
   // Props
-  export let modifier: any;                    // ActiveModifier with originalEventData
+  export let instance: any;                    // ActiveEventInstance
   export let controller: any;                  // EventPhaseController
   export let isViewingCurrentPhase: boolean;
   
   // State
   let isExpanded = false;
   
-  // Extract event data
-  $: event = modifier.originalEventData;
+  // Extract event data and resolution state
+  $: event = instance.eventData;
+  $: resolution = instance.appliedOutcome || null;
+  $: resolved = !!resolution;
   $: possibleOutcomes = event ? buildPossibleOutcomes(event.effects) : [];
   
   // Build outcomes array for BaseCheckCard
@@ -50,14 +52,14 @@
     return outcomes;
   })() : [];
   
-  // Check if this modifier can be resolved (has original event data)
+  // Check if this instance can be resolved (has event data)
   $: canResolve = !!event;
   
   // Get failure preview message (what happens if ignored)
   $: failurePreview = (() => {
     if (!event?.effects) {
-      // Fallback for modifiers without event data
-      return modifier.description || 'This modifier cannot be resolved manually';
+      // Fallback for instances without event data
+      return instance.description || 'This event cannot be resolved manually';
     }
     
     // Prefer critical failure, fallback to failure
@@ -76,7 +78,7 @@
   <!-- Header - Always visible, click to toggle -->
   <button class="event-header" on:click={toggleExpand} type="button">
     <div class="header-content">
-      <h3 class="event-title">{event?.name || modifier.name}</h3>
+      <h3 class="event-title">{event?.name || 'Ongoing Event'}</h3>
       <span class="ongoing-badge">Ongoing</span>
     </div>
     {#if !isExpanded}
@@ -95,7 +97,7 @@
         <p class="event-description">{event.description}</p>
         
         <BaseCheckCard
-          id={event.id}
+          id={instance.instanceId}
           name={event.name}
           description={event.description}
           skills={event.skills}
@@ -110,8 +112,8 @@
           {isViewingCurrentPhase}
           {possibleOutcomes}
           showAidButton={false}
-          resolved={false}
-          resolution={null}
+          {resolved}
+          {resolution}
           primaryButtonLabel="Apply Result"
           skillSectionTitle="Choose Your Response:"
           on:executeSkill
@@ -121,7 +123,7 @@
           on:debugOutcomeChanged
         />
       {:else}
-        <p class="event-description">{modifier.description || 'No description available'}</p>
+        <p class="event-description">{instance.description || 'No description available'}</p>
         <div class="unresolvable-notice">
           <i class="fas fa-info-circle"></i>
           <span>This modifier cannot be resolved manually and will be applied automatically.</span>

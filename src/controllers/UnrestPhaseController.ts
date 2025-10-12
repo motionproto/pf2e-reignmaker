@@ -52,12 +52,17 @@ export async function createUnrestPhaseController() {
         const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;
         const incidentTriggered = kingdom.turnState?.unrestPhase?.incidentTriggered ?? false;
         
+        // Check unrest tier - if tier 0 (stable), auto-complete all steps
+        const unrest = kingdom.unrest || 0;
+        const tier = getUnrestTier(unrest);
+        const isStable = tier === 0;
+        
         // Initialize steps with CORRECT completion state (using type-safe constants)
         // No workarounds needed - steps reflect KingdomActor state directly
         const steps = [
           { name: 'Calculate Unrest', completed: 1 },  // UnrestPhaseSteps.CALCULATE_UNREST = 0 (always complete)
-          { name: 'Incident Check', completed: incidentRolled ? 1 : 0 },  // UnrestPhaseSteps.INCIDENT_CHECK = 1
-          { name: 'Resolve Incident', completed: (incidentRolled && !incidentTriggered) ? 1 : 0 }  // UnrestPhaseSteps.RESOLVE_INCIDENT = 2
+          { name: 'Incident Check', completed: (isStable || incidentRolled) ? 1 : 0 },  // UnrestPhaseSteps.INCIDENT_CHECK = 1 (auto-complete if stable)
+          { name: 'Resolve Incident', completed: (isStable || (incidentRolled && !incidentTriggered)) ? 1 : 0 }  // UnrestPhaseSteps.RESOLVE_INCIDENT = 2 (auto-complete if stable or no incident)
         ];
         
         await initializePhaseSteps(steps);
@@ -201,6 +206,68 @@ export async function createUnrestPhaseController() {
       );
     },
 
+
+    /**
+     * Store incident resolution in KingdomActor (synced across all clients)
+     */
+    async storeIncidentResolution(
+      incidentId: string,
+      resolution: {
+        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+        actorName: string;
+        skillName: string;
+        effect: string;
+        modifiers?: any[];
+        manualEffects?: string[];
+        rollBreakdown?: any;
+        effectsApplied?: boolean;
+      }
+    ) {
+      const actor = getKingdomActor();
+      if (!actor) {
+        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+        return { success: false };
+      }
+
+      await actor.updateKingdom((kingdom) => {
+        if (kingdom.turnState?.unrestPhase) {
+          kingdom.turnState.unrestPhase.incidentResolution = resolution;
+          console.log(`✅ [UnrestPhaseController] Stored incident resolution in KingdomActor: ${incidentId}`);
+        }
+      });
+
+      return { success: true };
+    },
+    
+    /**
+     * Mark incident resolution as applied (after "Apply Result" clicked)
+     */
+    async markIncidentApplied() {
+      const actor = getKingdomActor();
+      if (!actor) return;
+
+      await actor.updateKingdom((kingdom) => {
+        if (kingdom.turnState?.unrestPhase?.incidentResolution) {
+          kingdom.turnState.unrestPhase.incidentResolution.effectsApplied = true;
+          console.log(`✅ [UnrestPhaseController] Marked incident as applied (synced to all clients)`);
+        }
+      });
+    },
+
+    /**
+     * Clear incident resolution from KingdomActor
+     */
+    async clearIncidentResolution() {
+      const actor = getKingdomActor();
+      if (!actor) return;
+
+      await actor.updateKingdom((kingdom) => {
+        if (kingdom.turnState?.unrestPhase) {
+          kingdom.turnState.unrestPhase.incidentResolution = undefined;
+          console.log(`🚫 [UnrestPhaseController] Cleared incident resolution from KingdomActor`);
+        }
+      });
+    },
 
     /**
      * Get outcome modifiers for an incident

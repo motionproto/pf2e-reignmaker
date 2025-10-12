@@ -24,19 +24,9 @@
    let checkHandler: any;
    let possibleOutcomes: any[] = [];
    
-   // Resolution state for current incident
-   let incidentResolution: {
-     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-     actorName: string;
-     skillName: string;
-     effect: string;
-     stateChanges?: Record<string, any>;
-     modifiers?: any[];
-     manualEffects?: string[];
-     shortfallResources?: string[];
-     rollBreakdown?: any;
-   } | null = null;
-   let incidentResolved = false;
+   // ✅ READ resolution state from KingdomActor (synced across all clients)
+   $: incidentResolution = $kingdomData.turnState?.unrestPhase?.incidentResolution || null;
+   $: incidentResolved = !!incidentResolution;
    
    // Current user ID
    let currentUserId: string | null = null;
@@ -67,6 +57,11 @@
    
    // Track the last loaded incident ID to prevent unnecessary reloads
    let lastLoadedIncidentId: string | null = null;
+   
+   // Generate unique checkId per turn to force component remount
+   $: incidentCheckId = currentIncident 
+      ? `incident-${currentIncident.id}-turn${$kingdomData.currentTurn}` 
+      : null;
    
    // Load incident when incident ID changes (from turnState)
    $: if ($kingdomData.turnState?.unrestPhase?.incidentId) {
@@ -176,23 +171,8 @@
       const game = (window as any).game;
       currentUserId = game?.user?.id || null;
       
-      // Check for persisted applied outcome
-      if ($kingdomData?.turnState?.unrestPhase?.appliedOutcome) {
-         const appliedOutcome = $kingdomData.turnState.unrestPhase.appliedOutcome;
-         if (currentIncident && appliedOutcome.incidentId === currentIncident.id) {
-            // Restore resolved state
-            incidentResolved = true;
-            incidentResolution = {
-               outcome: appliedOutcome.outcome,
-               actorName: appliedOutcome.incidentName,
-               skillName: appliedOutcome.skillUsed,
-               effect: appliedOutcome.effect,
-               stateChanges: appliedOutcome.stateChanges,
-               modifiers: appliedOutcome.modifiers,
-               manualEffects: appliedOutcome.manualEffects
-            };
-         }
-      }
+      // Note: appliedOutcome is legacy - resolution now stored in incidentResolution
+      // If needed, could restore from appliedOutcome here, but resolution is now the primary source
    });
    
    // Helper functions removed - now using UnrestIncidentProvider
@@ -294,11 +274,11 @@
             console.log(`✅ [UnrestPhase] Incident check completed:`, result.outcome);
             isRolling = false;
             
-            // ARCHITECTURE: Delegate to controller for outcome data extraction
+            // ARCHITECTURE: Delegate to controller for outcome data extraction and storage
             if (!currentIncident) return;
             const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, result.outcome);
             
-            incidentResolution = {
+            const resolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
@@ -307,14 +287,19 @@
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
             };
-            incidentResolved = true;
+            
+            // ✅ Store in KingdomActor via controller (syncs to all clients)
+            await unrestPhaseController.storeIncidentResolution(currentIncident.id, resolution);
          },
          
-         onCancel: () => {
+         onCancel: async () => {
             console.log(`🚫 [UnrestPhase] Incident check cancelled - resetting state`);
             isRolling = false;
-            incidentResolution = null;
-            incidentResolved = false;
+            
+            // ✅ Clear from KingdomActor via controller (syncs to all clients)
+            if (unrestPhaseController) {
+               await unrestPhaseController.clearIncidentResolution();
+            }
             
             // Note: Incidents don't consume player actions
          },
@@ -351,6 +336,9 @@
       if (result.success) {
          console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
          
+         // ✅ Mark as applied (syncs to all clients)
+         await controller.markIncidentApplied();
+         
          // Parse shortfall information from the new result structure
          const shortfalls: string[] = [];
          if (result.applied?.applied?.specialEffects) {
@@ -371,10 +359,13 @@
    }
    
    // Event handler - cancel resolution
-   function handleCancel() {
+   async function handleCancel() {
       console.log(`🔄 [UnrestPhase] User cancelled outcome - resetting for re-roll`);
-      incidentResolution = null;
-      incidentResolved = false;
+      
+      // ✅ Clear from KingdomActor via controller (syncs to all clients)
+      if (unrestPhaseController) {
+         await unrestPhaseController.clearIncidentResolution();
+      }
       
       // Note: Incidents don't consume player actions
    }
@@ -521,33 +512,35 @@
    {#if showIncidentResult}
       {#if currentIncident}
          <!-- Use BaseCheckCard for incident resolution - only show when controller is ready -->
-         {#if unrestPhaseController}
-            <BaseCheckCard
-                     id={currentIncident.id}
-                     name={currentIncident.name}
-                     description={currentIncident.description}
-                     skills={currentIncident.skills}
-                     outcomes={incidentOutcomes}
-                     traits={currentIncident.traits || []}
-                     checkType="incident"
-                     expandable={false}
-                     showCompletions={false}
-                     showAvailability={false}
-                     showSpecial={false}
-                     showIgnoreButton={false}
-                     {isViewingCurrentPhase}
-                     {possibleOutcomes}
-                     showAidButton={false}
-                     resolved={incidentResolved}
-                     resolution={incidentResolution}
-                     primaryButtonLabel="Apply Result"
-                     skillSectionTitle="Choose Your Response:"
-                     on:executeSkill={handleExecuteSkill}
-                     on:primary={handleApplyResult}
-                     on:cancel={handleCancel}
-                     on:reroll={handleReroll}
-                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
-                  />
+         {#if unrestPhaseController && incidentCheckId}
+            {#key incidentCheckId}
+               <BaseCheckCard
+                        id={incidentCheckId}
+                        name={currentIncident.name}
+                        description={currentIncident.description}
+                        skills={currentIncident.skills}
+                        outcomes={incidentOutcomes}
+                        traits={currentIncident.traits || []}
+                        checkType="incident"
+                        expandable={false}
+                        showCompletions={false}
+                        showAvailability={false}
+                        showSpecial={false}
+                        showIgnoreButton={false}
+                        {isViewingCurrentPhase}
+                        {possibleOutcomes}
+                        showAidButton={false}
+                        resolved={incidentResolved}
+                        resolution={incidentResolution}
+                        primaryButtonLabel="Apply Result"
+                        skillSectionTitle="Choose Your Response:"
+                        on:executeSkill={handleExecuteSkill}
+                        on:primary={handleApplyResult}
+                        on:cancel={handleCancel}
+                        on:performReroll={handleReroll}
+                        on:debugOutcomeChanged={handleDebugOutcomeChanged}
+                     />
+            {/key}
          {:else}
             <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
                <i class="fas fa-spinner fa-spin"></i> Loading...

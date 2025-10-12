@@ -53,6 +53,18 @@ export interface UnrestPhaseState {
   incidentResolved: boolean;
   incidentOutcome?: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   incidentSkillUsed?: string;
+  incidentResolution?: {
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+    actorName: string;
+    skillName: string;
+    effect: string;
+    modifiers?: any[];
+    manualEffects?: string[];
+    rollBreakdown?: any;
+    shortfallResources?: string[];
+    effectsApplied?: boolean;  // Track if "Apply Result" was clicked (syncs across clients)
+  };
+  resolutionState?: import('../models/Modifiers').ResolutionState;  // Intermediate state (choices, dice rolls) - syncs across clients
   appliedOutcome?: {
     incidentId: string;
     incidentName: string;
@@ -135,6 +147,11 @@ export interface TurnState {
   // Action tracking across all phases
   actionLog: ActionLogEntry[];
   
+  // NEW: Unified intermediate resolution state for all CheckCards
+  // Keyed by checkId (instanceId for events, "incident-{id}" for incidents, etc.)
+  // Contains in-progress choice selections and dice rolls
+  activeResolutions: Record<string, import('../models/Modifiers').ResolutionState>;
+  
   // Phase-specific state objects
   statusPhase: StatusPhaseState;
   resourcesPhase: ResourcesPhaseState;
@@ -151,6 +168,7 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
   return {
     turnNumber,
     actionLog: [],
+    activeResolutions: {},
     
     statusPhase: {
       completed: false,

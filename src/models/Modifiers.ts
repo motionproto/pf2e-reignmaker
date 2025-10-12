@@ -15,6 +15,16 @@ import type { EventModifier } from '../types/modifiers';
 import type { EventData } from '../controllers/events/event-loader';
 
 /**
+ * Intermediate resolution state for OutcomeDisplay
+ * Syncs choice selections and dice rolls across clients
+ */
+export interface ResolutionState {
+  selectedChoice: number | null;
+  resolvedDice: Record<number | string, number>;
+  selectedResources?: Record<number, string>;
+}
+
+/**
  * Resolution condition for modifiers that can be resolved
  */
 export interface ResolutionCondition {
@@ -64,8 +74,10 @@ export interface ActiveEventInstance {
     modifiers?: any[];           // RESOLVED static values (no dice formulas or choices)
     manualEffects?: string[];
     shortfallResources?: string[];
+    effectsApplied?: boolean;    // Track if "Apply Result" was clicked (syncs across clients)
   };
-  effectsApplied?: boolean;      // True after "Apply Result" clicked (gates phase completion)
+  effectsApplied?: boolean;      // DEPRECATED - moved into appliedOutcome (gates phase completion)
+  resolutionState?: ResolutionState;  // Intermediate state (choices, dice rolls) - syncs across clients
 }
 
 /**

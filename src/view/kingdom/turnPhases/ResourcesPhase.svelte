@@ -115,54 +115,49 @@
       {/each}
    </div>
    
-   <!-- Manual Collection Controls -->
-   {#if !collectCompleted}
-      <div class="manual-collection-section">
-         <div class="collection-prompt">
-            <h3>Ready to Collect Resources</h3>
-            <p>Click the button below to manually collect territory production and settlement gold income.</p>
-         </div>
-         
-         <div class="collect-button-container">
-            <Button 
-               variant="secondary"
-               on:click={handleCollectResources} 
-               disabled={isCollecting}
-               icon={isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
-               iconPosition="left"
-            >
-               {#if isCollecting}
-                  Collecting Resources...
-               {:else}
-                  Collect All Resources
-               {/if}
-            </Button>
-         </div>
-      </div>
-   {/if}
-   
    <!-- Phase Steps -->
    <div class="phase-steps-container">
       
-      <!-- Step 1: Collect Resources and Revenue -->
-      <div class="phase-step" class:completed={collectCompleted}>
-         <!-- Resource Production -->
+      <!-- Collection Button -->
+      <div class="button-area">
+            {#if !collectCompleted}
+               <Button 
+                  variant="secondary"
+                  on:click={handleCollectResources} 
+                  disabled={isCollecting}
+                  icon={isCollecting ? "fas fa-spinner fa-spin" : "fas fa-hand-holding-usd"}
+                  iconPosition="left"
+               >
+                  {#if isCollecting}
+                     Collecting Resources...
+                  {:else}
+                     Collect Resources
+                  {/if}
+               </Button>
+            {:else}
+               <div class="auto-status">
+                  <i class="fas fa-check"></i> Resources Collected
+               </div>
+            {/if}
+      </div>
+      
+      <!-- Resource Production & Gold Income -->
+      <div class="income-production-summary" class:collected={collectCompleted}>
          {#if totalProduction.size > 0}
             {@const productionList = Object.keys(resourceConfig)
                .filter(resource => (totalProduction.get(resource) || 0) > 0)
                .map(resource => ({resource, amount: totalProduction.get(resource) || 0}))}
-            <div class="production-summary">
-               <div class="production-header">
-                  <span class="production-title">Resource Production This Turn:</span>
-                  <span class="production-total">
-                     {#each productionList as item, i}
-                        {#if i > 0} | {/if}
-                        <span style="color: {resourceConfig[item.resource]?.color || 'var(--text-primary)'}">
-                           +{item.amount} {item.resource.charAt(0).toUpperCase() + item.resource.slice(1)}
-                        </span>
-                     {/each}
-                  </span>
-               </div>
+            <div class="production-section">
+               <i class="fas fa-hand-holding-usd"></i>
+               <span class="section-title">Resource Production This Turn:</span>
+               <span class="production-total">
+                  {#each productionList as item, i}
+                     {#if i > 0}<span class="pipe-separator">|</span>{/if}
+                     <span style="color: {resourceConfig[item.resource]?.color || 'var(--text-primary)'}">
+                        +{item.amount} {item.resource.charAt(0).toUpperCase() + item.resource.slice(1)}
+                     </span>
+                  {/each}
+               </span>
                
                {#if worksiteDetails.length > 0}
                   <div class="worksite-summary">
@@ -176,40 +171,37 @@
             </div>
          {/if}
          
-         <!-- Gold Income from Settlements -->
          {#if settlementCount > 0}
-            <div class="gold-income-summary">
-               <div class="income-header">
-                  <i class="fas fa-coins" style="color: var(--color-amber-light);"></i>
-                  <span class="income-title">Settlement Gold Income:</span>
-                  {#if potentialGoldIncome > 0}
-                     <span class="income-amount" style="color: var(--color-amber-light);">
-                        +{potentialGoldIncome} Gold
-                     </span>
-                  {:else}
-                     <span class="income-amount" style="color: var(--text-tertiary);">
-                        No gold income
-                     </span>
-                  {/if}
-               </div>
-               
-               {#if unfedSettlementsCount > 0}
-                  <div class="income-note warning">
-                     <i class="fas fa-exclamation-triangle"></i>
-                     {unfedSettlementsCount} settlement{unfedSettlementsCount > 1 ? 's' : ''} not generating gold (unfed last turn)
-                  </div>
-               {:else if fedSettlementsCount > 0}
-                  <div class="income-note success">
-                     <i class="fas fa-check-circle"></i>
-                     All settlements were fed last turn and generate gold
-                  </div>
+            <div class="gold-income-section">
+               <i class="fas fa-coins" style="color: var(--color-amber-light);"></i>
+               <span class="section-title">Settlement Gold Income:</span>
+               {#if potentialGoldIncome > 0}
+                  <span class="income-amount" style="color: var(--color-amber-light);">
+                     +{potentialGoldIncome} Gold
+                  </span>
+               {:else}
+                  <span class="income-amount" style="color: var(--text-tertiary);">
+                     No gold income
+                  </span>
                {/if}
             </div>
+            
+            {#if unfedSettlementsCount > 0}
+               <div class="income-note warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  {unfedSettlementsCount} settlement{unfedSettlementsCount > 1 ? 's' : ''} not generating gold (unfed last turn)
+               </div>
+            {:else if fedSettlementsCount > 0}
+               <div class="income-note success">
+                  <i class="fas fa-check-circle"></i>
+                  All settlements were fed last turn and generate gold
+               </div>
+            {/if}
          {/if}
       </div>
       
-   </div>
-</div>
+   </div> <!-- End of phase-steps-container -->
+</div> <!-- End of resources-phase -->
 
 <style lang="scss">
    .resources-phase {
@@ -227,205 +219,70 @@
       justify-content: center;
    }
    
-   .resource-card {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 0.75rem;
-      border-radius: 0.375rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      outline: 2px solid transparent;
-      outline-offset: 2px;
-      transition: all 0.2s ease;
-      position: relative;
-      flex: 0 0 auto;
-      
-      &:hover:not(.editing) {
-         outline-color: var(--resource-color);
-         background: rgba(0, 0, 0, 0.3);
-      }
-      
-      &.editing {
-         outline-width: 3px;
-         outline-color: var(--resource-color);
-         background: linear-gradient(135deg, 
-            rgba(0, 0, 0, 0.3),
-            color-mix(in srgb, var(--resource-color) 10%, transparent)
-         );
-      }
-      
-      .resource-icon {
-         font-size: 1.5rem;
-      }
-      
-      .resource-info {
-         display: flex;
-         flex-direction: column;
-         min-width: 80px;
-      }
-      
-      .resource-value {
-         font-size: var(--font-2xl);
-         font-weight: var(--font-weight-bold);
-         color: var(--text-primary);
-      }
-      
-      .resource-label {
-         font-size: var(--font-sm);
-         color: var(--text-tertiary);
-         text-transform: capitalize;
-      }
-      
-      .resource-edit-input {
-         width: 80px;
-         padding: 0.25rem 0.5rem;
-         border: 2px solid var(--resource-color);
-         border-radius: 0.25rem;
-         background: var(--bg-surface);
-         color: var(--text-primary);
-         font-size: var(--font-xl);
-         font-weight: var(--font-weight-bold);
-         text-align: center;
-         
-         &:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--resource-color) 20%, transparent);
-         }
-      }
-      
-      /* Remove number input arrows for cleaner look */
-      .resource-edit-input::-webkit-inner-spin-button,
-      .resource-edit-input::-webkit-outer-spin-button {
-         -webkit-appearance: none;
-         margin: 0;
-      }
-      
-      .resource-edit-input[type="number"] {
-         -moz-appearance: textfield;
-      }
-      
-      .edit-buttons {
-         display: flex;
-         gap: 0.25rem;
-         margin-top: 0.25rem;
-      }
-      
-      .save-btn,
-      .cancel-btn {
-         flex: 1;
-         padding: 0.25rem;
-         border: 1px solid var(--border-default);
-         background: var(--bg-surface);
-         border-radius: 0.25rem;
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         cursor: pointer;
-         transition: all var(--transition-fast);
-         color: var(--text-primary);
-         font-size: 0.75rem;
-         
-         i {
-            font-size: 0.75rem;
-         }
-      }
-      
-      .save-btn:hover {
-         background: var(--color-success);
-         border-color: var(--color-success);
-         color: white;
-      }
-      
-      .cancel-btn:hover {
-         background: var(--color-danger);
-         border-color: var(--color-danger);
-         color: white;
-      }
-      
-      .save-btn:active,
-      .cancel-btn:active {
-         transform: scale(0.95);
-      }
-   }
-   
    .phase-steps-container {
       display: flex;
       flex-direction: column;
       gap: 15px;
    }
    
-   .phase-step {
-      position: relative;
-      background: rgba(0, 0, 0, 0.05);
-      padding: 20px;
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
-      transition: all 0.2s ease;
-      
-      &.completed {
-         background: rgba(34, 197, 94, 0.1);
-         border-color: var(--color-green-border);
-      }
-      
-      &:hover:not(.completed) {
-         background: rgba(0, 0, 0, 0.08);
-         border-color: var(--border-default);
-      }
-      
-      h4 {
-         margin: 0 0 15px 0;
-         color: var(--text-primary);
-         font-size: var(--font-xl);  /* 20px */
-         font-weight: var(--font-weight-semibold);
-         line-height: 1.3;
-      }
-   }
-   
-   .phase-step-complete {
-      position: absolute;
-      top: 15px;
-      right: 15px;
-      color: var(--color-green);
-      font-size: 20px;
-   }
-   
-   .production-summary {
-      margin: 15px auto;
-      padding: 15px;
+   .income-production-summary {
+      margin: 1rem auto;
+      padding: 1.5rem 2rem;
       max-width: 800px;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));
       border-radius: var(--radius-md);
       border: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: all 0.3s ease;
       
-      .production-header {
-         display: flex;
-         justify-content: space-between;
-         align-items: center;
-         margin-bottom: 10px;
-         flex-wrap: wrap;
-         gap: 10px;
-      }
-      
-      .production-title {
-         font-size: var(--font-2xl);
-         font-weight: var(--font-weight-semibold);
-         line-height: 1.5;
-         color: var(--text-primary);
-      }
-      
-      .production-total {
-         font-size: var(--font-2xl);  /* 18px */
-         font-weight: var(--font-weight-semibold);
-         color: var(--color-green);
+      &.collected {
+         border: 2px solid var(--color-green);
+         background: linear-gradient(135deg,
+            rgba(34, 197, 94, 0.15),
+            rgba(34, 197, 94, 0.08));
       }
    }
    
+   .production-section,
+   .gold-income-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+   }
+   
+   .section-title {
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+   }
+   
+   .production-total {
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-green);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+   }
+   
+   .pipe-separator {
+      color: var(--text-secondary);
+      margin: 0 8px;
+   }
+   
+   .income-amount {
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-semibold);
+   }
+   
    .worksite-summary {
-      margin-top: 10px;
+      width: 100%;
+      margin-top: 5px;
       
       .worksite-count {
          color: var(--text-secondary);
@@ -443,38 +300,10 @@
       font-style: italic;
    }
    
-   .gold-income-summary {
-      margin: 15px auto;
-      padding: 15px;
-      max-width: 800px;
-      background: linear-gradient(135deg,
-         rgba(24, 24, 27, 0.5),
-         rgba(31, 31, 35, 0.3));
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
-      
-      .income-header {
-         display: flex;
-         align-items: center;
-         gap: 10px;
-         margin-bottom: 10px;
-         
-         i {
-            font-size: 20px;
-         }
-      }
-      
-      .income-title {
-         font-size: var(--font-xl);
-         font-weight: var(--font-weight-semibold);
-         line-height: 1.5;
-         color: var(--text-primary);
-         flex: 1;
-      }
-      
-      .income-amount {
-         font-size: var(--font-2xl);
-         font-weight: var(--font-weight-semibold);
+   .production-section,
+   .gold-income-section {
+      i {
+         font-size: 20px;
       }
    }
    
@@ -487,93 +316,45 @@
       font-size: var(--font-m);
       
       &.warning {
-         background: rgba(245, 158, 11, 0.1);
          color: var(--color-amber-light);
          border: 1px solid var(--color-amber);
          
          i {
             font-size: 14px;
+            color: var(--color-amber-light);
          }
       }
       
       &.success {
-         background: rgba(34, 197, 94, 0.1);
          color: var(--color-green-light);
          border: 1px solid var(--color-green);
          
          i {
             font-size: 14px;
+            color: var(--color-green-light);
          }
       }
    }
    
-   .manual-collection-section {
-      margin: 20px auto;
-      padding: 20px;
-      max-width: 800px;
-      background: linear-gradient(135deg,
-         rgba(24, 24, 27, 0.5),
-         rgba(31, 31, 35, 0.3));
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
-      text-align: center;
-      
-      h3 {
-         margin: 0 0 10px 0;
-         color: var(--text-primary);
-         font-size: var(--font-xl);
-         font-weight: var(--font-weight-semibold);
-      }
-      
-      p {
-         margin: 0 0 20px 0;
-         color: var(--text-secondary);
-         font-size: var(--font-md);
-         line-height: 1.5;
-      }
-   }
-   
-   .collection-prompt {
-      margin-bottom: 20px;
-   }
-   
-   .collection-completed {
-      h3 {
-         color: var(--color-green);
-      }
-   }
-   
-   .collect-button-container {
+   .button-area {
       display: flex;
+      align-items: flex-start;
       justify-content: center;
-      padding: 0;
    }
    
-   .phase-summary {
-      margin-top: 15px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+   .auto-status {
+      padding: 0.5rem 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      display: inline-flex;
+      align-items: center;
       
-      .summary-title {
-         font-weight: var(--font-weight-semibold);
-         color: var(--text-primary);
-         margin-bottom: 8px;
-      }
-      
-      .summary-details {
-         display: flex;
-         gap: 15px;
-         flex-wrap: wrap;
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-         
-         span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-         }
+      i {
+         margin-right: 8px;
+         color: var(--color-green);
       }
    }
 </style>
