@@ -64,6 +64,7 @@ export interface DiceModifier {
  *     type: 'choice', 
  *     resources: ['lumber', 'ore', 'food'], 
  *     value: { formula: '2d4+1', negative: true },
+ *     negative: true,
  *     duration: 'immediate' 
  *   }
  */
@@ -71,6 +72,7 @@ export interface ChoiceModifier {
   type: 'choice';
   resources: ResourceType[];
   value: number | DiceValue;  // Can be static or dice
+  negative?: boolean;  // true for loss/penalty, false/undefined for gain
   duration?: ModifierDuration;
   name?: string;
 }

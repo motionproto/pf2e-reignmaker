@@ -38,6 +38,7 @@
             "stone"
           ],
           "value": 1,
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -61,6 +62,7 @@
             "stone"
           ],
           "value": 2,
+          "negative": true,
           "duration": "immediate"
         }
       ],

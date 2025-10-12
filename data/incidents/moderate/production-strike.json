@@ -37,10 +37,8 @@
             "ore",
             "stone"
           ],
-          "value": {
-            "formula": "1d4-1",
-            "negative": true
-          },
+          "value": "1d4-1",
+          "negative": true,
           "duration": "immediate"
         }
       ],
@@ -56,10 +54,8 @@
             "ore",
             "stone"
           ],
-          "value": {
-            "formula": "2d4-1",
-            "negative": true
-          },
+          "value": "2d4-1",
+          "negative": true,
           "duration": "immediate"
         }
       ],

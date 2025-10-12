@@ -211,6 +211,89 @@ export async function createEventPhaseController(_eventService?: any) {
         },
         
         /**
+         * Start resolving an event - tracks who is working on it for multi-player coordination
+         */
+        async startResolvingEvent(
+            eventId: string,
+            outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+            isIgnored: boolean = false
+        ) {
+            const { getKingdomActor } = await import('../stores/KingdomStore');
+            const actor = getKingdomActor();
+            const kingdom = actor?.getKingdom();
+            const game = (globalThis as any).game;
+            
+            if (!game?.user) return { success: false, error: 'No user found' };
+            
+            const existingInstance = kingdom?.activeEventInstances?.find(
+                instance => instance.eventId === eventId && instance.status === 'pending'
+            );
+            
+            if (!existingInstance) {
+                console.warn(`⚠️ [EventPhaseController] Cannot start resolving - instance not found: ${eventId}`);
+                return { success: false, error: 'Event instance not found' };
+            }
+            
+            // Set resolution progress
+            await updateKingdom(kingdom => {
+                const instance = kingdom.activeEventInstances?.find(i => i.instanceId === existingInstance.instanceId);
+                if (instance) {
+                    instance.resolutionProgress = {
+                        playerId: game.user.id,
+                        playerName: game.user.name,
+                        timestamp: Date.now(),
+                        outcome,
+                        selectedChoices: [],
+                        rolledDice: {}
+                    };
+                    console.log(`🎬 [EventPhaseController] ${game.user.name} started resolving: ${eventId}`);
+                }
+            });
+            
+            return { success: true };
+        },
+        
+        /**
+         * Update resolution progress (when player makes choices or rolls dice)
+         */
+        async updateResolutionProgress(
+            eventId: string,
+            updates: {
+                selectedChoices?: number[];
+                rolledDice?: Record<string, number>;
+            }
+        ) {
+            const { getKingdomActor } = await import('../stores/KingdomStore');
+            const actor = getKingdomActor();
+            const kingdom = actor?.getKingdom();
+            
+            const existingInstance = kingdom?.activeEventInstances?.find(
+                instance => instance.eventId === eventId && instance.status === 'pending'
+            );
+            
+            if (!existingInstance?.resolutionProgress) {
+                console.warn(`⚠️ [EventPhaseController] Cannot update progress - no resolution in progress: ${eventId}`);
+                return { success: false };
+            }
+            
+            await updateKingdom(kingdom => {
+                const instance = kingdom.activeEventInstances?.find(i => i.instanceId === existingInstance.instanceId);
+                if (instance?.resolutionProgress) {
+                    if (updates.selectedChoices !== undefined) {
+                        instance.resolutionProgress.selectedChoices = updates.selectedChoices;
+                        console.log(`📝 [EventPhaseController] Updated choices: ${updates.selectedChoices}`);
+                    }
+                    if (updates.rolledDice !== undefined) {
+                        instance.resolutionProgress.rolledDice = updates.rolledDice;
+                        console.log(`🎲 [EventPhaseController] Updated dice: ${JSON.stringify(updates.rolledDice)}`);
+                    }
+                }
+            });
+            
+            return { success: true };
+        },
+        
+        /**
          * Resolve event with ResolutionData
          * Receives pre-computed resolution data from UI (all dice rolled, choices made)
          */
@@ -218,7 +301,9 @@ export async function createEventPhaseController(_eventService?: any) {
             eventId: string,
             outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
             resolutionData: ResolutionData,
-            isIgnored: boolean = false
+            isIgnored: boolean = false,
+            actorName?: string,
+            skillName?: string
         ) {
             // Validate event exists
             const event = eventService.getEventById(eventId);
@@ -250,12 +335,15 @@ export async function createEventPhaseController(_eventService?: any) {
                  outcomeData.modifiers.some(m => m.duration === 'ongoing' || typeof m.duration === 'number'))
             );
             
+            // Capture the instance ID for use later when storing appliedOutcome
+            let newInstanceId: string | null = null;
+            
             // Create instance and clear current event in a SINGLE update to avoid double-rendering
             if (shouldCreateInstance && !existingInstance) {
                 // First time: Create new instance
-                const instanceId = `${event.id}-${Date.now()}`;
+                newInstanceId = `${event.id}-${Date.now()}`;
                 const instance: ActiveEventInstance = {
-                    instanceId,
+                    instanceId: newInstanceId,
                     eventId: event.id,
                     eventType: 'event',
                     eventData: event,
@@ -275,7 +363,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     }
                 });
                 
-                console.log(`✅ [EventPhaseController] Created event instance and cleared current event: ${instance.instanceId}`);
+                console.log(`✅ [EventPhaseController] Created event instance and cleared current event: ${newInstanceId}`);
             } else if (existingInstance) {
                 // Reroll case: Instance already exists, just apply effects
                 console.log(`🔁 [EventPhaseController] Re-rolling existing instance: ${event.name} (${existingInstance.instanceId})`);
@@ -289,6 +377,45 @@ export async function createEventPhaseController(_eventService?: any) {
                 resolutionData,
                 [EventsPhaseSteps.RESOLVE_EVENT, EventsPhaseSteps.APPLY_MODIFIERS]  // Type-safe step indices
             );
+            
+            // Store appliedOutcome and mark effects as applied
+            if (shouldCreateInstance || existingInstance) {
+                // Use the captured instanceId (if we just created one) or the existing instance's ID
+                const targetInstanceId = existingInstance?.instanceId || newInstanceId;
+                
+                // Convert ResolutionData.numericModifiers to resolved static modifiers
+                // This ensures OutcomeDisplay shows static values, not interactive dice/choices
+                const resolvedModifiers = resolutionData.numericModifiers.map(m => ({
+                    type: 'static' as const,
+                    resource: m.resource,
+                    value: m.value,
+                    duration: 'immediate' as const  // Copy from original if needed
+                }));
+                
+                await updateKingdom(kingdom => {
+                    if (!kingdom.activeEventInstances) return;
+                    
+                    const instance = kingdom.activeEventInstances.find(i => i.instanceId === targetInstanceId);
+                    if (instance) {
+                        instance.appliedOutcome = {
+                            outcome,
+                            actorName: actorName || 'Event Ignored',
+                            skillName: skillName || '',
+                            effect: outcomeData?.msg || '',
+                            modifiers: resolvedModifiers,  // ✅ RESOLVED values, not raw modifiers
+                            manualEffects: outcomeData?.manualEffects || [],
+                            shortfallResources: result.applied?.applied?.specialEffects
+                                ?.filter((e: string) => e.startsWith('shortage_penalty:'))
+                                ?.map((e: string) => e.split(':')[1]) || []
+                        };
+                        instance.effectsApplied = true;  // Mark effects as applied (gates phase completion)
+                        
+                        // Clear resolution progress after successful application
+                        instance.resolutionProgress = undefined;
+                        console.log(`✅ [EventPhaseController] Stored appliedOutcome with ${resolvedModifiers.length} resolved modifiers and cleared progress: ${targetInstanceId}`);
+                    }
+                });
+            }
             
             // After resolution, mark instance as resolved if it ends the event
             if (!isIgnored && existingInstance && outcomeData?.endsEvent) {
@@ -325,15 +452,14 @@ export async function createEventPhaseController(_eventService?: any) {
                 });
             }
             
-            // Check if all events are resolved (phase completion)
+            // Check if all events have effects applied (phase completion)
             const updatedActor = getKingdomActor();
             const updatedKingdomState = updatedActor?.getKingdom();
             const pendingInstances = updatedKingdomState?.activeEventInstances?.filter(i => i.status === 'pending') || [];
-            const resolvedEvents = updatedKingdomState?.turnState?.eventsPhase?.resolvedOngoingEvents || [];
-            const allResolved = pendingInstances.length === 0 || pendingInstances.every(i => resolvedEvents.includes(i.eventId));
+            const allEffectsApplied = pendingInstances.length === 0 || pendingInstances.every(i => i.effectsApplied === true);
             
-            if (allResolved && !updatedKingdomState?.turnState?.eventsPhase?.eventId) {
-                console.log(`✅ [EventPhaseController] All events resolved, marking phase complete`);
+            if (allEffectsApplied && !updatedKingdomState?.turnState?.eventsPhase?.eventId) {
+                console.log(`✅ [EventPhaseController] All event effects applied, marking phase complete`);
                 await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
                 await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
             }

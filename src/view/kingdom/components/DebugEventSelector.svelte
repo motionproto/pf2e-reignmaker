@@ -75,6 +75,26 @@
          if (type === 'event') {
             kingdom.turnState.eventsPhase.eventId = itemId;
             kingdom.turnState.eventsPhase.eventTriggered = itemId !== null;
+            
+            // Simulate a full event roll to match normal behavior
+            if (itemId !== null) {
+               // Mark event as rolled
+               kingdom.turnState.eventsPhase.eventRolled = true;
+               
+               // Generate a simulated roll that would have triggered the event
+               // (any roll >= DC would trigger, so use current DC as the roll)
+               const currentDC = kingdom.eventDC || 15;
+               kingdom.turnState.eventsPhase.eventRoll = currentDC;
+               
+               // Reset DC to 15 (matches normal event trigger behavior)
+               kingdom.eventDC = 15;
+               
+               console.log(`[DebugEventSelector] Simulated event roll: ${currentDC} (DC was ${currentDC}, now reset to 15)`);
+            } else {
+               // Clear event - reset roll state
+               kingdom.turnState.eventsPhase.eventRolled = false;
+               kingdom.turnState.eventsPhase.eventRoll = undefined;
+            }
          } else {
             kingdom.turnState.unrestPhase.incidentId = itemId;
             kingdom.turnState.unrestPhase.incidentTriggered = itemId !== null;

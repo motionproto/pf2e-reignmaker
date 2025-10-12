@@ -54,9 +54,8 @@
     
     console.log(`📋 [getPreviewLabel] choice ${choiceIndex}, rolledDice has ${Array.from(rolledDice.keys())}, choiceRolls:`, choiceRolls, 'rolledValue:', rolledValue);
     
-    // Determine action (Lose/Gain)
-    const isNegative = typeof modifier.value === 'string' ? modifier.value.startsWith('-') : modifier.value < 0;
-    const action = isNegative ? 'Lose' : 'Gain';
+    // Determine action (Lose/Gain) from explicit negative field
+    const action = modifier.negative ? 'Lose' : 'Gain';
     
     // Capitalize resource name
     const resourceName = resource.charAt(0).toUpperCase() + resource.slice(1);
@@ -68,10 +67,11 @@
       // Show formula: "Lose 2d4+1 Lumber"
       let formula = modifier.value;
       if (typeof formula === 'string') {
+        // Remove leading minus sign if present (negative flag handles this)
         if (formula.startsWith('-')) {
           formula = formula.substring(1);
         }
-        formula = formula.replace(/^\((.+)\)$/, '$1');
+        formula = formula.replace(/^\\((.+)\\)$/, '$1');
       }
       return `${action} ${formula} ${resourceName}`;
     }
@@ -130,14 +130,20 @@
     if (choice.modifiers) {
       choice.modifiers.forEach((modifier: any, modIndex: number) => {
         const value = modifier.value;
+        let finalValue: number | undefined;
         
         if (typeof value === 'string' && DICE_PATTERN.test(value)) {
           const rolled = choiceRolls?.get(modIndex);
           if (rolled !== undefined) {
-            resourceValues[modifier.resource] = rolled;
+            finalValue = rolled;
           }
         } else if (typeof value === 'number') {
-          resourceValues[modifier.resource] = value;
+          finalValue = value;
+        }
+        
+        // Apply negative sign if needed
+        if (finalValue !== undefined) {
+          resourceValues[modifier.resource] = modifier.negative ? -Math.abs(finalValue) : Math.abs(finalValue);
         }
       });
     }

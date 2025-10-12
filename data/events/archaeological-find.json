@@ -66,6 +66,7 @@
             "stone"
           ],
           "value": 1,
+          "negative": false,
           "duration": "immediate"
         }
       ],

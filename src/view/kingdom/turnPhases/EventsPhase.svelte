@@ -115,11 +115,22 @@
          outcomes.push({ type: 'criticalFailure', description: event.effects.criticalFailure.msg });
       }
       
+      // Check if someone is currently resolving this event
+      const progress = instance.resolutionProgress;
+      const isBeingResolved = !!progress;
+      const isResolvedByMe = progress?.playerId === currentUserId;
+      const isResolvedByOther = isBeingResolved && !isResolvedByMe;
+      const resolverName = progress?.playerName || 'Another player';
+      
       return {
          instance,
          event,
          outcomes,
-         possibleOutcomes: buildPossibleOutcomes(event.effects)
+         possibleOutcomes: buildPossibleOutcomes(event.effects),
+         isBeingResolved,
+         isResolvedByMe,
+         isResolvedByOther,
+         resolverName
       };
    });
    
@@ -273,7 +284,7 @@
    async function handleExecuteSkill(event: CustomEvent) {
       if (!checkHandler || !eventPhaseController) return;
       
-      const { skill, eventId } = event.detail;
+      const { skill, eventId, outcome } = event.detail;
       
       // Determine which event this skill check is for
       let targetEvent = currentEvent;
@@ -307,6 +318,11 @@
          pendingSkillExecution = { skill };
          showActionConfirm = true;
          return;
+      }
+      
+      // Mark that this player is starting to resolve (multi-player coordination)
+      if (outcome) {
+         await eventPhaseController.startResolvingEvent(targetEvent.id, outcome, false);
       }
       
       // Execute the skill check
@@ -357,11 +373,17 @@
             };
             
             if (isOngoingEvent) {
-               // Store in the ongoing events resolution map
-               ongoingEventResolutions.set(eventId, resolution);
-               ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
+               // Store in KingdomActor (synced to all clients!)
+               await updateKingdom(kingdom => {
+                  if (!kingdom.activeEventInstances) return;
+                  const instance = kingdom.activeEventInstances.find(i => i.eventId === eventId);
+                  if (instance) {
+                     instance.appliedOutcome = resolution;
+                     console.log(`✅ [EventsPhase] Stored ongoing event resolution in instance: ${instance.instanceId}`);
+                  }
+               });
             } else {
-               // Store in main event resolution
+               // Store in main event resolution (local state, current event only)
                eventResolution = resolution;
                eventResolved = true;
             }
@@ -372,8 +394,15 @@
             isRolling = false;
             
             if (isOngoingEvent) {
-               ongoingEventResolutions.delete(eventId);
-               ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
+               // Clear resolution from KingdomActor
+               updateKingdom(kingdom => {
+                  if (!kingdom.activeEventInstances) return;
+                  const instance = kingdom.activeEventInstances.find(i => i.eventId === eventId);
+                  if (instance) {
+                     instance.appliedOutcome = undefined;
+                     console.log(`🚫 [EventsPhase] Cleared ongoing event resolution from instance`);
+                  }
+               });
             } else {
                eventResolution = null;
                eventResolved = false;
@@ -412,7 +441,7 @@
          const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === checkId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
-            resolution = ongoingEventResolutions.get(checkId);
+            resolution = ongoingEvent.instance.appliedOutcome;  // ✅ Get from instance
             console.log(`🔄 [EventsPhase] Applying ongoing event: ${targetEvent.name}`);
          }
       } else {
@@ -441,7 +470,9 @@
          targetEvent.id,
          resolution.outcome,
          resolutionData,
-         isIgnored
+         isIgnored,
+         resolution.actorName,
+         resolution.skillName
       );
       
       if (result.success) {
@@ -546,12 +577,18 @@
       };
       
       if (isOngoingEvent) {
-         // Store in the ongoing events resolution map
-         ongoingEventResolutions.set(checkId, resolution);
-         ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
-         console.log(`✅ [EventsPhase] Ongoing event ignore preview prepared for ${targetEvent.name}`);
+         // Store in KingdomActor (synced to all clients!)
+         await updateKingdom(kingdom => {
+            if (!kingdom.activeEventInstances) return;
+            const instance = kingdom.activeEventInstances.find(i => i.eventId === checkId);
+            if (instance) {
+               instance.appliedOutcome = resolution;
+               instance.effectsApplied = false;  // Preview only, not applied yet
+               console.log(`✅ [EventsPhase] Stored ignore preview in instance: ${instance.instanceId}`);
+            }
+         });
       } else {
-         // Store in main event resolution
+         // Store in main event resolution (local state for current event)
          eventResolution = resolution;
          eventResolved = true;
          console.log(`✅ [EventsPhase] Current event ignore preview prepared for ${targetEvent.name}`);
@@ -879,10 +916,13 @@
                      {isViewingCurrentPhase}
                      possibleOutcomes={item.possibleOutcomes}
                      showAidButton={false}
-                     resolved={ongoingEventResolutions.has(item.event.id)}
-                     resolution={ongoingEventResolutions.get(item.event.id) || null}
+                     resolved={!!item.instance.appliedOutcome}
+                     resolution={item.instance.appliedOutcome || null}
                      primaryButtonLabel="Apply Result"
                      skillSectionTitle="Choose Your Response:"
+                     resolutionInProgress={item.isBeingResolved}
+                     resolvingPlayerName={item.resolverName}
+                     isBeingResolvedByOther={item.isResolvedByOther}
                      on:executeSkill={handleExecuteSkill}
                      on:primary={handleApplyResult}
                      on:cancel={handleCancel}

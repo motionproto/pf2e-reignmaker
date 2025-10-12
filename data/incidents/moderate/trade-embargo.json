@@ -46,10 +46,8 @@
             "food",
             "stone"
           ],
-          "value": {
-            "formula": "1d4+1",
-            "negative": true
-          },
+          "value": "1d4+1",
+          "negative": true,
           "duration": "immediate",
           "name": "Trade Embargo Resource Loss"
         }
@@ -74,10 +72,8 @@
             "food",
             "stone"
           ],
-          "value": {
-            "formula": "1d4+1",
-            "negative": true
-          },
+          "value": "1d4+1",
+          "negative": true,
           "duration": "immediate"
         },
         {

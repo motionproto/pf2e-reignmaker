@@ -89,6 +89,11 @@
   export let skillSectionTitle: string = 'Choose Skill:';
   export let debugMode: boolean = false;
   
+  // Multi-player coordination props
+  export let resolutionInProgress: boolean = false;
+  export let resolvingPlayerName: string = '';
+  export let isBeingResolvedByOther: boolean = false;
+  
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
   $: effectiveDebugMode = debugMode || isGM;
@@ -337,12 +342,19 @@
                   description={skillOption.description || ''}
                   bonus={bonus}
                   selected={localUsedSkill === skillOption.skill}
-                  disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability)}
+                  disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
                   loading={isRolling && localUsedSkill === skillOption.skill}
                   on:execute={() => handleSkillClick(skillOption.skill)}
                 />
               {/each}
             </div>
+            
+            {#if isBeingResolvedByOther}
+              <div class="resolution-progress-notice">
+                <i class="fas fa-user-clock"></i>
+                <span>{resolvingPlayerName} is currently resolving this event...</span>
+              </div>
+            {/if}
           </div>
         {/if}
       {/if}
@@ -636,6 +648,25 @@
     letter-spacing: 0.05em;
     color: var(--text-tertiary);
     text-transform: capitalize;
+  }
+  
+  .resolution-progress-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--color-blue-light);
+    font-size: var(--font-sm);
+    font-style: italic;
+    
+    i {
+      font-size: var(--font-md);
+      opacity: 0.8;
+    }
   }
   
   @keyframes pulse {

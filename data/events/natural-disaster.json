@@ -41,7 +41,8 @@
             "food",
             "stone"
           ],
-          "value": -1,
+          "value": 1,
+          "negative": true,
           "duration": "immediate"
         }
       ],

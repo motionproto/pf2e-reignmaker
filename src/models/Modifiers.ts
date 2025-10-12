@@ -45,6 +45,27 @@ export interface ActiveEventInstance {
   eventData: EventData;          // Full event object (skills, outcomes, etc.)
   createdTurn: number;
   status: 'pending' | 'resolved';
+  
+  // Multi-player resolution tracking - shows who is currently working on this event
+  resolutionProgress?: {
+    playerId: string;                    // Who is currently resolving
+    playerName: string;                  // For display ("Alice is resolving...")
+    timestamp: number;                   // When they started
+    outcome?: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';  // What they rolled
+    selectedChoices?: number[];          // Which choice buttons clicked
+    rolledDice?: Record<string, number>; // Which dice were rolled { '0': 4, 'state:food': -3 }
+  };
+  
+  appliedOutcome?: {             // Persisted resolution state (survives re-renders)
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+    actorName: string;
+    skillName: string;
+    effect: string;
+    modifiers?: any[];           // RESOLVED static values (no dice formulas or choices)
+    manualEffects?: string[];
+    shortfallResources?: string[];
+  };
+  effectsApplied?: boolean;      // True after "Apply Result" clicked (gates phase completion)
 }
 
 /**
