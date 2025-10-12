@@ -258,9 +258,29 @@
    
    // Event handler - execute skill check
    async function handleExecuteSkill(event: CustomEvent) {
-      if (!currentEvent || !checkHandler || !eventPhaseController) return;
+      if (!checkHandler || !eventPhaseController) return;
       
-      const { skill } = event.detail;
+      const { skill, eventId } = event.detail;
+      
+      // Determine which event this skill check is for
+      let targetEvent = currentEvent;
+      
+      // If eventId is provided and it's not the current event, check ongoing events
+      if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === eventId);
+         if (ongoingEvent) {
+            targetEvent = ongoingEvent.event;
+         }
+      }
+      
+      if (!targetEvent) {
+         console.error('[EventsPhase] No event found for skill check');
+         return;
+      }
+      
+      // Store the target event temporarily for the skill check
+      const previousEvent = currentEvent;
+      currentEvent = targetEvent;
       
       // Check if THIS PLAYER has already performed an action using actionLog
       const actionLog = $kingdomData.turnState?.actionLog || [];
@@ -278,6 +298,11 @@
       
       // Execute the skill check
       await executeSkillCheck(skill);
+      
+      // Restore previous event if we switched
+      if (previousEvent !== targetEvent) {
+         currentEvent = previousEvent;
+      }
    }
    
    async function executeSkillCheck(skill: string) {
@@ -1016,6 +1041,7 @@
    .ongoing-events-header {
       margin: 0 0 15px 0;
       color: var(--text-accent);
+      font-family: var(--base-font);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-normal);
    }

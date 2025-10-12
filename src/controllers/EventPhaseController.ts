@@ -228,48 +228,60 @@ export async function createEventPhaseController(_eventService?: any) {
             }
             
             const outcomeData = event.effects[outcome];
+            const { getKingdomActor } = await import('../stores/KingdomStore');
+            const actor = getKingdomActor();
+            const kingdom = actor?.getKingdom();
+            const currentTurn = kingdom?.currentTurn || 1;
             
-            // Special handling for ignored dangerous events with immediate modifiers
-            // These become ongoing modifiers so they can be resolved later
+            // Check if this event already exists as an ongoing modifier
+            const existingModifier = kingdom?.activeModifiers?.find(
+                m => m.sourceId === event.id && m.originalEventData
+            );
+            
+            // Special handling for ignored dangerous events
             if (isIgnored && 
                 event.traits?.includes('dangerous') && 
                 outcomeData && 
                 outcomeData.modifiers && 
                 outcomeData.modifiers.length > 0) {
                 
-                const hasImmediateModifiers = outcomeData.modifiers.some(m => m.duration === 'immediate');
-                
-                if (hasImmediateModifiers) {
-                    const { getKingdomActor } = await import('../stores/KingdomStore');
-                    const actor = getKingdomActor();
-                    const kingdom = actor?.getKingdom();
-                    const currentTurn = kingdom?.currentTurn || 1;
+                // If re-ignoring an ongoing event, the effects have already been applied
+                // Just apply the failure effects without creating a new modifier
+                if (existingModifier) {
+                    console.log(`🔁 [EventPhaseController] Re-ignoring ongoing event: ${event.name} (modifier already exists, just applying failure effects)`);
+                    // The modifier stays in the ongoing events section
+                    // Fall through to apply effects via resolvePhaseOutcome
+                } else {
+                    // First time ignoring - create ongoing modifier if it has immediate modifiers
+                    const hasImmediateModifiers = outcomeData.modifiers.some(m => m.duration === 'immediate');
                     
-                    // Convert immediate modifiers to ongoing for ignored dangerous events
-                    const ongoingModifiers = outcomeData.modifiers.map(m => ({
-                        ...m,
-                        duration: m.duration === 'immediate' ? 'ongoing' : m.duration
-                    }));
-                    
-                    const modifier: ActiveModifier = {
-                        id: `event-${event.id}-${currentTurn}`,
-                        name: event.name,
-                        description: event.description,
-                        tier: typeof event.tier === 'number' ? event.tier : 1,
-                        sourceType: 'event',
-                        sourceId: event.id,
-                        sourceName: event.name,
-                        startTurn: currentTurn,
-                        modifiers: ongoingModifiers,
-                        originalEventData: event
-                    };
-                    
-                    await updateKingdom(kingdom => {
-                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                        kingdom.activeModifiers.push(modifier);
-                    });
-                    
-                    console.log(`✅ [EventPhaseController] Created ongoing modifier from ignored dangerous event: ${modifier.name}`);
+                    if (hasImmediateModifiers) {
+                        // Convert immediate modifiers to ongoing for ignored dangerous events
+                        const ongoingModifiers = outcomeData.modifiers.map(m => ({
+                            ...m,
+                            duration: m.duration === 'immediate' ? 'ongoing' : m.duration
+                        }));
+                        
+                        const modifier: ActiveModifier = {
+                            id: `event-${event.id}-${currentTurn}`,
+                            name: event.name,
+                            description: event.description,
+                            tier: typeof event.tier === 'number' ? event.tier : 1,
+                            sourceType: 'event',
+                            sourceId: event.id,
+                            sourceName: event.name,
+                            startTurn: currentTurn,
+                            modifiers: ongoingModifiers,
+                            originalEventData: event
+                        };
+                        
+                        await updateKingdom(kingdom => {
+                            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
+                            kingdom.activeModifiers.push(modifier);
+                        });
+                        
+                        console.log(`✅ [EventPhaseController] Created ongoing modifier from ignored dangerous event: ${modifier.name}`);
+                    }
                 }
             }
             // Check if event should create an ongoing modifier from rolled outcome

@@ -131,6 +131,7 @@
     dispatch('executeSkill', {
       skill,
       checkId: id,
+      eventId: id,  // For events/incidents, eventId is the same as checkId
       checkName: name,
       checkType
     });
