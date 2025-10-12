@@ -3,7 +3,7 @@
  * Replaces the complex persistence service with simple Foundry hooks
  */
 
-import { setupFoundrySync } from '../stores/KingdomStore';
+import { setupFoundrySync, updateOnlinePlayers } from '../stores/KingdomStore';
 import type { KingdomActor } from '../actors/KingdomActor';
 
 declare const Hooks: any;
@@ -54,6 +54,22 @@ function setupGameHooks(): void {
   Hooks.on('ready', () => {
     initializeKingdomActor();
     initializeKingdomArmiesFolder();
+  });
+  
+  // Hook for user connection changes to update online players list
+  Hooks.on('userConnected', (user: any, connected: boolean) => {
+    console.log(`[Kingdom Sync] User ${user.name} ${connected ? 'connected' : 'disconnected'}`);
+    updateOnlinePlayers();
+  });
+  
+  // Hook for updateUser - fires on ALL clients when any user changes (including active status)
+  // This ensures all clients see when players connect/disconnect
+  Hooks.on('updateUser', (user: any, changes: any, options: any, userId: string) => {
+    // Check if the active status changed (connect/disconnect)
+    if ('active' in changes) {
+      console.log(`[Kingdom Sync] User ${user.name} active status changed to: ${changes.active}`);
+      updateOnlinePlayers();
+    }
   });
 }
 

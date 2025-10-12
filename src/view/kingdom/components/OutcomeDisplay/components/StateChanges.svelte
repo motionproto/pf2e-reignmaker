@@ -18,9 +18,11 @@
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
   
   // Extract dice modifiers that should be shown as rollers
-  // These are modifiers with dice formulas that are NOT part of resource arrays
+  // These are modifiers with dice formulas that are NOT choice modifiers or resource arrays
   $: diceModifiersToShow = modifiers?.filter(m => 
-    !Array.isArray(m.resource) && 
+    m.type !== 'choice' &&           // Exclude choice modifiers (handled by ChoiceButtons)
+    !m.resources &&                  // Exclude modifiers with resources array (also choice modifiers)
+    !Array.isArray(m.resource) &&    // Exclude resource arrays
     typeof m.value === 'string' && 
     DICE_PATTERN.test(m.value)
   ) || [];
@@ -85,7 +87,13 @@
   }
   
   // Get label for a modifier (e.g., "Lose 2d4 Food")
-  function getModifierLabel(resource: string, value: any, resolved?: number): string {
+  function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
+    // Handle undefined or empty resource
+    if (!resource) {
+      console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
+      return `Unknown modifier: ${value}`;
+    }
+    
     const isNegative = (typeof value === 'string' && value.startsWith('-')) || 
                       (typeof value === 'number' && value < 0) ||
                       (resolved !== undefined && resolved < 0);
@@ -97,7 +105,7 @@
     } else {
       let displayValue = value;
       if (typeof displayValue === 'string') {
-        displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
+        displayValue = displayValue.replace(/^-/, '').replace(/^\\((.+)\\)$/, '$1');
       }
       return `${action} ${displayValue} ${resourceName}`;
     }

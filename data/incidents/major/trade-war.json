@@ -39,7 +39,7 @@
         },
         {
           "type": "choice",
-          "resources": [
+          "resource": [
             "lumber",
             "ore",
             "food",
@@ -64,7 +64,7 @@
         },
         {
           "type": "choice",
-          "resources": [
+          "resource": [
             "lumber",
             "ore",
             "food",

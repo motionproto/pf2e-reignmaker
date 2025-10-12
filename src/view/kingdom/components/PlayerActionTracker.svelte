@@ -1,23 +1,13 @@
 <script lang="ts">
-  import { kingdomData } from '../../../stores/KingdomStore';
+  import { kingdomData, onlinePlayers } from '../../../stores/KingdomStore';
   
   export let compact: boolean = false;
   
   let headerExpanded: boolean = false;
   
-  // Get online players from Foundry API
-  $: onlinePlayers = ((window as any).game?.users?.filter((u: any) => u.active) || []).map((user: any) => {
-    const characterName = user.character?.name;
-    const displayName = characterName || user.name || 'Unknown Player';
-    
-    return {
-      playerId: user.id,
-      playerName: user.name || 'Unknown Player',
-      displayName: displayName,
-      playerColor: user.color || '#cccccc',
-      characterName: characterName || user.name || 'Unknown'
-    };
-  }); // Show all online players
+  // Note: onlinePlayers now comes from reactive store, updated by Foundry hooks
+  // This ensures the tracker updates in real-time when players connect/disconnect
+  // Actions are still preserved from actionLog even if players disconnect
   
   // Get action log
   $: actionLog = $kingdomData.turnState?.actionLog || [];
@@ -37,7 +27,7 @@
   }, {} as Record<string, typeof actionLog>);
   
   // Players who have acted (for header expansion)
-  $: playersWhoActed = onlinePlayers.filter((p: any) => (playerActionCounts.get(p.playerId) || 0) > 0);
+  $: playersWhoActed = $onlinePlayers.filter((p: any) => (playerActionCounts.get(p.playerId) || 0) > 0);
   
   // Helper to format action name from actionName field (e.g., "build-structure-success")
   function formatActionName(actionName: string): { name: string; outcome: string } {
@@ -88,7 +78,7 @@
     </div>
 
     <div class="player-dots">
-      {#each onlinePlayers as player}
+      {#each $onlinePlayers as player}
         {@const hasActed = (playerActionCounts.get(player.playerId) || 0) > 0}
         <div 
           class="player-dot {hasActed ? 'acted' : ''}"
@@ -109,7 +99,7 @@
       {#if playersWhoActed.length === 0}
         <div class="no-actions">No actions performed yet</div>
       {:else}
-        {#each onlinePlayers as player}
+        {#each $onlinePlayers as player}
           {@const playerLog = actionsByPlayer[player.playerId] || []}
           {#if playerLog.length > 0}
             <div class="player-action-group">

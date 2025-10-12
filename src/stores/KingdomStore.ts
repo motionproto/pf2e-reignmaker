@@ -33,6 +33,17 @@ export const phaseViewLocked = writable<boolean>(true); // Lock viewing phase to
 export const selectedSettlement = writable<string | null>(null);
 export const expandedSections = writable<Set<string>>(new Set());
 
+// Online players store - reactive to Foundry user connections
+export interface OnlinePlayer {
+  playerId: string;
+  playerName: string;
+  displayName: string;
+  playerColor: string;
+  characterName: string;
+}
+
+export const onlinePlayers = writable<OnlinePlayer[]>([]);
+
 // Initialization state - components can wait for this to be true
 export const isInitialized = writable<boolean>(false);
 
@@ -160,10 +171,41 @@ export function isCurrentPhaseComplete(): boolean {
  */
 
 /**
+ * Update online players list from Foundry
+ */
+export function updateOnlinePlayers(): void {
+  if (typeof game === 'undefined' || !game.users) {
+    console.warn('[KingdomStore] Game users not available');
+    return;
+  }
+
+  const players: OnlinePlayer[] = game.users
+    .filter((u: any) => u.active)
+    .map((user: any) => {
+      const characterName = user.character?.name;
+      const displayName = characterName || user.name || 'Unknown Player';
+      
+      return {
+        playerId: user.id,
+        playerName: user.name || 'Unknown Player',
+        displayName: displayName,
+        playerColor: user.color || '#cccccc',
+        characterName: characterName || user.name || 'Unknown'
+      };
+    });
+
+  onlinePlayers.set(players);
+  console.log(`[KingdomStore] Updated online players: ${players.length} online`);
+}
+
+/**
  * Initialize all current players
  */
 export function initializeAllPlayers(): void {
   // Player tracking is now handled via actionLog in turnState
+  // Initialize online players list
+  updateOnlinePlayers();
+  
   // Mark as fully initialized
   isInitialized.set(true);
   console.log('[KingdomStore] Player tracking uses turnState.actionLog');

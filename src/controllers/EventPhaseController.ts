@@ -531,8 +531,10 @@ export async function createEventPhaseController(_eventService?: any) {
                     let resourceInfo = 'unknown';
                     if (isStaticModifier(mod) || isDiceModifier(mod)) {
                         resourceInfo = mod.resource;
+                    } else if (Array.isArray((mod as any).resource)) {
+                        resourceInfo = (mod as any).resource.join(', ');
                     } else {
-                        resourceInfo = (mod as any).resources?.join(', ') || 'unknown';
+                        resourceInfo = (mod as any).resource || 'unknown';
                     }
                     console.log(`     - Type: ${mod.type}, Resource: ${resourceInfo}, Value: ${(mod as any).value}, Duration: ${mod.duration}`);
                     console.log(`     - isStatic: ${isStaticModifier(mod)}, isOngoing: ${isOngoingDuration(mod.duration)}, isTurnCount: ${typeof mod.duration === 'number'}`);

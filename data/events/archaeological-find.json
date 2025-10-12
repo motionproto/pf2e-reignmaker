@@ -59,7 +59,7 @@
       "modifiers": [
         {
           "type": "choice",
-          "resources": [
+          "resource": [
             "food",
             "lumber",
             "ore",
