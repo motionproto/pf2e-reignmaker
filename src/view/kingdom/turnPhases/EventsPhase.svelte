@@ -58,6 +58,19 @@
    } | null = null;
    let eventResolved = false;
    
+   // Track resolutions for ongoing events separately
+   let ongoingEventResolutions = new Map<string, {
+     outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
+     actorName: string;
+     skillName: string;
+     effect: string;
+     stateChanges?: Record<string, any>;
+     modifiers?: any[];
+     manualEffects?: string[];
+     shortfallResources?: string[];
+     rollBreakdown?: any;
+   }>();
+   
    // Aid dialog state
    let showAidSelectionDialog = false;
    let showActionConfirm = false;
@@ -76,14 +89,14 @@
    $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
    $: eventResolvedFromState = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC || 15;
+   $: activeEventInstances = $kingdomData.activeEventInstances || [];
    $: activeModifiers = $kingdomData.activeModifiers || [];
-   $: ongoingEvents = activeModifiers.filter(m => m.originalEventData);
-   $: customModifiers = activeModifiers.filter(m => !m.originalEventData);
+   $: pendingEventInstances = activeEventInstances.filter(instance => instance.status === 'pending');
+   $: customModifiers = activeModifiers;  // All modifiers are now custom (no event data)
    
-   // Build outcomes for ongoing events
-   $: ongoingEventsWithOutcomes = ongoingEvents.map(modifier => {
-      if (!modifier.originalEventData) return null;
-      const event = modifier.originalEventData;
+   // Build outcomes for ongoing events from activeEventInstances
+   $: ongoingEventsWithOutcomes = pendingEventInstances.map(instance => {
+      const event = instance.eventData;
       const outcomes: Array<{
          type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
          description: string;
@@ -103,12 +116,12 @@
       }
       
       return {
-         modifier,
+         instance,
          event,
          outcomes,
          possibleOutcomes: buildPossibleOutcomes(event.effects)
       };
-   }).filter(item => item !== null);
+   });
    
    $: stabilityRoll = $kingdomData.turnState?.eventsPhase?.eventRoll || 0;
    $: showStabilityResult = $kingdomData.turnState?.eventsPhase?.eventRoll !== null;
@@ -308,6 +321,10 @@
    async function executeSkillCheck(skill: string) {
       if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
+      // Capture the event ID for closure
+      const eventId = currentEvent.id;
+      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.event.id === eventId);
+      
       // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
       // when the result is applied
       
@@ -329,7 +346,7 @@
             if (!currentEvent) return;
             const outcomeData = eventPhaseController.getEventModifiers(currentEvent, result.outcome);
             
-            eventResolution = {
+            const resolution = {
                outcome: result.outcome,
                actorName: result.actorName,
                skillName: skill,
@@ -338,14 +355,29 @@
                manualEffects: outcomeData.manualEffects,
                rollBreakdown: result.rollBreakdown
             };
-            eventResolved = true;
+            
+            if (isOngoingEvent) {
+               // Store in the ongoing events resolution map
+               ongoingEventResolutions.set(eventId, resolution);
+               ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
+            } else {
+               // Store in main event resolution
+               eventResolution = resolution;
+               eventResolved = true;
+            }
          },
          
          onCancel: () => {
             console.log(`🚫 [EventsPhase] Event check cancelled - resetting state`);
             isRolling = false;
-            eventResolution = null;
-            eventResolved = false;
+            
+            if (isOngoingEvent) {
+               ongoingEventResolutions.delete(eventId);
+               ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
+            } else {
+               eventResolution = null;
+               eventResolved = false;
+            }
             
             // Note: Canceling doesn't add to actionLog, so player can still act
          },
@@ -360,25 +392,54 @@
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-      if (!eventResolution || !currentEvent) return;
+      console.log(`📝 [EventsPhase] handleApplyResult called`);
       
-      console.log(`📝 [EventsPhase] Applying event result:`, eventResolution.outcome);
-      console.log(`🔍 [EventsPhase] Event detail received:`, event.detail);
-      
-      // NEW ARCHITECTURE: event.detail.resolution is already ResolutionData from OutcomeDisplay
+      // NEW ARCHITECTURE: event.detail contains both resolution and checkId
       const resolutionData = event.detail.resolution;
+      const checkId = event.detail.checkId;
+      
+      console.log(`� [EventsPhase] Event detail received:`, event.detail);
       console.log(`📋 [EventsPhase] ResolutionData:`, resolutionData);
+      console.log(`🔍 [EventsPhase] CheckId:`, checkId);
+      
+      // Determine which event and resolution to use
+      let targetEvent: EventData | null = null;
+      let resolution: any = null;
+      
+      // Check if this is an ongoing event or current event
+      if (checkId && checkId !== currentEvent?.id) {
+         // Ongoing event
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === checkId);
+         if (ongoingEvent) {
+            targetEvent = ongoingEvent.event;
+            resolution = ongoingEventResolutions.get(checkId);
+            console.log(`🔄 [EventsPhase] Applying ongoing event: ${targetEvent.name}`);
+         }
+      } else {
+         // Current event
+         targetEvent = currentEvent;
+         resolution = eventResolution;
+         console.log(`📍 [EventsPhase] Applying current event: ${targetEvent?.name}`);
+      }
+      
+      // Validate we have what we need
+      if (!resolution || !targetEvent) {
+         console.error(`❌ [EventsPhase] Missing resolution or event:`, { resolution, targetEvent });
+         return;
+      }
+      
+      console.log(`� [EventsPhase] Applying event result for ${targetEvent?.name}:`, resolution.outcome);
       
       // Call controller directly with ResolutionData
       const { createEventPhaseController } = await import('../../../controllers/EventPhaseController');
       const controller = await createEventPhaseController(null);
       
       // Pass isIgnored flag to controller
-      const isIgnored = eventResolution.isIgnored || false;
+      const isIgnored = resolution.isIgnored || false;
       
       const result = await controller.resolveEvent(
-         currentEvent.id,
-         eventResolution.outcome,
+         targetEvent.id,
+         resolution.outcome,
          resolutionData,
          isIgnored
       );
@@ -397,8 +458,11 @@
          }
          
          if (shortfalls.length > 0) {
-            eventResolution.shortfallResources = shortfalls;
+            resolution.shortfallResources = shortfalls;
          }
+         
+         // Note: No manual clearing needed - the reactive statement will handle it
+         // when the controller updates turnState.eventsPhase.eventId = null
       } else {
          console.error(`❌ [EventsPhase] Failed to apply event resolution:`, result.error);
          ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
@@ -442,17 +506,37 @@
    }
    
    // Event handler - ignore event (preview only, user must apply)
-   async function handleIgnore() {
-      if (!currentEvent || !eventPhaseController) return;
+   async function handleIgnore(event: CustomEvent) {
+      if (!eventPhaseController) return;
       
-      console.log(`🚫 [EventsPhase] Ignoring event (preparing failure preview): ${currentEvent.name}`);
+      const { checkId } = event.detail;
+      
+      // Determine which event this ignore is for
+      let targetEvent = currentEvent;
+      
+      // If checkId is provided and it's not the current event, check ongoing events
+      if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.event.id === checkId);
+         if (ongoingEvent) {
+            targetEvent = ongoingEvent.event;
+         }
+      }
+      
+      if (!targetEvent) {
+         console.error('[EventsPhase] No event found for ignore');
+         return;
+      }
+      
+      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.event.id === checkId);
+      
+      console.log(`🚫 [EventsPhase] Ignoring event (preparing failure preview): ${targetEvent.name}`);
       
       // Just prepare the failure outcome preview - don't apply anything yet
       // User must click "Apply Result" to confirm
-      const outcomeData = eventPhaseController.getEventModifiers(currentEvent, 'failure');
+      const outcomeData = eventPhaseController.getEventModifiers(targetEvent, 'failure');
       
-      eventResolution = {
-         outcome: 'failure',
+      const resolution = {
+         outcome: 'failure' as const,
          actorName: 'Event Ignored',
          skillName: '',
          effect: outcomeData.msg,
@@ -460,9 +544,23 @@
          manualEffects: outcomeData.manualEffects,
          isIgnored: true  // Flag to hide reroll button
       };
-      eventResolved = true;
       
-      console.log(`✅ [EventsPhase] Failure preview prepared, awaiting user confirmation`);
+      if (isOngoingEvent) {
+         // Store in the ongoing events resolution map
+         ongoingEventResolutions.set(checkId, resolution);
+         ongoingEventResolutions = ongoingEventResolutions; // Trigger reactivity
+         console.log(`✅ [EventsPhase] Ongoing event ignore preview prepared for ${targetEvent.name}`);
+      } else {
+         // Store in main event resolution
+         eventResolution = resolution;
+         eventResolved = true;
+         console.log(`✅ [EventsPhase] Current event ignore preview prepared for ${targetEvent.name}`);
+      }
+      
+      // Temporarily set currentEvent for the apply handler
+      if (targetEvent !== currentEvent) {
+         currentEvent = targetEvent;
+      }
    }
    
    // Event handler - aid another
@@ -781,8 +879,8 @@
                      {isViewingCurrentPhase}
                      possibleOutcomes={item.possibleOutcomes}
                      showAidButton={false}
-                     resolved={false}
-                     resolution={null}
+                     resolved={ongoingEventResolutions.has(item.event.id)}
+                     resolution={ongoingEventResolutions.get(item.event.id) || null}
                      primaryButtonLabel="Apply Result"
                      skillSectionTitle="Choose Your Response:"
                      on:executeSkill={handleExecuteSkill}

@@ -237,6 +237,7 @@
    * This is the single source of truth for what gets applied to the kingdom
    */
   function computeResolutionData(): ResolutionData {
+    console.log('🔍 [computeResolutionData] Starting with modifiers:', modifiers);
     const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
     
     // Case 1: Choice was made (resource arrays are replaced by choice)
@@ -273,10 +274,13 @@
     // Case 2: No choices, apply all modifiers
     else {
       console.log('🔍 [computeResolutionData] Processing standard resolution (no choices)');
+      console.log('🔍 [computeResolutionData] Modifiers array:', modifiers);
+      console.log('🔍 [computeResolutionData] Modifiers count:', modifiers?.length || 0);
       
       if (modifiers) {
         for (let i = 0; i < modifiers.length; i++) {
           const mod = modifiers[i];
+          console.log(`🔍 [computeResolutionData] Processing modifier [${i}]:`, mod);
           
           // Skip resource arrays if no choice (shouldn't happen, but safety)
           if (Array.isArray(mod.resource)) {
@@ -286,12 +290,17 @@
           
           // Get rolled value or use static value
           let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
+          console.log(`🔍 [computeResolutionData] Resolved value for [${i}]:`, value, '(type:', typeof value, ')');
           
           if (typeof value === 'number') {
             numericModifiers.push({ resource: mod.resource as ResourceType, value });
             console.log(`✅ [computeResolutionData] Added modifier [${i}]: ${mod.resource} = ${value}`);
+          } else {
+            console.warn(`⚠️ [computeResolutionData] Skipped modifier [${i}] - value is not a number:`, value);
           }
         }
+      } else {
+        console.warn('⚠️ [computeResolutionData] No modifiers array provided!');
       }
     }
     

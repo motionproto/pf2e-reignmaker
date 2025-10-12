@@ -13,7 +13,7 @@ import type { ResolutionData } from '../types/modifiers';
 import { updateKingdom } from '../stores/KingdomStore';
 import { createModifierService } from '../services/ModifierService';
 import { createGameEffectsService } from '../services/GameEffectsService';
-import type { ActiveModifier } from '../models/Modifiers';
+import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import { isStaticModifier, isOngoingDuration, isDiceModifier } from '../types/modifiers';
 import { 
   reportPhaseStart, 
@@ -233,101 +233,112 @@ export async function createEventPhaseController(_eventService?: any) {
             const kingdom = actor?.getKingdom();
             const currentTurn = kingdom?.currentTurn || 1;
             
-            // Check if this event already exists as an ongoing modifier
-            const existingModifier = kingdom?.activeModifiers?.find(
-                m => m.sourceId === event.id && m.originalEventData
+            // Check if this event already exists as an ongoing instance
+            const existingInstance = kingdom?.activeEventInstances?.find(
+                instance => instance.eventId === event.id && instance.status === 'pending'
             );
             
-            // Special handling for ignored dangerous events
-            if (isIgnored && 
-                event.traits?.includes('dangerous') && 
-                outcomeData && 
-                outcomeData.modifiers && 
-                outcomeData.modifiers.length > 0) {
+            // NEW ARCHITECTURE: Create or update ActiveEventInstance for ongoing events
+            // This happens for:
+            // 1. Ignored dangerous events with immediate modifiers → ongoing
+            // 2. Rolled outcomes with endsEvent: false and ongoing modifiers
+            const shouldCreateInstance = (
+                (isIgnored && 
+                 event.traits?.includes('dangerous') && 
+                 outcomeData?.modifiers?.some(m => m.duration === 'immediate')) ||
+                (outcomeData && !outcomeData.endsEvent && outcomeData.modifiers && 
+                 outcomeData.modifiers.some(m => m.duration === 'ongoing' || typeof m.duration === 'number'))
+            );
+            
+            // Create instance and clear current event in a SINGLE update to avoid double-rendering
+            if (shouldCreateInstance && !existingInstance) {
+                // First time: Create new instance
+                const instanceId = `${event.id}-${Date.now()}`;
+                const instance: ActiveEventInstance = {
+                    instanceId,
+                    eventId: event.id,
+                    eventType: 'event',
+                    eventData: event,
+                    createdTurn: currentTurn,
+                    status: 'pending'
+                };
                 
-                // If re-ignoring an ongoing event, the effects have already been applied
-                // Just apply the failure effects without creating a new modifier
-                if (existingModifier) {
-                    console.log(`🔁 [EventPhaseController] Re-ignoring ongoing event: ${event.name} (modifier already exists, just applying failure effects)`);
-                    // The modifier stays in the ongoing events section
-                    // Fall through to apply effects via resolvePhaseOutcome
-                } else {
-                    // First time ignoring - create ongoing modifier if it has immediate modifiers
-                    const hasImmediateModifiers = outcomeData.modifiers.some(m => m.duration === 'immediate');
+                await updateKingdom(kingdom => {
+                    // Create instance
+                    if (!kingdom.activeEventInstances) kingdom.activeEventInstances = [];
+                    kingdom.activeEventInstances.push(instance);
                     
-                    if (hasImmediateModifiers) {
-                        // Convert immediate modifiers to ongoing for ignored dangerous events
-                        const ongoingModifiers = outcomeData.modifiers.map(m => ({
-                            ...m,
-                            duration: m.duration === 'immediate' ? 'ongoing' : m.duration
-                        }));
-                        
-                        const modifier: ActiveModifier = {
-                            id: `event-${event.id}-${currentTurn}`,
-                            name: event.name,
-                            description: event.description,
-                            tier: typeof event.tier === 'number' ? event.tier : 1,
-                            sourceType: 'event',
-                            sourceId: event.id,
-                            sourceName: event.name,
-                            startTurn: currentTurn,
-                            modifiers: ongoingModifiers,
-                            originalEventData: event
-                        };
-                        
-                        await updateKingdom(kingdom => {
-                            if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                            kingdom.activeModifiers.push(modifier);
-                        });
-                        
-                        console.log(`✅ [EventPhaseController] Created ongoing modifier from ignored dangerous event: ${modifier.name}`);
+                    // Clear current event atomically (prevents showing in both sections)
+                    if (kingdom.turnState?.eventsPhase?.eventId === eventId) {
+                        kingdom.turnState.eventsPhase.eventId = null;
+                        kingdom.turnState.eventsPhase.eventTriggered = false;
                     }
-                }
-            }
-            // Check if event should create an ongoing modifier from rolled outcome
-            // This happens when the outcome has endsEvent: false and already has ongoing modifiers
-            else if (outcomeData && !outcomeData.endsEvent && outcomeData.modifiers && outcomeData.modifiers.length > 0) {
-                const { getKingdomActor } = await import('../stores/KingdomStore');
-                const actor = getKingdomActor();
-                const kingdom = actor?.getKingdom();
-                const currentTurn = kingdom?.currentTurn || 1;
+                });
                 
-                // Check if modifiers have ongoing duration
-                const hasOngoingModifiers = outcomeData.modifiers.some(m => 
-                    m.duration === 'ongoing' || typeof m.duration === 'number'
-                );
-                
-                if (hasOngoingModifiers) {
-                    const modifier: ActiveModifier = {
-                        id: `event-${event.id}-${currentTurn}`,
-                        name: event.name,
-                        description: event.description,
-                        tier: typeof event.tier === 'number' ? event.tier : 1,
-                        sourceType: 'event',
-                        sourceId: event.id,
-                        sourceName: event.name,
-                        startTurn: currentTurn,
-                        modifiers: outcomeData.modifiers,
-                        originalEventData: event
-                    };
-                    
-                    await updateKingdom(kingdom => {
-                        if (!kingdom.activeModifiers) kingdom.activeModifiers = [];
-                        kingdom.activeModifiers.push(modifier);
-                    });
-                    
-                    console.log(`✅ [EventPhaseController] Created ongoing modifier from event outcome: ${modifier.name}`);
-                }
+                console.log(`✅ [EventPhaseController] Created event instance and cleared current event: ${instance.instanceId}`);
+            } else if (existingInstance) {
+                // Reroll case: Instance already exists, just apply effects
+                console.log(`🔁 [EventPhaseController] Re-rolling existing instance: ${event.name} (${existingInstance.instanceId})`);
             }
             
             // Use unified resolution wrapper (consolidates duplicate logic)
-            return await resolvePhaseOutcome(
+            const result = await resolvePhaseOutcome(
                 eventId,
                 'event',
                 outcome,
                 resolutionData,
                 [EventsPhaseSteps.RESOLVE_EVENT, EventsPhaseSteps.APPLY_MODIFIERS]  // Type-safe step indices
             );
+            
+            // After resolution, mark instance as resolved if it ends the event
+            if (!isIgnored && existingInstance && outcomeData?.endsEvent) {
+                await updateKingdom(kingdom => {
+                    kingdom.activeEventInstances = kingdom.activeEventInstances?.filter(
+                        instance => instance.instanceId !== existingInstance.instanceId
+                    ) || [];
+                });
+                console.log(`✅ [EventPhaseController] Removed resolved event instance: ${existingInstance.instanceId}`);
+            }
+            
+            // Track event as resolved (for phase gate) - only if NOT creating new instance
+            if (!shouldCreateInstance || existingInstance) {
+                await updateKingdom(kingdom => {
+                    if (!kingdom.turnState?.eventsPhase) return;
+                    
+                    // Initialize resolved tracking array
+                    if (!kingdom.turnState.eventsPhase.resolvedOngoingEvents) {
+                        kingdom.turnState.eventsPhase.resolvedOngoingEvents = [];
+                    }
+                    
+                    // Add to resolved list (prevents blocking phase progression)
+                    if (!kingdom.turnState.eventsPhase.resolvedOngoingEvents.includes(eventId)) {
+                        kingdom.turnState.eventsPhase.resolvedOngoingEvents.push(eventId);
+                        console.log(`✅ [EventPhaseController] Marked event as resolved: ${eventId}`);
+                    }
+                    
+                    // If it was the active event, clear it (moves to ongoing section)
+                    if (kingdom.turnState.eventsPhase.eventId === eventId) {
+                        kingdom.turnState.eventsPhase.eventId = null;
+                        kingdom.turnState.eventsPhase.eventTriggered = false;
+                        console.log(`✅ [EventPhaseController] Cleared active event, moved to ongoing section`);
+                    }
+                });
+            }
+            
+            // Check if all events are resolved (phase completion)
+            const updatedActor = getKingdomActor();
+            const updatedKingdomState = updatedActor?.getKingdom();
+            const pendingInstances = updatedKingdomState?.activeEventInstances?.filter(i => i.status === 'pending') || [];
+            const resolvedEvents = updatedKingdomState?.turnState?.eventsPhase?.resolvedOngoingEvents || [];
+            const allResolved = pendingInstances.length === 0 || pendingInstances.every(i => resolvedEvents.includes(i.eventId));
+            
+            if (allResolved && !updatedKingdomState?.turnState?.eventsPhase?.eventId) {
+                console.log(`✅ [EventPhaseController] All events resolved, marking phase complete`);
+                await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
+                await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
+            }
+            
+            return result;
         },
         /**
          * Apply custom modifiers at the start of Events phase
@@ -349,13 +360,11 @@ export async function createEventPhaseController(_eventService?: any) {
             
             console.log(`🔍 [EventPhaseController.applyCustomModifiers] Total active modifiers: ${kingdom.activeModifiers.length}`);
             kingdom.activeModifiers.forEach(m => {
-                console.log(`  - ${m.name} (sourceType: ${m.sourceType}, hasOriginalEventData: ${!!m.originalEventData})`);
+                console.log(`  - ${m.name} (sourceType: ${m.sourceType})`);
             });
             
-            // Filter for custom modifiers only (no resolution path, not from structures)
-            const customModifiers = kingdom.activeModifiers.filter(m => 
-                !m.originalEventData && m.sourceType === 'custom'
-            );
+            // Filter for custom modifiers only (sourceType === 'custom')
+            const customModifiers = kingdom.activeModifiers.filter(m => m.sourceType === 'custom');
             
             if (customModifiers.length === 0) {
                 console.log('⚠️ [EventPhaseController.applyCustomModifiers] No custom modifiers found');

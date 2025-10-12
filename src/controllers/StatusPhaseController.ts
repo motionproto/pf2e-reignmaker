@@ -44,8 +44,18 @@ export async function createStatusPhaseController() {
         // Clear previous turn's incident
         await this.clearPreviousIncident();
         
-        // NOTE: Resource decay, Fame init, and base unrest are now handled by TurnManager.prepareTurn()
-        // This ensures they only run once per turn, not on component remount
+        // ✅ ONE-TIME turn initialization (runs at START of every turn, including Turn 1)
+        // Process resource decay from previous turn
+        await this.processResourceDecay();
+        
+        // Initialize Fame to 1 for this turn
+        await this.initializeFame();
+        
+        // Apply base unrest (size + metropolises)
+        await this.applyBaseUnrest();
+        
+        // Clean up expired modifiers
+        await this.cleanupExpiredModifiers();
         
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
@@ -212,10 +222,21 @@ export async function createStatusPhaseController() {
     },
 
     /**
+     * Clean up expired modifiers
+     */
+    async cleanupExpiredModifiers() {
+      const { createModifierService } = await import('../services/ModifierService');
+      const modifierService = await createModifierService();
+      await modifierService.cleanupExpiredModifiers();
+    },
+
+    /**
      * Apply permanent modifiers from structures
      * 
      * Permanent modifiers come from built structures and are applied each turn.
      * This is different from immediate/ongoing/turn-based modifiers from events/incidents.
+     * 
+     * Note: These use a legacy format with duration: 'permanent' (not part of typed EventModifier system)
      */
     async applyPermanentModifiers() {
       const actor = getKingdomActor();
@@ -231,6 +252,13 @@ export async function createStatusPhaseController() {
         return;
       }
 
+      // Legacy permanent modifiers use a simplified structure (not typed EventModifier)
+      interface LegacyPermanentModifier {
+        resource: string;
+        value: number | string;
+        duration: 'permanent';
+      }
+
       const permanentModifiers = (kingdom.activeModifiers || []).filter(
         (mod: any) => mod.modifiers?.some((m: any) => m.duration === 'permanent')
       );
@@ -244,12 +272,13 @@ export async function createStatusPhaseController() {
       // Apply each permanent modifier's effects
       for (const modifier of permanentModifiers) {
         for (const mod of modifier.modifiers || []) {
-          if (mod.duration === 'permanent') {
-            const resource = mod.resource;
-            const value = typeof mod.value === 'string' ? parseInt(mod.value, 10) : mod.value;
+          const legacyMod = mod as unknown as LegacyPermanentModifier;
+          if (legacyMod.duration === 'permanent') {
+            const resource = legacyMod.resource;
+            const value = typeof legacyMod.value === 'string' ? parseInt(legacyMod.value, 10) : legacyMod.value;
             
             if (isNaN(value)) {
-              console.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${mod.value}`);
+              console.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${legacyMod.value}`);
               continue;
             }
 

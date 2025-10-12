@@ -5,7 +5,7 @@
 
 import type { Settlement } from '../models/Settlement';
 import type { BuildProject, Army } from '../models/BuildProject';
-import type { ActiveModifier } from '../models/Modifiers';
+import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import type { TurnState } from '../models/TurnState';
 import type { Faction } from '../models/Faction';
 
@@ -98,7 +98,8 @@ export interface KingdomData {
   
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
-  activeModifiers: ActiveModifier[];  // Active modifiers from events/structures/custom
+  activeEventInstances: ActiveEventInstance[];  // Active event/incident instances that need resolution
+  activeModifiers: ActiveModifier[];  // Active modifiers from structures/diplomatic/custom (NOT events)
   eventDC: number;  // Event DC that persists across turns (15 default, -5 when no event, min 6)
   
   // Simplified phase management with step arrays - single source of truth
@@ -251,6 +252,7 @@ export class KingdomActor extends Actor {
       fame: 0,
       isAtWar: false,
       ongoingEvents: [],
+      activeEventInstances: [],
       activeModifiers: [],
       eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],
@@ -375,6 +377,38 @@ export class KingdomActor extends Actor {
       kingdom.activeModifiers = kingdom.activeModifiers.filter(m => m.id !== modifierId);
     });
   }
+  
+  /**
+   * Add active event instance
+   */
+  async addActiveEventInstance(instance: ActiveEventInstance): Promise<void> {
+    await this.updateKingdom((kingdom) => {
+      kingdom.activeEventInstances = kingdom.activeEventInstances || [];
+      kingdom.activeEventInstances.push(instance);
+    });
+  }
+  
+  /**
+   * Remove active event instance
+   */
+  async removeActiveEventInstance(instanceId: string): Promise<void> {
+    await this.updateKingdom((kingdom) => {
+      kingdom.activeEventInstances = (kingdom.activeEventInstances || []).filter(e => e.instanceId !== instanceId);
+    });
+  }
+  
+  /**
+   * Update active event instance
+   */
+  async updateActiveEventInstance(instanceId: string, updates: Partial<ActiveEventInstance>): Promise<void> {
+    await this.updateKingdom((kingdom) => {
+      kingdom.activeEventInstances = kingdom.activeEventInstances || [];
+      const index = kingdom.activeEventInstances.findIndex(e => e.instanceId === instanceId);
+      if (index >= 0) {
+        kingdom.activeEventInstances[index] = { ...kingdom.activeEventInstances[index], ...updates };
+      }
+    });
+  }
 }
 
 /**
@@ -406,6 +440,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       fame: 0,
       isAtWar: false,
       ongoingEvents: [],
+      activeEventInstances: [],
       activeModifiers: [],
       eventDC: 15,  // Default event DC per rules
       currentPhaseSteps: [],

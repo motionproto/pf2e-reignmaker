@@ -86,6 +86,7 @@ export interface EventsPhaseState {
     manualEffects: string[];
   }>;
   activeAids: AidEntry[];  // Aid bonuses available for the current event
+  resolvedOngoingEvents?: string[];  // Event IDs resolved this turn (for phase gate)
 }
 
 /**

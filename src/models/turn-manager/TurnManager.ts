@@ -235,157 +235,6 @@ export class TurnManager {
     }
     
     /**
-     * Prepare turn - centralized one-time initialization for new turns
-     * Called once at the start of each turn (from endTurn)
-     */
-    private async prepareTurn(): Promise<void> {
-        console.log('🔄 [TurnManager] Preparing turn...');
-        
-        // 1. Process resource decay (from previous turn)
-        await this.processResourceDecay();
-        
-        // 2. Apply base unrest (size + metropolises)
-        await this.applyBaseUnrest();
-        
-        // 3. Initialize Fame to 1
-        await this.initializeFame();
-        
-        // 4. Clean up expired modifiers
-        await this.cleanupExpiredModifiers();
-        
-        console.log('✅ [TurnManager] Turn preparation complete');
-    }
-    
-    /**
-     * Process resource decay from previous turn
-     */
-    private async processResourceDecay(): Promise<void> {
-        const { getKingdomActor } = await import('../../stores/KingdomStore');
-        const actor = getKingdomActor();
-        if (!actor) {
-            console.error('❌ [TurnManager] No KingdomActor available');
-            return;
-        }
-        
-        await actor.updateKingdom((kingdom) => {
-            const decayedLumber = kingdom.resources.lumber || 0;
-            const decayedStone = kingdom.resources.stone || 0;
-            const decayedOre = kingdom.resources.ore || 0;
-            
-            kingdom.resources.lumber = 0;
-            kingdom.resources.stone = 0;
-            kingdom.resources.ore = 0;
-            
-            if (decayedLumber > 0 || decayedStone > 0 || decayedOre > 0) {
-                console.log(`♻️ [TurnManager] Resource decay: -${decayedLumber} lumber, -${decayedStone} stone, -${decayedOre} ore`);
-            }
-        });
-    }
-    
-    /**
-     * Apply base unrest from kingdom size and metropolises
-     */
-    private async applyBaseUnrest(): Promise<void> {
-        const { getKingdomActor } = await import('../../stores/KingdomStore');
-        const { SettlementTier } = await import('../../models/Settlement');
-        const actor = getKingdomActor();
-        if (!actor) {
-            console.error('❌ [TurnManager] No KingdomActor available');
-            return;
-        }
-        
-        const kingdom = actor.getKingdom();
-        if (!kingdom) {
-            console.error('❌ [TurnManager] No kingdom data available');
-            return;
-        }
-        
-        // Get setting value (with fallback to 8)
-        // @ts-ignore - Foundry globals
-        let hexesPerUnrest = 8; // default
-        try {
-            hexesPerUnrest = (game.settings.get('pf2e-reignmaker', 'hexesPerUnrest') as number) || 8;
-        } catch (error) {
-            console.warn('⚠️ [TurnManager] Setting not available yet, using default (8)');
-        }
-        
-        // Calculate base unrest sources
-        const hexUnrest = Math.floor(kingdom.size / hexesPerUnrest);
-        const metropolisCount = kingdom.settlements.filter(
-            s => s.tier === SettlementTier.METROPOLIS
-        ).length;
-        
-        const totalBaseUnrest = hexUnrest + metropolisCount;
-        
-        if (totalBaseUnrest > 0) {
-            // Create display-only modifiers for Status phase UI
-            const displayModifiers: any[] = [];
-            
-            if (hexUnrest > 0) {
-                displayModifiers.push({
-                    id: 'status-size-unrest',
-                    name: 'Kingdom Size',
-                    description: `Your kingdom's ${kingdom.size} hexes generate unrest as it becomes harder to govern`,
-                    sourceType: 'structure',
-                    modifiers: [{
-                        resource: 'unrest',
-                        value: hexUnrest,
-                        duration: 'permanent'
-                    }]
-                });
-            }
-            
-            if (metropolisCount > 0) {
-                displayModifiers.push({
-                    id: 'status-metropolis-unrest',
-                    name: 'Metropolis Complexity',
-                    description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
-                    sourceType: 'structure',
-                    modifiers: [{
-                        resource: 'unrest',
-                        value: metropolisCount,
-                        duration: 'permanent'
-                    }]
-                });
-            }
-            
-            await actor.updateKingdom((k) => {
-                k.unrest = (k.unrest || 0) + totalBaseUnrest;
-                
-                // Store display modifiers in turnState for Status phase UI
-                if (k.turnState) {
-                    k.turnState.statusPhase.displayModifiers = displayModifiers;
-                }
-            });
-            
-            console.log(`📊 [TurnManager] Base unrest applied: +${hexUnrest} (${kingdom.size} hexes ÷ ${hexesPerUnrest}), +${metropolisCount} (metropolises) = +${totalBaseUnrest} total`);
-        }
-    }
-    
-    /**
-     * Initialize Fame to 1 for the turn
-     */
-    private async initializeFame(): Promise<void> {
-        const { getKingdomActor } = await import('../../stores/KingdomStore');
-        const actor = getKingdomActor();
-        if (actor) {
-            await actor.updateKingdom((kingdom) => {
-                kingdom.fame = 1;
-            });
-            console.log('✨ [TurnManager] Fame initialized to 1');
-        }
-    }
-    
-    /**
-     * Clean up expired modifiers
-     */
-    private async cleanupExpiredModifiers(): Promise<void> {
-        const { createModifierService } = await import('../../services/ModifierService');
-        const modifierService = await createModifierService();
-        await modifierService.cleanupExpiredModifiers();
-    }
-    
-    /**
      * End the current turn and start a new one
      */
     async endTurn(): Promise<void> {
@@ -419,8 +268,9 @@ export class TurnManager {
             // Cleanup is handled by ModifierService.cleanupExpiredModifiers() during Status phase
         });
         
-        // ✅ ONE-TIME turn initialization (runs once, not on component mount)
-        await this.prepareTurn();
+        // ✅ Turn initialization now handled by StatusPhaseController.startPhase()
+        // This ensures initialization happens at the START of the turn (including Turn 1),
+        // not at the end of the previous turn
         
         this.onTurnChanged?.(currentKingdom.currentTurn + 1);
         this.onPhaseChanged?.(TurnPhase.STATUS);
