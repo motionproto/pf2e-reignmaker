@@ -55,17 +55,24 @@ export function getResourceIcon(resource: string): string {
 }
 
 /**
- * Get color class for a resource type
+ * Get color CSS variable for a resource/stat type
+ * Uses centralized icon color variables from variables.css
  */
 export function getResourceColor(resource: string): string {
   const colors: Record<string, string> = {
-    gold: 'resource-gold',
-    food: 'resource-food',
-    lumber: 'resource-lumber',
-    stone: 'resource-stone',
-    ore: 'resource-ore'
+    // Resources
+    gold: 'var(--icon-gold)',
+    food: 'var(--icon-food)',
+    lumber: 'var(--icon-lumber)',
+    stone: 'var(--icon-stone)',
+    ore: 'var(--icon-ore)',
+    
+    // Stats
+    fame: 'var(--icon-fame)',
+    unrest: 'var(--icon-unrest-minor)',
+    prison: 'var(--icon-prison)'
   };
-  return colors[resource] || 'resource-default';
+  return colors[resource] || 'var(--text-primary)';
 }
 
 /**

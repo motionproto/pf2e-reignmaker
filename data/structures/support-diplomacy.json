@@ -10,10 +10,8 @@
       "category": "diplomacy",
       "tier": 1,
       "effect": "+1 Diplomatic capacity. Enables 'Establish Diplomatic Relations' action",
-      "construction": {
-        "resources": {
-          "stone": 2
-        }
+      "cost": {
+        "stone": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "diplomacy",
       "tier": 2,
       "effect": "+2 Diplomatic capacity",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 2
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "diplomacy",
       "tier": 3,
       "effect": "+3 Diplomatic capacity. +1 Fame",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 4,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 4,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "diplomacy",
       "tier": 4,
       "effect": "+4 Diplomatic capacity. +1 Fame",
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 6,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 6,
+        "ore": 6
       },
       "traits": [
         "building",

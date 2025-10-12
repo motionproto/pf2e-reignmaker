@@ -10,10 +10,8 @@
       "category": "fortifications",
       "tier": 1,
       "effect": "+1 Army AC",
-      "construction": {
-        "resources": {
-          "lumber": 2
-        }
+      "cost": {
+        "lumber": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "fortifications",
       "tier": 2,
       "effect": "+1 Army AC, +1 Effective Level",
-      "construction": {
-        "resources": {
-          "lumber": 1,
-          "stone": 3
-        }
+      "cost": {
+        "lumber": 1,
+        "stone": 3
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "fortifications",
       "tier": 3,
       "effect": "+1 Army AC, +2 Effective Level",
-      "construction": {
-        "resources": {
-          "lumber": 1,
-          "stone": 4,
-          "ore": 3
-        }
+      "cost": {
+        "lumber": 1,
+        "stone": 4,
+        "ore": 3
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "fortifications",
       "tier": 4,
       "effect": "+2 Army AC, +3 Effective Level",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 8,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 8,
+        "ore": 6
       },
       "traits": [
         "building",

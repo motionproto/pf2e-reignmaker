@@ -47,7 +47,7 @@
     "dev:proxy": "vite",
     "dev:standalone": "vite --config vite.config.dev.ts",
     "clean": "rm -rf dist",
-    "deploy": "node buildscripts/deploy.js",
+    "deploy": "npm run clean && node buildscripts/deploy.js",
     "deploy:dev": "npm run dev:setup",
     "preview": "vite preview",
     "proxy": "npm run dev"

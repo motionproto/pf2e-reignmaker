@@ -10,10 +10,8 @@
       "category": "revenue",
       "tier": 1,
       "effect": "Each Kingdom Turn, the kingdom gains 1 Gold",
-      "construction": {
-        "resources": {
-          "stone": 2
-        }
+      "cost": {
+        "stone": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "revenue",
       "tier": 2,
       "effect": "Each Kingdom Turn, the kingdom gains 2 Gold. PCs may attempt the Personal Income kingdom action",
-      "construction": {
-        "resources": {
-          "lumber": 1,
-          "stone": 3
-        }
+      "cost": {
+        "lumber": 1,
+        "stone": 3
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "revenue",
       "tier": 3,
       "effect": "Each Kingdom Turn, the kingdom gains 4 Gold. PCs may attempt the Personal Income action (Income T3)",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 5,
-          "ore": 1
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 5,
+        "ore": 1
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "revenue",
       "tier": 4,
       "effect": "Each Kingdom Turn, the kingdom gains 8 Gold. PCs may attempt the Personal Income action (Income T4)",
-      "construction": {
-        "resources": {
-          "lumber": 3,
-          "stone": 9,
-          "ore": 4
-        }
+      "cost": {
+        "lumber": 3,
+        "stone": 9,
+        "ore": 4
       },
       "traits": [
         "building",

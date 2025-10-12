@@ -149,7 +149,7 @@ export function parseStructureFromJSON(data: any): Structure {
     type: data.type as StructureType,
     category: data.category as StructureCategory,
     tier: data.tier,
-    constructionCost: data.construction?.resources || {},
+    constructionCost: data.cost || {},
     effects: {},
     effect: '',
     special: data.special,

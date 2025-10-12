@@ -10,10 +10,8 @@
       "category": "logistics",
       "tier": 1,
       "effect": "Increases the settlement's unit capacity by +1",
-      "construction": {
-        "resources": {
-          "stone": 2
-        }
+      "cost": {
+        "stone": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "logistics",
       "tier": 2,
       "effect": "Increases the settlement's unit capacity by +2",
-      "construction": {
-        "resources": {
-          "lumber": 1,
-          "stone": 3
-        }
+      "cost": {
+        "lumber": 1,
+        "stone": 3
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "logistics",
       "tier": 3,
       "effect": "Increases the settlement's unit capacity by +3",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 4,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 4,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "logistics",
       "tier": 4,
       "effect": "Increases the settlement's unit capacity by +4",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 8,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 8,
+        "ore": 6
       },
       "traits": [
         "building",

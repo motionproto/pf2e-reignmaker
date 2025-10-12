@@ -54,6 +54,18 @@
   /* Brown/Tan Colors - Used for resource icons */
   --color-brown-light: hsla(29, 48%, 64%, 1);
   
+  /* Icon Colors - Consistent colors for game icons */
+  --icon-fame: var(--color-amber);
+  --icon-gold: var(--color-amber-light);
+  --icon-unrest-none: var(--color-gray-500);
+  --icon-unrest-minor: var(--color-orange);
+  --icon-unrest-moderate: var(--color-crimson);
+  --icon-unrest-major: var(--color-red);
+  --icon-prison: var(--color-warning);
+  --icon-food: var(--color-brown-light);
+  --icon-lumber: var(--color-green);
+  --icon-stone: var(--color-gray-500);
+  --icon-ore: var(--color-blue);
 
   /* Semantic Colors */
   --bg-base: var(--color-gray-950);

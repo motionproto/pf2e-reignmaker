@@ -16,6 +16,10 @@
   // Pure UI state - no business logic  
   $: selectedPhase = $viewingPhase || $currentPhase;
   
+  // Lock warning state
+  let lockWarningActive = false;
+  let lockWarningTimeout: number | null = null;
+  
   // Helper function to determine if a phase is completed
   // A phase is completed if the current phase comes after it in the sequence
   function isPhaseCompleted(phase: TurnPhase, current: TurnPhase): boolean {
@@ -33,6 +37,33 @@
 
   // Pure UI actions - just update viewing state
   function handlePhaseClick(phase: TurnPhase) {
+    // If locked and clicking different phase than current
+    if ($phaseViewLocked && phase !== $currentPhase) {
+      if (!lockWarningActive) {
+        // First click - show warning
+        lockWarningActive = true;
+        console.log('[PhaseBar] Lock warning activated - click again to unlock');
+        
+        // Clear warning after 5 seconds
+        lockWarningTimeout = window.setTimeout(() => {
+          lockWarningActive = false;
+          lockWarningTimeout = null;
+          console.log('[PhaseBar] Lock warning timeout - reset to locked state');
+        }, 5000);
+        
+        return; // Don't change phase yet
+      } else {
+        // Second click - unlock and proceed
+        console.log('[PhaseBar] Unlocking phase view - confirmed by second click');
+        lockWarningActive = false;
+        if (lockWarningTimeout) {
+          clearTimeout(lockWarningTimeout);
+          lockWarningTimeout = null;
+        }
+        phaseViewLocked.set(false);
+      }
+    }
+    
     setViewingPhase(phase);
   }
   
@@ -71,11 +102,19 @@
     <button
       class="lock-button"
       class:locked={$phaseViewLocked}
+      class:warning={lockWarningActive}
       on:click={handleLockToggle}
       title={$phaseViewLocked ? 'View locked to current phase - click to unlock' : 'View unlocked - click to lock to current phase'}
     >
       <i class="fas {$phaseViewLocked ? 'fa-lock' : 'fa-unlock'}"></i>
     </button>
+    
+    <!-- Lock warning message -->
+    {#if lockWarningActive}
+      <div class="lock-warning-message">
+        Click again to unlock
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -307,6 +346,60 @@
   
   .lock-button:not(.locked) i {
     transform: rotate(-30deg);
+  }
+  
+  /* Lock warning state - red pulse animation */
+  .lock-button.warning {
+    color: var(--color-danger, #ff4444) !important;
+    animation: lock-warning-pulse 0.5s ease-in-out infinite;
+  }
+  
+  @keyframes lock-warning-pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.3);
+      opacity: 0.8;
+    }
+  }
+  
+  /* Lock warning message */
+  .lock-warning-message {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-danger, #ff4444);
+    color: white;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: fade-in-out 5s ease-in-out forwards;
+    z-index: 100;
+  }
+  
+  @keyframes fade-in-out {
+    0% {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
   }
 
   /* Responsive design */

@@ -14,10 +14,8 @@
       "skills": [
         "performance"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 2
-        }
+      "cost": {
+        "lumber": 2
       },
       "traits": [
         "building",
@@ -39,11 +37,9 @@
         "performance",
         "diplomacy"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 2
       },
       "traits": [
         "building",
@@ -66,12 +62,10 @@
         "diplomacy",
         "lore"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 2,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 2,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -94,12 +88,10 @@
         "diplomacy",
         "lore"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 6,
-          "stone": 6,
-          "ore": 4
-        }
+      "cost": {
+        "lumber": 6,
+        "stone": 6,
+        "ore": 4
       },
       "traits": [
         "building",

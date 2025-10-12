@@ -10,10 +10,8 @@
       "category": "justice",
       "tier": 1,
       "effect": "Can hold 1 imprisoned Unrest. Allows Execute action only",
-      "construction": {
-        "resources": {
-          "stone": 2
-        }
+      "cost": {
+        "stone": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "justice",
       "tier": 2,
       "effect": "Can hold 2 imprisoned Unrest. Allows Execute action only",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 2
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "justice",
       "tier": 3,
       "effect": "Can hold 4 imprisoned Unrest. Allows Execute or Pardon actions",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 4,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 4,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "justice",
       "tier": 4,
       "effect": "Can hold 8 imprisoned Unrest. Allows Execute or Pardon actions",
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 6,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 6,
+        "ore": 6
       },
       "traits": [
         "building",

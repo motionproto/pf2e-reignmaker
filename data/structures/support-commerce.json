@@ -10,10 +10,8 @@
       "category": "commerce",
       "tier": 1,
       "effect": "Enables selling surplus at 2:1 (resources:gold). Purchase non-magical items up to settlement level",
-      "construction": {
-        "resources": {
-          "lumber": 2
-        }
+      "cost": {
+        "lumber": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "commerce",
       "tier": 2,
       "effect": "Enables purchasing scrolls and consumables up to settlement level",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 2
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "commerce",
       "tier": 3,
       "effect": "Improves selling surplus to 3:2 (resources:gold). Purchase magical items up to settlement level. +1 gold income per turn",
-      "construction": {
-        "resources": {
-          "lumber": 3,
-          "stone": 3,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 3,
+        "stone": 3,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "commerce",
       "tier": 4,
       "effect": "Improves selling surplus to 1:1 (resources:gold). +2 gold income per turn",
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 4,
-          "ore": 8
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 4,
+        "ore": 8
       },
       "traits": [
         "building",

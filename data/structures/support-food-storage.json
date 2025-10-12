@@ -10,10 +10,8 @@
       "category": "food-storage",
       "tier": 1,
       "effect": "+4 Food capacity",
-      "construction": {
-        "resources": {
-          "lumber": 2
-        }
+      "cost": {
+        "lumber": 2
       },
       "traits": [
         "building",
@@ -30,11 +28,9 @@
       "category": "food-storage",
       "tier": 2,
       "effect": "+8 Food capacity",
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 2
       },
       "traits": [
         "building",
@@ -51,12 +47,10 @@
       "category": "food-storage",
       "tier": 3,
       "effect": "+16 Food capacity",
-      "construction": {
-        "resources": {
-          "lumber": 3,
-          "stone": 3,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 3,
+        "stone": 3,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -73,12 +67,10 @@
       "category": "food-storage",
       "tier": 4,
       "effect": "+36 Food capacity",
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 6,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 6,
+        "ore": 6
       },
       "traits": [
         "building",

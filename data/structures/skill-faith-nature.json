@@ -14,10 +14,8 @@
       "skills": [
         "religion"
       ],
-      "construction": {
-        "resources": {
-          "stone": 2
-        }
+      "cost": {
+        "stone": 2
       },
       "traits": [
         "building",
@@ -39,11 +37,9 @@
         "religion",
         "medicine"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 1,
-          "stone": 3
-        }
+      "cost": {
+        "lumber": 1,
+        "stone": 3
       },
       "traits": [
         "building",
@@ -66,12 +62,10 @@
         "medicine",
         "nature"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 2,
-          "stone": 4,
-          "ore": 2
-        }
+      "cost": {
+        "lumber": 2,
+        "stone": 4,
+        "ore": 2
       },
       "traits": [
         "building",
@@ -94,12 +88,10 @@
         "medicine",
         "nature"
       ],
-      "construction": {
-        "resources": {
-          "lumber": 4,
-          "stone": 6,
-          "ore": 6
-        }
+      "cost": {
+        "lumber": 4,
+        "stone": 6,
+        "ore": 6
       },
       "traits": [
         "building",
