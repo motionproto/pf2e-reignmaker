@@ -32,7 +32,7 @@
       "modifiers": [
         {
           "type": "choice",
-          "resource": [
+          "resources": [
             "lumber",
             "ore",
             "stone"
@@ -49,7 +49,7 @@
       "modifiers": [
         {
           "type": "choice",
-          "resource": [
+          "resources": [
             "lumber",
             "ore",
             "stone"

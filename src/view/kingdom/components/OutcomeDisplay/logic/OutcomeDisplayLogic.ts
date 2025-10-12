@@ -49,7 +49,7 @@ export function processChoiceSelection(choice: any): { effect: string; stateChan
  */
 export function detectResourceArrayModifiers(modifiers: any[] | undefined): any[] {
   if (!modifiers) return [];
-  return modifiers.filter(m => Array.isArray(m.resource));
+  return modifiers.filter(m => Array.isArray(m.resources));
 }
 
 /**
@@ -88,7 +88,7 @@ export function computeDisplayStateChanges(
   if (modifiers && modifiers.length > 0) {
     modifiers.forEach((modifier, idx) => {
       // Skip resource arrays (handled separately above)
-      if (Array.isArray(modifier.resource)) return;
+      if (Array.isArray(modifier.resources)) return;
       
       // Check if this modifier has a rolled value
       const rolledValue = resolvedDice?.get(idx);

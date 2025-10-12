@@ -168,6 +168,10 @@ src/
   };
   ifUnresolved?: UnresolvedEvent;  // Becomes modifier if failed/ignored
 }
+
+// EventModifier can be StaticModifier, DiceModifier, or ChoiceModifier
+// ChoiceModifier uses resource: ResourceType[] (array) for player selection
+// Detection: Array.isArray(modifier.resource)
 ```
 
 ### Key Changes from Old System
