@@ -14,6 +14,7 @@ import {
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
+import { StatusPhaseSteps } from './shared/PhaseStepConstants';
 import { createDefaultTurnState } from '../models/TurnState';
 import { SettlementTier } from '../models/Settlement';
 
@@ -49,8 +50,8 @@ export async function createStatusPhaseController() {
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
         
-        // Auto-complete the single step immediately
-        await completePhaseStepByIndex(0);
+        // Auto-complete the single step immediately (using type-safe constant)
+        await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
         
         console.log('✅ [StatusPhaseController] Status step auto-completed');
         

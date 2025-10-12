@@ -5,7 +5,7 @@
  * functionality across all phase controllers.
  */
 
-import { getKingdomActor, getTurnManager } from '../../stores/KingdomStore';
+import { getKingdomActor } from '../../stores/KingdomStore';
 import { TurnPhase } from '../../actors/KingdomActor';
 
 /**
@@ -69,7 +69,7 @@ export function checkPhaseGuard(
   
   // Steps exist and we're in the CORRECT phase
   // Check if we're mid-phase (any steps completed)
-  const hasCompletedSteps = kingdom.currentPhaseSteps?.some(s => s.completed === 1);
+  const hasCompletedSteps = kingdom.currentPhaseSteps?.some((s: any) => s.completed === 1);
   if (hasCompletedSteps) {
     // We're mid-phase, don't re-initialize (would clear component state/progress)
     console.log(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
@@ -117,8 +117,7 @@ export async function completePhaseStepByIndex(stepIndex: number): Promise<{ pha
 }
 
 /**
- * Check if a specific step is completed by index
- * Uses TurnManager singleton with modular phase-handler
+ * Check if a specific step is completed by index - delegates to PhaseHandler
  */
 export async function isStepCompletedByIndex(stepIndex: number): Promise<boolean> {
   console.log(`[PhaseControllerHelpers] Using TurnManager singleton to check step completion at index: ${stepIndex}`);
@@ -131,5 +130,54 @@ export async function isStepCompletedByIndex(stepIndex: number): Promise<boolean
   } catch (error) {
     console.error('❌ [PhaseControllerHelpers] Error checking step completion:', error);
     return false;
+  }
+}
+
+/**
+ * Unified resolution wrapper for Event/Unrest/Action outcomes
+ * 
+ * Consolidates the duplicate resolution logic from Event, Unrest, and Action controllers.
+ * Handles validation, outcome application, step completion, and error handling.
+ * 
+ * @param itemId - ID of the event/incident/action being resolved
+ * @param itemType - Type of item ('event' | 'incident' | 'action')
+ * @param outcome - Outcome degree (criticalSuccess, success, failure, criticalFailure)
+ * @param resolutionData - Pre-computed resolution data from UI
+ * @param stepIndicesToComplete - Array of step indices to complete after successful resolution
+ * @returns Result object with success flag and applied changes or error message
+ */
+export async function resolvePhaseOutcome(
+  itemId: string,
+  itemType: 'event' | 'incident' | 'action',
+  outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+  resolutionData: any, // ResolutionData from types/events
+  stepIndicesToComplete: number[]
+): Promise<{ success: boolean; applied?: any; error?: string }> {
+  console.log(`🎯 [PhaseControllerHelpers.resolvePhaseOutcome] Resolving ${itemType} ${itemId} with ${outcome}`);
+  console.log(`📋 [PhaseControllerHelpers] ResolutionData:`, resolutionData);
+  
+  try {
+    // Apply outcome using shared resolution service
+    const { applyResolvedOutcome } = await import('../../services/resolution');
+    const result = await applyResolvedOutcome(resolutionData, outcome);
+    
+    // Complete phase steps in order
+    for (const stepIndex of stepIndicesToComplete) {
+      await completePhaseStepByIndex(stepIndex);
+      console.log(`✅ [PhaseControllerHelpers] Completed step ${stepIndex}`);
+    }
+    
+    console.log(`✅ [PhaseControllerHelpers] ${itemType} resolved successfully`);
+    
+    return {
+      success: true,
+      applied: result
+    };
+  } catch (error) {
+    console.error(`❌ [PhaseControllerHelpers] Error resolving ${itemType}:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
   }
 }

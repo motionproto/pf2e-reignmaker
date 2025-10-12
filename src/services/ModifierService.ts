@@ -16,53 +16,10 @@ import { getEventDisplayName } from '../types/event-helpers';
 import { updateKingdom } from '../stores/KingdomStore';
 
 /**
- * Map tier descriptors to numeric values for modifier tracking
- */
-function tierToNumber(tier: EventTier): number {
-  switch (tier) {
-    case 'minor': return 1;
-    case 'moderate': return 2;
-    case 'major': return 3;
-    default: return 1;
-  }
-}
-
-/**
  * Create modifier service
  */
 export async function createModifierService() {
   return {
-    /**
-     * Create active modifier from unresolved event/incident
-     * 
-     * NOTE: This is a simplified implementation that creates a basic modifier.
-     * The full ifUnresolved structure is not yet implemented in the JSON data.
-     * For now, this creates a modifier based on the event's tier.
-     */
-    createFromUnresolvedEvent(event: KingdomEvent, currentTurn: number): ActiveModifier | undefined {
-      // TODO: Implement proper ifUnresolved structure in JSON data
-      // For now, return undefined as most events don't have this configured yet
-      if (!event.ifUnresolved) {
-        console.warn(`Event ${event.id} has no ifUnresolved configuration`);
-        return undefined;
-      }
-      
-      // Create a basic modifier using event data
-      // IMPORTANT: Preserve original event data for ongoing events that need skill resolution
-      return {
-        id: `event-${event.id}-${currentTurn}`,
-        name: getEventDisplayName(event),
-        description: event.description,
-        tier: tierToNumber(event.tier),
-        sourceType: 'event',
-        sourceId: event.id,
-        sourceName: getEventDisplayName(event),
-        startTurn: currentTurn,
-        modifiers: [], // TODO: Extract from ifUnresolved when structure is defined
-        originalEventData: event // Preserve event for skill resolution in CheckCard
-      };
-    },
-    
     /**
      * Apply structure modifiers only during Status phase
      * Custom modifiers are applied during Events phase by EventPhaseController
@@ -123,62 +80,6 @@ export async function createModifierService() {
           console.log(`🧹 [ModifierService] Removed ${removedCount} expired modifiers`);
         }
       });
-    },
-    
-    /**
-     * Attempt to resolve a modifier
-     * Returns result indicating success/failure
-     */
-    async attemptResolution(modifierId: string, rollResult: number, levelBasedDC: number): Promise<ResolutionResult> {
-      let result: ResolutionResult = {
-        success: false,
-        msg: 'Modifier not found',
-        removed: false
-      };
-      
-      await updateKingdom(kingdom => {
-        const modifier = kingdom.activeModifiers?.find(m => m.id === modifierId);
-        
-        if (!modifier) {
-          return;
-        }
-        
-        if (!modifier.resolvedWhen || modifier.resolvedWhen.type !== 'skill') {
-          result = {
-            success: false,
-            msg: 'This modifier cannot be resolved',
-            removed: false
-          };
-          return;
-        }
-        
-        const resolution = modifier.resolvedWhen.skillResolution;
-        if (!resolution) {
-          return;
-        }
-        
-        const dc = levelBasedDC + (resolution.dcAdjustment || 0);
-        const success = rollResult >= dc;
-        
-        if (success) {
-          // Remove modifier on success
-          kingdom.activeModifiers = kingdom.activeModifiers?.filter((m: ActiveModifier) => m.id !== modifierId) || [];
-          
-          result = {
-            success: true,
-            msg: resolution.onSuccess?.msg || 'Successfully resolved!',
-            removed: true
-          };
-        } else {
-          result = {
-            success: false,
-            msg: resolution.onFailure?.msg || 'Failed to resolve',
-            removed: false
-          };
-        }
-      });
-      
-      return result;
     },
     
     /**

@@ -18,13 +18,7 @@ import {
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
-
-// Define steps for Upkeep Phase - FIXED structure
-const UPKEEP_PHASE_STEPS = [
-  { name: 'Feed Settlements' },     // Step 0 - MANUAL (always requires user interaction)
-  { name: 'Support Military' },    // Step 1 - CONDITIONAL (auto if no armies)
-  { name: 'Build Queue' }  // Step 2 - CONDITIONAL (auto if no projects)
-];
+import { UpkeepPhaseSteps } from './shared/PhaseStepConstants';
 
 export async function createUpkeepPhaseController() {
   return {
@@ -62,7 +56,7 @@ export async function createUpkeepPhaseController() {
      * Feed settlements step
      */
     async feedSettlements() {
-      if (await isStepCompletedByIndex(0)) { // Step 0 = feed-settlements
+      if (await isStepCompletedByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS)) {
         return createPhaseResult(false, 'Settlements already fed this turn');
       }
 
@@ -70,8 +64,8 @@ export async function createUpkeepPhaseController() {
         console.log('🍞 [UpkeepPhaseController] Processing settlement feeding...');
         await this.processFoodConsumption();
         
-        // Complete step 0 (feed-settlements)
-        await completePhaseStepByIndex(0);
+        // Complete feed settlements step (using type-safe constant)
+        await completePhaseStepByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS);
         
         return createPhaseResult(true);
       } catch (error) {
@@ -83,7 +77,7 @@ export async function createUpkeepPhaseController() {
      * Support military step
      */
     async supportMilitary() {
-      if (await isStepCompletedByIndex(1)) { // Step 1 = support-military
+      if (await isStepCompletedByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY)) {
         return createPhaseResult(false, 'Military already supported this turn');
       }
 
@@ -91,8 +85,8 @@ export async function createUpkeepPhaseController() {
         console.log('⚔️ [UpkeepPhaseController] Processing military support...');
         await this.processMilitarySupport();
         
-        // Complete step 1 (support-military)
-        await completePhaseStepByIndex(1);
+        // Complete support military step (using type-safe constant)
+        await completePhaseStepByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY);
         
         return createPhaseResult(true);
       } catch (error) {
@@ -104,7 +98,7 @@ export async function createUpkeepPhaseController() {
      * Process build queue step
      */
     async processBuilds() {
-      if (await isStepCompletedByIndex(2)) { // Step 2 = process-builds
+      if (await isStepCompletedByIndex(UpkeepPhaseSteps.PROCESS_BUILDS)) {
         return createPhaseResult(false, 'Build queue already processed this turn');
       }
 
@@ -112,8 +106,8 @@ export async function createUpkeepPhaseController() {
         console.log('🏗️ [UpkeepPhaseController] Processing build queue...');
         await this.processBuildProjects();
         
-        // Complete step 2 (process-builds)
-        await completePhaseStepByIndex(2);
+        // Complete process builds step (using type-safe constant)
+        await completePhaseStepByIndex(UpkeepPhaseSteps.PROCESS_BUILDS);
         
         return createPhaseResult(true);
       } catch (error) {
@@ -393,9 +387,9 @@ export async function createUpkeepPhaseController() {
         unfedSettlements,
         unfedUnrest,
         stepsCompleted: {
-          feedSettlements: await isStepCompletedByIndex(0), // Step 0 = feed-settlements
-          supportMilitary: await isStepCompletedByIndex(1), // Step 1 = support-military
-          processBuilds: await isStepCompletedByIndex(2)    // Step 2 = process-builds
+          feedSettlements: await isStepCompletedByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS),
+          supportMilitary: await isStepCompletedByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY),
+          processBuilds: await isStepCompletedByIndex(UpkeepPhaseSteps.PROCESS_BUILDS)
         }
       };
     }

@@ -45,7 +45,7 @@
     left: var(--start-x);
     top: var(--start-y);
     transform: translate(-50%, -50%); /* Center the number on its position */
-    font-size: var(--font-3xl);
+    font-size: var(--font-4xl);
     font-weight: var(--font-weight-bold);
     color: var(--delta-color);
     pointer-events: none;
@@ -68,8 +68,8 @@
     
     /* Combined animation */
     animation: 
-      pulse 0.6s ease-out,
-      fade-out 0.5s ease-out 4.1s forwards;
+      pulse 0.5s ease-out,
+      fade-out 0.5s ease-out 5s forwards;
   }
   
   /* Pulse animation: fade in + scale 1→1.2→1 (0-0.6s) */

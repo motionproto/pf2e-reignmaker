@@ -19,9 +19,11 @@ import {
   checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
-  isStepCompletedByIndex
+  isStepCompletedByIndex,
+  resolvePhaseOutcome
 } from './shared/PhaseControllerHelpers'
 import { TurnPhase } from '../actors/KingdomActor'
+import { UnrestPhaseSteps } from './shared/PhaseStepConstants'
 import { 
   getUnrestTierInfo,
   getUnrestStatus,
@@ -50,12 +52,12 @@ export async function createUnrestPhaseController() {
         const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;
         const incidentTriggered = kingdom.turnState?.unrestPhase?.incidentTriggered ?? false;
         
-        // Initialize steps with CORRECT completion state from the start
+        // Initialize steps with CORRECT completion state (using type-safe constants)
         // No workarounds needed - steps reflect KingdomActor state directly
         const steps = [
-          { name: 'Calculate Unrest', completed: 1 },  // Always complete
-          { name: 'Incident Check', completed: incidentRolled ? 1 : 0 },
-          { name: 'Resolve Incident', completed: (incidentRolled && !incidentTriggered) ? 1 : 0 }
+          { name: 'Calculate Unrest', completed: 1 },  // UnrestPhaseSteps.CALCULATE_UNREST = 0 (always complete)
+          { name: 'Incident Check', completed: incidentRolled ? 1 : 0 },  // UnrestPhaseSteps.INCIDENT_CHECK = 1
+          { name: 'Resolve Incident', completed: (incidentRolled && !incidentTriggered) ? 1 : 0 }  // UnrestPhaseSteps.RESOLVE_INCIDENT = 2
         ];
         
         await initializePhaseSteps(steps);
@@ -92,8 +94,8 @@ export async function createUnrestPhaseController() {
         return { incidentTriggered: false };
       }
 
-      // Check if step 1 (check incidents) is already completed
-      if (await isStepCompletedByIndex(1)) {
+      // Check if incident check step is already completed (using type-safe constant)
+      if (await isStepCompletedByIndex(UnrestPhaseSteps.INCIDENT_CHECK)) {
         console.log('🟡 [UnrestPhaseController] Incident check already completed');
         return { incidentTriggered: false };
       }
@@ -148,14 +150,14 @@ export async function createUnrestPhaseController() {
           }
         });
         
-        // Complete step 2 using proper helper (ensures phaseComplete is updated)
-        await completePhaseStepByIndex(2); // Resolve Incident
+        // Complete resolve incident step (using type-safe constant)
+        await completePhaseStepByIndex(UnrestPhaseSteps.RESOLVE_INCIDENT);
         
         console.log('✅ [UnrestPhaseController] No incident - turnState updated, step 2 completed via helper');
       }
       
-      // Complete step 1 (incident check)
-      await completePhaseStepByIndex(1);
+      // Complete incident check step (using type-safe constant)
+      await completePhaseStepByIndex(UnrestPhaseSteps.INCIDENT_CHECK);
       
       return { 
         incidentTriggered,
@@ -172,7 +174,7 @@ export async function createUnrestPhaseController() {
     async resolveIncident(
       incidentId: string, 
       outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      resolutionData: import('../types/events').ResolutionData
+      resolutionData: import('../types/modifiers').ResolutionData
     ) {
       const actor = getKingdomActor();
       if (!actor) {
@@ -180,61 +182,23 @@ export async function createUnrestPhaseController() {
         return { success: false, error: 'No kingdom actor' };
       }
 
-      // DIAGNOSTIC: Check current phase and steps BEFORE applying
-      const kingdom = actor.getKingdom();
-      if (kingdom) {
-        console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - Current state BEFORE resolution:');
-        console.log('  - Current Phase:', kingdom.currentPhase);
-        console.log('  - Current Phase Steps:', kingdom.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed ? 'complete' : 'incomplete'})`));
-        console.log('  - Phase Complete Flag:', kingdom.phaseComplete);
+      // Validate incident exists
+      const { incidentLoader } = await import('./incidents/incident-loader');
+      const incident = incidentLoader.getIncidentById(incidentId);
+      
+      if (!incident) {
+        console.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
+        return { success: false, error: 'Incident not found' };
       }
 
-      console.log(`🎯 [UnrestPhaseController] Resolving incident ${incidentId} with outcome: ${outcome}`);
-      console.log(`📋 [UnrestPhaseController] ResolutionData:`, resolutionData);
-
-      try {
-        // NEW ARCHITECTURE: ResolutionData already contains final numeric values
-        // No need to filter, transform, or roll - just apply!
-        
-        const { incidentLoader } = await import('./incidents/incident-loader');
-        const incident = incidentLoader.getIncidentById(incidentId);
-        
-        if (!incident) {
-          console.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
-          return { success: false, error: 'Incident not found' };
-        }
-
-        // Apply outcome using shared service
-        const { applyResolvedOutcome } = await import('../services/resolution');
-        const result = await applyResolvedOutcome(resolutionData, outcome);
-        
-        // Complete step 2 (resolve incident)
-        await completePhaseStepByIndex(2);
-        
-        // DIAGNOSTIC: Check state AFTER completing step 2
-        const kingdomAfter = actor.getKingdom();
-        if (kingdomAfter) {
-          console.log('🔍 [UnrestPhaseController] DIAGNOSTIC - Current state AFTER step 2 completion:');
-          console.log('  - Current Phase:', kingdomAfter.currentPhase);
-          console.log('  - Current Phase Steps:', kingdomAfter.currentPhaseSteps?.map((s, i) => `[${i}] ${s.name} (${s.completed === 1 ? 'complete' : 'incomplete'})`));
-          console.log('  - Phase Complete Flag:', kingdomAfter.phaseComplete);
-          console.log('  - Completed Count:', kingdomAfter.currentPhaseSteps?.filter(s => s.completed === 1).length);
-          console.log('  - Total Steps:', kingdomAfter.currentPhaseSteps?.length);
-        }
-        
-        console.log(`✅ [UnrestPhaseController] Incident resolved successfully`);
-        
-        return {
-          success: true,
-          applied: result  // Pass through result with shortfall data
-        };
-      } catch (error) {
-        console.error('❌ [UnrestPhaseController] Error resolving incident:', error);
-        return { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        };
-      }
+      // Use unified resolution wrapper (consolidates duplicate logic)
+      return await resolvePhaseOutcome(
+        incidentId,
+        'incident',
+        outcome,
+        resolutionData,
+        [UnrestPhaseSteps.RESOLVE_INCIDENT]  // Type-safe step index
+      );
     },
 
 

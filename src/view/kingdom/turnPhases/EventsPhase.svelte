@@ -348,10 +348,14 @@
       const { createEventPhaseController } = await import('../../../controllers/EventPhaseController');
       const controller = await createEventPhaseController(null);
       
+      // Pass isIgnored flag to controller
+      const isIgnored = eventResolution.isIgnored || false;
+      
       const result = await controller.resolveEvent(
          currentEvent.id,
          eventResolution.outcome,
-         resolutionData
+         resolutionData,
+         isIgnored
       );
       
       if (result.success) {

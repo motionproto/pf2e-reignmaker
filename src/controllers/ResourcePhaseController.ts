@@ -19,6 +19,7 @@ import {
   isStepCompletedByIndex
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
+import { ResourcesPhaseSteps } from './shared/PhaseStepConstants';
 
 export async function createResourcePhaseController() {
   // Helper function to get active economic modifiers
@@ -67,8 +68,8 @@ export async function createResourcePhaseController() {
      * Any player can complete this once per turn
      */
     async collectResources() {
-      // Check if step 0 (collect-resources) is already completed
-      if (await isStepCompletedByIndex(0)) {
+      // Check if collect resources step is already completed (using type-safe constant)
+      if (await isStepCompletedByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES)) {
         return createPhaseResult(false, 'Resources already collected this turn');
       }
 
@@ -141,8 +142,8 @@ export async function createResourcePhaseController() {
           }
         });
         
-        // Mark step 0 (collect-resources) as completed
-        await completePhaseStepByIndex(0);
+        // Mark collect resources step as completed (using type-safe constant)
+        await completePhaseStepByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES);
         
         reportPhaseComplete('ResourcePhaseController Collection');
         return createPhaseResult(true);
@@ -194,7 +195,7 @@ export async function createResourcePhaseController() {
           totalCollected: result.totalCollected,
           
           // Collection status
-          isCollected: await isStepCompletedByIndex(0) // Step 0 = collect-resources
+          isCollected: await isStepCompletedByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES)
         };
       } catch (error) {
         console.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
@@ -208,16 +209,9 @@ export async function createResourcePhaseController() {
           unfedCount: 0,
           totalSettlements: settlements.length,
           totalCollected: new Map(),
-          isCollected: await isStepCompletedByIndex(0) // Step 0 = collect-resources
+          isCollected: await isStepCompletedByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES)
         };
       }
-    },
-
-    /**
-     * @deprecated Use getPreviewData() instead - kept for backward compatibility
-     */
-    async getCollectionPreview() {
-      return await this.getPreviewData();
     }
   };
 }

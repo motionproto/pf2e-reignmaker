@@ -16,12 +16,14 @@ import {
   checkPhaseGuard,
   initializePhaseSteps,
   completePhaseStepByIndex,
-  isStepCompletedByIndex
+  isStepCompletedByIndex,
+  resolvePhaseOutcome
 } from './shared/PhaseControllerHelpers'
 import { actionResolver } from './actions/action-resolver'
 import type { PlayerAction } from './actions/action-types'
 import type { KingdomData } from '../actors/KingdomActor'
 import { TurnPhase } from '../actors/KingdomActor'
+import { ActionPhaseSteps } from './shared/PhaseStepConstants'
 
 export async function createActionPhaseController() {
   // Store for action resolutions
@@ -44,7 +46,7 @@ export async function createActionPhaseController() {
         await initializePhaseSteps(steps);
         
         // Auto-complete immediately since players can choose to skip actions
-        await completePhaseStepByIndex(0);
+        await completePhaseStepByIndex(ActionPhaseSteps.EXECUTE_ACTIONS);
         
         console.log('✅ [ActionPhaseController] Actions phase auto-completed (players can skip actions)')
         
@@ -60,7 +62,7 @@ export async function createActionPhaseController() {
      * Execute player actions step
      */
     async executeActions() {
-      if (await isStepCompletedByIndex(0)) {
+      if (await isStepCompletedByIndex(ActionPhaseSteps.EXECUTE_ACTIONS)) {
         console.log('🟡 [ActionPhaseController] Actions already executed')
         return createPhaseResult(false, 'Actions already executed this turn')
       }
@@ -71,8 +73,8 @@ export async function createActionPhaseController() {
         // Player actions are handled through the UI and individual action controllers
         // This step is completed manually when all players have taken their actions
         
-        // Complete step 0 (execute-actions)
-        await completePhaseStepByIndex(0)
+        // Complete execute actions step (using type-safe constant)
+        await completePhaseStepByIndex(ActionPhaseSteps.EXECUTE_ACTIONS)
         
         console.log('✅ [ActionPhaseController] Player actions executed')
         return createPhaseResult(true)
@@ -82,35 +84,6 @@ export async function createActionPhaseController() {
       }
     },
 
-    /**
-     * Resolve action results step
-     */
-    async resolveResults() {
-      if (!(await isStepCompletedByIndex(0))) {
-        return createPhaseResult(false, 'Must execute actions before resolving results')
-      }
-
-      if (isStepCompletedByIndex(1)) {
-        console.log('🟡 [ActionPhaseController] Results already resolved')
-        return createPhaseResult(false, 'Results already resolved this turn')
-      }
-
-      try {
-        console.log('⚖️ [ActionPhaseController] Resolving action results...')
-        
-        // Action results are resolved through individual action implementations
-        // This step is completed manually when all action results have been processed
-        
-        // Complete step 1 (resolve-results)
-        await completePhaseStepByIndex(1)
-        
-        console.log('✅ [ActionPhaseController] Action results resolved')
-        return createPhaseResult(true)
-      } catch (error) {
-        console.error('❌ [ActionPhaseController] Error resolving results:', error)
-        return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error')
-      }
-    },
 
     /**
      * Check if a specific player has spent their action (using actionLog)
@@ -182,7 +155,7 @@ export async function createActionPhaseController() {
     /**
      * Get display data for the UI (using actionLog)
      */
-    getDisplayData() {
+    async getDisplayData() {
       const kingdom = get(kingdomData)
       const game = (window as any).game
       const totalPlayers = game?.users?.filter((u: any) => !u.isGM)?.length || 0
@@ -195,17 +168,8 @@ export async function createActionPhaseController() {
         allPlayersActed: actedCount === totalPlayers && totalPlayers > 0,
         playersWhoActed: this.getPlayersWhoActed(),
         playersWhoHaventActed: this.getPlayersWhoHaventActed(),
-        actionsCompleted: isStepCompletedByIndex(0)
+        actionsCompleted: await isStepCompletedByIndex(ActionPhaseSteps.EXECUTE_ACTIONS)
       }
-    },
-
-    /**
-     * Reset player actions - no longer needed, handled by turnState reset
-     */
-    async resetPlayerActions() {
-      // Player actions are now automatically reset via turnState.actionLog reset
-      // (handled by TurnManager.endTurn() which resets entire turnState)
-      console.log('🔄 [ActionPhaseController] Player actions reset via turnState')
     },
 
     /**
@@ -238,133 +202,7 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * NEW ARCHITECTURE: Resolve action with ResolutionData
-     * Receives pre-computed resolution data from UI (all dice rolled, choices made)
-     */
-    async resolveAction(
-      actionId: string,
-      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      resolutionData: import('../types/events').ResolutionData,
-      actorName?: string,
-      skillName?: string,
-      playerId?: string
-    ) {
-      console.log(`🎯 [ActionPhaseController] Resolving action ${actionId} with outcome: ${outcome}`);
-      console.log(`📋 [ActionPhaseController] ResolutionData:`, resolutionData);
-      
-      try {
-        // NEW ARCHITECTURE: ResolutionData already contains final numeric values
-        // No need to filter, transform, or roll - just apply!
-        
-        const { actionLoader } = await import('./actions/action-loader');
-        const action = actionLoader.getAllActions().find(a => a.id === actionId);
-        if (!action) {
-          console.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
-          return { success: false, error: 'Action not found' };
-        }
-        
-        // Check requirements
-        const kingdom = get(kingdomData);
-        const requirements = this.getActionRequirements(action, kingdom);
-        if (!requirements.met) {
-          return { success: false, error: requirements.reason || 'Action requirements not met' };
-        }
-        
-        // Apply outcome using shared service
-        const { applyResolvedOutcome } = await import('../services/resolution');
-        const result = await applyResolvedOutcome(resolutionData, outcome);
-        
-        // Track player action
-        if (playerId) {
-          const { createGameEffectsService } = await import('../services/GameEffectsService');
-          const gameEffects = await createGameEffectsService();
-          const game = (window as any).game;
-          const user = game?.users?.get(playerId);
-          const playerName = user?.name || 'Unknown Player';
-          
-          await gameEffects.trackPlayerAction(
-            playerId,
-            playerName,
-            actorName || playerName,
-            `${actionId}-${outcome}`,
-            TurnPhase.ACTIONS
-          );
-          
-          console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
-        }
-        
-        console.log(`✅ [ActionPhaseController] Action resolved successfully`);
-        
-        // Return the result directly (it's already ApplyOutcomeResult with proper structure)
-        return result;
-      } catch (error) {
-        console.error('❌ [ActionPhaseController] Error resolving action:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    },
-    
-    /**
-     * OLD ARCHITECTURE: Execute an action with optional pre-rolled dice values
-     * DEPRECATED: Use resolveAction() instead for new code
-     */
-    async executeAction(
-      action: PlayerAction,
-      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-      kingdomData: KingdomData,
-      currentTurn: number,
-      preRolledValues?: Map<number | string, number>,
-      actorName?: string,
-      skillName?: string,
-      playerId?: string
-    ) {
-      try {
-        // Check requirements first
-        const requirements = this.getActionRequirements(action, kingdomData)
-        if (!requirements.met) {
-          return { success: false, error: requirements.reason || 'Action requirements not met' }
-        }
-
-        // Execute the action using ActionResolver (which now uses GameEffectsService)
-        const result = await actionResolver.executeAction(action, outcome, kingdomData, preRolledValues)
-        
-        // Track player action if successful and we have player info
-        if (result.success && playerId) {
-          try {
-            const { createGameEffectsService } = await import('../services/GameEffectsService')
-            const gameEffects = await createGameEffectsService()
-            
-            // Get player name from game
-            const game = (window as any).game
-            const user = game?.users?.get(playerId)
-            const playerName = user?.name || 'Unknown Player'
-            
-            await gameEffects.trackPlayerAction(
-              playerId,
-              playerName,
-              actorName || playerName,
-              `${action.id}-${outcome}`,
-              TurnPhase.ACTIONS
-            )
-            
-            console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${action.id}-${outcome}`)
-          } catch (trackingError) {
-            console.error('[ActionPhaseController] Failed to track action:', trackingError)
-            // Don't fail the whole action if tracking fails
-          }
-        }
-        
-        return result
-      } catch (error) {
-        console.error('Error executing action:', error)
-        return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-      }
-    },
-
-    /**
-     * Store action resolution
+     * Store action resolution (used by UI to track pending resolutions)
      */
     storeResolution(resolution: any) {
       actionResolutions.set(resolution.actionId, resolution)
@@ -394,7 +232,7 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Reset action resolution
+     * Reset action resolution (used by UI for rerolls)
      */
     async resetAction(actionId: string, kingdomData: KingdomData, playerId?: string) {
       actionResolutions.delete(actionId)
@@ -402,11 +240,68 @@ export async function createActionPhaseController() {
     },
 
     /**
-     * Reset controller state
+     * Reset controller state (called on component unmount)
      */
     resetState() {
       actionResolutions.clear()
       console.log('🔄 [ActionPhaseController] Reset controller state')
+    },
+
+    /**
+     * Resolve action with ResolutionData
+     * Receives pre-computed resolution data from UI (all dice rolled, choices made)
+     */
+    async resolveAction(
+      actionId: string,
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+      resolutionData: import('../types/modifiers').ResolutionData,
+      actorName?: string,
+      skillName?: string,
+      playerId?: string
+    ) {
+      // Validate action exists
+      const { actionLoader } = await import('./actions/action-loader');
+      const action = actionLoader.getAllActions().find(a => a.id === actionId);
+      if (!action) {
+        console.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
+        return { success: false, error: 'Action not found' };
+      }
+      
+      // Check requirements
+      const kingdom = get(kingdomData);
+      const requirements = this.getActionRequirements(action, kingdom);
+      if (!requirements.met) {
+        return { success: false, error: requirements.reason || 'Action requirements not met' };
+      }
+      
+      // Track player action (action-specific logic before resolution)
+      if (playerId) {
+        const { createGameEffectsService } = await import('../services/GameEffectsService');
+        const gameEffects = await createGameEffectsService();
+        const game = (window as any).game;
+        const user = game?.users?.get(playerId);
+        const playerName = user?.name || 'Unknown Player';
+        
+        await gameEffects.trackPlayerAction(
+          playerId,
+          playerName,
+          actorName || playerName,
+          `${actionId}-${outcome}`,
+          TurnPhase.ACTIONS
+        );
+        
+        console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+      }
+      
+      // Use unified resolution wrapper (consolidates duplicate logic)
+      // Note: Actions don't complete phase steps (phase auto-completes on init)
+      return await resolvePhaseOutcome(
+        actionId,
+        'action',
+        outcome,
+        resolutionData,
+        []  // No steps to complete for actions (auto-complete phase)
+      );
     }
   }
 }
