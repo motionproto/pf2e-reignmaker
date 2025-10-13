@@ -1,23 +1,8 @@
 <script context="module" lang="ts">
-  interface StaticModifier {
-    type: 'static';
-    resource: string;
-    value: number;
-  }
+  import type { EventModifier } from '../../../types/modifiers';
+  import type { PossibleOutcome } from '../../../controllers/shared/PossibleOutcomeHelpers';
   
-  interface DiceModifier {
-    type: 'dice';
-    resource: string;
-    formula: string;
-    negative: boolean;
-  }
-  
-  export interface PossibleOutcome {
-    result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
-    label: string;
-    description: string;
-    modifiers?: Array<StaticModifier | DiceModifier>; // Support both static and dice modifiers
-  }
+  export type { PossibleOutcome };
 </script>
 
 <script lang="ts">
@@ -98,13 +83,27 @@
             {#if outcome.modifiers && outcome.modifiers.length > 0}
               <div class="outcome-modifiers">
                 {#each outcome.modifiers as modifier}
-                  {@const resourceName = typeof modifier.resource === 'string' 
-                    ? modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)
-                    : 'Unknown'}
                   <span class="modifier-badge">
-                    {#if modifier.type === 'dice' && modifier.formula}
+                    {#if modifier.type === 'choice'}
+                      <!-- Handle choice modifiers: player chooses from multiple resources -->
+                      {@const action = modifier.negative ? 'Lose' : 'Gain'}
+                      {@const resourceList = modifier.resources
+                        .map(r => r.charAt(0).toUpperCase() + r.slice(1))
+                        .join(', ')
+                        .replace(/, ([^,]*)$/, ', or $1')}
+                      {@const valueStr = typeof modifier.value === 'object' 
+                        ? modifier.value.formula 
+                        : typeof modifier.value === 'string'
+                        ? modifier.value
+                        : String(modifier.value)}
+                      {action} {valueStr} {resourceList}
+                    {:else if modifier.type === 'dice'}
+                      <!-- Handle dice modifiers -->
+                      {@const resourceName = modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)}
                       {modifier.negative ? 'Lose' : 'Gain'} {modifier.formula} {resourceName}
                     {:else if modifier.type === 'static'}
+                      <!-- Handle static modifiers -->
+                      {@const resourceName = modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)}
                       {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
                     {/if}
                   </span>

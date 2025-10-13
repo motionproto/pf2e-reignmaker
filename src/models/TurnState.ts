@@ -94,6 +94,7 @@ export interface EventsPhaseState {
   eventRoll?: number;
   eventTriggered: boolean;
   eventId: string | null;
+  eventInstanceId: string | null;  // Specific instance ID (ties marker to unique instance)
   eventResolved: boolean;
   appliedOutcomes: Array<{
     eventId: string;
@@ -211,6 +212,7 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
       eventRolled: false,
       eventTriggered: false,
       eventId: null,
+      eventInstanceId: null,
       eventResolved: false,
       appliedOutcomes: [],
       activeAids: []

@@ -151,19 +151,33 @@ export async function createEventPhaseController(_eventService?: any) {
                     state.currentEvent = event;
                     logger.debug(`✨ [EventPhaseController] Event triggered: "${getEventDisplayName(event)}" (${event.id})`);
                     
-                    // ✅ ARCHITECTURE FIX: Create ActiveCheckInstance IMMEDIATELY
+                    // ✅ ARCHITECTURE FIX: Create ActiveCheckInstance IMMEDIATELY (or reuse if exists)
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
                     const kingdom = actor?.getKingdom();
                     
-                    if (actor && kingdom) {
-                        // Create instance via CheckInstanceService
-                        const instanceId = await checkInstanceService.createInstance(
-                            'event',
-                            event.id,
-                            event,
-                            kingdom.currentTurn
+                    if (actor && kingdom && event) {
+                        // Check if this event already exists as an ongoing instance
+                        const existingInstance = kingdom.activeCheckInstances?.find(
+                            i => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
                         );
+                        
+                        let instanceId: string;
+                        
+                        if (existingInstance) {
+                            // Reuse existing ongoing instance
+                            instanceId = existingInstance.instanceId;
+                            logger.debug(`🔁 [EventPhaseController] Event already ongoing, reusing instance: ${instanceId}`);
+                        } else {
+                            // Create new instance via CheckInstanceService
+                            instanceId = await checkInstanceService.createInstance(
+                                'event',
+                                event.id,
+                                event,
+                                kingdom.currentTurn
+                            );
+                            logger.debug(`✅ [EventPhaseController] Created new event instance: ${instanceId}`);
+                        }
                         
                         // Update persistent DC and turnState (mark as current event)
                         await actor.updateKingdom((kingdom) => {
@@ -176,10 +190,9 @@ export async function createEventPhaseController(_eventService?: any) {
                                 kingdom.turnState.eventsPhase.eventRoll = roll;
                                 kingdom.turnState.eventsPhase.eventTriggered = true;
                                 kingdom.turnState.eventsPhase.eventId = event.id;  // Marks as "current event"
+                                kingdom.turnState.eventsPhase.eventInstanceId = instanceId;  // ✅ Ties marker to specific instance
                             }
                         });
-                        
-                        logger.debug(`✅ [EventPhaseController] Created event instance: ${instanceId}`);
                     }
                     
                     // Step 1 (Resolve Event) remains INCOMPLETE - player must resolve
@@ -377,10 +390,17 @@ export async function createEventPhaseController(_eventService?: any) {
                     }
                     
                     // If it was the active event, clear it (moves to ongoing section)
-                    if (kingdom.turnState.eventsPhase.eventId === eventId) {
+                    // ✅ CRITICAL FIX: Check BOTH eventId AND instanceId to prevent clearing wrong event
+                    const currentInstanceId = existingInstance?.instanceId || newInstanceId;
+                    if (kingdom.turnState.eventsPhase.eventId === eventId && 
+                        kingdom.turnState.eventsPhase.eventInstanceId === currentInstanceId) {
                         kingdom.turnState.eventsPhase.eventId = null;
+                        kingdom.turnState.eventsPhase.eventInstanceId = null;
                         kingdom.turnState.eventsPhase.eventTriggered = false;
-                        logger.debug(`✅ [EventPhaseController] Cleared active event, moved to ongoing section`);
+                        logger.debug(`✅ [EventPhaseController] Cleared active event marker (${currentInstanceId})`);
+                    } else if (kingdom.turnState.eventsPhase.eventId === eventId) {
+                        // Different instance - don't clear the marker
+                        logger.debug(`⚠️ [EventPhaseController] Event ${eventId} resolved, but different instance is current (not clearing marker)`);
                     }
                 });
             }

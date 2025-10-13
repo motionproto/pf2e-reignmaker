@@ -93,9 +93,9 @@
    $: activeEventInstances = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'event') || [];
    $: activeModifiers = $kingdomData.activeModifiers || [];
    
-   // ✅ NEW ARCHITECTURE: Get current event instance from turnState.eventId
-   $: currentEventInstance = $kingdomData.turnState?.eventsPhase?.eventId 
-      ? activeEventInstances.find(i => i.checkId === $kingdomData.turnState?.eventsPhase?.eventId)
+   // ✅ NEW ARCHITECTURE: Get current event instance from turnState.eventInstanceId (precise matching)
+   $: currentEventInstance = $kingdomData.turnState?.eventsPhase?.eventInstanceId 
+      ? activeEventInstances.find(i => i.instanceId === $kingdomData.turnState?.eventsPhase?.eventInstanceId)
       : null;
    
    // Filter instances: ongoing = pending but NOT current, resolved = resolved status
@@ -296,16 +296,27 @@
    async function handleExecuteSkill(event: CustomEvent) {
       if (!checkHandler || !eventPhaseController) return;
       
-      const { skill, eventId, outcome } = event.detail;
+      const { skill, eventId, checkId, outcome } = event.detail;
       
       // Determine which event this skill check is for
       let targetEvent = currentEvent;
+      let targetInstanceId: string | null = null;
       
       // If eventId is provided and it's not the current event, check ongoing events
       if (eventId && (!currentEvent || currentEvent.id !== eventId)) {
          const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === eventId);
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
+            targetInstanceId = ongoingEvent.instance.instanceId;
+         }
+      }
+      
+      // Also check by checkId (which IS the instanceId for ongoing events)
+      if (!targetEvent && checkId) {
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         if (ongoingEvent) {
+            targetEvent = ongoingEvent.event;
+            targetInstanceId = ongoingEvent.instance.instanceId;
          }
       }
       
@@ -338,7 +349,7 @@
       }
       
       // Execute the skill check
-      await executeSkillCheck(skill);
+      await executeSkillCheck(skill, targetInstanceId);
       
       // Restore previous event if we switched
       if (previousEvent !== targetEvent) {
@@ -346,12 +357,14 @@
       }
    }
    
-   async function executeSkillCheck(skill: string) {
+   async function executeSkillCheck(skill: string, targetInstanceId: string | null = null) {
       if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
-      // Capture the event ID for closure
+      // Capture the event ID and instance ID for closure
       const eventId = currentEvent.id;
-      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.instance.instanceId === eventId);
+      // Determine instance ID: use provided targetInstanceId for ongoing events, or look up current event instance
+      const instanceId = targetInstanceId || $kingdomData.turnState?.eventsPhase?.eventInstanceId || null;
+      const isOngoingEvent = !!targetInstanceId;
       
       // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
       // when the result is applied
@@ -386,14 +399,16 @@
                effectsApplied: false
             };
             
-            if (isOngoingEvent) {
+            if (isOngoingEvent && instanceId) {
                // Store in KingdomActor (synced to all clients!)
                await updateKingdom(kingdom => {
                   if (!kingdom.activeCheckInstances) return;
-                  const instance = kingdom.activeCheckInstances.find((i: any) => i.checkType === 'event' && i.checkId === eventId);
+                  const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = resolution;
                      console.log(`✅ [EventsPhase] Stored ongoing event resolution in instance: ${instance.instanceId}`);
+                  } else {
+                     console.error(`❌ [EventsPhase] Could not find instance with ID: ${instanceId}`);
                   }
                });
             } else {
@@ -407,11 +422,11 @@
             console.log(`🚫 [EventsPhase] Event check cancelled - resetting state`);
             isRolling = false;
             
-            if (isOngoingEvent) {
+            if (isOngoingEvent && instanceId) {
                // Clear resolution from KingdomActor
                updateKingdom(kingdom => {
                   if (!kingdom.activeCheckInstances) return;
-                  const instance = kingdom.activeCheckInstances.find((i: any) => i.checkType === 'event' && i.checkId === eventId);
+                  const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = undefined;
                      console.log(`🚫 [EventsPhase] Cleared ongoing event resolution from instance`);

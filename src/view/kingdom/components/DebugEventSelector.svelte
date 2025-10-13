@@ -99,13 +99,14 @@
                kingdom.currentTurn
             );
             
-            // Update turnState for display purposes (roll number + event ID for current event lookup)
+            // Update turnState for display purposes (roll number + event ID + instance ID)
             await updateKingdom(kingdom => {
                if (!kingdom.turnState) return;
                kingdom.turnState.eventsPhase.eventRolled = true;
                kingdom.turnState.eventsPhase.eventTriggered = true;
                kingdom.turnState.eventsPhase.eventRoll = 20; // Simulated 20 roll (triggered)
-               kingdom.turnState.eventsPhase.eventId = event.id; // Store event ID for current event lookup
+               kingdom.turnState.eventsPhase.eventId = event.id; // Store event ID for display
+               kingdom.turnState.eventsPhase.eventInstanceId = instanceId; // Store instance ID for lookup
                kingdom.eventDC = 15; // Reset DC (matches normal event trigger behavior)
             });
             
@@ -124,6 +125,7 @@
                kingdom.turnState.eventsPhase.eventTriggered = false;
                kingdom.turnState.eventsPhase.eventRoll = undefined;
                kingdom.turnState.eventsPhase.eventId = null;
+               kingdom.turnState.eventsPhase.eventInstanceId = null;
             });
             
             console.log('[DebugEventSelector] Cleared event');

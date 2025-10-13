@@ -3,18 +3,20 @@
  * Handles missing outcomes gracefully (e.g., incidents where criticalSuccess = success)
  */
 
+import type { EventModifier } from '../../types/modifiers';
+
 export interface PossibleOutcome {
   result: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   label: string;
   description: string;
-  modifiers?: Array<{ resource: string; value: number }>;
+  modifiers?: EventModifier[];
 }
 
 export interface OutcomeEffects {
-  criticalSuccess?: { msg: string; modifiers?: any[] };
-  success?: { msg: string; modifiers?: any[] };
-  failure?: { msg: string; modifiers?: any[] };
-  criticalFailure?: { msg: string; modifiers?: any[] };
+  criticalSuccess?: { msg: string; modifiers?: EventModifier[] };
+  success?: { msg: string; modifiers?: EventModifier[] };
+  failure?: { msg: string; modifiers?: EventModifier[] };
+  criticalFailure?: { msg: string; modifiers?: EventModifier[] };
 }
 
 
