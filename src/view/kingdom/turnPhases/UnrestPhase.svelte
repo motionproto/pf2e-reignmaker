@@ -15,7 +15,6 @@
    
    // UI State only - no business logic
    let phaseExecuting = false;
-   let showIncidentResult = false;
    let isRolling = false;
    let incidentCheckRoll: number = 0;
    let incidentCheckDC: number = 0;
@@ -24,8 +23,11 @@
    let checkHandler: any;
    let possibleOutcomes: any[] = [];
    
-   // ✅ READ resolution state from KingdomActor (synced across all clients)
-   $: incidentResolution = $kingdomData.turnState?.unrestPhase?.incidentResolution || null;
+   // NEW ARCHITECTURE: Read from ActiveCheckInstance instead of turnState
+   // Don't filter by status - show all incidents (clearCompleted handles cleanup at phase start)
+   $: activeIncidents = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+   $: currentIncidentInstance = activeIncidents[0] || null;
+   $: incidentResolution = currentIncidentInstance?.appliedOutcome || null;
    $: incidentResolved = !!incidentResolution;
    
    // Current user ID
@@ -52,49 +54,40 @@
       };
    })() : { currentUnrest: 0, tier: 0, tierName: 'Stable', penalty: 0, description: 'No incidents occur at this level', statusClass: 'stable' };
    
-   // Current incident from kingdom data - get real incident
+   // Current incident - loaded from instance checkData
    let currentIncident: any = null;
    
-   // Track the last loaded incident ID to prevent unnecessary reloads
-   let lastLoadedIncidentId: string | null = null;
+   // Generate unique checkId from instance ID to force component remount
+   $: incidentCheckId = currentIncidentInstance?.instanceId || null;
    
-   // Generate unique checkId per turn to force component remount
-   $: incidentCheckId = currentIncident 
-      ? `incident-${currentIncident.id}-turn${$kingdomData.currentTurn}` 
-      : null;
-   
-   // Load incident when incident ID changes (from turnState)
-   $: if ($kingdomData.turnState?.unrestPhase?.incidentId) {
-      // Only reload if the incident ID actually changed
-      if ($kingdomData.turnState.unrestPhase.incidentId !== lastLoadedIncidentId) {
-         loadIncident($kingdomData.turnState.unrestPhase.incidentId);
-         lastLoadedIncidentId = $kingdomData.turnState.unrestPhase.incidentId;
+   // Load incident from instance checkData (already loaded in instance)
+   $: {
+      if (currentIncidentInstance) {
+         currentIncident = currentIncidentInstance.checkData;
+         console.log('📋 [UnrestPhase] Loaded incident from instance:', currentIncident?.name);
+      } else {
+         currentIncident = null;
       }
    }
-   // NOTE: Incident data persists in turnState for entire turn
-   // Applied outcomes are stored in turnState.unrestPhase.appliedOutcome
    
-   // FIX: Make showIncidentResult reactive to kingdom data state
-   // This ensures all connected clients show the incident section when synced from Foundry
-   $: if ($kingdomData.turnState?.unrestPhase?.incidentRolled) {
-      // Incident check has been performed - show the result section
-      showIncidentResult = true;
-      
-      // Also restore roll values for display
-      if ($kingdomData.turnState.unrestPhase.incidentRoll !== undefined) {
-         incidentCheckRoll = $kingdomData.turnState.unrestPhase.incidentRoll;
-         incidentCheckDC = $kingdomData.turnState.unrestPhase.incidentRoll; // Use same value for both
-      }
-      
-      // Ensure controller exists when showing incident result section
-      // This is important for other clients that didn't click the roll button
-      if (!unrestPhaseController) {
-         (async () => {
-            const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
-            unrestPhaseController = await createUnrestPhaseController();
-            console.log('🔄 [UnrestPhase] Controller initialized for synced incident display');
-         })();
-      }
+   // NEW ARCHITECTURE: Show incident result if we have an active instance
+   $: showIncidentResult = activeIncidents.length > 0;
+   
+   // Restore roll values for display when incident is rolled
+   $: if ($kingdomData.turnState?.unrestPhase?.incidentRoll !== undefined) {
+      incidentCheckRoll = $kingdomData.turnState.unrestPhase.incidentRoll;
+      incidentCheckDC = $kingdomData.turnState.unrestPhase.incidentChance || 0;
+      incidentCheckChance = $kingdomData.turnState.unrestPhase.incidentChance || 0;
+   }
+   
+   // Ensure controller exists when showing incident result section
+   // This is important for other clients that didn't click the roll button
+   $: if (showIncidentResult && !unrestPhaseController) {
+      (async () => {
+         const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
+         unrestPhaseController = await createUnrestPhaseController();
+         console.log('🔄 [UnrestPhase] Controller initialized for synced incident display');
+      })();
    }
    
    async function loadIncident(incidentId: string) {
@@ -214,10 +207,6 @@
       incidentCheckDC = result.chance || 0;
       incidentCheckChance = result.chance || 0;
       
-      // Force trigger reactivity by setting to false first, then true
-      showIncidentResult = false;
-      await new Promise(resolve => setTimeout(resolve, 10)); // Small delay to ensure reactivity
-      
       // The controller already handles setting the incident ID, now explicitly load it
       if (result.incidentTriggered && result.incidentId) {
          console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
@@ -229,17 +218,13 @@
          currentIncident = null;
       }
       
-      // Now show the result section (after incident is loaded)
-      showIncidentResult = true;
-      console.log('👁️ [UnrestPhase] showIncidentResult set to true, currentIncident:', currentIncident?.name || 'null');
+      console.log('👁️ [UnrestPhase] Incident roll complete, currentIncident:', currentIncident?.name || 'null');
          
       } catch (error) {
          console.error('❌ [UnrestPhase] Error rolling for incident:', error);
-         // Still show the result section even on error
-         showIncidentResult = true;
       } finally {
          isRolling = false;
-         console.log('🏁 [UnrestPhase] Rolling finished, isRolling:', isRolling, 'showIncidentResult:', showIncidentResult);
+         console.log('🏁 [UnrestPhase] Rolling finished, isRolling:', isRolling);
       }
    }
    
@@ -336,8 +321,8 @@
       if (result.success) {
          console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
          
-         // ✅ Mark as applied (syncs to all clients)
-         await controller.markIncidentApplied();
+         // NOTE: markApplied() now called automatically in resolvePhaseOutcome()
+         // No need to call controller.markIncidentApplied() separately
          
          // Parse shortfall information from the new result structure
          const shortfalls: string[] = [];
@@ -378,7 +363,7 @@
       console.log(`🔁 [UnrestPhase] Performing reroll with skill: ${skill}`);
       
       // Reset UI state for new roll
-      handleCancel();
+      await handleCancel();
       
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -424,7 +409,7 @@
 <div class="unrest-phase">
    <!-- Debug Incident Selector (GM Only) -->
    {#if isGM}
-      <DebugEventSelector type="incident" currentItemId={$kingdomData.turnState?.unrestPhase?.incidentId || null} />
+      <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.checkId || null} />
    {/if}
    
    <!-- Step 1: Unrest Dashboard -->
@@ -470,7 +455,7 @@
                      Roll for Incident
                   {/if}
                </button>
-               {#if stepComplete && showIncidentResult}
+               {#if stepComplete}
                   <div class="roll-result-text">
                      {#if incidentWasTriggered}
                         <i class="fas fa-exclamation-triangle"></i>
@@ -522,6 +507,7 @@
                         outcomes={incidentOutcomes}
                         traits={currentIncident.traits || []}
                         checkType="incident"
+                        checkInstance={currentIncidentInstance}
                         expandable={false}
                         showCompletions={false}
                         showAvailability={false}

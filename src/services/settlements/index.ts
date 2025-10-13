@@ -6,6 +6,7 @@ import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTier, SettlementTierConfig, getDefaultSettlementImage } from '../../models/Settlement';
 import { structuresService } from '../structures';
+import { logger } from '../../utils/Logger';
 
 export class SettlementService {
   /**
@@ -190,7 +191,7 @@ export class SettlementService {
    * @param updates - Partial settlement updates
    */
   async updateSettlement(settlementId: string, updates: Partial<Settlement>): Promise<void> {
-    console.log(`🏰 [SettlementService] Updating settlement: ${settlementId}`);
+    logger.debug(`🏰 [SettlementService] Updating settlement: ${settlementId}`);
     
     const { updateKingdom } = await import('../../stores/KingdomStore');
     
@@ -198,9 +199,9 @@ export class SettlementService {
       const settlement = kingdom.settlements.find(s => s.id === settlementId);
       if (settlement) {
         Object.assign(settlement, updates);
-        console.log(`✅ [SettlementService] Updated ${settlement.name}`);
+        logger.debug(`✅ [SettlementService] Updated ${settlement.name}`);
       } else {
-        console.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
+        logger.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
       }
     });
   }
@@ -217,7 +218,7 @@ export class SettlementService {
     structuresRemoved: number;
     armiesMarkedUnsupported: number;
   }> {
-    console.log(`🏰 [SettlementService] Deleting settlement: ${settlementId}`);
+    logger.debug(`🏰 [SettlementService] Deleting settlement: ${settlementId}`);
     
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
@@ -256,7 +257,7 @@ export class SettlementService {
       k.settlements = k.settlements.filter(s => s.id !== settlementId);
     });
     
-    console.log(`✅ [SettlementService] Deleted ${settlementName}: ${structuresRemoved} structures, ${armiesMarkedUnsupported} armies unsupported`);
+    logger.debug(`✅ [SettlementService] Deleted ${settlementName}: ${structuresRemoved} structures, ${armiesMarkedUnsupported} armies unsupported`);
     
     return {
       name: settlementName,
@@ -272,7 +273,7 @@ export class SettlementService {
    * @param settlementId - Settlement ID
    */
   async upgradeSettlement(settlementId: string): Promise<void> {
-    console.log(`🏰 [SettlementService] Upgrading settlement: ${settlementId}`);
+    logger.debug(`🏰 [SettlementService] Upgrading settlement: ${settlementId}`);
     
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
@@ -315,12 +316,12 @@ export class SettlementService {
         // Update to new tier's default image if settlement was using old default
         if (isUsingDefaultImage) {
           s.imagePath = getDefaultSettlementImage(nextTier);
-          console.log(`🖼️ [SettlementService] Updated default image to ${nextTier} tier`);
+          logger.debug(`🖼️ [SettlementService] Updated default image to ${nextTier} tier`);
         }
       }
     });
     
-    console.log(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
+    logger.debug(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
   }
   
   /**
@@ -330,11 +331,11 @@ export class SettlementService {
    * @param imagePath - Path to image file
    */
   async updateSettlementImage(settlementId: string, imagePath: string): Promise<void> {
-    console.log(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
+    logger.debug(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
     
     await this.updateSettlement(settlementId, { imagePath });
     
-    console.log(`✅ [SettlementService] Updated settlement image`);
+    logger.debug(`✅ [SettlementService] Updated settlement image`);
   }
   
   /**
@@ -344,7 +345,7 @@ export class SettlementService {
    * @param newLevel - New settlement level (1-20)
    */
   async updateSettlementLevel(settlementId: string, newLevel: number): Promise<void> {
-    console.log(`🏰 [SettlementService] Updating settlement level: ${settlementId} → ${newLevel}`);
+    logger.debug(`🏰 [SettlementService] Updating settlement level: ${settlementId} → ${newLevel}`);
     
     // Validate level range
     if (newLevel < 1 || newLevel > 20) {
@@ -353,7 +354,7 @@ export class SettlementService {
     
     await this.updateSettlement(settlementId, { level: newLevel });
     
-    console.log(`✅ [SettlementService] Settlement level updated to ${newLevel}`);
+    logger.debug(`✅ [SettlementService] Settlement level updated to ${newLevel}`);
   }
 }
 

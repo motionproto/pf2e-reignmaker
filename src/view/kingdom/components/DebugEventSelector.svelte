@@ -1,7 +1,9 @@
 <script lang="ts">
-   import { updateKingdom } from '../../../stores/KingdomStore';
+   import { updateKingdom, kingdomData } from '../../../stores/KingdomStore';
    import { eventService } from '../../../controllers/events/event-loader';
    import { incidentLoader } from '../../../controllers/incidents/incident-loader';
+   import { checkInstanceService } from '../../../services/CheckInstanceService';
+   import { get } from 'svelte/store';
    import type { EventData } from '../../../controllers/events/event-loader';
    import type { KingdomIncident } from '../../../types/incidents';
    
@@ -66,40 +68,117 @@
    }
    
    async function setActiveItem(itemId: string | null) {
-      await updateKingdom(kingdom => {
-         if (!kingdom.turnState) {
-            console.warn('[DebugEventSelector] No turnState found, cannot set item');
-            return;
-         }
-         
-         if (type === 'event') {
-            kingdom.turnState.eventsPhase.eventId = itemId;
-            kingdom.turnState.eventsPhase.eventTriggered = itemId !== null;
-            
-            // Simulate a full event roll to match normal behavior
-            if (itemId !== null) {
-               // Mark event as rolled
-               kingdom.turnState.eventsPhase.eventRolled = true;
-               
-               // Generate a simulated roll that would have triggered the event
-               // (any roll >= DC would trigger, so use current DC as the roll)
-               const currentDC = kingdom.eventDC || 15;
-               kingdom.turnState.eventsPhase.eventRoll = currentDC;
-               
-               // Reset DC to 15 (matches normal event trigger behavior)
-               kingdom.eventDC = 15;
-               
-               console.log(`[DebugEventSelector] Simulated event roll: ${currentDC} (DC was ${currentDC}, now reset to 15)`);
-            } else {
-               // Clear event - reset roll state
-               kingdom.turnState.eventsPhase.eventRolled = false;
-               kingdom.turnState.eventsPhase.eventRoll = undefined;
+      const kingdom = get(kingdomData);
+      
+      if (!kingdom.turnState) {
+         console.warn('[DebugEventSelector] No turnState found, cannot set item');
+         return;
+      }
+      
+      if (type === 'event') {
+         // EVENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
+         if (itemId !== null) {
+            // Find event data
+            const event = eventService.getEventById(itemId);
+            if (!event) {
+               console.error(`[DebugEventSelector] Event not found: ${itemId}`);
+               return;
             }
+            
+            // Clear any existing event instances
+            const existing = checkInstanceService.getPendingInstances('event', kingdom);
+            for (const instance of existing) {
+               await checkInstanceService.clearInstance(instance.instanceId);
+            }
+            
+            // Create new ActiveCheckInstance
+            const instanceId = await checkInstanceService.createInstance(
+               'event',
+               event.id,
+               event,
+               kingdom.currentTurn
+            );
+            
+            // Update turnState for display purposes (roll number + event ID for current event lookup)
+            await updateKingdom(kingdom => {
+               if (!kingdom.turnState) return;
+               kingdom.turnState.eventsPhase.eventRolled = true;
+               kingdom.turnState.eventsPhase.eventTriggered = true;
+               kingdom.turnState.eventsPhase.eventRoll = 20; // Simulated 20 roll (triggered)
+               kingdom.turnState.eventsPhase.eventId = event.id; // Store event ID for current event lookup
+               kingdom.eventDC = 15; // Reset DC (matches normal event trigger behavior)
+            });
+            
+            console.log(`[DebugEventSelector] Created event instance: ${instanceId}`);
          } else {
-            kingdom.turnState.unrestPhase.incidentId = itemId;
-            kingdom.turnState.unrestPhase.incidentTriggered = itemId !== null;
+            // Clear event
+            const existing = checkInstanceService.getPendingInstances('event', kingdom);
+            for (const instance of existing) {
+               await checkInstanceService.clearInstance(instance.instanceId);
+            }
+            
+            // Clear turnState
+            await updateKingdom(kingdom => {
+               if (!kingdom.turnState) return;
+               kingdom.turnState.eventsPhase.eventRolled = false;
+               kingdom.turnState.eventsPhase.eventTriggered = false;
+               kingdom.turnState.eventsPhase.eventRoll = undefined;
+               kingdom.turnState.eventsPhase.eventId = null;
+            });
+            
+            console.log('[DebugEventSelector] Cleared event');
          }
-      });
+      } else {
+         // INCIDENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
+         if (itemId !== null) {
+            // Find incident data
+            const incident = incidentLoader.getIncidentById(itemId);
+            if (!incident) {
+               console.error(`[DebugEventSelector] Incident not found: ${itemId}`);
+               return;
+            }
+            
+            // Clear any existing incident instances
+            const existing = checkInstanceService.getPendingInstances('incident', kingdom);
+            for (const instance of existing) {
+               await checkInstanceService.clearInstance(instance.instanceId);
+            }
+            
+            // Create new ActiveCheckInstance
+            const instanceId = await checkInstanceService.createInstance(
+               'incident',
+               incident.id,
+               incident,
+               kingdom.currentTurn
+            );
+            
+            // Update turnState for display purposes (roll number)
+            await updateKingdom(kingdom => {
+               if (!kingdom.turnState) return;
+               kingdom.turnState.unrestPhase.incidentRolled = true;
+               kingdom.turnState.unrestPhase.incidentTriggered = true;
+               kingdom.turnState.unrestPhase.incidentRoll = 50; // Simulated 50% roll
+            });
+            
+            console.log(`[DebugEventSelector] Created incident instance: ${instanceId}`);
+         } else {
+            // Clear incident
+            const existing = checkInstanceService.getPendingInstances('incident', kingdom);
+            for (const instance of existing) {
+               await checkInstanceService.clearInstance(instance.instanceId);
+            }
+            
+            // Clear turnState
+            await updateKingdom(kingdom => {
+               if (!kingdom.turnState) return;
+               kingdom.turnState.unrestPhase.incidentRolled = false;
+               kingdom.turnState.unrestPhase.incidentTriggered = false;
+               kingdom.turnState.unrestPhase.incidentRoll = undefined;
+            });
+            
+            console.log('[DebugEventSelector] Cleared incident');
+         }
+      }
    }
 </script>
 

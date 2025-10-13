@@ -5,6 +5,7 @@
  */
 
 import { getKingdomActor } from '../../stores/KingdomStore';
+import { logger } from '../../utils/Logger';
 
 export interface RerollContext {
   checkId: string;
@@ -65,11 +66,11 @@ export async function deductFameForReroll(): Promise<RerollResult> {
       k.fame = previousFame - 1;
     });
     
-    console.log(`💎 [RerollHelpers] Deducted 1 fame for reroll (${previousFame} → ${previousFame - 1})`);
+    logger.debug(`💎 [RerollHelpers] Deducted 1 fame for reroll (${previousFame} → ${previousFame - 1})`);
     
     return { success: true, previousFame };
   } catch (error) {
-    console.error('❌ [RerollHelpers] Error deducting fame:', error);
+    logger.error('❌ [RerollHelpers] Error deducting fame:', error);
     return { success: false, error: 'Failed to deduct fame', previousFame };
   }
 }
@@ -81,7 +82,7 @@ export async function restoreFameAfterFailedReroll(previousFame: number): Promis
   const actor = getKingdomActor();
   
   if (!actor) {
-    console.error('❌ [RerollHelpers] Cannot restore fame - actor not found');
+    logger.error('❌ [RerollHelpers] Cannot restore fame - actor not found');
     return;
   }
   
@@ -90,9 +91,9 @@ export async function restoreFameAfterFailedReroll(previousFame: number): Promis
       k.fame = previousFame;
     });
     
-    console.log(`🔄 [RerollHelpers] Restored fame to ${previousFame} after failed reroll`);
+    logger.debug(`🔄 [RerollHelpers] Restored fame to ${previousFame} after failed reroll`);
   } catch (error) {
-    console.error('❌ [RerollHelpers] Error restoring fame:', error);
+    logger.error('❌ [RerollHelpers] Error restoring fame:', error);
   }
 }
 
@@ -133,7 +134,7 @@ export async function handleRerollWithFame(options: {
   const { currentItem, selectedSkill, phaseName, resetUiState, triggerRoll } = options;
   
   if (!currentItem || !selectedSkill) {
-    console.error(`[${phaseName}] Cannot reroll - missing item or skill`);
+    logger.error(`[${phaseName}] Cannot reroll - missing item or skill`);
     return;
   }
   
@@ -151,7 +152,7 @@ export async function handleRerollWithFame(options: {
     return;
   }
   
-  console.log(`💎 [${phaseName}] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
+  logger.debug(`💎 [${phaseName}] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
   
   // Reset UI state for new roll
   resetUiState();
@@ -163,7 +164,7 @@ export async function handleRerollWithFame(options: {
   try {
     await triggerRoll(selectedSkill);
   } catch (error) {
-    console.error(`[${phaseName}] Error during reroll:`, error);
+    logger.error(`[${phaseName}] Error during reroll:`, error);
     
     // Restore fame on error
     if (deductResult.previousFame !== undefined) {

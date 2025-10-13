@@ -87,6 +87,31 @@ function registerModuleSettings() {
         default: 8
     });
     
+    // Register log level setting for console logging
+    // @ts-ignore - Foundry globals
+    game.settings.register('pf2e-reignmaker', 'logLevel', {
+        name: 'Console Log Level',
+        hint: 'Control how much information is logged to the console. ERROR: Critical failures only. WARN: Warnings and errors. INFO (default): Important state changes, warnings, and errors. DEBUG: All logs (very verbose).',
+        scope: 'client',  // Per-user setting
+        config: true,     // Show in module settings
+        type: String,
+        choices: {
+            '0': 'ERROR - Critical failures only',
+            '1': 'WARN - Warnings and errors',
+            '2': 'INFO - Important state changes (default)',
+            '3': 'DEBUG - All logs (very verbose)'
+        },
+        default: '2',  // INFO level by default
+        onChange: (value: string) => {
+            // Update logger level when setting changes
+            import('./utils/Logger').then(({ logger, LogLevel }) => {
+                const level = parseInt(value);
+                logger.setLevel(level);
+                console.log(`[PF2E ReignMaker] Log level changed to: ${LogLevel[level]}`);
+            });
+        }
+    });
+    
     // Register reset kingdom button setting
     // Using a dummy boolean setting to create a button in the UI
     // @ts-ignore - Foundry globals
@@ -175,6 +200,18 @@ Hooks.once('init', () => {
 Hooks.once('ready', async () => {
     console.log('PF2E ReignMaker | Module ready');
     console.log('PF2E ReignMaker | Svelte Kingdom system initialized');
+    
+    // Initialize logger from setting
+    try {
+        const { logger, LogLevel } = await import('./utils/Logger');
+        // @ts-ignore
+        const logLevelSetting = game.settings.get('pf2e-reignmaker', 'logLevel') as string;
+        const level = parseInt(logLevelSetting);
+        logger.setLevel(level);
+        console.log(`PF2E ReignMaker | Log level initialized to: ${LogLevel[level]}`);
+    } catch (error) {
+        console.error('PF2E ReignMaker | Failed to initialize logger:', error);
+    }
     
     // Initialize the new Foundry-first kingdom system
     try {

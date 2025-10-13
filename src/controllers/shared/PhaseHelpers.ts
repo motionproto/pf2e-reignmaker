@@ -6,6 +6,7 @@
  */
 
 import { writable, type Writable } from 'svelte/store';
+import { logger } from '../../utils/Logger';
 
 /**
  * Composable controller initialization helper
@@ -33,7 +34,7 @@ export function usePhaseController<T>(
       
       initialized.set(true);
     } catch (error) {
-      console.error('[PhaseHelpers] Error initializing controller:', error);
+      logger.error('[PhaseHelpers] Error initializing controller:', error);
       initialized.set(false);
     }
   };

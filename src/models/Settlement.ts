@@ -88,15 +88,15 @@ export interface Settlement {
 export function getDefaultSettlementImage(tier: SettlementTier): string {
   switch (tier) {
     case SettlementTier.VILLAGE:
-      return 'img/settlements/village.webp';
+      return 'modules/pf2e-reignmaker/img/settlements/village.webp';
     case SettlementTier.TOWN:
-      return 'img/settlements/town.webp';
+      return 'modules/pf2e-reignmaker/img/settlements/town.webp';
     case SettlementTier.CITY:
-      return 'img/settlements/city.webp';
+      return 'modules/pf2e-reignmaker/img/settlements/city.webp';
     case SettlementTier.METROPOLIS:
-      return 'img/settlements/metropolis.webp';
+      return 'modules/pf2e-reignmaker/img/settlements/metropolis.webp';
     default:
-      return 'img/settlements/village.webp';
+      return 'modules/pf2e-reignmaker/img/settlements/village.webp';
   }
 }
 

@@ -44,7 +44,7 @@
     "failure": {
       "msg": "No change in relations",
       "modifiers": [],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Relations worsen by one step",
@@ -56,7 +56,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     }
   },
   "traits": [

@@ -17,6 +17,7 @@ import { TurnPhase } from '../actors/KingdomActor';
 import { StatusPhaseSteps } from './shared/PhaseStepConstants';
 import { createDefaultTurnState } from '../models/TurnState';
 import { SettlementTier } from '../models/Settlement';
+import { logger } from '../utils/Logger';
 
 export async function createStatusPhaseController() {
   return {
@@ -63,7 +64,7 @@ export async function createStatusPhaseController() {
         // Auto-complete the single step immediately (using type-safe constant)
         await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
         
-        console.log('✅ [StatusPhaseController] Status step auto-completed');
+        logger.debug('✅ [StatusPhaseController] Status step auto-completed');
         
         reportPhaseComplete('StatusPhaseController');
         return createPhaseResult(true);
@@ -86,7 +87,7 @@ export async function createStatusPhaseController() {
       
       // Clear applied outcomes from turnState (automatically cleared by turnState reset)
       // This is now handled by TurnManager.endTurn() which resets turnState
-      console.log('🧹 [StatusPhaseController] Applied outcomes cleared (handled by TurnManager.endTurn())');
+      logger.debug('🧹 [StatusPhaseController] Applied outcomes cleared (handled by TurnManager.endTurn())');
     },
 
     /**
@@ -96,7 +97,7 @@ export async function createStatusPhaseController() {
     async clearPreviousIncident() {
       // This is now automatically handled by turnState reset
       // No need to manually clear - turnState.unrestPhase resets on turn advance
-      console.log('🧹 [StatusPhaseController] Previous turn incident cleared (handled by turnState reset)');
+      logger.debug('🧹 [StatusPhaseController] Previous turn incident cleared (handled by turnState reset)');
     },
 
     /**
@@ -106,7 +107,7 @@ export async function createStatusPhaseController() {
     async processResourceDecay() {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
         return;
       }
       
@@ -121,7 +122,7 @@ export async function createStatusPhaseController() {
         kingdom.resources.ore = 0;
         
         if (decayedLumber > 0 || decayedStone > 0 || decayedOre > 0) {
-          console.log(`♻️ [StatusPhaseController] Resource decay: -${decayedLumber} lumber, -${decayedStone} stone, -${decayedOre} ore`);
+          logger.debug(`♻️ [StatusPhaseController] Resource decay: -${decayedLumber} lumber, -${decayedStone} stone, -${decayedOre} ore`);
         }
       });
     },
@@ -135,7 +136,7 @@ export async function createStatusPhaseController() {
         await actor.updateKingdom((kingdom) => {
           kingdom.fame = 1;
         });
-        console.log('✨ [StatusPhaseController] Fame initialized to 1');
+        logger.debug('✨ [StatusPhaseController] Fame initialized to 1');
       }
     },
 
@@ -149,13 +150,13 @@ export async function createStatusPhaseController() {
     async applyBaseUnrest() {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
         return;
       }
 
       const kingdom = actor.getKingdom();
       if (!kingdom) {
-        console.error('❌ [StatusPhaseController] No kingdom data available');
+        logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
       }
 
@@ -165,7 +166,7 @@ export async function createStatusPhaseController() {
       try {
         hexesPerUnrest = (game.settings.get('pf2e-reignmaker', 'hexesPerUnrest') as number) || 8;
       } catch (error) {
-        console.warn('⚠️ [StatusPhaseController] Setting not available yet, using default (8)');
+        logger.warn('⚠️ [StatusPhaseController] Setting not available yet, using default (8)');
       }
       
       // Calculate base unrest sources
@@ -217,7 +218,7 @@ export async function createStatusPhaseController() {
           }
         });
         
-        console.log(`📊 [StatusPhaseController] Base unrest applied: +${hexUnrest} (${kingdom.size} hexes ÷ ${hexesPerUnrest}), +${metropolisCount} (metropolises) = +${totalBaseUnrest} total`);
+        logger.debug(`📊 [StatusPhaseController] Base unrest applied: +${hexUnrest} (${kingdom.size} hexes ÷ ${hexesPerUnrest}), +${metropolisCount} (metropolises) = +${totalBaseUnrest} total`);
       }
     },
 
@@ -241,14 +242,14 @@ export async function createStatusPhaseController() {
     async applyPermanentModifiers() {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
         return;
       }
 
       // Get active modifiers with permanent duration
       const kingdom = actor.getKingdom();
       if (!kingdom) {
-        console.error('❌ [StatusPhaseController] No kingdom data available');
+        logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
       }
 
@@ -267,7 +268,7 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      console.log(`🏛️ [StatusPhaseController] Applying ${permanentModifiers.length} permanent modifiers`);
+      logger.debug(`🏛️ [StatusPhaseController] Applying ${permanentModifiers.length} permanent modifiers`);
 
       // Apply each permanent modifier's effects
       for (const modifier of permanentModifiers) {
@@ -278,7 +279,7 @@ export async function createStatusPhaseController() {
             const value = typeof legacyMod.value === 'string' ? parseInt(legacyMod.value, 10) : legacyMod.value;
             
             if (isNaN(value)) {
-              console.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${legacyMod.value}`);
+              logger.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${legacyMod.value}`);
               continue;
             }
 
@@ -291,7 +292,7 @@ export async function createStatusPhaseController() {
               const newValue = Math.max(0, currentValue + value);
               kingdom.resources[resource] = newValue;
 
-              console.log(`  ✓ ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+              logger.debug(`  ✓ ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
             });
           }
         }
@@ -308,13 +309,13 @@ export async function createStatusPhaseController() {
     async ensureTurnState() {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [StatusPhaseController] No KingdomActor available');
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
         return;
       }
 
       const kingdom = actor.getKingdom();
       if (!kingdom) {
-        console.error('❌ [StatusPhaseController] No kingdom data available');
+        logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
       }
 
@@ -322,32 +323,32 @@ export async function createStatusPhaseController() {
 
       // Case 1: No turnState exists (first run or legacy save)
       if (!kingdom.turnState) {
-        console.log('🔄 [StatusPhaseController] No turnState found, initializing...');
+        logger.debug('🔄 [StatusPhaseController] No turnState found, initializing...');
         
         // Fresh initialization (no migration needed - data is already clean)
         await actor.updateKingdom((k) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
         
-        console.log('✅ [StatusPhaseController] turnState initialized for turn', currentTurn);
+        logger.debug('✅ [StatusPhaseController] turnState initialized for turn', currentTurn);
         return;
       }
 
       // Case 2: turnState exists but turn number mismatch (turn advanced)
       if (kingdom.turnState.turnNumber !== currentTurn) {
-        console.log('🔄 [StatusPhaseController] Turn advanced, resetting turnState...');
-        console.log(`   Previous turn: ${kingdom.turnState.turnNumber}, Current turn: ${currentTurn}`);
+        logger.debug('🔄 [StatusPhaseController] Turn advanced, resetting turnState...');
+        logger.debug(`   Previous turn: ${kingdom.turnState.turnNumber}, Current turn: ${currentTurn}`);
         
         await actor.updateKingdom((k) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
         
-        console.log('✅ [StatusPhaseController] turnState reset for turn', currentTurn);
+        logger.debug('✅ [StatusPhaseController] turnState reset for turn', currentTurn);
         return;
       }
 
       // Case 3: turnState exists and matches current turn (phase navigation within same turn)
-      console.log('✅ [StatusPhaseController] turnState already initialized for turn', currentTurn);
+      logger.debug('✅ [StatusPhaseController] turnState already initialized for turn', currentTurn);
     }
   };
 }

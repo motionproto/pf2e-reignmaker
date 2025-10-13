@@ -31,6 +31,8 @@
   import AdditionalInfo from './CheckCard/components/AdditionalInfo.svelte';
   import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
   
+  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  
   // Required props
   export let id: string;
   export let name: string;
@@ -43,6 +45,7 @@
   }>;
   export let checkType: 'action' | 'event' | 'incident' = 'action';
   export let traits: string[] = [];  // For events/incidents
+  export let checkInstance: ActiveCheckInstance | null = null;  // NEW: Full instance for resolution state
   
   // Feature flags
   export let expandable: boolean = false;  // Actions only
@@ -221,7 +224,7 @@
            o.type === 'success' ? 'Success' :
            o.type === 'failure' ? 'Failure' : 'Critical Failure',
     description: o.description,
-    modifiers: o.modifiers || []
+    modifiers: (o.modifiers || []) as any  // Cast to any - old format compatibility
   }));
   
   // Get card state class - never show as fully resolved for actions
@@ -256,7 +259,7 @@
       {#if resolved && resolution}
         <!-- After resolution: Show OutcomeDisplay -->
         <OutcomeDisplay
-          checkId={id}
+          instance={checkInstance}
           outcome={resolution.outcome}
           actorName={resolution.actorName}
           skillName={usedSkill}

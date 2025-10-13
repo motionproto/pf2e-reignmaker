@@ -15,6 +15,7 @@ import { Hex, Worksite, WorksiteType } from '../../models/Hex';
 import type { Settlement, SettlementTier } from '../../models/Settlement';
 import { createSettlement } from '../../models/Settlement';
 import type { HexFeature, HexState } from '../../api/kingmaker';
+import { logger } from '../../utils/Logger';
 
 // Declare Foundry globals
 declare const Hooks: any;
@@ -58,7 +59,7 @@ export class TerritoryService {
             const hexes: Hex[] = [];
             const settlements: Settlement[] = [];
             
-            console.log('Starting Kingmaker sync, found hexes:', Object.keys(hexStates).length);
+            logger.debug('Starting Kingmaker sync, found hexes:', Object.keys(hexStates).length);
             
             for (const hexId of Object.keys(hexStates)) {
                 const hexState = hexStates[hexId];
@@ -83,26 +84,26 @@ export class TerritoryService {
                             terrain = this.normalizeTerrainName(rawTerrain);
                             zoneId = hexData.zone;
                             
-                            console.log(`Got terrain from region hex ${dotNotationId}:`, {
+                            logger.debug(`Got terrain from region hex ${dotNotationId}:`, {
                                 rawTerrain,
                                 normalizedTerrain: terrain,
                                 zone: zoneId
                             });
                         } else {
-                            console.warn(`Region hex ${dotNotationId} has no terrain data, marking as Unknown`);
+                            logger.warn(`Region hex ${dotNotationId} has no terrain data, marking as Unknown`);
                             terrain = 'Unknown';
                         }
                     } else {
-                        console.warn(`Could not find region hex for ${dotNotationId}, marking as Unknown`);
+                        logger.warn(`Could not find region hex for ${dotNotationId}, marking as Unknown`);
                         terrain = 'Unknown';
                     }
                 } catch (error) {
-                    console.error(`Error accessing region hex for ${dotNotationId}:`, error);
+                    logger.error(`Error accessing region hex for ${dotNotationId}:`, error);
                     terrain = 'Unknown';
                 }
                 
                 // Debug log for each claimed hex
-                console.log(`Processing hex ${dotNotationId}:`, {
+                logger.debug(`Processing hex ${dotNotationId}:`, {
                     terrain: terrain,
                     zone: zoneId,
                     camp: hexState.camp,
@@ -118,7 +119,7 @@ export class TerritoryService {
                 
                 // Log commodity detection for debugging
                 if (worksite) {
-                    console.log(`Hex ${dotNotationId} worksite analysis:`, {
+                    logger.debug(`Hex ${dotNotationId} worksite analysis:`, {
                         worksiteType: worksite.type,
                         commodity: hexState.commodity || 'none',
                         hasMatchingCommodity: hasSpecialTrait,
@@ -143,7 +144,7 @@ export class TerritoryService {
                 }
             }
             
-            console.log(`Synced ${hexes.length} hexes and ${settlements.length} settlements`);
+            logger.debug(`Synced ${hexes.length} hexes and ${settlements.length} settlements`);
             
             // Update kingdom store with territory data
             this.updateKingdomStore(hexes, settlements);
@@ -155,7 +156,7 @@ export class TerritoryService {
             };
             
         } catch (error) {
-            console.error('Failed to sync from Kingmaker:', error);
+            logger.error('Failed to sync from Kingmaker:', error);
             return {
                 success: false,
                 hexesSynced: 0,
@@ -173,11 +174,11 @@ export class TerritoryService {
         try {
             const actor = get(kingdomData);
             if (!actor || Object.keys(actor).length === 0) {
-                console.warn('[Territory Service] No kingdom data available, skipping store update');
+                logger.warn('[Territory Service] No kingdom data available, skipping store update');
                 return;
             }
         } catch (error) {
-            console.warn('[Territory Service] Error checking kingdom data:', error);
+            logger.warn('[Territory Service] Error checking kingdom data:', error);
             return;
         }
         
@@ -229,7 +230,7 @@ export class TerritoryService {
             state.cachedProduction = cachedProduction;
             state.cachedProductionByHex = cachedProductionByHex;
             
-            console.log('[Territory Service] Updated kingdom store with:', {
+            logger.debug('[Territory Service] Updated kingdom store with:', {
                 hexes: state.hexes.length,
                 settlements: state.settlements.length,
                 worksiteCount: state.worksiteCount,
@@ -266,11 +267,11 @@ export class TerritoryService {
             
             if (!existingAtLocation) {
                 // Only add if we don't have a settlement at this location
-                console.log(`Adding new settlement at ${kmSettlement.location.x},${kmSettlement.location.y} from Kingmaker`);
+                logger.debug(`Adding new settlement at ${kmSettlement.location.x},${kmSettlement.location.y} from Kingmaker`);
                 result.push(kmSettlement);
             } else {
                 // Keep our existing settlement data
-                console.log(`Preserving existing settlement "${existingAtLocation.name}" at ${existingAtLocation.location.x},${existingAtLocation.location.y}`);
+                logger.debug(`Preserving existing settlement "${existingAtLocation.name}" at ${existingAtLocation.location.x},${existingAtLocation.location.y}`);
             }
         }
         
@@ -284,7 +285,7 @@ export class TerritoryService {
                               !fromKingmaker.some(km => km.location.x === settlement.location.x && km.location.y === settlement.location.y);
             
             if (!shouldKeep) {
-                console.log(`Removing settlement "${settlement.name}" at ${locationKey} - no longer in Kingmaker`);
+                logger.debug(`Removing settlement "${settlement.name}" at ${locationKey} - no longer in Kingmaker`);
             }
             
             return shouldKeep;
@@ -302,7 +303,7 @@ export class TerritoryService {
         
         const num = parseInt(numericId);
         if (isNaN(num)) {
-            console.warn(`Invalid hex ID: ${numericId}, returning as is`);
+            logger.warn(`Invalid hex ID: ${numericId}, returning as is`);
             return numericId;
         }
         
@@ -333,7 +334,7 @@ export class TerritoryService {
             // Try to extract terrain name from object
             const terrainObj = terrain as any;
             terrainString = terrainObj.type || terrainObj.name || terrainObj.value || JSON.stringify(terrain);
-            console.log('Terrain is object, extracted:', terrainString, 'from', terrain);
+            logger.debug('Terrain is object, extracted:', terrainString, 'from', terrain);
         }
         
         const normalized = terrainString.toString().toLowerCase().trim();
@@ -414,7 +415,7 @@ export class TerritoryService {
                 return 'Plains'; // Lakes/water treated as plains
                 
             default: 
-                console.warn(`Unknown terrain type: "${terrainString}" (original: ${JSON.stringify(terrain)}), marking as Unknown`);
+                logger.warn(`Unknown terrain type: "${terrainString}" (original: ${JSON.stringify(terrain)}), marking as Unknown`);
                 return 'Unknown';
         }
     }
@@ -442,7 +443,7 @@ export class TerritoryService {
                 case 'quarry': 
                     return new Worksite(WorksiteType.QUARRY);
                 default: 
-                    console.warn(`Unknown camp type from Kingmaker: ${hexState.camp}`);
+                    logger.warn(`Unknown camp type from Kingmaker: ${hexState.camp}`);
                     return null;
             }
         }

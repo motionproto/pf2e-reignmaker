@@ -8,6 +8,7 @@
  */
 
 import { getIncidentDisplayName } from '../types/event-helpers';
+import { logger } from '../utils/Logger';
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
@@ -32,6 +33,7 @@ import {
   getIncidentSeverity,
   type UnrestTierInfo
 } from '../services/domain/unrest/UnrestService'
+import { checkInstanceService } from '../services/CheckInstanceService'
 
 // Re-export for backwards compatibility
 export { type UnrestTierInfo, getUnrestTierInfo, getUnrestStatus };
@@ -46,11 +48,35 @@ export async function createUnrestPhaseController() {
         const guardResult = checkPhaseGuard(TurnPhase.UNREST, 'UnrestPhaseController');
         if (guardResult) return guardResult;
         
+        // ✅ FIX: Clear incidents from previous turns using createdTurn comparison
         const kingdom = get(kingdomData);
+        const allIncidents = kingdom.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+        const outdatedIncidents = allIncidents.filter(i => i.createdTurn < kingdom.currentTurn);
         
-        // Read CURRENT state from turnState (single source of truth)
+        if (outdatedIncidents.length > 0) {
+          logger.debug(`🧹 [UnrestPhaseController] Clearing ${outdatedIncidents.length} incident(s) from previous turn(s)`);
+          await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+        }
+        
+        // Also clear completed/applied incidents from THIS turn on first entry
+        const completedThisTurn = allIncidents.filter(i => 
+          i.createdTurn === kingdom.currentTurn && (i.status === 'resolved' || i.status === 'applied')
+        );
+        if (completedThisTurn.length > 0) {
+          logger.debug(`🧹 [UnrestPhaseController] Clearing ${completedThisTurn.length} completed incident(s) from this turn`);
+          await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
+        }
+        
+        // Read state from activeCheckInstances (new) OR turnState (legacy fallback)
+        const pendingIncidents = checkInstanceService.getPendingInstances('incident', kingdom);
         const incidentRolled = kingdom.turnState?.unrestPhase?.incidentRolled ?? false;
-        const incidentTriggered = kingdom.turnState?.unrestPhase?.incidentTriggered ?? false;
+        const incidentTriggered = pendingIncidents.length > 0 || (kingdom.turnState?.unrestPhase?.incidentTriggered ?? false);
+        
+        // Check if incident has been resolved (has appliedOutcome)
+        const incidentInstance = pendingIncidents[0];
+        const effectsApplied = incidentInstance?.appliedOutcome?.effectsApplied ?? 
+                               kingdom.turnState?.unrestPhase?.incidentResolution?.effectsApplied ?? 
+                               false;
         
         // Check unrest tier - if tier 0 (stable), auto-complete all steps
         const unrest = kingdom.unrest || 0;
@@ -62,12 +88,12 @@ export async function createUnrestPhaseController() {
         const steps = [
           { name: 'Calculate Unrest', completed: 1 },  // UnrestPhaseSteps.CALCULATE_UNREST = 0 (always complete)
           { name: 'Incident Check', completed: (isStable || incidentRolled) ? 1 : 0 },  // UnrestPhaseSteps.INCIDENT_CHECK = 1 (auto-complete if stable)
-          { name: 'Resolve Incident', completed: (isStable || (incidentRolled && !incidentTriggered)) ? 1 : 0 }  // UnrestPhaseSteps.RESOLVE_INCIDENT = 2 (auto-complete if stable or no incident)
+          { name: 'Resolve Incident', completed: (isStable || (incidentRolled && !incidentTriggered) || effectsApplied) ? 1 : 0 }  // UnrestPhaseSteps.RESOLVE_INCIDENT = 2 (auto-complete if stable, no incident, or effects applied)
         ];
         
         await initializePhaseSteps(steps);
         
-        console.log('✅ [UnrestPhaseController] Phase initialization complete');
+        logger.debug('✅ [UnrestPhaseController] Phase initialization complete');
         
         return createPhaseResult(true)
       } catch (error) {
@@ -83,7 +109,7 @@ export async function createUnrestPhaseController() {
       const kingdom = get(kingdomData)
       const currentUnrest = kingdom.unrest || 0
       
-      console.log(`📊 [UnrestPhaseController] Current unrest level: ${currentUnrest}`)
+      logger.debug(`📊 [UnrestPhaseController] Current unrest level: ${currentUnrest}`)
       
       // This step is already auto-completed during initialization
       return { unrest: currentUnrest }
@@ -95,13 +121,13 @@ export async function createUnrestPhaseController() {
     async checkForIncidents() {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+        logger.error('❌ [UnrestPhaseController] No kingdom actor available');
         return { incidentTriggered: false };
       }
 
       // Check if incident check step is already completed (using type-safe constant)
       if (await isStepCompletedByIndex(UnrestPhaseSteps.INCIDENT_CHECK)) {
-        console.log('🟡 [UnrestPhaseController] Incident check already completed');
+        logger.debug('🟡 [UnrestPhaseController] Incident check already completed');
         return { incidentTriggered: false };
       }
 
@@ -116,9 +142,10 @@ export async function createUnrestPhaseController() {
       const roll = Math.random();
       const incidentTriggered = roll < incidentChance;
       
-      console.log(`🎲 [UnrestPhaseController] Incident check: rolled ${(roll * 100).toFixed(1)}% vs ${(incidentChance * 100)}% chance (tier ${tier})`);
+      logger.debug(`🎲 [UnrestPhaseController] Incident check: rolled ${(roll * 100).toFixed(1)}% vs ${(incidentChance * 100)}% chance (tier ${tier})`);
       
       let incidentId: string | null = null;
+      let instanceId: string | null = null;
       if (incidentTriggered) {
         try {
           const { incidentLoader } = await import('./incidents/incident-loader');
@@ -126,39 +153,49 @@ export async function createUnrestPhaseController() {
           const incident = incidentLoader.getRandomIncident(severity);
           incidentId = incident?.id || null;
           
-          console.log(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident?.name);
-          
-          // Set the incident - write to turnState ONLY (simplified migration)
-          await actor.updateKingdom((kingdom) => {
-            if (kingdom.turnState) {
-              kingdom.turnState.unrestPhase.incidentRolled = true;
-              kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
-              kingdom.turnState.unrestPhase.incidentTriggered = true;
-              kingdom.turnState.unrestPhase.incidentId = incidentId;
-            }
-          });
-          
-          console.log('⚠️ [UnrestPhaseController] Incident triggered, step 2 will require manual resolution');
+          if (incident) {
+            logger.debug(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident.name);
+            
+            // NEW ARCHITECTURE: Create ActiveCheckInstance
+            instanceId = await checkInstanceService.createInstance(
+              'incident',
+              incident.id,
+              incident,
+              kingdom.currentTurn
+            );
+            
+            // MINIMAL turnState update (only for roll display in UI)
+            await actor.updateKingdom((kingdom) => {
+              if (kingdom.turnState) {
+                kingdom.turnState.unrestPhase.incidentRolled = true;
+                kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
+                kingdom.turnState.unrestPhase.incidentChance = Math.round(incidentChance * 100);
+                kingdom.turnState.unrestPhase.incidentTriggered = true;
+              }
+            });
+            
+            logger.debug(`⚠️ [UnrestPhaseController] Incident triggered (instance: ${instanceId}), step 2 will require manual resolution`);
+          }
         } catch (error) {
-          console.error('❌ [UnrestPhaseController] Error loading incident:', error);
+          logger.error('❌ [UnrestPhaseController] Error loading incident:', error);
         }
       } else {
-        console.log('✅ [UnrestPhaseController] No incident occurred');
+        logger.debug('✅ [UnrestPhaseController] No incident occurred');
         
-        // Update turnState
+        // MINIMAL turnState update (only for roll display in UI)
         await actor.updateKingdom((kingdom) => {
           if (kingdom.turnState) {
             kingdom.turnState.unrestPhase.incidentRolled = true;
             kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
+            kingdom.turnState.unrestPhase.incidentChance = Math.round(incidentChance * 100);
             kingdom.turnState.unrestPhase.incidentTriggered = false;
-            kingdom.turnState.unrestPhase.incidentId = null;
           }
         });
         
         // Complete resolve incident step (using type-safe constant)
         await completePhaseStepByIndex(UnrestPhaseSteps.RESOLVE_INCIDENT);
         
-        console.log('✅ [UnrestPhaseController] No incident - turnState updated, step 2 completed via helper');
+        logger.debug('✅ [UnrestPhaseController] No incident - turnState updated, step 2 completed via helper');
       }
       
       // Complete incident check step (using type-safe constant)
@@ -168,7 +205,8 @@ export async function createUnrestPhaseController() {
         incidentTriggered,
         roll: Math.round(roll * 100),
         chance: Math.round(incidentChance * 100),
-        incidentId
+        incidentId,
+        instanceId  // Return instance ID for UI
       };
     },
 
@@ -183,7 +221,7 @@ export async function createUnrestPhaseController() {
     ) {
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+        logger.error('❌ [UnrestPhaseController] No kingdom actor available');
         return { success: false, error: 'No kingdom actor' };
       }
 
@@ -192,7 +230,7 @@ export async function createUnrestPhaseController() {
       const incident = incidentLoader.getIncidentById(incidentId);
       
       if (!incident) {
-        console.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
+        logger.error(`❌ [UnrestPhaseController] Incident ${incidentId} not found`);
         return { success: false, error: 'Incident not found' };
       }
 
@@ -208,7 +246,8 @@ export async function createUnrestPhaseController() {
 
 
     /**
-     * Store incident resolution in KingdomActor (synced across all clients)
+     * Store incident resolution in ActiveCheckInstance (synced across all clients)
+     * NEW ARCHITECTURE ONLY - no legacy fallback
      */
     async storeIncidentResolution(
       incidentId: string,
@@ -223,50 +262,86 @@ export async function createUnrestPhaseController() {
         effectsApplied?: boolean;
       }
     ) {
-      const actor = getKingdomActor();
-      if (!actor) {
-        console.error('❌ [UnrestPhaseController] No kingdom actor available');
+      const kingdom = get(kingdomData);
+      
+      // NEW ARCHITECTURE: Store in ActiveCheckInstance
+      const pendingIncidents = checkInstanceService.getPendingInstances('incident', kingdom);
+      const instance = pendingIncidents.find(i => i.checkId === incidentId);
+      
+      if (!instance) {
+        logger.error('❌ [UnrestPhaseController] No pending incident instance found');
         return { success: false };
       }
-
-      await actor.updateKingdom((kingdom) => {
-        if (kingdom.turnState?.unrestPhase) {
-          kingdom.turnState.unrestPhase.incidentResolution = resolution;
-          console.log(`✅ [UnrestPhaseController] Stored incident resolution in KingdomActor: ${incidentId}`);
-        }
-      });
-
+      
+      // Build ResolutionData format for service
+      const resolutionData: import('../types/modifiers').ResolutionData = {
+        numericModifiers: resolution.modifiers || [],
+        manualEffects: resolution.manualEffects || [],
+        complexActions: []  // Incidents don't have complex actions
+      };
+      
+      await checkInstanceService.storeOutcome(
+        instance.instanceId,
+        resolution.outcome,
+        resolutionData,
+        resolution.actorName,
+        resolution.skillName,
+        resolution.effect,
+        resolution.rollBreakdown
+      );
+      
+      logger.debug(`✅ [UnrestPhaseController] Stored incident resolution: ${incidentId}`);
       return { success: true };
     },
     
     /**
      * Mark incident resolution as applied (after "Apply Result" clicked)
+     * NEW ARCHITECTURE ONLY - no legacy fallback
      */
     async markIncidentApplied() {
-      const actor = getKingdomActor();
-      if (!actor) return;
-
-      await actor.updateKingdom((kingdom) => {
-        if (kingdom.turnState?.unrestPhase?.incidentResolution) {
-          kingdom.turnState.unrestPhase.incidentResolution.effectsApplied = true;
-          console.log(`✅ [UnrestPhaseController] Marked incident as applied (synced to all clients)`);
-        }
-      });
+      const kingdom = get(kingdomData);
+      
+      // NEW ARCHITECTURE: Find incident with status 'resolved' (has been rolled but not applied)
+      const resolvedIncident = kingdom.activeCheckInstances?.find(i => 
+        i.checkType === 'incident' && i.status === 'resolved'
+      );
+      
+      if (!resolvedIncident) {
+        logger.error('❌ [UnrestPhaseController] No resolved incident to mark as applied');
+        return;
+      }
+      
+      await checkInstanceService.markApplied(resolvedIncident.instanceId);
+      logger.debug(`✅ [UnrestPhaseController] Marked incident as applied (synced to all clients)`);
     },
 
     /**
-     * Clear incident resolution from KingdomActor
+     * Clear incident resolution from ActiveCheckInstance
+     * NEW ARCHITECTURE ONLY - no legacy fallback
+     * ✅ FIX: Clears appliedOutcome AND resets status to 'pending' for rerolls
      */
     async clearIncidentResolution() {
+      const kingdom = get(kingdomData);
       const actor = getKingdomActor();
-      if (!actor) return;
-
-      await actor.updateKingdom((kingdom) => {
-        if (kingdom.turnState?.unrestPhase) {
-          kingdom.turnState.unrestPhase.incidentResolution = undefined;
-          console.log(`🚫 [UnrestPhaseController] Cleared incident resolution from KingdomActor`);
-        }
-      });
+      if (!actor) {
+        logger.error('❌ [UnrestPhaseController] No kingdom actor available');
+        return;
+      }
+      
+      // ✅ FIX: Find ANY incident (pending, resolved, or applied) and reset it
+      const allIncidents = kingdom.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+      if (allIncidents.length > 0) {
+        await actor.updateKingdom(k => {
+          const instance = k.activeCheckInstances?.find(i => 
+            i.instanceId === allIncidents[0].instanceId
+          );
+          if (instance) {
+            instance.appliedOutcome = undefined;  // Clear resolution
+            instance.status = 'pending';  // Reset status for reroll
+            logger.debug(`🚫 [UnrestPhaseController] Cleared incident resolution and reset status to pending`);
+          }
+        });
+      }
     },
 
     /**

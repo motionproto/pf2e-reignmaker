@@ -7,26 +7,27 @@
 
 import { getKingdomActor } from '../../stores/KingdomStore';
 import { TurnPhase } from '../../actors/KingdomActor';
+import { logger } from '../../utils/Logger';
 
 /**
  * Standardized logging for phase start
  */
 export function reportPhaseStart(phaseName: string): void {
-  console.log(`🟡 [${phaseName}] Starting phase...`);
+  logger.debug(`🟡 [${phaseName}] Starting phase...`);
 }
 
 /**
  * Standardized logging for phase completion
  */
 export function reportPhaseComplete(phaseName: string): void {
-  console.log(`✅ [${phaseName}] Phase complete`);
+  logger.debug(`✅ [${phaseName}] Phase complete`);
 }
 
 /**
  * Standardized logging for phase errors
  */
 export function reportPhaseError(phaseName: string, error: Error): void {
-  console.error(`❌ [${phaseName}] Phase failed:`, error);
+  logger.error(`❌ [${phaseName}] Phase failed:`, error);
 }
 
 /**
@@ -63,7 +64,7 @@ export function checkPhaseGuard(
   
   // Steps exist - check if we're in the WRONG phase
   if (kingdom?.currentPhase !== phaseName) {
-    console.log(`⏭️ [${controllerName}] Not in ${phaseName} phase, skipping initialization`);
+    logger.debug(`⏭️ [${controllerName}] Not in ${phaseName} phase, skipping initialization`);
     return createPhaseResult(true);
   }
   
@@ -72,13 +73,13 @@ export function checkPhaseGuard(
   const hasCompletedSteps = kingdom.currentPhaseSteps?.some((s: any) => s.completed === 1);
   if (hasCompletedSteps) {
     // We're mid-phase, don't re-initialize (would clear component state/progress)
-    console.log(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
+    logger.debug(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
     return createPhaseResult(true);
   }
   
   // No completed steps yet - allow initialization
   // This handles the case where we just navigated to this phase with stale steps
-  console.log(`✅ [${controllerName}] In correct phase, allowing initialization`);
+  logger.debug(`✅ [${controllerName}] In correct phase, allowing initialization`);
   return null;
 }
 
@@ -87,7 +88,7 @@ export function checkPhaseGuard(
  * Uses TurnManager singleton with modular phase-handler
  */
 export async function initializePhaseSteps(steps: Array<{ name: string }>): Promise<void> {
-  console.log(`[PhaseControllerHelpers] Using TurnManager singleton for step initialization`);
+  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton for step initialization`);
   
   // Use TurnManager singleton for step management (business logic)
   const { TurnManager } = await import('../../models/turn-manager');
@@ -100,7 +101,7 @@ export async function initializePhaseSteps(steps: Array<{ name: string }>): Prom
  * Uses TurnManager singleton with modular phase-handler
  */
 export async function completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }> {
-  console.log(`[PhaseControllerHelpers] Using TurnManager singleton to complete step at index: ${stepIndex}`);
+  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton to complete step at index: ${stepIndex}`);
   
   try {
     // Use TurnManager singleton for step completion (business logic)
@@ -108,10 +109,10 @@ export async function completePhaseStepByIndex(stepIndex: number): Promise<{ pha
     const turnManager = TurnManager.getInstance();
     const result = await turnManager.completePhaseStepByIndex(stepIndex);
     
-    console.log(`✅ [PhaseControllerHelpers] Step ${stepIndex} completed via TurnManager singleton`);
+    logger.debug(`✅ [PhaseControllerHelpers] Step ${stepIndex} completed via TurnManager singleton`);
     return result;
   } catch (error) {
-    console.error('❌ [PhaseControllerHelpers] Error completing step:', error);
+    logger.error('❌ [PhaseControllerHelpers] Error completing step:', error);
     return { phaseComplete: false };
   }
 }
@@ -120,7 +121,7 @@ export async function completePhaseStepByIndex(stepIndex: number): Promise<{ pha
  * Check if a specific step is completed by index - delegates to PhaseHandler
  */
 export async function isStepCompletedByIndex(stepIndex: number): Promise<boolean> {
-  console.log(`[PhaseControllerHelpers] Using TurnManager singleton to check step completion at index: ${stepIndex}`);
+  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton to check step completion at index: ${stepIndex}`);
   
   try {
     // Use TurnManager singleton for step status checking
@@ -128,7 +129,7 @@ export async function isStepCompletedByIndex(stepIndex: number): Promise<boolean
     const turnManager = TurnManager.getInstance();
     return await turnManager.isStepCompletedByIndex(stepIndex);
   } catch (error) {
-    console.error('❌ [PhaseControllerHelpers] Error checking step completion:', error);
+    logger.error('❌ [PhaseControllerHelpers] Error checking step completion:', error);
     return false;
   }
 }
@@ -153,28 +154,47 @@ export async function resolvePhaseOutcome(
   resolutionData: any, // ResolutionData from types/events
   stepIndicesToComplete: number[]
 ): Promise<{ success: boolean; applied?: any; error?: string }> {
-  console.log(`🎯 [PhaseControllerHelpers.resolvePhaseOutcome] Resolving ${itemType} ${itemId} with ${outcome}`);
-  console.log(`📋 [PhaseControllerHelpers] ResolutionData:`, resolutionData);
+  logger.debug(`🎯 [PhaseControllerHelpers.resolvePhaseOutcome] Resolving ${itemType} ${itemId} with ${outcome}`);
+  logger.debug(`📋 [PhaseControllerHelpers] ResolutionData:`, resolutionData);
   
   try {
     // Apply outcome using shared resolution service
     const { applyResolvedOutcome } = await import('../../services/resolution');
     const result = await applyResolvedOutcome(resolutionData, outcome);
     
+    // NEW ARCHITECTURE: Mark instance as applied BEFORE completing steps
+    // This must happen while instance still has status 'resolved'
+    const { checkInstanceService } = await import('../../services/CheckInstanceService');
+    const { get } = await import('svelte/store');
+    const { kingdomData } = await import('../../stores/KingdomStore');
+    const kingdom = get(kingdomData);
+    
+    // Find the resolved instance (status = 'resolved')
+    const resolvedInstance = kingdom.activeCheckInstances?.find((i: any) => 
+      i.checkType === itemType && i.checkId === itemId && i.status === 'resolved'
+    );
+    
+    if (resolvedInstance) {
+      await checkInstanceService.markApplied(resolvedInstance.instanceId);
+      logger.debug(`✅ [PhaseControllerHelpers] Marked ${itemType} instance as applied`);
+    } else {
+      logger.warn(`⚠️ [PhaseControllerHelpers] No resolved ${itemType} instance found to mark as applied`);
+    }
+    
     // Complete phase steps in order
     for (const stepIndex of stepIndicesToComplete) {
       await completePhaseStepByIndex(stepIndex);
-      console.log(`✅ [PhaseControllerHelpers] Completed step ${stepIndex}`);
+      logger.debug(`✅ [PhaseControllerHelpers] Completed step ${stepIndex}`);
     }
     
-    console.log(`✅ [PhaseControllerHelpers] ${itemType} resolved successfully`);
+    logger.debug(`✅ [PhaseControllerHelpers] ${itemType} resolved successfully`);
     
     return {
       success: true,
       applied: result
     };
   } catch (error) {
-    console.error(`❌ [PhaseControllerHelpers] Error resolving ${itemType}:`, error);
+    logger.error(`❌ [PhaseControllerHelpers] Error resolving ${itemType}:`, error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

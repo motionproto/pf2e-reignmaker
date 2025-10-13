@@ -4,6 +4,12 @@
  * Single source of truth for all UI state during a turn.
  * Stored in KingdomData for multi-client synchronization.
  * Reset at turn boundaries by StatusPhaseController.
+ * 
+ * MIGRATION PLAN (Active Check Instance Unification):
+ * - Phase 1: Create activeCheckInstances alongside existing state (COMPLETE)
+ * - Phase 2: Migrate incidents to use activeCheckInstances (IN PROGRESS)
+ * - Phase 3: Migrate events to use activeCheckInstances
+ * - Phase 4: Remove legacy fields (incidentResolution, eventId, activeEventInstances)
  */
 
 import type { TurnPhase } from '../actors/KingdomActor';
@@ -46,8 +52,10 @@ export interface ResourcesPhaseState {
  */
 export interface UnrestPhaseState {
   completed: boolean;
+  initialized?: boolean;  // Track if phase has been initialized (for cleanup guard)
   incidentRolled: boolean;
   incidentRoll?: number;
+  incidentChance?: number;  // Chance threshold for incident
   incidentTriggered: boolean;
   incidentId: string | null;
   incidentResolved: boolean;
@@ -187,9 +195,15 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
     unrestPhase: {
       completed: false,
       incidentRolled: false,
+      incidentRoll: undefined,
       incidentTriggered: false,
       incidentId: null,
-      incidentResolved: false
+      incidentResolved: false,
+      incidentOutcome: undefined,
+      incidentSkillUsed: undefined,
+      incidentResolution: undefined,
+      resolutionState: undefined,
+      appliedOutcome: undefined
     },
     
     eventsPhase: {

@@ -8,6 +8,7 @@
 import type { PlayerAction } from './action-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { createGameEffectsService, type OutcomeDegree } from '../../services/GameEffectsService';
+import { logger } from '../../utils/Logger';
 
 // TEMPORARY: Inline helpers from deleted resolution-service.ts
 function getLevelBasedDC(level: number): number {
@@ -254,7 +255,7 @@ export class ActionResolver {
         kingdomData: KingdomData,
         isCriticalSuccess: boolean
     ) {
-        console.log(`🎮 [ActionResolver] Executing game effect: ${gameEffect.type}`);
+        logger.debug(`🎮 [ActionResolver] Executing game effect: ${gameEffect.type}`);
         
         switch (gameEffect.type) {
             case 'recruitArmy': {
@@ -305,7 +306,7 @@ export class ActionResolver {
             // etc.
             
             default:
-                console.warn(`⚠️ [ActionResolver] Unknown game effect type: ${gameEffect.type}`);
+                logger.warn(`⚠️ [ActionResolver] Unknown game effect type: ${gameEffect.type}`);
                 return {
                     success: false,
                     error: `Unknown game effect type: ${gameEffect.type}`

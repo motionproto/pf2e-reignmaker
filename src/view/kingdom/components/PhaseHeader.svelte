@@ -16,6 +16,9 @@
   // But only enable the button if we're viewing the actual current phase
   $: currentPhaseComplete = ($kingdomData.phaseComplete || false) && isViewingActualPhase;
 
+  // Check if current user is GM
+  $: isGM = (globalThis as any).game?.user?.isGM || false;
+
   // Debug phase completion detection
   $: console.log('🔍 [PhaseHeader DEBUG] Phase completion check:', {
     currentPhase: $currentPhase,
@@ -29,6 +32,26 @@
   
   let headerElement: HTMLElement;
   let previousTitle = '';
+  
+  // GM-only shift-click handler to bypass disabled state
+  function handleNextPhaseClick(event: CustomEvent) {
+    // Extract the MouseEvent from the CustomEvent detail
+    const mouseEvent = event.detail as MouseEvent;
+    
+    // If shift is held and user is GM, force progression even if disabled
+    if (mouseEvent?.shiftKey && isGM) {
+      console.log('🔑 [PhaseHeader] GM shift-click detected - forcing phase progression');
+      if (onNextPhase) {
+        onNextPhase();
+      }
+      return;
+    }
+    
+    // Normal click - only proceed if not disabled
+    if (currentPhaseComplete && onNextPhase) {
+      onNextPhase();
+    }
+  }
   
   // Trigger fade animation when phase changes
   $: if (title !== previousTitle && headerElement) {
@@ -70,9 +93,9 @@
         variant="primary"
         icon={isUpkeepPhase ? 'fas fa-calendar-check' : 'fas fa-arrow-right'}
         iconPosition="right"
-        on:click={onNextPhase}
+        on:click={handleNextPhaseClick}
         disabled={!currentPhaseComplete}
-        tooltip={!currentPhaseComplete ? 'Complete all required steps in this phase first' : undefined}
+        tooltip={!currentPhaseComplete ? (isGM ? 'Complete all required steps in this phase first (GM: Shift-click to force)' : 'Complete all required steps in this phase first') : undefined}
       >
         {#if isUpkeepPhase}
           End Turn {$currentTurn}

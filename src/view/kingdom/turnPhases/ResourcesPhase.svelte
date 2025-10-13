@@ -286,18 +286,16 @@
       
       .worksite-count {
          color: var(--text-secondary);
-         font-size: var(--font-sm);
-         font-style: italic;
+         font-size: var(--font-md);
       }
    }
    
    .no-production {
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.1);
+      padding: .5rem;
       border-radius: var(--radius-md);
       text-align: center;
-      color: var(--text-tertiary);
-      font-style: italic;
+      color: var(--text-primary);
+      font-size: var(--font-md);
    }
    
    .production-section,
@@ -313,7 +311,7 @@
       gap: 8px;
       padding: 8px 12px;
       border-radius: var(--radius-sm);
-      font-size: var(--font-m);
+      font-size: var(--font-md);
       
       &.warning {
          color: var(--color-amber-light);

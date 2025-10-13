@@ -1,5 +1,7 @@
 // Note: getKingdomActor not needed for character service, removing unused import
 
+import { logger } from '../../utils/Logger';
+
 export interface CharacterSelectionResult {
   success: boolean;
   selectedCharacter?: any;
@@ -38,7 +40,7 @@ export class PF2eCharacterService {
     try {
       return game.user?.character || null;
     } catch (error) {
-      console.error('[PF2eCharacterService] Error getting current user character:', error);
+      logger.error('[PF2eCharacterService] Error getting current user character:', error);
       return null;
     }
   }

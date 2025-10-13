@@ -7,10 +7,11 @@
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
   import {
-    updateCheckResolutionState,
-    getCheckResolutionState,
-    clearCheckResolutionState
+    updateInstanceResolutionState,
+    getInstanceResolutionState,
+    clearInstanceResolutionState
   } from '../../../../controllers/shared/ResolutionStateHelpers';
+  import type { ActiveCheckInstance } from '../../../../models/CheckInstance';
   import { 
     getOutcomeDisplayProps,
     detectDiceModifiers,
@@ -39,7 +40,7 @@
   import DebugResultSelector from './components/DebugResultSelector.svelte';
   
   // Props
-  export let checkId: string;  // NEW: Unique identifier for this check instance
+  export let instance: ActiveCheckInstance | null = null;  // NEW: Full instance object for state access
   export let outcome: string;
   export let actorName: string;
   export let skillName: string | undefined = undefined;
@@ -68,8 +69,8 @@
   
   type OutcomeType = 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
   
-  // ✅ READ state from KingdomActor (syncs across all clients)
-  $: resolutionState = getCheckResolutionState(checkId, $kingdomData.turnState);
+  // ✅ READ state from instance (syncs across all clients)
+  $: resolutionState = getInstanceResolutionState(instance);
   $: selectedChoice = resolutionState.selectedChoice;
   // Convert string keys back to appropriate types for Maps
   $: resolvedDice = new Map(
@@ -124,7 +125,7 @@
     if (Array.isArray(m.resources)) return false; // Not a resource array
     
     // Legacy format: value as string matching dice pattern
-    const hasLegacyDice = typeof m.value === 'string' && /^-?\d+d\d+([+-]\d+)?$/.test(m.value);
+    const hasLegacyDice = typeof m.value === 'string' && /^-?\\d+d\\d+([+-]\\d+)?$/.test(m.value);
     
     // Typed format: has formula field
     const hasTypedDice = m.type === 'dice' && m.formula;
@@ -132,8 +133,9 @@
     return hasLegacyDice || hasTypedDice;
   }).map((m, idx) => ({ ...m, originalIndex: idx })) || [];
   
-  // Only count dice modifiers that are NOT part of auto-generated choices
-  $: standaloneDiceModifiers = hasChoices ? [] : diceModifiers;
+  // FIXED: Show ALL dice modifiers, even when choices exist
+  // Choices and dice modifiers can coexist (e.g., choice + 1d4 penalty)
+  $: standaloneDiceModifiers = diceModifiers;
   $: hasDiceModifiers = standaloneDiceModifiers.length > 0;
   $: diceResolved = hasDiceModifiers && standaloneDiceModifiers.every(m => resolvedDice.has(m.originalIndex));
   
@@ -149,11 +151,14 @@
   
   // Button visibility and state
   $: showCancelButton = showCancel && !applied && !isIgnored;
-  $: showFameRerollButton = showFameReroll && !applied && !hasChoices && !hasResourceArrays && !hasDiceModifiers && !isIgnored;
+  // Hide reroll button once user starts resolving (makes choices/rolls dice)
+  // They can reroll the base outcome, but not after committing to resolutions
+  $: hasAnyResolutionState = selectedChoice !== null || resolvedDice.size > 0 || selectedResources.size > 0;
+  $: showFameRerollButton = showFameReroll && !applied && !isIgnored && !hasAnyResolutionState;
   $: effectivePrimaryLabel = applied ? '✓ Applied' : primaryButtonLabel;
   
   // Validation logic with debug logging
-  // Key insight: If we have choices, dice are handled within choices - don't check diceResolved
+  // FIXED: Check ALL interactive elements (choices, dice, state changes) independently
   let primaryButtonDisabled = false;
   $: {
     // Check if there's any content to apply
@@ -187,18 +192,17 @@
       ui.notifications?.error('Outcome data error: No message or modifiers to display');
     }
     
-    // If choices exist, ONLY check if choice is selected (dice are internal to choice)
-    // Otherwise, check standalone dice modifiers and state change dice
-    if (hasChoices) {
-      primaryButtonDisabled = applied || !choicesResolved;
-    } else {
-      // Enable button if there's content but no interactive elements to resolve
-      // OR if all interactive elements are resolved
-      primaryButtonDisabled = applied || 
-        (hasDiceModifiers && !diceResolved) || 
-        (hasStateChangeDice && !stateChangeDiceResolved) ||
-        (!hasContent); // Disable if there's literally nothing to apply
-    }
+    // FIXED: Check ALL resolution requirements independently
+    // Choices, dice, and state changes can all coexist
+    const choicesNeedResolution = hasChoices && !choicesResolved;
+    const diceNeedResolution = hasDiceModifiers && !diceResolved;
+    const stateChangeDiceNeedResolution = hasStateChangeDice && !stateChangeDiceResolved;
+    
+    primaryButtonDisabled = applied || 
+      choicesNeedResolution ||
+      diceNeedResolution ||
+      stateChangeDiceNeedResolution ||
+      !hasContent;
   }
   
   // Display effective message and state changes
@@ -235,8 +239,10 @@
     
     console.log(`💎 [OutcomeDisplay] Fame deducted (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
     
-    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
-    await clearCheckResolutionState(checkId);
+    // ✅ Clear state in instance via helper (syncs to all clients)
+    if (instance) {
+      await clearInstanceResolutionState(instance.instanceId);
+    }
     
     // Reset local UI state
     choiceResult = null;
@@ -334,19 +340,22 @@
   }
   
   async function handlePrimary() {
-    console.log('🔵 [handlePrimary] Called', { hasChoices, choicesResolved, applied, primaryButtonDisabled });
+    console.log('🔵 [handlePrimary] Called', { hasChoices, choicesResolved, hasDiceModifiers, diceResolved, applied, primaryButtonDisabled });
     
-    // Validation: If choices exist, only check if resolved. Otherwise check dice.
-    if (hasChoices) {
-      if (!choicesResolved) {
-        console.log('❌ [handlePrimary] Blocked: choices not resolved');
-        return;
-      }
-    } else {
-      if ((hasDiceModifiers && !diceResolved) || (hasStateChangeDice && !stateChangeDiceResolved)) {
-        console.log('❌ [handlePrimary] Blocked: dice not resolved');
-        return;
-      }
+    // FIXED: Validate ALL interactive elements independently
+    if (hasChoices && !choicesResolved) {
+      console.log('❌ [handlePrimary] Blocked: choices not resolved');
+      return;
+    }
+    
+    if (hasDiceModifiers && !diceResolved) {
+      console.log('❌ [handlePrimary] Blocked: dice not resolved');
+      return;
+    }
+    
+    if (hasStateChangeDice && !stateChangeDiceResolved) {
+      console.log('❌ [handlePrimary] Blocked: state change dice not resolved');
+      return;
     }
     
     console.log('✅ [handlePrimary] Computing resolution data...');
@@ -374,31 +383,35 @@
   async function handleDiceRoll(event: CustomEvent) {
     const { modifierIndex, result } = event.detail;
     
-    // ✅ Store in KingdomActor via helper (syncs to all clients)
-    await updateCheckResolutionState(checkId, {
-      resolvedDice: {
-        ...resolutionState.resolvedDice,
-        [modifierIndex]: result
-      }
-    });
+    // ✅ Store in instance via helper (syncs to all clients)
+    if (instance) {
+      await updateInstanceResolutionState(instance.instanceId, {
+        resolvedDice: {
+          ...resolutionState.resolvedDice,
+          [modifierIndex]: result
+        }
+      });
+    }
     
-    console.log(`🎲 [OutcomeDisplay] Rolled dice: ${result} for modifier ${modifierIndex} (checkId: ${checkId})`);
+    console.log(`🎲 [OutcomeDisplay] Rolled dice: ${result} for modifier ${modifierIndex} (instance: ${instance?.instanceId})`);
     dispatch('diceRolled', event.detail);
   }
   
   async function handleChoiceSelect(event: CustomEvent) {
     const { index, rolledValues } = event.detail;
     
+    if (!instance) return;
+    
     // Toggle selection
     if (selectedChoice === index) {
-      // ✅ Clear choice in KingdomActor
-      await updateCheckResolutionState(checkId, { selectedChoice: null });
+      // ✅ Clear choice in instance
+      await updateInstanceResolutionState(instance.instanceId, { selectedChoice: null });
       choiceResult = null;
       return;
     }
     
-    // ✅ Store in KingdomActor via helper (syncs to all clients)
-    await updateCheckResolutionState(checkId, { selectedChoice: index });
+    // ✅ Store in instance via helper (syncs to all clients)
+    await updateInstanceResolutionState(instance.instanceId, { selectedChoice: index });
     
     const choice = effectiveChoices[index];
     const resourceValues = rolledValues || {};
@@ -417,8 +430,10 @@
   }
   
   async function handleCancel() {
-    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
-    await clearCheckResolutionState(checkId);
+    // ✅ Clear state in instance via helper (syncs to all clients)
+    if (instance) {
+      await clearInstanceResolutionState(instance.instanceId);
+    }
     
     // Reset local UI state
     choiceResult = null;
@@ -430,8 +445,10 @@
     const newOutcome = event.detail.outcome as OutcomeType;
     debugOutcome = newOutcome;
     
-    // ✅ Clear state in KingdomActor via helper (syncs to all clients)
-    await clearCheckResolutionState(checkId);
+    // ✅ Clear state in instance via helper (syncs to all clients)
+    if (instance) {
+      await clearInstanceResolutionState(instance.instanceId);
+    }
     
     // Reset local UI state
     choiceResult = null;

@@ -4,6 +4,7 @@ import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { PF2eCharacterService } from './PF2eCharacterService';
 import { getSkillPenalty } from '../domain/unrest/UnrestService';
+import { logger } from '../../utils/Logger';
 
 export interface SkillCheckOptions {
   skillName: string;
@@ -133,7 +134,7 @@ export class PF2eSkillService {
           pf2eModifiers.push(pf2eMod);
         }
       } catch (error) {
-        console.warn('Failed to create PF2e modifier:', error, mod);
+        logger.warn('Failed to create PF2e modifier:', error, mod);
         // Fallback to basic object with test function
         pf2eModifiers.push({
           label: mod.name || mod.label || 'Kingdom Modifier',
@@ -262,7 +263,7 @@ export class PF2eSkillService {
     actionId?: string  // Optional action ID for aid bonuses
   ): Promise<any> {
     try {
-      console.log('🎲 [PF2eSkillService] Starting kingdom skill check:', {
+      logger.debug('🎲 [PF2eSkillService] Starting kingdom skill check:', {
         skillName, checkType, checkName, checkId
       });
 
@@ -332,11 +333,11 @@ export class PF2eSkillService {
         ]
       });
       
-      console.log('✅ [PF2eSkillService] Skill check completed');
+      logger.debug('✅ [PF2eSkillService] Skill check completed');
       return rollResult;
       
     } catch (error) {
-      console.error(`❌ [PF2eSkillService] Failed to perform kingdom ${checkType} roll:`, error);
+      logger.error(`❌ [PF2eSkillService] Failed to perform kingdom ${checkType} roll:`, error);
       ui.notifications?.error("Failed to perform skill check");
       await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
       return null;

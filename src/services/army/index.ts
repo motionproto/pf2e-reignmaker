@@ -6,6 +6,7 @@ import type { Army } from '../../models/BuildProject';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTierConfig } from '../../models/Settlement';
 import type { KingdomData } from '../../actors/KingdomActor';
+import { logger } from '../../utils/Logger';
 
 export class ArmyService {
   /**
@@ -39,7 +40,7 @@ export class ArmyService {
    * @internal
    */
   async _createArmyInternal(name: string, level: number, actorData?: any): Promise<Army> {
-    console.log(`🪖 [ArmyService] Creating army: ${name} (Level ${level})`);
+    logger.debug(`🪖 [ArmyService] Creating army: ${name} (Level ${level})`);
     
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -81,7 +82,7 @@ export class ArmyService {
       ? ` assigned to ${settlement.name}`
       : ' (unsupported - no available settlement capacity)';
     
-    console.log(`✅ [ArmyService] Army created: ${name}${supportMsg}`);
+    logger.debug(`✅ [ArmyService] Army created: ${name}${supportMsg}`);
     return army;
   }
   
@@ -117,7 +118,7 @@ export class ArmyService {
     refund: number;
     actorId?: string;
   }> {
-    console.log(`🪖 [ArmyService] Disbanding army: ${armyId}`);
+    logger.debug(`🪖 [ArmyService] Disbanding army: ${armyId}`);
     
     const actor = getKingdomActor();
     if (!actor) {
@@ -154,11 +155,11 @@ export class ArmyService {
       
       if (npcActor) {
         await npcActor.delete();
-        console.log(`🗑️ [ArmyService] Deleted NPC actor: ${actorId}`);
+        logger.debug(`🗑️ [ArmyService] Deleted NPC actor: ${actorId}`);
       }
     }
     
-    console.log(`✅ [ArmyService] Army disbanded: ${army.name}`);
+    logger.debug(`✅ [ArmyService] Army disbanded: ${army.name}`);
     
     return {
       armyName: army.name,
@@ -178,7 +179,7 @@ export class ArmyService {
    * @throws Error if Foundry not ready or creation fails
    */
   async createNPCActor(name: string, level: number, customData?: any): Promise<string> {
-    console.log(`🎭 [ArmyService] Creating NPC actor: ${name} (Level ${level})`);
+    logger.debug(`🎭 [ArmyService] Creating NPC actor: ${name} (Level ${level})`);
     
     const game = (globalThis as any).game;
     
@@ -195,7 +196,7 @@ export class ArmyService {
     
     if (!folder) {
       // Fallback: Create folder if it doesn't exist (shouldn't happen if hooks ran properly)
-      console.warn(`📁 [ArmyService] "${folderName}" folder not found, creating as fallback...`);
+      logger.warn(`📁 [ArmyService] "${folderName}" folder not found, creating as fallback...`);
       folder = await game.folders.documentClass.create({
         name: folderName,
         type: "Actor",
@@ -210,7 +211,7 @@ export class ArmyService {
         throw new Error(`Failed to create "${folderName}" folder`);
       }
       
-      console.log(`✅ [ArmyService] Created "${folderName}" folder with OWNER permissions`);
+      logger.debug(`✅ [ArmyService] Created "${folderName}" folder with OWNER permissions`);
     }
     
     // Default NPC actor data
@@ -243,7 +244,7 @@ export class ArmyService {
       throw new Error(`Failed to create NPC actor: ${name}`);
     }
     
-    console.log(`✅ [ArmyService] NPC actor created in folder: ${npcActor.id}`);
+    logger.debug(`✅ [ArmyService] NPC actor created in folder: ${npcActor.id}`);
     return npcActor.id;
   }
   
@@ -255,7 +256,7 @@ export class ArmyService {
    * @throws Error if army has no actor or actor not found
    */
   async syncArmyToActor(armyId: string): Promise<void> {
-    console.log(`🔄 [ArmyService] Syncing army to actor: ${armyId}`);
+    logger.debug(`🔄 [ArmyService] Syncing army to actor: ${armyId}`);
     
     const actor = getKingdomActor();
     if (!actor) {
@@ -289,7 +290,7 @@ export class ArmyService {
       'system.details.level.value': army.level
     });
     
-    console.log(`✅ [ArmyService] Synced ${army.name} to NPC actor`);
+    logger.debug(`✅ [ArmyService] Synced ${army.name} to NPC actor`);
   }
   
   /**
@@ -299,7 +300,7 @@ export class ArmyService {
    * @param actorId - NPC actor ID
    */
   async syncActorToArmy(actorId: string): Promise<void> {
-    console.log(`🔄 [ArmyService] Syncing actor to army: ${actorId}`);
+    logger.debug(`🔄 [ArmyService] Syncing actor to army: ${actorId}`);
     
     const game = (globalThis as any).game;
     const npcActor = game?.actors?.get(actorId);
@@ -314,9 +315,9 @@ export class ArmyService {
       if (army) {
         army.name = npcActor.name;
         army.level = npcActor.system?.details?.level?.value || army.level;
-        console.log(`✅ [ArmyService] Synced NPC actor to ${army.name}`);
+        logger.debug(`✅ [ArmyService] Synced NPC actor to ${army.name}`);
       } else {
-        console.warn(`⚠️ [ArmyService] No army found for actor: ${actorId}`);
+        logger.warn(`⚠️ [ArmyService] No army found for actor: ${actorId}`);
       }
     });
   }
@@ -329,7 +330,7 @@ export class ArmyService {
    * @param newLevel - New level
    */
   async updateArmyLevel(armyId: string, newLevel: number): Promise<void> {
-    console.log(`📈 [ArmyService] Updating army level: ${armyId} → ${newLevel}`);
+    logger.debug(`📈 [ArmyService] Updating army level: ${armyId} → ${newLevel}`);
     
     await updateKingdom(kingdom => {
       const army = kingdom.armies?.find(a => a.id === armyId);
@@ -341,7 +342,7 @@ export class ArmyService {
     // Sync to actor
     await this.syncArmyToActor(armyId);
     
-    console.log(`✅ [ArmyService] Army level updated to ${newLevel}`);
+    logger.debug(`✅ [ArmyService] Army level updated to ${newLevel}`);
   }
   
   /**
@@ -353,7 +354,7 @@ export class ArmyService {
    * @throws Error if settlement not found or at capacity
    */
   async assignArmyToSettlement(armyId: string, settlementId: string | null): Promise<void> {
-    console.log(`🏘️ [ArmyService] Assigning army ${armyId} to settlement ${settlementId || 'none'}...`);
+    logger.debug(`🏘️ [ArmyService] Assigning army ${armyId} to settlement ${settlementId || 'none'}...`);
     
     const actor = getKingdomActor();
     if (!actor) {
@@ -408,14 +409,14 @@ export class ArmyService {
         army.isSupported = true;
         army.turnsUnsupported = 0;
         
-        console.log(`✅ [ArmyService] Army ${armyId} assigned to ${newSettlement.name}`);
+        logger.debug(`✅ [ArmyService] Army ${armyId} assigned to ${newSettlement.name}`);
       } else {
         // Manually unassigned
         army.supportedBySettlementId = undefined;
         army.isSupported = false;
         // turnsUnsupported increments during Upkeep phase
         
-        console.log(`✅ [ArmyService] Army ${armyId} unassigned (unsupported)`);
+        logger.debug(`✅ [ArmyService] Army ${armyId} unassigned (unsupported)`);
       }
     });
   }
@@ -441,7 +442,7 @@ export class ArmyService {
     });
     
     if (available.length === 0) {
-      console.log('⚠️ [ArmyService] No settlements with available army capacity');
+      logger.debug('⚠️ [ArmyService] No settlements with available army capacity');
       return null;
     }
     
@@ -449,7 +450,7 @@ export class ArmyService {
     const randomIndex = Math.floor(Math.random() * available.length);
     const selected = available[randomIndex];
     
-    console.log(`🎲 [ArmyService] Randomly selected ${selected.name} for army support`);
+    logger.debug(`🎲 [ArmyService] Randomly selected ${selected.name} for army support`);
     return selected;
   }
   
@@ -479,7 +480,7 @@ export class ArmyService {
     supported: Set<string>,
     unsupported: Set<string>
   } {
-    console.log(`🔧 [ArmyService] Processing army support (capacity: ${availableSupport})...`);
+    logger.debug(`🔧 [ArmyService] Processing army support (capacity: ${availableSupport})...`);
     
     const supported = new Set<string>();
     const unsupported = new Set<string>();
@@ -503,7 +504,7 @@ export class ArmyService {
       });
     }
     
-    console.log(`✅ [ArmyService] Support processed: ${supported.size} supported, ${unsupported.size} unsupported`);
+    logger.debug(`✅ [ArmyService] Support processed: ${supported.size} supported, ${unsupported.size} unsupported`);
     return { supported, unsupported };
   }
   
@@ -541,7 +542,7 @@ export class ArmyService {
    */
   getArmiesBySettlement(settlementId: string): Army[] {
     // TODO: Implement when we add settlement-army assignments
-    console.log(`🔍 [ArmyService] STUB: Get armies for settlement ${settlementId}`);
+    logger.debug(`🔍 [ArmyService] STUB: Get armies for settlement ${settlementId}`);
     return [];
   }
   

@@ -52,7 +52,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Miscarriage of justice",
@@ -64,7 +64,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     }
   },
   "traits": [

@@ -4,6 +4,7 @@
 import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
 import type { Faction, AttitudeLevel } from '../../models/Faction';
 import { createDefaultFaction } from '../../models/Faction';
+import { logger } from '../../utils/Logger';
 
 export class FactionService {
   /**
@@ -14,7 +15,7 @@ export class FactionService {
    * @returns Created faction
    */
   async createFaction(name: string, attitude: AttitudeLevel = 'Indifferent'): Promise<Faction> {
-    console.log(`🤝 [FactionService] Creating faction: ${name} (${attitude})`);
+    logger.debug(`🤝 [FactionService] Creating faction: ${name} (${attitude})`);
     
     const faction = createDefaultFaction(name, attitude);
     
@@ -25,7 +26,7 @@ export class FactionService {
       kingdom.factions.push(faction);
     });
     
-    console.log(`✅ [FactionService] Faction created: ${name}`);
+    logger.debug(`✅ [FactionService] Faction created: ${name}`);
     return faction;
   }
   
@@ -36,7 +37,7 @@ export class FactionService {
    * @param updates - Partial faction updates
    */
   async updateFaction(factionId: string, updates: Partial<Faction>): Promise<void> {
-    console.log(`🤝 [FactionService] Updating faction: ${factionId}`);
+    logger.debug(`🤝 [FactionService] Updating faction: ${factionId}`);
     
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
@@ -48,7 +49,7 @@ export class FactionService {
       Object.assign(faction, updates);
     });
     
-    console.log(`✅ [FactionService] Faction updated`);
+    logger.debug(`✅ [FactionService] Faction updated`);
   }
   
   /**
@@ -59,7 +60,7 @@ export class FactionService {
    * @param factionData - Complete faction data
    */
   async updateFactionDetails(factionId: string, factionData: Faction): Promise<void> {
-    console.log(`🤝 [FactionService] Updating faction details: ${factionId}`);
+    logger.debug(`🤝 [FactionService] Updating faction details: ${factionId}`);
     
     await updateKingdom(kingdom => {
       const factionIndex = kingdom.factions?.findIndex(f => f.id === factionId);
@@ -71,7 +72,7 @@ export class FactionService {
       kingdom.factions[factionIndex] = { ...factionData, id: factionId };
     });
     
-    console.log(`✅ [FactionService] Faction details updated`);
+    logger.debug(`✅ [FactionService] Faction details updated`);
   }
   
   /**
@@ -80,7 +81,7 @@ export class FactionService {
    * @param factionId - Faction ID to delete
    */
   async deleteFaction(factionId: string): Promise<void> {
-    console.log(`🤝 [FactionService] Deleting faction: ${factionId}`);
+    logger.debug(`🤝 [FactionService] Deleting faction: ${factionId}`);
     
     const actor = getKingdomActor();
     if (!actor) {
@@ -101,7 +102,7 @@ export class FactionService {
       kingdom.factions = kingdom.factions.filter(f => f.id !== factionId);
     });
     
-    console.log(`✅ [FactionService] Faction deleted: ${faction.name}`);
+    logger.debug(`✅ [FactionService] Faction deleted: ${faction.name}`);
   }
   
   /**
@@ -111,7 +112,7 @@ export class FactionService {
    * @param attitude - New attitude level
    */
   async updateAttitude(factionId: string, attitude: AttitudeLevel): Promise<void> {
-    console.log(`🤝 [FactionService] Updating attitude for ${factionId} to ${attitude}`);
+    logger.debug(`🤝 [FactionService] Updating attitude for ${factionId} to ${attitude}`);
     
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
@@ -122,7 +123,7 @@ export class FactionService {
       faction.attitude = attitude;
     });
     
-    console.log(`✅ [FactionService] Attitude updated to ${attitude}`);
+    logger.debug(`✅ [FactionService] Attitude updated to ${attitude}`);
   }
   
   /**
@@ -133,7 +134,7 @@ export class FactionService {
    * @param max - Optional max value (if changing the clock size)
    */
   async updateProgressClock(factionId: string, current: number, max?: number): Promise<void> {
-    console.log(`🤝 [FactionService] Updating progress clock for ${factionId}: ${current}${max ? `/${max}` : ''}`);
+    logger.debug(`🤝 [FactionService] Updating progress clock for ${factionId}: ${current}${max ? `/${max}` : ''}`);
     
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
@@ -150,7 +151,7 @@ export class FactionService {
       }
     });
     
-    console.log(`✅ [FactionService] Progress clock updated`);
+    logger.debug(`✅ [FactionService] Progress clock updated`);
   }
   
   /**

@@ -58,7 +58,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Devastating losses. Any worksites are removed from the hex unrest",
@@ -70,7 +70,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     }
   },
   "traits": [

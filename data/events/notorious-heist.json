@@ -59,7 +59,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Crime syndicate exposed",
@@ -78,7 +78,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     }
   },
   "traits": [

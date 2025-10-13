@@ -45,7 +45,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Magical disaster",
@@ -63,7 +63,7 @@
           "duration": "immediate"
         }
       ],
-      "endsEvent": false
+      "endsEvent": true
     }
   },
   "traits": [

@@ -14,6 +14,7 @@ import type { EventModifier } from '../types/modifiers';
 import { isStaticModifier, isOngoingDuration, isTurnCountDuration } from '../types/modifiers';
 import { getEventDisplayName } from '../types/event-helpers';
 import { updateKingdom } from '../stores/KingdomStore';
+import { logger } from '../utils/Logger';
 
 /**
  * Create modifier service
@@ -25,7 +26,7 @@ export async function createModifierService() {
      * Custom modifiers are applied during Events phase by EventPhaseController
      */
     async applyOngoingModifiers(): Promise<void> {
-      console.log('🟡 [ModifierService] Applying structure modifiers...');
+      logger.debug('🟡 [ModifierService] Applying structure modifiers...');
       
       await updateKingdom(kingdom => {
         const modifiers = kingdom.activeModifiers || [];
@@ -34,7 +35,7 @@ export async function createModifierService() {
         const structureModifiers = modifiers.filter(m => m.sourceType === 'structure');
         
         if (structureModifiers.length === 0) {
-          console.log('  ℹ️ No structure modifiers to apply');
+          logger.debug('  ℹ️ No structure modifiers to apply');
           return;
         }
         
@@ -46,13 +47,13 @@ export async function createModifierService() {
               const current = kingdom.resources[mod.resource] || 0;
               kingdom.resources[mod.resource] = Math.max(0, current + mod.value);
               
-              console.log(`  ✓ Applied structure modifier: ${mod.value} ${mod.resource} (from ${modifier.name})`);
+              logger.debug(`  ✓ Applied structure modifier: ${mod.value} ${mod.resource} (from ${modifier.name})`);
             }
           }
         }
       });
       
-      console.log('✅ [ModifierService] Structure modifiers applied');
+      logger.debug('✅ [ModifierService] Structure modifiers applied');
     },
     
     /**
@@ -77,7 +78,7 @@ export async function createModifierService() {
         
         const removedCount = initialCount - kingdom.activeModifiers.length;
         if (removedCount > 0) {
-          console.log(`🧹 [ModifierService] Removed ${removedCount} expired modifiers`);
+          logger.debug(`🧹 [ModifierService] Removed ${removedCount} expired modifiers`);
         }
       });
     },

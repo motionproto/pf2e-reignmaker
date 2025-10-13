@@ -19,6 +19,7 @@ import {
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
 import { UpkeepPhaseSteps } from './shared/PhaseStepConstants';
+import { logger } from '../utils/Logger';
 
 export async function createUpkeepPhaseController() {
   return {
@@ -61,7 +62,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        console.log('🍞 [UpkeepPhaseController] Processing settlement feeding...');
+        logger.debug('🍞 [UpkeepPhaseController] Processing settlement feeding...');
         await this.processFoodConsumption();
         
         // Complete feed settlements step (using type-safe constant)
@@ -82,7 +83,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        console.log('⚔️ [UpkeepPhaseController] Processing military support...');
+        logger.debug('⚔️ [UpkeepPhaseController] Processing military support...');
         await this.processMilitarySupport();
         
         // Complete support military step (using type-safe constant)
@@ -103,7 +104,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        console.log('🏗️ [UpkeepPhaseController] Processing build queue...');
+        logger.debug('🏗️ [UpkeepPhaseController] Processing build queue...');
         await this.processBuildProjects();
         
         // Complete process builds step (using type-safe constant)
@@ -132,7 +133,7 @@ export async function createUpkeepPhaseController() {
       
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        logger.error('❌ [UpkeepPhaseController] No KingdomActor available');
         return;
       }
       
@@ -165,12 +166,12 @@ export async function createUpkeepPhaseController() {
           availableFood -= required;
           settlement.wasFedLastTurn = true;
           fedSettlements.push(`${settlement.name} (${settlement.tier})`);
-          console.log(`🍞 [UpkeepPhaseController] Fed: ${settlement.name} (${settlement.tier}, ${required} food)`);
+          logger.debug(`🍞 [UpkeepPhaseController] Fed: ${settlement.name} (${settlement.tier}, ${required} food)`);
         } else {
           settlement.wasFedLastTurn = false;
           totalUnrest += tierNum;
           unfedSettlements.push({ name: settlement.name, tier: settlement.tier, tierNum, unrest: tierNum });
-          console.log(`❌ [UpkeepPhaseController] Unfed: ${settlement.name} (${settlement.tier}) → +${tierNum} Unrest`);
+          logger.debug(`❌ [UpkeepPhaseController] Unfed: ${settlement.name} (${settlement.tier}) → +${tierNum} Unrest`);
         }
       }
       
@@ -189,12 +190,12 @@ export async function createUpkeepPhaseController() {
       });
       
       // Summary logging
-      console.log(`✅ [UpkeepPhaseController] Settlement feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
+      logger.debug(`✅ [UpkeepPhaseController] Settlement feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
       if (totalUnrest > 0) {
-        console.log(`⚠️ [UpkeepPhaseController] Total unrest from unfed settlements: +${totalUnrest}`);
+        logger.debug(`⚠️ [UpkeepPhaseController] Total unrest from unfed settlements: +${totalUnrest}`);
       }
       if (unfedSettlements.length > 0) {
-        console.log(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
+        logger.debug(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
       }
     },
 
@@ -207,13 +208,13 @@ export async function createUpkeepPhaseController() {
       
       const armyCount = kingdom.armies?.length || 0;
       if (armyCount === 0) {
-        console.log('🛡️ [UpkeepPhaseController] No armies to support');
+        logger.debug('🛡️ [UpkeepPhaseController] No armies to support');
         return;
       }
       
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        logger.error('❌ [UpkeepPhaseController] No KingdomActor available');
         return;
       }
       
@@ -225,11 +226,11 @@ export async function createUpkeepPhaseController() {
       
       if (currentFood >= armyFood) {
         foodAfterArmies = currentFood - armyFood;
-        console.log(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
+        logger.debug(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
       } else {
         armyFoodUnrest = armyFood - currentFood;
         foodAfterArmies = 0;
-        console.log(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
+        logger.debug(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
       }
       
       // Pay gold support costs
@@ -243,7 +244,7 @@ export async function createUpkeepPhaseController() {
           kingdom.resources.gold = currentGold - supportCost;
           kingdom.unrest += armyFoodUnrest;
         });
-        console.log(`💰 [UpkeepPhaseController] Paid ${supportCost} gold for military support`);
+        logger.debug(`💰 [UpkeepPhaseController] Paid ${supportCost} gold for military support`);
       } else {
         // Can't afford support - generate unrest
         goldUnrest = supportCost - currentGold;
@@ -252,13 +253,13 @@ export async function createUpkeepPhaseController() {
           kingdom.resources.gold = 0;
           kingdom.unrest += armyFoodUnrest + goldUnrest;
         });
-        console.log(`⚠️ [UpkeepPhaseController] Military gold shortage: ${goldUnrest} unrest generated`);
+        logger.debug(`⚠️ [UpkeepPhaseController] Military gold shortage: ${goldUnrest} unrest generated`);
       }
       
       // Summary
       const totalUnrest = armyFoodUnrest + goldUnrest;
       if (totalUnrest > 0) {
-        console.log(`⚠️ [UpkeepPhaseController] Total military unrest: +${totalUnrest} (food: ${armyFoodUnrest}, gold: ${goldUnrest})`);
+        logger.debug(`⚠️ [UpkeepPhaseController] Total military unrest: +${totalUnrest} (food: ${armyFoodUnrest}, gold: ${goldUnrest})`);
       }
     },
 
@@ -271,13 +272,13 @@ export async function createUpkeepPhaseController() {
       
       const buildQueue = kingdom.buildQueue || [];
       if (buildQueue.length === 0) {
-        console.log('🏗️ [UpkeepPhaseController] No build projects to process');
+        logger.debug('🏗️ [UpkeepPhaseController] No build projects to process');
         return;
       }
       
       const actor = getKingdomActor();
       if (!actor) {
-        console.error('❌ [UpkeepPhaseController] No KingdomActor available');
+        logger.error('❌ [UpkeepPhaseController] No KingdomActor available');
         return;
       }
       
@@ -286,11 +287,11 @@ export async function createUpkeepPhaseController() {
         const completedProjects = [...kingdom.buildQueue];
         kingdom.buildQueue = []; // Clear the queue - projects are completed
         
-        console.log(`🏗️ [UpkeepPhaseController] Completed ${completedProjects.length} build projects:`, 
+        logger.debug(`🏗️ [UpkeepPhaseController] Completed ${completedProjects.length} build projects:`, 
           completedProjects.map(p => p.structureId));
       });
       
-      console.log(`✅ [UpkeepPhaseController] Processed ${buildQueue.length} build projects`);
+      logger.debug(`✅ [UpkeepPhaseController] Processed ${buildQueue.length} build projects`);
     },
 
     /**

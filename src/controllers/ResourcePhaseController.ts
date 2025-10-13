@@ -20,6 +20,7 @@ import {
 } from './shared/PhaseControllerHelpers';
 import { TurnPhase } from '../actors/KingdomActor';
 import { ResourcesPhaseSteps } from './shared/PhaseStepConstants';
+import { logger } from '../utils/Logger';
 
 export async function createResourcePhaseController() {
   // Helper function to get active economic modifiers
@@ -53,7 +54,7 @@ export async function createResourcePhaseController() {
         await initializePhaseSteps(steps);
         
         // Resource collection requires manual user interaction via UI button
-        console.log('🟡 [ResourcePhaseController] Resource collection requires manual completion');
+        logger.debug('🟡 [ResourcePhaseController] Resource collection requires manual completion');
         
         reportPhaseComplete('ResourcePhaseController');
         return createPhaseResult(true);
@@ -83,11 +84,11 @@ export async function createResourcePhaseController() {
           return createPhaseResult(false, 'No kingdom actor available');
         }
 
-        console.log(`🟡 [ResourcePhaseController] Collecting resources using economics service...`);
+        logger.debug(`🟡 [ResourcePhaseController] Collecting resources using economics service...`);
         
         // Get active economic modifiers
         const modifiers = getActiveModifiers(kingdom);
-        console.log(`� [ResourcePhaseController] Applying ${modifiers.length} economic modifiers`);
+        logger.debug(`� [ResourcePhaseController] Applying ${modifiers.length} economic modifiers`);
         
         // Use economics service to collect all resources
         const result = economicsService.collectTurnResources({
@@ -105,7 +106,7 @@ export async function createResourcePhaseController() {
             if (amount > 0) {
               const current = kingdom.resources[resource] || 0;
               kingdom.resources[resource] = current + amount;
-              console.log(`✅ [ResourcePhaseController] +${amount} ${resource} collected from territory`);
+              logger.debug(`✅ [ResourcePhaseController] +${amount} ${resource} collected from territory`);
             }
           });
           
@@ -113,23 +114,23 @@ export async function createResourcePhaseController() {
           if (result.resourceCollection.settlementGold > 0) {
             const current = kingdom.resources['gold'] || 0;
             kingdom.resources['gold'] = current + result.resourceCollection.settlementGold;
-            console.log(`✅ [ResourcePhaseController] +${result.resourceCollection.settlementGold} gold collected from settlements`);
+            logger.debug(`✅ [ResourcePhaseController] +${result.resourceCollection.settlementGold} gold collected from settlements`);
           }
         });
         
         // Log detailed results with clear separation
-        console.log(`🏞️ [ResourcePhaseController] Territory Resources Collected:`);
+        logger.debug(`🏞️ [ResourcePhaseController] Territory Resources Collected:`);
         if (result.resourceCollection.territoryResources.size > 0) {
           result.resourceCollection.territoryResources.forEach((amount, resource) => {
-            console.log(`   +${amount} ${resource}`);
+            logger.debug(`   +${amount} ${resource}`);
           });
         } else {
-          console.log(`   No territory resources this turn`);
+          logger.debug(`   No territory resources this turn`);
         }
         
-        console.log(`💰 [ResourcePhaseController] Settlement Gold: +${result.resourceCollection.settlementGold} from ${result.fedSettlementsCount} fed settlements`);
+        logger.debug(`💰 [ResourcePhaseController] Settlement Gold: +${result.resourceCollection.settlementGold} from ${result.fedSettlementsCount} fed settlements`);
         if (result.unfedSettlementsCount > 0) {
-          console.log(`🍞 [ResourcePhaseController] ${result.unfedSettlementsCount} settlements unfed (no gold income)`);
+          logger.debug(`🍞 [ResourcePhaseController] ${result.unfedSettlementsCount} settlements unfed (no gold income)`);
         }
         
         // Log worksite details
@@ -138,7 +139,7 @@ export async function createResourcePhaseController() {
             const productionList = Array.from(hex.production.entries())
               .map(([resource, amount]) => `${amount} ${resource}`)
               .join(', ');
-            console.log(`�️ [ResourcePhaseController] ${hex.hexName}: ${productionList}`);
+            logger.debug(`�️ [ResourcePhaseController] ${hex.hexName}: ${productionList}`);
           }
         });
         
@@ -198,7 +199,7 @@ export async function createResourcePhaseController() {
           isCollected: await isStepCompletedByIndex(ResourcesPhaseSteps.COLLECT_RESOURCES)
         };
       } catch (error) {
-        console.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
+        logger.error('❌ [ResourcePhaseController] Error in preview calculation:', error);
         
         // Fallback to empty result
         return {

@@ -27,6 +27,7 @@ import type {
 } from './types';
 
 import { calculateProduction, calculateSettlementGoldIncome } from './production';
+import { logger } from '../../utils/Logger';
 import { 
   calculateConsumption, 
   calculateArmySupportCapacity,
@@ -158,7 +159,7 @@ export class EconomicsService {
       modifiers?: EconomicModifier[];
     }
   ): ResourceCollectionResult {
-    console.log('🏭 [EconomicsService] Collecting turn resources with state:', {
+    logger.debug('🏭 [EconomicsService] Collecting turn resources with state:', {
       hexCount: state.hexes.length,
       settlementCount: state.settlements.length,
       cachedProductionSize: state.cachedProduction.size,
@@ -178,7 +179,7 @@ export class EconomicsService {
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
     const goldIncome = this.calculateSettlementGoldIncome(state.settlements);
     
-    console.log('💰 [EconomicsService] Settlement analysis:', {
+    logger.debug('💰 [EconomicsService] Settlement analysis:', {
       totalSettlements: state.settlements.length,
       fedSettlements: fedSettlements.length,
       unfedSettlements: unfedSettlements.length,
@@ -204,7 +205,7 @@ export class EconomicsService {
       production: new Map(production)
     }));
     
-    console.log('📊 [EconomicsService] Final collection result:', {
+    logger.debug('📊 [EconomicsService] Final collection result:', {
       territoryResources: Object.fromEntries(territoryResources),
       settlementGold,
       totalCollected: Object.fromEntries(totalCollected),

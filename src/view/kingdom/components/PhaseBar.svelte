@@ -16,7 +16,14 @@
   // Pure UI state - no business logic  
   $: selectedPhase = $viewingPhase || $currentPhase;
   
-  // Lock warning state
+  // Press-and-hold unlock state
+  let unlockProgress = 0; // 0-100
+  let unlockInProgress = false;
+  let unlockStartTime: number | null = null;
+  let unlockAnimationFrame: number | null = null;
+  let unlockTarget: 'lock' | TurnPhase | null = null; // What we're unlocking for
+  
+  // Lock warning animation state (for quick clicks on locked phases)
   let lockWarningActive = false;
   let lockWarningTimeout: number | null = null;
   
@@ -35,41 +42,95 @@
     }
   });
 
-  // Pure UI actions - just update viewing state
-  function handlePhaseClick(phase: TurnPhase) {
-    // If locked and clicking different phase than current
-    if ($phaseViewLocked && phase !== $currentPhase) {
-      if (!lockWarningActive) {
-        // First click - show warning
-        lockWarningActive = true;
-        console.log('[PhaseBar] Lock warning activated - click again to unlock');
-        
-        // Clear warning after 5 seconds
-        lockWarningTimeout = window.setTimeout(() => {
-          lockWarningActive = false;
-          lockWarningTimeout = null;
-          console.log('[PhaseBar] Lock warning timeout - reset to locked state');
-        }, 5000);
-        
-        return; // Don't change phase yet
-      } else {
-        // Second click - unlock and proceed
-        console.log('[PhaseBar] Unlocking phase view - confirmed by second click');
-        lockWarningActive = false;
-        if (lockWarningTimeout) {
-          clearTimeout(lockWarningTimeout);
-          lockWarningTimeout = null;
-        }
-        phaseViewLocked.set(false);
-      }
-    }
+  // Press-and-hold unlock handlers
+  function handleUnlockStart(target: 'lock' | TurnPhase) {
+    // Don't start if already unlocked
+    if (!$phaseViewLocked) return;
     
-    setViewingPhase(phase);
+    // Don't start if clicking on current phase (no unlock needed)
+    if (target !== 'lock' && target === $currentPhase) return;
+    
+    unlockInProgress = true;
+    unlockStartTime = Date.now();
+    unlockTarget = target;
+    
+    console.log(`[PhaseBar] Starting unlock for: ${target}`);
+    
+    // Start animation loop
+    updateUnlockProgress();
   }
   
-  // Lock toggle handler
+  function handleUnlockEnd() {
+    if (!unlockInProgress) return;
+    
+    if (unlockProgress >= 100) {
+      // Unlock successful
+      console.log(`[PhaseBar] Unlock complete! Target: ${unlockTarget}`);
+      phaseViewLocked.set(false);
+      
+      // If unlocking for a phase button, navigate to that phase
+      if (unlockTarget !== 'lock') {
+        setViewingPhase(unlockTarget as TurnPhase);
+      }
+    } else {
+      console.log(`[PhaseBar] Unlock cancelled at ${unlockProgress.toFixed(0)}%`);
+    }
+    
+    // Reset
+    cancelUnlock();
+  }
+  
+  function cancelUnlock() {
+    unlockInProgress = false;
+    unlockProgress = 0;
+    unlockStartTime = null;
+    unlockTarget = null;
+    if (unlockAnimationFrame) {
+      cancelAnimationFrame(unlockAnimationFrame);
+      unlockAnimationFrame = null;
+    }
+  }
+  
+  function updateUnlockProgress() {
+    if (!unlockInProgress || !unlockStartTime) return;
+    
+    const elapsed = Date.now() - unlockStartTime;
+    const DURATION = 1500; // 1.5 seconds (faster)
+    
+    unlockProgress = Math.min(100, (elapsed / DURATION) * 100);
+    
+    if (unlockProgress < 100) {
+      unlockAnimationFrame = requestAnimationFrame(updateUnlockProgress);
+    }
+  }
+  
+  // Pure UI actions - just update viewing state
+  function handlePhaseClick(phase: TurnPhase) {
+    if (!$phaseViewLocked) {
+      // Unlocked - navigate normally
+      setViewingPhase(phase);
+    } else if (phase !== $currentPhase && !unlockInProgress) {
+      // Locked and clicking different phase - show lock warning animation
+      lockWarningActive = true;
+      console.log('[PhaseBar] Lock warning - click different phase while locked');
+      
+      // Clear warning after animation completes (600ms)
+      if (lockWarningTimeout) clearTimeout(lockWarningTimeout);
+      lockWarningTimeout = window.setTimeout(() => {
+        lockWarningActive = false;
+        lockWarningTimeout = null;
+      }, 600);
+    }
+    // When pressing and holding, unlock is handled by mousedown/mouseup
+  }
+  
+  // Lock toggle handler (only for locking, not unlocking)
   function handleLockToggle() {
-    togglePhaseViewLock();
+    if (!$phaseViewLocked) {
+      // Only handle locking via click
+      togglePhaseViewLock();
+    }
+    // Unlocking is handled by press-and-hold
   }
 </script>
 
@@ -87,6 +148,9 @@
         class:active={phase.id === $currentPhase}
         class:selected={phase.id === selectedPhase}
         class:completed={isPhaseCompleted(phase.id, $currentPhase)}
+        on:mousedown={() => handleUnlockStart(phase.id)}
+        on:mouseup={handleUnlockEnd}
+        on:mouseleave={cancelUnlock}
         on:click={() => handlePhaseClick(phase.id)}
         title={phase.fullName}
       >
@@ -98,23 +162,44 @@
       </button>
     {/each}
     
-    <!-- Lock icon button -->
-    <button
-      class="lock-button"
-      class:locked={$phaseViewLocked}
-      class:warning={lockWarningActive}
-      on:click={handleLockToggle}
-      title={$phaseViewLocked ? 'View locked to current phase - click to unlock' : 'View unlocked - click to lock to current phase'}
-    >
-      <i class="fas {$phaseViewLocked ? 'fa-lock' : 'fa-unlock'}"></i>
-    </button>
-    
-    <!-- Lock warning message -->
-    {#if lockWarningActive}
-      <div class="lock-warning-message">
-        Click again to unlock
-      </div>
-    {/if}
+    <!-- Lock icon button with progress ring -->
+    <div class="lock-button-wrapper">
+      {#if $phaseViewLocked && unlockInProgress}
+        <svg class="progress-ring" width="36" height="36" viewBox="0 0 36 36">
+          <circle
+            class="progress-ring-circle"
+            cx="18"
+            cy="18"
+            r="14"
+            stroke="var(--color-danger, #ff4444)"
+            stroke-width="2.5"
+            fill="none"
+            style="stroke-dasharray: {2 * Math.PI * 14}; stroke-dashoffset: {2 * Math.PI * 14 * (1 - unlockProgress / 100)};"
+          />
+        </svg>
+      {/if}
+      
+      <button
+        class="lock-button"
+        class:locked={$phaseViewLocked}
+        class:unlocking={unlockInProgress}
+        class:warning={lockWarningActive}
+        on:mousedown={() => handleUnlockStart('lock')}
+        on:mouseup={handleUnlockEnd}
+        on:mouseleave={cancelUnlock}
+        on:click={handleLockToggle}
+        title={$phaseViewLocked ? 'Press and hold to unlock' : 'Click to lock to current phase'}
+      >
+        <i class="fas {$phaseViewLocked ? 'fa-lock' : 'fa-unlock'}"></i>
+      </button>
+      
+      <!-- Unlock message - small red text below -->
+      {#if unlockInProgress}
+        <div class="unlock-message">
+          Hold to unlock
+        </div>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -325,10 +410,11 @@
     margin-left: auto;
     background: transparent;
     border: none;
+    outline: none;
     cursor: pointer;
     transition: all 0.3s ease;
     color: var(--text-secondary);
-    font-size: 1.2rem;
+    font-size: 1rem;
     padding: 0;
   }
 
@@ -348,20 +434,97 @@
     transform: rotate(-30deg);
   }
   
-  /* Lock warning state - red pulse animation */
-  .lock-button.warning {
-    color: var(--color-danger, #ff4444) !important;
-    animation: lock-warning-pulse 0.5s ease-in-out infinite;
+  /* Lock button wrapper for progress ring positioning */
+  .lock-button-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  /* Radial progress ring */
+  .progress-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .progress-ring-circle {
+    transform-origin: center;
+    transform: rotate(-90deg);
+    transition: stroke-dashoffset 0.1s linear;
   }
   
-  @keyframes lock-warning-pulse {
+  /* Lock unlocking state - subtle pulse animation */
+  .lock-button.unlocking,
+  .lock-button.locked.unlocking {
+    color: var(--color-danger, #ff4444);
+    animation: lock-subtle-pulse 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes lock-subtle-pulse {
     0%, 100% {
       transform: scale(1);
       opacity: 1;
     }
     50% {
-      transform: scale(1.3);
-      opacity: 0.8;
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+  
+  /* Unlock message - simple small text centered above */
+  .unlock-message {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 100%;
+    margin-bottom: 0.25rem;
+    color: var(--text-secondary);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-normal);
+    white-space: nowrap;
+    z-index: 100;
+    animation: fade-in-above 0.2s ease-in;
+  }
+  
+  @keyframes fade-in-above {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 5px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+  
+  /* Lock warning animation - jump/pulse when clicking locked phase */
+  .lock-button.warning,
+  .lock-button.locked.warning {
+    color: var(--color-danger, #ff4444);
+    animation: lock-warning-jump 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+  
+  @keyframes lock-warning-jump {
+    0% {
+      transform: scale(1) rotate(0deg);
+    }
+    25% {
+      transform: scale(1.25) rotate(5deg);
+    }
+    50% {
+      transform: scale(1.25) rotate(5deg);
+    }
+    75% {
+      transform: scale(1.1) rotate(2deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
     }
   }
   

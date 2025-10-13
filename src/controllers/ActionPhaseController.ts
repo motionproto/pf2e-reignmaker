@@ -5,6 +5,8 @@
  * Players execute their chosen actions and results are resolved.
  */
 
+import { logger } from '../utils/Logger';
+
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
@@ -48,7 +50,7 @@ export async function createActionPhaseController() {
         // Auto-complete immediately since players can choose to skip actions
         await completePhaseStepByIndex(ActionPhaseSteps.EXECUTE_ACTIONS);
         
-        console.log('✅ [ActionPhaseController] Actions phase auto-completed (players can skip actions)')
+        logger.debug('✅ [ActionPhaseController] Actions phase auto-completed (players can skip actions)')
         
         reportPhaseComplete('ActionPhaseController')
         return createPhaseResult(true)
@@ -63,12 +65,12 @@ export async function createActionPhaseController() {
      */
     async executeActions() {
       if (await isStepCompletedByIndex(ActionPhaseSteps.EXECUTE_ACTIONS)) {
-        console.log('🟡 [ActionPhaseController] Actions already executed')
+        logger.debug('🟡 [ActionPhaseController] Actions already executed')
         return createPhaseResult(false, 'Actions already executed this turn')
       }
 
       try {
-        console.log('🎬 [ActionPhaseController] Executing player actions...')
+        logger.debug('🎬 [ActionPhaseController] Executing player actions...')
         
         // Player actions are handled through the UI and individual action controllers
         // This step is completed manually when all players have taken their actions
@@ -76,10 +78,10 @@ export async function createActionPhaseController() {
         // Complete execute actions step (using type-safe constant)
         await completePhaseStepByIndex(ActionPhaseSteps.EXECUTE_ACTIONS)
         
-        console.log('✅ [ActionPhaseController] Player actions executed')
+        logger.debug('✅ [ActionPhaseController] Player actions executed')
         return createPhaseResult(true)
       } catch (error) {
-        console.error('❌ [ActionPhaseController] Error executing actions:', error)
+        logger.error('❌ [ActionPhaseController] Error executing actions:', error)
         return createPhaseResult(false, error instanceof Error ? error.message : 'Unknown error')
       }
     },
@@ -236,7 +238,7 @@ export async function createActionPhaseController() {
      */
     async resetAction(actionId: string, kingdomData: KingdomData, playerId?: string) {
       actionResolutions.delete(actionId)
-      console.log(`🔄 [ActionPhaseController] Reset action resolution for ${actionId}`)
+      logger.debug(`🔄 [ActionPhaseController] Reset action resolution for ${actionId}`)
     },
 
     /**
@@ -244,7 +246,7 @@ export async function createActionPhaseController() {
      */
     resetState() {
       actionResolutions.clear()
-      console.log('🔄 [ActionPhaseController] Reset controller state')
+      logger.debug('🔄 [ActionPhaseController] Reset controller state')
     },
 
     /**
@@ -263,7 +265,7 @@ export async function createActionPhaseController() {
       const { actionLoader } = await import('./actions/action-loader');
       const action = actionLoader.getAllActions().find(a => a.id === actionId);
       if (!action) {
-        console.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
+        logger.error(`❌ [ActionPhaseController] Action ${actionId} not found`);
         return { success: false, error: 'Action not found' };
       }
       
@@ -290,7 +292,7 @@ export async function createActionPhaseController() {
           TurnPhase.ACTIONS
         );
         
-        console.log(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+        logger.debug(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
       }
       
       // Use unified resolution wrapper (consolidates duplicate logic)

@@ -11,6 +11,7 @@
  */
 
 import { isDiceModifier } from '../../types/modifiers';
+import { logger } from '../../utils/Logger';
 
 // Dice formula detection regex - supports parentheses: -(1d4+1) or simple: -1d4+1
 // DEPRECATED: Use isDiceModifier() type guard instead for modifier arrays
@@ -36,7 +37,7 @@ export function rollDiceFormula(formula: string): number {
   // Parse the dice formula
   const match = cleanFormula.match(/(\d+)d(\d+)(?:([+-])(\d+))?/i);
   if (!match) {
-    console.error(`Invalid dice formula: ${formula}`);
+    logger.error(`Invalid dice formula: ${formula}`);
     return 0;
   }
   
@@ -113,7 +114,7 @@ export function evaluateDiceFormula(formula: string): number {
     }
     
     const result = isNegative ? -total : total;
-    console.log(`🎲 [DiceRollingService] Rolled ${formula}: ${result}`);
+    logger.debug(`🎲 [DiceRollingService] Rolled ${formula}: ${result}`);
     return result;
   }
   

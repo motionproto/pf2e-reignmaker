@@ -89,15 +89,26 @@
    $: eventChecked = getStepCompletion(currentSteps, 0); // Step 0 = event-check
    $: eventResolvedFromState = getStepCompletion(currentSteps, 1); // Step 1 = resolve-event
    $: eventDC = $kingdomData.eventDC || 15;
-   $: activeEventInstances = $kingdomData.activeEventInstances || [];
+   // NEW ARCHITECTURE: Read from unified activeCheckInstances filtered by type
+   $: activeEventInstances = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'event') || [];
    $: activeModifiers = $kingdomData.activeModifiers || [];
-   $: pendingEventInstances = activeEventInstances.filter(instance => instance.status === 'pending');
+   
+   // ✅ NEW ARCHITECTURE: Get current event instance from turnState.eventId
+   $: currentEventInstance = $kingdomData.turnState?.eventsPhase?.eventId 
+      ? activeEventInstances.find(i => i.checkId === $kingdomData.turnState?.eventsPhase?.eventId)
+      : null;
+   
+   // Filter instances: ongoing = pending but NOT current, resolved = resolved status
+   $: ongoingEventInstances = activeEventInstances.filter(instance => 
+      instance.status === 'pending' && 
+      instance.checkId !== $kingdomData.turnState?.eventsPhase?.eventId
+   );
    $: resolvedEventInstances = activeEventInstances.filter(instance => instance.status === 'resolved');
    $: customModifiers = activeModifiers;  // All modifiers are now custom (no event data)
    
-   // Build outcomes for ongoing events from activeEventInstances  
-   $: ongoingEventsWithOutcomes = pendingEventInstances.map(instance => {
-      const event = instance.eventData;
+   // Build outcomes for ongoing events from activeCheckInstances  
+   $: ongoingEventsWithOutcomes = ongoingEventInstances.map(instance => {
+      const event = instance.checkData as EventData;  // NEW ARCHITECTURE: checkData instead of eventData
       const outcomes: Array<{
          type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
          description: string;
@@ -370,14 +381,16 @@
                effect: outcomeData.msg,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
-               rollBreakdown: result.rollBreakdown
+               shortfallResources: [],
+               rollBreakdown: result.rollBreakdown,
+               effectsApplied: false
             };
             
             if (isOngoingEvent) {
                // Store in KingdomActor (synced to all clients!)
                await updateKingdom(kingdom => {
-                  if (!kingdom.activeEventInstances) return;
-                  const instance = kingdom.activeEventInstances.find(i => i.eventId === eventId);
+                  if (!kingdom.activeCheckInstances) return;
+                  const instance = kingdom.activeCheckInstances.find((i: any) => i.checkType === 'event' && i.checkId === eventId);
                   if (instance) {
                      instance.appliedOutcome = resolution;
                      console.log(`✅ [EventsPhase] Stored ongoing event resolution in instance: ${instance.instanceId}`);
@@ -397,8 +410,8 @@
             if (isOngoingEvent) {
                // Clear resolution from KingdomActor
                updateKingdom(kingdom => {
-                  if (!kingdom.activeEventInstances) return;
-                  const instance = kingdom.activeEventInstances.find(i => i.eventId === eventId);
+                  if (!kingdom.activeCheckInstances) return;
+                  const instance = kingdom.activeCheckInstances.find((i: any) => i.checkType === 'event' && i.checkId === eventId);
                   if (instance) {
                      instance.appliedOutcome = undefined;
                      console.log(`🚫 [EventsPhase] Cleared ongoing event resolution from instance`);
@@ -502,8 +515,10 @@
    }
    
    // Event handler - cancel resolution
-   function handleCancel() {
+   async function handleCancel() {
       console.log(`🔄 [EventsPhase] User cancelled outcome - resetting for re-roll`);
+      
+      // Clear local UI state
       eventResolution = null;
       eventResolved = false;
       
@@ -518,7 +533,7 @@
       console.log(`🔁 [EventsPhase] Performing reroll with skill: ${skill}`);
 
       // Reset UI state for new roll
-      handleCancel();
+      await handleCancel();
 
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -537,87 +552,45 @@
       }
    }
    
-   // Event handler - ignore event (moves to ongoing immediately, preview state)
+   // Event handler - ignore event (delegate to controller)
    async function handleIgnore(event: CustomEvent) {
       if (!eventPhaseController) return;
       
       const { checkId } = event.detail;
       
       // Determine which event this ignore is for
-      let targetEvent = currentEvent;
+      let targetEventId: string | null = null;
       
       // If checkId is provided and it's not the current event, check ongoing events
       if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
          const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
          if (ongoingEvent) {
-            targetEvent = ongoingEvent.event;
+            targetEventId = ongoingEvent.event.id;
          }
+      } else if (currentEvent) {
+         targetEventId = currentEvent.id;
       }
       
-      if (!targetEvent) {
+      if (!targetEventId) {
          console.error('[EventsPhase] No event found for ignore');
          return;
       }
       
-      const isOngoingEvent = ongoingEventsWithOutcomes.some(item => item.instance.instanceId === checkId);
+      console.log(`🚫 [EventsPhase] Delegating ignore to controller: ${targetEventId}`);
       
-      console.log(`🚫 [EventsPhase] Ignoring event - moving to ongoing: ${targetEvent.name}`);
+      // ✅ ARCHITECTURE FIX: Delegate to controller, no business logic in UI
+      const result = await eventPhaseController.ignoreEvent(targetEventId);
       
-      // Prepare the failure outcome preview
-      const outcomeData = eventPhaseController.getEventModifiers(targetEvent, 'failure');
-      
-      const resolution = {
-         outcome: 'failure' as const,
-         actorName: 'Event Ignored',
-         skillName: '',
-         effect: outcomeData.msg,
-         modifiers: outcomeData.modifiers,
-         manualEffects: outcomeData.manualEffects,
-         isIgnored: true  // Flag to hide reroll button
-      };
-      
-      if (isOngoingEvent) {
-         // Already ongoing, just update the resolution
-         await updateKingdom(kingdom => {
-            if (!kingdom.activeEventInstances) return;
-            const instance = kingdom.activeEventInstances.find(i => i.eventId === checkId);
-            if (instance) {
-               instance.appliedOutcome = resolution;
-               instance.effectsApplied = false;  // Preview only, not applied yet
-               console.log(`✅ [EventsPhase] Stored ignore preview in instance: ${instance.instanceId}`);
-            }
-         });
+      if (result.success) {
+         // Clear local state if it was the current event
+         if (currentEvent && currentEvent.id === targetEventId) {
+            eventResolution = null;
+            eventResolved = false;
+         }
+         console.log(`✅ [EventsPhase] Event ignored successfully`);
       } else {
-         // Current event - create instance and move to ongoing section
-         const currentTurn = $kingdomData.currentTurn || 1;
-         const newInstanceId = `${targetEvent.id}-${Date.now()}`;
-         
-         await updateKingdom(kingdom => {
-            // Create new instance with preview
-            if (!kingdom.activeEventInstances) kingdom.activeEventInstances = [];
-            kingdom.activeEventInstances.push({
-               instanceId: newInstanceId,
-               eventId: targetEvent.id,
-               eventType: 'event',
-               eventData: targetEvent,
-               createdTurn: currentTurn,
-               status: 'pending',
-               appliedOutcome: resolution,
-               effectsApplied: false  // Preview only, not applied yet
-            });
-            
-            // Clear current event (moves to ongoing section)
-            if (kingdom.turnState?.eventsPhase?.eventId === targetEvent.id) {
-               kingdom.turnState.eventsPhase.eventId = null;
-               kingdom.turnState.eventsPhase.eventTriggered = false;
-            }
-            
-            console.log(`✅ [EventsPhase] Created ignored event instance and moved to ongoing: ${newInstanceId}`);
-         });
-         
-         // Clear local state
-         eventResolution = null;
-         eventResolved = false;
+         console.error(`❌ [EventsPhase] Failed to ignore event: ${result.error}`);
+         ui?.notifications?.error(`Failed to ignore event: ${result.error}`);
       }
    }
    
@@ -877,16 +850,17 @@
    {/if}
    
    <!-- Active Event Card - Show when an event needs to be resolved -->
-   {#if currentEvent}
-      {#key `${currentEvent.id}-${activeAidsCount}`}
+   {#if currentEventInstance && currentEventInstance.checkData}
+      {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
-            id={currentEvent.id}
-            name={currentEvent.name}
-            description={currentEvent.description}
-            skills={currentEvent.skills}
+            id={currentEventInstance.checkId}
+            name={currentEventInstance.checkData.name}
+            description={currentEventInstance.checkData.description}
+            skills={currentEventInstance.checkData.skills}
             outcomes={eventOutcomes}
-            traits={currentEvent.traits || []}
+            traits={currentEventInstance.checkData.traits || []}
             checkType="event"
+            checkInstance={currentEventInstance}
             expandable={false}
             showCompletions={false}
             showAvailability={false}
@@ -963,17 +937,18 @@
          <h2 class="resolved-events-header">Resolved Events</h2>
          <div class="resolved-events-list">
             {#each resolvedEventInstances as instance}
+               {@const eventData = instance.checkData}
                <div class="resolved-event-wrapper">
                   <div class="resolved-badge-container">
                      <span class="resolved-badge">Resolved</span>
                   </div>
                   <BaseCheckCard
-                     id={instance.eventId}
-                     name={instance.eventData.name}
-                     description={instance.eventData.description}
-                     skills={instance.eventData.skills}
+                     id={instance.checkId}
+                     name={eventData.name}
+                     description={eventData.description}
+                     skills={eventData.skills}
                      outcomes={[]}
-                     traits={instance.eventData.traits || []}
+                     traits={eventData.traits || []}
                      checkType="event"
                      expandable={false}
                      showCompletions={false}

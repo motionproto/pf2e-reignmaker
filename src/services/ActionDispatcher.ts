@@ -7,7 +7,9 @@
  * Pattern inspired by pf2e-kingmaker-tools ActionDispatcher.
  */
 
-console.log('[ActionDispatcher] Module loading...');
+import { logger } from '../utils/Logger';
+
+logger.debug('[ActionDispatcher] Module loading...');
 
 interface ActionMessage {
   action: string;
@@ -39,15 +41,15 @@ class ActionDispatcher {
    */
   initialize(): void {
     if (this.initialized) {
-      console.log('[ActionDispatcher] Already initialized, skipping');
+      logger.debug('[ActionDispatcher] Already initialized, skipping');
       return;
     }
 
-    console.log('[ActionDispatcher] Initializing...');
+    logger.debug('[ActionDispatcher] Initializing...');
 
     const game = (globalThis as any).game;
     if (!game?.socket) {
-      console.error('[ActionDispatcher] ❌ game.socket not available! Cannot initialize.');
+      logger.error('[ActionDispatcher] ❌ game.socket not available! Cannot initialize.');
       return;
     }
 
@@ -57,7 +59,7 @@ class ActionDispatcher {
     });
 
     this.initialized = true;
-    console.log('✅ [ActionDispatcher] Initialized - listening on', this.SOCKET_NAME);
+    logger.debug('✅ [ActionDispatcher] Initialized - listening on', this.SOCKET_NAME);
   }
 
   /**
@@ -69,7 +71,7 @@ class ActionDispatcher {
    */
   register(action: string, handler: ActionHandler): void {
     this.handlers.set(action, handler);
-    console.log(`[ActionDispatcher] Registered handler: ${action}`);
+    logger.debug(`[ActionDispatcher] Registered handler: ${action}`);
   }
 
   /**
@@ -88,11 +90,11 @@ class ActionDispatcher {
       throw new Error('[ActionDispatcher] Not initialized. Call initialize() first.');
     }
 
-    console.log(`[ActionDispatcher] Dispatching action: ${action}`, data);
+    logger.debug(`[ActionDispatcher] Dispatching action: ${action}`, data);
 
     // If we're GM, execute directly
     if (game?.user?.isGM) {
-      console.log(`[ActionDispatcher] User is GM, executing locally`);
+      logger.debug(`[ActionDispatcher] User is GM, executing locally`);
       return await this.executeHandler(action, data);
     }
 
@@ -100,7 +102,7 @@ class ActionDispatcher {
     const gmOnline = this.isGMOnline();
     if (!gmOnline) {
       const errorMsg = 'No GM is currently online. This action requires a GM to execute.';
-      console.warn(`[ActionDispatcher] ${errorMsg}`);
+      logger.warn(`[ActionDispatcher] ${errorMsg}`);
       
       // Don't show notification here - let the calling code handle user feedback
       // Just throw the error so caller can handle it appropriately
@@ -108,7 +110,7 @@ class ActionDispatcher {
     }
 
     // GM is online, send to GM
-    console.log(`[ActionDispatcher] User is player, routing to GM via socket`);
+    logger.debug(`[ActionDispatcher] User is player, routing to GM via socket`);
     this.sendToGM(action, data);
 
     // Fire-and-forget for now
@@ -132,7 +134,7 @@ class ActionDispatcher {
       senderId: game?.user?.id
     };
 
-    console.log(`[ActionDispatcher] Emitting to socket:`, message);
+    logger.debug(`[ActionDispatcher] Emitting to socket:`, message);
     game.socket.emit(this.SOCKET_NAME, message);
   }
 
@@ -145,21 +147,21 @@ class ActionDispatcher {
   private async handleSocketMessage(message: ActionMessage): Promise<void> {
     const game = (globalThis as any).game;
 
-    console.log('[ActionDispatcher] Received socket message:', message);
+    logger.debug('[ActionDispatcher] Received socket message:', message);
 
     // Only GM executes handlers
     if (!game?.user?.isGM) {
-      console.log('[ActionDispatcher] Not GM, ignoring message');
+      logger.debug('[ActionDispatcher] Not GM, ignoring message');
       return;
     }
 
-    console.log(`[ActionDispatcher] GM executing action: ${message.action}`);
+    logger.debug(`[ActionDispatcher] GM executing action: ${message.action}`);
 
     try {
       await this.executeHandler(message.action, message.data);
-      console.log(`✅ [ActionDispatcher] Action completed: ${message.action}`);
+      logger.debug(`✅ [ActionDispatcher] Action completed: ${message.action}`);
     } catch (error) {
-      console.error(`❌ [ActionDispatcher] Action failed: ${message.action}`, error);
+      logger.error(`❌ [ActionDispatcher] Action failed: ${message.action}`, error);
       
       // Notify sender of failure
       if (message.senderId && game?.users) {
@@ -190,7 +192,7 @@ class ActionDispatcher {
 
     if (!handler) {
       const error = `No handler registered for action: ${action}`;
-      console.error(`[ActionDispatcher] ${error}`);
+      logger.error(`[ActionDispatcher] ${error}`);
       throw new Error(error);
     }
 
@@ -228,6 +230,6 @@ export const actionDispatcher = ActionDispatcher.getInstance();
 
 // Export initialization function
 export function initializeActionDispatcher(): void {
-  console.log('[ActionDispatcher] initializeActionDispatcher() called');
+  logger.debug('[ActionDispatcher] initializeActionDispatcher() called');
   actionDispatcher.initialize();
 }

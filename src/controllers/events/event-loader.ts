@@ -2,6 +2,7 @@ import type { ActiveModifier } from '../../models/Modifiers';
 import type { EventSkill, EventOutcome, EventModifier, EventEffects, EventTrait } from '../../types/events';
 import { getEventDisplayName } from '../../types/event-helpers';
 import eventsData from '../../../dist/events.json';
+import { logger } from '../../utils/Logger';
 
 
 /**
@@ -62,11 +63,11 @@ export class EventService {
      */
     loadEvents(): void {
         if (this.eventsLoaded) {
-            console.log('Events already loaded, skipping...');
+            logger.debug('Events already loaded, skipping...');
             return;
         }
 
-        console.log('Loading events from imported data...');
+        logger.debug('Loading events from imported data...');
         
         try {
             // Load events from the imported JSON data
@@ -78,13 +79,13 @@ export class EventService {
             }
             
             this.eventsLoaded = true;
-            console.log(`Successfully loaded ${this.events.size} events`);
+            logger.debug(`Successfully loaded ${this.events.size} events`);
             
             // Log all event names for verification
             const eventNames = Array.from(this.events.values()).map(e => getEventDisplayName(e));
-            console.log('Events loaded:', eventNames);
+            logger.debug('Events loaded:', eventNames);
         } catch (error) {
-            console.error('Failed to load events:', error);
+            logger.error('Failed to load events:', error);
             // Fallback to empty map
             this.events = new Map();
         }
@@ -95,21 +96,21 @@ export class EventService {
      */
     getRandomEvent(): EventData | null {
         if (!this.eventsLoaded) {
-            console.error('Events not loaded yet - call loadEvents() first');
+            logger.error('Events not loaded yet - call loadEvents() first');
             return null;
         }
 
         const eventArray = Array.from(this.events.values());
-        console.log(`Getting random event from ${eventArray.length} available events`);
+        logger.debug(`Getting random event from ${eventArray.length} available events`);
         
         if (eventArray.length === 0) {
-            console.error('No events available in the events map');
+            logger.error('No events available in the events map');
             return null;
         }
 
         const randomIndex = Math.floor(Math.random() * eventArray.length);
         const selectedEvent = eventArray[randomIndex];
-        console.log(`Selected event: ${getEventDisplayName(selectedEvent)} (${selectedEvent.id})`);
+        logger.debug(`Selected event: ${getEventDisplayName(selectedEvent)} (${selectedEvent.id})`);
         
         return selectedEvent;
     }
@@ -136,7 +137,7 @@ export class EventService {
         // Get outcomes from the effects object
         const effects = event.effects;
         if (!effects) {
-            console.warn(`Event ${event.id} has no effects`);
+            logger.warn(`Event ${event.id} has no effects`);
             return null;
         }
 
@@ -201,13 +202,13 @@ export class EventService {
             case 'expires':
                 // Handle expiration effects
                 if (unresolved.expires) {
-                    console.log(`Event ${event.id} expires: ${unresolved.expires.message || 'No message'}`);
+                    logger.debug(`Event ${event.id} expires: ${unresolved.expires.message || 'No message'}`);
                     
                     // Check if it transforms to another event
                     if (unresolved.expires.transformsTo) {
                         const newEvent = this.getEventById(unresolved.expires.transformsTo);
                         if (newEvent) {
-                            console.log(`Event ${event.id} transforms to ${unresolved.expires.transformsTo}`);
+                            logger.debug(`Event ${event.id} transforms to ${unresolved.expires.transformsTo}`);
                         }
                     }
                 }
@@ -215,7 +216,7 @@ export class EventService {
 
             case 'auto-resolve':
                 // This type is no longer in the new data
-                console.log(`Event ${event.id} auto-resolves`);
+                logger.debug(`Event ${event.id} auto-resolves`);
                 break;
         }
 

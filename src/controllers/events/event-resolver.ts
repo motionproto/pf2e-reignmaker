@@ -185,15 +185,15 @@ export class EventResolver {
             // Beneficial non-ongoing events just expire without creating modifiers
             if (isOngoing) {
                 // Both dangerous and beneficial ongoing events can create modifiers
-                console.log(`[EventResolver] Creating ongoing modifier for ${event.id} (beneficial: ${isBeneficial}, dangerous: ${isDangerous})`);
+                logger.debug(`[EventResolver] Creating ongoing modifier for ${event.id} (beneficial: ${isBeneficial}, dangerous: ${isDangerous})`);
                 try {
                     unresolvedModifier = this.createUnresolvedModifierFromTraits(event, currentTurn);
                 } catch (error) {
-                    console.warn('[EventResolver] Could not create unresolved modifier:', error);
+                    logger.warn('[EventResolver] Could not create unresolved modifier:', error);
                 }
             } else if (isBeneficial) {
                 // Beneficial non-ongoing events expire without penalty
-                console.log(`[EventResolver] Beneficial non-ongoing event ${event.id} expires without creating modifier`);
+                logger.debug(`[EventResolver] Beneficial non-ongoing event ${event.id} expires without creating modifier`);
                 messages.push(`The opportunity has passed.`);
             }
         }
@@ -414,4 +414,5 @@ export class EventResolver {
 
 // Export singleton instance with EventService dependency
 import { eventService } from './event-loader';
+import { logger } from '../../utils/Logger';
 export const eventResolver = new EventResolver(eventService);

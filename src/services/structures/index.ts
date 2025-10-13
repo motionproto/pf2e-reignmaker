@@ -7,6 +7,7 @@ import type { Settlement } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
 import structuresData from '../../../dist/structures.json';
+import { logger } from '../../utils/Logger';
 
 export class StructuresService {
   private structures: Map<string, Structure> = new Map();
@@ -25,14 +26,14 @@ export class StructuresService {
           const structure = parseStructureFromJSON(structureData);
           this.structures.set(structure.id, structure);
         }
-        console.log(`Loaded ${this.structures.size} structures from combined file`);
+        logger.debug(`Loaded ${this.structures.size} structures from combined file`);
       } else {
-        console.error('Invalid structures data format');
+        logger.error('Invalid structures data format');
       }
       
       this.structuresLoaded = true;
     } catch (error) {
-      console.error('Failed to load structures:', error);
+      logger.error('Failed to load structures:', error);
     }
   }
   

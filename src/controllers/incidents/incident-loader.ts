@@ -1,5 +1,6 @@
 import type { KingdomIncident, EventSkill, EventOutcome } from '../../types/incidents';
 import incidentsData from '../../../dist/incidents.json';
+import { logger } from '../../utils/Logger';
 
 /**
  * Raw incident data structure from JSON (before type conversion)
@@ -43,11 +44,11 @@ export class IncidentLoader {
      */
     loadIncidents(): void {
         if (this.incidentsLoaded) {
-            console.log('Incidents already loaded, skipping...');
+            logger.debug('Incidents already loaded, skipping...');
             return;
         }
 
-        console.log('Loading incidents from imported data...');
+        logger.debug('Loading incidents from imported data...');
         
         try {
             // Load incidents from the imported JSON data
@@ -94,13 +95,13 @@ export class IncidentLoader {
             }
             
             this.incidentsLoaded = true;
-            console.log(`Successfully loaded ${this.incidents.size} incidents`);
+            logger.debug(`Successfully loaded ${this.incidents.size} incidents`);
             
             // Log incident counts by severity for verification
             const severityCounts = this.getIncidentCountsBySeverity();
-            console.log('Incidents loaded by severity:', severityCounts);
+            logger.debug('Incidents loaded by severity:', severityCounts);
         } catch (error) {
-            console.error('Failed to load incidents:', error);
+            logger.error('Failed to load incidents:', error);
             // Fallback to empty map
             this.incidents = new Map();
         }
@@ -111,21 +112,21 @@ export class IncidentLoader {
      */
     getRandomIncident(severity: 'minor' | 'moderate' | 'major'): KingdomIncident | null {
         if (!this.incidentsLoaded) {
-            console.error('Incidents not loaded yet - call loadIncidents() first');
+            logger.error('Incidents not loaded yet - call loadIncidents() first');
             return null;
         }
 
         const incidentsBySeverity = this.getIncidentsBySeverity(severity);
-        console.log(`Getting random ${severity} incident from ${incidentsBySeverity.length} available incidents`);
+        logger.debug(`Getting random ${severity} incident from ${incidentsBySeverity.length} available incidents`);
         
         if (incidentsBySeverity.length === 0) {
-            console.error(`No ${severity} incidents available`);
+            logger.error(`No ${severity} incidents available`);
             return null;
         }
 
         const randomIndex = Math.floor(Math.random() * incidentsBySeverity.length);
         const selectedIncident = incidentsBySeverity[randomIndex];
-        console.log(`Selected incident: ${selectedIncident.name} (${selectedIncident.id})`);
+        logger.debug(`Selected incident: ${selectedIncident.name} (${selectedIncident.id})`);
         
         return selectedIncident;
     }
@@ -162,7 +163,7 @@ export class IncidentLoader {
     ): EventOutcome | null {
         const effects = incident.effects;
         if (!effects) {
-            console.warn(`Incident ${incident.id} has no effects`);
+            logger.warn(`Incident ${incident.id} has no effects`);
             return null;
         }
 

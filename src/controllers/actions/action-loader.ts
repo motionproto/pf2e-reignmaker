@@ -1,5 +1,6 @@
 import type { PlayerAction, PlayerActionJson, SkillOption, ActionEffect } from './action-types';
 import actionsData from '../../../dist/player-actions.json';
+import { logger } from '../../utils/Logger';
 
 /**
  * Service for loading player actions from JSON data
@@ -16,11 +17,11 @@ export class ActionLoader {
      */
     loadActions(): void {
         if (this.actionsLoaded) {
-            console.log('Actions already loaded, skipping...');
+            logger.debug('Actions already loaded, skipping...');
             return;
         }
 
-        console.log('Loading actions from imported data...');
+        logger.debug('Loading actions from imported data...');
         
         try {
             // Load actions from the imported JSON data
@@ -67,13 +68,13 @@ export class ActionLoader {
             }
             
             this.actionsLoaded = true;
-            console.log(`Successfully loaded ${this.actions.size} actions`);
+            logger.debug(`Successfully loaded ${this.actions.size} actions`);
             
             // Log action counts by category for verification
             const categoryCounts = this.getActionCountsByCategory();
-            console.log('Actions loaded by category:', categoryCounts);
+            logger.debug('Actions loaded by category:', categoryCounts);
         } catch (error) {
-            console.error('Failed to load actions:', error);
+            logger.error('Failed to load actions:', error);
             // Fallback to empty map
             this.actions = new Map();
         }

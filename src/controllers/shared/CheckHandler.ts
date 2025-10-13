@@ -9,6 +9,7 @@
  */
 
 import { performKingdomSkillCheck, initializeRollResultHandler } from '../../services/pf2e';
+import { logger } from '../../utils/Logger';
 
 export interface CheckConfig {
   checkType: 'event' | 'incident' | 'action';
@@ -45,7 +46,7 @@ export class CheckHandler {
   async executeCheck(config: CheckConfig): Promise<void> {
     const { checkType, item, skill, onStart, onComplete, onCancel, onError } = config;
 
-    console.log(`🎲 [CheckHandler] Starting ${checkType} check for: ${item.name} with skill: ${skill}`);
+    logger.debug(`🎲 [CheckHandler] Starting ${checkType} check for: ${item.name} with skill: ${skill}`);
 
     // Initialize roll result handler
     initializeRollResultHandler();
@@ -63,7 +64,7 @@ export class CheckHandler {
           customEvent.detail?.checkId === item.id && 
           customEvent.detail?.checkType === checkType
         ) {
-          console.log(`✅ [CheckHandler] Roll completed for ${checkType}: ${item.id}`);
+          logger.debug(`✅ [CheckHandler] Roll completed for ${checkType}: ${item.id}`);
 
           const result: CheckResult = {
             outcome: customEvent.detail.outcome,
@@ -97,12 +98,12 @@ export class CheckHandler {
 
       // If performKingdomSkillCheck returns null, the user cancelled
       if (!rollResult) {
-        console.log(`🚫 [CheckHandler] Check was cancelled by user (null return)`);
+        logger.debug(`🚫 [CheckHandler] Check was cancelled by user (null return)`);
         this.handleCancellation(config);
       }
 
     } catch (error) {
-      console.error(`❌ [CheckHandler] Error executing ${checkType} check:`, error);
+      logger.error(`❌ [CheckHandler] Error executing ${checkType} check:`, error);
       this.cleanup();
       onError?.(error as Error);
     }
@@ -112,7 +113,7 @@ export class CheckHandler {
    * Handle check cancellation
    */
   private handleCancellation(config: CheckConfig): void {
-    console.log(`🔄 [CheckHandler] Handling cancellation for ${config.checkType}`);
+    logger.debug(`🔄 [CheckHandler] Handling cancellation for ${config.checkType}`);
     
     this.cleanup();
     config.onCancel?.();

@@ -12,6 +12,7 @@ import type { Structure } from '../models/Structure';
 import type { BuildProject } from '../models/BuildProject';
 import { BuildProjectManager } from '../models/BuildProject';
 import { SettlementTier } from '../models/Settlement';
+import { logger } from '../utils/Logger';
 
 export interface AvailabilityCheck {
   canAfford: boolean;
@@ -163,7 +164,7 @@ export async function createBuildStructureController() {
         k.buildQueue.push(project);
       });
 
-      console.log(`✅ [BuildStructureController] Added ${structure.name} to build queue for ${settlement.name}`);
+      logger.debug(`✅ [BuildStructureController] Added ${structure.name} to build queue for ${settlement.name}`);
       return { success: true, project };
     },
 
@@ -181,7 +182,7 @@ export async function createBuildStructureController() {
       // Check if we have the resources
       const available = kingdom.resources[resource] || 0;
       if (available < amount) {
-        console.warn(`⚠️  [BuildStructureController] Insufficient ${resource}: need ${amount}, have ${available}`);
+        logger.warn(`⚠️  [BuildStructureController] Insufficient ${resource}: need ${amount}, have ${available}`);
         return false;
       }
 
@@ -200,7 +201,7 @@ export async function createBuildStructureController() {
         }
       });
 
-      console.log(`✅ [BuildStructureController] Allocated ${allocated} ${resource} to project ${projectId}`);
+      logger.debug(`✅ [BuildStructureController] Allocated ${allocated} ${resource} to project ${projectId}`);
       return true;
     },
 
@@ -242,7 +243,7 @@ export async function createBuildStructureController() {
         }
       });
 
-      console.log(`✅ [BuildStructureController] Completed ${project.structureName} in ${project.settlementName}`);
+      logger.debug(`✅ [BuildStructureController] Completed ${project.structureName} in ${project.settlementName}`);
       return { success: true, project };
     },
 
@@ -280,7 +281,7 @@ export async function createBuildStructureController() {
         }
       });
 
-      console.log(`🔄 [BuildStructureController] Cancelled project ${project.structureName}`);
+      logger.debug(`🔄 [BuildStructureController] Cancelled project ${project.structureName}`);
       return { success: true, project };
     }
   };

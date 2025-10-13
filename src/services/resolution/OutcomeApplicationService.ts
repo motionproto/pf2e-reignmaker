@@ -9,6 +9,7 @@
 
 import { createGameEffectsService, type OutcomeDegree } from '../GameEffectsService';
 import type { ResolutionData } from '../../types/events';
+import { logger } from '../../utils/Logger';
 
 /**
  * Apply a resolved outcome to the kingdom
@@ -26,7 +27,7 @@ export async function applyResolvedOutcome(
   resolutionData: ResolutionData,
   outcome: OutcomeDegree
 ) {
-  console.log(`🎯 [OutcomeApplication] Applying ${outcome} with ${resolutionData.numericModifiers.length} modifiers`);
+  logger.debug(`🎯 [OutcomeApplication] Applying ${outcome} with ${resolutionData.numericModifiers.length} modifiers`);
   
   const gameEffects = await createGameEffectsService();
   
@@ -38,16 +39,16 @@ export async function applyResolvedOutcome(
   
   // Log manual effects (displayed in UI, not executed here)
   if (resolutionData.manualEffects.length > 0) {
-    console.log(`📋 [OutcomeApplication] Manual effects for GM:`, resolutionData.manualEffects);
+    logger.debug(`📋 [OutcomeApplication] Manual effects for GM:`, resolutionData.manualEffects);
   }
   
   // Execute complex actions (Phase 3 - stub for now)
   if (resolutionData.complexActions.length > 0) {
-    console.log(`🔧 [OutcomeApplication] Complex actions to execute:`, resolutionData.complexActions);
+    logger.debug(`🔧 [OutcomeApplication] Complex actions to execute:`, resolutionData.complexActions);
     // await gameEffects.executeComplexActions(resolutionData.complexActions);
   }
   
-  console.log(`✅ [OutcomeApplication] Outcome applied successfully`);
+  logger.debug(`✅ [OutcomeApplication] Outcome applied successfully`);
   
   return result;
 }
