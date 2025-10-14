@@ -3,7 +3,7 @@
 **Total Actions:** 27  
 **Status:** Based on actual data files in `data/player-actions/`
 
-Delete each markdown file as you complete its implementation.
+Mark each markdown file as done as you complete its implementation.
 
 ---
 
@@ -19,7 +19,7 @@ Delete each markdown file as you complete its implementation.
 - [ ] [disband-army.md](military-operations/disband-army.md)
 - [ ] [outfit-army.md](military-operations/outfit-army.md)
 - [ ] [recover-army.md](military-operations/recover-army.md)
-- [x] [recruit-unit.md](military-operations/recruit-unit.md) ✅ COMPLETE
+- [ ] [recruit-unit.md](military-operations/recruit-unit.md) 
 - [ ] [train-army.md](military-operations/train-army.md)
 
 ## Expand the Borders (5)
