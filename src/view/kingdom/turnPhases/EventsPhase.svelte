@@ -918,42 +918,38 @@
          <h2 class="ongoing-events-header">Ongoing Events</h2>
          <div class="ongoing-events-list">
             {#each ongoingEventsWithOutcomes as item}
-               <div class="ongoing-event-wrapper">
-                  <div class="ongoing-badge-container">
-                     <span class="ongoing-badge">Ongoing Event</span>
-                  </div>
-                  <BaseCheckCard
-                     id={item.instance.instanceId}
-                     name={item.event.name}
-                     description={item.event.description}
-                     skills={item.event.skills}
-                     outcomes={item.outcomes}
-                     traits={item.event.traits || []}
-                     checkType="event"
-                     expandable={false}
-                     showCompletions={false}
-                     showAvailability={false}
-                     showSpecial={false}
-                     showIgnoreButton={true}
-                     {isViewingCurrentPhase}
-                     possibleOutcomes={item.possibleOutcomes}
-                     showAidButton={true}
-                     aidResult={getAidResultForEvent(item.event.id)}
-                     resolved={!!item.instance.appliedOutcome}
-                     resolution={item.instance.appliedOutcome || null}
-                     primaryButtonLabel="Apply Result"
-                     skillSectionTitle="Choose Your Response:"
-                     resolutionInProgress={item.isBeingResolved}
-                     resolvingPlayerName={item.resolverName}
-                     isBeingResolvedByOther={item.isResolvedByOther}
-                     on:executeSkill={handleExecuteSkill}
-                     on:primary={handleApplyResult}
-                     on:cancel={handleCancel}
-                     on:performReroll={handlePerformReroll}
-                     on:ignore={handleIgnore}
-                     on:debugOutcomeChanged={handleDebugOutcomeChanged}
-                  />
-               </div>
+               <BaseCheckCard
+                  id={item.instance.instanceId}
+                  checkInstance={item.instance}
+                  name={item.event.name}
+                  description={item.event.description}
+                  skills={item.event.skills}
+                  outcomes={item.outcomes}
+                  traits={item.event.traits || []}
+                  checkType="event"
+                  expandable={false}
+                  showCompletions={false}
+                  showAvailability={false}
+                  showSpecial={false}
+                  showIgnoreButton={true}
+                  {isViewingCurrentPhase}
+                  possibleOutcomes={item.possibleOutcomes}
+                  showAidButton={true}
+                  aidResult={getAidResultForEvent(item.event.id)}
+                  resolved={!!item.instance.appliedOutcome}
+                  resolution={item.instance.appliedOutcome || null}
+                  primaryButtonLabel="Apply Result"
+                  skillSectionTitle="Choose Your Response:"
+                  resolutionInProgress={item.isBeingResolved}
+                  resolvingPlayerName={item.resolverName}
+                  isBeingResolvedByOther={item.isResolvedByOther}
+                  on:executeSkill={handleExecuteSkill}
+                  on:primary={handleApplyResult}
+                  on:cancel={handleCancel}
+                  on:performReroll={handlePerformReroll}
+                  on:ignore={handleIgnore}
+                  on:debugOutcomeChanged={handleDebugOutcomeChanged}
+               />
             {/each}
          </div>
       </div>
@@ -966,32 +962,28 @@
          <div class="resolved-events-list">
             {#each resolvedEventInstances as instance}
                {@const eventData = instance.checkData}
-               <div class="resolved-event-wrapper">
-                  <div class="resolved-badge-container">
-                     <span class="resolved-badge">Resolved</span>
-                  </div>
-                  <BaseCheckCard
-                     id={instance.checkId}
-                     name={eventData.name}
-                     description={eventData.description}
-                     skills={eventData.skills}
-                     outcomes={[]}
-                     traits={eventData.traits || []}
-                     checkType="event"
-                     expandable={false}
-                     showCompletions={false}
-                     showAvailability={false}
-                     showSpecial={false}
-                     showIgnoreButton={false}
-                     isViewingCurrentPhase={false}
-                     possibleOutcomes={[]}
-                     showAidButton={false}
-                     resolved={true}
-                     resolution={instance.appliedOutcome || null}
-                     primaryButtonLabel="Apply Result"
-                     skillSectionTitle=""
-                  />
-               </div>
+               <BaseCheckCard
+                  id={instance.checkId}
+                  name={eventData.name}
+                  description={eventData.description}
+                  skills={eventData.skills}
+                  outcomes={[]}
+                  traits={eventData.traits || []}
+                  checkType="event"
+                  expandable={false}
+                  showCompletions={false}
+                  showAvailability={false}
+                  showSpecial={false}
+                  showIgnoreButton={false}
+                  isViewingCurrentPhase={false}
+                  possibleOutcomes={[]}
+                  showAidButton={false}
+                  resolved={true}
+                  resolution={instance.appliedOutcome || null}
+                  primaryButtonLabel="Apply Result"
+                  skillSectionTitle=""
+                  statusBadge={{ text: 'Resolved', type: 'resolved' }}
+               />
             {/each}
          </div>
       </div>
@@ -1251,32 +1243,6 @@
       gap: 15px;
    }
    
-   .ongoing-event-wrapper {
-      position: relative;
-   }
-   
-   .ongoing-badge-container {
-      position: absolute;
-      top: -10px;
-      right: 20px;
-      z-index: 10;
-   }
-   
-   .ongoing-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 12px;
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(251, 191, 36, 0.2);
-      color: var(--color-amber-light);
-      border: 1px solid var(--color-amber);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-   }
-   
    .resolved-events-section {
       padding: 20px 0;
    }
@@ -1293,33 +1259,6 @@
       display: flex;
       flex-direction: column;
       gap: 15px;
-   }
-   
-   .resolved-event-wrapper {
-      position: relative;
-      opacity: 0.8;
-   }
-   
-   .resolved-badge-container {
-      position: absolute;
-      top: -10px;
-      right: 20px;
-      z-index: 10;
-   }
-   
-   .resolved-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 12px;
-      border-radius: var(--radius-full);
-      font-size: var(--font-xs);
-      font-weight: var(--font-weight-medium);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--color-green);
-      border: 1px solid var(--color-green-border);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
    }
    
    .custom-modifiers-section {

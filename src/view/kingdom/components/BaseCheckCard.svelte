@@ -92,6 +92,7 @@
   export let primaryButtonLabel: string = 'OK';
   export let skillSectionTitle: string = 'Choose Skill:';
   export let debugMode: boolean = false;
+  export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
   
   // Multi-player coordination props
   export let resolutionInProgress: boolean = false;
@@ -243,6 +244,7 @@
     {missingRequirements}
     {traits}
     {expandable}
+    {statusBadge}
     on:toggle={toggleExpanded}
   />
   

@@ -439,34 +439,6 @@
                   <span>Penalty: {unrestStatus.penalty}</span>
                </div>
             {/if}
-            
-            {#if unrestStatus.tier > 0}
-               <button 
-                  class="roll-incident-btn"
-                  on:click={rollForIncident}
-                  disabled={!isViewingCurrentPhase || isRolling || stepComplete}
-               >
-                  <i class="fas {stepComplete ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i>
-                  {#if stepComplete}
-                     Checked
-                  {:else if isRolling}
-                     Rolling...
-                  {:else}
-                     Roll for Incident
-                  {/if}
-               </button>
-               {#if stepComplete}
-                  <div class="roll-result-text">
-                     {#if incidentWasTriggered}
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <span>Rolled {incidentCheckRoll}% &lt; {incidentCheckDC}% chance - Incident triggered</span>
-                     {:else}
-                        <i class="fas fa-check-circle"></i>
-                        <span>Rolled {incidentCheckRoll}% &gt;= {incidentCheckDC}% chance - No incident</span>
-                     {/if}
-                  </div>
-               {/if}
-            {/if}
          </div>
          
          <!-- Right Side: Unrest Values -->
@@ -492,6 +464,37 @@
          </div>
       </div>
    </div>
+   
+   <!-- Roll for Incident Button -->
+   {#if unrestStatus.tier > 0}
+      <div class="button-area">
+         <button 
+            class="roll-incident-btn"
+            on:click={rollForIncident}
+            disabled={!isViewingCurrentPhase || isRolling || stepComplete}
+         >
+            <i class="fas {stepComplete ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i>
+            {#if stepComplete}
+               Checked
+            {:else if isRolling}
+               Rolling...
+            {:else}
+               Roll for Incident
+            {/if}
+         </button>
+      </div>
+      {#if stepComplete}
+         <div class="roll-result-text">
+            {#if incidentWasTriggered}
+               <i class="fas fa-exclamation-triangle"></i>
+               <span>Rolled {incidentCheckRoll}% &lt; {incidentCheckDC}% chance - Incident triggered</span>
+            {:else}
+               <i class="fas fa-check-circle"></i>
+               <span>Rolled {incidentCheckRoll}% &gt;= {incidentCheckDC}% chance - No incident</span>
+            {/if}
+         </div>
+      {/if}
+   {/if}
    
    <!-- Step 2: Incident Results -->
    {#if showIncidentResult}
@@ -637,62 +640,6 @@
          font-weight: var(--font-weight-medium);
          width: fit-content;
       }
-      
-      .roll-incident-btn {
-         padding: 8px 16px;
-         background: var(--btn-secondary-bg);
-         color: var(--text-primary);
-         border: 1px solid var(--border-medium);
-         border-radius: var(--radius-md);
-         cursor: pointer;
-         font-size: var(--font-sm);
-         font-weight: var(--font-weight-medium);
-         line-height: 1.2;
-         letter-spacing: 0.025em;
-         display: inline-flex;
-         align-items: center;
-         gap: 8px;
-         transition: all var(--transition-fast);
-         width: fit-content;
-         
-         &:hover:not(:disabled) {
-            background: var(--btn-secondary-hover);
-            border-color: var(--border-strong);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-         }
-         
-         &:disabled {
-            opacity: var(--opacity-disabled);
-            cursor: not-allowed;
-            background: var(--color-gray-700);
-         }
-         
-         i.spinning {
-            animation: spin 1s linear infinite;
-         }
-      }
-      
-      .roll-result-text {
-         margin-top: 8px;
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-         display: flex;
-         align-items: center;
-         gap: 8px;
-         
-         i {
-            font-size: var(--font-md);
-            
-            &.fa-exclamation-triangle {
-               color: var(--color-amber);
-            }
-            
-            &.fa-check-circle {
-               color: var(--color-green);
-            }
-         }
-      }
    }
    
    // Right side - Unrest value display
@@ -761,6 +708,71 @@
             letter-spacing: 0.05em;
             color: var(--text-tertiary);
             margin-top: 1rem;
+         }
+      }
+   }
+   
+   // Button area - centered button container
+   .button-area {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+   }
+   
+   // Roll for Incident button - standalone, larger size
+   .roll-incident-btn {
+      padding: 10px 20px;
+      background: var(--btn-secondary-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+      letter-spacing: 0.025em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all var(--transition-fast);
+      
+      &:hover:not(:disabled) {
+         background: var(--btn-secondary-hover);
+         border-color: var(--border-strong);
+         transform: translateY(-1px);
+         box-shadow: var(--shadow-md);
+      }
+      
+      &:disabled {
+         opacity: var(--opacity-disabled);
+         cursor: not-allowed;
+         background: var(--color-gray-700);
+      }
+      
+      i.spinning {
+         animation: spin 1s linear infinite;
+      }
+   }
+   
+   .roll-result-text {
+      text-align: center;
+      margin-top: 8px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      
+      i {
+         font-size: var(--font-md);
+         
+         &.fa-exclamation-triangle {
+            color: var(--color-amber);
+         }
+         
+         &.fa-check-circle {
+            color: var(--color-green);
          }
       }
    }

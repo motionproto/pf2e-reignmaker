@@ -11,6 +11,7 @@
   export let missingRequirements: string[] = [];
   export let traits: string[] = [];
   export let expandable: boolean = true;  // Control chevron visibility
+  export let statusBadge: { text: string; type: 'ongoing' | 'resolved' } | null = null;
   
   const dispatch = createEventDispatcher();
   
@@ -30,6 +31,9 @@
     <div class="card-title-row">
       <strong class="card-name" class:unavailable={!available}>{name}</strong>
       <div class="card-badges">
+        {#if statusBadge}
+          <span class="status-badge {statusBadge.type}">{statusBadge.text}</span>
+        {/if}
         {#if traits && traits.length > 0}
           <div class="card-traits">
             {#each traits as trait}
@@ -110,6 +114,7 @@
         align-items: center;
         gap: 8px;
         flex-shrink: 0;
+        flex-wrap: wrap;
         
         .requirements-badge {
           display: inline-flex;
@@ -157,7 +162,7 @@
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
-      margin-top: 4px;
+      align-items: center;
     }
     
     .trait-badge {
@@ -174,6 +179,32 @@
       letter-spacing: 0.05em;
       color: var(--text-tertiary);
       text-transform: capitalize;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1.2;
+      flex-shrink: 0;
+      
+      &.ongoing {
+        background: rgba(251, 191, 36, 0.2);
+        color: var(--color-amber-light);
+        border: 1px solid var(--color-amber);
+      }
+      
+      &.resolved {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--color-green);
+        border: 1px solid var(--color-green-border);
+      }
     }
   }
 </style>

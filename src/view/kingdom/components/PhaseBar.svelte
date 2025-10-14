@@ -439,6 +439,13 @@
     transform: scale(1.1);
   }
 
+  .lock-button:focus,
+  .lock-button:focus-visible,
+  .lock-button:active {
+    outline: none;
+    border: none;
+  }
+
   .lock-button.locked {
     color: var(--color-secondary);
   }
