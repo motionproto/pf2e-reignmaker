@@ -22,6 +22,7 @@ export interface ResolutionState {
   selectedChoice: number | null;
   resolvedDice: Record<number | string, number>;
   selectedResources?: Record<number, string>;
+  customComponentData?: any;  // Custom component resolution data (action-specific)
 }
 
 /**

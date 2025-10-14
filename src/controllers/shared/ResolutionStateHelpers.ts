@@ -65,7 +65,8 @@ export async function updateInstanceResolutionState(
     const existing = instance.resolutionState || {
       selectedChoice: null,
       resolvedDice: {},
-      selectedResources: {}
+      selectedResources: {},
+      customComponentData: undefined
     };
 
     // Merge with existing state
@@ -78,7 +79,8 @@ export async function updateInstanceResolutionState(
       selectedResources: {
         ...existing.selectedResources,
         ...state.selectedResources
-      }
+      },
+      customComponentData: state.customComponentData ?? existing.customComponentData
     };
 
     logger.debug(`✅ [ResolutionStateHelpers] Updated instance resolution state: ${instanceId}`, instance.resolutionState);

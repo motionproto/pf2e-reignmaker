@@ -63,6 +63,7 @@
   export let showIgnoreEvent: boolean = false;
   export let ignoreEventDisabled: boolean = false;
   export let isIgnored: boolean = false;  // Flag to hide reroll button for ignored events
+  export let customComponent: any = null;  // Custom resolution UI component (Svelte constructor)
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
@@ -72,6 +73,7 @@
   // ✅ READ state from instance (syncs across all clients)
   $: resolutionState = getInstanceResolutionState(instance);
   $: selectedChoice = resolutionState.selectedChoice;
+  $: customComponentData = resolutionState.customComponentData;  // Track custom component resolution
   // Convert string keys back to appropriate types for Maps
   $: resolvedDice = new Map(
     Object.entries(resolutionState.resolvedDice || {}).map(([k, v]) => {
@@ -149,6 +151,10 @@
   $: hasChoices = effectiveChoices && effectiveChoices.length > 0;
   $: choicesResolved = hasChoices && selectedChoice !== null;
   
+  // Determine if custom component requires resolution
+  $: hasCustomComponent = customComponent !== null;
+  $: customComponentResolved = !hasCustomComponent || (customComponentData !== undefined && customComponentData !== null);
+  
   // Button visibility and state
   $: showCancelButton = showCancel && !applied && !isIgnored;
   // Hide reroll button once user starts resolving (makes choices/rolls dice)
@@ -193,15 +199,17 @@
     }
     
     // FIXED: Check ALL resolution requirements independently
-    // Choices, dice, and state changes can all coexist
+    // Choices, dice, state changes, and custom components can all coexist
     const choicesNeedResolution = hasChoices && !choicesResolved;
     const diceNeedResolution = hasDiceModifiers && !diceResolved;
     const stateChangeDiceNeedResolution = hasStateChangeDice && !stateChangeDiceResolved;
+    const customComponentNeedsResolution = hasCustomComponent && !customComponentResolved;
     
     primaryButtonDisabled = applied || 
       choicesNeedResolution ||
       diceNeedResolution ||
       stateChangeDiceNeedResolution ||
+      customComponentNeedsResolution ||
       !hasContent;
   }
   
@@ -441,6 +449,20 @@
     dispatch('cancel');
   }
   
+  async function handleCustomSelection(event: CustomEvent) {
+    if (!instance) return;
+    
+    console.log('🎨 [OutcomeDisplay] Custom component selection:', event.detail);
+    
+    // ✅ Store custom component data in instance (syncs to all clients)
+    await updateInstanceResolutionState(instance.instanceId, {
+      customComponentData: event.detail
+    });
+    
+    // Forward to parent for inclusion in ResolutionData
+    dispatch('customSelection', event.detail);
+  }
+  
   async function handleDebugOutcomeChange(event: CustomEvent) {
     const newOutcome = event.detail.outcome as OutcomeType;
     debugOutcome = newOutcome;
@@ -494,6 +516,20 @@
       hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
       on:roll={handleDiceRoll} 
     />
+    
+    <!-- Custom resolution UI component (action-specific) -->
+    {#if customComponent}
+      <div class="custom-resolution-ui">
+        <svelte:component 
+          this={customComponent} 
+          {instance}
+          {outcome}
+          {modifiers}
+          {stateChanges}
+          on:selection
+        />
+      </div>
+    {/if}
   </div>
   
   <OutcomeActions

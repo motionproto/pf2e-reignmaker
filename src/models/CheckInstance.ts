@@ -31,6 +31,7 @@ export interface ActiveCheckInstance {
     selectedChoice: number | null;
     resolvedDice: Record<string | number, number>;
     selectedResources: Record<number, string>;
+    customComponentData?: any;  // Custom component resolution data (action-specific)
   };
   
   // Resolution tracking (for multi-player coordination)

@@ -144,11 +144,38 @@ export interface EventEffects {
 }
 
 /**
+ * Complex action types for game state changes
+ */
+export type ComplexActionType = 
+  | 'claimHex'
+  | 'harvestResources'
+  | 'buildRoads'
+  | 'fortifyHex'
+  | 'createSettlement'
+  | 'upgradeSettlement'
+  | 'repairStructure'
+  | 'createWorksite'
+  | 'recruitArmy'
+  | 'deployArmy'
+  | 'disbandArmy'
+  | 'trainArmy'
+  | 'recoverArmy'
+  | 'outfitArmy';
+
+/**
+ * Complex action for post-resolution game state changes
+ */
+export interface ComplexAction {
+  type: ComplexActionType;
+  data: any;  // Type-specific data for the action
+}
+
+/**
  * Helper type for resolution data passed from OutcomeDisplay
  * (Already defined in events.ts but included here for reference)
  */
 export interface ResolutionData {
   numericModifiers: Array<{ resource: ResourceType; value: number }>;
   manualEffects: string[];
-  complexActions: any[];
+  complexActions: ComplexAction[];
 }

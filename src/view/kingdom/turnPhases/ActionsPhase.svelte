@@ -653,7 +653,7 @@
         if (checkId === `aid-${targetActionId}`) {
           window.removeEventListener('kingdomRollComplete', aidRollListener as any);
           
-          // Calculate bonus based on outcome and proficiency
+          // Calculate bonus based on outcome and proficiency (including penalty for critical failure)
           let bonus = 0;
           let grantKeepHigher = false;
           
@@ -666,15 +666,18 @@
             else if (proficiencyRank <= 2) bonus = 2; // Trained/Expert
             else if (proficiencyRank === 3) bonus = 3; // Master
             else bonus = 4; // Legendary
+          } else if (outcome === 'criticalFailure') {
+            bonus = -1;  // PF2e rules: critical failure imposes a -1 penalty
           }
+          // outcome === 'failure' stays at 0 (no effect)
           
           console.log('[ActionsPhase] Aid stored for', targetActionId, '- outcome:', outcome, 'bonus:', bonus);
           
-          // Store aid in turnState (shared state - all players will see this)
-          // Store ALL aid attempts, not just successful ones (bonus > 0)
-          const actor = getKingdomActor();
-          if (actor) {
-            await actor.updateKingdom((kingdom) => {
+          // Store aids that have any effect (bonus or penalty)
+          if (bonus !== 0) {
+            const actor = getKingdomActor();
+            if (actor) {
+              await actor.updateKingdom((kingdom) => {
               if (!kingdom.turnState) return;
               if (!kingdom.turnState.actionsPhase.activeAids) {
                 kingdom.turnState.actionsPhase.activeAids = [];
@@ -691,9 +694,24 @@
                 grantKeepHigher,
                 timestamp: Date.now()
               });
-            });
-            
-            // Track the aid check in the action log
+              });
+              
+              // Track the aid check in the action log
+              if (gameEffectsService) {
+                await gameEffectsService.trackPlayerAction(
+                  game.user.id,
+                  game.user.name,
+                  actorName,
+                  `aid-${targetActionId}-${outcome}`,
+                  TurnPhase.ACTIONS
+                );
+              }
+              
+              const bonusText = bonus > 0 ? `+${bonus}` : `${bonus}`;
+              ui.notifications?.info(`You are now aiding ${targetActionName} with a ${bonusText} ${bonus > 0 ? 'bonus' : 'penalty'}${grantKeepHigher ? ' and keep higher roll' : ''}!`);
+            }
+          } else {
+            // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
             if (gameEffectsService) {
               await gameEffectsService.trackPlayerAction(
                 game.user.id,
@@ -704,11 +722,7 @@
               );
             }
             
-            if (bonus > 0) {
-              ui.notifications?.info(`You are now aiding ${targetActionName} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
-            } else {
-              ui.notifications?.warn(`Your aid attempt for ${targetActionName} failed.`);
-            }
+            ui.notifications?.warn(`Your aid attempt for ${targetActionName} failed. You can try again with a different skill.`);
           }
         }
       };

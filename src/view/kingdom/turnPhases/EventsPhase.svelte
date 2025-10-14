@@ -611,9 +611,43 @@
    }
    
    // Event handler - aid another
-   function handleAid() {
-      if (!currentEvent) return;
-      showAidSelectionDialog = true;
+   function handleAid(event: CustomEvent) {
+      const { checkId } = event.detail;
+      
+      // Determine which event this aid is for
+      let targetEvent = currentEvent;
+      
+      // If checkId is provided and different from currentEvent, look up ongoing event
+      if (checkId && (!currentEvent || currentEvent.id !== checkId)) {
+         const ongoingEvent = ongoingEventsWithOutcomes.find(item => item.instance.instanceId === checkId);
+         if (ongoingEvent) {
+            targetEvent = ongoingEvent.event;
+         }
+      }
+      
+      if (!targetEvent) {
+         console.error('[EventsPhase] No event found for aid');
+         return;
+      }
+      
+      // Check if THIS PLAYER has already performed an action using actionLog
+      const actionLog = $kingdomData.turnState?.actionLog || [];
+      const hasPlayerActed = actionLog.some((entry: any) => 
+         entry.playerId === currentUserId && 
+         (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      );
+      
+      // Store target event temporarily for the aid dialog
+      currentEvent = targetEvent;
+      
+      if (hasPlayerActed) {
+         // Show confirmation dialog before opening aid selection
+         pendingAidSkill = '';  // Mark that we're pending an aid, not a skill execution
+         showActionConfirm = true;
+      } else {
+         // No prior action, show aid selection dialog directly
+         showAidSelectionDialog = true;
+      }
    }
    
    // Aid dialog confirmation
@@ -658,7 +692,7 @@
          if (checkId === `aid-${eventForAid.id}`) {
             window.removeEventListener('kingdomRollComplete', aidRollListener as any);
             
-            // Calculate bonus
+            // Calculate bonus (including penalty for critical failure)
             const skillSlug = skill.toLowerCase();
             const skillData = actingCharacter.skills?.[skillSlug];
             const proficiencyRank = skillData?.rank || 0;
@@ -674,31 +708,49 @@
                else if (proficiencyRank <= 2) bonus = 2;
                else if (proficiencyRank === 3) bonus = 3;
                else bonus = 4;
+            } else if (outcome === 'criticalFailure') {
+               bonus = -1;  // PF2e rules: critical failure imposes a -1 penalty
             }
+            // outcome === 'failure' stays at 0 (no effect)
             
-            // Store aid in turnState
-            const actor = getKingdomActor();
-            if (actor) {
-               await actor.updateKingdom((kingdom) => {
-                  if (!kingdom.turnState?.eventsPhase) return;
-                  if (!kingdom.turnState.eventsPhase.activeAids) {
-                     kingdom.turnState.eventsPhase.activeAids = [];
-                  }
-                  
-                  kingdom.turnState.eventsPhase.activeAids.push({
-                     playerId: game.user.id,
-                     playerName: game.user.name,
-                     characterName: actorName,
-                     targetActionId: eventForAid.id,
-                     skillUsed: skill,
-                     outcome: outcome as any,
-                     bonus,
-                     grantKeepHigher,
-                     timestamp: Date.now()
+            // Store aids that have any effect (bonus or penalty)
+            if (bonus !== 0) {
+               // Store aid in turnState
+               const actor = getKingdomActor();
+               if (actor) {
+                  await actor.updateKingdom((kingdom) => {
+                     if (!kingdom.turnState?.eventsPhase) return;
+                     if (!kingdom.turnState.eventsPhase.activeAids) {
+                        kingdom.turnState.eventsPhase.activeAids = [];
+                     }
+                     
+                     kingdom.turnState.eventsPhase.activeAids.push({
+                        playerId: game.user.id,
+                        playerName: game.user.name,
+                        characterName: actorName,
+                        targetActionId: eventForAid.id,
+                        skillUsed: skill,
+                        outcome: outcome as any,
+                        bonus,
+                        grantKeepHigher,
+                        timestamp: Date.now()
+                     });
                   });
-               });
-               
-               // Track the aid as a player action (counts towards action limit)
+                  
+                  // Track the aid as a player action (counts towards action limit)
+                  await gameEffectsService.trackPlayerAction(
+                     game.user.id,
+                     game.user.name,
+                     actorName,
+                     `aid-${eventForAid.id}-${outcome}`,
+                     TurnPhase.EVENTS
+                  );
+                  
+                  const bonusText = bonus > 0 ? `+${bonus}` : `${bonus}`;
+                  ui?.notifications?.info(`You are now aiding ${eventForAid.name} with a ${bonusText} ${bonus > 0 ? 'bonus' : 'penalty'}${grantKeepHigher ? ' and keep higher roll' : ''}!`);
+               }
+            } else {
+               // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
                await gameEffectsService.trackPlayerAction(
                   game.user.id,
                   game.user.name,
@@ -707,11 +759,7 @@
                   TurnPhase.EVENTS
                );
                
-               if (bonus > 0) {
-                  ui?.notifications?.info(`You are now aiding ${eventForAid.name} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
-               } else {
-                  ui?.notifications?.warn(`Your aid attempt failed.`);
-               }
+               ui?.notifications?.warn(`Your aid attempt failed. You can try again with a different skill.`);
             }
          }
       };
@@ -766,14 +814,20 @@
    // Action confirmation dialog handlers
    function handleActionConfirm() {
       if (pendingSkillExecution) {
+         // Confirmed skill execution
          executeSkillCheck(pendingSkillExecution.skill);
          pendingSkillExecution = null;
+      } else if (pendingAidSkill === '') {
+         // Confirmed aid action - open aid selection dialog
+         pendingAidSkill = '';
+         showAidSelectionDialog = true;
       }
       showActionConfirm = false;
    }
    
    function handleActionCancelDialog() {
       pendingSkillExecution = null;
+      pendingAidSkill = '';
       showActionConfirm = false;
    }
    
@@ -948,6 +1002,7 @@
                   on:cancel={handleCancel}
                   on:performReroll={handlePerformReroll}
                   on:ignore={handleIgnore}
+                  on:aid={handleAid}
                   on:debugOutcomeChanged={handleDebugOutcomeChanged}
                />
             {/each}

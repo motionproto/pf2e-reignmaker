@@ -99,6 +99,9 @@
   export let resolvingPlayerName: string = '';
   export let isBeingResolvedByOther: boolean = false;
   
+  // Custom resolution UI component (for inline action-specific UIs)
+  export let customResolutionComponent: any = null;  // Svelte component constructor
+  
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
   $: effectiveDebugMode = debugMode || isGM;
@@ -276,10 +279,12 @@
           {primaryButtonLabel}
           {showFameReroll}
           debugMode={effectiveDebugMode}
+          customComponent={customResolutionComponent}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}
           on:debugOutcomeChanged={handleDebugOutcomeChange}
+          on:customSelection
         />
       {:else}
         <!-- Before resolution: Show skills and possible outcomes -->
@@ -322,12 +327,18 @@
             <div class="skill-tags">
               <!-- Aid Another button/badge as first item if enabled (but not on aid actions themselves) -->
               {#if effectiveShowAidButton}
-                {#if aidResult && aidResult.bonus > 0}
-                  <!-- Aid result badge - shown after successful aid check completes -->
+                {#if aidResult && aidResult.bonus !== 0}
+                  <!-- Aid result badge - shown after aid check completes (bonus or penalty) -->
                   <div class="aid-result-badge-inline {aidResult.outcome === 'criticalSuccess' ? 'critical-success' : aidResult.outcome === 'success' ? 'success' : 'failure'}">
                     <i class="fas fa-hands-helping"></i>
                     <span>
-                      Aid - {aidResult.outcome === 'criticalSuccess' ? `Critical (+${aidResult.bonus}, keep higher)` : `+${aidResult.bonus}`}
+                      {#if aidResult.outcome === 'criticalSuccess'}
+                        Aid - Critical (+{aidResult.bonus}, keep higher)
+                      {:else if aidResult.bonus > 0}
+                        Aid - +{aidResult.bonus}
+                      {:else}
+                        Aid - {aidResult.bonus} (penalty)
+                      {/if}
                     </span>
                   </div>
                 {:else}
