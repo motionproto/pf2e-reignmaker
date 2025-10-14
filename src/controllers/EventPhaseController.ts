@@ -252,7 +252,8 @@ export async function createEventPhaseController(_eventService?: any) {
             resolutionData: ResolutionData,
             isIgnored: boolean = false,
             actorName?: string,
-            skillName?: string
+            skillName?: string,
+            playerId?: string
         ) {
             // Validate event exists
             const event = eventService.getEventById(eventId);
@@ -266,6 +267,25 @@ export async function createEventPhaseController(_eventService?: any) {
             const actor = getKingdomActor();
             const kingdom = actor?.getKingdom();
             const currentTurn = kingdom?.currentTurn || 1;
+            
+            // Track player action (unless event is ignored)
+            if (!isIgnored && playerId && actorName) {
+                const { createGameEffectsService } = await import('../services/GameEffectsService');
+                const gameEffects = await createGameEffectsService();
+                const game = (window as any).game;
+                const user = game?.users?.get(playerId);
+                const playerName = user?.name || 'Unknown Player';
+                
+                await gameEffects.trackPlayerAction(
+                    playerId,
+                    playerName,
+                    actorName,
+                    `${eventId}-${outcome}`,
+                    TurnPhase.EVENTS
+                );
+                
+                logger.debug(`📝 [EventPhaseController] Tracked event action: ${actorName} performed ${eventId}-${outcome}`);
+            }
             
             // Check if this event already exists as an ongoing instance (NEW system)
             const existingInstance = kingdom?.activeCheckInstances?.find(

@@ -501,7 +501,8 @@
          resolutionData,
          isIgnored,
          resolution.actorName,
-         resolution.skillName
+         resolution.skillName,
+         currentUserId || undefined
       );
       
       if (result.success) {
@@ -697,6 +698,15 @@
                   });
                });
                
+               // Track the aid as a player action (counts towards action limit)
+               await gameEffectsService.trackPlayerAction(
+                  game.user.id,
+                  game.user.name,
+                  actorName,
+                  `aid-${eventForAid.id}-${outcome}`,
+                  TurnPhase.EVENTS
+               );
+               
                if (bonus > 0) {
                   ui?.notifications?.info(`You are now aiding ${eventForAid.name} with a +${bonus} bonus${grantKeepHigher ? ' and keep higher roll' : ''}!`);
                } else {
@@ -793,9 +803,8 @@
       }
    }
    
-   // Get aid result for the current event  
-   $: aidResultForEvent = currentEvent ? (() => {
-      const eventId = currentEvent.id; // Capture for closure
+   // Helper function to get aid result for any event ID
+   function getAidResultForEvent(eventId: string) {
       const activeAids = $kingdomData?.turnState?.eventsPhase?.activeAids;
       if (!activeAids || activeAids.length === 0) return null;
       
@@ -812,7 +821,10 @@
          outcome: mostRecentAid.outcome,
          bonus: mostRecentAid.bonus
       };
-   })() : null;
+   }
+   
+   // Get aid result for the current event  
+   $: aidResultForEvent = currentEvent ? getAidResultForEvent(currentEvent.id) : null;
 </script>
 
 <div class="events-phase">
@@ -883,7 +895,7 @@
             showIgnoreButton={true}
             {isViewingCurrentPhase}
             {possibleOutcomes}
-            showAidButton={false}
+            showAidButton={true}
             aidResult={aidResultForEvent}
             resolved={eventResolved}
             resolution={eventResolution}
@@ -925,7 +937,8 @@
                      showIgnoreButton={true}
                      {isViewingCurrentPhase}
                      possibleOutcomes={item.possibleOutcomes}
-                     showAidButton={false}
+                     showAidButton={true}
+                     aidResult={getAidResultForEvent(item.event.id)}
                      resolved={!!item.instance.appliedOutcome}
                      resolution={item.instance.appliedOutcome || null}
                      primaryButtonLabel="Apply Result"
