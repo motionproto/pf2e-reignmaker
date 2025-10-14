@@ -32,7 +32,6 @@
           "modifiers": [
             {
               "type": "dice",
-              "name": "Settlement Crisis Gold Loss",
               "resource": "gold",
               "formula": "2d4",
               "negative": true,

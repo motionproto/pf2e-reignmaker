@@ -28,26 +28,24 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Convert 4 Unrest to imprisoned Unrest (up to structure capacity)",
+      "description": "Convert up to 8 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
           "type": "static",
           "resource": "unrest",
-          "value": -6,
-          "duration": "immediate",
-          "name": "Arrest Dissidents"
+          "value": -8,
+          "duration": "immediate"
         }
       ]
     },
     "success": {
-      "description": "Convert 2 Unrest to imprisoned Unrest (up to structure capacity)",
+      "description": "Convert up to 4 Unrest to imprisoned Unrest (up to structure capacity)",
       "modifiers": [
         {
           "type": "static",
           "resource": "unrest",
           "value": -4,
-          "duration": "immediate",
-          "name": "Arrest Dissidents"
+          "duration": "immediate"
         }
       ]
     },
@@ -57,9 +55,8 @@
         {
           "type": "static",
           "resource": "unrest",
-          "value": -2,
-          "duration": "immediate",
-          "name": "Arrest Dissidents"
+          "value": 0,
+          "duration": "immediate"
         }
       ]
     },
@@ -70,8 +67,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate",
-          "name": "Arrest Dissidents"
+          "duration": "immediate"
         }
       ]
     }

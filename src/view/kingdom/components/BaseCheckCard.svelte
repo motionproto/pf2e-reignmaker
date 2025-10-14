@@ -98,6 +98,7 @@
   export let resolutionInProgress: boolean = false;
   export let resolvingPlayerName: string = '';
   export let isBeingResolvedByOther: boolean = false;
+  export let hasPlayerActed: boolean = false;  // Whether current player has already performed an action this turn
   
   // Custom resolution UI component (for inline action-specific UIs)
   export let customResolutionComponent: any = null;  // Svelte component constructor
@@ -134,6 +135,19 @@
   
   function handleSkillClick(skill: string) {
     if (isRolling || !isViewingCurrentPhase || resolved) return;
+    
+    // Check if player has already acted and this card isn't resolved yet
+    // (for actions, ask for confirmation; for events/incidents, proceed normally)
+    if (hasPlayerActed && checkType === 'action' && !resolved) {
+      // Dispatch confirmation request instead of executing directly
+      dispatch('confirmAction', {
+        skill,
+        checkId: id,
+        checkName: name,
+        checkType
+      });
+      return;
+    }
     
     isRolling = true;
     localUsedSkill = skill;

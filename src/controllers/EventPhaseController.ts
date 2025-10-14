@@ -486,7 +486,7 @@ export async function createEventPhaseController(_eventService?: any) {
             const modifiersToDecrement: Array<{ modifierId: string; modifierIndex: number }> = [];
             
             for (const modifier of customModifiers) {
-                logger.debug(`  📋 Processing modifier: ${modifier.name}`);
+                logger.debug(`  📋 Processing modifier: ${modifier.id} (${modifier.sourceType})`);
                 logger.debug(`     Modifiers count: ${modifier.modifiers.length}`);
                 
                 for (let i = 0; i < modifier.modifiers.length; i++) {
@@ -548,7 +548,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             const mod = modifier.modifiers[modifierIndex];
                             if (typeof mod.duration === 'number') {
                                 mod.duration -= 1;
-                                logger.debug(`   Decremented ${modifier.name}.modifiers[${modifierIndex}] to ${mod.duration} turns remaining`);
+                                logger.debug(`   Decremented ${modifier.id}.modifiers[${modifierIndex}] to ${mod.duration} turns remaining`);
                                 
                                 // Mark modifier for removal if all its modifiers are expired
                                 if (mod.duration <= 0) {

@@ -34,8 +34,7 @@
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate",
-          "name": "Recruit Unit (Patriotic Response)"
+          "duration": "immediate"
         }
       ],
       "gameEffects": [
@@ -69,8 +68,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate",
-          "name": "Recruit Unit (Failed Recruitment)"
+          "duration": "immediate"
         }
       ],
       "gameEffects": []

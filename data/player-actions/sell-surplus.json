@@ -36,26 +36,24 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Trade 2 Resources → 2 Gold",
+      "description": "Trade 2 Resources \u2192 2 Gold",
       "modifiers": [
         {
           "type": "dice",
           "resource": "gold",
           "formula": "1d4",
-          "duration": "immediate",
-          "name": "Sell Surplus"
+          "duration": "immediate"
         }
       ]
     },
     "success": {
-      "description": "Trade 2 Resources → 1 Gold",
+      "description": "Trade 2 Resources \u2192 1 Gold",
       "modifiers": [
         {
           "type": "static",
           "resource": "gold",
           "value": 1,
-          "duration": "immediate",
-          "name": "Sell Surplus"
+          "duration": "immediate"
         }
       ]
     },

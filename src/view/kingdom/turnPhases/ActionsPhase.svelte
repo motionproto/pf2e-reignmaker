@@ -2,6 +2,7 @@
   import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
   import { createGameEffectsService } from '../../../services/GameEffectsService';
+  import { createCheckInstanceService } from '../../../services/CheckInstanceService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
@@ -23,9 +24,10 @@
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
 
-  // Initialize controller and service
+  // Initialize controller and services
   let controller: any = null;
   let gameEffectsService: any = null;
+  let checkInstanceService: any = null;
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -34,17 +36,23 @@
   let showBuildStructureDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
+  let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
 
-  // Track current player's resolution (temporary until confirmed)
-  let resolvedActions = new Map<string, any>();
+  // Track action ID to current instance ID mapping for this player
+  // Map<actionId, instanceId> - one active instance per action per player
+  let currentActionInstances = new Map<string, string>();
   
   // Count of players who have acted (from actionLog)
   $: actionsUsed = ($kingdomData.turnState?.actionLog || []).filter((entry: any) => 
     entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS
   ).length;
   
-  // Force UI update when resolvedActions changes
-  $: resolvedActionsSize = resolvedActions.size;
+  // Check if current player has already acted (for all BaseCheckCards)
+  $: hasPlayerActed = ($kingdomData.turnState?.actionLog || []).some((entry: any) => {
+    const game = (window as any).game;
+    return entry.playerId === game?.user?.id && 
+      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS);
+  });
   
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
@@ -121,7 +129,9 @@
     }
 
     // Check if already resolved by current player
-    if (resolvedActions.has(actionId)) {
+    const existingInstanceId = currentActionInstances.get(actionId);
+    if (existingInstanceId) {
+      console.log('⏭️ [ActionsPhase] Action already has instance, skipping:', actionId);
       return;
     }
 
@@ -132,8 +142,6 @@
     if (!action) {
       return;
     }
-
-    // NOTE: We don't spend the action here anymore - it's spent when the user initially clicks the skill
 
     // Always mark the action as resolved to show the roll result
     const outcomeType = outcome as
@@ -146,39 +154,63 @@
     const modifiers = controller.getActionModifiers(action, outcomeType);
     
     // Make sure the action is expanded FIRST
-    // This ensures the card is already expanded when the resolution is displayed
     if (!expandedActions.has(actionId)) {
       expandedActions.clear();
       expandedActions.add(actionId);
       expandedActions = new Set(expandedActions);
     }
     
-    // Store resolution in controller (proper business logic location)
-    console.log('[ActionsPhase] Resolving action for player:', currentUserId, 'action:', action.id);
-    const resolution = {
-      actionId: action.id,
-      outcome: outcomeType,
-      actorName,
-      skillName,
-      timestamp: new Date(),
-      playerId: currentUserId || undefined
+    // Create check instance for this action
+    if (!checkInstanceService) {
+      checkInstanceService = await createCheckInstanceService();
+    }
+    
+    // Special handling for build-structure to replace {structure} placeholder in description
+    let customEffect: string | undefined = undefined;
+    if (action.id === 'build-structure' && pendingBuildAction?.structureId) {
+      const { structuresService } = await import('../../../services/structures');
+      const structure = structuresService.getStructure(pendingBuildAction.structureId);
+      
+      if (structure) {
+        const outcomeData = action[outcomeType];
+        if (outcomeData?.description) {
+          customEffect = outcomeData.description.replace(/{structure}/g, structure.name);
+        }
+      }
+    }
+    
+    const instanceId = await checkInstanceService.createInstance(
+      'action',
+      actionId,
+      action,
+      $currentTurn
+    );
+    
+    // Store preliminary outcome in instance (before user confirms)
+    const preliminaryResolutionData = {
+      numericModifiers: modifiers.map((m: any) => ({ resource: m.resource, value: m.value })),
+      manualEffects: [],
+      complexActions: []
     };
     
-    controller.storeResolution(resolution);
-    
-    // Store temporary resolution for current player (shows the OK/Cancel dialog)
-    // IMPORTANT: Include modifiers array for OutcomeDisplay to generate ResolutionData
-    resolvedActions.set(action.id, {
-      outcome: outcomeType,
+    await checkInstanceService.storeOutcome(
+      instanceId,
+      outcomeType,
+      preliminaryResolutionData,
       actorName,
-      skillName,
-      modifiers: modifiers  // Pass modifiers so OutcomeDisplay can generate ResolutionData
-    });
-    resolvedActions = resolvedActions; // Trigger reactivity
+      skillName || '',
+      customEffect || ''
+    );
+    
+    // Track instanceId for this action
+    currentActionInstances.set(actionId, instanceId);
+    console.log(`✅ [ActionsPhase] Created instance ${instanceId} for action ${actionId}`);
 
     // Force Svelte to update
     await tick();
   }
+
+  // Removed: Old resetAction call - instances are now managed via CheckInstanceService
 
   // Apply the actual state changes when user confirms the resolution
   // NEW ARCHITECTURE: Receives ResolutionData from OutcomeDisplay via primary event
@@ -196,50 +228,189 @@
       return;
     }
 
-    const resolution = resolvedActions.get(actionId);
-    if (!resolution) {
-      console.error('❌ [applyActionEffects] Resolution not found for action:', actionId);
+    // Get instance from storage
+    const instanceId = currentActionInstances.get(actionId);
+    if (!instanceId) {
+      console.error('❌ [applyActionEffects] No instance found for action:', actionId);
+      return;
+    }
+    
+    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    if (!instance?.appliedOutcome) {
+      console.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
       return;
     }
 
-    // NEW ARCHITECTURE: Use controller.resolveAction() with ResolutionData
-    const result = await controller.resolveAction(
-      actionId,
-      resolution.outcome,
-      resolutionData,
-      resolution.actorName,
-      resolution.skillName,
-      currentUserId || undefined
-    );
-    
-    console.log('📊 [applyActionEffects] Result:', result);
+    // Update instance with final resolution data and mark as applied
+    if (checkInstanceService) {
+      await checkInstanceService.storeOutcome(
+        instanceId,
+        instance.appliedOutcome.outcome,
+        resolutionData,
+        instance.appliedOutcome.actorName,
+        instance.appliedOutcome.skillName || '',
+        instance.appliedOutcome.effect
+      );
+      await checkInstanceService.markApplied(instanceId);
+      console.log(`✅ [ActionsPhase] Stored outcome and marked applied for instance: ${instanceId}`);
+    }
 
-    if (!result.success) {
-      // Show error to user about requirements not being met
-      ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
+    // Special handling for build-structure action
+    if (actionId === 'build-structure' && pendingBuildAction) {
+      await handleBuildStructureCompletion(instance.appliedOutcome.outcome, instance.appliedOutcome.actorName);
+      // Don't return - continue to centralized action tracking below
     } else {
-      // Show success notification with applied effects (if any resources were changed)
-      if (result.applied?.resources && result.applied.resources.length > 0) {
-        const effectsMsg = result.applied.resources
-          .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
-          .join(', ');
-        if (effectsMsg) {
-          ui.notifications?.info(`${action.name}: ${effectsMsg}`);
+      // NEW ARCHITECTURE: Use controller.resolveAction() with ResolutionData
+      const result = await controller.resolveAction(
+        actionId,
+        instance.appliedOutcome.outcome,
+        resolutionData,
+        instance.appliedOutcome.actorName,
+        instance.appliedOutcome.skillName || '',
+        currentUserId || undefined
+      );
+      
+      console.log('📊 [applyActionEffects] Result:', result);
+
+      if (!result.success) {
+        // Show error to user about requirements not being met
+        ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
+        return; // Don't track failed actions
+      } else {
+        // Show success notification with applied effects (if any resources were changed)
+        if (result.applied?.resources && result.applied.resources.length > 0) {
+          const effectsMsg = result.applied.resources
+            .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
+            .join(', ');
+          if (effectsMsg) {
+            ui.notifications?.info(`${action.name}: ${effectsMsg}`);
+          }
         }
       }
-      
-      // Note: Completion tracking is now handled by actionLog via GameEffectsService.trackPlayerAction()
+    }
+    
+    // Centralized action tracking - applies to ALL actions
+    if (gameEffectsService && currentUserId) {
+      await gameEffectsService.trackPlayerAction(
+        currentUserId,
+        (window as any).game?.user?.name,
+        instance.appliedOutcome.actorName,
+        actionId,
+        TurnPhase.ACTIONS
+      );
+      console.log(`📝 [applyActionEffects] Tracked action: ${actionId} for player: ${currentUserId}`);
     }
   }
-
-  // Reset an action
-  async function resetAction(actionId: string, skipPlayerActionReset: boolean = false) {
-    // Use the controller to reset the action
-    await controller.resetAction(actionId, $kingdomData as any, currentUserId || undefined);
-
-    // Note: Player action resets are handled via actionLog
-    // When a player rerolls, they don't add another actionLog entry
+  
+  // Handle build structure completion after roll
+  async function handleBuildStructureCompletion(outcome: string, actorName: string) {
+    if (!pendingBuildAction?.structureId || !pendingBuildAction?.settlementId) {
+      ui.notifications?.error('Build structure data missing');
+      pendingBuildAction = null;
+      return;
+    }
+    
+    const { structuresService } = await import('../../../services/structures');
+    const structure = structuresService.getStructure(pendingBuildAction.structureId);
+    
+    if (!structure) {
+      ui.notifications?.error('Structure not found');
+      pendingBuildAction = null;
+      return;
+    }
+    
+    const game = (window as any).game;
+    
+    // Only build on success or critical success
+    if (outcome === 'success' || outcome === 'criticalSuccess') {
+      const { createBuildStructureController } = await import('../../../controllers/BuildStructureController');
+      const buildController = await createBuildStructureController();
+      
+      // Add to build queue
+      const result = await buildController.addToBuildQueue(
+        pendingBuildAction.structureId,
+        pendingBuildAction.settlementId
+      );
+      
+      if (result.success && result.project) {
+        // Calculate cost modifier (50% off for critical success)
+        const costModifier = outcome === 'criticalSuccess' ? 0.5 : 1.0;
+        
+        // Apply cost modifier to project BEFORE allocating resources
+        if (costModifier !== 1.0) {
+          const actor = getKingdomActor();
+          if (actor) {
+            await actor.updateKingdom((kingdom) => {
+              const project = kingdom.buildQueue?.find(p => p.id === result.project!.id);
+              if (project && project.totalCost) {
+                // Convert to Map if it's a plain object (after deserialization)
+                const totalCostMap = project.totalCost instanceof Map 
+                  ? project.totalCost 
+                  : new Map(Object.entries(project.totalCost));
+                
+                // Update totalCost with reduced amounts (rounded up)
+                const newTotalCost = new Map<string, number>();
+                totalCostMap.forEach((value, resource) => {
+                  const amount = value as number;
+                  newTotalCost.set(resource, Math.ceil(amount * costModifier));
+                });
+                
+                // Assign back (as plain object for serialization)
+                project.totalCost = Object.fromEntries(newTotalCost) as any;
+                
+                // Also update remainingCost to match
+                if (project.remainingCost) {
+                  const remainingCostMap = project.remainingCost instanceof Map
+                    ? project.remainingCost
+                    : new Map(Object.entries(project.remainingCost));
+                  
+                  const newRemainingCost = new Map<string, number>();
+                  remainingCostMap.forEach((value, resource) => {
+                    const amount = value as number;
+                    newRemainingCost.set(resource, Math.ceil(amount * costModifier));
+                  });
+                  
+                  project.remainingCost = Object.fromEntries(newRemainingCost) as any;
+                }
+              }
+            });
+          }
+        }
+        
+        // Allocate resources (now using the modified totalCost)
+        let allAllocated = true;
+        for (const [resource, baseAmount] of Object.entries(structure.constructionCost)) {
+          if (baseAmount && baseAmount > 0) {
+            const amount = Math.ceil(baseAmount * costModifier);
+            const allocated = await buildController.allocateResources(result.project.id, resource, amount);
+            if (!allocated) {
+              allAllocated = false;
+            }
+          }
+        }
+        
+        // Show appropriate success message
+        if (outcome === 'criticalSuccess') {
+          ui.notifications?.info(`🎉 Critical Success! ${structure.name} construction started at half cost!`);
+        } else {
+          ui.notifications?.info(`✅ ${structure.name} construction started!`);
+        }
+        
+        if (!allAllocated) {
+          ui.notifications?.warn('Some resources were not available and will be allocated when possible');
+        }
+      } else {
+        ui.notifications?.error(result.error || 'Failed to start construction');
+      }
+    } else {
+      // Failure or critical failure - no building happens
+      ui.notifications?.warn(`Build Structure failed - no progress on ${structure.name}`);
+    }
+    
+    // Clear pending build action
+    pendingBuildAction = null;
   }
+
 
   // Listen for roll completion events
   async function handleRollComplete(event: CustomEvent) {
@@ -299,11 +470,6 @@
       "kingdomRollComplete",
       handleRollComplete as any
     );
-    
-    // Reset controller state for next phase
-    if (controller) {
-      controller.resetState();
-    }
   });
 
   // Helper functions delegating to controller
@@ -340,59 +506,56 @@
     return missing;
   }
 
-  function isActionResolvedHelper(actionId: string): boolean {
-    // Delegate to controller for business logic
-    if (!controller) return false;
-    return controller.isActionResolved(actionId, currentUserId || undefined);
-  }
   
   // Check if current player has a pending resolution for this action
   function isActionResolvedByCurrentPlayer(actionId: string): boolean {
-    return resolvedActions.has(actionId);
+    const instanceId = currentActionInstances.get(actionId);
+    if (!instanceId) return false;
+    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    return instance && instance.status !== 'pending';
   }
 
   function getCurrentPlayerResolution(actionId: string) {
-    return resolvedActions.get(actionId);
+    const instanceId = currentActionInstances.get(actionId);
+    if (!instanceId) return null;
+    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    if (!instance?.appliedOutcome) return null;
+    
+    // Convert instance appliedOutcome to resolution format for UI
+    return {
+      outcome: instance.appliedOutcome.outcome,
+      actorName: instance.appliedOutcome.actorName,
+      skillName: instance.appliedOutcome.skillName,
+      modifiers: instance.appliedOutcome.modifiers,
+      effect: instance.appliedOutcome.effect
+    };
   }
   
   // Removed: getActionCompletions - completions now handled by CompletionNotifications component
 
+  // Handle confirmation request from BaseCheckCard
+  function handleConfirmAction(event: CustomEvent, action: any) {
+    // Store pending execution and show confirmation dialog
+    pendingSkillExecution = { 
+      event: new CustomEvent('executeSkill', { detail: event.detail }),
+      action 
+    };
+    showActionConfirm = true;
+  }
+  
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
     // Special handling for build-structure action
     if (action.id === 'build-structure') {
-      // Show the build structure dialog instead of rolling
+      const { skill } = event.detail;
+      
+      // Store the pending skill and show dialog for structure selection
+      pendingBuildAction = { skill };
       showBuildStructureDialog = true;
       return;
     }
     
-    // Check if THIS PLAYER has already performed an action
-    // READ from reactive store (Single Source of Truth) - use actionLog
-    const game = (window as any).game;
-    const actionLog = $kingdomData.turnState?.actionLog || [];
-    // Check if this player has any action entries (actions or events, not incidents)
-    const hasPlayerActed = actionLog.some((entry: any) => 
-      entry.playerId === game?.user?.id && 
-      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
-    );
-    
-    console.log('[ActionsPhase] Action tracking check:', {
-      userId: game?.user?.id,
-      actionLogEntries: actionLog.filter((e: any) => e.playerId === game?.user?.id).length,
-      hasPlayerActed,
-      resolvedForThisAction: resolvedActions.has(action.id),
-      actionId: action.id
-    });
-    
-    if (hasPlayerActed && !resolvedActions.has(action.id)) {
-      // This player has already performed an action - show confirmation dialog
-      console.log('[ActionsPhase] Player has already acted - showing confirmation dialog');
-      pendingSkillExecution = { event, action };
-      showActionConfirm = true;
-      return;
-    }
-    
-    // Proceed with the skill execution and spend the action
+    // Proceed with the skill execution (action tracking check already done in BaseCheckCard)
     await executeSkillAction(event, action);
   }
   
@@ -439,18 +602,64 @@
     }
   }
 
+  // Handle debug outcome change
+  async function handleDebugOutcomeChange(event: CustomEvent, action: any) {
+    const { outcome: newOutcome } = event.detail;
+    
+    console.log(`🐛 [ActionsPhase] Debug outcome changed to: ${newOutcome} for action: ${action.id}`);
+    
+    // Get instance
+    const instanceId = currentActionInstances.get(action.id);
+    if (!instanceId) return;
+    
+    // Get modifiers for the new outcome
+    const modifiers = controller.getActionModifiers(action, newOutcome);
+    
+    // Regenerate custom effect if needed (for actions with dynamic messages)
+    let customEffect: string | undefined = undefined;
+    if (action.id === 'build-structure' && pendingBuildAction?.structureId) {
+      const { structuresService } = await import('../../../services/structures');
+      const structure = structuresService.getStructure(pendingBuildAction.structureId);
+      
+      if (structure) {
+        const outcomeData = action[newOutcome];
+        if (outcomeData?.description) {
+          customEffect = outcomeData.description.replace(/{structure}/g, structure.name);
+        }
+      }
+    }
+    
+    // Update instance with new outcome
+    const resolutionData = {
+      numericModifiers: modifiers.map((m: any) => ({ resource: m.resource, value: m.value })),
+      manualEffects: [],
+      complexActions: []
+    };
+    
+    await checkInstanceService.storeOutcome(
+      instanceId,
+      newOutcome,
+      resolutionData,
+      $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId)?.appliedOutcome?.actorName || '',
+      $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId)?.appliedOutcome?.skillName || '',
+      customEffect || ''
+    );
+    
+    console.log(`✅ [ActionsPhase] Updated instance ${instanceId} with new outcome: ${newOutcome}`);
+  }
+  
   // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
   async function handlePerformReroll(event: CustomEvent, action: any) {
     const { skill, previousFame } = event.detail;
     
     console.log(`🔁 [ActionsPhase] Performing reroll with skill: ${skill}`);
     
-    // Reset action resolution state (clear the UI)
-    resolvedActions.delete(action.id);
-    resolvedActions = resolvedActions;  // Trigger reactivity
-    
-    // Reset in controller (skip player action reset for reroll)
-    await resetAction(action.id, true);
+    // Clear instance for this action
+    const instanceId = currentActionInstances.get(action.id);
+    if (instanceId && checkInstanceService) {
+      await checkInstanceService.clearInstance(instanceId);
+      currentActionInstances.delete(action.id);
+    }
     
     // Small delay to ensure UI updates
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -528,33 +737,84 @@
   }
   
   // Handle canceling an action result
-  function handleActionResultCancel(actionId: string) {
-    // Reset the action without applying effects (no completion added yet)
-    resolvedActions.delete(actionId);
-    resolvedActions = resolvedActions; // Trigger reactivity
+  async function handleActionResultCancel(actionId: string) {
+    // Clear instance for this action
+    const instanceId = currentActionInstances.get(actionId);
+    if (instanceId && checkInstanceService) {
+      await checkInstanceService.clearInstance(instanceId);
+      currentActionInstances.delete(actionId);
+    }
     
     // Note: Canceling doesn't add to actionLog, so player can still act
   }
   
-  // Handle when a structure is successfully queued
+  // Handle when a structure is selected (not built yet - just closes dialog)
   async function handleStructureQueued(event: CustomEvent) {
-    const { structureId, settlementId, project } = event.detail;
+    const { structureId, settlementId } = event.detail;
     
-    // Track the build-structure action in actionLog
-    const game = (window as any).game;
-    if (game?.user?.id && gameEffectsService) {
-      const actingCharacter = getCurrentUserCharacter();
-      await gameEffectsService.trackPlayerAction(
-        game.user.id,
-        game.user.name,
-        actingCharacter?.name || 'Unknown',
-        'build-structure',
-        TurnPhase.ACTIONS
-      );
+    // Store structure selection
+    if (pendingBuildAction) {
+      pendingBuildAction.structureId = structureId;
+      pendingBuildAction.settlementId = settlementId;
+      
+      // Close dialog
+      showBuildStructureDialog = false;
+      
+      // Now trigger the skill roll with the selected structure context
+      await executeBuildStructureRoll(pendingBuildAction);
+    }
+  }
+  
+  // Execute the build structure skill roll
+  async function executeBuildStructureRoll(buildAction: { skill: string; structureId?: string; settlementId?: string }) {
+    if (!buildAction.structureId || !buildAction.settlementId) {
+      ui.notifications?.warn('Please select a structure to build');
+      return;
     }
     
-    // Show success notification
-    ui.notifications?.info(`Structure queued successfully!`);
+    const game = (window as any).game;
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        // User cancelled - reset pending action
+        pendingBuildAction = null;
+        return;
+      }
+    }
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      const action = actionLoader.getAllActions().find(a => a.id === 'build-structure');
+      if (!action) return;
+      
+      // Perform the roll
+      await performKingdomActionRoll(
+        actingCharacter,
+        buildAction.skill,
+        dc,
+        action.name,
+        action.id,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+      
+      // The roll completion will be handled by handleRollComplete
+      // which will trigger onActionResolved with the outcome
+    } catch (error) {
+      console.error("Error executing build structure roll:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+      pendingBuildAction = null;
+    }
   }
   
   // Handle Aid Another button click - check if player has acted, then open skill selection dialog
@@ -755,11 +1015,6 @@
     }
   }
   
-  // Get other players' resolutions for an action (helper to avoid inline type annotation)
-  function getOtherPlayersResolutions(actionId: string): any[] {
-    if (!controller) return [];
-    return controller.getAllPlayersResolutions(actionId).filter((r: any) => r.playerId !== currentUserId);
-  }
   
   // Get aid result for an action from shared kingdom state
   function getAidResultForAction(actionId: string): { outcome: string; bonus: number } | null {
@@ -806,9 +1061,12 @@
               {@const resolution = isResolved ? getCurrentPlayerResolution(action.id) : undefined}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${resolvedActionsSize}-${activeAidsCount}-${controller ? 'ready' : 'loading'}`}
+              {@const instanceId = currentActionInstances.get(action.id)}
+              {@const checkInstance = instanceId ? $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId) : null}
+              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}`}
                 <BaseCheckCard
                   id={action.id}
+                  checkInstance={checkInstance || null}
                   name={action.name}
                   description={action.description}
                   brief={action.brief || ''}
@@ -854,19 +1112,19 @@
                   showAidButton={true}
                   aidResult={getAidResultForAction(action.id)}
                   resolvedBadgeText="Resolved"
-                  primaryButtonLabel="OK"
+                  primaryButtonLabel="Apply Result"
                   skillSectionTitle="Choose Skill:"
                   isViewingCurrentPhase={isViewingCurrentPhase}
+                  {hasPlayerActed}
                   on:toggle={() => toggleAction(action.id)}
+                  on:confirmAction={(e) => handleConfirmAction(e, action)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
                   on:performReroll={(e) => handlePerformReroll(e, action)}
+                  on:debugOutcomeChanged={(e) => handleDebugOutcomeChange(e, action)}
                   on:aid={handleAid}
                   on:primary={(e) => {
                     // Apply the effects using new ResolutionData architecture
                     applyActionEffects(e);
-                    // Clear the current player's resolved state
-                    resolvedActions.delete(e.detail.checkId);
-                    resolvedActions = resolvedActions; // Trigger reactivity
                     // Keep the card expanded to show completion notifications
                   }}
                   on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}

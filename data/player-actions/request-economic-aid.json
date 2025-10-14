@@ -34,8 +34,7 @@
           "type": "dice",
           "resource": "gold",
           "formula": "1d4+1",
-          "duration": "immediate",
-          "name": "Request Economic Aid"
+          "duration": "immediate"
         }
       ]
     },
@@ -46,8 +45,7 @@
           "type": "dice",
           "resource": "gold",
           "formula": "1d4",
-          "duration": "immediate",
-          "name": "Request Economic Aid"
+          "duration": "immediate"
         }
       ]
     },

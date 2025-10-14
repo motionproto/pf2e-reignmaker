@@ -50,8 +50,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate",
-          "name": "Collect Stipend"
+          "duration": "immediate"
         }
       ]
     },
@@ -62,8 +61,7 @@
           "type": "dice",
           "resource": "unrest",
           "formula": "1d4",
-          "duration": "immediate",
-          "name": "Collect Stipend"
+          "duration": "immediate"
         }
       ]
     }

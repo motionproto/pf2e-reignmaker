@@ -28,20 +28,27 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build Structures for half cost",
+      "description": "Build a {structure} for half cost",
       "modifiers": []
     },
     "success": {
-      "description": "Build 1 Structure",
+      "description": "Construction begins on a {structure}.",
       "modifiers": []
     },
     "failure": {
-      "description": "No progress",
+      "description": "No progress on building a {structure}",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No progress",
-      "modifiers": []
+      "description": "Accidents and disputes plauge the {structure} project.",
+      "modifiers": [
+         {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }

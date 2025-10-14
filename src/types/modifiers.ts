@@ -30,7 +30,6 @@ export interface StaticModifier {
   resource: ResourceType;
   value: number;
   duration?: ModifierDuration;
-  name?: string;
 }
 
 /**
@@ -53,7 +52,6 @@ export interface DiceModifier {
   formula: string;  // e.g., '2d6', '1d4+1'
   negative?: boolean;  // true for formulas like '-2d6'
   duration?: ModifierDuration;
-  name?: string;
 }
 
 /**
@@ -74,7 +72,6 @@ export interface ChoiceModifier {
   value: number | DiceValue;  // Can be static or dice
   negative?: boolean;  // true for loss/penalty, false/undefined for gain
   duration?: ModifierDuration;
-  name?: string;
 }
 
 /**

@@ -26,12 +26,12 @@ export class CheckInstanceService {
    * Create a new check instance
    */
   async createInstance(
-    checkType: 'incident' | 'event',
+    checkType: 'incident' | 'event' | 'action',
     checkId: string,
     checkData: any,
     currentTurn: number
   ): Promise<string> {
-    const instanceId = `${checkType}-${checkId}-${Date.now()}`;
+    const instanceId = `T${currentTurn}-${checkId}-${Date.now()}`;
     const instance: ActiveCheckInstance = {
       instanceId,
       checkType,

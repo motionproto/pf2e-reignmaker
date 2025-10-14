@@ -27,7 +27,6 @@ interface StaticModifier {
   resource: ResourceType;
   value: number;
   duration?: ModifierDuration;
-  name?: string;
 }
 ```
 
@@ -37,8 +36,7 @@ interface StaticModifier {
   "type": "static",
   "resource": "unrest",
   "value": 1,
-  "duration": "immediate",
-  "name": "Festival Discontent"
+  "duration": "immediate"
 }
 ```
 
@@ -55,7 +53,6 @@ interface DiceModifier {
   formula: string;        // Just the formula (no negative sign)
   negative?: boolean;     // Separate flag for negative
   duration?: ModifierDuration;
-  name?: string;
 }
 ```
 
@@ -82,7 +79,6 @@ interface ChoiceModifier {
   resources: ResourceType[];  // Player selects from these
   value: number | DiceValue;  // Can be static or dice
   duration?: ModifierDuration;
-  name?: string;
 }
 ```
 

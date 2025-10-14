@@ -105,59 +105,21 @@
     dispatch('close');
   }
   
-  async function handleConfirm() {
-    if (!selectedStructureId || !selectedSettlementId || !controller) {
+  // Handle build button click from structure card - just dispatch selection
+  async function handleBuildStructure(event: CustomEvent<string>) {
+    selectedStructureId = event.detail;
+    selectedStructure = structuresService.getStructure(event.detail);
+    
+    if (!selectedStructureId || !selectedSettlementId) {
       errorMessage = 'Please select both a structure and a settlement';
       return;
     }
     
-    // Add to build queue
-    const result = await controller.addToBuildQueue(selectedStructureId, selectedSettlementId);
-    
-    if (result.success) {
-      // If we can afford it, auto-allocate resources
-      if (canAfford && !addToQueueOnly && selectedStructure && result.project) {
-        let allAllocated = true;
-        
-        for (const [resource, amount] of Object.entries(selectedStructure.constructionCost)) {
-          if (amount && amount > 0) {
-            const allocated = await controller.allocateResources(result.project.id, resource, amount);
-            if (!allocated) {
-              allAllocated = false;
-            }
-          }
-        }
-        
-        if (allAllocated) {
-          successMessage = `${selectedStructure.name} construction started!`;
-        } else {
-          successMessage = `${selectedStructure.name} added to build queue. Resources will be allocated when available.`;
-        }
-      } else {
-        successMessage = `${selectedStructure?.name} added to build queue`;
-      }
-      
-      // Dispatch success event
-      dispatch('structureQueued', {
-        structureId: selectedStructureId,
-        settlementId: selectedSettlementId,
-        project: result.project
-      });
-      
-      // Reset and close after a brief delay
-      setTimeout(() => {
-        handleClose();
-      }, 1500);
-    } else {
-      errorMessage = result.error || 'Failed to add structure to build queue';
-    }
-  }
-  
-  // Handle build button click from structure card
-  async function handleBuildStructure(event: CustomEvent<string>) {
-    selectedStructureId = event.detail;
-    selectedStructure = structuresService.getStructure(event.detail);
-    await handleConfirm();
+    // Dispatch selection event (actual building happens after roll)
+    dispatch('structureQueued', {
+      structureId: selectedStructureId,
+      settlementId: selectedSettlementId
+    });
   }
   
   // Select a structure

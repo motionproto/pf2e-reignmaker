@@ -279,7 +279,7 @@ export async function createStatusPhaseController() {
             const value = typeof legacyMod.value === 'string' ? parseInt(legacyMod.value, 10) : legacyMod.value;
             
             if (isNaN(value)) {
-              logger.warn(`⚠️ [StatusPhaseController] Invalid value for ${modifier.name}: ${legacyMod.value}`);
+              logger.warn(`⚠️ [StatusPhaseController] Invalid permanent modifier value: ${legacyMod.value} for ${resource} (source: ${modifier.sourceType})`);
               continue;
             }
 
@@ -292,7 +292,7 @@ export async function createStatusPhaseController() {
               const newValue = Math.max(0, currentValue + value);
               kingdom.resources[resource] = newValue;
 
-              logger.debug(`  ✓ ${modifier.name}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+              logger.debug(`  ✓ Permanent modifier: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
             });
           }
         }

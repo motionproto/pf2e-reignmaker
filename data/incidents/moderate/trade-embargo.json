@@ -35,8 +35,7 @@
           "resource": "gold",
           "formula": "1d4",
           "negative": true,
-          "duration": "immediate",
-          "name": "Trade Embargo Gold Loss"
+          "duration": "immediate"
         },
         {
           "type": "choice",
@@ -48,8 +47,7 @@
           ],
           "value": "1d4+1",
           "negative": true,
-          "duration": "immediate",
-          "name": "Trade Embargo Resource Loss"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true

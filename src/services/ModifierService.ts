@@ -47,7 +47,7 @@ export async function createModifierService() {
               const current = kingdom.resources[mod.resource] || 0;
               kingdom.resources[mod.resource] = Math.max(0, current + mod.value);
               
-              logger.debug(`  ✓ Applied structure modifier: ${mod.value} ${mod.resource} (from ${modifier.name})`);
+              logger.debug(`  ✓ Applied structure modifier: ${mod.value > 0 ? '+' : ''}${mod.value} ${mod.resource} (from ${modifier.name})`);
             }
           }
         }

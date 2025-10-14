@@ -34,8 +34,7 @@
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate",
-          "name": "Execute or Pardon Prisoners"
+          "duration": "immediate"
         }
       ]
     },
@@ -54,8 +53,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate",
-          "name": "Execute or Pardon Prisoners"
+          "duration": "immediate"
         }
       ]
     }

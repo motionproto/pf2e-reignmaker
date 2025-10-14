@@ -42,8 +42,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "immediate",
-          "name": "Hire Adventurers"
+          "duration": "immediate"
         }
       ]
     },
@@ -54,8 +53,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "immediate",
-          "name": "Hire Adventurers"
+          "duration": "immediate"
         }
       ]
     }

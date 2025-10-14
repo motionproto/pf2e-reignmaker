@@ -34,8 +34,7 @@
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "immediate",
-          "name": "Fortify Hex"
+          "duration": "immediate"
         }
       ]
     },

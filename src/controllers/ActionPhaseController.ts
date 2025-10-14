@@ -28,9 +28,6 @@ import { TurnPhase } from '../actors/KingdomActor'
 import { ActionPhaseSteps } from './shared/PhaseStepConstants'
 
 export async function createActionPhaseController() {
-  // Store for action resolutions
-  const actionResolutions = new Map<string, any>()
-  
   return {
     async startPhase() {
       reportPhaseStart('ActionPhaseController')
@@ -203,51 +200,6 @@ export async function createActionPhaseController() {
       return actionResolver.getActionDC(characterLevel)
     },
 
-    /**
-     * Store action resolution (used by UI to track pending resolutions)
-     */
-    storeResolution(resolution: any) {
-      actionResolutions.set(resolution.actionId, resolution)
-    },
-
-    /**
-     * Check if action is resolved by a specific player
-     */
-    isActionResolved(actionId: string, playerId?: string): boolean {
-      const resolution = actionResolutions.get(actionId)
-      if (!resolution) return false
-      
-      if (playerId) {
-        return resolution.playerId === playerId
-      }
-      
-      return true
-    },
-
-    /**
-     * Get all player resolutions for an action
-     */
-    getAllPlayersResolutions(actionId: string) {
-      // Return array for compatibility with component
-      const resolution = actionResolutions.get(actionId)
-      return resolution ? [resolution] : []
-    },
-
-    /**
-     * Reset action resolution (used by UI for rerolls)
-     */
-    async resetAction(actionId: string, kingdomData: KingdomData, playerId?: string) {
-      actionResolutions.delete(actionId)
-      logger.debug(`🔄 [ActionPhaseController] Reset action resolution for ${actionId}`)
-    },
-
-    /**
-     * Reset controller state (called on component unmount)
-     */
-    resetState() {
-      actionResolutions.clear()
-      logger.debug('🔄 [ActionPhaseController] Reset controller state')
-    },
 
     /**
      * Resolve action with ResolutionData
@@ -292,7 +244,7 @@ export async function createActionPhaseController() {
           TurnPhase.ACTIONS
         );
         
-        logger.debug(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+        logger.debug(`� [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
       }
       
       // Use unified resolution wrapper (consolidates duplicate logic)
