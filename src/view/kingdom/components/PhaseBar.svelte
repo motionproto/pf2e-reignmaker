@@ -22,6 +22,7 @@
   let unlockStartTime: number | null = null;
   let unlockAnimationFrame: number | null = null;
   let unlockTarget: 'lock' | TurnPhase | null = null; // What we're unlocking for
+  let justUnlocked = false; // Flag to prevent click event after successful unlock
   
   // Lock warning animation state (for quick clicks on locked phases)
   let lockWarningActive = false;
@@ -63,21 +64,12 @@
   function handleUnlockEnd() {
     if (!unlockInProgress) return;
     
-    if (unlockProgress >= 100) {
-      // Unlock successful
-      console.log(`[PhaseBar] Unlock complete! Target: ${unlockTarget}`);
-      phaseViewLocked.set(false);
-      
-      // If unlocking for a phase button, navigate to that phase
-      if (unlockTarget !== 'lock') {
-        setViewingPhase(unlockTarget as TurnPhase);
-      }
-    } else {
+    // If we haven't reached 100% yet, cancel the unlock
+    if (unlockProgress < 100) {
       console.log(`[PhaseBar] Unlock cancelled at ${unlockProgress.toFixed(0)}%`);
+      cancelUnlock();
     }
-    
-    // Reset
-    cancelUnlock();
+    // If already at 100%, unlock was already triggered in updateUnlockProgress
   }
   
   function cancelUnlock() {
@@ -99,7 +91,26 @@
     
     unlockProgress = Math.min(100, (elapsed / DURATION) * 100);
     
-    if (unlockProgress < 100) {
+    if (unlockProgress >= 100) {
+      // Unlock successful - trigger immediately at 100%
+      console.log(`[PhaseBar] Unlock complete! Target: ${unlockTarget}`);
+      phaseViewLocked.set(false);
+      
+      // If unlocking for a phase button, navigate to that phase
+      if (unlockTarget !== 'lock') {
+        setViewingPhase(unlockTarget as TurnPhase);
+      }
+      
+      // Set flag to prevent click event from re-locking
+      justUnlocked = true;
+      setTimeout(() => {
+        justUnlocked = false;
+      }, 100); // Short delay to ignore the click event
+      
+      // Reset state
+      cancelUnlock();
+    } else {
+      // Continue animation
       unlockAnimationFrame = requestAnimationFrame(updateUnlockProgress);
     }
   }
@@ -126,6 +137,12 @@
   
   // Lock toggle handler (only for locking, not unlocking)
   function handleLockToggle() {
+    // Ignore click if we just unlocked via press-and-hold
+    if (justUnlocked) {
+      console.log('[PhaseBar] Ignoring click after press-and-hold unlock');
+      return;
+    }
+    
     if (!$phaseViewLocked) {
       // Only handle locking via click
       togglePhaseViewLock();
