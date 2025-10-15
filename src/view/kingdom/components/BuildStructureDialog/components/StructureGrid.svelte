@@ -13,6 +13,7 @@
   export let skillCategories: string[];
   export let selectedStructureId: string;
   export let successMessage: string;
+  export let selectedSettlement: any;
   
   const dispatch = createEventDispatcher();
   
@@ -60,6 +61,7 @@
           {structure}
           {selectedStructureId}
           {successMessage}
+          {selectedSettlement}
           on:build={handleBuild}
           on:select={handleSelect}
           on:cancel={handleCancel}

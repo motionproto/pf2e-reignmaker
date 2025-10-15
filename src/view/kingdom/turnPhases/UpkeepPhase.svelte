@@ -11,6 +11,7 @@
    // Import clean architecture components
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    import Button from '../components/baseComponents/Button.svelte';
+   import BuildQueueItem from '../components/buildQueue/BuildQueueItem.svelte';
    
    // Controller instance
    let upkeepController: any;
@@ -404,14 +405,7 @@
                
                <div class="build-queue">
                   {#each $kingdomData.buildQueue as project}
-                     <div class="build-project-card">
-                        <div class="project-header">
-                           <span class="project-name">{project.structureId}</span>
-                           <span class="project-tier">In {project.settlementName}</span>
-                        </div>
-                        
-                        <div class="info-text">Build project ready to process</div>
-                     </div>
+                     <BuildQueueItem {project} />
                   {/each}
                </div>
                
@@ -901,58 +895,6 @@
       gap: 10px;
       max-height: 200px;
       overflow-y: auto;
-   }
-   
-   .build-project-card {
-      padding: 10px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
-      
-      .project-header {
-         display: flex;
-         justify-content: space-between;
-         margin-bottom: 8px;
-         font-size: var(--font-sm);
-      }
-      
-      .project-name {
-         font-weight: var(--font-weight-semibold);
-         color: var(--text-primary);
-      }
-      
-      .project-tier {
-         color: var(--color-amber);
-         opacity: 0.8;
-      }
-      
-      .progress-bar {
-         height: 16px;
-         background: rgba(0, 0, 0, 0.3);
-         border-radius: var(--radius-sm);
-         overflow: hidden;
-         margin-bottom: 6px;
-      }
-      
-      .progress-fill {
-         height: 100%;
-         background: linear-gradient(90deg, var(--color-crimson), var(--color-amber));
-         display: flex;
-         align-items: center;
-         justify-content: center;
-         transition: width 0.3s ease;
-      }
-      
-      .progress-text {
-         font-size: 11px;
-         color: white;
-         font-weight: var(--font-weight-bold);
-      }
-      
-      .project-needs {
-         font-size: var(--font-sm);
-         color: var(--text-tertiary);
-      }
    }
    
    

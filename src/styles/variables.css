@@ -92,6 +92,15 @@
   --color-warning: var(--color-amber);
   --color-info: var(--color-blue);
   
+  /* Info/In-Progress State Colors (Blue) */
+  --info-text: var(--color-blue);
+  --info-text-secondary: var(--color-blue-light);
+  --info-icon: var(--color-blue);
+  --info-background: hsla(217, 100%, 30%, 0.3);
+  --info-background-hover: hsla(217, 100%, 30%, 0.45);
+  --info-border: hsla(217, 100%, 80%, 0.3);
+  --info-border-hover: hsla(217, 100%, 80%, 0.5);
+  
   /* Status Colors */
   --status-critical-success: var(--color-blue-light);
   --status-success: var(--color-green-light);

@@ -7,8 +7,15 @@
   export let structure: Structure;
   export let selectedStructureId: string;
   export let successMessage: string;
+  export let selectedSettlement: any;
   
   const dispatch = createEventDispatcher();
+  
+  // Check if structure is in build queue for this settlement
+  $: isInBuildQueue = $kingdomData.buildQueue?.some(project => 
+    project.structureId === structure.id && 
+    project.settlementName === selectedSettlement?.name
+  ) || false;
   
   // Calculate affordability
   $: structureMissing = new Map<string, number>();
@@ -41,7 +48,7 @@
 
 <div class="structure-card-with-build">
   <div 
-    class="structure-card-wrapper {selectedStructureId === structure.id ? 'selected' : ''}"
+    class="structure-card-wrapper {selectedStructureId === structure.id ? 'selected' : ''} {isInBuildQueue ? 'in-progress' : ''}"
     on:click={selectStructure}
   >
     <StructureCard 
@@ -52,28 +59,34 @@
   
   <!-- Build Button in Card -->
   <div class="card-build-section">
-    {#if !structureCanAfford}
+    {#if isInBuildQueue}
+      <span class="in-progress-badge">
+        In Progress
+      </span>
+    {:else if !structureCanAfford}
       <span class="build-queue">
         <i class="fas fa-hourglass-half"></i>
         Queue
       </span>
     {/if}
     
-    <button 
-      class="card-cancel-button"
-      on:click={handleCancel}
-    >
-      Cancel
-    </button>
-    
-    <button 
-      class="card-build-button" 
-      on:click={buildStructure}
-      disabled={!!successMessage}
-    >
-      <i class="fas fa-hammer"></i>
-      Build
-    </button>
+    {#if !isInBuildQueue}
+      <button 
+        class="card-cancel-button"
+        on:click={handleCancel}
+      >
+        Cancel
+      </button>
+      
+      <button 
+        class="card-build-button" 
+        on:click={buildStructure}
+        disabled={!!successMessage}
+      >
+        <i class="fas fa-hammer"></i>
+        Build
+      </button>
+    {/if}
   </div>
 </div>
 
@@ -95,7 +108,17 @@
       }
     }
     
-    &:hover:not(.selected) {
+    &.in-progress {
+      opacity: 0.6;
+      pointer-events: none;
+      
+      :global(.structure-card) {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--border-subtle);
+      }
+    }
+    
+    &:hover:not(.selected):not(.in-progress) {
       transform: translateY(-2px);
       
       :global(.structure-card) {
@@ -115,6 +138,22 @@
     padding: 0.5rem 0.75rem;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-default);
+    
+    .in-progress-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: var(--font-sm);
+      color: var(--info-text);
+      background: var(--info-background);
+      padding: 0.375rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--info-border);
+      
+      i {
+        font-size: var(--font-sm);
+      }
+    }
     
     .build-queue {
       display: flex;

@@ -15,6 +15,7 @@
   
   export let availableStructures: Structure[];
   export let selectedCategory: string;
+  export let categoriesInProgress: Set<string>;
   
   const dispatch = createEventDispatcher();
   
@@ -49,6 +50,7 @@
             {category}
             {skills}
             isSelected={selectedCategory === category}
+            isInProgress={categoriesInProgress.has(category)}
             on:click={() => selectCategory(category)}
           />
         {/each}
@@ -64,6 +66,7 @@
           <CategoryItem 
             {category}
             isSelected={selectedCategory === category}
+            isInProgress={categoriesInProgress.has(category)}
             showSkills={false}
             on:click={() => selectCategory(category)}
           />

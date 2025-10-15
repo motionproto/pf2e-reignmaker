@@ -42,8 +42,16 @@ export class BuildProjectManager {
   static getRemainingCost(project: BuildProject): Map<string, number> {
     const remaining = new Map<string, number>();
     
-    project.totalCost.forEach((needed, resource) => {
-      const alreadyInvested = project.invested.get(resource) || 0;
+    // Handle both Map and plain object formats
+    const totalCost = project.totalCost instanceof Map 
+      ? project.totalCost 
+      : new Map(Object.entries(project.totalCost as any) as [string, number][]);
+    const invested = project.invested instanceof Map 
+      ? project.invested 
+      : new Map(Object.entries((project.invested as any) || {}) as [string, number][]);
+    
+    totalCost.forEach((needed: number, resource: string) => {
+      const alreadyInvested = invested.get(resource) || 0;
       const stillNeeded = needed - alreadyInvested;
       if (stillNeeded > 0) {
         remaining.set(resource, stillNeeded);
@@ -57,9 +65,17 @@ export class BuildProjectManager {
    * Check if a project is complete
    */
   static isComplete(project: BuildProject): boolean {
-    for (const [resource, needed] of project.totalCost) {
-      const invested = project.invested.get(resource) || 0;
-      if (invested < needed) {
+    // Handle both Map and plain object formats
+    const totalCost = project.totalCost instanceof Map 
+      ? project.totalCost 
+      : new Map(Object.entries(project.totalCost as any) as [string, number][]);
+    const invested = project.invested instanceof Map 
+      ? project.invested 
+      : new Map(Object.entries((project.invested as any) || {}) as [string, number][]);
+    
+    for (const [resource, needed] of totalCost) {
+      const investedAmount = invested.get(resource) || 0;
+      if (investedAmount < (needed as number)) {
         return false;
       }
     }
@@ -70,16 +86,24 @@ export class BuildProjectManager {
    * Get completion percentage of a project
    */
   static getCompletionPercentage(project: BuildProject): number {
-    if (project.totalCost.size === 0) return 100;
+    // Handle both Map and plain object formats
+    const totalCost = project.totalCost instanceof Map 
+      ? project.totalCost 
+      : new Map(Object.entries(project.totalCost as any) as [string, number][]);
+    const invested = project.invested instanceof Map 
+      ? project.invested 
+      : new Map(Object.entries((project.invested as any) || {}) as [string, number][]);
+    
+    if (totalCost.size === 0) return 100;
     
     let totalNeeded = 0;
     let totalInvested = 0;
     
-    project.totalCost.forEach((needed) => {
+    totalCost.forEach((needed: number) => {
       totalNeeded += needed;
     });
     
-    project.invested.forEach((amount) => {
+    invested.forEach((amount: number) => {
       totalInvested += amount;
     });
     

@@ -20,6 +20,8 @@
   
   import { createEventDispatcher } from 'svelte';
   import { getSkillBonuses } from '../../../services/pf2e';
+  import { kingdomData } from '../../../stores/KingdomStore';
+  import { TurnPhase } from '../../../actors/KingdomActor';
   
   // Sub-components
   import CheckCardHeader from './CheckCard/components/CheckCardHeader.svelte';
@@ -30,6 +32,7 @@
   import OutcomesSection from './CheckCard/components/OutcomesSection.svelte';
   import AdditionalInfo from './CheckCard/components/AdditionalInfo.svelte';
   import OutcomeDisplay from './OutcomeDisplay/OutcomeDisplay.svelte';
+  import ActionConfirmDialog from './ActionConfirmDialog.svelte';
   
   import type { ActiveCheckInstance } from '../../../models/CheckInstance';
   
@@ -98,7 +101,6 @@
   export let resolutionInProgress: boolean = false;
   export let resolvingPlayerName: string = '';
   export let isBeingResolvedByOther: boolean = false;
-  export let hasPlayerActed: boolean = false;  // Whether current player has already performed an action this turn
   
   // Custom resolution UI component (for inline action-specific UIs)
   export let customResolutionComponent: any = null;  // Svelte component constructor
@@ -117,6 +119,10 @@
   let isRolling: boolean = false;
   let localUsedSkill: string = '';
   
+  // Internal confirmation dialog state
+  let showOwnConfirmDialog: boolean = false;
+  let pendingSkill: string = '';
+  
   // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
   $: outcomeApplied = resolution?.effectsApplied || false;
   
@@ -125,6 +131,18 @@
   
   // Get the skill that was used
   $: usedSkill = resolution?.skillName || localUsedSkill || '';
+  
+  // Check if player has already acted (read from Single Source of Truth)
+  function hasPlayerActedCheck(): boolean {
+    const game = (globalThis as any).game;
+    if (!game?.user?.id) return false;
+    
+    const actionLog = $kingdomData.turnState?.actionLog || [];
+    return actionLog.some((entry: any) => 
+      entry.playerId === game.user.id && 
+      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+    );
+  }
   
   // UI handlers - all delegate to parent
   function toggleExpanded() {
@@ -136,19 +154,30 @@
   function handleSkillClick(skill: string) {
     if (isRolling || !isViewingCurrentPhase || resolved) return;
     
-    // Check if player has already acted and this card isn't resolved yet
-    // (for actions, ask for confirmation; for events/incidents, proceed normally)
-    if (hasPlayerActed && checkType === 'action' && !resolved) {
-      // Dispatch confirmation request instead of executing directly
-      dispatch('confirmAction', {
-        skill,
-        checkId: id,
-        checkName: name,
-        checkType
-      });
+    // Check if player has already acted (for actions and events, not incidents)
+    if (hasPlayerActedCheck() && (checkType === 'action' || checkType === 'event') && !resolved) {
+      // Show own confirmation dialog
+      pendingSkill = skill;
+      showOwnConfirmDialog = true;
       return;
     }
     
+    // Proceed with skill execution
+    executeSkillNow(skill);
+  }
+  
+  function handleConfirmationApproved() {
+    showOwnConfirmDialog = false;
+    executeSkillNow(pendingSkill);
+    pendingSkill = '';
+  }
+  
+  function handleConfirmationCancelled() {
+    showOwnConfirmDialog = false;
+    pendingSkill = '';
+  }
+  
+  function executeSkillNow(skill: string) {
     isRolling = true;
     localUsedSkill = skill;
     
@@ -402,6 +431,13 @@
     </div>
   {/if}
 </div>
+
+<!-- Internal Confirmation Dialog (for actions only) -->
+<ActionConfirmDialog
+  bind:show={showOwnConfirmDialog}
+  on:confirm={handleConfirmationApproved}
+  on:cancel={handleConfirmationCancelled}
+/>
 
 <style lang="scss">
   .base-check-card {

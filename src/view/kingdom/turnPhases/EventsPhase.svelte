@@ -20,7 +20,6 @@
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
-   import ActionConfirmDialog from '../components/ActionConfirmDialog.svelte';
    import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
    import { createGameEffectsService } from '../../../services/GameEffectsService';
    import {
@@ -73,9 +72,7 @@
    
    // Aid dialog state
    let showAidSelectionDialog = false;
-   let showActionConfirm = false;
    let pendingAidSkill = '';
-   let pendingSkillExecution: { skill: string } | null = null;
    
    // Current user ID
    let currentUserId: string | null = null;
@@ -328,20 +325,6 @@
       // Store the target event temporarily for the skill check
       const previousEvent = currentEvent;
       currentEvent = targetEvent;
-      
-      // Check if THIS PLAYER has already performed an action using actionLog
-      const actionLog = $kingdomData.turnState?.actionLog || [];
-      const hasPlayerActed = actionLog.some((entry: any) => 
-         entry.playerId === currentUserId && 
-         (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
-      );
-      
-      if (hasPlayerActed) {
-         // Show confirmation dialog
-         pendingSkillExecution = { skill };
-         showActionConfirm = true;
-         return;
-      }
       
       // Mark that this player is starting to resolve (multi-player coordination)
       if (outcome) {
@@ -640,14 +623,9 @@
       // Store target event temporarily for the aid dialog
       currentEvent = targetEvent;
       
-      if (hasPlayerActed) {
-         // Show confirmation dialog before opening aid selection
-         pendingAidSkill = '';  // Mark that we're pending an aid, not a skill execution
-         showActionConfirm = true;
-      } else {
-         // No prior action, show aid selection dialog directly
-         showAidSelectionDialog = true;
-      }
+      // No confirmation needed - aid checks are allowed even after acting
+      // (BaseCheckCard handles confirmation for skill checks, not aid)
+      showAidSelectionDialog = true;
    }
    
    // Aid dialog confirmation
@@ -811,26 +789,6 @@
       };
    }
    
-   // Action confirmation dialog handlers
-   function handleActionConfirm() {
-      if (pendingSkillExecution) {
-         // Confirmed skill execution
-         executeSkillCheck(pendingSkillExecution.skill);
-         pendingSkillExecution = null;
-      } else if (pendingAidSkill === '') {
-         // Confirmed aid action - open aid selection dialog
-         pendingAidSkill = '';
-         showAidSelectionDialog = true;
-      }
-      showActionConfirm = false;
-   }
-   
-   function handleActionCancelDialog() {
-      pendingSkillExecution = null;
-      pendingAidSkill = '';
-      showActionConfirm = false;
-   }
-   
    // Handle roll completion to clear aids
    async function handleRollComplete(event: CustomEvent) {
       const { checkId, checkType } = event.detail;
@@ -876,9 +834,6 @@
          bonus: mostRecentAid.bonus
       };
    }
-   
-   // Get aid result for the current event  
-   $: aidResultForEvent = currentEvent ? getAidResultForEvent(currentEvent.id) : null;
 </script>
 
 <div class="events-phase">
@@ -950,7 +905,7 @@
             {isViewingCurrentPhase}
             {possibleOutcomes}
             showAidButton={true}
-            aidResult={aidResultForEvent}
+            aidResult={currentEvent ? getAidResultForEvent(currentEvent.id) : null}
             resolved={eventResolved}
             resolution={eventResolution}
             primaryButtonLabel="Apply Result"
@@ -1063,13 +1018,6 @@
    actionName={currentEvent?.name || ''}
    on:confirm={handleAidConfirm}
    on:cancel={handleAidCancel}
-/>
-
-<!-- Action Confirmation Dialog -->
-<ActionConfirmDialog
-   bind:show={showActionConfirm}
-   on:confirm={handleActionConfirm}
-   on:cancel={handleActionCancelDialog}
 />
 
 <style lang="scss">

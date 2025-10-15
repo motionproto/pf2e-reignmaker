@@ -5,7 +5,6 @@
   import { createCheckInstanceService } from '../../../services/CheckInstanceService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
-  import ActionConfirmDialog from "../../kingdom/components/ActionConfirmDialog.svelte";
   import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
@@ -29,10 +28,23 @@
   let gameEffectsService: any = null;
   let checkInstanceService: any = null;
 
+  // Custom Action Registry - Declarative pattern for actions requiring pre-roll dialogs
+  const CUSTOM_ACTION_HANDLERS = {
+    'build-structure': {
+      requiresPreDialog: true,
+      showDialog: () => { showBuildStructureDialog = true; },
+      storePending: (skill: string) => { pendingBuildAction = { skill }; }
+    }
+    // Future custom actions just add registry entries here:
+    // 'recruit-army': {
+    //   requiresPreDialog: true,
+    //   showDialog: () => { showRecruitArmyDialog = true; },
+    //   storePending: (skill: string) => { pendingRecruitAction = { skill }; }
+    // }
+  };
+
   // UI State (not business logic)
   let expandedActions = new Set<string>();
-  let showActionConfirm: boolean = false;
-  let pendingSkillExecution: { event: CustomEvent, action: any } | null = null;
   let showBuildStructureDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
@@ -165,17 +177,25 @@
       checkInstanceService = await createCheckInstanceService();
     }
     
-    // Special handling for build-structure to replace {structure} placeholder in description
-    let customEffect: string | undefined = undefined;
-    if (action.id === 'build-structure' && pendingBuildAction?.structureId) {
-      const { structuresService } = await import('../../../services/structures');
-      const structure = structuresService.getStructure(pendingBuildAction.structureId);
-      
-      if (structure) {
-        const outcomeData = action[outcomeType];
-        if (outcomeData?.description) {
-          customEffect = outcomeData.description.replace(/{structure}/g, structure.name);
+    // Get base outcome description (handle both nested and top-level)
+    const outcomeData = (action as any).effects?.[outcomeType] || action[outcomeType];
+    let effectMessage = outcomeData?.description || 'Action completed';
+    
+    // Special handling for build-structure to replace {structure} placeholder
+    if (action.id === 'build-structure' && effectMessage.includes('{structure}')) {
+      if (pendingBuildAction?.structureId) {
+        const { structuresService } = await import('../../../services/structures');
+        const structure = structuresService.getStructure(pendingBuildAction.structureId);
+        
+        if (structure) {
+          effectMessage = effectMessage.replace(/{structure}/g, structure.name);
+        } else {
+          // Structure not found - use generic replacement
+          effectMessage = effectMessage.replace(/{structure}/g, 'structure');
         }
+      } else {
+        // No structure ID yet - use generic replacement
+        effectMessage = effectMessage.replace(/{structure}/g, 'structure');
       }
     }
     
@@ -199,11 +219,12 @@
       preliminaryResolutionData,
       actorName,
       skillName || '',
-      customEffect || ''
+      effectMessage
     );
     
     // Track instanceId for this action
     currentActionInstances.set(actionId, instanceId);
+    currentActionInstances = currentActionInstances;  // Trigger reactivity
     console.log(`✅ [ActionsPhase] Created instance ${instanceId} for action ${actionId}`);
 
     // Force Svelte to update
@@ -255,37 +276,40 @@
       console.log(`✅ [ActionsPhase] Stored outcome and marked applied for instance: ${instanceId}`);
     }
 
-    // Special handling for build-structure action
-    if (actionId === 'build-structure' && pendingBuildAction) {
-      await handleBuildStructureCompletion(instance.appliedOutcome.outcome, instance.appliedOutcome.actorName);
-      // Don't return - continue to centralized action tracking below
-    } else {
-      // NEW ARCHITECTURE: Use controller.resolveAction() with ResolutionData
-      const result = await controller.resolveAction(
-        actionId,
-        instance.appliedOutcome.outcome,
-        resolutionData,
-        instance.appliedOutcome.actorName,
-        instance.appliedOutcome.skillName || '',
-        currentUserId || undefined
-      );
-      
-      console.log('📊 [applyActionEffects] Result:', result);
+    // First, apply modifiers via controller for ALL actions (including build-structure)
+    const result = await controller.resolveAction(
+      actionId,
+      instance.appliedOutcome.outcome,
+      resolutionData,
+      instance.appliedOutcome.actorName,
+      instance.appliedOutcome.skillName || '',
+      currentUserId || undefined
+    );
+    
+    console.log('📊 [applyActionEffects] Result:', result);
 
-      if (!result.success) {
-        // Show error to user about requirements not being met
-        ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
-        return; // Don't track failed actions
-      } else {
-        // Show success notification with applied effects (if any resources were changed)
-        if (result.applied?.resources && result.applied.resources.length > 0) {
-          const effectsMsg = result.applied.resources
-            .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
-            .join(', ');
-          if (effectsMsg) {
-            ui.notifications?.info(`${action.name}: ${effectsMsg}`);
-          }
-        }
+    if (!result.success) {
+      // Show error to user about requirements not being met
+      ui.notifications?.warn(`${action.name} requirements not met: ${result.error}`);
+      return; // Don't track failed actions
+    }
+    
+    // Then, special post-resolution handling for build-structure (only on success/criticalSuccess)
+    if (actionId === 'build-structure' && pendingBuildAction) {
+      const outcome = instance.appliedOutcome.outcome;
+      if (outcome === 'success' || outcome === 'criticalSuccess') {
+        await handleBuildStructureCompletion(outcome, instance.appliedOutcome.actorName);
+      }
+      // For failure/criticalFailure, modifiers have already been applied above
+    }
+    
+    // Show success notification with applied effects (if any resources were changed)
+    if (result.applied?.resources && result.applied.resources.length > 0) {
+      const effectsMsg = result.applied.resources
+        .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
+        .join(', ');
+      if (effectsMsg) {
+        ui.notifications?.info(`${action.name}: ${effectsMsg}`);
       }
     }
     
@@ -300,6 +324,17 @@
       );
       console.log(`📝 [applyActionEffects] Tracked action: ${actionId} for player: ${currentUserId}`);
     }
+    
+    // Clear instance to reset card to initial state (actions can be performed again)
+    if (checkInstanceService) {
+      await checkInstanceService.clearInstance(instanceId);
+      currentActionInstances.delete(actionId);
+      currentActionInstances = currentActionInstances;  // Trigger reactivity
+      console.log(`🧹 [ActionsPhase] Cleared instance ${instanceId} after applying effects`);
+    }
+    
+    // Force UI update
+    await tick();
   }
   
   // Handle build structure completion after roll
@@ -349,14 +384,13 @@
                   : new Map(Object.entries(project.totalCost));
                 
                 // Update totalCost with reduced amounts (rounded up)
-                const newTotalCost = new Map<string, number>();
                 totalCostMap.forEach((value, resource) => {
                   const amount = value as number;
-                  newTotalCost.set(resource, Math.ceil(amount * costModifier));
+                  totalCostMap.set(resource, Math.ceil(amount * costModifier));
                 });
                 
-                // Assign back (as plain object for serialization)
-                project.totalCost = Object.fromEntries(newTotalCost) as any;
+                // Ensure it's a Map (not a plain object)
+                project.totalCost = totalCostMap as any;
                 
                 // Also update remainingCost to match
                 if (project.remainingCost) {
@@ -364,13 +398,12 @@
                     ? project.remainingCost
                     : new Map(Object.entries(project.remainingCost));
                   
-                  const newRemainingCost = new Map<string, number>();
                   remainingCostMap.forEach((value, resource) => {
                     const amount = value as number;
-                    newRemainingCost.set(resource, Math.ceil(amount * costModifier));
+                    remainingCostMap.set(resource, Math.ceil(amount * costModifier));
                   });
                   
-                  project.remainingCost = Object.fromEntries(newRemainingCost) as any;
+                  project.remainingCost = remainingCostMap as any;
                 }
               }
             });
@@ -402,10 +435,9 @@
       } else {
         ui.notifications?.error(result.error || 'Failed to start construction');
       }
-    } else {
-      // Failure or critical failure - no building happens
-      ui.notifications?.warn(`Build Structure failed - no progress on ${structure.name}`);
     }
+    // For failure/criticalFailure, modifiers (like unrest) are already applied via controller.resolveAction()
+    // No need for additional notification - the generic resource change notification handles it
     
     // Clear pending build action
     pendingBuildAction = null;
@@ -533,29 +565,20 @@
   
   // Removed: getActionCompletions - completions now handled by CompletionNotifications component
 
-  // Handle confirmation request from BaseCheckCard
-  function handleConfirmAction(event: CustomEvent, action: any) {
-    // Store pending execution and show confirmation dialog
-    pendingSkillExecution = { 
-      event: new CustomEvent('executeSkill', { detail: event.detail }),
-      action 
-    };
-    showActionConfirm = true;
-  }
-  
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
-    // Special handling for build-structure action
-    if (action.id === 'build-structure') {
+    // Check custom action registry for pre-dialog requirements
+    const customHandler = CUSTOM_ACTION_HANDLERS[action.id as keyof typeof CUSTOM_ACTION_HANDLERS];
+    
+    if (customHandler && customHandler.requiresPreDialog === true) {
+      // Custom action requires pre-roll dialog (e.g., structure selection)
       const { skill } = event.detail;
-      
-      // Store the pending skill and show dialog for structure selection
-      pendingBuildAction = { skill };
-      showBuildStructureDialog = true;
+      customHandler.storePending(skill);
+      customHandler.showDialog();
       return;
     }
     
-    // Proceed with the skill execution (action tracking check already done in BaseCheckCard)
+    // Standard action - proceed with skill execution
     await executeSkillAction(event, action);
   }
   
@@ -659,6 +682,7 @@
     if (instanceId && checkInstanceService) {
       await checkInstanceService.clearInstance(instanceId);
       currentActionInstances.delete(action.id);
+      currentActionInstances = currentActionInstances;  // Trigger reactivity
     }
     
     // Small delay to ensure UI updates
@@ -709,33 +733,6 @@
     }
   }
   
-  // Handle confirmation dialog results
-  function handleActionConfirm() {
-    if (pendingSkillExecution) {
-      const { event, action } = pendingSkillExecution;
-      
-      // Check if this is an aid action confirmation (happens before skill selection)
-      if (action.id === 'aid-pending' && pendingAidAction) {
-        // User confirmed - now show the skill selection dialog
-        showAidSelectionDialog = true;
-        pendingSkillExecution = null;
-        return;
-      }
-      
-      // Regular action - execute (action will be spent in executeSkillAction)
-      executeSkillAction(event, action);
-      pendingSkillExecution = null;
-    }
-  }
-  
-  function handleActionCancel() {
-    // If canceling aid confirmation, also clear the pending aid action
-    if (pendingSkillExecution?.action?.id === 'aid-pending') {
-      pendingAidAction = null;
-    }
-    pendingSkillExecution = null;
-  }
-  
   // Handle canceling an action result
   async function handleActionResultCancel(actionId: string) {
     // Clear instance for this action
@@ -743,6 +740,7 @@
     if (instanceId && checkInstanceService) {
       await checkInstanceService.clearInstance(instanceId);
       currentActionInstances.delete(actionId);
+      currentActionInstances = currentActionInstances;  // Trigger reactivity
     }
     
     // Note: Canceling doesn't add to actionLog, so player can still act
@@ -840,16 +838,9 @@
     });
     
     if (hasPlayerActed) {
-      console.log('[ActionsPhase] Player has already acted - showing confirmation dialog before skill selection');
-      // Store pending aid action so we can open skill selection after confirmation
-      pendingAidAction = { id: checkId, name: checkName };
-      // Create a fake event to pass to the confirmation handler
-      pendingSkillExecution = {
-        event: new CustomEvent('aid', { detail: { checkId, checkName } }),
-        action: { id: `aid-pending`, name: `Aid Another: ${checkName}` }
-      };
-      showActionConfirm = true;
-      return;
+      console.log('[ActionsPhase] Player has already acted - aid is special case, allowing');
+      // Note: Aid Another still allowed even if player has acted
+      // Regular action confirmation is now handled by BaseCheckCard
     }
     
     // No warning needed - proceed directly to skill selection
@@ -1057,12 +1048,19 @@
 
           <div class="actions-list">
             {#each actions as action (action.id)}
-              {@const isResolved = isActionResolvedByCurrentPlayer(action.id)}
-              {@const resolution = isResolved ? getCurrentPlayerResolution(action.id) : undefined}
-              {@const isAvailable = isActionAvailable(action)}
-              {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
               {@const instanceId = currentActionInstances.get(action.id)}
               {@const checkInstance = instanceId ? $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId) : null}
+              {@const isResolved = !!(checkInstance && checkInstance.status !== 'pending')}
+              {@const resolution = checkInstance?.appliedOutcome ? {
+                outcome: checkInstance.appliedOutcome.outcome,
+                actorName: checkInstance.appliedOutcome.actorName,
+                skillName: checkInstance.appliedOutcome.skillName,
+                modifiers: checkInstance.appliedOutcome.modifiers,
+                effect: checkInstance.appliedOutcome.effect,
+                effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
+              } : undefined}
+              {@const isAvailable = isActionAvailable(action)}
+              {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
               {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}`}
                 <BaseCheckCard
                   id={action.id}
@@ -1115,9 +1113,7 @@
                   primaryButtonLabel="Apply Result"
                   skillSectionTitle="Choose Skill:"
                   isViewingCurrentPhase={isViewingCurrentPhase}
-                  {hasPlayerActed}
                   on:toggle={() => toggleAction(action.id)}
-                  on:confirmAction={(e) => handleConfirmAction(e, action)}
                   on:executeSkill={(e) => handleExecuteSkill(e, action)}
                   on:performReroll={(e) => handlePerformReroll(e, action)}
                   on:debugOutcomeChanged={(e) => handleDebugOutcomeChange(e, action)}
@@ -1138,13 +1134,6 @@
 
   </div>
 </div>
-
-<!-- Action Confirmation Dialog -->
-<ActionConfirmDialog
-  bind:show={showActionConfirm}
-  on:confirm={handleActionConfirm}
-  on:cancel={handleActionCancel}
-/>
 
 <!-- Build Structure Dialog -->
 <BuildStructureDialog

@@ -4,11 +4,12 @@
   export let category: string;
   export let skills: string[] = [];
   export let isSelected: boolean = false;
+  export let isInProgress: boolean = false;
   export let showSkills: boolean = true;
 </script>
 
 <button
-  class="category-item {isSelected ? 'selected' : ''}"
+  class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''}"
   on:click
 >
   <i class="fas {getCategoryIcon(category)} category-icon"></i>
@@ -49,6 +50,24 @@
       
       .arrow {
         color: var(--color-amber);
+      }
+    }
+    
+    &.in-progress {
+      background: var(--info-background);
+      border-color: var(--info-border);
+      
+      &:hover {
+        background: var(--info-background-hover);
+        border-color: var(--info-border-hover);
+      }
+      
+      .category-icon {
+        color: var(--info-icon);
+      }
+      
+      .arrow {
+        color: var(--info-icon);
       }
     }
     
