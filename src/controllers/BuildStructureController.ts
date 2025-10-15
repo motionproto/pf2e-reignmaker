@@ -68,8 +68,10 @@ export async function createBuildStructureController() {
       const settlementTierNum = settlementTierToNumber(settlement.tier);
       
       return allStructures.filter(structure => {
-        // Must match settlement tier
-        if ((structure.tier || 1) > settlementTierNum) return false;
+        // Check minimum settlement tier requirement (support structures only)
+        if (structure.minimumSettlementTier && structure.minimumSettlementTier > settlementTierNum) {
+          return false;
+        }
         
         // Can't build if already have it
         if (settlement.structureIds.includes(structure.id)) return false;

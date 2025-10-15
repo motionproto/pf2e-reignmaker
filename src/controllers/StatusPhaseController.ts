@@ -45,6 +45,9 @@ export async function createStatusPhaseController() {
         // Clear previous turn's incident
         await this.clearPreviousIncident();
         
+        // Clear completed build projects from previous turn
+        await this.clearCompletedProjects();
+        
         // ✅ ONE-TIME turn initialization (runs at START of every turn, including Turn 1)
         // Process resource decay from previous turn
         await this.processResourceDecay();
@@ -98,6 +101,29 @@ export async function createStatusPhaseController() {
       // This is now automatically handled by turnState reset
       // No need to manually clear - turnState.unrestPhase resets on turn advance
       logger.debug('🧹 [StatusPhaseController] Previous turn incident cleared (handled by turnState reset)');
+    },
+
+    /**
+     * Clear completed build projects from previous turn
+     */
+    async clearCompletedProjects() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      await actor.updateKingdom(k => {
+        if (!k.buildQueue || k.buildQueue.length === 0) return;
+        
+        const beforeCount = k.buildQueue.length;
+        k.buildQueue = k.buildQueue.filter(p => !p.isCompleted);
+        const removed = beforeCount - k.buildQueue.length;
+        
+        if (removed > 0) {
+          logger.debug(`🧹 [StatusPhaseController] Cleared ${removed} completed project${removed > 1 ? 's' : ''} from previous turn`);
+        }
+      });
     },
 
     /**

@@ -7,9 +7,10 @@
   // Convert remainingCost object to array for iteration
   // Shows what's left to pay, not the original total cost
   $: costArray = Object.entries(project.remainingCost || {});
+  $: isCompleted = project.isCompleted || false;
 </script>
 
-<div class="build-queue-item">
+<div class="build-queue-item" class:completed={isCompleted}>
   <!-- Thumbnail placeholder -->
   <div class="queue-item-thumbnail">
     <div class="thumbnail-placeholder">
@@ -24,20 +25,28 @@
       <span class="settlement-location">in {project.settlementName}</span>
     </div>
     
-    <!-- Build cost -->
-    <div class="item-cost">
-      <span class="cost-label">Cost:</span>
-      <div class="cost-resources">
-        {#each costArray as [resource, amount]}
-          {#if amount > 0}
-            <div class="cost-resource">
-              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
-              <span>{amount}</span>
-            </div>
-          {/if}
-        {/each}
+    {#if isCompleted}
+      <!-- Completed badge -->
+      <div class="completed-badge">
+        <i class="fas fa-check-circle"></i>
+        <span>Completed</span>
       </div>
-    </div>
+    {:else}
+      <!-- Build cost -->
+      <div class="item-cost">
+        <span class="cost-label">Cost:</span>
+        <div class="cost-resources">
+          {#each costArray as [resource, amount]}
+            {#if amount > 0}
+              <div class="cost-resource">
+                <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+                <span>{amount}</span>
+              </div>
+            {/if}
+          {/each}
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -55,6 +64,15 @@
     &:hover {
       background: rgba(0, 0, 0, 0.4);
       border-color: var(--border-medium);
+    }
+    
+    &.completed {
+      border-color: #4caf50;
+      background: rgba(76, 175, 80, 0.15);
+      
+      &:hover {
+        background: rgba(76, 175, 80, 0.2);
+      }
     }
   }
   
@@ -104,6 +122,19 @@
       color: var(--text-tertiary);
       font-size: var(--font-sm);
       font-style: italic;
+    }
+  }
+  
+  .completed-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #4caf50;
+    font-size: var(--font-sm);
+    font-weight: var(--font-weight-semibold);
+    
+    i {
+      font-size: 16px;
     }
   }
   

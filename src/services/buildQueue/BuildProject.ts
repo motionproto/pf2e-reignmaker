@@ -17,6 +17,8 @@ export interface BuildProject {
   pendingAllocation: Map<string, number>; // This turn's allocation
   tier: number; // Structure tier requirement
   category: string; // Structure category
+  isCompleted?: boolean; // True when project is finished
+  completedTurn?: number; // Turn number when completed
 }
 
 /**

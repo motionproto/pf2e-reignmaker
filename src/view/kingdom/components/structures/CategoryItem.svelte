@@ -13,19 +13,16 @@
   class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''}"
   on:click
 >
+  {#if currentTier !== undefined}
+    <span class="tier-badge">Tier {currentTier}</span>
+  {/if}
   <i class="fas {getCategoryIcon(category)} category-icon"></i>
   <div class="category-info">
-    <div class="category-name-row">
-      <div class="category-name">{category}</div>
-      {#if currentTier !== undefined}
-        <span class="tier-badge">Tier {currentTier}</span>
-      {/if}
-    </div>
+    <div class="category-name">{category}</div>
     {#if showSkills && skills.length > 0}
       <div class="category-skills">{skills.join(', ')}</div>
     {/if}
   </div>
-  <i class="fas fa-chevron-right arrow"></i>
 </button>
 
 <style lang="scss">
@@ -44,6 +41,7 @@
     text-align: left;
     min-height: fit-content;
     border-color: var(--border-subtle);
+    position: relative;
     
     &:hover {
       background: rgba(0, 0, 0, 0.3);
@@ -90,34 +88,13 @@
       flex: 1;
       min-width: 0;
       
-      .category-name-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-      }
-      
       .category-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
         font-family: var(--base-font);
         color: var(--text-primary);
         word-wrap: break-word;
-      }
-      
-      .tier-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.125rem 0.5rem;
-        background: rgba(251, 191, 36, 0.15);
-        border: 1px solid rgba(251, 191, 36, 0.3);
-        border-radius: var(--radius-sm);
-        color: var(--color-amber);
-        font-size: var(--font-xs);
-        font-weight: var(--font-weight-semibold);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        flex-shrink: 0;
+        margin-bottom: 0.25rem;
       }
       
       .category-skills {
@@ -128,9 +105,21 @@
       }
     }
     
-    .arrow {
-      color: var(--text-tertiary);
-      font-size: var(--font-sm);
+    .tier-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.125rem 0.5rem;
+      background: rgba(128, 128, 128, 0.15);
+      border: 1px solid rgba(128, 128, 128, 0.3);
+      border-radius: var(--radius-sm);
+      color: rgba(180, 180, 180, 0.9);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       flex-shrink: 0;
     }
   }

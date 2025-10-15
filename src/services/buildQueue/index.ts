@@ -303,7 +303,7 @@ export class BuildQueueService {
   }
 
   /**
-   * Complete a project - add to settlement, remove from queue
+   * Complete a project - add to settlement, mark as completed
    */
   async completeProject(projectId: string): Promise<void> {
     logger.debug(`🏗️ [BuildQueueService] Completing project ${projectId}`);
@@ -328,9 +328,10 @@ export class BuildQueueService {
         logger.debug(`✅ Added ${project.structureId} to ${settlement.name}`);
       }
 
-      // Remove from queue
-      k.buildQueue = k.buildQueue.filter(p => p.id !== projectId);
-      logger.debug(`✅ Removed project from queue`);
+      // Mark as completed (don't remove from queue yet)
+      project.isCompleted = true;
+      project.completedTurn = k.currentTurn;
+      logger.debug(`✅ Marked project as completed (Turn ${k.currentTurn})`);
     });
   }
 }
