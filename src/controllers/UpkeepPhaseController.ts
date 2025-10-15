@@ -121,10 +121,12 @@ export async function createUpkeepPhaseController() {
      * 
      * NEW: Settlements fed by tier priority (highest first: Metropolis → City → Town → Village)
      * Unfed settlements generate unrest equal to their tier level
+     * Excess food beyond storage capacity is automatically lost
      */
     async processFoodConsumption() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
+      const { settlementService } = await import('../services/settlements');
       const kingdom = get(kingdomData);
       
       const settlements = kingdom.settlements || [];
@@ -175,6 +177,17 @@ export async function createUpkeepPhaseController() {
         }
       }
       
+      // Calculate food storage capacity
+      const foodStorageCapacity = settlementService.getTotalFoodStorage(settlements);
+      let excessFood = 0;
+      
+      // Enforce storage capacity - excess food is lost
+      if (availableFood > foodStorageCapacity) {
+        excessFood = availableFood - foodStorageCapacity;
+        availableFood = foodStorageCapacity;
+        logger.debug(`📦 [UpkeepPhaseController] Storage capacity exceeded: ${excessFood} excess food lost (capacity: ${foodStorageCapacity})`);
+      }
+      
       // Update kingdom state
       await actor.updateKingdom((kingdom) => {
         kingdom.resources.food = availableFood;
@@ -196,6 +209,9 @@ export async function createUpkeepPhaseController() {
       }
       if (unfedSettlements.length > 0) {
         logger.debug(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
+      }
+      if (excessFood > 0) {
+        logger.debug(`⚠️ [UpkeepPhaseController] ${excessFood} excess food lost due to storage capacity`);
       }
     },
 
@@ -287,21 +303,29 @@ export async function createUpkeepPhaseController() {
       const completed: string[] = [];
       const partiallyPaid: string[] = [];
       
+      // Track available resources as we process projects
+      const availableResources = { ...kingdom.resources };
+      
       // Process each project through the service
       for (const project of buildQueue) {
         logger.debug(`🔍 [UpkeepPhaseController] Processing project: ${project.structureName}`);
         
-        // Service handles partial payment & persistence
+        // Service handles partial payment & persistence using CURRENT available resources
         const result = await buildQueueService.processPartialPayment(
           project.id,
-          kingdom.resources
+          availableResources
         );
         
         if (result.paid && Object.keys(result.paid).length > 0) {
+          // Update running total of available resources
+          for (const [resource, amount] of Object.entries(result.paid)) {
+            availableResources[resource] = (availableResources[resource] || 0) - amount;
+          }
+          
           // Deduct paid resources from kingdom
           await actor.updateKingdom(k => {
             for (const [resource, amount] of Object.entries(result.paid)) {
-              k.resources[resource] = (k.resources[resource] || 0) - amount;
+              k.resources[resource] = Math.max(0, (k.resources[resource] || 0) - amount);
             }
           });
           
@@ -351,6 +375,8 @@ export async function createUpkeepPhaseController() {
           settlementFoodShortage: 0,
           unfedSettlements: [],
           unfedUnrest: 0,
+          foodStorageCapacity: 0,
+          excessFood: 0,
           stepsCompleted: {
             feedSettlements: false,
             supportMilitary: false,
@@ -362,6 +388,7 @@ export async function createUpkeepPhaseController() {
       // Use proper consumption service
       const { calculateConsumption, calculateArmySupportCapacity, calculateUnsupportedArmies } = await import('../services/economics/consumption');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
+      const { settlementService } = await import('../services/settlements');
       
       const settlements = kingdomData.settlements || [];
       const armies = kingdomData.armies || [];
@@ -371,6 +398,9 @@ export async function createUpkeepPhaseController() {
       
       const currentFood = kingdomData.resources?.food || 0;
       const armyCount = armies.length;
+      
+      // Calculate food storage capacity
+      const foodStorageCapacity = settlementService.getTotalFoodStorage(settlements);
       
       // Map settlement tier enum to numeric values
       const tierToNumber = (tier: typeof SettlementTier[keyof typeof SettlementTier]): number => {
@@ -407,6 +437,9 @@ export async function createUpkeepPhaseController() {
         }
       }
       
+      // Calculate excess food (what would be lost after feeding)
+      const excessFood = Math.max(0, availableFood - foodStorageCapacity);
+      
       const foodRemainingForArmies = Math.max(0, availableFood);
       const settlementFoodShortage = Math.max(0, consumption.settlementFood - currentFood);
       const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
@@ -425,6 +458,8 @@ export async function createUpkeepPhaseController() {
         settlementFoodShortage,
         unfedSettlements,
         unfedUnrest,
+        foodStorageCapacity,
+        excessFood,
         stepsCompleted: {
           feedSettlements: await isStepCompletedByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS),
           supportMilitary: await isStepCompletedByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY),

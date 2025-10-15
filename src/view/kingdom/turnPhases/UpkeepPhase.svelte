@@ -56,6 +56,8 @@
       settlementFoodShortage: number;
       unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}>;
       unfedUnrest: number;
+      foodStorageCapacity: number;
+      excessFood: number;
    } = {
       currentFood: 0,
       foodConsumption: 0,
@@ -69,7 +71,9 @@
       armyFoodShortage: 0,
       settlementFoodShortage: 0,
       unfedSettlements: [],
-      unfedUnrest: 0
+      unfedUnrest: 0,
+      foodStorageCapacity: 0,
+      excessFood: 0
    };
    
    // Update display data when kingdom data or controller changes
@@ -91,7 +95,9 @@
       armyFoodShortage,
       settlementFoodShortage,
       unfedSettlements,
-      unfedUnrest
+      unfedUnrest,
+      foodStorageCapacity,
+      excessFood
    } = displayData);
    
    // UI state for unfed settlements dropdown
@@ -221,7 +227,31 @@
                   <div class="stat-value">{currentFood}</div>
                   <div class="stat-label">Food Available</div>
                </div>
+               
+               <div class="consumption-stat storage" class:warning={excessFood > 0}>
+                  <i class="fas fa-boxes-stacked"></i>
+                  <div class="stat-value">
+                     {#if consumeCompleted}
+                        {currentFood} / {foodStorageCapacity}
+                     {:else}
+                        {Math.max(0, currentFood - settlementConsumption)} / {foodStorageCapacity}
+                     {/if}
+                  </div>
+                  <div class="stat-label">Food Stored / Capacity</div>
+               </div>
             </div>
+            
+            {#if foodStorageCapacity === 0 && currentFood > settlementConsumption && !consumeCompleted}
+               <div class="info-box">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <div class="info-message">Build a Granary to store food.</div>
+               </div>
+            {:else if excessFood > 0 && !consumeCompleted}
+               <div class="info-box">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <div class="info-message">Storage capacity exceeded.</div>
+               </div>
+            {/if}
             
             {#if unfedSettlements.length > 0 && !consumeCompleted}
                <div class="warning-box warning-stacked">
@@ -778,6 +808,22 @@
             color: var(--color-red);
          }
       }
+      
+      &.warning {
+         i {
+            color: var(--color-amber);
+         }
+         
+         .stat-value {
+            color: var(--color-amber-light);
+         }
+      }
+      
+      &.storage {
+         i {
+            color: var(--color-blue);
+         }
+      }
    }
    
    .army-support-display {
@@ -877,6 +923,24 @@
          opacity: 0.9;
          display: block;
          margin-top: 4px;
+      }
+   }
+   
+   .info-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid var(--color-amber);
+      border-radius: var(--radius-sm);
+      color: var(--color-amber-light);
+      font-size: var(--font-sm);
+      
+      i {
+         font-size: 16px;
+         color: var(--color-amber);
+         flex-shrink: 0;
       }
    }
    

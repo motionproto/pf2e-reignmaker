@@ -24,7 +24,14 @@ export class SettlementService {
         // Additional gold from structures (markets, etc.)
         const structureIncome = this.getStructureGoldIncome(settlement);
         
-        totalGold += baseIncome + structureIncome;
+        let settlementIncome = baseIncome + structureIncome;
+        
+        // Double income if connected to Capitol by roads
+        if (settlement.connectedByRoads) {
+          settlementIncome *= 2;
+        }
+        
+        totalGold += settlementIncome;
       }
     });
     

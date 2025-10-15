@@ -1,7 +1,32 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
+   import { updateKingdom } from '../../../../stores/KingdomStore';
    
    export let settlement: Settlement;
+   
+   let isUpdating = false;
+   
+   async function toggleRoadConnection() {
+      if (isUpdating) return;
+      
+      isUpdating = true;
+      try {
+         await updateKingdom(k => {
+            const s = k.settlements.find(s => s.id === settlement.id);
+            if (s) {
+               s.connectedByRoads = !s.connectedByRoads;
+            }
+         });
+         // @ts-ignore
+         ui.notifications?.info(`Road connection ${settlement.connectedByRoads ? 'enabled' : 'disabled'} for ${settlement.name}`);
+      } catch (error) {
+         console.error('Failed to update road connection:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to update road connection');
+      } finally {
+         isUpdating = false;
+      }
+   }
 </script>
 
 {#if settlement.wasFedLastTurn !== undefined}
@@ -17,15 +42,21 @@
                <span>Not fed last turn (no gold generation)</span>
             {/if}
          </div>
-         <div class="status-item">
+         <button 
+            class="status-item toggleable"
+            on:click={toggleRoadConnection}
+            disabled={isUpdating}
+            title="Click to toggle road connection (doubles gold income when connected)"
+         >
             {#if settlement.connectedByRoads}
                <i class="fas fa-check-circle status-good"></i>
-               <span>Connected by roads</span>
+               <span>Connected by roads (2x gold income)</span>
             {:else}
                <i class="fas fa-times-circle status-bad"></i>
                <span>Not connected by roads</span>
             {/if}
-         </div>
+            <i class="fas fa-pen edit-indicator"></i>
+         </button>
       </div>
    </div>
 {/if}
@@ -64,6 +95,39 @@
                margin-left: auto;
                color: var(--text-secondary);
                font-size: var(--font-sm);
+            }
+         }
+         
+         &.toggleable {
+            width: 100%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-base);
+            text-align: left;
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            
+            &:hover:not(:disabled) {
+               background: rgba(255, 255, 255, 0.08);
+               
+               .edit-indicator {
+                  opacity: 1;
+               }
+            }
+            
+            &:disabled {
+               opacity: var(--opacity-disabled);
+               cursor: not-allowed;
+            }
+            
+            .edit-indicator {
+               margin-left: auto;
+               color: var(--text-secondary);
+               font-size: var(--font-xs);
+               opacity: 0.5;
+               transition: var(--transition-base);
             }
          }
          

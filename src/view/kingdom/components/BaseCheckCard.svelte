@@ -331,7 +331,7 @@
         />
       {:else}
         <!-- Before resolution: Show skills and possible outcomes -->
-        {#if possibleOutcomes.length > 0}
+        {#if possibleOutcomes.length > 0 || (expandable && formattedOutcomes.length > 0)}
           {#if expandable}
             <!-- Actions use OutcomesSection -->
             <OutcomesSection possibleOutcomes={formattedOutcomes} />
