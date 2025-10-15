@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import CategoryItem from '../../structures/CategoryItem.svelte';
   import type { Structure } from '../../../../../models/Structure';
+  import type { Settlement } from '../../../../../models/Settlement';
   import { 
     capitalizeSkills 
   } from '../../../utils/presentation';
@@ -12,12 +13,23 @@
   import {
     getSkillsForCategory
   } from '../../../logic/BuildStructureDialogLogic';
+  import {
+    getMaxTierBuiltInCategory
+  } from '../logic/structureFiltering';
   
   export let availableStructures: Structure[];
   export let selectedCategory: string;
   export let categoriesInProgress: Set<string>;
+  export let selectedSettlementId: string;
+  export let settlements: Settlement[];
   
   const dispatch = createEventDispatcher();
+  
+  // Calculate current tier for a category
+  function getCurrentTier(category: string): number | undefined {
+    const tier = getMaxTierBuiltInCategory(category, selectedSettlementId, settlements);
+    return tier > 0 ? tier : undefined;
+  }
   
   // Separate structures by type
   $: ({ skill: skillStructures, support: supportStructures } = separateStructuresByType(availableStructures));
@@ -46,9 +58,11 @@
         
         {#each skillCategories as category}
           {@const skills = capitalizeSkills(getSkillsForCategory(category, availableStructures))}
+          {@const currentTier = getCurrentTier(category)}
           <CategoryItem 
             {category}
             {skills}
+            {currentTier}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             on:click={() => selectCategory(category)}
@@ -63,8 +77,10 @@
         <h3 class="section-title">Support Structures</h3>
         
         {#each supportCategories as category}
+          {@const currentTier = getCurrentTier(category)}
           <CategoryItem 
             {category}
+            {currentTier}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             showSkills={false}

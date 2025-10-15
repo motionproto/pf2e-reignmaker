@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { BuildProject } from '../../../../models/BuildProject';
+  import type { BuildProject } from '../../../../services/buildQueue';
   import { getResourceIcon, getResourceColor } from '../../utils/presentation';
   
   export let project: BuildProject;
   
-  // Convert totalCost object to array for iteration
-  $: costArray = Object.entries(project.totalCost || {});
+  // Convert remainingCost object to array for iteration
+  // Shows what's left to pay, not the original total cost
+  $: costArray = Object.entries(project.remainingCost || {});
 </script>
 
 <div class="build-queue-item">
@@ -25,14 +26,17 @@
     
     <!-- Build cost -->
     <div class="item-cost">
-      {#each costArray as [resource, amount]}
-        {#if amount > 0}
-          <div class="cost-resource">
-            <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
-            <span>{amount}</span>
-          </div>
-        {/if}
-      {/each}
+      <span class="cost-label">Cost:</span>
+      <div class="cost-resources">
+        {#each costArray as [resource, amount]}
+          {#if amount > 0}
+            <div class="cost-resource">
+              <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+              <span>{amount}</span>
+            </div>
+          {/if}
+        {/each}
+      </div>
     </div>
   </div>
 </div>
@@ -105,8 +109,23 @@
   
   .item-cost {
     display: flex;
-    gap: 12px;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
+    
+    .cost-label {
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .cost-resources {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
     
     .cost-resource {
       display: flex;

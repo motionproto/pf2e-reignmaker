@@ -14,7 +14,7 @@
  */
 
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
-import type { Army } from '../models/BuildProject';
+import type { Army } from './buildQueue/BuildProject';
 import { logger } from '../utils/Logger';
 
 /**

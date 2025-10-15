@@ -54,60 +54,63 @@ export function separateBuiltAndAvailable(
 }
 
 /**
- * Filter structures to show only the next available tier per category
- * Rule: Show tier N+1 where N is the highest tier built in that category
+ * Get the highest tier built in a category
  */
-export function filterStructuresByNextTier(
-  structures: Structure[],
+export function getMaxTierBuiltInCategory(
+  categoryName: string,
   selectedSettlementId: string,
   settlements: Settlement[]
-): Structure[] {
-  if (!selectedSettlementId) return structures;
+): number {
+  if (!selectedSettlementId) return 0;
   
   const settlement = settlements.find(s => s.id === selectedSettlementId);
-  if (!settlement) return structures;
+  if (!settlement) return 0;
   
   // Get all built structures in this settlement
   const builtStructures = structuresService.getAllStructures().filter(s =>
     settlement.structureIds.includes(s.id)
   );
   
-  // Group available structures by category
-  const structuresByCategory = new Map<string, Structure[]>();
+  // Find built structures in this category
+  const builtInCategory = builtStructures.filter(s => {
+    if (!s.category) return false;
+    return getCategoryDisplayName(s.category) === categoryName;
+  });
+  
+  // Find max tier (0 if none built)
+  return Math.max(
+    0,
+    ...builtInCategory.map(s => s.tier || 1)
+  );
+}
+
+/**
+ * Separate structures into buildable and locked based on tier progression
+ * Rule: Can build tier N+1 where N is the highest tier built in that category
+ * Locked structures are shown but greyed out
+ */
+export function separateByBuildability(
+  structures: Structure[],
+  categoryName: string,
+  selectedSettlementId: string,
+  settlements: Settlement[]
+): { buildable: Structure[], locked: Structure[] } {
+  if (!selectedSettlementId) return { buildable: structures, locked: [] };
+  
+  const maxTierBuilt = getMaxTierBuiltInCategory(categoryName, selectedSettlementId, settlements);
+  const nextTier = maxTierBuilt + 1;
+  
+  const buildable: Structure[] = [];
+  const locked: Structure[] = [];
   
   structures.forEach(structure => {
-    if (!structure.category) return;
-    const displayName = getCategoryDisplayName(structure.category);
-    if (!structuresByCategory.has(displayName)) {
-      structuresByCategory.set(displayName, []);
-    }
-    structuresByCategory.get(displayName)!.push(structure);
-  });
-  
-  const result: Structure[] = [];
-  
-  // For each category, find the next tier to show
-  structuresByCategory.forEach((categoryStructures, categoryName) => {
-    // Find built structures in this category
-    const builtInCategory = builtStructures.filter(s => {
-      if (!s.category) return false;
-      return getCategoryDisplayName(s.category) === categoryName;
-    });
-    
-    // Find max tier (0 if none built)
-    const maxTier = Math.max(
-      0,
-      ...builtInCategory.map(s => s.tier || 1)
-    );
-    
-    // Get next tier structure (tier N+1, capped at tier 4)
-    const nextTier = Math.min(maxTier + 1, 4);
-    const nextTierStructure = categoryStructures.find(s => s.tier === nextTier);
-    
-    if (nextTierStructure) {
-      result.push(nextTierStructure);
+    const structureTier = structure.tier || 1;
+    if (structureTier <= nextTier) {
+      buildable.push(structure);
+    } else {
+      locked.push(structure);
     }
   });
   
-  return result;
+  return { buildable, locked };
 }

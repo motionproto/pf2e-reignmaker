@@ -6,6 +6,7 @@
   export let isSelected: boolean = false;
   export let isInProgress: boolean = false;
   export let showSkills: boolean = true;
+  export let currentTier: number | undefined = undefined;
 </script>
 
 <button
@@ -14,7 +15,12 @@
 >
   <i class="fas {getCategoryIcon(category)} category-icon"></i>
   <div class="category-info">
-    <div class="category-name">{category}</div>
+    <div class="category-name-row">
+      <div class="category-name">{category}</div>
+      {#if currentTier !== undefined}
+        <span class="tier-badge">Tier {currentTier}</span>
+      {/if}
+    </div>
     {#if showSkills && skills.length > 0}
       <div class="category-skills">{skills.join(', ')}</div>
     {/if}
@@ -84,14 +90,34 @@
       flex: 1;
       min-width: 0;
       
+      .category-name-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+      
       .category-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
-        font-weight: var(--font-weight-semibold);
         font-family: var(--base-font);
         color: var(--text-primary);
-        margin-bottom: 0.25rem;
         word-wrap: break-word;
+      }
+      
+      .tier-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        background: rgba(251, 191, 36, 0.15);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        border-radius: var(--radius-sm);
+        color: var(--color-amber);
+        font-size: var(--font-xs);
+        font-weight: var(--font-weight-semibold);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
       }
       
       .category-skills {

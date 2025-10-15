@@ -7,7 +7,7 @@
   import { getCategoryDisplayName } from '../../../../models/Structure';
   import type { Settlement } from '../../../../models/Settlement';
   import { getUniqueCategories } from '../../logic/structureLogic';
-  import { getCategoryStructures, separateBuiltAndAvailable, filterStructuresByNextTier } from './logic/structureFiltering';
+  import { getCategoryStructures, separateBuiltAndAvailable, getMaxTierBuiltInCategory, separateByBuildability } from './logic/structureFiltering';
   
   // Sub-components
   import MessageBanner from './components/MessageBanner.svelte';
@@ -40,6 +40,11 @@
     controller = await createBuildStructureController();
   });
   
+  // Check settlement capacity
+  $: capacityInfo = controller && selectedSettlementId 
+    ? controller.isSettlementAtCapacity(selectedSettlementId)
+    : { atCapacity: false, current: 0, max: 0 };
+  
   // React to dialog open/close
   $: if (show) {
     settlements = $kingdomData.settlements;
@@ -53,8 +58,9 @@
     selectedCategory = '';
   }
   
-  // When settlement is selected, update available structures
-  $: if (selectedSettlementId && controller) {
+  // When settlement is selected OR settlements change, update available structures
+  // This ensures the dialog reacts to manual structure additions/removals
+  $: if (selectedSettlementId && controller && $kingdomData.settlements) {
     availableStructures = controller.getAvailableStructuresForSettlement(selectedSettlementId);
     
     // Auto-select first category
@@ -69,30 +75,45 @@
   }
   
   // Get all structures for selected category (both built and available)
-  $: categoryStructures = getCategoryStructures(selectedCategory, selectedSettlementId, settlements);
+  // React to settlements changes to ensure built structures list is current
+  $: categoryStructures = getCategoryStructures(selectedCategory, selectedSettlementId, $kingdomData.settlements);
   
   // Separate built and available structures
+  // React to settlements changes to ensure proper filtering
   $: ({ built: builtStructures, available: availableInCategoryUnfiltered } = separateBuiltAndAvailable(
     categoryStructures,
     availableStructures,
     selectedSettlementId,
-    settlements
+    $kingdomData.settlements
   ));
   
-  // Apply tier-based filtering to show only next available tier per category
-  $: availableInCategory = filterStructuresByNextTier(
+  // Separate available structures into buildable and locked
+  // React to settlements changes to ensure tier progression is current
+  $: ({ buildable: buildableInCategory, locked: lockedInCategory } = separateByBuildability(
     availableInCategoryUnfiltered,
+    selectedCategory,
     selectedSettlementId,
-    settlements
-  );
+    $kingdomData.settlements
+  ));
+  
+  // Combine buildable and locked for display (buildable first, then locked)
+  $: availableInCategory = [...buildableInCategory, ...lockedInCategory];
+  
+  // Get current tier built in selected category (for tier badge)
+  // React to settlements changes to ensure tier calculation is current
+  $: currentTierInCategory = selectedCategory 
+    ? getMaxTierBuiltInCategory(selectedCategory, selectedSettlementId, $kingdomData.settlements)
+    : undefined;
   
   // Get selected settlement for passing to child components
-  $: selectedSettlement = settlements.find(s => s.id === selectedSettlementId);
+  // React to settlements changes to ensure we have current settlement data
+  $: selectedSettlement = $kingdomData.settlements.find(s => s.id === selectedSettlementId);
   
   // Get categories with structures in progress for this settlement
+  // React to buildQueue and settlements changes
   $: categoriesInProgress = new Set<string>(
-    $kingdomData.buildQueue
-      ?.filter(project => project.settlementName === selectedSettlement?.name)
+    ($kingdomData.buildQueue || [])
+      .filter(project => project.settlementName === selectedSettlement?.name)
       .map(project => {
         const structure = structuresService.getStructure(project.structureId);
         if (structure?.category) {
@@ -100,7 +121,7 @@
         }
         return null;
       })
-      .filter((cat): cat is string => cat !== null) || []
+      .filter((cat): cat is string => cat !== null)
   );
   
   // Get skill categories for checking if category is skill-based
@@ -192,6 +213,8 @@
                 {availableStructures}
                 {selectedCategory}
                 {categoriesInProgress}
+                {selectedSettlementId}
+                {settlements}
                 on:select={handleSelectCategory}
               />
             </div>
@@ -208,6 +231,7 @@
                   {selectedStructureId}
                   {successMessage}
                   {selectedSettlement}
+                  {capacityInfo}
                   on:build={handleBuildStructure}
                   on:select={handleSelectStructure}
                   on:cancel={handleClose}

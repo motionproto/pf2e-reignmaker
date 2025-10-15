@@ -5,6 +5,8 @@
   import type { Structure } from '../../../../../models/Structure';
   import { getCategoryIcon, formatSkillsString } from '../../../utils/presentation';
   import { getSkillsForCategory } from '../../../logic/BuildStructureDialogLogic';
+  import { getMaxTierBuiltInCategory } from '../logic/structureFiltering';
+  import type { Settlement } from '../../../../../models/Settlement';
   
   export let selectedCategory: string;
   export let categoryStructures: Structure[];
@@ -13,9 +15,22 @@
   export let skillCategories: string[];
   export let selectedStructureId: string;
   export let successMessage: string;
-  export let selectedSettlement: any;
+  export let selectedSettlement: Settlement | undefined;
+  export let capacityInfo: { atCapacity: boolean; current: number; max: number };
   
   const dispatch = createEventDispatcher();
+  
+  // Calculate max tier built in this category
+  $: maxTierBuilt = selectedSettlement 
+    ? getMaxTierBuiltInCategory(selectedCategory, selectedSettlement.id, [selectedSettlement])
+    : 0;
+  $: nextTier = maxTierBuilt + 1;
+  
+  // Check if a structure is locked (tier beyond next tier)
+  function isStructureLocked(structure: Structure): boolean {
+    const structureTier = structure.tier || 1;
+    return structureTier > nextTier;
+  }
   
   function handleBuild(event: CustomEvent<string>) {
     dispatch('build', event.detail);
@@ -50,22 +65,35 @@
     </div>
     
     <div class="structures-grid">
+      <!-- Capacity Warning (above all structures) -->
+      {#if capacityInfo.atCapacity}
+        <div class="capacity-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Settlement at capacity ({capacityInfo.current}/{capacityInfo.max})
+        </div>
+      {/if}
+      
       <!-- Show built structures as simple headers -->
       {#each builtStructures as structure}
         <BuiltStructureItem {structure} />
       {/each}
       
-      <!-- Show available structures as full cards with build buttons -->
+      <!-- Show only the next buildable tier (not locked ones) -->
       {#each availableStructures as structure}
-        <AvailableStructureItem 
-          {structure}
-          {selectedStructureId}
-          {successMessage}
-          {selectedSettlement}
-          on:build={handleBuild}
-          on:select={handleSelect}
-          on:cancel={handleCancel}
-        />
+        {@const locked = isStructureLocked(structure)}
+        {#if !locked}
+          <AvailableStructureItem 
+            {structure}
+            locked={false}
+            {selectedStructureId}
+            {successMessage}
+            {selectedSettlement}
+            atCapacity={false}
+            on:build={handleBuild}
+            on:select={handleSelect}
+            on:cancel={handleCancel}
+          />
+        {/if}
       {/each}
     </div>
   </div>
@@ -121,6 +149,25 @@
           font-size: var(--font-sm);
           line-height: 1.4;
         }
+        
+        .capacity-warning {
+          margin: 0;
+          margin-top: 0.5rem;
+          color: var(--warning-text);
+          font-size: var(--font-sm);
+          line-height: 1.4;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 0.75rem;
+          background: rgba(255, 191, 0, 0.1);
+          border: 1px solid rgba(255, 191, 0, 0.3);
+          border-radius: var(--radius-sm);
+          
+          i {
+            font-size: var(--font-sm);
+          }
+        }
       }
     }
   }
@@ -132,5 +179,23 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    
+    .capacity-warning {
+      color: var(--warning-text);
+      font-size: var(--font-sm);
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: rgba(255, 191, 0, 0.1);
+      border: 1px solid rgba(255, 191, 0, 0.3);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.5rem;
+      
+      i {
+        font-size: var(--font-sm);
+      }
+    }
   }
 </style>

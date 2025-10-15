@@ -12,6 +12,7 @@
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    import Button from '../components/baseComponents/Button.svelte';
    import BuildQueueItem from '../components/buildQueue/BuildQueueItem.svelte';
+   import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Controller instance
    let upkeepController: any;
@@ -397,10 +398,15 @@
             <div class="content-area">
             {#if $kingdomData.buildQueue?.length > 0}
                <div class="build-resources-available">
-                  <strong>Available:</strong>
-                  {['lumber', 'stone', 'ore'].map(r => 
-                     `${$resources?.[r] || 0} ${r.charAt(0).toUpperCase() + r.slice(1)}`
-                  ).join(', ')}
+                  <span class="available-label">Available Resources:</span>
+                  <div class="resource-list">
+                     {#each ['lumber', 'stone', 'ore'] as resource}
+                        <div class="resource-item">
+                           <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
+                           <span>{$resources?.[resource] || 0}</span>
+                        </div>
+                     {/each}
+                  </div>
                </div>
                
                <div class="build-queue">
@@ -887,6 +893,35 @@
       border-radius: var(--radius-sm);
       color: var(--text-secondary);
       font-size: var(--font-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      
+      .available-label {
+         font-weight: var(--font-weight-semibold);
+         margin-bottom: 4px;
+      }
+      
+      .resource-list {
+         display: flex;
+         gap: 16px;
+         flex-wrap: wrap;
+      }
+      
+      .resource-item {
+         display: flex;
+         align-items: center;
+         gap: 6px;
+         
+         i {
+            font-size: 16px;
+         }
+         
+         span {
+            font-weight: var(--font-weight-semibold);
+            color: var(--text-primary);
+         }
+      }
    }
    
    .build-queue {

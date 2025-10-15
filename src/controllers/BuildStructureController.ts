@@ -9,8 +9,8 @@ import { get } from 'svelte/store';
 import { kingdomData, updateKingdom } from '../stores/KingdomStore';
 import { structuresService } from '../services/structures';
 import type { Structure } from '../models/Structure';
-import type { BuildProject } from '../models/BuildProject';
-import { BuildProjectManager } from '../models/BuildProject';
+import type { BuildProject } from '../services/buildQueue';
+import { BuildProjectManager } from '../services/buildQueue';
 import { SettlementTier } from '../models/Settlement';
 import { logger } from '../utils/Logger';
 
@@ -55,6 +55,7 @@ export async function createBuildStructureController() {
   return {
     /**
      * Get structures available to build in a settlement
+     * Now returns all buildable structures regardless of capacity (GM can override)
      */
     getAvailableStructuresForSettlement(settlementId: string): Structure[] {
       const kingdom = get(kingdomData);
@@ -73,14 +74,30 @@ export async function createBuildStructureController() {
         // Can't build if already have it
         if (settlement.structureIds.includes(structure.id)) return false;
         
-        // Check if at structure capacity
-        const maxStructures = getMaxStructuresForTier(settlement.tier);
-        if (settlement.structureIds.length >= maxStructures && maxStructures !== Infinity) {
-          return false;
-        }
+        // Note: No longer filtering by capacity - GM can override
         
         return true;
       });
+    },
+
+    /**
+     * Check if settlement is at capacity for structures
+     */
+    isSettlementAtCapacity(settlementId: string): { atCapacity: boolean; current: number; max: number } {
+      const kingdom = get(kingdomData);
+      if (!kingdom) return { atCapacity: false, current: 0, max: 0 };
+
+      const settlement = kingdom.settlements.find(s => s.id === settlementId);
+      if (!settlement) return { atCapacity: false, current: 0, max: 0 };
+
+      const maxStructures = getMaxStructuresForTier(settlement.tier);
+      const current = settlement.structureIds.length;
+      
+      return {
+        atCapacity: maxStructures !== Infinity && current >= maxStructures,
+        current,
+        max: maxStructures
+      };
     },
 
     /**
@@ -141,7 +158,7 @@ export async function createBuildStructureController() {
         return { success: false, error: 'Structure already built in this settlement' };
       }
 
-      // Create build project
+      // Create build project - use service to handle Map→object conversion
       const costMap = new Map<string, number>();
       Object.entries(structure.constructionCost).forEach(([resource, amount]) => {
         if (amount && amount > 0) {
@@ -149,7 +166,8 @@ export async function createBuildStructureController() {
         }
       });
 
-      const project = BuildProjectManager.createProject(
+      const { buildQueueService } = await import('../services/buildQueue');
+      const project = buildQueueService.createProject(
         structureId,
         structure.name,
         structure.tier || 1,
@@ -158,11 +176,8 @@ export async function createBuildStructureController() {
         settlement.name
       );
 
-      // Add to build queue
-      await updateKingdom(k => {
-        if (!k.buildQueue) k.buildQueue = [];
-        k.buildQueue.push(project);
-      });
+      // Add to build queue via service
+      await buildQueueService.addProject(project);
 
       logger.debug(`✅ [BuildStructureController] Added ${structure.name} to build queue for ${settlement.name}`);
       return { success: true, project };

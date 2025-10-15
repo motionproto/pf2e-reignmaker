@@ -2,7 +2,7 @@
 // Manages army operations, NPC actor integration, and support calculations
 
 import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
-import type { Army } from '../../models/BuildProject';
+import type { Army } from '../buildQueue/BuildProject';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTierConfig } from '../../models/Settlement';
 import type { KingdomData } from '../../actors/KingdomActor';

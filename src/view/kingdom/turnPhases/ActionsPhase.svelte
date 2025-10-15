@@ -371,67 +371,43 @@
         // Calculate cost modifier (50% off for critical success)
         const costModifier = outcome === 'criticalSuccess' ? 0.5 : 1.0;
         
-        // Apply cost modifier to project BEFORE allocating resources
+        // Apply cost modifier to project if critical success
         if (costModifier !== 1.0) {
           const actor = getKingdomActor();
           if (actor) {
             await actor.updateKingdom((kingdom) => {
               const project = kingdom.buildQueue?.find(p => p.id === result.project!.id);
               if (project && project.totalCost) {
-                // Convert to Map if it's a plain object (after deserialization)
-                const totalCostMap = project.totalCost instanceof Map 
-                  ? project.totalCost 
-                  : new Map(Object.entries(project.totalCost));
+                // Work with plain objects (already converted by BuildQueueService)
+                const totalCostObj = project.totalCost as any;
+                const remainingCostObj = project.remainingCost as any;
                 
                 // Update totalCost with reduced amounts (rounded up)
-                totalCostMap.forEach((value, resource) => {
-                  const amount = value as number;
-                  totalCostMap.set(resource, Math.ceil(amount * costModifier));
-                });
-                
-                // Ensure it's a Map (not a plain object)
-                project.totalCost = totalCostMap as any;
+                for (const [resource, amount] of Object.entries(totalCostObj)) {
+                  totalCostObj[resource] = Math.ceil((amount as number) * costModifier);
+                }
                 
                 // Also update remainingCost to match
-                if (project.remainingCost) {
-                  const remainingCostMap = project.remainingCost instanceof Map
-                    ? project.remainingCost
-                    : new Map(Object.entries(project.remainingCost));
-                  
-                  remainingCostMap.forEach((value, resource) => {
-                    const amount = value as number;
-                    remainingCostMap.set(resource, Math.ceil(amount * costModifier));
-                  });
-                  
-                  project.remainingCost = remainingCostMap as any;
+                if (remainingCostObj) {
+                  for (const [resource, amount] of Object.entries(remainingCostObj)) {
+                    remainingCostObj[resource] = Math.ceil((amount as number) * costModifier);
+                  }
                 }
+                
+                console.log(`💰 [BuildStructure] Critical success! Costs reduced to 50%:`, totalCostObj);
               }
             });
           }
         }
         
-        // Allocate resources (now using the modified totalCost)
-        let allAllocated = true;
-        for (const [resource, baseAmount] of Object.entries(structure.constructionCost)) {
-          if (baseAmount && baseAmount > 0) {
-            const amount = Math.ceil(baseAmount * costModifier);
-            const allocated = await buildController.allocateResources(result.project.id, resource, amount);
-            if (!allocated) {
-              allAllocated = false;
-            }
-          }
-        }
-        
         // Show appropriate success message
         if (outcome === 'criticalSuccess') {
-          ui.notifications?.info(`🎉 Critical Success! ${structure.name} construction started at half cost!`);
+          ui.notifications?.info(`🎉 Critical Success! ${structure.name} added to build queue at half cost!`);
         } else {
-          ui.notifications?.info(`✅ ${structure.name} construction started!`);
+          ui.notifications?.info(`✅ ${structure.name} added to build queue!`);
         }
         
-        if (!allAllocated) {
-          ui.notifications?.warn('Some resources were not available and will be allocated when possible');
-        }
+        ui.notifications?.info(`Pay for construction during the Upkeep phase.`);
       } else {
         ui.notifications?.error(result.error || 'Failed to start construction');
       }

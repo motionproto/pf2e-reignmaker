@@ -6,39 +6,37 @@
 
 <div class="structure-built">
   <span class="structure-built-name">{structure.name}</span>
-  <span class="structure-built-status">
-    <i class="fas fa-check"></i>
-    Built
-  </span>
+  <span class="structure-built-tier">Tier {structure.tier || 1}</span>
 </div>
 
 <style lang="scss">
   .structure-built {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 1rem;
+    padding-bottom: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    opacity: 0.7;
+    border-radius: var(--radius-md);
+    opacity: 0.5;
     
     .structure-built-name {
-      font-size: var(--font-md);
-      color: var(--text-secondary);
+      flex: 1;
+      font-size: var(--font-xl);
+      color: var(--text-tertiary);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--base-font);
     }
     
-    .structure-built-status {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: var(--font-sm);
-      color: var(--color-green);
-      opacity: 0.8;
-      
-      i {
-        font-size: var(--font-sm);
-      }
+    .structure-built-tier {
+      font-size: var(--font-size-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-tertiary);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
     }
   }
 </style>

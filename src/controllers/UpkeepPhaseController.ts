@@ -265,9 +265,11 @@ export async function createUpkeepPhaseController() {
 
     /**
      * Process build queue projects
+     * Supports partial payments - pays what's affordable each turn
      */
     async processBuildProjects() {
       const { kingdomData } = await import('../stores/KingdomStore');
+      const { buildQueueService } = await import('../services/buildQueue');
       const kingdom = get(kingdomData);
       
       const buildQueue = kingdom.buildQueue || [];
@@ -282,16 +284,52 @@ export async function createUpkeepPhaseController() {
         return;
       }
       
-      // Actually process and remove completed projects from the queue
-      await actor.updateKingdom((kingdom) => {
-        const completedProjects = [...kingdom.buildQueue];
-        kingdom.buildQueue = []; // Clear the queue - projects are completed
-        
-        logger.debug(`🏗️ [UpkeepPhaseController] Completed ${completedProjects.length} build projects:`, 
-          completedProjects.map(p => p.structureId));
-      });
+      const completed: string[] = [];
+      const partiallyPaid: string[] = [];
       
-      logger.debug(`✅ [UpkeepPhaseController] Processed ${buildQueue.length} build projects`);
+      // Process each project through the service
+      for (const project of buildQueue) {
+        logger.debug(`🔍 [UpkeepPhaseController] Processing project: ${project.structureName}`);
+        
+        // Service handles partial payment & persistence
+        const result = await buildQueueService.processPartialPayment(
+          project.id,
+          kingdom.resources
+        );
+        
+        if (result.paid && Object.keys(result.paid).length > 0) {
+          // Deduct paid resources from kingdom
+          await actor.updateKingdom(k => {
+            for (const [resource, amount] of Object.entries(result.paid)) {
+              k.resources[resource] = (k.resources[resource] || 0) - amount;
+            }
+          });
+          
+          const paidSummary = Object.entries(result.paid)
+            .map(([r, a]) => `${r}: ${a}`)
+            .join(', ');
+          
+          if (result.isComplete) {
+            // Complete the project via service
+            await buildQueueService.completeProject(project.id);
+            completed.push(`${project.structureName} in ${project.settlementName}`);
+            logger.debug(`✅ [UpkeepPhaseController] Completed: ${project.structureName} (paid: ${paidSummary})`);
+          } else {
+            partiallyPaid.push(`${project.structureName}: ${paidSummary}`);
+            logger.debug(`💰 [UpkeepPhaseController] Partial payment: ${project.structureName} (paid: ${paidSummary})`);
+          }
+        } else {
+          logger.debug(`⏭️ [UpkeepPhaseController] No payment: ${project.structureName} (insufficient resources)`);
+        }
+      }
+      
+      logger.debug(`🏗️ [UpkeepPhaseController] Build queue processed: ${completed.length} completed, ${partiallyPaid.length} partial payments`);
+      if (completed.length > 0) {
+        logger.debug(`✅ Built: ${completed.join(', ')}`);
+      }
+      if (partiallyPaid.length > 0) {
+        logger.debug(`💰 Partial payments: ${partiallyPaid.join('; ')}`);
+      }
     },
 
     /**
