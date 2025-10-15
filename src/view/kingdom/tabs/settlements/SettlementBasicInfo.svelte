@@ -33,6 +33,21 @@
          actor.sheet?.render(true);
       }
    }
+   
+   async function adjustImprisonedUnrest(delta: number) {
+      const newValue = settlement.imprisonedUnrest + delta;
+      // Enforce limits
+      if (newValue < 0 || newValue > imprisonedUnrestCapacity) return;
+      
+      // Update the settlement
+      const { updateKingdom } = await import('../../../../stores/KingdomStore');
+      await updateKingdom((kingdom) => {
+         const settlementIndex = kingdom.settlements.findIndex(s => s.id === settlement.id);
+         if (settlementIndex >= 0) {
+            kingdom.settlements[settlementIndex].imprisonedUnrest = newValue;
+         }
+      });
+   }
 </script>
 
 <div class="detail-section">
@@ -78,10 +93,26 @@
    
    <div class="detail-item-full">
       <span class="label">Imprisoned Unrest</span>
-      <span class="value">
+      <div class="value-with-controls">
          <i class="fas fa-dungeon"></i>
-         {settlement.imprisonedUnrest} out of {imprisonedUnrestCapacity}
-      </span>
+         <span class="value-display">{settlement.imprisonedUnrest} / {imprisonedUnrestCapacity}</span>
+         <div class="control-buttons">
+            <button 
+               class="control-btn minus" 
+               on:click={() => adjustImprisonedUnrest(-1)}
+               disabled={settlement.imprisonedUnrest <= 0}
+            >
+               <i class="fas fa-minus"></i>
+            </button>
+            <button 
+               class="control-btn plus" 
+               on:click={() => adjustImprisonedUnrest(1)}
+               disabled={settlement.imprisonedUnrest >= imprisonedUnrestCapacity}
+            >
+               <i class="fas fa-plus"></i>
+            </button>
+         </div>
+      </div>
    </div>
 </div>
 
@@ -160,6 +191,57 @@
             &:hover {
                opacity: 0.8;
                text-decoration: none;
+            }
+         }
+      }
+   }
+   
+   .value-with-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-primary);
+      font-size: var(--font-lg);
+      
+      i {
+         margin-right: 0.5rem;
+      }
+      
+      .value-display {
+         flex: 1;
+      }
+      
+      .control-buttons {
+         display: flex;
+         gap: 0.25rem;
+         
+         .control-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border-default);
+            background: var(--bg-surface);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: var(--text-primary);
+            
+            &:hover:not(:disabled) {
+               background: var(--bg-subtle);
+               border-color: var(--border-primary);
+               transform: scale(1.05);
+            }
+            
+            &:disabled {
+               opacity: 0.3;
+               cursor: not-allowed;
+            }
+            
+            i {
+               font-size: var(--font-sm);
+               margin: 0;
             }
          }
       }

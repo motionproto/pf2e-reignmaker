@@ -23,6 +23,7 @@ import { createModifierService } from './ModifierService';
 import type { ActionLogEntry } from '../models/TurnState';
 import type { TurnPhase } from '../actors/KingdomActor';
 import { logger } from '../utils/Logger';
+import { structuresService } from './structures';
 
 /**
  * Source type for the outcome
@@ -426,9 +427,6 @@ export async function createGameEffectsService() {
         case 'destroy_structure':
           await this.destroyStructure(params, result);
           break;
-        case 'imprisoned_unrest':
-          await this.convertToImprisonedUnrest(params, result);
-          break;
         case 'claim_hex':
           await this.claimHex(params, result);
           break;
@@ -456,25 +454,81 @@ export async function createGameEffectsService() {
     },
 
     /**
-     * Convert regular unrest to imprisoned unrest
+     * Allocate imprisoned unrest to settlements with justice structures
+     * 
+     * @param allocations - Map of settlementId → amount to store
+     * @returns ApplyOutcomeResult with applied changes
      */
-    async convertToImprisonedUnrest(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`⛓️ [GameEffects] Converting unrest to imprisoned unrest`);
+    async allocateImprisonedUnrest(
+      allocations: Record<string, number>
+    ): Promise<ApplyOutcomeResult> {
+      logger.debug(`⛓️ [GameEffects] Allocating imprisoned unrest:`, allocations);
       
-      await updateKingdom(kingdom => {
-        const unrestToConvert = 1; // Default 1 point
-        
-        if (kingdom.unrest >= unrestToConvert) {
-          kingdom.unrest -= unrestToConvert;
-          kingdom.imprisonedUnrest = (kingdom.imprisonedUnrest || 0) + unrestToConvert;
-          
-          logger.debug(`  ✓ Converted ${unrestToConvert} unrest to imprisoned unrest`);
-        } else {
-          logger.warn(`  ⚠️ Not enough unrest to convert (current: ${kingdom.unrest})`);
+      const result: ApplyOutcomeResult = {
+        success: true,
+        applied: {
+          resources: [],
+          specialEffects: []
         }
-      });
+      };
 
-      result.applied.specialEffects.push('imprisoned_unrest_converted');
+      try {
+        // Calculate total to allocate
+        const totalToAllocate = Object.values(allocations).reduce((sum, val) => sum + val, 0);
+        
+        if (totalToAllocate === 0) {
+          logger.warn(`  ⚠️ No unrest allocated`);
+          return result;
+        }
+
+        // Validate and apply allocations
+        await updateKingdom(kingdom => {
+          // Check if we have enough unrest
+          if (kingdom.unrest < totalToAllocate) {
+            throw new Error(`Not enough unrest to allocate (current: ${kingdom.unrest}, requested: ${totalToAllocate})`);
+          }
+
+          // Validate and apply each allocation
+          for (const [settlementId, amount] of Object.entries(allocations)) {
+            if (amount <= 0) continue;
+
+            const settlement = kingdom.settlements.find(s => s.id === settlementId);
+            if (!settlement) {
+              throw new Error(`Settlement not found: ${settlementId}`);
+            }
+
+            // Calculate capacity using structuresService
+            const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+            const currentImprisoned = settlement.imprisonedUnrest || 0;
+            const availableSpace = capacity - currentImprisoned;
+
+            if (amount > availableSpace) {
+              throw new Error(`Settlement ${settlement.name} doesn't have enough capacity (available: ${availableSpace}, requested: ${amount})`);
+            }
+
+            // Apply allocation
+            settlement.imprisonedUnrest = currentImprisoned + amount;
+            logger.debug(`  ✓ Allocated ${amount} imprisoned unrest to ${settlement.name} (${currentImprisoned} → ${settlement.imprisonedUnrest}/${capacity})`);
+          }
+
+          // Reduce kingdom unrest by total allocated
+          kingdom.unrest -= totalToAllocate;
+          logger.debug(`  ✓ Reduced kingdom unrest by ${totalToAllocate} (${kingdom.unrest + totalToAllocate} → ${kingdom.unrest})`);
+        });
+
+        // Record in result
+        result.applied.resources.push({ resource: 'unrest', value: -totalToAllocate });
+        result.applied.specialEffects.push('imprisoned_unrest_allocated');
+
+        logger.debug(`✅ [GameEffects] Imprisoned unrest allocation complete`);
+        return result;
+
+      } catch (error) {
+        logger.error(`❌ [GameEffects] Failed to allocate imprisoned unrest:`, error);
+        result.success = false;
+        result.error = error instanceof Error ? error.message : 'Unknown error';
+        return result;
+      }
     },
 
     /**

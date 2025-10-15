@@ -17,14 +17,14 @@
 **CRITICAL DATA ISSUE:** The current modifiers are incorrect!
 
 **Current (WRONG):**
-- Critical Success: -6 unrest
+- Critical Success: -8 unrest
 - Success: -4 unrest  
-- Failure: -2 unrest
+- Failure: 0 unrest
 - Critical Failure: +1 unrest
 
 **Should Be (per Actions.md):**
-- Critical Success: Convert 4 unrest → imprisoned (net effect depends on capacity)
-- Success: Convert 2 unrest → imprisoned (net effect depends on capacity)
+- Critical Success: Convert 8 unrest → imprisoned (net effect depends on capacity)
+- Success: Convert 4 unrest → imprisoned (net effect depends on capacity)
 - Failure: No effect
 - Critical Failure: +1 unrest
 

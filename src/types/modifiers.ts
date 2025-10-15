@@ -175,4 +175,5 @@ export interface ResolutionData {
   numericModifiers: Array<{ resource: ResourceType; value: number }>;
   manualEffects: string[];
   complexActions: ComplexAction[];
+  customComponentData?: any;  // Data from custom resolution components (e.g., arrest-dissidents allocations)
 }

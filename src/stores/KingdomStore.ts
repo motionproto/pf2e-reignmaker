@@ -25,6 +25,10 @@ export const resources = derived(kingdomData, $data => $data.resources);
 export const settlements = derived(kingdomData, $data => $data.settlements);
 export const armies = derived(kingdomData, $data => $data.armies);
 export const unrest = derived(kingdomData, $data => $data.unrest);
+// Imprisoned unrest is derived from settlements (sum of all settlement imprisoned unrest)
+export const imprisonedUnrest = derived(settlements, $settlements => {
+  return $settlements.reduce((sum, s) => sum + (s.imprisonedUnrest || 0), 0);
+});
 export const fame = derived(kingdomData, $data => $data.fame);
 
 // UI-only state (no persistence needed)

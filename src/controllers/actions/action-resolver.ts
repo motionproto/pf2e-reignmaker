@@ -9,6 +9,8 @@ import type { PlayerAction } from './action-types';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { createGameEffectsService, type OutcomeDegree } from '../../services/GameEffectsService';
 import { logger } from '../../utils/Logger';
+import { structuresService } from '../../services/structures';
+import { checkCustomRequirements } from './implementations';
 
 // TEMPORARY: Inline helpers from deleted resolution-service.ts
 function getLevelBasedDC(level: number): number {
@@ -57,7 +59,14 @@ export class ActionResolver {
         action: PlayerAction,
         kingdomData: KingdomData
     ): ActionRequirement {
-        // Check specific action-based requirements
+        // Check for custom implementation first
+        const customCheck = checkCustomRequirements(action.id, kingdomData);
+        if (customCheck !== null) {
+            // Custom implementation exists, use it
+            return customCheck;
+        }
+        
+        // Fall back to default requirement checking
         const specificCheck = this.checkSpecificActionRequirements(action, kingdomData);
         if (!specificCheck.met) {
             return specificCheck;
@@ -82,22 +91,15 @@ export class ActionResolver {
     
     /**
      * Check specific action-based requirements
+     * NOTE: This method now only handles actions without custom implementations.
+     * Actions with custom implementations should be registered in the implementations/ folder.
      */
     private checkSpecificActionRequirements(
         action: PlayerAction,
         kingdomData: KingdomData
     ): ActionRequirement {
         switch (action.id) {
-            case 'arrest-dissidents':
-                // Needs a justice structure with capacity (simplified check)
-                // In full implementation, would check for specific structures
-                if (kingdomData.unrest === 0) {
-                    return {
-                        met: false,
-                        reason: 'No unrest to arrest'
-                    };
-                }
-                break;
+            // arrest-dissidents now handled by ArrestDissidentsAction implementation
                 
             case 'execute-pardon-prisoners':
             case 'execute-or-pardon-prisoners':

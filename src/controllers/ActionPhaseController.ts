@@ -10,6 +10,7 @@ import { logger } from '../utils/Logger';
 import { getKingdomActor } from '../stores/KingdomStore'
 import { get } from 'svelte/store'
 import { kingdomData } from '../stores/KingdomStore'
+import ArrestDissidentsResolution from '../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte'
 import { 
   reportPhaseStart, 
   reportPhaseComplete, 
@@ -26,6 +27,7 @@ import type { PlayerAction } from './actions/action-types'
 import type { KingdomData } from '../actors/KingdomActor'
 import { TurnPhase } from '../actors/KingdomActor'
 import { ActionPhaseSteps } from './shared/PhaseStepConstants'
+import { getCustomResolutionComponent } from './actions/implementations'
 
 export async function createActionPhaseController() {
   return {
@@ -200,6 +202,13 @@ export async function createActionPhaseController() {
       return actionResolver.getActionDC(characterLevel)
     },
 
+    /**
+     * Get custom resolution component for an action if it requires one
+     */
+    getCustomComponent(actionId: string, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
+      // Use the implementations registry to get custom components
+      return getCustomResolutionComponent(actionId, outcome);
+    },
 
     /**
      * Resolve action with ResolutionData
@@ -244,7 +253,24 @@ export async function createActionPhaseController() {
           TurnPhase.ACTIONS
         );
         
-        logger.debug(`� [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+        logger.debug(`📝 [ActionPhaseController] Tracked action: ${actorName || playerName} performed ${actionId}-${outcome}`);
+      }
+      
+      // Check if action has custom resolution logic
+      const { hasCustomImplementation, executeCustomResolution } = await import('./actions/implementations');
+      const { getActionImplementation } = await import('./actions/implementations');
+      const impl = getActionImplementation(actionId);
+      
+      // Use custom resolution if available and needed for this outcome
+      if (impl?.customResolution && impl.needsCustomResolution?.(outcome)) {
+        logger.debug(`🎯 [ActionPhaseController] Using custom resolution for ${actionId}-${outcome}`);
+        const result = await executeCustomResolution(actionId, resolutionData);
+        
+        if (!result.success) {
+          logger.error(`❌ [ActionPhaseController] Custom resolution failed:`, result.error);
+        }
+        
+        return result;
       }
       
       // Use unified resolution wrapper (consolidates duplicate logic)

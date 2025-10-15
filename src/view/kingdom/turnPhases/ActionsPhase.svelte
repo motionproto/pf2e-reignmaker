@@ -1035,12 +1035,14 @@
                 effect: checkInstance.appliedOutcome.effect,
                 effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
               } : undefined}
+              {@const customComponent = (resolution && controller) ? controller.getCustomComponent(action.id, resolution.outcome) : null}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}`}
+              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}-${$kingdomData.unrest}-${$kingdomData.imprisonedUnrest}-${($kingdomData.resources?.resourcePoints || 0)}-${($kingdomData.armies?.length || 0)}-${($kingdomData.settlements?.length || 0)}`}
                 <BaseCheckCard
                   id={action.id}
                   checkInstance={checkInstance || null}
+                  customResolutionComponent={customComponent}
                   name={action.name}
                   description={action.description}
                   brief={action.brief || ''}

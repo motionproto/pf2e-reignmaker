@@ -330,6 +330,15 @@
           on:customSelection
         />
       {:else}
+        <!-- Availability notice for expandable cards (actions) when expanded -->
+        {#if expandable && !available && missingRequirements.length > 0}
+          <div class="availability-notice-banner">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span class="requirements-label">Requirements not met:</span>
+            <span class="requirements-text">{missingRequirements.join(', ')}</span>
+          </div>
+        {/if}
+        
         <!-- Before resolution: Show skills and possible outcomes -->
         {#if possibleOutcomes.length > 0 || (expandable && formattedOutcomes.length > 0)}
           {#if expandable}

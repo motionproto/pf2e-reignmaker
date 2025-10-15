@@ -4,6 +4,7 @@
     currentTurn,
     fame,
     unrest,
+    imprisonedUnrest,
     settlements,
     resources,
     updateKingdom,
@@ -73,7 +74,8 @@
       // Check if modifier has unrest effects in the modifiers array
       if (modifier.modifiers) {
         for (const mod of modifier.modifiers) {
-          if (mod.resource === "unrest") {
+          // Only count static modifiers that affect unrest
+          if (mod.type === 'static' && mod.resource === "unrest") {
             unrest += Number(mod.value);
           }
         }
@@ -202,17 +204,13 @@
                     k.unrest = newValue;
                   })}
               />
-            <!-- Imprisoned Unrest Card -->
+            <!-- Imprisoned Unrest Card (Display only - edit in Settlements tab) -->
             <ResourceCard
                 resource="prison"
-                value={$kingdomData.imprisonedUnrest}
+                value={$imprisonedUnrest}
                 icon={statsConfig.imprisoned.icon}
                 color={statsConfig.imprisoned.color}
                 size="compact"
-                onChange={(newValue) =>
-                  updateKingdom((k) => {
-                    k.imprisonedUnrest = newValue;
-                  })}
               />
 
             <!-- Resources Divider -->

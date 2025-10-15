@@ -28,26 +28,14 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Convert up to 8 Unrest to imprisoned Unrest (up to structure capacity)",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": -8,
-          "duration": "immediate"
-        }
-      ]
+      "description": "Convert up to 8 Unrest to imprisoned Unrest",
+      "modifiers": [],
+      "customResolution": true
     },
     "success": {
-      "description": "Convert up to 4 Unrest to imprisoned Unrest (up to structure capacity)",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": -4,
-          "duration": "immediate"
-        }
-      ]
+      "description": "Convert up to 4 Unrest to imprisoned Unrest",
+      "modifiers": [],
+      "customResolution": true
     },
     "failure": {
       "description": "No effect",

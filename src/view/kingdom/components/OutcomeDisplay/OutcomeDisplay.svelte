@@ -340,7 +340,8 @@
     const resolution: ResolutionData = {
       numericModifiers,
       manualEffects: manualEffects || [],
-      complexActions: [] // Phase 3 will add support for this
+      complexActions: [], // Phase 3 will add support for this
+      customComponentData  // Include custom component data (e.g., arrest-dissidents allocations)
     };
     
     console.log('📋 [computeResolutionData] Final resolution:', resolution);
