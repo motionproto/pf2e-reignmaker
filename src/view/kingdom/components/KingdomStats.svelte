@@ -16,6 +16,7 @@
   import FameCard from "./baseComponents/FameCard.svelte";
   import { economicsService } from "../../../services/economics";
   import { calculateSizeUnrest } from "../../../services/domain/unrest/UnrestService";
+  import { getResourceIcon, getResourceColor } from "../utils/presentation";
 
   // Kingdom name state
   let isEditingName = false;
@@ -115,15 +116,6 @@
     editingField = null;
   }
 
-  // Resource configuration for ResourceCard components
-  const resourceConfig: Record<string, { icon: string; color: string }> = {
-    food: { icon: "fa-wheat-awn", color: "var(--color-brown-light)" },
-    gold: { icon: "fa-coins", color: "var(--color-amber-light)" },
-    lumber: { icon: "fa-tree", color: "var(--color-green)" },
-    stone: { icon: "fa-cube", color: "var(--color-gray-500)" },
-    ore: { icon: "fa-mountain", color: "var(--color-blue)" },
-  };
-
   // Additional stats configuration for unrest
   const statsConfig: Record<string, { icon: string; color: string }> = {
     unrest: { icon: "fa-hand-fist", color: "var(--color-danger)" },
@@ -187,8 +179,8 @@
             <ResourceCard
                 resource="gold"
                 value={$resources.gold || 0}
-                icon={resourceConfig.gold.icon}
-                color={resourceConfig.gold.color}
+                icon={getResourceIcon('gold')}
+                color={getResourceColor('gold')}
                 size="compact"
               />
 
@@ -233,32 +225,32 @@
             <ResourceCard
                 resource="food"
                 value={$resources.food || 0}
-                icon={resourceConfig.food.icon}
-                color={resourceConfig.food.color}
+                icon={getResourceIcon('food')}
+                color={getResourceColor('food')}
                 size="compact"
               />
             <!-- Lumber Card -->
             <ResourceCard
                 resource="lumber"
                 value={$resources.lumber || 0}
-                icon={resourceConfig.lumber.icon}
-                color={resourceConfig.lumber.color}
+                icon={getResourceIcon('lumber')}
+                color={getResourceColor('lumber')}
                 size="compact"
               />
             <!-- Stone Card -->
             <ResourceCard
                 resource="stone"
                 value={$resources.stone || 0}
-                icon={resourceConfig.stone.icon}
-                color={resourceConfig.stone.color}
+                icon={getResourceIcon('stone')}
+                color={getResourceColor('stone')}
                 size="compact"
               />
             <!-- Ore Card -->
             <ResourceCard
                 resource="ore"
                 value={$resources.ore || 0}
-                icon={resourceConfig.ore.icon}
-                color={resourceConfig.ore.color}
+                icon={getResourceIcon('ore')}
+                color={getResourceColor('ore')}
                 size="compact"
               />
           </div>

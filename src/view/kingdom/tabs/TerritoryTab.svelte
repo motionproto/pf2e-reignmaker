@@ -1,15 +1,7 @@
 <script lang="ts">
    import { kingdomData } from '../../../stores/KingdomStore';
    import { WorksiteConfig } from '../../../models/Hex';
-   
-   // Resource icons and colors (matching ResourcesPhase)
-   const resourceConfig: Record<string, { icon: string; color: string }> = {
-      food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
-      lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
-      stone: { icon: 'fa-cube', color: 'var(--color-gray-500)' },
-      ore: { icon: 'fa-mountain', color: 'var(--color-blue)' },
-      gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' }
-   };
+   import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Map worksite types to their resource colors
    function getWorksiteColor(worksiteType: string): string {
@@ -17,14 +9,14 @@
          case 'Farmstead':
          case 'Hunting/Fishing Camp':
          case 'Oasis Farm':
-            return resourceConfig.food.color;
+            return getResourceColor('food');
          case 'Logging Camp':
-            return resourceConfig.lumber.color;
+            return getResourceColor('lumber');
          case 'Quarry':
-            return resourceConfig.stone.color;
+            return getResourceColor('stone');
          case 'Mine':
          case 'Bog Mine':
-            return resourceConfig.ore.color;
+            return getResourceColor('ore');
          default:
             return 'var(--color-gray-400)';
       }
@@ -179,14 +171,6 @@
       
       return production;
    }
-   
-   function getCommodityIcon(resource: string): string {
-      return resourceConfig[resource]?.icon || 'fa-box';
-   }
-   
-   function getResourceColor(resource: string): string {
-      return resourceConfig[resource]?.color || 'var(--color-gray-400)';
-   }
 </script>
 
 <div class="territory-tab">
@@ -292,7 +276,7 @@
                            <div class="production-list">
                               {#each Array.from((hex.getProduction && typeof hex.getProduction === 'function' ? hex.getProduction() : calculateHexProduction(hex)).entries()) as [resource, amount]}
                                  <span class="production-item">
-                                    <i class="fas {getCommodityIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
+                                    <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
                                     +{amount} {resource}
                                  </span>
                               {/each}

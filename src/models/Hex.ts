@@ -21,7 +21,7 @@ export const WorksiteConfig = {
   [WorksiteType.FARMSTEAD]: { displayName: 'Farmstead', icon: 'fa-wheat-awn' },
   [WorksiteType.LOGGING_CAMP]: { displayName: 'Logging Camp', icon: 'fa-tree' },
   [WorksiteType.QUARRY]: { displayName: 'Quarry', icon: 'fa-cube' },
-  [WorksiteType.MINE]: { displayName: 'Mine', icon: 'fa-gem' },
+  [WorksiteType.MINE]: { displayName: 'Mine', icon: 'fa-mountain' },
   [WorksiteType.BOG_MINE]: { displayName: 'Bog Mine', icon: 'fa-tint' },
   [WorksiteType.HUNTING_FISHING_CAMP]: { displayName: 'Hunting/Fishing Camp', icon: 'fa-fish' },
   [WorksiteType.OASIS_FARM]: { displayName: 'Oasis Farm', icon: 'fa-water' }

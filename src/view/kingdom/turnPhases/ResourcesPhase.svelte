@@ -5,6 +5,7 @@
    import Button from '../components/baseComponents/Button.svelte';
    import ResourceCard from '../components/baseComponents/ResourceCard.svelte';
    import { tick } from 'svelte';
+   import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -12,14 +13,8 @@
    // UI State only
    let isCollecting = false;
    
-   // Resource icons and colors - this is presentation configuration, belongs in component
-   const resourceConfig: Record<string, { icon: string; color: string }> = {
-      food: { icon: 'fa-wheat-awn', color: 'var(--color-brown-light)' },
-      gold: { icon: 'fa-coins', color: 'var(--color-amber-light)' },
-      lumber: { icon: 'fa-tree', color: 'var(--color-green)' },
-      stone: { icon: 'fa-cube', color: 'var(--color-gray-500)' },
-      ore: { icon: 'fa-mountain', color: 'var(--color-blue)' }
-   };
+   // Resource order for display
+   const resourceOrder = ['food', 'gold', 'lumber', 'stone', 'ore'];
    
    // Reactive data from kingdomData store
    $: currentResources = new Map([
@@ -104,12 +99,12 @@
    
    <!-- Resource Dashboard -->
    <div class="resource-dashboard">
-      {#each Object.entries(resourceConfig) as [resource, config]}
+      {#each resourceOrder as resource}
          <ResourceCard
             resource={resource}
             value={currentResources.get(resource) || 0}
-            icon={config.icon}
-            color={config.color}
+            icon={getResourceIcon(resource)}
+            color={getResourceColor(resource)}
             size="normal"
          />
       {/each}
@@ -144,7 +139,7 @@
       <!-- Resource Production & Gold Income -->
       <div class="income-production-summary" class:collected={collectCompleted}>
          {#if totalProduction.size > 0}
-            {@const productionList = Object.keys(resourceConfig)
+            {@const productionList = resourceOrder
                .filter(resource => (totalProduction.get(resource) || 0) > 0)
                .map(resource => ({resource, amount: totalProduction.get(resource) || 0}))}
             <div class="production-section">
@@ -153,7 +148,7 @@
                <span class="production-total">
                   {#each productionList as item, i}
                      {#if i > 0}<span class="pipe-separator">|</span>{/if}
-                     <span style="color: {resourceConfig[item.resource]?.color || 'var(--text-primary)'}">
+                     <span style="color: {getResourceColor(item.resource)}">
                         +{item.amount} {item.resource.charAt(0).toUpperCase() + item.resource.slice(1)}
                      </span>
                   {/each}

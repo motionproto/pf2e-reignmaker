@@ -49,7 +49,7 @@ export function getResourceIcon(resource: string): string {
     food: 'fa-wheat-awn',
     lumber: 'fa-tree',
     stone: 'fa-cube',
-    ore: 'fa-gem'
+    ore: 'fa-mountain'
   };
   return icons[resource] || 'fa-box';
 }
