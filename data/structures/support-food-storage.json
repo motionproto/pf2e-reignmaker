@@ -6,79 +6,81 @@
     {
       "id": "granary",
       "name": "Granary",
-      "type": "support",
-      "category": "food-storage",
-      "tier": 1,
-      "effect": "+4 Food capacity",
+      "description": "Basic grain storage facility",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "foodCapacity",
+          "value": 4,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "storehouses",
       "name": "Storehouses",
-      "type": "support",
-      "category": "food-storage",
-      "tier": 2,
-      "effect": "+8 Food capacity",
+      "description": "Multiple storage buildings for food preservation",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "granary"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "foodCapacity",
+          "value": 8,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "warehouses",
       "name": "Warehouses",
-      "type": "support",
-      "category": "food-storage",
-      "tier": 3,
-      "effect": "+16 Food capacity",
+      "description": "Large-scale storage facilities with climate control",
       "cost": {
         "lumber": 3,
         "stone": 3,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "storehouses"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "foodCapacity",
+          "value": 16,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "strategic-reserves",
       "name": "Strategic Reserves",
-      "type": "support",
-      "category": "food-storage",
-      "tier": 4,
-      "effect": "+36 Food capacity",
+      "description": "Massive storage complex with advanced preservation",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "foodCapacity",
+          "value": 36,
+          "duration": "permanent"
+        }
       ],
-      "special": "Once per Kingdom Turn, roll flat check DC 15; on success, negate a spoilage/loss event affecting Food.",
-      "upgradeFrom": "warehouses"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "negateFoodSpoilage",
+          "value": true
+        }
+      ],
+      "manualEffects": [
+        "Once per Kingdom Turn, roll flat check DC 15; on success, negate a spoilage/loss event affecting Food"
+      ]
     }
   ]
 }

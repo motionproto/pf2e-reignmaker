@@ -239,13 +239,13 @@ export async function createActionPhaseController() {
       
       // Track player action (action-specific logic before resolution)
       if (playerId) {
-        const { createGameEffectsService } = await import('../services/GameEffectsService');
-        const gameEffects = await createGameEffectsService();
+        const { createGameCommandsService } = await import('../services/GameCommandsService');
+        const gameCommands = await createGameCommandsService();
         const game = (window as any).game;
         const user = game?.users?.get(playerId);
         const playerName = user?.name || 'Unknown Player';
         
-        await gameEffects.trackPlayerAction(
+        await gameCommands.trackPlayerAction(
           playerId,
           playerName,
           actorName || playerName,

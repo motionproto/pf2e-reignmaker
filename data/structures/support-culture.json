@@ -6,79 +6,94 @@
     {
       "id": "open-stage",
       "name": "Open Stage",
-      "type": "support",
-      "category": "culture",
-      "tier": 1,
-      "effect": "PCs in this settlement gain +1 to checks made to reduce Unrest",
+      "description": "Simple performance venue for entertainers",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "unrestReductionBonus",
+          "value": 1
+        }
       ],
-      "special": null,
-      "upgradeFrom": null
+      "manualEffects": [
+        "PCs in this settlement gain +1 to checks made to reduce Unrest"
+      ]
     },
     {
       "id": "amphitheater",
       "name": "Amphitheater",
-      "type": "support",
-      "category": "culture",
-      "tier": 2,
-      "effect": "PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "description": "Large open-air theater for public performances",
       "cost": {
         "lumber": 3,
         "stone": 1
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "unrestReductionBonus",
+          "value": 2
+        }
       ],
-      "special": null,
-      "upgradeFrom": "open-stage"
+      "manualEffects": [
+        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+      ]
     },
     {
       "id": "playhouse",
       "name": "Playhouse",
-      "type": "support",
-      "category": "culture",
-      "tier": 3,
-      "effect": "PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "description": "Dedicated theater building for elaborate productions",
       "cost": {
         "lumber": 4,
         "stone": 3,
         "ore": 1
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "unrestReductionBonus",
+          "value": 2
+        }
       ],
-      "special": null,
-      "upgradeFrom": "amphitheater"
+      "manualEffects": [
+        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+      ]
     },
     {
       "id": "auditorium",
       "name": "Auditorium",
-      "type": "support",
-      "category": "culture",
-      "tier": 4,
-      "effect": "+1 Fame each turn. PCs in this settlement gain +2 to checks made to reduce Unrest",
+      "description": "Grand performance hall that uplifts the entire kingdom",
       "cost": {
         "lumber": 6,
         "stone": 6,
         "ore": 4
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "fame",
+          "value": 1,
+          "duration": "permanent"
+        },
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "permanent"
+        }
       ],
-      "special": "At the start of each Kingdom Turn, reduce Unrest by 1",
-      "upgradeFrom": "playhouse"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "unrestReductionBonus",
+          "value": 2
+        }
+      ],
+      "manualEffects": [
+        "At the start of each Kingdom Turn, gain +1 Fame and reduce Unrest by 1",
+        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+      ]
     }
   ]
 }

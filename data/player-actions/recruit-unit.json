@@ -37,7 +37,7 @@
           "duration": "immediate"
         }
       ],
-      "gameEffects": [
+      "gameCommands": [
         {
           "type": "recruitArmy",
           "level": "kingdom-level",
@@ -48,7 +48,7 @@
     "success": {
       "description": "Recruit a troop equal to the party level",
       "modifiers": [],
-      "gameEffects": [
+      "gameCommands": [
         {
           "type": "recruitArmy",
           "level": "kingdom-level",
@@ -59,7 +59,7 @@
     "failure": {
       "description": "No Recruits",
       "modifiers": [],
-      "gameEffects": []
+      "gameCommands": []
     },
     "criticalFailure": {
       "description": "No Recruit; +1 Unrest",
@@ -71,7 +71,7 @@
           "duration": "immediate"
         }
       ],
-      "gameEffects": []
+      "gameCommands": []
     }
   },
   "failureCausesUnrest": true

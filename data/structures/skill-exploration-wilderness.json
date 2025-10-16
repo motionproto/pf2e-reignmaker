@@ -6,100 +6,92 @@
     {
       "id": "hunters-lodge",
       "name": "Hunter's Lodge",
-      "type": "skill",
-      "category": "exploration-wilderness",
-      "tier": 1,
-      "earnIncomeLevel": "settlement",
-      "bonus": 1,
-      "skills": [
-        "survival"
-      ],
+      "description": "Basic wilderness tracking and hunting post",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "survival",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "rangers-outpost",
       "name": "Ranger's Outpost",
-      "type": "skill",
-      "category": "exploration-wilderness",
-      "tier": 2,
-      "earnIncomeLevel": "settlement+2",
-      "bonus": 1,
-      "skills": [
-        "survival",
-        "nature"
-      ],
+      "description": "Frontier station for wilderness scouts",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "hunters-lodge"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "survival",
+          "value": 1
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "nature",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "druids-grove",
       "name": "Druid's Grove",
-      "type": "skill",
-      "category": "exploration-wilderness",
-      "tier": 3,
-      "earnIncomeLevel": "settlement+4",
-      "bonus": 2,
-      "skills": [
-        "survival",
-        "nature",
-        "stealth"
-      ],
+      "description": "Sacred natural sanctuary for nature wardens",
       "cost": {
         "lumber": 4,
         "stone": 2,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "rangers-outpost"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "survival",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "nature",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "stealth",
+          "value": 2
+        }
+      ]
     },
     {
       "id": "wildskeepers-enclave",
       "name": "Wildskeeper's Enclave",
-      "type": "skill",
-      "category": "exploration-wilderness",
-      "tier": 4,
-      "earnIncomeLevel": "settlement+6",
-      "bonus": 3,
-      "skills": [
-        "survival",
-        "nature",
-        "stealth"
-      ],
+      "description": "Elite wilderness mastery compound",
       "cost": {
         "lumber": 6,
         "stone": 6,
         "ore": 4
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-4"
-      ],
-      "special": "Reroll 1 failed skill check per turn",
-      "upgradeFrom": "druids-grove"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "survival",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "nature",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "stealth",
+          "value": 3
+        }
+      ]
     }
   ],
   "skills": [

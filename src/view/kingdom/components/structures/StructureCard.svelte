@@ -5,9 +5,13 @@
     getResourceIcon, 
     getResourceColor 
   } from '../../utils/presentation';
+  import { generateEffectMessages } from '../../../../models/Structure';
   
   export let structure: Structure;
   export let tier: number;
+  
+  // Generate effect messages for gameEffects and manualEffects
+  $: effectMessages = generateEffectMessages(structure);
 </script>
 
 <div class="structure-card">
@@ -28,6 +32,13 @@
     
     <!-- Info Section -->
     <div class="structure-info">
+      <!-- Description -->
+      {#if structure.description}
+        <div class="structure-description">
+          {structure.description}
+        </div>
+      {/if}
+      
       <!-- Cost Section -->
       <div class="structure-card-cost">
         <div class="cost-label">Cost</div>
@@ -46,41 +57,39 @@
         </div>
       </div>
       
-      <!-- Effects Section -->
-      <div class="structure-card-effects">
-        <div class="effect-label">Effect</div>
-        {#if structure.effect}
-          <p class="effect-text">{structure.effect}</p>
-        {/if}
-        
-        {#if structure.effects.goldPerTurn}
-          <div class="effect-item">
-            <i class="fas fa-coins" style="color: #ffd700;"></i>
-            <span>+{structure.effects.goldPerTurn} Gold/turn</span>
-          </div>
-        {/if}
-        
-        {#if structure.effects.unrestReductionPerTurn}
-          <div class="effect-item">
-            <i class="fas fa-dove" style="color: #87ceeb;"></i>
-            <span>-{structure.effects.unrestReductionPerTurn} Unrest/turn</span>
-          </div>
-        {/if}
-        
-        {#if structure.effects.foodStorage}
-          <div class="effect-item">
-            <i class="fas fa-boxes-stacked" style="color: #cd853f;"></i>
-            <span>+{structure.effects.foodStorage} Food Storage</span>
-          </div>
-        {/if}
-        
-        {#if structure.special}
-          <div class="special-note">
-            <i class="fas fa-sparkles"></i>
-            {structure.special}
-          </div>
-        {/if}
-      </div>
+      <!-- Modifiers (from structure.modifiers array) -->
+      {#if structure.modifiers && structure.modifiers.length > 0}
+        <div class="structure-modifiers">
+          <div class="effect-label">Modifiers</div>
+          {#each structure.modifiers as modifier}
+            <div class="effect-item">
+              <i class="fas fa-arrow-up" style="color: #4ade80;"></i>
+              <span>{modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}</span>
+            </div>
+          {/each}
+        </div>
+      {/if}
+      
+      <!-- Effect Messages (gameEffects and manualEffects with msg support) -->
+      {#if effectMessages.length > 0}
+        <div class="structure-effect-messages">
+          <div class="effect-label">Effects</div>
+          {#each effectMessages as message}
+            <div class="effect-message-item">
+              <i class="fas fa-bolt"></i>
+              <span>{message}</span>
+            </div>
+          {/each}
+        </div>
+      {/if}
+      
+      <!-- Special Note -->
+      {#if structure.special}
+        <div class="special-note">
+          <i class="fas fa-sparkles"></i>
+          {structure.special}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -158,6 +167,15 @@
     gap: 1rem;
   }
   
+  /* Description */
+  .structure-description {
+    font-size: var(--font-md);
+    color: var(--text-secondary);
+    font-style: italic;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  
   /* Cost Section */
   .structure-card-cost {
     .cost-label {
@@ -192,22 +210,13 @@
     }
   }
   
-  /* Effects Section */
-  .structure-card-effects {
+  /* Modifiers Section */
+  .structure-modifiers {
     .effect-label {
-      font-size: var(--font-s);
+      font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       margin-bottom: 0.25rem;
-    }
-    
-    .effect-text {
-      margin: 0.25rem 0 0.5rem 0;
-      font-size: var(--font-md);
-      color: var(--text-primary);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.4;
-      white-space: pre-line;
     }
     
     .effect-item {
@@ -224,23 +233,51 @@
         font-size: var(--font-sm);
       }
     }
+  }
+  
+  /* Effect Messages Section */
+  .structure-effect-messages {
+    .effect-label {
+      font-size: var(--font-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
     
-    .special-note {
-      margin-top: 0.5rem;
-      padding: 0.5rem;
-      background: rgba(251, 191, 36, 0.05);
-      border-left: 2px solid var(--color-amber);
-      font-size: var(--font-md);
-      color: var(--text-accent);
+    .effect-message-item {
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
+      gap: 0.5rem;
+      margin: 0.25rem 0;
+      font-size: var(--font-sm);
+      color: var(--text-primary);
       
       i {
-        color: var(--color-amber);
-        font-size: var(--font-md);
+        width: 1rem;
+        text-align: center;
+        font-size: var(--font-sm);
         margin-top: 0.125rem;
+        color: var(--color-amber);
       }
+    }
+  }
+  
+  /* Special Note */
+  .special-note {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(251, 191, 36, 0.05);
+    border-left: 2px solid var(--color-amber);
+    font-size: var(--font-md);
+    color: var(--text-accent);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    
+    i {
+      color: var(--color-amber);
+      font-size: var(--font-md);
+      margin-top: 0.125rem;
     }
   }
 </style>

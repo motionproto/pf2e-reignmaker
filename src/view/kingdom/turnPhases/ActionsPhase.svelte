@@ -1,7 +1,7 @@
 <script lang="ts">
   import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
   import { TurnPhase } from "../../../actors/KingdomActor";
-  import { createGameEffectsService } from '../../../services/GameEffectsService';
+  import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createCheckInstanceService } from '../../../services/CheckInstanceService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
@@ -25,7 +25,7 @@
 
   // Initialize controller and services
   let controller: any = null;
-  let gameEffectsService: any = null;
+  let gameCommandsService: any = null;
   let checkInstanceService: any = null;
 
   // Custom Action Registry - Declarative pattern for actions requiring pre-roll dialogs
@@ -314,8 +314,8 @@
     }
     
     // Centralized action tracking - applies to ALL actions
-    if (gameEffectsService && currentUserId) {
-      await gameEffectsService.trackPlayerAction(
+    if (gameCommandsService && currentUserId) {
+      await gameCommandsService.trackPlayerAction(
         currentUserId,
         (window as any).game?.user?.name,
         instance.appliedOutcome.actorName,
@@ -452,7 +452,7 @@
   onMount(async () => {
     // Initialize controller and service
     controller = await createActionPhaseController();
-    gameEffectsService = await createGameEffectsService();
+    gameCommandsService = await createGameCommandsService();
     
     // Initialize the phase (this auto-completes immediately to allow players to skip actions)
     await controller.startPhase();
@@ -562,7 +562,7 @@
   async function executeSkillAction(event: CustomEvent, action: any) {
     const { skill, checkId, checkName } = event.detail;
     
-    // Note: Action spending is now handled by GameEffectsService.trackPlayerAction()
+    // Note: Action spending is now handled by GameCommandsService.trackPlayerAction()
     // which adds an entry to actionLog when the roll completes
     
     // Get character for roll
@@ -848,7 +848,7 @@
   async function executeAidRoll(skill: string, targetActionId: string, targetActionName: string) {
     const game = (window as any).game;
     
-    // Note: Aid action spending is handled by GameEffectsService.trackPlayerAction()
+    // Note: Aid action spending is handled by GameCommandsService.trackPlayerAction()
     // after the roll completes (see aidRollListener below)
     
     // Get character for roll
@@ -924,8 +924,8 @@
               });
               
               // Track the aid check in the action log
-              if (gameEffectsService) {
-                await gameEffectsService.trackPlayerAction(
+              if (gameCommandsService) {
+                await gameCommandsService.trackPlayerAction(
                   game.user.id,
                   game.user.name,
                   actorName,
@@ -939,8 +939,8 @@
             }
           } else {
             // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
-            if (gameEffectsService) {
-              await gameEffectsService.trackPlayerAction(
+            if (gameCommandsService) {
+              await gameCommandsService.trackPlayerAction(
                 game.user.id,
                 game.user.name,
                 actorName,

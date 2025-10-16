@@ -1,0 +1,43 @@
+{
+  "type": "support",
+  "family": "Logistics",
+  "description": "Military housing and support",
+  "tiers": [
+    {
+      "id": "barracks",
+      "name": "Barracks",
+      "msg": "Increases the settlement's unit capacity by 1",
+      "cost": {
+        "stone": 2
+      },
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ],
+      "manualEffects": [
+        "Choose or roll for one random structure in a random settlement. Mark that structure as damaged"
+      ],
+      "gameCommand": [
+        {
+          "type": "recruitArmy",
+          "level": "kingdom-level"
+        }
+      ],
+      "gameEffects": [
+        {
+          "type": "capacity",
+          "resource": "imprisonedUnrest",
+          "value": 2
+        },
+        {
+          "type": "unlock",
+          "action": "executePrisoners"
+        }
+      ]
+    }
+  ]
+}

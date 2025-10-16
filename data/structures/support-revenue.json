@@ -6,79 +6,109 @@
     {
       "id": "tax-office",
       "name": "Tax Office",
-      "type": "support",
-      "category": "revenue",
-      "tier": 1,
-      "effect": "Each Kingdom Turn, the kingdom gains 1 Gold",
+      "description": "Basic tax collection office",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 1,
+          "duration": "permanent"
+        }
       ],
-      "special": "Only one Taxation structure may exist in the kingdom at a time",
-      "upgradeFrom": null
+      "manualEffects": [
+        "Only one Revenue structure may exist in the kingdom at a time"
+      ]
     },
     {
       "id": "counting-house",
       "name": "Counting House",
-      "type": "support",
-      "category": "revenue",
-      "tier": 2,
-      "effect": "Each Kingdom Turn, the kingdom gains 2 Gold. PCs may attempt the Personal Income kingdom action",
+      "description": "Organized financial institution for tax collection",
       "cost": {
         "lumber": 1,
         "stone": 3
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 2,
+          "duration": "permanent"
+        }
       ],
-      "special": "Only one Taxation structure may exist in the kingdom at a time",
-      "upgradeFrom": "tax-office"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "personalIncome"
+          ]
+        }
+      ],
+      "manualEffects": [
+        "Only one Revenue structure may exist in the kingdom at a time"
+      ]
     },
     {
       "id": "treasury",
       "name": "Treasury",
-      "type": "support",
-      "category": "revenue",
-      "tier": 3,
-      "effect": "Each Kingdom Turn, the kingdom gains 4 Gold. PCs may attempt the Personal Income action (Income T3)",
+      "description": "Comprehensive treasury for managing kingdom finances",
       "cost": {
         "lumber": 2,
         "stone": 5,
         "ore": 1
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 4,
+          "duration": "permanent"
+        }
       ],
-      "special": "Only one Taxation structure may exist in the kingdom at a time",
-      "upgradeFrom": "counting-house"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "personalIncome"
+          ]
+        }
+      ],
+      "manualEffects": [
+        "Only one Revenue structure may exist in the kingdom at a time",
+        "Personal Income uses Tier 3 income level"
+      ]
     },
     {
       "id": "exchequer",
       "name": "Exchequer",
-      "type": "support",
-      "category": "revenue",
-      "tier": 4,
-      "effect": "Each Kingdom Turn, the kingdom gains 8 Gold. PCs may attempt the Personal Income action (Income T4)",
+      "description": "Grand financial institution managing kingdom wealth",
       "cost": {
         "lumber": 3,
         "stone": 9,
         "ore": 4
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 8,
+          "duration": "permanent"
+        }
       ],
-      "special": "Only one Taxation structure may exist in the kingdom at a time",
-      "upgradeFrom": "treasury"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "personalIncome"
+          ]
+        }
+      ],
+      "manualEffects": [
+        "Only one Revenue structure may exist in the kingdom at a time",
+        "Personal Income uses Tier 4 income level"
+      ]
     }
   ]
 }

@@ -6,79 +6,113 @@
     {
       "id": "stocks",
       "name": "Stocks",
-      "type": "support",
-      "category": "justice",
-      "tier": 1,
-      "effect": "Can hold 1 imprisoned Unrest. Allows Execute action only",
+      "description": "Basic detention facility for troublemakers",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "imprisonedUnrestCapacity",
+          "value": 1,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "executePrisoners"
+          ]
+        }
+      ]
     },
     {
       "id": "jail",
       "name": "Jail",
-      "type": "support",
-      "category": "justice",
-      "tier": 2,
-      "effect": "Can hold 2 imprisoned Unrest. Allows Execute action only",
+      "description": "Secure holding facility for criminals",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "imprisonedUnrestCapacity",
+          "value": 2,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "stocks"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "executePrisoners"
+          ]
+        }
+      ]
     },
     {
       "id": "prison",
       "name": "Prison",
-      "type": "support",
-      "category": "justice",
-      "tier": 3,
-      "effect": "Can hold 4 imprisoned Unrest. Allows Execute or Pardon actions",
+      "description": "Large detention complex with rehabilitation options",
       "cost": {
         "lumber": 2,
         "stone": 4,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "imprisonedUnrestCapacity",
+          "value": 4,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "jail"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "executePrisoners",
+            "pardonPrisoners"
+          ]
+        }
+      ]
     },
     {
       "id": "donjon",
       "name": "Donjon",
-      "type": "support",
-      "category": "justice",
-      "tier": 4,
-      "effect": "Can hold 8 imprisoned Unrest. Allows Execute or Pardon actions",
+      "description": "Fortress-like prison with advanced security",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "imprisonedUnrestCapacity",
+          "value": 8,
+          "duration": "permanent"
+        }
       ],
-      "special": "Once per turn, can convert 1 regular Unrest to imprisoned Unrest without an action",
-      "upgradeFrom": "prison"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "executePrisoners",
+            "pardonPrisoners"
+          ]
+        },
+        {
+          "type": "ruleMod",
+          "rule": "convertUnrestPerTurn",
+          "value": 1
+        }
+      ],
+      "manualEffects": [
+        "Once per turn, automatically converts 1 regular Unrest to imprisoned Unrest"
+      ]
     }
   ]
 }

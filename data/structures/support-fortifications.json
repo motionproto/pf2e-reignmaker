@@ -6,79 +6,96 @@
     {
       "id": "wooden-palisade",
       "name": "Wooden Palisade",
-      "type": "support",
-      "category": "fortifications",
-      "tier": 1,
-      "effect": "+1 Army AC",
+      "description": "Basic wooden defensive barrier",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "defenderBonus",
+          "value": {
+            "ac": 1
+          }
+        }
       ],
-      "special": null,
-      "upgradeFrom": null
+      "manualEffects": [
+        "Defending armies in this settlement gain +1 AC"
+      ]
     },
     {
       "id": "stone-walls",
       "name": "Stone Walls",
-      "type": "support",
-      "category": "fortifications",
-      "tier": 2,
-      "effect": "+1 Army AC, +1 Effective Level",
+      "description": "Solid stone defensive walls",
       "cost": {
         "lumber": 1,
         "stone": 3
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "defenderBonus",
+          "value": {
+            "ac": 1,
+            "level": 1
+          }
+        }
       ],
-      "special": null,
-      "upgradeFrom": "wooden-palisade"
+      "manualEffects": [
+        "Defending armies in this settlement gain +1 AC and +1 effective level"
+      ]
     },
     {
       "id": "fortified-walls",
       "name": "Fortified Walls",
-      "type": "support",
-      "category": "fortifications",
-      "tier": 3,
-      "effect": "+1 Army AC, +2 Effective Level",
+      "description": "Heavily reinforced defensive fortifications",
       "cost": {
         "lumber": 1,
         "stone": 4,
         "ore": 3
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "defenderBonus",
+          "value": {
+            "ac": 1,
+            "level": 2
+          }
+        }
       ],
-      "special": null,
-      "upgradeFrom": "stone-walls"
+      "manualEffects": [
+        "Defending armies in this settlement gain +1 AC and +2 effective level"
+      ]
     },
     {
       "id": "grand-battlements",
       "name": "Grand Battlements",
-      "type": "support",
-      "category": "fortifications",
-      "tier": 4,
-      "effect": "+2 Army AC, +3 Effective Level",
+      "description": "Massive defensive structures with advanced defensive positions",
       "cost": {
         "lumber": 2,
         "stone": 8,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "defenderBonus",
+          "value": {
+            "ac": 2,
+            "level": 3
+          }
+        },
+        {
+          "type": "ruleMod",
+          "rule": "defenderRecovery",
+          "value": true
+        }
       ],
-      "special": "Defenders located in this recover each turn as long as the city has food",
-      "upgradeFrom": "fortified-walls"
+      "manualEffects": [
+        "Defending armies in this settlement gain +2 AC and +3 effective level",
+        "Defenders located in this settlement recover each turn as long as the city has food"
+      ]
     }
   ]
 }

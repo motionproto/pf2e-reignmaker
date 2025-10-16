@@ -1,5 +1,5 @@
 /**
- * GameEffectsResolver - Handles non-resource game effects from actions
+ * GameCommandsResolver - Handles non-resource game effects from actions
  * 
  * Responsibilities:
  * - Execute game effects (claim hexes, recruit armies, found settlements, etc.)
@@ -29,7 +29,7 @@ export interface ResolveResult {
 /**
  * Create the game effects resolver service
  */
-export async function createGameEffectsResolver() {
+export async function createGameCommandsResolver() {
   return {
     /**
      * Recruit Army - Create a new army unit at specified level with NPC actor
@@ -40,7 +40,7 @@ export async function createGameEffectsResolver() {
      * @returns ResolveResult with created army data
      */
     async recruitArmy(level: number, name?: string): Promise<ResolveResult> {
-      logger.debug(`🪖 [GameEffectsResolver] Recruiting army at level ${level}...`);
+      logger.debug(`🪖 [GameCommandsResolver] Recruiting army at level ${level}...`);
       
       try {
         const actor = getKingdomActor();
@@ -85,7 +85,7 @@ export async function createGameEffectsResolver() {
         };
 
       } catch (error) {
-        logger.error('❌ [GameEffectsResolver] Failed to recruit army:', error);
+        logger.error('❌ [GameCommandsResolver] Failed to recruit army:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -101,7 +101,7 @@ export async function createGameEffectsResolver() {
      * @returns ResolveResult with refund data
      */
     async disbandArmy(armyId: string): Promise<ResolveResult> {
-      logger.debug(`🪖 [GameEffectsResolver] Disbanding army ${armyId}...`);
+      logger.debug(`🪖 [GameCommandsResolver] Disbanding army ${armyId}...`);
       
       try {
         // Delegate to ArmyService
@@ -118,7 +118,7 @@ export async function createGameEffectsResolver() {
         };
 
       } catch (error) {
-        logger.error('❌ [GameEffectsResolver] Failed to disband army:', error);
+        logger.error('❌ [GameCommandsResolver] Failed to disband army:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'
@@ -139,7 +139,7 @@ export async function createGameEffectsResolver() {
       location: { x: number; y: number } = { x: 0, y: 0 },
       grantFreeStructure: boolean = false
     ): Promise<ResolveResult> {
-      logger.debug(`🏘️ [GameEffectsResolver] Founding settlement: ${name}...`);
+      logger.debug(`🏘️ [GameCommandsResolver] Founding settlement: ${name}...`);
       
       try {
         const actor = getKingdomActor();
@@ -176,7 +176,7 @@ export async function createGameEffectsResolver() {
           ? `Founded ${name} (Village, Level 1) with 1 free structure slot!`
           : `Founded ${name} (Village, Level 1)`;
 
-        logger.debug(`✅ [GameEffectsResolver] ${message}`);
+        logger.debug(`✅ [GameCommandsResolver] ${message}`);
 
         return {
           success: true,
@@ -188,7 +188,7 @@ export async function createGameEffectsResolver() {
         };
 
       } catch (error) {
-        logger.error('❌ [GameEffectsResolver] Failed to found settlement:', error);
+        logger.error('❌ [GameCommandsResolver] Failed to found settlement:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'

@@ -7,7 +7,7 @@
  * - Consistent outcome application across Actions, Events, and Incidents
  */
 
-import { createGameEffectsService, type OutcomeDegree } from '../GameEffectsService';
+import { createGameCommandsService, type OutcomeDegree } from '../GameCommandsService';
 import type { ResolutionData } from '../../types/events';
 import { logger } from '../../utils/Logger';
 
@@ -29,10 +29,10 @@ export async function applyResolvedOutcome(
 ) {
   logger.debug(`🎯 [OutcomeApplication] Applying ${outcome} with ${resolutionData.numericModifiers.length} modifiers`);
   
-  const gameEffects = await createGameEffectsService();
+  const gameCommands = await createGameCommandsService();
   
   // Apply numeric modifiers with automatic critical success fame bonus
-  const result = await gameEffects.applyNumericModifiers(
+  const result = await gameCommands.applyNumericModifiers(
     resolutionData.numericModifiers,
     outcome  // Automatically applies +1 fame on critical success
   );
@@ -45,7 +45,7 @@ export async function applyResolvedOutcome(
   // Execute complex actions (Phase 3 - stub for now)
   if (resolutionData.complexActions.length > 0) {
     logger.debug(`🔧 [OutcomeApplication] Complex actions to execute:`, resolutionData.complexActions);
-    // await gameEffects.executeComplexActions(resolutionData.complexActions);
+    // await gameCommands.executeComplexActions(resolutionData.complexActions);
   }
   
   logger.debug(`✅ [OutcomeApplication] Outcome applied successfully`);

@@ -185,7 +185,19 @@
                       {/if}
                     </div>
                     
-                    <div class="structure-effect">{structure.effect}</div>
+                    {#if structure.description}
+                      <div class="structure-description">{structure.description}</div>
+                    {/if}
+                    
+                    {#if structure.modifiers && structure.modifiers.length > 0}
+                      <div class="structure-modifiers">
+                        {#each structure.modifiers as modifier}
+                          <span class="modifier-badge">
+                            {modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}
+                          </span>
+                        {/each}
+                      </div>
+                    {/if}
                   </div>
                   
                   {#if !isBuilt}
@@ -423,10 +435,31 @@
     font-weight: 600;
   }
   
-  .structure-effect {
+  .structure-description {
     color: var(--text-secondary, #9ca3af);
-    font-size: var(--font-sm, 0.75rem);
+    font-size: var(--font-sm, 0.875rem);
+    font-style: italic;
+    margin-top: 0.25rem;
     line-height: 1.3;
+  }
+  
+  .structure-modifiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+  
+  .modifier-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.625rem;
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+    border-radius: var(--radius-md, 0.375rem);
+    font-size: var(--font-xs, 0.75rem);
+    font-weight: 600;
+    border: 1px solid rgba(34, 197, 94, 0.3);
   }
   
   .add-button {

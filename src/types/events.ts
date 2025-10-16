@@ -60,7 +60,7 @@ export type EventTier = 'event' | 'minor' | 'moderate' | 'major' | number;
 /**
  * Resource types that can be modified
  */
-export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame' | 'imprisoned_unrest' | 'damage_structure';
+export type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'unrest' | 'fame' | 'imprisonedUnrest' | 'foodCapacity' | 'armyCapacity' | 'diplomaticCapacity' | 'imprisonedUnrestCapacity';
 
 /**
  * Import and re-export typed modifier system

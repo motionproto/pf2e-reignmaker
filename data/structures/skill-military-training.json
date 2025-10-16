@@ -6,100 +6,92 @@
     {
       "id": "gymnasium",
       "name": "Gymnasium",
-      "type": "skill",
-      "category": "military-training",
-      "tier": 1,
-      "earnIncomeLevel": "settlement",
-      "bonus": 1,
-      "skills": [
-        "athletics"
-      ],
+      "description": "Basic physical training facility",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "athletics",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "training-yard",
       "name": "Training Yard",
-      "type": "skill",
-      "category": "military-training",
-      "tier": 2,
-      "earnIncomeLevel": "settlement+2",
-      "bonus": 1,
-      "skills": [
-        "athletics",
-        "acrobatics"
-      ],
+      "description": "Combat training grounds for soldiers",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "gymnasium"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "athletics",
+          "value": 1
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "acrobatics",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "warriors-hall",
       "name": "Warrior's Hall",
-      "type": "skill",
-      "category": "military-training",
-      "tier": 3,
-      "earnIncomeLevel": "settlement+4",
-      "bonus": 2,
-      "skills": [
-        "athletics",
-        "acrobatics",
-        "intimidation"
-      ],
+      "description": "Prestigious barracks for elite warriors",
       "cost": {
         "lumber": 2,
         "stone": 3,
         "ore": 3
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "training-yard"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "athletics",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "acrobatics",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "intimidation",
+          "value": 2
+        }
+      ]
     },
     {
       "id": "military-academy",
       "name": "Military Academy",
-      "type": "skill",
-      "category": "military-training",
-      "tier": 4,
-      "earnIncomeLevel": "settlement+6",
-      "bonus": 3,
-      "skills": [
-        "athletics",
-        "acrobatics",
-        "intimidation"
-      ],
+      "description": "Premier institution for tactical and physical training",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-4"
-      ],
-      "special": "Reroll 1 failed skill check per turn",
-      "upgradeFrom": "warriors-hall"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "athletics",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "acrobatics",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "intimidation",
+          "value": 3
+        }
+      ]
     }
   ],
   "skills": [

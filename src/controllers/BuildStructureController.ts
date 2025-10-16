@@ -245,6 +245,12 @@ export async function createBuildStructureController() {
         return { success: false, error: 'Settlement not found' };
       }
 
+      // Get structure to access its modifiers
+      const structure = structuresService.getStructure(project.structureId);
+      if (!structure) {
+        return { success: false, error: 'Structure definition not found' };
+      }
+
       // Add structure to settlement and remove from queue
       await updateKingdom(k => {
         const s = k.settlements.find(s => s.name === project.settlementName);
@@ -258,7 +264,54 @@ export async function createBuildStructureController() {
         if (k.buildQueue) {
           k.buildQueue = k.buildQueue.filter(p => p.id !== projectId);
         }
+        
+        // Add structure modifiers to activeModifiers for permanent effects
+        if (structure.modifiers && structure.modifiers.length > 0) {
+          const activeModifier = {
+            id: `structure-${project.structureId}-${settlement.id}-${Date.now()}`,
+            name: structure.name,
+            description: structure.description || `Effects from ${structure.name}`,
+            tier: structure.tier || 1,
+            sourceType: 'structure' as const,
+            sourceId: project.structureId,
+            sourceName: structure.name,
+            startTurn: k.currentTurn,
+            modifiers: structure.modifiers
+          };
+          
+          if (!k.activeModifiers) {
+            k.activeModifiers = [];
+          }
+          k.activeModifiers.push(activeModifier);
+          
+          // Apply modifiers immediately (don't wait for next Status phase)
+          for (const mod of structure.modifiers) {
+            if (mod.type === 'static' && mod.duration === 'permanent') {
+              const resource = mod.resource;
+              const value = mod.value;
+              
+              if (!k.resources) {
+                k.resources = {};
+              }
+              
+              const currentValue = k.resources[resource] || 0;
+              const newValue = Math.max(0, currentValue + value);
+              k.resources[resource] = newValue;
+              
+              logger.debug(`  ✓ Applied modifier immediately: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+            }
+          }
+          
+          logger.debug(`✅ [BuildStructureController] Added ${structure.modifiers.length} modifiers from ${structure.name}`);
+        }
       });
+
+      // Update settlement derived properties and skill bonuses
+      const { settlementService } = await import('../services/settlements');
+      if (settlement) {
+        await settlementService.updateSettlementSkillBonuses(settlement.id);
+        await settlementService.updateSettlementDerivedProperties(settlement.id);
+      }
 
       logger.debug(`✅ [BuildStructureController] Completed ${project.structureName} in ${project.settlementName}`);
       return { success: true, project };

@@ -1,5 +1,5 @@
 /**
- * GameEffectsService - Unified interface for applying game outcomes
+ * GameCommandsService - Unified interface for applying game outcomes
  * 
  * Responsibilities:
  * - Apply immediate effects from events, incidents, and actions
@@ -74,7 +74,7 @@ export interface ApplyOutcomeResult {
 /**
  * Create the game effects service
  */
-export async function createGameEffectsService() {
+export async function createGameCommandsService() {
   const modifierService = await createModifierService();
 
   return {
@@ -89,7 +89,7 @@ export async function createGameEffectsService() {
       modifiers: Array<{ resource: ResourceType; value: number }>,
       outcome?: OutcomeDegree
     ): Promise<ApplyOutcomeResult> {
-      logger.debug(`🎯 [GameEffects] Applying ${modifiers.length} numeric modifiers`);
+      logger.debug(`🎯 [GameCommands] Applying ${modifiers.length} numeric modifiers`);
       
       const result: ApplyOutcomeResult = {
         success: true,
@@ -110,10 +110,10 @@ export async function createGameEffectsService() {
           await this.applyResourceChange(resource, value, 'Applied', result);
         }
         
-        logger.debug(`✅ [GameEffects] All modifiers applied successfully`);
+        logger.debug(`✅ [GameCommands] All modifiers applied successfully`);
         return result;
       } catch (error) {
-        logger.error(`❌ [GameEffects] Failed to apply modifiers:`, error);
+        logger.error(`❌ [GameCommands] Failed to apply modifiers:`, error);
         result.success = false;
         result.error = error instanceof Error ? error.message : 'Unknown error';
         return result;
@@ -134,13 +134,13 @@ export async function createGameEffectsService() {
     ): Promise<void> {
       const actor = getKingdomActor();
       if (!actor) {
-        logger.warn('[GameEffects] Cannot track action - no kingdom actor');
+        logger.warn('[GameCommands] Cannot track action - no kingdom actor');
         return;
       }
 
       await actor.updateKingdom(kingdom => {
         if (!kingdom.turnState) {
-          logger.warn('[GameEffects] Cannot track action - no turnState');
+          logger.warn('[GameCommands] Cannot track action - no turnState');
           return;
         }
         
@@ -159,7 +159,7 @@ export async function createGameEffectsService() {
 
         kingdom.turnState.actionLog.push(entry);
         
-        logger.debug(`📝 [GameEffects] Tracked action: ${characterName} performed ${actionName} in ${phase}`);
+        logger.debug(`📝 [GameCommands] Tracked action: ${characterName} performed ${actionName} in ${phase}`);
       });
     },
 
@@ -186,7 +186,7 @@ export async function createGameEffectsService() {
      * It handles immediate effects and delegates to ModifierService for ongoing effects.
      */
     async applyOutcome(params: ApplyOutcomeParams): Promise<ApplyOutcomeResult> {
-      logger.debug(`🎯 [GameEffects] Applying ${params.type} outcome:`, {
+      logger.debug(`🎯 [GameCommands] Applying ${params.type} outcome:`, {
         source: params.sourceName,
         outcome: params.outcome,
         modifierCount: params.modifiers.length
@@ -217,11 +217,11 @@ export async function createGameEffectsService() {
           await this.createOngoingModifier(params);
         }
 
-        logger.debug(`✅ [GameEffects] Outcome applied successfully:`, result.applied);
+        logger.debug(`✅ [GameCommands] Outcome applied successfully:`, result.applied);
         return result;
 
       } catch (error) {
-        logger.error(`❌ [GameEffects] Failed to apply outcome:`, error);
+        logger.error(`❌ [GameCommands] Failed to apply outcome:`, error);
         result.success = false;
         result.error = error instanceof Error ? error.message : 'Unknown error';
         return result;
@@ -250,7 +250,7 @@ export async function createGameEffectsService() {
         
         // Skip permanent modifiers (applied during Status phase for structures)
         if (modifier.duration === 'ongoing') {
-          logger.debug(`⏭️ [GameEffects] Skipping ongoing modifier (tracked separately): ${modifier.resource}`);
+          logger.debug(`⏭️ [GameCommands] Skipping ongoing modifier (tracked separately): ${modifier.resource}`);
           return;
         }
         
@@ -264,10 +264,10 @@ export async function createGameEffectsService() {
         let numericValue: number;
         if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
           numericValue = params.preRolledValues.get(modifierIndex)!;
-          logger.debug(`🎲 [GameEffects] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
+          logger.debug(`🎲 [GameCommands] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
         } else if (params.preRolledValues && params.preRolledValues.has(`state:${modifier.resource}`)) {
           numericValue = params.preRolledValues.get(`state:${modifier.resource}`)!;
-          logger.debug(`🎲 [GameEffects] Using pre-rolled state value for ${modifier.resource}: ${numericValue}`);
+          logger.debug(`🎲 [GameCommands] Using pre-rolled state value for ${modifier.resource}: ${numericValue}`);
         } else {
           // Roll the dice
           numericValue = this.evaluateDiceFormula(modifier.formula);
@@ -281,10 +281,10 @@ export async function createGameEffectsService() {
       } else if (isChoiceModifier(modifier)) {
         // Choice modifier: { type: 'choice', resources[], value, duration? }
         // This should have been resolved by OutcomeDisplay before calling
-        logger.warn(`⚠️ [GameEffects] Choice modifier not resolved! This should have been handled by UI.`);
+        logger.warn(`⚠️ [GameCommands] Choice modifier not resolved! This should have been handled by UI.`);
         
       } else {
-        logger.warn(`⚠️ [GameEffects] Unknown modifier type:`, modifier);
+        logger.warn(`⚠️ [GameCommands] Unknown modifier type:`, modifier);
       }
       
       // Note: Ongoing/turn-based modifiers are also added to activeModifiers
@@ -305,7 +305,7 @@ export async function createGameEffectsService() {
         for (let i = 0; i < numDice; i++) {
           total += Math.floor(Math.random() * diceSides) + 1;
         }
-        logger.debug(`🎲 [GameEffects] Rolled ${formula}: ${total}`);
+        logger.debug(`🎲 [GameCommands] Rolled ${formula}: ${total}`);
         return total;
       }
       // If it's not a dice formula, try parsing as a number
@@ -401,11 +401,11 @@ export async function createGameEffectsService() {
      * This delegates to ModifierService for tracking and applying effects each turn.
      */
     async createOngoingModifier(params: ApplyOutcomeParams): Promise<void> {
-      logger.debug(`🔄 [GameEffects] Creating ongoing modifier for ${params.sourceName}`);
+      logger.debug(`🔄 [GameCommands] Creating ongoing modifier for ${params.sourceName}`);
       
       // TODO: Implement when we have proper event/incident objects
       // For now, this is a placeholder for future implementation
-      logger.warn(`⚠️ [GameEffects] Ongoing modifier creation not yet implemented`);
+      logger.warn(`⚠️ [GameCommands] Ongoing modifier creation not yet implemented`);
     },
 
     /**
@@ -418,7 +418,7 @@ export async function createGameEffectsService() {
       params: ApplyOutcomeParams,
       result: ApplyOutcomeResult
     ): Promise<void> {
-      logger.debug(`🔧 [GameEffects] Applying special effect: ${effectType}`);
+      logger.debug(`🔧 [GameCommands] Applying special effect: ${effectType}`);
 
       switch (effectType) {
         case 'damage_structure':
@@ -431,7 +431,7 @@ export async function createGameEffectsService() {
           await this.claimHex(params, result);
           break;
         default:
-          logger.warn(`⚠️ [GameEffects] Unknown special effect type: ${effectType}`);
+          logger.warn(`⚠️ [GameCommands] Unknown special effect type: ${effectType}`);
       }
     },
 
@@ -439,7 +439,7 @@ export async function createGameEffectsService() {
      * Damage a random structure in a settlement
      */
     async damageStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`🏚️ [GameEffects] Damaging structure in settlement`);
+      logger.debug(`🏚️ [GameCommands] Damaging structure in settlement`);
       // TODO: Implement when structure system is ready
       result.applied.specialEffects.push('structure_damaged');
     },
@@ -448,7 +448,7 @@ export async function createGameEffectsService() {
      * Destroy a random structure in a settlement
      */
     async destroyStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`💥 [GameEffects] Destroying structure in settlement`);
+      logger.debug(`💥 [GameCommands] Destroying structure in settlement`);
       // TODO: Implement when structure system is ready
       result.applied.specialEffects.push('structure_destroyed');
     },
@@ -462,7 +462,7 @@ export async function createGameEffectsService() {
     async allocateImprisonedUnrest(
       allocations: Record<string, number>
     ): Promise<ApplyOutcomeResult> {
-      logger.debug(`⛓️ [GameEffects] Allocating imprisoned unrest:`, allocations);
+      logger.debug(`⛓️ [GameCommands] Allocating imprisoned unrest:`, allocations);
       
       const result: ApplyOutcomeResult = {
         success: true,
@@ -520,11 +520,11 @@ export async function createGameEffectsService() {
         result.applied.resources.push({ resource: 'unrest', value: -totalToAllocate });
         result.applied.specialEffects.push('imprisoned_unrest_allocated');
 
-        logger.debug(`✅ [GameEffects] Imprisoned unrest allocation complete`);
+        logger.debug(`✅ [GameCommands] Imprisoned unrest allocation complete`);
         return result;
 
       } catch (error) {
-        logger.error(`❌ [GameEffects] Failed to allocate imprisoned unrest:`, error);
+        logger.error(`❌ [GameCommands] Failed to allocate imprisoned unrest:`, error);
         result.success = false;
         result.error = error instanceof Error ? error.message : 'Unknown error';
         return result;
@@ -535,7 +535,7 @@ export async function createGameEffectsService() {
      * Claim a hex for the kingdom
      */
     async claimHex(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`🗺️ [GameEffects] Claiming hex`);
+      logger.debug(`🗺️ [GameCommands] Claiming hex`);
       // TODO: Implement when hex system is ready
       result.applied.specialEffects.push('hex_claimed');
     }

@@ -6,79 +6,108 @@
     {
       "id": "market-square",
       "name": "Market Square",
-      "type": "support",
-      "category": "commerce",
-      "tier": 1,
-      "effect": "Enables selling surplus at 2:1 (resources:gold). Purchase non-magical items up to settlement level",
+      "description": "Basic marketplace for trade and commerce",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "tradeRatio",
+          "value": {
+            "sell": "2:1"
+          }
+        }
       ],
-      "special": null,
-      "upgradeFrom": null
+      "manualEffects": [
+        "Enables selling surplus resources at 2:1 ratio (resources:gold)",
+        "Purchase non-magical items up to settlement level"
+      ]
     },
     {
       "id": "bazaar",
       "name": "Bazaar",
-      "type": "support",
-      "category": "commerce",
-      "tier": 2,
-      "effect": "Enables purchasing scrolls and consumables up to settlement level",
+      "description": "Expansive marketplace with magical goods",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "tradeRatio",
+          "value": {
+            "sell": "2:1"
+          }
+        }
       ],
-      "special": null,
-      "upgradeFrom": "market-square"
+      "manualEffects": [
+        "Enables selling surplus resources at 2:1 ratio (resources:gold)",
+        "Purchase non-magical items up to settlement level",
+        "Purchase scrolls and consumables up to settlement level"
+      ]
     },
     {
       "id": "merchant-guild",
       "name": "Merchant Guild",
-      "type": "support",
-      "category": "commerce",
-      "tier": 3,
-      "effect": "Improves selling surplus to 3:2 (resources:gold). Purchase magical items up to settlement level. +1 gold income per turn",
+      "description": "Organized merchant consortium with improved rates",
       "cost": {
         "lumber": 3,
         "stone": 3,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 1,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "bazaar"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "tradeRatio",
+          "value": {
+            "sell": "3:2"
+          }
+        }
+      ],
+      "manualEffects": [
+        "Enables selling surplus resources at 3:2 ratio (resources:gold)",
+        "Purchase magical items up to settlement level"
+      ]
     },
     {
       "id": "imperial-bank",
       "name": "Imperial Bank",
-      "type": "support",
-      "category": "commerce",
-      "tier": 4,
-      "effect": "Improves selling surplus to 1:1 (resources:gold). +2 gold income per turn",
+      "description": "Grand financial institution with optimal rates",
       "cost": {
         "lumber": 4,
         "stone": 4,
         "ore": 8
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": 2,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "merchant-guild"
+      "gameEffects": [
+        {
+          "type": "ruleMod",
+          "rule": "tradeRatio",
+          "value": {
+            "sell": "1:1"
+          }
+        }
+      ],
+      "manualEffects": [
+        "Enables selling surplus resources at 1:1 ratio (resources:gold)",
+        "Purchase magical items up to settlement level"
+      ]
     }
   ]
 }

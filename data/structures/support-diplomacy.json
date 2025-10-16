@@ -6,79 +6,124 @@
     {
       "id": "envoys-office",
       "name": "Envoy's Office",
-      "type": "support",
-      "category": "diplomacy",
-      "tier": 1,
-      "effect": "+1 Diplomatic capacity. Enables 'Establish Diplomatic Relations' action",
+      "description": "Basic diplomatic office for foreign relations",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "diplomaticCapacity",
+          "value": 1,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "establishDiplomaticRelations"
+          ]
+        }
+      ]
     },
     {
       "id": "embassy",
       "name": "Embassy",
-      "type": "support",
-      "category": "diplomacy",
-      "tier": 2,
-      "effect": "+2 Diplomatic capacity",
+      "description": "Formal embassy for establishing stronger foreign ties",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "diplomaticCapacity",
+          "value": 2,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "envoys-office"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "establishDiplomaticRelations"
+          ]
+        }
+      ]
     },
     {
       "id": "grand-embassy",
       "name": "Grand Embassy",
-      "type": "support",
-      "category": "diplomacy",
-      "tier": 3,
-      "effect": "+3 Diplomatic capacity. +1 Fame",
+      "description": "Prestigious embassy that enhances international reputation",
       "cost": {
         "lumber": 2,
         "stone": 4,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "diplomaticCapacity",
+          "value": 3,
+          "duration": "permanent"
+        },
+        {
+          "type": "static",
+          "resource": "fame",
+          "value": 1,
+          "duration": "permanent"
+        }
       ],
-      "special": null,
-      "upgradeFrom": "embassy"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "establishDiplomaticRelations"
+          ]
+        }
+      ]
     },
     {
       "id": "diplomatic-quarter-support",
       "name": "Diplomatic Quarter",
-      "type": "support",
-      "category": "diplomacy",
-      "tier": 4,
-      "effect": "+4 Diplomatic capacity. +1 Fame",
+      "description": "Entire district dedicated to international diplomacy",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "diplomaticCapacity",
+          "value": 4,
+          "duration": "permanent"
+        },
+        {
+          "type": "static",
+          "resource": "fame",
+          "value": 1,
+          "duration": "permanent"
+        },
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "permanent"
+        }
       ],
-      "special": "-1 Unrest each Kingdom Turn",
-      "upgradeFrom": "grand-embassy"
+      "gameEffects": [
+        {
+          "type": "unlock",
+          "actions": [
+            "establishDiplomaticRelations"
+          ]
+        }
+      ],
+      "manualEffects": [
+        "At the start of each Kingdom Turn, reduce Unrest by 1"
+      ]
     }
   ]
 }

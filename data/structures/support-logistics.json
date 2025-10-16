@@ -6,79 +6,80 @@
     {
       "id": "barracks",
       "name": "Barracks",
-      "type": "support",
-      "category": "logistics",
-      "tier": 1,
-      "effect": "Increases the settlement's unit capacity by +1",
+      "description": "Basic military housing for troops",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "armyCapacity",
+          "value": 1,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "garrison",
       "name": "Garrison",
-      "type": "support",
-      "category": "logistics",
-      "tier": 2,
-      "effect": "Increases the settlement's unit capacity by +2",
+      "description": "Fortified military quarters for larger forces",
       "cost": {
         "lumber": 1,
         "stone": 3
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "barracks"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "armyCapacity",
+          "value": 2,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "fortress",
       "name": "Fortress",
-      "type": "support",
-      "category": "logistics",
-      "tier": 3,
-      "effect": "Increases the settlement's unit capacity by +3",
+      "description": "Heavily defended military installation",
       "cost": {
         "lumber": 2,
         "stone": 4,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "garrison"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "armyCapacity",
+          "value": 3,
+          "duration": "permanent"
+        }
+      ]
     },
     {
       "id": "citadel",
       "name": "Citadel",
-      "type": "support",
-      "category": "logistics",
-      "tier": 4,
-      "effect": "Increases the settlement's unit capacity by +4",
+      "description": "Imposing fortress that projects military might",
       "cost": {
         "lumber": 2,
         "stone": 8,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "support-structure",
-        "tier-4"
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "armyCapacity",
+          "value": 4,
+          "duration": "permanent"
+        },
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": -1,
+          "duration": "permanent"
+        }
       ],
-      "special": "At the start of each Kingdom Turn, reduce the kingdom's Unrest by 1",
-      "upgradeFrom": "fortress"
+      "manualEffects": [
+        "At the start of each Kingdom Turn, reduce Unrest by 1"
+      ]
     }
   ]
 }

@@ -6,100 +6,92 @@
     {
       "id": "rats-warren",
       "name": "Rat's Warren",
-      "type": "skill",
-      "category": "crime-intrigue",
-      "tier": 1,
-      "earnIncomeLevel": "settlement",
-      "bonus": 1,
-      "skills": [
-        "thievery"
-      ],
+      "description": "Hidden underground criminal hideout",
       "cost": {
         "lumber": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "thievery",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "smugglers-den",
       "name": "Smuggler's Den",
-      "type": "skill",
-      "category": "crime-intrigue",
-      "tier": 2,
-      "earnIncomeLevel": "settlement+2",
-      "bonus": 1,
-      "skills": [
-        "thievery",
-        "deception"
-      ],
+      "description": "Secret facility for illicit trade operations",
       "cost": {
         "lumber": 2,
         "stone": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "rats-warren"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "thievery",
+          "value": 1
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "deception",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "thieves-guild",
       "name": "Thieves' Guild",
-      "type": "skill",
-      "category": "crime-intrigue",
-      "tier": 3,
-      "earnIncomeLevel": "settlement+4",
-      "bonus": 2,
-      "skills": [
-        "thievery",
-        "deception",
-        "stealth"
-      ],
+      "description": "Organized crime network headquarters",
       "cost": {
         "lumber": 2,
         "stone": 3,
         "ore": 3
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "smugglers-den"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "thievery",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "deception",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "stealth",
+          "value": 2
+        }
+      ]
     },
     {
       "id": "shadow-network",
       "name": "Shadow Network",
-      "type": "skill",
-      "category": "crime-intrigue",
-      "tier": 4,
-      "earnIncomeLevel": "settlement+6",
-      "bonus": 3,
-      "skills": [
-        "thievery",
-        "deception",
-        "stealth"
-      ],
+      "description": "Sophisticated underground intelligence network",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-4"
-      ],
-      "special": "Reroll 1 failed skill check per turn",
-      "upgradeFrom": "thieves-guild"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "thievery",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "deception",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "stealth",
+          "value": 3
+        }
+      ]
     }
   ],
   "skills": [

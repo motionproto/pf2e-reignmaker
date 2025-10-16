@@ -6,100 +6,92 @@
     {
       "id": "shrine",
       "name": "Shrine",
-      "type": "skill",
-      "category": "faith-nature",
-      "tier": 1,
-      "earnIncomeLevel": "settlement",
-      "bonus": 1,
-      "skills": [
-        "religion"
-      ],
+      "description": "Small sacred place of worship",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "religion",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "temple",
       "name": "Temple",
-      "type": "skill",
-      "category": "faith-nature",
-      "tier": 2,
-      "earnIncomeLevel": "settlement+2",
-      "bonus": 1,
-      "skills": [
-        "religion",
-        "medicine"
-      ],
+      "description": "Dedicated house of worship with healing services",
       "cost": {
         "lumber": 1,
         "stone": 3
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "shrine"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "religion",
+          "value": 1
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "medicine",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "temple-district",
       "name": "Temple District",
-      "type": "skill",
-      "category": "faith-nature",
-      "tier": 3,
-      "earnIncomeLevel": "settlement+4",
-      "bonus": 2,
-      "skills": [
-        "religion",
-        "medicine",
-        "nature"
-      ],
+      "description": "Sacred quarter with multiple shrines and gardens",
       "cost": {
         "lumber": 2,
         "stone": 4,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "temple"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "religion",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "medicine",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "nature",
+          "value": 2
+        }
+      ]
     },
     {
       "id": "grand-basilica",
       "name": "Grand Basilica",
-      "type": "skill",
-      "category": "faith-nature",
-      "tier": 4,
-      "earnIncomeLevel": "settlement+6",
-      "bonus": 3,
-      "skills": [
-        "religion",
-        "medicine",
-        "nature"
-      ],
+      "description": "Magnificent cathedral of divine power",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-4"
-      ],
-      "special": "Reroll 1 failed skill check per turn",
-      "upgradeFrom": "temple-district"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "religion",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "medicine",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "nature",
+          "value": 3
+        }
+      ]
     }
   ],
   "skills": [

@@ -113,6 +113,9 @@ export class SettlementStructureManagementService {
     // Update settlement skill bonuses after adding structures
     const { settlementService } = await import('../settlements');
     await settlementService.updateSettlementSkillBonuses(settlementId);
+    
+    // Update derived properties (imprisoned unrest capacity, food storage, etc.)
+    await settlementService.updateSettlementDerivedProperties(settlementId);
 
     return {
       success: true,
@@ -177,6 +180,9 @@ export class SettlementStructureManagementService {
     // Update settlement skill bonuses after removing structure
     const { settlementService } = await import('../settlements');
     await settlementService.updateSettlementSkillBonuses(settlementId);
+    
+    // Update derived properties (imprisoned unrest capacity, food storage, etc.)
+    await settlementService.updateSettlementDerivedProperties(settlementId);
 
     return { success: true, warning };
   }

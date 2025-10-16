@@ -3,7 +3,7 @@
  * 
  * Consolidates all dice-related logic from:
  * - OutcomeDisplayLogic (UI dice rolling)
- * - GameEffectsService (fallback dice rolling)
+ * - GameCommandsService (fallback dice rolling)
  * 
  * Single source of truth for dice operations across the application.
  * 

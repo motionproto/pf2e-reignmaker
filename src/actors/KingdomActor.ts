@@ -239,7 +239,12 @@ export class KingdomActor extends Actor {
         lumber: 0,
         stone: 0,
         ore: 0,
-        luxuries: 0
+        luxuries: 0,
+        // Capacity resources
+        foodCapacity: 0,
+        armyCapacity: 0,
+        diplomaticCapacity: 0,
+        imprisonedUnrestCapacity: 0
       },
       hexes: [],
       settlements: [],
@@ -396,7 +401,12 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       lumber: 0,
       stone: 0,
       ore: 0,
-      luxuries: 0
+      luxuries: 0,
+      // Capacity resources
+      foodCapacity: 0,
+      armyCapacity: 0,
+      diplomaticCapacity: 0,
+      imprisonedUnrestCapacity: 0
     },
     hexes: [],
     settlements: [],

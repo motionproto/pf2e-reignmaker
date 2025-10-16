@@ -454,18 +454,6 @@ export class ArmyService {
     return selected;
   }
   
-  /**
-   * Calculate total army support capacity from settlements
-   * 
-   * @param settlements - All settlements
-   * @returns Total support capacity
-   */
-  calculateTotalArmySupport(settlements: Settlement[]): number {
-    // This calculation is actually in SettlementService
-    // We just provide a convenience wrapper
-    const { settlementService } = require('../settlements');
-    return settlementService.calculateTotalArmySupport(settlements);
-  }
   
   /**
    * Process army support assignments
@@ -564,8 +552,7 @@ export class ArmyService {
     }
     
     // Check support capacity (warning only, not blocking)
-    const { settlementService } = require('../settlements');
-    const supportCapacity = settlementService.calculateTotalArmySupport(kingdom.settlements);
+    const supportCapacity = kingdom.resources?.armyCapacity || 0;
     const currentArmies = kingdom.armies?.length || 0;
     
     if (currentArmies >= supportCapacity) {

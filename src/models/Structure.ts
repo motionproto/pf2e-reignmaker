@@ -65,6 +65,43 @@ export enum SpecialAbility {
 }
 
 /**
+ * GameEffect types for structures (permanent passive capabilities)
+ */
+export type GameEffectType = 'unlock' | 'ruleMod';
+
+/**
+ * Unlock effect - enables player actions
+ */
+export interface UnlockEffect {
+  type: 'unlock';
+  actions: string[];  // List of action IDs to unlock
+  msg?: string;       // Optional custom message describing this effect
+}
+
+/**
+ * RuleMod effect - modifies game rules/mechanics
+ */
+export interface RuleModEffect {
+  type: 'ruleMod';
+  rule: string;       // Rule identifier
+  value?: any;        // Rule-specific data
+  msg?: string;       // Optional custom message describing this effect
+}
+
+/**
+ * Union type for all game effects
+ */
+export type GameEffect = UnlockEffect | RuleModEffect;
+
+/**
+ * Manual effect that requires GM interpretation
+ */
+export interface ManualEffect {
+  effect: string;     // Description of the effect
+  msg?: string;       // Optional custom message
+}
+
+/**
  * Structure bonuses and effects
  */
 export interface StructureEffects {
@@ -132,8 +169,12 @@ export interface Structure {
   
   // Effects
   effects: StructureEffects;
+  gameEffects?: GameEffect[]; // Permanent passive capabilities (unlocks, rule modifications)
+  modifiers?: any[]; // EventModifier array - capacity changes, etc.
+  manualEffects?: (string | ManualEffect)[]; // Effects that require manual resolution
   
   // Description
+  description?: string; // Short description (e.g., "Basic grain storage facility")
   effect: string; // Human-readable effect description
   special?: string; // Special rules or notes
   traits?: string[];
@@ -152,24 +193,44 @@ export function parseStructureFromJSON(data: any): Structure {
     constructionCost: data.cost || {},
     effects: {},
     effect: '',
+    description: data.description,
     special: data.special,
     traits: data.traits,
-    upgradeFrom: data.upgradeFrom
+    upgradeFrom: data.upgradeFrom,
+    modifiers: data.modifiers,
+    manualEffects: data.manualEffects
   };
   
   // Handle skill structures vs support structures
   if (data.type === 'skill') {
-    // Skill structures provide skill check bonuses
-    // For tier 1 structures (bonus = 0), use simplified text
-    if (data.tier === 1 || data.bonus === 0) {
+    // Parse settlementSkillBonus effects from gameEffects
+    const skillBonuses = new Map<string, number>();
+    
+    if (data.gameEffects && Array.isArray(data.gameEffects)) {
+      for (const effect of data.gameEffects) {
+        if (effect.type === 'settlementSkillBonus') {
+          const skill = effect.skill;
+          const value = effect.value || 0;
+          // Track highest bonus per skill (though shouldn't have duplicates)
+          skillBonuses.set(skill, Math.max(skillBonuses.get(skill) || 0, value));
+        }
+      }
+    }
+    
+    // Extract skills and determine highest bonus value
+    const skills = Array.from(skillBonuses.keys());
+    const maxBonus = Math.max(0, ...Array.from(skillBonuses.values()));
+    
+    // Generate effect text
+    if (data.tier === 1 || maxBonus === 0) {
       structure.effect = `Enables Earn Income with listed skills at settlement level.`;
     } else {
       const earnLevel = data.earnIncomeLevel || 'settlement level';
-      structure.effect = `Provides +${data.bonus || 0} to listed skills in this settlement.\nEnables Earn Income with listed skills at ${earnLevel}`;
+      structure.effect = `Provides +${maxBonus} to listed skills in this settlement.\nEnables Earn Income with listed skills at ${earnLevel}`;
     }
     
-    structure.effects.skillBonus = data.bonus || 0;
-    structure.effects.skillsSupported = data.skills || [];
+    structure.effects.skillBonus = maxBonus;
+    structure.effects.skillsSupported = skills;
     structure.effects.earnIncomeLevel = data.earnIncomeLevel || 'settlement';
   } else {
     // Support structures have various effects described in the effect field
@@ -270,6 +331,11 @@ export function parseStructureFromJSON(data: any): Structure {
     structure.effects.specialAbilities.push(SpecialAbility.DEFENDER_RECOVERY);
   }
   
+  // Parse gameEffects if present
+  if (data.gameEffects && Array.isArray(data.gameEffects)) {
+    structure.gameEffects = data.gameEffects as GameEffect[];
+  }
+  
   // Kingdom-wide unique for revenue structures
   if (structure.category === StructureCategory.REVENUE) {
     structure.uniqueKingdomWide = true;
@@ -281,6 +347,46 @@ export function parseStructureFromJSON(data: any): Structure {
   }
   
   return structure;
+}
+
+/**
+ * Generate effect messages for a structure
+ * Returns an array of effect messages (for gameEffects and manualEffects)
+ */
+export function generateEffectMessages(structure: Structure): string[] {
+  const messages: string[] = [];
+  
+  // Generate messages for gameEffects
+  if (structure.gameEffects && structure.gameEffects.length > 0) {
+    for (const effect of structure.gameEffects) {
+      if (effect.msg) {
+        // Use custom message if provided
+        messages.push(effect.msg);
+      } else {
+        // Generate message based on effect type
+        if (effect.type === 'unlock') {
+          const actionNames = effect.actions.join(', ');
+          messages.push(`Unlocks: ${actionNames}`);
+        } else if (effect.type === 'ruleMod') {
+          messages.push(`Modifies rule: ${effect.rule}`);
+        }
+      }
+    }
+  }
+  
+  // Generate messages for manualEffects
+  if (structure.manualEffects && structure.manualEffects.length > 0) {
+    for (const effect of structure.manualEffects) {
+      // manualEffects are plain strings or ManualEffect objects
+      if (typeof effect === 'string') {
+        messages.push(effect);
+      } else if (typeof effect === 'object' && 'effect' in effect) {
+        messages.push(effect.msg || effect.effect);
+      }
+    }
+  }
+  
+  return messages;
 }
 
 /**

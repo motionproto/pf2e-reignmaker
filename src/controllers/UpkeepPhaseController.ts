@@ -177,8 +177,8 @@ export async function createUpkeepPhaseController() {
         }
       }
       
-      // Calculate food storage capacity
-      const foodStorageCapacity = settlementService.getTotalFoodStorage(settlements);
+      // Get food storage capacity from stored resource
+      const foodStorageCapacity = kingdom.resources?.foodCapacity || 0;
       let excessFood = 0;
       
       // Enforce storage capacity - excess food is lost
@@ -388,7 +388,6 @@ export async function createUpkeepPhaseController() {
       // Use proper consumption service
       const { calculateConsumption, calculateArmySupportCapacity, calculateUnsupportedArmies } = await import('../services/economics/consumption');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
-      const { settlementService } = await import('../services/settlements');
       
       const settlements = kingdomData.settlements || [];
       const armies = kingdomData.armies || [];
@@ -399,8 +398,8 @@ export async function createUpkeepPhaseController() {
       const currentFood = kingdomData.resources?.food || 0;
       const armyCount = armies.length;
       
-      // Calculate food storage capacity
-      const foodStorageCapacity = settlementService.getTotalFoodStorage(settlements);
+      // Get food storage capacity from stored resource
+      const foodStorageCapacity = kingdomData.resources?.foodCapacity || 0;
       
       // Map settlement tier enum to numeric values
       const tierToNumber = (tier: typeof SettlementTier[keyof typeof SettlementTier]): number => {

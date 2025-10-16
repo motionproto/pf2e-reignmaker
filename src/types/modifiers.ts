@@ -17,7 +17,7 @@
 import type { ResourceType } from './events';
 export type { ResourceType };
 
-export type ModifierDuration = 'immediate' | 'ongoing' | number;
+export type ModifierDuration = 'immediate' | 'ongoing' | 'permanent' | number;
 
 /**
  * Static modifier - Applies a fixed numeric value to a resource
@@ -110,10 +110,14 @@ export function isOngoingDuration(duration: ModifierDuration | undefined): boole
   return duration === 'ongoing';
 }
 
+export function isPermanentDuration(duration: ModifierDuration | undefined): boolean {
+  return duration === 'permanent';
+}
+
 /**
- * Game effect types (for actions like recruiting armies)
+ * Game command types (for actions like recruiting armies)
  */
-export interface GameEffect {
+export interface GameCommand {
   type: 'recruitArmy' | 'disbandArmy' | 'damageStructure' | string;
   description: string;
   [key: string]: any;  // Allow additional type-specific properties
@@ -126,7 +130,7 @@ export interface OutcomeEffects {
   msg?: string;                    // Description message
   modifiers: EventModifier[];      // Typed modifiers
   manualEffects?: string[];        // GM instructions (not automated)
-  gameEffects?: GameEffect[];      // System-automated effects
+  gameCommands?: GameCommand[];    // System-automated commands
   endsEvent?: boolean;             // Whether this outcome ends the event
 }
 

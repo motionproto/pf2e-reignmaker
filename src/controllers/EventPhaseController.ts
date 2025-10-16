@@ -12,7 +12,7 @@ import type { KingdomData } from '../actors/KingdomActor';
 import type { ResolutionData } from '../types/modifiers';
 import { updateKingdom } from '../stores/KingdomStore';
 import { createModifierService } from '../services/ModifierService';
-import { createGameEffectsService } from '../services/GameEffectsService';
+import { createGameCommandsService } from '../services/GameCommandsService';
 import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import { isStaticModifier, isOngoingDuration, isDiceModifier } from '../types/modifiers';
 import { checkInstanceService } from '../services/CheckInstanceService';
@@ -52,7 +52,7 @@ export interface IncidentResolution {
 
 export async function createEventPhaseController(_eventService?: any) {
     const modifierService = await createModifierService();
-    const gameEffectsService = await createGameEffectsService();
+    const gameCommandsService = await createGameCommandsService();
     
     const createInitialState = (): EventPhaseState => ({
         currentEvent: null,
@@ -270,13 +270,13 @@ export async function createEventPhaseController(_eventService?: any) {
             
             // Track player action (unless event is ignored)
             if (!isIgnored && playerId && actorName) {
-                const { createGameEffectsService } = await import('../services/GameEffectsService');
-                const gameEffects = await createGameEffectsService();
+                const { createGameCommandsService } = await import('../services/GameCommandsService');
+                const gameCommands = await createGameCommandsService();
                 const game = (window as any).game;
                 const user = game?.users?.get(playerId);
                 const playerName = user?.name || 'Unknown Player';
                 
-                await gameEffects.trackPlayerAction(
+                await gameCommands.trackPlayerAction(
                     playerId,
                     playerName,
                     actorName,
@@ -529,7 +529,7 @@ export async function createEventPhaseController(_eventService?: any) {
             numericModifiers.forEach(m => logger.debug(`   ${m.resource}: ${m.value}`));
             
             if (numericModifiers.length > 0) {
-                await gameEffectsService.applyNumericModifiers(numericModifiers);
+                await gameCommandsService.applyNumericModifiers(numericModifiers);
                 logger.debug(`✅ [EventPhaseController] Applied ${numericModifiers.length} numeric modifier(s) from ${customModifiers.length} custom modifier(s)`);
             } else {
                 logger.debug(`⚠️ [EventPhaseController] No numeric modifiers to apply`);

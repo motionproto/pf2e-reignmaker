@@ -87,19 +87,6 @@ export class SettlementService {
   }
   
   /**
-   * Calculate total army support capacity
-   * Base support from tier + bonuses from structures
-   */
-  calculateTotalArmySupport(settlements: Settlement[]): number {
-    return settlements.reduce((total, settlement) => {
-      const config = SettlementTierConfig[settlement.tier];
-      const baseSupport = config?.armySupport || 0;
-      const structureBonus = structuresService.calculateArmySupportBonus(settlement);
-      return total + baseSupport + structureBonus;
-    }, 0);
-  }
-  
-  /**
    * Process food consumption and update fed status
    * Returns shortage amount if any
    */
@@ -131,25 +118,6 @@ export class SettlementService {
     }
   }
   
-  /**
-   * Get total food storage capacity across all settlements
-   * Now calculated from structures only, not tier
-   */
-  getTotalFoodStorage(settlements: Settlement[]): number {
-    return settlements.reduce((total, settlement) => {
-      return total + structuresService.calculateFoodStorage(settlement);
-    }, 0);
-  }
-  
-  /**
-   * Get total imprisoned unrest capacity
-   * Now calculated from structures only, not tier
-   */
-  getTotalImprisonedUnrestCapacity(settlements: Settlement[]): number {
-    return settlements.reduce((total, settlement) => {
-      return total + structuresService.calculateImprisonedUnrestCapacity(settlement);
-    }, 0);
-  }
   
   /**
    * Check if a settlement can be upgraded
@@ -253,6 +221,57 @@ export class SettlementService {
       if (s) {
         s.skillBonuses = newBonuses;
         logger.debug(`✅ [SettlementService] Updated skill bonuses:`, newBonuses);
+      }
+    });
+  }
+  
+  /**
+   * Update a settlement's derived properties based on its current structures
+   * These properties are stored on the settlement but calculated from structures
+   * Called automatically when structures are added/removed
+   * 
+   * @param settlementId - Settlement ID to update
+   */
+  async updateSettlementDerivedProperties(settlementId: string): Promise<void> {
+    logger.debug(`🎯 [SettlementService] Updating derived properties for settlement: ${settlementId}`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      logger.warn('⚠️ [SettlementService] No kingdom actor available');
+      return;
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      logger.warn('⚠️ [SettlementService] No kingdom data available');
+      return;
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      logger.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
+      return;
+    }
+    
+    // Calculate derived properties from structures
+    const imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(settlement);
+    const foodStorageCapacity = structuresService.calculateFoodStorage(settlement);
+    const goldIncome = structuresService.calculateGoldIncome(settlement);
+    
+    // Update settlement with calculated values
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s) {
+        s.imprisonedUnrestCapacityValue = imprisonedUnrestCapacityValue;
+        s.foodStorageCapacity = foodStorageCapacity;
+        s.goldIncome = goldIncome;
+        logger.debug(`✅ [SettlementService] Updated derived properties:`, {
+          imprisonedUnrestCapacityValue,
+          foodStorageCapacity,
+          goldIncome
+        });
       }
     });
   }
@@ -397,19 +416,6 @@ export class SettlementService {
     logger.debug(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
   }
   
-  /**
-   * Update settlement image
-   * 
-   * @param settlementId - Settlement ID
-   * @param imagePath - Path to image file
-   */
-  async updateSettlementImage(settlementId: string, imagePath: string): Promise<void> {
-    logger.debug(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
-    
-    await this.updateSettlement(settlementId, { imagePath });
-    
-    logger.debug(`✅ [SettlementService] Updated settlement image`);
-  }
   
   /**
    * Update settlement level

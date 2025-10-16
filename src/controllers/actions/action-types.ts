@@ -30,7 +30,7 @@ export interface ActionModifier {
 export interface ActionEffect {
   description: string;
   modifiers?: ActionModifier[]; // Resource changes (gold, food, unrest, etc.)
-  gameEffects?: import('./game-effects').GameEffect[]; // Gameplay effects (claim hexes, build structures, etc.)
+  gameCommands?: import('./game-commands').GameCommand[]; // Gameplay commands (claim hexes, build structures, etc.)
 }
 
 /**
@@ -39,7 +39,7 @@ export interface ActionEffect {
 export interface ActionEffectJson {
   description: string;
   modifiers?: ActionModifier[];
-  gameEffects?: import('./game-effects').GameEffect[];
+  gameCommands?: import('./game-commands').GameCommand[];
 }
 
 /**

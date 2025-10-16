@@ -82,11 +82,11 @@ export const ArrestDissidentsAction = {
       }
       
       try {
-        // Use GameEffectsService to handle the allocation
-        const { createGameEffectsService } = await import('../../../services/GameEffectsService');
-        const gameEffects = await createGameEffectsService();
+        // Use GameCommandsService to handle the allocation
+        const { createGameCommandsService } = await import('../../../services/GameCommandsService');
+        const gameCommands = await createGameCommandsService();
         
-        const result = await gameEffects.allocateImprisonedUnrest(
+        const result = await gameCommands.allocateImprisonedUnrest(
           resolutionData.customComponentData.allocations
         );
         

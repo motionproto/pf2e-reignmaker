@@ -6,100 +6,92 @@
     {
       "id": "scholars-table",
       "name": "Scholar's Table",
-      "type": "skill",
-      "category": "knowledge-magic",
-      "tier": 1,
-      "earnIncomeLevel": "settlement",
-      "bonus": 1,
-      "skills": [
-        "lore"
-      ],
+      "description": "Basic study area for researchers and scribes",
       "cost": {
         "stone": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-1"
-      ],
-      "special": null,
-      "upgradeFrom": null
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "lore",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "library",
       "name": "Library",
-      "type": "skill",
-      "category": "knowledge-magic",
-      "tier": 2,
-      "earnIncomeLevel": "settlement+2",
-      "bonus": 1,
-      "skills": [
-        "lore",
-        "arcana"
-      ],
+      "description": "Repository of books and arcane knowledge",
       "cost": {
         "lumber": 1,
         "stone": 3
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-2"
-      ],
-      "special": null,
-      "upgradeFrom": "scholars-table"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "lore",
+          "value": 1
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "arcana",
+          "value": 1
+        }
+      ]
     },
     {
       "id": "university",
       "name": "University",
-      "type": "skill",
-      "category": "knowledge-magic",
-      "tier": 3,
-      "earnIncomeLevel": "settlement+4",
-      "bonus": 2,
-      "skills": [
-        "lore",
-        "arcana",
-        "occultism"
-      ],
+      "description": "Prestigious center of higher learning",
       "cost": {
         "lumber": 2,
         "stone": 4,
         "ore": 2
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-3"
-      ],
-      "special": null,
-      "upgradeFrom": "library"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "lore",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "arcana",
+          "value": 2
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "occultism",
+          "value": 2
+        }
+      ]
     },
     {
       "id": "arcane-academy",
       "name": "Arcane Academy",
-      "type": "skill",
-      "category": "knowledge-magic",
-      "tier": 4,
-      "earnIncomeLevel": "settlement+6",
-      "bonus": 3,
-      "skills": [
-        "lore",
-        "arcana",
-        "occultism"
-      ],
+      "description": "Elite magical research institution",
       "cost": {
         "lumber": 4,
         "stone": 6,
         "ore": 6
       },
-      "traits": [
-        "building",
-        "skill-structure",
-        "tier-4"
-      ],
-      "special": "Reroll 1 failed skill check per turn",
-      "upgradeFrom": "university"
+      "gameEffects": [
+        {
+          "type": "settlementSkillBonus",
+          "skill": "lore",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "arcana",
+          "value": 3
+        },
+        {
+          "type": "settlementSkillBonus",
+          "skill": "occultism",
+          "value": 3
+        }
+      ]
     }
   ],
   "skills": [

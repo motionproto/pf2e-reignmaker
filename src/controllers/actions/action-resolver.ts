@@ -2,12 +2,12 @@
  * ActionResolver - Handles player action resolution and validation
  * 
  * This service manages action requirements and delegates outcome application
- * to the unified GameEffectsService.
+ * to the unified GameCommandsService.
  */
 
 import type { PlayerAction } from './action-types';
 import type { KingdomData } from '../../actors/KingdomActor';
-import { createGameEffectsService, type OutcomeDegree } from '../../services/GameEffectsService';
+import { createGameCommandsService, type OutcomeDegree } from '../../services/GameCommandsService';
 import { logger } from '../../utils/Logger';
 import { structuresService } from '../../services/structures';
 import { checkCustomRequirements } from './implementations';
@@ -159,7 +159,7 @@ export class ActionResolver {
     }
     
     /**
-     * Execute an action and apply its effects using GameEffectsService + GameEffectsResolver
+     * Execute an action and apply its effects using GameCommandsService + GameCommandsResolver
      */
     async executeAction(
         action: PlayerAction,
@@ -179,7 +179,7 @@ export class ActionResolver {
         const modifiers = this.getOutcomeModifiers(action, outcome);
         
         // Get game effects for this outcome
-        const gameEffects = effect?.gameEffects || [];
+        const gameCommands = effect?.gameCommands || [];
         
         // Track overall success and applied changes
         let overallSuccess = true;
@@ -188,8 +188,8 @@ export class ActionResolver {
         
         // Apply resource modifiers first (if any)
         if (modifiers.length > 0) {
-            const gameEffectsService = await createGameEffectsService();
-            const result = await gameEffectsService.applyOutcome({
+            const gameCommandsService = await createGameCommandsService();
+            const result = await gameCommandsService.applyOutcome({
                 type: 'action',
                 sourceId: action.id,
                 sourceName: action.name,
@@ -212,12 +212,12 @@ export class ActionResolver {
         }
         
         // Apply game effects (if any)
-        if (gameEffects.length > 0) {
-            const { createGameEffectsResolver } = await import('../../services/GameEffectsResolver');
-            const resolver = await createGameEffectsResolver();
+        if (gameCommands.length > 0) {
+            const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+            const resolver = await createGameCommandsResolver();
             
-            for (const gameEffect of gameEffects) {
-                const result = await this.executeGameEffect(
+            for (const gameEffect of gameCommands) {
+                const result = await this.executeGameCommand(
                     gameEffect,
                     resolver,
                     kingdomData,
@@ -251,7 +251,7 @@ export class ActionResolver {
     /**
      * Execute a single game effect by dispatching to the appropriate resolver method
      */
-    private async executeGameEffect(
+    private async executeGameCommand(
         gameEffect: any,
         resolver: any,
         kingdomData: KingdomData,

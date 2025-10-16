@@ -21,7 +21,7 @@
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
    import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
-   import { createGameEffectsService } from '../../../services/GameEffectsService';
+   import { createGameCommandsService } from '../../../services/GameCommandsService';
    import {
      getCurrentUserCharacter,
      showCharacterSelectionDialog,
@@ -34,7 +34,7 @@
    
    // Initialize controller and service
    let eventPhaseController: any;
-   let gameEffectsService: any;
+   let gameCommandsService: any;
    let checkHandler: any;
    
    // UI State (no business logic)
@@ -164,7 +164,7 @@
    onMount(async () => {
       // Initialize the controller and service
       eventPhaseController = await createEventPhaseController(null);
-      gameEffectsService = await createGameEffectsService();
+      gameCommandsService = await createGameCommandsService();
       checkHandler = createCheckHandler();
       
       // Initialize the phase (this sets up currentPhaseSteps!)
@@ -349,7 +349,7 @@
       const instanceId = targetInstanceId || $kingdomData.turnState?.eventsPhase?.eventInstanceId || null;
       const isOngoingEvent = !!targetInstanceId;
       
-      // Note: Action spending is handled by GameEffectsService.trackPlayerAction()
+      // Note: Action spending is handled by GameCommandsService.trackPlayerAction()
       // when the result is applied
       
       await checkHandler.executeCheck({
@@ -650,7 +650,7 @@
       const eventForAid = currentEvent;
       const game = (window as any).game;
       
-      // Note: Aid action spending is handled by GameEffectsService.trackPlayerAction()
+      // Note: Aid action spending is handled by GameCommandsService.trackPlayerAction()
       // when the aid is stored (see aidRollListener below)
       
       // Get character for roll
@@ -716,7 +716,7 @@
                   });
                   
                   // Track the aid as a player action (counts towards action limit)
-                  await gameEffectsService.trackPlayerAction(
+                  await gameCommandsService.trackPlayerAction(
                      game.user.id,
                      game.user.name,
                      actorName,
@@ -729,7 +729,7 @@
                }
             } else {
                // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
-               await gameEffectsService.trackPlayerAction(
+               await gameCommandsService.trackPlayerAction(
                   game.user.id,
                   game.user.name,
                   actorName,
