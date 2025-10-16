@@ -3,8 +3,9 @@
 /* Note: Font declarations moved to fonts.css which is copied directly without processing */
 
 /* Global font fallback for all module content (excludes Font Awesome icons) */
-#pf2e-reignmaker,
-#pf2e-reignmaker *:not([class*="fa-"]):not(.fa):not(.fas):not(.far):not(.fal):not(.fat):not(.fab):not(.fad) {
+/* Using :where() for 0 specificity - component styles can override naturally */
+:where(#pf2e-reignmaker),
+:where(#pf2e-reignmaker *:not([class*="fa-"])) {
   font-family: var(--font-sans-rm);
 }
 
@@ -152,8 +153,8 @@
   --space-12: 24px;
   
   /* Font Families - Module-scoped to avoid Foundry conflicts */
-  --font-sans-rm: "Lora", "Signika", system-ui, 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
-  --font-serif-rm: "Milonga","Caudex","Bona Nova", "Domine", "Libre Baskerville", "Eczar", serif;
+  --font-sans-rm:  "Signika", 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-serif-rm:  "Domine", serif;
   
   /* Font Sizes */
   --font-xs: 12px;

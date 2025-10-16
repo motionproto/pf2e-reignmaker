@@ -110,6 +110,10 @@ export class SettlementStructureManagementService {
       }
     });
 
+    // Update settlement skill bonuses after adding structures
+    const { settlementService } = await import('../settlements');
+    await settlementService.updateSettlementSkillBonuses(settlementId);
+
     return {
       success: true,
       addedStructures: structuresToAdd
@@ -169,6 +173,10 @@ export class SettlementStructureManagementService {
         }
       }
     });
+
+    // Update settlement skill bonuses after removing structure
+    const { settlementService } = await import('../settlements');
+    await settlementService.updateSettlementSkillBonuses(settlementId);
 
     return { success: true, warning };
   }

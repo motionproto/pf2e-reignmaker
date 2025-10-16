@@ -10,7 +10,7 @@
       "category": "performance-culture",
       "tier": 1,
       "earnIncomeLevel": "settlement",
-      "bonus": 0,
+      "bonus": 1,
       "skills": [
         "performance"
       ],

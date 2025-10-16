@@ -406,11 +406,11 @@
   .kingdom-name-header h3 {
     margin: 0;
     color: white;
-    font-size: var(--font-4xl);
+    font-size: var(--font-3xl);
     font-weight: var(--font-weight-bold);
     flex: 1;
-    font-family: var(--font-serif-rm);
     text-shadow: var(--text-shadow-sm);
+    font-family: var(--font-serif-rm);
   }
 
   .kingdom-name-header input {
@@ -424,7 +424,7 @@
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     outline: none;
-    font-family: var(--font-serif-rm);
+      font-family: var(--font-serif-rm);
   }
 
   .kingdom-name-header .edit-btn {
@@ -484,6 +484,7 @@
     background: transparent;
     margin-bottom: .25rem;
     margin-top: 1.5rem;
+      font-family: var(--font-serif-rm);
   }
 
   .stat-item {

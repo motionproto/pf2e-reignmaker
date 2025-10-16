@@ -193,6 +193,10 @@
                   }
                }
             }
+            
+            // Run settlement skill bonuses migration if needed
+            const { autoMigrateSettlements } = await import('../../services/migrations/SettlementSkillBonusesMigration');
+            await autoMigrateSettlements();
          } else {
             console.warn('[KingdomAppShell] No kingdom actor available');
          }

@@ -74,6 +74,9 @@ export interface Settlement {
   // Optional image
   imagePath?: string;
   
+  // Skill bonuses from structures
+  skillBonuses?: Record<string, number>; // Map of skill name -> bonus value (e.g. { athletics: 1, diplomacy: 2 })
+  
   // Computed properties (calculated by services dynamically)
   foodConsumption?: number;
   armySupport?: number;
@@ -121,6 +124,7 @@ export function createSettlement(
     imprisonedUnrest: 0,
     supportedUnits: [],
     wasFedLastTurn: true, // Assume fed initially
-    imagePath: getDefaultSettlementImage(tier) // Pre-populate with default tier image
+    imagePath: getDefaultSettlementImage(tier), // Pre-populate with default tier image
+    skillBonuses: {} // Initialize empty skill bonuses
   };
 }

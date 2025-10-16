@@ -192,6 +192,72 @@ export class SettlementService {
   }
   
   /**
+   * Calculate skill bonuses from a settlement's structures
+   * Returns a map of skill name -> highest bonus value
+   * 
+   * @param settlement - Settlement to calculate bonuses for
+   * @returns Map of skill name to bonus value
+   */
+  calculateSkillBonuses(settlement: Settlement): Record<string, number> {
+    const bonuses: Record<string, number> = {};
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = structuresService.getStructure(structureId);
+      if (structure?.type === 'skill' && structure.effects.skillsSupported) {
+        const bonus = structure.effects.skillBonus || 0;
+        for (const skill of structure.effects.skillsSupported) {
+          // Keep highest bonus per skill (multiple structures of same type)
+          bonuses[skill] = Math.max(bonuses[skill] || 0, bonus);
+        }
+      }
+    }
+    
+    return bonuses;
+  }
+  
+  /**
+   * Update a settlement's skill bonuses based on its current structures
+   * Called automatically when structures are added/removed
+   * 
+   * @param settlementId - Settlement ID to update
+   */
+  async updateSettlementSkillBonuses(settlementId: string): Promise<void> {
+    logger.debug(`🎯 [SettlementService] Updating skill bonuses for settlement: ${settlementId}`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      logger.warn('⚠️ [SettlementService] No kingdom actor available');
+      return;
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      logger.warn('⚠️ [SettlementService] No kingdom data available');
+      return;
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      logger.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
+      return;
+    }
+    
+    // Calculate new bonuses
+    const newBonuses = this.calculateSkillBonuses(settlement);
+    
+    // Update settlement
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s) {
+        s.skillBonuses = newBonuses;
+        logger.debug(`✅ [SettlementService] Updated skill bonuses:`, newBonuses);
+      }
+    });
+  }
+  
+  /**
    * Update settlement properties
    * 
    * @param settlementId - Settlement ID

@@ -151,24 +151,25 @@ export class PF2eSkillService {
 
   /**
    * Get kingdom modifiers for skill checks
+   * @param skillName - Skill being checked (for structure bonuses)
    * @param actionId - Optional action ID to retrieve aid bonuses for that specific action/event
    * @param checkType - Optional check type to determine which phase aids to check
    */
-  private getKingdomModifiers(actionId?: string, checkType?: 'action' | 'event' | 'incident'): any[] {
+  private getKingdomModifiers(skillName: string, actionId?: string, checkType?: 'action' | 'event' | 'incident'): any[] {
     const currentKingdomState = get(kingdomData);
     const kingdomModifiers: any[] = [];
     
-    // Add basic structure bonuses if available
+    // Add settlement infrastructure bonuses from cached skillBonuses
+    // Default to disabled so players can manually enable the relevant settlement
     if (currentKingdomState?.settlements) {
-      // Simple structure bonus calculation
       for (const settlement of currentKingdomState.settlements) {
-        if (settlement.structureIds?.length > 0) {
-          // Add a generic settlement bonus for now
+        const bonus = settlement.skillBonuses?.[skillName] ?? 0;
+        if (bonus > 0) {
           kingdomModifiers.push({
-            name: `Settlement Infrastructure (${settlement.name})`,
-            value: 1,
+            name: `${settlement.name} Infrastructure`,
+            value: bonus,
             type: 'circumstance',
-            enabled: true
+            enabled: false  // Player manually enables if action is in this settlement
           });
         }
       }
@@ -292,7 +293,7 @@ export class PF2eSkillService {
       const dc = this.getKingdomActionDC(characterLevel);
       
       // Get kingdom modifiers (including aids for this action/event)
-      const kingdomModifiers = this.getKingdomModifiers(actionId || checkId, checkType);
+      const kingdomModifiers = this.getKingdomModifiers(skillName, actionId || checkId, checkType);
       
       // Convert to PF2e format
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);

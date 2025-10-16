@@ -10,7 +10,7 @@
       "category": "knowledge-magic",
       "tier": 1,
       "earnIncomeLevel": "settlement",
-      "bonus": 0,
+      "bonus": 1,
       "skills": [
         "lore"
       ],
