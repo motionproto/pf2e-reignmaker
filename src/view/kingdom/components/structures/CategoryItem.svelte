@@ -91,7 +91,6 @@
       .category-name {
         font-weight: var(--font-weight-semibold);
         font-size: var(--font-lg);
-        font-family: var(--base-font);
         color: var(--text-primary);
         word-wrap: break-word;
         margin-bottom: 0.25rem;
@@ -101,7 +100,6 @@
         color: var(--text-tertiary);
         word-wrap: break-word;
         font-size: var(--font-sm);
-        font-family: var(--base-font);
       }
     }
     

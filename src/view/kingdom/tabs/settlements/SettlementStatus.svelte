@@ -70,7 +70,6 @@
          color: var(--color-accent);
          font-size: var(--font-lg);
          font-weight: var(--font-weight-semibold);
-         font-family: var(--base-font);
       }
    }
    

@@ -409,7 +409,7 @@
     font-size: var(--font-4xl);
     font-weight: var(--font-weight-bold);
     flex: 1;
-    font-family: var(--header-font);
+    font-family: var(--font-serif-rm);
     text-shadow: var(--text-shadow-sm);
   }
 
@@ -424,7 +424,7 @@
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     outline: none;
-    font-family: var(--display-font);
+    font-family: var(--font-serif-rm);
   }
 
   .kingdom-name-header .edit-btn {
@@ -481,7 +481,6 @@
     font-size: var(--font-2xl);
     font-weight: var(--font-weight-semibold);
     letter-spacing: 0.025em;
-    font-family: var(--base-font);
     background: transparent;
     margin-bottom: .25rem;
     margin-top: 1.5rem;

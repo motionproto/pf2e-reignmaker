@@ -88,7 +88,6 @@
         }
         
         .roll-number {
-          font-family: var(--base-font);
           font-size: var(--font-4xl);
           font-weight: var(--font-weight-bold);
           color: var(--text-primary);
@@ -98,7 +97,6 @@
       
       .roll-dc-small {
         flex: 1;
-        font-family: var(--base-font);
         font-size: var(--font-md);
         color: var(--text-secondary);
         text-align: left;

@@ -179,7 +179,6 @@
       margin: 0 0 8px 0;
       font-size: var(--font-md);
       font-weight: 600;
-      font-family: var(--base-font);
       color: var(--text-primary, #e0e0e0);
     }
   }

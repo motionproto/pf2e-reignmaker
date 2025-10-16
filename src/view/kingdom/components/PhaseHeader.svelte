@@ -122,7 +122,6 @@
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-elevated), var(--bg-overlay));
     border: 1px solid var(--border-m);
-    font-family: var(--base-font);
   }
 
 
@@ -162,7 +161,6 @@
     margin: 0;
     font-size: var(--font-3xl);
     font-weight: var(--font-weight-bold);
-    font-family: var(--base-font);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-md);
     letter-spacing: 0.025em;
@@ -171,7 +169,6 @@
   .phase-text p {
     margin: var(--space-2) 0 0;
     font-size: var(--font-md);
-    font-family: var(--base-font);
     color: var(--text-secondary
     );
     opacity: 0.85;

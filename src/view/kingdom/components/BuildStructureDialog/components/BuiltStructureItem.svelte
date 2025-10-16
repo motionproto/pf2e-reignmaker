@@ -26,7 +26,6 @@
       font-size: var(--font-xl);
       color: var(--text-tertiary);
       font-weight: var(--font-weight-semibold);
-      font-family: var(--base-font);
     }
     
     .structure-built-tier {

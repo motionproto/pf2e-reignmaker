@@ -925,7 +925,6 @@
       h2 {
          margin: 0;
          color: var(--color-accent);
-         font-family: var(--base-font);
          font-size: var(--font-4xl);
          font-weight: var(--font-weight-bold);
       }
@@ -945,7 +944,6 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 0.25rem;
       color: var(--color-accent);
-      font-family: var(--base-font);
       font-size: var(--font-3xl);
       font-weight: var(--font-weight-semibold);
       

@@ -139,7 +139,6 @@
           margin: 0;
           color: var(--color-amber);
           font-size: var(--font-3xl);
-          font-family: var(--base-font);
           line-height: 1.2;
         }
         

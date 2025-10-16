@@ -1235,7 +1235,6 @@
    .ongoing-events-header {
       margin: 0 0 15px 0;
       color: var(--text-accent);
-      font-family: var(--base-font);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-normal);
    }
@@ -1253,7 +1252,6 @@
    .resolved-events-header {
       margin: 0 0 15px 0;
       color: var(--text-accent);
-      font-family: var(--base-font);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-normal);
    }
@@ -1271,7 +1269,6 @@
    .custom-modifiers-header {
       margin: 0 0 15px 0;
       color: var(--text-accent);
-      font-family: var(--base-font);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-normal);
    }

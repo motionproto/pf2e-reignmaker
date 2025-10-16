@@ -603,7 +603,6 @@
          display: flex;
          align-items: center;
          gap: 10px;
-         font-family: var(--base-font);  // Use Signika font
          
          .step-icon {
             color: var(--color-amber);
@@ -689,7 +688,6 @@
          display: flex;
          align-items: center;
          gap: 10px;
-         font-family: var(--base-font);  // Use Signika font
          
          i {
             color: var(--color-amber);

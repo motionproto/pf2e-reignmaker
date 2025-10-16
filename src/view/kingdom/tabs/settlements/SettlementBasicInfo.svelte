@@ -140,7 +140,6 @@
          font-size: var(--font-md);
          color: var(--text-secondary);
          margin-bottom: 0.5rem;
-         font-family: var(--base-font);
          font-weight: var(--font-weight-light);
       }
       

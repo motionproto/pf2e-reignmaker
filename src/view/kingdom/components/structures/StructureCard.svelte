@@ -123,7 +123,6 @@
       color: var(--text-primary);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
-      font-family: var(--base-font);
       flex: 1;
     }
   }

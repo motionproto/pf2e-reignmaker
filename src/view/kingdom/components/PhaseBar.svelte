@@ -225,7 +225,6 @@
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
     border-radius: 6px;
     padding: 1.5rem 1rem; /* Symmetrical top/bottom padding for even spacing */
-    font-family: var(--base-font);
     margin-top: -0.4rem;
   }
 
@@ -262,7 +261,6 @@
     min-width: 100px;
     position: relative;
     color: var(--text-primary);
-    font-family: var(--base-font);
   }
 
   .phase-item:hover {
@@ -359,7 +357,6 @@
   .phase-label {
     font-size: 1rem;
     font-weight: var(--font-weight-medium);
-    font-family: var(--base-font);
     text-align: center;
     line-height: 1.2;
     opacity: 0.9;

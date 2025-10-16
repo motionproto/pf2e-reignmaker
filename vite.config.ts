@@ -6,6 +6,7 @@ import {
 
 import { sveltePreprocess }   from 'svelte-preprocess';
 import { defineConfig }       from 'vite';
+import { viteStaticCopy }     from 'vite-plugin-static-copy';
 import * as path              from 'path';
 
 import moduleJSON             from './module.json' with { type: 'json' };
@@ -100,6 +101,8 @@ export default defineConfig(({ mode }) =>
          minify: s_COMPRESS ? 'terser' : false,
          target: ['es2022'],
          terserOptions: s_COMPRESS ? { ...terserConfig(), ecma: 2022 } : void 0,
+         // Disable asset inlining to prevent fonts from being embedded as base64
+         assetsInlineLimit: 0,
          lib: {
             entry: './index.ts',
             formats: ['es'],
@@ -125,6 +128,18 @@ export default defineConfig(({ mode }) =>
          svelte({
             compilerOptions,
             preprocess: sveltePreprocess()
+         }),
+         viteStaticCopy({
+            targets: [
+               {
+                  src: 'styles/fonts',
+                  dest: '.'
+               },
+               {
+                  src: 'styles/fonts.css',
+                  dest: '.'
+               }
+            ]
          })
       ]
    };

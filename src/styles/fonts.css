@@ -1,0 +1,120 @@
+/* PF2E Kingdom Lite - Font Declarations */
+/* This file is copied directly to dist without processing to avoid font inlining */
+
+/* Lora - Variable Font (Base/Body Font) */
+@font-face {
+  font-family: "Lora";
+  src: url('fonts/Lora/Lora-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lora";
+  src: url('fonts/Lora/Lora-Italic-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 400 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Bona Nova - Static Font */
+@font-face {
+  font-family: "Bona Nova";
+  src: url('fonts/Bona_Nova/BonaNova-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bona Nova";
+  src: url('fonts/Bona_Nova/BonaNova-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bona Nova";
+  src: url('fonts/Bona_Nova/BonaNova-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Caudex - Static Font */
+@font-face {
+  font-family: "Caudex";
+  src: url('fonts/Caudex/Caudex-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Caudex";
+  src: url('fonts/Caudex/Caudex-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Caudex";
+  src: url('fonts/Caudex/Caudex-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Caudex";
+  src: url('fonts/Caudex/Caudex-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Domine - Variable Font */
+@font-face {
+  font-family: "Domine";
+  src: url('fonts/Domine/Domine-VariableFont_wght.ttf') format('truetype-variations');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Milonga - Regular Only */
+@font-face {
+  font-family: "Milonga";
+  src: url('fonts/Milonga/Milonga-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Libre Baskerville - Static Font (Headers/Display) */
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url('fonts/Libre_Baskerville/LibreBaskerville-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url('fonts/Libre_Baskerville/LibreBaskerville-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Libre Baskerville";
+  src: url('fonts/Libre_Baskerville/LibreBaskerville-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
