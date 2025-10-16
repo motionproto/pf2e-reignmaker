@@ -333,6 +333,11 @@ export async function createGameCommandsService() {
         return;
       }
 
+      if (resource === 'imprisonedUnrest') {
+        await this.applyImprisonedUnrestChange(value, modifierName, result);
+        return;
+      }
+
       // Handle standard resources (gold, food, lumber, stone, ore, luxuries)
       let hasShortfall = false;
       
@@ -393,6 +398,91 @@ export async function createGameCommandsService() {
       });
 
       result.applied.resources.push({ resource: 'fame', value });
+    },
+
+    /**
+     * Apply imprisoned unrest changes with special handling
+     * 
+     * This auto-allocates imprisoned unrest to settlements with available capacity.
+     * If no capacity exists, it converts to regular unrest instead.
+     */
+    async applyImprisonedUnrestChange(value: number, modifierName: string, result: ApplyOutcomeResult): Promise<void> {
+      if (value <= 0) {
+        logger.warn(`  ⚠️ Cannot apply negative imprisoned unrest`);
+        return;
+      }
+
+      logger.debug(`⛓️ [GameCommands] Applying ${value} imprisoned unrest`);
+
+      const actor = getKingdomActor();
+      const kingdom = actor?.getKingdom();
+      
+      if (!kingdom) {
+        logger.error(`  ❌ No kingdom actor found`);
+        return;
+      }
+
+      // Calculate total available capacity across all settlements
+      let totalCapacity = 0;
+      const settlementCapacities: Array<{ id: string; name: string; available: number }> = [];
+
+      for (const settlement of kingdom.settlements) {
+        const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+        const currentImprisoned = settlement.imprisonedUnrest || 0;
+        const available = capacity - currentImprisoned;
+        
+        if (available > 0) {
+          totalCapacity += available;
+          settlementCapacities.push({
+            id: settlement.id,
+            name: settlement.name,
+            available
+          });
+        }
+      }
+
+      logger.debug(`  ℹ️ Total prison capacity available: ${totalCapacity}`);
+
+      if (totalCapacity === 0) {
+        // No capacity - convert to regular unrest
+        logger.warn(`  ⚠️ No prison capacity available - converting ${value} imprisoned unrest to regular unrest`);
+        await this.applyUnrestChange(value, `${modifierName} (no prisons)`, result);
+        result.applied.specialEffects.push('imprisoned_unrest_overflow');
+        return;
+      }
+
+      // Allocate what we can to prisons
+      const amountToImprison = Math.min(value, totalCapacity);
+      const overflow = value - amountToImprison;
+
+      await updateKingdom(kingdom => {
+        let remaining = amountToImprison;
+        
+        // Allocate to settlements in order until we run out
+        for (const { id, name, available } of settlementCapacities) {
+          if (remaining <= 0) break;
+          
+          const settlement = kingdom.settlements.find(s => s.id === id);
+          if (!settlement) continue;
+
+          const toAllocate = Math.min(remaining, available);
+          const currentImprisoned = settlement.imprisonedUnrest || 0;
+          settlement.imprisonedUnrest = currentImprisoned + toAllocate;
+          
+          logger.debug(`  ✓ Allocated ${toAllocate} imprisoned unrest to ${name} (${currentImprisoned} → ${settlement.imprisonedUnrest})`);
+          remaining -= toAllocate;
+        }
+      });
+
+      result.applied.resources.push({ resource: 'imprisonedUnrest', value: amountToImprison });
+      result.applied.specialEffects.push('imprisoned_unrest_applied');
+
+      // Handle overflow if any
+      if (overflow > 0) {
+        logger.warn(`  ⚠️ Prison capacity exceeded by ${overflow} - converting to regular unrest`);
+        await this.applyUnrestChange(overflow, `${modifierName} (overflow)`, result);
+        result.applied.specialEffects.push('imprisoned_unrest_overflow');
+      }
     },
 
     /**

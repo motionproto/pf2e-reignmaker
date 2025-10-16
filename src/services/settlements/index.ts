@@ -226,14 +226,55 @@ export class SettlementService {
   }
   
   /**
-   * Update a settlement's derived properties based on its current structures
-   * These properties are stored on the settlement but calculated from structures
-   * Called automatically when structures are added/removed
-   * 
-   * @param settlementId - Settlement ID to update
+   * PUBLIC API: Add a structure to a settlement
+   * Automatically recalculates settlement and kingdom capacities
    */
-  async updateSettlementDerivedProperties(settlementId: string): Promise<void> {
-    logger.debug(`🎯 [SettlementService] Updating derived properties for settlement: ${settlementId}`);
+  async addStructure(settlementId: string, structureId: string): Promise<void> {
+    logger.info(`🏗️ [SettlementService] Adding structure ${structureId} to settlement ${settlementId}`);
+    
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s && !s.structureIds.includes(structureId)) {
+        s.structureIds.push(structureId);
+      }
+    });
+    
+    await this.recalculateSettlement(settlementId);
+    await this.recalculateKingdom();
+    
+    logger.info(`✅ [SettlementService] Structure added and capacities recalculated`);
+  }
+  
+  /**
+   * PUBLIC API: Remove a structure from a settlement
+   * Automatically recalculates settlement and kingdom capacities
+   */
+  async removeStructure(settlementId: string, structureId: string): Promise<void> {
+    logger.debug(`🏗️ [SettlementService] Removing structure ${structureId} from settlement ${settlementId}`);
+    
+    const { updateKingdom } = await import('../../stores/KingdomStore');
+    
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s) {
+        s.structureIds = s.structureIds.filter(id => id !== structureId);
+      }
+    });
+    
+    await this.recalculateSettlement(settlementId);
+    await this.recalculateKingdom();
+    
+    logger.debug(`✅ [SettlementService] Structure removed and capacities recalculated`);
+  }
+  
+  /**
+   * INTERNAL: Recalculate all derived properties for a settlement
+   * Called automatically when structures change
+   */
+  private async recalculateSettlement(settlementId: string): Promise<void> {
+    logger.info(`🔄 [SettlementService] Recalculating settlement: ${settlementId}`);
     
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
@@ -255,25 +296,101 @@ export class SettlementService {
       return;
     }
     
-    // Calculate derived properties from structures
-    const imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(settlement);
-    const foodStorageCapacity = structuresService.calculateFoodStorage(settlement);
-    const goldIncome = structuresService.calculateGoldIncome(settlement);
-    
-    // Update settlement with calculated values
     await updateKingdom(k => {
       const s = k.settlements.find(s => s.id === settlementId);
-      if (s) {
-        s.imprisonedUnrestCapacityValue = imprisonedUnrestCapacityValue;
-        s.foodStorageCapacity = foodStorageCapacity;
-        s.goldIncome = goldIncome;
-        logger.debug(`✅ [SettlementService] Updated derived properties:`, {
-          imprisonedUnrestCapacityValue,
-          foodStorageCapacity,
-          goldIncome
-        });
-      }
+      if (!s) return;
+      
+      // Recalculate ALL derived properties from structures
+      s.foodStorageCapacity = structuresService.calculateFoodStorage(s);
+      s.imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(s);
+      s.goldIncome = structuresService.calculateGoldIncome(s);
+      
+      // Army support = base tier + structure bonuses
+      const baseTier = SettlementTierConfig[s.tier]?.armySupport || 0;
+      const bonus = structuresService.calculateArmySupportBonus(s);
+      s.armySupport = baseTier + bonus;
+      
+      // Skill bonuses
+      s.skillBonuses = this.calculateSkillBonuses(s);
+      
+      logger.debug(`✅ [SettlementService] Settlement recalculated:`, {
+        foodStorageCapacity: s.foodStorageCapacity,
+        imprisonedUnrestCapacity: s.imprisonedUnrestCapacityValue,
+        goldIncome: s.goldIncome,
+        armySupport: s.armySupport,
+        skillBonuses: Object.keys(s.skillBonuses).length
+      });
     });
+  }
+  
+  /**
+   * INTERNAL: Recalculate kingdom-level capacity aggregations
+   * Called automatically when settlement capacities change
+   */
+  private async recalculateKingdom(): Promise<void> {
+    logger.info(`🔄 [SettlementService] Recalculating kingdom capacities`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      logger.warn('⚠️ [SettlementService] No kingdom actor available');
+      return;
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      logger.warn('⚠️ [SettlementService] No kingdom data available');
+      return;
+    }
+    
+    // Aggregate capacities across ALL settlements
+    const totals = kingdom.settlements.reduce((acc, s) => ({
+      foodCapacity: acc.foodCapacity + (s.foodStorageCapacity || 0),
+      armyCapacity: acc.armyCapacity + (s.armySupport || 0),
+      diplomaticCapacity: acc.diplomaticCapacity + structuresService.calculateDiplomaticCapacity(s),
+      imprisonedUnrestCapacity: acc.imprisonedUnrestCapacity + (s.imprisonedUnrestCapacityValue || 0)
+    }), {
+      foodCapacity: 0,
+      armyCapacity: 0,
+      diplomaticCapacity: 0,
+      imprisonedUnrestCapacity: 0
+    });
+    
+    // Update kingdom resources
+    await updateKingdom(k => {
+      if (!k.resources) {
+        k.resources = {
+          gold: 0,
+          food: 0,
+          lumber: 0,
+          stone: 0,
+          ore: 0,
+          luxuries: 0,
+          foodCapacity: 0,
+          armyCapacity: 0,
+          diplomaticCapacity: 0,
+          imprisonedUnrestCapacity: 0
+        };
+      }
+      
+      k.resources.foodCapacity = totals.foodCapacity;
+      k.resources.armyCapacity = totals.armyCapacity;
+      k.resources.diplomaticCapacity = totals.diplomaticCapacity;
+      k.resources.imprisonedUnrestCapacity = totals.imprisonedUnrestCapacity;
+      
+      logger.debug(`✅ [SettlementService] Kingdom capacities updated:`, totals);
+    });
+  }
+  
+  /**
+   * @deprecated Use addStructure() instead
+   * Update a settlement's derived properties based on its current structures
+   */
+  async updateSettlementDerivedProperties(settlementId: string): Promise<void> {
+    logger.warn(`⚠️ [SettlementService] updateSettlementDerivedProperties is deprecated, use addStructure/removeStructure`);
+    await this.recalculateSettlement(settlementId);
+    await this.recalculateKingdom();
   }
   
   /**
@@ -295,6 +412,70 @@ export class SettlementService {
       } else {
         logger.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
       }
+    });
+  }
+  
+  /**
+   * Update kingdom-level capacity resources by aggregating from all settlements
+   * This should be called whenever settlement structures change
+   */
+  async updateKingdomCapacities(): Promise<void> {
+    logger.debug(`🎯 [SettlementService] Updating kingdom-level capacities`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      logger.warn('⚠️ [SettlementService] No kingdom actor available');
+      return;
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      logger.warn('⚠️ [SettlementService] No kingdom data available');
+      return;
+    }
+    
+    // Calculate total food capacity across all settlements
+    const totalFoodCapacity = kingdom.settlements.reduce((total, settlement) => {
+      return total + (settlement.foodStorageCapacity || 0);
+    }, 0);
+    
+    // Calculate total army capacity across all settlements
+    const totalArmyCapacity = kingdom.settlements.reduce((total, settlement) => {
+      return total + (settlement.armySupport || 0);
+    }, 0);
+    
+    // Calculate total diplomatic capacity across all settlements
+    const totalDiplomaticCapacity = kingdom.settlements.reduce((total, settlement) => {
+      return total + structuresService.calculateDiplomaticCapacity(settlement);
+    }, 0);
+    
+    // Update kingdom resources
+    await updateKingdom(k => {
+      if (!k.resources) {
+        k.resources = {
+          gold: 0,
+          food: 0,
+          lumber: 0,
+          stone: 0,
+          ore: 0,
+          foodCapacity: 0,
+          armyCapacity: 0,
+          diplomaticCapacity: 0,
+          imprisonedUnrestCapacity: 0
+        };
+      }
+      
+      k.resources.foodCapacity = totalFoodCapacity;
+      k.resources.armyCapacity = totalArmyCapacity;
+      k.resources.diplomaticCapacity = totalDiplomaticCapacity;
+      
+      logger.debug(`✅ [SettlementService] Updated kingdom capacities:`, {
+        foodCapacity: totalFoodCapacity,
+        armyCapacity: totalArmyCapacity,
+        diplomaticCapacity: totalDiplomaticCapacity
+      });
     });
   }
   

@@ -11,24 +11,58 @@ import { logger } from '../../utils/Logger';
 
 export class StructuresService {
   private structures: Map<string, Structure> = new Map();
+  private families: StructureFamily[] = [];
   private structuresLoaded: boolean = false;
   
   /**
-   * Initialize structures from imported JSON data
+   * Initialize structures from imported JSON data (hierarchical families format)
    */
   initializeStructures(): void {
     if (this.structuresLoaded) return;
     
     try {
-      // Load structures from the imported JSON data
-      if (structuresData.structures && Array.isArray(structuresData.structures)) {
-        for (const structureData of structuresData.structures) {
-          const structure = parseStructureFromJSON(structureData);
-          this.structures.set(structure.id, structure);
+      // Load structure families from the imported JSON data
+      const data = structuresData as any;
+      
+      if (data.families && Array.isArray(data.families)) {
+        this.families = data.families;
+        
+        // Flatten families into individual structures
+        for (const family of this.families) {
+          if (!family.tiers || !Array.isArray(family.tiers)) {
+            continue;
+          }
+          
+          let previousStructureId: string | null = null;
+          
+          for (let tierIndex = 0; tierIndex < family.tiers.length; tierIndex++) {
+            const structureData = family.tiers[tierIndex];
+            
+            // Add metadata from family context
+            structureData.type = family.type;
+            structureData.category = family.category;
+            structureData.tier = tierIndex + 1; // Convert 0-based index to 1-based tier
+            structureData.upgradeFrom = previousStructureId;
+            
+            // Generate traits
+            structureData.traits = [
+              'building',
+              `${family.type}-structure`,
+              `tier-${tierIndex + 1}`
+            ];
+            
+            // Parse into Structure object
+            const structure = parseStructureFromJSON(structureData);
+            this.structures.set(structure.id, structure);
+            
+            // Track for next tier's upgradeFrom
+            previousStructureId = structure.id;
+          }
         }
-        logger.debug(`Loaded ${this.structures.size} structures from combined file`);
+        
+        logger.debug(`Loaded ${this.families.length} structure families (${this.structures.size} total structures)`);
       } else {
-        logger.error('Invalid structures data format');
+        logger.error('Invalid structures data format - expected families array');
       }
       
       this.structuresLoaded = true;
@@ -210,8 +244,13 @@ export class StructuresService {
     
     for (const structureId of settlement.structureIds) {
       const structure = this.getStructure(structureId);
-      if (structure?.effects.foodStorage) {
-        total += structure.effects.foodStorage;
+      if (structure?.modifiers) {
+        // Look for foodCapacity modifier in the modifiers array
+        for (const modifier of structure.modifiers) {
+          if (modifier.resource === 'foodCapacity' && modifier.type === 'static') {
+            total += modifier.value;
+          }
+        }
       }
     }
     
@@ -226,8 +265,13 @@ export class StructuresService {
     
     for (const structureId of settlement.structureIds) {
       const structure = this.getStructure(structureId);
-      if (structure?.effects.imprisonedUnrestCapacity) {
-        total += structure.effects.imprisonedUnrestCapacity;
+      if (structure?.modifiers) {
+        // Look for imprisonedUnrestCapacity modifier in the modifiers array
+        for (const modifier of structure.modifiers) {
+          if (modifier.resource === 'imprisonedUnrestCapacity' && modifier.type === 'static') {
+            total += modifier.value;
+          }
+        }
       }
     }
     
@@ -242,8 +286,13 @@ export class StructuresService {
     
     for (const structureId of settlement.structureIds) {
       const structure = this.getStructure(structureId);
-      if (structure?.effects.goldPerTurn) {
-        total += structure.effects.goldPerTurn;
+      if (structure?.modifiers) {
+        // Look for gold modifier in the modifiers array
+        for (const modifier of structure.modifiers) {
+          if (modifier.resource === 'gold' && modifier.type === 'static') {
+            total += modifier.value;
+          }
+        }
       }
     }
     
@@ -258,11 +307,41 @@ export class StructuresService {
     
     for (const structureId of settlement.structureIds) {
       const structure = this.getStructure(structureId);
-      if (structure?.effects.armySupportBonus) {
-        total += structure.effects.armySupportBonus;
+      if (structure?.modifiers) {
+        // Look for armyCapacity modifier in the modifiers array
+        for (const modifier of structure.modifiers) {
+          if (modifier.resource === 'armyCapacity' && modifier.type === 'static') {
+            total += modifier.value;
+          }
+        }
       }
     }
     
+    return total;
+  }
+  
+  /**
+   * Calculate diplomatic capacity from structures in a settlement
+   */
+  calculateDiplomaticCapacity(settlement: Settlement): number {
+    let total = 0;
+    
+    logger.info(`🏛️ [StructuresService] Calculating diplomatic capacity for ${settlement.name}...`);
+    
+    for (const structureId of settlement.structureIds) {
+      const structure = this.getStructure(structureId);
+      if (structure?.modifiers) {
+        // Look for diplomaticCapacity modifier in the modifiers array
+        for (const modifier of structure.modifiers) {
+          if (modifier.resource === 'diplomaticCapacity' && modifier.type === 'static') {
+            logger.info(`  ✅ ${structure.name} (T${structure.tier}): +${modifier.value}`);
+            total += modifier.value;
+          }
+        }
+      }
+    }
+    
+    logger.info(`  📊 Total diplomatic capacity: ${total}`);
     return total;
   }
   

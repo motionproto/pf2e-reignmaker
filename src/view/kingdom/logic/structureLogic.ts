@@ -1,5 +1,6 @@
 import type { Structure, StructureCategory } from '../../../models/Structure';
 import { getCategoryDisplayName } from '../../../models/Structure';
+import { structuresService } from '../../../services/structures';
 
 /**
  * Business logic for structure-related components
@@ -82,4 +83,13 @@ export function getUniqueCategories(structures: Structure[]): string[] {
   });
   
   return Array.from(categories).sort();
+}
+
+/**
+ * Get all categories from all structures in the game
+ * Use this to show all categories even if none are currently available
+ */
+export function getAllCategories(): string[] {
+  const allStructures = structuresService.getAllStructures();
+  return getUniqueCategories(allStructures);
 }

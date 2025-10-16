@@ -315,6 +315,7 @@ export class BuildQueueService {
     }
 
     let settlementId: string | undefined;
+    let structureId: string | undefined;
 
     await actor.updateKingdom(k => {
       const project = k.buildQueue.find(p => p.id === projectId);
@@ -323,12 +324,11 @@ export class BuildQueueService {
         return;
       }
 
-      // Add structure to settlement
+      // Find settlement and cache IDs
       const settlement = k.settlements.find(s => s.name === project.settlementName);
-      if (settlement && !settlement.structureIds.includes(project.structureId)) {
-        settlement.structureIds.push(project.structureId);
+      if (settlement) {
         settlementId = settlement.id;
-        logger.debug(`✅ Added ${project.structureId} to ${settlement.name}`);
+        structureId = project.structureId;
       }
 
       // Mark as completed (don't remove from queue yet)
@@ -337,12 +337,11 @@ export class BuildQueueService {
       logger.debug(`✅ Marked project as completed (Turn ${k.currentTurn})`);
     });
 
-    // Update settlement derived properties and skill bonuses
-    if (settlementId) {
+    // Add structure using centralized service (handles recalculation)
+    if (settlementId && structureId) {
       const { settlementService } = await import('../settlements');
-      await settlementService.updateSettlementSkillBonuses(settlementId);
-      await settlementService.updateSettlementDerivedProperties(settlementId);
-      logger.debug(`✅ [BuildQueueService] Updated settlement derived properties`);
+      await settlementService.addStructure(settlementId, structureId);
+      logger.debug(`✅ [BuildQueueService] Structure added and capacities recalculated`);
     }
   }
 }

@@ -9,8 +9,12 @@
    let isArmySupportExpanded = false;
    
    // Calculate army support capacity and used
-   $: armySupportCapacity = SettlementTierConfig[settlement.tier].armySupport;
+   // Use settlement's calculated armySupport (includes structure bonuses), fallback to base tier value
+   $: armySupportCapacity = settlement.armySupport || SettlementTierConfig[settlement.tier].armySupport;
    $: armiesSupportedCount = settlement.supportedUnits.length;
+   
+   // Calculate food storage capacity
+   $: foodCapacity = settlement.foodStorageCapacity || 0;
    
    // Calculate imprisoned unrest capacity
    $: imprisonedUnrestCapacity = settlement.imprisonedUnrestCapacityValue || 0;
@@ -63,7 +67,7 @@
          <span class="label">Stored Food</span>
          <span class="value">
             <i class="fas fa-warehouse"></i>
-            {settlement.storedFood}
+            {settlement.storedFood} / {foodCapacity}
          </span>
       </div>
    </div>

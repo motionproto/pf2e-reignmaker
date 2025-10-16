@@ -43,7 +43,7 @@
       <div class="structure-card-cost">
         <div class="cost-label">Cost</div>
         <div class="resource-list">
-          {#each Object.entries(structure.constructionCost) as [resource, amount]}
+          {#each Object.entries(structure.constructionCost || {}) as [resource, amount]}
             {#if amount && amount > 0}
               <div class="resource-item">
                 <i class="fas {getResourceIcon(resource)} resource-icon" style="color: {getResourceColor(resource)}"></i>
@@ -51,7 +51,7 @@
               </div>
             {/if}
           {/each}
-          {#if Object.values(structure.constructionCost).every(v => !v || v === 0)}
+          {#if !structure.constructionCost || Object.values(structure.constructionCost).every(v => !v || v === 0)}
             <span class="no-cost">Free</span>
           {/if}
         </div>

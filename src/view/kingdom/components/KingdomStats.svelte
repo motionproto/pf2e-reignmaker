@@ -61,6 +61,11 @@
     localStorage.setItem("kingdomWarStatus", newWarStatus ? "war" : "peace");
   }
 
+  // Diplomatic Support
+  $: helpfulRelationships = ($kingdomData.factions || []).filter(f => f.attitude === 'Helpful').length;
+  $: diplomaticCapacity = $resources.diplomaticCapacity || 0;
+  $: isOverCapacity = helpfulRelationships > diplomaticCapacity;
+
   // Calculate unrest sources using centralized service
   $: sizeUnrest = calculateSizeUnrest($kingdomData.size);
   $: warUnrest = isAtWar ? 1 : 0;
@@ -117,6 +122,11 @@
   function stopEditing() {
     editingField = null;
   }
+
+  // Calculate imprisoned unrest capacity
+  $: imprisonedUnrestCapacity = $settlements.reduce((sum, s) => {
+    return sum + (s.imprisonedUnrestCapacityValue || 0);
+  }, 0);
 
   // Additional stats configuration for unrest
   const statsConfig: Record<string, { icon: string; color: string }> = {
@@ -211,6 +221,8 @@
                 icon={statsConfig.imprisoned.icon}
                 color={statsConfig.imprisoned.color}
                 size="compact"
+                editable={false}
+                tooltip="{$imprisonedUnrest} / {imprisonedUnrestCapacity}"
               />
 
             <!-- Resources Divider -->
@@ -264,6 +276,14 @@
               <option value="peace">Peace</option>
               <option value="war">War</option>
             </select>
+          </div>
+          <!-- Diplomatic Support Card (matches ResourceCard style) -->
+          <div class="diplomatic-support-card" class:over-capacity={isOverCapacity}>
+            <i class="fas fa-handshake diplomatic-icon"></i>
+            <div class="diplomatic-info">
+              <div class="diplomatic-value">{helpfulRelationships} / {diplomaticCapacity}</div>
+              <div class="diplomatic-label">Diplomatic Support</div>
+            </div>
           </div>
         </div>
       </div>
@@ -616,6 +636,54 @@
     outline: none;
     border-color: var(--border-primary);
     box-shadow: var(--shadow-focus);
+  }
+
+  /* Diplomatic Support Card - matches ResourceCard compact style */
+  .diplomatic-support-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0.75rem 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .diplomatic-support-card.over-capacity {
+    border-color: var(--color-danger);
+    background: rgba(220, 38, 38, 0.1);
+  }
+
+  .diplomatic-icon {
+    font-size: 1.25rem;
+    color: var(--color-info);
+    flex-shrink: 0;
+  }
+
+  .diplomatic-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+  }
+
+  .diplomatic-value {
+    font-size: var(--font-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+  }
+
+  .diplomatic-support-card.over-capacity .diplomatic-value {
+    color: var(--color-danger);
+  }
+
+  .diplomatic-label {
+    font-size: var(--font-xs);
+    color: var(--text-tertiary);
+    text-transform: capitalize;
   }
 
   .resource-dashboard-grid {

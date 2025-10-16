@@ -106,11 +106,15 @@ function applyConsumptionModifier(
  * - Town: 2 Armies
  * - City: 3 Armies
  * - Metropolis: 4 Armies
+ * 
+ * Plus any structure bonuses (e.g., Barracks, Military Academy)
  */
 export function calculateArmySupportCapacity(settlements: Settlement[]): number {
   return settlements.reduce((total, settlement) => {
-    const config = SettlementTierConfig[settlement.tier];
-    return total + (config ? config.armySupport : 0);
+    // Use calculated armySupport if available (includes structure bonuses)
+    // Otherwise fall back to base tier value
+    const capacity = settlement.armySupport || SettlementTierConfig[settlement.tier]?.armySupport || 0;
+    return total + capacity;
   }, 0);
 }
 

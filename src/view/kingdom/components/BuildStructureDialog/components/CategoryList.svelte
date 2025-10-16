@@ -3,12 +3,14 @@
   import CategoryItem from '../../structures/CategoryItem.svelte';
   import type { Structure } from '../../../../../models/Structure';
   import type { Settlement } from '../../../../../models/Settlement';
+  import { structuresService } from '../../../../../services/structures';
   import { 
     capitalizeSkills 
   } from '../../../utils/presentation';
   import {
     separateStructuresByType,
-    getUniqueCategories
+    getUniqueCategories,
+    getAllCategories
   } from '../../../logic/structureLogic';
   import {
     getSkillsForCategory
@@ -31,12 +33,29 @@
     return tier > 0 ? tier : undefined;
   }
   
-  // Separate structures by type
-  $: ({ skill: skillStructures, support: supportStructures } = separateStructuresByType(availableStructures));
+  // Get all structures to determine all categories
+  $: allStructures = structuresService.getAllStructures();
   
-  // Get categories for each type
-  $: skillCategories = getUniqueCategories(skillStructures);
-  $: supportCategories = getUniqueCategories(supportStructures);
+  // Separate ALL structures by type (not just available)
+  $: ({ skill: allSkillStructures, support: allSupportStructures } = separateStructuresByType(allStructures));
+  
+  // Get all categories for each type
+  $: allSkillCategories = getUniqueCategories(allSkillStructures);
+  $: allSupportCategories = getUniqueCategories(allSupportStructures);
+  
+  // Get available categories (for determining unavailable state)
+  $: ({ skill: availableSkillStructures, support: availableSupportStructures } = separateStructuresByType(availableStructures));
+  $: availableSkillCategories = getUniqueCategories(availableSkillStructures);
+  $: availableSupportCategories = getUniqueCategories(availableSupportStructures);
+  
+  // Check if a category is unavailable (no structures available in it)
+  function isCategoryUnavailable(category: string, isSkillCategory: boolean): boolean {
+    if (isSkillCategory) {
+      return !availableSkillCategories.includes(category);
+    } else {
+      return !availableSupportCategories.includes(category);
+    }
+  }
   
   function selectCategory(category: string) {
     dispatch('select', category);
@@ -52,17 +71,19 @@
     </div>
   {:else}
     <!-- Skill Categories -->
-    {#if skillCategories.length > 0}
+    {#if allSkillCategories.length > 0}
       <div class="category-type-section">
         <h3 class="section-title">Skill Structures</h3>
         
-        {#each skillCategories as category}
-          {@const skills = capitalizeSkills(getSkillsForCategory(category, availableStructures))}
+        {#each allSkillCategories as category}
+          {@const skills = capitalizeSkills(getSkillsForCategory(category, allSkillStructures))}
           {@const currentTier = getCurrentTier(category)}
+          {@const isUnavailable = isCategoryUnavailable(category, true)}
           <CategoryItem 
             {category}
             {skills}
             {currentTier}
+            {isUnavailable}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             on:click={() => selectCategory(category)}
@@ -72,15 +93,17 @@
     {/if}
     
     <!-- Support Categories -->
-    {#if supportCategories.length > 0}
+    {#if allSupportCategories.length > 0}
       <div class="category-type-section">
         <h3 class="section-title">Support Structures</h3>
         
-        {#each supportCategories as category}
+        {#each allSupportCategories as category}
           {@const currentTier = getCurrentTier(category)}
+          {@const isUnavailable = isCategoryUnavailable(category, false)}
           <CategoryItem 
             {category}
             {currentTier}
+            {isUnavailable}
             isSelected={selectedCategory === category}
             isInProgress={categoriesInProgress.has(category)}
             showSkills={false}

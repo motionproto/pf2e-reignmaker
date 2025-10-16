@@ -24,11 +24,15 @@
       expandedCategories = new Set(expandedCategories);
    }
    
-   async function handleDeleteStructure(structureId: string, structureName: string) {
+   async function handleDeleteStructure(structureId: string, structureName: string, groupStructureIds?: string[]) {
+      const isGroupDelete = groupStructureIds && groupStructureIds.length > 1;
+      
       // @ts-ignore
       const confirmed = await Dialog.confirm({
-         title: 'Remove Structure',
-         content: `<p>Are you sure you want to remove <strong>${structureName}</strong>?</p><p>This action cannot be undone.</p>`,
+         title: isGroupDelete ? 'Remove Entire Group' : 'Remove Structure',
+         content: isGroupDelete 
+            ? `<p>This will remove the <strong>entire group</strong>. Are you sure?</p><p>This action cannot be undone.</p>`
+            : `<p>Are you sure you want to remove <strong>${structureName}</strong>?</p><p>This action cannot be undone.</p>`,
          yes: () => true,
          no: () => false
       });
@@ -36,21 +40,50 @@
       if (!confirmed) return;
       
       try {
-         const result = await settlementStructureManagement.removeStructureFromSettlement(
-            structureId,
-            settlement.id
-         );
-         
-         if (result.success) {
-            if (result.warning) {
-               // @ts-ignore
-               ui.notifications?.warn(result.warning);
+         // If group delete, remove all structures in the group
+         if (isGroupDelete) {
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const id of groupStructureIds) {
+               const result = await settlementStructureManagement.removeStructureFromSettlement(
+                  id,
+                  settlement.id
+               );
+               
+               if (result.success) {
+                  successCount++;
+               } else {
+                  errorCount++;
+               }
             }
-            // @ts-ignore
-            ui.notifications?.info(`Removed ${structureName}`);
+            
+            if (successCount > 0) {
+               // @ts-ignore
+               ui.notifications?.info(`Removed ${successCount} structure(s)`);
+            }
+            if (errorCount > 0) {
+               // @ts-ignore
+               ui.notifications?.error(`Failed to remove ${errorCount} structure(s)`);
+            }
          } else {
-            // @ts-ignore
-            ui.notifications?.error(result.error || 'Failed to remove structure');
+            // Single structure delete
+            const result = await settlementStructureManagement.removeStructureFromSettlement(
+               structureId,
+               settlement.id
+            );
+            
+            if (result.success) {
+               if (result.warning) {
+                  // @ts-ignore
+                  ui.notifications?.warn(result.warning);
+               }
+               // @ts-ignore
+               ui.notifications?.info(`Removed ${structureName}`);
+            } else {
+               // @ts-ignore
+               ui.notifications?.error(result.error || 'Failed to remove structure');
+            }
          }
       } catch (error) {
          console.error('Error removing structure:', error);
@@ -178,8 +211,15 @@
                      <td class="actions-cell">
                         <button 
                            class="delete-button"
-                           on:click={() => handleDeleteStructure(group.highestTier.id, group.highestTier.name)}
-                           title="Remove structure"
+                           on:click={(e) => {
+                              const groupIds = [group.highestTier.id, ...group.lowerTiers.map(s => s.id)];
+                              if (e.shiftKey && groupIds.length > 1) {
+                                 handleDeleteStructure(group.highestTier.id, group.highestTier.name, groupIds);
+                              } else {
+                                 handleDeleteStructure(group.highestTier.id, group.highestTier.name);
+                              }
+                           }}
+                           title={group.lowerTiers.length > 0 ? "Remove structure (SHIFT+click to remove entire group)" : "Remove structure"}
                         >
                            <i class="fas fa-trash"></i>
                         </button>

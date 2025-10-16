@@ -7,8 +7,21 @@ This ensures the monolithic file accurately reflects the individual files' conte
 import json
 from pathlib import Path
 
+def derive_category_from_filename(filename: str) -> str:
+    """Derive category enum value from filename."""
+    # Remove .json extension
+    name = filename.replace('.json', '')
+    
+    # Extract category portion after type prefix
+    if name.startswith('skill-'):
+        return name.replace('skill-', '')
+    elif name.startswith('support-'):
+        return name.replace('support-', '')
+    
+    return name
+
 def combine_structures():
-    """Read all individual structure JSON files and combine them into one."""
+    """Read all individual structure JSON files and combine them into one, preserving hierarchical structure."""
     
     # Paths
     structures_dir = Path(__file__).parent.parent / "data" / "structures"  # data/structures/
@@ -19,8 +32,8 @@ def combine_structures():
     # Ensure dist directory exists
     dist_dir.mkdir(exist_ok=True)
     
-    # Collect all structure data
-    all_structures = []
+    # Collect all structure families
+    families = []
     structure_files = sorted(structures_dir.glob("*.json"))
     
     print(f"Reading structure files from: {structures_dir}")
@@ -35,73 +48,59 @@ def combine_structures():
             with open(json_file, 'r') as f:
                 data = json.load(f)
                 
-                # Check if this is a consolidated file with tiers
-                if 'tiers' in data:
-                    # Handle the new consolidated format - tiers is a list
-                    if isinstance(data['tiers'], list):
-                        # Extract individual structures from tier list
-                        for structure in data['tiers']:
-                            all_structures.append(structure)
-                        print(f"  ✓ Loaded {len(data['tiers'])} structures from: {json_file.name}")
-                    elif isinstance(data['tiers'], dict):
-                        # Old format compatibility (if any)
-                        for tier_key, structure in data['tiers'].items():
-                            all_structures.append(structure)
-                        print(f"  ✓ Loaded {len(data['tiers'])} structures from: {json_file.name}")
-                else:
-                    # Regular standalone structure (shouldn't exist anymore)
-                    all_structures.append(data)
-                    print(f"  ✓ Loaded: {json_file.name}")
+                # Derive category from filename
+                category = derive_category_from_filename(json_file.name)
+                
+                # Add category to family data
+                data['category'] = category
+                
+                # Add this family to the output
+                families.append(data)
+                
+                tier_count = len(data.get('tiers', []))
+                print(f"  ✓ Loaded family: {json_file.name} ({tier_count} tiers)")
+                
         except Exception as e:
             print(f"  ✗ Error loading {json_file.name}: {e}")
     
-    # Sort structures by category and then by tier and id for consistency
-    # This groups structures by their functional category (e.g., commerce, justice, military-training, etc.)
-    all_structures.sort(key=lambda x: (x.get('category', ''), x.get('tier', 0), x.get('id', '')))
+    # Sort families by type and category
+    families.sort(key=lambda x: (x.get('type', ''), x.get('category', '')))
     
-    # Create the structures object with a structures array
+    # Create the structures object with families array
     structures_output = {
-        "structures": all_structures
+        "families": families
     }
     
     # Write combined file
     with open(output_file, 'w') as f:
         json.dump(structures_output, f, indent=4)
     
-    print(f"\n✅ Successfully combined {len(all_structures)} structures")
+    print(f"\n✅ Successfully combined {len(families)} structure families")
     print(f"📁 Output written to: {output_file}")
     
-    # Summary by tier
-    tier_counts = {}
-    for structure in all_structures:
-        tier = structure.get('tier', 0)
-        tier_counts[tier] = tier_counts.get(tier, 0) + 1
-    
-    print("\nStructures by tier:")
-    for tier in sorted(tier_counts.keys()):
-        print(f"  Tier {tier}: {tier_counts[tier]} structures")
+    # Calculate statistics
+    total_structures = sum(len(family.get('tiers', [])) for family in families)
     
     # Summary by type
     type_counts = {}
-    for structure in all_structures:
-        s_type = structure.get('type', 'unknown')
-        type_counts[s_type] = type_counts.get(s_type, 0) + 1
+    for family in families:
+        family_type = family.get('type', 'unknown')
+        tier_count = len(family.get('tiers', []))
+        type_counts[family_type] = type_counts.get(family_type, 0) + tier_count
     
+    print(f"\nTotal structures: {total_structures}")
     print("\nStructures by type:")
     for s_type in sorted(type_counts.keys()):
         print(f"  {s_type}: {type_counts[s_type]} structures")
     
     # Summary by category
-    category_counts = {}
-    for structure in all_structures:
-        category = structure.get('category', 'uncategorized')
-        category_counts[category] = category_counts.get(category, 0) + 1
+    print("\nFamilies by category:")
+    for family in families:
+        category = family.get('category', 'uncategorized')
+        tier_count = len(family.get('tiers', []))
+        print(f"  {category}: {tier_count} structures")
     
-    print("\nStructures by category:")
-    for category in sorted(category_counts.keys()):
-        print(f"  {category}: {category_counts[category]} structures")
-    
-    return all_structures
+    return families
 
 if __name__ == "__main__":
     combine_structures()

@@ -13,6 +13,7 @@
    export let size: 'normal' | 'compact' = 'normal';
    export let editable: boolean = true;
    export let onChange: ((newValue: number) => void) | null = null;
+   export let tooltip: string | undefined = undefined;
    
    // Generate unique card ID
    const cardId = `resource-${resource}-${Math.random().toString(36).substr(2, 9)}`;
@@ -119,9 +120,13 @@
    class:editing={isEditing}
    class:compact={size === 'compact'}
    class:editable
+   class:has-tooltip={!editable && tooltip}
    style="--resource-color: {color};"
    on:click={startEditing}
 >
+   {#if tooltip && !editable}
+      <div class="tooltip">{tooltip}</div>
+   {/if}
    <!-- Floating animation overlay -->
    {#if showAnimation}
       <div class="animation-overlay">
@@ -194,6 +199,11 @@
       }
       
       &.editable:hover:not(.editing) {
+         outline-color: var(--resource-color);
+         background: rgba(0, 0, 0, 0.3);
+      }
+      
+      &.has-tooltip:hover {
          outline-color: var(--resource-color);
          background: rgba(0, 0, 0, 0.3);
       }
@@ -354,5 +364,36 @@
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 1000;
+   }
+   
+   .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-0.5rem);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: var(--font-sm);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 1001;
+      
+      &::after {
+         content: '';
+         position: absolute;
+         top: 100%;
+         left: 50%;
+         transform: translateX(-50%);
+         border: 0.25rem solid transparent;
+         border-top-color: rgba(0, 0, 0, 0.9);
+      }
+   }
+   
+   .resource-card.has-tooltip:hover .tooltip {
+      opacity: 1;
    }
 </style>

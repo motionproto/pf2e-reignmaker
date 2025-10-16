@@ -11,7 +11,21 @@ export enum LogLevel {
 }
 
 class Logger {
-  private level: LogLevel = LogLevel.INFO;
+  private level: LogLevel;
+
+  constructor() {
+    // Auto-enable DEBUG in development mode
+    // @ts-ignore - Check for Vite dev mode
+    const isDev = import.meta.env?.DEV || 
+                  window.location.hostname === 'localhost' ||
+                  window.location.hostname === '127.0.0.1';
+    
+    this.level = isDev ? LogLevel.DEBUG : LogLevel.INFO;
+    
+    if (isDev) {
+      console.log('[Logger] 🔧 Development mode detected - DEBUG logging enabled');
+    }
+  }
 
   /**
    * Set the current log level

@@ -94,13 +94,10 @@ export class SettlementStructureManagementService {
       };
     }
 
-    // Add all structures and initialize their conditions
+    // Initialize conditions for new structures
     await updateKingdom(k => {
       const s = k.settlements.find(s => s.id === settlementId);
       if (s) {
-        s.structureIds.push(...structuresToAdd);
-        
-        // Initialize conditions for new structures
         if (!s.structureConditions) {
           s.structureConditions = {};
         }
@@ -110,12 +107,11 @@ export class SettlementStructureManagementService {
       }
     });
 
-    // Update settlement skill bonuses after adding structures
+    // Add structures using centralized service (handles recalculation)
     const { settlementService } = await import('../settlements');
-    await settlementService.updateSettlementSkillBonuses(settlementId);
-    
-    // Update derived properties (imprisoned unrest capacity, food storage, etc.)
-    await settlementService.updateSettlementDerivedProperties(settlementId);
+    for (const structureId of structuresToAdd) {
+      await settlementService.addStructure(settlementId, structureId);
+    }
 
     return {
       success: true,

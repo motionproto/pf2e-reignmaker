@@ -95,6 +95,33 @@
           />
         {/if}
       {/each}
+      
+      <!-- Requirement message when no available structures -->
+      {#if availableStructures.length === 0 && builtStructures.length > 0}
+        <div class="requirement-message">
+          {#if builtStructures.length === categoryStructures.length}
+            <i class="fas fa-check-circle"></i>
+            <div class="message-content">
+              <p class="message-title">All Structures Built</p>
+              <p class="message-text">All structures in this category have been built in this settlement.</p>
+            </div>
+          {:else}
+            <i class="fas fa-lock"></i>
+            <div class="message-content">
+              <p class="message-title">Tier Progression Required</p>
+              <p class="message-text">Build at least one Tier {maxTierBuilt} structure in this category to unlock Tier {nextTier}.</p>
+            </div>
+          {/if}
+        </div>
+      {:else if availableStructures.length === 0 && builtStructures.length === 0}
+        <div class="requirement-message">
+          <i class="fas fa-info-circle"></i>
+          <div class="message-content">
+            <p class="message-title">No Structures Available</p>
+            <p class="message-text">This settlement doesn't meet the tier requirements for structures in this category yet.</p>
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -194,6 +221,54 @@
       
       i {
         font-size: var(--font-sm);
+      }
+    }
+    
+    .requirement-message {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(100, 100, 100, 0.15);
+      border: 1px solid rgba(120, 120, 120, 0.3);
+      border-radius: var(--radius-md);
+      margin-top: 0.5rem;
+      
+      > i {
+        font-size: var(--font-xl);
+        color: var(--text-secondary);
+        margin-top: 0.125rem;
+        flex-shrink: 0;
+        
+        &.fa-check-circle {
+          color: rgba(100, 200, 100, 0.8);
+        }
+        
+        &.fa-lock {
+          color: rgba(200, 150, 50, 0.8);
+        }
+        
+        &.fa-info-circle {
+          color: rgba(100, 150, 200, 0.8);
+        }
+      }
+      
+      .message-content {
+        flex: 1;
+        
+        .message-title {
+          margin: 0 0 0.375rem 0;
+          font-size: var(--font-md);
+          font-weight: var(--font-weight-semibold);
+          color: var(--text-primary);
+        }
+        
+        .message-text {
+          margin: 0;
+          font-size: var(--font-sm);
+          color: var(--text-secondary);
+          line-height: 1.5;
+        }
       }
     }
   }

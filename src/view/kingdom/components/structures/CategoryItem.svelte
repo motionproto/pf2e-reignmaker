@@ -5,14 +5,18 @@
   export let skills: string[] = [];
   export let isSelected: boolean = false;
   export let isInProgress: boolean = false;
+  export let isUnavailable: boolean = false;
   export let showSkills: boolean = true;
   export let currentTier: number | undefined = undefined;
 </script>
 
 <button
-  class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''}"
+  class="category-item {isSelected ? 'selected' : ''} {isInProgress ? 'in-progress' : ''} {isUnavailable ? 'unavailable' : ''}"
   on:click
 >
+  {#if isUnavailable}
+    <i class="fas fa-lock unavailable-icon"></i>
+  {/if}
   {#if currentTier !== undefined}
     <span class="tier-badge">Tier {currentTier}</span>
   {/if}
@@ -73,6 +77,39 @@
       .arrow {
         color: var(--info-icon);
       }
+    }
+    
+    &.unavailable {
+      opacity: 0.5;
+      background: rgba(0, 0, 0, 0.3);
+      border-color: var(--border-subtle);
+      
+      &:hover {
+        opacity: 0.65;
+        background: rgba(0, 0, 0, 0.25);
+        border-color: var(--border-default);
+      }
+      
+      .category-icon {
+        color: var(--text-tertiary);
+      }
+      
+      .category-name {
+        color: var(--text-secondary);
+      }
+      
+      .category-skills {
+        color: var(--text-tertiary);
+      }
+    }
+    
+    .unavailable-icon {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      z-index: 1;
     }
     
     .category-icon {

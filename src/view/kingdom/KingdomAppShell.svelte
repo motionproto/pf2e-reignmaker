@@ -197,6 +197,17 @@
             // Run settlement skill bonuses migration if needed
             const { autoMigrateSettlements } = await import('../../services/migrations/SettlementSkillBonusesMigration');
             await autoMigrateSettlements();
+            
+            // Recalculate all settlement derived properties to ensure consistency
+            console.log('[KingdomAppShell] Recalculating settlement properties...');
+            const { settlementService } = await import('../../services/settlements');
+            const kingdom = kingdomActor.getKingdom();
+            if (kingdom?.settlements) {
+               for (const settlement of kingdom.settlements) {
+                  await settlementService.updateSettlementDerivedProperties(settlement.id);
+               }
+               console.log('[KingdomAppShell] Settlement properties recalculated successfully');
+            }
          } else {
             console.warn('[KingdomAppShell] No kingdom actor available');
          }

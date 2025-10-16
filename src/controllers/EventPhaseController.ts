@@ -180,16 +180,17 @@ export async function createEventPhaseController(_eventService?: any) {
                         }
                         
                         // Update persistent DC and turnState (mark as current event)
+                        const eventId = event.id; // Capture for callback
                         await actor.updateKingdom((kingdom) => {
                             // Update persistent DC (survives across turns)
                             kingdom.eventDC = newDC;
                             
                             // Update turnState (for current turn display - roll numbers + current marker)
-                            if (kingdom.turnState && event) {
+                            if (kingdom.turnState) {
                                 kingdom.turnState.eventsPhase.eventRolled = true;
                                 kingdom.turnState.eventsPhase.eventRoll = roll;
                                 kingdom.turnState.eventsPhase.eventTriggered = true;
-                                kingdom.turnState.eventsPhase.eventId = event.id;  // Marks as "current event"
+                                kingdom.turnState.eventsPhase.eventId = eventId;  // Marks as "current event"
                                 kingdom.turnState.eventsPhase.eventInstanceId = instanceId;  // ✅ Ties marker to specific instance
                             }
                         });
@@ -586,9 +587,35 @@ export async function createEventPhaseController(_eventService?: any) {
                 return { success: false, error: 'Event not found' };
             }
             
-            // Determine if this event should create an ongoing instance
-            const shouldCreateInstance = event.traits?.includes('dangerous');
+            const isBeneficial = event.traits?.includes('beneficial');
+            const isDangerous = event.traits?.includes('dangerous');
             const outcomeData = event.effects.failure;
+            
+            // Handle beneficial events: Apply failure outcome immediately
+            if (isBeneficial && !isDangerous && outcomeData) {
+                logger.debug(`🎁 [EventPhaseController] Beneficial event ignored - applying failure effects: ${eventId}`);
+                
+                // Apply failure outcome using existing resolveEvent logic
+                const result = await this.resolveEvent(
+                    eventId,
+                    'failure',
+                    { 
+                        numericModifiers: [],
+                        manualEffects: [],
+                        complexActions: []
+                    },
+                    true, // isIgnored = true (skips player tracking)
+                    'Event Ignored',
+                    '',
+                    undefined
+                );
+                
+                logger.debug(`✅ [EventPhaseController] Beneficial event failure effects applied: ${eventId}`);
+                return result;
+            }
+            
+            // Determine if this event should create an ongoing instance (dangerous events only)
+            const shouldCreateInstance = isDangerous;
             
             if (shouldCreateInstance && outcomeData) {
                 const { getKingdomActor } = await import('../stores/KingdomStore');
@@ -646,6 +673,7 @@ export async function createEventPhaseController(_eventService?: any) {
             await updateKingdom(kingdom => {
                 if (kingdom.turnState?.eventsPhase?.eventId === eventId) {
                     kingdom.turnState.eventsPhase.eventId = null;
+                    kingdom.turnState.eventsPhase.eventInstanceId = null;
                     kingdom.turnState.eventsPhase.eventTriggered = false;
                     logger.debug(`✅ [EventPhaseController] Cleared current event from turnState`);
                 }

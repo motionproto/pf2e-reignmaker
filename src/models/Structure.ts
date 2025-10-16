@@ -7,9 +7,10 @@
 export interface StructureFamily {
   type: 'skill' | 'support';
   family: string;
+  category: string;  // Kebab-case category identifier
   description: string;
   skills?: string[];  // Only for skill structures
-  tiers: Structure[]; // Array of 4 structures (T1-T4)
+  tiers: any[]; // Array of raw structure data (will be parsed into Structure objects)
 }
 
 /**
@@ -160,7 +161,7 @@ export interface Structure {
   
   // Requirements
   minimumSettlementTier?: number; // 1=Village, 2=Town, 3=City, 4=Metropolis
-  upgradeFrom?: string; // ID of prerequisite structure
+  upgradeFrom?: string | null; // ID of prerequisite structure (null for tier 1)
   unique?: boolean; // Only one can exist in settlement
   uniqueKingdomWide?: boolean; // Only one can exist in entire kingdom (revenue structures)
   
