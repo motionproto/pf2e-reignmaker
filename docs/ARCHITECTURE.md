@@ -35,7 +35,7 @@ Write: Component → Controller → KingdomActor → Foundry → All Clients
 
 **Player Actions:**
 - `src/controllers/actions/action-types.ts` - Action interfaces
-- `src/controllers/actions/game-effects.ts` - 25+ typed game effect definitions
+- `src/controllers/actions/game-commands.ts` - 25+ typed game command definitions
 - `src/controllers/actions/action-loader.ts` - Load/query actions from JSON
 - `src/controllers/actions/action-execution.ts` - Execute actions, apply effects
 - `data/player-actions/*.json` - 29 action definitions (structured effects)
@@ -302,7 +302,7 @@ isStepCompletedByIndex(stepIndex: number): Promise<boolean>
 ```
 src/controllers/actions/
 ├── action-types.ts       # TypeScript interfaces for actions
-├── game-effects.ts       # 25+ typed game effect definitions
+├── game-commands.ts      # 25+ typed game command definitions
 ├── action-loader.ts      # Load and manage action definitions
 └── action-execution.ts   # Execute actions and apply effects
 ```
@@ -333,7 +333,7 @@ interface ActionEffect {
 }
 ```
 
-**Game Effect Types (25+ types):**
+**Game Command Types (25+ commands):**
 - **Territory:** `claimHexes`, `fortifyHex`, `buildRoads`
 - **Construction:** `buildStructure`, `foundSettlement`, `upgradeSettlement`, `createWorksite`
 - **Military:** `recruitArmy`, `trainArmy`, `deployArmy`, `recoverArmy`, `disbandArmy`
@@ -674,7 +674,7 @@ src/
 │   ├── UpkeepPhaseController.ts
 │   ├── actions/               # Player action system
 │   │   ├── action-types.ts    # TypeScript interfaces
-│   │   ├── game-effects.ts    # Game effect definitions
+│   │   ├── game-commands.ts   # Game command definitions
 │   │   ├── action-loader.ts   # Action loading/querying
 │   │   └── action-execution.ts # Action execution logic
 │   ├── events/                # Event type providers
@@ -906,8 +906,8 @@ for (const [resource, value] of result.stateChanges) {
 ### Player Actions
 - **29 Actions**: Loaded from `data/player-actions/*.json` at startup
 - **6 Categories**: uphold-stability, military-operations, expand-borders, urban-planning, foreign-affairs, economic-actions
-- **Type Safety**: Full TypeScript validation via `action-types.ts` and `game-effects.ts`
-- **Execution**: ActionExecutionService validates requirements, parses outcomes, applies effects
+- **Type Safety**: Full TypeScript validation via `action-types.ts` and `game-commands.ts`
+- **Execution**: GameCommandsService and GameCommandsResolver handle command execution
 
 ### Turn Phases (in order)
 1. **STATUS** - Apply modifiers, check kingdom state

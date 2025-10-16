@@ -42,7 +42,16 @@ Type-safe resource modifications using explicit TypeScript discriminants.
 - StaticModifier, DiceModifier, ChoiceModifier
 - Duration types (immediate, ongoing, turn-count)
 - Outcome structure and message placeholders
-- Manual effects vs automated effects
+- Manual effects vs game commands
+
+### [Game Commands System](systems/game-commands-system.md)
+Structured gameplay commands for non-resource effects from player actions.
+
+**Topics:**
+- 25+ typed command definitions
+- Territory, construction, military, diplomatic commands
+- Service architecture (GameCommandsService, GameCommandsResolver)
+- Integration with action outcomes and dual-effect pattern
 
 ### [Phase Controllers](systems/phase-controllers.md)
 Implement phase-specific business logic following standardized patterns.

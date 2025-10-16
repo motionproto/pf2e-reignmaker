@@ -245,24 +245,37 @@ Some effects cannot be automated (map changes, NPC reactions, etc.):
 
 ---
 
-## Game Effects (Planned)
+## Game Commands System
 
-Game effects provide automated gameplay mechanics (not yet implemented):
+Game commands provide automated gameplay mechanics alongside resource modifiers.
+
+**Dual-Effect Architecture:**
+
+Action outcomes use two parallel systems:
+- **Modifiers** - Resource changes (gold, food, unrest, fame, etc.)
+- **GameCommands** - Gameplay mechanics (claim hexes, recruit armies, build structures, etc.)
 
 ```typescript
-interface GameEffect {
-  type: string;
-  [key: string]: any;  // Effect-specific properties
+interface ActionEffect {
+  description: string;
+  modifiers?: EventModifier[];        // Resource changes (this system)
+  gameCommands?: GameCommand[];       // Gameplay mechanics (see game-commands-system.md)
 }
 ```
 
-**Planned Types:**
-- Territory: `claimHexes`, `fortifyHex`, `buildRoads`
-- Construction: `buildStructure`, `repairStructure`, `createWorksite`
-- Military: `recruitArmy`, `trainArmy`, `deployArmy`
-- Diplomatic: `establishDiplomaticRelations`, `requestEconomicAid`
+**Implementation:**
+- 25+ typed command interfaces in `src/controllers/actions/game-commands.ts`
+- Command execution via `GameCommandsService` and `GameCommandsResolver`
+- Full integration with player actions in `data/player-actions/*.json`
 
-**Current Status:** Type definitions exist, automation not implemented. Game effects described in `manualEffects` or handled via custom UI.
+**Command Categories:**
+- Territory & Expansion (claimHexes, buildRoads, fortifyHex)
+- Construction (buildStructure, foundSettlement, upgradeSettlement)
+- Military Operations (recruitArmy, trainArmy, deployArmy, disbandArmy)
+- Diplomatic Actions (establishDiplomaticRelations, requestEconomicAid)
+- Event Management (resolveEvent, hireAdventurers, arrestDissidents)
+
+See `docs/systems/game-commands-system.md` for comprehensive documentation.
 
 ---
 
