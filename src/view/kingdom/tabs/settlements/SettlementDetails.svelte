@@ -155,7 +155,7 @@
             <div class="tier-and-actions">
                <SettlementLocationPicker settlement={settlement} />
                
-               <SettlementTier tier={settlement.tier} />
+               <SettlementTier {settlement} />
                
                <!-- Level Editor -->
                {#if isEditingLevel}

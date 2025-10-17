@@ -63,8 +63,8 @@ Actions are grouped by complexity to guide implementation order:
 ## Urban Planning (4)
 
 - [x] 🔴 [build-structure.md](urban-planning/build-structure.md)
-- [ ] 🟡 [establish-settlement.md](urban-planning/establish-settlement.md)
-- [ ] 🟡 [repair-structure.md](urban-planning/repair-structure.md)
+- [x] 🟡 [establish-settlement.md](urban-planning/establish-settlement.md)
+- [x] 🟡 [repair-structure.md](urban-planning/repair-structure.md)
 - [ ] 🟡 [upgrade-settlement.md](urban-planning/upgrade-settlement.md)
 
 ## Foreign Affairs (5)

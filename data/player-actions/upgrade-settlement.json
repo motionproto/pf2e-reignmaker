@@ -2,8 +2,11 @@
   "id": "upgrade-settlement",
   "name": "Upgrade Settlement",
   "category": "urban-planning",
-  "brief": "Advance tiers (requires both level and structure prerequisites)",
-  "description": "Expand an existing settlement's size and capabilities, transforming villages into thriving centers of civilization",
+  "brief": "Increase settlement level by 1",
+  "description": "Invest in infrastructure and urban development to advance your settlement's capabilities and unlock access to more advanced structures",
+  "cost": {
+    "gold": "settlement's new level"
+  },
   "skills": [
     {
       "skill": "crafting",
@@ -28,25 +31,26 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Increase Level +1 Structure",
+      "description": "Settlement level increases by 1 at half the normal cost (rounded up)",
       "modifiers": []
     },
     "success": {
-      "description": "Increase Level",
+      "description": "Settlement level increases by 1",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "Construction setbacks and delays waste resources. Pay half the upgrade cost (rounded up) with no level increase",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
+      "description": "Planning disasters and coordination failures waste the full investment with no progress. Pay the full upgrade cost with no level increase",
       "modifiers": []
     }
   },
   "requirements": [
-    "Village \u2192 Town: Level 2+ and 2+ Structures",
-    "Town \u2192 City: Level 5+ and 4+ Structures",
-    "City \u2192 Metropolis: Level 10+ and 6+ Structures"
-  ]
+    "Village → Town: Level 2+ and 2+ Structures",
+    "Town → City: Level 5+ and 4+ Structures",
+    "City → Metropolis: Level 8+ and 8+ Structures"
+  ],
+  "special": "Cost equals the settlement's NEW level in gold. For example, upgrading from level 4 to level 5 costs 5 gold. Tier changes occur automatically when level and structure prerequisites are met."
 }

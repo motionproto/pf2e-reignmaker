@@ -1,10 +1,34 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { updateKingdom } from '../../../../stores/KingdomStore';
+   import { settlementService } from '../../../../services/settlements';
    
    export let settlement: Settlement;
    
    let isUpdating = false;
+   
+   // Get tier upgrade requirements
+   $: upgradeValidation = settlement 
+      ? settlementService.canUpgradeSettlement(settlement)
+      : null;
+   
+   // Calculate structure progress towards next tier
+   $: structureProgress = settlement ? (() => {
+      const currentCount = settlement.structureIds.length;
+      
+      switch (settlement.tier) {
+         case 'Village':
+            return { current: currentCount, required: 2, nextTier: 'Town' };
+         case 'Town':
+            return { current: currentCount, required: 4, nextTier: 'City' };
+         case 'City':
+            return { current: currentCount, required: 8, nextTier: 'Metropolis' };
+         case 'Metropolis':
+            return null; // Max tier
+         default:
+            return null;
+      }
+   })() : null;
    
    async function toggleRoadConnection() {
       if (isUpdating) return;
@@ -57,6 +81,24 @@
             {/if}
             <i class="fas fa-pen edit-indicator"></i>
          </button>
+         
+         <!-- Structure Progress towards next tier -->
+         {#if structureProgress}
+            <div class="status-item" class:ready={structureProgress.current >= structureProgress.required}>
+               {#if structureProgress.current >= structureProgress.required}
+                  <i class="fas fa-hammer status-good"></i>
+                  <span>{structureProgress.current}/{structureProgress.required} structures (ready for {structureProgress.nextTier})</span>
+               {:else}
+                  <i class="fas fa-hammer status-warning"></i>
+                  <span>{structureProgress.current}/{structureProgress.required} structures required for {structureProgress.nextTier}</span>
+               {/if}
+            </div>
+         {:else if settlement.tier === 'Metropolis'}
+            <div class="status-item">
+               <i class="fas fa-crown status-good"></i>
+               <span>Maximum tier reached</span>
+            </div>
+         {/if}
       </div>
    </div>
 {/if}
@@ -66,7 +108,7 @@
       margin-bottom: .25rem;
       
       h4 {
-         margin: 0 0 0.75rem 0;
+         margin: 0 0 0.5rem 0;
          color: var(--color-accent);
          font-size: var(--font-lg);
          font-weight: var(--font-weight-semibold);
@@ -105,7 +147,7 @@
             transition: var(--transition-base);
             text-align: left;
             color: var(--text-primary);
-            padding: 0.75rem;
+            padding: 0.5rem 0;
             border-radius: var(--radius-md);
             
             &:hover:not(:disabled) {
@@ -127,6 +169,12 @@
                font-size: var(--font-xs);
                opacity: 0.5;
                transition: var(--transition-base);
+            }
+         }
+         
+         &.ready {
+            span {
+               color: var(--color-success);
             }
          }
          

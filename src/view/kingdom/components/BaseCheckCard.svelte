@@ -398,7 +398,7 @@
                   <button 
                     class="aid-button-inline"
                     on:click={handleAidClick}
-                    disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action')}
+                    disabled={isRolling || !isViewingCurrentPhase || (resolved && checkType !== 'action') || (!available && showAvailability) || isBeingResolvedByOther}
                   >
                     <i class="fas fa-hands-helping"></i>
                     Aid Another

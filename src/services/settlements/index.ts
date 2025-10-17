@@ -146,7 +146,7 @@ export class SettlementService {
   
   /**
    * Check if a settlement can be upgraded
-   * Based on Reignmaker Lite rules: level + structure requirements
+   * Based on Reignmaker Lite rules: structure requirements only
    */
   canUpgradeSettlement(settlement: Settlement): {
     canUpgrade: boolean,
@@ -159,17 +159,14 @@ export class SettlementService {
     switch (settlement.tier) {
       case SettlementTier.VILLAGE:
         nextTier = SettlementTier.TOWN;
-        if (settlement.level < 2) requirements.push('Settlement level 2 required');
         if (settlement.structureIds.length < 2) requirements.push('2 structures required');
         break;
       case SettlementTier.TOWN:
         nextTier = SettlementTier.CITY;
-        if (settlement.level < 5) requirements.push('Settlement level 5 required');
         if (settlement.structureIds.length < 4) requirements.push('4 structures required');
         break;
       case SettlementTier.CITY:
         nextTier = SettlementTier.METROPOLIS;
-        if (settlement.level < 8) requirements.push('Settlement level 8 required');
         if (settlement.structureIds.length < 8) requirements.push('8 structures required');
         break;
       case SettlementTier.METROPOLIS:
@@ -708,7 +705,7 @@ export class SettlementService {
   
   
   /**
-   * Update settlement level
+   * Update settlement level with automatic tier transitions
    * 
    * @param settlementId - Settlement ID
    * @param newLevel - New settlement level (1-20)
@@ -721,9 +718,58 @@ export class SettlementService {
       throw new Error(`Invalid settlement level: ${newLevel} (must be 1-20)`);
     }
     
-    await this.updateSettlement(settlementId, { level: newLevel });
+    const { getKingdomActor } = await import('../../stores/KingdomStore');
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
     
-    logger.debug(`✅ [SettlementService] Settlement level updated to ${newLevel}`);
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    const structureCount = settlement.structureIds?.length || 0;
+    const oldTier = settlement.tier;
+    
+    // Determine new tier based on level and structure count
+    let newTier = settlement.tier;
+    
+    if (newLevel >= 8 && structureCount >= 8 && oldTier !== SettlementTier.METROPOLIS) {
+      newTier = SettlementTier.METROPOLIS;
+      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to Metropolis!`);
+    } else if (newLevel >= 5 && structureCount >= 4 && oldTier === SettlementTier.TOWN) {
+      newTier = SettlementTier.CITY;
+      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to City!`);
+    } else if (newLevel >= 2 && structureCount >= 2 && oldTier === SettlementTier.VILLAGE) {
+      newTier = SettlementTier.TOWN;
+      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to Town!`);
+    }
+    
+    // Check if settlement is using the old tier's default image
+    const isUsingDefaultImage = settlement.imagePath === getDefaultSettlementImage(oldTier);
+    
+    const updates: Partial<Settlement> = { level: newLevel };
+    
+    // Update tier if it changed
+    if (newTier !== oldTier) {
+      updates.tier = newTier;
+      
+      // Update to new tier's default image if settlement was using old default
+      if (isUsingDefaultImage) {
+        updates.imagePath = getDefaultSettlementImage(newTier);
+        logger.debug(`🖼️ [SettlementService] Updated default image to ${newTier} tier`);
+      }
+    }
+    
+    await this.updateSettlement(settlementId, updates);
+    
+    logger.debug(`✅ [SettlementService] Settlement level updated to ${newLevel}${newTier !== oldTier ? ` (tier: ${newTier})` : ''}`);
   }
 }
 
