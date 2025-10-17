@@ -86,7 +86,7 @@
     <div class="notice">
       <i class="fas fa-info-circle"></i>
       <div class="notice-content">
-        <strong>After applying:</strong> You'll need to place a Village on the Kingmaker hex map using the hex editing tools.
+        <strong>After applying:</strong>Place a Village on the hex map using the kingmaker hex editing tools, and link it in the settlements tab.
       </div>
     </div>
   </div>
@@ -173,6 +173,11 @@
     cursor: pointer;
     transition: all 0.2s ease;
     
+    // Fix vertical text clipping
+    line-height: 1.5;
+    min-height: 2.5rem;
+    height: auto;
+    
     &:focus {
       outline: none;
       border-color: var(--color-primary);
@@ -182,6 +187,8 @@
     option {
       background: var(--bg-base);
       color: var(--text-primary);
+      padding: 0.5rem;
+      line-height: 1.5;
     }
   }
   
