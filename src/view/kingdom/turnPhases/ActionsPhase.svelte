@@ -202,6 +202,24 @@
       }
     }
     
+    // Special handling for repair-structure to replace {structure} placeholder
+    if (action.id === 'repair-structure' && effectMessage.includes('{structure}')) {
+      if (pendingRepairAction?.structureId) {
+        const { structuresService } = await import('../../../services/structures');
+        const structure = structuresService.getStructure(pendingRepairAction.structureId);
+        
+        if (structure) {
+          effectMessage = effectMessage.replace(/{structure}/g, structure.name);
+        } else {
+          // Structure not found - use generic replacement
+          effectMessage = effectMessage.replace(/{structure}/g, 'structure');
+        }
+      } else {
+        // No structure ID yet - use generic replacement
+        effectMessage = effectMessage.replace(/{structure}/g, 'structure');
+      }
+    }
+    
     // Store repair action metadata if this is a repair-structure action
     const metadata = actionId === 'repair-structure' && pendingRepairAction 
       ? { 
@@ -1112,7 +1130,7 @@
                 skillName: checkInstance.appliedOutcome.skillName || '',
                 modifiers: checkInstance.appliedOutcome.modifiers || [],
                 effect: checkInstance.appliedOutcome.effect || '',
-                effectsApplied: checkInstance.appliedOutcome.effectsApplied ?? false
+                effectsApplied: checkInstance.appliedOutcome.effectsApplied ? true : false
               } : undefined}
               {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
               {@const isAvailable = isActionAvailable(action)}

@@ -303,6 +303,35 @@ export function createErrorResult(error: string): ResolveResult {
 }
 
 // ============================================================================
+// TEMPLATE REPLACEMENT
+// ============================================================================
+
+/**
+ * Replace template placeholders in a string
+ * Replaces {key} with corresponding value from replacements object
+ * 
+ * @param template - String containing {placeholder} tokens
+ * @param replacements - Object mapping placeholder names to values
+ * @returns String with all placeholders replaced
+ * 
+ * @example
+ * replaceTemplatePlaceholders(
+ *   'The {structure} is repaired!',
+ *   { structure: 'Prison' }
+ * ) // => 'The Prison is repaired!'
+ */
+export function replaceTemplatePlaceholders(
+  template: string,
+  replacements: Record<string, string>
+): string {
+  let result = template;
+  for (const [key, value] of Object.entries(replacements)) {
+    result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+  }
+  return result;
+}
+
+// ============================================================================
 // LOGGING HELPERS
 // ============================================================================
 

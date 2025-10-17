@@ -311,6 +311,490 @@ Consider creating implementations for:
 - `claim-hexes` - Proficiency scaling and hex selection
 - Any action with `gameEffects` in player-actions JSON
 
+## Custom Outcome UI - Replacing Default Display
+
+### How Custom Components Replace Standard Outcomes
+
+By default, when a skill check completes, the system shows a standard outcome display:
+- Outcome message from action JSON
+- List of modifiers to apply
+- "Apply Result" button
+
+**Custom components REPLACE this default display for specific outcomes.**
+
+### The Flow
+
+```
+1. Skill check completes with outcome (e.g., "success")
+   ↓
+2. OutcomeDisplay checks: Does this action/outcome need custom UI?
+   ↓
+3. Calls getCustomResolutionComponent(actionId, outcome)
+   ↓
+4. Implementation returns component if needsCustomResolution(outcome) === true
+   ↓
+5. Custom component REPLACES standard display
+   ↓
+6. User interacts with custom UI (makes choices)
+   ↓
+7. Custom UI stores choices in instance.resolutionState.customComponentData
+   ↓
+8. User clicks "Apply Result" (from OutcomeDisplay)
+   ↓
+9. validateData() checks customComponentData
+   ↓
+10. execute() runs with the choices
+```
+
+### Implementation Pattern
+
+**1. Declare which outcomes need custom UI:**
+
+```typescript
+needsCustomResolution(outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): boolean {
+  // Return true for outcomes that should show custom UI
+  return outcome === 'success';  // Only success shows custom component
+}
+```
+
+**2. Provide the custom component:**
+
+```typescript
+customResolution: {
+  component: YourCustomComponent,  // Svelte component to show
+  // ...
+}
+```
+
+**3. What the user sees:**
+
+❌ **Without custom component (standard display):**
+```
+Success!
+You repaired the structure.
+
+Modifiers:
+• No modifiers
+
+[Apply Result]
+```
+
+✅ **With custom component (repair cost choice):**
+```
+Success!
+Choose repair cost:
+
+[1d4 Gold - Click to roll] [Half build cost: 2 lumber, 1 stone]
+
+(User makes choice, then clicks Apply Result)
+```
+
+### Key Concepts
+
+#### 1. Custom UI is Optional Per Outcome
+
+You can have custom UI for some outcomes but not others:
+
+```typescript
+needsCustomResolution(outcome): boolean {
+  // Success needs custom UI (cost choice)
+  if (outcome === 'success') return true;
+  
+  // Critical success is automatic (free repair, no UI needed)
+  if (outcome === 'criticalSuccess') return false;
+  
+  // Failures use standard display (just show modifiers)
+  return false;
+}
+```
+
+#### 2. Custom Component Props
+
+Your custom component receives these props:
+
+```svelte
+<script lang="ts">
+  export let instance: ActiveCheckInstance | null = null;  // Full instance data
+  export let outcome: string;                               // The outcome degree
+  
+  // Access pre-roll data from metadata
+  $: structureId = instance?.metadata?.structureId || '';
+  
+  // Access previous choices (if any)
+  $: previousChoice = instance?.resolutionState?.customComponentData?.choice;
+</script>
+```
+
+#### 3. The Data Contract
+
+**Critical:** What your component stores MUST match what your validation expects!
+
+```typescript
+// Component stores this:
+await updateInstanceResolutionState(instance.instanceId, {
+  customComponentData: {
+    structureId: 'prison',
+    settlementId: 'settlement-123',
+    cost: { gold: 3 }
+  }
+});
+
+// Validation MUST check for exactly this structure:
+validateData(resolutionData: ResolutionData): boolean {
+  const data = resolutionData.customComponentData;
+  if (!data?.structureId || !data?.settlementId || !data?.cost) {
+    return false;  // Missing required data
+  }
+  return true;
+}
+
+// Execute reads the same structure:
+async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
+  const { structureId, settlementId, cost } = resolutionData.customComponentData;
+  // Use the data...
+}
+```
+
+#### 4. Multiple Outcomes, Different UI
+
+You can show different components for different outcomes:
+
+```typescript
+customResolution: {
+  component: YourComponent,  // This will be shown for ALL outcomes where needsCustomResolution returns true
+  // ...
+}
+
+needsCustomResolution(outcome): boolean {
+  // Could show different components based on outcome
+  return outcome === 'success' || outcome === 'failure';
+}
+```
+
+**Note:** Currently the system uses ONE component for all custom outcomes. If you need different UI per outcome, you can:
+- Have the component check `outcome` prop and render differently
+- Use multiple action implementations (less recommended)
+
+### Common Patterns
+
+#### Pattern 1: Choice-Based Resolution
+
+**Use case:** User must choose between options before applying
+
+```typescript
+// Example: Choose between two costs
+customResolution: {
+  component: CostChoiceComponent,
+  
+  validateData(resolutionData: ResolutionData): boolean {
+    // Require user to have made a choice
+    return !!resolutionData.customComponentData?.selectedOption;
+  },
+  
+  async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
+    const { selectedOption, cost } = resolutionData.customComponentData;
+    // Apply based on choice
+  }
+}
+```
+
+#### Pattern 2: Allocation UI
+
+**Use case:** User must allocate/distribute something
+
+```typescript
+// Example: Allocate imprisoned unrest to settlements
+customResolution: {
+  component: AllocationComponent,
+  
+  validateData(resolutionData: ResolutionData): boolean {
+    const allocations = resolutionData.customComponentData?.allocations;
+    // Check all unrest is allocated
+    return allocations && totalAllocated === unrestAmount;
+  },
+  
+  async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
+    const { allocations } = resolutionData.customComponentData;
+    // Apply allocations to settlements
+  }
+}
+```
+
+#### Pattern 3: Conditional UI
+
+**Use case:** Only some outcomes need custom UI
+
+```typescript
+needsCustomResolution(outcome): boolean {
+  // Only success and critical success need UI
+  return outcome === 'success' || outcome === 'criticalSuccess';
+}
+
+// Component can check outcome and render differently:
+<script>
+  export let outcome: string;
+  
+  $: if (outcome === 'criticalSuccess') {
+    // Show success message, auto-apply
+  } else if (outcome === 'success') {
+    // Show choice UI
+  }
+</script>
+```
+
+### Debugging Custom UI
+
+**Problem:** Custom UI not showing
+
+**Check:**
+1. Is `needsCustomResolution(outcome)` returning `true`?
+2. Is `customResolution.component` defined?
+3. Check console for component errors
+4. Verify outcome matches what you expect
+
+**Problem:** Validation failing
+
+**Check:**
+1. Log `resolutionData.customComponentData` in `validateData()`
+2. Verify component is actually storing data
+3. Check data structure matches exactly
+4. Look for TypeScript type mismatches
+
+**Problem:** Execute not receiving data
+
+**Check:**
+1. Validation passed (if validation fails, execute won't run)
+2. Log `resolutionData` in `execute()`
+3. Check if data is in `customComponentData` or `metadata`
+
+## Lessons Learned from Implementations
+
+### Repair Structure Action - Key Patterns
+
+The repair structure implementation revealed several important patterns for complex actions:
+
+#### 1. Instance Metadata for Pre-Roll Data
+
+**Problem:** Need to pass data from pre-roll dialog (structure selection) to custom resolution component (cost choice).
+
+**Solution:** Store selection in instance metadata during action initiation:
+
+```typescript
+// In ActionsPhase.svelte - when creating instance
+const metadata = actionId === 'repair-structure' && pendingRepairAction 
+  ? { 
+      structureId: pendingRepairAction.structureId,
+      settlementId: pendingRepairAction.settlementId
+    }
+  : undefined;
+
+const instanceId = await checkInstanceService.createInstance(
+  'action',
+  actionId,
+  action,
+  $currentTurn,
+  metadata  // ← Passed here
+);
+```
+
+**Access in Custom Component:**
+```svelte
+<!-- RepairCostChoice.svelte -->
+<script>
+  export let instance: ActiveCheckInstance | null = null;
+  
+  // Read from metadata
+  $: structureId = instance?.metadata?.structureId || '';
+  $: settlementId = instance?.metadata?.settlementId || '';
+</script>
+```
+
+#### 2. Validation Must Match What UI Provides
+
+**Problem:** Validation failed because it required data that wasn't stored yet.
+
+**Solution:** Understand the data flow and validate what's actually available:
+
+```typescript
+validateData(resolutionData: ResolutionData): boolean {
+  const data = resolutionData.customComponentData;
+  
+  // ✅ Require what the UI stores
+  if (data?.structureId && data?.settlementId && data?.cost) {
+    // Validate affordability
+    // ...
+    return true;
+  }
+  
+  // ❌ Don't require data that doesn't exist yet
+  return false;
+}
+```
+
+**Data Flow:**
+1. User selects structure → Stored in `instance.metadata`
+2. User makes skill check → Instance created with metadata
+3. User selects cost → Stored in `instance.resolutionState.customComponentData`
+4. User clicks "Apply Result" → Validation checks customComponentData
+
+#### 3. Import Statements (Browser vs Node)
+
+**Problem:** Using `require()` causes "require is not defined" error.
+
+**Solution:** Always use ES6 imports:
+
+```typescript
+// ❌ DON'T - CommonJS (Node.js only)
+const { structuresService } = require('../../../services/structures');
+
+// ✅ DO - Top-level import (preferred)
+import { structuresService } from '../../../services/structures';
+
+// ✅ DO - Dynamic import (if needed conditionally)
+const { structuresService } = await import('../../../services/structures');
+```
+
+**Note:** `checkRequirements` must be synchronous, so use top-level imports only.
+
+#### 4. Cost Choice Pattern with Multiple Options
+
+**Pattern:** Let user choose between multiple cost options (dice roll vs fixed cost).
+
+**Implementation:**
+
+```typescript
+// Custom component stores selection
+async function selectOption() {
+  await updateInstanceResolutionState(instance.instanceId, {
+    customComponentData: {
+      costType: 'dice', // or 'half'
+      cost: costObj,     // actual cost object
+      structureId,       // from metadata
+      settlementId       // from metadata
+    }
+  });
+}
+
+// Execute reads from customComponentData
+async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
+  const { cost, structureId, settlementId } = resolutionData.customComponentData;
+  
+  if (cost && Object.keys(cost).length > 0) {
+    // Deduct resources
+  } else {
+    // Free (critical success)
+  }
+}
+```
+
+#### 5. Diagnostic Logging Strategy
+
+**Problem:** Complex flows are hard to debug without visibility.
+
+**Solution:** Add comprehensive logging at each step:
+
+```typescript
+// In validation
+console.log('🔍 [ActionName] Validating:', {
+  hasData: !!data,
+  structureId: data?.structureId,
+  fullData: resolutionData
+});
+
+// In storage
+console.log('💰 [Component] Storing data:', dataToStore);
+await updateInstanceResolutionState(...);
+console.log('✅ [Component] Stored successfully');
+
+// In execution
+logActionStart('action-id', 'Processing');
+// ... work
+logActionSuccess('action-id', 'Completed');
+```
+
+**Use emoji prefixes for quick scanning:**
+- 🔍 Validation
+- 💰 Cost/Resource operations
+- ✅ Success
+- ❌ Error
+- 🔧 Processing
+
+#### 6. Handle Different Outcomes Differently
+
+**Pattern:** Same action can behave differently based on outcome.
+
+```typescript
+needsCustomResolution(outcome): boolean {
+  // Only success needs cost choice
+  // Critical success is free (no UI needed)
+  return outcome === 'success';
+}
+
+async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
+  // Try customComponentData first (success with cost choice)
+  if (resolutionData.customComponentData?.structureId) {
+    structureId = resolutionData.customComponentData.structureId;
+    cost = resolutionData.customComponentData.cost;
+  } 
+  // Fall back to instance metadata (critical success, no cost)
+  else if (instance?.metadata?.structureId) {
+    structureId = instance.metadata.structureId;
+    // No cost for critical success
+  }
+}
+```
+
+#### 7. Resource Type Safety
+
+**Problem:** TypeScript errors when using wrong types for cost objects.
+
+**Solution:** Import proper types:
+
+```typescript
+import type { ResourceCost } from '../../../models/Structure';
+
+// Use the correct type
+let halfCost: ResourceCost = {};  // Not Record<string, number>
+```
+
+#### 8. Component-Action Data Contract
+
+**Critical:** Custom component and action implementation must agree on data structure.
+
+**Checklist:**
+- [ ] Component reads from `instance.metadata` (pre-roll data)
+- [ ] Component writes to `instance.resolutionState.customComponentData` (choices)
+- [ ] Action validates `customComponentData` structure
+- [ ] Action execution handles both `customComponentData` and `metadata` sources
+- [ ] Validation logging shows exactly what's being checked
+
+### Quick Reference: Repair Structure Flow
+
+```
+1. User clicks "Repair Structure"
+   └─> RepairStructureDialog opens
+   
+2. User selects structure
+   └─> Stores: { structureId, settlementId }
+   └─> Triggers skill check
+   
+3. Skill check creates instance
+   └─> Stores selection in instance.metadata
+   
+4. On success → RepairCostChoice shown
+   └─> Reads structureId/settlementId from metadata
+   └─> Calculates half cost from StructuresService
+   
+5. User selects cost option
+   └─> Stores in instance.resolutionState.customComponentData:
+       { costType, cost, structureId, settlementId }
+   
+6. User clicks "Apply Result"
+   └─> Validation checks customComponentData
+   └─> Execute deducts resources, repairs structure
+   └─> Settlement properties recalculated
+```
+
 ## Questions?
 
 See the architecture documentation in `/.clinerules/ARCHITECTURE_SUMMARY.md` for overall patterns and principles.

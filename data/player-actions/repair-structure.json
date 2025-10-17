@@ -20,7 +20,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Citizens volunteer their time and materials. The structure is repaired for free!",
+      "description": "Citizens volunteer their time and materials. The {structure} is repaired for free!",
       "modifiers": [],
       "gameEffects": [
         {
@@ -30,7 +30,7 @@
       ]
     },
     "success": {
-      "description": "",
+      "description": "you repair the {structure}. Choose to pay either tier × d4 gold OR half the original build cost.",
       "modifiers": [],
       "gameEffects": [
         {
@@ -40,11 +40,11 @@
       ]
     },
     "failure": {
-      "description": "Despite your efforts, the structure remains damaged and cannot be repaired at this time.",
+      "description": "Despite your efforts, the {structure} remains damaged.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Time and money are wasted in the failed repair attempt. The structure remains damaged.",
+      "description": "Time and money are wasted. The {structure} remains damaged.",
       "modifiers": [
         {
           "type": "static",

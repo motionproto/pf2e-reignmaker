@@ -20,8 +20,9 @@
   let isRolling: boolean = false;
   let halfCost: ResourceCost = {};
   let halfCostLoaded: boolean = false;
+  let structureTier: number = 1;
   
-  // Load half cost from service (presentation data)
+  // Load half cost and tier from service (presentation data)
   $: if (structureId && !halfCostLoaded) {
     loadHalfCost();
   }
@@ -34,6 +35,7 @@
     
     if (structure) {
       halfCost = structuresService.calculateHalfBuildCost(structure);
+      structureTier = structure.tier;
       halfCostLoaded = true;
     }
   }
@@ -41,26 +43,35 @@
   async function selectDiceOption() {
     isRolling = true;
     
-    // Roll dice
-    const rolled = Math.floor(Math.random() * 4) + 1; // 1d4
-    diceRollResult = rolled;
+    // Roll tier × d4 (e.g., tier 3 = 3d4)
+    let total = 0;
+    for (let i = 0; i < structureTier; i++) {
+      total += Math.floor(Math.random() * 4) + 1;
+    }
+    diceRollResult = total;
     isRolling = false;
     
     // Create cost as plain object (not Map) for proper serialization
-    const costObj = { gold: rolled };
+    const costObj = { gold: total };
     
     console.log('💰 [RepairCostChoice] Dice rolled cost:', costObj);
+    console.log('💰 [RepairCostChoice] Storing with structureId:', structureId, 'settlementId:', settlementId);
     
     // Store selection in instance (like choice buttons do)
     if (instance) {
+      const dataToStore = {
+        costType: 'dice',
+        cost: costObj,
+        structureId,
+        settlementId
+      };
+      console.log('💰 [RepairCostChoice] Data being stored:', dataToStore);
       await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: {
-          costType: 'dice',
-          cost: costObj,
-          structureId,
-          settlementId
-        }
+        customComponentData: dataToStore
       });
+      console.log('✅ [RepairCostChoice] Dice cost stored successfully');
+    } else {
+      console.error('❌ [RepairCostChoice] No instance available to store cost');
     }
     
     // Dispatch selection event
@@ -73,16 +84,24 @@
   }
   
   async function selectHalfOption() {
+    console.log('💰 [RepairCostChoice] Half cost selected:', halfCost);
+    console.log('💰 [RepairCostChoice] Storing with structureId:', structureId, 'settlementId:', settlementId);
+    
     // Store selection in instance
     if (instance) {
+      const dataToStore = {
+        costType: 'half',
+        cost: halfCost,
+        structureId,
+        settlementId
+      };
+      console.log('💰 [RepairCostChoice] Data being stored:', dataToStore);
       await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: {
-          costType: 'half',
-          cost: halfCost,
-          structureId,
-          settlementId
-        }
+        customComponentData: dataToStore
       });
+      console.log('✅ [RepairCostChoice] Half cost stored successfully');
+    } else {
+      console.error('❌ [RepairCostChoice] No instance available to store cost');
     }
     
     // Dispatch selection event
@@ -115,11 +134,11 @@
       {:else if diceRollResult !== null}
         <div class="cost-display">
           <div class="cost-value">{diceRollResult} Gold</div>
-          <div class="cost-label">1d4 rolled</div>
+          <div class="cost-label">{structureTier}d4 rolled</div>
         </div>
       {:else}
         <div class="cost-display">
-          <div class="cost-value">1d4 Gold</div>
+          <div class="cost-value">{structureTier}d4 Gold</div>
           <div class="cost-label">Click to roll</div>
         </div>
       {/if}
