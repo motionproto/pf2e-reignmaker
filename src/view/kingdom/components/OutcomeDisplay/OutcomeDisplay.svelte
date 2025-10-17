@@ -508,20 +508,18 @@
       {resolvedDice} 
       on:roll={handleDiceRoll} 
     />
-    <!-- Hide StateChanges when custom component is present (custom UI replaces it) -->
-    {#if !customComponent}
-      <StateChanges 
-        stateChanges={displayStateChanges} 
-        {modifiers} 
-        {resolvedDice} 
-        {manualEffects} 
-        outcome={effectiveOutcome} 
-        hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
-        on:roll={handleDiceRoll} 
-      />
-    {/if}
+    <!-- Always show StateChanges (modifiers, costs, effects) -->
+    <StateChanges 
+      stateChanges={displayStateChanges} 
+      {modifiers} 
+      {resolvedDice} 
+      {manualEffects} 
+      outcome={effectiveOutcome} 
+      hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
+      on:roll={handleDiceRoll} 
+    />
     
-    <!-- Custom resolution UI component (action-specific) -->
+    <!-- Custom resolution UI component (action-specific) - shown in addition to standard display -->
     {#if customComponent}
       <div class="custom-resolution-ui">
         <svelte:component 

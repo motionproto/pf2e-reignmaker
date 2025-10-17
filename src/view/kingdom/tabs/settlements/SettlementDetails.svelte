@@ -130,6 +130,17 @@
          </div>
       </div>
       
+      <!-- Unmapped Settlement Alert -->
+      {#if settlement.location.x === 0 && settlement.location.y === 0}
+         <div class="unmapped-alert">
+            <div class="alert-content">
+               <i class="fas fa-exclamation-triangle"></i>
+               <span>This settlement is not placed on the map. Please select a hex.</span>
+            </div>
+            <SettlementLocationPicker {settlement} />
+         </div>
+      {/if}
+      
       <div class="details-content">
          <SettlementImage {settlement} />
          <div class="status-wrapper">
@@ -442,6 +453,35 @@
       &:hover:not(:disabled) {
          background: #c82333;
          border-color: #bd2130;
+      }
+   }
+   
+   /* Unmapped Settlement Alert */
+   .unmapped-alert {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: rgba(251, 191, 36, 0.15);
+      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+      gap: 1rem;
+      
+      .alert-content {
+         display: flex;
+         align-items: center;
+         gap: 0.75rem;
+         flex: 1;
+         
+         i {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+         }
+         
+         span {
+            font-size: var(--font-sm);
+            font-weight: var(--font-weight-medium);
+         }
       }
    }
 </style>

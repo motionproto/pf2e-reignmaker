@@ -13,6 +13,7 @@ import type { SvelteComponent } from 'svelte';
 
 import ArrestDissidentsAction from './ArrestDissidentsAction';
 import RepairStructureAction from './RepairStructureAction';
+import EstablishSettlementAction from './EstablishSettlementAction';
 
 /**
  * Interface for custom action implementations
@@ -42,6 +43,7 @@ const actionImplementations = new Map<string, CustomActionImplementation>();
 // Register action implementations
 actionImplementations.set(ArrestDissidentsAction.id, ArrestDissidentsAction);
 actionImplementations.set(RepairStructureAction.id, RepairStructureAction);
+actionImplementations.set(EstablishSettlementAction.id, EstablishSettlementAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
@@ -143,7 +145,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction };
 
 // TODO: Export additional implementations as they're created
 // export { BuildStructureAction };

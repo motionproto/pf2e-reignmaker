@@ -82,6 +82,9 @@ export async function createGameCommandsService() {
      * NEW ARCHITECTURE: Apply numeric modifiers directly
      * Simpler than applyOutcome - just applies final numeric values
      * 
+     * ACCUMULATION: Modifiers are accumulated by resource type before applying
+     * This ensures floating numbers show totals (e.g., "+4 unrest" instead of four "+1 unrest")
+     * 
      * @param modifiers - Array of resource changes to apply
      * @param outcome - Outcome degree (for automatic fame bonus on critical success)
      */
@@ -106,8 +109,47 @@ export async function createGameCommandsService() {
           result.applied.specialEffects.push('critical_success_fame');
         }
         
+        // Step 1: Accumulate modifiers by resource type
+        const accumulated = new Map<ResourceType, number>();
         for (const { resource, value } of modifiers) {
-          await this.applyResourceChange(resource, value, 'Applied', result);
+          const current = accumulated.get(resource) || 0;
+          accumulated.set(resource, current + value);
+        }
+        
+        logger.debug(`📊 [GameCommands] Accumulated modifiers:`, Object.fromEntries(accumulated));
+        
+        // Step 2: Pre-detect shortfalls for standard resources
+        const shortfallResources: ResourceType[] = [];
+        const actor = getKingdomActor();
+        const kingdom = actor?.getKingdom();
+        
+        if (kingdom?.resources) {
+          for (const [resource, value] of accumulated) {
+            // Only check standard resources (not unrest, fame, imprisonedUnrest)
+            if (resource !== 'unrest' && resource !== 'fame' && resource !== 'imprisonedUnrest') {
+              const currentValue = kingdom.resources[resource] || 0;
+              const targetValue = currentValue + value;
+              if (value < 0 && targetValue < 0) {
+                shortfallResources.push(resource);
+                logger.debug(`  ⚠️ Shortfall detected: ${resource} (${currentValue} + ${value} = ${targetValue})`);
+              }
+            }
+          }
+        }
+        
+        // Step 3: Apply each accumulated resource change (skip individual shortfall checks)
+        for (const [resource, value] of accumulated) {
+          await this.applyResourceChange(resource, value, 'Applied', result, true);
+        }
+        
+        // Step 4: Apply accumulated shortfall penalty as one unrest change
+        if (shortfallResources.length > 0) {
+          const totalUnrestPenalty = shortfallResources.length;
+          logger.warn(`  ⚠️ Total shortfalls: ${shortfallResources.length} resources (${shortfallResources.join(', ')})`);
+          logger.warn(`  ⚠️ Accumulated unrest penalty: +${totalUnrestPenalty}`);
+          
+          await this.applyUnrestChange(totalUnrestPenalty, 'Resource shortfall', result);
+          result.applied.specialEffects.push(...shortfallResources.map(r => `shortage_penalty:${r}`));
         }
         
         logger.debug(`✅ [GameCommands] All modifiers applied successfully`);
@@ -315,12 +357,15 @@ export async function createGameCommandsService() {
 
     /**
      * Apply a resource change to the kingdom
+     * 
+     * @param skipShortfallCheck - If true, skip automatic +1 unrest per shortfall (used when caller handles accumulation)
      */
     async applyResourceChange(
       resource: ResourceType,
       value: number,
       modifierName: string,
-      result: ApplyOutcomeResult
+      result: ApplyOutcomeResult,
+      skipShortfallCheck: boolean = false
     ): Promise<void> {
       // Handle special resource types
       if (resource === 'unrest') {
@@ -360,8 +405,8 @@ export async function createGameCommandsService() {
         logger.debug(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})${hasShortfall ? ' [SHORTFALL]' : ''}`);
       });
 
-      // Apply shortfall penalty per Kingdom Rules
-      if (hasShortfall) {
+      // Apply shortfall penalty per Kingdom Rules (only if not skipped)
+      if (hasShortfall && !skipShortfallCheck) {
         logger.warn(`  ⚠️ Shortfall detected for ${resource}: gained +1 unrest`);
         await this.applyUnrestChange(1, `${modifierName} (shortage)`, result);
         result.applied.specialEffects.push(`shortage_penalty:${resource}`);

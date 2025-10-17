@@ -33,37 +33,59 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Village established and gain 1 Structure",
+      "description": "Village established and gain 1 free Tier 1 Structure of your choice",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "food",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "lumber",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         }
       ],
-      "manualEffects": ["Place the new village on the hex map"]
+      "manualEffects": [
+        "Place the new village on the hex map",
+        "Choose and add any Tier 1 structure to the new settlement"
+      ],
+      "gameEffects": [
+        {
+          "type": "selectStructure",
+          "tierFilter": 1,
+          "cost": "free"
+        }
+      ]
     },
     "success": {
       "description": "Village established",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "food",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "lumber",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         }
       ],
       "manualEffects": ["Place the new village on the hex map"]
@@ -72,16 +94,22 @@
       "description": "Scouts, surveyors, and initial supplies are wasted",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
-          "value": -1
+          "value": -1,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "food",
-          "value": -1
+          "value": -1,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "lumber",
-          "value": -1
+          "value": -1,
+          "duration": "immediate"
         }
       ]
     },
@@ -89,20 +117,28 @@
       "description": "Complete disaster - resources wasted, public embarrassment, confidence shaken",
       "modifiers": [
         {
+          "type": "static",
           "resource": "gold",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "food",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "lumber",
-          "value": -2
+          "value": -2,
+          "duration": "immediate"
         },
         {
+          "type": "static",
           "resource": "unrest",
-          "value": 1
+          "value": 1,
+          "duration": "immediate"
         }
       ]
     }
