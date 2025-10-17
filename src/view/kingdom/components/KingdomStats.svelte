@@ -112,6 +112,10 @@
   $: totalWorksites =
     foodProduction + lumberProduction + stoneProduction + oreProduction;
 
+  // Filter settlements to only count those with valid map locations
+  // Settlements at (0, 0) are considered unmapped and excluded from kingdom stats
+  $: mappedSettlements = $settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+
   // Track which field is being edited
   let editingField: string | null = null;
 
@@ -123,8 +127,8 @@
     editingField = null;
   }
 
-  // Calculate imprisoned unrest capacity
-  $: imprisonedUnrestCapacity = $settlements.reduce((sum, s) => {
+  // Calculate imprisoned unrest capacity (only from mapped settlements)
+  $: imprisonedUnrestCapacity = mappedSettlements.reduce((sum, s) => {
     return sum + (s.imprisonedUnrestCapacityValue || 0);
   }, 0);
 
@@ -303,7 +307,7 @@
               ><i class="fa-solid fa-house stat-icon"></i>Villages:</span
             >
             <span class="stat-value"
-              >{$settlements.filter((s) => s.tier === "Village").length}</span
+              >{mappedSettlements.filter((s) => s.tier === "Village").length}</span
             >
           </div>
           <div class="stat-item">
@@ -311,7 +315,7 @@
               ><i class="fa-solid fa-building stat-icon"></i>Towns:</span
             >
             <span class="stat-value"
-              >{$settlements.filter((s) => s.tier === "Town").length}</span
+              >{mappedSettlements.filter((s) => s.tier === "Town").length}</span
             >
           </div>
           <div class="stat-item">
@@ -319,7 +323,7 @@
               ><i class="fa-solid fa-city stat-icon"></i>Cities:</span
             >
             <span class="stat-value"
-              >{$settlements.filter((s) => s.tier === "City").length}</span
+              >{mappedSettlements.filter((s) => s.tier === "City").length}</span
             >
           </div>
           <div class="stat-item">
@@ -327,7 +331,7 @@
               ><i class="fa-solid fa-city stat-icon"></i>Metropolises:</span
             >
             <span class="stat-value"
-              >{$settlements.filter((s) => s.tier === "Metropolis")
+              >{mappedSettlements.filter((s) => s.tier === "Metropolis")
                 .length}</span
             >
           </div>

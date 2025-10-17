@@ -424,6 +424,7 @@ export class ArmyService {
   /**
    * Find a random settlement with available army support capacity
    * Used for auto-assignment when creating new armies
+   * Only includes settlements with valid map locations
    * 
    * @returns Settlement with capacity, or null if none available
    */
@@ -435,7 +436,12 @@ export class ArmyService {
     if (!kingdom) return null;
     
     // Find all settlements with available capacity
+    // Only count settlements with valid locations (exclude unmapped at 0,0)
     const available = kingdom.settlements.filter(s => {
+      // Must have a valid map location
+      const hasLocation = s.location.x !== 0 || s.location.y !== 0;
+      if (!hasLocation) return false;
+      
       const capacity = SettlementTierConfig[s.tier].armySupport;
       const current = s.supportedUnits.length;
       return current < capacity;

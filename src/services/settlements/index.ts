@@ -11,13 +11,25 @@ import { logger } from '../../utils/Logger';
 
 export class SettlementService {
   /**
+   * Filter settlements to only include those with valid map locations
+   * Settlements at (0, 0) are considered unmapped and excluded from calculations
+   */
+  private getSettlementsWithLocations(settlements: Settlement[]): Settlement[] {
+    return settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+  }
+  
+  /**
    * Calculate total gold income from all settlements
    * Only generates gold if settlements were fed last turn
+   * Only includes settlements with valid map locations
    */
   calculateSettlementGoldIncome(settlements: Settlement[]): number {
     let totalGold = 0;
     
-    settlements.forEach(settlement => {
+    // Only count settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    
+    mappedSettlements.forEach(settlement => {
       if (settlement.wasFedLastTurn) {
         // Base gold income by tier
         const baseIncome = this.getBaseGoldIncome(settlement.tier);
@@ -66,9 +78,13 @@ export class SettlementService {
   
   /**
    * Calculate total food consumption for all settlements
+   * Only includes settlements with valid map locations
    */
   calculateTotalFoodConsumption(settlements: Settlement[]): number {
-    return settlements.reduce((total, settlement) => {
+    // Only count settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    
+    return mappedSettlements.reduce((total, settlement) => {
       const config = SettlementTierConfig[settlement.tier];
       return total + (config?.foodConsumption || 0);
     }, 0);
@@ -76,9 +92,13 @@ export class SettlementService {
   
   /**
    * Get food consumption breakdown by settlement
+   * Only includes settlements with valid map locations
    */
   getFoodConsumptionBreakdown(settlements: Settlement[]): Array<{settlement: Settlement, consumption: number}> {
-    return settlements.map(settlement => {
+    // Only count settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    
+    return mappedSettlements.map(settlement => {
       const config = SettlementTierConfig[settlement.tier];
       return {
         settlement,
@@ -90,19 +110,23 @@ export class SettlementService {
   /**
    * Process food consumption and update fed status
    * Returns shortage amount if any
+   * Only includes settlements with valid map locations
    */
   processFoodConsumption(settlements: Settlement[], availableFood: number): {
     shortage: number,
     fedSettlements: Set<string>,
     unfedSettlements: Set<string>
   } {
+    // Only count settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    
     const totalNeeded = this.calculateTotalFoodConsumption(settlements);
     const fedSettlements = new Set<string>();
     const unfedSettlements = new Set<string>();
     
     if (availableFood >= totalNeeded) {
       // All settlements are fed
-      settlements.forEach(s => {
+      mappedSettlements.forEach(s => {
         fedSettlements.add(s.id);
         s.wasFedLastTurn = true;
       });
@@ -111,7 +135,7 @@ export class SettlementService {
       // Shortage - mark all as unfed for simplicity
       // Could implement priority system later
       const shortage = totalNeeded - availableFood;
-      settlements.forEach(s => {
+      mappedSettlements.forEach(s => {
         unfedSettlements.add(s.id);
         s.wasFedLastTurn = false;
       });
@@ -364,8 +388,10 @@ export class SettlementService {
       return;
     }
     
-    // Aggregate capacities across ALL settlements
-    const totals = kingdom.settlements.reduce((acc, s) => ({
+    // Aggregate capacities across ALL settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements);
+    
+    const totals = mappedSettlements.reduce((acc, s) => ({
       foodCapacity: acc.foodCapacity + (s.foodStorageCapacity || 0),
       armyCapacity: acc.armyCapacity + (s.armySupport || 0),
       diplomaticCapacity: acc.diplomaticCapacity + structuresService.calculateDiplomaticCapacity(s),
@@ -504,18 +530,20 @@ export class SettlementService {
       return;
     }
     
-    // Calculate total food capacity across all settlements
-    const totalFoodCapacity = kingdom.settlements.reduce((total, settlement) => {
+    // Calculate total food capacity across all settlements with valid locations
+    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements);
+    
+    const totalFoodCapacity = mappedSettlements.reduce((total, settlement) => {
       return total + (settlement.foodStorageCapacity || 0);
     }, 0);
     
     // Calculate total army capacity across all settlements
-    const totalArmyCapacity = kingdom.settlements.reduce((total, settlement) => {
+    const totalArmyCapacity = mappedSettlements.reduce((total, settlement) => {
       return total + (settlement.armySupport || 0);
     }, 0);
     
     // Calculate total diplomatic capacity across all settlements
-    const totalDiplomaticCapacity = kingdom.settlements.reduce((total, settlement) => {
+    const totalDiplomaticCapacity = mappedSettlements.reduce((total, settlement) => {
       return total + structuresService.calculateDiplomaticCapacity(settlement);
     }, 0);
     

@@ -160,9 +160,15 @@ export class PF2eSkillService {
     const kingdomModifiers: any[] = [];
     
     // Add settlement infrastructure bonuses from cached skillBonuses
+    // Only include settlements with valid map locations
     // Default to disabled so players can manually enable the relevant settlement
     if (currentKingdomState?.settlements) {
-      for (const settlement of currentKingdomState.settlements) {
+      // Filter to only mapped settlements (exclude unmapped at 0,0)
+      const mappedSettlements = currentKingdomState.settlements.filter(
+        s => s.location.x !== 0 || s.location.y !== 0
+      );
+      
+      for (const settlement of mappedSettlements) {
         const bonus = settlement.skillBonuses?.[skillName] ?? 0;
         if (bonus > 0) {
           kingdomModifiers.push({
@@ -281,11 +287,30 @@ export class PF2eSkillService {
       
       // Map skill name to system slug
       const skillSlug = this.skillNameToSlug[skillName.toLowerCase()] || skillName.toLowerCase();
-      const skill = actor?.skills?.[skillSlug];
+      let skill = actor?.skills?.[skillSlug];
+      
+      // Special handling for lore skills - let user select which lore to use
+      if (skillSlug === 'lore' && !skill) {
+        const loreItems = actor?.itemTypes?.lore || [];
+        
+        if (loreItems.length > 0) {
+          // Show selection dialog for lore skills
+          const selectedLoreItem = await this.showLoreSelectionDialog(loreItems);
+          if (!selectedLoreItem) {
+            return null; // User cancelled
+          }
+          // Get the skill data for the selected lore item
+          skill = actor.skills?.[selectedLoreItem.slug];
+        } else {
+          logger.warn(`⚠️ [PF2eSkillService] Character ${actor.name} has no lore skills.`);
+          ui.notifications?.warn(`${actor.name} has no lore skills to use.`);
+        }
+      }
       
       if (!skill) {
-        ui.notifications?.warn(`Character ${actor.name} doesn't have the ${skillName} skill`);
-        return null;
+        // Skill not found - warn but continue (may be untrained or different mapping)
+        logger.warn(`⚠️ [PF2eSkillService] Character ${actor.name} doesn't have skill '${skillName}' (slug: ${skillSlug}). Attempting roll anyway.`);
+        ui.notifications?.info(`Rolling ${skillName} (untrained or not in character sheet)`);
       }
       
       // Calculate DC based on character's level
@@ -299,7 +324,7 @@ export class PF2eSkillService {
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
       
       // Get skill proficiency rank for aid bonuses
-      const proficiencyRank = skill.rank || 0; // 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
+      const proficiencyRank = skill?.rank || 0; // 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary
       
       // Store check info in a flag for retrieval after roll
       await game.user?.setFlag('pf2e-reignmaker', 'pendingCheck', {
@@ -323,16 +348,41 @@ export class PF2eSkillService {
       const useKeepHigher = this.shouldUseKeepHigher(actionId || checkId, checkType);
       
       // Trigger the PF2e system roll with DC and modifiers
-      const rollResult = await skill.roll({
-        dc: { value: dc },
-        label: `${labelPrefix}: ${checkName}`,
-        modifiers: pf2eModifiers,
-        rollTwice: useKeepHigher ? 'keep-higher' : false,
-        extraRollOptions: [
-          `${checkType}:kingdom`,
-          `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
-        ]
-      });
+      let rollResult;
+      if (skill) {
+        // Use the skill's roll method if available
+        rollResult = await skill.roll({
+          dc: { value: dc },
+          label: `${labelPrefix}: ${checkName}`,
+          modifiers: pf2eModifiers,
+          rollTwice: useKeepHigher ? 'keep-higher' : false,
+          extraRollOptions: [
+            `${checkType}:kingdom`,
+            `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
+          ]
+        });
+      } else {
+        // Fallback: Try to find any skill and use it, or create a generic check
+        const firstAvailableSkill = Object.values(actor.skills || {})[0] as any;
+        if (firstAvailableSkill && firstAvailableSkill.roll) {
+          logger.debug(`🔄 [PF2eSkillService] Using fallback skill for ${skillName}`);
+          rollResult = await firstAvailableSkill.roll({
+            dc: { value: dc },
+            label: `${labelPrefix}: ${checkName} (${skillName})`,
+            modifiers: pf2eModifiers,
+            rollTwice: useKeepHigher ? 'keep-higher' : false,
+            extraRollOptions: [
+              `${checkType}:kingdom`,
+              `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
+            ]
+          });
+        } else {
+          logger.error('❌ [PF2eSkillService] No skills available on character');
+          ui.notifications?.error(`Cannot roll - character has no skills`);
+          await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
+          return null;
+        }
+      }
       
       logger.debug('✅ [PF2eSkillService] Skill check completed');
       return rollResult;
@@ -422,6 +472,51 @@ export class PF2eSkillService {
     }
 
     return skillData.totalModifier || skillData.mod || 0;
+  }
+
+  /**
+   * Show a dialog to select which lore skill to use
+   */
+  private async showLoreSelectionDialog(loreItems: any[]): Promise<any | null> {
+    return new Promise((resolve) => {
+      const options = loreItems
+        .map(item => `<option value="${item.slug}">${item.name}</option>`)
+        .join('');
+
+      const content = `
+        <form>
+          <div class="form-group">
+            <label>Select which Lore skill to use:</label>
+            <select id="lore-selection" style="width: 100%; padding: 5px;">
+              ${options}
+            </select>
+          </div>
+        </form>
+      `;
+
+      const DialogClass = (globalThis as any).Dialog;
+      new DialogClass({
+        title: 'Select Lore Skill',
+        content,
+        buttons: {
+          roll: {
+            icon: '<i class="fas fa-dice-d20"></i>',
+            label: 'Roll',
+            callback: (html: any) => {
+              const selectedSlug = html.find('#lore-selection').val() as string;
+              const selectedItem = loreItems.find(item => item.slug === selectedSlug);
+              resolve(selectedItem || null);
+            }
+          },
+          cancel: {
+            icon: '<i class="fas fa-times"></i>',
+            label: 'Cancel',
+            callback: () => resolve(null)
+          }
+        },
+        default: 'roll'
+      }).render(true);
+    });
   }
 }
 

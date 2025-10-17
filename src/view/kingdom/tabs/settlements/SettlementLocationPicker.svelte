@@ -10,6 +10,9 @@
    let isOpen = false;
    let dropdownElement: HTMLElement;
    
+   // Get current settlement from store to ensure we always have the latest data
+   $: currentSettlement = $kingdomData.settlements?.find(s => s.id === settlement.id) || settlement;
+   
    // Get all hexes from the map that have settlement features
    $: availableLocations = ($kingdomData.hexes || [])
       .filter(h => {
@@ -36,9 +39,12 @@
             ? settlementFeature.type.charAt(0).toUpperCase() + settlementFeature.type.slice(1).toLowerCase()
             : 'Settlement';
          
+         // Get settlement name (if available)
+         const settlementName = (settlementFeature as any)?.name || null;
+         
          // Check if this hex already has a settlement assigned
          const assignedSettlement = $kingdomData.settlements.find(s => 
-            s.location.x === x && s.location.y === y && s.id !== settlement.id
+            s.location.x === x && s.location.y === y && s.id !== currentSettlement.id
          );
          
          return {
@@ -46,6 +52,7 @@
             x,
             y,
             settlementType,
+            settlementName,
             isAssigned: !!assignedSettlement,
             assignedTo: assignedSettlement?.name
          };
@@ -56,12 +63,12 @@
          return a.y - b.y;
       });
    
-   // Check if current settlement has a valid location
-   $: hasLocation = settlement.location.x !== 0 || settlement.location.y !== 0;
+   // Check if current settlement has a valid location (use currentSettlement from store)
+   $: hasLocation = currentSettlement.location.x !== 0 || currentSettlement.location.y !== 0;
    
    // Get current location string
    $: locationString = hasLocation 
-      ? `${settlement.location.x}:${settlement.location.y.toString().padStart(2, '0')}`
+      ? `${currentSettlement.location.x}:${currentSettlement.location.y.toString().padStart(2, '0')}`
       : 'No location';
    
    function toggleDropdown() {
@@ -91,17 +98,32 @@
          }
       });
       
+      // Recalculate kingdom capacities since settlement is now mapped
+      const { settlementService } = await import('../../../../services/settlements');
+      await settlementService.updateKingdomCapacities();
+      
       closeDropdown();
       dispatch('locationChanged', { x, y });
    }
    
    async function clearLocation() {
+      // Store old location before clearing
+      const oldLocation = { x: currentSettlement.location.x, y: currentSettlement.location.y };
+      
       await updateKingdom(k => {
          const s = k.settlements.find(s => s.id === settlement.id);
          if (s) {
             s.location = { x: 0, y: 0 };
          }
       });
+      
+      // Remove settlement feature from Kingmaker map
+      const { territoryService } = await import('../../../../services/territory');
+      await territoryService.deleteKingmakerSettlement(oldLocation);
+      
+      // Recalculate kingdom capacities since settlement is now unmapped
+      const { settlementService } = await import('../../../../services/settlements');
+      await settlementService.updateKingdomCapacities();
       
       closeDropdown();
       dispatch('locationChanged', { x: 0, y: 0 });
@@ -157,7 +179,7 @@
                </div>
             {:else}
                {#each availableLocations as location}
-                  {@const isSelected = settlement.location.x === location.x && settlement.location.y === location.y}
+                  {@const isSelected = currentSettlement.location.x === location.x && currentSettlement.location.y === location.y}
                   <button
                      class="location-item"
                      class:selected={isSelected}
@@ -166,6 +188,9 @@
                      on:click|stopPropagation={() => selectLocation(location.x, location.y, location.isAssigned, isSelected)}
                      title={location.isAssigned ? `Already assigned to ${location.assignedTo}` : ''}
                   >
+                     {#if location.settlementName}
+                        <span class="location-name">{location.settlementName}</span>
+                     {/if}
                      <span class="location-type">{location.settlementType}</span>
                      <span class="location-coords">
                         {location.x}:{location.y.toString().padStart(2, '0')}
@@ -303,6 +328,13 @@
             background: rgba(var(--color-primary-rgb), 0.2);
          }
       }
+   }
+   
+   .location-name {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      flex: 1;
    }
    
    .location-type {

@@ -2,6 +2,8 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { SettlementTierConfig } from '../../../../models/Settlement';
    import { kingdomData } from '../../../../stores/KingdomStore';
+   import SkillTag from '../../components/CheckCard/components/SkillTag.svelte';
+   import { performKingdomSkillCheck } from '../../../../services/pf2e';
    
    export let settlement: Settlement;
    
@@ -18,6 +20,11 @@
    
    // Calculate imprisoned unrest capacity
    $: imprisonedUnrestCapacity = settlement.imprisonedUnrestCapacityValue || 0;
+   
+   // Get skill bonuses (filtered to only show non-zero bonuses)
+   $: skillBonuses = Object.entries(settlement.skillBonuses || {})
+      .filter(([_, bonus]) => bonus > 0)
+      .sort((a, b) => a[0].localeCompare(b[0])); // Sort alphabetically by skill name
    
    // Get actual army objects for this settlement
    $: supportedArmies = $kingdomData.armies.filter(army => 
@@ -51,6 +58,17 @@
             kingdom.settlements[settlementIndex].imprisonedUnrest = newValue;
          }
       });
+   }
+   
+   async function handleSkillRoll(skill: string, bonus: number) {
+      // Roll the skill for the user's character with the settlement bonus applied
+      await performKingdomSkillCheck(
+         skill,
+         'action',
+         `${settlement.name} - ${skill}`,
+         `settlement-skill-${settlement.id}-${skill}`,
+         undefined
+      );
    }
 </script>
 
@@ -118,6 +136,21 @@
          </div>
       </div>
    </div>
+   
+   {#if skillBonuses.length > 0}
+      <div class="detail-item-full skill-bonuses-section">
+         <span class="label">Skill Bonuses from Structures</span>
+         <div class="skill-bonuses-grid">
+            {#each skillBonuses as [skill, bonus]}
+               <SkillTag
+                  skill={skill.charAt(0).toUpperCase() + skill.slice(1)}
+                  bonus={bonus}
+                  on:execute={() => handleSkillRoll(skill, bonus)}
+               />
+            {/each}
+         </div>
+      </div>
+   {/if}
 </div>
 
 <style lang="scss">
@@ -247,6 +280,24 @@
                margin: 0;
             }
          }
+      }
+   }
+   
+   .skill-bonuses-section {
+      margin-top: 1rem;
+      
+      .label {
+         display: block;
+         font-size: var(--font-md);
+         color: var(--text-secondary);
+         margin-bottom: 0.75rem;
+         font-weight: var(--font-weight-light);
+      }
+      
+      .skill-bonuses-grid {
+         display: flex;
+         flex-wrap: wrap;
+         gap: 0.5rem;
       }
    }
 </style>

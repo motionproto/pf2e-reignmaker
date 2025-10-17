@@ -3,9 +3,15 @@ import { kingdomData, kingdomActor, isInitialized } from '../../../stores/Kingdo
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
+import SettlementLocationPicker from '../tabs/settlements/SettlementLocationPicker.svelte';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
+
+// Reactive: Get settlements without valid map locations
+$: unmappedSettlements = $kingdomData.settlements?.filter(
+   s => s.location.x === 0 && s.location.y === 0
+) || [];
 
 // Constants
 const MAX_FAME = 3;
@@ -35,6 +41,37 @@ async function initializePhase() {
 </script>
 
 <div class="status-phase">
+   <!-- Unmapped Settlements Alert Section -->
+   {#if unmappedSettlements.length > 0}
+      <div class="phase-section unmapped-settlements-alert">
+         <div class="section-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Unmapped Settlements</h3>
+         </div>
+         
+         <div class="alerts-stack">
+            {#each unmappedSettlements as settlement}
+               <div class="settlement-alert">
+                  <div class="alert-content">
+                     <i class="fas fa-city"></i>
+                     <div class="settlement-info">
+                        <strong>{settlement.name}</strong>
+                        <span class="tier-badge">{settlement.tier}</span>
+                     </div>
+                     <span class="alert-message">Not placed on map</span>
+                  </div>
+                  <SettlementLocationPicker {settlement} />
+               </div>
+            {/each}
+         </div>
+         
+         <div class="alert-note">
+            <i class="fas fa-info-circle"></i>
+            <span>Unmapped settlements do not contribute to kingdom resources, capacities, or skill bonuses.</span>
+         </div>
+      </div>
+   {/if}
+
    <!-- Fame Display Section -->
    <div class="phase-section fame-section">
       <div class="section-header">
@@ -197,5 +234,111 @@ async function initializePhase() {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 15px;
+   }
+
+   // Unmapped Settlements Alert Styles
+   .unmapped-settlements-alert {
+      background: linear-gradient(135deg,
+         rgba(251, 191, 36, 0.15),
+         rgba(245, 158, 11, 0.1));
+      border: 1px solid rgba(251, 191, 36, 0.3);
+
+      .section-header {
+         i {
+            color: #fbbf24;
+         }
+
+         h3 {
+            color: #fbbf24;
+         }
+      }
+   }
+
+   .alerts-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 15px;
+   }
+
+   .settlement-alert {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: var(--radius-md);
+      gap: 15px;
+
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         border-color: rgba(251, 191, 36, 0.4);
+      }
+   }
+
+   .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+
+      > i {
+         font-size: 1.25rem;
+         color: #fbbf24;
+         flex-shrink: 0;
+      }
+   }
+
+   .settlement-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+
+      strong {
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-primary);
+      }
+   }
+
+   .tier-badge {
+      padding: 2px 8px;
+      background: rgba(251, 191, 36, 0.2);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      color: #fbbf24;
+   }
+
+   .alert-message {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      font-style: italic;
+   }
+
+   .alert-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: var(--radius-md);
+
+      i {
+         font-size: 0.875rem;
+         color: #fbbf24;
+         margin-top: 2px;
+         flex-shrink: 0;
+      }
+
+      span {
+         font-size: var(--font-xs);
+         color: var(--text-secondary);
+         line-height: 1.5;
+      }
    }
 </style>

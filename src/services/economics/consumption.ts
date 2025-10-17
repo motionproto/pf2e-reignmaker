@@ -46,6 +46,7 @@ export function calculateConsumption(
 
 /**
  * Calculate food consumption for all settlements
+ * Only includes settlements with valid map locations
  * 
  * According to Kingdom Rules:
  * - Village: 1 Food
@@ -54,7 +55,10 @@ export function calculateConsumption(
  * - Metropolis: 12 Food
  */
 function calculateSettlementFoodConsumption(settlements: Settlement[]): number {
-  return settlements.reduce((total, settlement) => {
+  // Only count settlements with valid locations (exclude unmapped at 0,0)
+  const mappedSettlements = settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+  
+  return mappedSettlements.reduce((total, settlement) => {
     const config = SettlementTierConfig[settlement.tier];
     return total + (config ? config.foodConsumption : 0);
   }, 0);
@@ -100,6 +104,7 @@ function applyConsumptionModifier(
 
 /**
  * Calculate army support capacity from settlements
+ * Only includes settlements with valid map locations
  * 
  * According to Kingdom Rules:
  * - Village: 1 Army
@@ -110,7 +115,10 @@ function applyConsumptionModifier(
  * Plus any structure bonuses (e.g., Barracks, Military Academy)
  */
 export function calculateArmySupportCapacity(settlements: Settlement[]): number {
-  return settlements.reduce((total, settlement) => {
+  // Only count settlements with valid locations (exclude unmapped at 0,0)
+  const mappedSettlements = settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+  
+  return mappedSettlements.reduce((total, settlement) => {
     // Use calculated armySupport if available (includes structure bonuses)
     // Otherwise fall back to base tier value
     const capacity = settlement.armySupport || SettlementTierConfig[settlement.tier]?.armySupport || 0;
