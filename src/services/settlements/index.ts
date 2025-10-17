@@ -6,6 +6,7 @@ import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTier, SettlementTierConfig, getDefaultSettlementImage } from '../../models/Settlement';
 import { structuresService } from '../structures';
+import { territoryService } from '../territory';
 import { logger } from '../../utils/Logger';
 
 export class SettlementService {
@@ -421,17 +422,65 @@ export class SettlementService {
   async updateSettlement(settlementId: string, updates: Partial<Settlement>): Promise<void> {
     logger.debug(`🏰 [SettlementService] Updating settlement: ${settlementId}`);
     
-    const { updateKingdom } = await import('../../stores/KingdomStore');
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
-    await updateKingdom(kingdom => {
-      const settlement = kingdom.settlements.find(s => s.id === settlementId);
-      if (settlement) {
-        Object.assign(settlement, updates);
-        logger.debug(`✅ [SettlementService] Updated ${settlement.name}`);
-      } else {
-        logger.warn(`⚠️ [SettlementService] Settlement not found: ${settlementId}`);
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    // Track changes for Kingmaker map updates
+    const nameChanged = updates.name && updates.name !== settlement.name;
+    const tierChanged = updates.tier && updates.tier !== settlement.tier;
+    const locationChanged = updates.location && 
+      (updates.location.x !== settlement.location.x || updates.location.y !== settlement.location.y);
+    const oldLocation = { ...settlement.location };
+    
+    let updatedSettlement: Settlement | undefined;
+    
+    await updateKingdom(k => {
+      const s = k.settlements.find(s => s.id === settlementId);
+      if (s) {
+        Object.assign(s, updates);
+        updatedSettlement = s;
+        logger.debug(`✅ [SettlementService] Updated ${s.name}`);
       }
     });
+    
+    if (!updatedSettlement) return;
+    
+    // Handle Kingmaker map updates
+    if (locationChanged) {
+      // Location changed - remove from old location, add to new location
+      const oldHasLocation = oldLocation.x !== 0 || oldLocation.y !== 0;
+      const newHasLocation = updatedSettlement.location.x !== 0 || updatedSettlement.location.y !== 0;
+      
+      if (oldHasLocation) {
+        // Remove settlement feature from old location
+        await territoryService.deleteKingmakerSettlement(oldLocation);
+        logger.debug(`🗺️ [SettlementService] Removed ${updatedSettlement.name} from Kingmaker map at ${oldLocation.x}:${oldLocation.y}`);
+      }
+      
+      if (newHasLocation) {
+        // Add settlement feature to new location
+        await territoryService.updateKingmakerSettlement(updatedSettlement);
+        logger.debug(`🗺️ [SettlementService] Added ${updatedSettlement.name} to Kingmaker map at ${updatedSettlement.location.x}:${updatedSettlement.location.y}`);
+      }
+    } else if ((nameChanged || tierChanged) && (updatedSettlement.location.x !== 0 || updatedSettlement.location.y !== 0)) {
+      // Name or tier changed - update existing feature
+      await territoryService.updateKingmakerSettlement(updatedSettlement);
+      logger.debug(`🗺️ [SettlementService] Updated ${updatedSettlement.name} ${tierChanged ? 'tier' : 'name'} on Kingmaker map`);
+    }
   }
   
   /**
@@ -532,6 +581,7 @@ export class SettlementService {
     const structuresRemoved = settlement.structureIds.length;
     const armiesMarkedUnsupported = settlement.supportedUnits.length;
     const settlementName = settlement.name;
+    const settlementLocation = settlement.location;
     
     // Delete settlement and mark armies as unsupported
     await updateKingdom(k => {
@@ -548,6 +598,9 @@ export class SettlementService {
       // Remove settlement
       k.settlements = k.settlements.filter(s => s.id !== settlementId);
     });
+    
+    // Remove from Kingmaker map
+    await territoryService.deleteKingmakerSettlement(settlementLocation);
     
     logger.debug(`✅ [SettlementService] Deleted ${settlementName}: ${structuresRemoved} structures, ${armiesMarkedUnsupported} armies unsupported`);
     
@@ -599,6 +652,8 @@ export class SettlementService {
     const oldDefaultImage = getDefaultSettlementImage(settlement.tier);
     const isUsingDefaultImage = settlement.imagePath === oldDefaultImage;
     
+    let upgradedSettlement: Settlement | undefined;
+    
     // Perform upgrade
     await updateKingdom(k => {
       const s = k.settlements.find(s => s.id === settlementId);
@@ -610,8 +665,15 @@ export class SettlementService {
           s.imagePath = getDefaultSettlementImage(nextTier);
           logger.debug(`🖼️ [SettlementService] Updated default image to ${nextTier} tier`);
         }
+        
+        upgradedSettlement = s;
       }
     });
+    
+    // Update Kingmaker map with new tier
+    if (upgradedSettlement) {
+      await territoryService.updateKingmakerSettlement(upgradedSettlement);
+    }
     
     logger.debug(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
   }

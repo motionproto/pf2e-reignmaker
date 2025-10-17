@@ -92,9 +92,7 @@
    }, {} as Record<string, number>);
    
    $: totalProduction = ($kingdomData.hexes || []).reduce((acc, hex) => {
-      const production = hex.getProduction && typeof hex.getProduction === 'function' 
-         ? hex.getProduction() 
-         : calculateHexProduction(hex);
+      const production = calculateHexProduction(hex);
       production.forEach((amount: number, resource: string) => {
          acc[resource] = (acc[resource] || 0) + amount;
       });
@@ -112,14 +110,7 @@
    }
    
    function getProductionString(hex: any): string {
-      // Handle both Hex class instances and plain objects from stored data
-      let production;
-      if (hex.getProduction && typeof hex.getProduction === 'function') {
-         production = hex.getProduction();
-      } else {
-         // For plain objects, manually calculate production
-         production = calculateHexProduction(hex);
-      }
+      const production = calculateHexProduction(hex);
       
       if (production.size === 0) return '-';
       
@@ -272,9 +263,9 @@
                         {/if}
                      </td>
                      <td class="production">
-                        {#if getProductionString(hex) !== '-'}
+                        {#if calculateHexProduction(hex).size > 0}
                            <div class="production-list">
-                              {#each Array.from((hex.getProduction && typeof hex.getProduction === 'function' ? hex.getProduction() : calculateHexProduction(hex)).entries()) as [resource, amount]}
+                              {#each Array.from(calculateHexProduction(hex).entries()) as [resource, amount]}
                                  <span class="production-item">
                                     <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
                                     +{amount} {resource}
@@ -286,7 +277,26 @@
                         {/if}
                      </td>
                      <td class="features">
-                        {#if hex.name}
+                        {#if hex.features && hex.features.length > 0}
+                           <div class="features-list">
+                              {#each hex.features as feature}
+                                 {#if feature.type}
+                                    {@const featureType = feature.type.toLowerCase()}
+                                    {@const isSettlement = featureType === 'village' || featureType === 'town' || featureType === 'city' || featureType === 'metropolis'}
+                                    <span class="feature-badge" class:settlement={isSettlement}>
+                                       {#if isSettlement}
+                                          <i class="fas fa-city"></i>
+                                       {:else if featureType === 'farmland'}
+                                          <i class="fas fa-wheat-awn"></i>
+                                       {:else}
+                                          <i class="fas fa-landmark"></i>
+                                       {/if}
+                                       {feature.type.charAt(0).toUpperCase() + feature.type.slice(1)}
+                                    </span>
+                                 {/if}
+                              {/each}
+                           </div>
+                        {:else if hex.name}
                            <span class="feature-name">
                               <i class="fas fa-landmark"></i>
                               {hex.name}
@@ -507,6 +517,34 @@
                   
                   i {
                      font-size: 0.75rem;
+                  }
+               }
+            }
+            
+            .features-list {
+               display: flex;
+               flex-direction: column;
+               gap: 0.25rem;
+               
+               .feature-badge {
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 0.25rem;
+                  padding: 0.125rem 0.375rem;
+                  border-radius: 0.25rem;
+                  font-size: 0.75rem;
+                  font-weight: var(--font-weight-medium);
+                  background: rgba(255, 215, 0, 0.1);
+                  color: #ffd700;
+                  
+                  &.settlement {
+                     background: rgba(94, 0, 0, 0.2);
+                     color: var(--color-primary);
+                     border: 1px solid var(--color-primary);
+                  }
+                  
+                  i {
+                     font-size: 0.625rem;
                   }
                }
             }

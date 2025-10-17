@@ -1,17 +1,24 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { updateKingdom } from '../../../../stores/KingdomStore';
+   import { settlementService } from '../../../../services/settlements';
    import SettlementTier from './SettlementTier.svelte';
    import SettlementBasicInfo from './SettlementBasicInfo.svelte';
    import SettlementStructures from './SettlementStructures.svelte';
    import SettlementStatus from './SettlementStatus.svelte';
    import SettlementImage from './SettlementImage.svelte';
    import SettlementManagement from './SettlementManagement.svelte';
+   import SettlementLocationPicker from './SettlementLocationPicker.svelte';
+   import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement | null;
    
+   const dispatch = createEventDispatcher();
+   
    let isEditingName = false;
    let editedName = '';
+   let showDeleteConfirm = false;
+   let isDeleting = false;
    
    function startEditingName() {
       if (settlement) {
@@ -20,15 +27,10 @@
       }
    }
    
-   function saveSettlementName() {
+   async function saveSettlementName() {
       if (settlement && editedName.trim()) {
-         // Use the new store's update method to ensure proper state management and persistence
-         updateKingdom(k => {
-            const s = k.settlements.find(s => s.id === settlement!.id);
-            if (s) {
-               s.name = editedName.trim();
-            }
-         });
+         // Use settlement service to trigger Kingmaker map sync
+         await settlementService.updateSettlement(settlement.id, { name: editedName.trim() });
          isEditingName = false;
       }
    }
@@ -43,6 +45,41 @@
          saveSettlementName();
       } else if (event.key === 'Escape') {
          cancelEditingName();
+      }
+   }
+   
+   function openDeleteConfirm() {
+      showDeleteConfirm = true;
+   }
+   
+   function closeDeleteConfirm() {
+      showDeleteConfirm = false;
+   }
+   
+   async function confirmDelete() {
+      if (!settlement || isDeleting) return;
+      
+      isDeleting = true;
+      
+      try {
+         const result = await settlementService.deleteSettlement(settlement.id);
+         
+         // Show notification
+         // @ts-ignore - Foundry global
+         ui.notifications?.info(`Deleted settlement "${result.name}" (${result.structuresRemoved} structures removed, ${result.armiesMarkedUnsupported} armies unsupported)`);
+         
+         // Close dialog
+         showDeleteConfirm = false;
+         
+         // Notify parent to deselect
+         dispatch('settlementDeleted');
+         
+      } catch (error) {
+         console.error('Failed to delete settlement:', error);
+         // @ts-ignore - Foundry global
+         ui.notifications?.error(`Failed to delete settlement: ${error.message}`);
+      } finally {
+         isDeleting = false;
       }
    }
 </script>
@@ -86,7 +123,10 @@
                   </button>
                </div>
             {/if}
-            <SettlementTier tier={settlement.tier} level={settlement.level} />
+            <div class="tier-and-actions">
+               <SettlementLocationPicker settlement={settlement} />
+               <SettlementTier tier={settlement.tier} level={settlement.level} />
+            </div>
          </div>
       </div>
       
@@ -97,12 +137,64 @@
          </div>
          <SettlementBasicInfo {settlement} />
          <SettlementStructures {settlement} />
-         <SettlementManagement {settlement} />
+         <SettlementManagement {settlement} on:deleteRequest={openDeleteConfirm} />
       </div>
    {:else}
       <div class="empty-selection">
          <i class="fas fa-city fa-3x"></i>
          <p>Select a settlement to view details</p>
+      </div>
+   {/if}
+   
+   <!-- Delete Confirmation Dialog -->
+   {#if showDeleteConfirm && settlement}
+      <div class="modal-backdrop" on:click={closeDeleteConfirm}>
+         <div class="modal-dialog" on:click|stopPropagation>
+            <div class="modal-header">
+               <h3><i class="fas fa-exclamation-triangle"></i> Delete Settlement?</h3>
+               <button class="close-button" on:click={closeDeleteConfirm}>
+                  <i class="fas fa-times"></i>
+               </button>
+            </div>
+            
+            <div class="modal-content">
+               <p class="warning-text">
+                  This will permanently remove:
+               </p>
+               <ul class="delete-details">
+                  <li><strong>{settlement.name}</strong> ({settlement.tier})</li>
+                  <li>{settlement.structureIds.length} structures</li>
+                  {#if settlement.supportedUnits.length > 0}
+                     <li>{settlement.supportedUnits.length} armies will become unsupported</li>
+                  {/if}
+                  <li>All tributes and settlement data</li>
+               </ul>
+               <p class="warning-note">
+                  <strong>This cannot be undone.</strong>
+               </p>
+            </div>
+            
+            <div class="modal-footer">
+               <button 
+                  class="button button-secondary" 
+                  on:click={closeDeleteConfirm}
+                  disabled={isDeleting}
+               >
+                  Cancel
+               </button>
+               <button 
+                  class="button button-danger" 
+                  on:click={confirmDelete}
+                  disabled={isDeleting}
+               >
+                  {#if isDeleting}
+                     <i class="fas fa-spinner fa-spin"></i> Deleting...
+                  {:else}
+                     <i class="fas fa-trash"></i> Delete Settlement
+                  {/if}
+               </button>
+            </div>
+         </div>
       </div>
    {/if}
 </div>
@@ -195,5 +287,161 @@
    .empty-selection {
       @extend .empty-state;
       height: 100%;
+   }
+   
+   .tier-and-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+   }
+   
+   .delete-button {
+      padding: 0.5rem 0.75rem;
+      background: rgba(220, 53, 69, 0.1);
+      border: 1px solid rgba(220, 53, 69, 0.3);
+      border-radius: var(--radius-md);
+      color: #dc3545;
+      cursor: pointer;
+      transition: var(--transition-base);
+      
+      &:hover {
+         background: rgba(220, 53, 69, 0.2);
+         border-color: #dc3545;
+      }
+      
+      i {
+         font-size: var(--font-sm);
+      }
+   }
+   
+   /* Modal Styles */
+   .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+   }
+   
+   .modal-dialog {
+      background: var(--bg-elevated);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      min-width: 25rem;
+      max-width: 35rem;
+   }
+   
+   .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      border-bottom: 1px solid var(--color-border);
+      
+      h3 {
+         margin: 0;
+         color: #dc3545;
+         font-size: var(--font-lg);
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+         
+         i {
+            color: #ffc107;
+         }
+      }
+      
+      .close-button {
+         padding: 0.25rem 0.5rem;
+         background: transparent;
+         border: none;
+         color: var(--text-secondary);
+         cursor: pointer;
+         border-radius: var(--radius-md);
+         
+         &:hover {
+            background: rgba(255, 255, 255, 0.1);
+         }
+      }
+   }
+   
+   .modal-content {
+      padding: 1.5rem;
+      
+      .warning-text {
+         margin: 0 0 1rem 0;
+         color: var(--text-primary);
+      }
+      
+      .delete-details {
+         margin: 0 0 1rem 0;
+         padding-left: 1.5rem;
+         
+         li {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+         }
+      }
+      
+      .warning-note {
+         margin: 1rem 0 0 0;
+         padding: 0.75rem;
+         background: rgba(220, 53, 69, 0.1);
+         border: 1px solid rgba(220, 53, 69, 0.3);
+         border-radius: var(--radius-md);
+         color: #dc3545;
+         text-align: center;
+      }
+   }
+   
+   .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      padding: 1rem;
+      border-top: 1px solid var(--color-border);
+   }
+   
+   .button {
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: var(--transition-base);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      &:disabled {
+         opacity: 0.5;
+         cursor: not-allowed;
+      }
+   }
+   
+   .button-secondary {
+      background: var(--bg-subtle);
+      border: 1px solid var(--color-border);
+      color: var(--text-primary);
+      
+      &:hover:not(:disabled) {
+         background: rgba(255, 255, 255, 0.1);
+      }
+   }
+   
+   .button-danger {
+      background: #dc3545;
+      border: 1px solid #dc3545;
+      color: white;
+      
+      &:hover:not(:disabled) {
+         background: #c82333;
+         border-color: #bd2130;
+      }
    }
 </style>

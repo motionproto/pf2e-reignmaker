@@ -78,6 +78,7 @@ export interface KingdomData {
     worksite?: { type: string } | null;
     hasSpecialTrait?: boolean;
     name?: string;
+    features?: Array<{ type: string | null }>;
   }>;
   settlements: Settlement[];
   size: number;

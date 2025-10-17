@@ -4,6 +4,11 @@
   "category": "urban-planning",
   "brief": "Found a new village",
   "description": "Found a new community where settlers can establish homes and begin building infrastructure",
+  "cost": {
+    "gold": 2,
+    "lumber": 2,
+    "food": 2
+  },
   "skills": [
     {
       "skill": "society",
@@ -28,21 +33,79 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Found village +1 Structure",
-      "modifiers": []
+      "description": "Village established and gain 1 Structure",
+      "modifiers": [
+        {
+          "resource": "gold",
+          "value": -2
+        },
+        {
+          "resource": "food",
+          "value": -2
+        },
+        {
+          "resource": "lumber",
+          "value": -2
+        }
+      ],
+      "manualEffects": ["Place the new village on the hex map"]
     },
     "success": {
-      "description": "Found village",
-      "modifiers": []
+      "description": "Village established",
+      "modifiers": [
+        {
+          "resource": "gold",
+          "value": -2
+        },
+        {
+          "resource": "food",
+          "value": -2
+        },
+        {
+          "resource": "lumber",
+          "value": -2
+        }
+      ],
+      "manualEffects": ["Place the new village on the hex map"]
     },
     "failure": {
-      "description": "No effect",
-      "modifiers": []
+      "description": "Scouts, surveyors, and initial supplies are wasted",
+      "modifiers": [
+        {
+          "resource": "gold",
+          "value": -1
+        },
+        {
+          "resource": "food",
+          "value": -1
+        },
+        {
+          "resource": "lumber",
+          "value": -1
+        }
+      ]
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": []
+      "description": "Complete disaster - resources wasted, public embarrassment, confidence shaken",
+      "modifiers": [
+        {
+          "resource": "gold",
+          "value": -2
+        },
+        {
+          "resource": "food",
+          "value": -2
+        },
+        {
+          "resource": "lumber",
+          "value": -2
+        },
+        {
+          "resource": "unrest",
+          "value": 1
+        }
+      ]
     }
   },
-  "special": "Villages are typically Level 1. A new settlement begins as a Village unless special circumstances apply"
+  "special": "A new settlement begins as a level 1 Village unless special circumstances apply. Must be founded in a claimed hex with no other settlement within 4 hexes."
 }

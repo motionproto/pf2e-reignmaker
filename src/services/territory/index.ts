@@ -128,13 +128,14 @@ export class TerritoryService {
                     });
                 }
                 
-                // Create hex
+                // Create hex with features
                 const hex = new Hex(
                     dotNotationId,
                     terrain,
                     worksite,
                     hasSpecialTrait,
-                    null // Name can be added later if available
+                    null, // Name can be added later if available
+                    hexState.features || [] // Preserve features from Kingmaker
                 );
                 hexes.push(hex);
                 
@@ -189,7 +190,8 @@ export class TerritoryService {
                 terrain: hex.terrain,
                 worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
                 hasSpecialTrait: hex.hasSpecialTrait || false,
-                name: hex.name || undefined
+                name: hex.name || undefined,
+                features: hex.features || [] // Preserve features
             }));
             state.size = hexes.length;
             
@@ -564,7 +566,8 @@ export class TerritoryService {
                     hexData.terrain,
                     hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
                     hexData.hasSpecialTrait || false,
-                    hexData.name || null
+                    hexData.name || null,
+                    hexData.features || []
                 )
             );
         }
@@ -613,17 +616,203 @@ export class TerritoryService {
             hexData.terrain,
             hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
             hexData.hasSpecialTrait || false,
-            hexData.name || null
+            hexData.name || null,
+            hexData.features || []
         );
     }
     
-    /**
-     * Check if Kingmaker module is available
-     */
-    isKingmakerAvailable(): boolean {
-        // @ts-ignore - Foundry global
-        return typeof game !== 'undefined' && game?.modules?.get('pf2e-kingmaker')?.active;
+  /**
+   * Check if Kingmaker module is available
+   */
+  isKingmakerAvailable(): boolean {
+    // @ts-ignore - Foundry global
+    return typeof game !== 'undefined' && game?.modules?.get('pf2e-kingmaker')?.active;
+  }
+  
+  /* -------------------------------------------- */
+  /*  Kingmaker Map Updates (Write Operations)   */
+  /* -------------------------------------------- */
+  
+  /**
+   * Update a settlement feature on the Kingmaker map
+   * Called when settlements are created, upgraded, or renamed
+   */
+  async updateKingmakerSettlement(settlement: Settlement): Promise<void> {
+    if (!this.isKingmakerAvailable()) {
+      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+      return;
     }
+    
+    // Skip if settlement has no location
+    if (!settlement.location || (settlement.location.x === 0 && settlement.location.y === 0)) {
+      logger.debug(`[Territory Service] Settlement ${settlement.name} has no location, skipping map update`);
+      return;
+    }
+    
+    try {
+      // @ts-ignore - Kingmaker global
+      const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker);
+      if (!km?.state) {
+        logger.warn('[Territory Service] Kingmaker state not available');
+        return;
+      }
+      
+      // Calculate hex key from settlement location (same format Kingmaker uses)
+      const hexKey = (100 * settlement.location.x) + settlement.location.y;
+      
+      logger.debug(`🗺️ [Territory Service] Updating settlement on map:`, {
+        settlement: settlement.name,
+        tier: settlement.tier,
+        location: `${settlement.location.x}:${settlement.location.y}`,
+        hexKey: hexKey
+      });
+      
+      // Convert our tier to Kingmaker feature type
+      const kingmakerType = this.tierToKingmakerFeatureType(settlement.tier);
+      
+      // Get existing hex state to preserve other properties
+      const existingHexState = km.state.hexes[hexKey] || {};
+      const existingFeatures = existingHexState.features || [];
+      
+      logger.debug(`🗺️ [Territory Service] Existing hex state:`, {
+        hexKey,
+        existingFeatures: existingFeatures.map((f: any) => ({ type: f.type, name: f.name })),
+        claimed: existingHexState.claimed,
+        explored: existingHexState.explored
+      });
+      
+      // Remove any existing settlement features from this hex
+      const nonSettlementFeatures = existingFeatures.filter((f: any) => 
+        !['village', 'town', 'city', 'metropolis'].includes(f.type?.toLowerCase())
+      );
+      
+      // Create settlement feature
+      const settlementFeature = {
+        type: kingmakerType,
+        name: settlement.name,
+        discovered: true
+      };
+      
+      // Add our settlement feature
+      const updatedFeatures = [
+        ...nonSettlementFeatures,
+        settlementFeature
+      ];
+      
+      logger.debug(`🗺️ [Territory Service] Updated features:`, {
+        removed: existingFeatures.length - nonSettlementFeatures.length,
+        added: settlementFeature,
+        totalFeatures: updatedFeatures.length
+      });
+      
+      // Update Kingmaker state - DEFAULT recursive behavior is what we want
+      // This merges our hex into the existing hexes object
+      km.state.updateSource({
+        hexes: {
+          [hexKey]: {
+            ...existingHexState,
+            features: updatedFeatures
+          }
+        }
+      });
+      
+      await km.state.save();
+      
+      logger.info(`✅ [Territory Service] Updated Kingmaker map for "${settlement.name}" at ${settlement.location.x}:${settlement.location.y} (${kingmakerType})`);
+      
+    } catch (error) {
+      logger.error('[Territory Service] Failed to update Kingmaker settlement:', error);
+    }
+  }
+  
+  /**
+   * Remove a settlement feature from the Kingmaker map
+   * Called when settlements are deleted or unlinked
+   */
+  async deleteKingmakerSettlement(location: { x: number, y: number }): Promise<void> {
+    if (!this.isKingmakerAvailable()) {
+      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+      return;
+    }
+    
+    // Skip if no valid location
+    if (!location || (location.x === 0 && location.y === 0)) {
+      logger.debug('[Territory Service] Invalid location, skipping map update');
+      return;
+    }
+    
+    try {
+      // @ts-ignore - Kingmaker global
+      const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker);
+      if (!km?.state) {
+        logger.warn('[Territory Service] Kingmaker state not available');
+        return;
+      }
+      
+      // Calculate hex key
+      const hexKey = (100 * location.x) + location.y;
+      
+      logger.debug(`🗺️ [Territory Service] Removing settlement from map:`, {
+        location: `${location.x}:${location.y}`,
+        hexKey: hexKey
+      });
+      
+      // Get existing hex state
+      const existingHexState = km.state.hexes[hexKey];
+      if (!existingHexState || !existingHexState.features) {
+        logger.debug(`[Territory Service] No features at ${location.x}:${location.y}, nothing to delete`);
+        return;
+      }
+      
+      const existingFeatures = existingHexState.features;
+      
+      // Remove settlement features from this hex
+      const nonSettlementFeatures = existingFeatures.filter((f: any) => 
+        !['village', 'town', 'city', 'metropolis'].includes(f.type?.toLowerCase())
+      );
+      
+      logger.debug(`🗺️ [Territory Service] Feature removal:`, {
+        existingCount: existingFeatures.length,
+        removedCount: existingFeatures.length - nonSettlementFeatures.length,
+        remainingCount: nonSettlementFeatures.length
+      });
+      
+      // Update Kingmaker state - DEFAULT recursive behavior is what we want
+      km.state.updateSource({
+        hexes: {
+          [hexKey]: {
+            ...existingHexState,
+            features: nonSettlementFeatures
+          }
+        }
+      });
+      
+      await km.state.save();
+      
+      logger.info(`✅ [Territory Service] Removed settlement from Kingmaker map at ${location.x}:${location.y}`);
+      
+    } catch (error) {
+      logger.error('[Territory Service] Failed to delete Kingmaker settlement:', error);
+    }
+  }
+  
+  /**
+   * Convert our settlement tier to Kingmaker feature type
+   */
+  private tierToKingmakerFeatureType(tier: SettlementTier): string {
+    switch (tier) {
+      case 'Village':
+        return 'village';
+      case 'Town':
+        return 'town';
+      case 'City':
+        return 'city';
+      case 'Metropolis':
+        return 'metropolis';
+      default:
+        return 'village';
+    }
+  }
 }
 
 // Export singleton instance

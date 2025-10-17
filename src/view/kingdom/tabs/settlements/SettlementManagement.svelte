@@ -2,8 +2,11 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { settlementService } from '../../../../services/settlements';
    import { getMaxStructures, getMaxAllowedLevel } from './settlements.utils';
+   import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement;
+   
+   const dispatch = createEventDispatcher();
    
    let isProcessing = false;
    
@@ -70,43 +73,9 @@
       }
    }
    
-   // Delete settlement
-   async function confirmDeleteSettlement() {
-      if (!settlement || isProcessing) return;
-      
-      const structureCount = settlement.structureIds.length;
-      const armyCount = settlement.supportedUnits.length;
-      
-      // @ts-ignore
-      const confirmed = await Dialog.confirm({
-         title: `Delete ${settlement.name}?`,
-         content: `
-            <p>This will permanently delete this settlement.</p>
-            <ul>
-               <li>${structureCount} structure(s) will be removed</li>
-               <li>${armyCount} army unit(s) will become unsupported</li>
-            </ul>
-            <p><strong>This action cannot be undone.</strong></p>
-         `,
-         yes: () => true,
-         no: () => false,
-         defaultYes: false
-      });
-      
-      if (!confirmed) return;
-      
-      isProcessing = true;
-      try {
-         const result = await settlementService.deleteSettlement(settlement.id);
-         // @ts-ignore
-         ui.notifications?.info(`Deleted ${result.name}`);
-      } catch (error) {
-         console.error('Failed to delete settlement:', error);
-         // @ts-ignore
-         ui.notifications?.error(`Failed to delete: ${error.message}`);
-      } finally {
-         isProcessing = false;
-      }
+   // Delete settlement - emit event to parent
+   function handleDeleteClick() {
+      dispatch('deleteRequest');
    }
 </script>
 
@@ -182,7 +151,7 @@
    
    <!-- Delete Settlement -->
    <button 
-      on:click={confirmDeleteSettlement} 
+      on:click={handleDeleteClick} 
       disabled={isProcessing}
       class="delete-btn"
    >

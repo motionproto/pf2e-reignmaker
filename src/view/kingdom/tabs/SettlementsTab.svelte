@@ -26,6 +26,11 @@
    function handleSelectSettlement(settlement: Settlement) {
       selectedSettlement = settlement;
    }
+   
+   function handleSettlementDeleted() {
+      // Clear selection - reactive statement will auto-select next settlement
+      selectedSettlement = null;
+   }
 </script>
 
 <div class="settlements-tab">
@@ -35,7 +40,7 @@
          {selectedSettlement}
          onSelectSettlement={handleSelectSettlement}
       />
-      <SettlementDetails settlement={selectedSettlement} />
+      <SettlementDetails settlement={selectedSettlement} on:settlementDeleted={handleSettlementDeleted} />
    </div>
 </div>
 

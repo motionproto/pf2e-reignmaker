@@ -138,6 +138,13 @@ export class Worksite {
 }
 
 /**
+ * Hex feature (from Kingmaker module)
+ */
+export interface HexFeature {
+  type: string | null;
+}
+
+/**
  * Represents a hex of territory controlled by the kingdom
  */
 export class Hex {
@@ -146,19 +153,22 @@ export class Hex {
   worksite: Worksite | null;
   hasSpecialTrait: boolean;
   name: string | null;
+  features: HexFeature[];
   
   constructor(
     id: string,
     terrain: string,
     worksite: Worksite | null = null,
     hasSpecialTrait: boolean = false,
-    name: string | null = null
+    name: string | null = null,
+    features: HexFeature[] = []
   ) {
     this.id = id;
     this.terrain = terrain;
     this.worksite = worksite;
     this.hasSpecialTrait = hasSpecialTrait;
     this.name = name;
+    this.features = features;
   }
   
   /**
