@@ -3,7 +3,7 @@
   "name": "Repair Structure",
   "category": "urban-planning",
   "brief": "Fix damaged buildings to restore functionality",
-  "description": "Repair damaged structures within a settlement to restore its capabilities",
+  "description": "Repair damaged structures within a settlement to restore its capabilities. You must select a structure first, then perform the skill check. Only the lowest tier damaged structure per category can be repaired.",
   "skills": [
     {
       "skill": "crafting",
@@ -16,31 +16,35 @@
     {
       "skill": "athletics",
       "description": "physical labor"
-    },
-    {
-      "skill": "acrobatics",
-      "description": "specialized construction"
-    },
-    {
-      "skill": "stealth",
-      "description": "discrete building"
     }
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "The structure is repaired for free",
-      "modifiers": []
+      "description": "Citizens volunteer their time and materials. The structure is repaired for free!",
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "repairStructure",
+          "cost": "free"
+        }
+      ]
     },
     "success": {
-      "description": "Pay 1d4 gold OR 1/2 the build cost for the structures tier",
-      "modifiers": []
+      "description": "",
+      "modifiers": [],
+      "gameEffects": [
+        {
+          "type": "repairStructure",
+          "cost": "choice"
+        }
+      ]
     },
     "failure": {
-      "description": "Remains damaged",
+      "description": "Despite your efforts, the structure remains damaged and cannot be repaired at this time.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Lose 1 gold",
+      "description": "Time and money are wasted in the failed repair attempt. The structure remains damaged.",
       "modifiers": [
         {
           "type": "static",

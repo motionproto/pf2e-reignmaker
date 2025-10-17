@@ -7,6 +7,7 @@
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
+  import RepairStructureDialog from "../../kingdom/components/RepairStructureDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,
@@ -22,6 +23,7 @@
 
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
+  import { getCustomResolutionComponent } from '../../../controllers/actions/implementations';
 
   // Initialize controller and services
   let controller: any = null;
@@ -34,21 +36,22 @@
       requiresPreDialog: true,
       showDialog: () => { showBuildStructureDialog = true; },
       storePending: (skill: string) => { pendingBuildAction = { skill }; }
+    },
+    'repair-structure': {
+      requiresPreDialog: true,
+      showDialog: () => { showRepairStructureDialog = true; },
+      storePending: (skill: string) => { pendingRepairAction = { skill }; }
     }
-    // Future custom actions just add registry entries here:
-    // 'recruit-army': {
-    //   requiresPreDialog: true,
-    //   showDialog: () => { showRecruitArmyDialog = true; },
-    //   storePending: (skill: string) => { pendingRecruitAction = { skill }; }
-    // }
   };
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
   let showBuildStructureDialog: boolean = false;
+  let showRepairStructureDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
+  let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -199,11 +202,20 @@
       }
     }
     
+    // Store repair action metadata if this is a repair-structure action
+    const metadata = actionId === 'repair-structure' && pendingRepairAction 
+      ? { 
+          structureId: pendingRepairAction.structureId,
+          settlementId: pendingRepairAction.settlementId
+        }
+      : undefined;
+    
     const instanceId = await checkInstanceService.createInstance(
       'action',
       actionId,
       action,
-      $currentTurn
+      $currentTurn,
+      metadata
     );
     
     // Store preliminary outcome in instance (before user confirms)
@@ -303,6 +315,23 @@
       // For failure/criticalFailure, modifiers have already been applied above
     }
     
+    // Handle repair-structure completion
+    if (actionId === 'repair-structure' && instance.appliedOutcome) {
+      const outcome = instance.appliedOutcome.outcome;
+      
+      if (outcome === 'criticalSuccess') {
+        // Free repair - no cost choice needed
+        await handleRepairStructureCompletion(outcome, instance.appliedOutcome.actorName);
+      } else if (outcome === 'success') {
+        // Get cost choice from customComponentData
+        const customData = resolutionData.customComponentData;
+        if (customData?.structureId && customData?.settlementId && customData?.cost) {
+          await handleRepairWithCost(customData);
+        }
+      }
+      // For failure/criticalFailure, modifiers have already been applied above
+    }
+    
     // Show success notification with applied effects (if any resources were changed)
     if (result.applied?.resources && result.applied.resources.length > 0) {
       const effectsMsg = result.applied.resources
@@ -335,6 +364,111 @@
     
     // Force UI update
     await tick();
+  }
+  
+  // Handle custom selection from custom components (e.g., repair cost choice)
+  async function handleCustomSelection(event: CustomEvent, action: any) {
+    const { costType, cost, structureId, settlementId } = event.detail;
+    
+    console.log(`🔧 [ActionsPhase] Custom selection for ${action.id}:`, { costType, cost, structureId, settlementId });
+    
+    // Handle repair-structure cost selection
+    if (action.id === 'repair-structure' && pendingRepairAction) {
+      const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
+      const repairController = await createRepairStructureController();
+      
+      // Convert Map to plain object for controller
+      const costObj: Record<string, number> = {};
+      if (cost instanceof Map) {
+        for (const [resource, amount] of cost) {
+          costObj[resource] = amount;
+        }
+      } else {
+        Object.assign(costObj, cost);
+      }
+      
+      // Apply repair with cost
+      await repairController.applyRepairWithCost(
+        structureId,
+        settlementId,
+        costObj
+      );
+      
+      // Clear pending action
+      pendingRepairAction = null;
+      
+      // Force UI update
+      await tick();
+    }
+  }
+  
+  // Handle repair with cost (success outcome)
+  async function handleRepairWithCost(customData: any) {
+    const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
+    const repairController = await createRepairStructureController();
+    
+    console.log('🔧 [handleRepairWithCost] customData:', customData);
+    console.log('🔧 [handleRepairWithCost] customData.cost:', customData.cost);
+    console.log('🔧 [handleRepairWithCost] customData.cost type:', typeof customData.cost);
+    console.log('🔧 [handleRepairWithCost] customData.cost instanceof Map:', customData.cost instanceof Map);
+    
+    // Convert Map to plain object for controller
+    const costObj: Record<string, number> = {};
+    if (customData.cost instanceof Map) {
+      console.log('🔧 [handleRepairWithCost] Converting Map to object...');
+      for (const [resource, amount] of customData.cost) {
+        costObj[resource] = amount;
+        console.log(`  Added ${resource}: ${amount}`);
+      }
+    } else if (customData.cost && typeof customData.cost === 'object') {
+      console.log('🔧 [handleRepairWithCost] Using plain object...');
+      Object.assign(costObj, customData.cost);
+    } else {
+      console.error('❌ [handleRepairWithCost] Invalid cost data:', customData.cost);
+    }
+    
+    console.log('🔧 [handleRepairWithCost] Final costObj:', costObj);
+    
+    // Apply repair with cost
+    await repairController.applyRepairWithCost(
+      customData.structureId,
+      customData.settlementId,
+      costObj
+    );
+    
+    // Clear pending action
+    pendingRepairAction = null;
+  }
+  
+  // Handle repair structure completion (critical success = free repair)
+  async function handleRepairStructureCompletion(outcome: string, actorName: string) {
+    if (!pendingRepairAction?.structureId || !pendingRepairAction?.settlementId) {
+      pendingRepairAction = null;
+      return;
+    }
+    
+    const { structuresService } = await import('../../../services/structures');
+    const structure = structuresService.getStructure(pendingRepairAction.structureId);
+    
+    if (!structure) {
+      pendingRepairAction = null;
+      return;
+    }
+    
+    // Critical success = free repair
+    if (outcome === 'criticalSuccess') {
+      const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
+      const repairController = await createRepairStructureController();
+      
+      // Repair for free (no cost)
+      await repairController.removeCondition(
+        pendingRepairAction.structureId,
+        pendingRepairAction.settlementId
+      );
+    }
+    
+    // Clear pending repair action
+    pendingRepairAction = null;
   }
   
   // Handle build structure completion after roll
@@ -791,6 +925,73 @@
     }
   }
   
+  // Handle when a repair structure is selected
+  async function handleRepairStructureSelected(event: CustomEvent) {
+    const { structureId, settlementId } = event.detail;
+    
+    // Store structure selection
+    if (pendingRepairAction) {
+      pendingRepairAction.structureId = structureId;
+      pendingRepairAction.settlementId = settlementId;
+      
+      // Close dialog
+      showRepairStructureDialog = false;
+      
+      // Now trigger the skill roll with the selected structure context
+      await executeRepairStructureRoll(pendingRepairAction);
+    }
+  }
+  
+  // Execute the repair structure skill roll
+  async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
+    if (!repairAction.structureId || !repairAction.settlementId) {
+      ui.notifications?.warn('Please select a structure to repair');
+      return;
+    }
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        // User cancelled - reset pending action
+        pendingRepairAction = null;
+        return;
+      }
+    }
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      const action = actionLoader.getAllActions().find(a => a.id === 'repair-structure');
+      if (!action) return;
+      
+      // Perform the roll
+      await performKingdomActionRoll(
+        actingCharacter,
+        repairAction.skill,
+        dc,
+        action.name,
+        action.id,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+      
+      // The roll completion will be handled by handleRollComplete
+      // which will trigger onActionResolved with the outcome
+    } catch (error) {
+      console.error("Error executing repair structure roll:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+      pendingRepairAction = null;
+    }
+  }
+  
   // Handle Aid Another button click - check if player has acted, then open skill selection dialog
   function handleAid(event: CustomEvent) {
     const { checkId, checkName } = event.detail;
@@ -1030,12 +1231,12 @@
               {@const resolution = checkInstance?.appliedOutcome ? {
                 outcome: checkInstance.appliedOutcome.outcome,
                 actorName: checkInstance.appliedOutcome.actorName,
-                skillName: checkInstance.appliedOutcome.skillName,
-                modifiers: checkInstance.appliedOutcome.modifiers,
-                effect: checkInstance.appliedOutcome.effect,
-                effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
+                skillName: checkInstance.appliedOutcome.skillName || '',
+                modifiers: checkInstance.appliedOutcome.modifiers || [],
+                effect: checkInstance.appliedOutcome.effect || '',
+                effectsApplied: checkInstance.appliedOutcome.effectsApplied ?? false
               } : undefined}
-              {@const customComponent = (resolution && controller) ? controller.getCustomComponent(action.id, resolution.outcome) : null}
+              {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
               {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}-${$kingdomData.unrest}-${$kingdomData.imprisonedUnrest}-${($kingdomData.resources?.resourcePoints || 0)}-${($kingdomData.armies?.length || 0)}-${($kingdomData.settlements?.length || 0)}`}
@@ -1102,6 +1303,7 @@
                     // Keep the card expanded to show completion notifications
                   }}
                   on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
+                  on:customSelection={(e) => handleCustomSelection(e, action)}
                 />
               {/key}
             {/each}
@@ -1117,6 +1319,12 @@
 <BuildStructureDialog
   bind:show={showBuildStructureDialog}
   on:structureQueued={handleStructureQueued}
+/>
+
+<!-- Repair Structure Dialog -->
+<RepairStructureDialog
+  bind:show={showRepairStructureDialog}
+  on:structureSelected={handleRepairStructureSelected}
 />
 
 <!-- Aid Selection Dialog -->

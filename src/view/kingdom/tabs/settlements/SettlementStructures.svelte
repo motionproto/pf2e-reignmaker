@@ -169,7 +169,7 @@
             <tbody>
                {#each groupedStructures as group}
                   <!-- Highest tier row -->
-                  <tr class="structure-row">
+                  <tr class="structure-row" class:damaged={getStructureCondition(group.highestTier.id) === StructureCondition.DAMAGED}>
                      <td class="name-cell">
                         <div class="name-content">
                            {#if group.lowerTiers.length > 0}
@@ -229,7 +229,7 @@
                   <!-- Lower tiers (expandable) -->
                   {#if expandedCategories.has(group.category)}
                      {#each group.lowerTiers as structure}
-                        <tr class="structure-row lower-tier">
+                        <tr class="structure-row lower-tier" class:damaged={getStructureCondition(structure.id) === StructureCondition.DAMAGED}>
                            <td class="name-cell">
                               <div class="name-content indented">
                                  <span class="no-expand-spacer"></span>
@@ -378,13 +378,22 @@
       }
       
       tbody {
-         .structure-row {
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            
-            &.lower-tier {
-               background: rgba(0, 0, 0, 0.4);
-            }
+            .structure-row {
+               background: rgba(0, 0, 0, 0.3);
+               border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+               
+               &.lower-tier {
+                  background: rgba(0, 0, 0, 0.4);
+               }
+               
+               &.damaged {
+                  background: rgba(255, 50, 50, 0.15);
+                  border-left: 3px solid #ff6b6b;
+                  
+                  .structure-name {
+                     color: #ff6b6b;
+                  }
+               }
             
             td {
                padding: 0.75rem;

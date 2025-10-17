@@ -4,6 +4,7 @@
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
+import { StructureCondition } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
 import structuresData from '../../../dist/structures.json';
@@ -202,6 +203,58 @@ export class StructuresService {
   }
   
   /**
+   * Check if a structure is damaged in a settlement
+   */
+  isStructureDamaged(settlement: Settlement, structureId: string): boolean {
+    if (!settlement.structureConditions) {
+      return false;
+    }
+    return settlement.structureConditions[structureId] === StructureCondition.DAMAGED;
+  }
+  
+  /**
+   * Get the active (non-damaged) structure in a category
+   * Returns the highest-tier GOOD structure in the category
+   */
+  getActiveStructureInCategory(settlement: Settlement, category: string): Structure | null {
+    // Get all structures in this category
+    const categoryStructures = settlement.structureIds
+      .map(id => this.getStructure(id))
+      .filter(s => s && s.category === category) as Structure[];
+    
+    if (categoryStructures.length === 0) {
+      return null;
+    }
+    
+    // Filter out damaged structures
+    const goodStructures = categoryStructures.filter(s => 
+      !this.isStructureDamaged(settlement, s.id)
+    );
+    
+    if (goodStructures.length === 0) {
+      return null;
+    }
+    
+    // Return highest tier
+    goodStructures.sort((a, b) => b.tier - a.tier);
+    return goodStructures[0];
+  }
+  
+  /**
+   * Calculate half of the original build cost for repair
+   */
+  calculateHalfBuildCost(structure: Structure): ResourceCost {
+    const cost = structure.constructionCost;
+    const halfCost: ResourceCost = {};
+    
+    for (const [resource, amount] of Object.entries(cost)) {
+      (halfCost as any)[resource] = Math.ceil(amount / 2);
+    }
+    
+    return halfCost;
+  }
+  
+  /**
    * Get structures available for a settlement
    */
   getAvailableStructures(settlement: Settlement): Structure[] {
@@ -238,11 +291,17 @@ export class StructuresService {
   
   /**
    * Calculate total food storage capacity for a settlement
+   * Only counts non-damaged structures
    */
   calculateFoodStorage(settlement: Settlement): number {
     let total = 0;
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (this.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = this.getStructure(structureId);
       if (structure?.modifiers) {
         // Look for foodCapacity modifier in the modifiers array
@@ -259,11 +318,17 @@ export class StructuresService {
   
   /**
    * Calculate total imprisoned unrest capacity for a settlement
+   * Only counts non-damaged structures
    */
   calculateImprisonedUnrestCapacity(settlement: Settlement): number {
     let total = 0;
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (this.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = this.getStructure(structureId);
       if (structure?.modifiers) {
         // Look for imprisonedUnrestCapacity modifier in the modifiers array
@@ -280,11 +345,17 @@ export class StructuresService {
   
   /**
    * Calculate gold income from structures in a settlement
+   * Only counts non-damaged structures
    */
   calculateGoldIncome(settlement: Settlement): number {
     let total = 0;
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (this.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = this.getStructure(structureId);
       if (structure?.modifiers) {
         // Look for gold modifier in the modifiers array
@@ -301,11 +372,17 @@ export class StructuresService {
   
   /**
    * Calculate army support bonus from structures in a settlement
+   * Only counts non-damaged structures
    */
   calculateArmySupportBonus(settlement: Settlement): number {
     let total = 0;
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (this.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = this.getStructure(structureId);
       if (structure?.modifiers) {
         // Look for armyCapacity modifier in the modifiers array
@@ -322,6 +399,7 @@ export class StructuresService {
   
   /**
    * Calculate diplomatic capacity from structures in a settlement
+   * Only counts non-damaged structures
    */
   calculateDiplomaticCapacity(settlement: Settlement): number {
     let total = 0;
@@ -329,6 +407,11 @@ export class StructuresService {
     logger.info(`🏛️ [StructuresService] Calculating diplomatic capacity for ${settlement.name}...`);
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (this.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = this.getStructure(structureId);
       if (structure?.modifiers) {
         // Look for diplomaticCapacity modifier in the modifiers array
@@ -347,12 +430,18 @@ export class StructuresService {
   
   /**
    * Calculate unrest reduction per turn from all settlements
+   * Only counts non-damaged structures
    */
   calculateTotalUnrestReduction(settlements: Settlement[]): number {
     let total = 0;
     
     for (const settlement of settlements) {
       for (const structureId of settlement.structureIds) {
+        // Skip damaged structures
+        if (this.isStructureDamaged(settlement, structureId)) {
+          continue;
+        }
+        
         const structure = this.getStructure(structureId);
         if (structure?.effects.unrestReductionPerTurn) {
           total += structure.effects.unrestReductionPerTurn;
@@ -365,12 +454,18 @@ export class StructuresService {
   
   /**
    * Calculate fame per turn from all settlements
+   * Only counts non-damaged structures
    */
   calculateTotalFameGeneration(settlements: Settlement[]): number {
     let total = 0;
     
     for (const settlement of settlements) {
       for (const structureId of settlement.structureIds) {
+        // Skip damaged structures
+        if (this.isStructureDamaged(settlement, structureId)) {
+          continue;
+        }
+        
         const structure = this.getStructure(structureId);
         if (structure?.effects.famePerTurn) {
           total += structure.effects.famePerTurn;

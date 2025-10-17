@@ -162,6 +162,7 @@ export class SettlementService {
   /**
    * Calculate skill bonuses from a settlement's structures
    * Returns a map of skill name -> highest bonus value
+   * Only counts non-damaged structures
    * 
    * @param settlement - Settlement to calculate bonuses for
    * @returns Map of skill name to bonus value
@@ -170,6 +171,11 @@ export class SettlementService {
     const bonuses: Record<string, number> = {};
     
     for (const structureId of settlement.structureIds) {
+      // Skip damaged structures
+      if (structuresService.isStructureDamaged(settlement, structureId)) {
+        continue;
+      }
+      
       const structure = structuresService.getStructure(structureId);
       if (structure?.type === 'skill' && structure.effects.skillsSupported) {
         const bonus = structure.effects.skillBonus || 0;
@@ -304,6 +310,19 @@ export class SettlementService {
       s.foodStorageCapacity = structuresService.calculateFoodStorage(s);
       s.imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(s);
       s.goldIncome = structuresService.calculateGoldIncome(s);
+      
+      // Handle imprisoned unrest capacity reduction
+      // If current imprisoned unrest exceeds new capacity, return excess to kingdom unrest
+      const currentImprisoned = s.imprisonedUnrest || 0;
+      const newCapacity = s.imprisonedUnrestCapacityValue || 0;
+      
+      if (currentImprisoned > newCapacity) {
+        const excess = currentImprisoned - newCapacity;
+        s.imprisonedUnrest = newCapacity;
+        k.unrest = (k.unrest || 0) + excess;
+        
+        logger.warn(`⚠️ [SettlementService] Imprisoned capacity reduced in ${s.name}: ${excess} unrest returned to kingdom (${currentImprisoned} → ${newCapacity})`);
+      }
       
       // Army support = base tier + structure bonuses
       const baseTier = SettlementTierConfig[s.tier]?.armySupport || 0;

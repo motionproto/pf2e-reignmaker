@@ -29,7 +29,8 @@ export class CheckInstanceService {
     checkType: 'incident' | 'event' | 'action',
     checkId: string,
     checkData: any,
-    currentTurn: number
+    currentTurn: number,
+    metadata?: any
   ): Promise<string> {
     const instanceId = `T${currentTurn}-${checkId}-${Date.now()}`;
     const instance: ActiveCheckInstance = {
@@ -37,6 +38,7 @@ export class CheckInstanceService {
       checkType,
       checkId,
       checkData,
+      metadata,
       createdTurn: currentTurn,
       status: 'pending'
     };

@@ -21,6 +21,7 @@ export interface ActiveCheckInstance {
   checkType: 'event' | 'incident' | 'action';
   checkId: string;              // Source ID (eventId, incidentId, actionId)
   checkData: any;               // KingdomEvent | KingdomIncident | PlayerAction
+  metadata?: any;               // Optional metadata for action-specific data (e.g., structureId, settlementId)
   
   // Lifecycle
   createdTurn: number;

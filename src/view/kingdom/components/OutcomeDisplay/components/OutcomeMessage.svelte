@@ -2,7 +2,7 @@
   export let effect: string;
 </script>
 
-{#if effect}
+{#if effect && effect.trim().length > 0}
   <div class="resolution-effect">
     {@html effect}
   </div>

@@ -204,9 +204,22 @@ export async function createActionPhaseController() {
 
     /**
      * Get custom resolution component for an action if it requires one
+     * Returns component constructor or { component, props } for actions that need extra data
      */
-    getCustomComponent(actionId: string, outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure') {
-      // Use the implementations registry to get custom components
+    async getCustomComponent(
+      actionId: string, 
+      outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+      structureId?: string,
+      settlementId?: string
+    ) {
+      // Handle repair-structure with custom props
+      if (actionId === 'repair-structure') {
+        const { createRepairStructureController } = await import('./RepairStructureController');
+        const repairController = await createRepairStructureController();
+        return repairController.getCustomComponent(outcome, structureId, settlementId);
+      }
+      
+      // Use the implementations registry for other actions
       return getCustomResolutionComponent(actionId, outcome);
     },
 

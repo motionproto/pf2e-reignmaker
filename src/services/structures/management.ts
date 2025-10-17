@@ -300,6 +300,11 @@ export class SettlementStructureManagementService {
       }
     });
     
+    // Recalculate settlement derived properties immediately
+    const { settlementService } = await import('../settlements');
+    await settlementService.updateSettlementSkillBonuses(settlementId);
+    await settlementService.updateSettlementDerivedProperties(settlementId);
+    
     return { success: true };
   }
 }

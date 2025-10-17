@@ -508,15 +508,18 @@
       {resolvedDice} 
       on:roll={handleDiceRoll} 
     />
-    <StateChanges 
-      stateChanges={displayStateChanges} 
-      {modifiers} 
-      {resolvedDice} 
-      {manualEffects} 
-      outcome={effectiveOutcome} 
-      hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
-      on:roll={handleDiceRoll} 
-    />
+    <!-- Hide StateChanges when custom component is present (custom UI replaces it) -->
+    {#if !customComponent}
+      <StateChanges 
+        stateChanges={displayStateChanges} 
+        {modifiers} 
+        {resolvedDice} 
+        {manualEffects} 
+        outcome={effectiveOutcome} 
+        hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
+        on:roll={handleDiceRoll} 
+      />
+    {/if}
     
     <!-- Custom resolution UI component (action-specific) -->
     {#if customComponent}
