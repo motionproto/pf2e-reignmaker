@@ -2,58 +2,40 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { settlementService } from '../../../../services/settlements';
    import { getMaxStructures, getMaxAllowedLevel } from './settlements.utils';
-   import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement;
    
-   const dispatch = createEventDispatcher();
-   
    let isProcessing = false;
    
-   // Upgrade validation
+   // Upgrade validation with individual requirement tracking
    $: upgradeValidation = settlement 
       ? settlementService.canUpgradeSettlement(settlement)
       : null;
    
-   // Level cap based on tier + structure requirements
-   $: maxAllowedLevel = settlement ? getMaxAllowedLevel(settlement) : 20;
-   
-   // Level controls
-   async function incrementLevel() {
-      if (!settlement || isProcessing) return;
+   // Track individual requirement states for checkbox display
+   $: requirementStates = settlement ? (() => {
+      const states: Array<{ text: string; met: boolean }> = [];
       
-      isProcessing = true;
-      try {
-         await settlementService.updateSettlementLevel(
-            settlement.id, 
-            Math.min(settlement.level + 1, 20)
-         );
-      } catch (error) {
-         console.error('Failed to increment level:', error);
-         // @ts-ignore
-         ui.notifications?.error(`Failed to update level: ${error.message}`);
-      } finally {
-         isProcessing = false;
+      switch (settlement.tier) {
+         case 'Village':
+            states.push({ text: 'Settlement level 2 required', met: settlement.level >= 2 });
+            states.push({ text: '2 structures required', met: settlement.structureIds.length >= 2 });
+            break;
+         case 'Town':
+            states.push({ text: 'Settlement level 5 required', met: settlement.level >= 5 });
+            states.push({ text: '4 structures required', met: settlement.structureIds.length >= 4 });
+            break;
+         case 'City':
+            states.push({ text: 'Settlement level 8 required', met: settlement.level >= 8 });
+            states.push({ text: '8 structures required', met: settlement.structureIds.length >= 8 });
+            break;
+         case 'Metropolis':
+            // Max tier, no requirements
+            break;
       }
-   }
-   
-   async function decrementLevel() {
-      if (!settlement || isProcessing) return;
       
-      isProcessing = true;
-      try {
-         await settlementService.updateSettlementLevel(
-            settlement.id, 
-            Math.max(settlement.level - 1, 1)
-         );
-      } catch (error) {
-         console.error('Failed to decrement level:', error);
-         // @ts-ignore
-         ui.notifications?.error(`Failed to update level: ${error.message}`);
-      } finally {
-         isProcessing = false;
-      }
-   }
+      return states;
+   })() : [];
    
    // Upgrade settlement
    async function upgradeSettlement() {
@@ -72,73 +54,32 @@
          isProcessing = false;
       }
    }
-   
-   // Delete settlement - emit event to parent
-   function handleDeleteClick() {
-      dispatch('deleteRequest');
-   }
 </script>
 
 <div class="detail-section">
-   <h4>Management</h4>
-   
-   <!-- Level Controls -->
-   <div class="level-controls">
-      <span class="label">Settlement Level</span>
-      <div class="level-adjuster">
-         <button 
-            on:click={decrementLevel} 
-            disabled={settlement.level <= 1 || isProcessing}
-            class="level-btn"
-            title="Decrease level"
-         >
-            <i class="fas fa-minus"></i>
-         </button>
-         <span class="level-value">{settlement.level}</span>
-         <button 
-            on:click={incrementLevel} 
-            disabled={settlement.level >= maxAllowedLevel || isProcessing}
-            class="level-btn"
-            title={settlement.level >= maxAllowedLevel 
-               ? `Build ${getMaxStructures(settlement)} structures to unlock higher levels` 
-               : 'Increase level'}
-         >
-            <i class="fas fa-plus"></i>
-         </button>
-      </div>
-   </div>
-   
-   {#if settlement.level >= maxAllowedLevel && settlement.tier !== 'Metropolis'}
-      <div class="level-warning">
-         <i class="fas fa-exclamation-triangle"></i>
-         <span>Build {getMaxStructures(settlement)} structures to unlock higher levels</span>
-      </div>
-   {/if}
-   
    <!-- Upgrade Settlement -->
    {#if upgradeValidation}
       <div class="upgrade-section">
-         {#if upgradeValidation.canUpgrade}
-            <button 
-               on:click={upgradeSettlement} 
-               disabled={isProcessing}
-               class="upgrade-btn"
-            >
-               <i class="fas fa-arrow-up"></i>
-               Upgrade to {upgradeValidation.nextTier}
-            </button>
-         {:else if upgradeValidation.nextTier}
-            <button class="upgrade-btn disabled" disabled title={upgradeValidation.requirements.join(', ')}>
-               <i class="fas fa-lock"></i>
-               Upgrade Locked
-            </button>
-            <div class="requirements-list">
-               {#each upgradeValidation.requirements as req}
-                  <div class="requirement">
-                     <i class="fas fa-times"></i>
-                     {req}
-                  </div>
-               {/each}
+         {#if upgradeValidation.nextTier}
+            <div class="requirements-container">
+               <div class="upgrade-button-column">
+                  <button 
+                     on:click={upgradeSettlement} 
+                     disabled={!upgradeValidation.canUpgrade || isProcessing}
+                     class="upgrade-secondary-btn"
+                  >
+                     <i class="fas fa-arrow-up"></i>
+                     Upgrade Settlement
+                  </button>
+               </div>
+               <div class="requirements-list">
+                  {#each requirementStates as req}
+                     <div class="requirement" class:met={req.met}>
+                        <i class="fas {req.met ? 'fa-check-square' : 'fa-square'}"></i>
+                        <span>{req.text}</span>
+                     </div>
+                  {/each}
+               </div>
             </div>
          {:else}
             <div class="max-tier-notice">
@@ -148,16 +89,6 @@
          {/if}
       </div>
    {/if}
-   
-   <!-- Delete Settlement -->
-   <button 
-      on:click={handleDeleteClick} 
-      disabled={isProcessing}
-      class="delete-btn"
-   >
-      <i class="fas fa-trash"></i>
-      Delete Settlement
-   </button>
 </div>
 
 <style lang="scss">
@@ -172,64 +103,11 @@
       }
    }
    
-   .level-controls {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-      padding: 0.75rem;
-      background: var(--bg-elevated);
-      border-radius: var(--radius-lg);
-      
-      .label {
-         font-size: var(--font-sm);
-         color: var(--text-secondary);
-      }
-      
-      .level-adjuster {
-         display: flex;
-         align-items: center;
-         gap: 1rem;
-         
-         .level-btn {
-            width: 2rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border-default);
-            border-radius: var(--radius-lg);
-            background: var(--bg-elevated);
-            color: var(--text-primary);
-            cursor: pointer;
-            transition: var(--transition-base);
-            
-            &:hover:not(:disabled) {
-               background: var(--bg-overlay);
-               border-color: var(--color-primary);
-            }
-            
-            &:disabled {
-               opacity: var(--opacity-disabled);
-               cursor: not-allowed;
-            }
-         }
-         
-         .level-value {
-            font-size: var(--font-md);
-            font-weight: var(--font-weight-semibold);
-            color: var(--text-primary);
-            min-width: 2rem;
-            text-align: center;
-         }
-      }
-   }
-   
    .level-warning {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem;
+      padding: 1rem;
       margin-bottom: 1rem;
       background: var(--color-orange-bg);
       border-radius: var(--radius-lg);
@@ -269,23 +147,75 @@
          }
       }
       
-      .requirements-list {
-         margin-top: 0.75rem;
+      .requirements-container {
+         display: grid;
+         grid-template-columns: 1fr 1fr;
+         gap: 1rem;
+         align-items: center;
          padding: 0.75rem;
-         background: var(--color-orange-bg);
+         background: transparent;
+         border-radius: var(--radius-lg);
+         border: 1px solid var(--border-default);
+         box-sizing: border-box;
+      }
+      
+      .upgrade-button-column {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+      }
+      
+      .upgrade-secondary-btn {
+         padding: 0.5rem 1rem;
+         border: 1px solid var(--border-default);
          border-radius: var(--radius-md);
-         border-left: 3px solid var(--color-warning);
+         background: var(--bg-elevated);
+         color: var(--text-primary);
+         cursor: pointer;
+         transition: var(--transition-base);
+         font-weight: var(--font-weight-medium);
+         font-size: var(--font-sm);
+         white-space: nowrap;
+         
+         &:hover:not(:disabled) {
+            background: var(--bg-overlay);
+            border-color: var(--color-primary);
+         }
+         
+         &:disabled {
+            opacity: var(--opacity-disabled);
+            cursor: not-allowed;
+         }
+         
+         i {
+            margin-right: 0.5rem;
+         }
+      }
+      
+      .requirements-list {
+         display: flex;
+         flex-direction: column;
+         gap: 0.5rem;
          
          .requirement {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.25rem 0;
-            font-size: var(--font-sm);
-            color: var(--color-warning);
+            font-size: var(--font-md);
+            color: var(--text-secondary);
+            transition: var(--transition-base);
+            
+            &.met {
+               color: var(--color-success);
+            }
             
             i {
-               font-size: var(--font-xs);
+               font-size: var(--font-md);
+               flex-shrink: 0;
+            }
+            
+            span {
+               flex: 1;
             }
          }
       }
@@ -301,33 +231,6 @@
          color: var(--color-gold);
          font-weight: var(--font-weight-medium);
          font-size: var(--font-md);
-      }
-   }
-   
-   .delete-btn {
-      width: 100%;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-md);
-      background: var(--color-red-bg);
-      color: var(--color-danger);
-      cursor: pointer;
-      transition: var(--transition-base);
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-md);
-      
-      &:hover:not(:disabled) {
-         background: var(--btn-primary-bg);
-         border-color: var(--color-danger);
-      }
-      
-      &:disabled {
-         opacity: var(--opacity-disabled);
-         cursor: not-allowed;
-      }
-      
-      i {
-         margin-right: 0.5rem;
       }
    }
 </style>

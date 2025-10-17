@@ -17,6 +17,8 @@
    
    let isEditingName = false;
    let editedName = '';
+   let isEditingLevel = false;
+   let editedLevel = 1;
    let showDeleteConfirm = false;
    let isDeleting = false;
    
@@ -45,6 +47,33 @@
          saveSettlementName();
       } else if (event.key === 'Escape') {
          cancelEditingName();
+      }
+   }
+   
+   function startEditingLevel() {
+      if (settlement) {
+         isEditingLevel = true;
+         editedLevel = settlement.level;
+      }
+   }
+   
+   async function saveSettlementLevel() {
+      if (settlement && editedLevel >= 1 && editedLevel <= 20) {
+         await settlementService.updateSettlementLevel(settlement.id, editedLevel);
+         isEditingLevel = false;
+      }
+   }
+   
+   function cancelEditingLevel() {
+      isEditingLevel = false;
+      editedLevel = 1;
+   }
+   
+   function handleLevelKeydown(event: KeyboardEvent) {
+      if (event.key === 'Enter') {
+         saveSettlementLevel();
+      } else if (event.key === 'Escape') {
+         cancelEditingLevel();
       }
    }
    
@@ -125,7 +154,43 @@
             {/if}
             <div class="tier-and-actions">
                <SettlementLocationPicker settlement={settlement} />
-               <SettlementTier tier={settlement.tier} level={settlement.level} />
+               
+               <SettlementTier tier={settlement.tier} />
+               
+               <!-- Level Editor -->
+               {#if isEditingLevel}
+                  <div class="level-editor">
+                     <span class="level-label">Level</span>
+                     <input 
+                        type="number" 
+                        bind:value={editedLevel}
+                        on:keydown={handleLevelKeydown}
+                        class="level-input"
+                        min="1"
+                        max="20"
+                        autofocus
+                     />
+                     <button 
+                        on:click={saveSettlementLevel}
+                        class="level-confirm-btn"
+                        title="Save"
+                     >
+                        <i class="fas fa-check"></i>
+                     </button>
+                     <button 
+                        on:click={cancelEditingLevel}
+                        class="level-cancel-btn"
+                        title="Cancel"
+                     >
+                        <i class="fas fa-times"></i>
+                     </button>
+                  </div>
+               {:else}
+                  <div class="level-display" on:click={startEditingLevel}>
+                     <span class="level-label">Level</span>
+                     <span class="level-value">{settlement.level}</span>
+                  </div>
+               {/if}
             </div>
          </div>
       </div>
@@ -147,8 +212,18 @@
             <SettlementStatus {settlement} />
          </div>
          <SettlementBasicInfo {settlement} />
+         <SettlementManagement {settlement} />
          <SettlementStructures {settlement} />
-         <SettlementManagement {settlement} on:deleteRequest={openDeleteConfirm} />
+         
+         <!-- Delete Settlement Button -->
+         <button 
+            on:click={openDeleteConfirm} 
+            disabled={isDeleting}
+            class="delete-settlement-btn"
+         >
+            <i class="fas fa-trash"></i>
+            Delete Settlement
+         </button>
       </div>
    {:else}
       <div class="empty-selection">
@@ -453,6 +528,136 @@
       &:hover:not(:disabled) {
          background: #c82333;
          border-color: #bd2130;
+      }
+   }
+   
+   .delete-settlement-btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      margin-top: 1.5rem;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--color-red-bg);
+      color: var(--color-danger);
+      cursor: pointer;
+      transition: var(--transition-base);
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-md);
+      
+      &:hover:not(:disabled) {
+         background: var(--btn-primary-bg);
+         border-color: var(--color-danger);
+      }
+      
+      &:disabled {
+         opacity: var(--opacity-disabled);
+         cursor: not-allowed;
+      }
+      
+      i {
+         margin-right: 0.5rem;
+      }
+   }
+   
+   .level-display {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      
+      &:hover {
+         background: var(--bg-overlay);
+         border-color: var(--color-primary);
+      }
+      
+      .level-label {
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         font-weight: var(--font-weight-medium);
+      }
+      
+      .level-value {
+         font-size: var(--font-md);
+         color: var(--text-primary);
+         font-weight: var(--font-weight-semibold);
+         min-width: 1.5rem;
+         text-align: center;
+      }
+   }
+   
+   .level-editor {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--color-primary);
+      border-radius: var(--radius-md);
+      
+      .level-label {
+         font-size: var(--font-sm);
+         color: var(--text-secondary);
+         font-weight: var(--font-weight-medium);
+      }
+      
+      .level-input {
+         width: 3rem;
+         padding: 0.25rem 0.5rem;
+         background: var(--bg-overlay);
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-md);
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-semibold);
+         text-align: center;
+         
+         &:focus {
+            outline: none;
+            border-color: var(--color-primary);
+         }
+         
+         /* Remove number input arrows */
+         &::-webkit-inner-spin-button,
+         &::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+         }
+         -moz-appearance: textfield;
+      }
+      
+      .level-confirm-btn,
+      .level-cancel-btn {
+         padding: 0.25rem 0.5rem;
+         background: transparent;
+         border: none;
+         cursor: pointer;
+         border-radius: var(--radius-md);
+         transition: var(--transition-base);
+         
+         i {
+            font-size: var(--font-sm);
+         }
+      }
+      
+      .level-confirm-btn {
+         color: var(--color-success);
+         
+         &:hover {
+            background: rgba(40, 167, 69, 0.1);
+         }
+      }
+      
+      .level-cancel-btn {
+         color: var(--color-danger);
+         
+         &:hover {
+            background: rgba(220, 53, 69, 0.1);
+         }
       }
    }
    
