@@ -13,7 +13,7 @@ import { get } from 'svelte/store';
 import { kingdomData, updateKingdom } from '../../stores/KingdomStore';
 import { Hex, Worksite, WorksiteType } from '../../models/Hex';
 import type { Settlement, SettlementTier } from '../../models/Settlement';
-import { createSettlement } from '../../models/Settlement';
+import { createSettlement, createKingmakerSettlementId } from '../../models/Settlement';
 import type { HexFeature, HexState } from '../../api/kingmaker';
 import { logger } from '../../utils/Logger';
 
@@ -476,24 +476,59 @@ export class TerritoryService {
     
     /**
      * Extract settlements from hex features
+     * Uses location-based IDs to prevent duplicates
+     * Creates settlements with kingmakerLocation and rmLocation (0,0 if unlinked)
      */
     private extractSettlements(features: HexFeature[], hexId: string): Settlement[] {
         const settlements: Settlement[] = [];
+        
+        // Get existing settlements to check for duplicates
+        const existingSettlements = get(kingdomData).settlements || [];
         
         for (const feature of features) {
             const tier = this.getSettlementTier(feature.type);
             if (tier) {
                 // Parse hex coordinates from ID
                 const [xStr, yStr] = hexId.split('.');
-                const x = parseInt(xStr) || 0;
-                const y = parseInt(yStr) || 0;
+                const kingmakerX = parseInt(xStr) || 0;
+                const kingmakerY = parseInt(yStr) || 0;
+                const kingmakerLocation = { x: kingmakerX, y: kingmakerY };
                 
-                // Create settlement using the factory function
+                // Create consistent ID based on Kingmaker location
+                const settlementId = createKingmakerSettlementId(kingmakerLocation);
+                
+                // Check if we already have this settlement
+                const existing = existingSettlements.find(s => s.id === settlementId);
+                if (existing) {
+                    logger.debug(`Settlement ${settlementId} already exists, skipping duplicate creation`);
+                    continue;
+                }
+                
+                // Get feature name
+                const featureName = (feature as any).name;
+                const hasName = featureName && featureName.trim() && featureName.trim().toLowerCase() !== 'vacant';
+                
+                // rmLocation: (0,0) if no name (unlinked), otherwise same as Kingmaker location (linked)
+                const rmLocation = hasName ? kingmakerLocation : { x: 0, y: 0 };
+                
+                // Create settlement with kingmakerLocation
                 const settlement = createSettlement(
-                    `${feature.type}_${hexId}`,
-                    { x, y },
-                    tier as any
+                    hasName ? featureName.trim() : 'Unnamed Settlement',
+                    rmLocation,
+                    tier as any,
+                    kingmakerLocation // Pass Kingmaker location to factory
                 );
+                
+                // Factory creates the ID, but we need to ensure it's correct
+                settlement.id = settlementId;
+                settlement.kingmakerLocation = kingmakerLocation;
+                
+                logger.debug(`Created settlement ${settlementId}:`, {
+                    name: settlement.name,
+                    kingmakerLocation,
+                    rmLocation,
+                    linked: hasName
+                });
                 
                 settlements.push(settlement);
             }
@@ -722,6 +757,83 @@ export class TerritoryService {
       
     } catch (error) {
       logger.error('[Territory Service] Failed to update Kingmaker settlement:', error);
+    }
+  }
+  
+  /**
+   * Clear the custom name from a settlement feature on the Kingmaker map
+   * Called when settlements are unlinked (keeps the settlement feature, just removes the name)
+   */
+  async clearKingmakerSettlementName(location: { x: number, y: number }): Promise<void> {
+    if (!this.isKingmakerAvailable()) {
+      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+      return;
+    }
+    
+    // Skip if no valid location
+    if (!location || (location.x === 0 && location.y === 0)) {
+      logger.debug('[Territory Service] Invalid location, skipping map update');
+      return;
+    }
+    
+    try {
+      // @ts-ignore - Kingmaker global
+      const km = (typeof kingmaker !== 'undefined' ? kingmaker : (globalThis as any).kingmaker);
+      if (!km?.state) {
+        logger.warn('[Territory Service] Kingmaker state not available');
+        return;
+      }
+      
+      // Calculate hex key
+      const hexKey = (100 * location.x) + location.y;
+      
+      logger.debug(`🗺️ [Territory Service] Clearing settlement name from map:`, {
+        location: `${location.x}:${location.y}`,
+        hexKey: hexKey
+      });
+      
+      // Get existing hex state
+      const existingHexState = km.state.hexes[hexKey];
+      if (!existingHexState || !existingHexState.features) {
+        logger.debug(`[Territory Service] No features at ${location.x}:${location.y}, nothing to clear`);
+        return;
+      }
+      
+      const existingFeatures = existingHexState.features;
+      
+      // Find settlement feature and set name to "vacant"
+      const updatedFeatures = existingFeatures.map((f: any) => {
+        if (['village', 'town', 'city', 'metropolis'].includes(f.type?.toLowerCase())) {
+          // Keep the feature but set name to "vacant"
+          return {
+            ...f,
+            name: 'vacant'
+          };
+        }
+        return f;
+      });
+      
+      logger.debug(`🗺️ [Territory Service] Settlement name cleared:`, {
+        existingCount: existingFeatures.length,
+        updatedCount: updatedFeatures.length
+      });
+      
+      // Update Kingmaker state
+      km.state.updateSource({
+        hexes: {
+          [hexKey]: {
+            ...existingHexState,
+            features: updatedFeatures
+          }
+        }
+      });
+      
+      await km.state.save();
+      
+      logger.info(`✅ [Territory Service] Cleared settlement name from Kingmaker map at ${location.x}:${location.y}`);
+      
+    } catch (error) {
+      logger.error('[Territory Service] Failed to clear Kingmaker settlement name:', error);
     }
   }
   

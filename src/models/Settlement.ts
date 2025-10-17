@@ -56,7 +56,8 @@ export enum StructureCondition {
 export interface Settlement {
   id: string;
   name: string;
-  location: { x: number; y: number }; // Hex coordinates
+  location: { x: number; y: number }; // RM usage coordinates (0,0 = not linked, otherwise active location)
+  kingmakerLocation?: { x: number; y: number }; // Permanent Kingmaker map location (if from Kingmaker)
   level: number; // Settlement level (1-20)
   tier: SettlementTier;
   structureIds: string[]; // IDs of built structures
@@ -104,17 +105,36 @@ export function getDefaultSettlementImage(tier: SettlementTier): string {
 }
 
 /**
+ * Create a location-based ID for Kingmaker settlements
+ * This ensures consistent IDs across imports
+ */
+export function createKingmakerSettlementId(location: { x: number; y: number }): string {
+  return `settlement_${location.x}.${location.y.toString().padStart(2, '0')}`;
+}
+
+/**
  * Create a new settlement with defaults
+ * @param name Settlement name
+ * @param location RM usage location (set to 0,0 for unlinked)
+ * @param tier Settlement tier
+ * @param kingmakerLocation Optional Kingmaker map location (for imported settlements)
  */
 export function createSettlement(
   name: string,
   location: { x: number; y: number },
-  tier: SettlementTier = SettlementTier.VILLAGE
+  tier: SettlementTier = SettlementTier.VILLAGE,
+  kingmakerLocation?: { x: number; y: number }
 ): Settlement {
+  // Use location-based ID if from Kingmaker, otherwise random
+  const id = kingmakerLocation 
+    ? createKingmakerSettlementId(kingmakerLocation)
+    : `settlement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
   return {
-    id: `settlement-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id,
     name,
     location,
+    kingmakerLocation,
     level: 1,
     tier,
     structureIds: [],

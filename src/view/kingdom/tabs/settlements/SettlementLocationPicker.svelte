@@ -91,12 +91,25 @@
          return;
       }
       
+      // Update settlement's rmLocation (usage location) to link it
+      let updatedSettlement: typeof settlement | undefined;
       await updateKingdom(k => {
          const s = k.settlements.find(s => s.id === settlement.id);
          if (s) {
+            // Update rmLocation to mark as actively used
             s.location = { x, y };
+            updatedSettlement = s;
          }
       });
+      
+      // Write settlement name to Kingmaker map and refresh territory data
+      if (updatedSettlement) {
+         const { territoryService } = await import('../../../../services/territory');
+         await territoryService.updateKingmakerSettlement(updatedSettlement);
+         
+         // Re-sync territory to update hex features with new settlement name
+         territoryService.syncFromKingmaker();
+      }
       
       // Recalculate kingdom capacities since settlement is now mapped
       const { settlementService } = await import('../../../../services/settlements');
@@ -107,19 +120,24 @@
    }
    
    async function clearLocation() {
-      // Store old location before clearing
-      const oldLocation = { x: currentSettlement.location.x, y: currentSettlement.location.y };
+      // Use kingmakerLocation if available, otherwise use current location
+      const kmLocation = currentSettlement.kingmakerLocation || currentSettlement.location;
       
+      // Update settlement's rmLocation to (0,0) to mark as unlinked
       await updateKingdom(k => {
          const s = k.settlements.find(s => s.id === settlement.id);
          if (s) {
-            s.location = { x: 0, y: 0 };
+            s.location = { x: 0, y: 0 }; // rmLocation
+            // kingmakerLocation stays unchanged - it's the source of truth
          }
       });
       
-      // Remove settlement feature from Kingmaker map
+      // Clear settlement name from Kingmaker map (keep the feature, set name to empty/vacant)
       const { territoryService } = await import('../../../../services/territory');
-      await territoryService.deleteKingmakerSettlement(oldLocation);
+      await territoryService.clearKingmakerSettlementName(kmLocation);
+      
+      // Re-sync territory to update hex features
+      territoryService.syncFromKingmaker();
       
       // Recalculate kingdom capacities since settlement is now unmapped
       const { settlementService } = await import('../../../../services/settlements');
@@ -257,8 +275,8 @@
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-xl);
-      min-width: 15rem;
-      max-width: 20rem;
+      min-width: 20rem;
+      max-width: 30rem;
       z-index: 1000;
       overflow: hidden;
    }
@@ -303,29 +321,35 @@
    }
    
    .location-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto auto 2rem;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.75rem;
       width: 100%;
       padding: 0.5rem 0.75rem;
       background: transparent;
       border: none;
-      border-radius: var(--radius-md);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 0;
       color: var(--text-primary);
       cursor: pointer;
       transition: var(--transition-base);
       text-align: left;
+      
+      &:last-child {
+         border-bottom: none;
+      }
       
       &:hover {
          background: rgba(255, 255, 255, 0.05);
       }
       
       &.selected {
-         background: rgba(var(--color-primary-rgb), 0.15);
-         color: var(--color-primary);
+         background: rgba(34, 197, 94, 0.15);
+         color: var(--color-success, #22c55e);
          
          &:hover {
-            background: rgba(var(--color-primary-rgb), 0.2);
+            background: rgba(34, 197, 94, 0.2);
          }
       }
    }
@@ -334,13 +358,17 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
    }
    
    .location-type {
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       color: var(--text-secondary);
+      white-space: nowrap;
+      text-align: right;
       min-width: 5rem;
    }
    
@@ -348,17 +376,21 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       font-family: var(--font-mono, monospace);
-      flex: 1;
+      white-space: nowrap;
+      text-align: right;
+      min-width: 4rem;
    }
    
    .selected-icon {
-      color: var(--color-primary);
+      color: var(--color-success, #22c55e);
       font-size: var(--font-sm);
+      text-align: center;
    }
    
    .assigned-icon {
       color: var(--text-tertiary);
       font-size: var(--font-sm);
+      text-align: center;
    }
    
    .location-item.assigned {
