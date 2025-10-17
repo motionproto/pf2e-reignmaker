@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import { kingdomData } from '../../../stores/KingdomStore';
-  import { createRepairStructureController } from '../../../controllers/RepairStructureController';
+  import { structuresService } from '../../../services/structures';
   import type { Settlement } from '../../../models/Settlement';
   import Button from './baseComponents/Button.svelte';
   
@@ -14,9 +14,6 @@
   let selectedSettlementId: string = '';
   let errorMessage: string = '';
   let isLoading: boolean = true;
-  
-  // Controller
-  let controller: any = null;
   
   // Repairable structures grouped by settlement
   let repairableBySettlement: Array<{
@@ -31,7 +28,6 @@
   
   // Load repairable structures
   onMount(async () => {
-    controller = await createRepairStructureController();
     await loadRepairableStructures();
   });
   
@@ -44,13 +40,11 @@
   }
   
   async function loadRepairableStructures() {
-    if (!controller) return;
-    
     isLoading = true;
     errorMessage = '';
     
     try {
-      const structures = await controller.getRepairableStructures();
+      const structures = structuresService.getRepairableStructures();
       
       // Group by settlement ID
       const grouped = new Map<string, Array<any>>();

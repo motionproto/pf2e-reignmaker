@@ -315,23 +315,6 @@
       // For failure/criticalFailure, modifiers have already been applied above
     }
     
-    // Handle repair-structure completion
-    if (actionId === 'repair-structure' && instance.appliedOutcome) {
-      const outcome = instance.appliedOutcome.outcome;
-      
-      if (outcome === 'criticalSuccess') {
-        // Free repair - no cost choice needed
-        await handleRepairStructureCompletion(outcome, instance.appliedOutcome.actorName);
-      } else if (outcome === 'success') {
-        // Get cost choice from customComponentData
-        const customData = resolutionData.customComponentData;
-        if (customData?.structureId && customData?.settlementId && customData?.cost) {
-          await handleRepairWithCost(customData);
-        }
-      }
-      // For failure/criticalFailure, modifiers have already been applied above
-    }
-    
     // Show success notification with applied effects (if any resources were changed)
     if (result.applied?.resources && result.applied.resources.length > 0) {
       const effectsMsg = result.applied.resources
@@ -364,111 +347,6 @@
     
     // Force UI update
     await tick();
-  }
-  
-  // Handle custom selection from custom components (e.g., repair cost choice)
-  async function handleCustomSelection(event: CustomEvent, action: any) {
-    const { costType, cost, structureId, settlementId } = event.detail;
-    
-    console.log(`🔧 [ActionsPhase] Custom selection for ${action.id}:`, { costType, cost, structureId, settlementId });
-    
-    // Handle repair-structure cost selection
-    if (action.id === 'repair-structure' && pendingRepairAction) {
-      const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
-      const repairController = await createRepairStructureController();
-      
-      // Convert Map to plain object for controller
-      const costObj: Record<string, number> = {};
-      if (cost instanceof Map) {
-        for (const [resource, amount] of cost) {
-          costObj[resource] = amount;
-        }
-      } else {
-        Object.assign(costObj, cost);
-      }
-      
-      // Apply repair with cost
-      await repairController.applyRepairWithCost(
-        structureId,
-        settlementId,
-        costObj
-      );
-      
-      // Clear pending action
-      pendingRepairAction = null;
-      
-      // Force UI update
-      await tick();
-    }
-  }
-  
-  // Handle repair with cost (success outcome)
-  async function handleRepairWithCost(customData: any) {
-    const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
-    const repairController = await createRepairStructureController();
-    
-    console.log('🔧 [handleRepairWithCost] customData:', customData);
-    console.log('🔧 [handleRepairWithCost] customData.cost:', customData.cost);
-    console.log('🔧 [handleRepairWithCost] customData.cost type:', typeof customData.cost);
-    console.log('🔧 [handleRepairWithCost] customData.cost instanceof Map:', customData.cost instanceof Map);
-    
-    // Convert Map to plain object for controller
-    const costObj: Record<string, number> = {};
-    if (customData.cost instanceof Map) {
-      console.log('🔧 [handleRepairWithCost] Converting Map to object...');
-      for (const [resource, amount] of customData.cost) {
-        costObj[resource] = amount;
-        console.log(`  Added ${resource}: ${amount}`);
-      }
-    } else if (customData.cost && typeof customData.cost === 'object') {
-      console.log('🔧 [handleRepairWithCost] Using plain object...');
-      Object.assign(costObj, customData.cost);
-    } else {
-      console.error('❌ [handleRepairWithCost] Invalid cost data:', customData.cost);
-    }
-    
-    console.log('🔧 [handleRepairWithCost] Final costObj:', costObj);
-    
-    // Apply repair with cost
-    await repairController.applyRepairWithCost(
-      customData.structureId,
-      customData.settlementId,
-      costObj
-    );
-    
-    // Clear pending action
-    pendingRepairAction = null;
-  }
-  
-  // Handle repair structure completion (critical success = free repair)
-  async function handleRepairStructureCompletion(outcome: string, actorName: string) {
-    if (!pendingRepairAction?.structureId || !pendingRepairAction?.settlementId) {
-      pendingRepairAction = null;
-      return;
-    }
-    
-    const { structuresService } = await import('../../../services/structures');
-    const structure = structuresService.getStructure(pendingRepairAction.structureId);
-    
-    if (!structure) {
-      pendingRepairAction = null;
-      return;
-    }
-    
-    // Critical success = free repair
-    if (outcome === 'criticalSuccess') {
-      const { createRepairStructureController } = await import('../../../controllers/RepairStructureController');
-      const repairController = await createRepairStructureController();
-      
-      // Repair for free (no cost)
-      await repairController.removeCondition(
-        pendingRepairAction.structureId,
-        pendingRepairAction.settlementId
-      );
-    }
-    
-    // Clear pending repair action
-    pendingRepairAction = null;
   }
   
   // Handle build structure completion after roll
@@ -1303,7 +1181,6 @@
                     // Keep the card expanded to show completion notifications
                   }}
                   on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
-                  on:customSelection={(e) => handleCustomSelection(e, action)}
                 />
               {/key}
             {/each}

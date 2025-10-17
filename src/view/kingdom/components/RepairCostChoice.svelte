@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { kingdomData } from '../../../stores/KingdomStore';
-  import { createRepairStructureController } from '../../../controllers/RepairStructureController';
   import { updateInstanceResolutionState } from '../../../controllers/shared/ResolutionStateHelpers';
   import type { ActiveCheckInstance } from '../../../models/CheckInstance';
+  import type { ResourceCost } from '../../../models/Structure';
+  import { getResourceIcon, getResourceColor } from '../utils/presentation';
   
   // Props passed from OutcomeDisplay
   export let instance: ActiveCheckInstance | null = null;
@@ -15,38 +15,26 @@
   
   const dispatch = createEventDispatcher();
   
-  // UI State
+  // UI State only
   let diceRollResult: number | null = null;
   let isRolling: boolean = false;
-  let halfCost: Map<string, number> = new Map();
-  let controller: any = null;
+  let halfCost: ResourceCost = {};
+  let halfCostLoaded: boolean = false;
   
-  // Load controller and calculate costs
-  $: if (structureId && !controller) {
-    loadController();
+  // Load half cost from service (presentation data)
+  $: if (structureId && !halfCostLoaded) {
+    loadHalfCost();
   }
   
-  async function loadController() {
-    controller = await createRepairStructureController();
+  async function loadHalfCost() {
+    if (!structureId) return;
     
-    // Get half cost for this structure
-    if (controller && structureId && settlementId) {
-      const structure = await controller.getStructureById(structureId);
-      if (structure) {
-        // Import structures service to calculate half cost
-        const { structuresService } = await import('../../../services/structures');
-        const costObj = structuresService.calculateHalfBuildCost(structure);
-        
-        // Convert object to Map
-        halfCost = new Map(Object.entries(costObj));
-        console.log('🔧 [RepairCostChoice] Half cost calculated:', costObj, 'Map:', halfCost);
-        
-        // Debug icon rendering
-        for (const [resource, amount] of halfCost) {
-          const iconClass = getResourceIcon(resource);
-          console.log(`🎨 [RepairCostChoice] Resource: ${resource}, Amount: ${amount}, Icon: ${iconClass}`);
-        }
-      }
+    const { structuresService } = await import('../../../services/structures');
+    const structure = structuresService.getStructure(structureId);
+    
+    if (structure) {
+      halfCost = structuresService.calculateHalfBuildCost(structure);
+      halfCostLoaded = true;
     }
   }
   
@@ -85,20 +73,12 @@
   }
   
   async function selectHalfOption() {
-    // Convert Map to plain object for storage
-    const costObj: Record<string, number> = {};
-    for (const [resource, amount] of halfCost) {
-      costObj[resource] = amount;
-    }
-    
-    console.log('💰 [RepairCostChoice] Converted halfCost Map to object:', costObj);
-    
     // Store selection in instance
     if (instance) {
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: {
           costType: 'half',
-          cost: costObj,
+          cost: halfCost,
           structureId,
           settlementId
         }
@@ -108,33 +88,14 @@
     // Dispatch selection event
     dispatch('selection', {
       costType: 'half',
-      cost: costObj,
+      cost: halfCost,
       structureId,
       settlementId
     });
   }
   
-  // Import resource icon helper
-  import { getResourceIcon, getResourceColor } from '../utils/presentation';
-  
-  // Check if player can afford the cost
-  function canAfford(cost: Map<string, number>): boolean {
-    if (!cost || cost.size === 0) return true;
-    
-    for (const [resource, amount] of cost) {
-      const available = ($kingdomData.resources as any)?.[resource] || 0;
-      if (available < amount) {
-        return false;
-      }
-    }
-    
-    return true;
-  }
-  
-  // Get selected option from instance
+  // Get selected option from instance (UI state only)
   $: selectedCostType = instance?.resolutionState?.customComponentData?.costType;
-  $: diceAffordable = diceRollResult !== null ? canAfford(new Map([['gold', diceRollResult]])) : true;
-  $: halfAffordable = canAfford(halfCost);
 </script>
 
 <div class="repair-cost-choice">
@@ -143,8 +104,7 @@
     <button
       class="choice-button"
       class:selected={selectedCostType === 'dice'}
-      class:unaffordable={!diceAffordable && diceRollResult !== null}
-      disabled={isRolling || (!diceAffordable && diceRollResult !== null)}
+      disabled={isRolling}
       on:click={selectDiceOption}
     >
       {#if isRolling}
@@ -169,17 +129,15 @@
     <button
       class="choice-button"
       class:selected={selectedCostType === 'half'}
-      class:unaffordable={!halfAffordable}
-      disabled={!halfAffordable}
       on:click={selectHalfOption}
     >
       <div class="cost-display">
         <div class="cost-value">
-          {#if halfCost.size === 0}
+          {#if Object.keys(halfCost).length === 0}
             Free
           {:else}
             <div class="cost-resources">
-              {#each Array.from(halfCost.entries()) as [resource, amount]}
+              {#each Object.entries(halfCost) as [resource, amount]}
                 {@const iconClass = getResourceIcon(resource)}
                 {@const iconColor = getResourceColor(resource)}
                 {#if iconClass}
@@ -243,12 +201,6 @@
       border-color: var(--border-strong);
       box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
       opacity: 1;
-    }
-    
-    &.unaffordable {
-      opacity: 0.5;
-      border-color: rgba(239, 68, 68, 0.4);
-      cursor: not-allowed;
     }
     
     &:disabled {

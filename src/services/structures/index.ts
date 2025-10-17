@@ -2,13 +2,24 @@
 // Manages structure definitions and calculations
 
 import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/KingdomStore';
+import { kingdomData, getKingdomActor } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
 import { StructureCondition } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
 import structuresData from '../../../dist/structures.json';
 import { logger } from '../../utils/Logger';
+
+// Type for repairable structure information
+export interface RepairableStructure {
+  structureId: string;
+  structureName: string;
+  structureCategory: string;
+  structureTier: number;
+  settlementId: string;
+  settlementName: string;
+  halfCost: ResourceCost;
+}
 
 export class StructuresService {
   private structures: Map<string, Structure> = new Map();
@@ -590,6 +601,57 @@ export class StructuresService {
     }
     
     return true;
+  }
+  
+  /**
+   * Get all damaged structures that can be repaired
+   * Returns only the lowest tier damaged structure per category per settlement
+   */
+  getRepairableStructures(): RepairableStructure[] {
+    const actor = getKingdomActor();
+    if (!actor) return [];
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) return [];
+    
+    const repairableList: RepairableStructure[] = [];
+    
+    for (const settlement of kingdom.settlements) {
+      // Get damaged structures grouped by category
+      const damagedByCategory = new Map<string, Structure[]>();
+      
+      for (const structureId of settlement.structureIds) {
+        if (this.isStructureDamaged(settlement, structureId)) {
+          const structure = this.getStructure(structureId);
+          if (structure) {
+            if (!damagedByCategory.has(structure.category)) {
+              damagedByCategory.set(structure.category, []);
+            }
+            damagedByCategory.get(structure.category)!.push(structure);
+          }
+        }
+      }
+      
+      // For each category, only include the lowest tier
+      damagedByCategory.forEach(structures => {
+        const lowestTier = Math.min(...structures.map(s => s.tier));
+        const lowestStructure = structures.find(s => s.tier === lowestTier);
+        
+        if (lowestStructure) {
+          repairableList.push({
+            structureId: lowestStructure.id,
+            structureName: lowestStructure.name,
+            structureCategory: lowestStructure.category,
+            structureTier: lowestStructure.tier,
+            settlementId: settlement.id,
+            settlementName: settlement.name,
+            halfCost: this.calculateHalfBuildCost(lowestStructure)
+          });
+        }
+      });
+    }
+    
+    return repairableList;
   }
   
   /**
