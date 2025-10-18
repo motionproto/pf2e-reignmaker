@@ -9,6 +9,7 @@
   export let manualEffects: string[] | undefined = undefined;
   export let outcome: string | undefined = undefined;
   export let hideResources: string[] = []; // Resources to hide (handled elsewhere, e.g., in choice buttons)
+  export let customComponentData: any = undefined; // For custom component data (e.g., upgrade cost)
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\d+d\d+([+-]\d+)?$/;
@@ -16,6 +17,13 @@
   $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
+  $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
+  
+  // Debug logging
+  $: {
+    console.log('🔍 [StateChanges] customComponentData:', customComponentData);
+    console.log('🔍 [StateChanges] hasCustomCost:', hasCustomCost);
+  }
   
   // Extract dice modifiers that should be shown as rollers
   // These are modifiers with dice formulas that are NOT choice modifiers or resource arrays
@@ -28,7 +36,7 @@
   ) || [];
   $: hasDiceModifiers = diceModifiersToShow.length > 0;
   
-  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame || hasDiceModifiers;
+  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost;
   
   // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
@@ -195,6 +203,27 @@
         </div>
       {/if}
     {/if}
+    
+    <!-- Show custom cost (e.g., from upgrade settlement) -->
+    {#if hasCustomCost && customComponentData.cost}
+      <div class="dice-rollers-section">
+        <div class="dice-rollers-header">Cost:</div>
+        <div class="outcome-cards">
+          <div class="outcome-card static cost-card">
+            <div class="card-header">
+              <i class="fas fa-coins resource-icon"></i>
+              <div class="card-label">
+                {#if customComponentData.settlementName}
+                  Lose {customComponentData.cost} Gold (upgrade {customComponentData.settlementName} {customComponentData.currentLevel} → {customComponentData.newLevel})
+                {:else}
+                  Lose {customComponentData.cost} Gold
+                {/if}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
   {:else}
     <!-- Show "No Effect" when there's no content -->
     <div class="dice-rollers-section">
@@ -268,6 +297,15 @@
     
     &.static {
       cursor: default;
+    }
+    
+    &.cost-card {
+      background: rgba(234, 179, 8, 0.1);
+      border-color: rgba(234, 179, 8, 0.4);
+      
+      .resource-icon {
+        color: rgb(234, 179, 8);
+      }
     }
     
     &.no-effect {

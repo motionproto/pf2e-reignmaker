@@ -3,7 +3,7 @@
   "name": "Upgrade Settlement",
   "category": "urban-planning",
   "brief": "Increase settlement level by 1",
-  "description": "Invest in infrastructure and urban development to advance your settlement's capabilities and unlock access to more advanced structures",
+  "description": "Invest in infrastructure and development to advance your settlement's capabilities and unlock access to more advanced structures",
   "cost": {
     "gold": "settlement's new level"
   },
@@ -31,26 +31,27 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Settlement level increases by 1 at half the normal cost (rounded up)",
+      "description": "{Settlement} level increases by 1 at half the cost (rounded up)",
       "modifiers": []
     },
     "success": {
-      "description": "Settlement level increases by 1",
+      "description": "{Settlement} level increases by 1",
       "modifiers": []
     },
     "failure": {
-      "description": "Construction setbacks and delays waste resources. Pay half the upgrade cost (rounded up) with no level increase",
+      "description": "Construction setbacks and delays waste resources and achieve nothing in {Settlement}.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Planning disasters and coordination failures waste the full investment with no progress. Pay the full upgrade cost with no level increase",
+      "description": "Accidents and incompetance waste the full investment in {Settlement} achieving nothing.",
       "modifiers": []
     }
   },
   "requirements": [
-    "Village → Town: Level 2+ and 2+ Structures",
-    "Town → City: Level 5+ and 4+ Structures",
-    "City → Metropolis: Level 8+ and 8+ Structures"
+    "At least one settlement available",
+    "Settlement not at maximum level (20)",
+    "Settlement meets structure requirements for next tier",
+    "Sufficient gold for upgrade cost"
   ],
-  "special": "Cost equals the settlement's NEW level in gold. For example, upgrading from level 4 to level 5 costs 5 gold. Tier changes occur automatically when level and structure prerequisites are met."
+  "special": "Cost equals the settlement's NEW level in gold."
 }

@@ -127,25 +127,38 @@
       outcome
     });
     
-    // Store selection in instance
+    // Store settlement metadata
     if (instance) {
-      const dataToStore = {
+      const metadata = {
         settlementId: info.settlement.id,
-        outcome
+        settlementName: info.settlement.name,
+        currentLevel: info.currentLevel,
+        newLevel: info.newLevel
       };
       
       await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: dataToStore
+        customComponentData: metadata
       });
       
-      console.log('✅ [UpgradeSettlementDialog] Settlement selection stored');
+      console.log('✅ [UpgradeSettlementDialog] Settlement metadata stored');
     }
     
-    // Dispatch selection event
-    dispatch('selection', {
+    // Dispatch selection event with modifiers (gold cost)
+    // This makes the cost flow through the normal modifier system
+    const selectionData = {
       settlementId: info.settlement.id,
-      outcome
-    });
+      settlementName: info.settlement.name,
+      modifiers: [
+        {
+          resource: 'gold',
+          value: -info.actualCost,
+          type: 'static'
+        }
+      ]
+    };
+    
+    console.log('📤 [UpgradeSettlementDialog] Dispatching selection event:', selectionData);
+    dispatch('selection', selectionData);
   }
   
   // Get selected option from instance (UI state)

@@ -8,6 +8,7 @@
   import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import RepairStructureDialog from "../../kingdom/components/RepairStructureDialog.svelte";
+  import UpgradeSettlementSelectionDialog from "../../kingdom/components/UpgradeSettlementSelectionDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,
@@ -41,6 +42,11 @@
       requiresPreDialog: true,
       showDialog: () => { showRepairStructureDialog = true; },
       storePending: (skill: string) => { pendingRepairAction = { skill }; }
+    },
+    'upgrade-settlement': {
+      requiresPreDialog: true,
+      showDialog: () => { showUpgradeSettlementSelectionDialog = true; },
+      storePending: (skill: string) => { pendingUpgradeAction = { skill }; }
     }
   };
 
@@ -48,10 +54,12 @@
   let expandedActions = new Set<string>();
   let showBuildStructureDialog: boolean = false;
   let showRepairStructureDialog: boolean = false;
+  let showUpgradeSettlementSelectionDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
+  let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -220,13 +228,52 @@
       }
     }
     
-    // Store repair action metadata if this is a repair-structure action
-    const metadata = actionId === 'repair-structure' && pendingRepairAction 
-      ? { 
-          structureId: pendingRepairAction.structureId,
-          settlementId: pendingRepairAction.settlementId
+    // Special handling for upgrade-settlement to replace {Settlement} placeholder
+    if (action.id === 'upgrade-settlement') {
+      console.log('🏰 [ActionsPhase] Upgrade settlement - checking for placeholder replacement');
+      console.log('   effectMessage:', effectMessage);
+      console.log('   pendingUpgradeAction:', pendingUpgradeAction);
+      console.log('   contains {Settlement}?', effectMessage.includes('{Settlement}'));
+      
+      if (effectMessage.includes('{Settlement}')) {
+        if (pendingUpgradeAction?.settlementId) {
+          const actor = getKingdomActor();
+          if (actor) {
+            const kingdom = actor.getKingdom();
+            const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+            
+            console.log('   Found settlement:', settlement?.name);
+            
+            if (settlement) {
+              effectMessage = effectMessage.replace(/{Settlement}/g, settlement.name);
+              console.log('   Replaced! New message:', effectMessage);
+            } else {
+              console.warn('   ⚠️ Settlement not found, using generic');
+              effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
+            }
+          } else {
+            console.warn('   ⚠️ No actor, using generic');
+            effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
+          }
+        } else {
+          console.warn('   ⚠️ No settlementId in pendingUpgradeAction, using generic');
+          effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
         }
-      : undefined;
+      }
+    }
+    
+    // Store action metadata if needed
+    let metadata = undefined;
+    if (actionId === 'repair-structure' && pendingRepairAction) {
+      metadata = { 
+        structureId: pendingRepairAction.structureId,
+        settlementId: pendingRepairAction.settlementId
+      };
+    } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
+      metadata = {
+        settlementId: pendingUpgradeAction.settlementId
+      };
+    }
     
     const instanceId = await checkInstanceService.createInstance(
       'action',
@@ -236,9 +283,46 @@
       metadata
     );
     
-    // Store preliminary outcome in instance (before user confirms)
+    // Build preliminary resolution data with dynamic modifiers
+    let preliminaryModifiers = modifiers.map((m: any) => ({ resource: m.resource, value: m.value }));
+    
+    // Special handling for upgrade-settlement: inject cost modifier
+    if (actionId === 'upgrade-settlement' && pendingUpgradeAction?.settlementId) {
+      const actor = getKingdomActor();
+      if (actor && pendingUpgradeAction) {
+        const kingdom = actor.getKingdom();
+        const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+        
+        if (settlement) {
+          const newLevel = settlement.level + 1;
+          const fullCost = newLevel;
+          const isCriticalSuccess = outcomeType === 'criticalSuccess';
+          
+          // Calculate cost based on outcome
+          let actualCost = fullCost;
+          if (outcomeType === 'success') {
+            actualCost = fullCost;
+          } else if (outcomeType === 'criticalSuccess') {
+            actualCost = Math.ceil(fullCost / 2);
+          } else if (outcomeType === 'failure') {
+            actualCost = Math.ceil(fullCost / 2);
+          } else if (outcomeType === 'criticalFailure') {
+            actualCost = fullCost;
+          }
+          
+          // Add cost modifier
+          preliminaryModifiers.push({
+            resource: 'gold',
+            value: -actualCost
+          });
+          
+          console.log(`💰 [ActionsPhase] Added upgrade cost modifier: -${actualCost} gold (${outcomeType})`);
+        }
+      }
+    }
+    
     const preliminaryResolutionData = {
-      numericModifiers: modifiers.map((m: any) => ({ resource: m.resource, value: m.value })),
+      numericModifiers: preliminaryModifiers,
       manualEffects: [],
       complexActions: []
     };
@@ -324,17 +408,25 @@
       return; // Don't track failed actions
     }
     
-    // Then, special post-resolution handling for build-structure (only on success/criticalSuccess)
+    // Then, special post-resolution handling for actions with pre-roll selection
     if (actionId === 'build-structure' && pendingBuildAction) {
       const outcome = instance.appliedOutcome.outcome;
       if (outcome === 'success' || outcome === 'criticalSuccess') {
         await handleBuildStructureCompletion(outcome, instance.appliedOutcome.actorName);
       }
       // For failure/criticalFailure, modifiers have already been applied above
+    } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
+      const outcome = instance.appliedOutcome.outcome;
+      if (outcome === 'success' || outcome === 'criticalSuccess') {
+        await handleUpgradeSettlementCompletion(outcome, instance.appliedOutcome.actorName);
+      }
+      // For failure/criticalFailure, modifiers have already been applied above
     }
     
     // Show success notification with applied effects (if any resources were changed)
-    if (result.applied?.resources && result.applied.resources.length > 0) {
+    // Skip for actions with custom completion notifications
+    const hasCustomNotification = actionId === 'upgrade-settlement' || actionId === 'build-structure';
+    if (!hasCustomNotification && result.applied?.resources && result.applied.resources.length > 0) {
       const effectsMsg = result.applied.resources
         .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
         .join(', ');
@@ -365,6 +457,95 @@
     
     // Force UI update
     await tick();
+  }
+  
+  // Handle upgrade settlement completion after roll
+  async function handleUpgradeSettlementCompletion(outcome: string, actorName: string) {
+    if (!pendingUpgradeAction?.settlementId) {
+      ui.notifications?.error('Settlement upgrade data missing');
+      pendingUpgradeAction = null;
+      return;
+    }
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      ui.notifications?.error('No kingdom actor available');
+      pendingUpgradeAction = null;
+      return;
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      ui.notifications?.error('No kingdom data available');
+      pendingUpgradeAction = null;
+      return;
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+    if (!settlement) {
+      ui.notifications?.error('Settlement not found');
+      pendingUpgradeAction = null;
+      return;
+    }
+    
+    const currentLevel = settlement.level;
+    const newLevel = currentLevel + 1;
+    const fullCost = newLevel;
+    
+    // Calculate actual cost based on outcome
+    const isCriticalSuccess = outcome === 'criticalSuccess';
+    const actualCost = isCriticalSuccess ? Math.ceil(fullCost / 2) : fullCost;
+    
+    console.log('💰 [UpgradeSettlement] Cost calculation:', {
+      currentLevel,
+      newLevel,
+      fullCost,
+      isCriticalSuccess,
+      actualCost
+    });
+    
+    // Deduct gold cost
+    try {
+      await updateKingdom(k => {
+        if (k.resources.gold >= actualCost) {
+          k.resources.gold -= actualCost;
+        } else {
+          throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
+        }
+      });
+      
+      console.log(`✅ [UpgradeSettlement] Deducted ${actualCost} gold`);
+      
+      // Upgrade settlement level (handles automatic tier transitions)
+      const { settlementService } = await import('../../../services/settlements');
+      await settlementService.updateSettlementLevel(pendingUpgradeAction.settlementId, newLevel);
+      
+      // Get updated settlement for message
+      const updatedKingdom = actor.getKingdom();
+      const updatedSettlement = updatedKingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+      
+      if (updatedSettlement) {
+        // Check if tier changed
+        const tierChanged = updatedSettlement.tier !== settlement.tier;
+        
+        const message = tierChanged
+          ? `${updatedSettlement.name} upgraded to level ${newLevel} and became a ${updatedSettlement.tier}!`
+          : `${updatedSettlement.name} upgraded to level ${newLevel}`;
+        
+        if (isCriticalSuccess) {
+          ui.notifications?.info(`🎉 Critical Success! ${message} (50% off gold cost)`);
+        } else {
+          ui.notifications?.info(`✅ ${message}`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ [UpgradeSettlement] Error:', error);
+      ui.notifications?.error(error instanceof Error ? error.message : 'Failed to upgrade settlement');
+    }
+    
+    // Clear pending upgrade action
+    pendingUpgradeAction = null;
   }
   
   // Handle build structure completion after roll
@@ -838,6 +1019,32 @@
     }
   }
   
+  // Handle when a settlement is selected for upgrade
+  async function handleUpgradeSettlementSelected(event: CustomEvent) {
+    const { settlementId } = event.detail;
+    
+    // Store settlement selection
+    if (pendingUpgradeAction) {
+      pendingUpgradeAction.settlementId = settlementId;
+      
+      // Get settlement name for metadata
+      const actor = getKingdomActor();
+      if (actor) {
+        const kingdom = actor.getKingdom();
+        const settlement = kingdom?.settlements.find(s => s.id === settlementId);
+        if (settlement) {
+          (pendingUpgradeAction as any).settlementName = settlement.name;
+        }
+      }
+      
+      // Close dialog
+      showUpgradeSettlementSelectionDialog = false;
+      
+      // Now trigger the skill roll with the selected settlement context
+      await executeUpgradeSettlementRoll(pendingUpgradeAction);
+    }
+  }
+  
   // Execute the repair structure skill roll
   async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
     if (!repairAction.structureId || !repairAction.settlementId) {
@@ -885,6 +1092,56 @@
       console.error("Error executing repair structure roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingRepairAction = null;
+    }
+  }
+  
+  // Execute the upgrade settlement skill roll
+  async function executeUpgradeSettlementRoll(upgradeAction: { skill: string; settlementId?: string }) {
+    if (!upgradeAction.settlementId) {
+      ui.notifications?.warn('Please select a settlement to upgrade');
+      return;
+    }
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        // User cancelled - reset pending action
+        pendingUpgradeAction = null;
+        return;
+      }
+    }
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      const action = actionLoader.getAllActions().find(a => a.id === 'upgrade-settlement');
+      if (!action) return;
+      
+      // Perform the roll
+      await performKingdomActionRoll(
+        actingCharacter,
+        upgradeAction.skill,
+        dc,
+        action.name,
+        action.id,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+      
+      // The roll completion will be handled by handleRollComplete
+      // which will trigger onActionResolved with the outcome
+    } catch (error) {
+      console.error("Error executing upgrade settlement roll:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+      pendingUpgradeAction = null;
     }
   }
   
@@ -1130,12 +1387,12 @@
                 skillName: checkInstance.appliedOutcome.skillName || '',
                 modifiers: checkInstance.appliedOutcome.modifiers || [],
                 effect: checkInstance.appliedOutcome.effect || '',
-                effectsApplied: checkInstance.appliedOutcome.effectsApplied ? true : false
+                effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
               } : undefined}
               {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
               {@const isAvailable = isActionAvailable(action)}
               {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}-${$kingdomData.unrest}-${$kingdomData.imprisonedUnrest}-${($kingdomData.resources?.resourcePoints || 0)}-${($kingdomData.armies?.length || 0)}-${($kingdomData.settlements?.length || 0)}`}
+              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}-${$kingdomData.unrest}-${$kingdomData.imprisonedUnrest}-${($kingdomData.resources?.resourcePoints || 0)}-${($kingdomData.resources?.gold || 0)}-${($kingdomData.armies?.length || 0)}-${($kingdomData.settlements?.length || 0)}`}
                 <BaseCheckCard
                   id={action.id}
                   checkInstance={checkInstance || null}
@@ -1220,6 +1477,13 @@
 <RepairStructureDialog
   bind:show={showRepairStructureDialog}
   on:structureSelected={handleRepairStructureSelected}
+/>
+
+<!-- Upgrade Settlement Selection Dialog -->
+<UpgradeSettlementSelectionDialog
+  bind:show={showUpgradeSettlementSelectionDialog}
+  on:confirm={handleUpgradeSettlementSelected}
+  on:cancel={() => { pendingUpgradeAction = null; }}
 />
 
 <!-- Aid Selection Dialog -->

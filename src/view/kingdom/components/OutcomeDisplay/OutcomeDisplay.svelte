@@ -74,6 +74,13 @@
   $: resolutionState = getInstanceResolutionState(instance);
   $: selectedChoice = resolutionState.selectedChoice;
   $: customComponentData = resolutionState.customComponentData;  // Track custom component resolution
+  
+  // Debug logging
+  $: {
+    console.log('🔍 [OutcomeDisplay] customComponent:', customComponent);
+    console.log('🔍 [OutcomeDisplay] customComponentData:', customComponentData);
+    console.log('🔍 [OutcomeDisplay] instance:', instance?.instanceId);
+  }
   // Convert string keys back to appropriate types for Maps
   $: resolvedDice = new Map(
     Object.entries(resolutionState.resolvedDice || {}).map(([k, v]) => {
@@ -173,7 +180,9 @@
     const hasManualEffects = manualEffects && manualEffects.length > 0;
     const hasNumericModifiers = modifiers && modifiers.length > 0;
     const hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
-    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges;
+    const hasCustomData = customComponentData && Object.keys(customComponentData).length > 0;
+    const hasChoiceResultData = choiceResult && Object.keys(choiceResult.stateChanges || {}).length > 0;
+    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData;
     
     const validationState = {
       applied,
@@ -453,14 +462,37 @@
   async function handleCustomSelection(event: CustomEvent) {
     if (!instance) return;
     
-    console.log('🎨 [OutcomeDisplay] Custom component selection:', event.detail);
+    const { modifiers, ...metadata } = event.detail;
     
-    // ✅ Store custom component data in instance (syncs to all clients)
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: event.detail
-    });
+    console.log('🎨 [OutcomeDisplay] Custom component selection:', { modifiers, metadata });
     
-    // Forward to parent for inclusion in ResolutionData
+    // Store metadata (for UI display, like settlement name/level)
+    if (metadata && Object.keys(metadata).length > 0) {
+      await updateInstanceResolutionState(instance.instanceId, {
+        customComponentData: metadata
+      });
+    }
+    
+    // Convert modifiers to stateChanges (like choices do)
+    if (modifiers && modifiers.length > 0) {
+      const customStateChanges: Record<string, number> = {};
+      
+      for (const mod of modifiers) {
+        if (mod.resource && typeof mod.value === 'number') {
+          customStateChanges[mod.resource] = mod.value;
+        }
+      }
+      
+      // Store as a "choice result" so StateChanges displays it
+      choiceResult = {
+        effect: effect,
+        stateChanges: customStateChanges
+      };
+      
+      console.log('✅ [OutcomeDisplay] Custom modifiers converted to stateChanges:', customStateChanges);
+    }
+    
+    // Forward to parent
     dispatch('customSelection', event.detail);
   }
   
@@ -516,6 +548,7 @@
       {manualEffects} 
       outcome={effectiveOutcome} 
       hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
+      {customComponentData}
       on:roll={handleDiceRoll} 
     />
     
@@ -528,7 +561,7 @@
           {outcome}
           {modifiers}
           {stateChanges}
-          on:selection
+          on:selection={handleCustomSelection}
         />
       </div>
     {/if}

@@ -19,7 +19,6 @@ import {
   replaceTemplatePlaceholders,
   type ResolveResult
 } from './ActionHelpers';
-import UpgradeSettlementDialog from '../../../view/kingdom/components/UpgradeSettlementDialog.svelte';
 
 /**
  * Check if a settlement meets structure requirements for tier upgrade
@@ -119,115 +118,6 @@ export const UpgradeSettlementAction = {
     };
   },
   
-  customResolution: {
-    component: UpgradeSettlementDialog,
-    
-    validateData(resolutionData: ResolutionData): boolean {
-      const data = resolutionData.customComponentData;
-      
-      console.log('🔍 [UpgradeSettlement] Validating resolution data:', {
-        hasData: !!data,
-        hasSettlementId: !!data?.settlementId,
-        settlementId: data?.settlementId
-      });
-      
-      // Require settlement selection
-      if (!data?.settlementId) {
-        console.log('❌ [UpgradeSettlement] Validation failed: No settlement selected');
-        return false;
-      }
-      
-      console.log('✅ [UpgradeSettlement] Validation passed');
-      return true;
-    },
-    
-    async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
-      const { settlementId, outcome } = resolutionData.customComponentData;
-      
-      logActionStart('upgrade-settlement', `Upgrading settlement ${settlementId}`);
-      
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return createErrorResult('No kingdom actor available');
-        }
-        
-        const kingdom = actor.getKingdom();
-        if (!kingdom) {
-          return createErrorResult('No kingdom data available');
-        }
-        
-        const settlement = kingdom.settlements.find(s => s.id === settlementId);
-        if (!settlement) {
-          return createErrorResult('Settlement not found');
-        }
-        
-        const currentLevel = settlement.level;
-        const newLevel = currentLevel + 1;
-        const fullCost = newLevel;
-        
-        // Calculate actual cost based on outcome
-        const isCriticalSuccess = outcome === 'criticalSuccess';
-        const actualCost = isCriticalSuccess ? Math.ceil(fullCost / 2) : fullCost;
-        
-        console.log('💰 [UpgradeSettlement] Cost calculation:', {
-          currentLevel,
-          newLevel,
-          fullCost,
-          isCriticalSuccess,
-          actualCost
-        });
-        
-        // Deduct gold cost
-        const { updateKingdom } = await import('../../../stores/KingdomStore');
-        
-        await updateKingdom(k => {
-          if (k.resources.gold >= actualCost) {
-            k.resources.gold -= actualCost;
-          } else {
-            throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
-          }
-        });
-        
-        console.log(`✅ [UpgradeSettlement] Deducted ${actualCost} gold`);
-        
-        // Upgrade settlement level (handles automatic tier transitions)
-        const { settlementService } = await import('../../../services/settlements');
-        await settlementService.updateSettlementLevel(settlementId, newLevel);
-        
-        // Get updated settlement for message
-        const updatedKingdom = actor.getKingdom();
-        const updatedSettlement = updatedKingdom?.settlements.find(s => s.id === settlementId);
-        
-        if (!updatedSettlement) {
-          return createErrorResult('Failed to retrieve updated settlement');
-        }
-        
-        // Check if tier changed
-        const tierChanged = updatedSettlement.tier !== settlement.tier;
-        
-        const message = tierChanged
-          ? `${updatedSettlement.name} upgraded to level ${newLevel} and became a ${updatedSettlement.tier}!`
-          : `${updatedSettlement.name} upgraded to level ${newLevel}`;
-        
-        logActionSuccess('upgrade-settlement', message);
-        
-        return createSuccessResult(message);
-        
-      } catch (error) {
-        console.error('❌ [UpgradeSettlement] Error:', error);
-        logActionError('upgrade-settlement', error as Error);
-        return createErrorResult(error instanceof Error ? error.message : 'Failed to upgrade settlement');
-      }
-    }
-  },
-  
-  /**
-   * Both success and critical success need custom dialog for settlement selection
-   */
-  needsCustomResolution(outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): boolean {
-    return outcome === 'success' || outcome === 'criticalSuccess';
-  }
 };
 
 export default UpgradeSettlementAction;
