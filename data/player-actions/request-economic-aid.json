@@ -1,6 +1,8 @@
 {
   "id": "request-economic-aid",
   "name": "Request Economic Aid",
+  "disabled": true,
+  "disabledReason": "In Development",
   "category": "foreign-affairs",
   "brief": "Ask allies for resources or gold",
   "description": "Appeal to allied nations for material support in times of need",

@@ -15,6 +15,7 @@ import ArrestDissidentsAction from '../../../actions/arrest-dissidents/ArrestDis
 import RepairStructureAction from '../../../actions/repair-structure/RepairStructureAction';
 import EstablishSettlementAction from '../../../actions/establish-settlement/EstablishSettlementAction';
 import UpgradeSettlementAction from '../../../actions/upgrade-settlement/UpgradeSettlementAction';
+import EstablishDiplomaticRelationsAction from '../../../actions/establish-diplomatic-relations/EstablishDiplomaticRelationsAction';
 
 /**
  * Interface for custom action implementations
@@ -46,6 +47,7 @@ actionImplementations.set(ArrestDissidentsAction.id, ArrestDissidentsAction);
 actionImplementations.set(RepairStructureAction.id, RepairStructureAction);
 actionImplementations.set(EstablishSettlementAction.id, EstablishSettlementAction);
 actionImplementations.set(UpgradeSettlementAction.id, UpgradeSettlementAction);
+actionImplementations.set(EstablishDiplomaticRelationsAction.id, EstablishDiplomaticRelationsAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
@@ -147,7 +149,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction };
 
 // TODO: Export additional implementations as they're created
 // export { BuildStructureAction };

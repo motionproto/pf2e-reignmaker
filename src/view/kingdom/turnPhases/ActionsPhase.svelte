@@ -9,6 +9,7 @@
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
   import RepairStructureDialog from "../../../actions/repair-structure/RepairStructureDialog.svelte";
   import UpgradeSettlementSelectionDialog from "../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte";
+  import FactionSelectionDialog from "../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,
@@ -47,6 +48,11 @@
       requiresPreDialog: true,
       showDialog: () => { showUpgradeSettlementSelectionDialog = true; },
       storePending: (skill: string) => { pendingUpgradeAction = { skill }; }
+    },
+    'dimplomatic-mission': {
+      requiresPreDialog: true,
+      showDialog: () => { showFactionSelectionDialog = true; },
+      storePending: (skill: string) => { pendingDiplomaticAction = { skill }; }
     }
   };
 
@@ -55,11 +61,13 @@
   let showBuildStructureDialog: boolean = false;
   let showRepairStructureDialog: boolean = false;
   let showUpgradeSettlementSelectionDialog: boolean = false;
+  let showFactionSelectionDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
+  let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -1045,6 +1053,23 @@
     }
   }
   
+  // Handle when a faction is selected for diplomatic relations
+  async function handleFactionSelected(event: CustomEvent) {
+    const { factionId, factionName } = event.detail;
+    
+    // Store faction selection
+    if (pendingDiplomaticAction) {
+      pendingDiplomaticAction.factionId = factionId;
+      pendingDiplomaticAction.factionName = factionName;
+      
+      // Close dialog
+      showFactionSelectionDialog = false;
+      
+      // Now trigger the skill roll with the selected faction context
+      await executeEstablishDiplomaticRelationsRoll(pendingDiplomaticAction);
+    }
+  }
+  
   // Execute the repair structure skill roll
   async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
     if (!repairAction.structureId || !repairAction.settlementId) {
@@ -1142,6 +1167,56 @@
       console.error("Error executing upgrade settlement roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingUpgradeAction = null;
+    }
+  }
+  
+  // Execute the establish diplomatic relations skill roll
+  async function executeEstablishDiplomaticRelationsRoll(diplomaticAction: { skill: string; factionId?: string; factionName?: string }) {
+    if (!diplomaticAction.factionId) {
+      ui.notifications?.warn('Please select a faction');
+      return;
+    }
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        // User cancelled - reset pending action
+        pendingDiplomaticAction = null;
+        return;
+      }
+    }
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      const action = actionLoader.getAllActions().find(a => a.id === 'dimplomatic-mission');
+      if (!action) return;
+      
+      // Perform the roll
+      await performKingdomActionRoll(
+        actingCharacter,
+        diplomaticAction.skill,
+        dc,
+        action.name,
+        action.id,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+      
+      // The roll completion will be handled by handleRollComplete
+      // which will trigger onActionResolved with the outcome
+    } catch (error) {
+      console.error("Error executing establish diplomatic relations roll:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+      pendingDiplomaticAction = null;
     }
   }
   
@@ -1484,6 +1559,13 @@
   bind:show={showUpgradeSettlementSelectionDialog}
   on:confirm={handleUpgradeSettlementSelected}
   on:cancel={() => { pendingUpgradeAction = null; }}
+/>
+
+<!-- Faction Selection Dialog -->
+<FactionSelectionDialog
+  bind:show={showFactionSelectionDialog}
+  on:confirm={handleFactionSelected}
+  on:cancel={() => { pendingDiplomaticAction = null; }}
 />
 
 <!-- Aid Selection Dialog -->

@@ -1,6 +1,8 @@
 {
   "id": "hire-adventurers",
   "name": "Hire Adventurers",
+  "disabled": true,
+  "disabledReason": "In Development",
   "category": "foreign-affairs",
   "brief": "Pay gold to resolve events (2 Gold cost)",
   "description": "Contract independent heroes and mercenaries to handle dangerous tasks or resolve kingdom events",

@@ -27,40 +27,42 @@ export class ActionLoader {
             // Load actions from the imported JSON data
             const rawActionsList = actionsData as PlayerActionJson[];
             
-            // Convert raw data to typed actions
-            const actionsList: PlayerAction[] = rawActionsList.map(raw => ({
-                id: raw.id,
-                name: raw.name,
-                category: raw.category,
-                brief: raw.brief,
-                description: raw.description,
-                skills: raw.skills,
-                criticalSuccess: {
-                    description: raw.effects.criticalSuccess?.description || '',
-                    modifiers: raw.effects.criticalSuccess?.modifiers
-                },
-                success: {
-                    description: raw.effects.success?.description || '',
-                    modifiers: raw.effects.success?.modifiers
-                },
-                failure: {
-                    description: raw.effects.failure?.description || '',
-                    modifiers: raw.effects.failure?.modifiers
-                },
-                criticalFailure: {
-                    description: raw.effects.criticalFailure?.description || '',
-                    modifiers: raw.effects.criticalFailure?.modifiers
-                },
-                proficiencyScaling: raw.proficiencyScaling 
-                    ? new Map(Object.entries(raw.proficiencyScaling))
-                    : null,
-                special: raw.special || null,
-                cost: raw.costs 
-                    ? new Map(Object.entries(raw.costs))
-                    : null,
-                failureCausesUnrest: raw.failureCausesUnrest,
-                requirements: raw.requirements
-            }));
+            // Convert raw data to typed actions, filtering out disabled actions
+            const actionsList: PlayerAction[] = rawActionsList
+                .filter(raw => !(raw as any).disabled)  // Filter out disabled actions
+                .map(raw => ({
+                    id: raw.id,
+                    name: raw.name,
+                    category: raw.category,
+                    brief: raw.brief,
+                    description: raw.description,
+                    skills: raw.skills,
+                    criticalSuccess: {
+                        description: raw.effects.criticalSuccess?.description || '',
+                        modifiers: raw.effects.criticalSuccess?.modifiers
+                    },
+                    success: {
+                        description: raw.effects.success?.description || '',
+                        modifiers: raw.effects.success?.modifiers
+                    },
+                    failure: {
+                        description: raw.effects.failure?.description || '',
+                        modifiers: raw.effects.failure?.modifiers
+                    },
+                    criticalFailure: {
+                        description: raw.effects.criticalFailure?.description || '',
+                        modifiers: raw.effects.criticalFailure?.modifiers
+                    },
+                    proficiencyScaling: raw.proficiencyScaling 
+                        ? new Map(Object.entries(raw.proficiencyScaling))
+                        : null,
+                    special: raw.special || null,
+                    cost: raw.costs 
+                        ? new Map(Object.entries(raw.costs))
+                        : null,
+                    failureCausesUnrest: raw.failureCausesUnrest,
+                    requirements: raw.requirements
+                }));
             
             // Add all actions to the map
             for (const action of actionsList) {

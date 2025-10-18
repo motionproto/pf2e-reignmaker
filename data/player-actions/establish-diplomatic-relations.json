@@ -1,9 +1,9 @@
 {
-  "id": "establish-diplomatic-relations",
-  "name": "Establish Diplomatic Relations",
+  "id": "dimplomatic-mission",
+  "name": "Diplomatic Mission",
   "category": "foreign-affairs",
-  "brief": "Form alliances with other nations",
-  "description": "Open formal channels of communication with neighboring powers to enable future cooperation",
+  "brief": "Improve relations with a faction",
+  "description": "Send envoys to improve your kingdom's standing with neighboring powers and influential organizations",
   "skills": [
     {
       "skill": "diplomacy",
@@ -32,20 +32,48 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Allies + request aid",
-      "modifiers": []
+      "description": "Your diplomats achieved exceptional results! {Faction} improves their attitude toward your kingdom.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": -2,
+          "duration": "immediate"
+        }
+      ]
     },
     "success": {
-      "description": "Allies",
-      "modifiers": []
+      "description": "{Faction} improves their attitude toward your kingdom.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": -4,
+          "duration": "immediate"
+        }
+      ]
     },
     "failure": {
-      "description": "No effect",
-      "modifiers": []
+      "description": "Your diplomatic mission yielded no results, but relations remain stable.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": -4,
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": []
+      "description": "Your diplomats offended {Faction}! Their attitude worsens.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": -4,
+          "duration": "immediate"
+        }
+      ]
     }
   }
 }
