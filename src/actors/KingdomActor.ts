@@ -63,6 +63,9 @@ export interface PhaseStep {
 
 // Simplified, serializable kingdom data structure
 export interface KingdomData {
+  // Core identity
+  name?: string;  // Kingdom name
+  
   // Core progression
   currentTurn: number;
   currentPhase: TurnPhase;
@@ -235,6 +238,7 @@ export class KingdomActor extends Actor {
     const defaultFactions = await loadDefaultFactions();
     
     const defaultKingdom: KingdomData = {
+      name,
       currentTurn: 1,
       currentPhase: TurnPhase.STATUS,
       currentPhaseStepIndex: 0,
@@ -399,6 +403,7 @@ export class KingdomActor extends Actor {
  */
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
     return {
+      name,
       currentTurn: 1,
       currentPhase: TurnPhase.STATUS,
       currentPhaseStepIndex: 0,

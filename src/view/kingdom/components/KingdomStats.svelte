@@ -21,15 +21,29 @@
 
   // Kingdom name state
   let isEditingName = false;
-  let kingdomName = localStorage.getItem("kingdomName") || "Kingdom Name";
-  let editNameInput = kingdomName;
+  let editNameInput = "";
   let nameInputElement: HTMLInputElement;
+  
+  // Initialize kingdom name from actor or fallback to localStorage
+  $: kingdomName = $kingdomData.name || localStorage.getItem("kingdomName") || "Kingdom Name";
+  
+  // Update edit input when kingdomName changes
+  $: if (!isEditingName) {
+    editNameInput = kingdomName;
+  }
 
-  // Save kingdom name
-  function saveKingdomName() {
+  // Save kingdom name to both actor and localStorage
+  async function saveKingdomName() {
     if (editNameInput.trim()) {
-      kingdomName = editNameInput.trim();
-      localStorage.setItem("kingdomName", kingdomName);
+      const newName = editNameInput.trim();
+      
+      // Save to actor
+      await updateKingdom((k) => {
+        k.name = newName;
+      });
+      
+      // Also save to localStorage for backward compatibility
+      localStorage.setItem("kingdomName", newName);
     }
     isEditingName = false;
   }

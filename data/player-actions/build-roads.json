@@ -27,11 +27,11 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build road segments based on proficiency (Trained: 1, Expert: 2, Master: 3, Legendary: 4). Build the targeted road segment(s).",
+      "description": "Build road segments based on your skill proficiency",
       "modifiers": []
     },
     "success": {
-      "description": "Build 1 road segment. Build the targeted road segment.",
+      "description": "Build 1 road segment",
       "modifiers": []
     },
     "failure": {
