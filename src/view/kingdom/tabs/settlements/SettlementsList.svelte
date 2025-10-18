@@ -1,5 +1,7 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
+   import { createSettlement, SettlementTier } from '../../../../models/Settlement';
+   import { updateKingdom } from '../../../../stores/KingdomStore';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
    
    export let settlements: Settlement[] = [];
@@ -11,6 +13,25 @@
    
    // Get unique tiers from settlements
    $: settlementTiers = [...new Set(settlements.map(s => s.tier))].sort();
+   
+   // Create new settlement handler
+   async function handleCreateSettlement() {
+      // Create a new settlement at (0,0) - unlinked
+      const newSettlement = createSettlement(
+         'New Settlement',
+         { x: 0, y: 0 },
+         SettlementTier.VILLAGE
+      );
+      
+      // Add to kingdom
+      await updateKingdom(k => {
+         if (!k.settlements) k.settlements = [];
+         k.settlements.push(newSettlement);
+      });
+      
+      // Select the new settlement
+      onSelectSettlement(newSettlement);
+   }
    
    // Apply filters
    $: filteredSettlements = (() => {
@@ -92,6 +113,17 @@
          {/each}
       {/if}
    </div>
+   
+   <div class="panel-footer">
+      <button 
+         class="btn-create-settlement" 
+         on:click={handleCreateSettlement}
+         title="Create a new settlement manually"
+      >
+         <i class="fas fa-plus"></i>
+         Create Settlement
+      </button>
+   </div>
 </div>
 
 <style lang="scss">
@@ -148,6 +180,41 @@
       flex: 1;
       overflow-y: auto;
       padding: 0.5rem;
+   }
+   
+   .panel-footer {
+      padding: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      
+      .btn-create-settlement {
+         width: 100%;
+         padding: 0.5rem 1rem;
+         background: transparent;
+         border: 1px solid var(--border-default);
+         border-radius: var(--radius-lg);
+         color: var(--text-secondary);
+         font-size: var(--font-md);
+         cursor: pointer;
+         transition: var(--transition-base);
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         gap: 0.5rem;
+         
+         &:hover {
+            background: var(--bg-overlay);
+            border-color: var(--border-medium);
+            color: var(--text-primary);
+         }
+         
+         &:active {
+            transform: scale(0.98);
+         }
+         
+         i {
+            font-size: var(--font-sm);
+         }
+      }
    }
    
    .settlement-item {

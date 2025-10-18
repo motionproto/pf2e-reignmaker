@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { getContext, onMount } from 'svelte';
+   import { getContext, onMount, tick } from 'svelte';
    import { ApplicationShell }   from '#runtime/svelte/component/application';
    
    // Stores
@@ -59,7 +59,14 @@
          const { KingdomActor } = await import('../../actors/KingdomActor');
          
          console.log('[KingdomAppShell] Ensuring kingdom actor exists...');
-         let foundryActor = await ensureKingdomActor();
+         console.log('[KingdomAppShell] About to call ensureKingdomActor()...');
+         let foundryActor = null;
+         try {
+            foundryActor = await ensureKingdomActor();
+            console.log('[KingdomAppShell] ensureKingdomActor returned:', !!foundryActor, foundryActor?.name);
+         } catch (error) {
+            console.error('[KingdomAppShell] ensureKingdomActor threw error:', error);
+         }
          
          if (foundryActor) {
             console.log('[KingdomAppShell] Initializing kingdom actor store...');
@@ -146,12 +153,32 @@
             // Initialize the kingdom data if it doesn't exist
             if (!kingdomActor.getKingdom()) {
                await kingdomActor.initializeKingdom('New Kingdom');
+            } else {
+               // Migration: Ensure diplomaticCapacity is set (for kingdoms created before this was added)
+               const kingdom = kingdomActor.getKingdom();
+               if (kingdom && kingdom.resources && kingdom.resources.diplomaticCapacity === 0) {
+                  console.log('[KingdomAppShell] Migrating diplomaticCapacity from 0 to 1');
+                  await kingdomActor.updateKingdom((k) => {
+                     if (!k.resources.diplomaticCapacity || k.resources.diplomaticCapacity === 0) {
+                        k.resources.diplomaticCapacity = 1;
+                     }
+                  });
+               }
             }
             
-            // Initialize the store
+            // Initialize the store FIRST
+            console.log('[KingdomAppShell] Setting kingdom actor in store...');
             initializeKingdomActor(kingdomActor);
             
-            // Initialize all players for kingdom actions immediately after actor initialization
+            // Wait for next tick to ensure store is reactive
+            await tick();
+            
+            // Verify actor is available in store
+            const { getKingdomActor } = await import('../../stores/KingdomStore');
+            const storeActor = getKingdomActor();
+            console.log('[KingdomAppShell] Actor available in store:', !!storeActor);
+            
+            // Initialize all players for kingdom actions
             const { initializeAllPlayers } = await import('../../stores/KingdomStore');
             initializeAllPlayers();
             
@@ -159,33 +186,20 @@
             const { setupFoundrySync } = await import('../../stores/KingdomStore');
             setupFoundrySync();
             
-            // Debug current phase after initialization
-            setTimeout(() => {
-               console.log('🔍 [KingdomAppShell DEBUG] Initial kingdom state after mount:', {
-                  currentPhase: $kingdomData?.currentPhase,
-                  currentTurn: $kingdomData?.currentTurn,
-                  currentPhaseSteps: $kingdomData?.currentPhaseSteps,
-                  isUpkeepPhase: $kingdomData?.currentPhase === TurnPhase.UPKEEP
-               });
-            }, 500);
-            
-            // Also add immediate debug when kingdom data changes
-            setTimeout(() => {
-               console.log('🔍 [KingdomAppShell DEBUG] Raw kingdom data:', $kingdomData);
-            }, 1000);
-            
-            // Now sync territory data from Kingmaker if available (no delay needed)
+            // Now sync territory data from Kingmaker if available
             if (territoryService.isKingmakerAvailable()) {
                console.log('[KingdomAppShell] Syncing territory data...');
-               const result = territoryService.syncFromKingmaker();
+               const result = await territoryService.syncFromKingmaker();
                
                if (result.success) {
+                  console.log(`[KingdomAppShell] Territory sync successful: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
                   // Only show notification if there's actual data
                   if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
                      // @ts-ignore
                      ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
                   }
                } else if (result.error) {
+                  console.warn('[KingdomAppShell] Territory sync failed:', result.error);
                   // Don't show error notification on initial load unless there's a real error
                   if (!result.error.includes('not available')) {
                      // @ts-ignore
@@ -193,6 +207,18 @@
                   }
                }
             }
+            
+            // Debug current phase after initialization
+            setTimeout(() => {
+               console.log('🔍 [KingdomAppShell DEBUG] Initial kingdom state after mount:', {
+                  currentPhase: $kingdomData?.currentPhase,
+                  currentTurn: $kingdomData?.currentTurn,
+                  currentPhaseSteps: $kingdomData?.currentPhaseSteps,
+                  isUpkeepPhase: $kingdomData?.currentPhase === TurnPhase.UPKEEP,
+                  hexes: $kingdomData?.hexes?.length || 0,
+                  settlements: $kingdomData?.settlements?.length || 0
+               });
+            }, 500);
             
             // Run settlement skill bonuses migration if needed
             const { autoMigrateSettlements } = await import('../../services/migrations/SettlementSkillBonusesMigration');
@@ -209,10 +235,12 @@
                console.log('[KingdomAppShell] Settlement properties recalculated successfully');
             }
          } else {
-            console.warn('[KingdomAppShell] No kingdom actor available');
+            console.error('[KingdomAppShell] No kingdom actor found! This is the problem - initialization stopped here.');
+            console.error('[KingdomAppShell] Please ensure your party actor has kingdom data initialized.');
          }
       } catch (error) {
          console.error('[KingdomAppShell] Error during initialization:', error);
+         console.error('[KingdomAppShell] Error stack:', error.stack);
       }
    });
 
@@ -220,24 +248,26 @@
    $: if (refreshTrigger) {
       // console.log('Refreshing kingdom data...');
       
-      // Sync territory data from Kingmaker if available
-      if (territoryService.isKingmakerAvailable()) {
-         const result = territoryService.syncFromKingmaker();
-         // console.log('Kingmaker sync result:', result);
-         
-         if (result.success) {
-            // console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
-            // Show success notification
-            // @ts-ignore
-            ui.notifications?.info(`Territory synced: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+      // Sync territory data from Kingmaker if available (async)
+      (async () => {
+         if (territoryService.isKingmakerAvailable()) {
+            const result = await territoryService.syncFromKingmaker();
+            // console.log('Kingmaker sync result:', result);
+            
+            if (result.success) {
+               // console.log(`Successfully synced ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
+               // Show success notification
+               // @ts-ignore
+               ui.notifications?.info(`Territory synced: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
+            } else {
+               // console.error('Failed to sync from Kingmaker:', result.error);
+               // @ts-ignore
+               ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+            }
          } else {
-            // console.error('Failed to sync from Kingmaker:', result.error);
-            // @ts-ignore
-            ui.notifications?.warn(`Territory sync failed: ${result.error}`);
+            // console.log('Kingmaker module not available for sync');
          }
-      } else {
-         // console.log('Kingmaker module not available for sync');
-      }
+      })();
    }
 
    // Settings view state

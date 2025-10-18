@@ -54,6 +54,8 @@ function setupGameHooks(): void {
   Hooks.on('ready', () => {
     initializeKingdomActor();
     initializeKingdomArmiesFolder();
+    // NOTE: Territory data loading is now handled by KingdomAppShell.svelte
+    // after the actor is properly initialized. Do NOT call loadTerritoryData() here.
   });
   
   // Hook for user connection changes to update online players list
@@ -168,6 +170,14 @@ function findKingdomActor(): any | null {
     }
   }
   
+  // Second, look for party actor WITHOUT kingdom data (we'll initialize it)
+  for (const actor of actors) {
+    if (actor.type === 'party') {
+      console.log('[Kingdom Sync] Found party actor without kingdom data:', actor.name, '- will initialize');
+      return actor;
+    }
+  }
+  
   // Fallback: Look for actor with kingdom flag (old system)
   for (const actor of actors) {
     if (actor.getFlag('pf2e-reignmaker', 'isKingdom')) {
@@ -177,7 +187,7 @@ function findKingdomActor(): any | null {
   }
   
   // No kingdom actor found
-  console.warn('[Kingdom Sync] No kingdom actor found. Please initialize kingdom data on the party actor.');
+  console.warn('[Kingdom Sync] No party actor found. Please create a party actor.');
   return null;
 }
 
@@ -202,7 +212,7 @@ export async function loadTerritoryData(): Promise<void> {
       
       // Add a delay to ensure the kingdom actor is fully initialized
       setTimeout(async () => {
-        const result = territoryService.syncFromKingmaker();
+        const result = await territoryService.syncFromKingmaker();
         
         if (result.success) {
           console.log(`[Kingdom Sync] Successfully loaded ${result.hexesSynced} hexes and ${result.settlementsSynced} settlements`);
@@ -227,7 +237,7 @@ export async function manualTerritorySync(): Promise<void> {
     console.log('[Manual Sync] Starting manual territory sync...');
     
     if (territoryService.isKingmakerAvailable()) {
-      const result = territoryService.syncFromKingmaker();
+      const result = await territoryService.syncFromKingmaker();
       console.log('[Manual Sync] Result:', result);
     } else {
       console.log('[Manual Sync] Kingmaker module not available');

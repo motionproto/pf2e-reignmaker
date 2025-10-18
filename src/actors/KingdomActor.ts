@@ -248,7 +248,7 @@ export class KingdomActor extends Actor {
         // Capacity resources
         foodCapacity: 0,
         armyCapacity: 0,
-        diplomaticCapacity: 0,
+        diplomaticCapacity: 1,
         imprisonedUnrestCapacity: 0
       },
       hexes: [],
@@ -398,23 +398,23 @@ export class KingdomActor extends Actor {
  * Factions will be empty - use initializeKingdom() for full initialization with default factions.
  */
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
-  return {
-    currentTurn: 1,
-    currentPhase: TurnPhase.STATUS,
-    currentPhaseStepIndex: 0,
-    resources: {
-      gold: 0,
-      food: 0,
-      lumber: 0,
-      stone: 0,
-      ore: 0,
-      luxuries: 0,
-      // Capacity resources
-      foodCapacity: 0,
-      armyCapacity: 0,
-      diplomaticCapacity: 0,
-      imprisonedUnrestCapacity: 0
-    },
+    return {
+      currentTurn: 1,
+      currentPhase: TurnPhase.STATUS,
+      currentPhaseStepIndex: 0,
+      resources: {
+        gold: 0,
+        food: 0,
+        lumber: 0,
+        stone: 0,
+        ore: 0,
+        luxuries: 0,
+        // Capacity resources
+        foodCapacity: 0,
+        armyCapacity: 0,
+        diplomaticCapacity: 1,
+        imprisonedUnrestCapacity: 0
+      },
     hexes: [],
     settlements: [],
     size: 0,

@@ -39,7 +39,7 @@ export class TerritoryService {
     /**
      * Sync territory data from Kingmaker module to Kingdom store
      */
-    syncFromKingmaker(): KingmakerSyncResult {
+    async syncFromKingmaker(): Promise<KingmakerSyncResult> {
         try {
             // Check if Kingmaker is available
             // @ts-ignore - Kingmaker global
@@ -57,7 +57,6 @@ export class TerritoryService {
             
             // Convert and filter claimed hexes
             const hexes: Hex[] = [];
-            const settlements: Settlement[] = [];
             
             logger.debug('Starting Kingmaker sync, found hexes:', Object.keys(hexStates).length);
             
@@ -138,22 +137,19 @@ export class TerritoryService {
                     hexState.features || [] // Preserve features from Kingmaker
                 );
                 hexes.push(hex);
-                
-                // Extract settlements from features
-                if (hexState.features) {
-                    settlements.push(...this.extractSettlements(hexState.features, dotNotationId));
-                }
             }
             
-            logger.debug(`Synced ${hexes.length} hexes and ${settlements.length} settlements`);
+            logger.debug(`Synced ${hexes.length} hexes`);
             
             // Update kingdom store with territory data
-            this.updateKingdomStore(hexes, settlements);
+            await this.updateKingdomStore(hexes);
+            
+            logger.info(`[Territory Service] Kingdom store update completed successfully`);
             
             return {
                 success: true,
                 hexesSynced: hexes.length,
-                settlementsSynced: settlements.length
+                settlementsSynced: 0
             };
             
         } catch (error) {
@@ -170,20 +166,11 @@ export class TerritoryService {
     /**
      * Update the Kingdom store with territory data
      */
-    private updateKingdomStore(hexes: Hex[], kingmakerSettlements: Settlement[]): void {
-        // Check if kingdom actor store is available before updating
-        try {
-            const actor = get(kingdomData);
-            if (!actor || Object.keys(actor).length === 0) {
-                logger.warn('[Territory Service] No kingdom data available, skipping store update');
-                return;
-            }
-        } catch (error) {
-            logger.warn('[Territory Service] Error checking kingdom data:', error);
-            return;
-        }
+    private async updateKingdomStore(hexes: Hex[]): Promise<void> {
+        // Log territory update attempt
+        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes`);
         
-        updateKingdom(state => {
+        await updateKingdom(state => {
             // Convert Hex instances to plain objects for storage
             state.hexes = hexes.map(hex => ({
                 id: hex.id,
@@ -195,9 +182,7 @@ export class TerritoryService {
             }));
             state.size = hexes.length;
             
-            // Merge settlements - preserve existing data
-            const mergedSettlements = this.mergeSettlements(state.settlements || [], kingmakerSettlements);
-            state.settlements = mergedSettlements;
+            // NOTE: Settlements are NOT modified during sync - they are managed manually by the player
             
             // Update worksite counts for UI display
             const worksiteCount: Record<string, number> = {};
@@ -234,7 +219,6 @@ export class TerritoryService {
             
             logger.debug('[Territory Service] Updated kingdom store with:', {
                 hexes: state.hexes.length,
-                settlements: state.settlements.length,
                 worksiteCount: state.worksiteCount,
                 cachedProduction: state.cachedProduction,
                 productionByHexCount: state.cachedProductionByHex.length
@@ -247,51 +231,10 @@ export class TerritoryService {
         if (typeof Hooks !== 'undefined') {
             Hooks.call('pf2e-reignmaker.territoryUpdated', {
                 hexCount: hexes.length,
-                settlementCount: kingmakerSettlements.length,
+                settlementCount: 0,
                 source: 'kingmaker-sync'
             });
         }
-    }
-    
-    /**
-     * Merge existing settlements with Kingmaker settlement locations
-     * Preserves user-edited data while ensuring settlements exist at Kingmaker locations
-     */
-    private mergeSettlements(existing: Settlement[], fromKingmaker: Settlement[]): Settlement[] {
-        const result: Settlement[] = [...existing];
-        
-        for (const kmSettlement of fromKingmaker) {
-            // Check if we already have a settlement at this location
-            const existingAtLocation = existing.find(s => 
-                s.location.x === kmSettlement.location.x && 
-                s.location.y === kmSettlement.location.y
-            );
-            
-            if (!existingAtLocation) {
-                // Only add if we don't have a settlement at this location
-                logger.debug(`Adding new settlement at ${kmSettlement.location.x},${kmSettlement.location.y} from Kingmaker`);
-                result.push(kmSettlement);
-            } else {
-                // Keep our existing settlement data
-                logger.debug(`Preserving existing settlement "${existingAtLocation.name}" at ${existingAtLocation.location.x},${existingAtLocation.location.y}`);
-            }
-        }
-        
-        // Remove settlements that no longer exist in Kingmaker
-        // (only if they're at locations Kingmaker knows about)
-        const kmLocations = fromKingmaker.map(s => `${s.location.x},${s.location.y}`);
-        return result.filter(settlement => {
-            const locationKey = `${settlement.location.x},${settlement.location.y}`;
-            // Keep if: Kingmaker has it OR it's a user-created settlement at a non-Kingmaker location
-            const shouldKeep = kmLocations.includes(locationKey) || 
-                              !fromKingmaker.some(km => km.location.x === settlement.location.x && km.location.y === settlement.location.y);
-            
-            if (!shouldKeep) {
-                logger.debug(`Removing settlement "${settlement.name}" at ${locationKey} - no longer in Kingmaker`);
-            }
-            
-            return shouldKeep;
-        });
     }
     
     /**

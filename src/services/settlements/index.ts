@@ -412,14 +412,15 @@ export class SettlementService {
           luxuries: 0,
           foodCapacity: 0,
           armyCapacity: 0,
-          diplomaticCapacity: 0,
+          diplomaticCapacity: 1,
           imprisonedUnrestCapacity: 0
         };
       }
       
       k.resources.foodCapacity = totals.foodCapacity;
       k.resources.armyCapacity = totals.armyCapacity;
-      k.resources.diplomaticCapacity = totals.diplomaticCapacity;
+      // Base diplomatic capacity is 1, plus any bonuses from structures
+      k.resources.diplomaticCapacity = 1 + totals.diplomaticCapacity;
       k.resources.imprisonedUnrestCapacity = totals.imprisonedUnrestCapacity;
       
       logger.debug(`✅ [SettlementService] Kingdom capacities updated:`, totals);
@@ -434,6 +435,41 @@ export class SettlementService {
     logger.warn(`⚠️ [SettlementService] updateSettlementDerivedProperties is deprecated, use addStructure/removeStructure`);
     await this.recalculateSettlement(settlementId);
     await this.recalculateKingdom();
+  }
+  
+  /**
+   * Update settlement image path
+   * Convenience method for image updates
+   * 
+   * @param settlementId - Settlement ID
+   * @param imagePath - New image path (empty string to use default)
+   */
+  async updateSettlementImage(settlementId: string, imagePath: string): Promise<void> {
+    logger.debug(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
+    
+    const { getKingdomActor } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    // If empty string, use default tier image
+    const finalImagePath = imagePath || undefined;
+    
+    await this.updateSettlement(settlementId, { imagePath: finalImagePath });
+    
+    logger.debug(`✅ [SettlementService] Updated image for ${settlement.name}`);
   }
   
   /**
@@ -562,7 +598,8 @@ export class SettlementService {
       
       k.resources.foodCapacity = totalFoodCapacity;
       k.resources.armyCapacity = totalArmyCapacity;
-      k.resources.diplomaticCapacity = totalDiplomaticCapacity;
+      // Base diplomatic capacity is 1, plus any bonuses from structures
+      k.resources.diplomaticCapacity = 1 + totalDiplomaticCapacity;
       
       logger.debug(`✅ [SettlementService] Updated kingdom capacities:`, {
         foodCapacity: totalFoodCapacity,
