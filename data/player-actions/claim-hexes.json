@@ -24,11 +24,11 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Claim all targeted hexes +1 extra hex",
+      "description": "Based on your proficiency, claim this many hexes: Trained (1 hex), Expert (2 hexes), Master (3 hexes), or Legendary (4 hexes). Claim the targeted hex(es) on the map.",
       "modifiers": []
     },
     "success": {
-      "description": "Claim targeted hexes (based on proficiency)",
+      "description": "Claim 1 hex. Claim the targeted hex.",
       "modifiers": []
     },
     "failure": {

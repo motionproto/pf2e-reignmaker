@@ -4,6 +4,9 @@
   "category": "expand-borders",
   "brief": "Learn about unexplored hexes",
   "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats",
+  "cost": {
+    "gold": 1
+  },
   "skills": [
     {
       "skill": "stealth",
@@ -32,11 +35,11 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Learn about 2 hexes",
+      "description": "Learn about 2 hexes. Reveal the chosen hexes on the map.",
       "modifiers": []
     },
     "success": {
-      "description": "Learn about 1 hex",
+      "description": "Learn about 1 hex. Reveal the chosen hex on the map.",
       "modifiers": []
     },
     "failure": {
@@ -45,7 +48,13 @@
     },
     "criticalFailure": {
       "description": "Scouts lost",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1
+        }
+      ]
     }
   }
 }
