@@ -81,14 +81,14 @@ export const AttitudeLevelConfig: Record<AttitudeLevel, {
 };
 
 /**
- * Ordered attitude levels (worst to best)
+ * Ordered attitude levels (best to worst)
  */
 export const ATTITUDE_ORDER: AttitudeLevel[] = [
-  'Hostile',
-  'Unfriendly',
-  'Indifferent',
+  'Helpful',
   'Friendly',
-  'Helpful'
+  'Indifferent',
+  'Unfriendly',
+  'Hostile'
 ];
 
 /**

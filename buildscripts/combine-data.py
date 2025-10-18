@@ -101,6 +101,48 @@ def combine_incidents():
     
     return all_incidents
 
+def combine_factions():
+    """Combine all faction JSON files into dist/factions.json."""
+    factions_dir = Path(__file__).parent.parent / "data" / "factions"
+    output_file = Path(__file__).parent.parent / "dist" / "factions.json"
+    
+    all_factions = []
+    faction_files = sorted(factions_dir.glob("*.json"))
+    
+    print("\n🤝 Processing Factions...")
+    print(f"Reading faction files from: {factions_dir}")
+    
+    for json_file in faction_files:
+        # Skip combined files
+        if json_file.name in ["factions.json", "all_factions.json"]:
+            continue
+            
+        try:
+            with open(json_file, 'r') as f:
+                faction_data = json.load(f)
+                # If it's a single faction object, wrap in array
+                if isinstance(faction_data, dict):
+                    all_factions.append(faction_data)
+                # If it's already an array, extend
+                elif isinstance(faction_data, list):
+                    all_factions.extend(faction_data)
+                print(f"  ✓ Loaded: {json_file.name}")
+        except Exception as e:
+            print(f"  ✗ Error loading {json_file.name}: {e}")
+    
+    # Sort factions by id for consistency
+    all_factions.sort(key=lambda x: x.get('id', ''))
+    
+    # Write combined file
+    output_file.parent.mkdir(exist_ok=True)
+    with open(output_file, 'w') as f:
+        json.dump(all_factions, f, indent=4)
+    
+    print(f"✅ Successfully combined {len(all_factions)} factions")
+    print(f"📁 Output written to: {output_file}")
+    
+    return all_factions
+
 def combine_player_actions():
     """Combine all player action JSON files into dist/player-actions.json, organized by category."""
     actions_dir = Path(__file__).parent.parent / "data" / "player-actions"
@@ -189,6 +231,7 @@ def main():
     # Process each type
     events = combine_events()
     incidents = combine_incidents()
+    factions = combine_factions()
     actions = combine_player_actions()
     
     # Final summary
@@ -197,6 +240,7 @@ def main():
     print("=" * 60)
     print(f"✅ Events: {len(events)} files combined")
     print(f"✅ Incidents: {len(incidents)} files combined")
+    print(f"✅ Factions: {len(factions)} files combined")
     print(f"✅ Player Actions: {len(actions)} files combined")
     print("\nAll monolithic JSON files have been created in dist/")
     

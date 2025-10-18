@@ -4,6 +4,7 @@
 import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
 import type { Faction, AttitudeLevel } from '../../models/Faction';
 import { createDefaultFaction } from '../../models/Faction';
+import { loadDefaultFactions } from '../../models/DefaultFactions';
 import { logger } from '../../utils/Logger';
 
 export class FactionService {
@@ -255,6 +256,57 @@ export class FactionService {
     // TODO: Implement when diplomatic structures are added
     // For now, unlimited capacity
     return 999;
+  }
+  
+  /**
+   * Restore default factions from data file
+   * Only adds factions that don't already exist (by ID)
+   * Protects against data loss by never overwriting existing factions
+   * 
+   * @returns Object with added count and list of added faction names
+   */
+  async restoreDefaultFactions(): Promise<{ added: number; factionNames: string[] }> {
+    logger.debug('🤝 [FactionService] Restoring default factions');
+    
+    // Load default factions from file
+    const defaultFactions = await loadDefaultFactions();
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdom();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    // Get existing faction IDs
+    const existingIds = new Set((kingdom.factions || []).map(f => f.id));
+    
+    // Filter to only missing factions
+    const missingFactions = defaultFactions.filter(f => !existingIds.has(f.id));
+    
+    if (missingFactions.length === 0) {
+      logger.debug('✅ [FactionService] All default factions already exist');
+      return { added: 0, factionNames: [] };
+    }
+    
+    // Add missing factions
+    await updateKingdom(kingdom => {
+      if (!kingdom.factions) {
+        kingdom.factions = [];
+      }
+      kingdom.factions.push(...missingFactions);
+    });
+    
+    const addedNames = missingFactions.map(f => f.name);
+    logger.debug(`✅ [FactionService] Added ${missingFactions.length} default factions: ${addedNames.join(', ')}`);
+    
+    return { 
+      added: missingFactions.length, 
+      factionNames: addedNames 
+    };
   }
 }
 

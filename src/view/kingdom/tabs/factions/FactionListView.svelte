@@ -17,6 +17,12 @@
    let currentPage = 1;
    const itemsPerPage = 25;
    
+   // Sorting state
+   type SortColumn = 'name' | 'attitude' | null;
+   type SortDirection = 'asc' | 'desc';
+   let sortColumn: SortColumn = null;
+   let sortDirection: SortDirection = 'asc';
+   
    // Inline editing state
    let editingFactionId: string | null = null;
    let editingField: 'goal' | 'notes' | 'clockMax' | null = null;
@@ -29,7 +35,10 @@
    let newFactionAttitude: AttitudeLevel = 'Indifferent';
    let isCreatingFaction = false;
    
-   // Apply filters
+   // Restore defaults state
+   let isRestoringDefaults = false;
+   
+   // Apply filters and sorting
    $: filteredFactions = (() => {
       let factions = [...($kingdomData.factions || [])];
       
@@ -46,6 +55,21 @@
       // Attitude filter
       if (filterAttitude !== 'all') {
          factions = factions.filter(f => f.attitude === filterAttitude);
+      }
+      
+      // Sorting
+      if (sortColumn === 'name') {
+         factions.sort((a, b) => {
+            const comparison = a.name.localeCompare(b.name);
+            return sortDirection === 'asc' ? comparison : -comparison;
+         });
+      } else if (sortColumn === 'attitude') {
+         // Sort by attitude using ATTITUDE_ORDER
+         const attitudeIndex = (attitude: AttitudeLevel) => ATTITUDE_ORDER.indexOf(attitude);
+         factions.sort((a, b) => {
+            const comparison = attitudeIndex(a.attitude) - attitudeIndex(b.attitude);
+            return sortDirection === 'asc' ? comparison : -comparison;
+         });
       }
       
       return factions;
@@ -240,6 +264,43 @@
          currentPage--;
       }
    }
+   
+   // Sorting functions
+   function toggleSort(column: SortColumn) {
+      if (sortColumn === column) {
+         // Toggle direction
+         sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+         // New column, default to ascending
+         sortColumn = column;
+         sortDirection = 'asc';
+      }
+      // Reset to page 1 when sorting changes
+      currentPage = 1;
+   }
+   
+   // Restore defaults
+   async function restoreDefaults() {
+      isRestoringDefaults = true;
+      try {
+         const { factionService } = await import('../../../../services/factions');
+         const result = await factionService.restoreDefaultFactions();
+         
+         if (result.added === 0) {
+            // @ts-ignore
+            ui.notifications?.info('All default factions are already present');
+         } else {
+            // @ts-ignore
+            ui.notifications?.info(`Added ${result.added} default faction${result.added > 1 ? 's' : ''}: ${result.factionNames.join(', ')}`);
+         }
+      } catch (error) {
+         console.error('Failed to restore defaults:', error);
+         // @ts-ignore
+         ui.notifications?.error(error instanceof Error ? error.message : 'Failed to restore default factions');
+      } finally {
+         isRestoringDefaults = false;
+      }
+   }
 </script>
 
 <div class="factions-list">
@@ -280,8 +341,18 @@
       <table class="factions-table">
          <thead>
             <tr>
-               <th>Name</th>
-               <th colspan="5" class="attitude-header">Attitude</th>
+               <th class="sortable" on:click={() => toggleSort('name')}>
+                  Name
+                  {#if sortColumn === 'name'}
+                     <i class="fas fa-chevron-{sortDirection === 'asc' ? 'up' : 'down'} sort-indicator"></i>
+                  {/if}
+               </th>
+               <th colspan="5" class="attitude-header sortable" on:click={() => toggleSort('attitude')}>
+                  Attitude
+                  {#if sortColumn === 'attitude'}
+                     <i class="fas fa-chevron-{sortDirection === 'asc' ? 'up' : 'down'} sort-indicator"></i>
+                  {/if}
+               </th>
                {#if isGM}
                   <th>Goal</th>
                   <th>Progress</th>
@@ -505,6 +576,19 @@
          </button>
       </div>
    {/if}
+   
+   <!-- Restore Defaults Button -->
+   <div class="restore-defaults-container">
+      <Button 
+         variant="secondary" 
+         icon="fas fa-history" 
+         iconPosition="left"
+         disabled={isRestoringDefaults}
+         on:click={restoreDefaults}
+      >
+         {isRestoringDefaults ? 'Restoring...' : 'Restore Default Factions'}
+      </Button>
+   </div>
 </div>
 
 <style lang="scss">
@@ -597,6 +681,22 @@
             &.attitude-header {
                text-align: center;
             }
+            
+            &.sortable {
+               cursor: pointer;
+               user-select: none;
+               transition: all 0.2s;
+               
+               &:hover {
+                  background: rgba(255, 255, 255, 0.05);
+               }
+               
+               .sort-indicator {
+                  margin-left: 0.5rem;
+                  font-size: 0.75rem;
+                  opacity: 0.7;
+               }
+            }
          }
       }
       
@@ -604,17 +704,21 @@
          tr {
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             
+            &:nth-child(even):not(.create-row) {
+               background: rgba(255, 255, 255, 0.075);
+            }
+            
             &:hover:not(.create-row) {
-               background: rgba(255, 255, 255, 0.05);
+               background: rgba(255, 255, 255, 0.15);
             }
             
             &.create-row {
-               background: rgba(94, 0, 0, 0.1);
+               background: rgba(94, 0, 0, 0.2);
             }
          }
          
          td {
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 1rem;
             color: var(--color-text-dark-primary, #b5b3a4);
             
             &.attitude-cell {
@@ -909,5 +1013,13 @@
       .page-info {
          color: var(--color-text-dark-primary, #b5b3a4);
       }
+   }
+   
+   /* Restore Defaults */
+   .restore-defaults-container {
+      display: flex;
+      justify-content: center;
+      padding: 1rem 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
    }
 </style>

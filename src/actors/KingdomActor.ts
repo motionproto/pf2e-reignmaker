@@ -9,6 +9,7 @@ import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import type { ActiveCheckInstance } from '../models/CheckInstance';
 import type { TurnState } from '../models/TurnState';
 import type { Faction } from '../models/Faction';
+import { loadDefaultFactions } from '../models/DefaultFactions';
 import { logger } from '../utils/Logger';
 
 // Turn phases based on Reignmaker Lite rules - using semantic names
@@ -230,6 +231,9 @@ export class KingdomActor extends Actor {
    * Initialize kingdom with default data
    */
   async initializeKingdom(name: string = 'New Kingdom'): Promise<void> {
+    // Load default factions from data file
+    const defaultFactions = await loadDefaultFactions();
+    
     const defaultKingdom: KingdomData = {
       currentTurn: 1,
       currentPhase: TurnPhase.STATUS,
@@ -254,7 +258,7 @@ export class KingdomActor extends Actor {
       cachedProduction: {},
       armies: [],
       buildQueue: [],
-      factions: [],
+      factions: defaultFactions,  // Loaded from data/factions/default-factions.json
       unrest: 0,
       imprisonedUnrest: 0,
       fame: 0,
@@ -390,6 +394,8 @@ export class KingdomActor extends Actor {
 
 /**
  * Create default kingdom data
+ * Note: This is a synchronous utility function. 
+ * Factions will be empty - use initializeKingdom() for full initialization with default factions.
  */
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
   return {
@@ -416,7 +422,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     cachedProduction: {},
       armies: [],
       buildQueue: [],
-      factions: [],
+      factions: [],  // Empty - populated by initializeKingdom() or caller
       unrest: 0,
       imprisonedUnrest: 0,
       fame: 0,
