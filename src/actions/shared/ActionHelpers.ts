@@ -5,12 +5,12 @@
  * multiple action implementations to maintain DRY principles.
  */
 
-import type { KingdomData } from '../../../actors/KingdomActor';
-import type { Settlement } from '../../../models/Settlement';
-import { SettlementTier } from '../../../models/Settlement';
-import type { Army } from '../../../services/buildQueue/BuildProject';
-import { structuresService } from '../../../services/structures';
-import { logger } from '../../../utils/Logger';
+import type { KingdomData } from '../../actors/KingdomActor';
+import type { Settlement } from '../../models/Settlement';
+import { SettlementTier } from '../../models/Settlement';
+import type { Army } from '../../services/buildQueue/BuildProject';
+import { structuresService } from '../../services/structures';
+import { logger } from '../../utils/Logger';
 
 /**
  * Result of resource validation

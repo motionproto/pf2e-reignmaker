@@ -5,11 +5,11 @@
  * and structure requirement validation at tier boundaries.
  */
 
-import type { KingdomData } from '../../../actors/KingdomActor';
-import type { ActionRequirement } from '../action-resolver';
-import type { ResolutionData } from '../../../types/modifiers';
-import { SettlementTier } from '../../../models/Settlement';
-import { getKingdomActor } from '../../../stores/KingdomStore';
+import type { KingdomData } from '../../actors/KingdomActor';
+import type { ActionRequirement } from '../../controllers/actions/action-resolver';
+import type { ResolutionData } from '../../types/modifiers';
+import { SettlementTier } from '../../models/Settlement';
+import { getKingdomActor } from '../../stores/KingdomStore';
 import {
   logActionStart,
   logActionSuccess,
@@ -18,7 +18,7 @@ import {
   createErrorResult,
   replaceTemplatePlaceholders,
   type ResolveResult
-} from './ActionHelpers';
+} from '../shared/ActionHelpers';
 
 /**
  * Check if a settlement meets structure requirements for tier upgrade

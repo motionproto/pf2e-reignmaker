@@ -75,10 +75,29 @@ export interface ChoiceModifier {
 }
 
 /**
+ * Computed modifier - Value calculated at runtime based on game state
+ * 
+ * Example:
+ *   { type: 'computed', resource: 'gold', formula: 'halfUpgradeCost', negative: true }
+ *   { type: 'computed', resource: 'gold', formula: 'fullUpgradeCost', negative: true }
+ * 
+ * The 'formula' field is a string identifier that the action implementation
+ * will use to calculate the actual value at runtime. This allows actions to
+ * have dynamic costs/effects based on game state (settlement level, structure tier, etc.)
+ */
+export interface ComputedModifier {
+  type: 'computed';
+  resource: ResourceType;
+  formula: string;  // Runtime calculation identifier (action-specific)
+  negative?: boolean;  // true for costs/penalties, false/undefined for gains
+  duration?: ModifierDuration;
+}
+
+/**
  * Union type for all modifier types
  * TypeScript will narrow this based on the 'type' discriminant
  */
-export type EventModifier = StaticModifier | DiceModifier | ChoiceModifier;
+export type EventModifier = StaticModifier | DiceModifier | ChoiceModifier | ComputedModifier;
 
 /**
  * Type guards for modifier discrimination
@@ -93,6 +112,10 @@ export function isDiceModifier(modifier: EventModifier): modifier is DiceModifie
 
 export function isChoiceModifier(modifier: EventModifier): modifier is ChoiceModifier {
   return modifier.type === 'choice';
+}
+
+export function isComputedModifier(modifier: EventModifier): modifier is ComputedModifier {
+  return modifier.type === 'computed';
 }
 
 /**

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { updateInstanceResolutionState } from '../../../controllers/shared/ResolutionStateHelpers';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
-  import type { ResourceCost } from '../../../models/Structure';
-  import { getResourceIcon, getResourceColor } from '../utils/presentation';
+  import { updateInstanceResolutionState } from '../../controllers/shared/ResolutionStateHelpers';
+  import type { ActiveCheckInstance } from '../../models/CheckInstance';
+  import type { ResourceCost } from '../../models/Structure';
+  import { getResourceIcon, getResourceColor } from '../../view/kingdom/utils/presentation';
   
   // Props passed from OutcomeDisplay
   export let instance: ActiveCheckInstance | null = null;
@@ -30,7 +30,7 @@
   async function loadHalfCost() {
     if (!structureId) return;
     
-    const { structuresService } = await import('../../../services/structures');
+    const { structuresService } = await import('../../services/structures');
     const structure = structuresService.getStructure(structureId);
     
     if (structure) {

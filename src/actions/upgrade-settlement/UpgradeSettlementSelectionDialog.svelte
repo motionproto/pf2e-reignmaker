@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { SettlementTier } from '../../../models/Settlement';
-  import { getKingdomActor } from '../../../stores/KingdomStore';
+  import { SettlementTier } from '../../models/Settlement';
+  import { getKingdomActor } from '../../stores/KingdomStore';
   
   // Props for pre-roll dialog
   export let show: boolean = false;

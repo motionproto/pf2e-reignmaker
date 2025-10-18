@@ -32,19 +32,51 @@
   "effects": {
     "criticalSuccess": {
       "description": "{Settlement} level increases by 1 at half the cost (rounded up)",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "computed",
+          "resource": "gold",
+          "formula": "halfUpgradeCost",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ]
     },
     "success": {
       "description": "{Settlement} level increases by 1",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "computed",
+          "resource": "gold",
+          "formula": "fullUpgradeCost",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ]
     },
     "failure": {
       "description": "Construction setbacks and delays waste resources and achieve nothing in {Settlement}.",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "computed",
+          "resource": "gold",
+          "formula": "fullUpgradeCost",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ]
     },
     "criticalFailure": {
       "description": "Accidents and incompetance waste the full investment in {Settlement} achieving nothing.",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "computed",
+          "resource": "gold",
+          "formula": "fullUpgradeCost",
+          "negative": true,
+          "duration": "immediate"
+        }
+      ]
     }
   },
   "requirements": [

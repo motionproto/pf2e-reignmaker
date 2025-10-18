@@ -8,13 +8,13 @@
 import type { KingdomData } from '../../../actors/KingdomActor';
 import type { ActionRequirement } from '../action-resolver';
 import type { ResolutionData } from '../../../types/modifiers';
-import type { ResolveResult } from './ActionHelpers';
+import type { ResolveResult } from '../../../actions/shared/ActionHelpers';
 import type { SvelteComponent } from 'svelte';
 
-import ArrestDissidentsAction from './ArrestDissidentsAction';
-import RepairStructureAction from './RepairStructureAction';
-import EstablishSettlementAction from './EstablishSettlementAction';
-import UpgradeSettlementAction from './UpgradeSettlementAction';
+import ArrestDissidentsAction from '../../../actions/arrest-dissidents/ArrestDissidentsAction';
+import RepairStructureAction from '../../../actions/repair-structure/RepairStructureAction';
+import EstablishSettlementAction from '../../../actions/establish-settlement/EstablishSettlementAction';
+import UpgradeSettlementAction from '../../../actions/upgrade-settlement/UpgradeSettlementAction';
 
 /**
  * Interface for custom action implementations

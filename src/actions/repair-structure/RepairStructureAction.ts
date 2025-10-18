@@ -3,8 +3,8 @@
  * Handles structure repair business logic
  */
 
-import type { CustomActionImplementation } from './index';
-import type { ResolutionData } from '../../../types/modifiers';
+import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import type { ResolutionData } from '../../types/modifiers';
 import { 
   logActionStart, 
   logActionSuccess, 
@@ -13,12 +13,12 @@ import {
   createErrorResult,
   replaceTemplatePlaceholders,
   type ResolveResult 
-} from './ActionHelpers';
-import RepairCostChoice from '../../../view/kingdom/components/RepairCostChoice.svelte';
-import { updateKingdom, getKingdomActor } from '../../../stores/KingdomStore';
-import { settlementStructureManagement } from '../../../services/structures/management';
-import { structuresService } from '../../../services/structures';
-import { StructureCondition } from '../../../models/Settlement';
+} from '../shared/ActionHelpers';
+import RepairCostChoice from './RepairCostChoice.svelte';
+import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
+import { settlementStructureManagement } from '../../services/structures/management';
+import { structuresService } from '../../services/structures';
+import { StructureCondition } from '../../models/Settlement';
 
 const RepairStructureAction: CustomActionImplementation = {
   id: 'repair-structure',
@@ -162,7 +162,7 @@ const RepairStructureAction: CustomActionImplementation = {
         );
         
         // Recalculate settlement properties
-        const { settlementService } = await import('../../../services/settlements');
+        const { settlementService } = await import('../../services/settlements');
         await settlementService.updateSettlementDerivedProperties(settlementId);
         
         // Get structure name for template replacement
@@ -170,7 +170,7 @@ const RepairStructureAction: CustomActionImplementation = {
         const structureName = structure?.name || 'structure';
         
         // Load action JSON to get outcome descriptions
-        const { actionLoader } = await import('../../actions/action-loader');
+        const { actionLoader } = await import('../../controllers/actions/action-loader');
         const action = actionLoader.getAllActions().find(a => a.id === 'repair-structure');
         
         // Determine outcome based on whether cost was paid

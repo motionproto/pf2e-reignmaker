@@ -39,7 +39,7 @@ Actions are grouped by complexity to guide implementation order:
 
 ## Uphold Stability (3)
 
-- [ ] 🔴 [arrest-dissidents.md](uphold-stability/arrest-dissidents.md)
+- [x] 🔴 [arrest-dissidents.md](uphold-stability/arrest-dissidents.md)
 - [x] 🟢 [deal-with-unrest.md](uphold-stability/deal-with-unrest.md)
 - [ ] 🔴 [execute-or-pardon-prisoners.md](uphold-stability/execute-or-pardon-prisoners.md)
 
@@ -50,7 +50,7 @@ Actions are grouped by complexity to guide implementation order:
 - [ ] 🔴 [outfit-army.md](military-operations/outfit-army.md)
 - [ ] 🔴 [recover-army.md](military-operations/recover-army.md)
 - [ ] 🔴 [recruit-unit.md](military-operations/recruit-unit.md) 
-- [ ] 🔴 [train-army.md](military-operations/train-army.md)
+- [ ] 🔴 [train-army.md](military-operations/train-army.md)Before we proceed with more custom actions, I'd like to organize the actions because I'm having trouble finding the custom code and the UI that relates to these. 
 
 ## Expand the Borders (5)
 
@@ -65,7 +65,7 @@ Actions are grouped by complexity to guide implementation order:
 - [x] 🔴 [build-structure.md](urban-planning/build-structure.md)
 - [x] 🟡 [establish-settlement.md](urban-planning/establish-settlement.md)
 - [x] 🟡 [repair-structure.md](urban-planning/repair-structure.md)
-- [ ] 🟡 [upgrade-settlement.md](urban-planning/upgrade-settlement.md)
+- [x] 🟡 [upgrade-settlement.md](urban-planning/upgrade-settlement.md)
 
 ## Foreign Affairs (5)
 

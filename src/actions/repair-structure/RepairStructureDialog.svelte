@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { kingdomData } from '../../../stores/KingdomStore';
-  import { structuresService } from '../../../services/structures';
-  import type { Settlement } from '../../../models/Settlement';
-  import Button from './baseComponents/Button.svelte';
+  import { kingdomData } from '../../stores/KingdomStore';
+  import { structuresService } from '../../services/structures';
+  import type { Settlement } from '../../models/Settlement';
+  import Button from '../../view/kingdom/components/baseComponents/Button.svelte';
   
   export let show: boolean = false;
   

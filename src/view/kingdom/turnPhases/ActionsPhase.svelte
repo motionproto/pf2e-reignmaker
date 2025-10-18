@@ -7,8 +7,8 @@
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
   import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
-  import RepairStructureDialog from "../../kingdom/components/RepairStructureDialog.svelte";
-  import UpgradeSettlementSelectionDialog from "../../kingdom/components/UpgradeSettlementSelectionDialog.svelte";
+  import RepairStructureDialog from "../../../actions/repair-structure/RepairStructureDialog.svelte";
+  import UpgradeSettlementSelectionDialog from "../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,

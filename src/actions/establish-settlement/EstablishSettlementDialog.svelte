@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { ActiveCheckInstance } from '../../../models/CheckInstance';
-  import { updateInstanceResolutionState } from '../../../controllers/shared/ResolutionStateHelpers';
-  import { structuresService } from '../../../services/structures';
-  import type { Structure } from '../../../models/Structure';
+  import type { ActiveCheckInstance } from '../../models/CheckInstance';
+  import { updateInstanceResolutionState } from '../../controllers/shared/ResolutionStateHelpers';
+  import { structuresService } from '../../services/structures';
+  import type { Structure } from '../../models/Structure';
   
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: string;

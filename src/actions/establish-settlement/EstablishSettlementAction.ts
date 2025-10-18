@@ -5,11 +5,11 @@
  * and custom dialog for naming + optional structure selection on critical success.
  */
 
-import type { KingdomData } from '../../../actors/KingdomActor';
-import type { ActionRequirement } from '../action-resolver';
-import type { ResolutionData } from '../../../types/modifiers';
-import { createSettlement, SettlementTier } from '../../../models/Settlement';
-import { updateKingdom } from '../../../stores/KingdomStore';
+import type { KingdomData } from '../../actors/KingdomActor';
+import type { ActionRequirement } from '../../controllers/actions/action-resolver';
+import type { ResolutionData } from '../../types/modifiers';
+import { createSettlement, SettlementTier } from '../../models/Settlement';
+import { updateKingdom } from '../../stores/KingdomStore';
 import {
   logActionStart,
   logActionSuccess,
@@ -17,8 +17,8 @@ import {
   createSuccessResult,
   createErrorResult,
   type ResolveResult
-} from './ActionHelpers';
-import EstablishSettlementDialog from '../../../view/kingdom/components/EstablishSettlementDialog.svelte';
+} from '../shared/ActionHelpers';
+import EstablishSettlementDialog from './EstablishSettlementDialog.svelte';
 
 /**
  * Calculate distance between two hex coordinates
@@ -90,7 +90,7 @@ export const EstablishSettlementAction = {
         // Apply resource costs first (from numeric modifiers)
         // These are the costs shown in the outcome display (-2 gold, -2 food, -2 lumber)
         console.log('💰 [EstablishSettlement] Applying resource costs:', resolutionData.numericModifiers);
-        const { createGameCommandsService } = await import('../../../services/GameCommandsService');
+        const { createGameCommandsService } = await import('../../services/GameCommandsService');
         const gameCommands = await createGameCommandsService();
         
         const costResult = await gameCommands.applyNumericModifiers(
@@ -134,7 +134,7 @@ export const EstablishSettlementAction = {
         if (structureId) {
           console.log('🏗️ [EstablishSettlement] Adding bonus structure:', structureId);
           
-          const { settlementStructureManagement } = await import('../../../services/structures/management');
+          const { settlementStructureManagement } = await import('../../services/structures/management');
           
           const result = await settlementStructureManagement.addStructureToSettlement(
             structureId,

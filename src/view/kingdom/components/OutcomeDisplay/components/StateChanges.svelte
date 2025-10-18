@@ -224,19 +224,6 @@
         </div>
       </div>
     {/if}
-  {:else}
-    <!-- Show "No Effect" when there's no content -->
-    <div class="dice-rollers-section">
-      <div class="dice-rollers-header">Outcome:</div>
-      <div class="outcome-cards">
-        <div class="outcome-card static no-effect">
-          <div class="card-header">
-            <i class="fas fa-circle-minus resource-icon"></i>
-            <div class="card-label">No Effect</div>
-          </div>
-        </div>
-      </div>
-    </div>
   {/if}
 </div>
 

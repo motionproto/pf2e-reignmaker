@@ -5,10 +5,10 @@
  * allocating it to settlements with justice structures (dungeons, prisons, etc.)
  */
 
-import type { KingdomData } from '../../../actors/KingdomActor';
-import type { ActionRequirement } from '../action-resolver';
-import type { ResolutionData } from '../../../types/modifiers';
-import ArrestDissidentsResolution from '../../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
+import type { KingdomData } from '../../actors/KingdomActor';
+import type { ActionRequirement } from '../../controllers/actions/action-resolver';
+import type { ResolutionData } from '../../types/modifiers';
+import ArrestDissidentsResolution from '../../view/kingdom/components/OutcomeDisplay/components/ArrestDissidentsResolution.svelte';
 import {
   hasUnrestToArrest,
   calculateImprisonmentCapacity,
@@ -19,7 +19,7 @@ import {
   createSuccessResult,
   createErrorResult,
   type ResolveResult
-} from './ActionHelpers';
+} from '../shared/ActionHelpers';
 
 export const ArrestDissidentsAction = {
   id: 'arrest-dissidents',
@@ -83,7 +83,7 @@ export const ArrestDissidentsAction = {
       
       try {
         // Use GameCommandsService to handle the allocation
-        const { createGameCommandsService } = await import('../../../services/GameCommandsService');
+        const { createGameCommandsService } = await import('../../services/GameCommandsService');
         const gameCommands = await createGameCommandsService();
         
         const result = await gameCommands.allocateImprisonedUnrest(
