@@ -6,6 +6,7 @@
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
+import './debug/hex-selector-test'; // Debug tool for testing hex selector
 // Removed old Kingmaker sync - now handled by new architecture
 // import { initializeKingmakerSync, syncKingmakerToKingdomState } from './api/kingmaker';
 import { territoryService } from './services/territory';
@@ -15,6 +16,7 @@ import { kingdomData } from './stores/KingdomStore';
 import { KingdomApp } from './view/kingdom/KingdomApp';
 import { ResetKingdomDialog } from './ui/ResetKingdomDialog';
 import { initializeActionDispatcher } from './services/ActionDispatcher';
+import { registerKingdomHexControl } from './services/map';
 
 // Extend module type for our API
 declare global {
@@ -164,6 +166,9 @@ Hooks.once('init', () => {
     
     // Register the hook to add Kingdom icons to party actors
     registerKingdomIconHook();
+    
+    // Register kingdom hex highlighting scene control
+    registerKingdomHexControl();
     
     // Comment out debug version since we confirmed the icon works
     // initKingdomIconDebug();

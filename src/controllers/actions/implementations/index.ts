@@ -32,7 +32,7 @@ export interface CustomActionImplementation {
   customResolution?: {
     component: any; // Svelte component constructor (use any to allow specific component types)
     validateData(resolutionData: ResolutionData): boolean;
-    execute(resolutionData: ResolutionData): Promise<ResolveResult>;
+    execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult>;
   };
   
   // Determine if a specific outcome needs custom resolution
@@ -125,11 +125,13 @@ export function checkCustomRequirements(
  * Execute custom resolution for an action
  * @param actionId - The action ID
  * @param resolutionData - The resolution data from the UI
+ * @param instance - The action instance with metadata (outcome, etc.)
  * @returns ResolveResult, or error if action doesn't have custom resolution
  */
 export async function executeCustomResolution(
   actionId: string,
-  resolutionData: ResolutionData
+  resolutionData: ResolutionData,
+  instance?: any
 ): Promise<ResolveResult> {
   const impl = actionImplementations.get(actionId);
   
@@ -148,8 +150,8 @@ export async function executeCustomResolution(
     };
   }
   
-  // Execute custom resolution
-  return await impl.customResolution.execute(resolutionData);
+  // Execute custom resolution with instance metadata
+  return await impl.customResolution.execute(resolutionData, instance);
 }
 
 // Export all implementations for direct use if needed

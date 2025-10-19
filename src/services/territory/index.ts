@@ -172,14 +172,24 @@ export class TerritoryService {
         
         await updateKingdom(state => {
             // Convert Hex instances to plain objects for storage
-            state.hexes = hexes.map(hex => ({
-                id: hex.id,
-                terrain: hex.terrain,
-                worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
-                hasSpecialTrait: hex.hasSpecialTrait || false,
-                name: hex.name || undefined,
-                features: hex.features || [] // Preserve features
-            }));
+            // IMPORTANT: Validate hex IDs to prevent coordinate system bugs
+            state.hexes = hexes.map(hex => {
+                // Validate hex ID format (must be dot notation like "2.19", not "20.19")
+                const isValid = this.validateHexId(hex.id);
+                if (!isValid) {
+                    logger.error(`[Territory Service] Invalid hex ID detected: ${hex.id} - this will cause rendering issues!`);
+                    throw new Error(`Invalid hex ID format: ${hex.id}. Expected format: "i.j" (e.g., "2.19")`);
+                }
+                
+                return {
+                    id: hex.id,
+                    terrain: hex.terrain,
+                    worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
+                    hasSpecialTrait: hex.hasSpecialTrait || false,
+                    name: hex.name || undefined,
+                    features: hex.features || [] // Preserve features
+                };
+            });
             state.size = hexes.length;
             
             // NOTE: Settlements are NOT modified during sync - they are managed manually by the player
@@ -238,7 +248,9 @@ export class TerritoryService {
     }
     
     /**
-     * Convert numeric hex ID to dot notation (e.g., 9209 -> "92.09", 1011 -> "1.11")
+     * Convert numeric hex ID to dot notation
+     * Kingmaker format: row * 1000 + column
+     * Examples: 2019 -> "2.19", 5018 -> "5.18", 3020 -> "3.20"
      */
     private convertHexId(numericId: string): string {
         // If already in dot notation, return as is
@@ -252,17 +264,49 @@ export class TerritoryService {
             return numericId;
         }
         
-        // Handle 4-digit format (e.g., 9209 -> 92.09, 1011 -> 1.11)
-        if (num >= 1000) {
-            const row = Math.floor(num / 100);
-            const col = num % 100;
-            return `${row}.${col.toString().padStart(2, '0')}`;
-        } else {
-            // Handle 3-digit or less (e.g., 105 -> 1.05)
-            const row = Math.floor(num / 100);
-            const col = num % 100;
-            return `${row}.${col.toString().padStart(2, '0')}`;
+        // Kingmaker stores hex IDs as: row * 1000 + column
+        // Examples: 2019 = row 2, col 19; 5018 = row 5, col 18
+        const row = Math.floor(num / 1000);
+        const col = num % 1000;
+        
+        return `${row}.${col.toString().padStart(2, '0')}`;
+    }
+    
+    /**
+     * Validate hex ID format - must be dot notation like "2.19" (Foundry grid offsets)
+     * Prevents coordinate system bugs by rejecting invalid formats like "20.19"
+     */
+    private validateHexId(hexId: string): boolean {
+        // Must contain a dot separator
+        if (!hexId.includes('.')) {
+            logger.warn(`[Territory Service] Invalid hex ID format (no dot): ${hexId}`);
+            return false;
         }
+        
+        // Parse the coordinates
+        const parts = hexId.split('.');
+        if (parts.length !== 2) {
+            logger.warn(`[Territory Service] Invalid hex ID format (wrong parts): ${hexId}`);
+            return false;
+        }
+        
+        const i = parseInt(parts[0], 10);
+        const j = parseInt(parts[1], 10);
+        
+        // Both must be valid numbers
+        if (isNaN(i) || isNaN(j)) {
+            logger.warn(`[Territory Service] Invalid hex ID format (not numbers): ${hexId}`);
+            return false;
+        }
+        
+        // Sanity check: grid coordinates should be reasonable (0-99 range for Stolen Lands map)
+        // This catches bugs like "20.19" which should be "2.19"
+        if (i < 0 || i > 99 || j < 0 || j > 99) {
+            logger.warn(`[Territory Service] Hex ID coordinates out of expected range: ${hexId} (i=${i}, j=${j})`);
+            return false;
+        }
+        
+        return true;
     }
     
     /**

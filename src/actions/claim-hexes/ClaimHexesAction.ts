@@ -1,6 +1,6 @@
 /**
  * Claim Hexes Action Implementation
- * Calculates hexes based on skill proficiency rank
+ * Uses hex selector service to let players select hexes on the map
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
@@ -14,6 +14,7 @@ import {
   type ResolveResult 
 } from '../shared/ActionHelpers';
 import { getKingdomActor } from '../../stores/KingdomStore';
+import { hexSelectorService } from '../../services/hex-selector';
 
 /**
  * Convert proficiency rank to number of hexes
@@ -28,71 +29,111 @@ function getHexesFromProficiency(proficiencyRank: number): number {
   return Math.max(2, proficiencyRank);
 }
 
+/**
+ * Mark hexes as claimed in Kingmaker state
+ */
+async function markHexesAsClaimed(hexIds: string[]): Promise<void> {
+  const km = (globalThis as any).kingmaker;
+  if (!km?.state) {
+    console.warn('[ClaimHexes] Kingmaker state not available');
+    return;
+  }
+  
+  for (const hexId of hexIds) {
+    const [i, j] = hexId.split(':').map(Number);
+    const numericId = (i * 100) + j;
+    
+    console.log(`🏴 [ClaimHexes] Claiming hex ${hexId} (${numericId})`);
+    
+    // Update Kingmaker state
+    km.state.updateSource({
+      hexes: {
+        [numericId]: {
+          claimed: true,
+          explored: true
+        }
+      }
+    });
+  }
+  
+  await km.state.save();
+  console.log(`✅ [ClaimHexes] Claimed ${hexIds.length} hex${hexIds.length !== 1 ? 'es' : ''} in Kingmaker`);
+}
+
 const ClaimHexesAction: CustomActionImplementation = {
   id: 'claim-hexes',
   
   /**
-   * Custom resolution to calculate hexes based on proficiency
+   * Custom resolution using hex selector service
    */
   customResolution: {
-    component: null, // No custom UI needed
+    component: null, // No dialog needed - selector handles UI
     
     validateData(resolutionData: ResolutionData): boolean {
       return true;
     },
     
     async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
-      logActionStart('claim-hexes', 'Calculating hexes to claim');
+      logActionStart('claim-hexes', 'Starting hex claim process');
       
       try {
         const outcome = instance?.metadata?.outcome || 'success';
         
         // Get the proficiency rank from the roll metadata
-        // This should be stored by PF2eSkillService when the roll was made
         let proficiencyRank = 0;
-        
-        // Try to get proficiency from the pending check flag
+        const game = (globalThis as any).game;
         const pendingCheck = await game.user?.getFlag('pf2e-reignmaker', 'pendingCheck') as any;
         if (pendingCheck?.proficiencyRank !== undefined) {
           proficiencyRank = pendingCheck.proficiencyRank;
         }
         
-        // Calculate hexes based on outcome
-        let hexes = 0;
-        let message = '';
+        // Calculate how many hexes can be claimed
+        let hexCount = 0;
         
         switch (outcome) {
           case 'criticalSuccess':
-            // Critical success: hexes based on proficiency
-            hexes = getHexesFromProficiency(proficiencyRank);
-            const proficiencyName = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'][proficiencyRank] || 'Unknown';
-            message = `Claim ${hexes} hex${hexes !== 1 ? 'es' : ''} (${proficiencyName} proficiency). Claim the targeted hex${hexes !== 1 ? 'es' : ''} on the map.`;
+            hexCount = getHexesFromProficiency(proficiencyRank);
             break;
-            
           case 'success':
-            // Success: 1 hex
-            hexes = 1;
-            message = 'Claim 1 hex. Claim the targeted hex on the map.';
+            hexCount = 1;
             break;
-            
           case 'failure':
-            // Failure: no effect
-            message = 'No effect';
-            break;
-            
           case 'criticalFailure':
-            // Critical failure: no effect (but generates unrest via JSON modifiers)
-            message = 'No effect';
-            break;
+            // No hexes to claim on failure
+            const failureMessage = outcome === 'criticalFailure' 
+              ? 'Critical failure - no hexes claimed'
+              : 'Failure - no hexes claimed';
+            logActionSuccess('claim-hexes', failureMessage);
+            return createSuccessResult(failureMessage);
         }
         
-        logActionSuccess('claim-hexes', `${message} (proficiency rank: ${proficiencyRank})`);
-        
-        return createSuccessResult(message, {
-          hexes,
-          proficiencyRank,
-          outcome
+        // Invoke hex selector service
+        const proficiencyName = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'][proficiencyRank] || 'Unknown';
+        const selectedHexes = await hexSelectorService.selectHexes({
+          title: `Select ${hexCount} Hex${hexCount !== 1 ? 'es' : ''} to Claim`,
+          count: hexCount,
+          colorType: 'claim'
         });
+        
+        // Handle cancellation
+        if (!selectedHexes || selectedHexes.length === 0) {
+          logActionError('claim-hexes', new Error('Hex selection cancelled'));
+          return createErrorResult('Hex selection cancelled');
+        }
+        
+        // Mark hexes as claimed in Kingmaker
+        await markHexesAsClaimed(selectedHexes);
+        
+        // Sync territory to update Reignmaker
+        const { territoryService } = await import('../../services/territory');
+        await territoryService.syncFromKingmaker();
+        
+        const message = outcome === 'criticalSuccess'
+          ? `Claimed ${hexCount} hex${hexCount !== 1 ? 'es' : ''} (${proficiencyName} proficiency): ${selectedHexes.join(', ')}`
+          : `Claimed hex: ${selectedHexes.join(', ')}`;
+        
+        logActionSuccess('claim-hexes', message);
+        return createSuccessResult(message);
         
       } catch (error) {
         logActionError('claim-hexes', error as Error);
@@ -101,7 +142,7 @@ const ClaimHexesAction: CustomActionImplementation = {
     }
   },
   
-  // Always use custom resolution to calculate hexes
+  // Only use custom resolution for success outcomes
   needsCustomResolution(outcome): boolean {
     return outcome === 'criticalSuccess' || outcome === 'success';
   }

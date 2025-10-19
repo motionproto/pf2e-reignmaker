@@ -268,7 +268,18 @@ export async function createActionPhaseController() {
       // Use custom resolution if available and needed for this outcome
       if (impl?.customResolution && impl.needsCustomResolution?.(outcome)) {
         logger.debug(`🎯 [ActionPhaseController] Using custom resolution for ${actionId}-${outcome}`);
-        const result = await executeCustomResolution(actionId, resolutionData);
+        
+        // Create instance metadata for custom resolution
+        const instance = {
+          metadata: {
+            outcome,
+            actorName,
+            skillName,
+            playerId
+          }
+        };
+        
+        const result = await executeCustomResolution(actionId, resolutionData, instance);
         
         if (!result.success) {
           logger.error(`❌ [ActionPhaseController] Custom resolution failed:`, result.error);

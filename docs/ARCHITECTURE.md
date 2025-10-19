@@ -889,6 +889,199 @@ for (const [resource, value] of result.stateChanges) {
 }
 ```
 
+## Hex Coordinate System
+
+### Overview
+
+The hex coordinate system uses **Foundry VTT's native grid offsets** as the single source of truth. All hex IDs are stored in **dot notation** format (`"i.j"`) which directly maps to Foundry's grid coordinates.
+
+### Coordinate Formats
+
+**Dot Notation (Our Format):**
+```typescript
+"2.19"  // i=2, j=19 - Foundry grid offset
+"5.18"  // i=5, j=18
+```
+
+**Kingmaker Numeric (Legacy Format):**
+```typescript
+219   // (i * 100) + j = (2 * 100) + 19 = 219
+518   // (i * 100) + j = (5 * 100) + 18 = 518
+```
+
+**Colon Notation (Hex Selector):**
+```typescript
+"2:19"  // Used internally by hex-selector service
+```
+
+### Coordinate Transformations
+
+**Kingmaker → Reignmaker (Read):**
+```typescript
+// In TerritoryService.convertHexId()
+numericId: 219 
+  → row = Math.floor(219 / 100)  // 2
+  → col = 219 % 100               // 19
+  → dotNotation: "2.19"
+```
+
+**Reignmaker → Kingmaker (Write):**
+```typescript
+// In TerritoryService.updateKingmakerSettlement()
+location: {x: 2, y: 19}
+  → hexKey = (100 * 2) + 19  // 219
+```
+
+**Dot Notation → Foundry Grid:**
+```typescript
+// In ReignMakerMapLayer.drawSingleHex()
+hexId: "2.19"
+  → split('.') → ["2", "19"]
+  → {i: 2, j: 19}
+  → new GridHex({i: 2, j: 19}, canvas.grid)
+```
+
+### Validation System
+
+All hex IDs are validated before storage to prevent coordinate system bugs:
+
+```typescript
+// In TerritoryService.validateHexId()
+function validateHexId(hexId: string): boolean {
+  // Must use dot notation
+  if (!hexId.includes('.')) return false
+  
+  // Must have exactly 2 parts
+  const parts = hexId.split('.')
+  if (parts.length !== 2) return false
+  
+  // Both parts must be valid numbers
+  const i = parseInt(parts[0], 10)
+  const j = parseInt(parts[1], 10)
+  if (isNaN(i) || isNaN(j)) return false
+  
+  // Coordinates must be in reasonable range (0-99)
+  // This catches bugs like "20.19" which should be "2.19"
+  if (i < 0 || i > 99 || j < 0 || j > 99) return false
+  
+  return true
+}
+```
+
+**Validation runs automatically during:**
+- `TerritoryService.syncFromKingmaker()` - All hex data from Kingmaker
+- `TerritoryService.updateKingdomStore()` - Before writing to KingdomActor
+
+**Error Behavior:**
+- Invalid hex IDs throw an error with clear message
+- Prevents bad data from entering the system
+- Protects against future coordinate bugs
+
+### Rendering System
+
+**Vertex Calculation (Foundry v13 Pattern):**
+
+```typescript
+// In ReignMakerMapLayer.drawSingleHex()
+
+// 1. Parse hex ID to grid offset
+const [i, j] = hexId.split('.').map(Number)  // "2.19" → {i:2, j:19}
+
+// 2. Create GridHex instance
+const hex = new GridHex({i, j}, canvas.grid)
+
+// 3. Get hex center (world coordinates)
+const center = hex.center  // {x: 1234, y: 5678}
+
+// 4. Get vertices (grid-relative, NOT world coordinates!)
+const relativeVertices = canvas.grid.getShape(hex.offset)
+
+// 5. Apply Kingmaker's scaling factor (fixes gaps)
+const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY
+
+// 6. Translate to world coordinates
+const worldVertices = relativeVertices.map(v => ({
+  x: center.x + (v.x * scale),
+  y: center.y + (v.y * scale)
+}))
+
+// 7. Draw polygon
+graphics.drawPolygon(worldVertices.flatMap(v => [v.x, v.y]))
+```
+
+**Critical Implementation Detail:**
+- `canvas.grid.getShape()` returns vertices **relative to (0,0)**, NOT world coordinates
+- Must translate by adding to hex center to get correct world positions
+- Scaling factor `(sizeY + 2) / sizeY` prevents gaps between hexes (matches Kingmaker)
+
+### Data Flow
+
+**Sync from Kingmaker:**
+```
+Kingmaker State (numeric: 219)
+  ↓ TerritoryService.syncFromKingmaker()
+  ↓ convertHexId() → "2.19"
+  ↓ validateHexId() → ✅ Valid
+  ↓ updateKingdomStore()
+KingdomActor.kingdom.hexes[{id: "2.19", ...}]
+```
+
+**Render on Map:**
+```
+KingdomActor.kingdom.hexes
+  ↓ KingdomStore (reactive)
+  ↓ ReignMakerMapLayer.showKingdomHexes()
+  ↓ drawSingleHex("2.19")
+  ↓ Parse → {i: 2, j: 19}
+  ↓ GridHex + vertex translation
+Canvas Display (correct position)
+```
+
+**Write to Kingmaker:**
+```
+User Action (claim hex at 2.19)
+  ↓ ClaimHexesAction
+  ↓ hexId: "2:19" → split → {i: 2, j: 19}
+  ↓ numericId = (2 * 100) + 19 = 219
+Kingmaker State Update (hexes[219].claimed = true)
+```
+
+### Best Practices
+
+**DO:**
+- ✅ Always use dot notation (`"i.j"`) for stored hex IDs
+- ✅ Parse coordinates only when needed for rendering/writing
+- ✅ Rely on `validateHexId()` to catch invalid formats
+- ✅ Use `TerritoryService.syncFromKingmaker()` for data import
+- ✅ Test hex rendering after coordinate changes
+
+**DON'T:**
+- ❌ Store hex IDs in numeric or colon formats
+- ❌ Manually construct hex IDs without validation
+- ❌ Assume `getShape()` returns world coordinates
+- ❌ Skip coordinate validation during sync
+- ❌ Mix coordinate systems in the same context
+
+### Troubleshooting
+
+**Hexes not appearing on map?**
+1. Check console for validation errors
+2. Verify hex IDs use dot notation (`"2.19"` not `"219"` or `"2:19"`)
+3. Confirm coordinates are in scene bounds (0-99 typically)
+4. Test with known-good coordinates (scene center)
+
+**Wrong hex positions?**
+1. Verify coordinate transformation matches Kingmaker pattern
+2. Check vertex scaling factor is applied
+3. Ensure world coordinate translation (center + vertices)
+4. Compare with Kingmaker's hex rendering
+
+**Coordinate validation failing?**
+1. Check hex ID format (must have dot separator)
+2. Verify coordinates are numeric
+3. Ensure range is reasonable (0-99 for Stolen Lands)
+4. Review sync logs for conversion errors
+
 ## System Integration Points
 
 ### Events & Incidents
