@@ -148,27 +148,54 @@ export interface HexFeature {
  * Represents a hex of territory controlled by the kingdom
  */
 export class Hex {
-  id: string;
+  // Coordinates (primary identifiers)
+  row: number;
+  col: number;
+  
+  // Basic properties
   terrain: string;
-  worksite: Worksite | null;
-  hasSpecialTrait: boolean;
   name: string | null;
-  features: HexFeature[];
+  
+  // Ownership
+  claimedBy: number | string | null; // 0=wilderness, 1=player kingdom, "faction-name"=other faction
+  
+  // Infrastructure
+  worksite: Worksite | null;
+  hasRoad: boolean;
+  
+  // Game mechanics
+  hasCommodityBonus: boolean; // Hex has matching commodity for worksite (e.g., lumber commodity + logging camp)
+  
+  // Optional: Preserve raw Kingmaker data for debugging
+  kingmakerFeatures?: Array<{ type: string; [key: string]: any }>;
   
   constructor(
-    id: string,
+    row: number,
+    col: number,
     terrain: string,
     worksite: Worksite | null = null,
-    hasSpecialTrait: boolean = false,
+    hasCommodityBonus: boolean = false,
     name: string | null = null,
-    features: HexFeature[] = []
+    claimedBy: number | string | null = 0,
+    hasRoad: boolean = false,
+    kingmakerFeatures?: Array<{ type: string; [key: string]: any }>
   ) {
-    this.id = id;
+    this.row = row;
+    this.col = col;
     this.terrain = terrain;
     this.worksite = worksite;
-    this.hasSpecialTrait = hasSpecialTrait;
+    this.hasCommodityBonus = hasCommodityBonus;
     this.name = name;
-    this.features = features;
+    this.claimedBy = claimedBy;
+    this.hasRoad = hasRoad;
+    this.kingmakerFeatures = kingmakerFeatures;
+  }
+  
+  /**
+   * Get hex ID in dot notation (for backwards compatibility)
+   */
+  get id(): string {
+    return `${this.row}.${this.col.toString().padStart(2, '0')}`;
   }
   
   /**
@@ -181,8 +208,8 @@ export class Hex {
     
     const baseProduction = new Map(this.worksite.getBaseProduction(this.terrain));
     
-    // Special traits add +1 to production
-    if (this.hasSpecialTrait) {
+    // Commodity bonus adds +1 to production
+    if (this.hasCommodityBonus) {
       baseProduction.forEach((amount, resource) => {
         baseProduction.set(resource, amount + 1);
       });

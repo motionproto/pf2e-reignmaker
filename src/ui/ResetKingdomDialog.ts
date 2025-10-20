@@ -1,102 +1,64 @@
 /**
  * Dialog for confirming kingdom data reset
+ * Extends FormApplication to work with Foundry's settings menu system
  */
 
-import { getKingdomActor } from '../main.kingdom';
+// Declare Foundry types
+declare const FormApplication: any;
+declare const game: any;
+declare const ui: any;
 
-// Declare Foundry Dialog type
-declare const Dialog: any;
-
-export class ResetKingdomDialog {
-  static async show(): Promise<void> {
-    return new Promise((resolve) => {
-      new Dialog({
-        title: 'Reset Kingdom Data',
-        content: `
-          <div style="margin-bottom: 1em;">
-            <p style="font-weight: bold; color: #a00;">⚠️ Warning: This action cannot be undone!</p>
-            <p>This will completely reset all kingdom data, including:</p>
-            <ul style="margin-left: 1em; margin-top: 0.5em;">
-              <li>Turn counter (reset to 1)</li>
-              <li>All resources (gold, food, lumber, etc.)</li>
-              <li>All hexes and settlements</li>
-              <li>All armies and build queue</li>
-              <li>Unrest and fame</li>
-              <li>Active modifiers and ongoing events</li>
-              <li>Player actions and phase progress</li>
-            </ul>
-          </div>
-        `,
-        buttons: {
-          reset: {
-            icon: '<i class="fas fa-trash-restore"></i>',
-            label: 'Reset Kingdom',
-            callback: async () => {
-              await ResetKingdomDialog.resetKingdom();
-              resolve();
-            }
-          },
-          cancel: {
-            icon: '<i class="fas fa-times"></i>',
-            label: 'Cancel',
-            callback: () => resolve()
-          }
-        },
-        default: 'cancel'
-      }).render(true);
-    });
+export class ResetKingdomDialog extends FormApplication {
+  static get defaultOptions() {
+    return {
+      ...super.defaultOptions,
+      id: 'reset-kingdom-dialog',
+      title: 'Reset Kingdom Data',
+      template: 'templates/generic-form.html',  // Use Foundry's generic template
+      width: 500,
+      classes: ['pf2e-reignmaker', 'reset-kingdom-dialog']
+    };
   }
 
+  getData() {
+    return {
+      message: `
+        <p style="font-weight: bold; color: #a00;">⚠️ Warning: This action cannot be undone!</p>
+        <p>This will completely delete all kingdom data from the party actor.</p>
+        <p>When you next open the Kingdom UI, fresh data will be generated and territory will be synced from the Kingmaker module (if available).</p>
+      `
+    };
+  }
+
+  async _updateObject(event: Event, formData: any) {
+    // This is called when the form is submitted
+    await ResetKingdomDialog.resetKingdom();
+  }
+
+  /**
+   * Delete kingdom data from party actor
+   */
   private static async resetKingdom(): Promise<void> {
     try {
-      const actor = await getKingdomActor();
-      if (!actor) {
-        // @ts-ignore
-        ui.notifications?.warn('No kingdom actor found');
+      // Find the party actor
+      const partyActor = game.actors?.find((a: any) => a.type === 'party');
+
+      if (!partyActor) {
+        ui.notifications?.error('No party actor found!');
+        console.error('[PF2E ReignMaker] No party actor found');
         return;
       }
 
-      console.log('PF2E ReignMaker | Performing complete kingdom reset...');
-      
-      // STEP 1: Completely remove ALL old flags (nuke from orbit)
-      // This clears any legacy fields that might be hanging around
-      const moduleId = 'pf2e-reignmaker';
-      const allFlags = actor.flags?.[moduleId];
-      
-      if (allFlags) {
-        console.log('PF2E ReignMaker | Clearing all existing flags:', Object.keys(allFlags));
-        
-        // Unset ALL flags for this module
-        for (const key of Object.keys(allFlags)) {
-          await actor.unsetFlag(moduleId, key);
-          console.log(`PF2E ReignMaker | Cleared flag: ${key}`);
-        }
-      }
-      
-      // STEP 2: Initialize fresh kingdom data
-      await actor.initializeKingdom('New Kingdom');
-      
-      // STEP 3: Refresh Kingdom information from Kingmaker module
-      console.log('PF2E ReignMaker | Refreshing territory data from Kingmaker module...');
-      // @ts-ignore
-      ui.notifications?.info('Kingdom reset - loading territory data from Kingmaker module...');
-      
-      try {
-        const { loadTerritoryData } = await import('../hooks/kingdomSync');
-        await loadTerritoryData();
-        
-        // @ts-ignore
-        ui.notifications?.success('Kingdom data reset complete with territory data loaded');
-      } catch (territoryError) {
-        console.warn('PF2E ReignMaker | Could not load territory data:', territoryError);
-        // @ts-ignore
-        ui.notifications?.info('Kingdom data has been reset (territory data not available)');
-      }
-      
-      console.log('PF2E ReignMaker | Kingdom data reset successfully - all legacy fields removed');
+      console.log('[PF2E ReignMaker] Deleting kingdom data from party actor...');
+
+      // Remove the kingdom data flag
+      await partyActor.unsetFlag('pf2e-reignmaker', 'kingdom-data');
+
+      ui.notifications?.info(`Kingdom data removed from "${partyActor.name}". Reload the Kingdom UI to initialize fresh data.`);
+      console.log(`✅ [PF2E ReignMaker] Kingdom data removed from party actor: ${partyActor.name}`);
+      console.log('[PF2E ReignMaker] Reload the Kingdom UI to initialize fresh data');
     } catch (error) {
-      console.error('PF2E ReignMaker | Failed to reset kingdom:', error);
-      // @ts-ignore
+      console.error('[PF2E ReignMaker] Failed to reset kingdom:', error);
       ui.notifications?.error('Failed to reset kingdom data');
     }
   }

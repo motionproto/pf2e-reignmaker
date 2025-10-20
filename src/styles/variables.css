@@ -75,6 +75,18 @@
   --icon-stone: var(--color-gray-500);
   --icon-ore: var(--color-blue);
 
+  /* Resource Colors - For terrain badges and resource displays */
+  --color-food: var(--color-brown-light);
+  --color-food-subtle: hsla(29, 48%, 64%, 0.2);
+  --color-lumber: var(--color-green);
+  --color-lumber-subtle: hsla(142, 71%, 45%, 0.2);
+  --color-stone: var(--color-gray-500);
+  --color-stone-subtle: hsla(240, 5%, 56%, 0.2);
+  --color-ore: var(--color-blue);
+  --color-ore-subtle: hsla(217, 100%, 80%, 0.2);
+  --color-primary-subtle: hsla(0, 58%, 50%, 0.2);
+  --color-warning-subtle: hsla(38, 91%, 50%, 0.1);
+
   /* Semantic Colors */
   --bg-base: var(--color-gray-950);
   --bg-surface: var(--color-gray-900);
@@ -85,6 +97,7 @@
   --text-primary: var(--color-gray-50);
   --text-secondary: var(--color-gray-300);
   --text-tertiary: var(--color-gray-400);
+  --text-muted: var(--color-gray-500);
   --text-disabled: var(--color-gray-600);
   --text-inverted: var(--color-gray-900);  /* Dark text for light backgrounds */
   --text-accent: var(--color-amber);
@@ -127,6 +140,7 @@
   /* Borders - Luminance-based for better contrast */
   --border-subtle: hsla(240, 5%, 22%, 1);   /* Very subtle, barely visible */
   --border-default: hsla(240, 5%, 28%, 1);  /* Standard border visibility */
+  --border-secondary: hsla(240, 5%, 32%, 1); /* Secondary borders */
   --border-medium: hsla(240, 5%, 38%, 1);   /* More prominent borders */
   --border-strong: hsla(240, 5%, 48%, 1);   /* High contrast borders */
   --border-primary: var(--color-crimson);

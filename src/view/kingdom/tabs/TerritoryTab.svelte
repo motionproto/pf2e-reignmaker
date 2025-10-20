@@ -3,6 +3,18 @@
    import { WorksiteConfig } from '../../../models/Hex';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
+   // View mode toggle
+   let viewMode: 'territory' | 'world' = 'territory';
+   
+   // Calculate hex counts for view selector
+   $: claimedHexCount = ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1).length;
+   $: totalHexCount = ($kingdomData.hexes || []).length;
+   
+   // Get hex source based on view mode
+   $: sourceHexes = viewMode === 'territory' 
+      ? ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1) // Only player-claimed hexes
+      : ($kingdomData.hexes || []); // All hexes
+   
    // Map worksite types to their resource colors
    function getWorksiteColor(worksiteType: string): string {
       switch(worksiteType) {
@@ -30,17 +42,17 @@
    let filterTerrain: string = 'all';
    let filterWorksite: string = 'all';
    
-   // Get unique terrain types from hexes
-   $: terrainTypes = [...new Set(($kingdomData.hexes || []).map(h => h.terrain))].sort();
+   // Get unique terrain types from SOURCE hexes (filtered by view mode)
+   $: terrainTypes = [...new Set(sourceHexes.map(h => h.terrain))].sort();
    
-   // Get unique worksite types from hexes
-   $: worksiteTypes = [...new Set(($kingdomData.hexes || [])
+   // Get unique worksite types from SOURCE hexes (filtered by view mode)
+   $: worksiteTypes = [...new Set(sourceHexes
       .filter(h => h.worksite)
       .map(h => h.worksite!.type))].sort();
    
-   // Apply filters and sorting
+   // Apply filters and sorting to SOURCE hexes
    $: filteredAndSortedHexes = (() => {
-      let hexes = [...($kingdomData.hexes || [])];
+      let hexes = [...sourceHexes];
       
       // Apply filters
       if (filterTerrain !== 'all') {
@@ -85,13 +97,13 @@
       return hexes;
    })();
    
-   // Calculate territory statistics
-   $: terrainBreakdown = ($kingdomData.hexes || []).reduce((acc, hex) => {
+   // Calculate territory statistics from SOURCE hexes
+   $: terrainBreakdown = sourceHexes.reduce((acc, hex) => {
       acc[hex.terrain] = (acc[hex.terrain] || 0) + 1;
       return acc;
    }, {} as Record<string, number>);
    
-   $: totalProduction = ($kingdomData.hexes || []).reduce((acc, hex) => {
+   $: totalProduction = sourceHexes.reduce((acc, hex) => {
       const production = calculateHexProduction(hex);
       production.forEach((amount: number, resource: string) => {
          acc[resource] = (acc[resource] || 0) + amount;
@@ -153,8 +165,8 @@
             break;
       }
       
-      // Apply special trait bonus
-      if (hex.hasSpecialTrait) {
+      // Apply commodity bonus
+      if (hex.hasCommodityBonus) {
          production.forEach((amount, resource) => {
             production.set(resource, amount + 1);
          });
@@ -165,7 +177,7 @@
 </script>
 
 <div class="territory-tab">
-   <!-- Filters -->
+   <!-- Filters with View Mode Toggle -->
    <div class="territory-filters">
       <div class="filter-group">
          <label for="terrain-filter">Terrain:</label>
@@ -185,6 +197,45 @@
                <option value={worksite}>{WorksiteConfig[worksite]?.displayName || worksite}</option>
             {/each}
          </select>
+      </div>
+      
+      <!-- View Mode Radio Group (right side) -->
+      <div class="filter-group view-mode-group">
+         <div class="radio-group" role="radiogroup" aria-label="View mode">
+            <label class="radio-option" class:selected={viewMode === 'territory'}>
+               <input 
+                  type="radio" 
+                  name="viewMode" 
+                  value="territory" 
+                  bind:group={viewMode}
+                  class="radio-input"
+               />
+               <span class="radio-content">
+                  <span class="radio-label">Territory</span>
+                  <span class="radio-icon-count">
+                     <i class="fas fa-flag"></i>
+                     ({claimedHexCount})
+                  </span>
+               </span>
+            </label>
+            
+            <label class="radio-option" class:selected={viewMode === 'world'}>
+               <input 
+                  type="radio" 
+                  name="viewMode" 
+                  value="world" 
+                  bind:group={viewMode}
+                  class="radio-input"
+               />
+               <span class="radio-content">
+                  <span class="radio-label">World</span>
+                  <span class="radio-icon-count">
+                     <i class="fas fa-globe"></i>
+                     ({totalHexCount})
+                  </span>
+               </span>
+            </label>
+         </div>
       </div>
    </div>
    
@@ -227,6 +278,7 @@
                         <i class="fas fa-sort"></i>
                      {/if}
                   </th>
+                  <th>Roads</th>
                   <th>Features</th>
                </tr>
             </thead>
@@ -253,7 +305,7 @@
                         {/if}
                      </td>
                      <td class="commodities">
-                        {#if hex.hasSpecialTrait}
+                        {#if hex.hasCommodityBonus}
                            <span class="commodity-bonus" title="This hex has a commodity bonus">
                               <i class="fas fa-plus-circle"></i>
                               +1 Bonus
@@ -276,10 +328,19 @@
                            <span class="no-production">-</span>
                         {/if}
                      </td>
+                     <td class="roads">
+                        {#if $kingdomData.roadsBuilt && $kingdomData.roadsBuilt.includes(hex.id)}
+                           <span class="has-road" title="Road built in this hex">
+                              <i class="fas fa-check"></i>
+                           </span>
+                        {:else}
+                           <span class="no-road">-</span>
+                        {/if}
+                     </td>
                      <td class="features">
-                        {#if hex.features && hex.features.length > 0}
+                        {#if hex.kingmakerFeatures && hex.kingmakerFeatures.length > 0}
                            <div class="features-list">
-                              {#each hex.features as feature}
+                              {#each hex.kingmakerFeatures as feature}
                                  {#if feature.type}
                                     {@const featureType = feature.type.toLowerCase()}
                                     {@const isSettlement = featureType === 'village' || featureType === 'town' || featureType === 'city' || featureType === 'metropolis'}
@@ -346,21 +407,94 @@
          gap: 0.5rem;
          
          label {
-            color: var(--color-text-dark-secondary, #7a7971);
-            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-size: var(--font-sm);
          }
          
          select {
             padding: 0.25rem 0.5rem;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-secondary);
             border-radius: 0.25rem;
-            color: var(--color-text-dark-primary, #b5b3a4);
+            color: var(--text-primary);
             
             &:focus {
                outline: none;
-               border-color: var(--color-primary, #5e0000);
+               border-color: var(--color-primary);
             }
+         }
+      }
+   }
+   
+   .view-mode-group {
+      flex: 0 0 auto;
+      margin-left: auto;
+      
+      .radio-group {
+         display: flex;
+         gap: 0.5rem;
+         padding: 0.25rem;
+         background: rgba(0, 0, 0, 0.3);
+         border-radius: 0.5rem;
+         border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .radio-option {
+         display: flex;
+         align-items: center;
+         padding: 0.5rem 0.75rem;
+         border-radius: 0.375rem;
+         cursor: pointer;
+         transition: all 0.2s;
+         background: transparent;
+         border: 2px solid transparent;
+         user-select: none;
+         
+         &:hover {
+            background: rgba(255, 255, 255, 0.05);
+         }
+         
+         &.selected {
+            background: rgba(94, 0, 0, 0.3);
+            border-color: var(--color-primary);
+            
+            .radio-content {
+               color: var(--text-primary);
+            }
+         }
+      }
+      
+      .radio-input {
+         position: absolute;
+         opacity: 0;
+         pointer-events: none;
+      }
+      
+      .radio-content {
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         gap: 0.25rem;
+         color: var(--text-secondary);
+         transition: color 0.2s;
+      }
+      
+      .radio-label {
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-medium);
+         text-transform: uppercase;
+         letter-spacing: 0.05em;
+      }
+      
+      .radio-icon-count {
+         display: flex;
+         align-items: center;
+         gap: 0.375rem;
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-medium);
+         
+         i {
+            font-size: 1rem;
          }
       }
    }
@@ -387,9 +521,9 @@
          th {
             padding: 0.75rem;
             text-align: left;
-            color: var(--color-text-dark-primary, #b5b3a4);
+            color: var(--text-primary);
             font-weight: var(--font-weight-semibold);
-            border-bottom: 2px solid var(--color-primary, #5e0000);
+            border-bottom: 2px solid var(--color-primary);
             
             &.sortable {
                cursor: pointer;
@@ -404,8 +538,8 @@
                }
                
                i {
-                  font-size: 0.75rem;
-                  opacity: 0.5;
+                  font-size: var(--font-xs);
+                  opacity: var(--opacity-muted);
                }
             }
          }
@@ -424,16 +558,16 @@
          
          td {
             padding: 0.75rem;
-            color: var(--color-text-dark-secondary, #7a7971);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-subtle);
             
             &.hex-id {
                font-weight: var(--font-weight-semibold);
-               color: var(--color-text-dark-primary, #b5b3a4);
+               color: var(--text-primary);
                
                i {
                   margin-right: 0.5rem;
-                  color: var(--color-primary, #5e0000);
+                  color: var(--color-primary);
                }
             }
             
@@ -441,31 +575,31 @@
                display: inline-block;
                padding: 0.25rem 0.5rem;
                border-radius: 0.25rem;
-               font-size: 0.875rem;
+               font-size: var(--font-sm);
                font-weight: var(--font-weight-medium);
                
                &.terrain-plains {
                   // Food color (brown-light)
-                  background: rgba(160, 110, 70, 0.2);
-                  color: #a06e46;
+                  background: var(--color-food-subtle);
+                  color: (--color-food);
                }
                
                &.terrain-forest {
                   // Lumber color (green)
-                  background: rgba(34, 139, 34, 0.2);
-                  color: #228b22;
+                  background: var(--color-lumber-subtle);
+                  color: var(--color-lumber);
                }
                
                &.terrain-hills {
                   // Stone color (gray)
-                  background: rgba(128, 128, 128, 0.2);
-                  color: #808080;
+                  background: var(--color-stone-subtle);
+                  color: var(--color-stone);
                }
                
                &.terrain-mountains {
                   // Ore color (blue)
-                  background: rgba(70, 130, 180, 0.2);
-                  color: #4682b4;
+                  background: var(--color-ore-subtle);
+                  color: var(--color-ore);
                }
                
                &.terrain-swamp {
@@ -480,8 +614,8 @@
                }
                
                &.terrain-water {
-                  background: rgba(70, 130, 180, 0.2);
-                  color: #4682b4;
+                  background: var(--color-ore-subtle);
+                  color: var(--color-ore);
                }
             }
             
@@ -491,12 +625,12 @@
                gap: 0.5rem;
                padding: 0.25rem 0.5rem;
                border-radius: 0.25rem;
-               font-size: 0.875rem;
+               font-size: var(--font-sm);
             }
             
             .commodity-bonus {
-               color: #90ee90;
-               font-size: 0.875rem;
+               color: var(--color-success);
+               font-size: var(--font-sm);
                
                i {
                   margin-right: 0.25rem;
@@ -512,11 +646,11 @@
                   display: inline-flex;
                   align-items: center;
                   gap: 0.25rem;
-                  font-size: 0.875rem;
-                  color: #90ee90;
+                  font-size: var(--font-sm);
+                  color: var(--color-success);
                   
                   i {
-                     font-size: 0.75rem;
+                     font-size: var(--font-xs);
                   }
                }
             }
@@ -532,25 +666,25 @@
                   gap: 0.25rem;
                   padding: 0.125rem 0.375rem;
                   border-radius: 0.25rem;
-                  font-size: 0.75rem;
+                  font-size: var(--font-xs);
                   font-weight: var(--font-weight-medium);
-                  background: rgba(255, 215, 0, 0.1);
-                  color: #ffd700;
+                  background: var(--color-warning-subtle);
+                  color: var(--color-warning);
                   
                   &.settlement {
-                     background: rgba(94, 0, 0, 0.2);
+                     background: var(--color-primary-subtle);
                      color: var(--color-primary);
                      border: 1px solid var(--color-primary);
                   }
                   
                   i {
-                     font-size: 0.625rem;
+                     font-size: var(--font-xs);
                   }
                }
             }
             
             .feature-name {
-               color: #ffd700;
+               color: var(--color-warning);
                font-weight: var(--font-weight-medium);
                
                i {
@@ -558,11 +692,21 @@
                }
             }
             
+            .has-road {
+               color: var(--color-success);
+               font-size: var(--font-base);
+               
+               i {
+                  font-size: 1rem;
+               }
+            }
+            
             .no-worksite,
             .no-commodity,
             .no-production,
-            .no-features {
-               color: rgba(255, 255, 255, 0.3);
+            .no-features,
+            .no-road {
+               color: var(--text-disabled);
                font-style: italic;
             }
          }
@@ -578,19 +722,19 @@
       text-align: center;
       
       i {
-         font-size: 3rem;
-         color: rgba(255, 255, 255, 0.2);
+         font-size: var(--font-3xl);
+         color: var(--text-disabled);
          margin-bottom: 1rem;
       }
       
       p {
          margin: 0.5rem 0;
-         color: var(--color-text-dark-secondary, #7a7971);
+         color: var(--text-secondary);
          
          &.hint {
-            font-size: 0.875rem;
+            font-size: var(--font-sm);
             font-style: italic;
-            color: rgba(255, 255, 255, 0.4);
+            color: var(--text-muted);
          }
       }
    }

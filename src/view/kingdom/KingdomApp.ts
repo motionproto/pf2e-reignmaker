@@ -59,14 +59,14 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
    {
       const buttons: SvelteApp.HeaderButton[] = super._getHeaderButtons();
 
-      // Add refresh button
+      // Add import button
       buttons.unshift({
-         class: 'refresh',
-         icon: 'fas fa-sync',
-         title: 'Refresh Kingdom',
+         class: 'import',
+         icon: 'fas fa-file-import',
+         title: 'Import Territory Data',
          onPress: (): void => {
-            // Trigger refresh in the app shell
-            this.svelte.appShell?.$set({ refreshTrigger: Date.now() });
+            // Trigger welcome dialog in the app shell
+            this.svelte.appShell?.$set({ showWelcomeDialog: true });
          }
       });
 

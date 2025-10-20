@@ -174,6 +174,7 @@ export async function createActionEffectsService() {
 
     /**
      * Build roads in hexes
+     * IMPORTANT: Updates both roadsBuilt array AND individual hex.hasRoad flags
      */
     async buildRoads(data: { hexIds: string[] }, result: ActionEffectResult): Promise<void> {
       logger.debug(`🛣️ [ActionEffects] Building roads in ${data.hexIds.length} hex(es)`);
@@ -184,9 +185,19 @@ export async function createActionEffectsService() {
         }
 
         for (const hexId of data.hexIds) {
+          // Update roadsBuilt array
           if (!kingdom.roadsBuilt.includes(hexId)) {
             kingdom.roadsBuilt.push(hexId);
             result.changes.push(`Built road in hex: ${hexId}`);
+          }
+          
+          // Update individual hex hasRoad flag (CRITICAL for persistence)
+          const hex = kingdom.hexes?.find(h => h.id === hexId);
+          if (hex) {
+            hex.hasRoad = true;
+            logger.debug(`✅ [ActionEffects] Set hasRoad=true for hex ${hexId}`);
+          } else {
+            logger.warn(`⚠️ [ActionEffects] Hex ${hexId} not found in kingdom.hexes - road may not persist!`);
           }
         }
       });

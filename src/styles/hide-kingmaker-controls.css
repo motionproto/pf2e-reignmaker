@@ -1,0 +1,16 @@
+/* 
+ * Hide Kingmaker scene control buttons based on user settings
+ * These classes are dynamically added to the body element based on module settings
+ * 
+ * We hide the entire <li> element to prevent gaps in the menu
+ */
+
+/* Hide "Toggle Hex Controls" button (hexagon icon) and its parent list item */
+body.hide-kingmaker-hex-controls li:has(button[data-tool="hex"]) {
+  display: none !important;
+}
+
+/* Hide "Toggle Zone Boundaries" button (chart-area icon) and its parent list item */
+body.hide-kingmaker-show-regions li:has(button[data-tool="zones"]) {
+  display: none !important;
+}

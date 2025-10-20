@@ -6,11 +6,13 @@
  * Predefined and custom layer identifiers
  */
 export type LayerId = 
-  | 'kingdom-territory'  // Scene control toggle for kingdom hexes
-  | 'hex-selection'      // Temporary selections during actions
-  | 'settlements'        // Settlement markers/sprites
-  | 'routes'             // Roads and routes
-  | string;              // Custom layer IDs
+  | 'kingdom-territory'     // Scene control toggle for kingdom hexes
+  | 'hex-selection'         // Temporary selections during actions
+  | 'settlements'           // Settlement markers/sprites
+  | 'settlements-overlay'   // Settlement hex highlights (toolbar)
+  | 'routes'                // Roads and routes
+  | 'roads-overlay'         // Road hex highlights (toolbar)
+  | string;                 // Custom layer IDs
 
 /**
  * Hex rendering style configuration

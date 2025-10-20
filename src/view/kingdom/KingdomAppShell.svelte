@@ -13,6 +13,7 @@
    // Components
    import ContentSelector from './components/ContentSelector.svelte';
    import KingdomStats    from './components/KingdomStats.svelte';
+   import WelcomeDialog   from './components/WelcomeDialog.svelte';
    
    // Tab components
    import TurnTab         from './tabs/TurnTab.svelte';
@@ -186,27 +187,18 @@
             const { setupFoundrySync } = await import('../../stores/KingdomStore');
             setupFoundrySync();
             
-            // Now sync territory data from Kingmaker if available
-            if (territoryService.isKingmakerAvailable()) {
-               console.log('[KingdomAppShell] Syncing territory data...');
-               const result = await territoryService.syncFromKingmaker();
-               
-               if (result.success) {
-                  console.log(`[KingdomAppShell] Territory sync successful: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
-                  // Only show notification if there's actual data
-                  if (result.hexesSynced > 0 || result.settlementsSynced > 0) {
-                     // @ts-ignore
-                     ui.notifications?.info(`Territory loaded: ${result.hexesSynced} hexes, ${result.settlementsSynced} settlements`);
-                  }
-               } else if (result.error) {
-                  console.warn('[KingdomAppShell] Territory sync failed:', result.error);
-                  // Don't show error notification on initial load unless there's a real error
-                  if (!result.error.includes('not available')) {
-                     // @ts-ignore
-                     ui.notifications?.warn(`Territory sync failed: ${result.error}`);
-                  }
-               }
+            // Check if we should show welcome dialog BEFORE syncing
+            // This allows users to choose their import method
+            await tick();
+            const kingdomState = kingdomActor.getKingdom();
+            const hasNoTerritoryData = !kingdomState?.hexes || kingdomState.hexes.length === 0;
+            
+            if (hasNoTerritoryData) {
+               console.log('[KingdomAppShell] No territory data found, showing welcome dialog');
+               showWelcomeDialog = true;
+               // Don't auto-sync - let the user choose via dialog
             }
+            // NO automatic sync on app load - only manual imports or first-time setup
             
             // Debug current phase after initialization
             setTimeout(() => {
@@ -273,6 +265,9 @@
    // Settings view state
    let showSettingsView = false;
    
+   // Welcome dialog state (exportable so it can be triggered from header button)
+   export let showWelcomeDialog = false;
+   
    // Handle tab selection
    function handleTabChange(tab: string) {
       showSettingsView = false;
@@ -282,6 +277,17 @@
    // Handle settings button click
    function handleOpenSettings() {
       showSettingsView = true;
+   }
+   
+   // Handle welcome dialog close
+   function handleWelcomeClose() {
+      showWelcomeDialog = false;
+   }
+   
+   // Handle welcome dialog complete
+   function handleWelcomeComplete() {
+      showWelcomeDialog = false;
+      // Optionally refresh data or switch to Territory tab
    }
 </script>
 
@@ -346,6 +352,14 @@
          </div>
       {/if}
    </main>
+   
+   <!-- Welcome Dialog (shown when no territory data) -->
+   {#if showWelcomeDialog}
+      <WelcomeDialog 
+         on:close={handleWelcomeClose}
+         on:complete={handleWelcomeComplete}
+      />
+   {/if}
 </ApplicationShell>
 
 <style>

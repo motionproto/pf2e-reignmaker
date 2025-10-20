@@ -41,10 +41,10 @@
   "scripts": {
     "build": "python3 buildscripts/combine-data.py && python3 buildscripts/generate-types.py && vite build",
     "generate-types": "python3 buildscripts/generate-types.py",
-    "dev": "vite",
+    "dev": "vite --config vite.config.dev.ts",
     "dev:setup": "node buildscripts/setup-dev.js",
     "dev:start": "npm run dev:setup && npm run dev",
-    "dev:proxy": "vite",
+    "dev:proxy": "vite --config vite.config.dev.ts",
     "dev:standalone": "vite --config vite.config.dev.ts",
     "clean": "rm -rf dist",
     "deploy": "npm run clean && node buildscripts/deploy.js",

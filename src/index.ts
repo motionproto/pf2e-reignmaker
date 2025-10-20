@@ -3,6 +3,9 @@
 
 /// <reference types="vite/client" />
 
+// Import styles for hiding Kingmaker controls
+import './styles/hide-kingmaker-controls.css';
+
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
 import { initKingdomIconDebug } from './ui/KingdomIconDebug';
@@ -114,28 +117,86 @@ function registerModuleSettings() {
         }
     });
     
-    // Register reset kingdom button setting
-    // Using a dummy boolean setting to create a button in the UI
+    // Register setting to hide Kingmaker hex controls button
     // @ts-ignore - Foundry globals
-    game.settings.register('pf2e-reignmaker', 'resetKingdomData', {
-        name: 'Reset Kingdom Data',
-        hint: 'Click the button below to reset all kingdom data to default state (turn 0, empty resources, etc.). This action cannot be undone!',
-        scope: 'world',
-        config: true,  // Show in module settings
+    game.settings.register('pf2e-reignmaker', 'hideKingmakerHexControls', {
+        name: 'Hide Kingmaker "Hex Controls" Button',
+        hint: 'Hide the Kingmaker module\'s "Hex Controls" button from the scene controls toolbar (ReignMaker replaces this functionality). Requires refreshing the page to take effect.',
+        scope: 'client',  // Per-user setting
+        config: true,     // Show in module settings
         type: Boolean,
-        default: false,
-        onChange: async (value: unknown) => {
-            if (value === true) {
-                // Show confirmation dialog
-                await ResetKingdomDialog.show();
-                // Reset the setting back to false
-                // @ts-ignore
-                await game.settings.set('pf2e-reignmaker', 'resetKingdomData', false);
-            }
-        }
+        default: false,   // Disabled by default
+        requiresReload: true  // Foundry will automatically show "reload required" message
+    });
+    
+    // Register setting to hide Kingmaker show regions button
+    // @ts-ignore - Foundry globals
+    game.settings.register('pf2e-reignmaker', 'hideKingmakerShowRegions', {
+        name: 'Hide Kingmaker "Show Regions" Button',
+        hint: 'Hide the Kingmaker module\'s "Show Regions" button from the scene controls toolbar. Requires refreshing the page to take effect.',
+        scope: 'client',  // Per-user setting
+        config: true,     // Show in module settings
+        type: Boolean,
+        default: false,   // Disabled by default
+        requiresReload: true  // Foundry will automatically show "reload required" message
+    });
+    
+    // Register menu button for resetting kingdom data
+    // @ts-ignore - Foundry globals, type assertion for FormApplication
+    game.settings.registerMenu('pf2e-reignmaker', 'resetKingdomDataMenu', {
+        name: 'Reset Kingdom Data',
+        label: 'Reset Kingdom',
+        hint: 'Delete all kingdom data from the party actor. Data will regenerate when you next open the Kingdom UI.',
+        icon: 'fas fa-trash-alt',
+        type: ResetKingdomDialog as any,  // Extends FormApplication, type assertion for TS
+        restricted: true  // GM only
     });
     
     console.log('PF2E ReignMaker | Settings registered');
+}
+
+/**
+ * Apply CSS classes to hide Kingmaker buttons based on module settings
+ * Also deactivate (turn off) hidden buttons if they're currently active
+ */
+function applyKingmakerButtonVisibility() {
+    // @ts-ignore - Foundry globals
+    const hideHexControls = game.settings?.get('pf2e-reignmaker', 'hideKingmakerHexControls');
+    // @ts-ignore - Foundry globals
+    const hideShowRegions = game.settings?.get('pf2e-reignmaker', 'hideKingmakerShowRegions');
+    
+    if (hideHexControls) {
+        document.body.classList.add('hide-kingmaker-hex-controls');
+        console.log('PF2E ReignMaker | Applied CSS to hide Kingmaker hex controls button');
+        // Deactivate the button if it's currently active
+        deactivateKingmakerButton('hex');
+    } else {
+        document.body.classList.remove('hide-kingmaker-hex-controls');
+    }
+    
+    if (hideShowRegions) {
+        document.body.classList.add('hide-kingmaker-show-regions');
+        console.log('PF2E ReignMaker | Applied CSS to hide Kingmaker show regions button');
+        // Deactivate the button if it's currently active
+        deactivateKingmakerButton('zones');
+    } else {
+        document.body.classList.remove('hide-kingmaker-show-regions');
+    }
+}
+
+/**
+ * Deactivate a Kingmaker button if it's currently active
+ * This ensures hidden buttons don't leave their functionality running
+ */
+function deactivateKingmakerButton(toolName: string) {
+    // Wait for DOM to be ready
+    setTimeout(() => {
+        const button = document.querySelector(`button[data-tool="${toolName}"]`) as HTMLButtonElement;
+        if (button && button.getAttribute('aria-pressed') === 'true') {
+            console.log(`PF2E ReignMaker | Deactivating Kingmaker button: ${toolName}`);
+            button.click(); // Click to toggle it off
+        }
+    }, 100);
 }
 
 /**
@@ -146,6 +207,9 @@ Hooks.once('init', () => {
     
     // Register module settings
     registerModuleSettings();
+    
+    // Apply CSS classes to hide Kingmaker buttons based on settings
+    applyKingmakerButtonVisibility();
     
     // Initialize action dispatcher for player-to-GM communication
     console.log('PF2E ReignMaker | Calling initializeActionDispatcher()...');

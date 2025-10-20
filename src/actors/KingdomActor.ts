@@ -78,17 +78,22 @@ export interface KingdomData {
   // Territory
   hexes: Array<{
     id: string;
+    row: number;
+    col: number;
     terrain: string;
     worksite?: { type: string } | null;
-    hasSpecialTrait?: boolean;
+    hasCommodityBonus?: boolean;
+    hasRoad?: boolean;
     name?: string;
-    features?: Array<{ type: string | null }>;
+    kingmakerFeatures?: Array<{ type: string | null; [key: string]: any }>;
+    claimedBy?: number | string | null;
   }>;
   settlements: Settlement[];
   size: number;
   worksiteCount: Record<string, number>;
   cachedProduction: Record<string, number>;
   cachedProductionByHex?: Array<[any, Map<string, number>]>;
+  roadsBuilt?: string[];  // Hex IDs where roads have been built
   
   // Military & Construction
   armies: Army[];

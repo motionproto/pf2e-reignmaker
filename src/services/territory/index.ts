@@ -37,6 +37,75 @@ export interface KingmakerSyncResult {
 
 export class TerritoryService {
     /**
+     * Import territory from Foundry hex grid (for custom maps without Kingmaker)
+     */
+    async importFromFoundryGrid(): Promise<KingmakerSyncResult> {
+        try {
+            // @ts-ignore - Foundry globals
+            const canvas = game.canvas;
+            
+            // Validate hex grid
+            // @ts-ignore - Foundry CONST
+            if (!canvas?.grid || 
+                (canvas.grid.type !== CONST.GRID_TYPES.HEXODDR && 
+                 canvas.grid.type !== CONST.GRID_TYPES.HEXEVENR)) {
+                return {
+                    success: false,
+                    hexesSynced: 0,
+                    settlementsSynced: 0,
+                    error: 'Scene must use a hex grid (HEXODDR or HEXEVENR)'
+                };
+            }
+            
+            // Get grid dimensions
+            const grid = canvas.grid;
+            const gridWidth = Math.floor(canvas.dimensions.width / grid.size);
+            const gridHeight = Math.floor(canvas.dimensions.height / grid.size);
+            
+            logger.info(`[Territory Service] Importing custom hex grid: ${gridWidth}x${gridHeight}`);
+            
+            // Generate hexes for entire grid
+            const hexes: Hex[] = [];
+            for (let i = 0; i < gridHeight; i++) {
+                for (let j = 0; j < gridWidth; j++) {
+                    const hex = new Hex(
+                        i,          // row
+                        j,          // col
+                        'Unknown',  // Default terrain (editable later)
+                        null,       // No worksite
+                        false,      // No commodity bonus
+                        null,       // No name
+                        0,          // Wilderness (unclaimed)
+                        false,      // No road
+                        []          // No Kingmaker features
+                    );
+                    hexes.push(hex);
+                }
+            }
+            
+            logger.info(`[Territory Service] Generated ${hexes.length} hexes from grid`);
+            
+            // Update kingdom store with territory data
+            await this.updateKingdomStore(hexes);
+            
+            return {
+                success: true,
+                hexesSynced: hexes.length,
+                settlementsSynced: 0
+            };
+            
+        } catch (error) {
+            logger.error('[Territory Service] Failed to import from Foundry grid:', error);
+            return {
+                success: false,
+                hexesSynced: 0,
+                settlementsSynced: 0,
+                error: error instanceof Error ? error.message : 'Unknown error'
+            };
+        }
+    }
+    
+    /**
      * Sync territory data from Kingmaker module to Kingdom store
      */
     async syncFromKingmaker(): Promise<KingmakerSyncResult> {
@@ -53,65 +122,69 @@ export class TerritoryService {
                 };
             }
 
-            const hexStates = km.state.hexes;
+            const hexStates = km.state.hexes || {};
+            const regionHexes = km.region?.hexes;
+            
+            if (!regionHexes) {
+                logger.error('Kingmaker region hexes not available');
+                return {
+                    success: false,
+                    hexesSynced: 0,
+                    settlementsSynced: 0,
+                    error: 'Kingmaker region hexes not available'
+                };
+            }
             
             // Convert and filter claimed hexes
             const hexes: Hex[] = [];
+            const settlementsToAdd: Settlement[] = [];
             
-            logger.debug('Starting Kingmaker sync, found hexes:', Object.keys(hexStates).length);
+            logger.debug('Starting Kingmaker sync, found region hexes:', regionHexes.size);
             
-            for (const hexId of Object.keys(hexStates)) {
-                const hexState = hexStates[hexId];
-                if (!hexState?.claimed) continue;
-                
-                // Convert numeric ID to dot notation
-                const dotNotationId = this.convertHexId(hexId);
-                
-                // Get terrain from the region map only - no fallbacks
-                let terrain = 'Unknown';
-                let zoneId = null;
-                
-                try {
-                    // @ts-ignore - Kingmaker global
-                    const regionHex = km.region?.hexes?.get(parseInt(hexId));
-                    if (regionHex && regionHex.data) {
-                        // Get terrain from the hex's data (this is the source of truth)
-                        const hexData = regionHex.data;
-                        const rawTerrain = hexData.terrain;
-                        
-                        if (rawTerrain) {
-                            terrain = this.normalizeTerrainName(rawTerrain);
-                            zoneId = hexData.zone;
-                            
-                            logger.debug(`Got terrain from region hex ${dotNotationId}:`, {
-                                rawTerrain,
-                                normalizedTerrain: terrain,
-                                zone: zoneId
-                            });
-                        } else {
-                            logger.warn(`Region hex ${dotNotationId} has no terrain data, marking as Unknown`);
-                            terrain = 'Unknown';
-                        }
-                    } else {
-                        logger.warn(`Could not find region hex for ${dotNotationId}, marking as Unknown`);
-                        terrain = 'Unknown';
-                    }
-                } catch (error) {
-                    logger.error(`Error accessing region hex for ${dotNotationId}:`, error);
-                    terrain = 'Unknown';
+            // Iterate through REGION hexes (map data) instead of state hexes (player data)
+            // This ensures we get all ~300 map hexes, not just the ones with state
+            for (const [numericId, regionHex] of regionHexes.entries()) {
+                if (!regionHex || !regionHex.data) {
+                    continue; // Skip invalid hexes
                 }
                 
-                // Debug log for each claimed hex
-                logger.debug(`Processing hex ${dotNotationId}:`, {
-                    terrain: terrain,
-                    zone: zoneId,
-                    camp: hexState.camp,
-                    commodity: hexState.commodity,
-                    features: hexState.features
-                });
+                // Convert numeric ID to dot notation
+                const hexId = String(numericId);
+                const dotNotationId = this.convertHexId(hexId);
                 
-                // Convert worksite
-                const worksite = this.convertWorksite(hexState);
+                // Get terrain from the hex's data (this is the source of truth)
+                const hexData = regionHex.data;
+                const rawTerrain = hexData.terrain;
+                let terrain = 'Unknown';
+                const zoneId = hexData.zone || null;
+                
+                if (rawTerrain) {
+                    terrain = this.normalizeTerrainName(rawTerrain);
+                } else {
+                    terrain = 'Unknown';
+                    logger.debug(`Hex ${dotNotationId} has no terrain data, using Unknown`);
+                }
+                
+                // Look up hex state to get ownership data
+                // If hex has no state, it's wilderness (claimedBy = 0)
+                const hexState = hexStates[hexId] || {};
+                // Convert Kingmaker's claimed (boolean) to our claimedBy (number)
+                const claimedBy = hexState.claimed ? 1 : 0;
+                
+                // Debug log for each hex (reduced logging for performance)
+                if (claimedBy === 1 || hexState.camp || hexState.features?.length > 0) {
+                    logger.debug(`Processing hex ${dotNotationId}:`, {
+                        terrain: terrain,
+                        zone: zoneId,
+                        claimedBy: claimedBy,
+                        camp: hexState.camp,
+                        commodity: hexState.commodity,
+                        features: hexState.features
+                    });
+                }
+                
+                // Convert worksite (if hex has state)
+                const worksite = hexState.camp || hexState.features ? this.convertWorksite(hexState) : null;
                 
                 // Check for special commodity trait
                 const hasSpecialTrait = this.hasMatchingCommodity(hexState, worksite);
@@ -127,29 +200,48 @@ export class TerritoryService {
                     });
                 }
                 
-                // Create hex with features
+                // Parse row and col from dotNotationId
+                const [rowStr, colStr] = dotNotationId.split('.');
+                const row = parseInt(rowStr);
+                const col = parseInt(colStr);
+                
+                // Extract hasRoad from features
+                const hasRoad = hexState.features?.some(f => f.type === 'road') || false;
+                
+                // Create hex with features and ownership
                 const hex = new Hex(
-                    dotNotationId,
+                    row,
+                    col,
                     terrain,
                     worksite,
-                    hasSpecialTrait,
-                    null, // Name can be added later if available
-                    hexState.features || [] // Preserve features from Kingmaker
+                    hasSpecialTrait,  // hasCommodityBonus
+                    null,             // Name can be added later if available
+                    claimedBy,        // Track hex ownership
+                    hasRoad,          // Road flag
+                    hexState.features // Preserve Kingmaker features for debugging
                 );
                 hexes.push(hex);
+                
+                // Extract settlements from hex features (village, town, city, metropolis)
+                // Import ALL settlements from the entire map (claimed or not)
+                // Filtering by claimed territory happens in the UI/display layer
+                if (hexState.features && hexState.features.length > 0) {
+                    const settlements = this.extractSettlements(hexState.features, dotNotationId);
+                    settlementsToAdd.push(...settlements);
+                }
             }
             
-            logger.debug(`Synced ${hexes.length} hexes`);
+            logger.debug(`Synced ${hexes.length} hexes, extracted ${settlementsToAdd.length} settlements`);
             
-            // Update kingdom store with territory data
-            await this.updateKingdomStore(hexes);
+            // Update kingdom store with territory data and settlements
+            await this.updateKingdomStore(hexes, settlementsToAdd);
             
             logger.info(`[Territory Service] Kingdom store update completed successfully`);
             
             return {
                 success: true,
                 hexesSynced: hexes.length,
-                settlementsSynced: 0
+                settlementsSynced: settlementsToAdd.length
             };
             
         } catch (error) {
@@ -166,9 +258,17 @@ export class TerritoryService {
     /**
      * Update the Kingdom store with territory data
      */
-    private async updateKingdomStore(hexes: Hex[]): Promise<void> {
+    private async updateKingdomStore(hexes: Hex[], settlements: Settlement[] = []): Promise<void> {
         // Log territory update attempt
-        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes`);
+        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes and ${settlements.length} settlements`);
+        
+        // Extract roads from hex hasRoad property
+        const roadsBuilt: string[] = [];
+        for (const hex of hexes) {
+            if (hex.hasRoad) {
+                roadsBuilt.push(hex.id);
+            }
+        }
         
         await updateKingdom(state => {
             // Convert Hex instances to plain objects for storage
@@ -183,16 +283,45 @@ export class TerritoryService {
                 
                 return {
                     id: hex.id,
+                    row: hex.row,
+                    col: hex.col,
                     terrain: hex.terrain,
                     worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
-                    hasSpecialTrait: hex.hasSpecialTrait || false,
+                    hasCommodityBonus: hex.hasCommodityBonus || false,
+                    hasRoad: hex.hasRoad || false,
                     name: hex.name || undefined,
-                    features: hex.features || [] // Preserve features
+                    kingmakerFeatures: hex.kingmakerFeatures || [], // Preserve Kingmaker features
+                    claimedBy: hex.claimedBy ?? 0 // Preserve ownership
                 };
             });
-            state.size = hexes.length;
+            // Only count hexes claimed by the player (claimedBy === 1), not total hexes
+            state.size = state.hexes.filter((h: any) => h.claimedBy === 1).length;
             
-            // NOTE: Settlements are NOT modified during sync - they are managed manually by the player
+            // Add extracted settlements to kingdom store (only new ones, merge with existing)
+            if (settlements.length > 0) {
+                const existingSettlements = state.settlements || [];
+                const existingIds = new Set(existingSettlements.map(s => s.id));
+                const newSettlements = settlements.filter(s => !existingIds.has(s.id));
+                
+                if (newSettlements.length > 0) {
+                    state.settlements = [...existingSettlements, ...newSettlements];
+                    logger.info(`[Territory Service] Added ${newSettlements.length} new settlements from map import`);
+                }
+            }
+            
+            // Import roads from Kingmaker features
+            if (roadsBuilt.length > 0) {
+                if (!state.roadsBuilt) {
+                    state.roadsBuilt = [];
+                }
+                // Merge with existing roads, avoiding duplicates
+                const existingRoads = new Set(state.roadsBuilt);
+                for (const hexId of roadsBuilt) {
+                    existingRoads.add(hexId);
+                }
+                state.roadsBuilt = Array.from(existingRoads);
+                logger.info(`[Territory Service] Imported ${roadsBuilt.length} roads from Kingmaker`);
+            }
             
             // Update worksite counts for UI display
             const worksiteCount: Record<string, number> = {};
@@ -465,63 +594,87 @@ export class TerritoryService {
      * Extract settlements from hex features
      * Uses location-based IDs to prevent duplicates
      * Creates settlements with kingmakerLocation and rmLocation (0,0 if unlinked)
+     * IMPORTANT: Only ONE settlement per hex - takes the highest tier if multiple features exist
      */
     private extractSettlements(features: HexFeature[], hexId: string): Settlement[] {
-        const settlements: Settlement[] = [];
-        
         // Get existing settlements to check for duplicates
         const existingSettlements = get(kingdomData).settlements || [];
+        
+        // Parse hex coordinates from ID
+        const [xStr, yStr] = hexId.split('.');
+        const kingmakerX = parseInt(xStr) || 0;
+        const kingmakerY = parseInt(yStr) || 0;
+        const kingmakerLocation = { x: kingmakerX, y: kingmakerY };
+        
+        // Create consistent ID based on Kingmaker location
+        const settlementId = createKingmakerSettlementId(kingmakerLocation);
+        
+        // Check if we already have this settlement
+        const existing = existingSettlements.find(s => s.id === settlementId);
+        if (existing) {
+            logger.debug(`Settlement ${settlementId} already exists, skipping duplicate creation`);
+            return [];
+        }
+        
+        // Find ALL settlement features in this hex and take the HIGHEST tier
+        const settlementFeatures: Array<{ feature: HexFeature, tier: SettlementTier, tierRank: number }> = [];
+        const tierRanking = { 'Village': 1, 'Town': 2, 'City': 3, 'Metropolis': 4 };
         
         for (const feature of features) {
             const tier = this.getSettlementTier(feature.type);
             if (tier) {
-                // Parse hex coordinates from ID
-                const [xStr, yStr] = hexId.split('.');
-                const kingmakerX = parseInt(xStr) || 0;
-                const kingmakerY = parseInt(yStr) || 0;
-                const kingmakerLocation = { x: kingmakerX, y: kingmakerY };
-                
-                // Create consistent ID based on Kingmaker location
-                const settlementId = createKingmakerSettlementId(kingmakerLocation);
-                
-                // Check if we already have this settlement
-                const existing = existingSettlements.find(s => s.id === settlementId);
-                if (existing) {
-                    logger.debug(`Settlement ${settlementId} already exists, skipping duplicate creation`);
-                    continue;
-                }
-                
-                // Get feature name
-                const featureName = (feature as any).name;
-                const hasName = featureName && featureName.trim() && featureName.trim().toLowerCase() !== 'vacant';
-                
-                // rmLocation: (0,0) if no name (unlinked), otherwise same as Kingmaker location (linked)
-                const rmLocation = hasName ? kingmakerLocation : { x: 0, y: 0 };
-                
-                // Create settlement with kingmakerLocation
-                const settlement = createSettlement(
-                    hasName ? featureName.trim() : 'Unnamed Settlement',
-                    rmLocation,
-                    tier as any,
-                    kingmakerLocation // Pass Kingmaker location to factory
-                );
-                
-                // Factory creates the ID, but we need to ensure it's correct
-                settlement.id = settlementId;
-                settlement.kingmakerLocation = kingmakerLocation;
-                
-                logger.debug(`Created settlement ${settlementId}:`, {
-                    name: settlement.name,
-                    kingmakerLocation,
-                    rmLocation,
-                    linked: hasName
+                settlementFeatures.push({
+                    feature,
+                    tier,
+                    tierRank: tierRanking[tier] || 0
                 });
-                
-                settlements.push(settlement);
             }
         }
         
-        return settlements;
+        // No settlement features found
+        if (settlementFeatures.length === 0) {
+            return [];
+        }
+        
+        // Sort by tier rank (highest first) and take the first one
+        settlementFeatures.sort((a, b) => b.tierRank - a.tierRank);
+        const highestTierFeature = settlementFeatures[0];
+        
+        if (settlementFeatures.length > 1) {
+            logger.warn(`Hex ${hexId} has multiple settlement features:`, 
+                settlementFeatures.map(sf => sf.tier).join(', '),
+                `- using highest tier: ${highestTierFeature.tier}`
+            );
+        }
+        
+        // Get feature name
+        const featureName = (highestTierFeature.feature as any).name;
+        const hasName = featureName && featureName.trim() && featureName.trim().toLowerCase() !== 'vacant';
+        
+        // rmLocation: (0,0) if no name (unlinked), otherwise same as Kingmaker location (linked)
+        const rmLocation = hasName ? kingmakerLocation : { x: 0, y: 0 };
+        
+        // Create settlement with kingmakerLocation
+        const settlement = createSettlement(
+            hasName ? featureName.trim() : 'Unnamed Settlement',
+            rmLocation,
+            highestTierFeature.tier as any,
+            kingmakerLocation // Pass Kingmaker location to factory
+        );
+        
+        // Factory creates the ID, but we need to ensure it's correct
+        settlement.id = settlementId;
+        settlement.kingmakerLocation = kingmakerLocation;
+        
+        logger.debug(`Created settlement ${settlementId}:`, {
+            name: settlement.name,
+            tier: highestTierFeature.tier,
+            kingmakerLocation,
+            rmLocation,
+            linked: hasName
+        });
+        
+        return [settlement];
     }
     
     /**
@@ -582,16 +735,23 @@ export class TerritoryService {
             territory = hexes;
         } else {
             const kingdomState = get(kingdomData);
-            territory = (kingdomState.hexes || []).map(hexData => 
-                new Hex(
-                    hexData.id,
+            territory = (kingdomState.hexes || []).map(hexData => {
+                // Parse row and col from stored data or ID
+                const row = (hexData as any).row ?? parseInt(hexData.id.split('.')[0]);
+                const col = (hexData as any).col ?? parseInt(hexData.id.split('.')[1]);
+                
+                return new Hex(
+                    row,
+                    col,
                     hexData.terrain,
                     hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
-                    hexData.hasSpecialTrait || false,
+                    (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
                     hexData.name || null,
-                    hexData.features || []
-                )
-            );
+                    (hexData as any).claimedBy ?? 0,
+                    (hexData as any).hasRoad || false,
+                    (hexData as any).kingmakerFeatures || (hexData as any).features || []
+                );
+            });
         }
         
         // Count hexes by terrain
@@ -633,13 +793,20 @@ export class TerritoryService {
         const hexData = state.hexes?.find((h: any) => h.id === hexId);
         if (!hexData) return null;
         
+        // Parse row and col from stored data or ID
+        const row = (hexData as any).row ?? parseInt(hexId.split('.')[0]);
+        const col = (hexData as any).col ?? parseInt(hexId.split('.')[1]);
+        
         return new Hex(
-            hexData.id,
+            row,
+            col,
             hexData.terrain,
             hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
-            hexData.hasSpecialTrait || false,
+            (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
             hexData.name || null,
-            hexData.features || []
+            (hexData as any).claimedBy ?? 0,
+            (hexData as any).hasRoad || false,
+            (hexData as any).kingmakerFeatures || (hexData as any).features || []
         );
     }
     

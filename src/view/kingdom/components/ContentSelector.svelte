@@ -40,13 +40,15 @@
       {/each}
    </div>
    
-   <button 
-      class="settings-button" 
-      on:click={openSettings}
-      title="Kingdom Settings"
-   >
-      <i class="fas fa-cog"></i>
-   </button>
+   <div class="header-actions">
+      <button 
+         class="action-button settings-button" 
+         on:click={openSettings}
+         title="Kingdom Settings"
+      >
+         <i class="fas fa-cog"></i>
+      </button>
+   </div>
 </div>
 
 <style lang="scss">
@@ -106,7 +108,13 @@
       }
    }
    
-   .settings-button {
+   .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex: 0 0 auto;
+   }
+   
+   .action-button {
       padding: 8px 12px;
       background: rgba(0, 0, 0, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -126,10 +134,17 @@
       
       i {
          font-size: 1.2em;
+      }
+      
+      &.import-button:hover i {
+         transform: translateY(-2px);
+      }
+      
+      &.settings-button i {
          transition: transform 0.3s ease;
       }
       
-      &:hover i {
+      &.settings-button:hover i {
          transform: rotate(90deg);
       }
    }
