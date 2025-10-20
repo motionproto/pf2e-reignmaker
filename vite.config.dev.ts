@@ -1,146 +1,106 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { postcssConfig, terserConfig } from '@typhonjs-fvtt/runtime/rollup';
 import { sveltePreprocess } from 'svelte-preprocess';
 import { defineConfig } from 'vite';
-import * as path from 'path';
-import { foundryHMR, createFoundryProxy } from './vite-foundry-hmr';
 
-// Get Foundry URL from environment or use default
-const FOUNDRY_URL = process.env.FOUNDRY_URL || 'http://localhost:30000';
+import moduleJSON from './module.json' with { type: 'json' };
 
-// Development configuration for hot reloading with Foundry VTT
-export default defineConfig({
-  root: './',  // Use project root for development
-  base: 'http://localhost:5173/',  // Base URL for serving to Foundry
-  
-  resolve: {
-    conditions: ['browser', 'import'],
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@models': path.resolve(__dirname, './src/models'),
-      '@ui': path.resolve(__dirname, './src/ui'),
-      '@api': path.resolve(__dirname, './src/api'),
-      '@core': path.resolve(__dirname, './src/core'),
-      '@styles': path.resolve(__dirname, './src/styles'),
-      '@types': path.resolve(__dirname, './src/types'),
-      '@stores': path.resolve(__dirname, './src/stores'),
-      '@view': path.resolve(__dirname, './src/view'),
-      '@typhonjs-fvtt/runtime': path.resolve(__dirname, 'node_modules/@typhonjs-fvtt/runtime'),
-      '#runtime': path.resolve(__dirname, 'node_modules/@typhonjs-fvtt/runtime'),
-    }
-  },
+const s_PACKAGE_ID = `modules/${moduleJSON.id}`;
 
-  server: {
-    port: 5173,
-    open: false,  // Don't open browser, we'll use Foundry
-    watch: {
-      usePolling: false,
+// A short additional string to add to Svelte CSS hash values to make yours unique
+const s_SVELTE_HASH_ID = 'rm'; // 'rm' for reignmaker
+
+const s_COMPRESS = false;  // Set to true to compress the module bundle.
+const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
+
+export default defineConfig(({ mode }) => {
+  // Provides a custom hash adding the string defined in `s_SVELTE_HASH_ID` to scoped Svelte styles
+  const compilerOptions = mode === 'production' ? {
+    cssHash: ({ hash, css }: { hash: Function, css: string }) => `svelte-${s_SVELTE_HASH_ID}-${hash(css)}`
+  } : {};
+
+  return {
+    root: 'src/',                  // Source location / esbuild root.
+    base: `/${s_PACKAGE_ID}/dist`, // Base module path that 30001 / served dev directory.
+    publicDir: false,              // No public resources to copy.
+    cacheDir: '../.vite-cache',    // Relative from root directory.
+
+    resolve: {
+      conditions: ['browser', 'import']
     },
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5173,
-      overlay: true,  // Show errors in browser overlay
-    },
-    // Full proxy configuration for Foundry
-    proxy: createFoundryProxy(FOUNDRY_URL),
-    // CORS headers for cross-origin access from Foundry
-    cors: {
-      origin: '*',
-      credentials: true
-    },
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Access-Control-Allow-Credentials': 'true'
-    },
-    fs: {
-      // Allow serving files from the dist folder
-      allow: ['..', 'dist']
-    }
-  },
 
-  publicDir: 'dist',  // Serve dist folder as static files
+    esbuild: {
+      target: ['es2022']
+    },
 
-  css: {
-    postcss: {
-      plugins: []
-    }
-  },
+    css: {
+      // Creates a standard configuration for PostCSS with autoprefixer & postcss-preset-env.
+      postcss: postcssConfig({ compress: s_COMPRESS, sourceMap: s_SOURCEMAPS })
+    },
 
-  plugins: [
-    svelte({
-      preprocess: sveltePreprocess({
-        postcss: true,
-      }),
-      hot: true,
-      compilerOptions: {
-        dev: true,
-        hydratable: true,  // Enable hydration for better HMR
+    // About server options:
+    // - Set to `open` to boolean `false` to not open a browser window automatically. This is useful if you set up a
+    // debugger instance in your IDE and launch it with the URL: 'http://localhost:30001/game'.
+    //
+    // - The top proxy entry redirects requests under the module path for `style.css` and following standard static
+    // directories: `assets`, `lang`, and `packs` and will pull those resources from the main Foundry / 30000 server.
+    // This is necessary to reference the dev resources as the root is `/src` and there is no public / static
+    // resources served with this particular Vite configuration. Modify the proxy rule as necessary for your
+    // static resources / project.
+    server: {
+      port: 30001,
+      open: '/game',
+      proxy: {
+        // Serves static files from main Foundry server.
+        [`^(/${s_PACKAGE_ID}/(assets|lang|packs|dist/${moduleJSON.id}.css|dist/fonts.css))`]: 'http://localhost:30000',
+
+        // All other paths besides package ID path are served from main Foundry server.
+        [`^(?!/${s_PACKAGE_ID}/)`]: 'http://localhost:30000',
+
+        // Rewrite incoming `module-id.js` request from Foundry to the dev server `index.ts`.
+        [`/${s_PACKAGE_ID}/dist/${moduleJSON.id}.js`]: {
+          target: `http://localhost:30001/${s_PACKAGE_ID}/dist`,
+          rewrite: () => '/index.ts',
+        },
+
+        // Enable socket.io from main Foundry server.
+        '/socket.io': { target: 'ws://localhost:30000', ws: true }
       }
-    }),
-    foundryHMR()  // Add custom Foundry HMR plugin
-  ],
-
-  // Build configuration (for reference, not used in dev mode)
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: true,
-    minify: false,
-    lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'PF2eKingdomLite',
-      fileName: () => 'index.js',
-      formats: ['es']
     },
-    rollupOptions: {
-      external: [
-        // Foundry globals - these are available in the Foundry environment
-        /^foundry/,
-        'game',
-        'ui',
-        'canvas',
-        'CONFIG',
-        'Hooks',
-        'Actor',
-        'Item',
-        'ChatMessage',
-        'Dialog',
-        'Application',
-        'FormApplication',
-        'Handlebars',
-        'Roll',
-        'CONST'
-      ],
-      output: {
-        format: 'es',
-        globals: {
-          'game': 'game',
-          'ui': 'ui',
-          'canvas': 'canvas',
-          'CONFIG': 'CONFIG',
-          'Hooks': 'Hooks',
-          'Actor': 'Actor',
-          'Item': 'Item',
-          'ChatMessage': 'ChatMessage',
-          'Dialog': 'Dialog',
-          'Application': 'Application',
-          'FormApplication': 'FormApplication',
-          'Handlebars': 'Handlebars',
-          'Roll': 'Roll',
-          'CONST': 'CONST'
-        }
+    build: {
+      outDir: '../dist',
+      emptyOutDir: false,
+      sourcemap: s_SOURCEMAPS,
+      brotliSize: true,
+      minify: s_COMPRESS ? 'terser' : false,
+      target: ['es2022'],
+      terserOptions: s_COMPRESS ? { ...terserConfig(), ecma: 2022 } : void 0,
+      lib: {
+        entry: './index.ts',
+        formats: ['es'],
+        fileName: moduleJSON.id
+      },
+      rollupOptions: {
+        output: {
+          // Rewrite the default style.css to a more recognizable file name.
+          assetFileNames: (assetInfo) =>
+            assetInfo.name === 'style.css' ? `${moduleJSON.id}.css` : assetInfo.name as string,
+        },
+      },
+    },
+
+    // Necessary when using the dev server for top-level await usage inside TRL.
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'es2022'
       }
-    }
-  },
+    },
 
-  optimizeDeps: {
-    include: ['svelte', '@typhonjs-fvtt/runtime'],
-    exclude: ['game', 'ui', 'canvas', 'CONFIG', 'Hooks', 'CONST']
-  },
-
-  define: {
-    'import.meta.env.DEV': 'true'
-  }
+    plugins: [
+      svelte({
+        compilerOptions,
+        preprocess: sveltePreprocess()
+      })
+    ]
+  };
 });
