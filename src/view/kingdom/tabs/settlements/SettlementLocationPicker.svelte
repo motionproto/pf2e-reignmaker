@@ -16,10 +16,15 @@
    // Get all hexes from the map that have settlement features
    $: availableLocations = ($kingdomData.hexes || [])
       .filter(h => {
-         // Only include hexes with settlement features
-         if (!h.features || h.features.length === 0) return false;
+         // Only include hexes in claimed territory
+         const isClaimed = (h as any).claimedBy === 1;
+         if (!isClaimed) return false;
          
-         return h.features.some(f => 
+         // Only include hexes with settlement features
+         const features = (h as any).kingmakerFeatures || (h as any).features || [];
+         if (!features || features.length === 0) return false;
+         
+         return features.some((f: any) => 
             f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
          );
       })
@@ -29,8 +34,9 @@
          const x = parseInt(xStr) || 0;
          const y = parseInt(yStr) || 0;
          
-         // Get settlement type from features
-         const settlementFeature = h.features?.find(f => 
+         // Get settlement type from features (check both field names for compatibility)
+         const features = (h as any).kingmakerFeatures || (h as any).features || [];
+         const settlementFeature = features.find((f: any) => 
             f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
          );
          

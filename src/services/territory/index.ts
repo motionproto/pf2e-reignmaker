@@ -206,7 +206,7 @@ export class TerritoryService {
                 const col = parseInt(colStr);
                 
                 // Extract hasRoad from features
-                const hasRoad = hexState.features?.some(f => f.type === 'road') || false;
+                const hasRoad = hexState.features?.some((f: HexFeature) => f.type === 'road') || false;
                 
                 // Create hex with features and ownership
                 const hex = new Hex(
@@ -651,13 +651,16 @@ export class TerritoryService {
         const featureName = (highestTierFeature.feature as any).name;
         const hasName = featureName && featureName.trim() && featureName.trim().toLowerCase() !== 'vacant';
         
-        // rmLocation: (0,0) if no name (unlinked), otherwise same as Kingmaker location (linked)
-        const rmLocation = hasName ? kingmakerLocation : { x: 0, y: 0 };
+        // Skip unnamed/vacant features - they remain as hex features for location picker
+        if (!hasName) {
+            logger.debug(`Skipping unnamed/vacant settlement feature at ${hexId}`);
+            return [];
+        }
         
-        // Create settlement with kingmakerLocation
+        // Create settlement with kingmakerLocation (only for named settlements)
         const settlement = createSettlement(
-            hasName ? featureName.trim() : 'Unnamed Settlement',
-            rmLocation,
+            featureName.trim(),
+            kingmakerLocation, // Use Kingmaker location directly for named settlements
             highestTierFeature.tier as any,
             kingmakerLocation // Pass Kingmaker location to factory
         );
@@ -670,8 +673,7 @@ export class TerritoryService {
             name: settlement.name,
             tier: highestTierFeature.tier,
             kingmakerLocation,
-            rmLocation,
-            linked: hasName
+            linked: true // Always linked since we only create named settlements
         });
         
         return [settlement];
@@ -870,13 +872,13 @@ export class TerritoryService {
         return;
       }
       
-      // Calculate hex key from settlement location (same format Kingmaker uses)
-      const hexKey = (100 * settlement.location.x) + settlement.location.y;
+      // Calculate hex key from settlement location (Kingmaker format: i * 1000 + j)
+      const hexKey = (1000 * settlement.location.x) + settlement.location.y;
       
       logger.debug(`🗺️ [Territory Service] Updating settlement on map:`, {
         settlement: settlement.name,
         tier: settlement.tier,
-        location: `${settlement.location.x}:${settlement.location.y}`,
+        location: `${settlement.location.x}.${settlement.location.y}`,
         hexKey: hexKey
       });
       
@@ -962,11 +964,11 @@ export class TerritoryService {
         return;
       }
       
-      // Calculate hex key
-      const hexKey = (100 * location.x) + location.y;
+      // Calculate hex key (Kingmaker format: i * 1000 + j)
+      const hexKey = (1000 * location.x) + location.y;
       
       logger.debug(`🗺️ [Territory Service] Clearing settlement name from map:`, {
-        location: `${location.x}:${location.y}`,
+        location: `${location.x}.${location.y}`,
         hexKey: hexKey
       });
       
@@ -1039,11 +1041,11 @@ export class TerritoryService {
         return;
       }
       
-      // Calculate hex key
-      const hexKey = (100 * location.x) + location.y;
+      // Calculate hex key (Kingmaker format: i * 1000 + j)
+      const hexKey = (1000 * location.x) + location.y;
       
       logger.debug(`🗺️ [Territory Service] Removing settlement from map:`, {
-        location: `${location.x}:${location.y}`,
+        location: `${location.x}.${location.y}`,
         hexKey: hexKey
       });
       

@@ -92,6 +92,23 @@ function registerModuleSettings() {
         default: 8
     });
     
+    // Register road width setting
+    // @ts-ignore - Foundry globals and range slider support
+    game.settings.register('pf2e-reignmaker', 'roadWidth', {
+        name: 'Road Width',
+        hint: 'Width of roads on the kingdom map in pixels (12-32). Borders will be 4 pixels wider.',
+        scope: 'client',  // Per-user setting
+        config: true,     // Show in module settings
+        type: Number,
+        // @ts-ignore - range is supported by Foundry but not in type definitions
+        range: {
+            min: 12,
+            max: 32,
+            step: 1
+        },
+        default: 32
+    });
+    
     // Register log level setting for console logging
     // @ts-ignore - Foundry globals
     game.settings.register('pf2e-reignmaker', 'logLevel', {

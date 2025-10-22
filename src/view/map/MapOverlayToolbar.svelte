@@ -12,18 +12,67 @@
   let toolbarElement: HTMLDivElement;
 
   // Toggle states
+  let terrainActive = false;
   let territoriesActive = false;
+  let territoryBorderActive = false;
   let settlementsActive = false;
   let roadsActive = false;
 
   // Map layer instance
   const mapLayer = ReignMakerMapLayer.getInstance();
 
-  // Load saved position from localStorage
-  onMount(() => {
+  // Load saved position and overlay states from localStorage
+  onMount(async () => {
     const savedPosition = localStorage.getItem('reignmaker-toolbar-position');
     if (savedPosition) {
       position = JSON.parse(savedPosition);
+    }
+    
+    // IMPORTANT: Ensure PIXI container is visible when toolbar opens
+    // This is critical for overlays to be visible
+    mapLayer.showPixiContainer();
+    console.log('[MapOverlayToolbar] Ensured PIXI container is visible');
+    
+    // Load saved overlay states
+    const savedStates = localStorage.getItem('reignmaker-overlay-states');
+    if (savedStates) {
+      try {
+        const states = JSON.parse(savedStates);
+        
+        // Restore terrain overlay
+        if (states.terrainActive) {
+          terrainActive = true;
+          await showTerrain();
+        }
+        
+        // Restore territory overlay
+        if (states.territoriesActive) {
+          territoriesActive = true;
+          await showTerritories();
+        }
+        
+        // Restore territory border
+        if (states.territoryBorderActive) {
+          territoryBorderActive = true;
+          await showTerritoryBorder();
+        }
+        
+        // Restore settlements overlay
+        if (states.settlementsActive) {
+          settlementsActive = true;
+          await showSettlements();
+        }
+        
+        // Restore roads overlay
+        if (states.roadsActive) {
+          roadsActive = true;
+          await showRoads();
+        }
+        
+        console.log('[MapOverlayToolbar] Restored overlay states:', states);
+      } catch (error) {
+        console.error('[MapOverlayToolbar] Failed to restore overlay states:', error);
+      }
     }
   });
 
@@ -51,15 +100,46 @@
     }
   }
 
+  // Save overlay states to localStorage whenever they change
+  function saveOverlayStates() {
+    const states = {
+      terrainActive,
+      territoriesActive,
+      territoryBorderActive,
+      settlementsActive,
+      roadsActive
+    };
+    localStorage.setItem('reignmaker-overlay-states', JSON.stringify(states));
+    console.log('[MapOverlayToolbar] Saved overlay states:', states);
+  }
+
   // Toggle handlers
+  async function toggleTerrain() {
+    terrainActive = !terrainActive;
+    
+    if (terrainActive) {
+      await showTerrain();
+    } else {
+      // Clear and hide terrain layer
+      mapLayer.clearLayer('terrain-overlay');
+      mapLayer.hideLayer('terrain-overlay');
+    }
+    
+    saveOverlayStates();
+  }
+
   async function toggleTerritories() {
     territoriesActive = !territoriesActive;
     
     if (territoriesActive) {
       await showTerritories();
     } else {
+      // Clear and hide only the territory fill layer (border is independent)
+      mapLayer.clearLayer('kingdom-territory');
       mapLayer.hideLayer('kingdom-territory');
     }
+    
+    saveOverlayStates();
   }
 
   async function toggleSettlements() {
@@ -68,8 +148,26 @@
     if (settlementsActive) {
       await showSettlements();
     } else {
+      // Clear and hide layer to completely remove visuals
+      mapLayer.clearLayer('settlements-overlay');
       mapLayer.hideLayer('settlements-overlay');
     }
+    
+    saveOverlayStates();
+  }
+
+  async function toggleTerritoryBorder() {
+    territoryBorderActive = !territoryBorderActive;
+    
+    if (territoryBorderActive) {
+      await showTerritoryBorder();
+    } else {
+      // Clear outline only (keep territory fill if active)
+      mapLayer.clearLayer('kingdom-territory-outline');
+      mapLayer.hideLayer('kingdom-territory-outline');
+    }
+    
+    saveOverlayStates();
   }
 
   async function toggleRoads() {
@@ -78,16 +176,43 @@
     if (roadsActive) {
       await showRoads();
     } else {
-      // Clear and hide layers to remove all visual elements
-      mapLayer.clearLayer('roads-overlay');
-      mapLayer.clearLayer('routes');
-      mapLayer.hideLayer('roads-overlay');
-      mapLayer.hideLayer('routes');
+      // Clear and hide road layers (overlay + routes)
+      mapLayer.clearRoadLayers();
     }
+    
+    saveOverlayStates();
+  }
+
+  // Show terrain overlay (colors hexes by terrain type)
+  async function showTerrain() {
+    const kingmaker = (globalThis as any).game?.kingmaker;
+    if (!kingmaker?.region?.hexes) {
+      ui?.notifications?.warn('No terrain data available from Kingmaker module');
+      terrainActive = false;
+      return;
+    }
+
+    // Get all hexes with terrain data from Kingmaker module
+    const hexData = kingmaker.region.hexes
+      .filter((h: any) => h.data?.terrain)
+      .map((h: any) => ({
+        id: `${h.offset.i}.${h.offset.j}`,
+        terrain: h.data.terrain
+      }));
+
+    if (hexData.length === 0) {
+      ui?.notifications?.warn('No hexes with terrain data found');
+      terrainActive = false;
+      return;
+    }
+
+    console.log('[MapOverlayToolbar] Drawing terrain overlay for', hexData.length, 'hexes');
+    mapLayer.drawTerrainOverlay(hexData);
   }
 
   // Show territories (claimed hexes in party color)
   async function showTerritories() {
+    // Clear only the territory fill layer (border is independent)
     mapLayer.clearLayer('kingdom-territory');
     
     const canvas = (globalThis as any).canvas;
@@ -121,21 +246,55 @@
       return;
     }
 
-    // Get party color (default to royal blue)
-    const partyColor = 0x4169E1; // TODO: Make this configurable
+    // Get party color (default to bright dodger blue)
+    const partyColor = 0x1E90FF; // Dodger blue - brighter than royal blue
     
     const style: HexStyle = {
       fillColor: partyColor,
-      fillAlpha: 0.3,
-      borderColor: partyColor,
-      borderWidth: 2,
-      borderAlpha: 0.8
+      fillAlpha: 0.4,
+      borderWidth: 0  // No border on territory fill
     };
     
-    // Z-index 10: kingdom territory (bottom layer)
-    const layer = mapLayer.createLayer('kingdom-territory', 10);
+    // Let drawHexes manage the layer creation with correct z-index
     mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
     mapLayer.showLayer('kingdom-territory');
+  }
+
+  // Show territory border (outline around claimed territory)
+  async function showTerritoryBorder() {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.ready) {
+      console.warn('[MapOverlayToolbar] Canvas not ready');
+      return;
+    }
+
+    // Get claimed hexes from kingdom data
+    let hexIds: string[] = [];
+    
+    // Try Kingmaker module first
+    const kingmaker = (globalThis as any).game?.kingmaker;
+    if (kingmaker?.region?.hexes) {
+      const claimedHexes = kingmaker.region.hexes.filter((h: any) => h.data?.claimed);
+      if (claimedHexes && claimedHexes.length > 0) {
+        hexIds = claimedHexes.map((h: any) => `${h.offset.i}.${h.offset.j}`);
+      }
+    }
+    
+    // Fallback to KingdomActor data
+    if (hexIds.length === 0 && $kingdomData?.hexes) {
+      hexIds = $kingdomData.hexes
+        .filter((h: any) => h.claimedBy === 1) // Only player-claimed
+        .map((h: any) => h.id);
+    }
+    
+    if (hexIds.length === 0) {
+      ui?.notifications?.warn('No claimed territory to display border for');
+      territoryBorderActive = false;
+      return;
+    }
+
+    // Draw territory outline
+    mapLayer.drawTerritoryOutline(hexIds);
   }
 
   // Show settlements (hexes with settlements highlighted)
@@ -170,16 +329,15 @@
       borderAlpha: 1.0
     };
     
-    // Z-index 30: settlements (top layer)
-    const layer = mapLayer.createLayer('settlements-overlay', 30);
+    // Let drawHexes manage the layer creation with correct z-index
     mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
     mapLayer.showLayer('settlements-overlay');
   }
 
   // Show roads (hexes with roads connected by lines)
   async function showRoads() {
-    mapLayer.clearLayer('roads-overlay');
-    mapLayer.clearLayer('routes');
+    // Clear all road-related layers before redrawing
+    mapLayer.clearRoadLayers();
     
     // Get road hex IDs from territory service (single source of truth)
     const roadHexIds = territoryService.getRoads();
@@ -191,25 +349,8 @@
     }
     
     console.log('[MapOverlayToolbar] Displaying roads:', roadHexIds);
-
-    // Darker grey highlight for road hexes
-    const style: HexStyle = {
-      fillColor: 0x404040, // Dark grey
-      fillAlpha: 0.5,
-      borderColor: 0x303030,
-      borderWidth: 2,
-      borderAlpha: 0.9
-    };
     
-    // Z-index 20: roads (middle layer)
-    const roadsLayer = mapLayer.createLayer('roads-overlay', 20);
-    const routesLayer = mapLayer.createLayer('routes', 20);
-    
-    // Draw hex highlights
-    mapLayer.drawHexes(roadHexIds, style, 'roads-overlay');
-    mapLayer.showLayer('roads-overlay');
-    
-    // Draw road connections (lines connecting adjacent road hexes)
+    // Let drawRoadConnections manage the layer creation with correct z-index
     mapLayer.drawRoadConnections(roadHexIds, 'routes');
     mapLayer.showLayer('routes');
   }
@@ -222,9 +363,14 @@
     mapLayer.clearAllLayers();
     
     // Deactivate all toggles
+    terrainActive = false;
     territoriesActive = false;
+    territoryBorderActive = false;
     settlementsActive = false;
     roadsActive = false;
+    
+    // Save cleared state
+    saveOverlayStates();
     
     ui?.notifications?.info('Map overlays cleared');
   }
@@ -242,21 +388,8 @@
 
   // Dispatch custom event to notify parent when toolbar is closed
   function closeToolbar() {
-    // Clear and hide all active overlays
-    if (territoriesActive) {
-      mapLayer.clearLayer('kingdom-territory');
-      mapLayer.hideLayer('kingdom-territory');
-    }
-    if (settlementsActive) {
-      mapLayer.clearLayer('settlements-overlay');
-      mapLayer.hideLayer('settlements-overlay');
-    }
-    if (roadsActive) {
-      mapLayer.clearLayer('roads-overlay');
-      mapLayer.clearLayer('routes');
-      mapLayer.hideLayer('roads-overlay');
-      mapLayer.hideLayer('routes');
-    }
+    // Don't clear overlays when manually closing - they should stay visible
+    // Only hide the toolbar UI itself
     
     // Dispatch close event
     toolbarElement.dispatchEvent(new CustomEvent('close', { bubbles: true }));
@@ -285,12 +418,32 @@
   <div class="toolbar-buttons">
     <button 
       class="toolbar-button" 
+      class:active={terrainActive}
+      on:click={toggleTerrain}
+      title="Toggle Terrain Overlay"
+    >
+      <i class="fas fa-mountain"></i>
+      <span>Terrain</span>
+    </button>
+    
+    <button 
+      class="toolbar-button" 
       class:active={territoriesActive}
       on:click={toggleTerritories}
       title="Toggle Territory Overlay"
     >
       <i class="fas fa-flag"></i>
       <span>Territory</span>
+    </button>
+    
+    <button 
+      class="toolbar-button" 
+      class:active={territoryBorderActive}
+      on:click={toggleTerritoryBorder}
+      title="Toggle Territory Border"
+    >
+      <i class="fas fa-vector-square"></i>
+      <span>Border</span>
     </button>
     
     <button 

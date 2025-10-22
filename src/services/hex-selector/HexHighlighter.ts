@@ -127,7 +127,7 @@ export class HexHighlighter {
   /**
    * Highlight a selected hex
    */
-  highlightSelection(hexId: string, type: HexSelectionType): void {
+  highlightSelection(type: HexSelectionType, hexId: string): void {
     const colorKey = this.getNewColorKey(type);
     const config = HEX_HIGHLIGHT_COLORS[colorKey];
     
@@ -138,8 +138,8 @@ export class HexHighlighter {
     graphics.name = `Selection_${hexId}`;
     graphics.zIndex = 10; // Above kingdom territory
     
-    // Parse hex ID (colon notation "5:18") to Foundry coordinates
-    const [i, j] = hexId.split(':').map(Number);
+    // Parse hex ID (dot notation "50.18") to Foundry coordinates
+    const [i, j] = hexId.split('.').map(Number);
     
     // Get vertices directly from Foundry's grid
     const canvas = (globalThis as any).canvas;

@@ -2,23 +2,27 @@
  * Coordinate Conversion Helpers for Hex Selection
  * 
  * Handles conversion between:
- * - Foundry GridHex instances
- * - Kingmaker hex ID format (60:19)
+ * - Foundry GridHex instances with {i, j} offsets
+ * - Dot notation hex IDs (i.j format like "50.18")
  * - Pixel positions
+ * 
+ * IMPORTANT: Uses dot notation consistently with ReignMakerMapLayer
  */
 
 /**
- * Convert GridHex to Kingmaker hex ID format (60:19)
+ * Convert GridHex offset to dot notation hex ID (i.j format)
+ * Example: {i: 50, j: 18} -> "50.18"
  */
 export function hexToKingmakerId(offset: { i: number; j: number }): string {
-  return `${offset.i}:${String(offset.j).padStart(2, '0')}`;
+  return `${offset.i}.${offset.j}`;
 }
 
 /**
- * Convert Kingmaker hex ID to offset coordinates
+ * Convert dot notation hex ID to offset coordinates
+ * Example: "50.18" -> {i: 50, j: 18}
  */
 export function kingmakerIdToOffset(hexId: string): { i: number; j: number } {
-  const [i, j] = hexId.split(':').map(Number);
+  const [i, j] = hexId.split('.').map(Number);
   return { i, j };
 }
 

@@ -8,10 +8,71 @@ import SettlementLocationPicker from '../tabs/settlements/SettlementLocationPick
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
 
-// Reactive: Get settlements without valid map locations
-$: unmappedSettlements = $kingdomData.settlements?.filter(
-   s => s.location.x === 0 && s.location.y === 0
-) || [];
+// Reactive: Get settlements without valid map locations (in claimed territory)
+$: unmappedSettlements = $kingdomData.settlements?.filter(s => {
+   // Must be unmapped
+   if (s.location.x !== 0 || s.location.y !== 0) return false;
+   
+   // Must have a kingmakerLocation
+   if (!s.kingmakerLocation) return false;
+   
+   const kmLocation = s.kingmakerLocation; // Type narrowing
+   
+   // Find the hex at that kingmaker location
+   const kmHex = $kingdomData.hexes?.find((h: any) => {
+      const [xStr, yStr] = h.id.split('.');
+      const x = parseInt(xStr) || 0;
+      const y = parseInt(yStr) || 0;
+      return x === kmLocation.x && y === kmLocation.y;
+   });
+   
+   // Only show if hex is in claimed territory
+   return kmHex && (kmHex as any).claimedBy === 1;
+}) || [];
+
+// Reactive: Get hexes with settlement features but no associated settlement (in claimed territory)
+$: unassignedHexes = ($kingdomData.hexes || [])
+   .filter((h: any) => {
+      // Must be in claimed territory
+      if (h.claimedBy !== 1) return false;
+      
+      // Must have settlement features
+      const features = h.kingmakerFeatures || h.features || [];
+      const hasSettlementFeature = features.some((f: any) => 
+         f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+      );
+      if (!hasSettlementFeature) return false;
+      
+      // Check if any settlement is assigned to this hex
+      const [xStr, yStr] = h.id.split('.');
+      const x = parseInt(xStr) || 0;
+      const y = parseInt(yStr) || 0;
+      
+      const hasAssignedSettlement = $kingdomData.settlements?.some(s => 
+         s.location.x === x && s.location.y === y
+      );
+      
+      // Show if no settlement is assigned
+      return !hasAssignedSettlement;
+   })
+   .map((h: any) => {
+      const [xStr, yStr] = h.id.split('.');
+      const x = parseInt(xStr) || 0;
+      const y = parseInt(yStr) || 0;
+      
+      const features = h.kingmakerFeatures || h.features || [];
+      const settlementFeature = features.find((f: any) => 
+         f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+      );
+      
+      return {
+         id: h.id,
+         x,
+         y,
+         tier: settlementFeature?.type || 'Settlement',
+         name: settlementFeature?.name || 'Unnamed'
+      };
+   });
 
 // Constants
 const MAX_FAME = 3;
@@ -42,7 +103,7 @@ async function initializePhase() {
 
 <div class="status-phase">
    <!-- Unmapped Settlements Alert Section -->
-   {#if unmappedSettlements.length > 0}
+   {#if unmappedSettlements.length > 0 || unassignedHexes.length > 0}
       <div class="phase-section unmapped-settlements-alert">
          <div class="section-header">
             <i class="fas fa-exclamation-triangle"></i>
@@ -58,9 +119,22 @@ async function initializePhase() {
                         <strong>{settlement.name}</strong>
                         <span class="tier-badge">{settlement.tier}</span>
                      </div>
-                     <span class="alert-message">Not placed on map</span>
+                     <span class="alert-message">Settlement not assigned to hex</span>
                   </div>
                   <SettlementLocationPicker {settlement} />
+               </div>
+            {/each}
+            
+            {#each unassignedHexes as hex}
+               <div class="settlement-alert">
+                  <div class="alert-content">
+                     <i class="fas fa-map-marker-alt"></i>
+                     <div class="settlement-info">
+                        <strong>{hex.name || 'Unnamed'}</strong>
+                        <span class="tier-badge">{hex.tier}</span>
+                     </div>
+                     <span class="alert-message">Hex {hex.x}:{hex.y.toString().padStart(2, '0')} has no settlement assigned</span>
+                  </div>
                </div>
             {/each}
          </div>
