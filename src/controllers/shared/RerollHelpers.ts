@@ -33,7 +33,7 @@ export async function canRerollWithFame(): Promise<{ canReroll: boolean; current
     return { canReroll: false, currentFame: 0, error: 'Kingdom actor not found' };
   }
   
-  const kingdom = actor.getKingdom();
+  const kingdom = actor.getKingdomData();
   const currentFame = kingdom?.fame || 0;
   
   if (currentFame < 1) {
@@ -54,7 +54,7 @@ export async function deductFameForReroll(): Promise<RerollResult> {
     return { success: false, error: 'Kingdom actor not found' };
   }
   
-  const kingdom = actor.getKingdom();
+  const kingdom = actor.getKingdomData();
   const previousFame = kingdom?.fame || 0;
   
   if (previousFame < 1) {
@@ -62,7 +62,7 @@ export async function deductFameForReroll(): Promise<RerollResult> {
   }
   
   try {
-    await actor.updateKingdom((k) => {
+    await actor.updateKingdomData((k) => {
       k.fame = previousFame - 1;
     });
     
@@ -87,7 +87,7 @@ export async function restoreFameAfterFailedReroll(previousFame: number): Promis
   }
   
   try {
-    await actor.updateKingdom((k) => {
+    await actor.updateKingdomData((k) => {
       k.fame = previousFame;
     });
     

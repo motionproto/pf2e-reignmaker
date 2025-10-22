@@ -57,7 +57,7 @@
       try {
          const { ensureKingdomActor } = await import('../../hooks/kingdomSync');
          const { initializeKingdomActor } = await import('../../stores/KingdomStore');
-         const { KingdomActor } = await import('../../actors/KingdomActor');
+         const { wrapKingdomActor } = await import('../../utils/kingdom-actor-wrapper');
          
          console.log('[KingdomAppShell] Ensuring kingdom actor exists...');
          console.log('[KingdomAppShell] About to call ensureKingdomActor()...');
@@ -72,94 +72,19 @@
          if (foundryActor) {
             console.log('[KingdomAppShell] Initializing kingdom actor store...');
             
-            // Create a kingdom actor wrapper that adds our methods to the foundry actor
-            const kingdomActor = foundryActor;
-            
-            // Add our kingdom methods to the actor
-            kingdomActor.getKingdom = function() {
-               return this.getFlag('pf2e-reignmaker', 'kingdom-data') || null;
-            };
-            kingdomActor.setKingdom = async function(kingdom: any) {
-               await this.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
-            };
-            kingdomActor.updateKingdom = async function(updater: any) {
-               const kingdom = this.getKingdom();
-               if (!kingdom) {
-                  console.warn('[KingdomActor] No kingdom data found, cannot update');
-                  return;
-               }
-               updater(kingdom);
-               await this.setKingdom(kingdom);
-            };
-            kingdomActor.initializeKingdom = async function(name = 'New Kingdom') {
-               const { createDefaultKingdom } = await import('../../actors/KingdomActor');
-               const defaultKingdom = createDefaultKingdom(name);
-               await this.setKingdom(defaultKingdom);
-            };
-            kingdomActor.isCurrentPhaseComplete = function() {
-               const kingdom = this.getKingdom();
-               if (!kingdom) return false;
-               return kingdom.phasesCompleted?.includes(kingdom.currentPhase) || false;
-            };
-            kingdomActor.modifyResource = async function(resource: any, amount: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  const current = kingdom.resources[resource] || 0;
-                  kingdom.resources[resource] = Math.max(0, current + amount);
-               });
-            };
-            kingdomActor.setResource = async function(resource: any, amount: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.resources[resource] = Math.max(0, amount);
-               });
-            };
-            kingdomActor.addSettlement = async function(settlement: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.settlements.push(settlement);
-               });
-            };
-            kingdomActor.removeSettlement = async function(settlementId: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.settlements = kingdom.settlements.filter((s: any) => s.id !== settlementId);
-               });
-            };
-            kingdomActor.updateSettlement = async function(settlementId: any, updates: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  const index = kingdom.settlements.findIndex((s: any) => s.id === settlementId);
-                  if (index >= 0) {
-                     kingdom.settlements[index] = { ...kingdom.settlements[index], ...updates };
-                  }
-               });
-            };
-            kingdomActor.addArmy = async function(army: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.armies.push(army);
-               });
-            };
-            kingdomActor.removeArmy = async function(armyId: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.armies = kingdom.armies.filter((a: any) => a.id !== armyId);
-               });
-            };
-            kingdomActor.addModifier = async function(modifier: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.modifiers.push(modifier);
-               });
-            };
-            kingdomActor.removeModifier = async function(modifierId: any) {
-               await this.updateKingdom((kingdom: any) => {
-                  kingdom.modifiers = kingdom.modifiers.filter((m: any) => m.id !== modifierId);
-               });
-            };
+            // Wrap the actor with kingdom methods (if not already wrapped)
+            // Note: ensureKingdomActor() already wraps it, but this is safe (checks _kingdomWrapped flag)
+            const kingdomActor = wrapKingdomActor(foundryActor);
             
             // Initialize the kingdom data if it doesn't exist
-            if (!kingdomActor.getKingdom()) {
+            if (!kingdomActor.getKingdomData()) {
                await kingdomActor.initializeKingdom('New Kingdom');
             } else {
                // Migration: Ensure diplomaticCapacity is set (for kingdoms created before this was added)
-               const kingdom = kingdomActor.getKingdom();
+               const kingdom = kingdomActor.getKingdomData();
                if (kingdom && kingdom.resources && kingdom.resources.diplomaticCapacity === 0) {
                   console.log('[KingdomAppShell] Migrating diplomaticCapacity from 0 to 1');
-                  await kingdomActor.updateKingdom((k) => {
+                  await kingdomActor.updateKingdomData((k: any) => {
                      if (!k.resources.diplomaticCapacity || k.resources.diplomaticCapacity === 0) {
                         k.resources.diplomaticCapacity = 1;
                      }
@@ -190,7 +115,7 @@
             // Check if we should show welcome dialog BEFORE syncing
             // This allows users to choose their import method
             await tick();
-            const kingdomState = kingdomActor.getKingdom();
+            const kingdomState = kingdomActor.getKingdomData();
             const hasNoTerritoryData = !kingdomState?.hexes || kingdomState.hexes.length === 0;
             
             if (hasNoTerritoryData) {
@@ -219,7 +144,7 @@
             // Recalculate all settlement derived properties to ensure consistency
             console.log('[KingdomAppShell] Recalculating settlement properties...');
             const { settlementService } = await import('../../services/settlements');
-            const kingdom = kingdomActor.getKingdom();
+            const kingdom = kingdomActor.getKingdomData();
             if (kingdom?.settlements) {
                for (const settlement of kingdom.settlements) {
                   await settlementService.updateSettlementDerivedProperties(settlement.id);
@@ -230,9 +155,9 @@
             console.error('[KingdomAppShell] No kingdom actor found! This is the problem - initialization stopped here.');
             console.error('[KingdomAppShell] Please ensure your party actor has kingdom data initialized.');
          }
-      } catch (error) {
+      } catch (error: any) {
          console.error('[KingdomAppShell] Error during initialization:', error);
-         console.error('[KingdomAppShell] Error stack:', error.stack);
+         console.error('[KingdomAppShell] Error stack:', error?.stack);
       }
    });
 

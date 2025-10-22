@@ -60,7 +60,7 @@ export async function createGameCommandsResolver() {
         }
 
         // Get kingdom data for naming
-        const kingdom = actor.getKingdom();
+        const kingdom = actor.getKingdomData();
         if (!kingdom) {
           return {
             success: false,

@@ -85,7 +85,7 @@ export async function createStatusPhaseController() {
       const actor = getKingdomActor();
       if (!actor) return;
       
-      const kingdom = actor.getKingdom();
+      const kingdom = actor.getKingdomData();
       if (!kingdom || !kingdom.turnState) return;
       
       // Clear applied outcomes from turnState (automatically cleared by turnState reset)
@@ -113,7 +113,7 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      await actor.updateKingdom(k => {
+      await actor.updateKingdomData(k => {
         if (!k.buildQueue || k.buildQueue.length === 0) return;
         
         const beforeCount = k.buildQueue.length;
@@ -138,7 +138,7 @@ export async function createStatusPhaseController() {
       }
       
       // Clear non-storable resources (lumber, stone, ore)
-      await actor.updateKingdom((kingdom) => {
+      await actor.updateKingdomData((kingdom) => {
         const decayedLumber = kingdom.resources.lumber || 0;
         const decayedStone = kingdom.resources.stone || 0;
         const decayedOre = kingdom.resources.ore || 0;
@@ -159,7 +159,7 @@ export async function createStatusPhaseController() {
     async initializeFame() {
       const actor = getKingdomActor();
       if (actor) {
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           kingdom.fame = 1;
         });
         logger.debug('✨ [StatusPhaseController] Fame initialized to 1');
@@ -180,7 +180,7 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      const kingdom = actor.getKingdom();
+      const kingdom = actor.getKingdomData();
       if (!kingdom) {
         logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
@@ -235,7 +235,7 @@ export async function createStatusPhaseController() {
           });
         }
         
-        await actor.updateKingdom((k) => {
+        await actor.updateKingdomData((k) => {
           k.unrest = (k.unrest || 0) + totalBaseUnrest;
           
           // Store display modifiers in turnState for Status phase UI
@@ -273,7 +273,7 @@ export async function createStatusPhaseController() {
       }
 
       // Get active modifiers with permanent duration
-      const kingdom = actor.getKingdom();
+      const kingdom = actor.getKingdomData();
       if (!kingdom) {
         logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
@@ -309,7 +309,7 @@ export async function createStatusPhaseController() {
               continue;
             }
 
-            await actor.updateKingdom((kingdom) => {
+            await actor.updateKingdomData((kingdom) => {
               if (!kingdom.resources) {
                 kingdom.resources = {};
               }
@@ -339,7 +339,7 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      const kingdom = actor.getKingdom();
+      const kingdom = actor.getKingdomData();
       if (!kingdom) {
         logger.error('❌ [StatusPhaseController] No kingdom data available');
         return;
@@ -352,7 +352,7 @@ export async function createStatusPhaseController() {
         logger.debug('🔄 [StatusPhaseController] No turnState found, initializing...');
         
         // Fresh initialization (no migration needed - data is already clean)
-        await actor.updateKingdom((k) => {
+        await actor.updateKingdomData((k) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
         
@@ -365,7 +365,7 @@ export async function createStatusPhaseController() {
         logger.debug('🔄 [StatusPhaseController] Turn advanced, resetting turnState...');
         logger.debug(`   Previous turn: ${kingdom.turnState.turnNumber}, Current turn: ${currentTurn}`);
         
-        await actor.updateKingdom((k) => {
+        await actor.updateKingdomData((k) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
         

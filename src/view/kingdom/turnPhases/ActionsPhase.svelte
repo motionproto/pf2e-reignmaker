@@ -247,7 +247,7 @@
         if (pendingUpgradeAction?.settlementId) {
           const actor = getKingdomActor();
           if (actor) {
-            const kingdom = actor.getKingdom();
+            const kingdom = actor.getKingdomData();
             const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
             
             console.log('   Found settlement:', settlement?.name);
@@ -298,7 +298,7 @@
     if (actionId === 'upgrade-settlement' && pendingUpgradeAction?.settlementId) {
       const actor = getKingdomActor();
       if (actor && pendingUpgradeAction) {
-        const kingdom = actor.getKingdom();
+        const kingdom = actor.getKingdomData();
         const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
         
         if (settlement) {
@@ -482,7 +482,7 @@
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       ui.notifications?.error('No kingdom data available');
       pendingUpgradeAction = null;
@@ -529,7 +529,7 @@
       await settlementService.updateSettlementLevel(pendingUpgradeAction.settlementId, newLevel);
       
       // Get updated settlement for message
-      const updatedKingdom = actor.getKingdom();
+      const updatedKingdom = actor.getKingdomData();
       const updatedSettlement = updatedKingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
       
       if (updatedSettlement) {
@@ -594,7 +594,7 @@
         if (costModifier !== 1.0) {
           const actor = getKingdomActor();
           if (actor) {
-            await actor.updateKingdom((kingdom) => {
+            await actor.updateKingdomData((kingdom) => {
               const project = kingdom.buildQueue?.find(p => p.id === result.project!.id);
               if (project && project.totalCost) {
                 // Work with plain objects (already converted by BuildQueueService)
@@ -649,7 +649,7 @@
       // Clear aid modifiers for this specific action after roll completes
       const actor = getKingdomActor();
       if (actor) {
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           if (kingdom.turnState?.actionsPhase?.activeAids) {
             const beforeCount = kingdom.turnState.actionsPhase.activeAids.length;
             kingdom.turnState.actionsPhase.activeAids = 
@@ -1038,7 +1038,7 @@
       // Get settlement name for metadata
       const actor = getKingdomActor();
       if (actor) {
-        const kingdom = actor.getKingdom();
+        const kingdom = actor.getKingdomData();
         const settlement = kingdom?.settlements.find(s => s.id === settlementId);
         if (settlement) {
           (pendingUpgradeAction as any).settlementName = settlement.name;
@@ -1333,7 +1333,7 @@
           if (bonus !== 0) {
             const actor = getKingdomActor();
             if (actor) {
-              await actor.updateKingdom((kingdom) => {
+              await actor.updateKingdomData((kingdom) => {
               if (!kingdom.turnState) return;
               if (!kingdom.turnState.actionsPhase.activeAids) {
                 kingdom.turnState.actionsPhase.activeAids = [];

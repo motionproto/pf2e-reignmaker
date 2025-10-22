@@ -54,7 +54,7 @@ export function checkPhaseGuard(
   controllerName: string
 ): { success: boolean; error?: string } | null {
   const actor = getKingdomActor();
-  const kingdom = actor?.getKingdom();
+  const kingdom = actor?.getKingdomData();
   const hasSteps = kingdom?.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0;
   
   // No steps yet - guard passes, allow initialization

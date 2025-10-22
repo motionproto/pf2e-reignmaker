@@ -28,7 +28,7 @@ export function registerKingdomHandlers(): void {
     }
     
     // GM has permission to update directly
-    await actor.setKingdom(data.updatedKingdom);
+    await actor.setKingdomData(data.updatedKingdom);
     
     logger.debug('[KingdomHandlers] Kingdom updated successfully');
   });

@@ -112,7 +112,7 @@ export class BuildQueueService {
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       if (!k.buildQueue) k.buildQueue = [];
       k.buildQueue.push(project);
     });
@@ -129,7 +129,7 @@ export class BuildQueueService {
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       if (!k.buildQueue) return;
       
       const project = k.buildQueue.find(p => p.id === projectId);
@@ -151,7 +151,7 @@ export class BuildQueueService {
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       if (!k.buildQueue) return;
       
       const initialLength = k.buildQueue.length;
@@ -174,7 +174,7 @@ export class BuildQueueService {
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       k.buildQueue = [];
     });
 
@@ -263,7 +263,7 @@ export class BuildQueueService {
     const paid: Record<string, number> = {};
     let isComplete = false;
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       const project = k.buildQueue.find(p => p.id === projectId);
       if (!project) {
         logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);
@@ -317,7 +317,7 @@ export class BuildQueueService {
     let settlementId: string | undefined;
     let structureId: string | undefined;
 
-    await actor.updateKingdom(k => {
+    await actor.updateKingdomData(k => {
       const project = k.buildQueue.find(p => p.id === projectId);
       if (!project) {
         logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { ReignMakerMapLayer } from '../../services/map/ReignMakerMapLayer';
   import { kingdomData } from '../../stores/KingdomStore';
+  import { territoryService } from '../../services/territory';
   import type { HexStyle } from '../../services/map/types';
 
   // Toolbar state
@@ -180,11 +181,16 @@
     mapLayer.clearLayer('roads-overlay');
     mapLayer.clearLayer('routes');
     
-    if (!$kingdomData?.roadsBuilt || $kingdomData.roadsBuilt.length === 0) {
+    // Get road hex IDs from territory service (single source of truth)
+    const roadHexIds = territoryService.getRoads();
+    
+    if (roadHexIds.length === 0) {
       ui?.notifications?.warn('No roads to display');
       roadsActive = false;
       return;
     }
+    
+    console.log('[MapOverlayToolbar] Displaying roads:', roadHexIds);
 
     // Darker grey highlight for road hexes
     const style: HexStyle = {
@@ -200,11 +206,11 @@
     const routesLayer = mapLayer.createLayer('routes', 20);
     
     // Draw hex highlights
-    mapLayer.drawHexes($kingdomData.roadsBuilt, style, 'roads-overlay');
+    mapLayer.drawHexes(roadHexIds, style, 'roads-overlay');
     mapLayer.showLayer('roads-overlay');
     
     // Draw road connections (lines connecting adjacent road hexes)
-    mapLayer.drawRoadConnections($kingdomData.roadsBuilt, 'routes');
+    mapLayer.drawRoadConnections(roadHexIds, 'routes');
     mapLayer.showLayer('routes');
   }
 

@@ -52,7 +52,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
     const actor = getKingdomActor();
     if (!actor) return { met: false, reason: 'No kingdom actor available' };
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return { met: false, reason: 'No kingdom data available' };
     
     // Check if there are any factions
@@ -107,7 +107,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
           return createErrorResult('No kingdom actor available');
         }
         
-        const kingdom = actor.getKingdom();
+        const kingdom = actor.getKingdomData();
         if (!kingdom) {
           return createErrorResult('No kingdom data available');
         }

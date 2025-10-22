@@ -79,7 +79,7 @@
          // Default behavior: update via KingdomActor
          const actor = getKingdomActor();
          if (actor) {
-            actor.updateKingdom((kingdom) => {
+            actor.updateKingdomData((kingdom) => {
                kingdom.resources[resource] = newValue;
             });
          }

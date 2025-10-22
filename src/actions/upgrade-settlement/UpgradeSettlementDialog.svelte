@@ -93,7 +93,7 @@
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       console.error('❌ [UpgradeSettlementDialog] No kingdom data available');
       return;

@@ -165,7 +165,7 @@ export async function createUnrestPhaseController() {
             );
             
             // MINIMAL turnState update (only for roll display in UI)
-            await actor.updateKingdom((kingdom) => {
+            await actor.updateKingdomData((kingdom) => {
               if (kingdom.turnState) {
                 kingdom.turnState.unrestPhase.incidentRolled = true;
                 kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
@@ -183,7 +183,7 @@ export async function createUnrestPhaseController() {
         logger.debug('✅ [UnrestPhaseController] No incident occurred');
         
         // MINIMAL turnState update (only for roll display in UI)
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           if (kingdom.turnState) {
             kingdom.turnState.unrestPhase.incidentRolled = true;
             kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
@@ -331,7 +331,7 @@ export async function createUnrestPhaseController() {
       // ✅ FIX: Find ANY incident (pending, resolved, or applied) and reset it
       const allIncidents = kingdom.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
       if (allIncidents.length > 0) {
-        await actor.updateKingdom(k => {
+        await actor.updateKingdomData(k => {
           const instance = k.activeCheckInstances?.find(i => 
             i.instanceId === allIncidents[0].instanceId
           );

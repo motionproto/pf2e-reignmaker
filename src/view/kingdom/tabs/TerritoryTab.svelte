@@ -279,7 +279,7 @@
                      {/if}
                   </th>
                   <th>Roads</th>
-                  <th>Features</th>
+                  <th>Settlement</th>
                </tr>
             </thead>
             <tbody>
@@ -337,33 +337,25 @@
                            <span class="no-road">-</span>
                         {/if}
                      </td>
-                     <td class="features">
-                        {#if hex.kingmakerFeatures && hex.kingmakerFeatures.length > 0}
-                           <div class="features-list">
-                              {#each hex.kingmakerFeatures as feature}
-                                 {#if feature.type}
-                                    {@const featureType = feature.type.toLowerCase()}
-                                    {@const isSettlement = featureType === 'village' || featureType === 'town' || featureType === 'city' || featureType === 'metropolis'}
-                                    <span class="feature-badge" class:settlement={isSettlement}>
-                                       {#if isSettlement}
-                                          <i class="fas fa-city"></i>
-                                       {:else if featureType === 'farmland'}
-                                          <i class="fas fa-wheat-awn"></i>
-                                       {:else}
-                                          <i class="fas fa-landmark"></i>
-                                       {/if}
-                                       {feature.type.charAt(0).toUpperCase() + feature.type.slice(1)}
-                                    </span>
-                                 {/if}
-                              {/each}
-                           </div>
-                        {:else if hex.name}
-                           <span class="feature-name">
-                              <i class="fas fa-landmark"></i>
-                              {hex.name}
-                           </span>
+                     <td class="settlement">
+                        {#if $kingdomData.settlements}
+                           {@const hexCoords = hex.id.split('.')}
+                           {@const hexRow = parseInt(hexCoords[0])}
+                           {@const hexCol = parseInt(hexCoords[1])}
+                           {@const settlement = $kingdomData.settlements.find(s => s.location.x === hexRow && s.location.y === hexCol)}
+                           {#if settlement}
+                              <div class="settlement-info">
+                                 <span class="settlement-badge tier-{settlement.tier.toLowerCase()}">
+                                    <i class="fas fa-city"></i>
+                                    {settlement.name}
+                                 </span>
+                                 <span class="settlement-tier">{settlement.tier}</span>
+                              </div>
+                           {:else}
+                              <span class="no-settlement">-</span>
+                           {/if}
                         {:else}
-                           <span class="no-features">-</span>
+                           <span class="no-settlement">-</span>
                         {/if}
                      </td>
                   </tr>
@@ -701,11 +693,63 @@
                }
             }
             
+            .settlement-info {
+               display: flex;
+               flex-direction: column;
+               gap: 0.25rem;
+            }
+            
+            .settlement-badge {
+               display: inline-flex;
+               align-items: center;
+               gap: 0.375rem;
+               padding: 0.375rem 0.625rem;
+               border-radius: 0.375rem;
+               font-size: var(--font-sm);
+               font-weight: var(--font-weight-semibold);
+               border: 1px solid;
+               
+               &.tier-village {
+                  background: rgba(139, 69, 19, 0.15);
+                  border-color: rgba(139, 69, 19, 0.4);
+                  color: #d2691e;
+               }
+               
+               &.tier-town {
+                  background: rgba(70, 130, 180, 0.15);
+                  border-color: rgba(70, 130, 180, 0.4);
+                  color: #87ceeb;
+               }
+               
+               &.tier-city {
+                  background: rgba(147, 112, 219, 0.15);
+                  border-color: rgba(147, 112, 219, 0.4);
+                  color: #ba8fd8;
+               }
+               
+               &.tier-metropolis {
+                  background: rgba(255, 215, 0, 0.15);
+                  border-color: rgba(255, 215, 0, 0.4);
+                  color: #ffd700;
+               }
+               
+               i {
+                  font-size: var(--font-sm);
+               }
+            }
+            
+            .settlement-tier {
+               font-size: var(--font-xs);
+               color: var(--text-muted);
+               font-style: italic;
+            }
+            
             .no-worksite,
             .no-commodity,
             .no-production,
             .no-features,
-            .no-road {
+            .no-road,
+            .no-settlement {
                color: var(--text-disabled);
                font-style: italic;
             }

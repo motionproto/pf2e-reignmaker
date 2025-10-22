@@ -189,7 +189,7 @@ export async function createUpkeepPhaseController() {
       }
       
       // Update kingdom state
-      await actor.updateKingdom((kingdom) => {
+      await actor.updateKingdomData((kingdom) => {
         kingdom.resources.food = availableFood;
         kingdom.unrest += totalUnrest;
         
@@ -255,7 +255,7 @@ export async function createUpkeepPhaseController() {
       let goldUnrest = 0;
       
       if (currentGold >= supportCost) {
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = currentGold - supportCost;
           kingdom.unrest += armyFoodUnrest;
@@ -264,7 +264,7 @@ export async function createUpkeepPhaseController() {
       } else {
         // Can't afford support - generate unrest
         goldUnrest = supportCost - currentGold;
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = 0;
           kingdom.unrest += armyFoodUnrest + goldUnrest;
@@ -323,7 +323,7 @@ export async function createUpkeepPhaseController() {
           }
           
           // Deduct paid resources from kingdom
-          await actor.updateKingdom(k => {
+          await actor.updateKingdomData(k => {
             for (const [resource, amount] of Object.entries(result.paid)) {
               k.resources[resource] = Math.max(0, (k.resources[resource] || 0) - amount);
             }

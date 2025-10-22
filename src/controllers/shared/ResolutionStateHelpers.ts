@@ -55,7 +55,7 @@ export async function updateInstanceResolutionState(
     return;
   }
 
-  await actor.updateKingdom((kingdom) => {
+  await actor.updateKingdomData((kingdom) => {
     const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
     if (!instance) {
       logger.warn(`⚠️ [ResolutionStateHelpers] Instance not found: ${instanceId}`);
@@ -94,7 +94,7 @@ export async function clearInstanceResolutionState(instanceId: string): Promise<
   const actor = getKingdomActor();
   if (!actor) return;
 
-  await actor.updateKingdom((kingdom) => {
+  await actor.updateKingdomData((kingdom) => {
     const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
     if (instance) {
       instance.resolutionState = undefined;
@@ -124,7 +124,7 @@ export async function updateCheckResolutionState(
     return;
   }
 
-  await actor.updateKingdom((kingdom) => {
+  await actor.updateKingdomData((kingdom) => {
     if (!kingdom.turnState) return;
     if (!kingdom.turnState.activeResolutions) {
       kingdom.turnState.activeResolutions = {};
@@ -176,7 +176,7 @@ export async function clearCheckResolutionState(checkId: string): Promise<void> 
   const actor = getKingdomActor();
   if (!actor) return;
 
-  await actor.updateKingdom((kingdom) => {
+  await actor.updateKingdomData((kingdom) => {
     if (kingdom.turnState?.activeResolutions?.[checkId]) {
       delete kingdom.turnState.activeResolutions[checkId];
       logger.debug(`🚫 [ResolutionStateHelpers] Cleared resolution state for: ${checkId}`);
@@ -192,7 +192,7 @@ export async function clearAllResolutionStates(): Promise<void> {
   const actor = getKingdomActor();
   if (!actor) return;
 
-  await actor.updateKingdom((kingdom) => {
+  await actor.updateKingdomData((kingdom) => {
     if (kingdom.turnState) {
       kingdom.turnState.activeResolutions = {};
       logger.debug(`🚫 [ResolutionStateHelpers] Cleared all resolution states`);

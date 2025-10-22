@@ -1,23 +1,42 @@
 ## Core Architecture Principles
 
 ### 1. Single Source of Truth
-- **KingdomActor** = ONLY persistent data source
-- All writes go through KingdomActor methods
+- **Party Actor Flags** = ONLY persistent data source
+- Kingdom data stored at: `actor.getFlag('pf2e-reignmaker', 'kingdom-data')`
+- All writes go through wrapped actor methods (see Kingdom Actor Wrapper below)
 - Stores are derived/reactive, never written to directly
 
-### 2. Clean Separation of Concerns
+### 2. Kingdom Actor Wrapper Pattern
+- Party actors are regular Foundry Actors, NOT KingdomActor instances
+- `wrapKingdomActor()` adds kingdom methods to party actors at runtime
+- Wrapper applied during actor discovery in `kingdomSync.ts`
+- Methods: `getKingdomData()`, `setKingdomData()`, `updateKingdomData()`, etc.
+- All code uses these wrapped methods for consistent data access
+
+### 3. Clean Separation of Concerns
 - **Svelte components** = Presentation only (UI, user interaction, display logic)
 - **Controllers** = Business logic only (phase operations, game rules, calculations)
 - **Services** = Complex operations (utilities, integrations, reusable logic)
 - **NO business logic in Svelte files** - components delegate to controllers/services
 
-### 3. Data Flow Pattern
+### 4. Data Flow Pattern
 ```
-Read:  KingdomActor → KingdomStore → Component Display
-Write: Component Action → Controller → TurnManager → KingdomActor → Foundry → All Clients
+Read:  Party Actor Flags → Wrapped Actor → KingdomStore → Component Display
+Write: Component Action → Controller → TurnManager → Wrapped Actor → Party Actor Flags → Foundry → All Clients
 ```
 
-### 4. Phase Management Pattern
+**Accessing Kingdom Data:**
+```typescript
+// ✅ Correct - use wrapped actor methods
+const kingdom = actor.getKingdomData();
+await actor.setKingdomData(data);
+await actor.updateKingdomData(kingdom => { kingdom.fame += 1; });
+
+// ❌ Wrong - don't call getFlag() directly in business logic
+const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data');
+```
+
+### 5. Phase Management Pattern
 - **TurnManager** = Central coordinator (turn/phase progression + step management)
 - **Phase Components** = Mount when active, call `controller.startPhase()` 
 - **Phase Controllers** = Execute phase business logic, mark completion
@@ -28,7 +47,7 @@ Phase Flow: TurnManager.nextPhase() → Update currentPhase →
            Component Mounts → controller.startPhase() → Execute Logic
 ```
 
-### 5. Modular TurnManager Architecture
+### 6. Modular TurnManager Architecture
 - **TurnManager** = Main coordinator class with modular utilities
 - **PhaseHandler** = Utility class for step management (imported by TurnManager)
 - **PhaseControllerHelpers** = Utility functions (imported by controllers)
@@ -142,7 +161,11 @@ src/
 │   ├── pf2e/                # PF2e integration services
 │   └── ModifierService.ts   # Simplified modifier management
 ├── stores/                  # KingdomStore - Reactive bridges (read-only)
-├── actors/                  # KingdomActor (single source of truth)
+├── actors/                  # KingdomActor (type definitions)
+├── utils/                   # Utility functions
+│   └── kingdom-actor-wrapper.ts  # Wraps party actors with kingdom methods
+├── hooks/                   # Foundry hooks
+│   └── kingdomSync.ts       # Actor discovery and wrapping
 └── models/                  # TurnManager, Modifiers (data structures)
 ```
 

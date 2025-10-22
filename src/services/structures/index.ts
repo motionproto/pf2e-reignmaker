@@ -611,7 +611,7 @@ export class StructuresService {
     const actor = getKingdomActor();
     if (!actor) return [];
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return [];
     
     const repairableList: RepairableStructure[] = [];

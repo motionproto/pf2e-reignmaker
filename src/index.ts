@@ -286,6 +286,15 @@ Hooks.once('ready', async () => {
     try {
         initializeKingdomSystem();
         console.log('PF2E ReignMaker | Kingdom system initialized');
+        
+        // Initialize KingdomStore with the kingdom actor (if available)
+        // This ensures the store is ready for all components (Kingdom UI, map overlay, etc.)
+        const { initializeKingdomActor } = await import('./stores/KingdomStore');
+        const kingdomActor = await getKingdomActor();
+        if (kingdomActor) {
+            initializeKingdomActor(kingdomActor);
+            console.log('PF2E ReignMaker | KingdomStore initialized globally');
+        }
     } catch (error) {
         console.error('[Module] Failed to initialize kingdom system:', error);
     }
@@ -378,7 +387,7 @@ Hooks.once('ready', async () => {
         const exportKingdom = async () => {
             const actor = await getKingdomActor();
             if (actor) {
-                const kingdomData = actor.getKingdom();
+                const kingdomData = actor.getKingdomData?.() || actor.getFlag?.('pf2e-reignmaker', 'kingdom-data');
                 if (kingdomData) {
                     const jsonData = JSON.stringify(kingdomData, null, 2);
                     const blob = new Blob([jsonData], { type: 'application/json' });
@@ -409,7 +418,11 @@ Hooks.once('ready', async () => {
                         const kingdomData = JSON.parse(text);
                         const actor = await getKingdomActor();
                         if (actor) {
-                            await actor.setKingdom(kingdomData);
+                            if (actor.setKingdomData) {
+                                await actor.setKingdomData(kingdomData);
+                            } else {
+                                await actor.setFlag('pf2e-reignmaker', 'kingdom-data', kingdomData);
+                            }
                             // @ts-ignore
                             ui?.notifications?.info('Kingdom data imported successfully');
                         } else {

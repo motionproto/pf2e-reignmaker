@@ -811,6 +811,30 @@ export class TerritoryService {
     }
     
   /**
+   * Get all roads in the kingdom
+   * Single source of truth for road data
+   * Returns array of hex IDs that have roads
+   */
+  getRoads(): string[] {
+    const state = get(kingdomData);
+    
+    // Prefer roadsBuilt array if it exists and has data
+    if (state.roadsBuilt && state.roadsBuilt.length > 0) {
+      return state.roadsBuilt;
+    }
+    
+    // Fallback: derive from hexes with hasRoad flag
+    if (state.hexes) {
+      return state.hexes
+        .filter((h: any) => h.hasRoad === true)
+        .map((h: any) => h.id);
+    }
+    
+    // No roads found
+    return [];
+  }
+  
+  /**
    * Check if Kingmaker module is available
    */
   isKingmakerAvailable(): boolean {

@@ -125,7 +125,7 @@ export class ArmyService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -263,7 +263,7 @@ export class ArmyService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -361,7 +361,7 @@ export class ArmyService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -432,7 +432,7 @@ export class ArmyService {
     const actor = getKingdomActor();
     if (!actor) return null;
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return null;
     
     // Find all settlements with available capacity

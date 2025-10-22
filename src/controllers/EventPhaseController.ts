@@ -77,7 +77,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 // Get kingdom for step initialization
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
-                const kingdom = actor?.getKingdom();
+                const kingdom = actor?.getKingdomData();
                 
                 // Apply custom modifiers at the start of Events phase
                 await this.applyCustomModifiers();
@@ -154,7 +154,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     // ✅ ARCHITECTURE FIX: Create ActiveCheckInstance IMMEDIATELY (or reuse if exists)
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
-                    const kingdom = actor?.getKingdom();
+                    const kingdom = actor?.getKingdomData();
                     
                     if (actor && kingdom && event) {
                         // Check if this event already exists as an ongoing instance
@@ -181,7 +181,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         
                         // Update persistent DC and turnState (mark as current event)
                         const eventId = event.id; // Capture for callback
-                        await actor.updateKingdom((kingdom) => {
+                        await actor.updateKingdomData((kingdom) => {
                             // Update persistent DC (survives across turns)
                             kingdom.eventDC = newDC;
                             
@@ -209,7 +209,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
-                    await actor.updateKingdom((kingdom) => {
+                    await actor.updateKingdomData((kingdom) => {
                         // Update persistent DC (survives across turns)
                         kingdom.eventDC = newDC;
                         
@@ -266,7 +266,7 @@ export async function createEventPhaseController(_eventService?: any) {
             const outcomeData = event.effects[outcome];
             const { getKingdomActor } = await import('../stores/KingdomStore');
             const actor = getKingdomActor();
-            const kingdom = actor?.getKingdom();
+            const kingdom = actor?.getKingdomData();
             const currentTurn = kingdom?.currentTurn || 1;
             
             // Track player action (unless event is ignored)
@@ -433,7 +433,7 @@ export async function createEventPhaseController(_eventService?: any) {
             
             // Check if all events have effects applied (phase completion) - NEW system
             const updatedActor = getKingdomActor();
-            const updatedKingdomState = updatedActor?.getKingdom();
+            const updatedKingdomState = updatedActor?.getKingdomData();
             const pendingInstances = updatedKingdomState?.activeCheckInstances?.filter(
                 i => i.checkType === 'event' && i.status === 'pending'
             ) || [];
@@ -461,7 +461,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 return;
             }
             
-            const kingdom = actor.getKingdom();
+            const kingdom = actor.getKingdomData();
             if (!kingdom || !kingdom.activeModifiers || kingdom.activeModifiers.length === 0) {
                 logger.debug('⚠️ [EventPhaseController.applyCustomModifiers] No active modifiers');
                 return;
@@ -620,7 +620,7 @@ export async function createEventPhaseController(_eventService?: any) {
             if (shouldCreateInstance && outcomeData) {
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
-                const kingdom = actor?.getKingdom();
+                const kingdom = actor?.getKingdomData();
                 
                 if (kingdom) {
                     // Check if an instance already exists (created by performEventCheck)

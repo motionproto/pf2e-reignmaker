@@ -29,7 +29,7 @@
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       console.error('❌ [FactionSelectionDialog] No kingdom data available');
       return;

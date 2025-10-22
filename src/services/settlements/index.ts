@@ -228,7 +228,7 @@ export class SettlementService {
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       logger.warn('⚠️ [SettlementService] No kingdom data available');
       return;
@@ -312,7 +312,7 @@ export class SettlementService {
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       logger.warn('⚠️ [SettlementService] No kingdom data available');
       return;
@@ -379,7 +379,7 @@ export class SettlementService {
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       logger.warn('⚠️ [SettlementService] No kingdom data available');
       return;
@@ -454,7 +454,7 @@ export class SettlementService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -488,7 +488,7 @@ export class SettlementService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -557,7 +557,7 @@ export class SettlementService {
       return;
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       logger.warn('⚠️ [SettlementService] No kingdom data available');
       return;
@@ -630,7 +630,7 @@ export class SettlementService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -689,7 +689,7 @@ export class SettlementService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -761,7 +761,7 @@ export class SettlementService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }

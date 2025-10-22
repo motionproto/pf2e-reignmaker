@@ -137,25 +137,28 @@ export class KingdomActor extends Actor {
   
   /**
    * Get kingdom data from actor flags
+   * Note: When used on party actors, this method is added by wrapKingdomActor()
    */
-  getKingdom(): KingdomData | null {
+  getKingdomData(): KingdomData | null {
     const data = this.getFlag(KingdomActor.MODULE_ID, KingdomActor.KINGDOM_DATA_KEY) as KingdomData;
     return data || null;
   }
   
   /**
    * Set kingdom data to actor flags - triggers automatic synchronization
+   * Note: When used on party actors, this method is added by wrapKingdomActor()
    */
-  async setKingdom(kingdom: KingdomData): Promise<void> {
+  async setKingdomData(kingdom: KingdomData): Promise<void> {
     await this.setFlag(KingdomActor.MODULE_ID, KingdomActor.KINGDOM_DATA_KEY, kingdom);
   }
   
   /**
    * Update kingdom data with a function - similar to Svelte store pattern
    * Automatically routes through GM via ActionDispatcher if player lacks permission
+   * Note: When used on party actors, this method is added by wrapKingdomActor()
    */
-  async updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
-    const kingdom = this.getKingdom();
+  async updateKingdomData(updater: (kingdom: KingdomData) => void): Promise<void> {
+    const kingdom = this.getKingdomData();
     if (!kingdom) {
       logger.warn('[KingdomActor] No kingdom data found, cannot update');
       return;
@@ -197,7 +200,7 @@ export class KingdomActor extends Actor {
     updater(kingdom);
     
     // Save back to flags - triggers automatic sync
-    await this.setKingdom(kingdom);
+    await this.setKingdomData(kingdom);
   }
   
   /**
@@ -281,14 +284,14 @@ export class KingdomActor extends Actor {
       oncePerTurnActions: []
     };
     
-    await this.setKingdom(defaultKingdom);
+    await this.setKingdomData(defaultKingdom);
   }
   
   /**
    * Set phase steps - simple data setter
    */
   async setPhaseSteps(steps: Array<{ name: string; completed: 0 | 1 }>): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.currentPhaseSteps = steps;
     });
   }
@@ -297,7 +300,7 @@ export class KingdomActor extends Actor {
    * Set current step index - simple data setter
    */
   async setCurrentStepIndex(stepIndex: number): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.currentPhaseStepIndex = stepIndex;
     });
   }
@@ -306,7 +309,7 @@ export class KingdomActor extends Actor {
    * Complete a step by index - simple data setter
    */
   async completeStepByIndex(stepIndex: number): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       if (stepIndex >= 0 && stepIndex < kingdom.currentPhaseSteps.length) {
         kingdom.currentPhaseSteps[stepIndex].completed = 1;
       }
@@ -318,7 +321,7 @@ export class KingdomActor extends Actor {
    * Modify resource amounts
    */
   async modifyResource(resource: string, amount: number): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       const current = kingdom.resources[resource] || 0;
       kingdom.resources[resource] = Math.max(0, current + amount);
     });
@@ -328,7 +331,7 @@ export class KingdomActor extends Actor {
    * Set resource to specific amount
    */
   async setResource(resource: string, amount: number): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.resources[resource] = Math.max(0, amount);
     });
   }
@@ -337,7 +340,7 @@ export class KingdomActor extends Actor {
    * Add settlement
    */
   async addSettlement(settlement: Settlement): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.settlements.push(settlement);
     });
   }
@@ -346,7 +349,7 @@ export class KingdomActor extends Actor {
    * Remove settlement
    */
   async removeSettlement(settlementId: string): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.settlements = kingdom.settlements.filter(s => s.id !== settlementId);
     });
   }
@@ -355,7 +358,7 @@ export class KingdomActor extends Actor {
    * Update settlement
    */
   async updateSettlement(settlementId: string, updates: Partial<Settlement>): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       const index = kingdom.settlements.findIndex(s => s.id === settlementId);
       if (index >= 0) {
         kingdom.settlements[index] = { ...kingdom.settlements[index], ...updates };
@@ -367,7 +370,7 @@ export class KingdomActor extends Actor {
    * Add army
    */
   async addArmy(army: Army): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.armies.push(army);
     });
   }
@@ -376,7 +379,7 @@ export class KingdomActor extends Actor {
    * Remove army
    */
   async removeArmy(armyId: string): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.armies = kingdom.armies.filter(a => a.id !== armyId);
     });
   }
@@ -385,7 +388,7 @@ export class KingdomActor extends Actor {
    * Add active modifier
    */
   async addActiveModifier(modifier: ActiveModifier): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.activeModifiers.push(modifier);
     });
   }
@@ -394,7 +397,7 @@ export class KingdomActor extends Actor {
    * Remove active modifier
    */
   async removeActiveModifier(modifierId: string): Promise<void> {
-    await this.updateKingdom((kingdom) => {
+    await this.updateKingdomData((kingdom) => {
       kingdom.activeModifiers = kingdom.activeModifiers.filter(m => m.id !== modifierId);
     });
   }

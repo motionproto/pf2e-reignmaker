@@ -91,7 +91,7 @@ export async function createModifierService() {
       const actor = getKingdomActor();
       if (!actor) return [];
       
-      const kingdom = actor.getKingdom();
+      const kingdom = actor.getKingdomData();
       return kingdom?.activeModifiers || [];
     }
   };

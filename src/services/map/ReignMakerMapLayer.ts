@@ -313,6 +313,22 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Normalize hex ID format (remove leading zeros for consistent matching)
+   * "5.08" -> "5.8", "50.18" -> "50.18"
+   */
+  private normalizeHexId(hexId: string): string {
+    const parts = hexId.split('.');
+    if (parts.length !== 2) return hexId;
+    
+    const i = parseInt(parts[0], 10);
+    const j = parseInt(parts[1], 10);
+    
+    if (isNaN(i) || isNaN(j)) return hexId;
+    
+    return `${i}.${j}`;
+  }
+
+  /**
    * Draw road connections between adjacent hexes with roads
    * Creates a network of lines connecting road hexes
    */
@@ -327,8 +343,11 @@ export class ReignMakerMapLayer {
       return;
     }
 
-    // Create a Set for fast lookup
-    const roadHexSet = new Set(roadHexIds);
+    // Normalize all road hex IDs for consistent matching
+    const normalizedRoadHexIds = roadHexIds.map(id => this.normalizeHexId(id));
+    const roadHexSet = new Set(normalizedRoadHexIds);
+    
+    console.log('[ReignMakerMapLayer] Road hex IDs:', normalizedRoadHexIds.slice(0, 10));
 
     // Graphics object for drawing lines
     const graphics = new PIXI.Graphics();
@@ -345,11 +364,17 @@ export class ReignMakerMapLayer {
       try {
         // Parse hex ID: "50.18" -> {i: 50, j: 18}
         const parts = hexId.split('.');
-        if (parts.length !== 2) return;
+        if (parts.length !== 2) {
+          console.warn(`[ReignMakerMapLayer] Invalid hex ID format: ${hexId}`);
+          return;
+        }
 
         const i = parseInt(parts[0], 10);
         const j = parseInt(parts[1], 10);
-        if (isNaN(i) || isNaN(j)) return;
+        if (isNaN(i) || isNaN(j)) {
+          console.warn(`[ReignMakerMapLayer] Invalid hex coordinates: ${hexId}`);
+          return;
+        }
 
         // Create GridHex instance
         const hex = new GridHex({i, j}, canvas.grid);
@@ -364,25 +389,26 @@ export class ReignMakerMapLayer {
             return;
           }
 
-          // Build neighbor hex ID
-          const neighborId = `${neighbor.i}.${neighbor.j.toString().padStart(2, '0')}`;
+          // Build neighbor hex ID (normalized format without padding)
+          const neighborId = `${neighbor.i}.${neighbor.j}`;
 
           // Only draw if neighbor also has a road
           if (!roadHexSet.has(neighborId)) return;
 
           // Create a unique connection ID (sorted to avoid A->B and B->A duplicates)
-          const connectionId = [hexId, neighborId].sort().join('|');
+          const normalizedHexId = this.normalizeHexId(hexId);
+          const connectionId = [normalizedHexId, neighborId].sort().join('|');
           if (drawnConnections.has(connectionId)) return;
 
           // Mark as drawn
           drawnConnections.add(connectionId);
 
-          // Get neighbor center
+          // Get neighbor center in world coordinates
           const neighborHex = new GridHex({i: neighbor.i, j: neighbor.j}, canvas.grid);
           const neighborCenter = neighborHex.center;
 
-          // Draw line from hex center to neighbor center
-          graphics.lineStyle(4, 0x8B4513, 0.8); // Brown road color, 4px wide
+          // Draw line from hex center to neighbor center (both in world coordinates)
+          graphics.lineStyle(32, 0x8B4513, 0.8); // Brown road color, 32px wide
           graphics.moveTo(hexCenter.x, hexCenter.y);
           graphics.lineTo(neighborCenter.x, neighborCenter.y);
 
@@ -395,6 +421,10 @@ export class ReignMakerMapLayer {
 
     layer.addChild(graphics);
     console.log(`[ReignMakerMapLayer] ✅ Drew ${connectionCount} road connections`);
+    
+    if (connectionCount === 0) {
+      console.warn('[ReignMakerMapLayer] ⚠️ No road connections drawn - check that hex IDs match neighbor format');
+    }
   }
 
   /**
@@ -439,6 +469,9 @@ export class ReignMakerMapLayer {
     }
 
     try {
+      // KingdomStore is now initialized globally in the ready hook
+      // No need for on-demand initialization here
+
       // Dynamically import the toolbar component
       const { default: MapOverlayToolbar } = await import('../../view/map/MapOverlayToolbar.svelte');
 

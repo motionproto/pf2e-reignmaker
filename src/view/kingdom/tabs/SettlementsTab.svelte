@@ -18,9 +18,23 @@
       }
    }
    
+   // Filter settlements to only show those in claimed hexes (claimedBy === 1)
+   $: claimedSettlements = $kingdomData.settlements.filter(settlement => {
+      // Find the hex at this settlement's location
+      const hex = $kingdomData.hexes?.find(h => {
+         const hexCoords = h.id.split('.');
+         const hexRow = parseInt(hexCoords[0]);
+         const hexCol = parseInt(hexCoords[1]);
+         return hexRow === settlement.location.x && hexCol === settlement.location.y;
+      });
+      
+      // Only include if hex is claimed by player kingdom (claimedBy === 1)
+      return hex && (hex as any).claimedBy === 1;
+   });
+   
    // Auto-select first settlement if none selected and settlements exist
-   $: if (!selectedSettlement && $kingdomData.settlements.length > 0) {
-      selectedSettlement = $kingdomData.settlements[0];
+   $: if (!selectedSettlement && claimedSettlements.length > 0) {
+      selectedSettlement = claimedSettlements[0];
    }
    
    function handleSelectSettlement(settlement: Settlement) {
@@ -36,7 +50,7 @@
 <div class="settlements-tab">
    <div class="settlements-container">
       <SettlementsList 
-         settlements={$kingdomData.settlements}
+         settlements={claimedSettlements}
          {selectedSettlement}
          onSelectSettlement={handleSelectSettlement}
       />

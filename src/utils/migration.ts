@@ -175,7 +175,7 @@ export async function performMigration(): Promise<boolean> {
     }
     
     // Set the migrated data
-    await kingdomActor.setKingdom(migratedKingdom);
+    await kingdomActor.setKingdomData(migratedKingdom);
     
     // Clear old data (backup first)
     await partyActor.setFlag('pf2e-reignmaker', 'kingdom-data-backup', oldData);

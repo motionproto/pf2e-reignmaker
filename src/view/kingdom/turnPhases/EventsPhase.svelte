@@ -696,7 +696,7 @@
                // Store aid in turnState
                const actor = getKingdomActor();
                if (actor) {
-                  await actor.updateKingdom((kingdom) => {
+                  await actor.updateKingdomData((kingdom) => {
                      if (!kingdom.turnState?.eventsPhase) return;
                      if (!kingdom.turnState.eventsPhase.activeAids) {
                         kingdom.turnState.eventsPhase.activeAids = [];
@@ -797,7 +797,7 @@
          // Clear aid modifiers for this specific event after roll completes
          const actor = getKingdomActor();
          if (actor) {
-            await actor.updateKingdom((kingdom) => {
+            await actor.updateKingdomData((kingdom) => {
                if (kingdom.turnState?.eventsPhase?.activeAids) {
                   const beforeCount = kingdom.turnState.eventsPhase.activeAids.length;
                   kingdom.turnState.eventsPhase.activeAids = 

@@ -46,7 +46,7 @@ export class PhaseHandler {
       return { success: false, phaseComplete: false, error: 'No KingdomActor available' };
     }
 
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       return { success: false, phaseComplete: false, error: 'No kingdom data available' };
     }
@@ -110,7 +110,7 @@ export class PhaseHandler {
     const actor = getKingdomActor();
     if (!actor) return false;
 
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return false;
 
     const step = kingdom.currentPhaseSteps[stepIndex];
@@ -122,7 +122,7 @@ export class PhaseHandler {
     const actor = getKingdomActor();
     if (!actor) return false;
 
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return false;
 
     const totalSteps = kingdom.currentPhaseSteps.length;
@@ -140,7 +140,7 @@ export class PhaseHandler {
       return { index: 0, name: 'Unknown', totalSteps: 0 };
     }
 
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       return { index: 0, name: 'Unknown', totalSteps: 0 };
     }
@@ -159,7 +159,7 @@ export class PhaseHandler {
       return { completed: 0, total: 0, isComplete: false };
     }
 
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       return { completed: 0, total: 0, isComplete: false };
     }

@@ -16,7 +16,7 @@ export function needsSkillBonusesMigration(): boolean {
   const actor = getKingdomActor();
   if (!actor) return false;
   
-  const kingdom = actor.getKingdom();
+  const kingdom = actor.getKingdomData();
   if (!kingdom) return false;
   
   // Check if any settlement is missing skillBonuses
@@ -33,7 +33,7 @@ export async function migrateSettlementSkillBonuses(): Promise<void> {
     return;
   }
   
-  const kingdom = actor.getKingdom();
+  const kingdom = actor.getKingdomData();
   if (!kingdom) {
     logger.warn('[Migration] No kingdom data found');
     return;

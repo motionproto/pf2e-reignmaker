@@ -89,7 +89,7 @@ export class FactionService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -166,7 +166,7 @@ export class FactionService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -191,7 +191,7 @@ export class FactionService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }
@@ -215,7 +215,7 @@ export class FactionService {
     const actor = getKingdomActor();
     if (!actor) return null;
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return null;
     
     return kingdom.factions?.find(f => f.id === factionId) || null;
@@ -230,7 +230,7 @@ export class FactionService {
     const actor = getKingdomActor();
     if (!actor) return [];
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return [];
     
     return kingdom.factions || [];
@@ -276,7 +276,7 @@ export class FactionService {
       throw new Error('No kingdom actor available');
     }
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) {
       throw new Error('No kingdom data available');
     }

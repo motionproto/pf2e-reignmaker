@@ -100,7 +100,7 @@ export async function createResourcePhaseController() {
         });
         
         // Apply collected resources to kingdom using the new separated structure
-        await actor.updateKingdom((kingdom) => {
+        await actor.updateKingdomData((kingdom) => {
           // Apply territory resources (food, lumber, stone, ore)
           result.resourceCollection.territoryResources.forEach((amount, resource) => {
             if (amount > 0) {

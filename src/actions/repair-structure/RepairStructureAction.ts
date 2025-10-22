@@ -31,7 +31,7 @@ const RepairStructureAction: CustomActionImplementation = {
     const actor = getKingdomActor();
     if (!actor) return { met: false, reason: 'No kingdom actor available' };
     
-    const kingdom = actor.getKingdom();
+    const kingdom = actor.getKingdomData();
     if (!kingdom) return { met: false, reason: 'No kingdom data available' };
     
     // Check if any settlements have damaged structures
@@ -107,7 +107,7 @@ const RepairStructureAction: CustomActionImplementation = {
           return createErrorResult('No kingdom actor available');
         }
         
-        const kingdom = actor.getKingdom();
+        const kingdom = actor.getKingdomData();
         if (!kingdom) {
           return createErrorResult('No kingdom data available');
         }

@@ -4,6 +4,7 @@
  */
 
 import { setupFoundrySync, updateOnlinePlayers } from '../stores/KingdomStore';
+import { wrapKingdomActor } from '../utils/kingdom-actor-wrapper';
 import type { KingdomActor } from '../actors/KingdomActor';
 
 declare const Hooks: any;
@@ -157,7 +158,7 @@ async function initializeKingdomArmiesFolder(): Promise<void> {
 }
 
 /**
- * Find existing kingdom actor
+ * Find existing kingdom actor and wrap it with kingdom methods
  */
 function findKingdomActor(): any | null {
   const actors = game.actors?.contents || [];
@@ -166,7 +167,7 @@ function findKingdomActor(): any | null {
   for (const actor of actors) {
     if (actor.type === 'party' && actor.getFlag('pf2e-reignmaker', 'kingdom-data')) {
       console.log('[Kingdom Sync] Found party actor with kingdom data:', actor.name);
-      return actor;
+      return wrapKingdomActor(actor);
     }
   }
   
@@ -174,7 +175,7 @@ function findKingdomActor(): any | null {
   for (const actor of actors) {
     if (actor.type === 'party') {
       console.log('[Kingdom Sync] Found party actor without kingdom data:', actor.name, '- will initialize');
-      return actor;
+      return wrapKingdomActor(actor);
     }
   }
   
@@ -182,7 +183,7 @@ function findKingdomActor(): any | null {
   for (const actor of actors) {
     if (actor.getFlag('pf2e-reignmaker', 'isKingdom')) {
       console.log('[Kingdom Sync] Found legacy kingdom actor:', actor.name);
-      return actor;
+      return wrapKingdomActor(actor);
     }
   }
   

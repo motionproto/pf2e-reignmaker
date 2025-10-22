@@ -15,7 +15,9 @@ export const kingdomActor = writable<KingdomActor | null>(null);
 // Derived kingdom data - automatically updates when actor updates
 export const kingdomData = derived(kingdomActor, ($actor): KingdomData => {
   if (!$actor) return createDefaultKingdom();
-  return $actor.getKingdom() || createDefaultKingdom();
+  // Actor is wrapped with getKingdomData() method by wrapKingdomActor()
+  const data = $actor.getKingdomData?.() || $actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
+  return data || createDefaultKingdom();
 });
 
 // Convenience derived stores for common UI needs
@@ -61,11 +63,12 @@ export function getTurnManager(): TurnManager {
 /**
  * Initialize the kingdom actor store
  */
-export function initializeKingdomActor(actor: KingdomActor): void {
+export function initializeKingdomActor(actor: any): void {
   kingdomActor.set(actor);
   
   // Initialize viewing phase to match current phase
-  const kingdom = actor.getKingdom();
+  // Actor is wrapped with getKingdomData() method by wrapKingdomActor()
+  const kingdom = actor.getKingdomData?.() || actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
   if (kingdom) {
     viewingPhase.set(kingdom.currentPhase);
   }
@@ -89,7 +92,7 @@ function initializeTurnManager(): void {
 /**
  * Get the current kingdom actor
  */
-export function getKingdomActor(): KingdomActor | null {
+export function getKingdomActor(): any | null {
   return get(kingdomActor);
 }
 
@@ -101,28 +104,48 @@ export function getKingdomData(): KingdomData {
 }
 
 /**
- * Update kingdom data - simple wrapper around actor.updateKingdom
+ * Update kingdom data - uses wrapped actor's updateKingdomData method
  */
 export async function updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
   const actor = get(kingdomActor);
   if (!actor) {
     console.warn('[KingdomActor Store] No actor available for update - likely during initialization, queuing update');
     // Don't fail silently - instead, wait for actor to be available
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       const unsubscribe = kingdomActor.subscribe((newActor) => {
         if (newActor) {
           unsubscribe();
-          newActor.updateKingdom(updater).then(resolve).catch(error => {
-            console.error('[KingdomActor Store] Failed to update kingdom:', error);
+          // Use wrapped actor's updateKingdomData method
+          if (newActor.updateKingdomData) {
+            newActor.updateKingdomData(updater)
+              .then(() => resolve())
+              .catch(error => {
+                console.error('[KingdomActor Store] Failed to update kingdom:', error);
+                resolve();
+              });
+          } else {
             resolve();
-          });
+          }
         }
       });
     });
   }
   
   try {
-    await actor.updateKingdom(updater);
+    // Use wrapped actor's updateKingdomData method if available
+    if (actor.updateKingdomData) {
+      await actor.updateKingdomData(updater);
+    } else {
+      console.warn('[KingdomActor Store] Actor not wrapped - using fallback');
+      // Fallback to direct flag manipulation
+      const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData;
+      if (!kingdom) {
+        console.warn('[KingdomActor Store] No kingdom data found on actor');
+        return;
+      }
+      updater(kingdom);
+      await actor.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
+    }
   } catch (error) {
     console.error('[KingdomActor Store] Failed to update kingdom:', error);
   }
@@ -141,9 +164,11 @@ export async function advancePhase(): Promise<void> {
     
     // Update viewing phase to match new current phase
     const actor = get(kingdomActor);
-    const updatedKingdom = actor?.getKingdom();
-    if (updatedKingdom) {
-      viewingPhase.set(updatedKingdom.currentPhase);
+    if (actor) {
+      const updatedKingdom = actor.getKingdomData?.() || actor.getFlag?.('pf2e-reignmaker', 'kingdom-data') as KingdomData;
+      if (updatedKingdom) {
+        viewingPhase.set(updatedKingdom.currentPhase);
+      }
     }
   } catch (error) {
     console.error('[KingdomActor Store] Error advancing phase:', error);
@@ -167,7 +192,7 @@ export function isCurrentPhaseComplete(): boolean {
   return data.currentPhaseSteps.every(step => step.completed === 1);
 }
 
-// Convenience methods removed - use getKingdomActor() and actor.updateKingdom() directly
+// Convenience methods removed - use getKingdomActor() and actor.updateKingdomData() directly
 // This enforces the Single Source of Truth architecture pattern
 
 /**

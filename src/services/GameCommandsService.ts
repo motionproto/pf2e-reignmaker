@@ -121,7 +121,7 @@ export async function createGameCommandsService() {
         // Step 2: Pre-detect shortfalls for standard resources
         const shortfallResources: ResourceType[] = [];
         const actor = getKingdomActor();
-        const kingdom = actor?.getKingdom();
+        const kingdom = actor?.getKingdomData();
         
         if (kingdom?.resources) {
           for (const [resource, value] of accumulated) {
@@ -180,7 +180,7 @@ export async function createGameCommandsService() {
         return;
       }
 
-      await actor.updateKingdom(kingdom => {
+      await actor.updateKingdomData(kingdom => {
         if (!kingdom.turnState) {
           logger.warn('[GameCommands] Cannot track action - no turnState');
           return;
@@ -210,7 +210,7 @@ export async function createGameCommandsService() {
      */
     getPlayerActionCount(playerId: string): number {
       const actor = getKingdomActor();
-      const kingdom = actor?.getKingdom();
+      const kingdom = actor?.getKingdomData();
       
       if (!kingdom?.turnState?.actionLog) {
         return 0;
@@ -460,7 +460,7 @@ export async function createGameCommandsService() {
       logger.debug(`⛓️ [GameCommands] Applying ${value} imprisoned unrest`);
 
       const actor = getKingdomActor();
-      const kingdom = actor?.getKingdom();
+      const kingdom = actor?.getKingdomData();
       
       if (!kingdom) {
         logger.error(`  ❌ No kingdom actor found`);
