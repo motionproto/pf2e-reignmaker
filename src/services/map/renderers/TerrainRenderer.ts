@@ -1,4 +1,4 @@
-I'm still missing the terrain colors, which might be from another terrain renderer. Or is it stored somewhere else? /**
+/**
  * TerrainRenderer - Renders terrain type overlays on map hexes
  */
 
