@@ -217,8 +217,8 @@
           <h3>Kingdom Status</h3>
           <span class="phase-number">Phase 1</span>
         </div>
-        <ul>
-          <li>Gain 1 Fame (use it or lose during upkeep)</li>
+        <ul class="phase-details">
+          <li>Gain 1 Fame to use before the end of turn</li>
           <li>Apply ongoing modifiers from structures</li>
         </ul>
       </div>
@@ -231,9 +231,9 @@
           <h3>Resources</h3>
           <span class="phase-number">Phase 2</span>
         </div>
-        <ul>
+        <ul class="phase-details">
           <li>Collect resources from worksites</li>
-          <li>Collect gold from settlements</li>
+          <li>Collect gold from fed settlements</li>
         </ul>
       </div>
       
@@ -245,9 +245,10 @@
           <h3>Unrest</h3>
           <span class="phase-number">Phase 3</span>
         </div>
-        <ul>
-          <li>Roll for incidents if Unrest is 3+ (Tier 1+)</li>
-          <li>Incidents are resolved without using Actions</li>
+        <ul class="phase-details">
+          <li>Roll for an incident if unrest is 3+</li>
+          <li>Resolving incidents doesn’t use an action</li>
+          <li>Incidents are always negative </li>
         </ul>
       </div>
       
@@ -259,9 +260,10 @@
           <h3>Events</h3>
           <span class="phase-number">Phase 4</span>
         </div>
-        <ul>
+        <ul class="phase-details">
           <li>Roll a flat check to see if a random event occurs</li>
-          <li>Events require an action to resolve and may have lasting consequences if ignored</li>
+          <li>Events require a player's action to resolve</li>
+          <li>Ignoring events have ongoing consequences</li>
         </ul>
       </div>
       
@@ -273,9 +275,9 @@
           <h3>Actions</h3>
           <span class="phase-number">Phase 5</span>
         </div>
-        <ul>
-          <li>Each of 4 PCs takes one Kingdom Action</li>
-          <li>Options: claim hexes, build structures, recruit armies, diplomacy, etc.</li>
+        <ul class="phase-details">
+          <li>Each PC gets one action per turn</li>
+          <li>Resoved with skill check at DC by level</li>
           <li>Actions from the Capital gain +1 bonus</li>
         </ul>
       </div>
@@ -288,9 +290,9 @@
           <h3>Upkeep</h3>
           <span class="phase-number">Phase 6</span>
         </div>
-        <ul>
-          <li>Feed settlements (unfed settlements cause Unrest)</li>
-          <li>Support armies (unsupported armies make Morale checks)</li>
+        <ul class="phase-details">
+          <li>Feed settlements, or face unrest</li>
+          <li>Support armies with food and gold</li>
           <li>Apply resources to build queue</li>
           <li>Unused Lumber/Stone/Ore is lost</li>
         </ul>
@@ -675,6 +677,23 @@
     p {
       font-size: var(--font-md);
       margin: 0;
+    }
+  }
+  
+  .phase-details {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin: 0;
+    
+    li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-size: var(--font-md);
+      line-height: 1.5;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
   }
   
