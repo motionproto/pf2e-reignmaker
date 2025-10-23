@@ -319,4 +319,30 @@ await modifierService.cleanupExpiredModifiers();
 
 ---
 
+## Important Development Notes
+
+### Browser Environment - NO CommonJS
+
+**⚠️ CRITICAL: This is a browser-based Foundry VTT module**
+
+- ❌ **NEVER use `require()`** - causes "require is not defined" errors
+- ✅ **ALWAYS use ES6 imports** - `import { foo } from './bar'`
+- ✅ **Use dynamic imports** if needed - `await import('./module')`
+
+**Common Mistake:**
+```typescript
+// ❌ WRONG - Browser doesn't have require()
+const { calculateProduction } = require('../services/economics/production');
+
+// ✅ CORRECT - Use ES6 import at top of file
+import { calculateProduction } from '../services/economics/production';
+
+// ✅ CORRECT - Or dynamic import if needed inside function
+const { calculateProduction } = await import('../services/economics/production');
+```
+
+**Why this matters:** Foundry VTT modules run in the browser, not Node.js. The browser doesn't have a `require()` function. Always use ES6 module syntax.
+
+---
+
 **Remember:** If you're touching UI, it goes in Svelte. If you're implementing game logic, it goes in controllers/services.

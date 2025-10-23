@@ -1146,6 +1146,134 @@ try {
 - **Phase Controllers**: See `docs/PHASE_CONTROLLER_GUIDE.md` for phase implementation patterns  
 - **TurnManager Reference**: See `docs/TURNMANAGER_REFERENCE.md` for turn/phase coordination details
 
+## Worksite Production Recalculation Pattern
+
+### Overview
+
+`worksiteProduction` is **derived data stored for efficiency**, not a cache. It's calculated from hexes but persisted in KingdomActor to avoid recalculating on every read. This pattern maintains data consistency while optimizing performance.
+
+### Storage Location
+
+```typescript
+// In KingdomActor
+interface KingdomData {
+  worksiteProduction: Record<string, number>           // Total production by resource
+  worksiteProductionByHex: Array<[HexInfo, Map<string, number>]>  // Per-hex breakdown
+}
+```
+
+### Recalculation Helper
+
+**Location:** `src/utils/recalculateProduction.ts`
+
+**Main Function:**
+```typescript
+// Recalculates production from current hexes and updates KingdomActor
+async function recalculateWorksiteProduction(): Promise<boolean>
+```
+
+**Convenience Wrapper:**
+```typescript
+// Silent failure version for use in services (doesn't block operations)
+async function tryRecalculateProduction(): Promise<void>
+```
+
+### When to Recalculate
+
+Call `recalculateWorksiteProduction()` whenever hexes or worksites change:
+
+**✅ Automatic Recalculation:**
+- **TerritoryService.syncFromKingmaker()** - After Kingmaker import
+- **TerritoryService.importFromFoundryGrid()** - After grid import
+- **TerritoryService.updateKingdomStore()** - After any hex bulk update
+
+**⚠️ Manual Recalculation Needed:**
+- Hex editing UI (claim/unclaim hexes)
+- Worksite creation/modification through player actions
+- Direct hex data manipulation
+
+### Implementation Pattern
+
+**In Services (Automatic):**
+```typescript
+// Territory service already handles this
+private async updateKingdomStore(hexes: Hex[]): Promise<void> {
+  await updateKingdom(state => {
+    state.hexes = hexes.map(/* ... */)
+    // Inline calculation during bulk updates
+    state.worksiteProduction = calculateFromHexes(hexes)
+  })
+  
+  // Recalculate to ensure consistency
+  const { tryRecalculateProduction } = await import('../../utils/recalculateProduction')
+  await tryRecalculateProduction()
+}
+```
+
+**In Actions (Manual):**
+```typescript
+// After worksite-related changes
+async createWorksite(data: WorksiteData): Promise<void> {
+  await updateKingdom(kingdom => {
+    // Modify hex worksite data
+    const hex = kingdom.hexes.find(h => h.id === data.hexId)
+    if (hex) hex.worksite = data.worksite
+  })
+  
+  // Recalculate production
+  const { tryRecalculateProduction } = await import('../utils/recalculateProduction')
+  await tryRecalculateProduction()
+}
+```
+
+### How It Works
+
+1. **Read current hexes** from KingdomActor
+2. **Convert to Hex instances** (with terrain, worksites, bonuses)
+3. **Calculate production** using economics service
+4. **Update KingdomActor** with new production values
+5. **Reactivity triggers** UI updates automatically
+
+### Key Principles
+
+- **Not a cache** - It's persistent derived data
+- **Efficiency** - Avoids recalculating on every resource collection
+- **Consistency** - Recalculates whenever source data (hexes) changes
+- **Single Source** - Hexes are the source of truth, production is derived
+- **Automatic updates** - Reactive stores trigger UI updates when production changes
+
+### Integration Points
+
+| Location | Purpose | Status |
+|----------|---------|--------|
+| **TerritoryService** | Bulk hex updates (Kingmaker sync, imports) | ✅ Integrated |
+| **ActionEffectsService** | Worksite creation via actions | ⚠️ Could benefit |
+| **Hex Editing UI** | Manual hex/worksite modifications | 🔮 Future feature |
+| **ResourcePhaseController** | Uses stored production (no recalc needed) | ✅ Correct usage |
+
+### Performance Impact
+
+- **Minimal** - Only recalculates after bulk operations (rare)
+- **Async** - Doesn't block UI or gameplay
+- **Safe** - Silent failure won't break hex operations
+- **Efficient** - Resource collection uses stored values (fast)
+
+### Future Considerations
+
+When implementing hex editing UI:
+```typescript
+// Example: Manual hex claim
+async function claimHex(hexId: string): Promise<void> {
+  await updateKingdom(kingdom => {
+    const hex = kingdom.hexes.find(h => h.id === hexId)
+    if (hex) hex.claimedBy = 1
+  })
+  
+  // IMPORTANT: Recalculate production after hex changes
+  await recalculateWorksiteProduction()
+}
+```
+
 ---
 
 This architecture provides a **clean, maintainable system** that leverages Foundry's strengths while keeping the code **simple and understandable**. The dual-effect action system provides complete type safety, and the reactive bridge pattern ensures consistent data flow throughout the application.

@@ -180,16 +180,16 @@ export class EconomicsService {
     state: {
       hexes: Hex[];
       settlements: Settlement[];
-      cachedProduction: Map<string, number>;
-      cachedProductionByHex: Array<[Hex, Map<string, number>]>;
+      worksiteProduction: Map<string, number>;
+      worksiteProductionByHex: Array<[Hex, Map<string, number>]>;
       modifiers?: EconomicModifier[];
     }
   ): ResourceCollectionResult {
     logger.debug('🏭 [EconomicsService] Collecting turn resources with state:', {
       hexCount: state.hexes.length,
       settlementCount: state.settlements.length,
-      cachedProductionSize: state.cachedProduction.size,
-      cachedProduction: Object.fromEntries(state.cachedProduction),
+      worksiteProductionSize: state.worksiteProduction.size,
+      worksiteProduction: Object.fromEntries(state.worksiteProduction),
       settlements: state.settlements.map(s => ({ 
         name: s.name, 
         tier: s.tier, 
@@ -199,9 +199,9 @@ export class EconomicsService {
       }))
     });
     
-    // Use cached production from KingdomState (calculated once when hexes change)
-    const hexProduction = new Map(state.cachedProduction);
-    logger.debug('🏞️ [EconomicsService] Hex production from cache:', Object.fromEntries(hexProduction));
+    // Use worksite production from KingdomState (calculated once when hexes change)
+    const hexProduction = new Map(state.worksiteProduction);
+    logger.debug('🏞️ [EconomicsService] Hex production from stored state:', Object.fromEntries(hexProduction));
     
     // Check if there's any gold in hex production (shouldn't be, but let's verify)
     const hexGold = hexProduction.get('gold') || 0;
@@ -233,7 +233,7 @@ export class EconomicsService {
     }
     
     // Prepare detailed breakdown for UI
-    const productionByHex = state.cachedProductionByHex.map(([hex, production]) => ({
+    const productionByHex = state.worksiteProductionByHex.map(([hex, production]) => ({
       hexId: hex.id,
       hexName: hex.name || `Hex ${hex.id}`,
       terrain: hex.terrain,
@@ -259,7 +259,7 @@ export class EconomicsService {
         settlementGold
       },
       details: {
-        hexCount: state.cachedProductionByHex.length,
+        hexCount: state.worksiteProductionByHex.length,
         productionByHex
       }
     };

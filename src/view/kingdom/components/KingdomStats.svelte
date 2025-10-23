@@ -108,10 +108,10 @@
   $: totalUnrestPerTurn = sizeUnrest + warUnrest + eventUnrest - structureBonus;
 
   // Get production values from the kingdom data
-  $: actualFoodIncome = $kingdomData.cachedProduction.food || 0;
-  $: actualLumberIncome = $kingdomData.cachedProduction.lumber || 0;
-  $: actualStoneIncome = $kingdomData.cachedProduction.stone || 0;
-  $: actualOreIncome = $kingdomData.cachedProduction.ore || 0;
+  $: actualFoodIncome = $kingdomData.worksiteProduction?.food || 0;
+  $: actualLumberIncome = $kingdomData.worksiteProduction?.lumber || 0;
+  $: actualStoneIncome = $kingdomData.worksiteProduction?.stone || 0;
+  $: actualOreIncome = $kingdomData.worksiteProduction?.ore || 0;
 
   // Calculate gold income from settlements using economics service
   $: actualGoldIncome =

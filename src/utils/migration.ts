@@ -37,10 +37,10 @@ export function migrateKingdomState(oldState: any): KingdomData {
       newKingdom.worksiteCount = { ...oldState.worksiteCount };
     }
     
-    if (oldState.cachedProduction instanceof Map) {
-      newKingdom.cachedProduction = Object.fromEntries(oldState.cachedProduction);
-    } else if (oldState.cachedProduction && typeof oldState.cachedProduction === 'object') {
-      newKingdom.cachedProduction = { ...oldState.cachedProduction };
+    if (oldState.worksiteProduction instanceof Map) {
+      newKingdom.worksiteProduction = Object.fromEntries(oldState.worksiteProduction);
+    } else if (oldState.worksiteProduction && typeof oldState.worksiteProduction === 'object') {
+      newKingdom.worksiteProduction = { ...oldState.worksiteProduction };
     }
     
     // Convert phase tracking

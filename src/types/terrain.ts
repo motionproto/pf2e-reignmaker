@@ -122,6 +122,8 @@ export function normalizeTerrainType(terrain: string | null | undefined): Terrai
     // Water variants (NEW)
     case 'water':
     case 'lake':
+    case 'river':
+    case 'coast':
     case 'ocean':
     case 'sea':
       return 'water';

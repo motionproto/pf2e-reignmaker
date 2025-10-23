@@ -8,6 +8,7 @@ import type { KingdomActor, KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
 import { TurnPhase } from '../actors/KingdomActor';
 import { TurnManager } from '../models/turn-manager';
+import { calculateProduction } from '../services/economics/production';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -84,6 +85,22 @@ export const claimedWorksites = derived(claimedHexes, $hexes => {
     }
     return counts;
   }, {} as Record<string, number>);
+});
+
+/**
+ * Current production from all hexes
+ * Uses worksiteProduction which is kept up-to-date by the economics service
+ * This is derived from hexes but stored in the model for efficiency
+ * Falls back to empty object if no production data available
+ */
+export const currentProduction = derived(kingdomData, $data => {
+  // Use worksite production if available
+  if ($data.worksiteProduction && typeof $data.worksiteProduction === 'object') {
+    return $data.worksiteProduction;
+  }
+  
+  // Fallback to empty production
+  return { food: 0, lumber: 0, stone: 0, ore: 0 };
 });
 
 // UI-only state (no persistence needed)
@@ -382,11 +399,11 @@ export async function startKingdom(): Promise<void> {
   // 2. Build production cache
   console.log('🏭 [KingdomStore] Building production cache...');
   await updateKingdom((kingdom) => {
-    // Recalculate production from hexes and cache it
+    // Recalculate production from hexes and store it
     const { calculateProduction } = require('../services/economics/production');
     const productionResult = calculateProduction(kingdom.hexes || [], []);
-    kingdom.cachedProduction = Object.fromEntries(productionResult.totalProduction);
-    kingdom.cachedProductionByHex = productionResult.byHex.map((entry: any) => [
+    kingdom.worksiteProduction = Object.fromEntries(productionResult.totalProduction);
+    kingdom.worksiteProductionByHex = productionResult.byHex.map((entry: any) => [
       entry.hex,
       entry.production
     ]);

@@ -340,21 +340,21 @@ export class TerritoryService {
             });
             state.worksiteCount = worksiteCount;
             
-            // Calculate and cache total production from all hexes
-            const cachedProduction: Record<string, number> = {};
-            const cachedProductionByHex: Array<[any, Map<string, number>]> = [];
+            // Calculate worksite production from all hexes (stored state for efficiency)
+            const worksiteProduction: Record<string, number> = {};
+            const worksiteProductionByHex: Array<[any, Map<string, number>]> = [];
             
             for (const hex of hexes) {
                 const production = hex.getProduction();
                 
-                // Add to total cached production
+                // Add to total worksite production
                 production.forEach((amount, resource) => {
-                    cachedProduction[resource] = (cachedProduction[resource] || 0) + amount;
+                    worksiteProduction[resource] = (worksiteProduction[resource] || 0) + amount;
                 });
                 
                 // Store per-hex production for detailed breakdown
                 if (production.size > 0) {
-                    cachedProductionByHex.push([{
+                    worksiteProductionByHex.push([{
                         id: hex.id,
                         name: hex.name || `Hex ${hex.id}`,
                         terrain: hex.terrain
@@ -362,14 +362,14 @@ export class TerritoryService {
                 }
             }
             
-            state.cachedProduction = cachedProduction;
-            state.cachedProductionByHex = cachedProductionByHex;
+            state.worksiteProduction = worksiteProduction;
+            state.worksiteProductionByHex = worksiteProductionByHex;
             
             logger.debug('[Territory Service] Updated kingdom store with:', {
                 hexes: state.hexes.length,
                 worksiteCount: state.worksiteCount,
-                cachedProduction: state.cachedProduction,
-                productionByHexCount: state.cachedProductionByHex.length
+                worksiteProduction: state.worksiteProduction,
+                productionByHexCount: state.worksiteProductionByHex.length
             });
             
             return state;
@@ -383,6 +383,11 @@ export class TerritoryService {
                 source: 'kingmaker-sync'
             });
         }
+        
+        // CRITICAL: Recalculate worksite production after hex data changes
+        // This ensures worksiteProduction stays in sync with hex modifications
+        const { tryRecalculateProduction } = await import('../../utils/recalculateProduction');
+        await tryRecalculateProduction();
     }
     
     /**

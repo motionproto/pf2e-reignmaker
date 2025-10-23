@@ -94,8 +94,8 @@ export async function createResourcePhaseController() {
         const result = economicsService.collectTurnResources({
           hexes: (kingdom.hexes || []) as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
           settlements: kingdom.settlements || [],
-          cachedProduction: new Map(Object.entries(kingdom.cachedProduction || {})),
-          cachedProductionByHex: [],
+          worksiteProduction: new Map(Object.entries(kingdom.worksiteProduction || {})),
+          worksiteProductionByHex: [],
           modifiers
         });
         
@@ -167,12 +167,12 @@ export async function createResourcePhaseController() {
         // Get active economic modifiers (including commodities, leadership bonuses, etc.)
         const modifiers = getActiveModifiers(kingdom);
         
-        // Use economics service with the same cached production that actual collection uses
+        // Use economics service with the same worksite production that actual collection uses
         const result = economicsService.collectTurnResources({
           hexes: hexes as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
           settlements,
-          cachedProduction: new Map(Object.entries(kingdom.cachedProduction || {})),
-          cachedProductionByHex: [], // This will be calculated by the economics service from hexes
+          worksiteProduction: new Map(Object.entries(kingdom.worksiteProduction || {})),
+          worksiteProductionByHex: [], // This will be calculated by the economics service from hexes
           modifiers
         });
         

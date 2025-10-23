@@ -92,8 +92,11 @@ export interface KingdomData {
   settlements: Settlement[];
   size: number;
   worksiteCount: Record<string, number>;
-  cachedProduction: Record<string, number>;
-  cachedProductionByHex?: Array<[any, Map<string, number>]>;
+  // Worksite production: resources produced by worksites on claimed hexes
+  // This is derived from hexes but stored in the model for efficiency
+  // Must be recalculated whenever hexes or worksites change
+  worksiteProduction: Record<string, number>;
+  worksiteProductionByHex?: Array<[any, Map<string, number>]>;
   roadsBuilt?: string[];  // Hex IDs where roads have been built
   
   // Military & Construction
@@ -269,7 +272,7 @@ export class KingdomActor extends Actor {
       settlements: [],
       size: 0,
       worksiteCount: {},
-      cachedProduction: {},
+      worksiteProduction: {},
       armies: [],
       buildQueue: [],
       factions: defaultFactions,  // Loaded from data/factions/default-factions.json
@@ -435,7 +438,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
     settlements: [],
     size: 0,
     worksiteCount: {},
-    cachedProduction: {},
+    worksiteProduction: {},
       armies: [],
       buildQueue: [],
       factions: [],  // Empty - populated by initializeKingdom() or caller
