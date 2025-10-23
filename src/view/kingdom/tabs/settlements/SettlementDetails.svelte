@@ -22,10 +22,16 @@
    let showDeleteConfirm = false;
    let isDeleting = false;
    
+   // Auto-start editing for newly created settlements
+   $: if (settlement && settlement.name.startsWith('Missing settlement at') && !isEditingName) {
+      startEditingName();
+   }
+   
    function startEditingName() {
       if (settlement) {
          isEditingName = true;
-         editedName = settlement.name;
+         // Empty the field if it's a "Missing settlement at" placeholder
+         editedName = settlement.name.startsWith('Missing settlement at') ? '' : settlement.name;
       }
    }
    
@@ -118,28 +124,35 @@
       <div class="panel-header">
          <div class="settlement-title">
             {#if isEditingName}
-               <input 
-                  type="text" 
-                  bind:value={editedName}
-                  on:keydown={handleNameKeydown}
-                  on:blur={saveSettlementName}
-                  class="name-input"
-                  autofocus
-               />
-               <button 
-                  on:click={saveSettlementName}
-                  class="save-button"
-                  title="Save"
-               >
-                  <i class="fas fa-check"></i>
-               </button>
-               <button 
-                  on:click={cancelEditingName}
-                  class="cancel-button"
-                  title="Cancel"
-               >
-                  <i class="fas fa-times"></i>
-               </button>
+               <div class="name-edit-wrapper">
+                  <div class="name-input-row">
+                     <input 
+                        type="text" 
+                        bind:value={editedName}
+                        on:keydown={handleNameKeydown}
+                        on:blur={saveSettlementName}
+                        class="name-input"
+                        autofocus
+                     />
+                     <button 
+                        on:click={saveSettlementName}
+                        class="save-button"
+                        title="Save"
+                     >
+                        <i class="fas fa-check"></i>
+                     </button>
+                     <button 
+                        on:click={cancelEditingName}
+                        class="cancel-button"
+                        title="Cancel"
+                     >
+                        <i class="fas fa-times"></i>
+                     </button>
+                  </div>
+                  {#if editedName.trim() === ''}
+                     <div class="name-hint">Enter settlement name</div>
+                  {/if}
+               </div>
             {:else}
                <div class="name-wrapper">
                   <h3>{settlement.name}</h3>
@@ -304,7 +317,7 @@
       
       .settlement-title {
          display: flex;
-         align-items: center;
+         align-items: flex-start;
          justify-content: space-between;
          gap: 0.5rem;
          width: 100%;
@@ -352,6 +365,26 @@
                background: rgba(255, 255, 255, 0.1);
                border-radius: var(--radius-md);
             }
+         }
+         
+         .name-edit-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
+         }
+         
+         .name-input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+         }
+         
+         .name-hint {
+            font-size: var(--font-xs);
+            color: var(--text-tertiary);
+            font-style: italic;
+            padding-left: 0.5rem;
          }
          
       }

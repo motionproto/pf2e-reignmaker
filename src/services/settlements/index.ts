@@ -11,23 +11,46 @@ import { logger } from '../../utils/Logger';
 
 export class SettlementService {
   /**
-   * Filter settlements to only include those with valid map locations
-   * Settlements at (0, 0) are considered unmapped and excluded from calculations
+   * Filter settlements to only include those with valid map locations IN CLAIMED TERRITORY
+   * Settlements at (0, 0) are considered unmapped
+   * Settlements in unclaimed hexes (claimedBy !== 1) are excluded from kingdom calculations
+   * 
+   * @param settlements - All settlements
+   * @param hexes - Kingdom hexes to check ownership
    */
-  private getSettlementsWithLocations(settlements: Settlement[]): Settlement[] {
-    return settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+  private getSettlementsWithLocations(settlements: Settlement[], hexes?: any[]): Settlement[] {
+    return settlements.filter(s => {
+      // Filter out unmapped settlements (at origin)
+      if (s.location.x === 0 && s.location.y === 0) {
+        return false;
+      }
+      
+      // If hexes provided, also check if settlement is in claimed territory
+      if (hexes) {
+        const settlementHex = hexes.find(h => 
+          h.row === s.location.x && h.col === s.location.y
+        );
+        
+        // Settlement must be in a player-claimed hex (claimedBy === 1)
+        if (!settlementHex || settlementHex.claimedBy !== 1) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
   }
   
   /**
    * Calculate total gold income from all settlements
    * Only generates gold if settlements were fed last turn
-   * Only includes settlements with valid map locations
+   * Only includes settlements with valid map locations IN CLAIMED TERRITORY
    */
-  calculateSettlementGoldIncome(settlements: Settlement[]): number {
+  calculateSettlementGoldIncome(settlements: Settlement[], hexes?: any[]): number {
     let totalGold = 0;
     
-    // Only count settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    // Only count settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(settlements, hexes);
     
     mappedSettlements.forEach(settlement => {
       if (settlement.wasFedLastTurn) {
@@ -78,11 +101,11 @@ export class SettlementService {
   
   /**
    * Calculate total food consumption for all settlements
-   * Only includes settlements with valid map locations
+   * Only includes settlements with valid map locations IN CLAIMED TERRITORY
    */
-  calculateTotalFoodConsumption(settlements: Settlement[]): number {
-    // Only count settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+  calculateTotalFoodConsumption(settlements: Settlement[], hexes?: any[]): number {
+    // Only count settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(settlements, hexes);
     
     return mappedSettlements.reduce((total, settlement) => {
       const config = SettlementTierConfig[settlement.tier];
@@ -92,11 +115,11 @@ export class SettlementService {
   
   /**
    * Get food consumption breakdown by settlement
-   * Only includes settlements with valid map locations
+   * Only includes settlements with valid map locations IN CLAIMED TERRITORY
    */
-  getFoodConsumptionBreakdown(settlements: Settlement[]): Array<{settlement: Settlement, consumption: number}> {
-    // Only count settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+  getFoodConsumptionBreakdown(settlements: Settlement[], hexes?: any[]): Array<{settlement: Settlement, consumption: number}> {
+    // Only count settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(settlements, hexes);
     
     return mappedSettlements.map(settlement => {
       const config = SettlementTierConfig[settlement.tier];
@@ -110,17 +133,17 @@ export class SettlementService {
   /**
    * Process food consumption and update fed status
    * Returns shortage amount if any
-   * Only includes settlements with valid map locations
+   * Only includes settlements with valid map locations IN CLAIMED TERRITORY
    */
-  processFoodConsumption(settlements: Settlement[], availableFood: number): {
+  processFoodConsumption(settlements: Settlement[], availableFood: number, hexes?: any[]): {
     shortage: number,
     fedSettlements: Set<string>,
     unfedSettlements: Set<string>
   } {
-    // Only count settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(settlements);
+    // Only count settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(settlements, hexes);
     
-    const totalNeeded = this.calculateTotalFoodConsumption(settlements);
+    const totalNeeded = this.calculateTotalFoodConsumption(settlements, hexes);
     const fedSettlements = new Set<string>();
     const unfedSettlements = new Set<string>();
     
@@ -385,8 +408,8 @@ export class SettlementService {
       return;
     }
     
-    // Aggregate capacities across ALL settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements);
+    // Aggregate capacities across ALL settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements, kingdom.hexes);
     
     const totals = mappedSettlements.reduce((acc, s) => ({
       foodCapacity: acc.foodCapacity + (s.foodStorageCapacity || 0),
@@ -563,8 +586,8 @@ export class SettlementService {
       return;
     }
     
-    // Calculate total food capacity across all settlements with valid locations
-    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements);
+    // Calculate total food capacity across all settlements with valid locations in claimed territory
+    const mappedSettlements = this.getSettlementsWithLocations(kingdom.settlements, kingdom.hexes);
     
     const totalFoodCapacity = mappedSettlements.reduce((total, settlement) => {
       return total + (settlement.foodStorageCapacity || 0);

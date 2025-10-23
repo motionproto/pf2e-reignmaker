@@ -147,13 +147,14 @@ export function calculateSettlementGoldIncome(
 
 /**
  * Get gold value for a settlement tier
+ * Based on Reignmaker Lite rules: Village=1, Town=2, City=4, Metropolis=6
  */
 function getTierGoldValue(tier: string): number {
   switch (tier.toLowerCase()) {
     case 'village': return 1;
     case 'town': return 2;
-    case 'city': return 3;
-    case 'metropolis': return 4;
+    case 'city': return 4;
+    case 'metropolis': return 6;
     default: return 0;
   }
 }

@@ -130,10 +130,10 @@ async function initializePhase() {
                   <div class="alert-content">
                      <i class="fas fa-map-marker-alt"></i>
                      <div class="settlement-info">
-                        <strong>{hex.name || 'Unnamed'}</strong>
-                        <span class="tier-badge">{hex.tier}</span>
+                        <strong class="hex-location">Hex {hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
+                        <span class="alert-message">Has no settlement assigned</span>
                      </div>
-                     <span class="alert-message">Hex {hex.x}:{hex.y.toString().padStart(2, '0')} has no settlement assigned</span>
+                     <span class="tier-badge">{hex.tier}</span>
                   </div>
                </div>
             {/each}
@@ -141,7 +141,7 @@ async function initializePhase() {
          
          <div class="alert-note">
             <i class="fas fa-info-circle"></i>
-            <span>Unmapped settlements do not contribute to kingdom resources, capacities, or skill bonuses.</span>
+            Unmapped settlements do not contribute to kingdom resources, capacities, or skill bonuses.
          </div>
       </div>
    {/if}
@@ -312,10 +312,8 @@ async function initializePhase() {
 
    // Unmapped Settlements Alert Styles
    .unmapped-settlements-alert {
-      background: linear-gradient(135deg,
-         rgba(251, 191, 36, 0.15),
-         rgba(245, 158, 11, 0.1));
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      background: transparent;
+      border: 2px solid #fbbf24;
 
       .section-header {
          i {
@@ -375,6 +373,10 @@ async function initializePhase() {
          font-weight: var(--font-weight-semibold);
          color: var(--text-primary);
       }
+
+      .hex-location {
+         font-weight: var(--font-weight-bold);
+      }
    }
 
    .tier-badge {
@@ -388,9 +390,9 @@ async function initializePhase() {
    }
 
    .alert-message {
-      font-size: var(--font-sm);
+      font-size: var(--font-lg);
       color: var(--text-secondary);
-      font-style: italic;
+      font-weight: normal;
    }
 
    .alert-note {
@@ -401,18 +403,15 @@ async function initializePhase() {
       background: rgba(251, 191, 36, 0.1);
       border: 1px solid rgba(251, 191, 36, 0.2);
       border-radius: var(--radius-md);
+      font-size: var(--font-md);
+      color: var(--text-secondary);
+      line-height: 1.5;
 
       i {
-         font-size: 0.875rem;
+         font-size: 1rem;
          color: #fbbf24;
          margin-top: 2px;
          flex-shrink: 0;
-      }
-
-      span {
-         font-size: var(--font-xs);
-         color: var(--text-secondary);
-         line-height: 1.5;
       }
    }
 </style>

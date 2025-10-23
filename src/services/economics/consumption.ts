@@ -13,16 +13,18 @@ import type { ConsumptionResult, EconomicModifier } from './types';
  * 
  * @param settlements - All kingdom settlements
  * @param armies - All kingdom armies  
+ * @param hexes - Kingdom hexes to check ownership (optional)
  * @param modifiers - Optional economic modifiers
  * @returns Detailed consumption breakdown
  */
 export function calculateConsumption(
   settlements: Settlement[],
   armies: Army[],
+  hexes?: any[],
   modifiers: EconomicModifier[] = []
 ): ConsumptionResult {
-  // Calculate base food consumption
-  const settlementFood = calculateSettlementFoodConsumption(settlements);
+  // Calculate base food consumption (only settlements in claimed territory)
+  const settlementFood = calculateSettlementFoodConsumption(settlements, hexes);
   const armyFood = calculateArmyFoodConsumption(armies);
   let totalFood = settlementFood + armyFood;
   
@@ -46,7 +48,7 @@ export function calculateConsumption(
 
 /**
  * Calculate food consumption for all settlements
- * Only includes settlements with valid map locations
+ * Only includes settlements with valid map locations IN CLAIMED TERRITORY
  * 
  * According to Kingdom Rules:
  * - Village: 1 Food
@@ -54,9 +56,28 @@ export function calculateConsumption(
  * - City: 8 Food
  * - Metropolis: 12 Food
  */
-function calculateSettlementFoodConsumption(settlements: Settlement[]): number {
-  // Only count settlements with valid locations (exclude unmapped at 0,0)
-  const mappedSettlements = settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+function calculateSettlementFoodConsumption(settlements: Settlement[], hexes?: any[]): number {
+  // Only count settlements with valid locations in claimed territory (claimedBy === 1)
+  const mappedSettlements = settlements.filter(s => {
+    // Filter out unmapped settlements (at origin)
+    if (s.location.x === 0 && s.location.y === 0) {
+      return false;
+    }
+    
+    // If hexes provided, also check if settlement is in claimed territory
+    if (hexes) {
+      const settlementHex = hexes.find(h => 
+        h.row === s.location.x && h.col === s.location.y
+      );
+      
+      // Settlement must be in a player-claimed hex (claimedBy === 1)
+      if (!settlementHex || settlementHex.claimedBy !== 1) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
   
   return mappedSettlements.reduce((total, settlement) => {
     const config = SettlementTierConfig[settlement.tier];
@@ -104,7 +125,7 @@ function applyConsumptionModifier(
 
 /**
  * Calculate army support capacity from settlements
- * Only includes settlements with valid map locations
+ * Only includes settlements with valid map locations IN CLAIMED TERRITORY
  * 
  * According to Kingdom Rules:
  * - Village: 1 Army
@@ -114,9 +135,28 @@ function applyConsumptionModifier(
  * 
  * Plus any structure bonuses (e.g., Barracks, Military Academy)
  */
-export function calculateArmySupportCapacity(settlements: Settlement[]): number {
-  // Only count settlements with valid locations (exclude unmapped at 0,0)
-  const mappedSettlements = settlements.filter(s => s.location.x !== 0 || s.location.y !== 0);
+export function calculateArmySupportCapacity(settlements: Settlement[], hexes?: any[]): number {
+  // Only count settlements with valid locations in claimed territory (claimedBy === 1)
+  const mappedSettlements = settlements.filter(s => {
+    // Filter out unmapped settlements (at origin)
+    if (s.location.x === 0 && s.location.y === 0) {
+      return false;
+    }
+    
+    // If hexes provided, also check if settlement is in claimed territory
+    if (hexes) {
+      const settlementHex = hexes.find(h => 
+        h.row === s.location.x && h.col === s.location.y
+      );
+      
+      // Settlement must be in a player-claimed hex (claimedBy === 1)
+      if (!settlementHex || settlementHex.claimedBy !== 1) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
   
   return mappedSettlements.reduce((total, settlement) => {
     // Use calculated armySupport if available (includes structure bonuses)
@@ -131,9 +171,10 @@ export function calculateArmySupportCapacity(settlements: Settlement[]): number 
  */
 export function calculateUnsupportedArmies(
   armies: Army[],
-  settlements: Settlement[]
+  settlements: Settlement[],
+  hexes?: any[]
 ): number {
-  const supportCapacity = calculateArmySupportCapacity(settlements);
+  const supportCapacity = calculateArmySupportCapacity(settlements, hexes);
   return Math.max(0, armies.length - supportCapacity);
 }
 

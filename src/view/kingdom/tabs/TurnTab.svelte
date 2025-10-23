@@ -8,6 +8,9 @@
    import PhaseHeader from '../components/PhaseHeader.svelte';
    import PlayerActionTracker from '../components/PlayerActionTracker.svelte';
    
+   // Setup Tab for Turn 0
+   import SetupTab from './SetupTab.svelte';
+   
    // Phase components - Using refactored versions for clean architecture
    import StatusPhase from '../turnPhases/StatusPhase.svelte';
    import ResourcesPhase from '../turnPhases/ResourcesPhase.svelte';
@@ -68,38 +71,44 @@
 </script>
 
 <div class="turn-management">
-   <!-- Phase header with gradient styling -->
-   <!-- Note: Button behavior (onNextPhase, isUpkeepPhase) is always tied to the ACTUAL phase, not the viewing phase -->
-   <PhaseHeader 
-      title={safePhaseInfo.displayName}
-      description={safePhaseInfo.description}
-      icon={displayPhaseIcon}
-      onNextPhase={handleAdvancePhase}
-      isUpkeepPhase={actualPhase === TurnPhase.UPKEEP}
-      isViewingActualPhase={displayPhase === actualPhase}
-   />
-   
-   <!-- Phase Bar underneath phase header -->
-   <PhaseBar />
-   
-   <!-- Player Action Tracker underneath phase bar -->
-   <PlayerActionTracker />
-   
-   <div class="phase-content">
-      {#if displayPhase === TurnPhase.STATUS}
-         <StatusPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {:else if displayPhase === TurnPhase.RESOURCES}
-         <ResourcesPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {:else if displayPhase === TurnPhase.UNREST}
-         <UnrestPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {:else if displayPhase === TurnPhase.EVENTS}
-         <EventsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {:else if displayPhase === TurnPhase.ACTIONS}
-         <ActionsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {:else if displayPhase === TurnPhase.UPKEEP}
-         <UpkeepPhase isViewingCurrentPhase={displayPhase === actualPhase} />
-      {/if}
-   </div>
+   {#if $kingdomData.currentTurn === 0}
+      <!-- Turn 0: Setup Phase -->
+      <SetupTab />
+   {:else}
+      <!-- Regular Turn Phases -->
+      <!-- Phase header with gradient styling -->
+      <!-- Note: Button behavior (onNextPhase, isUpkeepPhase) is always tied to the ACTUAL phase, not the viewing phase -->
+      <PhaseHeader 
+         title={safePhaseInfo.displayName}
+         description={safePhaseInfo.description}
+         icon={displayPhaseIcon}
+         onNextPhase={handleAdvancePhase}
+         isUpkeepPhase={actualPhase === TurnPhase.UPKEEP}
+         isViewingActualPhase={displayPhase === actualPhase}
+      />
+      
+      <!-- Phase Bar underneath phase header -->
+      <PhaseBar />
+      
+      <!-- Player Action Tracker underneath phase bar -->
+      <PlayerActionTracker />
+      
+      <div class="phase-content">
+         {#if displayPhase === TurnPhase.STATUS}
+            <StatusPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {:else if displayPhase === TurnPhase.RESOURCES}
+            <ResourcesPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {:else if displayPhase === TurnPhase.UNREST}
+            <UnrestPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {:else if displayPhase === TurnPhase.EVENTS}
+            <EventsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {:else if displayPhase === TurnPhase.ACTIONS}
+            <ActionsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {:else if displayPhase === TurnPhase.UPKEEP}
+            <UpkeepPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+         {/if}
+      </div>
+   {/if}
 </div>
 
 <style lang="scss">

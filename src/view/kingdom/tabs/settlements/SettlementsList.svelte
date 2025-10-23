@@ -1,7 +1,7 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { createSettlement, SettlementTier } from '../../../../models/Settlement';
-   import { updateKingdom } from '../../../../stores/KingdomStore';
+   import { kingdomData, updateKingdom } from '../../../../stores/KingdomStore';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
    
    export let settlements: Settlement[] = [];
@@ -14,13 +14,86 @@
    // Get unique tiers from settlements
    $: settlementTiers = [...new Set(settlements.map(s => s.tier))].sort();
    
-   // Create new settlement handler
+   // Detect unassigned hexes (hexes with settlement features but no settlement)
+   $: unassignedHexes = ($kingdomData.hexes || [])
+      .filter((h: any) => {
+         // Must be in claimed territory
+         if (h.claimedBy !== 1) return false;
+         
+         // Must have settlement features
+         const features = h.kingmakerFeatures || h.features || [];
+         const hasSettlementFeature = features.some((f: any) => 
+            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+         );
+         if (!hasSettlementFeature) return false;
+         
+         // Check if any settlement is assigned to this hex
+         const [xStr, yStr] = h.id.split('.');
+         const x = parseInt(xStr) || 0;
+         const y = parseInt(yStr) || 0;
+         
+         const hasAssignedSettlement = $kingdomData.settlements?.some(s => 
+            s.location.x === x && s.location.y === y
+         );
+         
+         // Show if no settlement is assigned
+         return !hasAssignedSettlement;
+      })
+      .map((h: any) => {
+         const [xStr, yStr] = h.id.split('.');
+         const x = parseInt(xStr) || 0;
+         const y = parseInt(yStr) || 0;
+         
+         const features = h.kingmakerFeatures || h.features || [];
+         const settlementFeature = features.find((f: any) => 
+            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+         );
+         
+         // Map feature type to SettlementTier
+         let tier = SettlementTier.VILLAGE;
+         if (settlementFeature?.type) {
+            const typeStr = settlementFeature.type.toLowerCase();
+            if (typeStr === 'town') tier = SettlementTier.TOWN;
+            else if (typeStr === 'city') tier = SettlementTier.CITY;
+            else if (typeStr === 'metropolis') tier = SettlementTier.METROPOLIS;
+         }
+         
+         return {
+            id: h.id,
+            x,
+            y,
+            tier,
+            name: settlementFeature?.name || 'Unnamed'
+         };
+      });
+   
+   // Create new settlement handler (manual creation)
    async function handleCreateSettlement() {
       // Create a new settlement at (0,0) - unlinked
       const newSettlement = createSettlement(
          'New Settlement',
          { x: 0, y: 0 },
          SettlementTier.VILLAGE
+      );
+      
+      // Add to kingdom
+      await updateKingdom(k => {
+         if (!k.settlements) k.settlements = [];
+         k.settlements.push(newSettlement);
+      });
+      
+      // Select the new settlement
+      onSelectSettlement(newSettlement);
+   }
+   
+   // Create settlement for unassigned hex
+   async function handleCreateSettlementAtHex(hex: { x: number; y: number; tier: SettlementTier; name: string }) {
+      // Create a settlement at the hex location
+      const newSettlement = createSettlement(
+         `Missing settlement at ${hex.x}:${hex.y.toString().padStart(2, '0')}`,
+         { x: hex.x, y: hex.y },
+         hex.tier,
+         { x: hex.x, y: hex.y } // kingmakerLocation
       );
       
       // Add to kingdom
@@ -74,7 +147,7 @@
    </div>
    
    <div class="settlements-list">
-      {#if filteredSettlements.length === 0}
+      {#if filteredSettlements.length === 0 && unassignedHexes.length === 0}
          <div class="empty-state">
             {#if searchTerm || filterTier !== 'all'}
                <i class="fas fa-search"></i>
@@ -111,6 +184,35 @@
                </div>
             </div>
          {/each}
+         
+         {#if unassignedHexes.length > 0}
+            <div class="unassigned-section">
+               <div class="section-divider">
+                  <span>Unassigned Locations</span>
+               </div>
+               
+               {#each unassignedHexes as hex}
+                  <div class="unassigned-item">
+                     <div class="unassigned-content">
+                        <div class="unassigned-left">
+                           <i class="fas fa-exclamation-triangle unassigned-icon"></i>
+                           <div class="unassigned-info">
+                              <div class="unassigned-name">Missing settlement at <strong>{hex.x}:{hex.y.toString().padStart(2, '0')}</strong></div>
+                           </div>
+                        </div>
+                        <button 
+                           class="btn-create-at-hex"
+                           on:click|stopPropagation={() => handleCreateSettlementAtHex(hex)}
+                           title="Create settlement at this location"
+                        >
+                           <i class="fas fa-plus"></i>
+                           Create
+                        </button>
+                     </div>
+                  </div>
+               {/each}
+            </div>
+         {/if}
       {/if}
    </div>
    
@@ -314,6 +416,112 @@
          .tier-badge {
             background: rgba(128, 128, 128, 0.2);
             color: var(--text-secondary);
+         }
+      }
+   }
+   
+   .unassigned-section {
+      margin-top: 1rem;
+      padding-top: 0.5rem;
+   }
+   
+   .section-divider {
+      text-align: center;
+      margin-bottom: 0.75rem;
+      
+      span {
+         display: inline-block;
+         padding: 0.25rem 0.75rem;
+         background: rgba(128, 128, 128, 0.15);
+         border: 1px solid rgba(128, 128, 128, 0.3);
+         border-radius: var(--radius-md);
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-secondary);
+         text-transform: uppercase;
+         letter-spacing: 0.05em;
+      }
+   }
+   
+   .unassigned-item {
+      background: rgba(128, 128, 128, 0.08);
+      border: 1px dashed rgba(128, 128, 128, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      transition: var(--transition-base);
+      
+      &:hover {
+         background: rgba(128, 128, 128, 0.12);
+         border-color: rgba(128, 128, 128, 0.5);
+      }
+      
+      .unassigned-content {
+         display: flex;
+         align-items: center;
+         justify-content: space-between;
+         gap: 1rem;
+      }
+      
+      .unassigned-left {
+         display: flex;
+         align-items: center;
+         gap: 0.75rem;
+         flex: 1;
+         min-width: 0;
+         
+         .unassigned-icon {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+         }
+         
+         .unassigned-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            flex: 1;
+            min-width: 0;
+            
+            .unassigned-name {
+               font-weight: var(--font-weight-normal);
+               color: var(--text-secondary);
+               font-size: var(--font-lg);
+            }
+            
+            .tier-badge {
+               align-self: flex-start;
+            }
+         }
+      }
+      
+      .btn-create-at-hex {
+         padding: 0.5rem 1rem;
+         background: rgba(128, 128, 128, 0.2);
+         border: 1px solid rgba(128, 128, 128, 0.4);
+         border-radius: var(--radius-md);
+         color: var(--text-primary);
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-semibold);
+         cursor: pointer;
+         transition: var(--transition-base);
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+         flex-shrink: 0;
+         
+         &:hover {
+            background: rgba(128, 128, 128, 0.3);
+            border-color: rgba(128, 128, 128, 0.6);
+            transform: translateY(-1px);
+         }
+         
+         &:active {
+            transform: scale(0.98);
+         }
+         
+         i {
+            font-size: var(--font-xs);
          }
       }
    }

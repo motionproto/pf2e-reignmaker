@@ -301,6 +301,94 @@ export async function incrementTurn(): Promise<void> {
 }
 
 /**
+ * Start the kingdom - advance from Turn 0 to Turn 1
+ * One-time initialization that begins turn mechanics
+ * Ensures all systems are properly initialized before first Status phase
+ */
+export async function startKingdom(): Promise<void> {
+  const actor = get(kingdomActor);
+  if (!actor) {
+    console.error('[KingdomStore] No kingdom actor available for startKingdom');
+    return;
+  }
+  
+  console.log('🏰 [KingdomStore] Starting kingdom - advancing from Turn 0 to Turn 1');
+  console.log('🔧 [KingdomStore] Running pre-flight checks and initialization...');
+  
+  // 1. Recalculate all settlement derived properties
+  console.log('📊 [KingdomStore] Recalculating settlement properties...');
+  const { settlementService } = await import('../services/settlements');
+  const kingdom = actor.getKingdomData();
+  if (kingdom?.settlements) {
+    for (const settlement of kingdom.settlements) {
+      await settlementService.updateSettlementDerivedProperties(settlement.id);
+    }
+    console.log(`  ✓ Updated ${kingdom.settlements.length} settlement(s)`);
+  }
+  
+  // 2. Build production cache
+  console.log('🏭 [KingdomStore] Building production cache...');
+  await updateKingdom((kingdom) => {
+    // Recalculate production from hexes and cache it
+    const { calculateProduction } = require('../services/economics/production');
+    const productionResult = calculateProduction(kingdom.hexes || [], []);
+    kingdom.cachedProduction = Object.fromEntries(productionResult.totalProduction);
+    kingdom.cachedProductionByHex = productionResult.byHex.map((entry: any) => [
+      entry.hex,
+      entry.production
+    ]);
+  });
+  console.log('  ✓ Production cache ready');
+  
+  // 3. Ensure all resource types exist (even if 0)
+  console.log('💰 [KingdomStore] Verifying resource initialization...');
+  await updateKingdom((kingdom) => {
+    const requiredResources = [
+      'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries',
+      'foodCapacity', 'armyCapacity', 'diplomaticCapacity', 'imprisonedUnrestCapacity'
+    ];
+    
+    for (const resource of requiredResources) {
+      if (kingdom.resources[resource] === undefined) {
+        kingdom.resources[resource] = 0;
+      }
+    }
+  });
+  console.log('  ✓ All resource types initialized');
+  
+  // 4. Advance to Turn 1 and mark setup complete
+  console.log('🎮 [KingdomStore] Advancing to Turn 1...');
+  await updateKingdom((kingdom) => {
+    // Advance to Turn 1
+    kingdom.currentTurn = 1;
+    
+    // Mark setup as complete (prevents returning to Turn 0)
+    kingdom.setupComplete = true;
+    
+    // Ensure we're at Status phase
+    kingdom.currentPhase = TurnPhase.STATUS;
+    
+    // Reset phase step tracking
+    kingdom.currentPhaseStepIndex = 0;
+    kingdom.currentPhaseSteps = [];
+    kingdom.phaseComplete = false;
+    
+    // Initialize oncePerTurnActions tracking
+    kingdom.oncePerTurnActions = [];
+  });
+  
+  // 5. Initialize turn manager for Turn 1
+  console.log('🎯 [KingdomStore] Initializing turn manager...');
+  const manager = getTurnManager();
+  if (manager) {
+    await manager.resetPhaseSteps();
+  }
+  
+  console.log('✅ [KingdomStore] Kingdom started - now at Turn 1');
+  console.log('🎉 [KingdomStore] All systems ready - Status phase will run on next render');
+}
+
+/**
  * Simple UI state functions
  */
 

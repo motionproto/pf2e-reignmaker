@@ -2,6 +2,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { postcssConfig, terserConfig } from '@typhonjs-fvtt/runtime/rollup';
 import { sveltePreprocess } from 'svelte-preprocess';
 import { defineConfig } from 'vite';
+import { foundryHMR } from './vite-foundry-hmr';
 
 import moduleJSON from './module.json' with { type: 'json' };
 
@@ -97,6 +98,7 @@ export default defineConfig(({ mode }) => {
     },
 
     plugins: [
+      foundryHMR(),
       svelte({
         compilerOptions,
         preprocess: sveltePreprocess()

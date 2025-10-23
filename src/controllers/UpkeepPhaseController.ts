@@ -129,9 +129,22 @@ export async function createUpkeepPhaseController() {
       const { settlementService } = await import('../services/settlements');
       const kingdom = get(kingdomData);
       
-      const settlements = kingdom.settlements || [];
+      // IMPORTANT: Only process settlements in claimed territory (claimedBy === 1)
+      const allSettlements = kingdom.settlements || [];
+      const hexes = kingdom.hexes || [];
+      const settlements = allSettlements.filter(s => {
+        // Must have valid location
+        if (s.location.x === 0 && s.location.y === 0) return false;
+        
+        // Must be in player-claimed hex
+        const hex = hexes.find(h => h.row === s.location.x && h.col === s.location.y);
+        return hex && hex.claimedBy === 1;
+      });
+      
       const armies = kingdom.armies || [];
       const currentFood = kingdom.resources?.food || 0;
+      
+      logger.debug(`🍞 [UpkeepPhaseController] Processing ${settlements.length} settlements in claimed territory (${allSettlements.length} total on map)`);
       
       const actor = getKingdomActor();
       if (!actor) {
@@ -391,9 +404,10 @@ export async function createUpkeepPhaseController() {
       
       const settlements = kingdomData.settlements || [];
       const armies = kingdomData.armies || [];
-      const consumption = calculateConsumption(settlements, armies);
-      const armySupport = calculateArmySupportCapacity(settlements);
-      const unsupportedCount = calculateUnsupportedArmies(armies, settlements);
+      const hexes = kingdomData.hexes || [];
+      const consumption = calculateConsumption(settlements, armies, hexes);
+      const armySupport = calculateArmySupportCapacity(settlements, hexes);
+      const unsupportedCount = calculateUnsupportedArmies(armies, settlements, hexes);
       
       const currentFood = kingdomData.resources?.food || 0;
       const armyCount = armies.length;
@@ -413,13 +427,23 @@ export async function createUpkeepPhaseController() {
       };
       
       // Calculate which settlements would be fed/unfed based on current food (simulation)
-      const sortedSettlements = [...settlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      // IMPORTANT: Only include settlements in claimed territory (claimedBy === 1)
+      const claimedSettlements = settlements.filter((s: any) => {
+        // Must have valid location
+        if (s.location.x === 0 && s.location.y === 0) return false;
+        
+        // Must be in player-claimed hex
+        const hex = hexes.find((h: any) => h.row === s.location.x && h.col === s.location.y);
+        return hex && hex.claimedBy === 1;
+      });
+      
+      const sortedSettlements = [...claimedSettlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
       let availableFood = currentFood;
       const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
       let unfedUnrest = 0;
       
       for (const settlement of sortedSettlements) {
-        const config = SettlementTierConfig[settlement.tier];
+        const config = SettlementTierConfig[settlement.tier as keyof typeof SettlementTierConfig];
         const required = config ? config.foodConsumption : 0;
         const tierNum = tierToNumber(settlement.tier);
         

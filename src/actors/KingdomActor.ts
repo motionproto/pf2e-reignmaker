@@ -71,6 +71,7 @@ export interface KingdomData {
   currentPhase: TurnPhase;
   currentPhaseStepIndex: number;  // Current step being worked on
   currentStepName?: string;       // Name of the current step
+  setupComplete?: boolean;        // True after Turn 0 setup is complete (one-time flag)
   
   // Resources - simple object instead of Map
   resources: Record<string, number>;
@@ -247,9 +248,10 @@ export class KingdomActor extends Actor {
     
     const defaultKingdom: KingdomData = {
       name,
-      currentTurn: 1,
+      currentTurn: 0,
       currentPhase: TurnPhase.STATUS,
       currentPhaseStepIndex: 0,
+      setupComplete: false,
       resources: {
         gold: 0,
         food: 0,
@@ -412,9 +414,10 @@ export class KingdomActor extends Actor {
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
     return {
       name,
-      currentTurn: 1,
+      currentTurn: 0,
       currentPhase: TurnPhase.STATUS,
       currentPhaseStepIndex: 0,
+      setupComplete: false,
       resources: {
         gold: 0,
         food: 0,

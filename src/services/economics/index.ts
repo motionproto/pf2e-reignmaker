@@ -75,9 +75,10 @@ export class EconomicsService {
   calculateConsumption(
     settlements: Settlement[],
     armies: Army[],
+    hexes?: any[],
     modifiers: EconomicModifier[] = []
   ): ConsumptionResult {
-    return calculateConsumption(settlements, armies, modifiers);
+    return calculateConsumption(settlements, armies, hexes, modifiers);
   }
   
   /**
@@ -130,20 +131,45 @@ export class EconomicsService {
   
   /**
    * Get potential gold income from settlements
-   * (Only collected if settlements are properly fed)
+   * (Only collected if settlements are properly fed and in claimed territory)
    */
-  calculateSettlementGoldIncome(settlements: Settlement[]): number {
+  calculateSettlementGoldIncome(settlements: Settlement[], hexes?: any[]): number {
     const tierCounts = new Map<string, number>();
     
-    // Only count settlements that were fed last turn
+    // Only count settlements that were fed last turn AND are in claimed territory
     settlements
-      .filter(s => s.wasFedLastTurn)
+      .filter(s => {
+        // Must be fed
+        if (!s.wasFedLastTurn) return false;
+        
+        // Must have valid location
+        if (s.location.x === 0 && s.location.y === 0) return false;
+        
+        // If hexes provided, must be in claimed territory
+        if (hexes) {
+          const settlementHex = hexes.find((h: any) => 
+            h.row === s.location.x && h.col === s.location.y
+          );
+          
+          // Settlement must be in a player-claimed hex (claimedBy === 1)
+          if (!settlementHex || settlementHex.claimedBy !== 1) {
+            return false;
+          }
+        }
+        
+        return true;
+      })
       .forEach(settlement => {
         const count = tierCounts.get(settlement.tier) || 0;
         tierCounts.set(settlement.tier, count + 1);
+        logger.debug(`💰 [EconomicsService] Settlement "${settlement.name}" (${settlement.tier}): wasFedLastTurn=${settlement.wasFedLastTurn}`);
       });
     
-    return calculateSettlementGoldIncome(tierCounts);
+    logger.debug(`💰 [EconomicsService] Tier counts for gold calculation:`, Object.fromEntries(tierCounts));
+    const goldIncome = calculateSettlementGoldIncome(tierCounts);
+    logger.debug(`💰 [EconomicsService] Calculated gold income from settlements: ${goldIncome}`);
+    
+    return goldIncome;
   }
 
   /**
@@ -167,17 +193,26 @@ export class EconomicsService {
       settlements: state.settlements.map(s => ({ 
         name: s.name, 
         tier: s.tier, 
-        wasFedLastTurn: s.wasFedLastTurn ?? 'undefined' 
+        wasFedLastTurn: s.wasFedLastTurn ?? 'undefined',
+        connectedByRoads: s.connectedByRoads ?? 'undefined',
+        structureCount: s.structureIds?.length || 0
       }))
     });
     
     // Use cached production from KingdomState (calculated once when hexes change)
     const hexProduction = new Map(state.cachedProduction);
+    logger.debug('🏞️ [EconomicsService] Hex production from cache:', Object.fromEntries(hexProduction));
     
-    // Calculate gold income from fed settlements
+    // Check if there's any gold in hex production (shouldn't be, but let's verify)
+    const hexGold = hexProduction.get('gold') || 0;
+    if (hexGold > 0) {
+      logger.warn(`⚠️ [EconomicsService] WARNING: Hex production contains ${hexGold} gold (should only come from settlements)`);
+    }
+    
+    // Calculate gold income from fed settlements in claimed territory
     const fedSettlements = state.settlements.filter(s => s.wasFedLastTurn);
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
-    const goldIncome = this.calculateSettlementGoldIncome(state.settlements);
+    const goldIncome = this.calculateSettlementGoldIncome(state.settlements, state.hexes);
     
     logger.debug('💰 [EconomicsService] Settlement analysis:', {
       totalSettlements: state.settlements.length,
@@ -233,9 +268,9 @@ export class EconomicsService {
   /**
    * Calculate army support and unsupported armies
    */
-  calculateMilitarySupport(settlements: Settlement[], armies: Army[]) {
-    const supportCapacity = calculateArmySupportCapacity(settlements);
-    const unsupported = calculateUnsupportedArmies(armies, settlements);
+  calculateMilitarySupport(settlements: Settlement[], armies: Army[], hexes?: any[]) {
+    const supportCapacity = calculateArmySupportCapacity(settlements, hexes);
+    const unsupported = calculateUnsupportedArmies(armies, settlements, hexes);
     
     return {
       capacity: supportCapacity,
