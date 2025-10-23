@@ -76,6 +76,44 @@ export function getResourceColor(resource: string): string {
 }
 
 /**
+ * Get icon for a terrain type
+ */
+export function getTerrainIcon(terrain: string): string {
+  const icons: Record<string, string> = {
+    plains: 'fa-seedling',
+    forest: 'fa-tree',
+    hills: 'fa-hill-rockslide',
+    mountains: 'fa-mountain',
+    swamp: 'fa-water',
+    desert: 'fa-sun',
+    lake: 'fa-water',
+    river: 'fa-water',
+    coast: 'fa-water',
+    unknown: 'fa-question'
+  };
+  return icons[terrain.toLowerCase()] || 'fa-map';
+}
+
+/**
+ * Get color for a terrain type
+ */
+export function getTerrainColor(terrain: string): string {
+  const colors: Record<string, string> = {
+    plains: '#90C650',
+    forest: '#228B22',
+    hills: '#8B7355',
+    mountains: '#808080',
+    swamp: '#6B8E23',
+    desert: '#EDC9AF',
+    lake: '#4682B4',
+    river: '#4682B4',
+    coast: '#5F9EA0',
+    unknown: '#666666'
+  };
+  return colors[terrain.toLowerCase()] || '#888888';
+}
+
+/**
  * Capitalize each word in skill names
  */
 export function capitalizeSkills(skills: string[]): string[] {

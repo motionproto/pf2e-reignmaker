@@ -6,6 +6,7 @@
     unrest,
     imprisonedUnrest,
     settlements,
+    claimedSettlements,
     resources,
     updateKingdom,
     getKingdomActor,
@@ -126,21 +127,8 @@
   $: totalWorksites =
     foodProduction + lumberProduction + stoneProduction + oreProduction;
 
-  // Filter settlements to only count those in claimed territory
-  // 1. Settlements at (0, 0) are considered unmapped (excluded)
-  // 2. Settlements must be in hexes claimed by this kingdom (claimedBy === 1)
-  $: mappedSettlements = $settlements.filter(s => {
-    // Exclude unmapped settlements
-    if (s.location.x === 0 && s.location.y === 0) return false;
-    
-    // Check if the settlement's hex is claimed by the kingdom
-    const hexId = s.kingmakerLocation 
-      ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
-      : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
-    
-    const hex = $kingdomData.hexes?.find((h: any) => h.id === hexId) as any;
-    return hex && hex.claimedBy === 1;
-  });
+  // Use centralized claimedSettlements store (formerly mappedSettlements)
+  $: mappedSettlements = $claimedSettlements;
 
   // Track which field is being edited
   let editingField: string | null = null;

@@ -124,22 +124,14 @@ export async function createUpkeepPhaseController() {
      * Excess food beyond storage capacity is automatically lost
      */
     async processFoodConsumption() {
-      const { kingdomData } = await import('../stores/KingdomStore');
+      const { kingdomData, claimedSettlements } = await import('../stores/KingdomStore');
       const { SettlementTierConfig, SettlementTier } = await import('../models/Settlement');
       const { settlementService } = await import('../services/settlements');
       const kingdom = get(kingdomData);
       
-      // IMPORTANT: Only process settlements in claimed territory (claimedBy === 1)
+      // Use centralized claimedSettlements store (filters by claimed territory)
+      const settlements = get(claimedSettlements);
       const allSettlements = kingdom.settlements || [];
-      const hexes = kingdom.hexes || [];
-      const settlements = allSettlements.filter(s => {
-        // Must have valid location
-        if (s.location.x === 0 && s.location.y === 0) return false;
-        
-        // Must be in player-claimed hex
-        const hex = hexes.find(h => h.row === s.location.x && h.col === s.location.y);
-        return hex && hex.claimedBy === 1;
-      });
       
       const armies = kingdom.armies || [];
       const currentFood = kingdom.resources?.food || 0;
@@ -427,17 +419,11 @@ export async function createUpkeepPhaseController() {
       };
       
       // Calculate which settlements would be fed/unfed based on current food (simulation)
-      // IMPORTANT: Only include settlements in claimed territory (claimedBy === 1)
-      const claimedSettlements = settlements.filter((s: any) => {
-        // Must have valid location
-        if (s.location.x === 0 && s.location.y === 0) return false;
-        
-        // Must be in player-claimed hex
-        const hex = hexes.find((h: any) => h.row === s.location.x && h.col === s.location.y);
-        return hex && hex.claimedBy === 1;
-      });
+      // Use centralized claimedSettlements store (already filtered by claimed territory)
+      const { claimedSettlements: claimedSettlementsStore } = await import('../stores/KingdomStore');
+      const claimedSettlementsData = get(claimedSettlementsStore);
       
-      const sortedSettlements = [...claimedSettlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      const sortedSettlements = [...claimedSettlementsData].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
       let availableFood = currentFood;
       const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
       let unfedUnrest = 0;

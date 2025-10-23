@@ -1,5 +1,5 @@
 <script lang="ts">
-   import { kingdomData } from '../../../stores/KingdomStore';
+   import { claimedSettlements } from '../../../stores/KingdomStore';
    import type { Settlement } from '../../../models/Settlement';
    import SettlementsList from './settlements/SettlementsList.svelte';
    import SettlementDetails from './settlements/SettlementDetails.svelte';
@@ -9,7 +9,7 @@
    
    // Keep selectedSettlement synchronized with store updates
    $: if (selectedSettlement) {
-      const updated = $kingdomData.settlements.find(s => s.id === selectedSettlement?.id);
+      const updated = $claimedSettlements.find(s => s.id === selectedSettlement?.id);
       if (updated) {
          selectedSettlement = updated;
       } else {
@@ -18,23 +18,9 @@
       }
    }
    
-   // Filter settlements to only show those in claimed hexes (claimedBy === 1)
-   $: claimedSettlements = $kingdomData.settlements.filter(settlement => {
-      // Find the hex at this settlement's location
-      const hex = $kingdomData.hexes?.find(h => {
-         const hexCoords = h.id.split('.');
-         const hexRow = parseInt(hexCoords[0]);
-         const hexCol = parseInt(hexCoords[1]);
-         return hexRow === settlement.location.x && hexCol === settlement.location.y;
-      });
-      
-      // Only include if hex is claimed by player kingdom (claimedBy === 1)
-      return hex && (hex as any).claimedBy === 1;
-   });
-   
    // Auto-select first settlement if none selected and settlements exist
-   $: if (!selectedSettlement && claimedSettlements.length > 0) {
-      selectedSettlement = claimedSettlements[0];
+   $: if (!selectedSettlement && $claimedSettlements.length > 0) {
+      selectedSettlement = $claimedSettlements[0];
    }
    
    function handleSelectSettlement(settlement: Settlement) {
@@ -50,7 +36,7 @@
 <div class="settlements-tab">
    <div class="settlements-container">
       <SettlementsList 
-         settlements={claimedSettlements}
+         settlements={$claimedSettlements}
          {selectedSettlement}
          onSelectSettlement={handleSelectSettlement}
       />

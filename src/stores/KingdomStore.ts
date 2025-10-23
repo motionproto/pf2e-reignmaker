@@ -33,6 +33,59 @@ export const imprisonedUnrest = derived(settlements, $settlements => {
 });
 export const fame = derived(kingdomData, $data => $data.fame);
 
+// ===== CLAIMED TERRITORY DERIVED STORES =====
+// Single source of truth for territory filtering logic
+// These automatically update when kingdom data changes
+
+/**
+ * Hexes claimed by the player kingdom (claimedBy === 1)
+ */
+export const claimedHexes = derived(kingdomData, $data => {
+  return $data.hexes.filter(h => h.claimedBy === 1);
+});
+
+/**
+ * Settlements in claimed hexes only
+ * Filters out unmapped settlements and settlements in unclaimed territory
+ */
+export const claimedSettlements = derived(kingdomData, $data => {
+  return $data.settlements.filter(s => {
+    // Exclude unmapped settlements
+    if (s.location.x === 0 && s.location.y === 0) return false;
+    
+    // Check if the settlement's hex is claimed by the kingdom
+    const hexId = s.kingmakerLocation 
+      ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
+      : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+    
+    const hex = $data.hexes?.find((h: any) => h.id === hexId) as any;
+    return hex && hex.claimedBy === 1;
+  });
+});
+
+/**
+ * Worksite counts from claimed hexes only
+ * Calculates by iterating through kingmakerFeatures in claimed hexes
+ */
+export const claimedWorksites = derived(claimedHexes, $hexes => {
+  return $hexes.reduce((counts, hex) => {
+    if (hex.kingmakerFeatures) {
+      for (const feature of hex.kingmakerFeatures) {
+        if (feature.type === 'farmland') {
+          counts.farmlands = (counts.farmlands || 0) + 1;
+        } else if (feature.type === 'lumberCamp') {
+          counts.lumberCamps = (counts.lumberCamps || 0) + 1;
+        } else if (feature.type === 'quarry') {
+          counts.quarries = (counts.quarries || 0) + 1;
+        } else if (feature.type === 'mine') {
+          counts.mines = (counts.mines || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, {} as Record<string, number>);
+});
+
 // UI-only state (no persistence needed)
 export const viewingPhase = writable<TurnPhase>(TurnPhase.STATUS);
 export const phaseViewLocked = writable<boolean>(true); // Lock viewing phase to current phase

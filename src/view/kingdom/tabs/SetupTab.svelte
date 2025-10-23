@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { kingdomData } from '../../../stores/KingdomStore';
+  import { kingdomData, claimedHexes, claimedSettlements, claimedWorksites } from '../../../stores/KingdomStore';
   import { startKingdom } from '../../../stores/KingdomStore';
-  import { getResourceIcon, getResourceColor } from '../utils/presentation';
+  import { getResourceIcon, getResourceColor, getTerrainIcon, getTerrainColor } from '../utils/presentation';
+  import ResourceCard from '../components/baseComponents/ResourceCard.svelte';
   
   let isStarting = false;
   
@@ -14,10 +15,35 @@
   }, {} as Record<string, number>);
   $: terrainBreakdown = Object.entries(terrainCounts).sort((a, b) => b[1] - a[1]);
   
-  // Calculate territory stats (claimed hexes only)
-  $: claimedHexes = $kingdomData.hexes.filter(h => h.claimedBy !== null && h.claimedBy !== undefined);
-  $: worksites = Object.entries($kingdomData.worksiteCount || {});
-  $: settlements = $kingdomData.settlements;
+  // Worksite data with resource mapping (using centralized claimedWorksites store)
+  $: worksiteData = [
+    { 
+      type: 'Farmlands', 
+      count: $claimedWorksites.farmlands || 0,
+      resource: 'food',
+      income: $kingdomData.cachedProduction?.food || 0
+    },
+    { 
+      type: 'Lumber Camps', 
+      count: $claimedWorksites.lumberCamps || 0,
+      resource: 'lumber',
+      income: $kingdomData.cachedProduction?.lumber || 0
+    },
+    { 
+      type: 'Quarries', 
+      count: $claimedWorksites.quarries || 0,
+      resource: 'stone',
+      income: $kingdomData.cachedProduction?.stone || 0
+    },
+    { 
+      type: 'Mines', 
+      count: $claimedWorksites.mines || 0,
+      resource: 'ore',
+      income: $kingdomData.cachedProduction?.ore || 0
+    }
+  ].filter(ws => ws.count > 0);
+  
+  $: totalWorksites = worksiteData.reduce((sum, ws) => sum + ws.count, 0);
   
   async function handleStartKingdom() {
     isStarting = true;
@@ -46,29 +72,17 @@
   <div class="setup-section world-overview">
     <h2>
       <i class="fas fa-globe"></i>
-      World Overview
+      World Overview - {totalHexes} hexes
     </h2>
     
-    <div class="stats-grid">
-      <div class="stat-card">
-        <i class="fas fa-map"></i>
-        <div class="stat-content">
-          <span class="stat-value">{totalHexes}</span>
-          <span class="stat-label">Total Hexes</span>
-        </div>
-      </div>
-    </div>
-    
     {#if terrainBreakdown.length > 0}
-      <div class="terrain-details">
-        <h3>Terrain Breakdown:</h3>
-        <ul>
-          {#each terrainBreakdown as [terrain, count]}
-            <li>
-              <strong>{count}</strong> {terrain.charAt(0).toUpperCase() + terrain.slice(1)} hex{count > 1 ? 'es' : ''}
-            </li>
-          {/each}
-        </ul>
+      <div class="terrain-grid">
+        {#each terrainBreakdown as [terrain, count]}
+          <div class="terrain-card">
+            <span class="terrain-value">{count}</span>
+            <span class="terrain-label">{terrain.charAt(0).toUpperCase() + terrain.slice(1)}</span>
+          </div>
+        {/each}
       </div>
     {/if}
   </div>
@@ -84,7 +98,7 @@
       <div class="stat-card">
         <i class="fas fa-flag"></i>
         <div class="stat-content">
-          <span class="stat-value">{claimedHexes.length}</span>
+          <span class="stat-value">{$claimedHexes.length}</span>
           <span class="stat-label">Claimed Hexes</span>
         </div>
       </div>
@@ -92,7 +106,7 @@
       <div class="stat-card">
         <i class="fas fa-city"></i>
         <div class="stat-content">
-          <span class="stat-value">{settlements.length}</span>
+          <span class="stat-value">{$claimedSettlements.length}</span>
           <span class="stat-label">Settlements</span>
         </div>
       </div>
@@ -100,22 +114,30 @@
       <div class="stat-card">
         <i class="fas fa-hammer"></i>
         <div class="stat-content">
-          <span class="stat-value">{worksites.reduce((sum, [_, count]) => sum + count, 0)}</span>
+          <span class="stat-value">{totalWorksites}</span>
           <span class="stat-label">Worksites</span>
         </div>
       </div>
     </div>
     
-    {#if worksites.length > 0}
-      <div class="worksite-details">
-        <h3>Resource Production Sites:</h3>
-        <ul>
-          {#each worksites as [type, count]}
-            <li>
-              <strong>{count}</strong> {type}{count > 1 ? 's' : ''}
-            </li>
+    {#if worksiteData.length > 0}
+      <div class="worksite-production">
+        <h3>Worksites</h3>
+        <div class="worksite-grid">
+          {#each worksiteData as worksite}
+            <div class="worksite-column">
+              <div class="worksite-label">{worksite.count} {worksite.type}</div>
+              <ResourceCard
+                resource={worksite.resource}
+                value={worksite.income}
+                icon={getResourceIcon(worksite.resource)}
+                color={getResourceColor(worksite.resource)}
+                size="compact"
+                editable={false}
+              />
+            </div>
           {/each}
-        </ul>
+        </div>
       </div>
     {/if}
   </div>
@@ -350,34 +372,71 @@
     }
   }
   
-  .worksite-details,
-  .terrain-details {
-    background: var(--bg-surface);
-    padding: 1rem;
+  .terrain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.5rem;
+  }
+  
+  .terrain-card {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
     border-radius: 0.375rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .terrain-value {
+      font-size: var(--font-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    
+    .terrain-label {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      text-transform: capitalize;
+    }
+  }
+  
+  .worksite-production {
     margin-top: 1rem;
     
     h3 {
-      font-size: 1rem;
-      margin-bottom: 0.5rem;
+      margin: 0 0 1rem 0;
+      font-size: 1.125rem;
+      color: var(--text-primary);
     }
-    
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      
-      li {
-        color: var(--text-secondary);
-        
-        strong {
-          color: var(--text-primary);
-        }
-      }
-    }
+  }
+  
+  .worksite-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+  }
+  
+  .worksite-column {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .worksite-label {
+    font-size: var(--font-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 0.25rem;
   }
   
   .guide-intro {
