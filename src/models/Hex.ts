@@ -1,6 +1,8 @@
 // Territory hex management for PF2e Kingdom Lite
 // Auto-converted and fixed from Hex.kt
 
+import type { TerrainType, TravelDifficulty } from '../types/terrain';
+
 /**
  * Types of worksites that can be built according to Kingdom Rules
  */
@@ -57,10 +59,11 @@ export class Worksite {
           case 'forest':
             return new Map([['food', 2]]); // Assuming cleared forest is similar to plains
           case 'swamp':
-          case 'wetlands':
             return new Map([['food', 1]]); // Hunting/fishing camp produces 1 food
           case 'desert':
             return new Map([['food', 1]]); // Oasis farm produces 1 food
+          case 'water':
+            return new Map([['food', 1]]); // Fishing boats produce 1 food
           default:
             // Any terrain with farmland should produce something
             // This ensures farmland features always work
@@ -91,7 +94,6 @@ export class Worksite {
           case 'mountains':
             return new Map([['ore', 1]]);
           case 'swamp':
-          case 'wetlands':
             // Bog Mine is a type of mine that works in swamps
             return new Map([['ore', 1]]);
           default:
@@ -101,7 +103,6 @@ export class Worksite {
       case WorksiteType.BOG_MINE:
         switch (normalizedTerrain) {
           case 'swamp':
-          case 'wetlands':
             return new Map([['ore', 1]]); // Alternative option for Swamp
           default:
             return new Map();
@@ -110,7 +111,6 @@ export class Worksite {
       case WorksiteType.HUNTING_FISHING_CAMP:
         switch (normalizedTerrain) {
           case 'swamp':
-          case 'wetlands':
             return new Map([['food', 1]]);
           default:
             return new Map();
@@ -153,7 +153,8 @@ export class Hex {
   col: number;
   
   // Basic properties
-  terrain: string;
+  terrain: TerrainType;
+  travel: TravelDifficulty; // Movement difficulty (for future movement mechanics)
   name: string | null;
   
   // Ownership
@@ -172,7 +173,8 @@ export class Hex {
   constructor(
     row: number,
     col: number,
-    terrain: string,
+    terrain: TerrainType,
+    travel: TravelDifficulty = 'open', // Default to open terrain
     worksite: Worksite | null = null,
     hasCommodityBonus: boolean = false,
     name: string | null = null,
@@ -183,6 +185,7 @@ export class Hex {
     this.row = row;
     this.col = col;
     this.terrain = terrain;
+    this.travel = travel;
     this.worksite = worksite;
     this.hasCommodityBonus = hasCommodityBonus;
     this.name = name;
@@ -240,12 +243,14 @@ export function getValidWorksitesForTerrain(terrain: string, hasOasisTrait: bool
       return [WorksiteType.MINE, WorksiteType.QUARRY];
       
     case 'swamp':
-    case 'wetlands':
       // Both regular Mine and Bog Mine work in swamps (they produce the same)
       return [WorksiteType.HUNTING_FISHING_CAMP, WorksiteType.MINE, WorksiteType.BOG_MINE];
       
     case 'desert':
       return hasOasisTrait ? [WorksiteType.OASIS_FARM] : [];
+      
+    case 'water':
+      return [WorksiteType.FARMSTEAD]; // Fishing boats = farmstead on water
       
     default:
       return [];

@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
   return {
     root: 'src/',                  // Source location / esbuild root.
     base: `/${s_PACKAGE_ID}/dist`, // Base module path that 30001 / served dev directory.
-    publicDir: false,              // No public resources to copy.
+    publicDir: '../public',        // Serve static assets from public directory in dev mode.
     cacheDir: '../.vite-cache',    // Relative from root directory.
 
     resolve: {
@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
       open: '/game',
       proxy: {
         // Serves static files from main Foundry server.
-        [`^(/${s_PACKAGE_ID}/(assets|lang|packs|dist/${moduleJSON.id}.css|dist/fonts.css|dist/fonts))`]: 'http://localhost:30000',
+        [`^(/${s_PACKAGE_ID}/(assets|lang|packs|img|dist/${moduleJSON.id}.css|dist/fonts.css|dist/fonts))`]: 'http://localhost:30000',
 
         // All other paths besides package ID path are served from main Foundry server.
         [`^(?!/${s_PACKAGE_ID}/)`]: 'http://localhost:30000',

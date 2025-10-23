@@ -1,9 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { ReignMakerMapLayer } from '../../services/map/ReignMakerMapLayer';
-  import { kingdomData } from '../../stores/KingdomStore';
-  import { territoryService } from '../../services/territory';
-  import type { HexStyle } from '../../services/map/types';
+  import { getOverlayManager } from '../../services/map/OverlayManager';
 
   // Toolbar state
   let isDragging = false;
@@ -11,17 +9,14 @@
   let dragStart = { x: 0, y: 0 };
   let toolbarElement: HTMLDivElement;
 
-  // Toggle states
-  let terrainActive = false;
-  let territoriesActive = false;
-  let territoryBorderActive = false;
-  let settlementsActive = false;
-  let roadsActive = false;
-
-  // Map layer instance
+  // Map layer and overlay manager instances
   const mapLayer = ReignMakerMapLayer.getInstance();
+  const overlayManager = getOverlayManager();
 
-  // Load saved position and overlay states from localStorage
+  // Get all registered overlays
+  let overlays = overlayManager.getAllOverlays();
+
+  // Load saved position and restore overlay states
   onMount(async () => {
     const savedPosition = localStorage.getItem('reignmaker-toolbar-position');
     if (savedPosition) {
@@ -33,47 +28,11 @@
     mapLayer.showPixiContainer();
     console.log('[MapOverlayToolbar] Ensured PIXI container is visible');
     
-    // Load saved overlay states
-    const savedStates = localStorage.getItem('reignmaker-overlay-states');
-    if (savedStates) {
-      try {
-        const states = JSON.parse(savedStates);
-        
-        // Restore terrain overlay
-        if (states.terrainActive) {
-          terrainActive = true;
-          await showTerrain();
-        }
-        
-        // Restore territory overlay
-        if (states.territoriesActive) {
-          territoriesActive = true;
-          await showTerritories();
-        }
-        
-        // Restore territory border
-        if (states.territoryBorderActive) {
-          territoryBorderActive = true;
-          await showTerritoryBorder();
-        }
-        
-        // Restore settlements overlay
-        if (states.settlementsActive) {
-          settlementsActive = true;
-          await showSettlements();
-        }
-        
-        // Restore roads overlay
-        if (states.roadsActive) {
-          roadsActive = true;
-          await showRoads();
-        }
-        
-        console.log('[MapOverlayToolbar] Restored overlay states:', states);
-      } catch (error) {
-        console.error('[MapOverlayToolbar] Failed to restore overlay states:', error);
-      }
-    }
+    // Restore overlay states using OverlayManager
+    await overlayManager.restoreState();
+    
+    // Trigger re-render to update button states
+    overlays = overlayManager.getAllOverlays();
   });
 
   // Dragging handlers
@@ -100,278 +59,24 @@
     }
   }
 
-  // Save overlay states to localStorage whenever they change
-  function saveOverlayStates() {
-    const states = {
-      terrainActive,
-      territoriesActive,
-      territoryBorderActive,
-      settlementsActive,
-      roadsActive
-    };
-    localStorage.setItem('reignmaker-overlay-states', JSON.stringify(states));
-    console.log('[MapOverlayToolbar] Saved overlay states:', states);
+  // Toggle overlay using OverlayManager
+  async function toggleOverlay(overlayId: string) {
+    try {
+      await overlayManager.toggleOverlay(overlayId);
+      // Trigger re-render to update active states
+      overlays = overlayManager.getAllOverlays();
+    } catch (error) {
+      console.error(`[MapOverlayToolbar] Failed to toggle overlay ${overlayId}:`, error);
+      // State will be automatically rolled back by OverlayManager
+    }
   }
 
-  // Toggle handlers
-  async function toggleTerrain() {
-    terrainActive = !terrainActive;
-    
-    if (terrainActive) {
-      await showTerrain();
-    } else {
-      // Clear and hide terrain layer
-      mapLayer.clearLayer('terrain-overlay');
-      mapLayer.hideLayer('terrain-overlay');
-    }
-    
-    saveOverlayStates();
-  }
-
-  async function toggleTerritories() {
-    territoriesActive = !territoriesActive;
-    
-    if (territoriesActive) {
-      await showTerritories();
-    } else {
-      // Clear and hide only the territory fill layer (border is independent)
-      mapLayer.clearLayer('kingdom-territory');
-      mapLayer.hideLayer('kingdom-territory');
-    }
-    
-    saveOverlayStates();
-  }
-
-  async function toggleSettlements() {
-    settlementsActive = !settlementsActive;
-    
-    if (settlementsActive) {
-      await showSettlements();
-    } else {
-      // Clear and hide layer to completely remove visuals
-      mapLayer.clearLayer('settlements-overlay');
-      mapLayer.hideLayer('settlements-overlay');
-    }
-    
-    saveOverlayStates();
-  }
-
-  async function toggleTerritoryBorder() {
-    territoryBorderActive = !territoryBorderActive;
-    
-    if (territoryBorderActive) {
-      await showTerritoryBorder();
-    } else {
-      // Clear outline only (keep territory fill if active)
-      mapLayer.clearLayer('kingdom-territory-outline');
-      mapLayer.hideLayer('kingdom-territory-outline');
-    }
-    
-    saveOverlayStates();
-  }
-
-  async function toggleRoads() {
-    roadsActive = !roadsActive;
-    
-    if (roadsActive) {
-      await showRoads();
-    } else {
-      // Clear and hide road layers (overlay + routes)
-      mapLayer.clearRoadLayers();
-    }
-    
-    saveOverlayStates();
-  }
-
-  // Show terrain overlay (colors hexes by terrain type)
-  async function showTerrain() {
-    const kingmaker = (globalThis as any).game?.kingmaker;
-    if (!kingmaker?.region?.hexes) {
-      ui?.notifications?.warn('No terrain data available from Kingmaker module');
-      terrainActive = false;
-      return;
-    }
-
-    // Get all hexes with terrain data from Kingmaker module
-    const hexData = kingmaker.region.hexes
-      .filter((h: any) => h.data?.terrain)
-      .map((h: any) => ({
-        id: `${h.offset.i}.${h.offset.j}`,
-        terrain: h.data.terrain
-      }));
-
-    if (hexData.length === 0) {
-      ui?.notifications?.warn('No hexes with terrain data found');
-      terrainActive = false;
-      return;
-    }
-
-    console.log('[MapOverlayToolbar] Drawing terrain overlay for', hexData.length, 'hexes');
-    mapLayer.drawTerrainOverlay(hexData);
-  }
-
-  // Show territories (claimed hexes in party color)
-  async function showTerritories() {
-    // Clear only the territory fill layer (border is independent)
-    mapLayer.clearLayer('kingdom-territory');
-    
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.ready) {
-      console.warn('[MapOverlayToolbar] Canvas not ready');
-      return;
-    }
-
-    // Get claimed hexes from kingdom data
-    let hexIds: string[] = [];
-    
-    // Try Kingmaker module first
-    const kingmaker = (globalThis as any).game?.kingmaker;
-    if (kingmaker?.region?.hexes) {
-      const claimedHexes = kingmaker.region.hexes.filter((h: any) => h.data?.claimed);
-      if (claimedHexes && claimedHexes.length > 0) {
-        hexIds = claimedHexes.map((h: any) => `${h.offset.i}.${h.offset.j}`);
-      }
-    }
-    
-    // Fallback to KingdomActor data
-    if (hexIds.length === 0 && $kingdomData?.hexes) {
-      hexIds = $kingdomData.hexes
-        .filter((h: any) => h.claimedBy === 1) // Only player-claimed
-        .map((h: any) => h.id);
-    }
-    
-    if (hexIds.length === 0) {
-      ui?.notifications?.warn('No claimed territory to display');
-      territoriesActive = false;
-      return;
-    }
-
-    // Get party color (default to bright dodger blue)
-    const partyColor = 0x1E90FF; // Dodger blue - brighter than royal blue
-    
-    const style: HexStyle = {
-      fillColor: partyColor,
-      fillAlpha: 0.4,
-      borderWidth: 0  // No border on territory fill
-    };
-    
-    // Let drawHexes manage the layer creation with correct z-index
-    mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
-    mapLayer.showLayer('kingdom-territory');
-  }
-
-  // Show territory border (outline around claimed territory)
-  async function showTerritoryBorder() {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.ready) {
-      console.warn('[MapOverlayToolbar] Canvas not ready');
-      return;
-    }
-
-    // Get claimed hexes from kingdom data
-    let hexIds: string[] = [];
-    
-    // Try Kingmaker module first
-    const kingmaker = (globalThis as any).game?.kingmaker;
-    if (kingmaker?.region?.hexes) {
-      const claimedHexes = kingmaker.region.hexes.filter((h: any) => h.data?.claimed);
-      if (claimedHexes && claimedHexes.length > 0) {
-        hexIds = claimedHexes.map((h: any) => `${h.offset.i}.${h.offset.j}`);
-      }
-    }
-    
-    // Fallback to KingdomActor data
-    if (hexIds.length === 0 && $kingdomData?.hexes) {
-      hexIds = $kingdomData.hexes
-        .filter((h: any) => h.claimedBy === 1) // Only player-claimed
-        .map((h: any) => h.id);
-    }
-    
-    if (hexIds.length === 0) {
-      ui?.notifications?.warn('No claimed territory to display border for');
-      territoryBorderActive = false;
-      return;
-    }
-
-    // Draw territory outline
-    mapLayer.drawTerritoryOutline(hexIds);
-  }
-
-  // Show settlements (hexes with settlements highlighted)
-  async function showSettlements() {
-    mapLayer.clearLayer('settlements-overlay');
-    
-    if (!$kingdomData?.settlements || $kingdomData.settlements.length === 0) {
-      ui?.notifications?.warn('No settlements to display');
-      settlementsActive = false;
-      return;
-    }
-
-    // Get hex IDs from settlement kingmakerLocation
-    const settlementHexIds = $kingdomData.settlements
-      .filter((s: any) => s.kingmakerLocation && s.kingmakerLocation.x > 0 && s.kingmakerLocation.y > 0) // Filter out unlinked settlements (0,0)
-      .map((s: any) => `${s.kingmakerLocation.x}.${s.kingmakerLocation.y}`); // Convert to hex ID format
-    
-    if (settlementHexIds.length === 0) {
-      ui?.notifications?.warn('No settlements found on map');
-      settlementsActive = false;
-      return;
-    }
-
-    console.log('[MapOverlayToolbar] Highlighting settlements:', settlementHexIds);
-
-    // Bright cyan highlight for settlements
-    const style: HexStyle = {
-      fillColor: 0x00FFFF, // Cyan - bright and visible
-      fillAlpha: 0.5,
-      borderColor: 0x00FFFF,
-      borderWidth: 3,
-      borderAlpha: 1.0
-    };
-    
-    // Let drawHexes manage the layer creation with correct z-index
-    mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
-    mapLayer.showLayer('settlements-overlay');
-  }
-
-  // Show roads (hexes with roads connected by lines)
-  async function showRoads() {
-    // Clear all road-related layers before redrawing
-    mapLayer.clearRoadLayers();
-    
-    // Get road hex IDs from territory service (single source of truth)
-    const roadHexIds = territoryService.getRoads();
-    
-    if (roadHexIds.length === 0) {
-      ui?.notifications?.warn('No roads to display');
-      roadsActive = false;
-      return;
-    }
-    
-    console.log('[MapOverlayToolbar] Displaying roads:', roadHexIds);
-    
-    // Let drawRoadConnections manage the layer creation with correct z-index
-    mapLayer.drawRoadConnections(roadHexIds, 'routes');
-    mapLayer.showLayer('routes');
-  }
-
-  // Reset all overlays
+  // Reset all overlays using OverlayManager
   function resetMap() {
     console.log('[MapOverlayToolbar] Resetting all map overlays');
-    
-    // Clear all layers
-    mapLayer.clearAllLayers();
-    
-    // Deactivate all toggles
-    terrainActive = false;
-    territoriesActive = false;
-    territoryBorderActive = false;
-    settlementsActive = false;
-    roadsActive = false;
-    
-    // Save cleared state
-    saveOverlayStates();
-    
+    overlayManager.clearAll();
+    // Trigger re-render to update active states
+    overlays = overlayManager.getAllOverlays();
     ui?.notifications?.info('Map overlays cleared');
   }
 
@@ -416,55 +121,17 @@
   </div>
   
   <div class="toolbar-buttons">
-    <button 
-      class="toolbar-button" 
-      class:active={terrainActive}
-      on:click={toggleTerrain}
-      title="Toggle Terrain Overlay"
-    >
-      <i class="fas fa-mountain"></i>
-      <span>Terrain</span>
-    </button>
-    
-    <button 
-      class="toolbar-button" 
-      class:active={territoriesActive}
-      on:click={toggleTerritories}
-      title="Toggle Territory Overlay"
-    >
-      <i class="fas fa-flag"></i>
-      <span>Territory</span>
-    </button>
-    
-    <button 
-      class="toolbar-button" 
-      class:active={territoryBorderActive}
-      on:click={toggleTerritoryBorder}
-      title="Toggle Territory Border"
-    >
-      <i class="fas fa-vector-square"></i>
-      <span>Border</span>
-    </button>
-    
-    <button 
-      class="toolbar-button" 
-      class:active={settlementsActive}
-      on:click={toggleSettlements}
-      title="Toggle Settlements Overlay"
-    >
-      <i class="fas fa-city"></i>
-      <span>Settlements</span>
-    </button>
-    
-    <button 
-      class="toolbar-button" 
-      class:active={roadsActive}
-      on:click={toggleRoads}
-      title="Toggle Roads Overlay"
-    >
-      <i class="fas fa-road"></i>
-      <span>Roads</span>
-    </button>
+    {#each overlays as overlay}
+      <button 
+        class="toolbar-button" 
+        class:active={overlayManager.isOverlayActive(overlay.id)}
+        on:click={() => toggleOverlay(overlay.id)}
+        title="Toggle {overlay.name} Overlay"
+      >
+        <i class="fas {overlay.icon}"></i>
+        <span>{overlay.name}</span>
+      </button>
+    {/each}
     
     <div class="toolbar-divider"></div>
     

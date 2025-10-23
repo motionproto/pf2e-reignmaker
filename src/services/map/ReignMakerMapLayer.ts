@@ -1,22 +1,29 @@
 /**
- * ReignMakerMapLayer - General-purpose PIXI canvas layer service
+ * ReignMakerMapLayer - Core PIXI canvas layer manager
  * 
- * Provides a unified foundation for all map annotations:
- * - Kingdom territory highlights
- * - Hex selections during actions
- * - Settlement markers/sprites
- * - Roads and routes
- * - Custom annotations
+ * Responsibilities:
+ * - PIXI container lifecycle (init, destroy, visibility)
+ * - Layer creation and management (z-index, clearing)
+ * - Generic hex drawing utilities
+ * - Coordination of renderers and toolbar
  * 
- * Uses Foundry VTT v13 patterns for proper canvas integration.
+ * Rendering is delegated to specialized modules in ./renderers/
  */
 
 import { getKingdomActor } from '../../main.kingdom';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { LayerId, HexStyle, MapLayer } from './types';
-import { DEFAULT_HEX_STYLES } from './types';
+import { DEFAULT_HEX_STYLES, TERRAIN_COLORS, WORKSITE_ICONS } from './types';
 import type { SvelteComponent } from 'svelte';
 import { generateTerritoryOutline } from './TerritoryOutline';
+import { isWaterTerrain } from '../../types/terrain';
+import { ToolbarManager } from './ToolbarManager';
+import { renderTerrainOverlay } from './renderers/TerrainRenderer';
+import { renderTerritoryOutline } from './renderers/TerritoryRenderer';
+import { renderRoadConnections } from './renderers/RoadRenderer';
+import { renderWorksiteIcons } from './renderers/WorksiteRenderer';
+import { renderResourceIcons } from './renderers/ResourceRenderer';
+import { renderSettlementIcons } from './renderers/SettlementIconRenderer';
 
 /**
  * Main map layer service (Singleton)
@@ -26,10 +33,8 @@ export class ReignMakerMapLayer {
   private container: PIXI.Container | null = null;
   private layers: Map<LayerId, MapLayer> = new Map();
   private initialized: boolean = false;
-  private toolbarComponent: SvelteComponent | null = null;
-  private toolbarElement: HTMLElement | null = null;
+  private toolbarManager: ToolbarManager = new ToolbarManager();
   private toggleState: boolean = false; // Scene control toggle state
-  private toolbarManuallyClosed: boolean = false; // Track if toolbar was manually closed via X button
 
   private constructor() {}
 
@@ -147,11 +152,14 @@ export class ReignMakerMapLayer {
   }
 
   /**
-   * Clear all content from a layer (but keep the layer)
+   * Clear content from a layer (remove graphics but keep visibility state)
+   * Use this when you want to redraw a layer without changing its visibility
    */
-  clearLayer(id: LayerId): void {
+  clearLayerContent(id: LayerId): void {
     const layer = this.layers.get(id);
     if (layer) {
+      const childCount = layer.container.children.length;
+      
       // Clear and destroy all children
       layer.container.removeChildren().forEach(child => {
         // If it's a Graphics object, clear it first
@@ -160,13 +168,21 @@ export class ReignMakerMapLayer {
         }
         child.destroy({ children: true, texture: false, baseTexture: false });
       });
-      // Also hide the layer when clearing to ensure it's not visible
-      layer.container.visible = false;
-      layer.visible = false;
-      console.log(`[ReignMakerMapLayer] Cleared and hid layer: ${id}`);
+      
+      console.log(`[ReignMakerMapLayer] Cleared ${childCount} children from layer: ${id} (visibility unchanged)`);
     } else {
-      console.log(`[ReignMakerMapLayer] Layer ${id} not found when trying to clear`);
+      console.log(`[ReignMakerMapLayer] Layer ${id} not found when trying to clear content`);
     }
+  }
+
+  /**
+   * Clear all content from a layer AND hide it
+   * Use this when you want to completely remove a layer from view
+   */
+  clearLayer(id: LayerId): void {
+    this.clearLayerContent(id);
+    this.hideLayer(id);
+    console.log(`[ReignMakerMapLayer] Cleared and hid layer: ${id}`);
   }
 
   /**
@@ -249,8 +265,11 @@ export class ReignMakerMapLayer {
     console.log(`[ReignMakerMapLayer] 🎨 Drawing ${hexIds.length} hexes...`);
     this.ensureInitialized();
     
-    // ALWAYS clear the layer first to prevent duplicate graphics
-    this.clearLayer(layerId);
+    // Validate layer is empty (detect leftover artifacts)
+    this.validateLayerEmpty(layerId);
+    
+    // Clear content only (preserve visibility state for now)
+    this.clearLayerContent(layerId);
     
     // Determine z-index based on layer type if not explicitly provided
     const layerZIndex = zIndex ?? this.getDefaultZIndex(layerId);
@@ -273,6 +292,10 @@ export class ReignMakerMapLayer {
     });
 
     layer.addChild(graphics);
+    
+    // PHASE 1 FIX: Always show layer after drawing (consistency with other draw methods)
+    this.showLayer(layerId);
+    
     console.log(`[ReignMakerMapLayer] ✅ Drew ${successCount}/${hexIds.length} hexes on layer: ${layerId}`);
   }
 
@@ -317,7 +340,7 @@ export class ReignMakerMapLayer {
         return false;
       }
       
-      // Use GridHex class for proper coordinate handling (matching Kingmaker pattern)
+      // Use GridHex class for proper coordinate handling
       const GridHex = (globalThis as any).foundry.grid.GridHex;
       const hex = new GridHex({i, j}, canvas.grid);
       
@@ -333,11 +356,10 @@ export class ReignMakerMapLayer {
         return false;
       }
       
-      // Apply Kingmaker's scaling factor (this fixes slight gaps between hexes)
+      // Apply scaling factor to fix slight gaps between hexes
       const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
       
       // Translate vertices to world coordinates by adding to hex center
-      // This matches how Kingmaker does it for Foundry v13
       const worldVertices = relativeVertices.map((v: any) => ({
         x: center.x + (v.x * scale),
         y: center.y + (v.y * scale)
@@ -380,6 +402,28 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Validate that a layer is empty (no children)
+   * Logs a warning if layer has unexpected content
+   * 
+   * @param id - Layer ID to validate
+   * @returns true if layer is empty or doesn't exist, false if has children
+   */
+  private validateLayerEmpty(id: LayerId): boolean {
+    const layer = this.layers.get(id);
+    if (!layer) return true;
+    
+    const childCount = layer.container.children.length;
+    if (childCount > 0) {
+      console.warn(
+        `[ReignMakerMapLayer] ⚠️ Layer '${id}' has ${childCount} children when expected to be empty!`,
+        'Children:', layer.container.children.map(c => c.name || c.constructor.name)
+      );
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Get default z-index for a layer based on its type
    * Ensures consistent layer ordering across the application
    */
@@ -394,6 +438,12 @@ export class ReignMakerMapLayer {
         return 30; // Settlements in middle
       case 'routes':
         return 40; // Roads on top
+      case 'worksites':
+        return 45; // Worksites above roads
+      case 'resources':
+        return 45; // Resources same level as worksites (never shown together)
+      case 'settlement-icons':
+        return 50; // Settlement icons above everything
       case 'hex-selection':
       default:
         return 0; // Default z-index
@@ -405,62 +455,22 @@ export class ReignMakerMapLayer {
    * Colors hexes based on terrain type (forest, plains, mountains, etc.)
    */
   drawTerrainOverlay(hexData: Array<{ id: string; terrain: string }>): void {
-    console.log(`[ReignMakerMapLayer] 🌄 Drawing terrain overlay for ${hexData.length} hexes...`);
     this.ensureInitialized();
     
     const layerId: LayerId = 'terrain-overlay';
     
-    // ALWAYS clear the layer first to prevent duplicate graphics
-    this.clearLayer(layerId);
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
     
-    const layer = this.createLayer(layerId, 5); // z=5: terrain at bottom
-
+    const layer = this.createLayer(layerId, 5);
     const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) {
-      console.warn('[ReignMakerMapLayer] ❌ Canvas grid not available');
-      return;
-    }
-
-    // Import terrain colors
-    const { TERRAIN_COLORS } = require('./types');
-
-    // Group hexes by terrain type for efficient rendering
-    const terrainGroups = new Map<string, string[]>();
-    hexData.forEach(({ id, terrain }) => {
-      const terrainType = terrain?.toLowerCase() || 'default';
-      if (!terrainGroups.has(terrainType)) {
-        terrainGroups.set(terrainType, []);
-      }
-      terrainGroups.get(terrainType)!.push(id);
-    });
-
-    console.log(`[ReignMakerMapLayer] Rendering ${terrainGroups.size} terrain types`);
-
-    // Draw each terrain type group
-    terrainGroups.forEach((hexIds, terrainType) => {
-      const terrainStyle = TERRAIN_COLORS[terrainType] || TERRAIN_COLORS['default'];
-      
-      const graphics = new PIXI.Graphics();
-      graphics.name = `Terrain_${terrainType}`;
-      graphics.visible = true;
-
-      let successCount = 0;
-      hexIds.forEach(hexId => {
-        const style: HexStyle = {
-          fillColor: terrainStyle.color,
-          fillAlpha: terrainStyle.alpha,
-          borderWidth: 0 // No borders for terrain overlay
-        };
-        const drawn = this.drawSingleHex(graphics, hexId, style, canvas);
-        if (drawn) successCount++;
-      });
-
-      layer.addChild(graphics);
-      console.log(`[ReignMakerMapLayer] ✅ Drew ${successCount} ${terrainType} hexes`);
-    });
-
+    
+    // Delegate to renderer
+    renderTerrainOverlay(layer, hexData, canvas, this.drawSingleHex.bind(this));
+    
+    // Show layer after drawing
     this.showLayer(layerId);
-    console.log(`[ReignMakerMapLayer] ✅ Terrain overlay complete`);
   }
 
   /**
@@ -477,8 +487,10 @@ export class ReignMakerMapLayer {
       return;
     }
 
-    // ALWAYS clear any existing outline first to prevent duplicates
-    this.clearLayer(layerId);
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
     const layer = this.createLayer(layerId, 10); // Higher zIndex to render above territory
 
     // Generate outline paths
@@ -536,147 +548,92 @@ export class ReignMakerMapLayer {
   /**
    * Draw road connections between adjacent hexes with roads
    * Creates a network of lines connecting road hexes
+   * Water hexes automatically count as roads with special styling
    */
-  drawRoadConnections(roadHexIds: string[], layerId: LayerId = 'routes'): void {
-    console.log(`[ReignMakerMapLayer] 🛣️ Drawing road connections for ${roadHexIds.length} hexes...`);
+  async drawRoadConnections(roadHexIds: string[], layerId: LayerId = 'routes'): Promise<void> {
     this.ensureInitialized();
     
-    // ALWAYS clear the layer first to prevent duplicate graphics
-    this.clearLayer(layerId);
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
     
-    const layer = this.createLayer(layerId, 40); // z=40: routes (top layer, above settlements)
-
+    const layer = this.createLayer(layerId, 40);
     const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) {
-      console.warn('[ReignMakerMapLayer] ❌ Canvas grid not available');
-      return;
-    }
-
-    // Normalize all road hex IDs for consistent matching
-    const normalizedRoadHexIds = roadHexIds.map(id => this.normalizeHexId(id));
-    const roadHexSet = new Set(normalizedRoadHexIds);
     
-    console.log('[ReignMakerMapLayer] Road hex IDs:', normalizedRoadHexIds.slice(0, 10));
-
-    // Graphics object for drawing lines
-    const graphics = new PIXI.Graphics();
-    graphics.name = 'RoadConnections';
-    graphics.visible = true;
-
-    // Track connections we've already drawn (to avoid duplicates)
-    const drawnConnections = new Set<string>();
-
-    const GridHex = (globalThis as any).foundry.grid.GridHex;
-    let connectionCount = 0;
-
-    // Store all road segments to draw in two passes (black borders first, then brown roads)
-    const roadSegments: Array<Array<{x: number, y: number}>> = [];
+    // Delegate to renderer
+    await renderRoadConnections(layer, roadHexIds, canvas);
     
-    roadHexIds.forEach(hexId => {
-      try {
-        const parts = hexId.split('.');
-        if (parts.length !== 2) return;
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
 
-        const i = parseInt(parts[0], 10);
-        const j = parseInt(parts[1], 10);
-        if (isNaN(i) || isNaN(j)) return;
-
-        const hex = new GridHex({i, j}, canvas.grid);
-        const hexCenter = hex.center;
-        const neighbors: any[] = hex.getNeighbors();
-
-        neighbors.forEach((neighbor: any) => {
-          const neighborI = neighbor.offset.i;
-          const neighborJ = neighbor.offset.j;
-          const neighborId = `${neighborI}.${neighborJ}`;
-
-          if (!roadHexSet.has(neighborId)) return;
-
-          const normalizedHexId = this.normalizeHexId(hexId);
-          const connectionId = [normalizedHexId, neighborId].sort().join('|');
-          if (drawnConnections.has(connectionId)) return;
-
-          drawnConnections.add(connectionId);
-
-          const neighborCenter = neighbor.center;
-
-          // Calculate Bezier curve control point
-          const midX = (hexCenter.x + neighborCenter.x) / 2;
-          const midY = (hexCenter.y + neighborCenter.y) / 2;
-          const dx = neighborCenter.x - hexCenter.x;
-          const dy = neighborCenter.y - hexCenter.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          const perpX = -dy / length;
-          const perpY = dx / length;
-          const curveOffset = 20;
-          const controlX = midX + perpX * curveOffset;
-          const controlY = midY + perpY * curveOffset;
-          
-          // Sample curve points
-          const segments = 10;
-          const points: Array<{x: number, y: number}> = [];
-          for (let t = 0; t <= segments; t++) {
-            const u = t / segments;
-            const x = Math.pow(1 - u, 2) * hexCenter.x +
-                     2 * (1 - u) * u * controlX +
-                     Math.pow(u, 2) * neighborCenter.x;
-            const y = Math.pow(1 - u, 2) * hexCenter.y +
-                     2 * (1 - u) * u * controlY +
-                     Math.pow(u, 2) * neighborCenter.y;
-            points.push({x, y});
-          }
-          
-          roadSegments.push(points);
-          connectionCount++;
-        });
-      } catch (error) {
-        console.error(`[ReignMakerMapLayer] Failed to process hex ${hexId}:`, error);
-      }
-    });
+  /**
+   * Draw worksite icons on hexes
+   * Places icon sprites at hex centers based on worksite type
+   */
+  async drawWorksiteIcons(worksiteData: Array<{ id: string; worksiteType: string }>): Promise<void> {
+    this.ensureInitialized();
     
-    // Get road width from settings (borders are 4 pixels wider)
-    // @ts-ignore - Foundry globals
-    const roadWidth = game.settings?.get('pf2e-reignmaker', 'roadWidth') as number || 32;
-    const borderWidth = roadWidth + 4;
+    const layerId: LayerId = 'worksites';
     
-    // PASS 1: Draw all black borders
-    graphics.lineStyle({
-      width: borderWidth,
-      color: 0x000000,
-      alpha: 0.6,
-      cap: PIXI.LINE_CAP.ROUND,
-      join: PIXI.LINE_JOIN.ROUND
-    });
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
     
-    roadSegments.forEach(points => {
-      graphics.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        graphics.lineTo(points[i].x, points[i].y);
-      }
-    });
+    const layer = this.createLayer(layerId, 45);
+    const canvas = (globalThis as any).canvas;
     
-    // PASS 2: Draw all brown roads on top
-    graphics.lineStyle({
-      width: roadWidth,
-      color: 0x8B4513,
-      alpha: 0.8,
-      cap: PIXI.LINE_CAP.ROUND,
-      join: PIXI.LINE_JOIN.ROUND
-    });
+    // Delegate to renderer
+    await renderWorksiteIcons(layer, worksiteData, canvas);
     
-    roadSegments.forEach(points => {
-      graphics.moveTo(points[0].x, points[0].y);
-      for (let i = 1; i < points.length; i++) {
-        graphics.lineTo(points[i].x, points[i].y);
-      }
-    });
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
 
-    layer.addChild(graphics);
-    console.log(`[ReignMakerMapLayer] ✅ Drew ${connectionCount} road connections`);
+  /**
+   * Draw resource/commodity icons on hexes (mapped from worksite positions)
+   * Places commodity icon sprites at hex centers based on what the worksite produces
+   */
+  async drawResourceIcons(worksiteData: Array<{ id: string; worksiteType: string }>): Promise<void> {
+    this.ensureInitialized();
     
-    if (connectionCount === 0) {
-      console.warn('[ReignMakerMapLayer] ⚠️ No road connections drawn - check that hex IDs match neighbor format');
-    }
+    const layerId: LayerId = 'resources';
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 45);
+    const canvas = (globalThis as any).canvas;
+    
+    // Delegate to renderer
+    await renderResourceIcons(layer, worksiteData, canvas);
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
+
+  /**
+   * Draw settlement tier icons on hexes
+   * Places tier-specific icon sprites at hex centers (village, town, city, metropolis)
+   */
+  async drawSettlementIcons(settlementData: Array<{ id: string; tier: string }>): Promise<void> {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'settlement-icons';
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 50);
+    const canvas = (globalThis as any).canvas;
+    
+    // Delegate to renderer
+    await renderSettlementIcons(layer, settlementData, canvas);
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
   }
 
   /**
@@ -704,7 +661,7 @@ export class ReignMakerMapLayer {
     this.ensureInitialized(); // Ensure container exists first
     if (this.container) {
       this.container.visible = true;
-      console.log('[ReignMakerMapLayer] PIXI container shown');
+      console.log('[ReignMakerMapLayer] PIXI container shown (visible:', this.container.visible, ')');
     } else {
       console.warn('[ReignMakerMapLayer] Cannot show container - initialization failed');
     }
@@ -716,7 +673,18 @@ export class ReignMakerMapLayer {
   hidePixiContainer(): void {
     if (this.container) {
       this.container.visible = false;
-      console.log('[ReignMakerMapLayer] PIXI container hidden');
+      console.log('[ReignMakerMapLayer] PIXI container hidden (visible:', this.container.visible, ')');
+      console.log('[ReignMakerMapLayer] Container children count:', this.container.children.length);
+      console.log('[ReignMakerMapLayer] Layer visibility states:', 
+        Array.from(this.layers.entries()).map(([id, layer]) => ({
+          id,
+          visible: layer.visible,
+          containerVisible: layer.container.visible,
+          childCount: layer.container.children.length
+        }))
+      );
+    } else {
+      console.error('[ReignMakerMapLayer] ❌ Cannot hide container - container is null!');
     }
   }
 
@@ -731,39 +699,52 @@ export class ReignMakerMapLayer {
    * Handle scene control toggle click
    */
   async handleSceneControlToggle(): Promise<void> {
+    console.log('[ReignMakerMapLayer] 🎯 handleSceneControlToggle() called, current toggleState:', this.toggleState);
+    console.log('[ReignMakerMapLayer] Container exists:', !!this.container, 'visible:', this.container?.visible);
+    
     if (!this.toggleState) {
       // Toggle OFF -> ON
-      console.log('[ReignMakerMapLayer] Toggle OFF -> ON');
+      console.log('[ReignMakerMapLayer] ═══ Toggle OFF -> ON ═══');
       this.toggleState = true;
-      this.toolbarManuallyClosed = false;
+      this.toolbarManager.resetManuallyClosed();
       this.showPixiContainer();
-      await this.showMapOverlayToolbar();
+      await this.toolbarManager.show(() => this.handleToolbarManualClose());
       // Toolbar's onMount will automatically restore saved overlay states
     } else {
       // Toggle ON -> OFF
-      console.log('[ReignMakerMapLayer] Toggle ON -> OFF');
+      console.log('[ReignMakerMapLayer] ═══ Toggle ON -> OFF ═══');
       this.toggleState = false;
-      this.toolbarManuallyClosed = false;
+      this.toolbarManager.resetManuallyClosed();
       
       // Hide and destroy the toolbar FIRST (before clearing layers)
-      // This ensures the toolbar can't try to re-draw while we're clearing
-      this.hideMapOverlayToolbar();
+      console.log('[ReignMakerMapLayer] Step 1: Hiding toolbar...');
+      this.toolbarManager.hide();
       
       // Clear all overlays to ensure they're not visible
+      console.log('[ReignMakerMapLayer] Step 2: Clearing all layers...');
       this.clearAllLayers();
       
       // Hide the PIXI container (this makes everything invisible immediately)
+      console.log('[ReignMakerMapLayer] Step 3: Hiding PIXI container...');
       this.hidePixiContainer();
       
+      // Verify container is actually hidden
+      console.log('[ReignMakerMapLayer] Step 4: Verifying container hidden...');
+      if (this.container && this.container.visible) {
+        console.error('[ReignMakerMapLayer] ❌ CRITICAL: Container is still visible after hidePixiContainer()!');
+        // Force it again
+        this.container.visible = false;
+      }
+      
       // Force canvas to re-render to ensure changes are visible
+      console.log('[ReignMakerMapLayer] Step 5: Forcing canvas re-render...');
       const canvas = (globalThis as any).canvas;
       if (canvas?.stage) {
         canvas.stage.render(canvas.app.renderer);
       }
       
-      // DO NOT clear localStorage - we want to preserve overlay states
-      // so they can be restored when toggled back ON
-      console.log('[ReignMakerMapLayer] Overlay states preserved in localStorage for restoration');
+      console.log('[ReignMakerMapLayer] ═══ Toggle OFF complete ═══');
+      console.log('[ReignMakerMapLayer] Final state - Container visible:', this.container?.visible);
     }
     
     // Update scene control button state
@@ -772,12 +753,13 @@ export class ReignMakerMapLayer {
 
   /**
    * Handle toolbar manual close (X button)
+   * Toolbar is just a control panel - closing it doesn't affect overlay visibility
    */
-  handleToolbarManualClose(): void {
-    console.log('[ReignMakerMapLayer] Toolbar manually closed via X button');
-    this.toolbarManuallyClosed = true;
-    this.hideMapOverlayToolbar();
+  private handleToolbarManualClose(): void {
+    console.log('[ReignMakerMapLayer] 🔴 Toolbar manually closed via X button');
+    console.log('[ReignMakerMapLayer] Overlays remain visible, toolbar hidden until next toggle');
     // Keep toggleState = true and PIXI container visible
+    // Overlays persist until user toggles rook button off
   }
 
   /**
@@ -797,80 +779,10 @@ export class ReignMakerMapLayer {
   }
 
   /**
-   * Toggle map overlay toolbar (scene control button)
-   * @deprecated Use handleSceneControlToggle instead
-   */
-  async toggleMapOverlayToolbar(): Promise<void> {
-    if (this.toolbarComponent) {
-      // Hide toolbar
-      this.hideMapOverlayToolbar();
-      console.log('[ReignMakerMapLayer] Toolbar hidden');
-    } else {
-      // Show toolbar
-      await this.showMapOverlayToolbar();
-    }
-  }
-
-  /**
-   * Show the map overlay toolbar
-   */
-  async showMapOverlayToolbar(): Promise<void> {
-    if (this.toolbarComponent) {
-      console.log('[ReignMakerMapLayer] Toolbar already visible');
-      return;
-    }
-
-    try {
-      // KingdomStore is now initialized globally in the ready hook
-      // No need for on-demand initialization here
-
-      // Dynamically import the toolbar component
-      const { default: MapOverlayToolbar } = await import('../../view/map/MapOverlayToolbar.svelte');
-
-      // Create container element
-      this.toolbarElement = document.createElement('div');
-      this.toolbarElement.id = 'reignmaker-map-overlay-toolbar';
-      document.body.appendChild(this.toolbarElement);
-
-      // Mount Svelte component
-      this.toolbarComponent = new MapOverlayToolbar({
-        target: this.toolbarElement
-      });
-
-      // Listen for close event
-      this.toolbarElement.addEventListener('close', () => {
-        this.handleToolbarManualClose();
-      });
-
-      console.log('[ReignMakerMapLayer] ✅ Toolbar shown');
-    } catch (error) {
-      console.error('[ReignMakerMapLayer] Failed to show toolbar:', error);
-      ui?.notifications?.error('Failed to show map overlay toolbar');
-    }
-  }
-
-  /**
-   * Hide the map overlay toolbar
-   */
-  hideMapOverlayToolbar(): void {
-    if (this.toolbarComponent) {
-      this.toolbarComponent.$destroy();
-      this.toolbarComponent = null;
-    }
-
-    if (this.toolbarElement) {
-      this.toolbarElement.remove();
-      this.toolbarElement = null;
-    }
-
-    console.log('[ReignMakerMapLayer] Toolbar hidden');
-  }
-
-  /**
    * Check if toolbar is currently visible
    */
   isToolbarVisible(): boolean {
-    return this.toolbarComponent !== null;
+    return this.toolbarManager.isVisible();
   }
 
   /**
@@ -891,44 +803,35 @@ export class ReignMakerMapLayer {
 
     console.log('[ReignMakerMapLayer] Canvas ready, attempting to get hex data...');
 
-    // Try to get hex data from multiple sources
-    let hexIds: string[] = [];
+    // Use ONLY kingdom data (canonical source)
+    const kingdomActor = await getKingdomActor();
     
-    // Source 1: Try Kingmaker module first (if available)
-    const kingmaker = (globalThis as any).game?.kingmaker;
-    if (kingmaker?.region?.hexes) {
-      console.log('[ReignMakerMapLayer] ✅ Kingmaker module available, reading claimed hexes...');
-      const claimedHexes = kingmaker.region.hexes.filter((h: any) => h.data?.claimed);
-      
-      if (claimedHexes && claimedHexes.length > 0) {
-        hexIds = claimedHexes.map((h: any) => `${h.offset.i}.${h.offset.j}`);
-        console.log(`[ReignMakerMapLayer] Got ${hexIds.length} hex IDs from Kingmaker:`, hexIds.slice(0, 5));
-      } else {
-        console.log('[ReignMakerMapLayer] ⚠️ No claimed hexes in Kingmaker module');
-      }
-    } else {
-      console.log('[ReignMakerMapLayer] ⚠️ Kingmaker module not available, trying fallback...');
+    if (!kingdomActor) {
+      console.warn('[ReignMakerMapLayer] ❌ No kingdom actor found');
+      // @ts-ignore
+      ui?.notifications?.warn('No kingdom data available');
+      return;
     }
-    
-    // Source 2: Fallback to our stored data (if Kingmaker didn't work)
-    if (hexIds.length === 0) {
-      console.log('[ReignMakerMapLayer] Attempting to read from KingdomActor flags...');
-      const kingdomActor = await getKingdomActor();
-      
-      if (kingdomActor) {
-        const kingdom = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
-        if (kingdom?.hexes && kingdom.hexes.length > 0) {
-          // Map hex IDs from our stored data (assuming correct Foundry coordinates)
-          hexIds = kingdom.hexes.map((h: any) => h.id);
-          console.log(`[ReignMakerMapLayer] 📋 Using ${hexIds.length} hex IDs from KingdomActor:`, hexIds.slice(0, 5));
-        }
-      }
-    }
-    
-    if (hexIds.length === 0) {
-      console.warn('[ReignMakerMapLayer] ❌ No hex data available from any source');
+
+    const kingdom = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
+    if (!kingdom?.hexes || kingdom.hexes.length === 0) {
+      console.warn('[ReignMakerMapLayer] ❌ No hex data in kingdom');
       // @ts-ignore
       ui?.notifications?.warn('No kingdom hex data available. Claim some hexes first!');
+      return;
+    }
+
+    // Map hex IDs from our stored data
+    const hexIds = kingdom.hexes
+      .filter((h: any) => h.claimedBy === 1) // Only player-claimed
+      .map((h: any) => h.id);
+    
+    console.log(`[ReignMakerMapLayer] 📋 Using ${hexIds.length} hex IDs from kingdom data:`, hexIds.slice(0, 5));
+
+    if (hexIds.length === 0) {
+      console.warn('[ReignMakerMapLayer] ❌ No claimed hexes found');
+      // @ts-ignore
+      ui?.notifications?.warn('No claimed territory to display');
       return;
     }
 
@@ -965,7 +868,7 @@ export class ReignMakerMapLayer {
    */
   destroy(): void {
     // Hide toolbar if visible
-    this.hideMapOverlayToolbar();
+    this.toolbarManager.hide();
 
     // Destroy all layers
     this.layers.forEach(layer => {
@@ -998,145 +901,5 @@ export class ReignMakerMapLayer {
   }
 }
 
-/**
- * Register the kingdom hex control button in the scene controls
- */
-export function registerKingdomHexControl(): void {
-  console.log('[ReignMakerMapLayer] Registering scene control button...');
-  
-  Hooks.on('getSceneControlButtons', (controls: any) => {
-    console.log('[ReignMakerMapLayer] getSceneControlButtons hook fired');
-    console.log('[ReignMakerMapLayer] Controls type:', typeof controls, 'Is array:', Array.isArray(controls));
-    
-    // Find the tokens control group (controls is an array in Foundry v11-12, might be object in v13)
-    let tokensControl;
-    if (Array.isArray(controls)) {
-      tokensControl = controls.find((c: any) => c.name === 'token');
-    } else {
-      // If controls is an object, try accessing directly
-      tokensControl = controls.token || controls.tokens;
-    }
-    
-    if (!tokensControl) {
-      console.warn('[ReignMakerMapLayer] Tokens control group not found');
-      console.log('[ReignMakerMapLayer] Available controls:', Object.keys(controls));
-      return;
-    }
-    
-    // Ensure tools array/object exists
-    if (!tokensControl.tools) {
-      tokensControl.tools = Array.isArray(controls) ? [] : {};
-    }
-    
-    const toolsArray = Array.isArray(tokensControl.tools) ? tokensControl.tools : Object.values(tokensControl.tools);
-    console.log('[ReignMakerMapLayer] Found tokens control group, current tools:', toolsArray.length);
-    console.log('[ReignMakerMapLayer] Tool names:', toolsArray.map((t: any) => t?.name));
-    
-    // Check individual settings for hiding Kingmaker module's controls
-    // @ts-ignore - Foundry globals
-    const hideHexControls = game.settings?.get('pf2e-reignmaker', 'hideKingmakerHexControls');
-    // @ts-ignore - Foundry globals
-    const hideShowRegions = game.settings?.get('pf2e-reignmaker', 'hideKingmakerShowRegions');
-    
-    console.log('[ReignMakerMapLayer] Hide settings:', { hideHexControls, hideShowRegions });
-    
-    // Remove Kingmaker controls based on user settings
-    if (hideHexControls || hideShowRegions) {
-      if (Array.isArray(tokensControl.tools)) {
-        // Array format
-        const before = tokensControl.tools.length;
-        tokensControl.tools = tokensControl.tools.filter((tool: any) => {
-          if (hideHexControls && tool.name === 'km-hex-overlay') {
-            console.log('[ReignMakerMapLayer] Filtering out Kingmaker "Hex Controls" button');
-            return false;
-          }
-          if (hideShowRegions && tool.name === 'km-show-regions') {
-            console.log('[ReignMakerMapLayer] Filtering out Kingmaker "Show Regions" button');
-            return false;
-          }
-          return true;
-        });
-        console.log(`[ReignMakerMapLayer] Removed ${before - tokensControl.tools.length} Kingmaker button(s)`);
-      } else {
-        // Object format
-        if (hideHexControls && tokensControl.tools['km-hex-overlay']) {
-          delete tokensControl.tools['km-hex-overlay'];
-          console.log('[ReignMakerMapLayer] Removed Kingmaker "Hex Controls" button');
-        }
-        if (hideShowRegions && tokensControl.tools['km-show-regions']) {
-          delete tokensControl.tools['km-show-regions'];
-          console.log('[ReignMakerMapLayer] Removed Kingmaker "Show Regions" button');
-        }
-      }
-    }
-    
-    // Check if our rook button already exists (avoid duplicates)
-    const rookExists = Array.isArray(tokensControl.tools)
-      ? tokensControl.tools.some((t: any) => t.name === 'reignmaker-hexes')
-      : !!tokensControl.tools['reignmaker-hexes'];
-    
-    if (rookExists) {
-      console.log('[ReignMakerMapLayer] Rook button already exists, skipping');
-      return;
-    }
-    
-    // Add our rook button
-    const rookButton = {
-      name: 'reignmaker-hexes',
-      title: 'Reignmaker Overlays',
-      icon: 'fas fa-chess-rook',
-      toggle: true,
-      active: ReignMakerMapLayer.getInstance().getToggleState(),
-      onClick: async (toggled: boolean) => {
-        console.log('[ReignMakerMapLayer] Rook button clicked, toggled:', toggled);
-        
-        // Check if map has been imported yet
-        const kingdomActor = await getKingdomActor();
-        if (kingdomActor) {
-          const kingdom = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
-          const hasImportedMap = kingdom?.hexes && kingdom.hexes.length > 0;
-          
-          if (!hasImportedMap) {
-            console.log('[ReignMakerMapLayer] No map data found, opening Kingdom UI to show import dialog...');
-            
-            // Open Kingdom UI - it will automatically show the WelcomeDialog for first-time setup
-            const { openKingdomUI } = await import('../../ui/KingdomIcon');
-            const actorId = kingdomActor.id;
-            openKingdomUI(actorId);
-            
-            // Don't show toolbar - user needs to import data first
-            return;
-          }
-        }
-        
-        const layer = ReignMakerMapLayer.getInstance();
-        await layer.handleSceneControlToggle();
-      },
-      button: true
-    };
-    
-    if (Array.isArray(tokensControl.tools)) {
-      tokensControl.tools.push(rookButton);
-    } else {
-      tokensControl.tools['reignmaker-hexes'] = rookButton;
-    }
-    
-    console.log('[ReignMakerMapLayer] ✅ Rook button added successfully');
-  });
-
-  // Initialize PIXI container when canvas is ready
-  Hooks.on('canvasReady', () => {
-    const layer = ReignMakerMapLayer.getInstance();
-    layer.showPixiContainer(); // Ensures initialization
-    layer.hidePixiContainer(); // Start hidden (controlled by scene toggle)
-    console.log('[ReignMakerMapLayer] Initialized PIXI container on canvasReady');
-  });
-
-  // Clean up on canvas tear down
-  Hooks.on('canvasTearDown', () => {
-    const layer = ReignMakerMapLayer.getInstance();
-    layer.destroy();
-  });
-  
-  console.log('[ReignMakerMapLayer] Hook listeners registered');
-}
+// Export registerKingdomHexControl from the dedicated module
+export { registerKingdomHexControl } from './SceneControlRegistration';

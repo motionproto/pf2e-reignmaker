@@ -16,6 +16,8 @@ import type { Settlement, SettlementTier } from '../../models/Settlement';
 import { createSettlement, createKingmakerSettlementId } from '../../models/Settlement';
 import type { HexFeature, HexState } from '../../api/kingmaker';
 import { logger } from '../../utils/Logger';
+import { normalizeTerrainType, normalizeTravelDifficulty } from '../../types/terrain';
+import type { TerrainType, TravelDifficulty } from '../../types/terrain';
 
 // Declare Foundry globals
 declare const Hooks: any;
@@ -71,7 +73,8 @@ export class TerritoryService {
                     const hex = new Hex(
                         i,          // row
                         j,          // col
-                        'Unknown',  // Default terrain (editable later)
+                        'plains',   // Default terrain (editable later)
+                        'open',     // Default travel (editable later)
                         null,       // No worksite
                         false,      // No commodity bonus
                         null,       // No name
@@ -152,18 +155,22 @@ export class TerritoryService {
                 const hexId = String(numericId);
                 const dotNotationId = this.convertHexId(hexId);
                 
-                // Get terrain from the hex's data (this is the source of truth)
+                // Get terrain and travel from the hex's data (this is the source of truth)
                 const hexData = regionHex.data;
                 const rawTerrain = hexData.terrain;
-                let terrain = 'Unknown';
+                const rawTravel = hexData.travel;
                 const zoneId = hexData.zone || null;
                 
+                let terrainType: TerrainType;
                 if (rawTerrain) {
-                    terrain = this.normalizeTerrainName(rawTerrain);
+                    terrainType = normalizeTerrainType(rawTerrain);
                 } else {
-                    terrain = 'Unknown';
-                    logger.debug(`Hex ${dotNotationId} has no terrain data, using Unknown`);
+                    terrainType = 'plains'; // Default to plains if no terrain data
+                    logger.debug(`Hex ${dotNotationId} has no terrain data, using plains`);
                 }
+                
+                // Normalize travel difficulty
+                const travelDifficulty = normalizeTravelDifficulty(rawTravel);
                 
                 // Look up hex state to get ownership data
                 // If hex has no state, it's wilderness (claimedBy = 0)
@@ -174,7 +181,8 @@ export class TerritoryService {
                 // Debug log for each hex (reduced logging for performance)
                 if (claimedBy === 1 || hexState.camp || hexState.features?.length > 0) {
                     logger.debug(`Processing hex ${dotNotationId}:`, {
-                        terrain: terrain,
+                        terrain: terrainType,
+                        travel: travelDifficulty,
                         zone: zoneId,
                         claimedBy: claimedBy,
                         camp: hexState.camp,
@@ -195,7 +203,7 @@ export class TerritoryService {
                         worksiteType: worksite.type,
                         commodity: hexState.commodity || 'none',
                         hasMatchingCommodity: hasSpecialTrait,
-                        expectedProduction: worksite.getBaseProduction(terrain),
+                        expectedProduction: worksite.getBaseProduction(terrainType),
                         bonusApplied: hasSpecialTrait ? '+1' : 'none'
                     });
                 }
@@ -212,7 +220,8 @@ export class TerritoryService {
                 const hex = new Hex(
                     row,
                     col,
-                    terrain,
+                    terrainType,
+                    travelDifficulty,
                     worksite,
                     hasSpecialTrait,  // hasCommodityBonus
                     null,             // Name can be added later if available
@@ -439,106 +448,6 @@ export class TerritoryService {
     }
     
     /**
-     * Normalize terrain names to our system
-     */
-    private normalizeTerrainName(terrain: string | null): string {
-        if (!terrain) {
-            return 'Unknown';
-        }
-        
-        // Handle object terrain (if Kingmaker provides terrain as an object)
-        let terrainString = terrain;
-        if (typeof terrain === 'object') {
-            // Try to extract terrain name from object
-            const terrainObj = terrain as any;
-            terrainString = terrainObj.type || terrainObj.name || terrainObj.value || JSON.stringify(terrain);
-            logger.debug('Terrain is object, extracted:', terrainString, 'from', terrain);
-        }
-        
-        const normalized = terrainString.toString().toLowerCase().trim();
-        
-        // Handle various terrain name formats from Kingmaker
-        switch (normalized) {
-            // Plains variants
-            case 'plains':
-            case 'plain':
-            case 'grassland':
-            case 'grasslands':
-            case 'meadow':
-            case 'meadows':
-            case 'field':
-            case 'fields':
-                return 'Plains';
-                
-            // Forest variants  
-            case 'forest':
-            case 'forests':
-            case 'wood':
-            case 'woods':
-            case 'woodland':
-            case 'woodlands':
-            case 'jungle':
-            case 'grove':
-                return 'Forest';
-                
-            // Hills variants
-            case 'hill':
-            case 'hills':
-            case 'highland':
-            case 'highlands':
-            case 'foothill':
-            case 'foothills':
-                return 'Hills';
-                
-            // Mountains variants
-            case 'mountain':
-            case 'mountains':
-            case 'mount':
-            case 'peak':
-            case 'peaks':
-            case 'cliff':
-            case 'cliffs':
-                return 'Mountains';
-                
-            // Swamp/Wetlands variants
-            case 'swamp':
-            case 'swamps':
-            case 'wetland':
-            case 'wetlands':
-            case 'marsh':
-            case 'marshes':
-            case 'bog':
-            case 'bogs':
-            case 'fen':
-            case 'fens':
-                return 'Swamp';
-                
-            // Desert variants
-            case 'desert':
-            case 'deserts':
-            case 'badlands':
-            case 'wasteland':
-            case 'wastes':
-            case 'dunes':
-                return 'Desert';
-                
-            // Water/Lake (treated as plains for production)
-            case 'lake':
-            case 'lakes':
-            case 'water':
-            case 'river':
-            case 'rivers':
-            case 'ocean':
-            case 'sea':
-                return 'Plains'; // Lakes/water treated as plains
-                
-            default: 
-                logger.warn(`Unknown terrain type: "${terrainString}" (original: ${JSON.stringify(terrain)}), marking as Unknown`);
-                return 'Unknown';
-        }
-    }
-    
-    /**
      * Convert Kingmaker worksite/camp to our Worksite model
      * 
      * Kingmaker has two ways to represent worksites:
@@ -745,7 +654,8 @@ export class TerritoryService {
                 return new Hex(
                     row,
                     col,
-                    hexData.terrain,
+                    hexData.terrain as TerrainType,
+                    (hexData as any).travel || 'open', // Default to open if not stored
                     hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
                     (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
                     hexData.name || null,
@@ -802,7 +712,8 @@ export class TerritoryService {
         return new Hex(
             row,
             col,
-            hexData.terrain,
+            hexData.terrain as TerrainType,
+            (hexData as any).travel || 'open', // Default to open if not stored
             hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
             (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
             hexData.name || null,
