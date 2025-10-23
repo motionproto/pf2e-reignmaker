@@ -2,8 +2,8 @@
  * TerritoryRenderer - Renders territory fill and outlines
  */
 
-import { DEFAULT_HEX_STYLES } from '../types';
 import type { HexStyle } from '../types';
+import { MAP_HEX_STYLES, TERRITORY_BORDER_COLORS } from '../../../view/kingdom/utils/presentation';
 import { generateTerritoryOutline } from '../TerritoryOutline';
 
 /**
@@ -29,7 +29,7 @@ export function renderTerritoryFill(
 
   // Note: drawHexesFn will handle creating the graphics and adding to layer
   // We just pass through the parameters
-  drawHexesFn(hexIds, DEFAULT_HEX_STYLES.kingdomTerritory, 'kingdom-territory', 10);
+  drawHexesFn(hexIds, MAP_HEX_STYLES.kingdomTerritory, 'kingdom-territory', 10);
   
   console.log('[TerritoryRenderer] ✅ Territory fill complete');
 }
@@ -65,8 +65,8 @@ export function renderTerritoryOutline(
   // Draw outline with single pass - thick bright blue border
   graphics.lineStyle({
     width: 16,
-    color: 0x00D4FF, // Bright electric blue - highly visible
-    alpha: 1.0, // Fully opaque
+    color: TERRITORY_BORDER_COLORS.outline,
+    alpha: TERRITORY_BORDER_COLORS.outlineAlpha,
     cap: PIXI.LINE_CAP.ROUND,
     join: PIXI.LINE_JOIN.ROUND
   });

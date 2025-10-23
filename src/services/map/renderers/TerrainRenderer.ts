@@ -1,9 +1,9 @@
-/**
+I'm still missing the terrain colors, which might be from another terrain renderer. Or is it stored somewhere else? /**
  * TerrainRenderer - Renders terrain type overlays on map hexes
  */
 
-import { TERRAIN_COLORS } from '../types';
 import type { HexStyle } from '../types';
+import { TERRAIN_OVERLAY_COLORS } from '../../../view/kingdom/utils/presentation';
 
 /**
  * Draw terrain overlay for hexes with terrain type data
@@ -41,7 +41,7 @@ export function renderTerrainOverlay(
 
   // Draw each terrain type group
   terrainGroups.forEach((hexIds, terrainType) => {
-    const terrainStyle = TERRAIN_COLORS[terrainType] || TERRAIN_COLORS['default'];
+    const terrainStyle = TERRAIN_OVERLAY_COLORS[terrainType] || TERRAIN_OVERLAY_COLORS['default'];
     
     const graphics = new PIXI.Graphics();
     graphics.name = `Terrain_${terrainType}`;

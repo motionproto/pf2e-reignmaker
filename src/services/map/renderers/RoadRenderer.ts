@@ -5,6 +5,7 @@
 import { getKingdomActor } from '../../../main.kingdom';
 import type { KingdomData } from '../../../actors/KingdomActor';
 import { isWaterTerrain } from '../../../types/terrain';
+import { ROAD_COLORS } from '../../../view/kingdom/utils/presentation';
 
 /**
  * Normalize hex ID format (remove leading zeros for consistent matching)
@@ -174,8 +175,8 @@ export async function renderRoadConnections(
   if (landRoadSegments.length > 0) {
     graphics.lineStyle({
       width: borderWidth,
-      color: 0x000000,
-      alpha: 0.6,
+      color: ROAD_COLORS.roadBorder,
+      alpha: ROAD_COLORS.roadBorderAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });
@@ -192,8 +193,8 @@ export async function renderRoadConnections(
   if (waterRoadSegments.length > 0) {
     graphics.lineStyle({
       width: waterBorderWidth,
-      color: 0x1976D2, // Darker blue
-      alpha: 0.6,
+      color: ROAD_COLORS.waterBorder,
+      alpha: ROAD_COLORS.waterBorderAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });
@@ -210,8 +211,8 @@ export async function renderRoadConnections(
   if (landRoadSegments.length > 0) {
     graphics.lineStyle({
       width: roadWidth,
-      color: 0x8B4513, // Brown
-      alpha: 0.8,
+      color: ROAD_COLORS.landRoad,
+      alpha: ROAD_COLORS.landRoadAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });
@@ -228,8 +229,8 @@ export async function renderRoadConnections(
   if (waterRoadSegments.length > 0) {
     graphics.lineStyle({
       width: waterRoadWidth,
-      color: 0x4FC3F7, // Light blue
-      alpha: 0.8,
+      color: ROAD_COLORS.waterRoad,
+      alpha: ROAD_COLORS.waterRoadAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });

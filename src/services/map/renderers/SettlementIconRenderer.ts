@@ -4,6 +4,7 @@
  */
 
 import { SETTLEMENT_ICONS } from '../types';
+import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
 
 /**
  * Draw settlement icons on hexes
@@ -85,8 +86,8 @@ export async function renderSettlementIcons(
       shadowSprite.position.set(center.x + 3, center.y + 3); // Offset for shadow
       const scale = iconSize / shadowSprite.height;
       shadowSprite.scale.set(scale, scale);
-      shadowSprite.tint = 0x000000; // Black
-      shadowSprite.alpha = 0.5; // Semi-transparent
+      shadowSprite.tint = ICON_SHADOW_COLOR.color;
+      shadowSprite.alpha = ICON_SHADOW_COLOR.alpha;
       
       // Add blur filter to shadow for softer effect
       const blurFilter = new PIXI.filters.BlurFilter();

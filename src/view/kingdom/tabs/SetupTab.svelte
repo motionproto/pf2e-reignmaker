@@ -41,7 +41,7 @@
       resource: 'ore',
       income: $kingdomData.cachedProduction?.ore || 0
     }
-  ].filter(ws => ws.count > 0);
+  ];
   
   $: totalWorksites = worksiteData.reduce((sum, ws) => sum + ws.count, 0);
   
@@ -126,7 +126,13 @@
         <div class="worksite-grid">
           {#each worksiteData as worksite}
             <div class="worksite-column">
-              <div class="worksite-label">{worksite.count} {worksite.type}</div>
+              <div class="worksite-label">
+                {#if worksite.count === 0}
+                  No {worksite.type}
+                {:else}
+                  {worksite.count} {worksite.type}
+                {/if}
+              </div>
               <ResourceCard
                 resource={worksite.resource}
                 value={worksite.income}
@@ -292,13 +298,13 @@
     
     h1 {
       margin: 0 0 0.5rem 0;
-      font-size: 2.5rem;
+      font-size: var(--font-5xl);
       font-weight: bold;
     }
     
     .subtitle {
       margin: 0;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
       opacity: 0.9;
     }
   }
@@ -324,7 +330,7 @@
     
     h3 {
       margin: 0.5rem 0;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
       color: var(--text-primary);
     }
     
@@ -351,7 +357,7 @@
     border: 1px solid var(--border-subtle);
     
     i {
-      font-size: 2rem;
+      font-size: var(--font-4xl);
       color: var(--text-secondary);
     }
     
@@ -367,7 +373,7 @@
     }
     
     .stat-label {
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       color: var(--text-secondary);
     }
   }
@@ -396,14 +402,14 @@
     }
     
     .terrain-value {
-      font-size: var(--font-xl);
+      font-size: var(--font-2xl);
       font-weight: var(--font-weight-bold);
       color: var(--text-primary);
       line-height: 1;
     }
     
     .terrain-label {
-      font-size: var(--font-xs);
+      font-size: var(--font-sm);
       color: var(--text-tertiary);
       text-transform: capitalize;
     }
@@ -414,7 +420,7 @@
     
     h3 {
       margin: 0 0 1rem 0;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
       color: var(--text-primary);
     }
   }
@@ -475,12 +481,12 @@
     }
     
     h3 {
-      font-size: 1rem;
+      font-size: var(--font-md);
       margin: 0 0 0.25rem 0;
     }
     
     p {
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       margin: 0;
     }
   }
@@ -500,7 +506,7 @@
     border-radius: 0.25rem;
     
     i {
-      font-size: 1.25rem;
+      font-size: var(--font-xl);
     }
     
     strong {
@@ -513,13 +519,13 @@
     
     .ready-message {
       margin-bottom: 2rem;
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
     }
   }
   
   .start-button {
     padding: 1rem 3rem;
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     font-weight: bold;
     background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
     color: white;

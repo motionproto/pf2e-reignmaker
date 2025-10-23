@@ -65,21 +65,21 @@ export const claimedSettlements = derived(kingdomData, $data => {
 
 /**
  * Worksite counts from claimed hexes only
- * Calculates by iterating through kingmakerFeatures in claimed hexes
+ * Calculates by checking hex.worksite.type in claimed hexes
  */
 export const claimedWorksites = derived(claimedHexes, $hexes => {
   return $hexes.reduce((counts, hex) => {
-    if (hex.kingmakerFeatures) {
-      for (const feature of hex.kingmakerFeatures) {
-        if (feature.type === 'farmland') {
-          counts.farmlands = (counts.farmlands || 0) + 1;
-        } else if (feature.type === 'lumberCamp') {
-          counts.lumberCamps = (counts.lumberCamps || 0) + 1;
-        } else if (feature.type === 'quarry') {
-          counts.quarries = (counts.quarries || 0) + 1;
-        } else if (feature.type === 'mine') {
-          counts.mines = (counts.mines || 0) + 1;
-        }
+    if (hex.worksite?.type) {
+      const type = hex.worksite.type;
+      // Map worksite types to our count keys
+      if (type === 'Farmstead' || type === 'Hunting/Fishing Camp' || type === 'Oasis Farm') {
+        counts.farmlands = (counts.farmlands || 0) + 1;
+      } else if (type === 'Logging Camp') {
+        counts.lumberCamps = (counts.lumberCamps || 0) + 1;
+      } else if (type === 'Quarry') {
+        counts.quarries = (counts.quarries || 0) + 1;
+      } else if (type === 'Mine' || type === 'Bog Mine') {
+        counts.mines = (counts.mines || 0) + 1;
       }
     }
     return counts;

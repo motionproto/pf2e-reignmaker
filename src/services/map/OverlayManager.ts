@@ -13,6 +13,7 @@ import type { LayerId, HexStyle } from './types';
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
+import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
 
 /**
  * Overlay definition interface
@@ -276,12 +277,7 @@ export class OverlayManager {
           throw new Error('No claimed territory');
         }
 
-        const partyColor = 0x1E90FF; // Dodger blue
-        const style: HexStyle = {
-          fillColor: partyColor,
-          fillAlpha: 0.4,
-          borderWidth: 0
-        };
+        const style: HexStyle = MAP_HEX_STYLES.partyTerritory;
 
         // PHASE 1 FIX: Draw method now handles showing (no manual showLayer needed)
         this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
@@ -346,13 +342,7 @@ export class OverlayManager {
 
         console.log('[OverlayManager] Highlighting settlements:', settlementHexIds);
 
-        const style: HexStyle = {
-          fillColor: 0x00FFFF, // Cyan
-          fillAlpha: 0.5,
-          borderColor: 0x00FFFF,
-          borderWidth: 3,
-          borderAlpha: 1.0
-        };
+        const style: HexStyle = MAP_HEX_STYLES.settlement;
 
         // PHASE 1 FIX: Draw method now handles showing (no manual showLayer needed)
         this.mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');

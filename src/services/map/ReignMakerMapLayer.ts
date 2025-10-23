@@ -13,7 +13,8 @@
 import { getKingdomActor } from '../../main.kingdom';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { LayerId, HexStyle, MapLayer } from './types';
-import { DEFAULT_HEX_STYLES, TERRAIN_COLORS, WORKSITE_ICONS } from './types';
+import { DEFAULT_HEX_STYLES, WORKSITE_ICONS } from './types';
+import { TERRITORY_BORDER_COLORS } from '../../view/kingdom/utils/presentation';
 import type { SvelteComponent } from 'svelte';
 import { generateTerritoryOutline } from './TerritoryOutline';
 import { isWaterTerrain } from '../../types/terrain';
@@ -511,8 +512,8 @@ export class ReignMakerMapLayer {
     // Draw outline with single pass - thick bright blue border
     graphics.lineStyle({
       width: 16,
-      color: 0x00D4FF, // Bright electric blue - highly visible
-      alpha: 1.0, // Fully opaque
+      color: TERRITORY_BORDER_COLORS.outline,
+      alpha: TERRITORY_BORDER_COLORS.outlineAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });

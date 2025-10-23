@@ -41,28 +41,9 @@ export interface MapLayer {
 
 /**
  * Default hex styles for common use cases
+ * Re-exported from presentation.ts for backwards compatibility
  */
-export const DEFAULT_HEX_STYLES = {
-  kingdomTerritory: {
-    fillColor: 0x4169E1,    // Royal blue
-    fillAlpha: 0.3,
-    borderWidth: 0          // No border on territory fill
-  },
-  selection: {
-    fillColor: 0xD2691E,    // Chocolate
-    fillAlpha: 0.5,
-    borderColor: 0xD2691E,
-    borderWidth: 2,
-    borderAlpha: 0.9
-  },
-  highlight: {
-    fillColor: 0xFFD700,    // Gold
-    fillAlpha: 0.4,
-    borderColor: 0xFFD700,
-    borderWidth: 3,
-    borderAlpha: 1.0
-  }
-} as const;
+export { MAP_HEX_STYLES as DEFAULT_HEX_STYLES } from '../../view/kingdom/utils/presentation';
 
 /**
  * Worksite icon mappings
@@ -107,25 +88,6 @@ export const SETTLEMENT_ICONS: Record<string, string> = {
 
 /**
  * Terrain type color mappings (visible overlays)
- * Colors are balanced to be clearly visible while allowing map details to show through
+ * Re-exported from presentation.ts for backwards compatibility
  */
-export const TERRAIN_COLORS: Record<string, { color: number; alpha: number }> = {
-  // Natural terrain
-  'plains': { color: 0xFFCC00, alpha: 0.35 },        // Golden yellow/orange (food icon)
-  'forest': { color: 0x228B22, alpha: 0.4 },         // Forest green
-  'hills': { color: 0xA0826D, alpha: 0.35 },         // Tan brown
-  'mountains': { color: 0x9BA5B5, alpha: 0.45 },     // Slate grey (mountain stone)
-  'swamp': { color: 0x4A5D23, alpha: 0.45 },         // Dark olive
-  'marsh': { color: 0x6B8E23, alpha: 0.4 },          // Olive drab
-  'water': { color: 0x1E90FF, alpha: 0.5 },          // Dodger blue (unified for all water bodies)
-  'desert': { color: 0xEDC9AF, alpha: 0.35 },        // Desert sand
-  'tundra': { color: 0xE0E8F0, alpha: 0.35 },        // Pale blue-grey
-  
-  // Special terrain
-  'ruins': { color: 0x8B8B83, alpha: 0.35 },         // Grey stone
-  'cave': { color: 0x2F4F4F, alpha: 0.5 },           // Dark slate grey
-  'wasteland': { color: 0x696969, alpha: 0.4 },      // Dim grey
-  
-  // Default fallback
-  'default': { color: 0xCCCCCC, alpha: 0.25 }        // Light grey
-};
+export { TERRAIN_OVERLAY_COLORS as TERRAIN_COLORS } from '../../view/kingdom/utils/presentation';
