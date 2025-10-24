@@ -1,5 +1,5 @@
 import type { KingdomIncident, EventSkill, EventOutcome } from '../../types/incidents';
-import incidentsData from '../../../dist/incidents.json';
+import incidentsData from '../../data-compiled/incidents.json';
 import { logger } from '../../utils/Logger';
 
 /**

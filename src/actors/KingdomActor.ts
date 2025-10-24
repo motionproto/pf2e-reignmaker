@@ -85,7 +85,12 @@ export interface KingdomData {
     worksite?: { type: string } | null;
     hasCommodityBonus?: boolean;
     hasRoad?: boolean;
-    fortified?: number;
+    fortified?: number;  // Legacy field - may be deprecated in favor of fortification
+    fortification?: {
+      tier: 1 | 2 | 3 | 4;
+      maintenancePaid: boolean;
+      turnBuilt: number;  // Turn number when built/upgraded (no maintenance required on this turn)
+    };
     name?: string;
     kingmakerFeatures?: Array<{ type: string | null; [key: string]: any }>;
     claimedBy?: number | string | null;

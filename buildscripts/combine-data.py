@@ -8,9 +8,9 @@ import json
 from pathlib import Path
 
 def combine_events():
-    """Combine all event JSON files into dist/events.json."""
+    """Combine all event JSON files into src/data-compiled/events.json."""
     events_dir = Path(__file__).parent.parent / "data" / "events"
-    output_file = Path(__file__).parent.parent / "dist" / "events.json"
+    output_file = Path(__file__).parent.parent / "src" / "data-compiled" / "events.json"
     
     all_events = []
     event_files = sorted(events_dir.glob("*.json"))
@@ -45,9 +45,9 @@ def combine_events():
     return all_events
 
 def combine_incidents():
-    """Combine all incident JSON files into dist/incidents.json, organized by severity."""
+    """Combine all incident JSON files into src/data-compiled/incidents.json, organized by severity."""
     incidents_base_dir = Path(__file__).parent.parent / "data" / "incidents"
-    output_file = Path(__file__).parent.parent / "dist" / "incidents.json"
+    output_file = Path(__file__).parent.parent / "src" / "data-compiled" / "incidents.json"
     
     all_incidents = []
     
@@ -102,9 +102,9 @@ def combine_incidents():
     return all_incidents
 
 def combine_factions():
-    """Combine all faction JSON files into dist/factions.json."""
+    """Combine all faction JSON files into src/data-compiled/factions.json."""
     factions_dir = Path(__file__).parent.parent / "data" / "factions"
-    output_file = Path(__file__).parent.parent / "dist" / "factions.json"
+    output_file = Path(__file__).parent.parent / "src" / "data-compiled" / "factions.json"
     
     all_factions = []
     faction_files = sorted(factions_dir.glob("*.json"))
@@ -144,9 +144,9 @@ def combine_factions():
     return all_factions
 
 def combine_player_actions():
-    """Combine all player action JSON files into dist/player-actions.json, organized by category."""
+    """Combine all player action JSON files into src/data-compiled/player-actions.json, organized by category."""
     actions_dir = Path(__file__).parent.parent / "data" / "player-actions"
-    output_file = Path(__file__).parent.parent / "dist" / "player-actions.json"
+    output_file = Path(__file__).parent.parent / "src" / "data-compiled" / "player-actions.json"
     
     all_actions = []
     action_files = sorted(actions_dir.glob("*.json"))
@@ -242,7 +242,7 @@ def main():
     print(f"✅ Incidents: {len(incidents)} files combined")
     print(f"✅ Factions: {len(factions)} files combined")
     print(f"✅ Player Actions: {len(actions)} files combined")
-    print("\nAll monolithic JSON files have been created in dist/")
+    print("\nAll monolithic JSON files have been created in src/data-compiled/")
     
     # Also update structures if the script exists
     structures_script = Path(__file__).parent / "combine-structures.py"

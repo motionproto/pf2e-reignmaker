@@ -4,6 +4,8 @@
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import type { ActionRequirement } from '../../controllers/actions/action-resolver';
+import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
 import { 
   logActionStart, 
@@ -30,6 +32,33 @@ function getRoadSegmentsFromProficiency(proficiencyRank: number): number {
 
 const BuildRoadsAction: CustomActionImplementation = {
   id: 'build-roads',
+  
+  /**
+   * Check if action requirements are met
+   */
+  checkRequirements(kingdomData: KingdomData): ActionRequirement {
+    // Check gold cost
+    const goldCost = 2;
+    if ((kingdomData.resources?.gold || 0) < goldCost) {
+      return {
+        met: false,
+        reason: 'Insufficient gold',
+        requiredResources: new Map([['gold', goldCost]]),
+        missingResources: new Map([['gold', goldCost - (kingdomData.resources?.gold || 0)]])
+      };
+    }
+    
+    // Check if we have claimed hexes to build roads in
+    const claimedHexes = (kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1);
+    if (claimedHexes.length === 0) {
+      return {
+        met: false,
+        reason: 'No claimed territory to build roads in'
+      };
+    }
+    
+    return { met: true };
+  },
   
   /**
    * Custom resolution to calculate road segments based on proficiency

@@ -4,6 +4,8 @@
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import type { ActionRequirement } from '../../controllers/actions/action-resolver';
+import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
 import { 
   logActionStart, 
@@ -31,6 +33,9 @@ function getHexesFromProficiency(proficiencyRank: number): number {
 
 const ClaimHexesAction: CustomActionImplementation = {
   id: 'claim-hexes',
+  
+  // No checkRequirements needed - action has no cost and is always available
+  // The hex selector will enforce adjacency during selection
   
   /**
    * Custom resolution using hex selector service

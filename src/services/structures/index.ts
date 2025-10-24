@@ -7,7 +7,7 @@ import type { Settlement } from '../../models/Settlement';
 import { StructureCondition } from '../../models/Settlement';
 import type { Structure, ResourceCost, StructureFamily, StructureType } from '../../models/Structure';
 import { parseStructureFromJSON, SpecialAbility, StructureCategory } from '../../models/Structure';
-import structuresData from '../../../dist/structures.json';
+import structuresData from '../../data-compiled/structures.json';
 import { logger } from '../../utils/Logger';
 
 // Type for repairable structure information

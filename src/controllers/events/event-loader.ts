@@ -1,7 +1,7 @@
 import type { ActiveModifier } from '../../models/Modifiers';
 import type { EventSkill, EventOutcome, EventModifier, EventEffects, EventTrait } from '../../types/events';
 import { getEventDisplayName } from '../../types/event-helpers';
-import eventsData from '../../../dist/events.json';
+import eventsData from '../../data-compiled/events.json';
 import { logger } from '../../utils/Logger';
 
 

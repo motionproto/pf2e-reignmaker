@@ -526,7 +526,38 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('settlement-icons')
     });
 
-    console.log('[OverlayManager] ✅ Registered 8 default overlays');
+    // Fortifications Overlay - REACTIVE (uses derived store for hexes with fortifications)
+    this.registerOverlay({
+      id: 'fortifications',
+      name: 'Fortifications',
+      icon: 'fa-shield-alt',
+      layerIds: ['fortifications'],
+      store: derived(kingdomData, $data => 
+        $data.hexes.filter((h: any) => h.fortification && h.fortification.tier > 0)
+      ),  // ✅ Reactive subscription
+      render: async (hexes) => {
+        const fortificationData = hexes.map((h: any) => ({ 
+          id: h.id, 
+          tier: h.fortification.tier,
+          maintenancePaid: h.fortification.maintenancePaid
+        }));
+
+        if (fortificationData.length === 0) {
+          console.log('[OverlayManager] No fortifications - clearing layer');
+          this.mapLayer.clearLayer('fortifications');
+          return;
+        }
+
+        console.log(`[OverlayManager] Drawing ${fortificationData.length} fortifications`);
+        await this.mapLayer.drawFortificationIcons(fortificationData);
+      },
+      hide: () => {
+        // Cleanup handled by OverlayManager
+      },
+      isActive: () => this.isOverlayActive('fortifications')
+    });
+
+    console.log('[OverlayManager] ✅ Registered 9 default overlays');
   }
 }
 

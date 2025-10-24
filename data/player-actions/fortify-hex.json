@@ -3,7 +3,72 @@
   "name": "Fortify Hex",
   "category": "expand-borders",
   "brief": "Strengthen defensive positions",
-  "description": "Construct defensive structures and preparations in a hex to improve its resistance against invasion",
+  "description": "Construct or upgrade defensive fortifications in claimed territory to improve resistance against invasion",
+  "tiers": [
+    {
+      "id": "earthworks",
+      "name": "Earthworks",
+      "tier": 1,
+      "cost": {
+        "lumber": 1
+      },
+      "maintenance": 0,
+      "benefits": {
+        "ac": 1,
+        "initiative": 0
+      },
+      "icon": "fortification_earthen.webp",
+      "description": "Basic earthen defensive positions with ditches and berms. Benefits: +1 AC to defending troops"
+    },
+    {
+      "id": "wooden-tower",
+      "name": "Wooden Tower",
+      "tier": 2,
+      "cost": {
+        "lumber": 2
+      },
+      "maintenance": 1,
+      "benefits": {
+        "ac": 1,
+        "initiative": 1
+      },
+      "icon": "fortification_tower_wood.webp",
+      "description": "Wooden watchtower with palisade defenses. Benefits: +1 AC, +1 Initiative to defending troops"
+    },
+    {
+      "id": "stone-tower",
+      "name": "Stone Tower",
+      "tier": 3,
+      "cost": {
+        "lumber": 1,
+        "stone": 2
+      },
+      "maintenance": 1,
+      "benefits": {
+        "ac": 2,
+        "initiative": 1
+      },
+      "icon": "fortification_tower_stone.webp",
+      "description": "Stone tower with reinforced defensive walls. Benefits: +2 AC, +1 Initiative to defending troops"
+    },
+    {
+      "id": "fortress",
+      "name": "Fortress",
+      "tier": 4,
+      "cost": {
+        "lumber": 2,
+        "stone": 4
+      },
+      "maintenance": 2,
+      "benefits": {
+        "ac": 2,
+        "initiative": 2
+      },
+      "icon": "fortification_keep.webp",
+      "description": "Massive fortified keep with multiple defensive layers. Benefits: +2 AC, +2 Initiative to defending troops. Units stationed here require no gold upkeep",
+      "special": "Units stationed here require no gold upkeep"
+    }
+  ],
   "skills": [
     {
       "skill": "crafting",
@@ -28,7 +93,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Fortify, reduce Unrest by 1",
+      "description": "Build/upgrade fortification, reduce Unrest by 1",
       "modifiers": [
         {
           "type": "static",
@@ -39,17 +104,24 @@
       ]
     },
     "success": {
-      "description": "Fortify",
+      "description": "Build/upgrade fortification",
       "modifiers": []
     },
     "failure": {
-      "description": "Fail",
+      "description": "Construction accidents delay progress",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
-      "modifiers": []
+      "description": "Workers injured in construction mishap",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "unrest",
+          "value": 1,
+          "duration": "immediate"
+        }
+      ]
     }
   },
-  "special": "Fortification Benefits: Troops defending in a fortified hex gain +1 armor class and +2 initiative circumstance bonus"
+  "special": "Must be placed in claimed territory. Automatically upgrades existing fortifications by one tier. Unpaid maintenance reduces effectiveness by one tier (minimum Tier 1)."
 }

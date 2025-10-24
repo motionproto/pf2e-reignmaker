@@ -1,5 +1,5 @@
 import type { PlayerAction, PlayerActionJson, SkillOption, ActionEffect } from './action-types';
-import actionsData from '../../../dist/player-actions.json';
+import actionsData from '../../data-compiled/player-actions.json';
 import { logger } from '../../utils/Logger';
 
 /**
@@ -57,8 +57,8 @@ export class ActionLoader {
                         ? new Map(Object.entries(raw.proficiencyScaling))
                         : null,
                     special: raw.special || null,
-                    cost: raw.costs 
-                        ? new Map(Object.entries(raw.costs))
+                    cost: (raw as any).cost 
+                        ? new Map(Object.entries((raw as any).cost))
                         : null,
                     failureCausesUnrest: raw.failureCausesUnrest,
                     requirements: raw.requirements

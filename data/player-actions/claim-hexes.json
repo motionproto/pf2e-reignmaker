@@ -3,7 +3,7 @@
   "name": "Claim Hexes",
   "category": "expand-borders",
   "brief": "Expand your kingdom's territorial control",
-  "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control",
+  "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control. Hexes must be adjacent to controlled territory.",
   "skills": [
     {
       "skill": "survival",

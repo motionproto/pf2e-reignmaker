@@ -86,8 +86,8 @@ export async function createModifierService() {
     /**
      * Get summary of active modifiers
      */
-    getActiveModifiers(): ActiveModifier[] {
-      const { getKingdomActor } = require('../stores/KingdomStore');
+    async getActiveModifiers(): Promise<ActiveModifier[]> {
+      const { getKingdomActor } = await import('../stores/KingdomStore');
       const actor = getKingdomActor();
       if (!actor) return [];
       

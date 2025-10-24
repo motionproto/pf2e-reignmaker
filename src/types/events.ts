@@ -43,14 +43,12 @@ export type EventTrait =
 /**
  * Modifier selector types (what the modifier affects)
  */
-export type ModifierSelector = 
-;
+export type ModifierSelector = string;
 
 /**
  * Event location types
  */
-export type EventLocation = 
-;
+export type EventLocation = string;
 
 /**
  * Event tier types (events use 'event', incidents vary)

@@ -425,8 +425,8 @@ export async function startKingdom(): Promise<void> {
   console.log('🏭 [KingdomStore] Building production cache...');
   await updateKingdom((kingdom) => {
     // Recalculate production from hexes and store it
-    const { calculateProduction } = require('../services/economics/production');
-    const productionResult = calculateProduction(kingdom.hexes || [], []);
+    // calculateProduction is already imported at the top of this file
+    const productionResult = calculateProduction(kingdom.hexes as any || [], []);
     kingdom.worksiteProduction = Object.fromEntries(productionResult.totalProduction);
     kingdom.worksiteProductionByHex = productionResult.byHex.map((entry: any) => [
       entry.hex,

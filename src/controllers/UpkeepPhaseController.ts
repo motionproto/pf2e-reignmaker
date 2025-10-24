@@ -37,9 +37,20 @@ export async function createUpkeepPhaseController() {
         
         // Initialize steps with CORRECT completion state from the start
         // No workarounds needed - steps reflect kingdom state directly
+        
+        // Check if military support is needed (armies OR fortifications requiring maintenance)
+        const hasArmies = (kingdom.armies?.length || 0) > 0;
+        const hexes = kingdom.hexes || [];
+        const currentTurn = kingdom.currentTurn;
+        const hasFortifications = hexes.some(hex => 
+          hex.fortification && 
+          hex.fortification.tier > 0 && 
+          hex.fortification.turnBuilt !== currentTurn  // Skip fortifications built this turn
+        );
+        
         const steps = [
           { name: 'Feed Settlements', completed: 0 },  // Always manual
-          { name: 'Support Military', completed: (kingdom.armies?.length || 0) === 0 ? 1 : 0 },
+          { name: 'Support Military', completed: (!hasArmies && !hasFortifications) ? 1 : 0 },
           { name: 'Build Queue', completed: (kingdom.buildQueue?.length || 0) === 0 ? 1 : 0 }
         ];
         
@@ -194,13 +205,13 @@ export async function createUpkeepPhaseController() {
       }
       
       // Update kingdom state
-      await actor.updateKingdomData((kingdom) => {
+      await actor.updateKingdomData((kingdom: any) => {
         kingdom.resources.food = availableFood;
         kingdom.unrest += totalUnrest;
         
         // Update settlement fed status
         sortedSettlements.forEach((sorted, index) => {
-          const original = kingdom.settlements.find(s => s.name === sorted.name);
+          const original = kingdom.settlements.find((s: any) => s.name === sorted.name);
           if (original) {
             original.wasFedLastTurn = sorted.wasFedLastTurn;
           }
@@ -221,17 +232,14 @@ export async function createUpkeepPhaseController() {
     },
 
     /**
-     * Process military support - Feed armies and pay gold costs
+     * Process military support - Feed armies, pay gold costs, and maintain fortifications
      */
     async processMilitarySupport() {
       const { kingdomData } = await import('../stores/KingdomStore');
       const kingdom = get(kingdomData);
       
       const armyCount = kingdom.armies?.length || 0;
-      if (armyCount === 0) {
-        logger.debug('🛡️ [UpkeepPhaseController] No armies to support');
-        return;
-      }
+      const hexes = kingdom.hexes || [];
       
       const actor = getKingdomActor();
       if (!actor) {
@@ -245,36 +253,104 @@ export async function createUpkeepPhaseController() {
       let armyFoodUnrest = 0;
       let foodAfterArmies = currentFood;
       
-      if (currentFood >= armyFood) {
-        foodAfterArmies = currentFood - armyFood;
-        logger.debug(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
-      } else {
-        armyFoodUnrest = armyFood - currentFood;
-        foodAfterArmies = 0;
-        logger.debug(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
+      if (armyCount > 0) {
+        if (currentFood >= armyFood) {
+          foodAfterArmies = currentFood - armyFood;
+          logger.debug(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
+        } else {
+          armyFoodUnrest = armyFood - currentFood;
+          foodAfterArmies = 0;
+          logger.debug(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
+        }
       }
       
-      // Pay gold support costs
-      const supportCost = armyCount;
+      // Calculate fortification maintenance costs
+      // Skip maintenance for fortifications built/upgraded this turn
+      const fortificationData = await import('../../data/player-actions/fortify-hex.json');
+      const currentTurn = kingdom.currentTurn;
+      let totalFortificationCost = 0;
+      const fortificationDetails: Array<{hexId: string, tier: number, cost: number}> = [];
+      const skippedNewFortifications: string[] = [];
+      
+      for (const hex of hexes) {
+        if (hex.fortification && hex.fortification.tier > 0) {
+          // Skip maintenance if built/upgraded this turn
+          if (hex.fortification.turnBuilt === currentTurn) {
+            skippedNewFortifications.push(hex.id);
+            logger.debug(`🆕 [UpkeepPhaseController] Skipping maintenance for new fortification at ${hex.id} (built this turn)`);
+            continue;
+          }
+          
+          const tierConfig = fortificationData.tiers[hex.fortification.tier - 1];
+          const cost = tierConfig.maintenance || 0;
+          totalFortificationCost += cost;
+          if (cost > 0) {
+            fortificationDetails.push({
+              hexId: hex.id,
+              tier: hex.fortification.tier,
+              cost
+            });
+          }
+        }
+      }
+      
+      // Pay gold support costs (armies + fortifications)
+      const armySupportCost = armyCount;
+      const totalGoldCost = armySupportCost + totalFortificationCost;
       const currentGold = kingdom.resources?.gold || 0;
       let goldUnrest = 0;
+      let availableForFortifications = 0;
       
-      if (currentGold >= supportCost) {
-        await actor.updateKingdomData((kingdom) => {
+      // Prioritize army upkeep first, then fortifications
+      if (currentGold >= totalGoldCost) {
+        // Can afford everything
+        await actor.updateKingdomData((kingdom: any) => {
           kingdom.resources.food = foodAfterArmies;
-          kingdom.resources.gold = currentGold - supportCost;
+          kingdom.resources.gold = currentGold - totalGoldCost;
           kingdom.unrest += armyFoodUnrest;
+          
+          // Mark all fortifications as paid
+          for (const hex of kingdom.hexes) {
+            if (hex.fortification) {
+              hex.fortification.maintenancePaid = true;
+            }
+          }
         });
-        logger.debug(`💰 [UpkeepPhaseController] Paid ${supportCost} gold for military support`);
+        logger.debug(`💰 [UpkeepPhaseController] Paid ${armySupportCost} gold for army support + ${totalFortificationCost} gold for fortifications`);
+      } else if (currentGold >= armySupportCost) {
+        // Can afford armies but not all fortifications
+        availableForFortifications = currentGold - armySupportCost;
+        await actor.updateKingdomData((kingdom: any) => {
+          kingdom.resources.food = foodAfterArmies;
+          kingdom.resources.gold = 0;
+          kingdom.unrest += armyFoodUnrest;
+          
+          // Mark fortifications as unpaid (effectiveness reduced by 1 tier)
+          for (const hex of kingdom.hexes) {
+            if (hex.fortification) {
+              hex.fortification.maintenancePaid = false;
+            }
+          }
+        });
+        logger.debug(`💰 [UpkeepPhaseController] Paid ${armySupportCost} gold for armies`);
+        logger.debug(`⚠️ [UpkeepPhaseController] Fortification maintenance unpaid: effectiveness reduced by 1 tier`);
       } else {
-        // Can't afford support - generate unrest
-        goldUnrest = supportCost - currentGold;
-        await actor.updateKingdomData((kingdom) => {
+        // Can't afford army support - generate unrest
+        goldUnrest = armySupportCost - currentGold;
+        await actor.updateKingdomData((kingdom: any) => {
           kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = 0;
           kingdom.unrest += armyFoodUnrest + goldUnrest;
+          
+          // Mark fortifications as unpaid
+          for (const hex of kingdom.hexes) {
+            if (hex.fortification) {
+              hex.fortification.maintenancePaid = false;
+            }
+          }
         });
         logger.debug(`⚠️ [UpkeepPhaseController] Military gold shortage: ${goldUnrest} unrest generated`);
+        logger.debug(`⚠️ [UpkeepPhaseController] Fortification maintenance unpaid: effectiveness reduced by 1 tier`);
       }
       
       // Summary
@@ -328,7 +404,7 @@ export async function createUpkeepPhaseController() {
           }
           
           // Deduct paid resources from kingdom
-          await actor.updateKingdomData(k => {
+          await actor.updateKingdomData((k: any) => {
             for (const [resource, amount] of Object.entries(result.paid)) {
               k.resources[resource] = Math.max(0, (k.resources[resource] || 0) - amount);
             }
@@ -453,6 +529,28 @@ export async function createUpkeepPhaseController() {
       const settlementFoodShortage = Math.max(0, consumption.settlementFood - currentFood);
       const armyFoodShortage = Math.max(0, consumption.armyFood - foodRemainingForArmies);
       
+      // Calculate fortification maintenance costs (skip fortifications built this turn)
+      const fortificationData = await import('../../data/player-actions/fortify-hex.json');
+      const currentTurn = kingdomData.currentTurn;
+      let totalFortificationCost = 0;
+      let fortificationCount = 0;
+      
+      for (const hex of hexes) {
+        if (hex.fortification && hex.fortification.tier > 0) {
+          // Skip maintenance if built/upgraded this turn
+          if (hex.fortification.turnBuilt === currentTurn) {
+            continue;
+          }
+          
+          const tierConfig = fortificationData.tiers[hex.fortification.tier - 1];
+          const cost = tierConfig.maintenance || 0;
+          if (cost > 0) {
+            totalFortificationCost += cost;
+            fortificationCount++;
+          }
+        }
+      }
+      
       return {
         currentFood,
         foodConsumption: consumption.totalFood,
@@ -469,6 +567,8 @@ export async function createUpkeepPhaseController() {
         unfedUnrest,
         foodStorageCapacity,
         excessFood,
+        fortificationMaintenanceCost: totalFortificationCost,
+        fortificationCount: fortificationCount,
         stepsCompleted: {
           feedSettlements: await isStepCompletedByIndex(UpkeepPhaseSteps.FEED_SETTLEMENTS),
           supportMilitary: await isStepCompletedByIndex(UpkeepPhaseSteps.SUPPORT_MILITARY),

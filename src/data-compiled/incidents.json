@@ -1,0 +1,1940 @@
+[
+    {
+        "id": "bandit-activity",
+        "name": "Bandit Activity",
+        "tier": "minor",
+        "description": "Bandit raids threaten your trade routes and settlements",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "show force"
+            },
+            {
+                "skill": "stealth",
+                "description": "infiltrate bandits"
+            },
+            {
+                "skill": "survival",
+                "description": "track to lair"
+            },
+            {
+                "skill": "occultism",
+                "description": "scrying"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Bandits deterred, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Bandit raids",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Major bandit raids",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "corruption-scandal",
+        "name": "Corruption Scandal",
+        "tier": "minor",
+        "description": "Corruption among your officials is exposed",
+        "skills": [
+            {
+                "skill": "society",
+                "description": "investigation"
+            },
+            {
+                "skill": "deception",
+                "description": "cover-up"
+            },
+            {
+                "skill": "intimidation",
+                "description": "purge corrupt officials"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "manage public relations"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Scandal contained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Lose gold (embezzlement/graft discovered)",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Lose gold and fame (major corruption exposed publicly)",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "crime-wave",
+        "name": "Crime Wave",
+        "tier": "minor",
+        "description": "Criminal activity surges throughout your settlements",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "crack down on criminals"
+            },
+            {
+                "skill": "thievery",
+                "description": "infiltrate gangs"
+            },
+            {
+                "skill": "society",
+                "description": "legal reform"
+            },
+            {
+                "skill": "occultism",
+                "description": "divine the source"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Crime suppressed, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Crime wave hits",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Major crime wave",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "diplomatic-incident",
+        "name": "Diplomatic Incident",
+        "tier": "minor",
+        "description": "A diplomatic misstep strains relations with neighbors",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "smooth over"
+            },
+            {
+                "skill": "society",
+                "description": "formal apology"
+            },
+            {
+                "skill": "deception",
+                "description": "deny involvement"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Relations maintained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "One neighbouring kingdom's attitude worsens",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 1 step (e.g., Friendly \u2192 Indifferent)"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Multiple kingdoms turn against you",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 1 step (e.g., Friendly \u2192 Indifferent)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "emigration-threat",
+        "name": "Emigration Threat",
+        "tier": "minor",
+        "description": "Citizens threaten to leave your kingdom permanently",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "convince to stay"
+            },
+            {
+                "skill": "society",
+                "description": "address concerns"
+            },
+            {
+                "skill": "religion",
+                "description": "appeal to faith"
+            },
+            {
+                "skill": "nature",
+                "description": "improve local conditions"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Population stays, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Citizens abandon ongoing projects",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Mass emigration causes chaos and abandoned projects",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "protests",
+        "name": "Protests",
+        "tier": "minor",
+        "description": "Citizens take to the streets in organized protests",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "address crowd"
+            },
+            {
+                "skill": "intimidation",
+                "description": "disperse crowds"
+            },
+            {
+                "skill": "performance",
+                "description": "distract crowds"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical calming"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Peaceful resolution, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Lose gold (property damage, lost productivity)",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Lose gold and fame",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "rising-tensions",
+        "name": "Rising Tensions",
+        "tier": "minor",
+        "description": "General tensions rise throughout your kingdom",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "calm populace"
+            },
+            {
+                "skill": "religion",
+                "description": "spiritual guidance"
+            },
+            {
+                "skill": "performance",
+                "description": "entertainment"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical displays"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Tensions ease, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Gain unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Gain unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 2,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "work-stoppage",
+        "name": "Work Stoppage",
+        "tier": "minor",
+        "description": "Workers in your kingdom refuse to continue their labor",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate with workers"
+            },
+            {
+                "skill": "intimidation",
+                "description": "force work"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire workers"
+            },
+            {
+                "skill": "medicine",
+                "description": "address health concerns"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Workers return, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Work stoppage halts production",
+                "modifiers": [
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "stone"
+                        ],
+                        "value": 1,
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Widespread work stoppage causes chaos",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "stone"
+                        ],
+                        "value": 2,
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "assassination-attempt",
+        "name": "Assassination Attempt",
+        "tier": "moderate",
+        "description": "An assassin targets one of your kingdom's leaders",
+        "skills": [
+            {
+                "skill": "athletics",
+                "description": "protect target"
+            },
+            {
+                "skill": "medicine",
+                "description": "treat wounds"
+            },
+            {
+                "skill": "stealth",
+                "description": "avoid the assassin"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Assassination prevented, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Leader escapes",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Leader wounded",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 2,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random PC leader. That PC cannot take a Kingdom Action this turn (they are recovering from wounds)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "diplomatic-crisis",
+        "name": "Diplomatic Crisis",
+        "tier": "moderate",
+        "description": "A serious diplomatic crisis threatens relations",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "smooth over"
+            },
+            {
+                "skill": "deception",
+                "description": "deny responsibility"
+            },
+            {
+                "skill": "society",
+                "description": "formal apology"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Relations maintained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "One neighbouring kingdom's attitude worsens",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 1 step (e.g., Friendly \u2192 Indifferent)"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Multiple kingdoms turn against you",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 1 step (e.g., Friendly \u2192 Indifferent)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "disease-outbreak",
+        "name": "Disease Outbreak",
+        "tier": "moderate",
+        "description": "A dangerous disease spreads through your settlements",
+        "skills": [
+            {
+                "skill": "medicine",
+                "description": "treat disease"
+            },
+            {
+                "skill": "nature",
+                "description": "natural remedies"
+            },
+            {
+                "skill": "religion",
+                "description": "divine healing"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Disease contained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Lose food (feeding the sick) and gain unrest",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "food",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Lose food and gain unrest",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "food",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one Medicine or Faith structure. Mark that structure as damaged"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "infrastructure-damage",
+        "name": "Infrastructure Damage",
+        "tier": "moderate",
+        "description": "Critical infrastructure is damaged or sabotaged",
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "emergency repairs"
+            },
+            {
+                "skill": "athletics",
+                "description": "labor mobilization"
+            },
+            {
+                "skill": "society",
+                "description": "organize response"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical restoration"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Damage prevented, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Infrastructure damage impacts your kingdom",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for one random structure in a random settlement. Mark that structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Widespread infrastructure damage causes chaos",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Roll 1d3. Mark that many random structures as damaged (choose or roll for random settlements)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "mass-exodus",
+        "name": "Mass Exodus",
+        "tier": "moderate",
+        "description": "Large numbers of citizens flee your kingdom",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "convince to stay"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire hope"
+            },
+            {
+                "skill": "religion",
+                "description": "spiritual guidance"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Population remains, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Citizens abandon projects and cause social unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Mass exodus damages your kingdom's reputation and stability",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "production-strike",
+        "name": "Production Strike",
+        "tier": "moderate",
+        "description": "Workers strike, halting resource production",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate with workers"
+            },
+            {
+                "skill": "society",
+                "description": "arbitrate"
+            },
+            {
+                "skill": "crafting",
+                "description": "work alongside"
+            },
+            {
+                "skill": "arcana",
+                "description": "automate production"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Strike ends, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Strike causes resource losses",
+                "modifiers": [
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "stone"
+                        ],
+                        "value": "1d4-1",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Prolonged strike devastates production",
+                "modifiers": [
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "stone"
+                        ],
+                        "value": "2d4-1",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "riot",
+        "name": "Riot",
+        "tier": "moderate",
+        "description": "Violent riots break out in your settlements",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "suppress riot"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate with rioters"
+            },
+            {
+                "skill": "athletics",
+                "description": "contain riot"
+            },
+            {
+                "skill": "medicine",
+                "description": "treat injured"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Riot quelled, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Riot damages property and increases unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random structure in a random settlement. Mark that structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Violent riot destroys property and increases unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random structure in a random settlement. Reduce that structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "settlement-crisis",
+        "name": "Settlement Crisis",
+        "tier": "moderate",
+        "description": "One of your settlements faces a major crisis",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "address concerns"
+            },
+            {
+                "skill": "society",
+                "description": "emergency aid"
+            },
+            {
+                "skill": "religion",
+                "description": "provide hope"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Settlement stabilized, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Choose how to handle the settlement crisis",
+                "modifiers": [],
+                "choices": [
+                    {
+                        "label": "Pay for emergency aid - lose {gold} gold",
+                        "modifiers": [
+                            {
+                                "type": "dice",
+                                "resource": "gold",
+                                "formula": "1d4",
+                                "negative": true,
+                                "duration": "immediate"
+                            }
+                        ]
+                    },
+                    {
+                        "label": "Let the settlement suffer - 1 structure damaged",
+                        "modifiers": []
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random settlement. If you chose 'structure damaged', damage 1 random structure in that settlement"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "A settlement collapses under the crisis",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random settlement. That settlement loses one level (minimum level 1)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "tax-revolt",
+        "name": "Tax Revolt",
+        "tier": "moderate",
+        "description": "Citizens revolt against tax collection",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "enforce collection"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate rates"
+            },
+            {
+                "skill": "society",
+                "description": "tax reform"
+            },
+            {
+                "skill": "deception",
+                "description": "creative accounting"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Taxes collected normally",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Lose gold (reduced tax collection)",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Lose gold and gain unrest",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "trade-embargo",
+        "name": "Trade Embargo",
+        "tier": "moderate",
+        "description": "Neighboring kingdoms impose trade restrictions",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate"
+            },
+            {
+                "skill": "society",
+                "description": "find loopholes"
+            },
+            {
+                "skill": "deception",
+                "description": "smuggling routes"
+            },
+            {
+                "skill": "occultism",
+                "description": "divine trade routes"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Trade continues, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Choose one",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "food",
+                            "stone"
+                        ],
+                        "value": "1d4+1",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Lose gold AND resources, gain unrest",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "food",
+                            "stone"
+                        ],
+                        "value": "1d4+1",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "border-raid",
+        "name": "Border Raid",
+        "tier": "major",
+        "description": "Enemy forces raid your border territories",
+        "skills": [
+            {
+                "skill": "athletics",
+                "description": "rapid response"
+            },
+            {
+                "skill": "intimidation",
+                "description": "retaliation"
+            },
+            {
+                "skill": "survival",
+                "description": "tracking"
+            },
+            {
+                "skill": "nature",
+                "description": "use terrain"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Raiders repelled, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Raiders pillage border territories, causing loss of gold and land",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Remove 1 border hex from your kingdom map"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Raiders devastate border regions, causing massive losses",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Roll 1d3 and remove that many border hexes from your kingdom map"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "economic-crash",
+        "name": "Economic Crash",
+        "tier": "major",
+        "description": "A severe economic downturn threatens your kingdom's prosperity",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "stabilize markets"
+            },
+            {
+                "skill": "society",
+                "description": "public confidence"
+            },
+            {
+                "skill": "intimidation",
+                "description": "force compliance"
+            },
+            {
+                "skill": "occultism",
+                "description": "divine intervention"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Economy stabilized, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Economic downturn causes significant losses",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d6",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Mark your highest tier commerce structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Economic collapse devastates your kingdom",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "4d6",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Reduce your highest tier commerce structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "guerrilla-movement",
+        "name": "Guerrilla Movement",
+        "tier": "major",
+        "description": "Armed rebels seize control of kingdom territory",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate with rebels"
+            },
+            {
+                "skill": "intimidation",
+                "description": "crush rebellion"
+            },
+            {
+                "skill": "society",
+                "description": "address grievances"
+            },
+            {
+                "skill": "religion",
+                "description": "appeal to faith"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Rebellion dispersed",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Rebels seize territory in your kingdom",
+                "modifiers": [],
+                "manualEffects": [
+                    "Roll 1d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)"
+                ],
+                "endsEvent": false
+            },
+            "criticalFailure": {
+                "msg": "Rebels establish a stronghold and raise an army against you",
+                "modifiers": [],
+                "manualEffects": [
+                    "Roll 2d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)",
+                    "Rebels raise an army with level = (your kingdom level - 1). Track this army as an enemy force"
+                ],
+                "endsEvent": false
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "international-crisis",
+        "name": "International Crisis",
+        "tier": "major",
+        "description": "Multiple kingdoms turn against you due to internal chaos",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "damage control"
+            },
+            {
+                "skill": "deception",
+                "description": "blame shifting"
+            },
+            {
+                "skill": "society",
+                "description": "formal reparations"
+            },
+            {
+                "skill": "performance",
+                "description": "public relations"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Crisis contained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Diplomatic relations severely damaged",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 2 steps (e.g., Friendly \u2192 Indifferent \u2192 Unfriendly)"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Multiple kingdoms turn against you",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 2 steps (e.g., Friendly \u2192 Indifferent \u2192 Unfriendly)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "international-scandal",
+        "name": "International Scandal",
+        "tier": "major",
+        "description": "A massive scandal ruins your kingdom's reputation",
+        "skills": [
+            {
+                "skill": "performance",
+                "description": "grand gesture"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "public relations"
+            },
+            {
+                "skill": "deception",
+                "description": "propaganda"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Reputation maintained, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Your kingdom's reputation suffers, losing fame and gold",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Devastating scandal cripples your kingdom's standing",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Your kingdom's fame is reduced to 0 for the remainder of this turn (regardless of current value)",
+                    "Your kingdom cannot gain fame for the remainder of this turn"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "mass-desertion-threat",
+        "name": "Mass Desertion Threat",
+        "tier": "major",
+        "description": "Your armies threaten mass desertion",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "rally troops"
+            },
+            {
+                "skill": "intimidation",
+                "description": "threaten deserters"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire loyalty"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Troops remain loyal, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Military morale crisis damages your forces",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose 1 army. That army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",
+                    "Mark your highest tier military structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Widespread desertion devastates your military",
+                "modifiers": [],
+                "manualEffects": [
+                    "Choose 2 armies. Each army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",
+                    "Reduce your highest tier military structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "noble-conspiracy",
+        "name": "Noble Conspiracy",
+        "tier": "major",
+        "description": "Nobles plot to overthrow the kingdom's leadership",
+        "skills": [
+            {
+                "skill": "stealth",
+                "description": "uncover plot"
+            },
+            {
+                "skill": "intimidation",
+                "description": "arrests"
+            },
+            {
+                "skill": "society",
+                "description": "political maneuvering"
+            },
+            {
+                "skill": "occultism",
+                "description": "divine truth"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Conspiracy exposed and dealt with, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "The conspiracy damages your kingdom's stability and reputation",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "The conspiracy strikes a devastating blow to your kingdom",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "fame",
+                        "value": -1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random PC leader. That PC loses their kingdom action this turn (they are dealing with the conspiracy)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "prison-breaks",
+        "name": "Prison Breaks",
+        "tier": "major",
+        "description": "Mass prison breaks release dangerous criminals",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "lockdown prisons"
+            },
+            {
+                "skill": "athletics",
+                "description": "pursuit"
+            },
+            {
+                "skill": "society",
+                "description": "negotiation"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Break prevented, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Mass prison break releases many criminals",
+                "modifiers": [],
+                "manualEffects": [
+                    "Convert half of your imprisoned unrest to regular unrest (round down)",
+                    "Mark your highest tier justice structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Complete prison break releases all criminals and destroys your justice system",
+                "modifiers": [],
+                "manualEffects": [
+                    "Convert ALL of your imprisoned unrest to regular unrest",
+                    "Reduce your highest tier justice structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "religious-schism",
+        "name": "Religious Schism",
+        "tier": "major",
+        "description": "Religious divisions tear your kingdom apart",
+        "skills": [
+            {
+                "skill": "religion",
+                "description": "theological debate"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "mediate factions"
+            },
+            {
+                "skill": "occultism",
+                "description": "divine intervention"
+            },
+            {
+                "skill": "society",
+                "description": "secular compromise"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Schism averted, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Religious divisions weaken your kingdom's faith institutions",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d6",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Mark your highest tier religious structure as damaged"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "The church splits entirely, destroying religious unity",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "4d6",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Reduce your highest tier religious structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "secession-crisis",
+        "name": "Secession Crisis",
+        "tier": "major",
+        "description": "A settlement declares independence from your kingdom",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate autonomy"
+            },
+            {
+                "skill": "intimidation",
+                "description": "suppress movement"
+            },
+            {
+                "skill": "society",
+                "description": "address grievances"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire loyalty"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Independence movement quelled, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "A settlement revolts against your kingdom",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one settlement. That settlement loses one level (minimum level 1)",
+                    "Reduce the highest tier structure's tier in that settlement by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "A settlement successfully declares independence from your kingdom",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 2,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one settlement. That settlement and all adjacent hexes secede from your kingdom (remove them from your map and mark as independent city-state)",
+                    "Any armies located in the seceded hexes defect to the new city-state (remove them from your control)"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "settlement-collapse",
+        "name": "Settlement Collapse",
+        "tier": "major",
+        "description": "A major settlement faces total collapse",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "address concerns"
+            },
+            {
+                "skill": "society",
+                "description": "emergency aid"
+            },
+            {
+                "skill": "religion",
+                "description": "provide hope"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Settlement stabilized, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Choose how to handle the settlement crisis",
+                "modifiers": [],
+                "choices": [
+                    {
+                        "label": "Pay for emergency aid - lose {gold} gold",
+                        "modifiers": [
+                            {
+                                "type": "dice",
+                                "resource": "gold",
+                                "formula": "2d4",
+                                "negative": true,
+                                "duration": "immediate"
+                            }
+                        ]
+                    },
+                    {
+                        "label": "Let the settlement suffer - 2 structures damaged",
+                        "modifiers": []
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random settlement. If you chose 'structures damaged', damage 2 random structures in that settlement"
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "A settlement collapses under the crisis",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Choose or roll for one random settlement. That settlement loses one level (minimum level 1)",
+                    "Reduce 1 random structure's tier in that settlement by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    },
+    {
+        "id": "trade-war",
+        "name": "Trade War",
+        "tier": "major",
+        "description": "A trade war devastates your economy",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate"
+            },
+            {
+                "skill": "society",
+                "description": "find loopholes"
+            },
+            {
+                "skill": "deception",
+                "description": "smuggling routes"
+            },
+            {
+                "skill": "arcana",
+                "description": "teleportation network"
+            }
+        ],
+        "effects": {
+            "success": {
+                "msg": "Trade continues, no effect",
+                "modifiers": [],
+                "endsEvent": true
+            },
+            "failure": {
+                "msg": "Choose how to absorb the economic shock",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "2d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "food",
+                            "stone"
+                        ],
+                        "value": "2d4+1",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            },
+            "criticalFailure": {
+                "msg": "Complete economic isolation devastates your kingdom",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "3d4",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "choice",
+                        "resources": [
+                            "lumber",
+                            "ore",
+                            "food",
+                            "stone"
+                        ],
+                        "value": "2d4+1",
+                        "negative": true,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "endsEvent": true
+            }
+        },
+        "traits": [
+            "dangerous"
+        ]
+    }
+]

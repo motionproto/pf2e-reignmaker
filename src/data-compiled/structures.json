@@ -1,0 +1,1784 @@
+{
+    "families": [
+        {
+            "type": "skill",
+            "family": "Civic & Governance",
+            "description": "Tier progression for Civic & Governance",
+            "tiers": [
+                {
+                    "id": "town-hall",
+                    "name": "Town Hall",
+                    "description": "Basic civic administrative building",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "city-hall",
+                    "name": "City Hall",
+                    "description": "Advanced government center for diplomacy",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "diplomatic-quarter",
+                    "name": "Diplomatic Quarter",
+                    "description": "Prestigious district for foreign relations",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "deception",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "grand-forum",
+                    "name": "Grand Forum",
+                    "description": "Magnificent hall for political discourse",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "deception",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Society",
+                "Diplomacy",
+                "Deception"
+            ],
+            "category": "civic-governance"
+        },
+        {
+            "type": "skill",
+            "family": "Crafting & Trade",
+            "description": "Tier progression for Crafting & Trade",
+            "tiers": [
+                {
+                    "id": "workshop",
+                    "name": "Workshop",
+                    "description": "Basic crafting workspace for artisans",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "crafting",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "artisans-hall",
+                    "name": "Artisan's Hall",
+                    "description": "Professional guild hall for skilled crafters",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "crafting",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "blacksmiths-guild",
+                    "name": "Blacksmiths' Guild",
+                    "description": "Specialized metalworking guild complex",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2,
+                        "ore": 4
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "crafting",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "masterworks-foundry",
+                    "name": "Masterworks Foundry",
+                    "description": "Elite crafting facility for legendary works",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 4,
+                        "ore": 8
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "crafting",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "society",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Crafting",
+                "Lore",
+                "Society"
+            ],
+            "category": "crafting-trade"
+        },
+        {
+            "type": "skill",
+            "family": "Crime & Intrigue",
+            "description": "Tier progression for Crime & Intrigue",
+            "tiers": [
+                {
+                    "id": "rats-warren",
+                    "name": "Rat's Warren",
+                    "description": "Hidden underground criminal hideout",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "thievery",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "smugglers-den",
+                    "name": "Smuggler's Den",
+                    "description": "Secret facility for illicit trade operations",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "thievery",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "deception",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "thieves-guild",
+                    "name": "Thieves' Guild",
+                    "description": "Organized crime network headquarters",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 3,
+                        "ore": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "thievery",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "deception",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "stealth",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "shadow-network",
+                    "name": "Shadow Network",
+                    "description": "Sophisticated underground intelligence network",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "thievery",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "deception",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "stealth",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Thievery",
+                "Deception",
+                "Stealth"
+            ],
+            "category": "crime-intrigue"
+        },
+        {
+            "type": "skill",
+            "family": "Exploration & Wilderness",
+            "description": "Tier progression for Exploration & Wilderness",
+            "tiers": [
+                {
+                    "id": "hunters-lodge",
+                    "name": "Hunter's Lodge",
+                    "description": "Basic wilderness tracking and hunting post",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "survival",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "rangers-outpost",
+                    "name": "Ranger's Outpost",
+                    "description": "Frontier station for wilderness scouts",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "survival",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "nature",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "druids-grove",
+                    "name": "Druid's Grove",
+                    "description": "Sacred natural sanctuary for nature wardens",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 2,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "survival",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "nature",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "stealth",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "wildskeepers-enclave",
+                    "name": "Wildskeeper's Enclave",
+                    "description": "Elite wilderness mastery compound",
+                    "cost": {
+                        "lumber": 6,
+                        "stone": 6,
+                        "ore": 4
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "survival",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "nature",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "stealth",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Survival",
+                "Nature",
+                "Stealth"
+            ],
+            "category": "exploration-wilderness"
+        },
+        {
+            "type": "skill",
+            "family": "Faith & Nature",
+            "description": "Tier progression for Faith & Nature",
+            "tiers": [
+                {
+                    "id": "shrine",
+                    "name": "Shrine",
+                    "description": "Small sacred place of worship",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "religion",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "temple",
+                    "name": "Temple",
+                    "description": "Dedicated house of worship with healing services",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "religion",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "temple-district",
+                    "name": "Temple District",
+                    "description": "Sacred quarter with multiple shrines and gardens",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "religion",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "nature",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "grand-basilica",
+                    "name": "Grand Basilica",
+                    "description": "Magnificent cathedral of divine power",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "religion",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "nature",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Religion",
+                "Medicine",
+                "Nature"
+            ],
+            "category": "faith-nature"
+        },
+        {
+            "type": "skill",
+            "family": "Knowledge & Magic",
+            "description": "Tier progression for Knowledge & Magic",
+            "tiers": [
+                {
+                    "id": "scholars-table",
+                    "name": "Scholar's Table",
+                    "description": "Basic study area for researchers and scribes",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "library",
+                    "name": "Library",
+                    "description": "Repository of books and arcane knowledge",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "arcana",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "university",
+                    "name": "University",
+                    "description": "Prestigious center of higher learning",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "arcana",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "occultism",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "arcane-academy",
+                    "name": "Arcane Academy",
+                    "description": "Elite magical research institution",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "arcana",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "occultism",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Lore",
+                "Arcana",
+                "Occultism"
+            ],
+            "category": "knowledge-magic"
+        },
+        {
+            "type": "skill",
+            "family": "Medicine & Healing",
+            "description": "Tier progression for Medicine & Healing",
+            "tiers": [
+                {
+                    "id": "healers-hut",
+                    "name": "Healer's Hut",
+                    "description": "Simple medical clinic for basic treatments",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "infirmary",
+                    "name": "Infirmary",
+                    "description": "Dedicated medical facility with trained staff",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "hospital",
+                    "name": "Hospital",
+                    "description": "Advanced medical center with magical healing",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "arcana",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "medical-college",
+                    "name": "Medical College",
+                    "description": "Premier institution for medical research and training",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "medicine",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "arcana",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Medicine",
+                "Lore",
+                "Arcana"
+            ],
+            "category": "medicine-healing"
+        },
+        {
+            "type": "skill",
+            "family": "Military & Training",
+            "description": "Tier progression for Military & Training",
+            "tiers": [
+                {
+                    "id": "gymnasium",
+                    "name": "Gymnasium",
+                    "description": "Basic physical training facility",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "athletics",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "training-yard",
+                    "name": "Training Yard",
+                    "description": "Combat training grounds for soldiers",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "athletics",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "acrobatics",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "warriors-hall",
+                    "name": "Warrior's Hall",
+                    "description": "Prestigious barracks for elite warriors",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 3,
+                        "ore": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "athletics",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "acrobatics",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "intimidation",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "military-academy",
+                    "name": "Military Academy",
+                    "description": "Premier institution for tactical and physical training",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "athletics",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "acrobatics",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "intimidation",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Athletics",
+                "Acrobatics",
+                "Intimidation"
+            ],
+            "category": "military-training"
+        },
+        {
+            "type": "skill",
+            "family": "Performance & Culture",
+            "description": "Tier progression for Performance & Culture",
+            "tiers": [
+                {
+                    "id": "buskers-alley",
+                    "name": "Busker's Alley",
+                    "description": "Street venue for musicians and entertainers",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "performance",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "famous-tavern",
+                    "name": "Famous Tavern",
+                    "description": "Popular gathering place for performances and socializing",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "performance",
+                            "value": 1
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "id": "performance-hall",
+                    "name": "Performance Hall",
+                    "description": "Dedicated theater for cultural performances",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 2,
+                        "ore": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "performance",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 2
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
+                    "id": "grand-amphitheater",
+                    "name": "Grand Amphitheater",
+                    "description": "Spectacular venue for legendary performances",
+                    "cost": {
+                        "lumber": 6,
+                        "stone": 6,
+                        "ore": 4
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "performance",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "diplomacy",
+                            "value": 3
+                        },
+                        {
+                            "type": "settlementSkillBonus",
+                            "skill": "lore",
+                            "value": 3
+                        }
+                    ]
+                }
+            ],
+            "skills": [
+                "Performance",
+                "Diplomacy",
+                "Lore"
+            ],
+            "category": "performance-culture"
+        },
+        {
+            "type": "support",
+            "family": "Commerce",
+            "description": "Trade and resource conversion",
+            "tiers": [
+                {
+                    "id": "market-square",
+                    "name": "Market Square",
+                    "description": "Basic marketplace for trade and commerce",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "tradeRatio",
+                            "value": {
+                                "sell": "2:1"
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Enables selling surplus resources at 2:1 ratio (resources:gold)",
+                        "Purchase non-magical items up to settlement level"
+                    ]
+                },
+                {
+                    "id": "bazaar",
+                    "name": "Bazaar",
+                    "description": "Expansive marketplace with magical goods",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "tradeRatio",
+                            "value": {
+                                "sell": "2:1"
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Enables selling surplus resources at 2:1 ratio (resources:gold)",
+                        "Purchase non-magical items up to settlement level",
+                        "Purchase scrolls and consumables up to settlement level"
+                    ]
+                },
+                {
+                    "id": "merchant-guild",
+                    "name": "Merchant Guild",
+                    "description": "Organized merchant consortium with improved rates",
+                    "cost": {
+                        "lumber": 3,
+                        "stone": 3,
+                        "ore": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "tradeRatio",
+                            "value": {
+                                "sell": "3:2"
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Enables selling surplus resources at 3:2 ratio (resources:gold)",
+                        "Purchase magical items up to settlement level"
+                    ]
+                },
+                {
+                    "id": "imperial-bank",
+                    "name": "Imperial Bank",
+                    "description": "Grand financial institution with optimal rates",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 4,
+                        "ore": 8
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 2,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "tradeRatio",
+                            "value": {
+                                "sell": "1:1"
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Enables selling surplus resources at 1:1 ratio (resources:gold)",
+                        "Purchase magical items up to settlement level"
+                    ]
+                }
+            ],
+            "category": "commerce"
+        },
+        {
+            "type": "support",
+            "family": "Culture",
+            "description": "Morale and unrest management",
+            "tiers": [
+                {
+                    "id": "open-stage",
+                    "name": "Open Stage",
+                    "description": "Simple performance venue for entertainers",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "unrestReductionBonus",
+                            "value": 1
+                        }
+                    ],
+                    "manualEffects": [
+                        "PCs in this settlement gain +1 to checks made to reduce Unrest"
+                    ]
+                },
+                {
+                    "id": "amphitheater",
+                    "name": "Amphitheater",
+                    "description": "Large open-air theater for public performances",
+                    "cost": {
+                        "lumber": 3,
+                        "stone": 1
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "unrestReductionBonus",
+                            "value": 2
+                        }
+                    ],
+                    "manualEffects": [
+                        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+                    ]
+                },
+                {
+                    "id": "playhouse",
+                    "name": "Playhouse",
+                    "description": "Dedicated theater building for elaborate productions",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 3,
+                        "ore": 1
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "unrestReductionBonus",
+                            "value": 2
+                        }
+                    ],
+                    "manualEffects": [
+                        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+                    ]
+                },
+                {
+                    "id": "auditorium",
+                    "name": "Auditorium",
+                    "description": "Grand performance hall that uplifts the entire kingdom",
+                    "cost": {
+                        "lumber": 6,
+                        "stone": 6,
+                        "ore": 4
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "fame",
+                            "value": 1,
+                            "duration": "permanent"
+                        },
+                        {
+                            "type": "static",
+                            "resource": "unrest",
+                            "value": -1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "unrestReductionBonus",
+                            "value": 2
+                        }
+                    ],
+                    "manualEffects": [
+                        "At the start of each Kingdom Turn, gain +1 Fame and reduce Unrest by 1",
+                        "PCs in this settlement gain +2 to checks made to reduce Unrest"
+                    ]
+                }
+            ],
+            "category": "culture"
+        },
+        {
+            "type": "support",
+            "family": "Diplomacy",
+            "description": "International relations and alliances",
+            "tiers": [
+                {
+                    "id": "envoys-office",
+                    "name": "Envoy's Office",
+                    "description": "Basic diplomatic office for foreign relations",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "diplomaticCapacity",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "establishDiplomaticRelations"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "embassy",
+                    "name": "Embassy",
+                    "description": "Formal embassy for establishing stronger foreign ties",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "diplomaticCapacity",
+                            "value": 2,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "establishDiplomaticRelations"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "grand-embassy",
+                    "name": "Grand Embassy",
+                    "description": "Prestigious embassy that enhances international reputation",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "diplomaticCapacity",
+                            "value": 3,
+                            "duration": "permanent"
+                        },
+                        {
+                            "type": "static",
+                            "resource": "fame",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "establishDiplomaticRelations"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "diplomatic-quarter-support",
+                    "name": "Diplomatic Quarter",
+                    "description": "Entire district dedicated to international diplomacy",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "diplomaticCapacity",
+                            "value": 4,
+                            "duration": "permanent"
+                        },
+                        {
+                            "type": "static",
+                            "resource": "fame",
+                            "value": 1,
+                            "duration": "permanent"
+                        },
+                        {
+                            "type": "static",
+                            "resource": "unrest",
+                            "value": -1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "establishDiplomaticRelations"
+                            ]
+                        }
+                    ],
+                    "manualEffects": [
+                        "At the start of each Kingdom Turn, reduce Unrest by 1"
+                    ]
+                }
+            ],
+            "category": "diplomacy"
+        },
+        {
+            "type": "support",
+            "family": "Food Storage",
+            "description": "Preserve agricultural surplus",
+            "tiers": [
+                {
+                    "id": "granary",
+                    "name": "Granary",
+                    "description": "Basic grain storage facility",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "foodCapacity",
+                            "value": 4,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "storehouses",
+                    "name": "Storehouses",
+                    "description": "Multiple storage buildings for food preservation",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "foodCapacity",
+                            "value": 8,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "warehouses",
+                    "name": "Warehouses",
+                    "description": "Large-scale storage facilities with climate control",
+                    "cost": {
+                        "lumber": 3,
+                        "stone": 3,
+                        "ore": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "foodCapacity",
+                            "value": 16,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "strategic-reserves",
+                    "name": "Strategic Reserves",
+                    "description": "Massive storage complex with advanced preservation",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "foodCapacity",
+                            "value": 36,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "negateFoodSpoilage",
+                            "value": true
+                        }
+                    ],
+                    "manualEffects": [
+                        "Once per Kingdom Turn, roll flat check DC 15; on success, negate a spoilage/loss event affecting Food"
+                    ]
+                }
+            ],
+            "category": "food-storage"
+        },
+        {
+            "type": "support",
+            "family": "Fortifications",
+            "description": "Defensive walls and battlements",
+            "tiers": [
+                {
+                    "id": "wooden-palisade",
+                    "name": "Wooden Palisade",
+                    "description": "Basic wooden defensive barrier",
+                    "cost": {
+                        "lumber": 2
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "defenderBonus",
+                            "value": {
+                                "ac": 1
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Defending armies in this settlement gain +1 AC"
+                    ]
+                },
+                {
+                    "id": "stone-walls",
+                    "name": "Stone Walls",
+                    "description": "Solid stone defensive walls",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "defenderBonus",
+                            "value": {
+                                "ac": 1,
+                                "level": 1
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Defending armies in this settlement gain +1 AC and +1 effective level"
+                    ]
+                },
+                {
+                    "id": "fortified-walls",
+                    "name": "Fortified Walls",
+                    "description": "Heavily reinforced defensive fortifications",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 4,
+                        "ore": 3
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "defenderBonus",
+                            "value": {
+                                "ac": 1,
+                                "level": 2
+                            }
+                        }
+                    ],
+                    "manualEffects": [
+                        "Defending armies in this settlement gain +1 AC and +2 effective level"
+                    ]
+                },
+                {
+                    "id": "grand-battlements",
+                    "name": "Grand Battlements",
+                    "description": "Massive defensive structures with advanced defensive positions",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 8,
+                        "ore": 6
+                    },
+                    "gameEffects": [
+                        {
+                            "type": "ruleMod",
+                            "rule": "defenderBonus",
+                            "value": {
+                                "ac": 2,
+                                "level": 3
+                            }
+                        },
+                        {
+                            "type": "ruleMod",
+                            "rule": "defenderRecovery",
+                            "value": true
+                        }
+                    ],
+                    "manualEffects": [
+                        "Defending armies in this settlement gain +2 AC and +3 effective level",
+                        "Defenders located in this settlement recover each turn as long as the city has food"
+                    ]
+                }
+            ],
+            "category": "fortifications"
+        },
+        {
+            "type": "support",
+            "family": "Justice",
+            "description": "Law enforcement and prisoner management",
+            "tiers": [
+                {
+                    "id": "stocks",
+                    "name": "Stocks",
+                    "description": "Basic detention facility for troublemakers",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "imprisonedUnrestCapacity",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "executePrisoners"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "jail",
+                    "name": "Jail",
+                    "description": "Secure holding facility for criminals",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "imprisonedUnrestCapacity",
+                            "value": 2,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "executePrisoners"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "prison",
+                    "name": "Prison",
+                    "description": "Large detention complex with rehabilitation options",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "imprisonedUnrestCapacity",
+                            "value": 4,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "executePrisoners",
+                                "pardonPrisoners"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "id": "donjon",
+                    "name": "Donjon",
+                    "description": "Fortress-like prison with advanced security",
+                    "cost": {
+                        "lumber": 4,
+                        "stone": 6,
+                        "ore": 6
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "imprisonedUnrestCapacity",
+                            "value": 8,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "executePrisoners",
+                                "pardonPrisoners"
+                            ]
+                        },
+                        {
+                            "type": "ruleMod",
+                            "rule": "convertUnrestPerTurn",
+                            "value": 1
+                        }
+                    ],
+                    "manualEffects": [
+                        "Once per turn, automatically converts 1 regular Unrest to imprisoned Unrest"
+                    ]
+                }
+            ],
+            "category": "justice"
+        },
+        {
+            "type": "support",
+            "family": "Logistics",
+            "description": "Military housing and support",
+            "tiers": [
+                {
+                    "id": "barracks",
+                    "name": "Barracks",
+                    "description": "Basic military housing for troops",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "armyCapacity",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "garrison",
+                    "name": "Garrison",
+                    "description": "Fortified military quarters for larger forces",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "armyCapacity",
+                            "value": 2,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "fortress",
+                    "name": "Fortress",
+                    "description": "Heavily defended military installation",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 4,
+                        "ore": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "armyCapacity",
+                            "value": 3,
+                            "duration": "permanent"
+                        }
+                    ]
+                },
+                {
+                    "id": "citadel",
+                    "name": "Citadel",
+                    "description": "Imposing fortress that projects military might",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 8,
+                        "ore": 6
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "armyCapacity",
+                            "value": 4,
+                            "duration": "permanent"
+                        },
+                        {
+                            "type": "static",
+                            "resource": "unrest",
+                            "value": -1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "manualEffects": [
+                        "At the start of each Kingdom Turn, reduce Unrest by 1"
+                    ]
+                }
+            ],
+            "category": "logistics"
+        },
+        {
+            "type": "support",
+            "family": "Revenue",
+            "description": "Tax collection and treasury",
+            "tiers": [
+                {
+                    "id": "tax-office",
+                    "name": "Tax Office",
+                    "description": "Basic tax collection office",
+                    "cost": {
+                        "stone": 2
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 1,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "manualEffects": [
+                        "Only one Revenue structure may exist in the kingdom at a time"
+                    ]
+                },
+                {
+                    "id": "counting-house",
+                    "name": "Counting House",
+                    "description": "Organized financial institution for tax collection",
+                    "cost": {
+                        "lumber": 1,
+                        "stone": 3
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 2,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "personalIncome"
+                            ]
+                        }
+                    ],
+                    "manualEffects": [
+                        "Only one Revenue structure may exist in the kingdom at a time"
+                    ]
+                },
+                {
+                    "id": "treasury",
+                    "name": "Treasury",
+                    "description": "Comprehensive treasury for managing kingdom finances",
+                    "cost": {
+                        "lumber": 2,
+                        "stone": 5,
+                        "ore": 1
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 4,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "personalIncome"
+                            ]
+                        }
+                    ],
+                    "manualEffects": [
+                        "Only one Revenue structure may exist in the kingdom at a time",
+                        "Personal Income uses Tier 3 income level"
+                    ]
+                },
+                {
+                    "id": "exchequer",
+                    "name": "Exchequer",
+                    "description": "Grand financial institution managing kingdom wealth",
+                    "cost": {
+                        "lumber": 3,
+                        "stone": 9,
+                        "ore": 4
+                    },
+                    "modifiers": [
+                        {
+                            "type": "static",
+                            "resource": "gold",
+                            "value": 8,
+                            "duration": "permanent"
+                        }
+                    ],
+                    "gameEffects": [
+                        {
+                            "type": "unlock",
+                            "actions": [
+                                "personalIncome"
+                            ]
+                        }
+                    ],
+                    "manualEffects": [
+                        "Only one Revenue structure may exist in the kingdom at a time",
+                        "Personal Income uses Tier 4 income level"
+                    ]
+                }
+            ],
+            "category": "revenue"
+        }
+    ]
+}

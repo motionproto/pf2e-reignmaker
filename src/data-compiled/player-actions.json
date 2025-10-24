@@ -1,0 +1,1823 @@
+[
+    {
+        "id": "create-worksite",
+        "name": "Create Worksite",
+        "category": "borders",
+        "brief": "Establish farms, mines, quarries, or lumber camps",
+        "description": "Establish resource extraction operations to harness the natural wealth of your territories",
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "build infrastructure"
+            },
+            {
+                "skill": "nature",
+                "description": "identify resources"
+            },
+            {
+                "skill": "survival",
+                "description": "frontier operations"
+            },
+            {
+                "skill": "athletics",
+                "description": "manual labor"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical extraction"
+            },
+            {
+                "skill": "religion",
+                "description": "blessed endeavors"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Immediately gain 1 Resource of the appropriate type, the Worksite is established and produces next turn",
+                "modifiers": []
+            },
+            "success": {
+                "description": "The Worksite is established and produces next turn",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No effect",
+                "modifiers": []
+            }
+        },
+        "special": "Choose a controlled hex. Establish a valid Worksite (Farm, Quarry, Mine, or Lumbermill)"
+    },
+    {
+        "id": "collect-stipend",
+        "name": "Collect Stipend",
+        "category": "economic-resources",
+        "brief": "Extract personal income (requires Counting House)",
+        "description": "Draw personal funds from the kingdom's treasury as compensation for your service",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "demand payment"
+            },
+            {
+                "skill": "deception",
+                "description": "creative accounting"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "formal request"
+            },
+            {
+                "skill": "society",
+                "description": "proper procedures"
+            },
+            {
+                "skill": "performance",
+                "description": "justify worth"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "impressive service"
+            },
+            {
+                "skill": "thievery",
+                "description": "skim the treasury"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Gain double the listed amount",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Gain the listed amount",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "unrest",
+                        "formula": "1d4",
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true,
+        "requirements": [
+            "Counting House (T2) or higher Taxation structure"
+        ],
+        "special": "The PC gains personal Gold based on the settlement's level and the highest active Taxation tier in the kingdom"
+    },
+    {
+        "id": "harvest-resources",
+        "name": "Harvest Resources",
+        "category": "economic-resources",
+        "brief": "Harvest materials from controlled hexes",
+        "description": "Harvest materials from your territories through direct extraction from the land",
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "natural harvesting"
+            },
+            {
+                "skill": "survival",
+                "description": "efficient extraction"
+            },
+            {
+                "skill": "crafting",
+                "description": "process materials"
+            },
+            {
+                "skill": "athletics",
+                "description": "physical labor"
+            },
+            {
+                "skill": "occultism",
+                "description": "mystical gathering"
+            },
+            {
+                "skill": "medicine",
+                "description": "herb collection"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Gain 1 resource from the hex + identify ideal location (+2 untyped bonus to Create Worksite in this hex)",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Gain 1 resource from the hex",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "The hex is depleted; it cannot be harvested again next turn",
+                "modifiers": []
+            }
+        },
+        "special": "May harvest from any controlled hex. Each hex can only be harvested once per turn. Resource type depends on terrain."
+    },
+    {
+        "id": "purchase-resources",
+        "name": "Purchase Resources",
+        "category": "economic-resources",
+        "brief": "Negotiate exchange rate then buy resources",
+        "description": "Use the kingdom's treasury to acquire needed materials from trade partners. Roll to determine the exchange rate, then purchase any amount at that rate.",
+        "skills": [
+            {
+                "skill": "society",
+                "description": "find suppliers"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "negotiate deals"
+            },
+            {
+                "skill": "intimidation",
+                "description": "demand better prices"
+            },
+            {
+                "skill": "deception",
+                "description": "misleading negotiations"
+            },
+            {
+                "skill": "mercantile-lore",
+                "description": "market expertise"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Establish 1:1 exchange rate (pay 1 gold per resource)",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Establish 2:1 exchange rate (pay 2 gold per resource)",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No trade available this turn",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Negotiations fail; lose 1d4 gold",
+                "modifiers": []
+            }
+        },
+        "special": "Choose a single resource type, then purchase any amount at the determined rate."
+    },
+    {
+        "id": "sell-surplus",
+        "name": "Sell Surplus",
+        "category": "economic-resources",
+        "brief": "Trade 2 resources for gold",
+        "description": "Convert excess resources into gold through trade with merchants and neighboring kingdoms",
+        "skills": [
+            {
+                "skill": "society",
+                "description": "market knowledge"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "trade negotiations"
+            },
+            {
+                "skill": "deception",
+                "description": "inflate value"
+            },
+            {
+                "skill": "performance",
+                "description": "showcase goods"
+            },
+            {
+                "skill": "thievery",
+                "description": "black market"
+            },
+            {
+                "skill": "occultism",
+                "description": "mystical trade"
+            },
+            {
+                "skill": "mercantile-lore",
+                "description": "trade expertise"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Trade 2 Resources \u2192 2 Gold",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Trade 2 Resources \u2192 1 Gold",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No effect",
+                "modifiers": []
+            }
+        },
+        "special": "Trade a single resource type for gold"
+    },
+    {
+        "id": "build-roads",
+        "name": "Build Roads",
+        "category": "expand-borders",
+        "brief": "Connect your territory with infrastructure",
+        "description": "Construct pathways between settlements to improve trade, travel, and military movement",
+        "cost": {
+            "gold": 2
+        },
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "engineering expertise"
+            },
+            {
+                "skill": "survival",
+                "description": "pathfinding routes"
+            },
+            {
+                "skill": "athletics",
+                "description": "manual labor"
+            },
+            {
+                "skill": "nature",
+                "description": "work with terrain"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Build road segments based on your skill proficiency",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Build 1 road segment",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Work crews are lost",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "claim-hexes",
+        "name": "Claim Hexes",
+        "category": "expand-borders",
+        "brief": "Expand your kingdom's territorial control",
+        "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control",
+        "skills": [
+            {
+                "skill": "survival",
+                "description": "wilderness expertise"
+            },
+            {
+                "skill": "exploration-lore",
+                "description": "surveying knowledge"
+            },
+            {
+                "skill": "society",
+                "description": "administrative control"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "military expansion"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Claim hexes based on your skill proficiency",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Claim 1 hex",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No effect",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "special": "Can only claim hexes adjacent to existing kingdom territory"
+    },
+    {
+        "id": "fortify-hex",
+        "name": "Fortify Hex",
+        "category": "expand-borders",
+        "brief": "Strengthen defensive positions",
+        "description": "Construct or upgrade defensive fortifications in claimed territory to improve resistance against invasion",
+        "tiers": [
+            {
+                "id": "earthworks",
+                "name": "Earthworks",
+                "tier": 1,
+                "cost": {
+                    "lumber": 1
+                },
+                "maintenance": 0,
+                "benefits": {
+                    "ac": 1,
+                    "initiative": 0
+                },
+                "icon": "fortification_earthen.webp",
+                "description": "Basic earthen defensive positions with ditches and berms"
+            },
+            {
+                "id": "wooden-tower",
+                "name": "Wooden Tower",
+                "tier": 2,
+                "cost": {
+                    "lumber": 2
+                },
+                "maintenance": 1,
+                "benefits": {
+                    "ac": 1,
+                    "initiative": 1
+                },
+                "icon": "fortification_tower_wood.webp",
+                "description": "Wooden watchtower with palisade defenses"
+            },
+            {
+                "id": "stone-tower",
+                "name": "Stone Tower",
+                "tier": 3,
+                "cost": {
+                    "lumber": 1,
+                    "stone": 2
+                },
+                "maintenance": 1,
+                "benefits": {
+                    "ac": 2,
+                    "initiative": 1
+                },
+                "icon": "fortification_tower_stone.webp",
+                "description": "Stone tower with reinforced defensive walls"
+            },
+            {
+                "id": "fortress",
+                "name": "Fortress",
+                "tier": 4,
+                "cost": {
+                    "lumber": 2,
+                    "stone": 4
+                },
+                "maintenance": 2,
+                "benefits": {
+                    "ac": 2,
+                    "initiative": 2
+                },
+                "icon": "fortification_keep.webp",
+                "description": "Massive fortified keep with multiple defensive layers",
+                "special": "Units stationed here require no gold upkeep"
+            }
+        ],
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "build fortifications"
+            },
+            {
+                "skill": "athletics",
+                "description": "manual construction"
+            },
+            {
+                "skill": "intimidation",
+                "description": "defensive displays"
+            },
+            {
+                "skill": "thievery",
+                "description": "trap placement"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "strategic defenses"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Build/upgrade fortification, reduce Unrest by 1",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Build/upgrade fortification",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "Construction accidents delay progress",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Workers injured in construction mishap",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "special": "Must be placed in claimed territory. Automatically upgrades existing fortifications by one tier. Unpaid maintenance reduces effectiveness by one tier (minimum Tier 1)."
+    },
+    {
+        "id": "send-scouts",
+        "name": "Send Scouts",
+        "category": "expand-borders",
+        "brief": "Learn about unexplored hexes",
+        "description": "Dispatch explorers to gather intelligence about neighboring territories and potential threats",
+        "cost": {
+            "gold": 1
+        },
+        "skills": [
+            {
+                "skill": "stealth",
+                "description": "covert reconnaissance"
+            },
+            {
+                "skill": "survival",
+                "description": "wilderness expertise"
+            },
+            {
+                "skill": "nature",
+                "description": "read the land"
+            },
+            {
+                "skill": "society",
+                "description": "gather local information"
+            },
+            {
+                "skill": "athletics",
+                "description": "rapid exploration"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "navigate obstacles"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Learn about 2 hexes. Reveal the chosen hexes on the map.",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Learn about 1 hex. Reveal the chosen hex on the map.",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No report",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Scouts lost",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "dimplomatic-mission",
+        "name": "Diplomatic Mission",
+        "category": "foreign-affairs",
+        "brief": "Improve relations with a faction",
+        "description": "Send envoys to improve your kingdom's standing with neighboring powers and influential organizations",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "formal negotiations"
+            },
+            {
+                "skill": "society",
+                "description": "cultural exchange"
+            },
+            {
+                "skill": "performance",
+                "description": "diplomatic ceremonies"
+            },
+            {
+                "skill": "deception",
+                "description": "strategic positioning"
+            },
+            {
+                "skill": "occultism",
+                "description": "mystical bonds"
+            },
+            {
+                "skill": "religion",
+                "description": "sacred alliances"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Your diplomats achieved exceptional results! {Faction} improves their attitude toward your kingdom.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -2,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "{Faction} improves their attitude toward your kingdom.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -4,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "Your diplomatic mission yielded no results, but relations remain stable.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -4,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "Your diplomats offended {Faction}! Their attitude worsens.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -4,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "hire-adventurers",
+        "name": "Hire Adventurers",
+        "disabled": true,
+        "disabledReason": "In Development",
+        "category": "foreign-affairs",
+        "brief": "Pay gold to resolve events (2 Gold cost)",
+        "description": "Contract independent heroes and mercenaries to handle dangerous tasks or resolve kingdom events",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "negotiate contracts"
+            },
+            {
+                "skill": "society",
+                "description": "use connections"
+            },
+            {
+                "skill": "deception",
+                "description": "exaggerate rewards"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire heroes"
+            },
+            {
+                "skill": "thievery",
+                "description": "recruit rogues"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "The adventurers resolve one ongoing Event entirely",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Roll to resolve an Event with a +2 circumstance bonus",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "The adventurers cause trouble. Gain +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "The adventurers vanish or turn rogue. Gain +2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 2,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true,
+        "costs": {
+            "gold": 2
+        },
+        "special": "Limit: This action may only be attempted once per Kingdom Turn"
+    },
+    {
+        "id": "infiltration",
+        "name": "Infiltration",
+        "disabled": true,
+        "disabledReason": "In Development",
+        "category": "foreign-affairs",
+        "brief": "Gather intelligence through espionage",
+        "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats",
+        "skills": [
+            {
+                "skill": "deception",
+                "description": "false identities"
+            },
+            {
+                "skill": "stealth",
+                "description": "covert operations"
+            },
+            {
+                "skill": "thievery",
+                "description": "steal secrets"
+            },
+            {
+                "skill": "society",
+                "description": "social infiltration"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical espionage"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "daring infiltration"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Valuable intel",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Broad intel",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Spies are captured",
+                "modifiers": []
+            }
+        }
+    },
+    {
+        "id": "request-economic-aid",
+        "name": "Request Economic Aid",
+        "disabled": true,
+        "disabledReason": "In Development",
+        "category": "foreign-affairs",
+        "brief": "Ask allies for resources or gold",
+        "description": "Appeal to allied nations for material support in times of need",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "formal request"
+            },
+            {
+                "skill": "society",
+                "description": "leverage connections"
+            },
+            {
+                "skill": "performance",
+                "description": "emotional appeal"
+            },
+            {
+                "skill": "thievery",
+                "description": "creative accounting"
+            },
+            {
+                "skill": "medicine",
+                "description": "humanitarian aid"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Gain 3 Resources of your choice OR 3 Gold",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4+1",
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Gain 2 Resources of your choice OR 2 Gold",
+                "modifiers": [
+                    {
+                        "type": "dice",
+                        "resource": "gold",
+                        "formula": "1d4",
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Ally refuses",
+                "modifiers": []
+            }
+        },
+        "requirements": [
+            "Diplomatic relations"
+        ]
+    },
+    {
+        "id": "request-military-aid",
+        "name": "Request Military Aid",
+        "disabled": true,
+        "disabledReason": "In Development",
+        "category": "foreign-affairs",
+        "brief": "Call for allied troops in battle",
+        "description": "Call upon allies to provide troops or military support during conflicts",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "alliance obligations"
+            },
+            {
+                "skill": "intimidation",
+                "description": "pressure tactics"
+            },
+            {
+                "skill": "society",
+                "description": "mutual defense"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical pacts"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "strategic necessity"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Gain 2 allied troops or a powerful special detachment for 1 battle",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Gain 1 allied troop for 1 battle",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Ally is offended",
+                "modifiers": []
+            }
+        },
+        "requirements": [
+            "Diplomatic relations"
+        ]
+    },
+    {
+        "id": "recover-army",
+        "name": "Recover Army",
+        "category": "military",
+        "brief": "Heal and restore damaged units",
+        "description": "Tend to wounded troops, restore morale, and replenish ranks after battle losses",
+        "skills": [
+            {
+                "skill": "medicine",
+                "description": "heal the wounded"
+            },
+            {
+                "skill": "performance",
+                "description": "boost morale"
+            },
+            {
+                "skill": "religion",
+                "description": "spiritual restoration"
+            },
+            {
+                "skill": "nature",
+                "description": "natural remedies"
+            },
+            {
+                "skill": "crafting",
+                "description": "repair equipment"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "veteran experience"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Troop recovers completely",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Troop recovers 1 segment",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No recovery",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No recovery",
+                "modifiers": []
+            }
+        }
+    },
+    {
+        "id": "deploy-army",
+        "name": "Deploy Army",
+        "category": "military-operations",
+        "brief": "Move troops to strategic positions",
+        "description": "Mobilize and maneuver your military forces across the kingdom's territory using various navigation methods",
+        "skills": [
+            {
+                "skill": "nature",
+                "description": "natural pathways"
+            },
+            {
+                "skill": "survival",
+                "description": "wilderness navigation"
+            },
+            {
+                "skill": "athletics",
+                "description": "forced march"
+            },
+            {
+                "skill": "stealth",
+                "description": "covert movement"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "military tactics"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Move, claim hex after battle",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Move",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "Move but -2 initiative, and troop is fatigued",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Your troop is lost they arrive at a Random nearby hex (1d6 for direction, 1-3 for offset); troop has -2 initiative, is fatigued and enfeebled 1; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true
+    },
+    {
+        "id": "disband-army",
+        "name": "Disband Army",
+        "category": "military-operations",
+        "brief": "Decommission troops and return soldiers home",
+        "description": "Release military units from service, returning soldiers to civilian life",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "stern dismissal"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "honorable discharge"
+            },
+            {
+                "skill": "society",
+                "description": "reintegration programs"
+            },
+            {
+                "skill": "performance",
+                "description": "farewell ceremony"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "military protocol"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "People welcome them home with honours!, -2 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -2,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Army disbands, -1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "Army disbands",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Army disbands, +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true
+    },
+    {
+        "id": "outfit-army",
+        "name": "Outfit Army",
+        "category": "military-operations",
+        "brief": "Equip troops with armor, weapons, runes, or equipment",
+        "description": "Equip your troops with superior arms, armor, and supplies to enhance their battlefield effectiveness",
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "forge equipment"
+            },
+            {
+                "skill": "society",
+                "description": "requisition supplies"
+            },
+            {
+                "skill": "intimidation",
+                "description": "commandeer resources"
+            },
+            {
+                "skill": "thievery",
+                "description": "acquire through subterfuge"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "military procurement"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Outfit troop",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No gear",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No gear",
+                "modifiers": []
+            }
+        },
+        "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"
+    },
+    {
+        "id": "recruit-unit",
+        "name": "Recruit Unit",
+        "category": "military-operations",
+        "brief": "Raise new troops for your armies",
+        "description": "Rally citizens to arms, drawing from the population to form new military units through inspiration, coercion, or demonstration of prowess",
+        "skills": [
+            {
+                "skill": "diplomacy",
+                "description": "inspire patriotism"
+            },
+            {
+                "skill": "intimidation",
+                "description": "conscription"
+            },
+            {
+                "skill": "society",
+                "description": "civic duty"
+            },
+            {
+                "skill": "performance",
+                "description": "recruitment rallies"
+            },
+            {
+                "skill": "athletics",
+                "description": "demonstrations of prowess"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ],
+                "gameCommands": [
+                    {
+                        "type": "recruitArmy",
+                        "level": "kingdom-level",
+                        "description": "Create new army unit at party level"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Recruit a troop equal to the party level",
+                "modifiers": [],
+                "gameCommands": [
+                    {
+                        "type": "recruitArmy",
+                        "level": "kingdom-level",
+                        "description": "Create new army unit at party level"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "No Recruits",
+                "modifiers": [],
+                "gameCommands": []
+            },
+            "criticalFailure": {
+                "description": "No Recruit; +1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ],
+                "gameCommands": []
+            }
+        },
+        "failureCausesUnrest": true
+    },
+    {
+        "id": "train-army",
+        "name": "Train Army",
+        "category": "military-operations",
+        "brief": "Improve unit levels up to party level",
+        "description": "Drill your troops in tactics and discipline to improve their combat effectiveness through various training methods",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "harsh discipline"
+            },
+            {
+                "skill": "athletics",
+                "description": "physical conditioning"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "agility training"
+            },
+            {
+                "skill": "survival",
+                "description": "endurance exercises"
+            },
+            {
+                "skill": "warfare-lore",
+                "description": "tactical doctrine"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Troop is promoted up to party level",
+                "modifiers": []
+            },
+            "success": {
+                "description": "+1 level (max party level)",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No change",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "No change",
+                "modifiers": []
+            }
+        }
+    },
+    {
+        "id": "arrest-dissidents",
+        "name": "Arrest Dissidents",
+        "category": "uphold-stability",
+        "brief": "Convert current unrest to imprisoned unrest",
+        "description": "Round up troublemakers and malcontents, converting unrest into imprisoned unrest that can be dealt with through the justice system",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "show of force"
+            },
+            {
+                "skill": "society",
+                "description": "legal procedures"
+            },
+            {
+                "skill": "stealth",
+                "description": "covert operations"
+            },
+            {
+                "skill": "deception",
+                "description": "infiltration tactics"
+            },
+            {
+                "skill": "athletics",
+                "description": "physical pursuit"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Convert up to 8 Unrest to imprisoned Unrest",
+                "modifiers": [],
+                "customResolution": true
+            },
+            "success": {
+                "description": "Convert up to 4 Unrest to imprisoned Unrest",
+                "modifiers": [],
+                "customResolution": true
+            },
+            "failure": {
+                "description": "No effect",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 0,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "Botched arrests cause riots; gain 1 Unrest",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true,
+        "requirements": [
+            "Justice structure with capacity"
+        ]
+    },
+    {
+        "id": "deal-with-unrest",
+        "name": "Deal with Unrest",
+        "category": "uphold-stability",
+        "brief": "Directly reduce unrest by 1-3 based on success",
+        "description": "Address grievances and calm tensions through various approaches: entertainment, religious ceremonies, shows of force, diplomatic engagement, scholarly discourse, or magical displays",
+        "skills": [
+            {
+                "skill": "performance",
+                "description": "entertainment and festivities"
+            },
+            {
+                "skill": "religion",
+                "description": "religious ceremonies"
+            },
+            {
+                "skill": "intimidation",
+                "description": "shows of force"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "diplomatic engagement"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical persuasion"
+            },
+            {
+                "skill": "medicine",
+                "description": "public health initiatives"
+            },
+            {
+                "skill": "occultism",
+                "description": "mystical demonstrations"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "impressive physical feats"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Widespread Support",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -3,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "The People Listen",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -2,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "Can we just get along?",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "No one listens.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 0,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "execute-or-pardon-prisoners",
+        "name": "Execute or Pardon Prisoners",
+        "category": "uphold-stability",
+        "brief": "Deal with imprisoned unrest through justice",
+        "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice",
+        "skills": [
+            {
+                "skill": "intimidation",
+                "description": "harsh justice (execute)"
+            },
+            {
+                "skill": "society",
+                "description": "legal proceedings (execute)"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "clemency (pardon)"
+            },
+            {
+                "skill": "religion",
+                "description": "divine forgiveness (pardon)"
+            },
+            {
+                "skill": "performance",
+                "description": "public ceremony (pardon)"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Remove 1d4 imprisoned Unrest from the settlement",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "Remove none",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "failureCausesUnrest": true,
+        "requirements": [
+            "Justice structure with imprisoned unrest"
+        ]
+    },
+    {
+        "id": "build-structure",
+        "name": "Build Structure",
+        "category": "urban-planning",
+        "brief": "Add markets, temples, barracks, and other structures",
+        "description": "Construct new buildings and infrastructure within a settlement to enhance its capabilities",
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "construction expertise"
+            },
+            {
+                "skill": "society",
+                "description": "organize workforce"
+            },
+            {
+                "skill": "athletics",
+                "description": "physical labor"
+            },
+            {
+                "skill": "acrobatics",
+                "description": "specialized construction"
+            },
+            {
+                "skill": "stealth",
+                "description": "discrete building"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Build a {structure} for half cost",
+                "modifiers": []
+            },
+            "success": {
+                "description": "Construction begins on a {structure}.",
+                "modifiers": []
+            },
+            "failure": {
+                "description": "No progress on building a {structure}",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Accidents and disputes plauge the {structure} project.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "establish-settlement",
+        "name": "Establish Settlement",
+        "category": "urban-planning",
+        "brief": "Found a new village",
+        "description": "Found a new community where settlers can establish homes and begin building infrastructure",
+        "cost": {
+            "gold": 2,
+            "lumber": 2,
+            "food": 2
+        },
+        "skills": [
+            {
+                "skill": "society",
+                "description": "organized settlement"
+            },
+            {
+                "skill": "survival",
+                "description": "frontier establishment"
+            },
+            {
+                "skill": "diplomacy",
+                "description": "attract settlers"
+            },
+            {
+                "skill": "religion",
+                "description": "blessed founding"
+            },
+            {
+                "skill": "medicine",
+                "description": "healthy community planning"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Village established and gain 1 free Tier 1 Structure of your choice",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "food",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "lumber",
+                        "value": -2,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Place the new village on the hex map",
+                    "Choose and add any Tier 1 structure to the new settlement"
+                ],
+                "gameEffects": [
+                    {
+                        "type": "selectStructure",
+                        "tierFilter": 1,
+                        "cost": "free"
+                    }
+                ]
+            },
+            "success": {
+                "description": "Village established",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "food",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "lumber",
+                        "value": -2,
+                        "duration": "immediate"
+                    }
+                ],
+                "manualEffects": [
+                    "Place the new village on the hex map"
+                ]
+            },
+            "failure": {
+                "description": "Scouts, surveyors, and initial supplies are wasted",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "food",
+                        "value": -1,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "lumber",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "Complete disaster - resources wasted, public embarrassment, confidence shaken",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "food",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "lumber",
+                        "value": -2,
+                        "duration": "immediate"
+                    },
+                    {
+                        "type": "static",
+                        "resource": "unrest",
+                        "value": 1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "special": "A new settlement begins as a level 1 Village unless special circumstances apply. Must be founded in a claimed hex with no other settlement within 4 hexes."
+    },
+    {
+        "id": "repair-structure",
+        "name": "Repair Structure",
+        "category": "urban-planning",
+        "brief": "Fix damaged buildings to restore functionality",
+        "description": "Repair damaged structures within a settlement to restore its capabilities. You must select a structure first, then perform the skill check. Only the lowest tier damaged structure per category can be repaired.",
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "construction expertise"
+            },
+            {
+                "skill": "society",
+                "description": "organize workforce"
+            },
+            {
+                "skill": "athletics",
+                "description": "physical labor"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "Citizens volunteer their time and materials. The {structure} is repaired for free!",
+                "modifiers": [],
+                "gameEffects": [
+                    {
+                        "type": "repairStructure",
+                        "cost": "free"
+                    }
+                ]
+            },
+            "success": {
+                "description": "you repair the {structure}. Choose to pay either tier \u00d7 d4 gold OR half the original build cost.",
+                "modifiers": [],
+                "gameEffects": [
+                    {
+                        "type": "repairStructure",
+                        "cost": "choice"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "Despite your efforts, the {structure} remains damaged.",
+                "modifiers": []
+            },
+            "criticalFailure": {
+                "description": "Time and money are wasted. The {structure} remains damaged.",
+                "modifiers": [
+                    {
+                        "type": "static",
+                        "resource": "gold",
+                        "value": -1,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        }
+    },
+    {
+        "id": "upgrade-settlement",
+        "name": "Upgrade Settlement",
+        "category": "urban-planning",
+        "brief": "Increase settlement level by 1",
+        "description": "Invest in infrastructure and development to advance your settlement's capabilities and unlock access to more advanced structures",
+        "cost": {
+            "gold": "settlement's new level"
+        },
+        "skills": [
+            {
+                "skill": "crafting",
+                "description": "infrastructure expansion"
+            },
+            {
+                "skill": "society",
+                "description": "urban planning"
+            },
+            {
+                "skill": "performance",
+                "description": "inspire growth"
+            },
+            {
+                "skill": "arcana",
+                "description": "magical enhancement"
+            },
+            {
+                "skill": "medicine",
+                "description": "public health improvements"
+            }
+        ],
+        "effects": {
+            "criticalSuccess": {
+                "description": "{Settlement} level increases by 1 at half the cost (rounded up)",
+                "modifiers": [
+                    {
+                        "type": "computed",
+                        "resource": "gold",
+                        "formula": "halfUpgradeCost",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "success": {
+                "description": "{Settlement} level increases by 1",
+                "modifiers": [
+                    {
+                        "type": "computed",
+                        "resource": "gold",
+                        "formula": "fullUpgradeCost",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "failure": {
+                "description": "Construction setbacks and delays waste resources and achieve nothing in {Settlement}.",
+                "modifiers": [
+                    {
+                        "type": "computed",
+                        "resource": "gold",
+                        "formula": "fullUpgradeCost",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ]
+            },
+            "criticalFailure": {
+                "description": "Accidents and incompetance waste the full investment in {Settlement} achieving nothing.",
+                "modifiers": [
+                    {
+                        "type": "computed",
+                        "resource": "gold",
+                        "formula": "fullUpgradeCost",
+                        "negative": true,
+                        "duration": "immediate"
+                    }
+                ]
+            }
+        },
+        "requirements": [
+            "At least one settlement available",
+            "Settlement not at maximum level (20)",
+            "Settlement meets structure requirements for next tier",
+            "Sufficient gold for upgrade cost"
+        ],
+        "special": "Cost equals the settlement's NEW level in gold."
+    }
+]

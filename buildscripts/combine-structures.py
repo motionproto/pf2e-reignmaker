@@ -26,11 +26,11 @@ def combine_structures():
     # Paths
     structures_dir = Path(__file__).parent.parent / "data" / "structures"  # data/structures/
     project_root = Path(__file__).parent.parent  # project root
-    dist_dir = project_root / "dist"
-    output_file = dist_dir / "structures.json"
+    data_compiled_dir = project_root / "src" / "data-compiled"
+    output_file = data_compiled_dir / "structures.json"
     
-    # Ensure dist directory exists
-    dist_dir.mkdir(exist_ok=True)
+    # Ensure src/data-compiled directory exists
+    data_compiled_dir.mkdir(parents=True, exist_ok=True)
     
     # Collect all structure families
     families = []

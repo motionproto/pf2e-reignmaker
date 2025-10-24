@@ -673,6 +673,31 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Draw fortification icons on hexes
+   * Places fortification icon sprites at hex centers based on tier
+   * Shows red border for unpaid maintenance
+   */
+  async drawFortificationIcons(fortificationData: Array<{ id: string; tier: number; maintenancePaid: boolean }>): Promise<void> {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'fortifications';
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 48); // Between settlement icons (50) and worksites (45)
+    const canvas = (globalThis as any).canvas;
+    
+    // Import and delegate to renderer
+    const { renderFortificationIcons } = await import('./renderers/FortificationRenderer');
+    await renderFortificationIcons(layer, fortificationData, canvas);
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
+
+  /**
    * Show interactive hover (hex highlight + optional road preview)
    * Used during hex selection to show which hex is being hovered over
    */

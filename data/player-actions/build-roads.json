@@ -3,7 +3,7 @@
   "name": "Build Roads",
   "category": "expand-borders",
   "brief": "Connect your territory with infrastructure",
-  "description": "Construct pathways between settlements to improve trade, travel, and military movement",
+  "description": "Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.",
   "cost": {
     "gold": 2
   },
