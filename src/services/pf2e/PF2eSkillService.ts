@@ -356,6 +356,7 @@ export class PF2eSkillService {
           label: `${labelPrefix}: ${checkName}`,
           modifiers: pf2eModifiers,
           rollTwice: useKeepHigher ? 'keep-higher' : false,
+          skipDialog: false,
           extraRollOptions: [
             `${checkType}:kingdom`,
             `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`
@@ -371,6 +372,7 @@ export class PF2eSkillService {
             label: `${labelPrefix}: ${checkName} (${skillName})`,
             modifiers: pf2eModifiers,
             rollTwice: useKeepHigher ? 'keep-higher' : false,
+            skipDialog: false,
             extraRollOptions: [
               `${checkType}:kingdom`,
               `${checkType}:kingdom:${checkName.toLowerCase().replace(/\s+/g, '-')}`

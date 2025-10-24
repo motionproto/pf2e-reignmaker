@@ -10,21 +10,37 @@
 
 import { ReignMakerMapLayer } from './ReignMakerMapLayer';
 import type { LayerId, HexStyle } from './types';
-import { get } from 'svelte/store';
-import { kingdomData } from '../../stores/KingdomStore';
+import { get, derived, writable, type Readable, type Unsubscriber, type Writable } from 'svelte/store';
+import { 
+  kingdomData, 
+  claimedHexes, 
+  claimedSettlements,
+  claimedHexesWithWorksites 
+} from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
 import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
 
 /**
  * Overlay definition interface
  * Each overlay type implements this interface
+ * 
+ * Supports two patterns:
+ * 1. Reactive (preferred): Provide `store` and `render` - automatically redraws when store changes
+ * 2. Legacy: Provide `show` - called manually each time overlay is shown
  */
 export interface MapOverlay {
   id: string;
   name: string;
   icon: string;
   layerIds: LayerId[]; // Which layers this overlay manages
-  show: () => Promise<void>;
+  
+  // Reactive pattern (preferred)
+  store?: Readable<any>;  // Store to subscribe to for automatic updates
+  render?: (data: any) => void | Promise<void>;  // How to render when data changes
+  
+  // Legacy pattern (backwards compatibility)
+  show?: () => Promise<void>;
+  
   hide: () => void;
   isActive: () => boolean;
 }
@@ -36,11 +52,23 @@ export class OverlayManager {
   private static instance: OverlayManager | null = null;
   private overlays: Map<string, MapOverlay> = new Map();
   private activeOverlays: Set<string> = new Set();
+  private subscriptions: Map<string, Unsubscriber> = new Map();  // Store subscriptions
   private mapLayer: ReignMakerMapLayer;
   private readonly STORAGE_KEY = 'reignmaker-overlay-states';
+  
+  // Reactive store for active overlay IDs - components can subscribe to this
+  private activeOverlaysStore: Writable<Set<string>> = writable(new Set());
 
   private constructor() {
     this.mapLayer = ReignMakerMapLayer.getInstance();
+  }
+  
+  /**
+   * Get reactive store for active overlays
+   * Components can subscribe to this for automatic UI updates
+   */
+  getActiveOverlaysStore(): Readable<Set<string>> {
+    return this.activeOverlaysStore;
   }
 
   /**
@@ -79,6 +107,9 @@ export class OverlayManager {
 
   /**
    * Show an overlay (with automatic cleanup)
+   * Supports both reactive (store + render) and legacy (show) patterns
+   * 
+   * IDEMPOTENT: Safe to call multiple times - returns early if already active
    */
   async showOverlay(id: string): Promise<void> {
     const overlay = this.overlays.get(id);
@@ -87,15 +118,51 @@ export class OverlayManager {
       return;
     }
 
+    // ✅ IDEMPOTENT: Early return if already active (prevent double subscription/render)
+    if (this.activeOverlays.has(id)) {
+      console.log(`[OverlayManager] 🔄 Overlay ${id} already active, skipping duplicate showOverlay() call`);
+      return;
+    }
+
     try {
-      // PHASE 1 FIX: Don't clear here - let draw methods handle it
-      // Draw methods now validate, clear, draw, and show in one consistent operation
-      
-      // Show the overlay (draw methods handle clearing)
-      await overlay.show();
-      
-      // Mark as active
+      // Mark as active FIRST (before subscription fires)
+      // This ensures isOverlayActive() returns true when subscription callback fires
       this.activeOverlays.add(id);
+      
+      // Reactive pattern: Subscribe to store for automatic updates
+      if (overlay.store && overlay.render) {
+        // Cleanup old subscription if exists
+        this.subscriptions.get(id)?.();
+        
+        console.log(`[OverlayManager] 🔄 Setting up reactive subscription for: ${id}`);
+        
+        // Subscribe to store - automatically redraws when data changes
+        const unsubscribe = overlay.store.subscribe(async ($data) => {
+          // Only render if overlay is still active
+          if (this.isOverlayActive(id)) {
+            console.log(`[OverlayManager] 🎨 Reactive redraw triggered for: ${id}`);
+            try {
+              await overlay.render!($data);
+            } catch (error) {
+              console.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
+            }
+          }
+        });
+        
+        this.subscriptions.set(id, unsubscribe);
+      }
+      // Legacy pattern: Call show() method
+      else if (overlay.show) {
+        await overlay.show();
+      }
+      else {
+        console.warn(`[OverlayManager] Overlay ${id} has neither reactive nor legacy show method`);
+        // Remove from active since we couldn't show it
+        this.activeOverlays.delete(id);
+        return;
+      }
+      
+      // Save state after successful activation
       this.saveState();
       
       console.log(`[OverlayManager] ✅ Showed overlay: ${id}`);
@@ -119,6 +186,14 @@ export class OverlayManager {
     }
 
     try {
+      // Cleanup subscription if exists
+      const unsubscribe = this.subscriptions.get(id);
+      if (unsubscribe) {
+        unsubscribe();
+        this.subscriptions.delete(id);
+        console.log(`[OverlayManager] 🔌 Unsubscribed from: ${id}`);
+      }
+      
       // Call overlay's hide method
       overlay.hide();
       
@@ -170,10 +245,14 @@ export class OverlayManager {
   clearAll(): void {
     console.log('[OverlayManager] Clearing all overlays...');
     
-    // Hide all active overlays
+    // Hide all active overlays (this will also clean up subscriptions)
     this.activeOverlays.forEach(id => {
       this.hideOverlay(id);
     });
+    
+    // Extra safety: Clean up any lingering subscriptions
+    this.subscriptions.forEach(unsub => unsub());
+    this.subscriptions.clear();
     
     // Clear all map layers
     this.mapLayer.clearAllLayers();
@@ -186,13 +265,17 @@ export class OverlayManager {
   }
 
   /**
-   * Save overlay states to localStorage
+   * Save overlay states to localStorage and update reactive store
    */
   saveState(): void {
     const state = {
       activeOverlays: Array.from(this.activeOverlays)
     };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+    
+    // Update reactive store so subscribers (like toolbar) get notified
+    this.activeOverlaysStore.set(new Set(this.activeOverlays));
+    
     console.log('[OverlayManager] Saved state:', state);
   }
 
@@ -224,29 +307,25 @@ export class OverlayManager {
    * Register default overlay types
    */
   private registerDefaultOverlays(): void {
-    // Terrain Overlay
+    // Terrain Overlay - REACTIVE (uses hexesWithTerrain store)
     this.registerOverlay({
       id: 'terrain',
       name: 'Terrain',
       icon: 'fa-mountain',
       layerIds: ['terrain-overlay'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.hexes) {
-          ui?.notifications?.warn('No kingdom data available');
-          throw new Error('No kingdom data');
-        }
-
-        const hexData = kingdom.hexes
-          .filter((h: any) => h.terrain)
-          .map((h: any) => ({ id: h.id, terrain: h.terrain }));
+      store: derived(kingdomData, $data => 
+        $data.hexes.filter((h: any) => h.terrain)
+      ),  // ✅ Reactive subscription
+      render: (hexes) => {
+        const hexData = hexes.map((h: any) => ({ id: h.id, terrain: h.terrain }));
 
         if (hexData.length === 0) {
-          ui?.notifications?.warn('No hexes with terrain data found');
-          throw new Error('No terrain data');
+          console.log('[OverlayManager] No terrain data - clearing layer');
+          this.mapLayer.clearLayer('terrain-overlay');
+          return;
         }
 
-        console.log('[OverlayManager] Drawing terrain overlay for', hexData.length, 'hexes');
+        console.log(`[OverlayManager] Drawing terrain overlay for ${hexData.length} hexes`);
         this.mapLayer.drawTerrainOverlay(hexData);
       },
       hide: () => {
@@ -255,31 +334,24 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('terrain')
     });
 
-    // Territory Overlay
+    // Territory Overlay - REACTIVE (uses claimedHexes store)
     this.registerOverlay({
       id: 'territories',
       name: 'Territory',
       icon: 'fa-flag',
       layerIds: ['kingdom-territory'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.hexes) {
-          ui?.notifications?.warn('No kingdom data available');
-          throw new Error('No kingdom data');
-        }
-
-        const hexIds = kingdom.hexes
-          .filter((h: any) => h.claimedBy === 1)
-          .map((h: any) => h.id);
-
+      store: claimedHexes,  // ✅ Reactive subscription
+      render: (hexes) => {
+        const hexIds = hexes.map((h: any) => h.id);
+        
         if (hexIds.length === 0) {
-          ui?.notifications?.warn('No claimed territory to display');
-          throw new Error('No claimed territory');
+          console.log('[OverlayManager] No claimed territory - clearing layer');
+          this.mapLayer.clearLayer('kingdom-territory');
+          return;
         }
 
         const style: HexStyle = MAP_HEX_STYLES.partyTerritory;
-
-        // PHASE 1 FIX: Draw method now handles showing (no manual showLayer needed)
+        console.log(`[OverlayManager] Drawing ${hexIds.length} claimed hexes`);
         this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
       },
       hide: () => {
@@ -288,28 +360,23 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('territories')
     });
 
-    // Territory Border Overlay
+    // Territory Border Overlay - REACTIVE (uses claimedHexes store)
     this.registerOverlay({
       id: 'territory-border',
       name: 'Border',
       icon: 'fa-vector-square',
       layerIds: ['kingdom-territory-outline'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.hexes) {
-          ui?.notifications?.warn('No kingdom data available');
-          throw new Error('No kingdom data');
-        }
-
-        const hexIds = kingdom.hexes
-          .filter((h: any) => h.claimedBy === 1)
-          .map((h: any) => h.id);
-
+      store: claimedHexes,  // ✅ Reactive subscription
+      render: (hexes) => {
+        const hexIds = hexes.map((h: any) => h.id);
+        
         if (hexIds.length === 0) {
-          ui?.notifications?.warn('No claimed territory to display border for');
-          throw new Error('No claimed territory');
+          console.log('[OverlayManager] No claimed territory - clearing border');
+          this.mapLayer.clearLayer('kingdom-territory-outline');
+          return;
         }
 
+        console.log(`[OverlayManager] Drawing border for ${hexIds.length} claimed hexes`);
         this.mapLayer.drawTerritoryOutline(hexIds);
       },
       hide: () => {
@@ -318,33 +385,26 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('territory-border')
     });
 
-    // Settlements Overlay
+    // Settlements Overlay - REACTIVE (uses claimedSettlements store)
     this.registerOverlay({
       id: 'settlements',
       name: 'Settlements',
       icon: 'fa-city',
       layerIds: ['settlements-overlay'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.settlements || kingdom.settlements.length === 0) {
-          ui?.notifications?.warn('No settlements to display');
-          throw new Error('No settlements');
-        }
-
-        const settlementHexIds = kingdom.settlements
+      store: claimedSettlements,  // ✅ Reactive subscription
+      render: (settlements) => {
+        const settlementHexIds = settlements
           .filter((s: any) => s.kingmakerLocation && s.kingmakerLocation.x > 0 && s.kingmakerLocation.y > 0)
           .map((s: any) => `${s.kingmakerLocation.x}.${s.kingmakerLocation.y}`);
 
         if (settlementHexIds.length === 0) {
-          ui?.notifications?.warn('No settlements found on map');
-          throw new Error('No settlements on map');
+          console.log('[OverlayManager] No settlements - clearing layer');
+          this.mapLayer.clearLayer('settlements-overlay');
+          return;
         }
 
-        console.log('[OverlayManager] Highlighting settlements:', settlementHexIds);
-
+        console.log(`[OverlayManager] Drawing ${settlementHexIds.length} settlements`);
         const style: HexStyle = MAP_HEX_STYLES.settlement;
-
-        // PHASE 1 FIX: Draw method now handles showing (no manual showLayer needed)
         this.mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
       },
       hide: () => {
@@ -353,23 +413,25 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('settlements')
     });
 
-    // Roads Overlay
+    // Roads Overlay - REACTIVE (uses kingdomRoads store)
     this.registerOverlay({
       id: 'roads',
       name: 'Roads',
       icon: 'fa-road',
       layerIds: ['routes'],
-      show: async () => {
-        const roadHexIds = territoryService.getRoads();
-
+      store: derived(kingdomData, $data => 
+        // Use getRoads() to get road hex IDs from territory service
+        // This ensures we use the same logic as before
+        ($data.roadsBuilt || []).length > 0 ? territoryService.getRoads() : []
+      ),  // ✅ Reactive subscription
+      render: (roadHexIds) => {
         if (roadHexIds.length === 0) {
-          ui?.notifications?.warn('No roads to display');
-          throw new Error('No roads');
+          console.log('[OverlayManager] No roads - clearing layer');
+          this.mapLayer.clearLayer('routes');
+          return;
         }
 
-        console.log('[OverlayManager] Displaying roads:', roadHexIds);
-
-        // PHASE 1 FIX: Draw method now handles showing (no manual showLayer needed)
+        console.log(`[OverlayManager] Drawing ${roadHexIds.length} road connections`);
         this.mapLayer.drawRoadConnections(roadHexIds, 'routes');
       },
       hide: () => {
@@ -378,30 +440,26 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('roads')
     });
 
-    // Worksites Overlay
+    // Worksites Overlay - REACTIVE (uses claimedHexesWithWorksites store)
     this.registerOverlay({
       id: 'worksites',
       name: 'Worksites',
       icon: 'fa-industry',
       layerIds: ['worksites'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.hexes) {
-          ui?.notifications?.warn('No kingdom data available');
-          throw new Error('No kingdom data');
-        }
-
-        const worksiteData = kingdom.hexes
-          .filter((h: any) => h.worksite?.type)
-          .map((h: any) => ({ id: h.id, worksiteType: h.worksite.type }));
+      store: claimedHexesWithWorksites,  // ✅ Reactive subscription
+      render: async (hexes) => {
+        const worksiteData = hexes.map((h: any) => ({ 
+          id: h.id, 
+          worksiteType: h.worksite.type 
+        }));
 
         if (worksiteData.length === 0) {
-          ui?.notifications?.warn('No worksites to display');
-          throw new Error('No worksites');
+          console.log('[OverlayManager] No worksites - clearing layer');
+          this.mapLayer.clearLayer('worksites');
+          return;
         }
 
-        console.log('[OverlayManager] Displaying worksites:', worksiteData);
-
+        console.log(`[OverlayManager] Drawing ${worksiteData.length} worksites`);
         await this.mapLayer.drawWorksiteIcons(worksiteData);
       },
       hide: () => {
@@ -410,31 +468,26 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('worksites')
     });
 
-    // Resources Overlay (commodity production icons)
+    // Resources Overlay - REACTIVE (uses claimedHexesWithWorksites store)
     this.registerOverlay({
       id: 'resources',
       name: 'Resources',
       icon: 'fa-gem',
       layerIds: ['resources'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.hexes) {
-          ui?.notifications?.warn('No kingdom data available');
-          throw new Error('No kingdom data');
-        }
-
-        // Use worksite positions but display resource icons
-        const worksiteData = kingdom.hexes
-          .filter((h: any) => h.worksite?.type)
-          .map((h: any) => ({ id: h.id, worksiteType: h.worksite.type }));
+      store: claimedHexesWithWorksites,  // ✅ Reactive subscription
+      render: async (hexes) => {
+        const worksiteData = hexes.map((h: any) => ({ 
+          id: h.id, 
+          worksiteType: h.worksite.type 
+        }));
 
         if (worksiteData.length === 0) {
-          ui?.notifications?.warn('No worksites to display resources for');
-          throw new Error('No worksites');
+          console.log('[OverlayManager] No resources - clearing layer');
+          this.mapLayer.clearLayer('resources');
+          return;
         }
 
-        console.log('[OverlayManager] Displaying resources:', worksiteData);
-
+        console.log(`[OverlayManager] Drawing ${worksiteData.length} resource icons`);
         await this.mapLayer.drawResourceIcons(worksiteData);
       },
       hide: () => {
@@ -443,34 +496,28 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('resources')
     });
 
-    // Settlement Icons Overlay (tier-based settlement icons)
+    // Settlement Icons Overlay - REACTIVE (uses claimedSettlements store)
     this.registerOverlay({
       id: 'settlement-icons',
       name: 'Settlement Icons',
       icon: 'fa-castle',
       layerIds: ['settlement-icons'],
-      show: async () => {
-        const kingdom = get(kingdomData);
-        if (!kingdom?.settlements || kingdom.settlements.length === 0) {
-          ui?.notifications?.warn('No settlements to display');
-          throw new Error('No settlements');
-        }
-
-        // Map settlements to their hex IDs and tiers
-        const settlementData = kingdom.settlements
+      store: claimedSettlements,  // ✅ Reactive subscription
+      render: async (settlements) => {
+        const settlementData = settlements
           .filter((s: any) => s.kingmakerLocation && s.kingmakerLocation.x > 0 && s.kingmakerLocation.y > 0)
           .map((s: any) => ({
             id: `${s.kingmakerLocation.x}.${s.kingmakerLocation.y}`,
-            tier: s.tier || 'Village'  // Default to Village if not specified
+            tier: s.tier || 'Village'
           }));
 
         if (settlementData.length === 0) {
-          ui?.notifications?.warn('No settlements found on map');
-          throw new Error('No settlements on map');
+          console.log('[OverlayManager] No settlement icons - clearing layer');
+          this.mapLayer.clearLayer('settlement-icons');
+          return;
         }
 
-        console.log('[OverlayManager] Displaying settlement icons:', settlementData);
-
+        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement icons`);
         await this.mapLayer.drawSettlementIcons(settlementData);
       },
       hide: () => {

@@ -11,7 +11,10 @@ import { HEX_HIGHLIGHT_COLORS, type ColorConfig, type HexSelectionType } from '.
 export class HexHighlighter {
   private container: PIXI.Container;
   private kingdomGraphics: PIXI.Graphics;
+  private hoverGraphics: PIXI.Graphics;
   private selectionGraphics: Map<string, PIXI.Graphics> = new Map();
+  private currentHoveredHex: string | null = null;
+  private selectionType: HexSelectionType = 'claim';
   
   constructor() {
     const canvas = (globalThis as any).canvas;
@@ -30,6 +33,12 @@ export class HexHighlighter {
     this.kingdomGraphics.name = 'KingdomTerritory';
     this.kingdomGraphics.zIndex = 1; // Below selections
     this.container.addChild(this.kingdomGraphics);
+    
+    // Create graphics for hover effect (ephemeral)
+    this.hoverGraphics = new PIXI.Graphics();
+    this.hoverGraphics.name = 'HoverHighlight';
+    this.hoverGraphics.zIndex = 5; // Above kingdom, below selections
+    this.container.addChild(this.hoverGraphics);
     
     // Foundry v12 uses canvas groups - add to OverlayCanvasGroup instead of stage
     const overlayGroup = canvas.stage.children.find((c: any) => c.name === 'OverlayCanvasGroup');
@@ -104,6 +113,9 @@ export class HexHighlighter {
    * Draw existing roads/claims in darker shade
    */
   drawExistingFeatures(type: HexSelectionType, existingHexes?: string[]): void {
+    // Store selection type for hover effects
+    this.selectionType = type;
+    
     if (!existingHexes || existingHexes.length === 0) return;
     
     const colorKey = this.getExistingColorKey(type);
@@ -136,7 +148,7 @@ export class HexHighlighter {
     // Create graphics for this selection
     const graphics = new PIXI.Graphics();
     graphics.name = `Selection_${hexId}`;
-    graphics.zIndex = 10; // Above kingdom territory
+    graphics.zIndex = 10; // Above kingdom territory and hover
     
     // Parse hex ID (dot notation "50.18") to Foundry coordinates
     const [i, j] = hexId.split('.').map(Number);
@@ -154,6 +166,48 @@ export class HexHighlighter {
     
     console.log(`[HexHighlighter] Added selection for ${hexId}, container now has ${this.container.children.length} children`);
     console.log('[HexHighlighter] Selection bounds:', graphics.getBounds());
+  }
+  
+  /**
+   * Show hover highlight on a hex
+   */
+  showHover(hexId: string): void {
+    // Don't show hover on already selected hexes
+    if (this.selectionGraphics.has(hexId)) {
+      return;
+    }
+    
+    // Don't redraw if already hovering this hex
+    if (this.currentHoveredHex === hexId) {
+      return;
+    }
+    
+    this.currentHoveredHex = hexId;
+    
+    const colorKey = this.getHoverColorKey(this.selectionType);
+    const config = HEX_HIGHLIGHT_COLORS[colorKey];
+    
+    // Clear previous hover
+    this.hoverGraphics.clear();
+    
+    // Parse hex ID (dot notation "50.18") to Foundry coordinates
+    const [i, j] = hexId.split('.').map(Number);
+    
+    // Get vertices directly from Foundry's grid
+    const canvas = (globalThis as any).canvas;
+    const vertices = canvas.grid.getVertices({i, j});
+    
+    this.hoverGraphics.beginFill(config.color, config.alpha);
+    this.hoverGraphics.drawPolygon(vertices.flatMap((v: any) => [v.x, v.y]));
+    this.hoverGraphics.endFill();
+  }
+  
+  /**
+   * Hide hover highlight
+   */
+  hideHover(): void {
+    this.currentHoveredHex = null;
+    this.hoverGraphics.clear();
   }
   
   /**
@@ -228,6 +282,19 @@ export class HexHighlighter {
       case 'settlement': return 'newSettlement';
       case 'scout': return 'newScout';
       default: return 'newClaim';
+    }
+  }
+  
+  /**
+   * Get color key for hover highlights
+   */
+  private getHoverColorKey(type: HexSelectionType): string {
+    switch (type) {
+      case 'claim': return 'hoverClaim';
+      case 'road': return 'hoverRoad';
+      case 'settlement': return 'hoverSettlement';
+      case 'scout': return 'hoverScout';
+      default: return 'hoverClaim';
     }
   }
 }

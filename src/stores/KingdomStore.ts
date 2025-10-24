@@ -88,6 +88,31 @@ export const claimedWorksites = derived(claimedHexes, $hexes => {
 });
 
 /**
+ * Hexes with worksites (for worksite overlay)
+ * Returns full hex objects that have worksite data
+ */
+export const claimedHexesWithWorksites = derived(claimedHexes, $hexes => 
+  $hexes.filter(h => h.worksite?.type)
+);
+
+/**
+ * Hexes with terrain data (for terrain overlay)
+ * Returns all hexes that have terrain information
+ */
+export const hexesWithTerrain = derived(kingdomData, $data =>
+  $data.hexes.filter(h => h.terrain)
+);
+
+/**
+ * Roads from kingdom data (for roads overlay)
+ * Returns array of road hex IDs
+ */
+export const kingdomRoads = derived(kingdomData, $data => {
+  // Roads are stored as an array of hex IDs in kingdom data
+  return $data.roadsBuilt || [];
+});
+
+/**
  * Current production from all hexes
  * Uses worksiteProduction which is kept up-to-date by the economics service
  * This is derived from hexes but stored in the model for efficiency

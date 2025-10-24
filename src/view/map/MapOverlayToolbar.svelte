@@ -13,8 +13,11 @@
   const mapLayer = ReignMakerMapLayer.getInstance();
   const overlayManager = getOverlayManager();
 
-  // Get all registered overlays
-  let overlays = overlayManager.getAllOverlays();
+  // Get all registered overlays (static list)
+  const overlays = overlayManager.getAllOverlays();
+  
+  // Subscribe to active overlays store for reactive UI updates
+  const activeOverlaysStore = overlayManager.getActiveOverlaysStore();
 
   // Load saved position and restore overlay states
   onMount(async () => {
@@ -30,9 +33,6 @@
     
     // Restore overlay states using OverlayManager
     await overlayManager.restoreState();
-    
-    // Trigger re-render to update button states
-    overlays = overlayManager.getAllOverlays();
   });
 
   // Dragging handlers
@@ -63,8 +63,7 @@
   async function toggleOverlay(overlayId: string) {
     try {
       await overlayManager.toggleOverlay(overlayId);
-      // Trigger re-render to update active states
-      overlays = overlayManager.getAllOverlays();
+      // No manual state update needed - reactive store will update automatically
     } catch (error) {
       console.error(`[MapOverlayToolbar] Failed to toggle overlay ${overlayId}:`, error);
       // State will be automatically rolled back by OverlayManager
@@ -75,8 +74,7 @@
   function resetMap() {
     console.log('[MapOverlayToolbar] Resetting all map overlays');
     overlayManager.clearAll();
-    // Trigger re-render to update active states
-    overlays = overlayManager.getAllOverlays();
+    // No manual state update needed - reactive store will update automatically
     ui?.notifications?.info('Map overlays cleared');
   }
 
@@ -124,7 +122,7 @@
     {#each overlays as overlay}
       <button 
         class="toolbar-button" 
-        class:active={overlayManager.isOverlayActive(overlay.id)}
+        class:active={$activeOverlaysStore.has(overlay.id)}
         on:click={() => toggleOverlay(overlay.id)}
         title="Toggle {overlay.name} Overlay"
       >

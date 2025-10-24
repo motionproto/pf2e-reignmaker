@@ -85,6 +85,7 @@ export interface KingdomData {
     worksite?: { type: string } | null;
     hasCommodityBonus?: boolean;
     hasRoad?: boolean;
+    fortified?: number;
     name?: string;
     kingmakerFeatures?: Array<{ type: string | null; [key: string]: any }>;
     claimedBy?: number | string | null;

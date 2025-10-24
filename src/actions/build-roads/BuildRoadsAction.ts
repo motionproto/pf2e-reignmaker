@@ -42,16 +42,14 @@ const BuildRoadsAction: CustomActionImplementation = {
     },
     
     async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
-      logActionStart('build-roads', 'Calculating road segments');
+      logActionStart('build-roads', 'Starting road building process');
       
       try {
         const outcome = instance?.metadata?.outcome || 'success';
+        const game = (globalThis as any).game;
         
         // Get the proficiency rank from the roll metadata
-        // This should be stored by PF2eSkillService when the roll was made
         let proficiencyRank = 0;
-        
-        // Try to get proficiency from the pending check flag
         const pendingCheck = await game.user?.getFlag('pf2e-reignmaker', 'pendingCheck') as any;
         if (pendingCheck?.proficiencyRank !== undefined) {
           proficiencyRank = pendingCheck.proficiencyRank;
@@ -59,40 +57,69 @@ const BuildRoadsAction: CustomActionImplementation = {
         
         // Calculate road segments based on outcome
         let roadSegments = 0;
-        let message = '';
         
         switch (outcome) {
           case 'criticalSuccess':
-            // Critical success: segments based on proficiency
             roadSegments = getRoadSegmentsFromProficiency(proficiencyRank);
-            const proficiencyName = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'][proficiencyRank] || 'Unknown';
-            message = `Build ${roadSegments} road segment${roadSegments !== 1 ? 's' : ''} (${proficiencyName} proficiency). Build the targeted road segment${roadSegments !== 1 ? 's' : ''} on the map.`;
             break;
-            
           case 'success':
-            // Success: 1 segment
             roadSegments = 1;
-            message = 'Build 1 road segment. Build the targeted road segment on the map.';
             break;
-            
           case 'failure':
-            // Failure: no effect
-            message = 'No effect';
-            break;
-            
           case 'criticalFailure':
-            // Critical failure: work crews lost (handled by modifiers in JSON)
-            message = 'Work crews are lost';
-            break;
+            // No roads on failure
+            const failureMessage = outcome === 'criticalFailure' 
+              ? 'Critical failure - work crews lost'
+              : 'Failure - no effect';
+            logActionSuccess('build-roads', failureMessage);
+            return createSuccessResult(failureMessage);
         }
         
-        logActionSuccess('build-roads', `${message} (proficiency rank: ${proficiencyRank})`);
+        // === HEX SELECTION WORKFLOW ===
         
-        return createSuccessResult(message, {
-          roadSegments,
-          proficiencyRank,
-          outcome
+        // Import validation function (gets fresh data on each call)
+        const { validateRoadHex } = await import('./roadValidator');
+        
+        // Invoke hex selector with validation
+        // HexSelectorService automatically shows appropriate overlays (territories, roads)
+        const { hexSelectorService } = await import('../../services/hex-selector');
+        const proficiencyName = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'][proficiencyRank] || 'Unknown';
+        
+        const selectedHexes = await hexSelectorService.selectHexes({
+          title: `Build ${roadSegments} Road Segment${roadSegments !== 1 ? 's' : ''}`,
+          count: roadSegments,
+          colorType: 'road',
+          validationFn: validateRoadHex  // Real-time validation with road preview!
         });
+        
+        // Handle cancellation (not an error - user chose to cancel)
+        if (!selectedHexes || selectedHexes.length === 0) {
+          logActionSuccess('build-roads', 'Road selection cancelled by user');
+          return createSuccessResult('Road selection cancelled');
+        }
+        
+        // Update Kingdom Store
+        const { updateKingdom } = await import('../../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+          if (!kingdom.roadsBuilt) kingdom.roadsBuilt = [];
+          kingdom.roadsBuilt.push(...selectedHexes);
+          console.log(`🛣️ [BuildRoads] Added roads: ${selectedHexes.join(', ')}`);
+        });
+        
+        // Clear interactive layers - roads now permanent in 'routes' layer (via reactive overlay)
+        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
+        const mapLayer = ReignMakerMapLayer.getInstance();
+        mapLayer.clearSelection();
+        console.log('🧹 [BuildRoads] Cleared interactive layers');
+        console.log('[BuildRoads] 🔄 Reactive road overlay will auto-update from Kingdom Store change');
+        
+        // Success message
+        const message = outcome === 'criticalSuccess'
+          ? `Built ${roadSegments} road segment${roadSegments !== 1 ? 's' : ''} (${proficiencyName} proficiency): ${selectedHexes.join(', ')}`
+          : `Built road segment: ${selectedHexes.join(', ')}`;
+        
+        logActionSuccess('build-roads', message);
+        return createSuccessResult(message);
         
       } catch (error) {
         logActionError('build-roads', error as Error);

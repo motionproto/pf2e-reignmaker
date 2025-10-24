@@ -29,37 +29,6 @@ function getHexesFromProficiency(proficiencyRank: number): number {
   return Math.max(2, proficiencyRank);
 }
 
-/**
- * Mark hexes as claimed in Kingmaker state
- */
-async function markHexesAsClaimed(hexIds: string[]): Promise<void> {
-  const km = (globalThis as any).kingmaker;
-  if (!km?.state) {
-    console.warn('[ClaimHexes] Kingmaker state not available');
-    return;
-  }
-  
-  for (const hexId of hexIds) {
-    const [i, j] = hexId.split(':').map(Number);
-    const numericId = (i * 100) + j;
-    
-    console.log(`🏴 [ClaimHexes] Claiming hex ${hexId} (${numericId})`);
-    
-    // Update Kingmaker state
-    km.state.updateSource({
-      hexes: {
-        [numericId]: {
-          claimed: true,
-          explored: true
-        }
-      }
-    });
-  }
-  
-  await km.state.save();
-  console.log(`✅ [ClaimHexes] Claimed ${hexIds.length} hex${hexIds.length !== 1 ? 'es' : ''} in Kingmaker`);
-}
-
 const ClaimHexesAction: CustomActionImplementation = {
   id: 'claim-hexes',
   
@@ -107,12 +76,16 @@ const ClaimHexesAction: CustomActionImplementation = {
             return createSuccessResult(failureMessage);
         }
         
-        // Invoke hex selector service
+        // Import validator
+        const { validateClaimHex } = await import('./claimHexValidator');
+        
+        // Invoke hex selector service with validation
         const proficiencyName = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'][proficiencyRank] || 'Unknown';
         const selectedHexes = await hexSelectorService.selectHexes({
           title: `Select ${hexCount} Hex${hexCount !== 1 ? 'es' : ''} to Claim`,
           count: hexCount,
-          colorType: 'claim'
+          colorType: 'claim',
+          validationFn: validateClaimHex
         });
         
         // Handle cancellation
@@ -121,12 +94,36 @@ const ClaimHexesAction: CustomActionImplementation = {
           return createErrorResult('Hex selection cancelled');
         }
         
-        // Mark hexes as claimed in Kingmaker
-        await markHexesAsClaimed(selectedHexes);
+        // Update Kingdom Store directly (Kingdom Store is the source of truth, NOT Kingmaker)
+        const { updateKingdom } = await import('../../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+          for (const hexId of selectedHexes) {
+            const hex = kingdom.hexes.find((h: any) => h.id === hexId);
+            if (hex) {
+              hex.claimedBy = 1;
+              console.log(`🏴 [ClaimHexes] Claimed hex ${hexId} in Kingdom Store`);
+            } else {
+              console.warn(`[ClaimHexes] Hex ${hexId} not found in Kingdom Store`);
+            }
+          }
+          
+          // Update kingdom size (count of claimed hexes)
+          kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === 1).length;
+          
+          console.log(`✅ [ClaimHexes] Updated Kingdom Store - now ${kingdom.size} claimed hex${kingdom.size !== 1 ? 'es' : ''}`);
+        });
         
-        // Sync territory to update Reignmaker
-        const { territoryService } = await import('../../services/territory');
-        await territoryService.syncFromKingmaker();
+        // Ensure PIXI container is visible (scene control active)
+        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
+        const mapLayer = ReignMakerMapLayer.getInstance();
+        mapLayer.showPixiContainer();
+        console.log('[ClaimHexes] ✅ Scene control activated (PIXI container visible)');
+        
+        // ✅ REACTIVE OVERLAYS: Kingdom Store change automatically triggers overlay updates
+        // No need to manually call showOverlay() - the reactive subscriptions handle it!
+        // Territory and border overlays subscribe to claimedHexes store and auto-redraw.
+        console.log('[ClaimHexes] 🔄 Reactive overlays will auto-update from Kingdom Store change');
+        
         
         const message = outcome === 'criticalSuccess'
           ? `Claimed ${hexCount} hex${hexCount !== 1 ? 'es' : ''} (${proficiencyName} proficiency): ${selectedHexes.join(', ')}`

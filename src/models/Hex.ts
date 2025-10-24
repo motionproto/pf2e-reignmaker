@@ -163,6 +163,7 @@ export class Hex {
   // Infrastructure
   worksite: Worksite | null;
   hasRoad: boolean;
+  fortified: number; // 0-4, represents fortification level
   
   // Game mechanics
   hasCommodityBonus: boolean; // Hex has matching commodity for worksite (e.g., lumber commodity + logging camp)
@@ -180,6 +181,7 @@ export class Hex {
     name: string | null = null,
     claimedBy: number | string | null = 0,
     hasRoad: boolean = false,
+    fortified: number = 0, // Default to 0 (unfortified)
     kingmakerFeatures?: Array<{ type: string; [key: string]: any }>
   ) {
     this.row = row;
@@ -191,6 +193,7 @@ export class Hex {
     this.name = name;
     this.claimedBy = claimedBy;
     this.hasRoad = hasRoad;
+    this.fortified = fortified;
     this.kingmakerFeatures = kingmakerFeatures;
   }
   

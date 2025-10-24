@@ -9,7 +9,10 @@ export type LayerId =
   | 'terrain-overlay'             // Terrain type coloring (bottom layer)
   | 'kingdom-territory'           // Scene control toggle for kingdom hexes
   | 'kingdom-territory-outline'   // Territory outline border
-  | 'hex-selection'               // Temporary selections during actions
+  | 'interactive-hover'           // Interactive hex hover (hex + road preview)
+  | 'interactive-selection'       // Interactive hex selection (hex + road connections)
+  | 'hex-selection'               // Temporary selections during actions (legacy, use interactive-selection)
+  | 'hex-hover'                   // Hover highlight during hex selection (legacy, use interactive-hover)
   | 'settlements'                 // Settlement markers/sprites
   | 'settlements-overlay'         // Settlement hex highlights (toolbar)
   | 'settlement-icons'            // Settlement tier icons (village, town, city, metropolis)

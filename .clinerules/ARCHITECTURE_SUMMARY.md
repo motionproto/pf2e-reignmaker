@@ -6,7 +6,54 @@
 - All writes go through wrapped actor methods (see Kingdom Actor Wrapper below)
 - Stores are derived/reactive, never written to directly
 
-### 2. Kingdom Actor Wrapper Pattern
+### 2. Kingmaker Integration (IMPORT ONLY)
+
+**⚠️ CRITICAL: Kingmaker module is ONLY used for INITIAL IMPORT ⚠️**
+
+**DO NOT use Kingmaker for regular gameplay operations!**
+
+**Correct Usage:**
+```typescript
+// ✅ ONLY during initial setup
+await territoryService.syncFromKingmaker();  // Import hex data ONCE
+
+// ✅ All gameplay operations - update Kingdom Store directly
+await updateKingdom(kingdom => {
+  const hex = kingdom.hexes.find(h => h.id === hexId);
+  if (hex) {
+    hex.claimedBy = 1;  // Update directly, reactive overlays auto-update
+  }
+});
+```
+
+**WRONG Usage (Common Mistake):**
+```typescript
+// ❌ NEVER do this during gameplay
+await markHexesInKingmaker(hexIds);        // Write to Kingmaker
+await territoryService.syncFromKingmaker(); // Read from Kingmaker
+// This creates a circular dependency and breaks reactivity!
+```
+
+**Data Flow Rules:**
+```
+Initial Setup (ONE TIME ONLY):
+  Kingmaker → syncFromKingmaker() → Kingdom Store
+
+Regular Gameplay (ALWAYS):
+  User Action → updateKingdom() → Kingdom Store → Reactive Overlays
+
+NEVER:
+  User Action → Kingmaker → sync → Kingdom Store ❌
+```
+
+**Why This Matters:**
+- Kingdom Store is the source of truth for gameplay
+- Reactive overlays subscribe to Kingdom Store, not Kingmaker
+- Writing to Kingmaker creates sync issues and delays
+- Kingmaker is a separate module with its own state management
+- We only read from Kingmaker during initial setup to import map data
+
+### 3. Kingdom Actor Wrapper Pattern
 - Party actors are regular Foundry Actors, NOT KingdomActor instances
 - `wrapKingdomActor()` adds kingdom methods to party actors at runtime
 - Wrapper applied during actor discovery in `kingdomSync.ts`

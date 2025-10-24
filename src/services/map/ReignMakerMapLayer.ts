@@ -28,6 +28,33 @@ import { renderSettlementIcons } from './renderers/SettlementIconRenderer';
 
 /**
  * Main map layer service (Singleton)
+ * 
+ * VISIBILITY MODEL:
+ * 
+ * Container (this.container):
+ *   - Master on/off switch via scene control (rook button)
+ *   - visible=false hides ALL layers regardless of individual layer.visible state
+ *   - Controlled by: handleSceneControlToggle()
+ *   - PIXI respects display tree: child layers invisible when parent hidden
+ * 
+ * Layers (individual PIXI.Container children):
+ *   - Controlled by: showLayer() / hideLayer()
+ *   - State persists when container toggles off/on
+ *   - Only visible when BOTH layer.visible=true AND container.visible=true
+ *   - Managed by toolbar overlays (territories, roads, settlements, etc.)
+ * 
+ * Interactive Layers (hover, selection):
+ *   - Temporary - cleared after actions complete
+ *   - NOT controlled by toolbar
+ *   - Used during hex selection workflows
+ *   - Must be explicitly cleared via clearSelection() / hideInteractiveHover()
+ * 
+ * LAYER LIFECYCLE:
+ *   1. createLayer() - Singleton pattern, reuses existing layers
+ *   2. drawSomething() - Renders content into layer
+ *   3. showLayer() - Makes layer visible (if container also visible)
+ *   4. clearLayerContent() - Removes graphics, preserves visibility state
+ *   5. clearLayer() - Removes graphics AND hides layer
  */
 export class ReignMakerMapLayer {
   private static instance: ReignMakerMapLayer | null = null;
@@ -117,6 +144,7 @@ export class ReignMakerMapLayer {
     const layerContainer = new PIXI.Container();
     layerContainer.name = `Layer_${id}`;
     layerContainer.zIndex = zIndex;
+    layerContainer.visible = true; // Explicitly set visible
 
     const layer: MapLayer = {
       id,
@@ -128,7 +156,7 @@ export class ReignMakerMapLayer {
     this.layers.set(id, layer);
     this.container?.addChild(layerContainer);
 
-    console.log(`[ReignMakerMapLayer] ✨ Created NEW layer: ${id} (zIndex: ${zIndex})`);
+    console.log(`[ReignMakerMapLayer] ✨ Created NEW layer: ${id} (zIndex: ${zIndex}, visible: true)`);
     return layerContainer;
   }
 
@@ -155,24 +183,31 @@ export class ReignMakerMapLayer {
   /**
    * Clear content from a layer (remove graphics but keep visibility state)
    * Use this when you want to redraw a layer without changing its visibility
+   * Creates the layer if it doesn't exist yet
    */
   clearLayerContent(id: LayerId): void {
-    const layer = this.layers.get(id);
-    if (layer) {
-      const childCount = layer.container.children.length;
-      
-      // Clear and destroy all children
-      layer.container.removeChildren().forEach(child => {
-        // If it's a Graphics object, clear it first
-        if (child instanceof PIXI.Graphics) {
-          child.clear();
-        }
-        child.destroy({ children: true, texture: false, baseTexture: false });
-      });
-      
-      console.log(`[ReignMakerMapLayer] Cleared ${childCount} children from layer: ${id} (visibility unchanged)`);
-    } else {
-      console.log(`[ReignMakerMapLayer] Layer ${id} not found when trying to clear content`);
+    // Ensure layer exists (create if needed)
+    let layer = this.layers.get(id);
+    if (!layer) {
+      // Create empty layer with default z-index
+      const zIndex = this.getDefaultZIndex(id);
+      this.createLayer(id, zIndex);
+      return; // Layer is already empty, nothing to clear
+    }
+    
+    const childCount = layer.container.children.length;
+    
+    // Clear and destroy all children
+    layer.container.removeChildren().forEach(child => {
+      // If it's a Graphics object, clear it first
+      if (child instanceof PIXI.Graphics) {
+        child.clear();
+      }
+      child.destroy({ children: true, texture: false, baseTexture: false });
+    });
+    
+    if (childCount > 0) {
+      console.log(`[ReignMakerMapLayer] Cleared ${childCount} children from layer: ${id}`);
     }
   }
 
@@ -638,6 +673,219 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Show interactive hover (hex highlight + optional road preview)
+   * Used during hex selection to show which hex is being hovered over
+   */
+  showInteractiveHover(hexId: string, style: HexStyle, roadPreview?: string[]): void {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'interactive-hover';
+    
+    // Create/get layer first (persists, stays visible)
+    const layer = this.createLayer(layerId, 15);
+    
+    // Clear previous hover content
+    this.clearLayerContent(layerId);
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      console.warn('[ReignMakerMapLayer] Canvas grid not available');
+      return;
+    }
+    
+    // Draw road preview if provided (valid hover - roads only, no hex fill)
+    if (roadPreview && roadPreview.length > 0) {
+      const roadGraphics = new PIXI.Graphics();
+      roadGraphics.name = `RoadPreview_${hexId}`;
+      roadGraphics.visible = true;
+      this.drawRoadPreviewLines(roadGraphics, hexId, roadPreview, {
+        color: 0x4CAF50,  // Green
+        alpha: 0.8,       // Slightly transparent
+        width: 8,         // 8px for hover
+        dashed: false     // Solid line
+      });
+      layer.addChild(roadGraphics);
+    } else {
+      // Invalid hover - show red hex fill (no road preview)
+      const hexGraphics = new PIXI.Graphics();
+      hexGraphics.name = `Hover_${hexId}`;
+      hexGraphics.visible = true;
+      
+      const drawn = this.drawSingleHex(hexGraphics, hexId, style, canvas);
+      if (drawn) {
+        layer.addChild(hexGraphics);
+      }
+    }
+  }
+  
+  /**
+   * Clear interactive hover (just clear content, layer persists)
+   */
+  hideInteractiveHover(): void {
+    this.clearLayerContent('interactive-hover');
+  }
+  
+  /**
+   * Add a hex to the interactive selection layer (hex + optional road connections)
+   * Used during hex selection to show which hexes have been clicked
+   */
+  addHexToSelection(hexId: string, style: HexStyle, roadConnections?: string[]): void {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'interactive-selection';
+    // Create/get layer first (persists, stays visible)
+    const layer = this.createLayer(layerId, 20); // Above hover
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      console.warn('[ReignMakerMapLayer] Canvas grid not available');
+      return;
+    }
+    
+    // Draw road connections only (no hex fill)
+    if (roadConnections && roadConnections.length > 0) {
+      const roadGraphics = new PIXI.Graphics();
+      roadGraphics.name = `RoadConnection_${hexId}`;
+      roadGraphics.visible = true;
+      this.drawRoadPreviewLines(roadGraphics, hexId, roadConnections, {
+        color: 0x4CAF50,  // Green
+        alpha: 1.0,       // Solid
+        width: 20,        // 20px for selection
+        dashed: false     // Solid line
+      });
+      layer.addChild(roadGraphics);
+      
+      console.log(`[ReignMakerMapLayer] Added hex ${hexId} to selection layer (roads only, 20px)`);
+    }
+  }
+  
+  /**
+   * Remove a hex from the selection layer
+   */
+  removeHexFromSelection(hexId: string): void {
+    const layer = this.getLayer('interactive-selection');
+    if (!layer) return;
+    
+    // Find and remove the hex graphic
+    const hexGraphic = layer.children.find(child => child.name === `Selection_${hexId}`);
+    if (hexGraphic) {
+      layer.removeChild(hexGraphic);
+      hexGraphic.destroy();
+    }
+    
+    // Find and remove the road graphic
+    const roadGraphic = layer.children.find(child => child.name === `RoadConnection_${hexId}`);
+    if (roadGraphic) {
+      layer.removeChild(roadGraphic);
+      roadGraphic.destroy();
+    }
+    
+    console.log(`[ReignMakerMapLayer] Removed hex ${hexId} from selection layer`);
+  }
+  
+  /**
+   * Clear the selection layer (just clear content, layer persists)
+   */
+  clearSelection(): void {
+    this.clearLayerContent('interactive-selection');
+  }
+  
+  /**
+   * Draw road preview lines between a hex and its adjacent road hexes
+   * Now draws on a graphics object instead of a layer container
+   */
+  private drawRoadPreviewLines(
+    graphics: PIXI.Graphics,
+    fromHexId: string,
+    toHexIds: string[],
+    style: { color: number; alpha: number; width: number; dashed: boolean }
+  ): void {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return;
+    
+    // Get center of source hex
+    const fromParts = fromHexId.split('.');
+    const fromI = parseInt(fromParts[0], 10);
+    const fromJ = parseInt(fromParts[1], 10);
+    
+    if (isNaN(fromI) || isNaN(fromJ)) return;
+    
+    const GridHex = (globalThis as any).foundry.grid.GridHex;
+    const fromHex = new GridHex({i: fromI, j: fromJ}, canvas.grid);
+    const fromCenter = fromHex.center;
+    
+    // Draw line to each adjacent road hex
+    toHexIds.forEach(toHexId => {
+      const toParts = toHexId.split('.');
+      const toI = parseInt(toParts[0], 10);
+      const toJ = parseInt(toParts[1], 10);
+      
+      if (isNaN(toI) || isNaN(toJ)) return;
+      
+      const toHex = new GridHex({i: toI, j: toJ}, canvas.grid);
+      const toCenter = toHex.center;
+      
+      // Draw Bezier curve (matches RoadRenderer logic)
+      const midX = (fromCenter.x + toCenter.x) / 2;
+      const midY = (fromCenter.y + toCenter.y) / 2;
+      const dx = toCenter.x - fromCenter.x;
+      const dy = toCenter.y - fromCenter.y;
+      const length = Math.sqrt(dx * dx + dy * dy);
+      const perpX = -dy / length;
+      const perpY = dx / length;
+      const curveOffset = 20;
+      const controlX = midX + perpX * curveOffset;
+      const controlY = midY + perpY * curveOffset;
+      
+      if (style.dashed) {
+        // Draw dashed line
+        graphics.lineStyle({
+          width: style.width,
+          color: style.color,
+          alpha: style.alpha,
+          cap: PIXI.LINE_CAP.ROUND,
+          join: PIXI.LINE_JOIN.ROUND
+        });
+        
+        // Sample curve and draw dashes
+        const segments = 20;
+        let drawing = true;
+        for (let t = 0; t <= segments; t++) {
+          const u = t / segments;
+          const x = Math.pow(1 - u, 2) * fromCenter.x +
+                   2 * (1 - u) * u * controlX +
+                   Math.pow(u, 2) * toCenter.x;
+          const y = Math.pow(1 - u, 2) * fromCenter.y +
+                   2 * (1 - u) * u * controlY +
+                   Math.pow(u, 2) * toCenter.y;
+          
+          if (t % 3 === 0) drawing = !drawing; // Toggle every 3 segments for dash effect
+          
+          if (drawing) {
+            if (t === 0 || !drawing) {
+              graphics.moveTo(x, y);
+            } else {
+              graphics.lineTo(x, y);
+            }
+          }
+        }
+      } else {
+        // Draw solid curved line
+        graphics.lineStyle({
+          width: style.width,
+          color: style.color,
+          alpha: style.alpha,
+          cap: PIXI.LINE_CAP.ROUND,
+          join: PIXI.LINE_JOIN.ROUND
+        });
+        
+        graphics.moveTo(fromCenter.x, fromCenter.y);
+        graphics.quadraticCurveTo(controlX, controlY, toCenter.x, toCenter.y);
+      }
+    });
+  }
+  
+  /**
    * Add a sprite to a layer
    */
   addSprite(sprite: PIXI.Sprite, layerId: LayerId = 'settlements'): void {
@@ -674,14 +922,17 @@ export class ReignMakerMapLayer {
   hidePixiContainer(): void {
     if (this.container) {
       this.container.visible = false;
-      console.log('[ReignMakerMapLayer] PIXI container hidden (visible:', this.container.visible, ')');
+      console.log('[ReignMakerMapLayer] ═══ CONTAINER HIDDEN ═══');
+      console.log('[ReignMakerMapLayer] Container visible:', this.container.visible);
+      console.log('[ReignMakerMapLayer] Parent chain:', this.container.parent?.name || 'none');
       console.log('[ReignMakerMapLayer] Container children count:', this.container.children.length);
       console.log('[ReignMakerMapLayer] Layer visibility states:', 
         Array.from(this.layers.entries()).map(([id, layer]) => ({
           id,
           visible: layer.visible,
           containerVisible: layer.container.visible,
-          childCount: layer.container.children.length
+          childCount: layer.container.children.length,
+          parent: layer.container.parent?.name || 'none'
         }))
       );
     } else {
@@ -717,35 +968,18 @@ export class ReignMakerMapLayer {
       this.toggleState = false;
       this.toolbarManager.resetManuallyClosed();
       
-      // Hide and destroy the toolbar FIRST (before clearing layers)
+      // Hide toolbar (overlays remain in their state for when we toggle back ON)
       console.log('[ReignMakerMapLayer] Step 1: Hiding toolbar...');
       this.toolbarManager.hide();
       
-      // Clear all overlays to ensure they're not visible
-      console.log('[ReignMakerMapLayer] Step 2: Clearing all layers...');
-      this.clearAllLayers();
-      
-      // Hide the PIXI container (this makes everything invisible immediately)
-      console.log('[ReignMakerMapLayer] Step 3: Hiding PIXI container...');
+      // Hide the PIXI container (master visibility switch)
+      // This hides all layers at once without affecting their individual state
+      console.log('[ReignMakerMapLayer] Step 2: Hiding PIXI container...');
       this.hidePixiContainer();
-      
-      // Verify container is actually hidden
-      console.log('[ReignMakerMapLayer] Step 4: Verifying container hidden...');
-      if (this.container && this.container.visible) {
-        console.error('[ReignMakerMapLayer] ❌ CRITICAL: Container is still visible after hidePixiContainer()!');
-        // Force it again
-        this.container.visible = false;
-      }
-      
-      // Force canvas to re-render to ensure changes are visible
-      console.log('[ReignMakerMapLayer] Step 5: Forcing canvas re-render...');
-      const canvas = (globalThis as any).canvas;
-      if (canvas?.stage) {
-        canvas.stage.render(canvas.app.renderer);
-      }
       
       console.log('[ReignMakerMapLayer] ═══ Toggle OFF complete ═══');
       console.log('[ReignMakerMapLayer] Final state - Container visible:', this.container?.visible);
+      console.log('[ReignMakerMapLayer] Overlays remain in their state and will restore when toggling back ON');
     }
     
     // Update scene control button state

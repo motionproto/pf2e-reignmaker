@@ -1,12 +1,30 @@
 /**
  * Territory Service
  * 
- * Manages territory state synchronization between the Kingmaker module
- * and the Kingdom store. This service is responsible for:
- * - Syncing hex data from the Kingmaker module
- * - Converting between data formats
- * - Updating the Kingdom store with territory information
- * - Providing territory-related calculations
+ * CRITICAL: Kingmaker module is ONLY used for INITIAL IMPORT
+ * 
+ * This service manages territory data with the following rules:
+ * 
+ * ⚠️ DO NOT USE KINGMAKER FOR REGULAR OPERATIONS ⚠️
+ * 
+ * Kingmaker Usage (IMPORT ONLY):
+ * - syncFromKingmaker() - ONLY called during initial setup to import hex data
+ * - importFromFoundryGrid() - Alternative import for custom maps
+ * 
+ * Kingdom Store Usage (ALL OPERATIONS):
+ * - Kingdom Store is the source of truth for ALL gameplay
+ * - Update hexes directly via updateKingdom()
+ * - Never write to Kingmaker during gameplay
+ * - Never sync from Kingmaker after initial import
+ * 
+ * Data Flow:
+ * 1. Initial Setup: Kingmaker → syncFromKingmaker() → Kingdom Store
+ * 2. Gameplay: Kingdom Store ONLY (Kingmaker not involved)
+ * 3. Reactive Overlays: Subscribe to Kingdom Store, update automatically
+ * 
+ * Common Mistake:
+ * ❌ WRONG: Update Kingmaker → sync from Kingmaker → Kingdom Store
+ * ✅ RIGHT: Update Kingdom Store directly → reactive overlays update
  */
 
 import { get } from 'svelte/store';
@@ -80,6 +98,7 @@ export class TerritoryService {
                         null,       // No name
                         0,          // Wilderness (unclaimed)
                         false,      // No road
+                        0,          // No fortification
                         []          // No Kingmaker features
                     );
                     hexes.push(hex);
@@ -227,6 +246,7 @@ export class TerritoryService {
                     null,             // Name can be added later if available
                     claimedBy,        // Track hex ownership
                     hasRoad,          // Road flag
+                    0,                // No fortification (default)
                     hexState.features // Preserve Kingmaker features for debugging
                 );
                 hexes.push(hex);
@@ -298,6 +318,7 @@ export class TerritoryService {
                     worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
                     hasCommodityBonus: hex.hasCommodityBonus || false,
                     hasRoad: hex.hasRoad || false,
+                    fortified: hex.fortified || 0,
                     name: hex.name || undefined,
                     kingmakerFeatures: hex.kingmakerFeatures || [], // Preserve Kingmaker features
                     claimedBy: hex.claimedBy ?? 0 // Preserve ownership
@@ -666,6 +687,7 @@ export class TerritoryService {
                     hexData.name || null,
                     (hexData as any).claimedBy ?? 0,
                     (hexData as any).hasRoad || false,
+                    (hexData as any).fortified || 0,
                     (hexData as any).kingmakerFeatures || (hexData as any).features || []
                 );
             });
@@ -724,6 +746,7 @@ export class TerritoryService {
             hexData.name || null,
             (hexData as any).claimedBy ?? 0,
             (hexData as any).hasRoad || false,
+            (hexData as any).fortified || 0,
             (hexData as any).kingmakerFeatures || (hexData as any).features || []
         );
     }
