@@ -10,7 +10,7 @@
    export let value: number;
    export let icon: string;
    export let color: string;
-   export let size: 'normal' | 'compact' = 'normal';
+   export let size: 'normal' | 'compact' | 'fill' = 'normal';
    export let editable: boolean = true;
    export let onChange: ((newValue: number) => void) | null = null;
    export let tooltip: string | undefined = undefined;
@@ -119,6 +119,7 @@
    class="resource-card" 
    class:editing={isEditing}
    class:compact={size === 'compact'}
+   class:fill={size === 'fill'}
    class:editable
    class:has-tooltip={!editable && tooltip}
    style="--resource-color: {color};"
@@ -173,7 +174,13 @@
          </div>
       {:else}
          <div class="resource-value">{value}</div>
-         <div class="resource-label">{resource}</div>
+         <div class="resource-label">
+            {#if size === 'fill'}
+               {resource} / turn
+            {:else}
+               {resource}
+            {/if}
+         </div>
       {/if}
    </div>
 </div>
@@ -279,6 +286,46 @@
          .resource-edit-input {
             width: 100%;
             font-size: var(--font-lg);
+         }
+      }
+      
+      /* Fill size (for containers like SetupTab worksite cards) */
+      &.fill {
+         width: 100%;
+         height: 100%;
+         flex: 1;
+         border-radius: 0 0 0.5rem 0.5rem; /* Sharp top corners, rounded bottom to match parent */
+         border-top: none; /* Remove top border to blend with parent */
+         padding: 1rem;
+         gap: 0.75rem;
+         
+         .resource-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+         }
+         
+         .resource-info {
+            min-width: 0;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+         }
+         
+         .resource-value {
+            font-size: var(--font-3xl);
+            font-weight: var(--font-weight-bold);
+            color: var(--text-primary);
+         }
+         
+         .resource-label {
+            font-size: var(--font-sm);
+            color: var(--text-tertiary);
+            text-transform: capitalize;
+         }
+         
+         .resource-edit-input {
+            width: 100%;
+            font-size: var(--font-2xl);
          }
       }
       

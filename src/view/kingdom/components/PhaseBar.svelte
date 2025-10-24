@@ -421,7 +421,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: auto;
+    margin-left: 1rem;
     background: transparent;
     border: none;
     outline: none;

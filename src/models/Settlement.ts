@@ -1,6 +1,12 @@
 // Settlement model for PF2e Kingdom Lite
 // Based on Reignmaker Lite rules
 
+// Import settlement tier images
+import villageImg from '../../img/settlements/village.webp';
+import townImg from '../../img/settlements/town.webp';
+import cityImg from '../../img/settlements/city.webp';
+import metropolisImg from '../../img/settlements/metropolis.webp';
+
 /**
  * Settlement tiers based on Reignmaker Lite rules
  */
@@ -92,15 +98,15 @@ export interface Settlement {
 export function getDefaultSettlementImage(tier: SettlementTier): string {
   switch (tier) {
     case SettlementTier.VILLAGE:
-      return 'modules/pf2e-reignmaker/img/settlements/village.webp';
+      return villageImg;
     case SettlementTier.TOWN:
-      return 'modules/pf2e-reignmaker/img/settlements/town.webp';
+      return townImg;
     case SettlementTier.CITY:
-      return 'modules/pf2e-reignmaker/img/settlements/city.webp';
+      return cityImg;
     case SettlementTier.METROPOLIS:
-      return 'modules/pf2e-reignmaker/img/settlements/metropolis.webp';
+      return metropolisImg;
     default:
-      return 'modules/pf2e-reignmaker/img/settlements/village.webp';
+      return villageImg;
   }
 }
 

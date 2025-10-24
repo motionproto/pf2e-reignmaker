@@ -1,10 +1,20 @@
 <script lang="ts">
   import { kingdomData, claimedHexes, claimedSettlements, claimedWorksites, currentProduction } from '../../../stores/KingdomStore';
   import { startKingdom } from '../../../stores/KingdomStore';
+  import { setSelectedTab } from '../../../stores/ui';
   import { getResourceIcon, getResourceColor, getTerrainIcon, getTerrainColor } from '../utils/presentation';
   import ResourceCard from '../components/baseComponents/ResourceCard.svelte';
+  import Button from '../components/baseComponents/Button.svelte';
   
   let isStarting = false;
+  
+  // Check if game is already active (turn 1 or greater)
+  $: isGameActive = $kingdomData.currentTurn >= 1;
+  
+  // Function to return to Turn tab
+  function resumeGame() {
+    setSelectedTab('turn');
+  }
   
   // Calculate world stats (all hexes)
   $: totalHexes = $kingdomData.hexes.length;
@@ -309,7 +319,7 @@
     
     <div class="stats-grid">
       <div class="stat-card">
-        <i class="fas fa-flag"></i>
+        <i class="fas fa-hexagon"></i>
         <div class="stat-content">
           <span class="stat-value">{$claimedHexes.length}</span>
           <span class="stat-label">Claimed Hexes</span>
@@ -349,7 +359,7 @@
                   value={worksite.income}
                   icon={getResourceIcon(worksite.resource)}
                   color={getResourceColor(worksite.resource)}
-                  size="compact"
+                  size="fill"
                   editable={false}
                 />
               </div>
@@ -360,32 +370,31 @@
     {/if}
   </div>
   
-  <!-- Ready to Start -->
-  <div class="setup-section ready-section">
-    <h2>
-      <i class="fas fa-flag-checkered"></i>
-      Ready to Begin?
-    </h2>
-    
-    <p class="ready-message">
-      When you're ready, click the button below to start Turn 1 and begin managing your kingdom.
-      You can explore your territory, settlements, and other tabs at any time.
-    </p>
-    
-    <button 
-      class="start-button" 
-      on:click={handleStartKingdom}
-      disabled={isStarting}
-    >
-      {#if isStarting}
-        <i class="fas fa-spinner fa-spin"></i>
-        Starting Kingdom...
-      {:else}
-        <i class="fas fa-play"></i>
-        Begin Turn 1
-      {/if}
-    </button>
-  </div>
+  <!-- Ready to Start (only show if game not started) -->
+  {#if !isGameActive}
+    <div class="setup-section ready-section">
+      <h2>
+        <i class="fas fa-flag-checkered"></i>
+        Ready to Begin?
+      </h2>
+      
+      <p class="ready-message">
+        Click the button below to start Turn 1 and begin managing your kingdom.
+        Explore the territory, settlements, and other tabs at any time.
+      </p>
+      
+      <div class="start-button-wrapper">
+        <Button
+          variant="primary"
+          disabled={isStarting}
+          icon={isStarting ? "fas fa-spinner fa-spin spinning" : "fas fa-play"}
+          on:click={handleStartKingdom}
+        >
+          {isStarting ? 'Starting Kingdom...' : 'Begin Turn 1'}
+        </Button>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style lang="scss">
@@ -408,9 +417,15 @@
     color: white;
     
     .kingdom-icon {
-      font-size: 4rem;
       margin-bottom: 1rem;
-      opacity: 0.9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      
+      i {
+        font-size: 6rem;
+        opacity: 0.9;
+      }
     }
     
     h1 {
@@ -428,6 +443,7 @@
   
   .setup-section {
     background: var(--bg-elevated);
+    
     padding: 1.5rem;
     border-radius: 0.5rem;
     border: 1px solid var(--border-secondary);
@@ -459,40 +475,45 @@
   
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
     margin-bottom: 1rem;
   }
   
   .stat-card {
     background: var(--bg-surface);
-    padding: 1rem;
+    padding: 0.75rem;
     border-radius: 0.375rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: .75rem;
     border: 1px solid var(--border-subtle);
     
     i {
-      font-size: var(--font-4xl);
+      font-size: var(--font-2xl);
       color: var(--text-secondary);
+      flex-shrink: 0;
     }
     
     .stat-content {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+      align-items: baseline;
+      gap: .75rem;
+      min-width: 0;
     }
     
     .stat-value {
-      font-size: 1.5rem;
+      font-size: var(--font-2xl);
       font-weight: bold;
       color: var(--text-primary);
     }
     
     .stat-label {
-      font-size: var(--font-md);
+      font-size: var(--font-lg);
       font-weight: normal;
       color: var(--text-secondary);
+      white-space: nowrap;
     }
   }
   
@@ -588,22 +609,22 @@
   }
   
   .worksite-header {
-    background: var(--bg-surface);
-    padding: 0.75rem 1rem;
+    background: color-mix(in srgb, var(--color-gray-700) 50%, transparent);
+    padding: 0.5rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-subtle);
   }
-  
+
   .worksite-title {
-    font-size: var(--font-lg);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-);
+    font-weight: var(--font-weight-normal);
     color: var(--text-primary);
   }
   
   .worksite-count {
-    font-size: var(--font-lg);
+    font-size: var(--font-xl);
     font-weight: var(--font-weight-bold);
     color: var(--text-secondary);
     background: var(--bg-elevated);
@@ -614,10 +635,10 @@
   }
   
   .worksite-content {
-    padding: 1rem;
+    padding: 0;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column;
+    flex: 1;
   }
   
   .guide-intro {
@@ -698,8 +719,8 @@
   }
   
   .resource-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
   
@@ -742,32 +763,13 @@
     }
   }
   
-  .start-button {
-    padding: 1rem 3rem;
+  .start-button-wrapper :global(.button) {
+    padding: 16px 24px;
     font-size: var(--font-xl);
-    font-weight: bold;
-    background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.75rem;
+    gap: 12px;
     
-    &:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    }
-    
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    
-    i {
-      font-size: 1.5rem;
+    :global(i) {
+      font-size: var(--font-lg);
     }
   }
 </style>

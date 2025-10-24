@@ -42,6 +42,14 @@
    
    <div class="header-actions">
       <button 
+         class="tab-button icon-only" 
+         class:active={selectedTab === 'setup'}
+         on:click={() => selectTab('setup')}
+         title="Kingdom Setup & Guide"
+      >
+         <i class="fas fa-question-circle"></i>
+      </button>
+      <button 
          class="action-button settings-button" 
          on:click={openSettings}
          title="Kingdom Settings"
@@ -96,6 +104,18 @@
          // Explicitly set white color for all child elements
          i, span {
             color: white;
+         }
+      }
+      
+      &.icon-only {
+         padding: 8px 12px;
+         
+         span {
+            display: none;
+         }
+         
+         i {
+            font-size: 1.2em;
          }
       }
       

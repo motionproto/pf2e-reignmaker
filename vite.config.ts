@@ -140,7 +140,7 @@ export default defineConfig(({ mode }) =>
                   dest: '.'
                },
                {
-                  src: '../img',
+                  src: '../public/img',
                   dest: '.'
                }
             ]

@@ -17,6 +17,7 @@
    
    // Tab components
    import TurnTab         from './tabs/TurnTab.svelte';
+   import SetupTab        from './tabs/SetupTab.svelte';
    import TerritoryTab    from './tabs/TerritoryTab.svelte';
    import SettlementsTab  from './tabs/SettlementsTab.svelte';
    import ArmiesTab       from './tabs/ArmiesTab.svelte';
@@ -244,6 +245,8 @@
                <SettingsTab />
             {:else if $uiState.selectedTab === 'turn'}
                <TurnTab />
+            {:else if $uiState.selectedTab === 'setup'}
+               <SetupTab />
             {:else if $uiState.selectedTab === 'territory'}
                <TerritoryTab />
             {:else if $uiState.selectedTab === 'settlements'}
