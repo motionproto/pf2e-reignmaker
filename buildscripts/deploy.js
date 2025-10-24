@@ -64,6 +64,12 @@ const directoriesToCopy = [
     'img'
 ];
 
+console.log(`\n🧹 Cleaning old build artifacts from target directory...\n`);
+
+// Clean old build artifacts (hash-named JS/CSS files and their maps)
+// Keep important files like module.json, LICENSE, data/, img/, etc.
+cleanBuildArtifacts(TARGET_DIR);
+
 console.log(`\n📋 Deploying to: ${TARGET_DIR}\n`);
 
 // Copy individual files
@@ -85,12 +91,56 @@ directoriesToCopy.forEach(dir => {
     const targetPath = path.join(TARGET_DIR, dir);
     
     if (fs.existsSync(sourcePath)) {
+        // Remove existing directory to avoid accumulating old files
+        if (fs.existsSync(targetPath)) {
+            console.log(`   🗑️  Removing old ${dir}/ directory...`);
+            fs.rmSync(targetPath, { recursive: true, force: true });
+        }
         console.log(`   📁 Copying ${dir}/...`);
         copyDirectoryRecursive(sourcePath, targetPath);
     } else {
         console.log(`   ⚠️  Skipping ${dir}/ (not found)`);
     }
 });
+
+/**
+ * Clean old build artifacts from the target directory
+ * Removes hash-named JS files, source maps, and CSS files
+ */
+function cleanBuildArtifacts(targetDir) {
+    if (!fs.existsSync(targetDir)) {
+        return; // Nothing to clean if directory doesn't exist
+    }
+
+    const files = fs.readdirSync(targetDir);
+    let cleanedCount = 0;
+
+    files.forEach(file => {
+        const filePath = path.join(targetDir, file);
+        const stat = fs.statSync(filePath);
+
+        // Only process files in the root directory, not subdirectories
+        if (stat.isFile()) {
+            // Match hash-named build artifacts (e.g., GameCommandsResolver-ABC123.js)
+            // Pattern: name-hash.js or name-hash.js.map or name-hash.css
+            const isHashedFile = /^[A-Za-z0-9_-]+-[A-Za-z0-9_-]+\.(js|js\.map|css)$/.test(file);
+            
+            // Also match the main CSS file
+            const isMainCSS = file === 'pf2e-reignmaker.css';
+            
+            // Also match the main JS file and map
+            const isMainJS = file === 'pf2e-reignmaker.js' || file === 'pf2e-reignmaker.js.map';
+
+            if (isHashedFile || isMainCSS || isMainJS) {
+                console.log(`   🗑️  Removing old artifact: ${file}`);
+                fs.unlinkSync(filePath);
+                cleanedCount++;
+            }
+        }
+    });
+
+    console.log(`✅ Cleaned ${cleanedCount} old build artifact${cleanedCount !== 1 ? 's' : ''}`);
+}
 
 /**
  * Recursively copy a directory

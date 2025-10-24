@@ -95,7 +95,7 @@ export default defineConfig(({ mode }) =>
       },
       build: {
          outDir: '../dist',
-         emptyOutDir: false,
+         emptyOutDir: true,
          sourcemap: s_SOURCEMAPS,
          brotliSize: true,
          minify: s_COMPRESS ? 'terser' : false,
