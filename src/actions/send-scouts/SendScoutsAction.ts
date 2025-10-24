@@ -6,6 +6,17 @@
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { KingdomData } from '../../actors/KingdomActor';
+import type { ResolutionData } from '../../types/modifiers';
+import { 
+  logActionStart, 
+  logActionSuccess, 
+  logActionError,
+  createSuccessResult,
+  createErrorResult,
+  type ResolveResult 
+} from '../shared/ActionHelpers';
+import { hexSelectorService } from '../../services/hex-selector';
+import { worldExplorerService } from '../../services/WorldExplorerService';
 
 const SendScoutsAction: CustomActionImplementation = {
   id: 'send-scouts',
@@ -27,6 +38,110 @@ const SendScoutsAction: CustomActionImplementation = {
     }
     
     return { met: true };
+  },
+
+  /**
+   * Custom resolution using hex selector service + World Explorer integration
+   */
+  customResolution: {
+    component: null, // No dialog needed - selector handles UI
+
+    validateData(resolutionData: ResolutionData): boolean {
+      return true;
+    },
+
+    async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
+      logActionStart('send-scouts', 'Starting scout hex selection');
+
+      try {
+        const outcome = instance?.metadata?.outcome || 'success';
+
+        // Determine hex count based on success level
+        // Critical Success: 2 hexes, Success: 1 hex, Failure/Critical Failure: 0 hexes
+        let hexCount = 0;
+        
+        if (outcome === 'criticalSuccess') {
+          hexCount = 2;
+        } else if (outcome === 'success') {
+          hexCount = 1;
+        } else {
+          // Failure or Critical Failure - no hexes to scout
+          const message = outcome === 'criticalFailure' 
+            ? 'Scouts lost - no hexes revealed'
+            : 'No report - no hexes revealed';
+          logActionSuccess('send-scouts', message);
+          return createSuccessResult(message);
+        }
+        
+        logActionStart('send-scouts', `Outcome: ${outcome}, selecting ${hexCount} hex${hexCount !== 1 ? 'es' : ''}`);
+
+        // Create validation function to filter out already-revealed hexes
+        const validateHex = (hexId: string): boolean => {
+          // Only allow selection of hexes that are NOT already revealed
+          if (worldExplorerService.isAvailable()) {
+            const isRevealed = worldExplorerService.isRevealed(hexId);
+            if (isRevealed) {
+              console.log(`[SendScouts] Hex ${hexId} already revealed - skipping`);
+              return false;
+            }
+          }
+          return true;
+        };
+
+        // Open hex selector
+        const selectedHexes = await hexSelectorService.selectHexes({
+          title: `Select ${hexCount} Hex${hexCount !== 1 ? 'es' : ''} to Scout`,
+          count: hexCount,
+          colorType: 'scout',
+          validationFn: validateHex
+        });
+
+        // Handle cancellation gracefully (not an error - user choice)
+        // No gold deducted if cancelled
+        if (!selectedHexes || selectedHexes.length === 0) {
+          const message = 'Hex selection cancelled - no gold deducted';
+          logActionSuccess('send-scouts', message);
+          return createSuccessResult(message);
+        }
+
+        // Deduct gold cost (1 gold) AFTER confirming selection
+        const { updateKingdom } = await import('../../stores/KingdomStore');
+        await updateKingdom(kingdom => {
+          if (!kingdom.resources) kingdom.resources = {};
+          if (!kingdom.resources.gold) kingdom.resources.gold = 0;
+          kingdom.resources.gold -= 1;
+        });
+        console.log('💰 [SendScouts] Deducted 1 gold (after hex selection confirmed)');
+
+        // Reveal hexes in World Explorer (if module is available)
+        let revealMessage = '';
+        if (worldExplorerService.isAvailable()) {
+          worldExplorerService.revealHexes(selectedHexes);
+          revealMessage = ' - Revealed on map';
+          logActionSuccess('send-scouts', 'Hexes revealed in World Explorer');
+          
+          // Show notification to user
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.info(`🗺️ Revealed ${selectedHexes.length} hex${selectedHexes.length !== 1 ? 'es' : ''} on the map`);
+        } else {
+          console.warn('⚠️ [SendScouts] World Explorer module not available - hexes not revealed');
+          revealMessage = ' - Install World Explorer module to reveal on map';
+        }
+
+        const message = `Scouted ${selectedHexes.length} ${selectedHexes.length === 1 ? 'hex' : 'hexes'}: ${selectedHexes.join(', ')}${revealMessage}`;
+        logActionSuccess('send-scouts', message);
+        return createSuccessResult(message);
+
+      } catch (error) {
+        logActionError('send-scouts', error as Error);
+        return createErrorResult(error instanceof Error ? error.message : 'Unknown error');
+      }
+    }
+  },
+
+  // Use custom resolution for all outcomes
+  needsCustomResolution(outcome): boolean {
+    return true;
   }
 };
 

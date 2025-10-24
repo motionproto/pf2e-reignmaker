@@ -1465,9 +1465,11 @@
                 effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
               } : undefined}
               {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
-              {@const isAvailable = isActionAvailable(action)}
-              {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-              {#key `${action.id}-${currentActionInstances.size}-${activeAidsCount}-${controller ? 'ready' : 'loading'}-${$kingdomData.unrest}-${$kingdomData.imprisonedUnrest}-${($kingdomData.resources?.resourcePoints || 0)}-${($kingdomData.resources?.gold || 0)}-${($kingdomData.armies?.length || 0)}-${($kingdomData.settlements?.length || 0)}`}
+              <!-- Reactive availability checks - re-evaluate when $kingdomData changes -->
+              {@const isAvailable = (controller && $kingdomData) ? isActionAvailable(action) : false}
+              {@const missingRequirements = (!isAvailable && controller && $kingdomData) ? getMissingRequirements(action) : []}
+              <!-- Key block only controls BaseCheckCard re-mounting, not availability reactivity -->
+              {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}`}
                 <BaseCheckCard
                   id={action.id}
                   checkInstance={checkInstance || null}

@@ -300,7 +300,7 @@
         "name": "Build Roads",
         "category": "expand-borders",
         "brief": "Connect your territory with infrastructure",
-        "description": "Construct pathways between settlements to improve trade, travel, and military movement",
+        "description": "Construct pathways between settlements to improve trade, travel, and military movement. Roads must be built in claimed territory.",
         "cost": {
             "gold": 2
         },
@@ -352,7 +352,7 @@
         "name": "Claim Hexes",
         "category": "expand-borders",
         "brief": "Expand your kingdom's territorial control",
-        "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control",
+        "description": "Expand your kingdom's borders by claiming adjacent wilderness hexes through surveying, settlement, and administrative control. Hexes must be adjacent to controlled territory.",
         "skills": [
             {
                 "skill": "survival",
@@ -418,7 +418,7 @@
                     "initiative": 0
                 },
                 "icon": "fortification_earthen.webp",
-                "description": "Basic earthen defensive positions with ditches and berms"
+                "description": "Basic earthen defensive positions with ditches and berms. Benefits: +1 AC to defending troops"
             },
             {
                 "id": "wooden-tower",
@@ -433,7 +433,7 @@
                     "initiative": 1
                 },
                 "icon": "fortification_tower_wood.webp",
-                "description": "Wooden watchtower with palisade defenses"
+                "description": "Wooden watchtower with palisade defenses. Benefits: +1 AC, +1 Initiative to defending troops"
             },
             {
                 "id": "stone-tower",
@@ -449,7 +449,7 @@
                     "initiative": 1
                 },
                 "icon": "fortification_tower_stone.webp",
-                "description": "Stone tower with reinforced defensive walls"
+                "description": "Stone tower with reinforced defensive walls. Benefits: +2 AC, +1 Initiative to defending troops"
             },
             {
                 "id": "fortress",
@@ -465,7 +465,7 @@
                     "initiative": 2
                 },
                 "icon": "fortification_keep.webp",
-                "description": "Massive fortified keep with multiple defensive layers",
+                "description": "Massive fortified keep with multiple defensive layers. Benefits: +2 AC, +2 Initiative to defending troops. Units stationed here require no gold upkeep",
                 "special": "Units stationed here require no gold upkeep"
             }
         ],
