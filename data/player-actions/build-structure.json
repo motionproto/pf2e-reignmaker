@@ -18,12 +18,8 @@
       "description": "physical labor"
     },
     {
-      "skill": "acrobatics",
-      "description": "specialized construction"
-    },
-    {
-      "skill": "stealth",
-      "description": "discrete building"
+      "skill": "arcana",
+      "description": "magically assisted construction"
     }
   ],
   "effects": {

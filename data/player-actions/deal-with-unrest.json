@@ -32,10 +32,6 @@
     {
       "skill": "occultism",
       "description": "mystical demonstrations"
-    },
-    {
-      "skill": "acrobatics",
-      "description": "impressive physical feats"
     }
   ],
   "effects": {

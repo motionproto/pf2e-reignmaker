@@ -26,10 +26,6 @@
       "description": "black market"
     },
     {
-      "skill": "occultism",
-      "description": "mystical trade"
-    },
-    {
       "skill": "mercantile-lore",
       "description": "trade expertise"
     }
