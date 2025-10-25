@@ -6,6 +6,18 @@ import { PF2eCharacterService } from './PF2eCharacterService';
 import { getSkillPenalty } from '../domain/unrest/UnrestService';
 import { logger } from '../../utils/Logger';
 
+// Module-level state for reroll modifier preservation (client-only, no persistence)
+let lastRollModifiers: Array<{ label: string; modifier: number }> | null = null;
+
+/**
+ * Store modifiers from a completed roll for potential reroll
+ * Called by OutcomeDisplay when user clicks "Reroll with Fame"
+ */
+export function storeModifiersForReroll(modifiers: Array<{ label: string; modifier: number }>) {
+  lastRollModifiers = modifiers;
+  logger.debug('📦 [PF2eSkillService] Stored modifiers for reroll:', modifiers);
+}
+
 export interface SkillCheckOptions {
   skillName: string;
   checkType: 'action' | 'event' | 'incident';
@@ -320,6 +332,43 @@ export class PF2eSkillService {
       // Get kingdom modifiers (including aids for this action/event)
       const kingdomModifiers = this.getKingdomModifiers(skillName, actionId || checkId, checkType);
       
+      // Apply stored modifiers from previous roll (for rerolls)
+      if (lastRollModifiers && lastRollModifiers.length > 0) {
+        logger.debug('📋 [PF2eSkillService] Applying stored modifiers from previous roll:', lastRollModifiers);
+        
+        // Track which labels we've matched
+        const matchedLabels = new Set<string>();
+        
+        // First pass: enable existing modifiers that match
+        for (const mod of kingdomModifiers) {
+          const previousMod = lastRollModifiers.find(m => m.label === mod.name);
+          if (previousMod) {
+            mod.enabled = true;
+            matchedLabels.add(mod.name);
+            logger.debug(`✅ [PF2eSkillService] Pre-enabled modifier: ${mod.name}`);
+          }
+        }
+        
+        // Second pass: add custom modifiers from previous roll that aren't in our list
+        // These are modifiers the user added manually in the PF2e dialog
+        for (const prevMod of lastRollModifiers) {
+          if (!matchedLabels.has(prevMod.label)) {
+            // This is a custom modifier - add it with the value from the previous roll
+            kingdomModifiers.push({
+              name: prevMod.label,
+              value: prevMod.modifier,
+              type: 'circumstance',  // Default to circumstance for custom modifiers
+              enabled: true
+            });
+            logger.debug(`📝 [PF2eSkillService] Added custom modifier from previous roll: ${prevMod.label} (${prevMod.modifier})`);
+          }
+        }
+        
+        // Clear stored modifiers after use
+        lastRollModifiers = null;
+        logger.debug('🧹 [PF2eSkillService] Cleared stored modifiers');
+      }
+      
       // Convert to PF2e format
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
       
@@ -529,8 +578,9 @@ export const performKingdomSkillCheck = (
   checkType: 'action' | 'event' | 'incident',
   checkName: string,
   checkId: string,
-  checkEffects?: any
-) => pf2eSkillService.performKingdomSkillCheck(skillName, checkType, checkName, checkId, checkEffects);
+  checkEffects?: any,
+  actionId?: string
+) => pf2eSkillService.performKingdomSkillCheck(skillName, checkType, checkName, checkId, checkEffects, actionId);
 
 export const performKingdomActionRoll = (
   actor: any,

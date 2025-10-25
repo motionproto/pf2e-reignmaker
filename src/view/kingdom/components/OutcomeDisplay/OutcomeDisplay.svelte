@@ -256,6 +256,24 @@
     
     console.log(`💎 [OutcomeDisplay] Fame deducted (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
     
+    // Extract enabled modifiers from rollBreakdown and store for next roll
+    const enabledModifiers: Array<{ label: string; modifier: number }> = [];
+    if (rollBreakdown?.modifiers) {
+      for (const mod of rollBreakdown.modifiers) {
+        if (mod.enabled === true) {
+          enabledModifiers.push({
+            label: mod.label,
+            modifier: mod.modifier
+          });
+        }
+      }
+      console.log('📋 [OutcomeDisplay] Extracted enabled modifiers:', enabledModifiers);
+    }
+    
+    // Store modifiers for the next roll (module-scoped state)
+    const { storeModifiersForReroll } = await import('../../../../services/pf2e/PF2eSkillService');
+    storeModifiersForReroll(enabledModifiers);
+    
     // ✅ Clear state in instance via helper (syncs to all clients)
     if (instance) {
       await clearInstanceResolutionState(instance.instanceId);
@@ -266,10 +284,11 @@
     
     console.log('🔄 [OutcomeDisplay] UI state reset for reroll');
     
-    // Dispatch reroll request with skill info and previous fame for error recovery
+    // Dispatch reroll request with skill info and previous fame
+    // Note: Modifiers are now stored in module-scoped state, not passed as parameters
     dispatch('performReroll', { 
       skill: skillName,
-      previousFame: deductResult.previousFame 
+      previousFame: deductResult.previousFame
     });
   }
   

@@ -542,12 +542,13 @@ export async function createUpkeepPhaseController() {
             continue;
           }
           
+          // Count ALL fortifications requiring processing, regardless of cost
+          // This matches the logic in startPhase() for step auto-completion
+          fortificationCount++;
+          
           const tierConfig = fortificationData.tiers[hex.fortification.tier - 1];
           const cost = tierConfig.maintenance || 0;
-          if (cost > 0) {
-            totalFortificationCost += cost;
-            fortificationCount++;
-          }
+          totalFortificationCost += cost;
         }
       }
       

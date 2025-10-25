@@ -240,7 +240,7 @@
       await executeSkillCheck(skill);
    }
    
-   async function executeSkillCheck(skill: string) {
+   async function executeSkillCheck(skill: string, enabledModifiers?: string[]) {
       if (!currentIncident || !checkHandler || !unrestPhaseController) return;
       
       // Note: Incidents don't consume player actions - they're separate checks
@@ -249,6 +249,7 @@
          checkType: 'incident',
          item: currentIncident,
          skill,
+         enabledModifiers,
          
          onStart: () => {
             console.log(`🎬 [UnrestPhase] Starting incident check with skill: ${skill}`);
@@ -358,19 +359,18 @@
    // Event handler - reroll with fame
    async function handleReroll(event: CustomEvent) {
       if (!currentIncident) return;
-      
-      const { skill, previousFame } = event.detail;
-      console.log(`🔁 [UnrestPhase] Performing reroll with skill: ${skill}`);
-      
+      const { skill, previousFame, enabledModifiers } = event.detail;
+      console.log(`🔁 [UnrestPhase] Performing reroll with skill: ${skill}`, { enabledModifiers });
+
       // Reset UI state for new roll
       await handleCancel();
-      
+
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Trigger new roll
+
+      // Trigger new roll with preserved modifiers
       try {
-         await executeSkillCheck(skill);
+         await executeSkillCheck(skill, enabledModifiers);
       } catch (error) {
          console.error('[UnrestPhase] Error during reroll:', error);
          // Restore fame if the roll failed

@@ -340,7 +340,7 @@
       }
    }
    
-   async function executeSkillCheck(skill: string, targetInstanceId: string | null = null) {
+   async function executeSkillCheck(skill: string, targetInstanceId: string | null = null, enabledModifiers?: string[]) {
       if (!currentEvent || !checkHandler || !eventPhaseController) return;
       
       // Capture the event ID and instance ID for closure
@@ -356,6 +356,7 @@
          checkType: 'event',
          item: currentEvent,
          skill,
+         enabledModifiers,
          
          onStart: () => {
             console.log(`🎬 [EventsPhase] Starting event check with skill: ${skill}`);
@@ -527,9 +528,8 @@
    // Event handler - perform reroll (OutcomeDisplay handles fame)
    async function handlePerformReroll(event: CustomEvent) {
       if (!currentEvent) return;
-
-      const { skill, previousFame } = event.detail;
-      console.log(`🔁 [EventsPhase] Performing reroll with skill: ${skill}`);
+      const { skill, previousFame, enabledModifiers } = event.detail;
+      console.log(`🔁 [EventsPhase] Performing reroll with skill: ${skill}`, { enabledModifiers });
 
       // Reset UI state for new roll
       await handleCancel();
@@ -537,9 +537,9 @@
       // Small delay to ensure UI updates
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Trigger new roll
+      // Trigger new roll with preserved modifiers
       try {
-         await executeSkillCheck(skill);
+         await executeSkillCheck(skill, null, enabledModifiers);
       } catch (error) {
          console.error('[EventsPhase] Error during reroll:', error);
          // Restore fame if the roll failed

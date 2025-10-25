@@ -15,6 +15,7 @@ export interface CheckConfig {
   checkType: 'event' | 'incident' | 'action';
   item: any;  // Event, incident, or action data
   skill: string;
+  enabledModifiers?: Array<{ label: string; modifier: number }>;  // Modifiers that were enabled in previous roll
   
   // Callbacks for UI updates
   onStart?: () => void;
@@ -44,7 +45,7 @@ export class CheckHandler {
    * Execute a kingdom skill check with full lifecycle management
    */
   async executeCheck(config: CheckConfig): Promise<void> {
-    const { checkType, item, skill, onStart, onComplete, onCancel, onError } = config;
+    const { checkType, item, skill, enabledModifiers, onStart, onComplete, onCancel, onError } = config;
 
     logger.debug(`🎲 [CheckHandler] Starting ${checkType} check for: ${item.name} with skill: ${skill}`);
 
@@ -93,7 +94,9 @@ export class CheckHandler {
           successEffect: item.effects?.success?.msg || 'Success',
           failureEffect: item.effects?.failure?.msg || 'Failure',
           criticalFailureEffect: item.effects?.criticalFailure?.msg || 'Critical Failure'
-        }
+        },
+        undefined  // actionId
+        // Note: Modifiers are now preserved via module-scoped state in PF2eSkillService
       );
 
       // If performKingdomSkillCheck returns null, the user cancelled

@@ -3,7 +3,6 @@
    import { get } from 'svelte/store';
    import { kingdomData, resources, settlements, updateKingdom } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
-   import type { BuildProject } from '../../../models/BuildProject';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -58,6 +57,8 @@
       unfedUnrest: number;
       foodStorageCapacity: number;
       excessFood: number;
+      fortificationMaintenanceCost: number;
+      fortificationCount: number;
    } = {
       currentFood: 0,
       foodConsumption: 0,
@@ -73,7 +74,9 @@
       unfedSettlements: [],
       unfedUnrest: 0,
       foodStorageCapacity: 0,
-      excessFood: 0
+      excessFood: 0,
+      fortificationMaintenanceCost: 0,
+      fortificationCount: 0
    };
    
    // Update display data when kingdom data or controller changes
@@ -97,7 +100,9 @@
       unfedSettlements,
       unfedUnrest,
       foodStorageCapacity,
-      excessFood
+      excessFood,
+      fortificationMaintenanceCost,
+      fortificationCount
    } = displayData);
    
    // UI state for unfed settlements dropdown
@@ -317,8 +322,28 @@
          
          <div class="card-content">
             <div class="content-area">
-            {#if armyCount > 0}
-               <!-- Army Food Consumption -->
+            {#if armyCount > 0 || fortificationCount > 0}
+               <!-- Combined Capacity Display - First Thing Shown -->
+               <div class="military-capacity-display">
+                  <div class="capacity-item" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport && armyCount > 0}>
+                     <i class="fas fa-chess-knight"></i>
+                     <span>{armyCount} / {armySupport} Armies</span>
+                  </div>
+                  
+                  <div class="capacity-item">
+                     <i class="fas fa-chess-rook"></i>
+                     <span>{fortificationCount} Fortifications</span>
+                  </div>
+                  
+                  {#if unsupportedCount > 0}
+                     <div class="capacity-item danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>{unsupportedCount} Unsupported</span>
+                     </div>
+                  {/if}
+               </div>
+               
+               <!-- Food Consumption (always show, 0 if no armies) -->
                <div class="consumption-display">
                   <div class="consumption-stat required">
                      <i class="fas fa-utensils"></i>
@@ -331,21 +356,9 @@
                      <div class="stat-value">{foodRemainingForArmies}</div>
                      <div class="stat-label">Food Remaining</div>
                   </div>
-                  
-                  <div class="consumption-stat required">
-                     <i class="fas fa-coins"></i>
-                     <div class="stat-value">{armyCount}</div>
-                     <div class="stat-label">Gold Required</div>
-                  </div>
-                  
-                  <div class="consumption-stat available" class:danger={$resources?.gold < armyCount}>
-                     <i class="fas fa-coins resource-gold"></i>
-                     <div class="stat-value">{$resources?.gold || 0}</div>
-                     <div class="stat-label">Gold Available</div>
-                  </div>
                </div>
                
-               {#if armyFoodShortage > 0 && !militaryCompleted}
+               {#if armyCount > 0 && armyFoodShortage > 0 && !militaryCompleted}
                   <div class="warning-box">
                      <i class="fas fa-exclamation-triangle"></i>
                      <strong>Warning:</strong> Not enough food for armies! Short by {armyFoodShortage} food.
@@ -353,41 +366,47 @@
                   </div>
                {/if}
                
-               <!-- Army Support Capacity -->
-               <div class="army-support-display">
-                  <div class="support-status" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport}>
-                     <i class="fas fa-shield-alt"></i>
-                     <div>
-                        <div class="stat-value">{armyCount} / {armySupport}</div>
-                        <div class="stat-label">Armies / Capacity</div>
-                     </div>
-                  </div>
-                  
-                  {#if unsupportedCount > 0}
-                     <div class="support-status danger">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <div>
-                           <div class="stat-value">{unsupportedCount}</div>
-                           <div class="stat-label">Unsupported</div>
-                        </div>
-                     </div>
-                  {/if}
-               </div>
-               
-               {#if unsupportedCount > 0 && !militaryCompleted}
+               {#if armyCount > 0 && unsupportedCount > 0 && !militaryCompleted}
                   <div class="warning-box">
                      <i class="fas fa-exclamation-triangle"></i>
                      <strong>Warning:</strong> {unsupportedCount} unsupported {unsupportedCount === 1 ? 'army' : 'armies'} will cause +{unsupportedCount} Unrest!
                      <br><small>Future update: Morale checks will be required.</small>
                   </div>
                {/if}
+               
+               <!-- Consolidated Gold Display -->
+               <div class="consumption-display">
+                  <div class="consumption-stat required">
+                     <i class="fas fa-coins"></i>
+                     <div class="stat-value">{armyCount + fortificationMaintenanceCost}</div>
+                     <div class="stat-label">Gold Required</div>
+                  </div>
+                  
+                  <div class="consumption-stat available" class:danger={$resources?.gold < (armyCount + fortificationMaintenanceCost)}>
+                     <i class="fas fa-coins resource-gold"></i>
+                     <div class="stat-value">{$resources?.gold || 0}</div>
+                     <div class="stat-label">Gold Available</div>
+                  </div>
+               </div>
+               
+               {#if !militaryCompleted && ($resources?.gold || 0) < (armyCount + fortificationMaintenanceCost)}
+                  <div class="warning-box">
+                     <i class="fas fa-exclamation-triangle"></i>
+                     <strong>Warning:</strong> Insufficient gold for military support!
+                     {#if ($resources?.gold || 0) < armyCount}
+                        <br><small>Cannot afford army upkeep - will generate unrest.</small>
+                     {:else if fortificationCount > 0}
+                        <br><small>Cannot afford fortification maintenance - effectiveness reduced by 1 tier.</small>
+                     {/if}
+                  </div>
+               {/if}
             {:else}
-               <div class="info-text">No armies currently fielded</div>
+               <div class="info-text">No armies or fortifications requiring maintenance</div>
             {/if}
             </div>
             
             <div class="button-area">
-            {#if armyCount > 0}
+            {#if armyCount > 0 || fortificationCount > 0}
                {#if !militaryCompleted}
                   <Button 
                      variant="secondary"
@@ -396,7 +415,7 @@
                      icon={processingMilitary ? "fas fa-spinner spinning" : "fas fa-shield-alt"}
                      on:click={handleMilitarySupport}
                   >
-                     {processingMilitary ? "Processing..." : "Pay Armies"}
+                     {processingMilitary ? "Processing..." : armyCount > 0 && fortificationCount > 0 ? "Pay Armies & Fortifications" : armyCount > 0 ? "Pay Armies" : "Pay Fortifications"}
                   </Button>
                {:else}
                   <div class="auto-status">
@@ -405,7 +424,7 @@
                {/if}
             {:else}
                <div class="auto-status">
-                  <i class="fas fa-check"></i> Military Support Skipped (No Armies)
+                  <i class="fas fa-check"></i> No Military Support Needed
                </div>
             {/if}
             </div>
@@ -824,60 +843,47 @@
       }
    }
    
-   .army-support-display {
+   .military-capacity-display {
       display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-   }
-   
-   .support-status {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 15px;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
-      flex: 1;
-      justify-content: center;
+   }
+   
+   .capacity-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: var(--font-sm);
+      color: var(--text-primary);
       
       i {
-         font-size: 24px;
-         color: var(--color-blue);
-      }
-      
-      .stat-value {
          font-size: 18px;
-         font-weight: var(--font-weight-bold);
-         color: var(--text-primary);
+         color: var(--color-blue);
+         width: 20px;
+         text-align: center;
       }
       
-      .stat-label {
-         font-size: var(--font-xs);
+      span {
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.025em;
-         color: var(--text-tertiary);
       }
       
       &.warning {
-         background: rgba(245, 158, 11, 0.1);
-         border-color: var(--color-amber);
-         
          i {
+            color: var(--color-amber);
+         }
+         span {
             color: var(--color-amber);
          }
       }
       
       &.danger {
-         background: rgba(239, 68, 68, 0.1);
-         border-color: var(--color-red);
-         
          i {
             color: var(--color-red);
          }
-         
-         .stat-value {
+         span {
             color: var(--color-red);
          }
       }

@@ -152,7 +152,8 @@
     actorName: string,
     checkType?: string,
     skillName?: string,
-    proficiencyRank?: number
+    proficiencyRank?: number,
+    rollBreakdown?: any
   ) {
     // Only handle action type checks
     if (checkType && checkType !== "action") {
@@ -341,7 +342,8 @@
       preliminaryResolutionData,
       actorName,
       skillName || '',
-      effectMessage
+      effectMessage,
+      rollBreakdown  // Pass rollBreakdown from the roll result
     );
     
     // Track instanceId for this action
@@ -641,10 +643,10 @@
 
   // Listen for roll completion events
   async function handleRollComplete(event: CustomEvent) {
-    const { checkId, outcome, actorName, checkType, skillName, proficiencyRank } = event.detail;
+    const { checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown } = event.detail;
 
     if (checkType === "action") {
-      await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank);
+      await onActionResolved(checkId, outcome, actorName, checkType, skillName, proficiencyRank, rollBreakdown);
       
       // Clear aid modifiers for this specific action after roll completes
       const actor = getKingdomActor();
@@ -830,6 +832,9 @@
     const instanceId = currentActionInstances.get(action.id);
     if (!instanceId) return;
     
+    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    if (!instance) return;
+    
     // Get modifiers for the new outcome
     const modifiers = controller.getActionModifiers(action, newOutcome);
     
@@ -858,9 +863,10 @@
       instanceId,
       newOutcome,
       resolutionData,
-      $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId)?.appliedOutcome?.actorName || '',
-      $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId)?.appliedOutcome?.skillName || '',
-      customEffect || ''
+      instance.appliedOutcome?.actorName || 'Unknown',
+      instance.appliedOutcome?.skillName || '',
+      customEffect || (action[newOutcome] as any)?.description || 'Action completed',
+      instance.appliedOutcome?.rollBreakdown  // Preserve existing rollBreakdown
     );
     
     console.log(`✅ [ActionsPhase] Updated instance ${instanceId} with new outcome: ${newOutcome}`);
@@ -1462,6 +1468,7 @@
                 skillName: checkInstance.appliedOutcome.skillName || '',
                 modifiers: checkInstance.appliedOutcome.modifiers || [],
                 effect: checkInstance.appliedOutcome.effect || '',
+                rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
                 effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
               } : undefined}
               {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
