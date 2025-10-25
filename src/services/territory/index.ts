@@ -58,8 +58,20 @@ export interface KingmakerSyncResult {
 export class TerritoryService {
     /**
      * Import territory from Foundry hex grid (for custom maps without Kingmaker)
+     * GM-ONLY: Only GM can import territory data
      */
     async importFromFoundryGrid(): Promise<KingmakerSyncResult> {
+        // GM check - only GM can import data
+        if (!(game as any)?.user?.isGM) {
+            logger.error('[Territory Service] Only GM can import kingdom data');
+            return { 
+                success: false, 
+                hexesSynced: 0, 
+                settlementsSynced: 0, 
+                error: 'Only GM can import kingdom data' 
+            };
+        }
+        
         try {
             // @ts-ignore - Foundry globals
             const canvas = game.canvas;
@@ -129,8 +141,20 @@ export class TerritoryService {
     
     /**
      * Sync territory data from Kingmaker module to Kingdom store
+     * GM-ONLY: Only GM can import territory data
      */
     async syncFromKingmaker(): Promise<KingmakerSyncResult> {
+        // GM check - only GM can import data
+        if (!(game as any)?.user?.isGM) {
+            logger.error('[Territory Service] Only GM can import kingdom data');
+            return { 
+                success: false, 
+                hexesSynced: 0, 
+                settlementsSynced: 0, 
+                error: 'Only GM can import kingdom data' 
+            };
+        }
+        
         try {
             // Check if Kingmaker is available
             // @ts-ignore - Kingmaker global
@@ -159,7 +183,6 @@ export class TerritoryService {
             
             // Convert and filter claimed hexes
             const hexes: Hex[] = [];
-            const settlementsToAdd: Settlement[] = [];
             
             logger.debug('Starting Kingmaker sync, found region hexes:', regionHexes.size);
             
@@ -253,27 +276,28 @@ export class TerritoryService {
                     ourFeatures       // Our features (Kingmaker data converted & discarded)
                 );
                 hexes.push(hex);
-                
-                // Extract settlements from hex features (village, town, city, metropolis)
-                // Import ALL settlements from the entire map (claimed or not)
-                // Filtering by claimed territory happens in the UI/display layer
-                if (hexState.features && hexState.features.length > 0) {
-                    const settlements = this.extractSettlements(hexState.features, dotNotationId);
-                    settlementsToAdd.push(...settlements);
-                }
             }
             
-            logger.debug(`Synced ${hexes.length} hexes, extracted ${settlementsToAdd.length} settlements`);
+            logger.debug(`Synced ${hexes.length} hexes with hex features`);
             
-            // Update kingdom store with territory data and settlements
-            await this.updateKingdomStore(hexes, settlementsToAdd);
+            // Count settlement features for logging (settlements remain as hex features only)
+            let settlementFeatureCount = 0;
+            for (const hex of hexes) {
+                settlementFeatureCount += hex.features.filter(f => f.type === 'settlement').length;
+            }
+            
+            logger.info(`[Territory Service] Found ${settlementFeatureCount} settlement features in hexes`);
+            logger.info(`[Territory Service] Settlement objects are created via UI, not during import`);
+            
+            // Update kingdom store with territory data (no Settlement objects created here)
+            await this.updateKingdomStore(hexes);
             
             logger.info(`[Territory Service] Kingdom store update completed successfully`);
             
             return {
                 success: true,
                 hexesSynced: hexes.length,
-                settlementsSynced: settlementsToAdd.length
+                settlementsSynced: 0  // Settlements are hex features, not Settlement objects
             };
             
         } catch (error) {
@@ -289,10 +313,11 @@ export class TerritoryService {
     
     /**
      * Update the Kingdom store with territory data
+     * Optionally accepts settlements to merge into kingdom data (for initial import only)
      */
-    private async updateKingdomStore(hexes: Hex[], settlements: Settlement[] = []): Promise<void> {
+    private async updateKingdomStore(hexes: Hex[], settlements?: Settlement[]): Promise<void> {
         // Log territory update attempt
-        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes and ${settlements.length} settlements`);
+        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes`);
         
         // Extract roads from hex hasRoad property
         const roadsBuilt: string[] = [];
@@ -330,21 +355,18 @@ export class TerritoryService {
             // Only count hexes claimed by the player (claimedBy === 1), not total hexes
             state.size = state.hexes.filter((h: any) => h.claimedBy === 1).length;
             
-            // Add extracted settlements to kingdom store (only new ones, merge with existing)
-            if (settlements.length > 0) {
+            // Merge imported settlements (if provided)
+            if (settlements && settlements.length > 0) {
+                // Get existing settlements
                 const existingSettlements = state.settlements || [];
                 const existingIds = new Set(existingSettlements.map(s => s.id));
+                
+                // Add new settlements that don't already exist
                 const newSettlements = settlements.filter(s => !existingIds.has(s.id));
                 
                 if (newSettlements.length > 0) {
-                    // Clean up Kingmaker data - we only needed it to copy to location
-                    // location is now the source of truth, kingmakerLocation is discarded
-                    newSettlements.forEach(s => {
-                        delete s.kingmakerLocation;
-                    });
-                    
                     state.settlements = [...existingSettlements, ...newSettlements];
-                    logger.info(`[Territory Service] Added ${newSettlements.length} new settlements from map import (Kingmaker location data discarded)`);
+                    logger.info(`[Territory Service] Imported ${newSettlements.length} settlements from Kingmaker`);
                 }
             }
             
@@ -525,22 +547,20 @@ export class TerritoryService {
             
             if (!featureType) continue; // Skip features with no type
             
-            // Convert settlement features
+            // Convert settlement features - ALL settlements become unlinked hex features
             if (['village', 'town', 'city', 'metropolis'].includes(featureType)) {
                 const featureName = (kmFeature as any).name?.trim();
                 const hasName = featureName && featureName.toLowerCase() !== 'vacant';
                 
-                // If named: we already created a Settlement object for this
-                // If vacant: create unlinked feature marker for location picker
-                if (!hasName) {
-                    ourFeatures.push({
-                        type: 'settlement',
-                        linked: false,
-                        settlementId: null,
-                        tier: featureType.charAt(0).toUpperCase() + featureType.slice(1)
-                    });
-                }
-                // Named settlements will have their features added when they're linked
+                // Create unlinked feature for ALL settlements (named + vacant)
+                // Players will create Settlement objects via UI
+                ourFeatures.push({
+                    type: 'settlement',
+                    linked: false,
+                    settlementId: null,
+                    tier: featureType.charAt(0).toUpperCase() + featureType.slice(1),
+                    name: hasName ? featureName : undefined  // Preserve Kingmaker name
+                });
             }
             // Convert road features
             else if (featureType === 'road') {

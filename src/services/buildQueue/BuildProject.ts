@@ -28,6 +28,7 @@ export interface Army {
   id: string;
   name: string;
   level: number;
+  type?: string; // Army type (cavalry, engineers, infantry, kobold, wolves)
   isSupported: boolean;
   turnsUnsupported: number;
   actorId?: string; // Reference to the NPC actor in Foundry

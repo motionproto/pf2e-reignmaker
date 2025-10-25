@@ -20,6 +20,7 @@ import BuildRoadsAction from '../../../actions/build-roads/BuildRoadsAction';
 import ClaimHexesAction from '../../../actions/claim-hexes/ClaimHexesAction';
 import FortifyHexAction from '../../../actions/fortify-hex/FortifyHexAction';
 import SendScoutsAction from '../../../actions/send-scouts/SendScoutsAction';
+import RecruitUnitAction from '../../../actions/recruit-unit/RecruitUnitAction';
 
 /**
  * Interface for custom action implementations
@@ -56,6 +57,7 @@ actionImplementations.set(BuildRoadsAction.id, BuildRoadsAction);
 actionImplementations.set(ClaimHexesAction.id, ClaimHexesAction);
 actionImplementations.set(FortifyHexAction.id, FortifyHexAction);
 actionImplementations.set(SendScoutsAction.id, SendScoutsAction);
+actionImplementations.set(RecruitUnitAction.id, RecruitUnitAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
@@ -159,7 +161,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction };
 
 // TODO: Export additional implementations as they're created
 // export { BuildStructureAction };

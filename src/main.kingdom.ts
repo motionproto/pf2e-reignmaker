@@ -5,6 +5,7 @@
 
 import { KingdomActor } from './actors/KingdomActor';
 import { initializeKingdomSync } from './hooks/kingdomSync';
+import { registerArmyActorHooks } from './hooks/armyActorHooks';
 
 declare const Hooks: any;
 declare const CONFIG: any;
@@ -21,6 +22,9 @@ export function initializeKingdomSystem(): void {
   
   // Initialize synchronization hooks
   initializeKingdomSync();
+  
+  // Register army actor deletion hooks
+  registerArmyActorHooks();
   
   console.log('[Kingdom System] Initialization complete');
 }

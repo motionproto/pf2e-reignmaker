@@ -16,7 +16,8 @@ import {
   claimedHexes, 
   claimedSettlements,
   allSettlements,
-  claimedHexesWithWorksites 
+  claimedHexesWithWorksites,
+  hexesWithSettlementFeatures
 } from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
 import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
@@ -443,25 +444,23 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('territory-border')
     });
 
-    // Settlements Overlay - REACTIVE (uses allSettlements store)
+    // Settlements Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
     this.registerOverlay({
       id: 'settlements',
       name: 'Settlements',
       icon: 'fa-city',
       layerIds: ['settlements-overlay'],
-      store: allSettlements,  // ✅ Reactive subscription - shows ALL settlements
-      render: (settlements) => {
-        const settlementHexIds = settlements
-          .filter((s: any) => s.location && s.location.x > 0 && s.location.y > 0)
-          .map((s: any) => `${s.location.x}.${s.location.y}`);
+      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
+      render: (hexesWithFeatures) => {
+        const settlementHexIds = hexesWithFeatures.map((h: any) => h.id);
 
         if (settlementHexIds.length === 0) {
-          console.log('[OverlayManager] No settlements - clearing layer');
+          console.log('[OverlayManager] No settlement features - clearing layer');
           this.mapLayer.clearLayer('settlements-overlay');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${settlementHexIds.length} settlements`);
+        console.log(`[OverlayManager] Drawing ${settlementHexIds.length} settlement features`);
         const style: HexStyle = MAP_HEX_STYLES.settlement;
         this.mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
       },
@@ -554,28 +553,26 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('resources')
     });
 
-    // Settlement Icons Overlay - REACTIVE (uses allSettlements store)
+    // Settlement Icons Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
     this.registerOverlay({
       id: 'settlement-icons',
       name: 'Settlement Icons',
       icon: 'fa-castle',
       layerIds: ['settlement-icons'],
-      store: allSettlements,  // ✅ Reactive subscription - shows ALL settlements
-      render: async (settlements) => {
-        const settlementData = settlements
-          .filter((s: any) => s.location && s.location.x > 0 && s.location.y > 0)
-          .map((s: any) => ({
-            id: `${s.location.x}.${s.location.y}`,
-            tier: s.tier || 'Village'
-          }));
+      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
+      render: async (hexesWithFeatures) => {
+        const settlementData = hexesWithFeatures.map((h: any) => ({
+          id: h.id,
+          tier: h.feature?.tier || 'Village'
+        }));
 
         if (settlementData.length === 0) {
-          console.log('[OverlayManager] No settlement icons - clearing layer');
+          console.log('[OverlayManager] No settlement feature icons - clearing layer');
           this.mapLayer.clearLayer('settlement-icons');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement icons`);
+        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement feature icons`);
         await this.mapLayer.drawSettlementIcons(settlementData);
       },
       hide: () => {

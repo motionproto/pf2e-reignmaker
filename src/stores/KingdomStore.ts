@@ -48,29 +48,27 @@ export const claimedHexes = derived(kingdomData, $data => {
 /**
  * All settlements with valid map locations
  * Filters out only unmapped settlements (location 0,0)
+ * Uses location as the source of truth (kingmakerLocation is discarded after import)
  */
 export const allSettlements = derived(kingdomData, $data => {
   return $data.settlements.filter(s => {
-    // Only exclude unmapped settlements
-    return s.kingmakerLocation 
-      ? (s.kingmakerLocation.x > 0 || s.kingmakerLocation.y > 0)
-      : (s.location.x > 0 || s.location.y > 0);
+    // Only exclude unmapped settlements (location is the source of truth)
+    return s.location.x > 0 || s.location.y > 0;
   });
 });
 
 /**
  * Settlements in claimed hexes only
  * Filters out unmapped settlements and settlements in unclaimed territory
+ * Uses location as the source of truth (kingmakerLocation is discarded after import)
  */
 export const claimedSettlements = derived(kingdomData, $data => {
   return $data.settlements.filter(s => {
     // Exclude unmapped settlements
     if (s.location.x === 0 && s.location.y === 0) return false;
     
-    // Check if the settlement's hex is claimed by the kingdom
-    const hexId = s.kingmakerLocation 
-      ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
-      : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+    // Check if the settlement's hex is claimed by the kingdom (use location only)
+    const hexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
     
     const hex = $data.hexes?.find((h: any) => h.id === hexId) as any;
     return hex && hex.claimedBy === 1;
@@ -123,6 +121,25 @@ export const hexesWithTerrain = derived(kingdomData, $data =>
 export const kingdomRoads = derived(kingdomData, $data => {
   // Roads are stored as an array of hex IDs in kingdom data
   return $data.roadsBuilt || [];
+});
+
+/**
+ * Hexes with settlement features (for settlement overlay)
+ * Returns all hexes that have settlement features
+ */
+export const hexesWithSettlementFeatures = derived(kingdomData, $data => {
+  return $data.hexes
+    .filter((h: any) => {
+      const features = h.features || [];
+      return features.some((f: any) => f.type === 'settlement');
+    })
+    .map((h: any) => {
+      const settlementFeature = (h.features || []).find((f: any) => f.type === 'settlement');
+      return {
+        id: h.id,
+        feature: settlementFeature
+      };
+    });
 });
 
 /**
@@ -414,6 +431,13 @@ export async function incrementTurn(): Promise<void> {
  * Ensures all systems are properly initialized before first Status phase
  */
 export async function startKingdom(): Promise<void> {
+  // GM check - only GM can start the kingdom
+  if (!(game as any)?.user?.isGM) {
+    console.error('[KingdomStore] Only GM can start the kingdom');
+    (ui as any).notifications?.error('Only the GM can start Turn 1');
+    return;
+  }
+  
   const actor = get(kingdomActor);
   if (!actor) {
     console.error('[KingdomStore] No kingdom actor available for startKingdom');

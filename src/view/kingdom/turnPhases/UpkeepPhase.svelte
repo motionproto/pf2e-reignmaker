@@ -11,6 +11,7 @@
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    import Button from '../components/baseComponents/Button.svelte';
    import BuildQueueItem from '../components/buildQueue/BuildQueueItem.svelte';
+   import WarningNotification from '../components/baseComponents/WarningNotification.svelte';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Controller instance
@@ -259,11 +260,11 @@
             {/if}
             
             {#if unfedSettlements.length > 0 && !consumeCompleted}
-               <div class="warning-box warning-stacked">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <div class="warning-title">Food shortage: {unfedSettlements.length} settlement{unfedSettlements.length > 1 ? 's' : ''} will be unfed</div>
-                  <div class="warning-message">Unfed settlements generate unrest based on their tier and will not generate gold next turn. Total unrest: +{unfedUnrest}.</div>
-               </div>
+               <WarningNotification 
+                  title="Food shortage"
+                  description="Unfed settlements generate unrest based on their tier and will not generate gold next turn."
+                  impact="+{unfedUnrest} Unrest"
+               />
                
                <!-- Collapsible unfed settlements list -->
                <button 
@@ -271,7 +272,7 @@
                   on:click={() => showUnfedSettlements = !showUnfedSettlements}
                >
                   <i class="fas fa-chevron-{showUnfedSettlements ? 'up' : 'down'}"></i>
-                  {showUnfedSettlements ? 'Hide' : 'Show'} unfed settlements
+                  {showUnfedSettlements ? 'Hide' : 'Show'} unfed settlements ({unfedSettlements.length})
                </button>
                
                {#if showUnfedSettlements}
@@ -359,19 +360,19 @@
                </div>
                
                {#if armyCount > 0 && armyFoodShortage > 0 && !militaryCompleted}
-                  <div class="warning-box">
-                     <i class="fas fa-exclamation-triangle"></i>
-                     <strong>Warning:</strong> Not enough food for armies! Short by {armyFoodShortage} food.
-                     <br><small>This will cause +{armyFoodShortage} Unrest.</small>
-                  </div>
+                  <WarningNotification 
+                     title="Food shortage"
+                     description="Short by {armyFoodShortage} food."
+                     impact="+{armyFoodShortage} Unrest"
+                  />
                {/if}
                
                {#if armyCount > 0 && unsupportedCount > 0 && !militaryCompleted}
-                  <div class="warning-box">
-                     <i class="fas fa-exclamation-triangle"></i>
-                     <strong>Warning:</strong> {unsupportedCount} unsupported {unsupportedCount === 1 ? 'army' : 'armies'} will cause +{unsupportedCount} Unrest!
-                     <br><small>Future update: Morale checks will be required.</small>
-                  </div>
+                  <WarningNotification 
+                     title="Unsupported armies"
+                     description="{unsupportedCount} {unsupportedCount === 1 ? 'army' : 'armies'} without support. Future update: Morale checks will be required."
+                     impact="+{unsupportedCount} Unrest"
+                  />
                {/if}
                
                <!-- Consolidated Gold Display -->
@@ -390,15 +391,15 @@
                </div>
                
                {#if !militaryCompleted && ($resources?.gold || 0) < (armyCount + fortificationMaintenanceCost)}
-                  <div class="warning-box">
-                     <i class="fas fa-exclamation-triangle"></i>
-                     <strong>Warning:</strong> Insufficient gold for military support!
-                     {#if ($resources?.gold || 0) < armyCount}
-                        <br><small>Cannot afford army upkeep - will generate unrest.</small>
-                     {:else if fortificationCount > 0}
-                        <br><small>Cannot afford fortification maintenance - effectiveness reduced by 1 tier.</small>
-                     {/if}
-                  </div>
+                  <WarningNotification 
+                     title="Insufficient gold"
+                     description={($resources?.gold || 0) < armyCount 
+                        ? "Cannot afford army upkeep." 
+                        : "Cannot afford fortification maintenance."}
+                     impact={($resources?.gold || 0) < armyCount 
+                        ? "Will generate Unrest" 
+                        : "Fortification effectiveness reduced by 1 tier"}
+                  />
                {/if}
             {:else}
                <div class="info-text">No armies or fortifications requiring maintenance</div>
@@ -886,47 +887,6 @@
          span {
             color: var(--color-red);
          }
-      }
-   }
-   
-   .warning-box {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--color-amber);
-      border-radius: var(--radius-sm);
-      color: var(--color-amber-light);
-      font-size: var(--font-sm);
-      
-      &.warning-stacked {
-         flex-direction: column;
-         align-items: flex-start;
-         gap: 6px;
-      }
-      
-      i {
-         font-size: 16px;
-         margin-top: 2px;
-         flex-shrink: 0;
-      }
-      
-      .warning-title {
-         font-weight: var(--font-weight-semibold);
-         color: var(--color-amber-light);
-      }
-      
-      .warning-message {
-         opacity: 0.9;
-         font-size: var(--font-xs);
-         line-height: 1.4;
-      }
-      
-      small {
-         opacity: 0.9;
-         display: block;
-         margin-top: 4px;
       }
    }
    

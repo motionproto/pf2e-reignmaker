@@ -14,30 +14,19 @@
    // Get unique tiers from settlements
    $: settlementTiers = [...new Set(settlements.map(s => s.tier))].sort();
    
-   // Detect unassigned hexes (hexes with settlement features but no settlement)
+   // Detect unassigned hexes (hexes with unlinked settlement features)
    $: unassignedHexes = ($kingdomData.hexes || [])
       .filter((h: any) => {
          // Must be in claimed territory
          if (h.claimedBy !== 1) return false;
          
-         // Must have settlement features
+         // Must have unlinked settlement features
          const features = h.features || [];
-         const hasSettlementFeature = features.some((f: any) => 
-            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
-         );
-         if (!hasSettlementFeature) return false;
-         
-         // Check if any settlement is assigned to this hex
-         const [xStr, yStr] = h.id.split('.');
-         const x = parseInt(xStr) || 0;
-         const y = parseInt(yStr) || 0;
-         
-         const hasAssignedSettlement = $kingdomData.settlements?.some(s => 
-            s.location.x === x && s.location.y === y
+         const hasUnlinkedSettlement = features.some((f: any) => 
+            f.type === 'settlement' && f.linked === false
          );
          
-         // Show if no settlement is assigned
-         return !hasAssignedSettlement;
+         return hasUnlinkedSettlement;
       })
       .map((h: any) => {
          const [xStr, yStr] = h.id.split('.');
@@ -46,16 +35,16 @@
          
          const features = h.features || [];
          const settlementFeature = features.find((f: any) => 
-            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+            f.type === 'settlement' && f.linked === false
          );
          
-         // Map feature type to SettlementTier
+         // Map feature tier to SettlementTier
          let tier = SettlementTier.VILLAGE;
-         if (settlementFeature?.type) {
-            const typeStr = settlementFeature.type.toLowerCase();
-            if (typeStr === 'town') tier = SettlementTier.TOWN;
-            else if (typeStr === 'city') tier = SettlementTier.CITY;
-            else if (typeStr === 'metropolis') tier = SettlementTier.METROPOLIS;
+         if (settlementFeature?.tier) {
+            const tierStr = settlementFeature.tier;
+            if (tierStr === 'Town') tier = SettlementTier.TOWN;
+            else if (tierStr === 'City') tier = SettlementTier.CITY;
+            else if (tierStr === 'Metropolis') tier = SettlementTier.METROPOLIS;
          }
          
          return {
@@ -63,7 +52,7 @@
             x,
             y,
             tier,
-            name: settlementFeature?.name || 'Unnamed'
+            name: settlementFeature?.name  // Use feature name (may be undefined)
          };
       });
    
@@ -87,19 +76,29 @@
    }
    
    // Create settlement for unassigned hex
-   async function handleCreateSettlementAtHex(hex: { x: number; y: number; tier: SettlementTier; name: string }) {
+   async function handleCreateSettlementAtHex(hex: { x: number; y: number; tier: SettlementTier; name?: string }) {
       // Create a settlement at the hex location
       const newSettlement = createSettlement(
-         `Missing settlement at ${hex.x}:${hex.y.toString().padStart(2, '0')}`,
+         hex.name || 'New Settlement',  // Use feature name if available
          { x: hex.x, y: hex.y },
-         hex.tier,
-         { x: hex.x, y: hex.y } // kingmakerLocation
+         hex.tier
       );
       
-      // Add to kingdom
+      // Add to kingdom and link hex feature
       await updateKingdom(k => {
          if (!k.settlements) k.settlements = [];
          k.settlements.push(newSettlement);
+         
+         // Link the hex feature to this settlement
+         const hexId = `${hex.x}.${String(hex.y).padStart(2, '0')}`;
+         const hexData = k.hexes.find(h => h.id === hexId) as any;
+         if (hexData?.features) {
+            const feature = hexData.features.find((f: any) => f.type === 'settlement' && !f.linked);
+            if (feature) {
+               feature.linked = true;
+               feature.settlementId = newSettlement.id;
+            }
+         }
       });
       
       // Select the new settlement
@@ -197,7 +196,13 @@
                         <div class="unassigned-left">
                            <i class="fas fa-exclamation-triangle unassigned-icon"></i>
                            <div class="unassigned-info">
-                              <div class="unassigned-name">Missing settlement at <strong>{hex.x}:{hex.y.toString().padStart(2, '0')}</strong></div>
+                              <div class="unassigned-name">
+                              {#if hex.name}
+                                 <strong>{hex.name}</strong> at {hex.x}:{hex.y.toString().padStart(2, '0')}
+                              {:else}
+                                 Settlement at <strong>{hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
+                              {/if}
+                           </div>
                            </div>
                         </div>
                         <button 

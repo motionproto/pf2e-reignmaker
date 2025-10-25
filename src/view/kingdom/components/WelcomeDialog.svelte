@@ -10,6 +10,7 @@
    let selectedType: 'stolen-lands' | 'custom' | null = null;
    let hasKingmakerData = false;
    let importResult: { success: boolean; hexesSynced: number; error?: string } | null = null;
+   let isGM = false;
    
    // Scene selection
    let allScenes: any[] = [];
@@ -48,6 +49,9 @@
    }
    
    onMount(() => {
+      // Check if current user is GM
+      isGM = (game as any)?.user?.isGM || false;
+      
       // Load all available scenes
       allScenes = KingdomSettings.getAllScenes();
       
@@ -170,55 +174,69 @@
          </div>
          
          <div class="dialog-body">
-            <!-- Scene Selector (no wrapper) -->
-            <label for="scene-select" class="scene-label">
-               <i class="fas fa-map"></i>
-               Select Kingdom Map Scene
-            </label>
-            <select 
-               id="scene-select" 
-               class="scene-dropdown"
-               bind:value={selectedScene}
-            >
-               <option value={null}>-- Select a Scene --</option>
-               {#each allScenes as scene}
-                  <option value={scene}>
-                     {scene.name}
-                  </option>
-               {/each}
-            </select>
-            
-            <p class="campaign-prompt">
-               Select your campaign setting:
-            </p>
-            
-            <div class="scene-options">
-               <button 
-                  class="scene-option stolen-lands" 
-                  class:available={kingmakerAvailable}
-                  class:unavailable={!kingmakerAvailable}
-                  disabled={!kingmakerAvailable}
-                  on:click={() => selectSceneType('stolen-lands')}
+            {#if isGM}
+               <!-- GM: Show import controls -->
+               <label for="scene-select" class="scene-label">
+                  <i class="fas fa-map"></i>
+                  Select Kingdom Map Scene
+               </label>
+               <select 
+                  id="scene-select" 
+                  class="scene-dropdown"
+                  bind:value={selectedScene}
                >
-                  <div class="option-icon">
-                     <i class="fas fa-crown"></i>
-                  </div>
-                  <div class="option-content">
-                     <h3>Stolen Lands</h3>
-                     <p>Pathfinder Kingmaker Adventure Path</p>
-                  </div>
-               </button>
+                  <option value={null}>-- Select a Scene --</option>
+                  {#each allScenes as scene}
+                     <option value={scene}>
+                        {scene.name}
+                     </option>
+                  {/each}
+               </select>
                
-               <button class="scene-option custom-map available" on:click={() => selectSceneType('custom')}>
-                  <div class="option-icon">
-                     <i class="fas fa-map-marked-alt"></i>
+               <p class="campaign-prompt">
+                  Select your campaign setting:
+               </p>
+               
+               <div class="scene-options">
+                  <button 
+                     class="scene-option stolen-lands" 
+                     class:available={kingmakerAvailable}
+                     class:unavailable={!kingmakerAvailable}
+                     disabled={!kingmakerAvailable}
+                     on:click={() => selectSceneType('stolen-lands')}
+                  >
+                     <div class="option-icon">
+                        <i class="fas fa-crown"></i>
+                     </div>
+                     <div class="option-content">
+                        <h3>Stolen Lands</h3>
+                        <p>Pathfinder Kingmaker Adventure Path</p>
+                     </div>
+                  </button>
+                  
+                  <button class="scene-option custom-map available" on:click={() => selectSceneType('custom')}>
+                     <div class="option-icon">
+                        <i class="fas fa-map-marked-alt"></i>
+                     </div>
+                     <div class="option-content">
+                        <h3>Custom Hex Map</h3>
+                        <p>Your own campaign world</p>
+                     </div>
+                  </button>
+               </div>
+            {:else}
+               <!-- Non-GM: Show waiting message -->
+               <div class="player-waiting">
+                  <div class="waiting-icon">
+                     <i class="fas fa-hourglass-half"></i>
                   </div>
-                  <div class="option-content">
-                     <h3>Custom Hex Map</h3>
-                     <p>Your own campaign world</p>
-                  </div>
-               </button>
-            </div>
+                  <h3>Waiting for GM</h3>
+                  <p>
+                     Your GM will import the kingdom map data to get started.
+                     Once the import is complete, you'll be able to explore the kingdom and participate in turn phases.
+                  </p>
+               </div>
+            {/if}
          </div>
          
          <div class="dialog-footer">
@@ -415,6 +433,43 @@
       .importing-text {
          text-align: center;
          color: var(--text-secondary);
+      }
+   }
+   
+   .player-waiting {
+      text-align: center;
+      padding: 2rem;
+      
+      .waiting-icon {
+         font-size: 4rem;
+         color: var(--text-secondary);
+         margin-bottom: 1.5rem;
+         
+         i {
+            animation: pulse 2s ease-in-out infinite;
+         }
+      }
+      
+      h3 {
+         margin: 0 0 1rem 0;
+         color: var(--text-primary);
+         font-size: var(--font-2xl);
+      }
+      
+      p {
+         margin: 0;
+         color: var(--text-secondary);
+         font-size: var(--font-lg);
+         line-height: var(--line-height-relaxed);
+      }
+   }
+   
+   @keyframes pulse {
+      0%, 100% {
+         opacity: 0.6;
+      }
+      50% {
+         opacity: 1;
       }
    }
    

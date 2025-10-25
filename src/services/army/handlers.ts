@@ -18,10 +18,12 @@ export function registerArmyHandlers(): void {
   actionDispatcher.register('createArmy', async (data: {
     name: string;
     level: number;
+    type?: string;
+    image?: string;
     actorData?: any;
   }) => {
     logger.debug('[ArmyHandlers] Creating army:', data);
-    const army = await armyService._createArmyInternal(data.name, data.level, data.actorData);
+    const army = await armyService._createArmyInternal(data.name, data.level, data.type, data.image, data.actorData);
     logger.debug('[ArmyHandlers] Army created:', army);
     return army;
   });
@@ -34,6 +36,18 @@ export function registerArmyHandlers(): void {
     const result = await armyService._disbandArmyInternal(data.armyId);
     logger.debug('[ArmyHandlers] Army disbanded:', result);
     return result;
+  });
+
+  // Register placeArmyToken handler
+  actionDispatcher.register('placeArmyToken', async (data: {
+    actorId: string;
+    sceneId: string;
+    x: number;
+    y: number;
+  }) => {
+    logger.debug('[ArmyHandlers] Placing army token:', data);
+    await armyService._placeArmyTokenInternal(data.actorId, data.sceneId, data.x, data.y);
+    logger.debug('[ArmyHandlers] Army token placed successfully');
   });
 
   logger.debug('✅ [ArmyHandlers] Army operation handlers registered');

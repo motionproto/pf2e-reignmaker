@@ -148,9 +148,7 @@ export interface HexFeature {
   linked?: boolean;          // true = has Settlement object, false = vacant marker
   settlementId?: string | null;  // ID linking to Settlement, null if unlinked
   tier?: string;             // Village/Town/City/Metropolis (for display on vacant settlements)
-  
-  // Landmark-specific fields (when type = 'landmark')
-  name?: string;             // Name of the landmark
+  name?: string;             // Settlement/landmark name (preserved from Kingmaker import)
   
   // Extensible for future feature types
   [key: string]: any;

@@ -15,10 +15,10 @@ export class ArmyService {
    * 
    * @param name - Army name
    * @param level - Army level (typically party level)
-   * @param actorData - Optional custom NPC actor data
+   * @param options - Optional army options (type, image, custom actor data)
    * @returns Created army with actorId
    */
-  async createArmy(name: string, level: number, actorData?: any): Promise<Army> {
+  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any }): Promise<Army> {
     const { actionDispatcher } = await import('../ActionDispatcher');
     
     if (!actionDispatcher.isAvailable()) {
@@ -28,7 +28,9 @@ export class ArmyService {
     return await actionDispatcher.dispatch('createArmy', {
       name,
       level,
-      actorData
+      type: options?.type,
+      image: options?.image,
+      actorData: options?.actorData
     });
   }
 
@@ -39,14 +41,14 @@ export class ArmyService {
    * 
    * @internal
    */
-  async _createArmyInternal(name: string, level: number, actorData?: any): Promise<Army> {
+  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any): Promise<Army> {
     logger.debug(`🪖 [ArmyService] Creating army: ${name} (Level ${level})`);
     
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // Create NPC actor in Foundry
-    const actorId = await this.createNPCActor(name, level, actorData);
+    // Create NPC actor in Foundry with army type image
+    const actorId = await this.createNPCActor(name, level, image, actorData);
     
     // Auto-assign to random settlement with capacity
     const settlement = this.findRandomSettlementWithCapacity();
@@ -56,6 +58,7 @@ export class ArmyService {
       id: armyId,
       name: name,
       level: level,
+      type: type,
       isSupported: !!settlement,
       turnsUnsupported: settlement ? 0 : 1,
       actorId: actorId,
@@ -77,6 +80,9 @@ export class ArmyService {
         }
       }
     });
+    
+    // Add metadata flag to actor for identification
+    await this.addArmyMetadata(actorId, armyId, type);
     
     const supportMsg = settlement 
       ? ` assigned to ${settlement.name}`
@@ -105,7 +111,71 @@ export class ArmyService {
     
     return await actionDispatcher.dispatch('disbandArmy', { armyId });
   }
+  
+  /**
+   * Place army token on scene (routes through GM via ActionDispatcher)
+   * 
+   * @param actorId - Actor ID of the army
+   * @param sceneId - Scene ID where token should be placed
+   * @param x - X coordinate in pixels
+   * @param y - Y coordinate in pixels
+   */
+  async placeArmyToken(actorId: string, sceneId: string, x: number, y: number): Promise<void> {
+    const { actionDispatcher } = await import('../ActionDispatcher');
+    
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
+    }
+    
+    return await actionDispatcher.dispatch('placeArmyToken', {
+      actorId,
+      sceneId,
+      x,
+      y
+    });
+  }
 
+  /**
+   * Internal method - Place army token with direct GM permissions
+   * This is called by the socket handler on the GM's client
+   * DO NOT call this directly from UI - use placeArmyToken() instead
+   * 
+   * @internal
+   */
+  async _placeArmyTokenInternal(actorId: string, sceneId: string, x: number, y: number): Promise<void> {
+    logger.debug(`🎭 [ArmyService] Placing token for actor ${actorId} at (${x}, ${y})`);
+    
+    const game = (globalThis as any).game;
+    const scene = game?.scenes?.get(sceneId);
+    
+    if (!scene) {
+      throw new Error(`Scene not found: ${sceneId}`);
+    }
+    
+    // Get the actor to access its prototype token data
+    const actor = game?.actors?.get(actorId);
+    if (!actor) {
+      throw new Error(`Actor not found: ${actorId}`);
+    }
+    
+    // Create token data using actor's prototype token
+    const tokenData = {
+      actorId: actorId,
+      x: x,
+      y: y,
+      hidden: false,
+      actorLink: true, // Link token to actor (changes to actor affect all tokens)
+      // Explicitly set token image from actor's prototype token
+      texture: {
+        src: actor.prototypeToken?.texture?.src || actor.img
+      }
+    };
+    
+    await scene.createEmbeddedDocuments('Token', [tokenData]);
+    
+    logger.debug(`✅ [ArmyService] Token placed successfully at (${x}, ${y}) with image: ${tokenData.texture.src} (linked: true)`);
+  }
+  
   /**
    * Internal method - Disband army with direct GM permissions
    * This is called by the socket handler on the GM's client
@@ -174,11 +244,12 @@ export class ArmyService {
    * 
    * @param name - Actor name
    * @param level - Actor level
+   * @param image - Optional image path for portrait and token
    * @param customData - Optional custom actor data
    * @returns Actor ID
    * @throws Error if Foundry not ready or creation fails
    */
-  async createNPCActor(name: string, level: number, customData?: any): Promise<string> {
+  async createNPCActor(name: string, level: number, image?: string, customData?: any): Promise<string> {
     logger.debug(`🎭 [ArmyService] Creating NPC actor: ${name} (Level ${level})`);
     
     const game = (globalThis as any).game;
@@ -219,9 +290,15 @@ export class ArmyService {
       name: name,
       type: 'npc',
       folder: folder.id, // Place in folder
+      img: image, // Portrait image
       // Set ownership so all players can see/edit the army actor
       ownership: {
         default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+      },
+      prototypeToken: {
+        texture: {
+          src: image // Token image
+        }
       },
       system: {
         details: {
@@ -246,6 +323,35 @@ export class ArmyService {
     
     logger.debug(`✅ [ArmyService] NPC actor created in folder: ${npcActor.id}`);
     return npcActor.id;
+  }
+  
+  /**
+   * Add metadata flag to army actor for identification
+   * Should be called after actor creation to link actor to kingdom army data
+   * 
+   * @param actorId - The NPC actor ID
+   * @param armyId - The army ID in kingdom data
+   * @param armyType - The army type (cavalry, infantry, etc.)
+   */
+  async addArmyMetadata(actorId: string, armyId: string, armyType?: string): Promise<void> {
+    logger.debug(`🏷️ [ArmyService] Adding metadata to actor ${actorId}`);
+    
+    const game = (globalThis as any).game;
+    const npcActor = game?.actors?.get(actorId);
+    
+    if (!npcActor) {
+      throw new Error(`NPC actor not found: ${actorId}`);
+    }
+    
+    const kingdomActor = getKingdomActor();
+    
+    await npcActor.setFlag('pf2e-reignmaker', 'army-metadata', {
+      armyId: armyId,
+      armyType: armyType,
+      kingdomActorId: kingdomActor?.id
+    });
+    
+    logger.debug(`✅ [ArmyService] Metadata added to actor`);
   }
   
   /**

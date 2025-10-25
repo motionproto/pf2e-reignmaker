@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { kingdomData, claimedHexes, claimedSettlements, claimedWorksites, currentProduction } from '../../../stores/KingdomStore';
   import { startKingdom } from '../../../stores/KingdomStore';
   import { setSelectedTab } from '../../../stores/ui';
@@ -7,6 +8,12 @@
   import Button from '../components/baseComponents/Button.svelte';
   
   let isStarting = false;
+  let isGM = false;
+  
+  onMount(() => {
+    // Check if current user is GM
+    isGM = (game as any)?.user?.isGM || false;
+  });
   
   // Check if game is already active (turn 1 or greater)
   $: isGameActive = $kingdomData.currentTurn >= 1;
@@ -379,20 +386,27 @@
       </h2>
       
       <p class="ready-message">
-        Click the button below to start Turn 1 and begin managing your kingdom.
-        Explore the territory, settlements, and other tabs at any time.
+        {#if isGM}
+          Once you've reviewed your kingdom's starting position, click below to begin Turn 1.
+          Explore the Territory, Settlements, and other tabs to learn about your kingdom.
+        {:else}
+          Your GM will start Turn 1 when everyone is ready.
+          Explore the Territory, Settlements, and other tabs to learn about your kingdom.
+        {/if}
       </p>
       
-      <div class="start-button-wrapper">
-        <Button
-          variant="primary"
-          disabled={isStarting}
-          icon={isStarting ? "fas fa-spinner fa-spin spinning" : "fas fa-play"}
-          on:click={handleStartKingdom}
-        >
-          {isStarting ? 'Starting Kingdom...' : 'Begin Turn 1'}
-        </Button>
-      </div>
+      {#if isGM}
+        <div class="start-button-wrapper">
+          <Button
+            variant="primary"
+            disabled={isStarting}
+            icon={isStarting ? "fas fa-spinner fa-spin spinning" : "fas fa-play"}
+            on:click={handleStartKingdom}
+          >
+            {isStarting ? 'Starting Kingdom...' : 'Begin Turn 1'}
+          </Button>
+        </div>
+      {/if}
     </div>
   {/if}
 </div>

@@ -61,7 +61,7 @@
     }
   },
   "failureCausesUnrest": true,
-  "costs": {
+  "cost": {
     "gold": 2
   },
   "special": "Limit: This action may only be attempted once per Kingdom Turn"
