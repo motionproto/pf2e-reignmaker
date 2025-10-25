@@ -46,6 +46,19 @@ export const claimedHexes = derived(kingdomData, $data => {
 });
 
 /**
+ * All settlements with valid map locations
+ * Filters out only unmapped settlements (location 0,0)
+ */
+export const allSettlements = derived(kingdomData, $data => {
+  return $data.settlements.filter(s => {
+    // Only exclude unmapped settlements
+    return s.kingmakerLocation 
+      ? (s.kingmakerLocation.x > 0 || s.kingmakerLocation.y > 0)
+      : (s.location.x > 0 || s.location.y > 0);
+  });
+});
+
+/**
  * Settlements in claimed hexes only
  * Filters out unmapped settlements and settlements in unclaimed territory
  */

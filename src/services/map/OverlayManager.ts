@@ -15,6 +15,7 @@ import {
   kingdomData, 
   claimedHexes, 
   claimedSettlements,
+  allSettlements,
   claimedHexesWithWorksites 
 } from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
@@ -51,12 +52,11 @@ export interface MapOverlay {
 export class OverlayManager {
   private static instance: OverlayManager | null = null;
   private overlays: Map<string, MapOverlay> = new Map();
-  private activeOverlays: Set<string> = new Set();
   private subscriptions: Map<string, Unsubscriber> = new Map();  // Store subscriptions
   private mapLayer: ReignMakerMapLayer;
   private readonly STORAGE_KEY = 'reignmaker-overlay-states';
   
-  // Reactive store for active overlay IDs - components can subscribe to this
+  // Single source of truth for active overlay IDs - both runtime and reactive UI state
   private activeOverlaysStore: Writable<Set<string>> = writable(new Set());
 
   private constructor() {
@@ -119,18 +119,22 @@ export class OverlayManager {
     }
 
     // ✅ IDEMPOTENT: Early return if already active (prevent double subscription/render)
-    if (this.activeOverlays.has(id)) {
+    const $active = get(this.activeOverlaysStore);
+    if ($active.has(id)) {
       console.log(`[OverlayManager] 🔄 Overlay ${id} already active, skipping duplicate showOverlay() call`);
       return;
     }
 
     console.log(`[OverlayManager] 📍 Showing overlay: ${id}`);
-    console.log(`[OverlayManager] Active overlays before: ${this.activeOverlays.size}, Subscriptions before: ${this.subscriptions.size}`);
+    console.log(`[OverlayManager] Active overlays before: ${$active.size}, Subscriptions before: ${this.subscriptions.size}`);
 
     try {
       // Mark as active FIRST (before subscription fires)
       // This ensures isOverlayActive() returns true when subscription callback fires
-      this.activeOverlays.add(id);
+      this.activeOverlaysStore.update($set => {
+        $set.add(id);
+        return $set;
+      });
       
       // Reactive pattern: Subscribe to store for automatic updates
       if (overlay.store && overlay.render) {
@@ -170,19 +174,26 @@ export class OverlayManager {
       else {
         console.warn(`[OverlayManager] Overlay ${id} has neither reactive nor legacy show method`);
         // Remove from active since we couldn't show it
-        this.activeOverlays.delete(id);
+        this.activeOverlaysStore.update($set => {
+          $set.delete(id);
+          return $set;
+        });
         return;
       }
       
       // Save state after successful activation
       this.saveState();
       
-      console.log(`[OverlayManager] ✅ Showed overlay: ${id} (active: ${this.activeOverlays.size}, subscriptions: ${this.subscriptions.size})`);
+      const $activeAfter = get(this.activeOverlaysStore);
+      console.log(`[OverlayManager] ✅ Showed overlay: ${id} (active: ${$activeAfter.size}, subscriptions: ${this.subscriptions.size})`);
     } catch (error) {
       console.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
       // Don't throw - log error but continue (prevents one failing overlay from breaking everything)
       // Remove from active overlays since it failed
-      this.activeOverlays.delete(id);
+      this.activeOverlaysStore.update($set => {
+        $set.delete(id);
+        return $set;
+      });
       this.saveState();
     }
   }
@@ -217,7 +228,10 @@ export class OverlayManager {
       });
       
       // Mark as inactive
-      this.activeOverlays.delete(id);
+      this.activeOverlaysStore.update($set => {
+        $set.delete(id);
+        return $set;
+      });
       
       // Save state unless told to skip (bulk operations handle state separately)
       if (!skipStateSave) {
@@ -246,14 +260,16 @@ export class OverlayManager {
    * Check if overlay is active
    */
   isOverlayActive(id: string): boolean {
-    return this.activeOverlays.has(id);
+    const $active = get(this.activeOverlaysStore);
+    return $active.has(id);
   }
 
   /**
    * Get list of active overlay IDs
    */
   getActiveOverlayIds(): string[] {
-    return Array.from(this.activeOverlays);
+    const $active = get(this.activeOverlaysStore);
+    return Array.from($active);
   }
 
   /**
@@ -263,17 +279,23 @@ export class OverlayManager {
    *                        (useful when toggling scene control OFF/ON)
    */
   clearAll(preserveState: boolean = false): void {
+    const $active = get(this.activeOverlaysStore);
+    
     console.log('[OverlayManager] 🧹 Clearing all overlays...');
-    console.log('[OverlayManager] Active overlays before cleanup:', Array.from(this.activeOverlays));
+    console.log('[OverlayManager] Active overlays before cleanup:', Array.from($active));
     console.log('[OverlayManager] Active subscriptions before cleanup:', this.subscriptions.size);
     console.log('[OverlayManager] Preserve state:', preserveState);
     
-    // If NOT preserving state, save empty state at the start (will be saved at end too)
-    // If preserving state, don't touch localStorage at all
+    // ✅ CRITICAL FIX: Save current state to localStorage BEFORE clearing
+    // This preserves which overlays were active so they can be restored later
+    if (preserveState) {
+      this.saveState();
+      console.log('[OverlayManager] 💾 Saved overlay state before clearing:', Array.from($active));
+    }
     
     // Hide all active overlays (skip individual state saves - we'll handle at end)
-    const overlaysToHide = Array.from(this.activeOverlays);
-    overlaysToHide.forEach(id => {
+    const overlaysToHide = Array.from($active);
+    overlaysToHide.forEach((id: string) => {
       this.hideOverlay(id, true); // skipStateSave = true
     });
     
@@ -291,40 +313,28 @@ export class OverlayManager {
     
     // Handle state saving
     if (preserveState) {
-      // DON'T save to localStorage - it keeps the overlay IDs for restoration
-      // BUT update reactive store so toolbar buttons turn OFF (reflect reality)
-      this.updateReactiveStore();
-      console.log('[OverlayManager] 💾 Preserved overlay state in localStorage (toolbar updated to reflect cleared graphics)');
-      console.log('[OverlayManager] ✅ All overlays cleared - graphics removed, subscriptions: 0');
+      // State already saved before clearing - store already updated by hideOverlay calls
+      console.log('[OverlayManager] ✅ All overlays cleared - graphics removed, subscriptions: 0, state preserved for restoration');
     } else {
       // Permanently clear state (e.g., "Reset Map" button)
-      // activeOverlays is already clear from hideOverlay calls
-      this.saveState(); // Save the now-empty state (also updates reactive store)
+      // Store already updated by hideOverlay calls, just persist to localStorage
+      this.saveState();
       console.log('[OverlayManager] ✅ All overlays cleared - subscriptions: 0, active: 0, state saved');
     }
   }
 
   /**
-   * Save overlay states to localStorage and update reactive store
+   * Save overlay states to localStorage
+   * Store is already the source of truth, so we just persist it
    */
   saveState(): void {
+    const $active = get(this.activeOverlaysStore);
     const state = {
-      activeOverlays: Array.from(this.activeOverlays)
+      activeOverlays: Array.from($active)
     };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
     
-    // Update reactive store so subscribers (like toolbar) get notified
-    this.updateReactiveStore();
-    
     console.log('[OverlayManager] Saved state:', state);
-  }
-  
-  /**
-   * Update the reactive store (separate from localStorage)
-   * This keeps the toolbar buttons in sync with activeOverlays
-   */
-  private updateReactiveStore(): void {
-    this.activeOverlaysStore.set(new Set(this.activeOverlays));
   }
 
   /**
@@ -433,17 +443,17 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('territory-border')
     });
 
-    // Settlements Overlay - REACTIVE (uses claimedSettlements store)
+    // Settlements Overlay - REACTIVE (uses allSettlements store)
     this.registerOverlay({
       id: 'settlements',
       name: 'Settlements',
       icon: 'fa-city',
       layerIds: ['settlements-overlay'],
-      store: claimedSettlements,  // ✅ Reactive subscription
+      store: allSettlements,  // ✅ Reactive subscription - shows ALL settlements
       render: (settlements) => {
         const settlementHexIds = settlements
-          .filter((s: any) => s.kingmakerLocation && s.kingmakerLocation.x > 0 && s.kingmakerLocation.y > 0)
-          .map((s: any) => `${s.kingmakerLocation.x}.${s.kingmakerLocation.y}`);
+          .filter((s: any) => s.location && s.location.x > 0 && s.location.y > 0)
+          .map((s: any) => `${s.location.x}.${s.location.y}`);
 
         if (settlementHexIds.length === 0) {
           console.log('[OverlayManager] No settlements - clearing layer');
@@ -544,18 +554,18 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('resources')
     });
 
-    // Settlement Icons Overlay - REACTIVE (uses claimedSettlements store)
+    // Settlement Icons Overlay - REACTIVE (uses allSettlements store)
     this.registerOverlay({
       id: 'settlement-icons',
       name: 'Settlement Icons',
       icon: 'fa-castle',
       layerIds: ['settlement-icons'],
-      store: claimedSettlements,  // ✅ Reactive subscription
+      store: allSettlements,  // ✅ Reactive subscription - shows ALL settlements
       render: async (settlements) => {
         const settlementData = settlements
-          .filter((s: any) => s.kingmakerLocation && s.kingmakerLocation.x > 0 && s.kingmakerLocation.y > 0)
+          .filter((s: any) => s.location && s.location.x > 0 && s.location.y > 0)
           .map((s: any) => ({
-            id: `${s.kingmakerLocation.x}.${s.kingmakerLocation.y}`,
+            id: `${s.location.x}.${s.location.y}`,
             tier: s.tier || 'Village'
           }));
 

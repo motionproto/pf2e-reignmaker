@@ -29,10 +29,10 @@
 
 import { get } from 'svelte/store';
 import { kingdomData, updateKingdom } from '../../stores/KingdomStore';
-import { Hex, Worksite, WorksiteType } from '../../models/Hex';
+import { Hex, Worksite, WorksiteType, type HexFeature } from '../../models/Hex';
 import type { Settlement, SettlementTier } from '../../models/Settlement';
 import { createSettlement, createKingmakerSettlementId } from '../../models/Settlement';
-import type { HexFeature, HexState } from '../../api/kingmaker';
+import type { HexFeature as KingmakerHexFeature, HexState } from '../../api/kingmaker';
 import { logger } from '../../utils/Logger';
 import { normalizeTerrainType, normalizeTravelDifficulty } from '../../types/terrain';
 import type { TerrainType, TravelDifficulty } from '../../types/terrain';
@@ -233,7 +233,10 @@ export class TerritoryService {
                 const col = parseInt(colStr);
                 
                 // Extract hasRoad from features
-                const hasRoad = hexState.features?.some((f: HexFeature) => f.type === 'road') || false;
+                const hasRoad = hexState.features?.some((f: KingmakerHexFeature) => f.type === 'road') || false;
+                
+                // Convert Kingmaker features to our format (if any)
+                const ourFeatures = this.convertKingmakerFeatures(hexState.features || []);
                 
                 // Create hex with features and ownership
                 const hex = new Hex(
@@ -247,7 +250,7 @@ export class TerritoryService {
                     claimedBy,        // Track hex ownership
                     hasRoad,          // Road flag
                     0,                // No fortification (default)
-                    hexState.features // Preserve Kingmaker features for debugging
+                    ourFeatures       // Our features (Kingmaker data converted & discarded)
                 );
                 hexes.push(hex);
                 
@@ -320,7 +323,7 @@ export class TerritoryService {
                     hasRoad: hex.hasRoad || false,
                     fortified: hex.fortified || 0,
                     name: hex.name || undefined,
-                    kingmakerFeatures: hex.kingmakerFeatures || [], // Preserve Kingmaker features
+                    features: hex.features || [], // Our features (NOT Kingmaker)
                     claimedBy: hex.claimedBy ?? 0 // Preserve ownership
                 };
             });
@@ -334,8 +337,14 @@ export class TerritoryService {
                 const newSettlements = settlements.filter(s => !existingIds.has(s.id));
                 
                 if (newSettlements.length > 0) {
+                    // Clean up Kingmaker data - we only needed it to copy to location
+                    // location is now the source of truth, kingmakerLocation is discarded
+                    newSettlements.forEach(s => {
+                        delete s.kingmakerLocation;
+                    });
+                    
                     state.settlements = [...existingSettlements, ...newSettlements];
-                    logger.info(`[Territory Service] Added ${newSettlements.length} new settlements from map import`);
+                    logger.info(`[Territory Service] Added ${newSettlements.length} new settlements from map import (Kingmaker location data discarded)`);
                 }
             }
             
@@ -505,6 +514,54 @@ export class TerritoryService {
     }
     
     /**
+     * Convert Kingmaker features to our feature format
+     * Extracts only what we need, discards Kingmaker-specific data
+     */
+    private convertKingmakerFeatures(kingmakerFeatures: KingmakerHexFeature[]): HexFeature[] {
+        const ourFeatures: HexFeature[] = [];
+        
+        for (const kmFeature of kingmakerFeatures) {
+            const featureType = kmFeature.type?.toLowerCase();
+            
+            if (!featureType) continue; // Skip features with no type
+            
+            // Convert settlement features
+            if (['village', 'town', 'city', 'metropolis'].includes(featureType)) {
+                const featureName = (kmFeature as any).name?.trim();
+                const hasName = featureName && featureName.toLowerCase() !== 'vacant';
+                
+                // If named: we already created a Settlement object for this
+                // If vacant: create unlinked feature marker for location picker
+                if (!hasName) {
+                    ourFeatures.push({
+                        type: 'settlement',
+                        linked: false,
+                        settlementId: null,
+                        tier: featureType.charAt(0).toUpperCase() + featureType.slice(1)
+                    });
+                }
+                // Named settlements will have their features added when they're linked
+            }
+            // Convert road features
+            else if (featureType === 'road') {
+                ourFeatures.push({
+                    type: 'road'
+                });
+            }
+            // Convert landmarks (if any)
+            else if ((kmFeature as any).name) {
+                ourFeatures.push({
+                    type: 'landmark',
+                    name: (kmFeature as any).name
+                });
+            }
+            // Other features we don't handle yet - could be extended later
+        }
+        
+        return ourFeatures;
+    }
+    
+    /**
      * Check if hex has commodity matching its worksite production
      */
     private hasMatchingCommodity(hexState: HexState, worksite: Worksite | null): boolean {
@@ -531,7 +588,7 @@ export class TerritoryService {
      * Creates settlements with kingmakerLocation and rmLocation (0,0 if unlinked)
      * IMPORTANT: Only ONE settlement per hex - takes the highest tier if multiple features exist
      */
-    private extractSettlements(features: HexFeature[], hexId: string): Settlement[] {
+    private extractSettlements(features: KingmakerHexFeature[], hexId: string): Settlement[] {
         // Get existing settlements to check for duplicates
         const existingSettlements = get(kingdomData).settlements || [];
         
@@ -552,7 +609,7 @@ export class TerritoryService {
         }
         
         // Find ALL settlement features in this hex and take the HIGHEST tier
-        const settlementFeatures: Array<{ feature: HexFeature, tier: SettlementTier, tierRank: number }> = [];
+        const settlementFeatures: Array<{ feature: KingmakerHexFeature, tier: SettlementTier, tierRank: number }> = [];
         const tierRanking = { 'Village': 1, 'Town': 2, 'City': 3, 'Metropolis': 4 };
         
         for (const feature of features) {
@@ -688,7 +745,7 @@ export class TerritoryService {
                     (hexData as any).claimedBy ?? 0,
                     (hexData as any).hasRoad || false,
                     (hexData as any).fortified || 0,
-                    (hexData as any).kingmakerFeatures || (hexData as any).features || []
+                    (hexData as any).features || []
                 );
             });
         }
@@ -747,7 +804,7 @@ export class TerritoryService {
             (hexData as any).claimedBy ?? 0,
             (hexData as any).hasRoad || false,
             (hexData as any).fortified || 0,
-            (hexData as any).kingmakerFeatures || (hexData as any).features || []
+            (hexData as any).features || []
         );
     }
     

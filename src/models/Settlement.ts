@@ -62,8 +62,8 @@ export enum StructureCondition {
 export interface Settlement {
   id: string;
   name: string;
-  location: { x: number; y: number }; // RM usage coordinates (0,0 = not linked, otherwise active location)
-  kingmakerLocation?: { x: number; y: number }; // Permanent Kingmaker map location (if from Kingmaker)
+  location: { x: number; y: number }; // SOURCE OF TRUTH for settlement location
+  kingmakerLocation?: { x: number; y: number }; // TEMPORARY - Only used during Kingmaker import, then discarded
   level: number; // Settlement level (1-20)
   tier: SettlementTier;
   structureIds: string[]; // IDs of built structures
@@ -121,9 +121,9 @@ export function createKingmakerSettlementId(location: { x: number; y: number }):
 /**
  * Create a new settlement with defaults
  * @param name Settlement name
- * @param location RM usage location (set to 0,0 for unlinked)
+ * @param location Settlement location (source of truth)
  * @param tier Settlement tier
- * @param kingmakerLocation Optional Kingmaker map location (for imported settlements)
+ * @param kingmakerLocation Optional - Only used during import, will be removed by sync service
  */
 export function createSettlement(
   name: string,

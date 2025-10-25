@@ -138,10 +138,22 @@ export class Worksite {
 }
 
 /**
- * Hex feature (from Kingmaker module)
+ * Hex Feature - Our own feature system (NOT Kingmaker)
+ * Extensible for future features like roads, landmarks, etc.
  */
 export interface HexFeature {
-  type: string | null;
+  type: 'settlement' | 'road' | 'landmark' | 'other';
+  
+  // Settlement-specific fields (when type = 'settlement')
+  linked?: boolean;          // true = has Settlement object, false = vacant marker
+  settlementId?: string | null;  // ID linking to Settlement, null if unlinked
+  tier?: string;             // Village/Town/City/Metropolis (for display on vacant settlements)
+  
+  // Landmark-specific fields (when type = 'landmark')
+  name?: string;             // Name of the landmark
+  
+  // Extensible for future feature types
+  [key: string]: any;
 }
 
 /**
@@ -168,8 +180,8 @@ export class Hex {
   // Game mechanics
   hasCommodityBonus: boolean; // Hex has matching commodity for worksite (e.g., lumber commodity + logging camp)
   
-  // Optional: Preserve raw Kingmaker data for debugging
-  kingmakerFeatures?: Array<{ type: string; [key: string]: any }>;
+  // Our own features (NOT Kingmaker)
+  features: HexFeature[];
   
   constructor(
     row: number,
@@ -182,7 +194,7 @@ export class Hex {
     claimedBy: number | string | null = 0,
     hasRoad: boolean = false,
     fortified: number = 0, // Default to 0 (unfortified)
-    kingmakerFeatures?: Array<{ type: string; [key: string]: any }>
+    features: HexFeature[] = []
   ) {
     this.row = row;
     this.col = col;
@@ -194,7 +206,7 @@ export class Hex {
     this.claimedBy = claimedBy;
     this.hasRoad = hasRoad;
     this.fortified = fortified;
-    this.kingmakerFeatures = kingmakerFeatures;
+    this.features = features;
   }
   
   /**

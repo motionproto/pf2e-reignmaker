@@ -21,7 +21,7 @@
          if (h.claimedBy !== 1) return false;
          
          // Must have settlement features
-         const features = h.kingmakerFeatures || h.features || [];
+         const features = h.features || [];
          const hasSettlementFeature = features.some((f: any) => 
             f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
          );
@@ -44,7 +44,7 @@
          const x = parseInt(xStr) || 0;
          const y = parseInt(yStr) || 0;
          
-         const features = h.kingmakerFeatures || h.features || [];
+         const features = h.features || [];
          const settlementFeature = features.find((f: any) => 
             f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
          );

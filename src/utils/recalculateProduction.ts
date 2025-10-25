@@ -60,7 +60,7 @@ export async function recalculateWorksiteProduction(): Promise<boolean> {
         hexData.claimedBy ?? 0,
         hexData.hasRoad || false,
         hexData.fortified || 0,
-        hexData.kingmakerFeatures || hexData.features || []
+        hexData.features || []
       );
     });
     

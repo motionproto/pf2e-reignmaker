@@ -273,10 +273,11 @@ export class HexSelectorService {
         break;
         
       case 'settlement':
-        // Show territory and existing settlements
+        // Show territory, existing settlements, and settlement icons
         await this.overlayManager.showOverlay('territories');
         await this.overlayManager.showOverlay('territory-border');
         await this.overlayManager.showOverlay('settlements');
+        await this.overlayManager.showOverlay('settlement-icons');
         break;
     }
   }

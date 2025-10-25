@@ -21,7 +21,7 @@
          if (!isClaimed) return false;
          
          // Only include hexes with settlement features
-         const features = (h as any).kingmakerFeatures || (h as any).features || [];
+         const features = (h as any).features || [];
          if (!features || features.length === 0) return false;
          
          return features.some((f: any) => 
@@ -34,8 +34,8 @@
          const x = parseInt(xStr) || 0;
          const y = parseInt(yStr) || 0;
          
-         // Get settlement type from features (check both field names for compatibility)
-         const features = (h as any).kingmakerFeatures || (h as any).features || [];
+         // Get settlement type from features
+         const features = (h as any).features || [];
          const settlementFeature = features.find((f: any) => 
             f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
          );
