@@ -124,6 +124,9 @@ export class OverlayManager {
       return;
     }
 
+    console.log(`[OverlayManager] 📍 Showing overlay: ${id}`);
+    console.log(`[OverlayManager] Active overlays before: ${this.activeOverlays.size}, Subscriptions before: ${this.subscriptions.size}`);
+
     try {
       // Mark as active FIRST (before subscription fires)
       // This ensures isOverlayActive() returns true when subscription callback fires
@@ -132,7 +135,12 @@ export class OverlayManager {
       // Reactive pattern: Subscribe to store for automatic updates
       if (overlay.store && overlay.render) {
         // Cleanup old subscription if exists
+        const hadOldSubscription = this.subscriptions.has(id);
         this.subscriptions.get(id)?.();
+        
+        if (hadOldSubscription) {
+          console.warn(`[OverlayManager] ⚠️ Cleaned up old subscription for ${id} - this shouldn't happen!`);
+        }
         
         console.log(`[OverlayManager] 🔄 Setting up reactive subscription for: ${id}`);
         
@@ -146,13 +154,17 @@ export class OverlayManager {
             } catch (error) {
               console.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
             }
+          } else {
+            console.warn(`[OverlayManager] ⚠️ Subscription fired for inactive overlay: ${id} - this shouldn't happen!`);
           }
         });
         
         this.subscriptions.set(id, unsubscribe);
+        console.log(`[OverlayManager] ✅ Subscription registered for: ${id} (total: ${this.subscriptions.size})`);
       }
       // Legacy pattern: Call show() method
       else if (overlay.show) {
+        console.log(`[OverlayManager] 📜 Using legacy show() method for: ${id}`);
         await overlay.show();
       }
       else {
@@ -165,7 +177,7 @@ export class OverlayManager {
       // Save state after successful activation
       this.saveState();
       
-      console.log(`[OverlayManager] ✅ Showed overlay: ${id}`);
+      console.log(`[OverlayManager] ✅ Showed overlay: ${id} (active: ${this.activeOverlays.size}, subscriptions: ${this.subscriptions.size})`);
     } catch (error) {
       console.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
       // Don't throw - log error but continue (prevents one failing overlay from breaking everything)
@@ -177,8 +189,9 @@ export class OverlayManager {
 
   /**
    * Hide an overlay (with automatic cleanup)
+   * @param skipStateSave - If true, don't save state (used during bulk clear operations)
    */
-  hideOverlay(id: string): void {
+  hideOverlay(id: string, skipStateSave: boolean = false): void {
     const overlay = this.overlays.get(id);
     if (!overlay) {
       console.warn(`[OverlayManager] Overlay not found: ${id}`);
@@ -205,7 +218,11 @@ export class OverlayManager {
       
       // Mark as inactive
       this.activeOverlays.delete(id);
-      this.saveState();
+      
+      // Save state unless told to skip (bulk operations handle state separately)
+      if (!skipStateSave) {
+        this.saveState();
+      }
       
       console.log(`[OverlayManager] ✅ Hid overlay: ${id}`);
     } catch (error) {
@@ -241,27 +258,50 @@ export class OverlayManager {
 
   /**
    * Clear all overlays
+   * 
+   * @param preserveState - If true, keeps the active overlay state saved for restoration
+   *                        (useful when toggling scene control OFF/ON)
    */
-  clearAll(): void {
-    console.log('[OverlayManager] Clearing all overlays...');
+  clearAll(preserveState: boolean = false): void {
+    console.log('[OverlayManager] 🧹 Clearing all overlays...');
+    console.log('[OverlayManager] Active overlays before cleanup:', Array.from(this.activeOverlays));
+    console.log('[OverlayManager] Active subscriptions before cleanup:', this.subscriptions.size);
+    console.log('[OverlayManager] Preserve state:', preserveState);
     
-    // Hide all active overlays (this will also clean up subscriptions)
-    this.activeOverlays.forEach(id => {
-      this.hideOverlay(id);
+    // If NOT preserving state, save empty state at the start (will be saved at end too)
+    // If preserving state, don't touch localStorage at all
+    
+    // Hide all active overlays (skip individual state saves - we'll handle at end)
+    const overlaysToHide = Array.from(this.activeOverlays);
+    overlaysToHide.forEach(id => {
+      this.hideOverlay(id, true); // skipStateSave = true
     });
     
     // Extra safety: Clean up any lingering subscriptions
+    const lingering = this.subscriptions.size;
     this.subscriptions.forEach(unsub => unsub());
     this.subscriptions.clear();
+    
+    if (lingering > 0) {
+      console.warn(`[OverlayManager] ⚠️ Cleaned up ${lingering} lingering subscription(s)`);
+    }
     
     // Clear all map layers
     this.mapLayer.clearAllLayers();
     
-    // Clear active state
-    this.activeOverlays.clear();
-    this.saveState();
-    
-    console.log('[OverlayManager] ✅ All overlays cleared');
+    // Handle state saving
+    if (preserveState) {
+      // DON'T save to localStorage - it keeps the overlay IDs for restoration
+      // BUT update reactive store so toolbar buttons turn OFF (reflect reality)
+      this.updateReactiveStore();
+      console.log('[OverlayManager] 💾 Preserved overlay state in localStorage (toolbar updated to reflect cleared graphics)');
+      console.log('[OverlayManager] ✅ All overlays cleared - graphics removed, subscriptions: 0');
+    } else {
+      // Permanently clear state (e.g., "Reset Map" button)
+      // activeOverlays is already clear from hideOverlay calls
+      this.saveState(); // Save the now-empty state (also updates reactive store)
+      console.log('[OverlayManager] ✅ All overlays cleared - subscriptions: 0, active: 0, state saved');
+    }
   }
 
   /**
@@ -274,9 +314,17 @@ export class OverlayManager {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
     
     // Update reactive store so subscribers (like toolbar) get notified
-    this.activeOverlaysStore.set(new Set(this.activeOverlays));
+    this.updateReactiveStore();
     
     console.log('[OverlayManager] Saved state:', state);
+  }
+  
+  /**
+   * Update the reactive store (separate from localStorage)
+   * This keeps the toolbar buttons in sync with activeOverlays
+   */
+  private updateReactiveStore(): void {
+    this.activeOverlaysStore.set(new Set(this.activeOverlays));
   }
 
   /**

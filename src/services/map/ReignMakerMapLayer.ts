@@ -993,18 +993,25 @@ export class ReignMakerMapLayer {
       this.toggleState = false;
       this.toolbarManager.resetManuallyClosed();
       
-      // Hide toolbar (overlays remain in their state for when we toggle back ON)
+      // Step 1: Hide toolbar
       console.log('[ReignMakerMapLayer] Step 1: Hiding toolbar...');
       this.toolbarManager.hide();
       
-      // Hide the PIXI container (master visibility switch)
-      // This hides all layers at once without affecting their individual state
-      console.log('[ReignMakerMapLayer] Step 2: Hiding PIXI container...');
+      // Step 2: Clear all overlays - THIS IS CRITICAL
+      // Unsubscribes from all reactive stores to prevent rendering while hidden
+      // BUT preserve state so overlays restore when toggling back ON
+      console.log('[ReignMakerMapLayer] Step 2: Clearing all overlays and unsubscribing from stores (preserving state)...');
+      const { getOverlayManager } = await import('./OverlayManager');
+      const overlayManager = getOverlayManager();
+      overlayManager.clearAll(true); // preserveState = true
+      
+      // Step 3: Hide the PIXI container
+      console.log('[ReignMakerMapLayer] Step 3: Hiding PIXI container...');
       this.hidePixiContainer();
       
       console.log('[ReignMakerMapLayer] ═══ Toggle OFF complete ═══');
       console.log('[ReignMakerMapLayer] Final state - Container visible:', this.container?.visible);
-      console.log('[ReignMakerMapLayer] Overlays remain in their state and will restore when toggling back ON');
+      console.log('[ReignMakerMapLayer] All subscriptions cleaned up, overlays will restore when toggling back ON');
     }
     
     // Update scene control button state

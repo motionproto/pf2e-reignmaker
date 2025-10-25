@@ -1,0 +1,11 @@
+{
+  "PF2E_REIGNMAKER": {
+    "SCENE_CONTROL": {
+      "TOOLCLIP": {
+        "HEADING": "Reignmaker Overlays",
+        "PARAGRAPH_1": "Toggle hex overlays on/off",
+        "PARAGRAPH_2": "Double-click to open Kingdom UI"
+      }
+    }
+  }
+}

@@ -1,7 +1,46 @@
 # Layer Management System Audit
 
 **Date:** 2025-10-23  
-**Issue:** Layers sometimes persist when they should be removed, causing visual artifacts
+**Last Updated:** 2025-10-25  
+**Issue:** Layers sometimes persist when they should be removed, causing visual artifacts  
+**Status:** ✅ **RESOLVED**
+
+---
+
+## Resolution Summary (2025-10-25)
+
+The root cause was identified as **reactive store subscriptions continuing to fire after the scene control was toggled OFF**. The fix was simple and effective:
+
+### What Was Fixed
+
+1. **Added `overlayManager.clearAll()` when toggling scene control OFF**
+   - Unsubscribes from all reactive stores
+   - Prevents rendering while container is hidden
+   - Location: `ReignMakerMapLayer.handleSceneControlToggle()`
+
+2. **Improved canvasTearDown cleanup**
+   - Calls `overlayManager.clearAll()` before destroying layers
+   - Ensures clean state on scene changes
+   - Location: `SceneControlRegistration.ts`
+
+3. **Enhanced validation logging**
+   - Tracks subscription lifecycle
+   - Warns if subscriptions fire when they shouldn't
+   - Helps identify future issues
+
+### Why This Works
+
+The reactive overlay system uses Svelte stores that automatically re-render when kingdom data changes. Previously, when toggling the scene control OFF:
+- The PIXI container was hidden ✅
+- But subscriptions kept running ❌
+- Kingdom data changes (from Kingmaker sync, user actions, etc.) triggered rendering ❌
+- Layers were drawn behind the hidden container, causing artifacts when toggled back ON ❌
+
+Now when toggling OFF:
+- The PIXI container is hidden ✅
+- All subscriptions are unsubscribed ✅
+- No rendering occurs ✅
+- Clean slate when toggling back ON ✅
 
 ---
 

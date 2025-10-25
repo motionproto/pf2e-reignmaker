@@ -2,6 +2,24 @@
  * Type definitions for ReignMaker Map Layer Service
  */
 
+// Import settlement icons
+import villageIcon from '../../../img/map_icons/settlement_village.webp';
+import townIcon from '../../../img/map_icons/settlement_town.webp';
+import cityIcon from '../../../img/map_icons/settlement_city.webp';
+import metropolisIcon from '../../../img/map_icons/settlement_metropolis.webp';
+
+// Import worksite icons
+import farmIcon from '../../../img/map_icons/worksite_farm.webp';
+import lumberIcon from '../../../img/map_icons/worksite_lumber_mill.webp';
+import mineIcon from '../../../img/map_icons/worksite_mine.webp';
+import quarryIcon from '../../../img/map_icons/worksite_quarry.webp';
+
+// Import resource/commodity icons
+import foodIcon from '../../../img/map_icons/commodity_food.webp';
+import lumberCommodityIcon from '../../../img/map_icons/commodity_lumber.webp';
+import oreIcon from '../../../img/map_icons/commodity_ore.webp';
+import stoneIcon from '../../../img/map_icons/commodity_stone.webp';
+
 /**
  * Predefined and custom layer identifiers
  */
@@ -51,42 +69,45 @@ export { MAP_HEX_STYLES as DEFAULT_HEX_STYLES } from '../../view/kingdom/utils/p
 /**
  * Worksite icon mappings
  * Maps worksite types to their icon image paths
+ * Using ES module imports for HMR compatibility
  */
 export const WORKSITE_ICONS: Record<string, string> = {
-  'Farmstead': 'modules/pf2e-reignmaker/img/map_icons/worksite_farm.webp',
-  'Logging Camp': 'modules/pf2e-reignmaker/img/map_icons/worksite_lumber_mill.webp',
-  'Mine': 'modules/pf2e-reignmaker/img/map_icons/worksite_mine.webp',
-  'Bog Mine': 'modules/pf2e-reignmaker/img/map_icons/worksite_mine.webp', // Reuse mine icon
-  'Quarry': 'modules/pf2e-reignmaker/img/map_icons/worksite_quarry.webp',
-  'Hunting/Fishing Camp': 'modules/pf2e-reignmaker/img/map_icons/worksite_farm.webp', // Reuse farm icon
-  'Oasis Farm': 'modules/pf2e-reignmaker/img/map_icons/worksite_farm.webp' // Reuse farm icon
+  'Farmstead': farmIcon,
+  'Logging Camp': lumberIcon,
+  'Mine': mineIcon,
+  'Bog Mine': mineIcon, // Reuse mine icon
+  'Quarry': quarryIcon,
+  'Hunting/Fishing Camp': farmIcon, // Reuse farm icon
+  'Oasis Farm': farmIcon // Reuse farm icon
 };
 
 /**
  * Resource/Commodity icon mappings
  * Maps worksite types to their corresponding resource production icons
  * Represents what resources the worksites produce
+ * Using ES module imports for HMR compatibility
  */
 export const RESOURCE_ICONS: Record<string, string> = {
-  'Farmstead': 'modules/pf2e-reignmaker/img/map_icons/commodity_food.webp',
-  'Logging Camp': 'modules/pf2e-reignmaker/img/map_icons/commodity_lumber.webp',
-  'Mine': 'modules/pf2e-reignmaker/img/map_icons/commodity_ore.webp',
-  'Bog Mine': 'modules/pf2e-reignmaker/img/map_icons/commodity_ore.webp',
-  'Quarry': 'modules/pf2e-reignmaker/img/map_icons/commodity_stone.webp',
-  'Hunting/Fishing Camp': 'modules/pf2e-reignmaker/img/map_icons/commodity_food.webp',
-  'Oasis Farm': 'modules/pf2e-reignmaker/img/map_icons/commodity_food.webp'
+  'Farmstead': foodIcon,
+  'Logging Camp': lumberCommodityIcon,
+  'Mine': oreIcon,
+  'Bog Mine': oreIcon,
+  'Quarry': stoneIcon,
+  'Hunting/Fishing Camp': foodIcon,
+  'Oasis Farm': foodIcon
 };
 
 /**
  * Settlement icon mappings
  * Maps settlement tier NAME to appropriate icon
  * Settlement data uses tier names ('Village', 'Town', 'City', 'Metropolis')
+ * Using ES module imports for HMR compatibility
  */
 export const SETTLEMENT_ICONS: Record<string, string> = {
-  'Village': 'modules/pf2e-reignmaker/img/map_icons/settlement_village.webp',
-  'Town': 'modules/pf2e-reignmaker/img/map_icons/settlement_town.webp',
-  'City': 'modules/pf2e-reignmaker/img/map_icons/settlement_city.webp',
-  'Metropolis': 'modules/pf2e-reignmaker/img/map_icons/settlement_metropolis.webp'
+  'Village': villageIcon,
+  'Town': townIcon,
+  'City': cityIcon,
+  'Metropolis': metropolisIcon
 };
 
 /**

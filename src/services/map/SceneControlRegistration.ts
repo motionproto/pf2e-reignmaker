@@ -88,6 +88,11 @@ export function registerKingdomHexControl(): void {
       return;
     }
     
+    // Click detection state for double-click handling
+    let clickTimer: number | null = null;
+    let clickCount = 0;
+    const DOUBLE_CLICK_DELAY = 300; // ms
+    
     // Add our rook button
     const rookButton = {
       name: 'reignmaker-hexes',
@@ -95,30 +100,77 @@ export function registerKingdomHexControl(): void {
       icon: 'fas fa-chess-rook',
       toggle: true,
       active: ReignMakerMapLayer.getInstance().getToggleState(),
+      toolclip: {
+        heading: 'Reignmaker Overlays',
+        items: [
+          { paragraph: 'Toggle hex overlays on/off' },
+          { paragraph: 'Double-click to open the ReignMaker UI' }
+        ]
+      },
       onClick: async (toggled: boolean) => {
         console.log('[SceneControlRegistration] Rook button clicked, toggled:', toggled);
         
-        // Check if map has been imported yet
-        const kingdomActor = await getKingdomActor();
-        if (kingdomActor) {
-          const kingdom = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
-          const hasImportedMap = kingdom?.hexes && kingdom.hexes.length > 0;
-          
-          if (!hasImportedMap) {
-            console.log('[SceneControlRegistration] No map data found, opening Kingdom UI to show import dialog...');
+        clickCount++;
+        
+        // If this is the first click, start the timer
+        if (clickCount === 1) {
+          clickTimer = window.setTimeout(async () => {
+            console.log('[SceneControlRegistration] Single-click detected - toggling overlays');
             
-            // Open Kingdom UI - it will automatically show the WelcomeDialog for first-time setup
+            // Single click: toggle overlays
+            // Check if map has been imported yet
+            const kingdomActor = await getKingdomActor();
+            if (kingdomActor) {
+              const kingdom = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
+              const hasImportedMap = kingdom?.hexes && kingdom.hexes.length > 0;
+              
+              if (!hasImportedMap) {
+                console.log('[SceneControlRegistration] No map data found, opening Kingdom UI to show import dialog...');
+                
+                // Open Kingdom UI - it will automatically show the WelcomeDialog for first-time setup
+                const { openKingdomUI } = await import('../../ui/KingdomIcon');
+                const actorId = kingdomActor.id;
+                openKingdomUI(actorId);
+                
+                // Reset click state
+                clickCount = 0;
+                clickTimer = null;
+                return;
+              }
+            }
+            
+            const layer = ReignMakerMapLayer.getInstance();
+            await layer.handleSceneControlToggle();
+            
+            // Reset click state
+            clickCount = 0;
+            clickTimer = null;
+          }, DOUBLE_CLICK_DELAY);
+        } 
+        // If this is the second click within the delay, it's a double-click
+        else if (clickCount === 2) {
+          console.log('[SceneControlRegistration] Double-click detected - opening Kingdom UI');
+          
+          // Cancel the single-click timer
+          if (clickTimer !== null) {
+            window.clearTimeout(clickTimer);
+            clickTimer = null;
+          }
+          
+          // Reset click state
+          clickCount = 0;
+          
+          // Double click: open Kingdom UI
+          const kingdomActor = await getKingdomActor();
+          if (kingdomActor) {
             const { openKingdomUI } = await import('../../ui/KingdomIcon');
             const actorId = kingdomActor.id;
             openKingdomUI(actorId);
-            
-            // Don't show toolbar - user needs to import data first
-            return;
+          } else {
+            // @ts-ignore - Foundry globals
+            ui.notifications?.warn('No Kingdom actor found. Please create or assign a party actor first.');
           }
         }
-        
-        const layer = ReignMakerMapLayer.getInstance();
-        await layer.handleSceneControlToggle();
       },
       button: true
     };
@@ -141,9 +193,19 @@ export function registerKingdomHexControl(): void {
   });
 
   // Clean up on canvas tear down
-  Hooks.on('canvasTearDown', () => {
+  Hooks.on('canvasTearDown', async () => {
+    console.log('[SceneControlRegistration] 🧹 Canvas tearing down - cleaning up overlays and layers...');
+    
+    // Step 1: Clear all overlay subscriptions before destroying
+    const { getOverlayManager } = await import('./OverlayManager');
+    const overlayManager = getOverlayManager();
+    overlayManager.clearAll();
+    
+    // Step 2: Destroy the map layer
     const layer = ReignMakerMapLayer.getInstance();
     layer.destroy();
+    
+    console.log('[SceneControlRegistration] ✅ Canvas cleanup complete');
   });
   
   console.log('[SceneControlRegistration] Hook listeners registered');
