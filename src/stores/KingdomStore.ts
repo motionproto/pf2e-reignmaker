@@ -10,6 +10,7 @@ import { TurnPhase } from '../actors/KingdomActor';
 import { TurnManager } from '../models/turn-manager';
 import { calculateProduction } from '../services/economics/production';
 import { PLAYER_KINGDOM } from '../types/ownership';
+import { filterVisibleHexes, filterVisibleHexIds } from '../utils/visibility-filter';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -41,9 +42,11 @@ export const fame = derived(kingdomData, $data => $data.fame);
 
 /**
  * Hexes claimed by the player kingdom (claimedBy === PLAYER_KINGDOM)
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
  */
 export const claimedHexes = derived(kingdomData, $data => {
-  return $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
+  const claimed = $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
+  return filterVisibleHexes(claimed);
 });
 
 /**
@@ -108,26 +111,31 @@ export const claimedHexesWithWorksites = derived(claimedHexes, $hexes =>
 /**
  * Hexes with terrain data (for terrain overlay)
  * Returns all hexes that have terrain information
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
  */
-export const hexesWithTerrain = derived(kingdomData, $data =>
-  $data.hexes.filter(h => h.terrain)
-);
+export const hexesWithTerrain = derived(kingdomData, $data => {
+  const withTerrain = $data.hexes.filter(h => h.terrain);
+  return filterVisibleHexes(withTerrain);
+});
 
 /**
  * Roads from kingdom data (for roads overlay)
  * Returns array of road hex IDs
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
  */
 export const kingdomRoads = derived(kingdomData, $data => {
   // Roads are stored as an array of hex IDs in kingdom data
-  return $data.roadsBuilt || [];
+  const roads = $data.roadsBuilt || [];
+  return filterVisibleHexIds(roads);
 });
 
 /**
  * Hexes with settlement features (for settlement overlay)
  * Returns all hexes that have settlement features
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
  */
 export const hexesWithSettlementFeatures = derived(kingdomData, $data => {
-  return $data.hexes
+  const withSettlements = $data.hexes
     .filter((h: any) => {
       const features = h.features || [];
       return features.some((f: any) => f.type === 'settlement');
@@ -139,6 +147,8 @@ export const hexesWithSettlementFeatures = derived(kingdomData, $data => {
         feature: settlementFeature
       };
     });
+  
+  return filterVisibleHexes(withSettlements);
 });
 
 /**
