@@ -1,4 +1,5 @@
 <script lang="ts">
+   import { PLAYER_KINGDOM } from '../../../types/ownership';
   import { createEventDispatcher, onMount } from 'svelte';
   import Dialog from './baseComponents/Dialog.svelte';
   import { getKingdomData } from '../../../stores/KingdomStore';
@@ -52,7 +53,7 @@
           : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
         
         const hex = kingdom.hexes?.find((h: any) => h.id === hexId) as any;
-        const isClaimed = hex && hex.claimedBy === 1;
+        const isClaimed = hex && hex.claimedBy === PLAYER_KINGDOM;
         
         if (!isClaimed) return false;
         

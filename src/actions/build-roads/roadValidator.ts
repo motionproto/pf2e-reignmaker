@@ -3,7 +3,7 @@
  * Validates hex selections for road building
  * 
  * Rules:
- * - Roads can only be built on claimed hexes (claimedBy === 1)
+ * - Roads can only be built on claimed hexes (claimedBy === PLAYER_KINGDOM)
  * - Roads must be adjacent to existing roads OR settlements
  * - Settlements count as roads for adjacency purposes
  */
@@ -102,7 +102,7 @@ export function validateRoadHex(hexId: string, pendingRoads: string[] = []): boo
   
   // Check 1: Must be claimed by kingdom
   const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-  if (!hex || hex.claimedBy !== 1) {
+  if (!hex || hex.claimedBy !== PLAYER_KINGDOM) {
     console.log(`[RoadValidator] ❌ Hex ${hexId} not claimed`);
     return false;
   }

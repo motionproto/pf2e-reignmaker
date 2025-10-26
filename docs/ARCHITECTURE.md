@@ -101,6 +101,120 @@ export async function createPhaseController() {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+## Ownership System (Unified String-Based Pattern)
+
+### Overview
+
+The ownership system uses a **unified string-based pattern** for both settlements and hexes, replacing the previous mixed boolean/number system with a clear, extensible approach.
+
+### Core Design
+
+**Location:** `src/types/ownership.ts`
+
+```typescript
+// Single constant for player kingdom
+export const PLAYER_KINGDOM = "player";
+
+// Unified type for all ownership
+export type OwnershipValue = string | null;
+```
+
+### Usage Across Models
+
+**Settlements:**
+```typescript
+interface Settlement {
+  owned: OwnershipValue;  // "player" | "FactionName" | null
+  // ...
+}
+```
+
+**Hexes:**
+```typescript
+interface Hex {
+  claimedBy: OwnershipValue;  // "player" | "FactionName" | null
+  // ...
+}
+```
+
+### Ownership Values
+
+| Value | Meaning | Example |
+|-------|---------|---------|
+| `PLAYER_KINGDOM` (`"player"`) | Owned by player kingdom | Player's capital |
+| String (other) | Owned by named faction | `"Pitax"`, `"Brevoy"` |
+| `null` | Unowned/wilderness | Unclaimed territory |
+
+### Common Patterns
+
+**Check Player Ownership:**
+```typescript
+import { PLAYER_KINGDOM } from '../types/ownership';
+
+if (hex.claimedBy === PLAYER_KINGDOM) {
+  // Player owns this hex
+}
+
+if (settlement.owned === PLAYER_KINGDOM) {
+  // Player owns this settlement
+}
+```
+
+**Check Faction Ownership:**
+```typescript
+if (hex.claimedBy === "Pitax") {
+  // Pitax controls this hex
+}
+```
+
+**Check Unowned:**
+```typescript
+if (settlement.owned === null) {
+  // Unowned settlement
+}
+```
+
+**Store Filters (Derived Stores):**
+```typescript
+// In KingdomStore.ts
+export const ownedSettlements = derived(kingdomData, $data => {
+  return $data.settlements.filter(s => s.owned === PLAYER_KINGDOM);
+});
+
+export const claimedHexes = derived(kingdomData, $data => {
+  return $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
+});
+```
+
+### Benefits of This Approach
+
+1. **Consistent** - Same pattern for settlements and hexes
+2. **Self-documenting** - `"player"` is clearer than `1` or `true`
+3. **Type-safe** - Single constant prevents typos
+4. **Extensible** - Easy to add new factions without code changes
+5. **Idiomatic** - Uses TypeScript's native `null` for "unowned" state
+
+### Kingmaker Integration
+
+The territory service converts Kingmaker's ownership format during import:
+
+```typescript
+// In TerritoryService.syncFromKingmaker()
+const claimedBy = hexState.claimed ? PLAYER_KINGDOM : null;
+```
+
+### Migration Notes
+
+**Removed:**
+- Helper functions (`isPlayerOwned()`, `isFactionOwned()`, etc.)
+- Mixed ownership types (boolean/number/string)
+- Complex ownership checks
+
+**Replaced With:**
+- Direct property comparison
+- Unified `OwnershipValue` type
+- Single `PLAYER_KINGDOM` constant
+
 ## Key Components
 
 ### 1. KingdomActor (`src/actors/KingdomActor.ts`)

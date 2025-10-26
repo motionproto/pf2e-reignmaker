@@ -4,7 +4,7 @@
  * 
  * Rules:
  * - Cannot be adjacent to another settlement (1-hex minimum spacing)
- * - Must be in claimed territory (claimedBy === 1)
+ * - Must be in claimed territory (claimedBy === PLAYER_KINGDOM)
  * - First settlement rule: Waive claimed territory requirement
  * - Cannot place on already occupied settlement hex
  */
@@ -63,7 +63,7 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   if (!isFirstSettlement) {
     const hex = kingdom.hexes.find((h: any) => h.id === hexId);
     
-    if (!hex || hex.claimedBy !== 1) {
+    if (!hex || hex.claimedBy !== PLAYER_KINGDOM) {
       console.log(`[SettlementValidator] ❌ Hex ${hexId} is not in claimed territory`);
       return false;
     }

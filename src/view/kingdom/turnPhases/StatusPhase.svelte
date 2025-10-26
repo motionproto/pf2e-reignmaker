@@ -1,4 +1,5 @@
 <script lang="ts">
+   import { PLAYER_KINGDOM } from '../../../types/ownership';
 import { kingdomData, kingdomActor, isInitialized } from '../../../stores/KingdomStore';
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
@@ -27,14 +28,14 @@ $: unmappedSettlements = $kingdomData.settlements?.filter(s => {
    });
    
    // Only show if hex is in claimed territory
-   return kmHex && (kmHex as any).claimedBy === 1;
+   return kmHex && (kmHex as any).claimedBy === PLAYER_KINGDOM;
 }) || [];
 
 // Reactive: Get hexes with settlement features but no associated settlement (in claimed territory)
 $: unassignedHexes = ($kingdomData.hexes || [])
    .filter((h: any) => {
       // Must be in claimed territory
-      if (h.claimedBy !== 1) return false;
+      if (h.claimedBy !== PLAYER_KINGDOM) return false;
       
       // Must have settlement features
       const features = h.features || [];

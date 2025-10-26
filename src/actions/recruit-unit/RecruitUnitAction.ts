@@ -6,6 +6,7 @@
  */
 
 import type { KingdomData } from '../../actors/KingdomActor';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { ResolutionData } from '../../types/modifiers';
 import { getKingdomData } from '../../stores/KingdomStore';
@@ -85,7 +86,7 @@ async function promptForArmyDetails_OLD(): Promise<{
         : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
       
       const hex = kingdom.hexes?.find((h: any) => h.id === hexId) as any;
-      const isClaimed = hex && hex.claimedBy === 1;
+      const isClaimed = hex && hex.claimedBy === PLAYER_KINGDOM;
       
       if (!isClaimed) return false;
       

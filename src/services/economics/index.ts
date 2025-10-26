@@ -18,6 +18,7 @@
 
 import type { Hex } from '../../models/Hex';
 import type { Settlement, Army } from '../../actors/KingdomActor';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { 
   ProductionResult, 
   ConsumptionResult, 
@@ -151,8 +152,8 @@ export class EconomicsService {
             h.row === s.location.x && h.col === s.location.y
           );
           
-          // Settlement must be in a player-claimed hex (claimedBy === 1)
-          if (!settlementHex || settlementHex.claimedBy !== 1) {
+          // Settlement must be in a player-claimed hex (claimedBy === PLAYER_KINGDOM)
+          if (!settlementHex || settlementHex.claimedBy !== PLAYER_KINGDOM) {
             return false;
           }
         }

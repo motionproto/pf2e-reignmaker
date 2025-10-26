@@ -11,6 +11,7 @@
  */
 
 import { getKingdomActor } from '../../main.kingdom';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { LayerId, HexStyle, MapLayer } from './types';
 import { DEFAULT_HEX_STYLES, WORKSITE_ICONS } from './types';
@@ -1090,7 +1091,7 @@ export class ReignMakerMapLayer {
 
     // Map hex IDs from our stored data
     const hexIds = kingdom.hexes
-      .filter((h: any) => h.claimedBy === 1) // Only player-claimed
+      .filter((h: any) => h.claimedBy === PLAYER_KINGDOM) // Only player-claimed
       .map((h: any) => h.id);
     
     console.log(`[ReignMakerMapLayer] 📋 Using ${hexIds.length} hex IDs from kingdom data:`, hexIds.slice(0, 5));

@@ -3,6 +3,7 @@
    import { createSettlement, SettlementTier } from '../../../../models/Settlement';
    import { kingdomData, updateKingdom } from '../../../../stores/KingdomStore';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
+   import { PLAYER_KINGDOM } from '../../../../types/ownership';
    
    export let settlements: Settlement[] = [];
    export let selectedSettlement: Settlement | null = null;
@@ -18,7 +19,7 @@
    $: unassignedHexes = ($kingdomData.hexes || [])
       .filter((h: any) => {
          // Must be in claimed territory
-         if (h.claimedBy !== 1) return false;
+         if (h.claimedBy !== PLAYER_KINGDOM) return false;
          
          // Must have unlinked settlement features
          const features = h.features || [];
@@ -58,21 +59,34 @@
    
    // Create new settlement handler (manual creation)
    async function handleCreateSettlement() {
-      // Create a new settlement at (0,0) - unlinked
-      const newSettlement = createSettlement(
-         'New Settlement',
-         { x: 0, y: 0 },
-         SettlementTier.VILLAGE
-      );
-      
-      // Add to kingdom
-      await updateKingdom(k => {
-         if (!k.settlements) k.settlements = [];
-         k.settlements.push(newSettlement);
-      });
-      
-      // Select the new settlement
-      onSelectSettlement(newSettlement);
+      try {
+         console.log('🏘️ Creating new settlement...');
+         
+         // Create a new settlement at (0,0) - unlinked
+         const newSettlement = createSettlement(
+            'New Settlement',
+            { x: 0, y: 0 },
+            SettlementTier.VILLAGE
+         );
+         
+         console.log('✅ Created settlement:', newSettlement);
+         
+         // Add to kingdom
+         await updateKingdom(k => {
+            if (!k.settlements) k.settlements = [];
+            k.settlements.push(newSettlement);
+         });
+         
+         console.log('✅ Added settlement to kingdom');
+         
+         // Select the new settlement
+         onSelectSettlement(newSettlement);
+         
+         console.log('✅ Selected new settlement');
+      } catch (error) {
+         console.error('❌ Error creating settlement:', error);
+         ui.notifications?.error('Failed to create settlement. Check console for details.');
+      }
    }
    
    // Create settlement for unassigned hex

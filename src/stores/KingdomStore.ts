@@ -9,6 +9,7 @@ import { createDefaultKingdom } from '../actors/KingdomActor';
 import { TurnPhase } from '../actors/KingdomActor';
 import { TurnManager } from '../models/turn-manager';
 import { calculateProduction } from '../services/economics/production';
+import { PLAYER_KINGDOM } from '../types/ownership';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -39,10 +40,10 @@ export const fame = derived(kingdomData, $data => $data.fame);
 // These automatically update when kingdom data changes
 
 /**
- * Hexes claimed by the player kingdom (claimedBy === 1)
+ * Hexes claimed by the player kingdom (claimedBy === PLAYER_KINGDOM)
  */
 export const claimedHexes = derived(kingdomData, $data => {
-  return $data.hexes.filter(h => h.claimedBy === 1);
+  return $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
 });
 
 /**
@@ -58,22 +59,20 @@ export const allSettlements = derived(kingdomData, $data => {
 });
 
 /**
- * Settlements in claimed hexes only
- * Filters out unmapped settlements and settlements in unclaimed territory
- * Uses location as the source of truth (kingmakerLocation is discarded after import)
+ * Owned settlements - settlements belonging to the player's kingdom
+ * Uses the explicit `owned` property (simpler than checking hex claiming)
+ * Filters for player-owned settlements only (owned === PLAYER_KINGDOM)
+ * Excludes faction-owned settlements and unowned settlements
  */
-export const claimedSettlements = derived(kingdomData, $data => {
-  return $data.settlements.filter(s => {
-    // Exclude unmapped settlements
-    if (s.location.x === 0 && s.location.y === 0) return false;
-    
-    // Check if the settlement's hex is claimed by the kingdom (use location only)
-    const hexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
-    
-    const hex = $data.hexes?.find((h: any) => h.id === hexId) as any;
-    return hex && hex.claimedBy === 1;
-  });
+export const ownedSettlements = derived(kingdomData, $data => {
+  return $data.settlements.filter(s => s.owned === PLAYER_KINGDOM);
 });
+
+/**
+ * Legacy alias for backward compatibility
+ * @deprecated Use ownedSettlements instead
+ */
+export const claimedSettlements = ownedSettlements;
 
 /**
  * Worksite counts from claimed hexes only

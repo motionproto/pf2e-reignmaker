@@ -7,6 +7,10 @@ import townImg from '../../img/settlements/town.webp';
 import cityImg from '../../img/settlements/city.webp';
 import metropolisImg from '../../img/settlements/metropolis.webp';
 
+// Import ownership types
+import type { OwnershipValue } from '../types/ownership';
+import { PLAYER_KINGDOM } from '../types/ownership';
+
 /**
  * Settlement tiers based on Reignmaker Lite rules
  */
@@ -69,6 +73,12 @@ export interface Settlement {
   structureIds: string[]; // IDs of built structures
   structureConditions?: Record<string, StructureCondition>; // Map of structureId -> condition
   connectedByRoads: boolean;
+  
+  // Ownership tracking
+  // - "player" = Owned by player kingdom
+  // - string = Owned by named faction (e.g., "Pitax", "Brevoy")
+  // - null = Unowned/neutral
+  owned: OwnershipValue;
   
   // Resources and state
   storedFood: number;
@@ -146,6 +156,7 @@ export function createSettlement(
     structureIds: [],
     structureConditions: {},
     connectedByRoads: false,
+    owned: PLAYER_KINGDOM, // All created settlements are owned by the player kingdom
     storedFood: 0,
     imprisonedUnrest: 0,
     supportedUnits: [],

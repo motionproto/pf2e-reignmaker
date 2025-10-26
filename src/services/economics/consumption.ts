@@ -5,6 +5,7 @@
  */
 
 import type { Settlement, Army } from '../../actors/KingdomActor';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import { SettlementTierConfig } from '../../models/Settlement';
 import type { ConsumptionResult, EconomicModifier } from './types';
 
@@ -57,7 +58,7 @@ export function calculateConsumption(
  * - Metropolis: 12 Food
  */
 function calculateSettlementFoodConsumption(settlements: Settlement[], hexes?: any[]): number {
-  // Only count settlements with valid locations in claimed territory (claimedBy === 1)
+  // Only count settlements with valid locations in claimed territory (claimedBy === PLAYER_KINGDOM)
   const mappedSettlements = settlements.filter(s => {
     // Filter out unmapped settlements (at origin)
     if (s.location.x === 0 && s.location.y === 0) {
@@ -70,8 +71,8 @@ function calculateSettlementFoodConsumption(settlements: Settlement[], hexes?: a
         h.row === s.location.x && h.col === s.location.y
       );
       
-      // Settlement must be in a player-claimed hex (claimedBy === 1)
-      if (!settlementHex || settlementHex.claimedBy !== 1) {
+      // Settlement must be in a player-claimed hex (claimedBy === PLAYER_KINGDOM)
+      if (!settlementHex || settlementHex.claimedBy !== PLAYER_KINGDOM) {
         return false;
       }
     }
@@ -136,7 +137,7 @@ function applyConsumptionModifier(
  * Plus any structure bonuses (e.g., Barracks, Military Academy)
  */
 export function calculateArmySupportCapacity(settlements: Settlement[], hexes?: any[]): number {
-  // Only count settlements with valid locations in claimed territory (claimedBy === 1)
+  // Only count settlements with valid locations in claimed territory (claimedBy === PLAYER_KINGDOM)
   const mappedSettlements = settlements.filter(s => {
     // Filter out unmapped settlements (at origin)
     if (s.location.x === 0 && s.location.y === 0) {
@@ -149,8 +150,8 @@ export function calculateArmySupportCapacity(settlements: Settlement[], hexes?: 
         h.row === s.location.x && h.col === s.location.y
       );
       
-      // Settlement must be in a player-claimed hex (claimedBy === 1)
-      if (!settlementHex || settlementHex.claimedBy !== 1) {
+      // Settlement must be in a player-claimed hex (claimedBy === PLAYER_KINGDOM)
+      if (!settlementHex || settlementHex.claimedBy !== PLAYER_KINGDOM) {
         return false;
       }
     }

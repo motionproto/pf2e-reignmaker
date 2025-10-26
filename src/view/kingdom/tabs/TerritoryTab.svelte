@@ -1,4 +1,5 @@
 <script lang="ts">
+   import { PLAYER_KINGDOM } from '../../../types/ownership';
    import { kingdomData } from '../../../stores/KingdomStore';
    import { WorksiteConfig } from '../../../models/Hex';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
@@ -7,12 +8,12 @@
    let viewMode: 'territory' | 'world' = 'territory';
    
    // Calculate hex counts for view selector
-   $: claimedHexCount = ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1).length;
+   $: claimedHexCount = ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
    $: totalHexCount = ($kingdomData.hexes || []).length;
    
    // Get hex source based on view mode
    $: sourceHexes = viewMode === 'territory' 
-      ? ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1) // Only player-claimed hexes
+      ? ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM) // Only player-claimed hexes
       : ($kingdomData.hexes || []); // All hexes
    
    // Map worksite types to their resource colors

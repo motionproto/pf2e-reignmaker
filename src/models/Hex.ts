@@ -2,6 +2,7 @@
 // Auto-converted and fixed from Hex.kt
 
 import type { TerrainType, TravelDifficulty } from '../types/terrain';
+import type { OwnershipValue } from '../types/ownership';
 
 /**
  * Types of worksites that can be built according to Kingdom Rules
@@ -168,7 +169,10 @@ export class Hex {
   name: string | null;
   
   // Ownership
-  claimedBy: number | string | null; // 0=wilderness, 1=player kingdom, "faction-name"=other faction
+  // - "player" = Owned by player kingdom
+  // - string = Owned by named faction (e.g., "Pitax", "Brevoy")
+  // - null = Wilderness/unclaimed
+  claimedBy: OwnershipValue;
   
   // Infrastructure
   worksite: Worksite | null;
@@ -189,7 +193,7 @@ export class Hex {
     worksite: Worksite | null = null,
     hasCommodityBonus: boolean = false,
     name: string | null = null,
-    claimedBy: number | string | null = 0,
+    claimedBy: OwnershipValue = null,
     hasRoad: boolean = false,
     fortified: number = 0, // Default to 0 (unfortified)
     features: HexFeature[] = []

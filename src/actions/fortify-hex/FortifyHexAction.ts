@@ -4,6 +4,7 @@
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
@@ -24,7 +25,7 @@ const FortifyHexAction: CustomActionImplementation = {
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {
     // Check if we have claimed hexes to fortify
-    const claimedHexes = (kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1);
+    const claimedHexes = (kingdomData.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM);
     if (claimedHexes.length === 0) {
       return {
         met: false,

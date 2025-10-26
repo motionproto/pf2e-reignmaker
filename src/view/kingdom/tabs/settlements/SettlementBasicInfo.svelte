@@ -90,13 +90,38 @@
       </div>
    </div>
    
-   <div class="detail-item-full expandable" on:click={toggleArmySupport}>
-      <span class="label">Army Support</span>
-      <span class="value">
-         <i class="fas fa-shield-alt"></i>
-         {armiesSupportedCount} out of {armySupportCapacity}
-         <i class="fas fa-chevron-{isArmySupportExpanded ? 'up' : 'down'} expand-icon"></i>
-      </span>
+   <div class="detail-grid">
+      <div class="detail-item expandable" on:click={toggleArmySupport}>
+         <span class="label">Army Support</span>
+         <span class="value">
+            <i class="fas fa-shield-alt"></i>
+            {armiesSupportedCount} out of {armySupportCapacity}
+            <i class="fas fa-chevron-{isArmySupportExpanded ? 'up' : 'down'} expand-icon"></i>
+         </span>
+      </div>
+      <div class="detail-item">
+         <span class="label">Imprisoned Unrest</span>
+         <div class="value-with-controls">
+            <i class="fas fa-dungeon"></i>
+            <span class="value-display">{settlement.imprisonedUnrest} / {imprisonedUnrestCapacity}</span>
+            <div class="control-buttons">
+               <button 
+                  class="control-btn minus" 
+                  on:click={() => adjustImprisonedUnrest(-1)}
+                  disabled={settlement.imprisonedUnrest <= 0}
+               >
+                  <i class="fas fa-minus"></i>
+               </button>
+               <button 
+                  class="control-btn plus" 
+                  on:click={() => adjustImprisonedUnrest(1)}
+                  disabled={settlement.imprisonedUnrest >= imprisonedUnrestCapacity}
+               >
+                  <i class="fas fa-plus"></i>
+               </button>
+            </div>
+         </div>
+      </div>
    </div>
    {#if isArmySupportExpanded && supportedArmies.length > 0}
       <div class="army-list">
@@ -112,30 +137,6 @@
          {/each}
       </div>
    {/if}
-   
-   <div class="detail-item-full">
-      <span class="label">Imprisoned Unrest</span>
-      <div class="value-with-controls">
-         <i class="fas fa-dungeon"></i>
-         <span class="value-display">{settlement.imprisonedUnrest} / {imprisonedUnrestCapacity}</span>
-         <div class="control-buttons">
-            <button 
-               class="control-btn minus" 
-               on:click={() => adjustImprisonedUnrest(-1)}
-               disabled={settlement.imprisonedUnrest <= 0}
-            >
-               <i class="fas fa-minus"></i>
-            </button>
-            <button 
-               class="control-btn plus" 
-               on:click={() => adjustImprisonedUnrest(1)}
-               disabled={settlement.imprisonedUnrest >= imprisonedUnrestCapacity}
-            >
-               <i class="fas fa-plus"></i>
-            </button>
-         </div>
-      </div>
-   </div>
    
    {#if skillBonuses.length > 0}
       <div class="detail-item-full skill-bonuses-section">
@@ -156,9 +157,7 @@
 <style lang="scss">
    @use './settlements-shared.scss';
    
-   .detail-item-full {
-      margin-top: 1rem;
-      
+   .detail-item {
       &.expandable {
          cursor: pointer;
          padding: 0.5rem;
@@ -170,7 +169,19 @@
          &:hover {
             background: rgba(255, 255, 255, 0.05);
          }
+         
+         .value {
+            .expand-icon {
+               margin-left: auto;
+               color: var(--text-secondary);
+               font-size: var(--font-sm);
+            }
+         }
       }
+   }
+   
+   .detail-item-full {
+      margin-top: 1rem;
       
       .label {
          display: block;
@@ -189,12 +200,6 @@
          
          i {
             margin-right: 0.5rem;
-         }
-         
-         .expand-icon {
-            margin-left: auto;
-            color: var(--text-secondary);
-            font-size: var(--font-sm);
          }
       }
    }

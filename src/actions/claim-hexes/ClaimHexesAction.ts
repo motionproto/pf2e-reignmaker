@@ -4,6 +4,7 @@
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
@@ -113,7 +114,7 @@ const ClaimHexesAction: CustomActionImplementation = {
           }
           
           // Update kingdom size (count of claimed hexes)
-          kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === 1).length;
+          kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
           
           console.log(`✅ [ClaimHexes] Updated Kingdom Store - now ${kingdom.size} claimed hex${kingdom.size !== 1 ? 'es' : ''}`);
         });

@@ -22,7 +22,7 @@ export async function validateFortifyHex(hexId: string): Promise<{ valid: boolea
   }
   
   // Must be claimed territory
-  if (hex.claimedBy !== 1) {
+  if (hex.claimedBy !== PLAYER_KINGDOM) {
     return { valid: false, message: 'Must be in claimed territory' };
   }
   

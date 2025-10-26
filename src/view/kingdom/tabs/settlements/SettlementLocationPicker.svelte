@@ -1,4 +1,5 @@
 <script lang="ts">
+   import { PLAYER_KINGDOM } from '../../../../types/ownership';
    import type { Settlement } from '../../../../models/Settlement';
    import { kingdomData, updateKingdom } from '../../../../stores/KingdomStore';
    import { createEventDispatcher } from 'svelte';
@@ -17,7 +18,7 @@
    $: availableLocations = ($kingdomData.hexes || [])
       .filter(h => {
          // Only include hexes in claimed territory
-         const isClaimed = (h as any).claimedBy === 1;
+         const isClaimed = (h as any).claimedBy === PLAYER_KINGDOM;
          if (!isClaimed) return false;
          
          // Only include hexes with settlement features

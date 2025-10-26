@@ -2,6 +2,7 @@
 // Manages settlement operations and calculations
 
 import { get } from 'svelte/store';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import { kingdomData } from '../../stores/KingdomStore';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTier, SettlementTierConfig, getDefaultSettlementImage } from '../../models/Settlement';
@@ -13,7 +14,7 @@ export class SettlementService {
   /**
    * Filter settlements to only include those with valid map locations IN CLAIMED TERRITORY
    * Settlements at (0, 0) are considered unmapped
-   * Settlements in unclaimed hexes (claimedBy !== 1) are excluded from kingdom calculations
+   * Settlements in unclaimed hexes (claimedBy !== PLAYER_KINGDOM) are excluded from kingdom calculations
    * 
    * @param settlements - All settlements
    * @param hexes - Kingdom hexes to check ownership
@@ -31,8 +32,8 @@ export class SettlementService {
           h.row === s.location.x && h.col === s.location.y
         );
         
-        // Settlement must be in a player-claimed hex (claimedBy === 1)
-        if (!settlementHex || settlementHex.claimedBy !== 1) {
+        // Settlement must be in a player-claimed hex (claimedBy === PLAYER_KINGDOM)
+        if (!settlementHex || settlementHex.claimedBy !== PLAYER_KINGDOM) {
           return false;
         }
       }

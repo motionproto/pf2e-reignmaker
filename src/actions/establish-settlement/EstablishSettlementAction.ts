@@ -6,6 +6,7 @@
  */
 
 import type { KingdomData } from '../../actors/KingdomActor';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { ResolutionData } from '../../types/modifiers';
 import { createSettlement, SettlementTier } from '../../models/Settlement';
@@ -163,14 +164,14 @@ export const EstablishSettlementAction = {
             
             adjacentHexIds.forEach(hexId => {
               const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-              if (hex && hex.claimedBy !== 1) {
+              if (hex && hex.claimedBy !== PLAYER_KINGDOM) {
                 hex.claimedBy = 1;
                 console.log(`  🏴 Claimed adjacent hex: ${hexId}`);
               }
             });
             
             // Update kingdom size
-            kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === 1).length;
+            kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
             console.log(`  ✅ Total claimed hexes: ${kingdom.size}`);
           }
         });

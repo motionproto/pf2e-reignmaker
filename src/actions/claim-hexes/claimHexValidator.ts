@@ -3,7 +3,7 @@
  * Validates hex selections for claiming territory
  * 
  * Rules:
- * - Cannot claim already claimed hexes (claimedBy === 1)
+ * - Cannot claim already claimed hexes (claimedBy === PLAYER_KINGDOM)
  * - First hex can be claimed anywhere (bootstrap rule)
  * - Subsequent hexes must be adjacent to existing claimed OR pending claims
  */
@@ -25,7 +25,7 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   
   // Check 1: Cannot claim already claimed hex
   const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-  if (hex && hex.claimedBy === 1) {
+  if (hex && hex.claimedBy === PLAYER_KINGDOM) {
     console.log(`[ClaimValidator] ❌ Hex ${hexId} already claimed`);
     return false;
   }
@@ -38,7 +38,7 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   
   // Get all currently claimed hexes
   const claimedHexIds = kingdom.hexes
-    .filter((h: any) => h.claimedBy === 1)
+    .filter((h: any) => h.claimedBy === PLAYER_KINGDOM)
     .map((h: any) => h.id);
   
   // Check 3: First claim (bootstrap rule) - any unclaimed hex is valid

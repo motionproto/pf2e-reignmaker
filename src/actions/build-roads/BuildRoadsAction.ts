@@ -4,6 +4,7 @@
  */
 
 import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ResolutionData } from '../../types/modifiers';
@@ -49,7 +50,7 @@ const BuildRoadsAction: CustomActionImplementation = {
     }
     
     // Check if we have claimed hexes to build roads in
-    const claimedHexes = (kingdomData.hexes || []).filter((h: any) => h.claimedBy === 1);
+    const claimedHexes = (kingdomData.hexes || []).filter((h: any) => h.claimedBy === PLAYER_KINGDOM);
     if (claimedHexes.length === 0) {
       return {
         met: false,

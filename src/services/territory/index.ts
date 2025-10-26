@@ -36,6 +36,7 @@ import type { HexFeature as KingmakerHexFeature, HexState } from '../../api/king
 import { logger } from '../../utils/Logger';
 import { normalizeTerrainType, normalizeTravelDifficulty } from '../../types/terrain';
 import type { TerrainType, TravelDifficulty } from '../../types/terrain';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 // Declare Foundry globals
 declare const Hooks: any;
@@ -108,7 +109,7 @@ export class TerritoryService {
                         null,       // No worksite
                         false,      // No commodity bonus
                         null,       // No name
-                        0,          // Wilderness (unclaimed)
+                        null,       // Wilderness (unclaimed)
                         false,      // No road
                         0,          // No fortification
                         []          // No Kingmaker features
@@ -215,13 +216,13 @@ export class TerritoryService {
                 const travelDifficulty = normalizeTravelDifficulty(rawTravel);
                 
                 // Look up hex state to get ownership data
-                // If hex has no state, it's wilderness (claimedBy = 0)
+                // If hex has no state, it's wilderness (claimedBy = null)
                 const hexState = hexStates[hexId] || {};
-                // Convert Kingmaker's claimed (boolean) to our claimedBy (number)
-                const claimedBy = hexState.claimed ? 1 : 0;
+                // Convert Kingmaker's claimed (boolean) to our claimedBy (string | null)
+                const claimedBy = hexState.claimed ? PLAYER_KINGDOM : null;
                 
                 // Debug log for each hex (reduced logging for performance)
-                if (claimedBy === 1 || hexState.camp || hexState.features?.length > 0) {
+                if (claimedBy === PLAYER_KINGDOM || hexState.camp || hexState.features?.length > 0) {
                     logger.debug(`Processing hex ${dotNotationId}:`, {
                         terrain: terrainType,
                         travel: travelDifficulty,
@@ -349,11 +350,11 @@ export class TerritoryService {
                     fortified: hex.fortified || 0,
                     name: hex.name || undefined,
                     features: hex.features || [], // Our features (NOT Kingmaker)
-                    claimedBy: hex.claimedBy ?? 0 // Preserve ownership
+                    claimedBy: hex.claimedBy ?? null // Preserve ownership
                 };
             });
-            // Only count hexes claimed by the player (claimedBy === 1), not total hexes
-            state.size = state.hexes.filter((h: any) => h.claimedBy === 1).length;
+            // Only count hexes claimed by the player (claimedBy === PLAYER_KINGDOM), not total hexes
+            state.size = state.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
             
             // Merge imported settlements (if provided)
             if (settlements && settlements.length > 0) {
@@ -762,7 +763,7 @@ export class TerritoryService {
                     hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
                     (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
                     hexData.name || null,
-                    (hexData as any).claimedBy ?? 0,
+                    (hexData as any).claimedBy ?? null,
                     (hexData as any).hasRoad || false,
                     (hexData as any).fortified || 0,
                     (hexData as any).features || []
