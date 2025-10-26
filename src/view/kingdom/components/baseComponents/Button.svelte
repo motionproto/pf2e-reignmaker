@@ -3,7 +3,8 @@
    
    export let disabled: boolean = false;
    export let type: 'button' | 'submit' | 'reset' = 'button';
-   export let variant: 'primary' | 'secondary' | 'outline' | 'success' | 'danger' | 'warning' = 'primary';
+   export let variant: 'primary' | 'secondary' | 'outline' | 'small_secondary' | 'success' | 'danger' | 'warning' = 'primary';
+   export let size: 'default' | 'small' = 'default';
    export let ariaLabel: string | undefined = undefined;
    export let tooltip: string | undefined = undefined;
    export let icon: string | undefined = undefined;
@@ -22,6 +23,7 @@
 <button 
    {type}
    class="button {variant}"
+   class:small={size === 'small'}
    class:full-width={fullWidth}
    {disabled}
    aria-label={ariaLabel}
@@ -89,6 +91,18 @@
          
          &::before {
             display: none;
+         }
+      }
+      
+      // Small size modifier (applies to any variant)
+      &.small {
+         padding: 0.5rem 1rem;
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-semibold);
+         
+         :global(i) {
+            font-size: var(--font-sm);
+            font-weight: var(--font-weight-bold);
          }
       }
       
@@ -172,6 +186,44 @@
             background: transparent;
             border-color: var(--border-subtle);
             color: var(--text-tertiary);
+         }
+      }
+      
+      // Small Secondary variant (matches add-structure-button)
+      &.small_secondary {
+         padding: 0.5rem 1rem;
+         background: rgba(255, 255, 255, 0.1);
+         color: var(--text-primary);
+         border: 1px solid rgba(255, 255, 255, 0.2);
+         font-size: var(--font-sm);
+           font-weight: var(--font-weight-semibold);
+         
+         &::before {
+            background: linear-gradient(90deg,
+               transparent,
+               rgba(255, 255, 255, 0.1),
+               transparent);
+         }
+         
+         &:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+         }
+         
+         &:active:not(:disabled) {
+            background: rgba(255, 255, 255, 0.18);
+         }
+         
+         &:disabled {
+            background: transparent;
+            border-color: var(--border-subtle);
+            color: var(--text-tertiary);
+         }
+         
+         :global(i) {
+               font-size: var(--font-sm);
+               font-weight: var(--font-weight-bold);
+
          }
       }
       

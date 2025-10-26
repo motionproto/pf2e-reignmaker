@@ -219,6 +219,22 @@ export class Hex {
   }
   
   /**
+   * Check if this hex has a settlement
+   * Settlements count as roads - you don't need to build roads in settlement hexes
+   */
+  get hasSettlement(): boolean {
+    return this.features.some(f => f.type === 'settlement');
+  }
+  
+  /**
+   * Check if this hex effectively has roads (either hasRoad flag OR has a settlement)
+   * Settlements count as roads for all game purposes
+   */
+  get effectivelyHasRoads(): boolean {
+    return this.hasRoad || this.hasSettlement;
+  }
+  
+  /**
    * Calculate the production from this hex
    */
   getProduction(): Map<string, number> {

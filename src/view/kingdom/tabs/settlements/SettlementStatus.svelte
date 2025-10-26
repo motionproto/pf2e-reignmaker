@@ -6,7 +6,6 @@
    
    export let settlement: Settlement;
    
-   let isUpdating = false;
    let showCapitalConfirm = false;
    let oldCapitalName = '';
    let isUpdatingCapital = false;
@@ -34,32 +33,6 @@
       }
    })() : null;
    
-   async function toggleRoadConnection() {
-      if (isUpdating) return;
-      
-      isUpdating = true;
-      try {
-         await updateKingdom(k => {
-            const s = k.settlements.find(s => s.id === settlement.id);
-            if (s) {
-               s.connectedByRoads = !s.connectedByRoads;
-            }
-         });
-         
-         // Recalculate settlement gold income (affected by road connection)
-         // @ts-ignore - recalculateSettlement is private but we need it here
-         await settlementService['recalculateSettlement'](settlement.id);
-         
-         // @ts-ignore
-         ui.notifications?.info(`Road connection ${settlement.connectedByRoads ? 'enabled' : 'disabled'} for ${settlement.name}`);
-      } catch (error) {
-         console.error('Failed to update road connection:', error);
-         // @ts-ignore
-         ui.notifications?.error('Failed to update road connection');
-      } finally {
-         isUpdating = false;
-      }
-   }
    
    async function handleCapitalToggle() {
       if (isUpdatingCapital) return;
@@ -193,19 +166,14 @@
             {/if}
          </div>
          
-         <!-- Show capital status or road connection toggle -->
+         <!-- Show capital status or road connection (read-only) -->
          {#if settlement.isCapital}
             <div class="status-item">
                <i class="fas fa-crown status-good"></i>
                <span>Is the Capital (2x gold income)</span>
             </div>
          {:else}
-            <button 
-               class="status-item toggleable"
-               on:click={toggleRoadConnection}
-               disabled={isUpdating}
-               title="Click to toggle road connection (doubles gold income when connected to capital)"
-            >
+            <div class="status-item">
                {#if settlement.connectedByRoads}
                   <i class="fas fa-check-circle status-good"></i>
                   <span>Connected to capital by roads (2x gold income)</span>
@@ -213,8 +181,7 @@
                   <i class="fas fa-times-circle status-bad"></i>
                   <span>Not connected to capital by roads</span>
                {/if}
-               <i class="fas fa-pen edit-indicator"></i>
-            </button>
+            </div>
          {/if}
          
          <!-- Structure Progress towards next tier -->

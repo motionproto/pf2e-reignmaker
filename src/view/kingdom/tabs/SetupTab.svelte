@@ -4,6 +4,7 @@
   import { startKingdom } from '../../../stores/KingdomStore';
   import { setSelectedTab } from '../../../stores/ui';
   import { getResourceIcon, getResourceColor, getTerrainIcon, getTerrainColor } from '../utils/presentation';
+  import { isKingdomDataReady } from '../../../services/KingdomInitializationService';
   import ResourceCard from '../components/baseComponents/ResourceCard.svelte';
   import Button from '../components/baseComponents/Button.svelte';
   
@@ -17,6 +18,12 @@
   
   // Check if game is already active (turn 1 or greater)
   $: isGameActive = $kingdomData.currentTurn >= 1;
+  
+  // Check if kingdom data is fully initialized and ready
+  $: isDataReady = isKingdomDataReady($kingdomData);
+  
+  // Can start if GM and data is ready
+  $: canStart = isGM && isDataReady && !isStarting;
   
   // Function to return to Turn tab
   function resumeGame() {
@@ -107,6 +114,8 @@
   $: totalWorksites = worksiteData.reduce((sum, ws) => sum + ws.count, 0);
   
   async function handleStartKingdom() {
+    if (!canStart) return;
+    
     isStarting = true;
     try {
       await startKingdom();
@@ -387,8 +396,12 @@
       
       <p class="ready-message">
         {#if isGM}
-          Once you've reviewed your kingdom's starting position, click below to begin Turn 1.
-          Explore the Territory, Settlements, and other tabs to learn about your kingdom.
+          {#if !isDataReady}
+            Kingdom data is initializing. Please complete the import wizard first (Welcome dialog).
+          {:else}
+            Once you've reviewed your kingdom's starting position, click below to begin Turn 1.
+            Explore the Territory, Settlements, and other tabs to learn about your kingdom.
+          {/if}
         {:else}
           Your GM will start Turn 1 when everyone is ready.
           Explore the Territory, Settlements, and other tabs to learn about your kingdom.
@@ -399,13 +412,26 @@
         <div class="start-button-wrapper">
           <Button
             variant="primary"
-            disabled={isStarting}
-            icon={isStarting ? "fas fa-spinner fa-spin spinning" : "fas fa-play"}
+            disabled={!canStart}
+            icon={isStarting ? "fas fa-spinner fa-spin spinning" : isDataReady ? "fas fa-play" : "fas fa-hourglass-half"}
             on:click={handleStartKingdom}
           >
-            {isStarting ? 'Starting Kingdom...' : 'Begin Turn 1'}
+            {#if !isDataReady}
+              Waiting for Data Initialization...
+            {:else if isStarting}
+              Starting Kingdom...
+            {:else}
+              Begin Turn 1
+            {/if}
           </Button>
         </div>
+        
+        {#if !isDataReady}
+          <p class="data-warning">
+            <i class="fas fa-info-circle"></i>
+            Complete the import wizard to initialize kingdom data before starting Turn 1.
+          </p>
+        {/if}
       {/if}
     </div>
   {/if}

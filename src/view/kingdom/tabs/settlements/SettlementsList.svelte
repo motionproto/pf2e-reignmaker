@@ -79,6 +79,12 @@
          
          console.log('✅ Added settlement to kingdom');
          
+         // Calculate derived properties (goldIncome, capacities, etc.)
+         const { settlementService } = await import('../../../../services/settlements');
+         await settlementService.updateSettlementDerivedProperties(newSettlement.id);
+         
+         console.log('✅ Calculated settlement derived properties');
+         
          // Select the new settlement
          onSelectSettlement(newSettlement);
          
@@ -114,6 +120,10 @@
             }
          }
       });
+      
+      // Calculate derived properties (goldIncome, capacities, etc.)
+      const { settlementService } = await import('../../../../services/settlements');
+      await settlementService.updateSettlementDerivedProperties(newSettlement.id);
       
       // Select the new settlement
       onSelectSettlement(newSettlement);

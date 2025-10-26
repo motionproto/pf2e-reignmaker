@@ -5,7 +5,19 @@
  */
 
 import type { Settlement, Army } from '../../actors/KingdomActor';
-import type { Hex } from '../../models/Hex';
+
+/**
+ * Plain object representation of a hex (for serialization)
+ */
+export interface HexData {
+  id: string;
+  row: number;
+  col: number;
+  terrain: string;
+  worksite?: { type: string } | null;
+  hasCommodityBonus?: boolean;
+  [key: string]: any;
+}
 
 /**
  * Resource production result from all sources
@@ -19,7 +31,7 @@ export interface ProductionResult {
   totalProduction: Map<string, number>;
   /** Breakdown by hex for detailed reporting */
   byHex: Array<{
-    hex: Hex;
+    hex: HexData;
     production: Map<string, number>;
   }>;
 }

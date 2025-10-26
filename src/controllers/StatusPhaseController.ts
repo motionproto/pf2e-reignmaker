@@ -37,6 +37,7 @@ export async function createStatusPhaseController() {
         await initializePhaseSteps(steps);
         
         // Initialize or reset turnState (Phase 1 of TurnState Migration)
+        // Data is guaranteed to exist by this point (initialized in Stage 1)
         await this.ensureTurnState();
         
         // Clear applied outcomes from previous turn
@@ -332,7 +333,7 @@ export async function createStatusPhaseController() {
      * - Reset turnState when advancing turns (detect via turnNumber mismatch)
      * - Migrate legacy fields if needed
      */
-    async ensureTurnState() {
+    async ensureTurnState(): Promise<void> {
       const actor = getKingdomActor();
       if (!actor) {
         logger.error('❌ [StatusPhaseController] No KingdomActor available');

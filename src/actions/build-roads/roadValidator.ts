@@ -10,7 +10,8 @@
 
 import type { KingdomData } from '../../actors/KingdomActor';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { getAdjacentHexIds, isAdjacentToAny } from '../shared/hexValidation';
+import { getAdjacentHexIds, isHexClaimedByPlayer, isHexPending, hexHasSettlement, hexHasRoads } from '../shared/hexValidation';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 /**
  * Check if hex is adjacent to existing roads, pending roads, or settlements
@@ -101,21 +102,23 @@ export function validateRoadHex(hexId: string, pendingRoads: string[] = []): boo
   const kingdom = getKingdomData();
   
   // Check 1: Must be claimed by kingdom
-  const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-  if (!hex || hex.claimedBy !== PLAYER_KINGDOM) {
+  if (!isHexClaimedByPlayer(hexId, kingdom)) {
     console.log(`[RoadValidator] ❌ Hex ${hexId} not claimed`);
     return false;
   }
   
-  // Check 2: Cannot already have a road
-  const existingRoads = kingdom.roadsBuilt || [];
-  if (existingRoads.includes(hexId)) {
-    console.log(`[RoadValidator] ❌ Hex ${hexId} already has a road`);
+  // Check 2: Cannot already have a road (includes settlement check)
+  if (hexHasRoads(hexId, kingdom)) {
+    if (hexHasSettlement(hexId, kingdom)) {
+      console.log(`[RoadValidator] ❌ Hex ${hexId} has a settlement (settlements count as roads)`);
+    } else {
+      console.log(`[RoadValidator] ❌ Hex ${hexId} already has a road`);
+    }
     return false;
   }
   
   // Check 3: Cannot already be selected as a pending road
-  if (pendingRoads.includes(hexId)) {
+  if (isHexPending(hexId, pendingRoads)) {
     console.log(`[RoadValidator] ❌ Hex ${hexId} already selected`);
     return false;
   }

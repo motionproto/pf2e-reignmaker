@@ -173,37 +173,6 @@ export async function createActionEffectsService() {
     },
 
     /**
-     * Build roads in hexes
-     * IMPORTANT: Updates both roadsBuilt array AND individual hex.hasRoad flags
-     */
-    async buildRoads(data: { hexIds: string[] }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🛣️ [ActionEffects] Building roads in ${data.hexIds.length} hex(es)`);
-      
-      await updateKingdom(kingdom => {
-        if (!kingdom.roadsBuilt) {
-          kingdom.roadsBuilt = [];
-        }
-
-        for (const hexId of data.hexIds) {
-          // Update roadsBuilt array
-          if (!kingdom.roadsBuilt.includes(hexId)) {
-            kingdom.roadsBuilt.push(hexId);
-            result.changes.push(`Built road in hex: ${hexId}`);
-          }
-          
-          // Update individual hex hasRoad flag (CRITICAL for persistence)
-          const hex = kingdom.hexes?.find(h => h.id === hexId);
-          if (hex) {
-            hex.hasRoad = true;
-            logger.debug(`✅ [ActionEffects] Set hasRoad=true for hex ${hexId}`);
-          } else {
-            logger.warn(`⚠️ [ActionEffects] Hex ${hexId} not found in kingdom.hexes - road may not persist!`);
-          }
-        }
-      });
-    },
-
-    /**
      * Fortify a hex
      */
     async fortifyHex(data: { hexId: string }, result: ActionEffectResult): Promise<void> {
@@ -333,17 +302,65 @@ export async function createActionEffectsService() {
     },
 
     /**
-     * Deploy an army to a hex
+     * Build roads in hexes
+     * IMPORTANT: Updates both roadsBuilt array AND individual hex.hasRoad flags
+     * Recalculates all settlements to update road connectivity
+     */
+    async buildRoads(data: { hexIds: string[] }, result: ActionEffectResult): Promise<void> {
+      logger.debug(`🛣️ [ActionEffects] Building roads in ${data.hexIds.length} hex(es)`);
+
+      await updateKingdom(kingdom => {
+        if (!kingdom.roadsBuilt) {
+          kingdom.roadsBuilt = [];
+        }
+        
+        for (const hexId of data.hexIds) {
+          // Update roadsBuilt array
+          if (!kingdom.roadsBuilt.includes(hexId)) {
+            kingdom.roadsBuilt.push(hexId);
+            result.changes.push(`Built road in hex: ${hexId}`);
+          }
+
+          // Update individual hex hasRoad flag (CRITICAL for persistence)
+          const hex = kingdom.hexes?.find(h => h.id === hexId);
+          if (hex) {
+            hex.hasRoad = true;
+            logger.debug(`✅ [ActionEffects] Set hasRoad=true for hex ${hexId}`);
+          } else {
+            logger.warn(`⚠️ [ActionEffects] Hex ${hexId} not found in kingdom.hexes - road may not persist!`);
+          }
+        }
+      });
+      
+      // Recalculate all settlements to update road connectivity
+      const { settlementService } = await import('./settlements');
+      const actor = getKingdomActor();
+      if (!actor) return;
+      
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) return;
+      
+      logger.debug(`🔄 [ActionEffects] Recalculating settlement connectivity after road construction`);
+      
+      for (const settlement of kingdom.settlements) {
+        // Use private method via bracket notation
+        await (settlementService as any)['recalculateSettlement'](settlement.id);
+      }
+      
+      logger.debug(`✅ [ActionEffects] Settlement connectivity recalculated`);
+    },
+
+    /**
+     * Deploy an army to a location
      */
     async deployArmy(data: { armyId: string; hexId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`📍 [ActionEffects] Deploying army ${data.armyId} to hex ${data.hexId}`);
+      logger.debug(`🚀 [ActionEffects] Deploying army ${data.armyId} to ${data.hexId}`);
       
       await updateKingdom(kingdom => {
         const army = kingdom.armies?.find(a => a.id === data.armyId);
         if (army) {
-          army.deployedHexId = data.hexId;
-          army.status = 'deployed';
-          result.changes.push(`Deployed army to hex ${data.hexId}`);
+          (army as any).location = data.hexId;
+          result.changes.push(`Deployed army to ${data.hexId}`);
         }
       });
     },
@@ -352,16 +369,11 @@ export async function createActionEffectsService() {
      * Disband an army unit
      */
     async disbandArmy(data: { armyId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`❌ [ActionEffects] Disbanding army ${data.armyId}`);
+      logger.debug(`💀 [ActionEffects] Disbanding army ${data.armyId}`);
       
       await updateKingdom(kingdom => {
-        if (kingdom.armies) {
-          const index = kingdom.armies.findIndex(a => a.id === data.armyId);
-          if (index !== -1) {
-            kingdom.armies.splice(index, 1);
-            result.changes.push(`Disbanded army`);
-          }
-        }
+        kingdom.armies = kingdom.armies.filter(a => a.id !== data.armyId);
+        result.changes.push(`Disbanded army`);
       });
     },
 

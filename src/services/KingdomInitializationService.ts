@@ -1,0 +1,94 @@
+/**
+ * Kingdom Initialization Service
+ * 
+ * Handles complete kingdom data initialization after import.
+ * This runs during Stage 1 (WelcomeDialog) to ensure all derived properties
+ * are calculated before Turn 1 begins.
+ */
+
+import { logger } from '../utils/Logger';
+import type { KingdomActor } from '../actors/KingdomActor';
+
+/**
+ * Initialize all kingdom derived data after import
+ * Should be called immediately after territory import completes
+ * 
+ * @param actor - The kingdom actor (wrapped with kingdom methods)
+ */
+export async function initializeKingdomData(actor: any): Promise<void> {
+  logger.info('🔧 [KingdomInit] Starting complete initialization...');
+  
+  try {
+    // 1. Recalculate settlement properties
+    const kingdom = actor.getKingdomData();
+    if (kingdom?.settlements && kingdom.settlements.length > 0) {
+      const { settlementService } = await import('./settlements');
+      for (const settlement of kingdom.settlements) {
+        await settlementService.updateSettlementDerivedProperties(settlement.id);
+      }
+      logger.info(`  ✓ ${kingdom.settlements.length} settlement(s) initialized`);
+    } else {
+      logger.info('  ✓ No settlements to initialize');
+    }
+    
+    // 2. Build production cache
+    const { calculateProduction } = await import('./economics/production');
+    await actor.updateKingdomData((kingdom: any) => {
+      const result = calculateProduction(kingdom.hexes || [], []);
+      kingdom.worksiteProduction = Object.fromEntries(result.totalProduction);
+      kingdom.worksiteProductionByHex = result.byHex.map((e: any) => [e.hex, e.production]);
+    });
+    logger.info('  ✓ Production cache built');
+    
+    // 3. Initialize all resource types (ensure they exist even if 0)
+    await actor.updateKingdomData((kingdom: any) => {
+      const requiredResources = [
+        'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries',
+        'foodCapacity', 'armyCapacity', 'diplomaticCapacity', 'imprisonedUnrestCapacity'
+      ];
+      
+      for (const resource of requiredResources) {
+        if (kingdom.resources[resource] === undefined) {
+          kingdom.resources[resource] = 0;
+        }
+      }
+    });
+    logger.info('  ✓ Resources initialized');
+    
+    // 4. Wait for Foundry flag synchronization to propagate
+    // Give the Foundry actor update system time to sync across clients
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    logger.info('✅ [KingdomInit] Initialization complete - all derived data ready!');
+  } catch (error) {
+    logger.error('❌ [KingdomInit] Initialization failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if kingdom data is fully initialized and ready for Turn 1
+ * 
+ * @param kingdom - Kingdom data to check
+ * @returns true if all required data exists
+ */
+export function isKingdomDataReady(kingdom: any): boolean {
+  if (!kingdom) return false;
+  
+  // Check that production cache exists
+  if (!kingdom.worksiteProduction) return false;
+  
+  // Check that all required resources exist
+  const requiredResources = [
+    'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries',
+    'foodCapacity', 'armyCapacity', 'diplomaticCapacity', 'imprisonedUnrestCapacity'
+  ];
+  
+  for (const resource of requiredResources) {
+    if (kingdom.resources[resource] === undefined) {
+      return false;
+    }
+  }
+  
+  return true;
+}

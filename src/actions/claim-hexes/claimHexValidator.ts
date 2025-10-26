@@ -10,7 +10,8 @@
 
 import type { KingdomData } from '../../actors/KingdomActor';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { getAdjacentHexIds, isAdjacentToAny } from '../shared/hexValidation';
+import { isAdjacentToAny, isHexClaimedByPlayer, isHexPending } from '../shared/hexValidation';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 /**
  * Validate a hex for claiming
@@ -24,14 +25,13 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   const kingdom = getKingdomData();
   
   // Check 1: Cannot claim already claimed hex
-  const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-  if (hex && hex.claimedBy === PLAYER_KINGDOM) {
+  if (isHexClaimedByPlayer(hexId, kingdom)) {
     console.log(`[ClaimValidator] ❌ Hex ${hexId} already claimed`);
     return false;
   }
   
   // Check 2: Cannot already be selected as a pending claim
-  if (pendingClaims.includes(hexId)) {
+  if (isHexPending(hexId, pendingClaims)) {
     console.log(`[ClaimValidator] ❌ Hex ${hexId} already selected`);
     return false;
   }

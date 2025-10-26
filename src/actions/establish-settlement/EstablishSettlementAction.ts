@@ -157,6 +157,13 @@ export const EstablishSettlementAction = {
           }
           kingdom.settlements.push(newSettlement);
           
+          // Set hasRoad flag for settlement hex (settlements count as roads)
+          const hex = kingdom.hexes.find((h: any) => h.id === selectedHexId);
+          if (hex) {
+            hex.hasRoad = true;
+            console.log(`🛣️ [EstablishSettlement] Set hasRoad=true for settlement hex ${selectedHexId}`);
+          }
+          
           // First settlement: Automatically claim all adjacent hexes
           if (isFirstSettlement) {
             console.log('🏴 [EstablishSettlement] First settlement - claiming adjacent hexes');

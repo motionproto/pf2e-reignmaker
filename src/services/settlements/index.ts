@@ -8,6 +8,7 @@ import type { Settlement } from '../../models/Settlement';
 import { SettlementTier, SettlementTierConfig, getDefaultSettlementImage } from '../../models/Settlement';
 import { structuresService } from '../structures';
 import { territoryService } from '../territory';
+import { roadConnectivityService } from '../RoadConnectivityService';
 import { logger } from '../../utils/Logger';
 
 export class SettlementService {
@@ -368,7 +369,22 @@ export class SettlementService {
       s.foodStorageCapacity = structuresService.calculateFoodStorage(s);
       s.imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(s);
       
+      // Calculate road connectivity (if not capital)
+      if (!s.isCapital) {
+        const capital = k.settlements.find(
+          set => set.isCapital && set.owned === s.owned
+        );
+        
+        s.connectedByRoads = capital
+          ? roadConnectivityService.isConnectedToCapital(s, capital, k)
+          : false;
+      } else {
+        // Capital doesn't need connectivity flag (uses isCapital instead)
+        s.connectedByRoads = false;
+      }
+      
       // Calculate gold income (base + structures + capital/road multiplier)
+      // This uses connectedByRoads flag calculated above
       s.goldIncome = this.calculateIndividualSettlementGoldIncome(s);
       
       // Handle imprisoned unrest capacity reduction
@@ -546,7 +562,7 @@ export class SettlementService {
     let updatedSettlement: Settlement | undefined;
     
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s) {
         Object.assign(s, updates);
         updatedSettlement = s;
@@ -695,6 +711,18 @@ export class SettlementService {
         }
       });
       
+      // Clear hasRoad flag from settlement hex (only if no actual road was built)
+      const settlementHexId = `${settlementLocation.x}.${String(settlementLocation.y).padStart(2, '0')}`;
+      const hex = k.hexes.find((h: any) => h.id === settlementHexId);
+      if (hex && hex.hasRoad) {
+        // Only clear if hex doesn't have an actual road built (not in roadsBuilt array)
+        const hasActualRoad = k.roadsBuilt?.includes(settlementHexId);
+        if (!hasActualRoad) {
+          hex.hasRoad = false;
+          logger.debug(`🛣️ [SettlementService] Cleared hasRoad flag from hex ${settlementHexId}`);
+        }
+      }
+      
       // Remove settlement
       k.settlements = k.settlements.filter(s => s.id !== settlementId);
     });
@@ -756,7 +784,7 @@ export class SettlementService {
     
     // Perform upgrade
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s) {
         s.tier = nextTier;
         

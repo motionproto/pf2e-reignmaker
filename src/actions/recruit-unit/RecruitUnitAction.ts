@@ -11,6 +11,7 @@ import type { ActionRequirement } from '../../controllers/actions/action-resolve
 import type { ResolutionData } from '../../types/modifiers';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { SettlementTierConfig } from '../../models/Settlement';
+import { isHexClaimedByPlayer } from '../shared/hexValidation';
 import {
   logActionStart,
   logActionSuccess,
@@ -85,10 +86,7 @@ async function promptForArmyDetails_OLD(): Promise<{
         ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
         : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
       
-      const hex = kingdom.hexes?.find((h: any) => h.id === hexId) as any;
-      const isClaimed = hex && hex.claimedBy === PLAYER_KINGDOM;
-      
-      if (!isClaimed) return false;
+      if (!isHexClaimedByPlayer(hexId, kingdom)) return false;
       
       // Get settlement tier config for army support
       const capacity = SettlementTierConfig[s.tier]?.armySupport || 0;

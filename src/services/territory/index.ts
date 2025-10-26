@@ -256,11 +256,13 @@ export class TerritoryService {
                 const row = parseInt(rowStr);
                 const col = parseInt(colStr);
                 
-                // Extract hasRoad from features
-                const hasRoad = hexState.features?.some((f: KingmakerHexFeature) => f.type === 'road') || false;
-                
-                // Convert Kingmaker features to our format (if any)
+                // Convert Kingmaker features to our format first
                 const ourFeatures = this.convertKingmakerFeatures(hexState.features || []);
+                
+                // Extract hasRoad from features (roads OR settlements count as roads)
+                const hasRoadFeature = hexState.features?.some((f: KingmakerHexFeature) => f.type === 'road') || false;
+                const hasSettlementFeature = ourFeatures.some(f => f.type === 'settlement');
+                const hasRoad = hasRoadFeature || hasSettlementFeature;
                 
                 // Create hex with features and ownership
                 const hex = new Hex(

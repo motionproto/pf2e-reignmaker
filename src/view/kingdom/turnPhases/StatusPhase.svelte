@@ -4,57 +4,26 @@ import { kingdomData, kingdomActor, isInitialized } from '../../../stores/Kingdo
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
-import SettlementLocationPicker from '../tabs/settlements/SettlementLocationPicker.svelte';
+import { setSelectedTab } from '../../../stores/ui';
+import { SettlementTier } from '../../../models/Settlement';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
 
-// Reactive: Get settlements without valid map locations (in claimed territory)
-$: unmappedSettlements = $kingdomData.settlements?.filter(s => {
-   // Must be unmapped
-   if (s.location.x !== 0 || s.location.y !== 0) return false;
-   
-   // Must have a kingmakerLocation
-   if (!s.kingmakerLocation) return false;
-   
-   const kmLocation = s.kingmakerLocation; // Type narrowing
-   
-   // Find the hex at that kingmaker location
-   const kmHex = $kingdomData.hexes?.find((h: any) => {
-      const [xStr, yStr] = h.id.split('.');
-      const x = parseInt(xStr) || 0;
-      const y = parseInt(yStr) || 0;
-      return x === kmLocation.x && y === kmLocation.y;
-   });
-   
-   // Only show if hex is in claimed territory
-   return kmHex && (kmHex as any).claimedBy === PLAYER_KINGDOM;
-}) || [];
-
-// Reactive: Get hexes with settlement features but no associated settlement (in claimed territory)
+// Reactive: Get hexes with unlinked settlement features (in claimed territory)
+// This matches the pattern from SettlementsList.svelte
 $: unassignedHexes = ($kingdomData.hexes || [])
    .filter((h: any) => {
       // Must be in claimed territory
       if (h.claimedBy !== PLAYER_KINGDOM) return false;
       
-      // Must have settlement features
+      // Must have unlinked settlement features
       const features = h.features || [];
-      const hasSettlementFeature = features.some((f: any) => 
-         f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
-      );
-      if (!hasSettlementFeature) return false;
-      
-      // Check if any settlement is assigned to this hex
-      const [xStr, yStr] = h.id.split('.');
-      const x = parseInt(xStr) || 0;
-      const y = parseInt(yStr) || 0;
-      
-      const hasAssignedSettlement = $kingdomData.settlements?.some(s => 
-         s.location.x === x && s.location.y === y
+      const hasUnlinkedSettlement = features.some((f: any) => 
+         f.type === 'settlement' && f.linked === false
       );
       
-      // Show if no settlement is assigned
-      return !hasAssignedSettlement;
+      return hasUnlinkedSettlement;
    })
    .map((h: any) => {
       const [xStr, yStr] = h.id.split('.');
@@ -63,17 +32,34 @@ $: unassignedHexes = ($kingdomData.hexes || [])
       
       const features = h.features || [];
       const settlementFeature = features.find((f: any) => 
-         f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
+         f.type === 'settlement' && f.linked === false
       );
+      
+      // Map feature tier to SettlementTier
+      let tier = SettlementTier.VILLAGE;
+      if (settlementFeature?.tier) {
+         const tierStr = settlementFeature.tier;
+         if (tierStr === 'Town') tier = SettlementTier.TOWN;
+         else if (tierStr === 'City') tier = SettlementTier.CITY;
+         else if (tierStr === 'Metropolis') tier = SettlementTier.METROPOLIS;
+      }
       
       return {
          id: h.id,
          x,
          y,
-         tier: settlementFeature?.type || 'Settlement',
-         name: settlementFeature?.name || 'Unnamed'
+         tier,
+         name: settlementFeature?.name  // Use feature name (may be undefined)
       };
    });
+
+// Reactive: Check if kingdom has a capital
+$: hasCapital = $kingdomData.settlements?.some(s => s.isCapital === true) ?? false;
+
+// Handler to navigate to settlements tab
+function navigateToSettlements() {
+   setSelectedTab('settlements');
+}
 
 // Constants
 const MAX_FAME = 3;
@@ -103,38 +89,71 @@ async function initializePhase() {
 </script>
 
 <div class="status-phase">
-   <!-- Unmapped Settlements Alert Section -->
-   {#if unmappedSettlements.length > 0 || unassignedHexes.length > 0}
-      <div class="phase-section unmapped-settlements-alert">
+   <!-- No Capital Alert Section -->
+   {#if !hasCapital && $kingdomData.settlements && $kingdomData.settlements.length > 0}
+      <div class="phase-section no-capital-alert">
          <div class="section-header">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Unmapped Settlements</h3>
+            <i class="fas fa-crown"></i>
+            <h3>No Capital Designated</h3>
          </div>
          
          <div class="alerts-stack">
-            {#each unmappedSettlements as settlement}
-               <div class="settlement-alert">
-                  <div class="alert-content">
-                     <i class="fas fa-city"></i>
-                     <div class="settlement-info">
-                        <strong>{settlement.name}</strong>
-                        <span class="tier-badge">{settlement.tier}</span>
-                     </div>
-                     <span class="alert-message">Settlement not assigned to hex</span>
+            <div 
+               class="settlement-alert clickable"
+               on:click={navigateToSettlements}
+               on:keypress={(e) => e.key === 'Enter' && navigateToSettlements()}
+               role="button"
+               tabindex="0"
+               title="Click to go to Settlements tab"
+            >
+               <div class="alert-content">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <div class="settlement-info">
+                     <strong>Your kingdom needs a capital settlement</strong>
                   </div>
-                  <SettlementLocationPicker {settlement} />
+                  <span class="click-hint">
+                     <i class="fas fa-arrow-right"></i>
+                     Click to designate
+                  </span>
                </div>
-            {/each}
-            
+            </div>
+         </div>
+      </div>
+   {/if}
+
+   <!-- Unassigned Settlements Alert Section -->
+   {#if unassignedHexes.length > 0}
+      <div class="phase-section unassigned-settlements-alert">
+         <div class="section-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Settlements Need Creation</h3>
+         </div>
+         
+         <div class="alerts-stack">
             {#each unassignedHexes as hex}
-               <div class="settlement-alert">
+               <div 
+                  class="settlement-alert clickable"
+                  on:click={navigateToSettlements}
+                  on:keypress={(e) => e.key === 'Enter' && navigateToSettlements()}
+                  role="button"
+                  tabindex="0"
+                  title="Click to go to Settlements tab"
+               >
                   <div class="alert-content">
                      <i class="fas fa-map-marker-alt"></i>
                      <div class="settlement-info">
-                        <strong class="hex-location">Hex {hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
-                        <span class="alert-message">Has no settlement assigned</span>
+                        {#if hex.name}
+                           <strong>{hex.name}</strong>
+                           <span class="hex-location">at {hex.x}:{hex.y.toString().padStart(2, '0')}</span>
+                        {:else}
+                           <strong class="hex-location">Hex {hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
+                        {/if}
+                        <span class="tier-badge">{hex.tier}</span>
                      </div>
-                     <span class="tier-badge">{hex.tier}</span>
+                     <span class="click-hint">
+                        <i class="fas fa-arrow-right"></i>
+                        Click to create
+                     </span>
                   </div>
                </div>
             {/each}
@@ -142,7 +161,7 @@ async function initializePhase() {
          
          <div class="alert-note">
             <i class="fas fa-info-circle"></i>
-            Unmapped settlements do not contribute to kingdom resources, capacities, or skill bonuses.
+            These locations have settlement features but no settlements created yet.
          </div>
       </div>
    {/if}
@@ -311,8 +330,9 @@ async function initializePhase() {
       gap: 15px;
    }
 
-   // Unmapped Settlements Alert Styles
-   .unmapped-settlements-alert {
+   // Alert Styles (shared between unassigned settlements and no capital)
+   .unassigned-settlements-alert,
+   .no-capital-alert {
       background: transparent;
       border: 2px solid #fbbf24;
 
@@ -343,10 +363,20 @@ async function initializePhase() {
       border: 1px solid rgba(251, 191, 36, 0.2);
       border-radius: var(--radius-md);
       gap: 15px;
+      transition: all 0.2s ease;
 
-      &:hover {
-         background: rgba(0, 0, 0, 0.3);
-         border-color: rgba(251, 191, 36, 0.4);
+      &.clickable {
+         cursor: pointer;
+
+         &:hover {
+            background: rgba(251, 191, 36, 0.15);
+            border-color: rgba(251, 191, 36, 0.5);
+            transform: translateX(4px);
+         }
+
+         &:active {
+            transform: translateX(2px);
+         }
       }
    }
 
@@ -368,6 +398,7 @@ async function initializePhase() {
       align-items: center;
       gap: 8px;
       flex: 1;
+      flex-wrap: wrap;
 
       strong {
          font-size: var(--font-md);
@@ -376,7 +407,9 @@ async function initializePhase() {
       }
 
       .hex-location {
-         font-weight: var(--font-weight-bold);
+         font-size: var(--font-md);
+         color: var(--text-secondary);
+         font-weight: var(--font-weight-normal);
       }
    }
 
@@ -388,12 +421,21 @@ async function initializePhase() {
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       color: #fbbf24;
+      flex-shrink: 0;
    }
 
-   .alert-message {
-      font-size: var(--font-lg);
-      color: var(--text-secondary);
-      font-weight: normal;
+   .click-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--font-sm);
+      color: #fbbf24;
+      font-weight: var(--font-weight-medium);
+      flex-shrink: 0;
+
+      i {
+         font-size: var(--font-xs);
+      }
    }
 
    .alert-note {

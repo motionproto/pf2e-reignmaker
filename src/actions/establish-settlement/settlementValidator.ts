@@ -11,7 +11,8 @@
 
 import type { KingdomData } from '../../actors/KingdomActor';
 import { getKingdomData } from '../../stores/KingdomStore';
-import { getAdjacentHexIds } from '../shared/hexValidation';
+import { getAdjacentHexIds, isHexClaimedByPlayer, isHexPending } from '../shared/hexValidation';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 /**
  * Validate a hex for settlement placement
@@ -25,7 +26,7 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   const kingdom = getKingdomData();
   
   // Check 1: Cannot already be selected as a pending placement
-  if (pendingClaims.includes(hexId)) {
+  if (isHexPending(hexId, pendingClaims)) {
     console.log(`[SettlementValidator] ❌ Hex ${hexId} already selected`);
     return false;
   }
@@ -61,9 +62,7 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   
   // Check 4: Must be in claimed territory (unless first settlement)
   if (!isFirstSettlement) {
-    const hex = kingdom.hexes.find((h: any) => h.id === hexId);
-    
-    if (!hex || hex.claimedBy !== PLAYER_KINGDOM) {
+    if (!isHexClaimedByPlayer(hexId, kingdom)) {
       console.log(`[SettlementValidator] ❌ Hex ${hexId} is not in claimed territory`);
       return false;
     }

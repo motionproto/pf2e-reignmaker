@@ -2,6 +2,8 @@
    import { createEventDispatcher, onMount } from 'svelte';
    import { territoryService } from '../../../services/territory';
    import { KingdomSettings } from '../../../api/foundry';
+   import { getKingdomActor } from '../../../stores/KingdomStore';
+   import { initializeKingdomData } from '../../../services/KingdomInitializationService';
    
    const dispatch = createEventDispatcher();
    
@@ -11,6 +13,7 @@
    let hasKingmakerData = false;
    let importResult: { success: boolean; hexesSynced: number; error?: string } | null = null;
    let isGM = false;
+   let isInitializing = false;
    
    // Scene selection
    let allScenes: any[] = [];
@@ -104,13 +107,22 @@
       step = 'importing';
       
       try {
+         // Step 1: Import hexes from Kingmaker
          const result = await territoryService.syncFromKingmaker();
          importResult = result;
          
          if (result.success) {
+            // Step 2: Initialize all derived data (NEW - Stage 1 completion)
+            isInitializing = true;
+            const actor = getKingdomActor();
+            if (actor) {
+               await initializeKingdomData(actor);
+            }
+            isInitializing = false;
+            
             step = 'complete';
             // @ts-ignore
-            ui.notifications?.info(`Successfully imported ${result.hexesSynced} hexes from Kingmaker!`);
+            ui.notifications?.info(`Kingdom ready! Imported ${result.hexesSynced} hexes and initialized all data.`);
          } else {
             // @ts-ignore
             ui.notifications?.error(`Failed to import: ${result.error}`);
@@ -118,6 +130,7 @@
          }
       } catch (error) {
          console.error('Import failed:', error);
+         isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Import failed. See console for details.');
          step = 'select';
@@ -129,13 +142,22 @@
       step = 'importing';
       
       try {
+         // Step 1: Import from Foundry grid
          const result = await territoryService.importFromFoundryGrid();
          importResult = result;
          
          if (result.success) {
+            // Step 2: Initialize all derived data (NEW - Stage 1 completion)
+            isInitializing = true;
+            const actor = getKingdomActor();
+            if (actor) {
+               await initializeKingdomData(actor);
+            }
+            isInitializing = false;
+            
             step = 'complete';
             // @ts-ignore
-            ui.notifications?.info(`Created empty kingdom with ${result.hexesSynced} hexes from scene grid!`);
+            ui.notifications?.info(`Kingdom ready! Created ${result.hexesSynced} hexes and initialized all data.`);
          } else {
             // @ts-ignore
             ui.notifications?.error(`Failed to create kingdom: ${result.error}`);
@@ -143,6 +165,7 @@
          }
       } catch (error) {
          console.error('Custom map import failed:', error);
+         isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Failed to create kingdom. See console for details.');
          step = 'select';
@@ -288,13 +311,17 @@
          <div class="dialog-header">
             <h2>
                <i class="fas fa-spinner fa-spin"></i>
-               Importing Territory Data...
+               {isInitializing ? 'Initializing Kingdom Data...' : 'Importing Territory Data...'}
             </h2>
          </div>
          
          <div class="dialog-body">
             <p class="importing-text">
-               Please wait while ReignMaker imports your kingdom data.
+               {#if isInitializing}
+                  Calculating derived properties and building caches...
+               {:else}
+                  Please wait while ReignMaker imports your kingdom data.
+               {/if}
             </p>
          </div>
          
@@ -310,16 +337,20 @@
          <div class="dialog-body">
             {#if importResult}
                <p class="import-complete-text">
-                  Successfully imported {importResult.hexesSynced} hexes!
+                  ✅ Kingdom Data Ready!
+               </p>
+               
+               <p class="success-summary">
+                  Imported {importResult.hexesSynced} hexes and initialized all derived properties.
                </p>
                
                <p class="next-steps">
-                  Your kingdom is ready. You can now:
+                  Your kingdom is fully initialized. You can now:
                </p>
                <ul>
-                  <li>View and manage your territory in the <strong>Territory</strong> tab</li>
-                  <li>Create and upgrade settlements in the <strong>Settlements</strong> tab</li>
-                  <li>Progress through kingdom turns in the <strong>Turn</strong> tab</li>
+                  <li>Review your territory in the <strong>Territory</strong> tab</li>
+                  <li>Check settlements in the <strong>Settlements</strong> tab</li>
+                  <li>Start Turn 1 from the <strong>Setup</strong> tab</li>
                </ul>
             {/if}
          </div>

@@ -1,6 +1,8 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { settlementService } from '../../../../services/settlements';
+   import { getDefaultSettlementImage } from '../../../../models/Settlement';
+   import Button from '../../components/baseComponents/Button.svelte';
    
    export let settlement: Settlement;
    
@@ -90,6 +92,28 @@
          ui.notifications?.error(`Failed to remove image: ${error.message}`);
       }
    }
+   
+   function pickMapImage() {
+      // TODO: Implement map image picker functionality
+      // @ts-ignore
+      ui.notifications?.info('Pick Map Image - Feature coming soon');
+   }
+   
+   async function restoreDefault() {
+      if (!settlement) return;
+      
+      try {
+         // Get the default tier image path and set it
+         const defaultImage = getDefaultSettlementImage(settlement.tier);
+         await settlementService.updateSettlementImage(settlement.id, defaultImage);
+         // @ts-ignore
+         ui.notifications?.info('Settlement image restored to default');
+      } catch (error) {
+         console.error('Failed to restore default image:', error);
+         // @ts-ignore
+         ui.notifications?.error(`Failed to restore default image: ${error.message}`);
+      }
+   }
 </script>
 
 <div class="detail-section">
@@ -97,20 +121,30 @@
       <div class="settlement-image">
          <img src={settlement.imagePath} alt={settlement.name} />
          <div class="image-actions">
-            <button on:click={selectImage} class="change-image-btn">
-               <i class="fas fa-exchange-alt"></i> Change Image
-            </button>
-            <button on:click={removeImage} class="remove-image-btn">
-               <i class="fas fa-times"></i> Remove
-            </button>
+            <Button variant="secondary" size="small" icon="fa-solid fa-image" on:click={selectImage}>
+               Change Image
+            </Button>
+            <Button variant="outline" size="small" icon="fas fa-times" on:click={removeImage}>
+               Remove
+            </Button>
+            <div class="spacer"></div>
+            <Button variant="secondary" size="small" on:click={pickMapImage}>
+               Map Image
+            </Button>
          </div>
       </div>
    {:else}
-      <div class="image-placeholder">
-         <i class="fas fa-image fa-3x"></i>
-         <button on:click={selectImage} class="upload-image-btn">
-            <i class="fas fa-upload"></i> Upload Image
-         </button>
+      <div class="placeholder-actions">
+         <Button variant="secondary" size="small" icon="fas fa-upload" on:click={selectImage}>
+            Upload Image
+         </Button>
+         <Button variant="outline" size="small" icon="fas fa-undo" on:click={restoreDefault}>
+            Restore Default
+         </Button>
+         <div class="spacer"></div>
+         <Button variant="secondary" size="small" on:click={pickMapImage}>
+            Map Image
+         </Button>
       </div>
    {/if}
 </div>
@@ -132,6 +166,10 @@
       .image-actions {
          display: flex;
          gap: 0.5rem;
+         
+         .spacer {
+            flex: 1;
+         }
          
          button {
             flex: 1;
@@ -165,42 +203,12 @@
       }
    }
    
-   .image-placeholder {
+   .placeholder-actions {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-      background: var(--bg-elevated);
-      border: 2px dashed var(--border-default);
-      border-radius: var(--radius-lg);
-      text-align: center;
+      gap: 0.5rem;
       
-      i {
-         margin-bottom: 1rem;
-         opacity: var(--opacity-muted);
-         color: var(--text-secondary);
-      }
-      
-      .upload-image-btn {
-         padding: 0.5rem 1rem;
-         border: 1px solid var(--border-default);
-         border-radius: var(--radius-md);
-         background: var(--bg-elevated);
-         color: var(--text-primary);
-         cursor: pointer;
-         transition: var(--transition-base);
-         font-size: var(--font-md);
-         
-         &:hover {
-            background: var(--bg-overlay);
-            border-color: var(--color-primary);
-         }
-         
-         i {
-            margin: 0 0.5rem 0 0;
-            opacity: 1;
-         }
+      .spacer {
+         flex: 1;
       }
    }
 </style>

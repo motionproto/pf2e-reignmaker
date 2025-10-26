@@ -4,18 +4,17 @@
  * Handles all resource production calculations for the kingdom
  */
 
-import type { Hex } from '../../models/Hex';
-import type { ProductionResult, EconomicModifier } from './types';
+import type { ProductionResult, EconomicModifier, HexData } from './types';
 
 /**
  * Calculate total resource production from all hexes
  * 
- * @param hexes - All kingdom hexes
+ * @param hexes - All kingdom hexes (plain objects)
  * @param modifiers - Optional economic modifiers
  * @returns Detailed production breakdown
  */
 export function calculateProduction(
-  hexes: Hex[], 
+  hexes: HexData[], 
   modifiers: EconomicModifier[] = []
 ): ProductionResult {
   const baseProduction = new Map<string, number>();
@@ -25,7 +24,7 @@ export function calculateProduction(
   // Calculate base production from each hex
   hexes.forEach(hex => {
     if (hex.worksite) {
-      const hexProduction = hex.getProduction();
+      const hexProduction = calculateHexProduction(hex);
       
       // Add to total base production
       hexProduction.forEach((amount, resource) => {
@@ -90,6 +89,94 @@ function applyModifier(
       bonusTracker.set(resource, (bonusTracker.get(resource) || 0) + bonus);
     }
   });
+}
+
+/**
+ * Calculate production from a single hex (plain object version)
+ * Replicates Hex.getProduction() logic without requiring class instances
+ * 
+ * @param hex - Hex data (plain object)
+ * @returns Map of resource to production amount
+ */
+function calculateHexProduction(hex: HexData): Map<string, number> {
+  if (!hex.worksite) {
+    return new Map();
+  }
+  
+  // Get base production from worksite type and terrain
+  const baseProduction = getWorksiteBaseProduction(hex.worksite.type, hex.terrain);
+  
+  // Apply commodity bonus (+1 to all production)
+  if (hex.hasCommodityBonus) {
+    baseProduction.forEach((amount, resource) => {
+      baseProduction.set(resource, amount + 1);
+    });
+  }
+  
+  return baseProduction;
+}
+
+/**
+ * Get base production for a worksite type on specific terrain
+ * Replicates Worksite.getBaseProduction() logic without requiring class instances
+ * 
+ * @param worksiteType - Type of worksite
+ * @param terrain - Terrain type
+ * @returns Map of resource to production amount
+ */
+function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<string, number> {
+  const normalizedTerrain = terrain.toLowerCase();
+  
+  switch (worksiteType) {
+    case 'Farmstead':
+      switch (normalizedTerrain) {
+        case 'plains':
+        case 'forest':
+          return new Map([['food', 2]]);
+        case 'hills':
+        case 'swamp':
+        case 'desert':
+        case 'water':
+          return new Map([['food', 1]]);
+        default:
+          console.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
+          return new Map([['food', 1]]);
+      }
+      
+    case 'Logging Camp':
+      if (normalizedTerrain === 'forest') {
+        return new Map([['lumber', 2]]);
+      }
+      return new Map();
+      
+    case 'Quarry':
+      if (normalizedTerrain === 'hills' || normalizedTerrain === 'mountains') {
+        return new Map([['stone', 1]]);
+      }
+      return new Map();
+      
+    case 'Mine':
+    case 'Bog Mine':
+      if (normalizedTerrain === 'mountains' || normalizedTerrain === 'swamp') {
+        return new Map([['ore', 1]]);
+      }
+      return new Map();
+      
+    case 'Hunting/Fishing Camp':
+      if (normalizedTerrain === 'swamp') {
+        return new Map([['food', 1]]);
+      }
+      return new Map();
+      
+    case 'Oasis Farm':
+      if (normalizedTerrain === 'desert') {
+        return new Map([['food', 1]]);
+      }
+      return new Map();
+      
+    default:
+      return new Map();
+  }
 }
 
 /**

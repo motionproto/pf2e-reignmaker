@@ -5,6 +5,8 @@
 
 import { get } from 'svelte/store';
 import { kingdomData } from '../../stores/KingdomStore';
+import { isHexClaimedByPlayer, getHex } from '../shared/hexValidation';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 
 /**
  * Validate if a hex can be fortified
@@ -15,14 +17,14 @@ export async function validateFortifyHex(hexId: string): Promise<{ valid: boolea
   const kingdom = get(kingdomData);
   
   // Find the hex
-  const hex = kingdom.hexes.find((h: any) => h.id === hexId);
+  const hex = getHex(hexId, kingdom);
   
   if (!hex) {
     return { valid: false, message: 'Hex not found' };
   }
   
   // Must be claimed territory
-  if (hex.claimedBy !== PLAYER_KINGDOM) {
+  if (!isHexClaimedByPlayer(hexId, kingdom)) {
     return { valid: false, message: 'Must be in claimed territory' };
   }
   

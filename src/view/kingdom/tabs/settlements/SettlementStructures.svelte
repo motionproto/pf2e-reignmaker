@@ -1,16 +1,38 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
-   import { StructureCondition } from '../../../../models/Settlement';
+   import { StructureCondition, SettlementTier } from '../../../../models/Settlement';
    import { getStructureCount, getMaxStructures } from './settlements.utils';
    import { settlementStructureManagement } from '../../../../services/structures/management';
    import { structuresService } from '../../../../services/structures';
    import SettlementStructureDialog from '../../components/SettlementStructureDialog.svelte';
+   import Button from '../../components/baseComponents/Button.svelte';
    import type { Structure } from '../../../../models/Structure';
    
    export let settlement: Settlement;
    
    let showAddDialog = false;
    let expandedCategories: Set<string> = new Set();
+   let dismissedWarning = false;
+   
+   // Get minimum structure requirements for tier
+   function getMinStructuresForTier(tier: SettlementTier): number {
+      switch (tier) {
+         case SettlementTier.TOWN:
+            return 2;
+         case SettlementTier.CITY:
+            return 4;
+         case SettlementTier.METROPOLIS:
+            return 8;
+         default:
+            return 0;
+      }
+   }
+   
+   // Check if settlement meets minimum structure requirements
+   $: currentStructures = settlement.structureIds?.length || 0;
+   $: requiredStructures = getMinStructuresForTier(settlement.tier);
+   $: meetsRequirements = currentStructures >= requiredStructures;
+   $: showWarning = !meetsRequirements && requiredStructures > 0 && !dismissedWarning;
    
    // Get grouped structures for this settlement
    $: groupedStructures = settlementStructureManagement.getSettlementStructuresGrouped(settlement);
@@ -144,17 +166,43 @@
             ({getStructureCount(settlement)}/{getMaxStructures(settlement)})
          </span>
       </h4>
+      <Button variant="small_secondary" icon="fas fa-plus">
+         Test Button
+      </Button>
       <button class="add-structure-button" on:click={openAddDialog}>
          <i class="fas fa-plus"></i>
          Add Structure
       </button>
    </div>
    
+   <!-- Minimum Structures Warning -->
+   {#if showWarning}
+      <div class="minimum-structures-warning">
+         <div class="warning-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="warning-text">
+               <strong>Insufficient Structures for {settlement.tier}</strong>
+               <p>This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)</p>
+            </div>
+            <button 
+               class="dismiss-button" 
+               on:click={() => dismissedWarning = true}
+               title="Dismiss warning"
+            >
+               <i class="fas fa-times"></i>
+            </button>
+         </div>
+      </div>
+   {/if}
+   
    {#if settlement.structureIds.length === 0}
       <div class="empty-structures">
          <i class="fas fa-tools"></i>
          <p>No structures built yet.</p>
-         <p class="hint">Click "Add Structure" to build in this settlement.</p>
+         <button class="add-structure-button" on:click={openAddDialog}>
+            <i class="fas fa-plus"></i>
+            Add Structure
+         </button>
       </div>
    {:else}
       <table class="structures-table">
@@ -335,6 +383,70 @@
    
    .empty-structures {
       @extend .empty-state;
+      
+      .add-structure-button {
+         margin-top: 1rem;
+      }
+   }
+   
+   .minimum-structures-warning {
+      margin-bottom: 1rem;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-left: 4px solid #fbbf24;
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      
+      .warning-content {
+         display: flex;
+         align-items: flex-start;
+         gap: 1rem;
+         
+         > i {
+            font-size: 1.5rem;
+            color: #fbbf24;
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+         }
+         
+         .warning-text {
+            flex: 1;
+            
+            strong {
+               display: block;
+               font-size: var(--font-lg);
+               font-weight: var(--font-weight-semibold);
+               color: #fbbf24;
+               margin-bottom: 0.25rem;
+            }
+            
+            p {
+               margin: 0;
+               font-size: var(--font-md);
+               color: var(--text-secondary);
+            }
+         }
+         
+         .dismiss-button {
+            background: transparent;
+            border: none;
+            color: rgba(251, 191, 36, 0.6);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            
+            &:hover {
+               color: #fbbf24;
+               background: rgba(251, 191, 36, 0.1);
+            }
+            
+            i {
+               font-size: 1rem;
+            }
+         }
+      }
    }
    
    .structures-table {
