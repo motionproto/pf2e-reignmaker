@@ -127,7 +127,7 @@
       description: "No kingdom stands alone.",
     },
     {
-      id: "economic-actions",
+      id: "economic-resources",
       name: "Economic Actions",
       icon: "fa-coins",
       description: "Manage trade and personal wealth.",

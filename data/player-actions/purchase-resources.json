@@ -2,8 +2,8 @@
   "id": "purchase-resources",
   "name": "Purchase Resources",
   "category": "economic-resources",
-  "brief": "Negotiate exchange rate then buy resources",
-  "description": "Use the kingdom's treasury to acquire needed materials from trade partners. Roll to determine the exchange rate, then purchase any amount at that rate.",
+  "brief": "Purchase resources with gold based on commerce structure tier",
+  "description": "Use the kingdom's treasury to acquire needed materials through your commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure (Market Square, Bazaar, Merchant Guild, or Imperial Bank).",
   "skills": [
     {
       "skill": "society",
@@ -28,11 +28,11 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Establish 1:1 exchange rate (pay 1 gold per resource)",
+      "description": "Use trade rate one tier higher than your commerce structure (e.g., Market Square → Bazaar rate). Imperial Bank achieves legendary 1:3 rate (1 gold → 3 resources)!",
       "modifiers": []
     },
     "success": {
-      "description": "Establish 2:1 exchange rate (pay 2 gold per resource)",
+      "description": "Use your current commerce structure's trade rate (Market Square: 2:1, Bazaar: 3:2, Merchant Guild: 1:1, Imperial Bank: 1:2)",
       "modifiers": []
     },
     "failure": {
@@ -40,9 +40,9 @@
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Negotiations fail; lose 1d4 gold",
+      "description": "Negotiations fail catastrophically; lose 1d4 gold",
       "modifiers": []
     }
   },
-  "special": "Choose a single resource type, then purchase any amount at the determined rate."
+  "special": "Purchase a single resource type with gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, buy in sets of 2 resources for 3 gold). Commerce tier determines rate: T1 Market Square (2:1) → T2 Bazaar (3:2) → T3 Merchant Guild (1:1) → T4 Imperial Bank (1:2) → Bonus Tier (1:3, critical success only)"
 }

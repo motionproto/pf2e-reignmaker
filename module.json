@@ -35,12 +35,5 @@
         "minimum": "13",
         "maximum": "13",
         "verified": "13"
-    },
-    "languages": [
-        {
-            "lang": "en",
-            "name": "English",
-            "path": "lang/en.json"
-        }
-    ]
+    }
 }

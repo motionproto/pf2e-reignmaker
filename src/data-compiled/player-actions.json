@@ -79,10 +79,6 @@
                 "description": "justify worth"
             },
             {
-                "skill": "acrobatics",
-                "description": "impressive service"
-            },
-            {
                 "skill": "thievery",
                 "description": "skim the treasury"
             }
@@ -251,10 +247,6 @@
             {
                 "skill": "thievery",
                 "description": "black market"
-            },
-            {
-                "skill": "occultism",
-                "description": "mystical trade"
             },
             {
                 "skill": "mercantile-lore",
@@ -483,8 +475,8 @@
                 "description": "defensive displays"
             },
             {
-                "skill": "thievery",
-                "description": "trap placement"
+                "skill": "survival",
+                "description": "wilderness defenses"
             },
             {
                 "skill": "warfare-lore",
@@ -667,8 +659,6 @@
     {
         "id": "hire-adventurers",
         "name": "Hire Adventurers",
-        "disabled": true,
-        "disabledReason": "In Development",
         "category": "foreign-affairs",
         "brief": "Pay gold to resolve events (2 Gold cost)",
         "description": "Contract independent heroes and mercenaries to handle dangerous tasks or resolve kingdom events",
@@ -727,7 +717,7 @@
             }
         },
         "failureCausesUnrest": true,
-        "costs": {
+        "cost": {
             "gold": 2
         },
         "special": "Limit: This action may only be attempted once per Kingdom Turn"
@@ -735,8 +725,6 @@
     {
         "id": "infiltration",
         "name": "Infiltration",
-        "disabled": true,
-        "disabledReason": "In Development",
         "category": "foreign-affairs",
         "brief": "Gather intelligence through espionage",
         "description": "Deploy spies and agents to gather intelligence on rival kingdoms or potential threats",
@@ -788,8 +776,6 @@
     {
         "id": "request-economic-aid",
         "name": "Request Economic Aid",
-        "disabled": true,
-        "disabledReason": "In Development",
         "category": "foreign-affairs",
         "brief": "Ask allies for resources or gold",
         "description": "Appeal to allied nations for material support in times of need",
@@ -807,8 +793,8 @@
                 "description": "emotional appeal"
             },
             {
-                "skill": "thievery",
-                "description": "creative accounting"
+                "skill": "deception",
+                "description": "exaggerate need"
             },
             {
                 "skill": "medicine",
@@ -854,8 +840,6 @@
     {
         "id": "request-military-aid",
         "name": "Request Military Aid",
-        "disabled": true,
-        "disabledReason": "In Development",
         "category": "foreign-affairs",
         "brief": "Call for allied troops in battle",
         "description": "Call upon allies to provide troops or military support during conflicts",
@@ -1352,10 +1336,6 @@
             {
                 "skill": "occultism",
                 "description": "mystical demonstrations"
-            },
-            {
-                "skill": "acrobatics",
-                "description": "impressive physical feats"
             }
         ],
         "effects": {
@@ -1490,12 +1470,8 @@
                 "description": "physical labor"
             },
             {
-                "skill": "acrobatics",
-                "description": "specialized construction"
-            },
-            {
-                "skill": "stealth",
-                "description": "discrete building"
+                "skill": "arcana",
+                "description": "magically assisted construction"
             }
         ],
         "effects": {

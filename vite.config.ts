@@ -138,6 +138,10 @@ export default defineConfig(({ mode }) =>
                {
                   src: 'styles/fonts.css',
                   dest: '.'
+               },
+               {
+                  src: 'data-compiled/*.json',
+                  dest: '.'
                }
             ]
          })

@@ -4,6 +4,7 @@
 
 import { createDefaultFaction } from './Faction';
 import type { Faction, AttitudeLevel } from './Faction';
+import factionsData from '../data-compiled/factions.json';
 
 interface DefaultFactionData {
   id: string;
@@ -12,18 +13,13 @@ interface DefaultFactionData {
 }
 
 /**
- * Load default factions from combined dist file
+ * Load default factions from compiled data
+ * Uses ES module import for proper HMR support (matches pattern in event-loader.ts, action-loader.ts, etc.)
  */
 export async function loadDefaultFactions(): Promise<Faction[]> {
   try {
-    // Import the combined JSON file from dist
-    const response = await fetch('modules/pf2e-reignmaker/dist/factions.json');
-    if (!response.ok) {
-      console.warn('[DefaultFactions] Could not load default factions, using empty array');
-      return [];
-    }
-    
-    const data: DefaultFactionData[] = await response.json();
+    // Use the imported JSON data directly
+    const data: DefaultFactionData[] = factionsData as DefaultFactionData[];
     
     // Convert to Faction objects, using the predefined IDs
     return data.map(item => {

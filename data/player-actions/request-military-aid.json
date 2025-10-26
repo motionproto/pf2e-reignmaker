@@ -1,8 +1,6 @@
 {
   "id": "request-military-aid",
   "name": "Request Military Aid",
-  "disabled": true,
-  "disabledReason": "In Development",
   "category": "foreign-affairs",
   "brief": "Call for allied troops in battle",
   "description": "Call upon allies to provide troops or military support during conflicts",

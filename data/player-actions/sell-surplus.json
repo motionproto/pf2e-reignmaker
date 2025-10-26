@@ -2,8 +2,8 @@
   "id": "sell-surplus",
   "name": "Sell Surplus",
   "category": "economic-resources",
-  "brief": "Trade 2 resources for gold",
-  "description": "Convert excess resources into gold through trade with merchants and neighboring kingdoms",
+  "brief": "Trade resources for gold based on commerce structure tier",
+  "description": "Convert excess resources into gold through your kingdom's commerce infrastructure. Better commerce structures provide better trade rates. Requires at least one commerce structure (Market Square, Bazaar, Merchant Guild, or Imperial Bank).",
   "skills": [
     {
       "skill": "society",
@@ -32,35 +32,21 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Trade 2 Resources \u2192 2 Gold",
-      "modifiers": [
-        {
-          "type": "dice",
-          "resource": "gold",
-          "formula": "1d4",
-          "duration": "immediate"
-        }
-      ]
+      "description": "Use trade rate one tier higher than your commerce structure (e.g., Market Square → Bazaar rate). Imperial Bank achieves legendary 1:3 rate!",
+      "modifiers": []
     },
     "success": {
-      "description": "Trade 2 Resources \u2192 1 Gold",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "gold",
-          "value": 1,
-          "duration": "immediate"
-        }
-      ]
+      "description": "Use your current commerce structure's trade rate (Market Square: 2:1, Bazaar: 3:2, Merchant Guild: 1:1, Imperial Bank: 1:2)",
+      "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "No buyers found this turn",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
+      "description": "No buyers found this turn",
       "modifiers": []
     }
   },
-  "special": "Trade a single resource type for gold"
+  "special": "Trade a single resource type for gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, trade in sets of 3). Commerce tier determines rate: T1 Market Square (2:1) → T2 Bazaar (3:2) → T3 Merchant Guild (1:1) → T4 Imperial Bank (1:2) → Bonus Tier (1:3, critical success only)"
 }
