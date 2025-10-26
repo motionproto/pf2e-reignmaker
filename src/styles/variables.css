@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Faculty+Glyphic&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
 /* PF2E Kingdom Lite - Design System Variables */
 /* Simple CSS variables for consistent theming */
 /* Note: Font declarations moved to fonts.css which is copied directly without processing */
@@ -167,8 +169,8 @@
   --space-12: 24px;
   
   /* Font Families - Module-scoped to avoid Foundry conflicts */
-  --font-sans-rm:  "Signika", 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
-  --font-serif-rm:  "Domine", serif;
+  --font-sans-rm:   "Signika", "Montserrat", 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-serif-rm:  "Faculty Glyphic", "Domine", serif;
   
   /* Font Sizes */
   --font-xs: 12px;

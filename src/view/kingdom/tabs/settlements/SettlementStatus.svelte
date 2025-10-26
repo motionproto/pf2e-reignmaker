@@ -1,11 +1,15 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
-   import { updateKingdom } from '../../../../stores/KingdomStore';
+   import { updateKingdom, kingdomData } from '../../../../stores/KingdomStore';
    import { settlementService } from '../../../../services/settlements';
+   import Dialog from '../../components/baseComponents/Dialog.svelte';
    
    export let settlement: Settlement;
    
    let isUpdating = false;
+   let showCapitalConfirm = false;
+   let oldCapitalName = '';
+   let isUpdatingCapital = false;
    
    // Get tier upgrade requirements
    $: upgradeValidation = settlement 
@@ -41,6 +45,11 @@
                s.connectedByRoads = !s.connectedByRoads;
             }
          });
+         
+         // Recalculate settlement gold income (affected by road connection)
+         // @ts-ignore - recalculateSettlement is private but we need it here
+         await settlementService['recalculateSettlement'](settlement.id);
+         
          // @ts-ignore
          ui.notifications?.info(`Road connection ${settlement.connectedByRoads ? 'enabled' : 'disabled'} for ${settlement.name}`);
       } catch (error) {
@@ -51,36 +60,162 @@
          isUpdating = false;
       }
    }
+   
+   async function handleCapitalToggle() {
+      if (isUpdatingCapital) return;
+      
+      // If unchecking capital, just unset it
+      if (settlement.isCapital) {
+         isUpdatingCapital = true;
+         try {
+            await updateKingdom(k => {
+               const s = k.settlements.find(s => s.id === settlement.id);
+               if (s) {
+                  s.isCapital = false;
+               }
+            });
+            
+            // Recalculate settlement gold income (affected by capital status)
+            // @ts-ignore - recalculateSettlement is private but we need it here
+            await settlementService['recalculateSettlement'](settlement.id);
+            
+            // @ts-ignore - Foundry global
+            ui.notifications?.info(`${settlement.name} is no longer the capital`);
+         } catch (error) {
+            console.error('Failed to update capital status:', error);
+            // @ts-ignore - Foundry global
+            ui.notifications?.error('Failed to update capital status');
+         } finally {
+            isUpdatingCapital = false;
+         }
+         return;
+      }
+      
+      // If setting as capital, check for existing capital
+      const existingCapital = $kingdomData.settlements.find(
+         s => s.owned === settlement.owned && s.isCapital && s.id !== settlement.id
+      );
+      
+      if (existingCapital) {
+         // Show confirmation dialog
+         oldCapitalName = existingCapital.name;
+         showCapitalConfirm = true;
+      } else {
+         // No existing capital, just set it
+         await setAsCapital();
+      }
+   }
+   
+   function closeCapitalConfirm() {
+      showCapitalConfirm = false;
+      oldCapitalName = '';
+   }
+   
+   async function confirmCapitalChange() {
+      await setAsCapital();
+      closeCapitalConfirm();
+   }
+   
+   async function setAsCapital() {
+      if (isUpdatingCapital) return;
+      
+      isUpdatingCapital = true;
+      try {
+         // Track old capital ID to recalculate it as well
+         const oldCapitalId = $kingdomData.settlements.find(
+            s => s.owned === settlement.owned && s.isCapital && s.id !== settlement.id
+         )?.id;
+         
+         await updateKingdom(k => {
+            // Unset any existing capital for this faction
+            const existingCapital = k.settlements.find(
+               s => s.owned === settlement.owned && s.isCapital && s.id !== settlement.id
+            );
+            if (existingCapital) {
+               existingCapital.isCapital = false;
+            }
+            
+            // Set new capital
+            const s = k.settlements.find(s => s.id === settlement.id);
+            if (s) {
+               s.isCapital = true;
+            }
+         });
+         
+         // Recalculate both settlements' gold income (affected by capital status)
+         // @ts-ignore - recalculateSettlement is private but we need it here
+         await settlementService['recalculateSettlement'](settlement.id);
+         if (oldCapitalId) {
+            // @ts-ignore
+            await settlementService['recalculateSettlement'](oldCapitalId);
+         }
+         
+         // @ts-ignore - Foundry global
+         ui.notifications?.info(`${settlement.name} is now the capital`);
+      } catch (error) {
+         console.error('Failed to update capital status:', error);
+         // @ts-ignore - Foundry global
+         ui.notifications?.error('Failed to update capital status');
+      } finally {
+         isUpdatingCapital = false;
+      }
+   }
 </script>
 
 {#if settlement.wasFedLastTurn !== undefined}
    <div class="detail-section">
-      <h4>Status</h4>
+      <div class="status-header">
+         <h4>Status</h4>
+         <!-- Capital Toggle -->
+         <button 
+            class="capital-toggle" 
+            class:is-capital={settlement.isCapital}
+            title="Mark this settlement as the faction's capital"
+            on:click={handleCapitalToggle}
+            disabled={isUpdatingCapital}
+         >
+            {#if settlement.isCapital}
+               <i class="fas fa-crown"></i>
+            {:else}
+               <i class="far fa-square"></i>
+            {/if}
+            <span>Capital</span>
+         </button>
+      </div>
       <div class="status-list">
          <div class="status-item">
             {#if settlement.wasFedLastTurn}
                <i class="fas fa-check-circle status-good"></i>
-               <span>Fed last turn (generates gold)</span>
+               <span>Fed last turn ({settlement.goldIncome || 0} gold/turn)</span>
             {:else}
                <i class="fas fa-exclamation-triangle status-warning"></i>
                <span>Not fed last turn (no gold generation)</span>
             {/if}
          </div>
-         <button 
-            class="status-item toggleable"
-            on:click={toggleRoadConnection}
-            disabled={isUpdating}
-            title="Click to toggle road connection (doubles gold income when connected)"
-         >
-            {#if settlement.connectedByRoads}
-               <i class="fas fa-check-circle status-good"></i>
-               <span>Connected by roads (2x gold income)</span>
-            {:else}
-               <i class="fas fa-times-circle status-bad"></i>
-               <span>Not connected by roads</span>
-            {/if}
-            <i class="fas fa-pen edit-indicator"></i>
-         </button>
+         
+         <!-- Show capital status or road connection toggle -->
+         {#if settlement.isCapital}
+            <div class="status-item">
+               <i class="fas fa-crown status-good"></i>
+               <span>Is the Capital (2x gold income)</span>
+            </div>
+         {:else}
+            <button 
+               class="status-item toggleable"
+               on:click={toggleRoadConnection}
+               disabled={isUpdating}
+               title="Click to toggle road connection (doubles gold income when connected to capital)"
+            >
+               {#if settlement.connectedByRoads}
+                  <i class="fas fa-check-circle status-good"></i>
+                  <span>Connected to capital by roads (2x gold income)</span>
+               {:else}
+                  <i class="fas fa-times-circle status-bad"></i>
+                  <span>Not connected to capital by roads</span>
+               {/if}
+               <i class="fas fa-pen edit-indicator"></i>
+            </button>
+         {/if}
          
          <!-- Structure Progress towards next tier -->
          {#if structureProgress}
@@ -101,17 +236,83 @@
          {/if}
       </div>
    </div>
+   
+   <!-- Capital Change Confirmation Dialog -->
+   <Dialog
+      bind:show={showCapitalConfirm}
+      title="Change Capital?"
+      confirmLabel={isUpdatingCapital ? 'Changing...' : 'Change Capital'}
+      cancelLabel="Cancel"
+      confirmDisabled={isUpdatingCapital}
+      on:confirm={confirmCapitalChange}
+      on:cancel={closeCapitalConfirm}
+   >
+      <p>
+         This will change the capital from <strong>{oldCapitalName}</strong> to <strong>{settlement.name}</strong>.
+      </p>
+   </Dialog>
 {/if}
 
 <style lang="scss">
    .detail-section {
       margin-bottom: .25rem;
+   }
+   
+   .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
       
       h4 {
-         margin: 0 0 0.5rem 0;
+         margin: 0;
          color: var(--color-accent);
          font-size: var(--font-lg);
          font-weight: var(--font-weight-semibold);
+      }
+   }
+   
+   .capital-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      
+      &:hover:not(:disabled) {
+         background: var(--bg-overlay);
+         border-color: var(--color-primary);
+      }
+      
+      &:disabled {
+         opacity: var(--opacity-disabled);
+         cursor: not-allowed;
+      }
+      
+      i {
+         color: var(--text-tertiary);
+         font-size: var(--font-sm);
+      }
+      
+      span {
+         font-weight: var(--font-weight-medium);
+      }
+      
+      // Active state (is capital)
+      &.is-capital {
+         background: rgba(251, 191, 36, 0.1);
+         border-color: rgba(251, 191, 36, 0.3);
+         color: var(--text-primary);
+         
+         i {
+            color: #fbbf24;
+         }
       }
    }
    
@@ -192,6 +393,5 @@
             }
          }
       }
-      
    }
 </style>

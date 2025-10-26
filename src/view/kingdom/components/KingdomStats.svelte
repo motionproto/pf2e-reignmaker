@@ -517,12 +517,12 @@
     padding: 0rem 1.25rem;
     color: var(--color-accent);
     font-size: var(--font-2xl);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     letter-spacing: 0.025em;
     background: transparent;
-    margin-bottom: .25rem;
+    margin-bottom: .5rem;
     margin-top: 1.5rem;
-      font-family: var(--font-serif-rm);
+    font-family: var(--font-serif-rm);
   }
 
   .stat-item {

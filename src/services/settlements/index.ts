@@ -46,6 +46,9 @@ export class SettlementService {
    * Calculate total gold income from all settlements
    * Only generates gold if settlements were fed last turn
    * Only includes settlements with valid map locations IN CLAIMED TERRITORY
+   * 
+   * This now sums the pre-calculated goldIncome property on each settlement.
+   * The individual settlement gold income is calculated by recalculateSettlement().
    */
   calculateSettlementGoldIncome(settlements: Settlement[], hexes?: any[]): number {
     let totalGold = 0;
@@ -55,20 +58,8 @@ export class SettlementService {
     
     mappedSettlements.forEach(settlement => {
       if (settlement.wasFedLastTurn) {
-        // Base gold income by tier
-        const baseIncome = this.getBaseGoldIncome(settlement.tier);
-        
-        // Additional gold from structures (markets, etc.)
-        const structureIncome = this.getStructureGoldIncome(settlement);
-        
-        let settlementIncome = baseIncome + structureIncome;
-        
-        // Double income if connected to Capitol by roads
-        if (settlement.connectedByRoads) {
-          settlementIncome *= 2;
-        }
-        
-        totalGold += settlementIncome;
+        // Use pre-calculated gold income from settlement property
+        totalGold += settlement.goldIncome || 0;
       }
     });
     
@@ -91,6 +82,27 @@ export class SettlementService {
       default:
         return 0;
     }
+  }
+  
+  /**
+   * Calculate gold income for an individual settlement
+   * Used to populate settlement.goldIncome property
+   */
+  private calculateIndividualSettlementGoldIncome(settlement: Settlement): number {
+    // Base gold income by tier
+    const baseIncome = this.getBaseGoldIncome(settlement.tier);
+    
+    // Additional gold from structures (markets, etc.)
+    const structureIncome = this.getStructureGoldIncome(settlement);
+    
+    let settlementIncome = baseIncome + structureIncome;
+    
+    // Double income if settlement is the capital OR connected to capital by roads
+    if (settlement.isCapital || settlement.connectedByRoads) {
+      settlementIncome *= 2;
+    }
+    
+    return settlementIncome;
   }
   
   /**
@@ -355,7 +367,9 @@ export class SettlementService {
       // Recalculate ALL derived properties from structures
       s.foodStorageCapacity = structuresService.calculateFoodStorage(s);
       s.imprisonedUnrestCapacityValue = structuresService.calculateImprisonedUnrestCapacity(s);
-      s.goldIncome = structuresService.calculateGoldIncome(s);
+      
+      // Calculate gold income (base + structures + capital/road multiplier)
+      s.goldIncome = this.calculateIndividualSettlementGoldIncome(s);
       
       // Handle imprisoned unrest capacity reduction
       // If current imprisoned unrest exceeds new capacity, return excess to kingdom unrest

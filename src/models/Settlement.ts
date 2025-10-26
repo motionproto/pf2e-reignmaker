@@ -73,6 +73,7 @@ export interface Settlement {
   structureIds: string[]; // IDs of built structures
   structureConditions?: Record<string, StructureCondition>; // Map of structureId -> condition
   connectedByRoads: boolean;
+  isCapital?: boolean; // Whether this settlement is the faction's capital
   
   // Ownership tracking
   // - "player" = Owned by player kingdom
@@ -156,6 +157,7 @@ export function createSettlement(
     structureIds: [],
     structureConditions: {},
     connectedByRoads: false,
+    isCapital: false, // Initialize as not a capital
     owned: PLAYER_KINGDOM, // All created settlements are owned by the player kingdom
     storedFood: 0,
     imprisonedUnrest: 0,
