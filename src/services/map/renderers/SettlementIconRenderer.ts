@@ -11,12 +11,12 @@ import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
  * Places tier-specific icon sprites at hex centers based on settlement tier
  * 
  * @param layer - PIXI container to add sprites to
- * @param settlementData - Array of settlements with hex ID and tier NAME (Village, Town, City, Metropolis)
+ * @param settlementData - Array of settlements with hex ID, tier NAME, and optional custom mapIconPath
  * @param canvas - Foundry canvas object
  */
 export async function renderSettlementIcons(
   layer: PIXI.Container,
-  settlementData: Array<{ id: string; tier: string }>,
+  settlementData: Array<{ id: string; tier: string; mapIconPath?: string }>,
   canvas: any
 ): Promise<number> {
   console.log(`[SettlementIconRenderer] 🏛️ Rendering settlement icons for ${settlementData.length} hexes...`);
@@ -34,17 +34,17 @@ export async function renderSettlementIcons(
   // Process each settlement
   console.log(`[SettlementIconRenderer] Starting loop over ${settlementData.length} settlements`);
   for (const settlement of settlementData) {
-    const { id, tier } = settlement;
-    console.log(`[SettlementIconRenderer] Processing settlement:`, { id, tier });
+    const { id, tier, mapIconPath } = settlement;
+    console.log(`[SettlementIconRenderer] Processing settlement:`, { id, tier, mapIconPath });
     try {
-      // Get icon path for this settlement tier
-      const iconPath = SETTLEMENT_ICONS[tier];
+      // Use custom map icon if available, otherwise fall back to default tier icon
+      const iconPath = mapIconPath || SETTLEMENT_ICONS[tier];
       if (!iconPath) {
         console.warn(`[SettlementIconRenderer] No icon found for settlement tier: ${tier}`);
         continue;
       }
 
-      console.log(`[SettlementIconRenderer] Loading icon for settlement at ${id}, tier ${tier}, path: ${iconPath}`);
+      console.log(`[SettlementIconRenderer] Loading icon for settlement at ${id}, tier ${tier}, path: ${iconPath} ${mapIconPath ? '(custom)' : '(default)'}`);
 
       // Parse hex ID
       const parts = id.split('.');

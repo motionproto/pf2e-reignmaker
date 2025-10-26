@@ -527,6 +527,57 @@ export class SettlementService {
   }
   
   /**
+   * Update settlement map icon path
+   * Convenience method for map icon updates
+   * Also syncs the map icon to the hex feature in territory service
+   * 
+   * @param settlementId - Settlement ID
+   * @param iconPath - New map icon path (undefined to use default tier icon)
+   */
+  async updateSettlementMapIcon(settlementId: string, iconPath: string | undefined): Promise<void> {
+    logger.debug(`🗺️ [SettlementService] Updating settlement map icon: ${settlementId}`);
+    
+    const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
+    
+    const actor = getKingdomActor();
+    if (!actor) {
+      throw new Error('No kingdom actor available');
+    }
+    
+    const kingdom = actor.getKingdomData();
+    if (!kingdom) {
+      throw new Error('No kingdom data available');
+    }
+    
+    const settlement = kingdom.settlements.find(s => s.id === settlementId);
+    if (!settlement) {
+      throw new Error(`Settlement not found: ${settlementId}`);
+    }
+    
+    // Update settlement's mapIconPath
+    await this.updateSettlement(settlementId, { mapIconPath: iconPath });
+    
+    // Sync mapIconPath to hex feature
+    const hexId = `${settlement.location.x}.${String(settlement.location.y).padStart(2, '0')}`;
+    await updateKingdom(k => {
+      // @ts-ignore - Hex features typing will be updated
+      const hex = k.hexes.find((h: any) => h.id === hexId);
+      if (hex) {
+        // @ts-ignore - Hex features typing will be updated
+        const settlementFeature = hex.features?.find((f: any) => 
+          f.type === 'settlement' && f.settlementId === settlementId
+        );
+        if (settlementFeature) {
+          settlementFeature.mapIconPath = iconPath;
+          logger.debug(`✅ [SettlementService] Synced map icon to hex feature at ${hexId}`);
+        }
+      }
+    });
+    
+    logger.debug(`✅ [SettlementService] Updated map icon for ${settlement.name}`);
+  }
+  
+  /**
    * Update settlement properties
    * 
    * @param settlementId - Settlement ID
@@ -566,6 +617,23 @@ export class SettlementService {
       if (s) {
         Object.assign(s, updates);
         updatedSettlement = s;
+        
+        // SYNC: Update hex feature to keep settlement data consistent
+        if (nameChanged || tierChanged) {
+          const hexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+          const hex = k.hexes.find((h: any) => h.id === hexId) as any;
+          if (hex?.features) {
+            const settlementFeature = hex.features.find((f: any) => 
+              f.type === 'settlement' && f.settlementId === settlementId
+            ) as any;
+            if (settlementFeature) {
+              if (nameChanged) settlementFeature.name = s.name;
+              if (tierChanged) settlementFeature.tier = s.tier;
+              logger.debug(`🔄 [SettlementService] Synced settlement data to hex feature at ${hexId}`);
+            }
+          }
+        }
+        
         logger.debug(`✅ [SettlementService] Updated ${s.name}`);
       }
     });

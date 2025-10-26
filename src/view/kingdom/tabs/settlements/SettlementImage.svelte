@@ -2,9 +2,15 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { settlementService } from '../../../../services/settlements';
    import { getDefaultSettlementImage } from '../../../../models/Settlement';
+   import { processMapIcon, sanitizeSettlementName } from '../../../../utils/ImageProcessor';
+   import { ensureUploadDirectory } from '../../../../utils/FileSystemHelper';
    import Button from '../../components/baseComponents/Button.svelte';
+   import Dialog from '../../components/baseComponents/Dialog.svelte';
    
    export let settlement: Settlement;
+   
+   // Dialog state
+   let showMapIconInfo = false;
    
    // Image upload
    async function selectImage() {
@@ -93,10 +99,105 @@
       }
    }
    
-   function pickMapImage() {
-      // TODO: Implement map image picker functionality
+   async function pickMapImage() {
+      if (!settlement) return;
+      
+      // @ts-ignore - Check if player has file browser permission
+      const game = (globalThis as any).game;
+      
+      // Check if user has FILES_BROWSE permission
+      if (!game?.user?.hasPermission("FILES_BROWSE")) {
+         // @ts-ignore
+         ui.notifications?.warn('You need file browsing permission to upload map icons. Please ask your GM.');
+         return;
+      }
+      
+      // Show info dialog before file picker
+      showMapIconInfo = true;
+   }
+   
+   function handleMapIconConfirm() {
+      showMapIconInfo = false;
+      openMapIconPicker();
+   }
+   
+   function handleMapIconCancel() {
+      showMapIconInfo = false;
+   }
+   
+   async function openMapIconPicker() {
+      if (!settlement) return;
+      
       // @ts-ignore
-      ui.notifications?.info('Pick Map Image - Feature coming soon');
+      const game = (globalThis as any).game;
+      
+      // Generate suggested filename
+      const sanitizedName = sanitizeSettlementName(settlement.name);
+      // Use world-specific directory
+      const worldId = game.world.id;
+      const uploadDir = `worlds/${worldId}/reignmaker-uploads/map-icons`;
+      
+      // Ensure directory exists (routes through GM if player)
+      try {
+         await ensureUploadDirectory(uploadDir);
+      } catch (err) {
+         console.error('Failed to ensure directory exists:', err);
+         // @ts-ignore
+         ui.notifications?.error('Failed to create upload directory. Please ensure a GM is online.');
+         return;
+      }
+      
+      // Open file picker for initial selection - start browsing in upload directory
+      // @ts-ignore
+      const fp = new FilePicker({
+         type: "image",
+         current: uploadDir, // Start browsing in our upload directory
+         activeSource: "data",
+         displayMode: "tiles",
+         redirectToRoot: ["data"],
+         callback: async (selectedPath: string) => {
+            try {
+               // Fetch the selected file
+               const response = await fetch(selectedPath);
+               if (!response.ok) throw new Error('Failed to fetch selected image');
+               
+               const blob = await response.blob();
+               const file = new File([blob], 'temp.jpg', { type: blob.type });
+               
+               // Process the image
+               // @ts-ignore
+               ui.notifications?.info('Processing image...');
+               const processedBlob = await processMapIcon(file);
+               
+               // Convert blob to File for upload
+               const processedFile = new File([processedBlob], `${sanitizedName}.webp`, { type: 'image/webp' });
+               
+               // Upload to Foundry's file system in our upload directory
+               // @ts-ignore
+               const upload = await FilePicker.upload(
+                  'data',
+                  uploadDir,
+                  processedFile,
+                  {}
+               );
+               
+               if (upload?.path) {
+                  // Update settlement with new map icon path
+                  await settlementService.updateSettlementMapIcon(settlement.id, upload.path);
+                  // @ts-ignore
+                  ui.notifications?.success('Map icon updated successfully');
+               } else {
+                  throw new Error('Upload failed - no path returned');
+               }
+            } catch (error) {
+               console.error('Failed to process/upload map icon:', error);
+               // @ts-ignore
+               ui.notifications?.error(`Failed to update map icon: ${error.message}`);
+            }
+         }
+      });
+      
+      fp.render(true);
    }
    
    async function restoreDefault() {
@@ -115,6 +216,30 @@
       }
    }
 </script>
+
+<!-- Map Icon Info Dialog -->
+<Dialog 
+   bind:show={showMapIconInfo}
+   title="🗺️ Map Icon Upload"
+   confirmLabel="Choose Image"
+   cancelLabel="Cancel"
+   on:confirm={handleMapIconConfirm}
+   on:cancel={handleMapIconCancel}
+>
+   <div class="map-icon-info">
+      <p><strong>Map icons are automatically processed:</strong></p>
+      <ul>
+         <li>📐 Center-cropped to square</li>
+         <li>📏 Scaled to 128×128 pixels</li>
+         <li>🖼️ Converted to WebP format</li>
+         <li>💾 Optimized file size (~50KB)</li>
+      </ul>
+      <p class="info-footer">
+         <strong>Supported formats:</strong> PNG, JPG, WebP<br/>
+         <strong>Any size works</strong> - the image will be automatically processed.
+      </p>
+   </div>
+</Dialog>
 
 <div class="detail-section">
    {#if settlement.imagePath}
@@ -150,6 +275,30 @@
 </div>
 
 <style lang="scss">
+   .map-icon-info {
+      text-align: left;
+      line-height: 1.6;
+      font-size: var(--font-md);
+      padding: 0rem 1.5rem; /* Less vertical, more horizontal */
+      
+      p {
+         margin-bottom: 0.75rem;
+      }
+      
+      ul {
+         margin: 0.5rem 0 0.5rem 1.5rem;
+         padding: 0;
+      }
+      
+      li {
+         margin-bottom: 0.25rem;
+      }
+      
+      .info-footer {
+         margin-top: 1rem;
+      }
+   }
+   
    .detail-section {
       margin-bottom: 1.5rem;
    }

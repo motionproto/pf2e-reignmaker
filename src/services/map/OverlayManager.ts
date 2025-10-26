@@ -54,6 +54,7 @@ export class OverlayManager {
   private static instance: OverlayManager | null = null;
   private overlays: Map<string, MapOverlay> = new Map();
   private subscriptions: Map<string, Unsubscriber> = new Map();  // Store subscriptions
+  private zoomSubscriptions: Map<string, { callback: Function; lastScale: number }> = new Map();  // Zoom hook tracking
   private mapLayer: ReignMakerMapLayer;
   private readonly STORAGE_KEY = 'reignmaker-overlay-states';
   
@@ -182,6 +183,11 @@ export class OverlayManager {
         return;
       }
       
+      // Subscribe to zoom changes for settlement-labels overlay
+      if (id === 'settlement-labels') {
+        this.setupZoomSubscription(id);
+      }
+      
       // Save state after successful activation
       this.saveState();
       
@@ -217,6 +223,14 @@ export class OverlayManager {
         unsubscribe();
         this.subscriptions.delete(id);
         console.log(`[OverlayManager] 🔌 Unsubscribed from: ${id}`);
+      }
+      
+      // Cleanup zoom subscription if exists
+      const zoomSub = this.zoomSubscriptions.get(id);
+      if (zoomSub) {
+        Hooks.off('canvasPan', zoomSub.callback);
+        this.zoomSubscriptions.delete(id);
+        console.log(`[OverlayManager] 🔍 Removed zoom subscription for: ${id}`);
       }
       
       // Call overlay's hide method
@@ -322,6 +336,67 @@ export class OverlayManager {
       this.saveState();
       console.log('[OverlayManager] ✅ All overlays cleared - subscriptions: 0, active: 0, state saved');
     }
+  }
+
+  /**
+   * Setup zoom change subscription for dynamic label scaling
+   * Hooks into Foundry's canvasPan event to detect zoom changes
+   */
+  private setupZoomSubscription(overlayId: string): void {
+    const overlay = this.overlays.get(overlayId);
+    if (!overlay || !overlay.store || !overlay.render) {
+      console.warn(`[OverlayManager] Cannot setup zoom subscription for ${overlayId} - missing store/render`);
+      return;
+    }
+
+    // Get initial canvas scale
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.stage?.scale) {
+      console.warn('[OverlayManager] Canvas not available for zoom subscription');
+      return;
+    }
+
+    const initialScale = canvas.stage.scale.x;
+    
+    // Define hook callback for zoom changes
+    const zoomCallback = (canvasInstance: any, view: any) => {
+      // Only proceed if overlay is still active
+      if (!this.isOverlayActive(overlayId)) {
+        return;
+      }
+
+      const currentScale = canvasInstance.stage?.scale?.x;
+      if (!currentScale) return;
+
+      // Check if zoom has changed (not just pan)
+      const zoomSubscription = this.zoomSubscriptions.get(overlayId);
+      if (!zoomSubscription) return;
+
+      const lastScale = zoomSubscription.lastScale;
+      
+      // Only re-render if zoom actually changed (threshold to avoid floating point issues)
+      if (Math.abs(currentScale - lastScale) > 0.001) {
+        console.log(`[OverlayManager] 🔍 Zoom changed for ${overlayId}: ${lastScale.toFixed(2)} → ${currentScale.toFixed(2)}`);
+        
+        // Update tracked scale
+        zoomSubscription.lastScale = currentScale;
+        
+        // Trigger re-render with current data
+        const currentData = get(overlay.store!);
+        overlay.render!(currentData);
+      }
+    };
+
+    // Register the hook
+    Hooks.on('canvasPan', zoomCallback);
+
+    // Store subscription info for cleanup
+    this.zoomSubscriptions.set(overlayId, {
+      callback: zoomCallback,
+      lastScale: initialScale
+    });
+
+    console.log(`[OverlayManager] 🔍 Zoom subscription setup for ${overlayId} (initial scale: ${initialScale.toFixed(2)})`);
   }
 
   /**
@@ -563,7 +638,8 @@ export class OverlayManager {
       render: async (hexesWithFeatures) => {
         const settlementData = hexesWithFeatures.map((h: any) => ({
           id: h.id,
-          tier: h.feature?.tier || 'Village'
+          tier: h.feature?.tier || 'Village',
+          mapIconPath: h.feature?.mapIconPath  // Custom map icon (optional)
         }));
 
         if (settlementData.length === 0) {
@@ -579,6 +655,42 @@ export class OverlayManager {
         // Cleanup handled by OverlayManager
       },
       isActive: () => this.isOverlayActive('settlement-icons')
+    });
+
+    // Settlement Labels Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
+    this.registerOverlay({
+      id: 'settlement-labels',
+      name: 'Settlement Labels',
+      icon: 'fa-tag',
+      layerIds: ['settlement-labels'],
+      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
+      render: async (hexesWithFeatures) => {
+        console.log('[OverlayManager] Settlement Labels render called, data:', hexesWithFeatures);
+        
+        const settlementData = hexesWithFeatures.map((h: any) => {
+          console.log('[OverlayManager] Processing hex:', h);
+          return {
+            id: h.id,
+            name: h.feature?.name || 'Unnamed',
+            tier: h.feature?.tier || 'Village'
+          };
+        });
+
+        console.log('[OverlayManager] Mapped settlement data:', settlementData);
+
+        if (settlementData.length === 0) {
+          console.log('[OverlayManager] No settlement labels - clearing layer');
+          this.mapLayer.clearLayer('settlement-labels');
+          return;
+        }
+
+        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement labels`);
+        await this.mapLayer.drawSettlementLabels(settlementData);
+      },
+      hide: () => {
+        // Cleanup handled by OverlayManager
+      },
+      isActive: () => this.isOverlayActive('settlement-labels')
     });
 
     // Fortifications Overlay - REACTIVE (uses derived store for hexes with fortifications)
@@ -612,7 +724,7 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('fortifications')
     });
 
-    console.log('[OverlayManager] ✅ Registered 9 default overlays');
+    console.log('[OverlayManager] ✅ Registered 10 default overlays');
   }
 }
 

@@ -34,9 +34,11 @@ export type LayerId =
   | 'settlements'                 // Settlement markers/sprites
   | 'settlements-overlay'         // Settlement hex highlights (toolbar)
   | 'settlement-icons'            // Settlement tier icons (village, town, city, metropolis)
+  | 'settlement-labels'           // Settlement name labels (text below icons)
   | 'worksites'                   // Worksite icons (farm, mine, quarry, etc.)
   | 'resources'                   // Resource/commodity icons (food, lumber, ore, stone)
   | 'routes'                      // Road connections (curved lines between road hexes)
+  | 'fortifications'              // Fortification icons (walls, towers, keeps)
   | string;                       // Custom layer IDs
 
 /**

@@ -33,5 +33,47 @@ export function registerKingdomHandlers(): void {
     logger.debug('[KingdomHandlers] Kingdom updated successfully');
   });
 
+  // Register ensureUploadDirectory handler
+  actionDispatcher.register('ensureUploadDirectory', async (data: {
+    path: string;
+  }) => {
+    logger.debug('[KingdomHandlers] Ensuring upload directory exists:', data.path);
+    
+    // @ts-ignore
+    const game = (globalThis as any).game;
+    
+    // Only GM can create directories
+    if (!game?.user?.isGM) {
+      throw new Error('Only GM can create directories');
+    }
+    
+    try {
+      // Try to browse to check if exists
+      // @ts-ignore
+      await FilePicker.browse('data', data.path);
+      logger.debug('[KingdomHandlers] Directory already exists:', data.path);
+    } catch (err) {
+      // Directory doesn't exist, create it (and parents if needed)
+      // Create parent directories first
+      const parts = data.path.split('/');
+      let currentPath = '';
+      
+      for (const part of parts) {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        
+        try {
+          // @ts-ignore
+          await FilePicker.browse('data', currentPath);
+          logger.debug(`[KingdomHandlers] Directory exists: ${currentPath}`);
+        } catch (browseErr) {
+          // Directory doesn't exist, create it
+          // @ts-ignore
+          await FilePicker.createDirectory('data', currentPath);
+          logger.info(`[KingdomHandlers] Created directory: ${currentPath}`);
+        }
+      }
+    }
+  });
+
   logger.debug('✅ [KingdomHandlers] Kingdom operation handlers registered');
 }

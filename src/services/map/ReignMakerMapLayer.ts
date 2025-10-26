@@ -674,6 +674,30 @@ export class ReignMakerMapLayer {
   }
 
   /**
+   * Draw settlement name labels on hexes
+   * Places text labels below settlement icons with background panels
+   */
+  async drawSettlementLabels(settlementData: Array<{ id: string; name: string; tier: string }>): Promise<void> {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'settlement-labels';
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 51); // Above settlement icons (50)
+    const canvas = (globalThis as any).canvas;
+    
+    // Delegate to renderer
+    const { renderSettlementLabels } = await import('./renderers/SettlementLabelRenderer');
+    await renderSettlementLabels(layer, settlementData, canvas);
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
+
+  /**
    * Draw fortification icons on hexes
    * Places fortification icon sprites at hex centers based on tier
    * Shows red border for unpaid maintenance

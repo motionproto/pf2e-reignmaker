@@ -150,6 +150,7 @@ export interface HexFeature {
   settlementId?: string | null;  // ID linking to Settlement, null if unlinked
   tier?: string;             // Village/Town/City/Metropolis (for display on vacant settlements)
   name?: string;             // Settlement/landmark name (preserved from Kingmaker import)
+  mapIconPath?: string;      // Custom map icon path for settlement (overrides default tier icon)
   
   // Extensible for future feature types
   [key: string]: any;

@@ -7,6 +7,12 @@ import townImg from '../../img/settlements/town.webp';
 import cityImg from '../../img/settlements/city.webp';
 import metropolisImg from '../../img/settlements/metropolis.webp';
 
+// Import map icon images
+import villageMapIcon from '../../img/map_icons/settlement_village.webp';
+import townMapIcon from '../../img/map_icons/settlement_town.webp';
+import cityMapIcon from '../../img/map_icons/settlement_city.webp';
+import metropolisMapIcon from '../../img/map_icons/settlement_metropolis.webp';
+
 // Import ownership types
 import type { OwnershipValue } from '../types/ownership';
 import { PLAYER_KINGDOM } from '../types/ownership';
@@ -92,6 +98,9 @@ export interface Settlement {
   // Optional image
   imagePath?: string;
   
+  // Optional custom map icon (falls back to default tier icon)
+  mapIconPath?: string;
+  
   // Skill bonuses from structures
   skillBonuses?: Record<string, number>; // Map of skill name -> bonus value (e.g. { athletics: 1, diplomacy: 2 })
   
@@ -119,6 +128,48 @@ export function getDefaultSettlementImage(tier: SettlementTier): string {
     default:
       return villageImg;
   }
+}
+
+/**
+ * Get default map icon path for settlement tier
+ */
+export function getDefaultMapIcon(tier: SettlementTier): string {
+  switch (tier) {
+    case SettlementTier.VILLAGE:
+      return villageMapIcon;
+    case SettlementTier.TOWN:
+      return townMapIcon;
+    case SettlementTier.CITY:
+      return cityMapIcon;
+    case SettlementTier.METROPOLIS:
+      return metropolisMapIcon;
+    default:
+      return villageMapIcon;
+  }
+}
+
+/**
+ * Get map icon for settlement with automatic fallback
+ * Returns custom icon if set, otherwise returns default tier icon
+ * 
+ * @param settlement - Settlement to get icon for
+ * @returns Map icon path (always returns a valid path)
+ * 
+ * @example
+ * ```typescript
+ * // In Svelte components:
+ * const iconPath = getSettlementMapIcon(settlement);
+ * 
+ * // In HTML with error fallback:
+ * <img 
+ *   src={getSettlementMapIcon(settlement)} 
+ *   alt={settlement.name}
+ *   on:error={(e) => e.target.src = getDefaultMapIcon(settlement.tier)}
+ * />
+ * ```
+ */
+export function getSettlementMapIcon(settlement: Settlement): string {
+  return settlement.mapIconPath || getDefaultMapIcon(settlement.tier);
 }
 
 /**
