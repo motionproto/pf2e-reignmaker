@@ -13,14 +13,14 @@ import { logger } from '../../utils/Logger';
  * Standardized logging for phase start
  */
 export function reportPhaseStart(phaseName: string): void {
-  logger.debug(`🟡 [${phaseName}] Starting phase...`);
+
 }
 
 /**
  * Standardized logging for phase completion
  */
 export function reportPhaseComplete(phaseName: string): void {
-  logger.debug(`✅ [${phaseName}] Phase complete`);
+
 }
 
 /**
@@ -64,7 +64,7 @@ export function checkPhaseGuard(
   
   // Steps exist - check if we're in the WRONG phase
   if (kingdom?.currentPhase !== phaseName) {
-    logger.debug(`⏭️ [${controllerName}] Not in ${phaseName} phase, skipping initialization`);
+
     return createPhaseResult(true);
   }
   
@@ -73,13 +73,13 @@ export function checkPhaseGuard(
   const hasCompletedSteps = kingdom.currentPhaseSteps?.some((s: any) => s.completed === 1);
   if (hasCompletedSteps) {
     // We're mid-phase, don't re-initialize (would clear component state/progress)
-    logger.debug(`⏭️ [${controllerName}] Mid-phase with progress, skipping re-initialization`);
+
     return createPhaseResult(true);
   }
   
   // No completed steps yet - allow initialization
   // This handles the case where we just navigated to this phase with stale steps
-  logger.debug(`✅ [${controllerName}] In correct phase, allowing initialization`);
+
   return null;
 }
 
@@ -88,8 +88,7 @@ export function checkPhaseGuard(
  * Uses TurnManager singleton with modular phase-handler
  */
 export async function initializePhaseSteps(steps: Array<{ name: string }>): Promise<void> {
-  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton for step initialization`);
-  
+
   // Use TurnManager singleton for step management (business logic)
   const { TurnManager } = await import('../../models/turn-manager');
   const turnManager = TurnManager.getInstance();
@@ -101,15 +100,13 @@ export async function initializePhaseSteps(steps: Array<{ name: string }>): Prom
  * Uses TurnManager singleton with modular phase-handler
  */
 export async function completePhaseStepByIndex(stepIndex: number): Promise<{ phaseComplete: boolean }> {
-  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton to complete step at index: ${stepIndex}`);
-  
+
   try {
     // Use TurnManager singleton for step completion (business logic)
     const { TurnManager } = await import('../../models/turn-manager');
     const turnManager = TurnManager.getInstance();
     const result = await turnManager.completePhaseStepByIndex(stepIndex);
-    
-    logger.debug(`✅ [PhaseControllerHelpers] Step ${stepIndex} completed via TurnManager singleton`);
+
     return result;
   } catch (error) {
     logger.error('❌ [PhaseControllerHelpers] Error completing step:', error);
@@ -121,8 +118,7 @@ export async function completePhaseStepByIndex(stepIndex: number): Promise<{ pha
  * Check if a specific step is completed by index - delegates to PhaseHandler
  */
 export async function isStepCompletedByIndex(stepIndex: number): Promise<boolean> {
-  logger.debug(`[PhaseControllerHelpers] Using TurnManager singleton to check step completion at index: ${stepIndex}`);
-  
+
   try {
     // Use TurnManager singleton for step status checking
     const { TurnManager } = await import('../../models/turn-manager');
@@ -154,9 +150,8 @@ export async function resolvePhaseOutcome(
   resolutionData: any, // ResolutionData from types/events
   stepIndicesToComplete: number[]
 ): Promise<{ success: boolean; applied?: any; error?: string }> {
-  logger.debug(`🎯 [PhaseControllerHelpers.resolvePhaseOutcome] Resolving ${itemType} ${itemId} with ${outcome}`);
-  logger.debug(`📋 [PhaseControllerHelpers] ResolutionData:`, resolutionData);
-  
+
+
   try {
     // Apply outcome using shared resolution service
     const { applyResolvedOutcome } = await import('../../services/resolution');
@@ -176,7 +171,7 @@ export async function resolvePhaseOutcome(
     
     if (resolvedInstance) {
       await checkInstanceService.markApplied(resolvedInstance.instanceId);
-      logger.debug(`✅ [PhaseControllerHelpers] Marked ${itemType} instance as applied`);
+
     } else {
       logger.warn(`⚠️ [PhaseControllerHelpers] No resolved ${itemType} instance found to mark as applied`);
     }
@@ -184,11 +179,9 @@ export async function resolvePhaseOutcome(
     // Complete phase steps in order
     for (const stepIndex of stepIndicesToComplete) {
       await completePhaseStepByIndex(stepIndex);
-      logger.debug(`✅ [PhaseControllerHelpers] Completed step ${stepIndex}`);
+
     }
-    
-    logger.debug(`✅ [PhaseControllerHelpers] ${itemType} resolved successfully`);
-    
+
     return {
       success: true,
       applied: result

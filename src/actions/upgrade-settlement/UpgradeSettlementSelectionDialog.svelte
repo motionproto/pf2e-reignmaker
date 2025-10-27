@@ -83,13 +83,13 @@
   async function loadEligibleSettlements() {
     const actor = getKingdomActor();
     if (!actor) {
-      console.error('❌ [UpgradeSettlementSelectionDialog] No kingdom actor available');
+      logger.error('❌ [UpgradeSettlementSelectionDialog] No kingdom actor available');
       return;
     }
     
     const kingdom = actor.getKingdomData();
     if (!kingdom) {
-      console.error('❌ [UpgradeSettlementSelectionDialog] No kingdom data available');
+      logger.error('❌ [UpgradeSettlementSelectionDialog] No kingdom data available');
       return;
     }
     
@@ -99,8 +99,7 @@
     eligibleSettlements = kingdom.settlements
       .map(s => canUpgradeSettlement(s, availableGold))
       .filter((info): info is SettlementUpgradeInfo => info !== null);
-    
-    console.log(`🏰 [UpgradeSettlementSelectionDialog] Found ${eligibleSettlements.length} eligible settlements`);
+
   }
   
   function selectSettlement(info: SettlementUpgradeInfo) {
@@ -119,9 +118,7 @@
       ui?.notifications?.warn('Please select a settlement to upgrade');
       return;
     }
-    
-    console.log('🏰 [UpgradeSettlementSelectionDialog] Settlement selected:', selectedSettlementId);
-    
+
     // Dispatch confirmation event
     dispatch('confirm', {
       settlementId: selectedSettlementId

@@ -19,7 +19,6 @@
   }
 
   // Reactive statement to log the current selection for debugging
-  $: console.log('[AidSelectionDialog] selectedSkill:', selectedSkill);
 
   const skills = [
     { value: 'acrobatics', label: 'Acrobatics' },

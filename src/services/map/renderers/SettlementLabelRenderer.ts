@@ -42,10 +42,9 @@ export async function renderSettlementLabels(
   settlementData: Array<{ id: string; name: string; tier: string }>,
   canvas: any
 ): Promise<number> {
-  console.log(`[SettlementLabelRenderer] 📝 Rendering settlement labels for ${settlementData.length} settlements...`);
 
   if (!canvas?.grid) {
-    console.warn('[SettlementLabelRenderer] ❌ Canvas grid not available');
+    logger.warn('[SettlementLabelRenderer] ❌ Canvas grid not available');
     return 0;
   }
 
@@ -59,15 +58,6 @@ export async function renderSettlementLabels(
   const inverseScale = 1.0 / canvasScale;
   
   // Debug logging for zoom levels
-  console.log(`[SettlementLabelRenderer] 🔍 Zoom Debug:`, {
-    rawCanvasScale: rawCanvasScale.toFixed(2),
-    canvasScale: canvasScale.toFixed(2),
-    clamped: rawCanvasScale < 0.3,
-    zoomPercentage: `${(canvasScale * 100).toFixed(0)}%`,
-    inverseScale: inverseScale.toFixed(2),
-    baseFontSize: LABEL_STYLE.fontSize,
-    effectiveFontSize: `${LABEL_STYLE.fontSize * inverseScale} (appears as ${LABEL_STYLE.fontSize}px on screen)`
-  });
 
   // Process each settlement
   for (const settlement of settlementData) {
@@ -77,7 +67,7 @@ export async function renderSettlementLabels(
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
-        console.warn(`[SettlementLabelRenderer] ⚠️ Invalid hex ID format: ${id}`);
+        logger.warn(`[SettlementLabelRenderer] ⚠️ Invalid hex ID format: ${id}`);
         continue;
       }
 
@@ -85,7 +75,7 @@ export async function renderSettlementLabels(
       const j = parseInt(parts[1], 10);
       
       if (isNaN(i) || isNaN(j)) {
-        console.warn(`[SettlementLabelRenderer] ⚠️ Invalid hex coordinates: ${id}`);
+        logger.warn(`[SettlementLabelRenderer] ⚠️ Invalid hex coordinates: ${id}`);
         continue;
       }
 
@@ -113,10 +103,9 @@ export async function renderSettlementLabels(
       successCount++;
       
     } catch (error) {
-      console.error(`[SettlementLabelRenderer] Failed to draw label for settlement ${id}:`, error);
+      logger.error(`[SettlementLabelRenderer] Failed to draw label for settlement ${id}:`, error);
     }
   }
 
-  console.log(`[SettlementLabelRenderer] ✅ Drew ${successCount}/${settlementData.length} settlement labels`);
   return successCount;
 }

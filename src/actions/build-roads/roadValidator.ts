@@ -103,32 +103,31 @@ export function validateRoadHex(hexId: string, pendingRoads: string[] = []): boo
   
   // Check 1: Must be claimed by kingdom
   if (!isHexClaimedByPlayer(hexId, kingdom)) {
-    console.log(`[RoadValidator] ❌ Hex ${hexId} not claimed`);
+
     return false;
   }
   
   // Check 2: Cannot already have a road (includes settlement check)
   if (hexHasRoads(hexId, kingdom)) {
     if (hexHasSettlement(hexId, kingdom)) {
-      console.log(`[RoadValidator] ❌ Hex ${hexId} has a settlement (settlements count as roads)`);
+
     } else {
-      console.log(`[RoadValidator] ❌ Hex ${hexId} already has a road`);
+
     }
     return false;
   }
   
   // Check 3: Cannot already be selected as a pending road
   if (isHexPending(hexId, pendingRoads)) {
-    console.log(`[RoadValidator] ❌ Hex ${hexId} already selected`);
+
     return false;
   }
   
   // Check 4: Must be adjacent to existing roads, pending roads, or settlements
   if (!isAdjacentToRoadOrSettlement(hexId, kingdom, pendingRoads)) {
-    console.log(`[RoadValidator] ❌ Hex ${hexId} not adjacent to roads/settlements`);
+
     return false;
   }
-  
-  console.log(`[RoadValidator] ✅ Hex ${hexId} valid for road`);
+
   return true;
 }

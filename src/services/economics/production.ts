@@ -5,6 +5,7 @@
  */
 
 import type { ProductionResult, EconomicModifier, HexData } from './types';
+import { logger } from '../../utils/Logger';
 
 /**
  * Calculate total resource production from all hexes
@@ -139,7 +140,7 @@ function getWorksiteBaseProduction(worksiteType: string, terrain: string): Map<s
         case 'water':
           return new Map([['food', 1]]);
         default:
-          console.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
+          logger.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
           return new Map([['food', 1]]);
       }
       

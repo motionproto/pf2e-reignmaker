@@ -45,20 +45,18 @@ export class ResetKingdomDialog extends FormApplication {
 
       if (!partyActor) {
         ui.notifications?.error('No party actor found!');
-        console.error('[PF2E ReignMaker] No party actor found');
+        logger.error('[PF2E ReignMaker] No party actor found');
         return;
       }
-
-      console.log('[PF2E ReignMaker] Deleting kingdom data from party actor...');
 
       // Remove the kingdom data flag
       await partyActor.unsetFlag('pf2e-reignmaker', 'kingdom-data');
 
       ui.notifications?.info(`Kingdom data removed from "${partyActor.name}". Reload the Kingdom UI to initialize fresh data.`);
-      console.log(`✅ [PF2E ReignMaker] Kingdom data removed from party actor: ${partyActor.name}`);
-      console.log('[PF2E ReignMaker] Reload the Kingdom UI to initialize fresh data');
+
+
     } catch (error) {
-      console.error('[PF2E ReignMaker] Failed to reset kingdom:', error);
+      logger.error('[PF2E ReignMaker] Failed to reset kingdom:', error);
       ui.notifications?.error('Failed to reset kingdom data');
     }
   }

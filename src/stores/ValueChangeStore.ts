@@ -29,7 +29,7 @@ let initializationComplete = false;
 // Allow time for kingdom data to fully load before tracking changes
 setTimeout(() => {
   initializationComplete = true;
-  console.log('🎬 [ValueChangeStore] Initialization window complete, now tracking changes');
+
 }, 1000);
 
 // Initialize previous values
@@ -38,13 +38,13 @@ resources.subscribe($resources => {
     // First run - just capture current state, don't trigger animations
     previousValues = { ...$resources };
     isInitialized = true;
-    console.log('🎬 [ValueChangeStore] Initialized with current values (no animations triggered)');
+
     return;
   }
   
   // Don't trigger animations during initialization window
   if (!initializationComplete) {
-    console.log('🎬 [ValueChangeStore] Still in initialization window, updating values without animations');
+
     previousValues = { ...$resources };
     return;
   }
@@ -69,9 +69,7 @@ resources.subscribe($resources => {
       
       if (currentValue !== previousValue) {
         const delta = currentValue - previousValue;
-        
-        console.log(`🎬 [ValueChangeStore] Detected change: ${resource} ${previousValue} → ${currentValue} (Δ${delta})`);
-        
+
         events.push({
           id: `anim-${resource}-${Date.now()}-${Math.random()}`,
           resource,
@@ -83,7 +81,7 @@ resources.subscribe($resources => {
     
     // Add new animation events
     if (events.length > 0) {
-      console.log(`🎬 [ValueChangeStore] Emitting ${events.length} animation events:`, events);
+
       activeAnimations.update(current => [...current, ...events]);
     }
     

@@ -163,7 +163,7 @@
     // Check if already resolved by current player
     const existingInstanceId = currentActionInstances.get(actionId);
     if (existingInstanceId) {
-      console.log('⏭️ [ActionsPhase] Action already has instance, skipping:', actionId);
+
       return;
     }
 
@@ -239,33 +239,28 @@
     
     // Special handling for upgrade-settlement to replace {Settlement} placeholder
     if (action.id === 'upgrade-settlement') {
-      console.log('🏰 [ActionsPhase] Upgrade settlement - checking for placeholder replacement');
-      console.log('   effectMessage:', effectMessage);
-      console.log('   pendingUpgradeAction:', pendingUpgradeAction);
-      console.log('   contains {Settlement}?', effectMessage.includes('{Settlement}'));
-      
+
+
       if (effectMessage.includes('{Settlement}')) {
         if (pendingUpgradeAction?.settlementId) {
           const actor = getKingdomActor();
           if (actor) {
             const kingdom = actor.getKingdomData();
             const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
-            
-            console.log('   Found settlement:', settlement?.name);
-            
+
             if (settlement) {
               effectMessage = effectMessage.replace(/{Settlement}/g, settlement.name);
-              console.log('   Replaced! New message:', effectMessage);
+
             } else {
-              console.warn('   ⚠️ Settlement not found, using generic');
+              logger.warn('   ⚠️ Settlement not found, using generic');
               effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
             }
           } else {
-            console.warn('   ⚠️ No actor, using generic');
+            logger.warn('   ⚠️ No actor, using generic');
             effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
           }
         } else {
-          console.warn('   ⚠️ No settlementId in pendingUpgradeAction, using generic');
+          logger.warn('   ⚠️ No settlementId in pendingUpgradeAction, using generic');
           effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
         }
       }
@@ -324,8 +319,7 @@
             resource: 'gold',
             value: -actualCost
           });
-          
-          console.log(`💰 [ActionsPhase] Added upgrade cost modifier: -${actualCost} gold (${outcomeType})`);
+
         }
       }
     }
@@ -349,7 +343,6 @@
     // Track instanceId for this action
     currentActionInstances.set(actionId, instanceId);
     currentActionInstances = currentActionInstances;  // Trigger reactivity
-    console.log(`✅ [ActionsPhase] Created instance ${instanceId} for action ${actionId}`);
 
     // Force Svelte to update
     await tick();
@@ -361,28 +354,26 @@
   // NEW ARCHITECTURE: Receives ResolutionData from OutcomeDisplay via primary event
   async function applyActionEffects(event: CustomEvent) {
     const { checkId: actionId, resolution: resolutionData } = event.detail;
-    
-    console.log('🔵 [applyActionEffects] Called for action:', actionId);
-    console.log('📋 [applyActionEffects] ResolutionData:', resolutionData);
-    
+
+
     const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
     );
     if (!action) {
-      console.error('❌ [applyActionEffects] Action not found:', actionId);
+      logger.error('❌ [applyActionEffects] Action not found:', actionId);
       return;
     }
 
     // Get instance from storage
     const instanceId = currentActionInstances.get(actionId);
     if (!instanceId) {
-      console.error('❌ [applyActionEffects] No instance found for action:', actionId);
+      logger.error('❌ [applyActionEffects] No instance found for action:', actionId);
       return;
     }
     
     const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
     if (!instance?.appliedOutcome) {
-      console.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
+      logger.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
       return;
     }
 
@@ -397,7 +388,7 @@
         instance.appliedOutcome.effect
       );
       await checkInstanceService.markApplied(instanceId);
-      console.log(`✅ [ActionsPhase] Stored outcome and marked applied for instance: ${instanceId}`);
+
     }
 
     // First, apply modifiers via controller for ALL actions (including build-structure)
@@ -409,8 +400,6 @@
       instance.appliedOutcome.skillName || '',
       currentUserId || undefined
     );
-    
-    console.log('📊 [applyActionEffects] Result:', result);
 
     if (!result.success) {
       // Show error to user about requirements not being met
@@ -454,7 +443,7 @@
         actionId,
         TurnPhase.ACTIONS
       );
-      console.log(`📝 [applyActionEffects] Tracked action: ${actionId} for player: ${currentUserId}`);
+
     }
     
     // Clear instance to reset card to initial state (actions can be performed again)
@@ -462,7 +451,7 @@
       await checkInstanceService.clearInstance(instanceId);
       currentActionInstances.delete(actionId);
       currentActionInstances = currentActionInstances;  // Trigger reactivity
-      console.log(`🧹 [ActionsPhase] Cleared instance ${instanceId} after applying effects`);
+
     }
     
     // Force UI update
@@ -505,15 +494,7 @@
     // Calculate actual cost based on outcome
     const isCriticalSuccess = outcome === 'criticalSuccess';
     const actualCost = isCriticalSuccess ? Math.ceil(fullCost / 2) : fullCost;
-    
-    console.log('💰 [UpgradeSettlement] Cost calculation:', {
-      currentLevel,
-      newLevel,
-      fullCost,
-      isCriticalSuccess,
-      actualCost
-    });
-    
+
     // Deduct gold cost
     try {
       await updateKingdom(k => {
@@ -523,9 +504,7 @@
           throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
         }
       });
-      
-      console.log(`✅ [UpgradeSettlement] Deducted ${actualCost} gold`);
-      
+
       // Upgrade settlement level (handles automatic tier transitions)
       const { settlementService } = await import('../../../services/settlements');
       await settlementService.updateSettlementLevel(pendingUpgradeAction.settlementId, newLevel);
@@ -550,7 +529,7 @@
       }
       
     } catch (error) {
-      console.error('❌ [UpgradeSettlement] Error:', error);
+      logger.error('❌ [UpgradeSettlement] Error:', error);
       ui.notifications?.error(error instanceof Error ? error.message : 'Failed to upgrade settlement');
     }
     
@@ -614,8 +593,7 @@
                     remainingCostObj[resource] = Math.ceil((amount as number) * costModifier);
                   }
                 }
-                
-                console.log(`💰 [BuildStructure] Critical success! Costs reduced to 50%:`, totalCostObj);
+
               }
             });
           }
@@ -661,7 +639,7 @@
             const afterCount = kingdom.turnState.actionsPhase.activeAids.length;
             
             if (beforeCount > afterCount) {
-              console.log(`🧹 [ActionsPhase] Cleared ${beforeCount - afterCount} aid(s) for action: ${checkId}`);
+
             }
           }
         });
@@ -677,13 +655,11 @@
     
     // Initialize the phase (this auto-completes immediately to allow players to skip actions)
     await controller.startPhase();
-    console.log('[ActionsPhase] Phase initialized with controller');
-    
+
     // Store current user ID
     const game = (window as any).game;
     currentUserId = game?.user?.id || null;
-    console.log('[ActionsPhase] Initialized with currentUserId:', currentUserId, 'userName:', game?.user?.name);
-    
+
     window.addEventListener(
       "kingdomRollComplete",
       handleRollComplete as any
@@ -691,7 +667,7 @@
     initializeRollResultHandler();
 
     // Wait for store initialization before accessing player data
-    console.log('[ActionsPhase] Component mounted, waiting for store initialization...');
+
   });
 
   onDestroy(() => {
@@ -817,7 +793,7 @@
         }
       );
     } catch (error) {
-      console.error("Error executing skill:", error);
+      logger.error("Error executing skill:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
     }
   }
@@ -825,9 +801,7 @@
   // Handle debug outcome change
   async function handleDebugOutcomeChange(event: CustomEvent, action: any) {
     const { outcome: newOutcome } = event.detail;
-    
-    console.log(`🐛 [ActionsPhase] Debug outcome changed to: ${newOutcome} for action: ${action.id}`);
-    
+
     // Get instance
     const instanceId = currentActionInstances.get(action.id);
     if (!instanceId) return;
@@ -868,16 +842,13 @@
       customEffect || (action[newOutcome] as any)?.description || 'Action completed',
       instance.appliedOutcome?.rollBreakdown  // Preserve existing rollBreakdown
     );
-    
-    console.log(`✅ [ActionsPhase] Updated instance ${instanceId} with new outcome: ${newOutcome}`);
+
   }
   
   // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
   async function handlePerformReroll(event: CustomEvent, action: any) {
     const { skill, previousFame } = event.detail;
-    
-    console.log(`🔁 [ActionsPhase] Performing reroll with skill: ${skill}`);
-    
+
     // Clear instance for this action
     const instanceId = currentActionInstances.get(action.id);
     if (instanceId && checkInstanceService) {
@@ -924,7 +895,7 @@
         }
       );
     } catch (error) {
-      console.error("Error during reroll:", error);
+      logger.error("Error during reroll:", error);
       // Restore fame if the roll failed
       const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
       if (previousFame !== undefined) {
@@ -1010,7 +981,7 @@
       // The roll completion will be handled by handleRollComplete
       // which will trigger onActionResolved with the outcome
     } catch (error) {
-      console.error("Error executing build structure roll:", error);
+      logger.error("Error executing build structure roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingBuildAction = null;
     }
@@ -1120,7 +1091,7 @@
       // The roll completion will be handled by handleRollComplete
       // which will trigger onActionResolved with the outcome
     } catch (error) {
-      console.error("Error executing repair structure roll:", error);
+      logger.error("Error executing repair structure roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingRepairAction = null;
     }
@@ -1170,7 +1141,7 @@
       // The roll completion will be handled by handleRollComplete
       // which will trigger onActionResolved with the outcome
     } catch (error) {
-      console.error("Error executing upgrade settlement roll:", error);
+      logger.error("Error executing upgrade settlement roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingUpgradeAction = null;
     }
@@ -1220,7 +1191,7 @@
       // The roll completion will be handled by handleRollComplete
       // which will trigger onActionResolved with the outcome
     } catch (error) {
-      console.error("Error executing establish diplomatic relations roll:", error);
+      logger.error("Error executing establish diplomatic relations roll:", error);
       ui.notifications?.error(`Failed to perform action: ${error}`);
       pendingDiplomaticAction = null;
     }
@@ -1229,9 +1200,7 @@
   // Handle Aid Another button click - check if player has acted, then open skill selection dialog
   function handleAid(event: CustomEvent) {
     const { checkId, checkName } = event.detail;
-    
-    console.log('[ActionsPhase] Aid Another clicked:', { checkId, checkName });
-    
+
     // Check if THIS PLAYER has already acted - show confirmation dialog
     // READ from reactive store (Single Source of Truth) - use actionLog
     const game = (window as any).game;
@@ -1241,15 +1210,9 @@
       entry.playerId === game?.user?.id && 
       (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
     );
-    
-    console.log('[ActionsPhase] Aid action tracking check (before skill selection):', {
-      userId: game?.user?.id,
-      actionLogEntries: actionLog.filter((e: any) => e.playerId === game?.user?.id).length,
-      hasPlayerActed
-    });
-    
+
     if (hasPlayerActed) {
-      console.log('[ActionsPhase] Player has already acted - aid is special case, allowing');
+
       // Note: Aid Another still allowed even if player has acted
       // Regular action confirmation is now handled by BaseCheckCard
     }
@@ -1265,9 +1228,7 @@
     
     const { skill } = event.detail;
     showAidSelectionDialog = false;
-    
-    console.log('[ActionsPhase] Aid skill selected:', skill);
-    
+
     // Proceed with aid roll (action tracking already checked in handleAid)
     await executeAidRoll(skill, pendingAidAction.id, pendingAidAction.name);
     pendingAidAction = null;
@@ -1309,9 +1270,7 @@
       // Listen for the roll completion BEFORE starting the roll
       aidRollListener = async (e: any) => {
         const { checkId, outcome, actorName } = e.detail;
-        
-        console.log('[ActionsPhase] kingdomRollComplete received:', checkId, 'Looking for:', `aid-${targetActionId}`);
-        
+
         if (checkId === `aid-${targetActionId}`) {
           window.removeEventListener('kingdomRollComplete', aidRollListener as any);
           
@@ -1332,9 +1291,7 @@
             bonus = -1;  // PF2e rules: critical failure imposes a -1 penalty
           }
           // outcome === 'failure' stays at 0 (no effect)
-          
-          console.log('[ActionsPhase] Aid stored for', targetActionId, '- outcome:', outcome, 'bonus:', bonus);
-          
+
           // Store aids that have any effect (bonus or penalty)
           if (bonus !== 0) {
             const actor = getKingdomActor();
@@ -1412,7 +1369,7 @@
       if (aidRollListener) {
         window.removeEventListener('kingdomRollComplete', aidRollListener as any);
       }
-      console.error('Error performing aid roll:', error);
+      logger.error('Error performing aid roll:', error);
       ui.notifications?.error(`Failed to perform aid: ${error}`);
     }
   }

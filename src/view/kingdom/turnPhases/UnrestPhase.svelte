@@ -64,7 +64,7 @@
    $: {
       if (currentIncidentInstance) {
          currentIncident = currentIncidentInstance.checkData;
-         console.log('📋 [UnrestPhase] Loaded incident from instance:', currentIncident?.name);
+
       } else {
          currentIncident = null;
       }
@@ -86,7 +86,7 @@
       (async () => {
          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
          unrestPhaseController = await createUnrestPhaseController();
-         console.log('🔄 [UnrestPhase] Controller initialized for synced incident display');
+
       })();
    }
    
@@ -99,13 +99,13 @@
          
          if (incident) {
             currentIncident = incident;
-            console.log('📋 [UnrestPhase] Loaded incident:', currentIncident.name);
+
          } else {
-            console.error('❌ [UnrestPhase] Incident not found:', incidentId);
+            logger.error('❌ [UnrestPhase] Incident not found:', incidentId);
             currentIncident = null;
          }
       } catch (error) {
-         console.error('❌ [UnrestPhase] Error loading incident:', error);
+         logger.error('❌ [UnrestPhase] Error loading incident:', error);
          currentIncident = null;
       }
    }
@@ -151,15 +151,13 @@
    
    // Initialize phase steps when component mounts
    onMount(async () => {
-      console.log('🟡 [UnrestPhase] Component mounted, initializing phase...');
-      
+
       // Initialize the phase (this sets up currentPhaseSteps!)
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       unrestPhaseController = await createUnrestPhaseController();
       checkHandler = createCheckHandler();
       await unrestPhaseController.startPhase();
-      console.log('✅ [UnrestPhase] Phase initialized with controller');
-      
+
       // Store current user ID
       const game = (window as any).game;
       currentUserId = game?.user?.id || null;
@@ -178,30 +176,25 @@
       const canRoll = controller.canRollForIncident();
       
       if (!canRoll.allowed) {
-         console.log('🛑 [UnrestPhase] Cannot roll -', canRoll.reason);
+
          return;
       }
       
       if (phaseExecuting) {
-         console.log('🛑 [UnrestPhase] Cannot roll - phase executing');
+
          return;
       }
-      
-      console.log('🎲 [UnrestPhase] Starting incident roll...');
+
       isRolling = true;
       showIncidentResult = false;
       
       try {
          const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
          const controller = await createUnrestPhaseController();
-         
-      console.log('🎮 [UnrestPhase] Controller created, calling checkForIncidents...');
-      
+
       // Call the manual incident check method that completes the step
       const result = await controller.checkForIncidents();
-      
-      console.log('🎲 [UnrestPhase] Incident check result:', result);
-      
+
       // Store roll results for display
       incidentCheckRoll = result.roll || 0;
       incidentCheckDC = result.chance || 0;
@@ -209,22 +202,20 @@
       
       // The controller already handles setting the incident ID, now explicitly load it
       if (result.incidentTriggered && result.incidentId) {
-         console.log('⚠️ [UnrestPhase] Incident triggered! ID:', result.incidentId);
+
          // Explicitly load the incident before showing results
          await loadIncident(result.incidentId);
       } else {
-         console.log('✅ [UnrestPhase] No incident occurred');
+
          // Ensure incident is cleared
          currentIncident = null;
       }
-      
-      console.log('👁️ [UnrestPhase] Incident roll complete, currentIncident:', currentIncident?.name || 'null');
-         
+
       } catch (error) {
-         console.error('❌ [UnrestPhase] Error rolling for incident:', error);
+         logger.error('❌ [UnrestPhase] Error rolling for incident:', error);
       } finally {
          isRolling = false;
-         console.log('🏁 [UnrestPhase] Rolling finished, isRolling:', isRolling);
+
       }
    }
    
@@ -252,12 +243,12 @@
          enabledModifiers,
          
          onStart: () => {
-            console.log(`🎬 [UnrestPhase] Starting incident check with skill: ${skill}`);
+
             isRolling = true;
          },
          
          onComplete: async (result: any) => {
-            console.log(`✅ [UnrestPhase] Incident check completed:`, result.outcome);
+
             isRolling = false;
             
             // ARCHITECTURE: Delegate to controller for outcome data extraction and storage
@@ -279,7 +270,7 @@
          },
          
          onCancel: async () => {
-            console.log(`🚫 [UnrestPhase] Incident check cancelled - resetting state`);
+
             isRolling = false;
             
             // ✅ Clear from KingdomActor via controller (syncs to all clients)
@@ -291,7 +282,7 @@
          },
          
          onError: (error: Error) => {
-            console.error(`❌ [UnrestPhase] Error in incident check:`, error);
+            logger.error(`❌ [UnrestPhase] Error in incident check:`, error);
             isRolling = false;
             ui?.notifications?.error(`Failed to perform incident check: ${error.message}`);
          }
@@ -301,14 +292,11 @@
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
       if (!incidentResolution || !currentIncident) return;
-      
-      console.log(`📝 [UnrestPhase] Applying incident result:`, incidentResolution.outcome);
-      console.log(`🔍 [UnrestPhase] Event detail received:`, event.detail);
-      
+
+
       // NEW ARCHITECTURE: event.detail.resolution is already ResolutionData from OutcomeDisplay
       const resolutionData = event.detail.resolution;
-      console.log(`📋 [UnrestPhase] ResolutionData:`, resolutionData);
-      
+
       // Call controller directly with ResolutionData
       const { createUnrestPhaseController } = await import('../../../controllers/UnrestPhaseController');
       const controller = await createUnrestPhaseController();
@@ -320,8 +308,7 @@
       );
       
       if (result.success) {
-         console.log(`✅ [UnrestPhase] Incident resolution applied successfully`);
-         
+
          // NOTE: markApplied() now called automatically in resolvePhaseOutcome()
          // No need to call controller.markIncidentApplied() separately
          
@@ -339,15 +326,14 @@
             incidentResolution.shortfallResources = shortfalls;
          }
       } else {
-         console.error(`❌ [UnrestPhase] Failed to apply incident resolution:`, result.error);
+         logger.error(`❌ [UnrestPhase] Failed to apply incident resolution:`, result.error);
          ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
       }
    }
    
    // Event handler - cancel resolution
    async function handleCancel() {
-      console.log(`🔄 [UnrestPhase] User cancelled outcome - resetting for re-roll`);
-      
+
       // ✅ Clear from KingdomActor via controller (syncs to all clients)
       if (unrestPhaseController) {
          await unrestPhaseController.clearIncidentResolution();
@@ -360,7 +346,6 @@
    async function handleReroll(event: CustomEvent) {
       if (!currentIncident) return;
       const { skill, previousFame, enabledModifiers } = event.detail;
-      console.log(`🔁 [UnrestPhase] Performing reroll with skill: ${skill}`, { enabledModifiers });
 
       // Reset UI state for new roll
       await handleCancel();
@@ -372,7 +357,7 @@
       try {
          await executeSkillCheck(skill, enabledModifiers);
       } catch (error) {
-         console.error('[UnrestPhase] Error during reroll:', error);
+         logger.error('[UnrestPhase] Error during reroll:', error);
          // Restore fame if the roll failed
          const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
          if (previousFame !== undefined) {
@@ -387,8 +372,7 @@
       if (!currentIncident || !incidentResolution) return;
       
       const newOutcome = event.detail.outcome;
-      console.log(`🐛 [UnrestPhase] Debug outcome changed to: ${newOutcome}`);
-      
+
       // Fetch new modifiers for the new outcome
       const outcomeData = unrestPhaseController.getIncidentModifiers(currentIncident, newOutcome);
       

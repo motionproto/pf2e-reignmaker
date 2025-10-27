@@ -37,10 +37,6 @@ export async function createActionEffectsService() {
      * This is the main entry point for all complex game state changes.
      */
     async applyComplexAction(action: ComplexAction): Promise<ActionEffectResult> {
-      logger.debug(`🎯 [ActionEffects] Applying complex action:`, {
-        type: action.type,
-        data: action.data
-      });
 
       const result: ActionEffectResult = {
         success: true,
@@ -97,7 +93,6 @@ export async function createActionEffectsService() {
             result.error = `Unknown action type: ${action.type}`;
         }
 
-        logger.debug(`✅ [ActionEffects] Action applied successfully:`, result.changes);
         return result;
 
       } catch (error) {
@@ -136,8 +131,7 @@ export async function createActionEffectsService() {
      * Claim one or more hexes for the kingdom
      */
     async claimHexes(data: { hexIds: string[] }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🗺️ [ActionEffects] Claiming ${data.hexIds.length} hex(es)`);
-      
+
       await updateKingdom(kingdom => {
         if (!kingdom.claimedHexes) {
           kingdom.claimedHexes = [];
@@ -156,8 +150,7 @@ export async function createActionEffectsService() {
      * Harvest resources from a hex
      */
     async harvestHexResources(data: { hexId: string; resource: string; amount: number }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`⛏️ [ActionEffects] Harvesting ${data.amount} ${data.resource} from hex ${data.hexId}`);
-      
+
       await updateKingdom(kingdom => {
         // Mark hex as harvested (track which hexes have been harvested this turn)
         if (!kingdom.harvestedHexes) {
@@ -176,8 +169,7 @@ export async function createActionEffectsService() {
      * Fortify a hex
      */
     async fortifyHex(data: { hexId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🏰 [ActionEffects] Fortifying hex ${data.hexId}`);
-      
+
       await updateKingdom(kingdom => {
         if (!kingdom.fortifiedHexes) {
           kingdom.fortifiedHexes = [];
@@ -198,8 +190,7 @@ export async function createActionEffectsService() {
      * Create a new settlement
      */
     async createSettlement(data: { name: string; hexId: string; tier: number }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🏘️ [ActionEffects] Creating settlement: ${data.name}`);
-      
+
       await updateKingdom(kingdom => {
         if (!kingdom.settlements) {
           kingdom.settlements = [];
@@ -223,8 +214,7 @@ export async function createActionEffectsService() {
      * Upgrade a settlement's tier
      */
     async upgradeSettlement(data: { settlementId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`⬆️ [ActionEffects] Upgrading settlement ${data.settlementId}`);
-      
+
       await updateKingdom(kingdom => {
         const settlement = kingdom.settlements?.find(s => s.id === data.settlementId);
         if (settlement) {
@@ -239,8 +229,7 @@ export async function createActionEffectsService() {
      * Repair a damaged structure
      */
     async repairStructure(data: { settlementId: string; structureId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🔧 [ActionEffects] Repairing structure ${data.structureId} in settlement ${data.settlementId}`);
-      
+
       await updateKingdom(kingdom => {
         const settlement = kingdom.settlements?.find(s => s.id === data.settlementId);
         if (settlement) {
@@ -254,8 +243,7 @@ export async function createActionEffectsService() {
      * Create a worksite (special hex improvement)
      */
     async createWorksite(data: { hexId: string; resourceType: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`⚒️ [ActionEffects] Creating ${data.resourceType} worksite in hex ${data.hexId}`);
-      
+
       await updateKingdom(kingdom => {
         if (!kingdom.worksites) {
           kingdom.worksites = [];
@@ -281,8 +269,7 @@ export async function createActionEffectsService() {
      * Recruit a new army unit
      */
     async recruitArmy(data: { unitType: string; settlementId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`⚔️ [ActionEffects] Recruiting ${data.unitType} army`);
-      
+
       await updateKingdom(kingdom => {
         if (!kingdom.armies) {
           kingdom.armies = [];
@@ -307,7 +294,6 @@ export async function createActionEffectsService() {
      * Recalculates all settlements to update road connectivity
      */
     async buildRoads(data: { hexIds: string[] }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🛣️ [ActionEffects] Building roads in ${data.hexIds.length} hex(es)`);
 
       await updateKingdom(kingdom => {
         if (!kingdom.roadsBuilt) {
@@ -325,7 +311,7 @@ export async function createActionEffectsService() {
           const hex = kingdom.hexes?.find(h => h.id === hexId);
           if (hex) {
             hex.hasRoad = true;
-            logger.debug(`✅ [ActionEffects] Set hasRoad=true for hex ${hexId}`);
+
           } else {
             logger.warn(`⚠️ [ActionEffects] Hex ${hexId} not found in kingdom.hexes - road may not persist!`);
           }
@@ -339,23 +325,19 @@ export async function createActionEffectsService() {
       
       const kingdom = actor.getKingdomData();
       if (!kingdom) return;
-      
-      logger.debug(`🔄 [ActionEffects] Recalculating settlement connectivity after road construction`);
-      
+
       for (const settlement of kingdom.settlements) {
         // Use private method via bracket notation
         await (settlementService as any)['recalculateSettlement'](settlement.id);
       }
-      
-      logger.debug(`✅ [ActionEffects] Settlement connectivity recalculated`);
+
     },
 
     /**
      * Deploy an army to a location
      */
     async deployArmy(data: { armyId: string; hexId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🚀 [ActionEffects] Deploying army ${data.armyId} to ${data.hexId}`);
-      
+
       await updateKingdom(kingdom => {
         const army = kingdom.armies?.find(a => a.id === data.armyId);
         if (army) {
@@ -369,8 +351,7 @@ export async function createActionEffectsService() {
      * Disband an army unit
      */
     async disbandArmy(data: { armyId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`💀 [ActionEffects] Disbanding army ${data.armyId}`);
-      
+
       await updateKingdom(kingdom => {
         kingdom.armies = kingdom.armies.filter(a => a.id !== data.armyId);
         result.changes.push(`Disbanded army`);
@@ -381,8 +362,7 @@ export async function createActionEffectsService() {
      * Train an army to improve its capabilities
      */
     async trainArmy(data: { armyId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🎯 [ActionEffects] Training army ${data.armyId}`);
-      
+
       await updateKingdom(kingdom => {
         const army = kingdom.armies?.find(a => a.id === data.armyId);
         if (army) {
@@ -396,8 +376,7 @@ export async function createActionEffectsService() {
      * Recover a damaged/routed army
      */
     async recoverArmy(data: { armyId: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`❤️ [ActionEffects] Recovering army ${data.armyId}`);
-      
+
       await updateKingdom(kingdom => {
         const army = kingdom.armies?.find(a => a.id === data.armyId);
         if (army) {
@@ -411,8 +390,7 @@ export async function createActionEffectsService() {
      * Outfit an army with equipment
      */
     async outfitArmy(data: { armyId: string; equipment: string }, result: ActionEffectResult): Promise<void> {
-      logger.debug(`🛡️ [ActionEffects] Outfitting army ${data.armyId} with ${data.equipment}`);
-      
+
       await updateKingdom(kingdom => {
         const army = kingdom.armies?.find(a => a.id === data.armyId);
         if (army) {

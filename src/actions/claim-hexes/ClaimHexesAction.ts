@@ -18,6 +18,7 @@ import {
 } from '../shared/ActionHelpers';
 import { getKingdomActor } from '../../stores/KingdomStore';
 import { hexSelectorService } from '../../services/hex-selector';
+import { logger } from '../../utils/Logger';
 
 /**
  * Convert proficiency rank to number of hexes
@@ -107,30 +108,26 @@ const ClaimHexesAction: CustomActionImplementation = {
             const hex = kingdom.hexes.find((h: any) => h.id === hexId);
             if (hex) {
               hex.claimedBy = 1;
-              console.log(`🏴 [ClaimHexes] Claimed hex ${hexId} in Kingdom Store`);
+
             } else {
-              console.warn(`[ClaimHexes] Hex ${hexId} not found in Kingdom Store`);
+              logger.warn(`[ClaimHexes] Hex ${hexId} not found in Kingdom Store`);
             }
           }
           
           // Update kingdom size (count of claimed hexes)
           kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
-          
-          console.log(`✅ [ClaimHexes] Updated Kingdom Store - now ${kingdom.size} claimed hex${kingdom.size !== 1 ? 'es' : ''}`);
+
         });
         
         // Ensure PIXI container is visible (scene control active)
         const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.showPixiContainer();
-        console.log('[ClaimHexes] ✅ Scene control activated (PIXI container visible)');
-        
+
         // ✅ REACTIVE OVERLAYS: Kingdom Store change automatically triggers overlay updates
         // No need to manually call showOverlay() - the reactive subscriptions handle it!
         // Territory and border overlays subscribe to claimedHexes store and auto-redraw.
-        console.log('[ClaimHexes] 🔄 Reactive overlays will auto-update from Kingdom Store change');
-        
-        
+
         const message = outcome === 'criticalSuccess'
           ? `Claimed ${hexCount} hex${hexCount !== 1 ? 'es' : ''} (${proficiencyName} proficiency): ${selectedHexes.join(', ')}`
           : `Claimed hex: ${selectedHexes.join(', ')}`;

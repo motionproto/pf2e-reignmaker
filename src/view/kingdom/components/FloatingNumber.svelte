@@ -21,10 +21,9 @@
   
   // Auto-remove after animation completes (4.6s)
   onMount(() => {
-    console.log(`🎬 [FloatingNumber] Mounted: delta=${delta}, x=${startX}, y=${startY}, id=${animationId}`);
-    
+
     const timeout = setTimeout(() => {
-      console.log(`🎬 [FloatingNumber] Removing animation: ${animationId}`);
+
       removeAnimation(animationId);
     }, 4600);
     

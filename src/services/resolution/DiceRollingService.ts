@@ -114,7 +114,7 @@ export function evaluateDiceFormula(formula: string): number {
     }
     
     const result = isNegative ? -total : total;
-    logger.debug(`🎲 [DiceRollingService] Rolled ${formula}: ${result}`);
+
     return result;
   }
   

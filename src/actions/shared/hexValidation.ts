@@ -8,6 +8,7 @@
 import { kingmakerIdToOffset, hexToKingmakerId } from '../../services/hex-selector/coordinates';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 import type { KingdomData } from '../../actors/KingdomActor';
+import { logger } from '../../utils/Logger';
 
 /**
  * Get adjacent hex IDs for a given hex using Foundry's GridHex API
@@ -20,7 +21,7 @@ export function getAdjacentHexIds(hexId: string): string[] {
   const GridHex = (globalThis as any).foundry?.grid?.GridHex;
   
   if (!canvas?.grid || !GridHex) {
-    console.warn(`[HexValidation] Canvas grid or GridHex not available`);
+    logger.warn(`[HexValidation] Canvas grid or GridHex not available`);
     return [];
   }
   
@@ -30,7 +31,7 @@ export function getAdjacentHexIds(hexId: string): string[] {
     
     return hex.getNeighbors().map((neighbor: any) => hexToKingmakerId(neighbor.offset));
   } catch (error) {
-    console.warn(`[HexValidation] Error getting neighbors for ${hexId}:`, error);
+    logger.warn(`[HexValidation] Error getting neighbors for ${hexId}:`, error);
     return [];
   }
 }

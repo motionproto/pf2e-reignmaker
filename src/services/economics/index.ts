@@ -163,13 +163,11 @@ export class EconomicsService {
       .forEach(settlement => {
         const count = tierCounts.get(settlement.tier) || 0;
         tierCounts.set(settlement.tier, count + 1);
-        logger.debug(`💰 [EconomicsService] Settlement "${settlement.name}" (${settlement.tier}): wasFedLastTurn=${settlement.wasFedLastTurn}`);
+
       });
-    
-    logger.debug(`💰 [EconomicsService] Tier counts for gold calculation:`, Object.fromEntries(tierCounts));
+
     const goldIncome = calculateSettlementGoldIncome(tierCounts);
-    logger.debug(`💰 [EconomicsService] Calculated gold income from settlements: ${goldIncome}`);
-    
+
     return goldIncome;
   }
 
@@ -186,24 +184,10 @@ export class EconomicsService {
       modifiers?: EconomicModifier[];
     }
   ): ResourceCollectionResult {
-    logger.debug('🏭 [EconomicsService] Collecting turn resources with state:', {
-      hexCount: state.hexes.length,
-      settlementCount: state.settlements.length,
-      worksiteProductionSize: state.worksiteProduction.size,
-      worksiteProduction: Object.fromEntries(state.worksiteProduction),
-      settlements: state.settlements.map(s => ({ 
-        name: s.name, 
-        tier: s.tier, 
-        wasFedLastTurn: s.wasFedLastTurn ?? 'undefined',
-        connectedByRoads: s.connectedByRoads ?? 'undefined',
-        structureCount: s.structureIds?.length || 0
-      }))
-    });
-    
+
     // Use worksite production from KingdomState (calculated once when hexes change)
     const hexProduction = new Map(state.worksiteProduction);
-    logger.debug('🏞️ [EconomicsService] Hex production from stored state:', Object.fromEntries(hexProduction));
-    
+
     // Check if there's any gold in hex production (shouldn't be, but let's verify)
     const hexGold = hexProduction.get('gold') || 0;
     if (hexGold > 0) {
@@ -214,15 +198,7 @@ export class EconomicsService {
     const fedSettlements = state.settlements.filter(s => s.wasFedLastTurn);
     const unfedSettlements = state.settlements.filter(s => !s.wasFedLastTurn);
     const goldIncome = this.calculateSettlementGoldIncome(state.settlements, state.hexes);
-    
-    logger.debug('💰 [EconomicsService] Settlement analysis:', {
-      totalSettlements: state.settlements.length,
-      fedSettlements: fedSettlements.length,
-      unfedSettlements: unfedSettlements.length,
-      goldIncome,
-      fedSettlementDetails: fedSettlements.map(s => ({ name: s.name, tier: s.tier }))
-    });
-    
+
     // Create separate collections for clarity
     const territoryResources = new Map(hexProduction);
     const settlementGold = goldIncome;
@@ -240,14 +216,7 @@ export class EconomicsService {
       terrain: hex.terrain,
       production: new Map(production)
     }));
-    
-    logger.debug('📊 [EconomicsService] Final collection result:', {
-      territoryResources: Object.fromEntries(territoryResources),
-      settlementGold,
-      totalCollected: Object.fromEntries(totalCollected),
-      productionByHexCount: productionByHex.length
-    });
-    
+
     return {
       hexProduction,
       goldIncome,

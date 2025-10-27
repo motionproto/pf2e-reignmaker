@@ -133,16 +133,15 @@ const BuildRoadsAction: CustomActionImplementation = {
         await updateKingdom(kingdom => {
           if (!kingdom.roadsBuilt) kingdom.roadsBuilt = [];
           kingdom.roadsBuilt.push(...selectedHexes);
-          console.log(`🛣️ [BuildRoads] Added roads: ${selectedHexes.join(', ')}`);
+
         });
         
         // Clear interactive layers - roads now permanent in 'routes' layer (via reactive overlay)
         const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.clearSelection();
-        console.log('🧹 [BuildRoads] Cleared interactive layers');
-        console.log('[BuildRoads] 🔄 Reactive road overlay will auto-update from Kingdom Store change');
-        
+
+
         // Success message
         const message = outcome === 'criticalSuccess'
           ? `Built ${roadSegments} road segment${roadSegments !== 1 ? 's' : ''} (${proficiencyName} proficiency): ${selectedHexes.join(', ')}`

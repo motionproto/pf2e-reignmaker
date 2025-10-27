@@ -53,10 +53,8 @@
     
     // Create cost as plain object (not Map) for proper serialization
     const costObj = { gold: total };
-    
-    console.log('💰 [RepairCostChoice] Dice rolled cost:', costObj);
-    console.log('💰 [RepairCostChoice] Storing with structureId:', structureId, 'settlementId:', settlementId);
-    
+
+
     // Store selection in instance (like choice buttons do)
     if (instance) {
       const dataToStore = {
@@ -65,13 +63,13 @@
         structureId,
         settlementId
       };
-      console.log('💰 [RepairCostChoice] Data being stored:', dataToStore);
+
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: dataToStore
       });
-      console.log('✅ [RepairCostChoice] Dice cost stored successfully');
+
     } else {
-      console.error('❌ [RepairCostChoice] No instance available to store cost');
+      logger.error('❌ [RepairCostChoice] No instance available to store cost');
     }
     
     // Dispatch selection event
@@ -84,9 +82,8 @@
   }
   
   async function selectHalfOption() {
-    console.log('💰 [RepairCostChoice] Half cost selected:', halfCost);
-    console.log('💰 [RepairCostChoice] Storing with structureId:', structureId, 'settlementId:', settlementId);
-    
+
+
     // Store selection in instance
     if (instance) {
       const dataToStore = {
@@ -95,13 +92,13 @@
         structureId,
         settlementId
       };
-      console.log('💰 [RepairCostChoice] Data being stored:', dataToStore);
+
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: dataToStore
       });
-      console.log('✅ [RepairCostChoice] Half cost stored successfully');
+
     } else {
-      console.error('❌ [RepairCostChoice] No instance available to store cost');
+      logger.error('❌ [RepairCostChoice] No instance available to store cost');
     }
     
     // Dispatch selection event

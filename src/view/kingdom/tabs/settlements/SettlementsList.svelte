@@ -82,8 +82,7 @@
    // Create new settlement handler (manual creation)
    async function handleCreateSettlement() {
       try {
-         console.log('🏘️ Creating new settlement...');
-         
+
          // Create a new settlement at (0,0) - unlinked, owned by current faction
          const newSettlement = createSettlement(
             'New Settlement',
@@ -92,29 +91,22 @@
             undefined, // kingmakerLocation
             get(currentFaction) // Use current faction
          );
-         
-         console.log('✅ Created settlement:', newSettlement);
-         
+
          // Add to kingdom
          await updateKingdom(k => {
             if (!k.settlements) k.settlements = [];
             k.settlements.push(newSettlement);
          });
-         
-         console.log('✅ Added settlement to kingdom');
-         
+
          // Calculate derived properties (goldIncome, capacities, etc.)
          const { settlementService } = await import('../../../../services/settlements');
          await settlementService.updateSettlementDerivedProperties(newSettlement.id);
-         
-         console.log('✅ Calculated settlement derived properties');
-         
+
          // Select the new settlement
          onSelectSettlement(newSettlement);
-         
-         console.log('✅ Selected new settlement');
+
       } catch (error) {
-         console.error('❌ Error creating settlement:', error);
+         logger.error('❌ Error creating settlement:', error);
          ui.notifications?.error('Failed to create settlement. Check console for details.');
       }
    }
@@ -215,8 +207,7 @@
             feature.tier = editForm.tier;
          }
       });
-      
-      console.log(`✅ Updated settlement feature at ${editingHexId}`);
+
       cancelEditingFeature();
    }
    

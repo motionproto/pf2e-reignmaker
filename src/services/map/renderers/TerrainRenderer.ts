@@ -4,6 +4,7 @@
 
 import type { HexStyle } from '../types';
 import { TERRAIN_OVERLAY_COLORS } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Draw terrain overlay for hexes with terrain type data
@@ -20,10 +21,9 @@ export function renderTerrainOverlay(
   canvas: any,
   drawHexFn: (graphics: PIXI.Graphics, hexId: string, style: HexStyle, canvas: any) => boolean
 ): void {
-  console.log(`[TerrainRenderer] 🌄 Rendering terrain overlay for ${hexData.length} hexes...`);
 
   if (!canvas?.grid) {
-    console.warn('[TerrainRenderer] ❌ Canvas grid not available');
+    logger.warn('[TerrainRenderer] ❌ Canvas grid not available');
     return;
   }
 
@@ -36,8 +36,6 @@ export function renderTerrainOverlay(
     }
     terrainGroups.get(terrainType)!.push(id);
   });
-
-  console.log(`[TerrainRenderer] Rendering ${terrainGroups.size} terrain types`);
 
   // Draw each terrain type group
   terrainGroups.forEach((hexIds, terrainType) => {
@@ -59,8 +57,7 @@ export function renderTerrainOverlay(
     });
 
     layer.addChild(graphics);
-    console.log(`[TerrainRenderer] ✅ Drew ${successCount} ${terrainType} hexes`);
+
   });
 
-  console.log(`[TerrainRenderer] ✅ Terrain overlay complete`);
 }

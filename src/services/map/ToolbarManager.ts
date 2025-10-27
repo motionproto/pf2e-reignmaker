@@ -3,6 +3,7 @@
  */
 
 import type { SvelteComponent } from 'svelte';
+import { logger } from '../../utils/Logger';
 
 /**
  * Manages the map overlay toolbar's lifecycle and state
@@ -19,7 +20,7 @@ export class ToolbarManager {
    */
   async show(onManualClose?: () => void): Promise<void> {
     if (this.toolbarComponent) {
-      console.log('[ToolbarManager] Toolbar already visible');
+
       return;
     }
 
@@ -44,9 +45,8 @@ export class ToolbarManager {
         this.handleManualClose();
       });
 
-      console.log('[ToolbarManager] ✅ Toolbar shown');
     } catch (error) {
-      console.error('[ToolbarManager] Failed to show toolbar:', error);
+      logger.error('[ToolbarManager] Failed to show toolbar:', error);
       ui?.notifications?.error('Failed to show map overlay toolbar');
     }
   }
@@ -65,7 +65,6 @@ export class ToolbarManager {
       this.toolbarElement = null;
     }
 
-    console.log('[ToolbarManager] Toolbar hidden');
   }
 
   /**
@@ -73,7 +72,7 @@ export class ToolbarManager {
    * Returns true to indicate manual close occurred
    */
   private handleManualClose(): boolean {
-    console.log('[ToolbarManager] Toolbar manually closed via X button');
+
     this.toolbarManuallyClosed = true;
     this.hide();
     

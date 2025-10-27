@@ -257,8 +257,7 @@ export class ActionResolver {
         kingdomData: KingdomData,
         isCriticalSuccess: boolean
     ) {
-        logger.debug(`🎮 [ActionResolver] Executing game effect: ${gameEffect.type}`);
-        
+
         switch (gameEffect.type) {
             case 'recruitArmy': {
                 // Determine army level

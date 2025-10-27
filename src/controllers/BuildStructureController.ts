@@ -181,7 +181,6 @@ export async function createBuildStructureController() {
       // Add to build queue via service
       await buildQueueService.addProject(project);
 
-      logger.debug(`✅ [BuildStructureController] Added ${structure.name} to build queue for ${settlement.name}`);
       return { success: true, project };
     },
 
@@ -218,7 +217,6 @@ export async function createBuildStructureController() {
         }
       });
 
-      logger.debug(`✅ [BuildStructureController] Allocated ${allocated} ${resource} to project ${projectId}`);
       return true;
     },
 
@@ -297,12 +295,10 @@ export async function createBuildStructureController() {
               const currentValue = k.resources[resource] || 0;
               const newValue = Math.max(0, currentValue + value);
               k.resources[resource] = newValue;
-              
-              logger.debug(`  ✓ Applied modifier immediately: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})`);
+
             }
           }
-          
-          logger.debug(`✅ [BuildStructureController] Added ${structure.modifiers.length} modifiers from ${structure.name}`);
+
         }
       });
 
@@ -313,7 +309,6 @@ export async function createBuildStructureController() {
         await settlementService.updateSettlementDerivedProperties(settlement.id);
       }
 
-      logger.debug(`✅ [BuildStructureController] Completed ${project.structureName} in ${project.settlementName}`);
       return { success: true, project };
     },
 
@@ -351,7 +346,6 @@ export async function createBuildStructureController() {
         }
       });
 
-      logger.debug(`🔄 [BuildStructureController] Cancelled project ${project.structureName}`);
       return { success: true, project };
     }
   };

@@ -86,8 +86,7 @@ const FortifyHexAction: CustomActionImplementation = {
         const { OverlayManager } = await import('../../services/map/OverlayManager');
         const overlayManager = OverlayManager.getInstance();
         await overlayManager.showOverlay('fortifications');
-        console.log('[FortifyHex] 🏰 Fortification overlay enabled for hex selection');
-        
+
         // Invoke hex selector service with validation
         const { hexSelectorService } = await import('../../services/hex-selector');
         
@@ -212,14 +211,13 @@ const FortifyHexAction: CustomActionImplementation = {
               maintenancePaid: true,
               turnBuilt: kingdom.currentTurn  // No maintenance required on turn built
             };
-            console.log(`🏰 [FortifyHex] ${currentTier === 0 ? 'Built' : 'Upgraded to'} ${tierConfig.name} at hex ${hexId}`);
+
           }
         });
         
         // ✅ REACTIVE OVERLAYS: Kingdom Store change automatically triggers overlay updates
         // The fortification overlay is already active and subscribed to kingdomData changes
-        console.log('[FortifyHex] 🔄 Reactive fortification overlay will auto-update from Kingdom Store change');
-        
+
         const actionVerb = currentTier === 0 ? 'Built' : `Upgraded to`;
         const costSummary = Object.entries(cost)
           .map(([r, a]) => `${a} ${r}`)

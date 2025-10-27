@@ -1,5 +1,3 @@
-import { logger } from '../../utils/Logger';
-
 export interface RollResult {
   total: number;
   outcome: string;
@@ -78,28 +76,23 @@ export class PF2eRollService {
   initializeRollResultHandler(): void {
     // Initialize hook only once
     if (this.rollHandlerInitialized) {
-      logger.debug('[PF2eRollService] Roll result handler already initialized');
+
       return;
     }
-    
-    logger.debug('✅ [PF2eRollService] Initializing createChatMessage hook for kingdom rolls');
+
     this.rollHandlerInitialized = true;
     
     // Hook into chat message creation to process kingdom check results  
     Hooks.on('createChatMessage', async (message: any) => {
-      logger.debug('[PF2eRollService] createChatMessage hook fired, checking for pending kingdom check...');
-      
+
       // Check for both old and new flag names for backward compatibility
       let pendingCheck: any = game.user?.getFlag('pf2e-reignmaker', 'pendingCheck');
       let isLegacyAction = false;
-      
-      logger.debug('[PF2eRollService] pendingCheck flag:', pendingCheck);
-      
+
       if (!pendingCheck) {
         // Check for legacy pendingAction flag
         const legacyCheck: any = game.user?.getFlag('pf2e-reignmaker', 'pendingAction');
-        logger.debug('[PF2eRollService] pendingAction flag (legacy):', legacyCheck);
-        
+
         if (legacyCheck) {
           // Convert legacy action to new format
           isLegacyAction = true;
@@ -117,24 +110,21 @@ export class PF2eRollService {
       }
       
       if (!pendingCheck) {
-        logger.debug('[PF2eRollService] No pending check found, returning');
+
         return;
       }
-      
-      logger.debug('[PF2eRollService] Message speaker actor:', message.speaker?.actor, 'Expected:', pendingCheck.actorId);
-      
+
       // Check if the message is from the correct actor
       if (message.speaker?.actor !== pendingCheck.actorId) {
-        logger.debug('[PF2eRollService] Actor mismatch, returning');
+
         return;
       }
       
       // Check if this is a skill check roll
       const roll = message.rolls?.[0];
-      logger.debug('[PF2eRollService] Roll found:', !!roll, 'Has DC:', !!message.flags?.pf2e?.context?.dc);
-      
+
       if (!roll || !message.flags?.pf2e?.context?.dc) {
-        logger.debug('[PF2eRollService] Not a valid skill check, returning');
+
         return;
       }
       
@@ -155,8 +145,7 @@ export class PF2eRollService {
           enabled: m.enabled !== false
         }))
       };
-      logger.debug(`🎲 [PF2eRollService] Parsed outcome: ${outcome} for ${pendingCheck.checkId}, dispatching ${pendingCheck.checkType} event...`);
-      
+
       // Dispatch a custom event with the roll result
       // Components can listen for this event and filter by checkType and checkId
       const event = new CustomEvent('kingdomRollComplete', {
@@ -177,10 +166,10 @@ export class PF2eRollService {
       // Clear the appropriate flag
       if (isLegacyAction) {
         await game.user?.unsetFlag('pf2e-reignmaker', 'pendingAction');
-        logger.debug('[PF2eRollService] Cleared legacy pendingAction flag');
+
       } else {
         await game.user?.unsetFlag('pf2e-reignmaker', 'pendingCheck');
-        logger.debug('[PF2eRollService] Cleared pendingCheck flag');
+
       }
     });
   }

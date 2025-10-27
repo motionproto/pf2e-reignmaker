@@ -65,8 +65,7 @@ export const UpgradeSettlementAction = {
    * Validates that at least one settlement meets structure requirements and has gold for upgrade
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {
-    console.log('🔍 [UpgradeSettlement] Checking requirements');
-    
+
     const settlements = kingdomData.settlements || [];
     const availableGold = kingdomData.resources?.gold || 0;
     
@@ -92,27 +91,15 @@ export const UpgradeSettlementAction = {
     
     // Second check: can we afford to upgrade any of them?
     const minCost = Math.min(...settlementsWithStructures.map(s => s.level + 1));
-    
-    console.log('💰 [UpgradeSettlement] Gold check:', {
-      availableGold,
-      minCost,
-      settlements: settlementsWithStructures.map(s => ({
-        name: s.name,
-        level: s.level,
-        cost: s.level + 1
-      }))
-    });
-    
+
     if (availableGold < minCost) {
-      console.log(`❌ [UpgradeSettlement] Insufficient gold: need ${minCost}, have ${availableGold}`);
+
       return {
         met: false,
         reason: `Insufficient gold to upgrade (need ${minCost} gold)`
       };
     }
-    
-    console.log(`✅ [UpgradeSettlement] ${settlementsWithStructures.length} eligible settlement(s)`);
-    
+
     return {
       met: true
     };

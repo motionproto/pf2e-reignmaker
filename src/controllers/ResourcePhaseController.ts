@@ -54,8 +54,7 @@ export async function createResourcePhaseController() {
         await initializePhaseSteps(steps);
         
         // Resource collection requires manual user interaction via UI button
-        logger.debug('🟡 [ResourcePhaseController] Resource collection requires manual completion');
-        
+
         reportPhaseComplete('ResourcePhaseController');
         return createPhaseResult(true);
       } catch (error) {
@@ -84,12 +83,9 @@ export async function createResourcePhaseController() {
           return createPhaseResult(false, 'No kingdom actor available');
         }
 
-        logger.debug(`🟡 [ResourcePhaseController] Collecting resources using economics service...`);
-        
         // Get active economic modifiers
         const modifiers = getActiveModifiers(kingdom);
-        logger.debug(`� [ResourcePhaseController] Applying ${modifiers.length} economic modifiers`);
-        
+
         // Use economics service to collect all resources
         const result = economicsService.collectTurnResources({
           hexes: (kingdom.hexes || []) as any[], // Cast to avoid type mismatch - economics service handles the actual hex format
@@ -106,7 +102,7 @@ export async function createResourcePhaseController() {
             if (amount > 0) {
               const current = kingdom.resources[resource] || 0;
               kingdom.resources[resource] = current + amount;
-              logger.debug(`✅ [ResourcePhaseController] +${amount} ${resource} collected from territory`);
+
             }
           });
           
@@ -114,23 +110,22 @@ export async function createResourcePhaseController() {
           if (result.resourceCollection.settlementGold > 0) {
             const current = kingdom.resources['gold'] || 0;
             kingdom.resources['gold'] = current + result.resourceCollection.settlementGold;
-            logger.debug(`✅ [ResourcePhaseController] +${result.resourceCollection.settlementGold} gold collected from settlements`);
+
           }
         });
         
         // Log detailed results with clear separation
-        logger.debug(`🏞️ [ResourcePhaseController] Territory Resources Collected:`);
+
         if (result.resourceCollection.territoryResources.size > 0) {
           result.resourceCollection.territoryResources.forEach((amount, resource) => {
-            logger.debug(`   +${amount} ${resource}`);
+
           });
         } else {
-          logger.debug(`   No territory resources this turn`);
+
         }
-        
-        logger.debug(`💰 [ResourcePhaseController] Settlement Gold: +${result.resourceCollection.settlementGold} from ${result.fedSettlementsCount} fed settlements`);
+
         if (result.unfedSettlementsCount > 0) {
-          logger.debug(`🍞 [ResourcePhaseController] ${result.unfedSettlementsCount} settlements unfed (no gold income)`);
+
         }
         
         // Log worksite details
@@ -139,7 +134,7 @@ export async function createResourcePhaseController() {
             const productionList = Array.from(hex.production.entries())
               .map(([resource, amount]) => `${amount} ${resource}`)
               .join(', ');
-            logger.debug(`�️ [ResourcePhaseController] ${hex.hexName}: ${productionList}`);
+
           }
         });
         

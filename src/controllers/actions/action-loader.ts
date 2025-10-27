@@ -17,12 +17,10 @@ export class ActionLoader {
      */
     loadActions(): void {
         if (this.actionsLoaded) {
-            logger.debug('Actions already loaded, skipping...');
+
             return;
         }
 
-        logger.debug('Loading actions from imported data...');
-        
         try {
             // Load actions from the imported JSON data
             const rawActionsList = actionsData as PlayerActionJson[];
@@ -70,11 +68,10 @@ export class ActionLoader {
             }
             
             this.actionsLoaded = true;
-            logger.debug(`Successfully loaded ${this.actions.size} actions`);
-            
+
             // Log action counts by category for verification
             const categoryCounts = this.getActionCountsByCategory();
-            logger.debug('Actions loaded by category:', categoryCounts);
+
         } catch (error) {
             logger.error('Failed to load actions:', error);
             // Fallback to empty map

@@ -73,7 +73,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        logger.debug('🍞 [UpkeepPhaseController] Processing settlement feeding...');
+
         await this.processFoodConsumption();
         
         // Complete feed settlements step (using type-safe constant)
@@ -94,7 +94,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        logger.debug('⚔️ [UpkeepPhaseController] Processing military support...');
+
         await this.processMilitarySupport();
         
         // Complete support military step (using type-safe constant)
@@ -115,7 +115,7 @@ export async function createUpkeepPhaseController() {
       }
 
       try {
-        logger.debug('🏗️ [UpkeepPhaseController] Processing build queue...');
+
         await this.processBuildProjects();
         
         // Complete process builds step (using type-safe constant)
@@ -146,9 +146,7 @@ export async function createUpkeepPhaseController() {
       
       const armies = kingdom.armies || [];
       const currentFood = kingdom.resources?.food || 0;
-      
-      logger.debug(`🍞 [UpkeepPhaseController] Processing ${settlements.length} settlements in claimed territory (${allSettlements.length} total on map)`);
-      
+
       const actor = getKingdomActor();
       if (!actor) {
         logger.error('❌ [UpkeepPhaseController] No KingdomActor available');
@@ -184,12 +182,12 @@ export async function createUpkeepPhaseController() {
           availableFood -= required;
           settlement.wasFedLastTurn = true;
           fedSettlements.push(`${settlement.name} (${settlement.tier})`);
-          logger.debug(`🍞 [UpkeepPhaseController] Fed: ${settlement.name} (${settlement.tier}, ${required} food)`);
+
         } else {
           settlement.wasFedLastTurn = false;
           totalUnrest += tierNum;
           unfedSettlements.push({ name: settlement.name, tier: settlement.tier, tierNum, unrest: tierNum });
-          logger.debug(`❌ [UpkeepPhaseController] Unfed: ${settlement.name} (${settlement.tier}) → +${tierNum} Unrest`);
+
         }
       }
       
@@ -201,7 +199,7 @@ export async function createUpkeepPhaseController() {
       if (availableFood > foodStorageCapacity) {
         excessFood = availableFood - foodStorageCapacity;
         availableFood = foodStorageCapacity;
-        logger.debug(`📦 [UpkeepPhaseController] Storage capacity exceeded: ${excessFood} excess food lost (capacity: ${foodStorageCapacity})`);
+
       }
       
       // Update kingdom state
@@ -219,15 +217,15 @@ export async function createUpkeepPhaseController() {
       });
       
       // Summary logging
-      logger.debug(`✅ [UpkeepPhaseController] Settlement feeding complete: ${fedSettlements.length} fed, ${unfedSettlements.length} unfed`);
+
       if (totalUnrest > 0) {
-        logger.debug(`⚠️ [UpkeepPhaseController] Total unrest from unfed settlements: +${totalUnrest}`);
+
       }
       if (unfedSettlements.length > 0) {
-        logger.debug(`📋 [UpkeepPhaseController] Unfed settlements will not generate gold next turn`);
+
       }
       if (excessFood > 0) {
-        logger.debug(`⚠️ [UpkeepPhaseController] ${excessFood} excess food lost due to storage capacity`);
+
       }
     },
 
@@ -256,11 +254,11 @@ export async function createUpkeepPhaseController() {
       if (armyCount > 0) {
         if (currentFood >= armyFood) {
           foodAfterArmies = currentFood - armyFood;
-          logger.debug(`⚔️ [UpkeepPhaseController] Fed ${armyCount} armies (${armyFood} food)`);
+
         } else {
           armyFoodUnrest = armyFood - currentFood;
           foodAfterArmies = 0;
-          logger.debug(`❌ [UpkeepPhaseController] Army food shortage: ${armyFoodUnrest} missing → +${armyFoodUnrest} Unrest`);
+
         }
       }
       
@@ -277,7 +275,7 @@ export async function createUpkeepPhaseController() {
           // Skip maintenance if built/upgraded this turn
           if (hex.fortification.turnBuilt === currentTurn) {
             skippedNewFortifications.push(hex.id);
-            logger.debug(`🆕 [UpkeepPhaseController] Skipping maintenance for new fortification at ${hex.id} (built this turn)`);
+
             continue;
           }
           
@@ -316,7 +314,7 @@ export async function createUpkeepPhaseController() {
             }
           }
         });
-        logger.debug(`💰 [UpkeepPhaseController] Paid ${armySupportCost} gold for army support + ${totalFortificationCost} gold for fortifications`);
+
       } else if (currentGold >= armySupportCost) {
         // Can afford armies but not all fortifications
         availableForFortifications = currentGold - armySupportCost;
@@ -332,8 +330,8 @@ export async function createUpkeepPhaseController() {
             }
           }
         });
-        logger.debug(`💰 [UpkeepPhaseController] Paid ${armySupportCost} gold for armies`);
-        logger.debug(`⚠️ [UpkeepPhaseController] Fortification maintenance unpaid: effectiveness reduced by 1 tier`);
+
+
       } else {
         // Can't afford army support - generate unrest
         goldUnrest = armySupportCost - currentGold;
@@ -349,14 +347,14 @@ export async function createUpkeepPhaseController() {
             }
           }
         });
-        logger.debug(`⚠️ [UpkeepPhaseController] Military gold shortage: ${goldUnrest} unrest generated`);
-        logger.debug(`⚠️ [UpkeepPhaseController] Fortification maintenance unpaid: effectiveness reduced by 1 tier`);
+
+
       }
       
       // Summary
       const totalUnrest = armyFoodUnrest + goldUnrest;
       if (totalUnrest > 0) {
-        logger.debug(`⚠️ [UpkeepPhaseController] Total military unrest: +${totalUnrest} (food: ${armyFoodUnrest}, gold: ${goldUnrest})`);
+
       }
     },
 
@@ -371,7 +369,7 @@ export async function createUpkeepPhaseController() {
       
       const buildQueue = kingdom.buildQueue || [];
       if (buildQueue.length === 0) {
-        logger.debug('🏗️ [UpkeepPhaseController] No build projects to process');
+
         return;
       }
       
@@ -389,8 +387,7 @@ export async function createUpkeepPhaseController() {
       
       // Process each project through the service
       for (const project of buildQueue) {
-        logger.debug(`🔍 [UpkeepPhaseController] Processing project: ${project.structureName}`);
-        
+
         // Service handles partial payment & persistence using CURRENT available resources
         const result = await buildQueueService.processPartialPayment(
           project.id,
@@ -418,19 +415,18 @@ export async function createUpkeepPhaseController() {
             // Complete the project via service
             await buildQueueService.completeProject(project.id);
             completed.push(`${project.structureName} in ${project.settlementName}`);
-            logger.debug(`✅ [UpkeepPhaseController] Completed: ${project.structureName} (paid: ${paidSummary})`);
+
           } else {
             partiallyPaid.push(`${project.structureName}: ${paidSummary}`);
-            logger.debug(`💰 [UpkeepPhaseController] Partial payment: ${project.structureName} (paid: ${paidSummary})`);
+
           }
         } else {
-          logger.debug(`⏭️ [UpkeepPhaseController] No payment: ${project.structureName} (insufficient resources)`);
+
         }
       }
-      
-      logger.debug(`🏗️ [UpkeepPhaseController] Build queue processed: ${completed.length} completed, ${partiallyPaid.length} partial payments`);
+
       if (completed.length > 0) {
-        logger.debug(`✅ Built: ${completed.join(', ')}`);
+
       }
       if (partiallyPaid.length > 0) {
         logger.debug(`💰 Partial payments: ${partiallyPaid.join('; ')}`);

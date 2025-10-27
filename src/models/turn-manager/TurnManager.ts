@@ -10,6 +10,7 @@
  */
 
 import { TurnPhase, type PhaseStep } from '../../actors/KingdomActor';
+import { logger } from '../../utils/Logger';
 
 // Player action state (turn-scoped)
 interface PlayerAction {
@@ -33,7 +34,7 @@ export class TurnManager {
     onTurnEnded?: (turn: number) => void;
     
     private constructor() {
-        console.log('[TurnManager] Initialized - central turn and player coordinator (singleton)');
+
     }
     
     /**
@@ -65,8 +66,7 @@ export class TurnManager {
         // Use existing PhaseHandler implementation
         const { PhaseHandler } = await import('./phase-handler');
         await PhaseHandler.initializePhaseSteps(steps);
-        
-        console.log(`✅ [TurnManager] Delegated phase step initialization to PhaseHandler`);
+
     }
 
     /**
@@ -100,7 +100,6 @@ export class TurnManager {
         const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
         const allComplete = totalSteps > 0 && completedCount === totalSteps;
 
-        console.log(`[TurnManager] Phase ${kingdom.currentPhase} completion: ${completedCount}/${totalSteps} steps`);
         return allComplete;
     }
 
@@ -116,7 +115,7 @@ export class TurnManager {
         });
         
         this.onPhaseChanged?.(phase);
-        console.log(`[TurnManager] Set current phase to ${phase}`);
+
     }
     
     /**
@@ -129,8 +128,7 @@ export class TurnManager {
             kingdom.currentPhaseStepIndex = 0;
             kingdom.phaseComplete = false;
         });
-        
-        console.log('[TurnManager] Reset phase steps');
+
     }
 
     /**
@@ -143,8 +141,7 @@ export class TurnManager {
             kingdom.currentPhaseStepIndex = 0;
             kingdom.phaseComplete = false;
         });
-        
-        console.log('[TurnManager] Force reset current phase steps for testing');
+
     }
     
     /**
@@ -161,7 +158,7 @@ export class TurnManager {
         });
         
         this.onTurnChanged?.(currentKingdom.currentTurn + 1);
-        console.log(`[TurnManager] Incremented to turn ${currentKingdom.currentTurn + 1}`);
+
     }
     
   /**
@@ -175,7 +172,7 @@ export class TurnManager {
       return currentKingdom.currentPhase;
     } catch (error) {
       // Fallback - return a default phase if stores aren't available yet
-      console.warn('[TurnManager] Could not access kingdom data, falling back to STATUS phase');
+      logger.warn('[TurnManager] Could not access kingdom data, falling back to STATUS phase');
       return 'status';
     }
   }
@@ -187,9 +184,7 @@ export class TurnManager {
         const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
-        
-        console.log(`[TurnManager] Phase ${currentKingdom.currentPhase} marked as complete`);
-        
+
         // Notify UI of phase completion
         this.onPhaseChanged?.(currentKingdom.currentPhase);
     }
@@ -213,7 +208,7 @@ export class TurnManager {
             });
             
             this.onPhaseChanged?.(next);
-            console.log(`[TurnManager] Advanced to ${next} with fresh step state`);
+
         } else {
             // End of turn reached
             await this.endTurn();
@@ -241,9 +236,7 @@ export class TurnManager {
         const { kingdomData } = await import('../../stores/KingdomStore');
         const { get } = await import('svelte/store');
         const currentKingdom = get(kingdomData);
-        
-        console.log(`[TurnManager] Ending turn ${currentKingdom.currentTurn}`);
-        
+
         this.onTurnEnded?.(currentKingdom.currentTurn);
         
         // Player actions are automatically reset via turnState reset below
@@ -274,16 +267,14 @@ export class TurnManager {
         
         this.onTurnChanged?.(currentKingdom.currentTurn + 1);
         this.onPhaseChanged?.(TurnPhase.STATUS);
-        
-        console.log(`[TurnManager] Started turn ${currentKingdom.currentTurn + 1}`);
+
     }
     
     /**
      * Start a new game/reset turns
      */
     async startNewGame(): Promise<void> {
-        console.log('[TurnManager] Starting new game');
-        
+
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom((kingdom) => {
             kingdom.currentTurn = 1;
@@ -309,7 +300,7 @@ export class TurnManager {
         });
         
         this.onPhaseChanged?.(phase);
-        console.log(`[TurnManager] Skipped to ${phase}`);
+
     }
     
     /**

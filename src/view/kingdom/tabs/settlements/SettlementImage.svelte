@@ -67,7 +67,7 @@
                   // @ts-ignore
                   ui.notifications?.info('Settlement image updated');
                } catch (error) {
-                  console.error('Failed to update image:', error);
+                  logger.error('Failed to update image:', error);
                   // @ts-ignore
                   ui.notifications?.error(`Failed to update image: ${error.message}`);
                }
@@ -79,7 +79,7 @@
       try {
          fp.render(true);
       } catch (error) {
-         console.error('Failed to open file picker:', error);
+         logger.error('Failed to open file picker:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to open file picker. Please contact your GM if this persists.');
       }
@@ -93,7 +93,7 @@
          // @ts-ignore
          ui.notifications?.info('Settlement image removed');
       } catch (error) {
-         console.error('Failed to remove image:', error);
+         logger.error('Failed to remove image:', error);
          // @ts-ignore
          ui.notifications?.error(`Failed to remove image: ${error.message}`);
       }
@@ -141,7 +141,7 @@
       try {
          await ensureUploadDirectory(uploadDir);
       } catch (err) {
-         console.error('Failed to ensure directory exists:', err);
+         logger.error('Failed to ensure directory exists:', err);
          // @ts-ignore
          ui.notifications?.error('Failed to create upload directory. Please ensure a GM is online.');
          return;
@@ -190,7 +190,7 @@
                   throw new Error('Upload failed - no path returned');
                }
             } catch (error) {
-               console.error('Failed to process/upload map icon:', error);
+               logger.error('Failed to process/upload map icon:', error);
                // @ts-ignore
                ui.notifications?.error(`Failed to update map icon: ${error.message}`);
             }
@@ -210,7 +210,7 @@
          // @ts-ignore
          ui.notifications?.info('Settlement image restored to default');
       } catch (error) {
-         console.error('Failed to restore default image:', error);
+         logger.error('Failed to restore default image:', error);
          // @ts-ignore
          ui.notifications?.error(`Failed to restore default image: ${error.message}`);
       }

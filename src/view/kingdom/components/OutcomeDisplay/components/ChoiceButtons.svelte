@@ -51,9 +51,7 @@
     const modifier = choice.modifiers[0]; // Get first modifier
     const resource = modifier.resource;
     const rolledValue = choiceRolls?.get(0);
-    
-    console.log(`📋 [getPreviewLabel] choice ${choiceIndex}, rolledDice has ${Array.from(rolledDice.keys())}, choiceRolls:`, choiceRolls, 'rolledValue:', rolledValue);
-    
+
     // Determine action (Lose/Gain) from explicit negative field
     const action = modifier.negative ? 'Lose' : 'Gain';
     
@@ -111,7 +109,7 @@
           
           const result = rollDiceFormula(value);
           choiceRolls.set(modIndex, result);
-          console.log(`🎲 [ChoiceButtons] Rolled ${value} = ${result} for choice ${choiceIndex}, modifier ${modIndex}`);
+
         }
       }
       

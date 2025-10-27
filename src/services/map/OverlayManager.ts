@@ -21,6 +21,7 @@ import {
 } from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
 import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
+import { logger } from '../../utils/Logger';
 
 /**
  * Overlay definition interface
@@ -90,7 +91,7 @@ export class OverlayManager {
    */
   registerOverlay(overlay: MapOverlay): void {
     this.overlays.set(overlay.id, overlay);
-    console.log(`[OverlayManager] Registered overlay: ${overlay.id}`);
+
   }
 
   /**
@@ -116,19 +117,17 @@ export class OverlayManager {
   async showOverlay(id: string): Promise<void> {
     const overlay = this.overlays.get(id);
     if (!overlay) {
-      console.warn(`[OverlayManager] Overlay not found: ${id}`);
+      logger.warn(`[OverlayManager] Overlay not found: ${id}`);
       return;
     }
 
     // ✅ IDEMPOTENT: Early return if already active (prevent double subscription/render)
     const $active = get(this.activeOverlaysStore);
     if ($active.has(id)) {
-      console.log(`[OverlayManager] 🔄 Overlay ${id} already active, skipping duplicate showOverlay() call`);
+
       return;
     }
 
-    console.log(`[OverlayManager] 📍 Showing overlay: ${id}`);
-    console.log(`[OverlayManager] Active overlays before: ${$active.size}, Subscriptions before: ${this.subscriptions.size}`);
 
     try {
       // Mark as active FIRST (before subscription fires)
@@ -145,36 +144,34 @@ export class OverlayManager {
         this.subscriptions.get(id)?.();
         
         if (hadOldSubscription) {
-          console.warn(`[OverlayManager] ⚠️ Cleaned up old subscription for ${id} - this shouldn't happen!`);
+          logger.warn(`[OverlayManager] ⚠️ Cleaned up old subscription for ${id} - this shouldn't happen!`);
         }
-        
-        console.log(`[OverlayManager] 🔄 Setting up reactive subscription for: ${id}`);
-        
+
         // Subscribe to store - automatically redraws when data changes
         const unsubscribe = overlay.store.subscribe(async ($data) => {
           // Only render if overlay is still active
           if (this.isOverlayActive(id)) {
-            console.log(`[OverlayManager] 🎨 Reactive redraw triggered for: ${id}`);
+
             try {
               await overlay.render!($data);
             } catch (error) {
-              console.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
+              logger.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
             }
           } else {
-            console.warn(`[OverlayManager] ⚠️ Subscription fired for inactive overlay: ${id} - this shouldn't happen!`);
+            logger.warn(`[OverlayManager] ⚠️ Subscription fired for inactive overlay: ${id} - this shouldn't happen!`);
           }
         });
         
         this.subscriptions.set(id, unsubscribe);
-        console.log(`[OverlayManager] ✅ Subscription registered for: ${id} (total: ${this.subscriptions.size})`);
+
       }
       // Legacy pattern: Call show() method
       else if (overlay.show) {
-        console.log(`[OverlayManager] 📜 Using legacy show() method for: ${id}`);
+
         await overlay.show();
       }
       else {
-        console.warn(`[OverlayManager] Overlay ${id} has neither reactive nor legacy show method`);
+        logger.warn(`[OverlayManager] Overlay ${id} has neither reactive nor legacy show method`);
         // Remove from active since we couldn't show it
         this.activeOverlaysStore.update($set => {
           $set.delete(id);
@@ -192,9 +189,9 @@ export class OverlayManager {
       this.saveState();
       
       const $activeAfter = get(this.activeOverlaysStore);
-      console.log(`[OverlayManager] ✅ Showed overlay: ${id} (active: ${$activeAfter.size}, subscriptions: ${this.subscriptions.size})`);
+
     } catch (error) {
-      console.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
+      logger.error(`[OverlayManager] ❌ Failed to show overlay ${id}:`, error);
       // Don't throw - log error but continue (prevents one failing overlay from breaking everything)
       // Remove from active overlays since it failed
       this.activeOverlaysStore.update($set => {
@@ -212,7 +209,7 @@ export class OverlayManager {
   hideOverlay(id: string, skipStateSave: boolean = false): void {
     const overlay = this.overlays.get(id);
     if (!overlay) {
-      console.warn(`[OverlayManager] Overlay not found: ${id}`);
+      logger.warn(`[OverlayManager] Overlay not found: ${id}`);
       return;
     }
 
@@ -222,7 +219,7 @@ export class OverlayManager {
       if (unsubscribe) {
         unsubscribe();
         this.subscriptions.delete(id);
-        console.log(`[OverlayManager] 🔌 Unsubscribed from: ${id}`);
+
       }
       
       // Cleanup zoom subscription if exists
@@ -230,7 +227,7 @@ export class OverlayManager {
       if (zoomSub) {
         Hooks.off('canvasPan', zoomSub.callback);
         this.zoomSubscriptions.delete(id);
-        console.log(`[OverlayManager] 🔍 Removed zoom subscription for: ${id}`);
+
       }
       
       // Call overlay's hide method
@@ -252,10 +249,9 @@ export class OverlayManager {
       if (!skipStateSave) {
         this.saveState();
       }
-      
-      console.log(`[OverlayManager] ✅ Hid overlay: ${id}`);
+
     } catch (error) {
-      console.error(`[OverlayManager] Failed to hide overlay ${id}:`, error);
+      logger.error(`[OverlayManager] Failed to hide overlay ${id}:`, error);
       throw error;
     }
   }
@@ -295,17 +291,13 @@ export class OverlayManager {
    */
   clearAll(preserveState: boolean = false): void {
     const $active = get(this.activeOverlaysStore);
-    
-    console.log('[OverlayManager] 🧹 Clearing all overlays...');
-    console.log('[OverlayManager] Active overlays before cleanup:', Array.from($active));
-    console.log('[OverlayManager] Active subscriptions before cleanup:', this.subscriptions.size);
-    console.log('[OverlayManager] Preserve state:', preserveState);
-    
+
+
     // ✅ CRITICAL FIX: Save current state to localStorage BEFORE clearing
     // This preserves which overlays were active so they can be restored later
     if (preserveState) {
       this.saveState();
-      console.log('[OverlayManager] 💾 Saved overlay state before clearing:', Array.from($active));
+
     }
     
     // Hide all active overlays (skip individual state saves - we'll handle at end)
@@ -320,7 +312,7 @@ export class OverlayManager {
     this.subscriptions.clear();
     
     if (lingering > 0) {
-      console.warn(`[OverlayManager] ⚠️ Cleaned up ${lingering} lingering subscription(s)`);
+      logger.warn(`[OverlayManager] ⚠️ Cleaned up ${lingering} lingering subscription(s)`);
     }
     
     // Clear all map layers
@@ -329,12 +321,12 @@ export class OverlayManager {
     // Handle state saving
     if (preserveState) {
       // State already saved before clearing - store already updated by hideOverlay calls
-      console.log('[OverlayManager] ✅ All overlays cleared - graphics removed, subscriptions: 0, state preserved for restoration');
+
     } else {
       // Permanently clear state (e.g., "Reset Map" button)
       // Store already updated by hideOverlay calls, just persist to localStorage
       this.saveState();
-      console.log('[OverlayManager] ✅ All overlays cleared - subscriptions: 0, active: 0, state saved');
+
     }
   }
 
@@ -345,14 +337,14 @@ export class OverlayManager {
   private setupZoomSubscription(overlayId: string): void {
     const overlay = this.overlays.get(overlayId);
     if (!overlay || !overlay.store || !overlay.render) {
-      console.warn(`[OverlayManager] Cannot setup zoom subscription for ${overlayId} - missing store/render`);
+      logger.warn(`[OverlayManager] Cannot setup zoom subscription for ${overlayId} - missing store/render`);
       return;
     }
 
     // Get initial canvas scale
     const canvas = (globalThis as any).canvas;
     if (!canvas?.stage?.scale) {
-      console.warn('[OverlayManager] Canvas not available for zoom subscription');
+      logger.warn('[OverlayManager] Canvas not available for zoom subscription');
       return;
     }
 
@@ -376,8 +368,7 @@ export class OverlayManager {
       
       // Only re-render if zoom actually changed (threshold to avoid floating point issues)
       if (Math.abs(currentScale - lastScale) > 0.001) {
-        console.log(`[OverlayManager] 🔍 Zoom changed for ${overlayId}: ${lastScale.toFixed(2)} → ${currentScale.toFixed(2)}`);
-        
+
         // Update tracked scale
         zoomSubscription.lastScale = currentScale;
         
@@ -396,7 +387,6 @@ export class OverlayManager {
       lastScale: initialScale
     });
 
-    console.log(`[OverlayManager] 🔍 Zoom subscription setup for ${overlayId} (initial scale: ${initialScale.toFixed(2)})`);
   }
 
   /**
@@ -409,8 +399,7 @@ export class OverlayManager {
       activeOverlays: Array.from($active)
     };
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
-    
-    console.log('[OverlayManager] Saved state:', state);
+
   }
 
   /**
@@ -422,7 +411,6 @@ export class OverlayManager {
       if (!savedState) return;
 
       const state = JSON.parse(savedState);
-      console.log('[OverlayManager] Restoring state:', state);
 
       // Restore each active overlay
       for (const overlayId of state.activeOverlays || []) {
@@ -431,9 +419,8 @@ export class OverlayManager {
         }
       }
 
-      console.log('[OverlayManager] ✅ State restored');
     } catch (error) {
-      console.error('[OverlayManager] Failed to restore state:', error);
+      logger.error('[OverlayManager] Failed to restore state:', error);
     }
   }
 
@@ -454,12 +441,11 @@ export class OverlayManager {
         const hexData = hexes.map((h: any) => ({ id: h.id, terrain: h.terrain }));
 
         if (hexData.length === 0) {
-          console.log('[OverlayManager] No terrain data - clearing layer');
+
           this.mapLayer.clearLayer('terrain-overlay');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing terrain overlay for ${hexData.length} hexes`);
         this.mapLayer.drawTerrainOverlay(hexData);
       },
       hide: () => {
@@ -479,13 +465,13 @@ export class OverlayManager {
         const hexIds = hexes.map((h: any) => h.id);
         
         if (hexIds.length === 0) {
-          console.log('[OverlayManager] No claimed territory - clearing layer');
+
           this.mapLayer.clearLayer('kingdom-territory');
           return;
         }
 
         const style: HexStyle = MAP_HEX_STYLES.partyTerritory;
-        console.log(`[OverlayManager] Drawing ${hexIds.length} claimed hexes`);
+
         this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
       },
       hide: () => {
@@ -505,12 +491,11 @@ export class OverlayManager {
         const hexIds = hexes.map((h: any) => h.id);
         
         if (hexIds.length === 0) {
-          console.log('[OverlayManager] No claimed territory - clearing border');
+
           this.mapLayer.clearLayer('kingdom-territory-outline');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing border for ${hexIds.length} claimed hexes`);
         this.mapLayer.drawTerritoryOutline(hexIds);
       },
       hide: () => {
@@ -530,12 +515,11 @@ export class OverlayManager {
         const settlementHexIds = hexesWithFeatures.map((h: any) => h.id);
 
         if (settlementHexIds.length === 0) {
-          console.log('[OverlayManager] No settlement features - clearing layer');
+
           this.mapLayer.clearLayer('settlements-overlay');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${settlementHexIds.length} settlement features`);
         const style: HexStyle = MAP_HEX_STYLES.settlement;
         this.mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
       },
@@ -558,12 +542,11 @@ export class OverlayManager {
       ),  // ✅ Reactive subscription
       render: (roadHexIds) => {
         if (roadHexIds.length === 0) {
-          console.log('[OverlayManager] No roads - clearing layer');
+
           this.mapLayer.clearLayer('routes');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${roadHexIds.length} road connections`);
         this.mapLayer.drawRoadConnections(roadHexIds, 'routes');
       },
       hide: () => {
@@ -586,12 +569,11 @@ export class OverlayManager {
         }));
 
         if (worksiteData.length === 0) {
-          console.log('[OverlayManager] No worksites - clearing layer');
+
           this.mapLayer.clearLayer('worksites');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${worksiteData.length} worksites`);
         await this.mapLayer.drawWorksiteIcons(worksiteData);
       },
       hide: () => {
@@ -614,12 +596,11 @@ export class OverlayManager {
         }));
 
         if (worksiteData.length === 0) {
-          console.log('[OverlayManager] No resources - clearing layer');
+
           this.mapLayer.clearLayer('resources');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${worksiteData.length} resource icons`);
         await this.mapLayer.drawResourceIcons(worksiteData);
       },
       hide: () => {
@@ -643,12 +624,11 @@ export class OverlayManager {
         }));
 
         if (settlementData.length === 0) {
-          console.log('[OverlayManager] No settlement feature icons - clearing layer');
+
           this.mapLayer.clearLayer('settlement-icons');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement feature icons`);
         await this.mapLayer.drawSettlementIcons(settlementData);
       },
       hide: () => {
@@ -665,10 +645,9 @@ export class OverlayManager {
       layerIds: ['settlement-labels'],
       store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
       render: async (hexesWithFeatures) => {
-        console.log('[OverlayManager] Settlement Labels render called, data:', hexesWithFeatures);
-        
+
         const settlementData = hexesWithFeatures.map((h: any) => {
-          console.log('[OverlayManager] Processing hex:', h);
+
           return {
             id: h.id,
             name: h.feature?.name || 'Unnamed',
@@ -676,15 +655,12 @@ export class OverlayManager {
           };
         });
 
-        console.log('[OverlayManager] Mapped settlement data:', settlementData);
-
         if (settlementData.length === 0) {
-          console.log('[OverlayManager] No settlement labels - clearing layer');
+
           this.mapLayer.clearLayer('settlement-labels');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${settlementData.length} settlement labels`);
         await this.mapLayer.drawSettlementLabels(settlementData);
       },
       hide: () => {
@@ -710,12 +686,11 @@ export class OverlayManager {
         }));
 
         if (fortificationData.length === 0) {
-          console.log('[OverlayManager] No fortifications - clearing layer');
+
           this.mapLayer.clearLayer('fortifications');
           return;
         }
 
-        console.log(`[OverlayManager] Drawing ${fortificationData.length} fortifications`);
         await this.mapLayer.drawFortificationIcons(fortificationData);
       },
       hide: () => {
@@ -724,7 +699,6 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('fortifications')
     });
 
-    console.log('[OverlayManager] ✅ Registered 10 default overlays');
   }
 }
 

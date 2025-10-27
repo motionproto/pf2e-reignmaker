@@ -50,29 +50,18 @@ const RepairStructureAction: CustomActionImplementation = {
     
     validateData(resolutionData: ResolutionData): boolean {
       const data = resolutionData.customComponentData;
-      
-      console.log('🔍 [RepairStructureAction] Validating resolution data:', {
-        hasCustomComponentData: !!data,
-        dataKeys: data ? Object.keys(data) : [],
-        structureId: data?.structureId,
-        settlementId: data?.settlementId,
-        cost: data?.cost,
-        costKeys: data?.cost ? Object.keys(data.cost) : [],
-        fullResolutionData: resolutionData,
-        fullCustomData: data
-      });
-      
+
       // Check if user selected a cost option
       if (!data?.structureId || !data?.settlementId || !data?.cost) {
         const message = 'Please select a repair cost option (dice or half cost)';
-        console.log('❌ [RepairStructureAction] Validation failed:', message);
+
         (window as any).ui?.notifications?.warn(message);
         return false;
       }
       
       // Don't check affordability here - that's handled in execute()
       // Validation only checks that a choice was made
-      console.log('✅ [RepairStructureAction] Validation passed (choice made)');
+
       return true;
     },
     

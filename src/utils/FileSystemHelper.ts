@@ -21,7 +21,7 @@ export async function ensureUploadDirectory(path: string): Promise<void> {
     try {
       // @ts-ignore
       await FilePicker.browse('data', path);
-      logger.debug(`✅ Directory exists: ${path}`);
+
     } catch (err) {
       // Directory doesn't exist, create it (and parents if needed)
       try {
@@ -35,12 +35,12 @@ export async function ensureUploadDirectory(path: string): Promise<void> {
           try {
             // @ts-ignore
             await FilePicker.browse('data', currentPath);
-            logger.debug(`✅ Directory exists: ${currentPath}`);
+
           } catch (browseErr) {
             // Directory doesn't exist, create it
             // @ts-ignore
             await FilePicker.createDirectory('data', currentPath);
-            logger.info(`📁 Created directory: ${currentPath}`);
+
           }
         }
       } catch (createErr) {
@@ -52,15 +52,13 @@ export async function ensureUploadDirectory(path: string): Promise<void> {
   }
   
   // If player, route through GM via ActionDispatcher
-  logger.debug(`[FileSystemHelper] Requesting GM to ensure directory: ${path}`);
-  
+
   try {
     await actionDispatcher.dispatch('ensureUploadDirectory', { path });
     
     // Brief delay to let GM process
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    logger.debug(`✅ [FileSystemHelper] Directory creation request sent to GM: ${path}`);
+
   } catch (err) {
     logger.error(`❌ [FileSystemHelper] Failed to ensure directory: ${path}`, err);
     throw err;

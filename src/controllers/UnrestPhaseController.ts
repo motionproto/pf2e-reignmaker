@@ -54,7 +54,7 @@ export async function createUnrestPhaseController() {
         const outdatedIncidents = allIncidents.filter(i => i.createdTurn < kingdom.currentTurn);
         
         if (outdatedIncidents.length > 0) {
-          logger.debug(`🧹 [UnrestPhaseController] Clearing ${outdatedIncidents.length} incident(s) from previous turn(s)`);
+
           await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
         }
         
@@ -63,7 +63,7 @@ export async function createUnrestPhaseController() {
           i.createdTurn === kingdom.currentTurn && (i.status === 'resolved' || i.status === 'applied')
         );
         if (completedThisTurn.length > 0) {
-          logger.debug(`🧹 [UnrestPhaseController] Clearing ${completedThisTurn.length} completed incident(s) from this turn`);
+
           await checkInstanceService.clearCompleted('incident', kingdom.currentTurn);
         }
         
@@ -92,9 +92,7 @@ export async function createUnrestPhaseController() {
         ];
         
         await initializePhaseSteps(steps);
-        
-        logger.debug('✅ [UnrestPhaseController] Phase initialization complete');
-        
+
         return createPhaseResult(true)
       } catch (error) {
         reportPhaseError('UnrestPhaseController', error instanceof Error ? error : new Error(String(error)))
@@ -106,19 +104,6 @@ export async function createUnrestPhaseController() {
      * Calculate and display current unrest level (auto-completed on init)
      */
     async calculateUnrest() {
-      const kingdom = get(kingdomData)
-      const currentUnrest = kingdom.unrest || 0
-      
-      logger.debug(`📊 [UnrestPhaseController] Current unrest level: ${currentUnrest}`)
-      
-      // This step is already auto-completed during initialization
-      return { unrest: currentUnrest }
-    },
-
-    /**
-     * Check for incidents based on unrest level (manual step)
-     */
-    async checkForIncidents() {
       const actor = getKingdomActor();
       if (!actor) {
         logger.error('❌ [UnrestPhaseController] No kingdom actor available');
@@ -127,7 +112,7 @@ export async function createUnrestPhaseController() {
 
       // Check if incident check step is already completed (using type-safe constant)
       if (await isStepCompletedByIndex(UnrestPhaseSteps.INCIDENT_CHECK)) {
-        logger.debug('🟡 [UnrestPhaseController] Incident check already completed');
+
         return { incidentTriggered: false };
       }
 
@@ -141,9 +126,7 @@ export async function createUnrestPhaseController() {
       // Roll for incident occurrence
       const roll = Math.random();
       const incidentTriggered = roll < incidentChance;
-      
-      logger.debug(`🎲 [UnrestPhaseController] Incident check: rolled ${(roll * 100).toFixed(1)}% vs ${(incidentChance * 100)}% chance (tier ${tier})`);
-      
+
       let incidentId: string | null = null;
       let instanceId: string | null = null;
       if (incidentTriggered) {
@@ -154,8 +137,7 @@ export async function createUnrestPhaseController() {
           incidentId = incident?.id || null;
           
           if (incident) {
-            logger.debug(`📋 [UnrestPhaseController] Selected incident for tier ${tier}:`, incident.name);
-            
+
             // NEW ARCHITECTURE: Create ActiveCheckInstance
             instanceId = await checkInstanceService.createInstance(
               'incident',
@@ -173,15 +155,13 @@ export async function createUnrestPhaseController() {
                 kingdom.turnState.unrestPhase.incidentTriggered = true;
               }
             });
-            
-            logger.debug(`⚠️ [UnrestPhaseController] Incident triggered (instance: ${instanceId}), step 2 will require manual resolution`);
+
           }
         } catch (error) {
           logger.error('❌ [UnrestPhaseController] Error loading incident:', error);
         }
       } else {
-        logger.debug('✅ [UnrestPhaseController] No incident occurred');
-        
+
         // MINIMAL turnState update (only for roll display in UI)
         await actor.updateKingdomData((kingdom) => {
           if (kingdom.turnState) {
@@ -194,8 +174,7 @@ export async function createUnrestPhaseController() {
         
         // Complete resolve incident step (using type-safe constant)
         await completePhaseStepByIndex(UnrestPhaseSteps.RESOLVE_INCIDENT);
-        
-        logger.debug('✅ [UnrestPhaseController] No incident - turnState updated, step 2 completed via helper');
+
       }
       
       // Complete incident check step (using type-safe constant)
@@ -289,8 +268,7 @@ export async function createUnrestPhaseController() {
         resolution.effect,
         resolution.rollBreakdown
       );
-      
-      logger.debug(`✅ [UnrestPhaseController] Stored incident resolution: ${incidentId}`);
+
       return { success: true };
     },
     
@@ -312,7 +290,7 @@ export async function createUnrestPhaseController() {
       }
       
       await checkInstanceService.markApplied(resolvedIncident.instanceId);
-      logger.debug(`✅ [UnrestPhaseController] Marked incident as applied (synced to all clients)`);
+
     },
 
     /**
@@ -338,7 +316,7 @@ export async function createUnrestPhaseController() {
           if (instance) {
             instance.appliedOutcome = undefined;  // Clear resolution
             instance.status = 'pending';  // Reset status for reroll
-            logger.debug(`🚫 [UnrestPhaseController] Cleared incident resolution and reset status to pending`);
+
           }
         });
       }

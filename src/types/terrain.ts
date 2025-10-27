@@ -61,7 +61,7 @@ export function normalizeTravelDifficulty(travel: string | null | undefined): Tr
       return 'water';
     
     default:
-      console.warn(`Unknown travel difficulty: "${travel}", defaulting to open`);
+      logger.warn(`Unknown travel difficulty: "${travel}", defaulting to open`);
       return 'open';
   }
 }
@@ -130,7 +130,7 @@ export function normalizeTerrainType(terrain: string | null | undefined): Terrai
     
     // Default fallback
     default:
-      console.warn(`Unknown terrain type: "${terrain}", defaulting to plains`);
+      logger.warn(`Unknown terrain type: "${terrain}", defaulting to plains`);
       return 'plains';
   }
 }

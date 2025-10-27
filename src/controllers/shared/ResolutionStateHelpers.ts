@@ -83,7 +83,6 @@ export async function updateInstanceResolutionState(
       customComponentData: state.customComponentData ?? existing.customComponentData
     };
 
-    logger.debug(`✅ [ResolutionStateHelpers] Updated instance resolution state: ${instanceId}`, instance.resolutionState);
   });
 }
 
@@ -98,7 +97,7 @@ export async function clearInstanceResolutionState(instanceId: string): Promise<
     const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
     if (instance) {
       instance.resolutionState = undefined;
-      logger.debug(`🚫 [ResolutionStateHelpers] Cleared instance resolution state: ${instanceId}`);
+
     }
   });
 }
@@ -149,7 +148,6 @@ export async function updateCheckResolutionState(
       }
     };
 
-    logger.debug(`✅ [ResolutionStateHelpers] Updated resolution state for: ${checkId}`, kingdom.turnState.activeResolutions[checkId]);
   });
 }
 
@@ -179,7 +177,7 @@ export async function clearCheckResolutionState(checkId: string): Promise<void> 
   await actor.updateKingdomData((kingdom) => {
     if (kingdom.turnState?.activeResolutions?.[checkId]) {
       delete kingdom.turnState.activeResolutions[checkId];
-      logger.debug(`🚫 [ResolutionStateHelpers] Cleared resolution state for: ${checkId}`);
+
     }
   });
 }
@@ -195,7 +193,7 @@ export async function clearAllResolutionStates(): Promise<void> {
   await actor.updateKingdomData((kingdom) => {
     if (kingdom.turnState) {
       kingdom.turnState.activeResolutions = {};
-      logger.debug(`🚫 [ResolutionStateHelpers] Cleared all resolution states`);
+
     }
   });
 }

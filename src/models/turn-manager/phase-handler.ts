@@ -4,6 +4,7 @@
 
 import { getKingdomActor, updateKingdom } from '../../stores/KingdomStore';
 import type { PhaseStep } from '../../actors/KingdomActor';
+import { logger } from '../../utils/Logger';
 
 export interface StepCompletionResult {
   success: boolean;
@@ -35,8 +36,6 @@ export class PhaseHandler {
       kingdom.phaseComplete = totalSteps > 0 && completedCount === totalSteps;
     });
 
-    console.log(`✅ [PhaseHandler] Initialized ${steps.length} steps:`, 
-      steps.map(s => s.name));
   }
 
   // Complete a step by index and handle progression logic
@@ -52,7 +51,7 @@ export class PhaseHandler {
     }
 
     if (stepIndex < 0 || stepIndex >= kingdom.currentPhaseSteps.length) {
-      console.warn(`[PhaseHandler] Invalid step index: ${stepIndex} (array length: ${kingdom.currentPhaseSteps.length})`);
+      logger.warn(`[PhaseHandler] Invalid step index: ${stepIndex} (array length: ${kingdom.currentPhaseSteps.length})`);
       return { success: false, phaseComplete: false, error: `Invalid step index: ${stepIndex}` };
     }
 
@@ -94,12 +93,10 @@ export class PhaseHandler {
       stepName = kingdom.currentPhaseSteps[stepIndex]?.name || 'Unknown Step';
     });
 
-    console.log(`[PhaseHandler] Completed step ${stepIndex}: '${stepName}'`);
-
     if (phaseComplete) {
-      console.log(`✅ [PhaseHandler] All ${totalSteps} steps completed for phase - phaseComplete set to true`);
+
     } else {
-      console.log(`[PhaseHandler] Progress: ${completedCount}/${totalSteps} steps complete - phaseComplete set to false`);
+
     }
 
     return { success: true, phaseComplete };
@@ -129,7 +126,6 @@ export class PhaseHandler {
     const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
     const allComplete = totalSteps > 0 && completedCount === totalSteps;
 
-    console.log(`[PhaseHandler] Phase completion: ${completedCount}/${totalSteps} steps`);
     return allComplete;
   }
 

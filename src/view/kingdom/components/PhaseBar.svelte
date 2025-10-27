@@ -54,9 +54,7 @@
     unlockInProgress = true;
     unlockStartTime = Date.now();
     unlockTarget = target;
-    
-    console.log(`[PhaseBar] Starting unlock for: ${target}`);
-    
+
     // Start animation loop
     updateUnlockProgress();
   }
@@ -66,7 +64,7 @@
     
     // If we haven't reached 100% yet, cancel the unlock
     if (unlockProgress < 100) {
-      console.log(`[PhaseBar] Unlock cancelled at ${unlockProgress.toFixed(0)}%`);
+
       cancelUnlock();
     }
     // If already at 100%, unlock was already triggered in updateUnlockProgress
@@ -93,7 +91,7 @@
     
     if (unlockProgress >= 100) {
       // Unlock successful - trigger immediately at 100%
-      console.log(`[PhaseBar] Unlock complete! Target: ${unlockTarget}`);
+
       phaseViewLocked.set(false);
       
       // If unlocking for a phase button, navigate to that phase
@@ -123,8 +121,7 @@
     } else if (phase !== $currentPhase && !unlockInProgress) {
       // Locked and clicking different phase - show lock warning animation
       lockWarningActive = true;
-      console.log('[PhaseBar] Lock warning - click different phase while locked');
-      
+
       // Clear warning after animation completes (600ms)
       if (lockWarningTimeout) clearTimeout(lockWarningTimeout);
       lockWarningTimeout = window.setTimeout(() => {
@@ -139,7 +136,7 @@
   function handleLockToggle() {
     // Ignore click if we just unlocked via press-and-hold
     if (justUnlocked) {
-      console.log('[PhaseBar] Ignoring click after press-and-hold unlock');
+
       return;
     }
     

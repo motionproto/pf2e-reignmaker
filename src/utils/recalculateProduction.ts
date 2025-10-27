@@ -29,8 +29,7 @@ import type { TerrainType } from '../types/terrain';
  */
 export async function recalculateWorksiteProduction(): Promise<boolean> {
   try {
-    logger.debug('[Production Recalc] Starting worksite production recalculation...');
-    
+
     const actor = getKingdomActor();
     if (!actor) {
       logger.error('[Production Recalc] No kingdom actor available');
@@ -81,14 +80,9 @@ export async function recalculateWorksiteProduction(): Promise<boolean> {
         },
         entry.production
       ]);
-      
-      logger.debug('[Production Recalc] Updated worksite production:', {
-        totalProduction: kingdom.worksiteProduction,
-        hexCount: kingdom.worksiteProductionByHex.length
-      });
+
     });
-    
-    logger.info('[Production Recalc] ✅ Worksite production recalculated successfully');
+
     return true;
     
   } catch (error) {
@@ -106,6 +100,6 @@ export async function tryRecalculateProduction(): Promise<void> {
     await recalculateWorksiteProduction();
   } catch (error) {
     // Silent failure - don't block territory operations
-    logger.debug('[Production Recalc] Recalculation skipped:', error);
+
   }
 }

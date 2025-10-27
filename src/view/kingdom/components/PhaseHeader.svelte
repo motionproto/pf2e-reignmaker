@@ -20,16 +20,7 @@
   $: isGM = (globalThis as any).game?.user?.isGM || false;
 
   // Debug phase completion detection
-  $: console.log('🔍 [PhaseHeader DEBUG] Phase completion check:', {
-    currentPhase: $currentPhase,
-    totalSteps: $kingdomData.currentPhaseSteps?.length || 0,
-    completedSteps: $kingdomData.currentPhaseSteps?.filter(s => s.completed).length || 0,
-    phaseComplete: $kingdomData.phaseComplete,
-    isViewingActualPhase,
-    currentPhaseComplete,
-    buttonDisabled: !currentPhaseComplete
-  });
-  
+
   let headerElement: HTMLElement;
   let previousTitle = '';
   
@@ -40,7 +31,7 @@
     
     // If shift is held and user is GM, force progression even if disabled
     if (mouseEvent?.shiftKey && isGM) {
-      console.log('🔑 [PhaseHeader] GM shift-click detected - forcing phase progression');
+
       if (onNextPhase) {
         onNextPhase();
       }

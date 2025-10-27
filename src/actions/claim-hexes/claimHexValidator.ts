@@ -26,13 +26,13 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   
   // Check 1: Cannot claim already claimed hex
   if (isHexClaimedByPlayer(hexId, kingdom)) {
-    console.log(`[ClaimValidator] ❌ Hex ${hexId} already claimed`);
+
     return false;
   }
   
   // Check 2: Cannot already be selected as a pending claim
   if (isHexPending(hexId, pendingClaims)) {
-    console.log(`[ClaimValidator] ❌ Hex ${hexId} already selected`);
+
     return false;
   }
   
@@ -43,7 +43,7 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   
   // Check 3: First claim (bootstrap rule) - any unclaimed hex is valid
   if (claimedHexIds.length === 0 && pendingClaims.length === 0) {
-    console.log(`[ClaimValidator] ✅ Hex ${hexId} valid (first claim)`);
+
     return true;
   }
   
@@ -52,10 +52,9 @@ export function validateClaimHex(hexId: string, pendingClaims: string[] = []): b
   const isAdjacent = isAdjacentToAny(hexId, allClaimedIds);
   
   if (!isAdjacent) {
-    console.log(`[ClaimValidator] ❌ Hex ${hexId} not adjacent to claimed territory`);
+
     return false;
   }
-  
-  console.log(`[ClaimValidator] ✅ Hex ${hexId} valid for claim`);
+
   return true;
 }

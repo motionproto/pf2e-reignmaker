@@ -55,7 +55,7 @@
             // @ts-ignore - Foundry global
             ui.notifications?.info(`${settlement.name} is no longer the capital`);
          } catch (error) {
-            console.error('Failed to update capital status:', error);
+            logger.error('Failed to update capital status:', error);
             // @ts-ignore - Foundry global
             ui.notifications?.error('Failed to update capital status');
          } finally {
@@ -126,7 +126,7 @@
          // @ts-ignore - Foundry global
          ui.notifications?.info(`${settlement.name} is now the capital`);
       } catch (error) {
-         console.error('Failed to update capital status:', error);
+         logger.error('Failed to update capital status:', error);
          // @ts-ignore - Foundry global
          ui.notifications?.error('Failed to update capital status');
       } finally {

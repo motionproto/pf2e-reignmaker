@@ -11,6 +11,7 @@ import { TurnManager } from '../models/turn-manager';
 import { calculateProduction } from '../services/economics/production';
 import { PLAYER_KINGDOM } from '../types/ownership';
 import { filterVisibleHexes, filterVisibleHexIds } from '../utils/visibility-filter';
+import { logger } from '../utils/Logger';
 
 // Core actor store - this is the single source of truth
 export const kingdomActor = writable<KingdomActor | null>(null);
@@ -291,9 +292,7 @@ export function initializeKingdomActor(actor: any): void {
   if (kingdom) {
     viewingPhase.set(kingdom.currentPhase);
   }
-  
-  console.log('[KingdomActor Store] Initialized with actor:', actor.name);
-  
+
   // Initialize TurnManager for phase progression
   initializeTurnManager();
 }
@@ -304,8 +303,7 @@ export function initializeKingdomActor(actor: any): void {
 function initializeTurnManager(): void {
   // Get singleton instance - will create if doesn't exist
   const turnManager = TurnManager.getInstance();
-  
-  console.log('✅ [KingdomActor Store] TurnManager singleton ready - phases are self-executing');
+
 }
 
 /**
@@ -328,7 +326,7 @@ export function getKingdomData(): KingdomData {
 export async function updateKingdom(updater: (kingdom: KingdomData) => void): Promise<void> {
   const actor = get(kingdomActor);
   if (!actor) {
-    console.warn('[KingdomActor Store] No actor available for update - likely during initialization, queuing update');
+    logger.warn('[KingdomActor Store] No actor available for update - likely during initialization, queuing update');
     // Don't fail silently - instead, wait for actor to be available
     return new Promise<void>((resolve) => {
       const unsubscribe = kingdomActor.subscribe((newActor) => {
@@ -339,7 +337,7 @@ export async function updateKingdom(updater: (kingdom: KingdomData) => void): Pr
             newActor.updateKingdomData(updater)
               .then(() => resolve())
               .catch(error => {
-                console.error('[KingdomActor Store] Failed to update kingdom:', error);
+                logger.error('[KingdomActor Store] Failed to update kingdom:', error);
                 resolve();
               });
           } else {
@@ -355,18 +353,18 @@ export async function updateKingdom(updater: (kingdom: KingdomData) => void): Pr
     if (actor.updateKingdomData) {
       await actor.updateKingdomData(updater);
     } else {
-      console.warn('[KingdomActor Store] Actor not wrapped - using fallback');
+      logger.warn('[KingdomActor Store] Actor not wrapped - using fallback');
       // Fallback to direct flag manipulation
       const kingdom = actor.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData;
       if (!kingdom) {
-        console.warn('[KingdomActor Store] No kingdom data found on actor');
+        logger.warn('[KingdomActor Store] No kingdom data found on actor');
         return;
       }
       updater(kingdom);
       await actor.setFlag('pf2e-reignmaker', 'kingdom-data', kingdom);
     }
   } catch (error) {
-    console.error('[KingdomActor Store] Failed to update kingdom:', error);
+    logger.error('[KingdomActor Store] Failed to update kingdom:', error);
   }
 }
 
@@ -379,8 +377,7 @@ export async function advancePhase(): Promise<void> {
   try {
     const turnManager = getTurnManager();
     await turnManager.nextPhase();
-    console.log('✅ [KingdomActor Store] Phase advanced via TurnManager');
-    
+
     // Update viewing phase to match new current phase
     const actor = get(kingdomActor);
     if (actor) {
@@ -390,10 +387,9 @@ export async function advancePhase(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[KingdomActor Store] Error advancing phase:', error);
+    logger.error('[KingdomActor Store] Error advancing phase:', error);
   }
 }
-
 
 
 export function isPhaseStepCompleted(stepIndex: number): boolean {
@@ -423,7 +419,7 @@ export function isCurrentPhaseComplete(): boolean {
  */
 export function updateOnlinePlayers(): void {
   if (typeof game === 'undefined' || !game.users) {
-    console.warn('[KingdomStore] Game users not available');
+    logger.warn('[KingdomStore] Game users not available');
     return;
   }
 
@@ -443,7 +439,7 @@ export function updateOnlinePlayers(): void {
     });
 
   onlinePlayers.set(players);
-  console.log(`[KingdomStore] Updated online players: ${players.length} online`);
+
 }
 
 /**
@@ -456,7 +452,7 @@ export function initializeAllPlayers(): void {
   
   // Mark as fully initialized
   isInitialized.set(true);
-  console.log('[KingdomStore] Player tracking uses turnState.actionLog');
+
 }
 
 /**
@@ -475,11 +471,11 @@ export function togglePhaseViewLock(): void {
     if (newLockState) {
       const data = get(kingdomData);
       if (data.currentPhase) {
-        console.log(`[KingdomStore] Lock engaged, syncing view to current phase: ${data.currentPhase}`);
+
         viewingPhase.set(data.currentPhase);
       }
     } else {
-      console.log(`[KingdomStore] Lock disengaged, viewing phase will stay at: ${get(viewingPhase)}`);
+
     }
     
     return newLockState;
@@ -497,7 +493,7 @@ export async function setCurrentPhase(phase: TurnPhase): Promise<void> {
     // Update viewing phase to match
     viewingPhase.set(phase);
   } else {
-    console.warn('[KingdomStore] No TurnManager available for setCurrentPhase');
+    logger.warn('[KingdomStore] No TurnManager available for setCurrentPhase');
   }
 }
 
@@ -506,7 +502,7 @@ export async function resetPhaseSteps(): Promise<void> {
   if (manager) {
     await manager.resetPhaseSteps();
   } else {
-    console.warn('[KingdomStore] No TurnManager available for resetPhaseSteps');
+    logger.warn('[KingdomStore] No TurnManager available for resetPhaseSteps');
   }
 }
 
@@ -515,7 +511,7 @@ export async function incrementTurn(): Promise<void> {
   if (manager) {
     await manager.incrementTurn();
   } else {
-    console.warn('[KingdomStore] No TurnManager available for incrementTurn');
+    logger.warn('[KingdomStore] No TurnManager available for incrementTurn');
   }
 }
 
@@ -527,19 +523,17 @@ export async function incrementTurn(): Promise<void> {
 export async function startKingdom(): Promise<void> {
   // GM check - only GM can start the kingdom
   if (!(game as any)?.user?.isGM) {
-    console.error('[KingdomStore] Only GM can start the kingdom');
+    logger.error('[KingdomStore] Only GM can start the kingdom');
     (ui as any).notifications?.error('Only the GM can start Turn 1');
     return;
   }
   
   const actor = get(kingdomActor);
   if (!actor) {
-    console.error('[KingdomStore] No kingdom actor available for startKingdom');
+    logger.error('[KingdomStore] No kingdom actor available for startKingdom');
     return;
   }
-  
-  console.log('🏰 [KingdomStore] Starting Turn 1 - data already initialized');
-  
+
   // Simple turn advancement - all data exists from Stage 1
   await updateKingdom((kingdom) => {
     kingdom.currentTurn = 1;
@@ -556,8 +550,7 @@ export async function startKingdom(): Promise<void> {
   if (manager) {
     await manager.resetPhaseSteps();
   }
-  
-  console.log('✅ [KingdomStore] Turn 1 started - Status phase will initialize on mount');
+
 }
 
 /**
@@ -574,7 +567,7 @@ export function selectSettlement(settlementId: string | null): void {
 export function setupFoundrySync(): void {
   // Only setup if Foundry is available
   if (typeof Hooks === 'undefined') {
-    console.warn('[KingdomActor Store] Foundry hooks not available');
+    logger.warn('[KingdomActor Store] Foundry hooks not available');
     return;
   }
   
@@ -586,8 +579,7 @@ export function setupFoundrySync(): void {
     if (currentActor && actor.id === currentActor.id) {
       // Check if kingdom data was updated
       if (changes.flags?.['pf2e-reignmaker']?.['kingdom-data']) {
-        console.log(`[KingdomActor Store] Kingdom updated by user ${userId}`);
-        
+
         // Refresh the actor reference in the store
         kingdomActor.set(actor as KingdomActor);
         
@@ -598,18 +590,15 @@ export function setupFoundrySync(): void {
         if (kingdom && newPhase) {
           const isLocked = get(phaseViewLocked);
           const currentViewingPhase = get(viewingPhase);
-          
-          console.log(`[KingdomActor Store] Phase sync check - Current: ${newPhase}, Viewing: ${currentViewingPhase}, Lock: ${isLocked ? 'LOCKED' : 'UNLOCKED'}`);
-          
+
           // If locked and viewing phase doesn't match current phase, sync them
           if (isLocked && currentViewingPhase !== newPhase) {
-            console.log(`[KingdomActor Store] Lock engaged, syncing view from ${currentViewingPhase} to ${newPhase}`);
+
             viewingPhase.set(newPhase);
           }
         }
       }
     }
   });
-  
-  console.log('[KingdomActor Store] Foundry synchronization hooks setup complete');
+
 }

@@ -47,8 +47,6 @@ export class CheckHandler {
   async executeCheck(config: CheckConfig): Promise<void> {
     const { checkType, item, skill, enabledModifiers, onStart, onComplete, onCancel, onError } = config;
 
-    logger.debug(`🎲 [CheckHandler] Starting ${checkType} check for: ${item.name} with skill: ${skill}`);
-
     // Initialize roll result handler
     initializeRollResultHandler();
 
@@ -65,7 +63,6 @@ export class CheckHandler {
           customEvent.detail?.checkId === item.id && 
           customEvent.detail?.checkType === checkType
         ) {
-          logger.debug(`✅ [CheckHandler] Roll completed for ${checkType}: ${item.id}`);
 
           const result: CheckResult = {
             outcome: customEvent.detail.outcome,
@@ -101,7 +98,7 @@ export class CheckHandler {
 
       // If performKingdomSkillCheck returns null, the user cancelled
       if (!rollResult) {
-        logger.debug(`🚫 [CheckHandler] Check was cancelled by user (null return)`);
+
         this.handleCancellation(config);
       }
 
@@ -116,8 +113,7 @@ export class CheckHandler {
    * Handle check cancellation
    */
   private handleCancellation(config: CheckConfig): void {
-    logger.debug(`🔄 [CheckHandler] Handling cancellation for ${config.checkType}`);
-    
+
     this.cleanup();
     config.onCancel?.();
 

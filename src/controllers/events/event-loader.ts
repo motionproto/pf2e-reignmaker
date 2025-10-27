@@ -63,12 +63,10 @@ export class EventService {
      */
     loadEvents(): void {
         if (this.eventsLoaded) {
-            logger.debug('Events already loaded, skipping...');
+
             return;
         }
 
-        logger.debug('Loading events from imported data...');
-        
         try {
             // Load events from the imported JSON data
             const eventsList = eventsData as EventData[];
@@ -79,11 +77,10 @@ export class EventService {
             }
             
             this.eventsLoaded = true;
-            logger.debug(`Successfully loaded ${this.events.size} events`);
-            
+
             // Log all event names for verification
             const eventNames = Array.from(this.events.values()).map(e => getEventDisplayName(e));
-            logger.debug('Events loaded:', eventNames);
+
         } catch (error) {
             logger.error('Failed to load events:', error);
             // Fallback to empty map
@@ -101,8 +98,7 @@ export class EventService {
         }
 
         const eventArray = Array.from(this.events.values());
-        logger.debug(`Getting random event from ${eventArray.length} available events`);
-        
+
         if (eventArray.length === 0) {
             logger.error('No events available in the events map');
             return null;
@@ -110,8 +106,7 @@ export class EventService {
 
         const randomIndex = Math.floor(Math.random() * eventArray.length);
         const selectedEvent = eventArray[randomIndex];
-        logger.debug(`Selected event: ${getEventDisplayName(selectedEvent)} (${selectedEvent.id})`);
-        
+
         return selectedEvent;
     }
 
@@ -202,13 +197,12 @@ export class EventService {
             case 'expires':
                 // Handle expiration effects
                 if (unresolved.expires) {
-                    logger.debug(`Event ${event.id} expires: ${unresolved.expires.message || 'No message'}`);
-                    
+
                     // Check if it transforms to another event
                     if (unresolved.expires.transformsTo) {
                         const newEvent = this.getEventById(unresolved.expires.transformsTo);
                         if (newEvent) {
-                            logger.debug(`Event ${event.id} transforms to ${unresolved.expires.transformsTo}`);
+
                         }
                     }
                 }
@@ -216,7 +210,7 @@ export class EventService {
 
             case 'auto-resolve':
                 // This type is no longer in the new data
-                logger.debug(`Event ${event.id} auto-resolves`);
+
                 break;
         }
 

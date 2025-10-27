@@ -22,6 +22,7 @@ import {
 import { hexSelectorService } from '../../services/hex-selector';
 import { getAdjacentHexIds } from '../shared/hexValidation';
 import { kingmakerIdToOffset } from '../../services/hex-selector/coordinates';
+import { logger } from '../../utils/Logger';
 
 /**
  * Calculate distance between two hex coordinates
@@ -50,13 +51,10 @@ export const EstablishSettlementAction = {
     // Note: This check would need a target hex coordinate to work properly
     // For now, we'll skip the distance check during requirements
     // and rely on manual validation when placing on the map
-    
-    console.log('🔍 [EstablishSettlement] Checking requirements');
-    
+
     // Check if we have any settlements (informational only)
     const settlementCount = kingdomData.settlements?.length || 0;
-    console.log(`   Existing settlements: ${settlementCount}`);
-    
+
     return {
       met: true
     };
@@ -100,8 +98,7 @@ export const EstablishSettlementAction = {
         }
         
         const selectedHexId = selectedHexes[0];
-        console.log(`🗺️ [EstablishSettlement] Selected hex: ${selectedHexId}`);
-        
+
         // Step 2: Prompt for settlement name using Foundry Dialog
         const settlementName = await promptForSettlementName();
         if (!settlementName) {
@@ -115,7 +112,7 @@ export const EstablishSettlementAction = {
         }
         
         // Step 4: Apply resource costs
-        console.log('💰 [EstablishSettlement] Applying resource costs:', resolutionData.numericModifiers);
+
         const { createGameCommandsService } = await import('../../services/GameCommandsService');
         const gameCommands = await createGameCommandsService();
         
@@ -125,12 +122,10 @@ export const EstablishSettlementAction = {
         );
         
         if (!costResult.success) {
-          console.error('❌ [EstablishSettlement] Failed to apply costs:', costResult.error);
+          logger.error('❌ [EstablishSettlement] Failed to apply costs:', costResult.error);
           return createErrorResult(costResult.error || 'Failed to pay settlement costs');
         }
-        
-        console.log('✅ [EstablishSettlement] Resource costs applied');
-        
+
         // Step 5: Convert hex ID to coordinates
         const offset = kingmakerIdToOffset(selectedHexId);
         const location = { x: offset.i, y: offset.j };
@@ -141,15 +136,7 @@ export const EstablishSettlementAction = {
           location,
           SettlementTier.VILLAGE
         );
-        
-        console.log('🏘️ [EstablishSettlement] Created settlement:', {
-          id: newSettlement.id,
-          name: newSettlement.name,
-          tier: newSettlement.tier,
-          location: newSettlement.location,
-          hexId: selectedHexId
-        });
-        
+
         // Step 7: Add to kingdom and handle first settlement special case
         await updateKingdom(kingdom => {
           if (!kingdom.settlements) {
@@ -161,34 +148,31 @@ export const EstablishSettlementAction = {
           const hex = kingdom.hexes.find((h: any) => h.id === selectedHexId);
           if (hex) {
             hex.hasRoad = true;
-            console.log(`🛣️ [EstablishSettlement] Set hasRoad=true for settlement hex ${selectedHexId}`);
+
           }
           
           // First settlement: Automatically claim all adjacent hexes
           if (isFirstSettlement) {
-            console.log('🏴 [EstablishSettlement] First settlement - claiming adjacent hexes');
+
             const adjacentHexIds = getAdjacentHexIds(selectedHexId);
             
             adjacentHexIds.forEach(hexId => {
               const hex = kingdom.hexes.find((h: any) => h.id === hexId);
               if (hex && hex.claimedBy !== PLAYER_KINGDOM) {
                 hex.claimedBy = 1;
-                console.log(`  🏴 Claimed adjacent hex: ${hexId}`);
+
               }
             });
             
             // Update kingdom size
             kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
-            console.log(`  ✅ Total claimed hexes: ${kingdom.size}`);
+
           }
         });
-        
-        console.log('✅ [EstablishSettlement] Added settlement to kingdom');
-        
+
         // Step 8: Add structure if critical success
         if (selectedStructureId) {
-          console.log('🏗️ [EstablishSettlement] Adding bonus structure:', selectedStructureId);
-          
+
           const { settlementStructureManagement } = await import('../../services/structures/management');
           
           const result = await settlementStructureManagement.addStructureToSettlement(
@@ -197,9 +181,9 @@ export const EstablishSettlementAction = {
           );
           
           if (result.success) {
-            console.log('✅ [EstablishSettlement] Bonus structure added');
+
           } else {
-            console.log('⚠️ [EstablishSettlement] Failed to add bonus structure:', result.error);
+
           }
         }
         
@@ -207,11 +191,9 @@ export const EstablishSettlementAction = {
         const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.showPixiContainer();
-        console.log('[EstablishSettlement] ✅ Scene control activated');
-        
+
         // Reactive overlays will auto-update from Kingdom Store changes
-        console.log('[EstablishSettlement] 🔄 Reactive overlays will auto-update from Kingdom Store change');
-        
+
         logActionSuccess('establish-settlement', `Founded ${settlementName}!`);
         
         const adjacentClaimMessage = isFirstSettlement ? ' (claimed adjacent hexes)' : '';
@@ -221,7 +203,7 @@ export const EstablishSettlementAction = {
         return createSuccessResult(message);
         
       } catch (error) {
-        console.error('❌ [EstablishSettlement] Error:', error);
+        logger.error('❌ [EstablishSettlement] Error:', error);
         logActionError('establish-settlement', error as Error);
         return createErrorResult(error instanceof Error ? error.message : 'Failed to establish settlement');
       }

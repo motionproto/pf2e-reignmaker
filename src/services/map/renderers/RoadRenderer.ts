@@ -6,6 +6,7 @@ import { getKingdomActor } from '../../../main.kingdom';
 import type { KingdomData } from '../../../actors/KingdomActor';
 import { isWaterTerrain } from '../../../types/terrain';
 import { ROAD_COLORS } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Normalize hex ID format (remove leading zeros for consistent matching)
@@ -37,10 +38,9 @@ export async function renderRoadConnections(
   roadHexIds: string[],
   canvas: any
 ): Promise<void> {
-  console.log(`[RoadRenderer] 🛣️ Rendering road connections for ${roadHexIds.length} hexes...`);
 
   if (!canvas?.grid) {
-    console.warn('[RoadRenderer] ❌ Canvas grid not available');
+    logger.warn('[RoadRenderer] ❌ Canvas grid not available');
     return;
   }
 
@@ -69,9 +69,7 @@ export async function renderRoadConnections(
   // Normalize all road hex IDs for consistent matching
   const normalizedRoadHexIds = allRoadHexIds.map(id => normalizeHexId(id));
   const roadHexSet = new Set(normalizedRoadHexIds);
-  
-  console.log('[RoadRenderer] Road hex IDs:', normalizedRoadHexIds.slice(0, 10));
-  console.log(`[RoadRenderer] Including ${waterHexSet.size} water hexes as automatic roads`);
+
 
   // Graphics object for drawing lines
   const graphics = new PIXI.Graphics();
@@ -158,7 +156,7 @@ export async function renderRoadConnections(
         connectionCount++;
       });
     } catch (error) {
-      console.error(`[RoadRenderer] Failed to process hex ${hexId}:`, error);
+      logger.error(`[RoadRenderer] Failed to process hex ${hexId}:`, error);
     }
   });
   
@@ -244,9 +242,8 @@ export async function renderRoadConnections(
   }
 
   layer.addChild(graphics);
-  console.log(`[RoadRenderer] ✅ Drew ${connectionCount} road connections (${landRoadSegments.length} land, ${waterRoadSegments.length} water)`);
-  
+
   if (connectionCount === 0) {
-    console.warn('[RoadRenderer] ⚠️ No road connections drawn - check that hex IDs match neighbor format');
+    logger.warn('[RoadRenderer] ⚠️ No road connections drawn - check that hex IDs match neighbor format');
   }
 }

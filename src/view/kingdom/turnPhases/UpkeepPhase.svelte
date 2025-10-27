@@ -34,13 +34,7 @@
    $: allStepsComplete = areAllStepsComplete(currentSteps);
    
    // Debug step completion states
-   $: console.log('🔍 [UpkeepPhase DEBUG] Step completion status:', {
-      totalSteps: currentSteps.length,
-      completedSteps: currentSteps.filter(s => s.completed).length,
-      allStepsComplete,
-      currentSteps
-   });
-   
+
    // Get all display data from controller (now async)
    let displayData: {
       currentFood: number;
@@ -123,19 +117,18 @@
    });
 
    async function initializePhase() {
-      console.log('🟡 [UpkeepPhase] Component mounted - initializing phase...');
-      
+
       try {
          upkeepController = await createUpkeepPhaseController();
          const result = await upkeepController.startPhase();
          
          if (result.success) {
-            console.log('✅ [UpkeepPhase] Phase initialized for manual operations');
+
          } else {
-            console.error('❌ [UpkeepPhase] Phase initialization failed:', result.error);
+            logger.error('❌ [UpkeepPhase] Phase initialization failed:', result.error);
          }
       } catch (error) {
-         console.error('❌ [UpkeepPhase] Unexpected error:', error);
+         logger.error('❌ [UpkeepPhase] Unexpected error:', error);
       }
    }
    
@@ -147,12 +140,12 @@
       try {
          const result = await upkeepController.feedSettlements();
          if (result.success) {
-            console.log('✅ [UpkeepPhase] Settlements fed successfully');
+
          } else {
-            console.error('❌ [UpkeepPhase] Failed to feed settlements:', result.error);
+            logger.error('❌ [UpkeepPhase] Failed to feed settlements:', result.error);
          }
       } catch (error) {
-         console.error('❌ [UpkeepPhase] Error feeding settlements:', error);
+         logger.error('❌ [UpkeepPhase] Error feeding settlements:', error);
       } finally {
          processingFood = false;
       }
@@ -165,12 +158,12 @@
       try {
          const result = await upkeepController.supportMilitary();
          if (result.success) {
-            console.log('✅ [UpkeepPhase] Military support processed successfully');
+
          } else {
-            console.error('❌ [UpkeepPhase] Failed to process military support:', result.error);
+            logger.error('❌ [UpkeepPhase] Failed to process military support:', result.error);
          }
       } catch (error) {
-         console.error('❌ [UpkeepPhase] Error processing military support:', error);
+         logger.error('❌ [UpkeepPhase] Error processing military support:', error);
       } finally {
          processingMilitary = false;
       }
@@ -183,12 +176,12 @@
       try {
          const result = await upkeepController.processBuilds();
          if (result.success) {
-            console.log('✅ [UpkeepPhase] Build queue processed successfully');
+
          } else {
-            console.error('❌ [UpkeepPhase] Failed to process build queue:', result.error);
+            logger.error('❌ [UpkeepPhase] Failed to process build queue:', result.error);
          }
       } catch (error) {
-         console.error('❌ [UpkeepPhase] Error processing build queue:', error);
+         logger.error('❌ [UpkeepPhase] Error processing build queue:', error);
       } finally {
          processingBuild = false;
       }
@@ -196,7 +189,7 @@
 
    // Remove the auto-complete logic since phase completion should be manual
    async function handleCompletePhase() {
-      console.log('🔍 [UpkeepPhase DEBUG] Manual phase completion no longer needed');
+
       // Phase completes automatically when all steps are done
    }
 </script>

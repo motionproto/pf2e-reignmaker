@@ -143,7 +143,7 @@
          
          cancelEdit();
       } catch (error) {
-         console.error('Failed to save edit:', error);
+         logger.error('Failed to save edit:', error);
          // @ts-ignore
          ui.notifications?.error(error instanceof Error ? error.message : 'Failed to save changes');
       } finally {
@@ -165,7 +165,7 @@
          const { factionService } = await import('../../../../services/factions');
          await factionService.updateAttitude(factionId, attitude);
       } catch (error) {
-         console.error('Failed to change attitude:', error);
+         logger.error('Failed to change attitude:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to change attitude');
       }
@@ -177,7 +177,7 @@
          const { factionService } = await import('../../../../services/factions');
          await factionService.incrementProgress(factionId);
       } catch (error) {
-         console.error('Failed to increment progress:', error);
+         logger.error('Failed to increment progress:', error);
       }
    }
    
@@ -186,7 +186,7 @@
          const { factionService } = await import('../../../../services/factions');
          await factionService.decrementProgress(factionId);
       } catch (error) {
-         console.error('Failed to decrement progress:', error);
+         logger.error('Failed to decrement progress:', error);
       }
    }
    
@@ -303,7 +303,7 @@
             ui.notifications?.info(`Added ${result.added} default faction${result.added > 1 ? 's' : ''}: ${result.factionNames.join(', ')}`);
          }
       } catch (error) {
-         console.error('Failed to restore defaults:', error);
+         logger.error('Failed to restore defaults:', error);
          // @ts-ignore
          ui.notifications?.error(error instanceof Error ? error.message : 'Failed to restore default factions');
       } finally {

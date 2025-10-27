@@ -120,13 +120,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
         
         // Determine outcome based on resolution data
         const outcome = instance?.metadata?.outcome || 'success';
-        
-        console.log('🤝 [EstablishDiplomaticRelations] Processing outcome:', {
-          outcome,
-          factionId,
-          currentAttitude: faction.attitude
-        });
-        
+
         // Handle attitude changes based on outcome
         let newAttitude: AttitudeLevel | null = null;
         

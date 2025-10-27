@@ -4,6 +4,7 @@
 
 import type { KingdomActor, KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
+import { logger } from '../utils/Logger';
 
 declare const game: any;
 declare const ui: any;
@@ -112,12 +113,11 @@ export function migrateKingdomState(oldState: any): KingdomData {
     if (oldState.eventStabilityRoll !== undefined) newKingdom.eventStabilityRoll = oldState.eventStabilityRoll;
     if (oldState.eventRollDC !== undefined) newKingdom.eventRollDC = oldState.eventRollDC;
     if (oldState.eventTriggered !== undefined) newKingdom.eventTriggered = oldState.eventTriggered;
-    
-    console.log('[Migration] Successfully migrated kingdom state');
+
     return newKingdom;
     
   } catch (error) {
-    console.error('[Migration] Error migrating kingdom state:', error);
+    logger.error('[Migration] Error migrating kingdom state:', error);
     return newKingdom; // Return default if migration fails
   }
 }
@@ -138,7 +138,7 @@ export async function checkMigrationNeeded(): Promise<boolean> {
     
     return false;
   } catch (error) {
-    console.error('[Migration] Error checking migration status:', error);
+    logger.error('[Migration] Error checking migration status:', error);
     return false;
   }
 }
@@ -150,18 +150,16 @@ export async function performMigration(): Promise<boolean> {
   try {
     const partyActor = game.actors?.find((a: any) => a.type === 'party');
     if (!partyActor) {
-      console.log('[Migration] No party actor found, skipping migration');
+
       return false;
     }
     
     const oldData = partyActor.getFlag('pf2e-reignmaker', 'kingdom-data');
     if (!oldData || !oldData.kingdomState) {
-      console.log('[Migration] No old data found, skipping migration');
+
       return false;
     }
-    
-    console.log('[Migration] Starting migration from old format...');
-    
+
     // Migrate the kingdom state
     const migratedKingdom = migrateKingdomState(oldData.kingdomState);
     
@@ -170,7 +168,7 @@ export async function performMigration(): Promise<boolean> {
     const kingdomActor = await ensureKingdomActor() as KingdomActor;
     
     if (!kingdomActor) {
-      console.error('[Migration] Failed to create kingdom actor');
+      logger.error('[Migration] Failed to create kingdom actor');
       return false;
     }
     
@@ -180,9 +178,7 @@ export async function performMigration(): Promise<boolean> {
     // Clear old data (backup first)
     await partyActor.setFlag('pf2e-reignmaker', 'kingdom-data-backup', oldData);
     await partyActor.unsetFlag('pf2e-reignmaker', 'kingdom-data');
-    
-    console.log('[Migration] Migration completed successfully');
-    
+
     // Notify user
     if (typeof ui !== 'undefined' && ui.notifications) {
       ui.notifications.info('Kingdom data migrated to new format successfully!');
@@ -191,7 +187,7 @@ export async function performMigration(): Promise<boolean> {
     return true;
     
   } catch (error) {
-    console.error('[Migration] Migration failed:', error);
+    logger.error('[Migration] Migration failed:', error);
     
     if (typeof ui !== 'undefined' && ui.notifications) {
       ui.notifications.error('Kingdom data migration failed. Please check console for details.');

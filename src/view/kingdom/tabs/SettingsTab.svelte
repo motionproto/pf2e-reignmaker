@@ -37,7 +37,7 @@
          // @ts-ignore - Foundry globals
          hexesPerUnrest = (game.settings.get('pf2e-reignmaker', 'hexesPerUnrest') as number) || 8;
       } catch (error) {
-         console.warn('Failed to load hexesPerUnrest setting:', error);
+         logger.warn('Failed to load hexesPerUnrest setting:', error);
       }
    });
    
@@ -51,9 +51,9 @@
             await KingdomSettings.setKingdomSceneId(sceneId);
             selectedSceneId = sceneId;
             currentScene = allScenes.find(s => s.id === sceneId);
-            console.log(`Kingdom scene updated to: ${currentScene?.name}`);
+
          } catch (error) {
-            console.error('Failed to save kingdom scene:', error);
+            logger.error('Failed to save kingdom scene:', error);
          }
       }
    }
@@ -68,9 +68,9 @@
             // @ts-ignore - Foundry globals
             await game.settings.set('pf2e-reignmaker', 'hexesPerUnrest', value);
             hexesPerUnrest = value;
-            console.log(`Hexes per unrest updated to: ${value}`);
+
          } catch (error) {
-            console.error('Failed to save hexes per unrest:', error);
+            logger.error('Failed to save hexes per unrest:', error);
          }
       }
    }

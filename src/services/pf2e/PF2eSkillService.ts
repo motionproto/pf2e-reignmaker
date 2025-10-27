@@ -15,7 +15,7 @@ let lastRollModifiers: Array<{ label: string; modifier: number }> | null = null;
  */
 export function storeModifiersForReroll(modifiers: Array<{ label: string; modifier: number }>) {
   lastRollModifiers = modifiers;
-  logger.debug('📦 [PF2eSkillService] Stored modifiers for reroll:', modifiers);
+
 }
 
 export interface SkillCheckOptions {
@@ -282,9 +282,6 @@ export class PF2eSkillService {
     actionId?: string  // Optional action ID for aid bonuses
   ): Promise<any> {
     try {
-      logger.debug('🎲 [PF2eSkillService] Starting kingdom skill check:', {
-        skillName, checkType, checkName, checkId
-      });
 
       // Get or select character
       let actor = this.characterService.getCurrentUserCharacter();
@@ -334,8 +331,7 @@ export class PF2eSkillService {
       
       // Apply stored modifiers from previous roll (for rerolls)
       if (lastRollModifiers && lastRollModifiers.length > 0) {
-        logger.debug('📋 [PF2eSkillService] Applying stored modifiers from previous roll:', lastRollModifiers);
-        
+
         // Track which labels we've matched
         const matchedLabels = new Set<string>();
         
@@ -345,7 +341,7 @@ export class PF2eSkillService {
           if (previousMod) {
             mod.enabled = true;
             matchedLabels.add(mod.name);
-            logger.debug(`✅ [PF2eSkillService] Pre-enabled modifier: ${mod.name}`);
+
           }
         }
         
@@ -360,13 +356,13 @@ export class PF2eSkillService {
               type: 'circumstance',  // Default to circumstance for custom modifiers
               enabled: true
             });
-            logger.debug(`📝 [PF2eSkillService] Added custom modifier from previous roll: ${prevMod.label} (${prevMod.modifier})`);
+
           }
         }
         
         // Clear stored modifiers after use
         lastRollModifiers = null;
-        logger.debug('🧹 [PF2eSkillService] Cleared stored modifiers');
+
       }
       
       // Convert to PF2e format
@@ -415,7 +411,7 @@ export class PF2eSkillService {
         // Fallback: Try to find any skill and use it, or create a generic check
         const firstAvailableSkill = Object.values(actor.skills || {})[0] as any;
         if (firstAvailableSkill && firstAvailableSkill.roll) {
-          logger.debug(`🔄 [PF2eSkillService] Using fallback skill for ${skillName}`);
+
           rollResult = await firstAvailableSkill.roll({
             dc: { value: dc },
             label: `${labelPrefix}: ${checkName} (${skillName})`,
@@ -434,8 +430,7 @@ export class PF2eSkillService {
           return null;
         }
       }
-      
-      logger.debug('✅ [PF2eSkillService] Skill check completed');
+
       return rollResult;
       
     } catch (error) {

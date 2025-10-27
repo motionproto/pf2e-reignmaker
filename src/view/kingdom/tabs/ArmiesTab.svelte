@@ -186,7 +186,7 @@
          
          cancelEdit();
       } catch (error) {
-         console.error('Failed to save edit:', error);
+         logger.error('Failed to save edit:', error);
          // @ts-ignore
          ui.notifications?.error(error instanceof Error ? error.message : 'Failed to save changes');
       } finally {
@@ -291,7 +291,7 @@
             ui.notifications?.info(`Created new NPC actor for ${army.name}`);
          }
       } catch (error) {
-         console.error('Failed to create NPC actor:', error);
+         logger.error('Failed to create NPC actor:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to create NPC actor');
       }

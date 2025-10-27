@@ -7,6 +7,7 @@
 
 import { kingmakerIdToOffset, hexToKingmakerId, getHexVertices } from './coordinates';
 import { HEX_HIGHLIGHT_COLORS, type ColorConfig, type HexSelectionType } from './types';
+import { logger } from '../../utils/Logger';
 
 export class HexHighlighter {
   private container: PIXI.Container;
@@ -44,14 +45,13 @@ export class HexHighlighter {
     const overlayGroup = canvas.stage.children.find((c: any) => c.name === 'OverlayCanvasGroup');
     if (overlayGroup) {
       overlayGroup.addChild(this.container);
-      console.log('[HexHighlighter] Container added to OverlayCanvasGroup');
+
     } else {
       // Fallback to stage if group not found
       canvas.stage.addChild(this.container);
-      console.log('[HexHighlighter] Container added to canvas.stage (fallback)');
+
     }
-    
-    console.log('[HexHighlighter] Created persistent PIXI.Container layer:', this.container.name);
+
   }
   
   /**
@@ -68,13 +68,13 @@ export class HexHighlighter {
     });
     
     if (!kingdomActor) {
-      console.warn('[HexHighlighter] No kingdom actor found');
+      logger.warn('[HexHighlighter] No kingdom actor found');
       return;
     }
     
     const kingdom = kingdomActor.getKingdom?.();
     if (!kingdom?.hexes || kingdom.hexes.length === 0) {
-      console.warn('[HexHighlighter] No kingdom hexes data available');
+      logger.warn('[HexHighlighter] No kingdom hexes data available');
       return;
     }
     
@@ -100,13 +100,11 @@ export class HexHighlighter {
         
         count++;
       } catch (error) {
-        console.error(`[HexHighlighter] Failed to draw hex ${hexData.id}:`, error);
+        logger.error(`[HexHighlighter] Failed to draw hex ${hexData.id}:`, error);
       }
     });
-    
-    console.log(`[HexHighlighter] Drew ${count} kingdom territory hexes`);
-    console.log('[HexHighlighter] Kingdom graphics bounds:', this.kingdomGraphics.getBounds());
-    console.log('[HexHighlighter] Container visible:', this.container.visible);
+
+
   }
   
   /**
@@ -142,9 +140,7 @@ export class HexHighlighter {
   highlightSelection(type: HexSelectionType, hexId: string): void {
     const colorKey = this.getNewColorKey(type);
     const config = HEX_HIGHLIGHT_COLORS[colorKey];
-    
-    console.log(`[HexHighlighter] Highlighting ${hexId} with color ${colorKey}:`, config);
-    
+
     // Create graphics for this selection
     const graphics = new PIXI.Graphics();
     graphics.name = `Selection_${hexId}`;
@@ -163,9 +159,8 @@ export class HexHighlighter {
     
     this.container.addChild(graphics);
     this.selectionGraphics.set(hexId, graphics);
-    
-    console.log(`[HexHighlighter] Added selection for ${hexId}, container now has ${this.container.children.length} children`);
-    console.log('[HexHighlighter] Selection bounds:', graphics.getBounds());
+
+
   }
   
   /**
@@ -219,7 +214,7 @@ export class HexHighlighter {
       this.container.removeChild(graphics);
       graphics.destroy();
       this.selectionGraphics.delete(hexId);
-      console.log(`[HexHighlighter] Removed selection for ${hexId}`);
+
     }
   }
   
@@ -236,8 +231,7 @@ export class HexHighlighter {
       graphics.destroy();
     });
     this.selectionGraphics.clear();
-    
-    console.log('[HexHighlighter] Cleared all highlights');
+
   }
   
   /**
@@ -250,13 +244,12 @@ export class HexHighlighter {
     const canvas = (globalThis as any).canvas;
     if (canvas?.stage && this.container.parent === canvas.stage) {
       canvas.stage.removeChild(this.container);
-      console.log('[HexHighlighter] Removed container from canvas.stage');
+
     }
     
     // Destroy container
     this.container.destroy({ children: true });
-    
-    console.log('[HexHighlighter] Destroyed');
+
   }
   
   /**

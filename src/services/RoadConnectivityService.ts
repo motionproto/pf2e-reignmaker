@@ -14,7 +14,6 @@
 
 import type { Settlement } from '../models/Settlement';
 import type { KingdomData } from '../actors/KingdomActor';
-import { logger } from '../utils/Logger';
 import { hexHasRoads } from '../actions/shared/hexValidation';
 
 class RoadConnectivityService {
@@ -98,13 +97,13 @@ class RoadConnectivityService {
   ): boolean {
     // Quick validation
     if (!settlement || !capital) {
-      logger.debug('[RoadConnectivity] Missing settlement or capital');
+
       return false;
     }
     
     // Must be same faction
     if (settlement.owned !== capital.owned) {
-      logger.debug('[RoadConnectivity] Different factions - not connected');
+
       return false;
     }
     
@@ -114,12 +113,10 @@ class RoadConnectivityService {
     
     // Same hex = connected
     if (startHexId === targetHexId) {
-      logger.debug('[RoadConnectivity] Same hex - connected');
+
       return true;
     }
-    
-    logger.debug(`[RoadConnectivity] Checking path: ${settlement.name} (${startHexId}) → ${capital.name} (${targetHexId})`);
-    
+
     // BFS pathfinding
     const queue: string[] = [startHexId];
     const visited = new Set<string>([startHexId]);
@@ -136,7 +133,7 @@ class RoadConnectivityService {
         
         // Check if we reached the target
         if (adjacentHexId === targetHexId) {
-          logger.debug(`[RoadConnectivity] ✅ Path found: ${settlement.name} connected to ${capital.name}`);
+
           return true;
         }
         
@@ -147,8 +144,7 @@ class RoadConnectivityService {
         }
       }
     }
-    
-    logger.debug(`[RoadConnectivity] ❌ No path found: ${settlement.name} not connected to ${capital.name}`);
+
     return false;
   }
   
@@ -163,12 +159,10 @@ class RoadConnectivityService {
     const capital = kingdom.settlements?.find(s => s.isCapital && s.owned === factionId as any);
     
     if (!capital) {
-      logger.debug(`[RoadConnectivity] No capital found for faction ${factionId}`);
+
       return;
     }
-    
-    logger.debug(`[RoadConnectivity] Recalculating connectivity for faction ${factionId}`);
-    
+
     const settlements = kingdom.settlements?.filter(s => s.owned === factionId as any) || [];
     
     for (const settlement of settlements) {
@@ -177,7 +171,7 @@ class RoadConnectivityService {
         settlement.connectedByRoads = false;
       } else {
         settlement.connectedByRoads = this.isConnectedToCapital(settlement, capital, kingdom);
-        logger.debug(`[RoadConnectivity] ${settlement.name}: ${settlement.connectedByRoads ? '✅ connected' : '❌ not connected'}`);
+
       }
     }
   }

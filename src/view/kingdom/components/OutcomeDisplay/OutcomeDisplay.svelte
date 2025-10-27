@@ -77,9 +77,8 @@
   
   // Debug logging
   $: {
-    console.log('🔍 [OutcomeDisplay] customComponent:', customComponent);
-    console.log('🔍 [OutcomeDisplay] customComponentData:', customComponentData);
-    console.log('🔍 [OutcomeDisplay] instance:', instance?.instanceId);
+
+
   }
   // Convert string keys back to appropriate types for Maps
   $: resolvedDice = new Map(
@@ -198,12 +197,10 @@
       resolvedDiceKeys: Array.from(resolvedDice.keys()),
       stateChangeDiceKeys: stateChangeDice.map(d => `state:${d.key}`)
     };
-    
-    console.log('🔍 [OutcomeDisplay] Validation state:', validationState);
-    
+
     // If there's no content at all, this is a data error
     if (!hasContent && !applied) {
-      console.error('❌ [OutcomeDisplay] Invalid outcome - no message or modifiers');
+      logger.error('❌ [OutcomeDisplay] Invalid outcome - no message or modifiers');
       ui.notifications?.error('Outcome data error: No message or modifiers to display');
     }
     
@@ -238,8 +235,7 @@
   
   // Event handlers
   async function handleReroll() {
-    console.log('🔁 [OutcomeDisplay] Reroll with Fame initiated');
-    
+
     // Check if reroll is possible
     const fameCheck = await canRerollWithFame();
     if (!fameCheck.canReroll) {
@@ -253,9 +249,7 @@
       ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
       return;
     }
-    
-    console.log(`💎 [OutcomeDisplay] Fame deducted (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
-    
+
     // Extract enabled modifiers from rollBreakdown and store for next roll
     const enabledModifiers: Array<{ label: string; modifier: number }> = [];
     if (rollBreakdown?.modifiers) {
@@ -267,7 +261,7 @@
           });
         }
       }
-      console.log('📋 [OutcomeDisplay] Extracted enabled modifiers:', enabledModifiers);
+
     }
     
     // Store modifiers for the next roll (module-scoped state)
@@ -281,9 +275,7 @@
     
     // Reset local UI state
     choiceResult = null;
-    
-    console.log('🔄 [OutcomeDisplay] UI state reset for reroll');
-    
+
     // Dispatch reroll request with skill info and previous fame
     // Note: Modifiers are now stored in module-scoped state, not passed as parameters
     dispatch('performReroll', { 
@@ -297,13 +289,12 @@
    * This is the single source of truth for what gets applied to the kingdom
    */
   function computeResolutionData(): ResolutionData {
-    console.log('🔍 [computeResolutionData] Starting with modifiers:', modifiers);
+
     const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
     
     // Case 1: Choice was made (resource arrays are replaced by choice)
     if (selectedChoice !== null && choiceResult?.stateChanges) {
-      console.log('🔍 [computeResolutionData] Processing choice-based resolution');
-      
+
       // Add non-resource-array modifiers (e.g., gold penalty in Trade War)
       if (modifiers) {
         for (let i = 0; i < modifiers.length; i++) {
@@ -311,7 +302,7 @@
           
           // Skip resource arrays (they're replaced by the choice)
           if (Array.isArray(mod.resources)) {
-            console.log(`⏭️ [computeResolutionData] Skipping resource array modifier [${i}]`);
+
             continue;
           }
           
@@ -320,7 +311,7 @@
           
           if (typeof value === 'number') {
             numericModifiers.push({ resource: mod.resource as ResourceType, value });
-            console.log(`✅ [computeResolutionData] Added modifier [${i}]: ${mod.resource} = ${value}`);
+
           }
         }
       }
@@ -328,39 +319,35 @@
       // Add choice modifiers (already rolled in ChoiceButtons)
       for (const [resource, value] of Object.entries(choiceResult.stateChanges)) {
         numericModifiers.push({ resource: resource as ResourceType, value: value as number });
-        console.log(`✅ [computeResolutionData] Added choice modifier: ${resource} = ${value}`);
+
       }
     }
     // Case 2: No choices, apply all modifiers
     else {
-      console.log('🔍 [computeResolutionData] Processing standard resolution (no choices)');
-      console.log('🔍 [computeResolutionData] Modifiers array:', modifiers);
-      console.log('🔍 [computeResolutionData] Modifiers count:', modifiers?.length || 0);
-      
+
+
       if (modifiers) {
         for (let i = 0; i < modifiers.length; i++) {
           const mod = modifiers[i];
-          console.log(`🔍 [computeResolutionData] Processing modifier [${i}]:`, mod);
-          
+
           // Skip resource arrays if no choice (shouldn't happen, but safety)
           if (Array.isArray(mod.resources)) {
-            console.warn(`⚠️ [computeResolutionData] Resource array without choice: [${i}]`);
+            logger.warn(`⚠️ [computeResolutionData] Resource array without choice: [${i}]`);
             continue;
           }
           
           // Get rolled value or use static value
           let value = resolvedDice.get(i) ?? resolvedDice.get(`state:${mod.resource}`) ?? mod.value;
-          console.log(`🔍 [computeResolutionData] Resolved value for [${i}]:`, value, '(type:', typeof value, ')');
-          
+
           if (typeof value === 'number') {
             numericModifiers.push({ resource: mod.resource as ResourceType, value });
-            console.log(`✅ [computeResolutionData] Added modifier [${i}]: ${mod.resource} = ${value}`);
+
           } else {
-            console.warn(`⚠️ [computeResolutionData] Skipped modifier [${i}] - value is not a number:`, value);
+            logger.warn(`⚠️ [computeResolutionData] Skipped modifier [${i}] - value is not a number:`, value);
           }
         }
       } else {
-        console.warn('⚠️ [computeResolutionData] No modifiers array provided!');
+        logger.warn('⚠️ [computeResolutionData] No modifiers array provided!');
       }
     }
     
@@ -371,36 +358,31 @@
       complexActions: [], // Phase 3 will add support for this
       customComponentData  // Include custom component data (e.g., arrest-dissidents allocations)
     };
-    
-    console.log('📋 [computeResolutionData] Final resolution:', resolution);
+
     return resolution;
   }
   
   async function handlePrimary() {
-    console.log('🔵 [handlePrimary] Called', { hasChoices, choicesResolved, hasDiceModifiers, diceResolved, applied, primaryButtonDisabled });
-    
+
     // FIXED: Validate ALL interactive elements independently
     if (hasChoices && !choicesResolved) {
-      console.log('❌ [handlePrimary] Blocked: choices not resolved');
+
       return;
     }
     
     if (hasDiceModifiers && !diceResolved) {
-      console.log('❌ [handlePrimary] Blocked: dice not resolved');
+
       return;
     }
     
     if (hasStateChangeDice && !stateChangeDiceResolved) {
-      console.log('❌ [handlePrimary] Blocked: state change dice not resolved');
+
       return;
     }
-    
-    console.log('✅ [handlePrimary] Computing resolution data...');
-    
+
     // NEW ARCHITECTURE: Compute complete resolution data
     const resolutionData = computeResolutionData();
-    
-    console.log('📤 [handlePrimary] Dispatching primary event with resolution data');
+
     dispatch('primary', resolutionData);
   }
   
@@ -429,8 +411,7 @@
         }
       });
     }
-    
-    console.log(`🎲 [OutcomeDisplay] Rolled dice: ${result} for modifier ${modifierIndex} (instance: ${instance?.instanceId})`);
+
     dispatch('diceRolled', event.detail);
   }
   
@@ -482,9 +463,7 @@
     if (!instance) return;
     
     const { modifiers, ...metadata } = event.detail;
-    
-    console.log('🎨 [OutcomeDisplay] Custom component selection:', { modifiers, metadata });
-    
+
     // Store metadata (for UI display, like settlement name/level)
     if (metadata && Object.keys(metadata).length > 0) {
       await updateInstanceResolutionState(instance.instanceId, {
@@ -507,8 +486,7 @@
         effect: effect,
         stateChanges: customStateChanges
       };
-      
-      console.log('✅ [OutcomeDisplay] Custom modifiers converted to stateChanges:', customStateChanges);
+
     }
     
     // Forward to parent

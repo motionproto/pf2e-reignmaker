@@ -5,8 +5,6 @@ import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
 import type { Faction, AttitudeLevel } from '../../models/Faction';
 import { createDefaultFaction } from '../../models/Faction';
 import { loadDefaultFactions } from '../../models/DefaultFactions';
-import { logger } from '../../utils/Logger';
-
 export class FactionService {
   /**
    * Create a new faction
@@ -16,8 +14,7 @@ export class FactionService {
    * @returns Created faction
    */
   async createFaction(name: string, attitude: AttitudeLevel = 'Indifferent'): Promise<Faction> {
-    logger.debug(`🤝 [FactionService] Creating faction: ${name} (${attitude})`);
-    
+
     const faction = createDefaultFaction(name, attitude);
     
     await updateKingdom(kingdom => {
@@ -26,8 +23,7 @@ export class FactionService {
       }
       kingdom.factions.push(faction);
     });
-    
-    logger.debug(`✅ [FactionService] Faction created: ${name}`);
+
     return faction;
   }
   
@@ -38,8 +34,7 @@ export class FactionService {
    * @param updates - Partial faction updates
    */
   async updateFaction(factionId: string, updates: Partial<Faction>): Promise<void> {
-    logger.debug(`🤝 [FactionService] Updating faction: ${factionId}`);
-    
+
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
       if (!faction) {
@@ -49,8 +44,7 @@ export class FactionService {
       // Apply updates
       Object.assign(faction, updates);
     });
-    
-    logger.debug(`✅ [FactionService] Faction updated`);
+
   }
   
   /**
@@ -61,8 +55,7 @@ export class FactionService {
    * @param factionData - Complete faction data
    */
   async updateFactionDetails(factionId: string, factionData: Faction): Promise<void> {
-    logger.debug(`🤝 [FactionService] Updating faction details: ${factionId}`);
-    
+
     await updateKingdom(kingdom => {
       const factionIndex = kingdom.factions?.findIndex(f => f.id === factionId);
       if (factionIndex === undefined || factionIndex === -1) {
@@ -72,8 +65,7 @@ export class FactionService {
       // Replace entire faction (preserving the ID)
       kingdom.factions[factionIndex] = { ...factionData, id: factionId };
     });
-    
-    logger.debug(`✅ [FactionService] Faction details updated`);
+
   }
   
   /**
@@ -82,8 +74,7 @@ export class FactionService {
    * @param factionId - Faction ID to delete
    */
   async deleteFaction(factionId: string): Promise<void> {
-    logger.debug(`🤝 [FactionService] Deleting faction: ${factionId}`);
-    
+
     const actor = getKingdomActor();
     if (!actor) {
       throw new Error('No kingdom actor available');
@@ -102,8 +93,7 @@ export class FactionService {
     await updateKingdom(kingdom => {
       kingdom.factions = kingdom.factions.filter(f => f.id !== factionId);
     });
-    
-    logger.debug(`✅ [FactionService] Faction deleted: ${faction.name}`);
+
   }
   
   /**
@@ -113,8 +103,7 @@ export class FactionService {
    * @param attitude - New attitude level
    */
   async updateAttitude(factionId: string, attitude: AttitudeLevel): Promise<void> {
-    logger.debug(`🤝 [FactionService] Updating attitude for ${factionId} to ${attitude}`);
-    
+
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
       if (!faction) {
@@ -123,8 +112,7 @@ export class FactionService {
       
       faction.attitude = attitude;
     });
-    
-    logger.debug(`✅ [FactionService] Attitude updated to ${attitude}`);
+
   }
   
   /**
@@ -135,8 +123,7 @@ export class FactionService {
    * @param max - Optional max value (if changing the clock size)
    */
   async updateProgressClock(factionId: string, current: number, max?: number): Promise<void> {
-    logger.debug(`🤝 [FactionService] Updating progress clock for ${factionId}: ${current}${max ? `/${max}` : ''}`);
-    
+
     await updateKingdom(kingdom => {
       const faction = kingdom.factions?.find(f => f.id === factionId);
       if (!faction) {
@@ -151,8 +138,7 @@ export class FactionService {
         faction.progressClock.current = Math.min(faction.progressClock.current, faction.progressClock.max);
       }
     });
-    
-    logger.debug(`✅ [FactionService] Progress clock updated`);
+
   }
   
   /**
@@ -266,8 +252,7 @@ export class FactionService {
    * @returns Object with added count and list of added faction names
    */
   async restoreDefaultFactions(): Promise<{ added: number; factionNames: string[] }> {
-    logger.debug('🤝 [FactionService] Restoring default factions');
-    
+
     // Load default factions from file
     const defaultFactions = await loadDefaultFactions();
     
@@ -288,7 +273,7 @@ export class FactionService {
     const missingFactions = defaultFactions.filter(f => !existingIds.has(f.id));
     
     if (missingFactions.length === 0) {
-      logger.debug('✅ [FactionService] All default factions already exist');
+
       return { added: 0, factionNames: [] };
     }
     
@@ -301,8 +286,7 @@ export class FactionService {
     });
     
     const addedNames = missingFactions.map(f => f.name);
-    logger.debug(`✅ [FactionService] Added ${missingFactions.length} default factions: ${addedNames.join(', ')}`);
-    
+
     return { 
       added: missingFactions.length, 
       factionNames: addedNames 

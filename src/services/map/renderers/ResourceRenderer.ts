@@ -5,6 +5,7 @@
 
 import { RESOURCE_ICONS } from '../types';
 import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Draw resource icons on hexes (mapped from worksite types)
@@ -19,10 +20,9 @@ export async function renderResourceIcons(
   worksiteData: Array<{ id: string; worksiteType: string }>,
   canvas: any
 ): Promise<number> {
-  console.log(`[ResourceRenderer] 💎 Rendering resource icons for ${worksiteData.length} hexes...`);
 
   if (!canvas?.grid) {
-    console.warn('[ResourceRenderer] ❌ Canvas grid not available');
+    logger.warn('[ResourceRenderer] ❌ Canvas grid not available');
     return 0;
   }
 
@@ -35,14 +35,14 @@ export async function renderResourceIcons(
       // Get resource icon path for this worksite type
       const iconPath = RESOURCE_ICONS[worksiteType];
       if (!iconPath) {
-        console.warn(`[ResourceRenderer] No resource icon found for worksite type: ${worksiteType}`);
+        logger.warn(`[ResourceRenderer] No resource icon found for worksite type: ${worksiteType}`);
         continue;
       }
 
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
-        console.warn(`[ResourceRenderer] ⚠️ Invalid hex ID format: ${id}`);
+        logger.warn(`[ResourceRenderer] ⚠️ Invalid hex ID format: ${id}`);
         continue;
       }
 
@@ -50,7 +50,7 @@ export async function renderResourceIcons(
       const j = parseInt(parts[1], 10);
       
       if (isNaN(i) || isNaN(j)) {
-        console.warn(`[ResourceRenderer] ⚠️ Invalid hex coordinates: ${id}`);
+        logger.warn(`[ResourceRenderer] ⚠️ Invalid hex coordinates: ${id}`);
         continue;
       }
 
@@ -91,10 +91,9 @@ export async function renderResourceIcons(
       successCount++;
       
     } catch (error) {
-      console.error(`[ResourceRenderer] Failed to draw resource icon for hex ${id}:`, error);
+      logger.error(`[ResourceRenderer] Failed to draw resource icon for hex ${id}:`, error);
     }
   }
 
-  console.log(`[ResourceRenderer] ✅ Drew ${successCount}/${worksiteData.length} resource icons`);
   return successCount;
 }

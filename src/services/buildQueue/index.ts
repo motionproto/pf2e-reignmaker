@@ -77,9 +77,8 @@ export class BuildQueueService {
     cost: Map<string, number>,
     settlementName: string
   ): BuildProject {
-    logger.debug(`🏗️ [BuildQueueService] Creating project for ${structureName}...`);
-    logger.debug(`📊 Input cost Map:`, Array.from(cost.entries()));
-    
+
+
     // Use BuildProjectManager to create with Maps
     const project = BuildProjectManager.createProject(
       structureId,
@@ -98,8 +97,7 @@ export class BuildQueueService {
       invested: Object.fromEntries(project.invested) as any,
       pendingAllocation: Object.fromEntries(project.pendingAllocation) as any
     };
-    
-    logger.debug(`✅ [BuildQueueService] Converted totalCost:`, converted.totalCost);
+
     return converted;
   }
 
@@ -107,8 +105,7 @@ export class BuildQueueService {
    * Add a new project to the queue
    */
   async addProject(project: BuildProject): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Adding project: ${project.structureName} in ${project.settlementName}`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
@@ -117,15 +114,13 @@ export class BuildQueueService {
       k.buildQueue.push(project);
     });
 
-    logger.debug(`✅ [BuildQueueService] Project added to queue`);
   }
 
   /**
    * Update a project in the queue
    */
   async updateProject(projectId: string, updates: Partial<BuildProject>): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Updating project: ${projectId}`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
@@ -135,7 +130,7 @@ export class BuildQueueService {
       const project = k.buildQueue.find(p => p.id === projectId);
       if (project) {
         Object.assign(project, updates);
-        logger.debug(`✅ [BuildQueueService] Project updated`);
+
       } else {
         logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);
       }
@@ -146,8 +141,7 @@ export class BuildQueueService {
    * Remove a project from the queue
    */
   async removeProject(projectId: string): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Removing project: ${projectId}`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
@@ -158,7 +152,7 @@ export class BuildQueueService {
       k.buildQueue = k.buildQueue.filter(p => p.id !== projectId);
       
       if (k.buildQueue.length < initialLength) {
-        logger.debug(`✅ [BuildQueueService] Project removed from queue`);
+
       } else {
         logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);
       }
@@ -169,8 +163,7 @@ export class BuildQueueService {
    * Clear all projects from the queue
    */
   async clearQueue(): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Clearing build queue`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) throw new Error('Kingdom actor not available');
 
@@ -178,7 +171,6 @@ export class BuildQueueService {
       k.buildQueue = [];
     });
 
-    logger.debug(`✅ [BuildQueueService] Build queue cleared`);
   }
 
   /**
@@ -190,8 +182,7 @@ export class BuildQueueService {
     resource: string, 
     amount: number
   ): Promise<boolean> {
-    logger.debug(`🏗️ [BuildQueueService] Allocating ${amount} ${resource} to project ${projectId}`);
-    
+
     const project = this.getProject(projectId);
     if (!project) {
       logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);
@@ -206,8 +197,7 @@ export class BuildQueueService {
       await this.updateProject(projectId, {
         pendingAllocation: project.pendingAllocation
       });
-      
-      logger.debug(`✅ [BuildQueueService] Allocated ${allocated} ${resource}`);
+
       return true;
     }
 
@@ -219,8 +209,7 @@ export class BuildQueueService {
    * Apply pending allocations to a project
    */
   async applyPendingAllocations(projectId: string): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Applying pending allocations to project ${projectId}`);
-    
+
     const project = this.getProject(projectId);
     if (!project) {
       logger.warn(`⚠️ [BuildQueueService] Project not found: ${projectId}`);
@@ -238,7 +227,6 @@ export class BuildQueueService {
       progress: project.progress
     });
 
-    logger.debug(`✅ [BuildQueueService] Pending allocations applied`);
   }
 
   /**
@@ -252,8 +240,7 @@ export class BuildQueueService {
     paid: Record<string, number>;
     isComplete: boolean;
   }> {
-    logger.debug(`💰 [BuildQueueService] Processing partial payment for ${projectId}`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) {
       logger.error('❌ [BuildQueueService] No KingdomActor available');
@@ -294,9 +281,8 @@ export class BuildQueueService {
 
       // Check if complete
       isComplete = Object.keys(project.remainingCost || {}).length === 0;
-      
-      logger.debug(`💰 Paid:`, paid);
-      logger.debug(`✅ Complete: ${isComplete}`);
+
+
     });
 
     return { paid, isComplete };
@@ -306,8 +292,7 @@ export class BuildQueueService {
    * Complete a project - add to settlement, mark as completed
    */
   async completeProject(projectId: string): Promise<void> {
-    logger.debug(`🏗️ [BuildQueueService] Completing project ${projectId}`);
-    
+
     const actor = get(kingdomActor);
     if (!actor) {
       logger.error('❌ [BuildQueueService] No KingdomActor available');
@@ -334,14 +319,14 @@ export class BuildQueueService {
       // Mark as completed (don't remove from queue yet)
       project.isCompleted = true;
       project.completedTurn = k.currentTurn;
-      logger.debug(`✅ Marked project as completed (Turn ${k.currentTurn})`);
+
     });
 
     // Add structure using centralized service (handles recalculation)
     if (settlementId && structureId) {
       const { settlementService } = await import('../settlements');
       await settlementService.addStructure(settlementId, structureId);
-      logger.debug(`✅ [BuildQueueService] Structure added and capacities recalculated`);
+
     }
   }
 }

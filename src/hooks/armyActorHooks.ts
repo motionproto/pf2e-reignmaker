@@ -12,8 +12,7 @@ import { logger } from '../utils/Logger';
  * Should be called during module initialization
  */
 export function registerArmyActorHooks(): void {
-  logger.debug('[ArmyActorHooks] Registering army actor hooks...');
-  
+
   /**
    * Hook: preDeleteActor
    * Intercepts actor deletion attempts
@@ -22,7 +21,7 @@ export function registerArmyActorHooks(): void {
   Hooks.on('preDeleteActor', (actor: any, options: any, userId: string) => {
     // If already confirmed, allow deletion
     if (options.reignmakerConfirmed) {
-      logger.debug('[ArmyActorHooks] Deletion confirmed, allowing...');
+
       return true;
     }
     
@@ -32,9 +31,7 @@ export function registerArmyActorHooks(): void {
     if (!armyMetadata?.armyId) {
       return true; // Not an army, allow deletion
     }
-    
-    logger.debug(`🗑️ [ArmyActorHooks] Intercepting deletion of army actor: ${actor.name}`);
-    
+
     // Find army in kingdom data
     const kingdom = getKingdomData();
     const army = kingdom.armies?.find((a: any) => a.id === armyMetadata.armyId);
@@ -73,14 +70,14 @@ export function registerArmyActorHooks(): void {
           icon: '<i class="fas fa-times"></i>',
           label: 'Cancel',
           callback: () => {
-            logger.debug('[ArmyActorHooks] Army deletion cancelled by user');
+
           }
         },
         delete: {
           icon: '<i class="fas fa-trash"></i>',
           label: 'Delete Anyway',
           callback: () => {
-            logger.debug('[ArmyActorHooks] User confirmed deletion, proceeding...');
+
             // Delete with confirmation flag to bypass hook
             actor.delete({ reignmakerConfirmed: true });
           }
@@ -105,9 +102,7 @@ export function registerArmyActorHooks(): void {
     if (!armyMetadata?.armyId) {
       return; // Not an army
     }
-    
-    logger.debug(`🗑️ [ArmyActorHooks] Cleaning up kingdom data for deleted army actor: ${actor.name}`);
-    
+
     // Remove from kingdom store
     await updateKingdom(kingdom => {
       // Remove from armies array
@@ -122,18 +117,15 @@ export function registerArmyActorHooks(): void {
         const afterUnits = s.supportedUnits.length;
         
         if (beforeUnits > afterUnits) {
-          logger.debug(`   Removed army from settlement: ${s.name}`);
+
         }
       });
-      
-      logger.debug(`   Armies removed: ${beforeCount - afterCount}`);
+
     });
     
     const ui = (globalThis as any).ui;
     ui?.notifications?.info(`Army "${actor.name}" removed from kingdom records.`);
-    
-    logger.debug(`✅ [ArmyActorHooks] Kingdom data cleaned up for ${actor.name}`);
+
   });
-  
-  logger.debug('✅ [ArmyActorHooks] Army actor hooks registered');
+
 }

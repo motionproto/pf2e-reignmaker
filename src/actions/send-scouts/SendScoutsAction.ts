@@ -17,6 +17,7 @@ import {
 } from '../shared/ActionHelpers';
 import { hexSelectorService } from '../../services/hex-selector';
 import { worldExplorerService } from '../../services/WorldExplorerService';
+import { logger } from '../../utils/Logger';
 
 const SendScoutsAction: CustomActionImplementation = {
   id: 'send-scouts',
@@ -81,7 +82,7 @@ const SendScoutsAction: CustomActionImplementation = {
           if (worldExplorerService.isAvailable()) {
             const isRevealed = worldExplorerService.isRevealed(hexId);
             if (isRevealed) {
-              console.log(`[SendScouts] Hex ${hexId} already revealed - skipping`);
+
               return false;
             }
           }
@@ -111,7 +112,6 @@ const SendScoutsAction: CustomActionImplementation = {
           if (!kingdom.resources.gold) kingdom.resources.gold = 0;
           kingdom.resources.gold -= 1;
         });
-        console.log('💰 [SendScouts] Deducted 1 gold (after hex selection confirmed)');
 
         // Reveal hexes in World Explorer (if module is available)
         let revealMessage = '';
@@ -124,7 +124,7 @@ const SendScoutsAction: CustomActionImplementation = {
           const ui = (globalThis as any).ui;
           ui?.notifications?.info(`🗺️ Revealed ${selectedHexes.length} hex${selectedHexes.length !== 1 ? 'es' : ''} on the map`);
         } else {
-          console.warn('⚠️ [SendScouts] World Explorer module not available - hexes not revealed');
+          logger.warn('⚠️ [SendScouts] World Explorer module not available - hexes not revealed');
           revealMessage = ' - Install World Explorer module to reveal on map';
         }
 

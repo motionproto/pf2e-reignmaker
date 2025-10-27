@@ -121,7 +121,7 @@
       await startKingdom();
       ui.notifications?.info('Kingdom turns have begun! Starting Turn 1.');
     } catch (error) {
-      console.error('Failed to start kingdom:', error);
+      logger.error('Failed to start kingdom:', error);
       ui.notifications?.error('Failed to start kingdom. See console for details.');
       isStarting = false;
     }

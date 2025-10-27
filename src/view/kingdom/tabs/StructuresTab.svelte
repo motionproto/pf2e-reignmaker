@@ -27,11 +27,10 @@
   
   // Initialize structures service
   onMount(() => {
-    console.log('StructuresTab: Initializing structures...');
+
     structuresService.initializeStructures();
     allStructures = structuresService.getAllStructures();
-    console.log(`StructuresTab: Loaded ${allStructures.length} structures`);
-    
+
     // Subscribe to selection state
     unsubscribe = structureSelection.subscribe(state => {
       // Handle state changes if needed

@@ -6,6 +6,7 @@ import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
 import { setSelectedTab } from '../../../stores/ui';
 import { SettlementTier } from '../../../models/Settlement';
+import { logger } from '../../../utils/Logger';
 
 // Props - add the missing prop to fix the warning
 export let isViewingCurrentPhase: boolean = true;
@@ -73,15 +74,13 @@ $: if ($kingdomData.currentPhase === TurnPhase.STATUS && $isInitialized && $king
 async function initializePhase() {
    if (hasInitialized) return;
    hasInitialized = true;
-   
-   console.log('🟡 [StatusPhase] Initializing phase controller...');
-   
+
    try {
       const { createStatusPhaseController } = await import('../../../controllers/StatusPhaseController');
       const controller = await createStatusPhaseController();
       await controller.startPhase();
    } catch (error) {
-      console.error('❌ [StatusPhase] FATAL: Phase initialization failed:', error);
+      logger.error('❌ [StatusPhase] FATAL: Phase initialization failed:', error);
       // No retry - fail fast and loud
       throw error;
    }

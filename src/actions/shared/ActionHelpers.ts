@@ -342,7 +342,7 @@ export function logActionStart(actionId: string, details?: string): void {
   const msg = details 
     ? `🎬 [Action:${actionId}] Starting: ${details}`
     : `🎬 [Action:${actionId}] Starting...`;
-  logger.debug(msg);
+
 }
 
 /**
@@ -352,7 +352,7 @@ export function logActionSuccess(actionId: string, details?: string): void {
   const msg = details
     ? `✅ [Action:${actionId}] Success: ${details}`
     : `✅ [Action:${actionId}] Completed successfully`;
-  logger.debug(msg);
+
 }
 
 /**

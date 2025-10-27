@@ -122,7 +122,7 @@ export async function createEventPhaseController(_eventService?: any) {
         }> {
             // Check if event roll step is already completed (using type-safe constant)
             if (await isStepCompletedByIndex(EventsPhaseSteps.EVENT_ROLL)) {
-                logger.debug('🟡 [EventPhaseController] Event check already completed');
+
                 return {
                     triggered: !!state.currentEvent,
                     event: state.currentEvent,
@@ -134,9 +134,7 @@ export async function createEventPhaseController(_eventService?: any) {
             // Roll d20 for event check
             const roll = Math.floor(Math.random() * 20) + 1;
             const triggered = roll >= currentDC;
-            
-            logger.debug(`🎲 [EventPhaseController] Event check: rolled ${roll} vs DC ${currentDC} - ${triggered ? 'TRIGGERED' : 'NO EVENT'}`);
-            
+
             state.eventCheckRoll = roll;
             
             let newDC: number;
@@ -149,8 +147,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 
                 if (event) {
                     state.currentEvent = event;
-                    logger.debug(`✨ [EventPhaseController] Event triggered: "${getEventDisplayName(event)}" (${event.id})`);
-                    
+
                     // ✅ ARCHITECTURE FIX: Create ActiveCheckInstance IMMEDIATELY (or reuse if exists)
                     const { getKingdomActor } = await import('../stores/KingdomStore');
                     const actor = getKingdomActor();
@@ -167,7 +164,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         if (existingInstance) {
                             // Reuse existing ongoing instance
                             instanceId = existingInstance.instanceId;
-                            logger.debug(`🔁 [EventPhaseController] Event already ongoing, reusing instance: ${instanceId}`);
+
                         } else {
                             // Create new instance via CheckInstanceService
                             instanceId = await checkInstanceService.createInstance(
@@ -176,7 +173,7 @@ export async function createEventPhaseController(_eventService?: any) {
                                 event,
                                 kingdom.currentTurn
                             );
-                            logger.debug(`✅ [EventPhaseController] Created new event instance: ${instanceId}`);
+
                         }
                         
                         // Update persistent DC and turnState (mark as current event)
@@ -198,13 +195,12 @@ export async function createEventPhaseController(_eventService?: any) {
                     
                     // Step 1 (Resolve Event) remains INCOMPLETE - player must resolve
                     // Step 2 (Apply Modifiers) remains INCOMPLETE - will complete with step 1
-                    logger.debug('⚠️ [EventPhaseController] Event triggered - step 1 requires resolution');
+
                 }
             } else {
                 // No event - reduce DC by 5 (minimum 6)
                 newDC = Math.max(6, currentDC - 5);
-                logger.debug(`📉 [EventPhaseController] No event, DC reduced from ${currentDC} to ${newDC}`);
-                
+
                 // Update persistent DC and turnState
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
@@ -226,8 +222,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 // Complete steps using type-safe constants
                 await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
                 await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
-                
-                logger.debug('✅ [EventPhaseController] No event - turnState updated, steps 1 & 2 completed via helpers');
+
             }
             
             state.eventDC = newDC;
@@ -284,8 +279,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     `${eventId}-${outcome}`,
                     TurnPhase.EVENTS
                 );
-                
-                logger.debug(`📝 [EventPhaseController] Tracked event action: ${actorName} performed ${eventId}-${outcome}`);
+
             }
             
             // Check if this event already exists as an ongoing instance (NEW system)
@@ -322,12 +316,12 @@ export async function createEventPhaseController(_eventService?: any) {
                     if (kingdom.turnState?.eventsPhase?.eventId === eventId) {
                         kingdom.turnState.eventsPhase.eventId = null;
                         kingdom.turnState.eventsPhase.eventTriggered = false;
-                        logger.debug(`✅ [EventPhaseController] Created ongoing event instance and cleared turnState: ${newInstanceId}`);
+
                     }
                 });
             } else if (existingInstance) {
                 // Reroll case: Instance already exists, just apply effects
-                logger.debug(`🔁 [EventPhaseController] Re-rolling existing instance: ${event.name} (${existingInstance.instanceId})`);
+
             }
             
             // Use unified resolution wrapper (consolidates duplicate logic)
@@ -374,7 +368,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         
                         // Clear resolution progress after successful application
                         instance.resolutionProgress = undefined;
-                        logger.debug(`✅ [EventPhaseController] Stored appliedOutcome with ${resolvedModifiers.length} resolved modifiers${isIgnored ? ' (ignored)' : ''}: ${targetInstanceId}`);
+
                     }
                 });
             }
@@ -389,7 +383,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     );
                     if (instance) {
                         instance.status = 'resolved';
-                        logger.debug(`✅ [EventPhaseController] Marked event as resolved (endsEvent: true): ${instance.instanceId}`);
+
                     }
                 });
             }
@@ -407,7 +401,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     // Add to resolved list (prevents blocking phase progression)
                     if (!kingdom.turnState.eventsPhase.resolvedOngoingEvents.includes(eventId)) {
                         kingdom.turnState.eventsPhase.resolvedOngoingEvents.push(eventId);
-                        logger.debug(`✅ [EventPhaseController] Marked event as resolved: ${eventId}`);
+
                     }
                     
                     // If it was the active event, clear it (moves to ongoing section)
@@ -418,10 +412,10 @@ export async function createEventPhaseController(_eventService?: any) {
                         kingdom.turnState.eventsPhase.eventId = null;
                         kingdom.turnState.eventsPhase.eventInstanceId = null;
                         kingdom.turnState.eventsPhase.eventTriggered = false;
-                        logger.debug(`✅ [EventPhaseController] Cleared active event marker (${currentInstanceId})`);
+
                     } else if (kingdom.turnState.eventsPhase.eventId === eventId) {
                         // Different instance - don't clear the marker
-                        logger.debug(`⚠️ [EventPhaseController] Event ${eventId} resolved, but different instance is current (not clearing marker)`);
+
                     }
                 });
             }
@@ -442,7 +436,7 @@ export async function createEventPhaseController(_eventService?: any) {
             );
             
             if (allEffectsApplied && !updatedKingdomState?.turnState?.eventsPhase?.eventId) {
-                logger.debug(`✅ [EventPhaseController] All event effects applied, marking phase complete`);
+
                 await completePhaseStepByIndex(EventsPhaseSteps.RESOLVE_EVENT);
                 await completePhaseStepByIndex(EventsPhaseSteps.APPLY_MODIFIERS);
             }
@@ -457,39 +451,35 @@ export async function createEventPhaseController(_eventService?: any) {
             const { getKingdomActor } = await import('../stores/KingdomStore');
             const actor = getKingdomActor();
             if (!actor) {
-                logger.debug('⚠️ [EventPhaseController.applyCustomModifiers] No actor found');
+
                 return;
             }
             
             const kingdom = actor.getKingdomData();
             if (!kingdom || !kingdom.activeModifiers || kingdom.activeModifiers.length === 0) {
-                logger.debug('⚠️ [EventPhaseController.applyCustomModifiers] No active modifiers');
+
                 return;
             }
-            
-            logger.debug(`🔍 [EventPhaseController.applyCustomModifiers] Total active modifiers: ${kingdom.activeModifiers.length}`);
+
             kingdom.activeModifiers.forEach(m => {
-                logger.debug(`  - ${m.name} (sourceType: ${m.sourceType})`);
+
             });
             
             // Filter for custom modifiers only (sourceType === 'custom')
             const customModifiers = kingdom.activeModifiers.filter(m => m.sourceType === 'custom');
             
             if (customModifiers.length === 0) {
-                logger.debug('⚠️ [EventPhaseController.applyCustomModifiers] No custom modifiers found');
+
                 return;
             }
-            
-            logger.debug(`🔄 [EventPhaseController] Applying ${customModifiers.length} custom modifier(s)...`);
-            
+
             // Batch modifiers by resource to avoid collisions
             const modifiersByResource = new Map<string, number>();
             const modifiersToDecrement: Array<{ modifierId: string; modifierIndex: number }> = [];
             
             for (const modifier of customModifiers) {
-                logger.debug(`  📋 Processing modifier: ${modifier.id} (${modifier.sourceType})`);
-                logger.debug(`     Modifiers count: ${modifier.modifiers.length}`);
-                
+
+
                 for (let i = 0; i < modifier.modifiers.length; i++) {
                     const mod = modifier.modifiers[i];
                     let resourceInfo = 'unknown';
@@ -500,22 +490,20 @@ export async function createEventPhaseController(_eventService?: any) {
                     } else {
                         resourceInfo = (mod as any).resource || 'unknown';
                     }
-                    logger.debug(`     - Type: ${mod.type}, Resource: ${resourceInfo}, Value: ${(mod as any).value}, Duration: ${mod.duration}`);
-                    logger.debug(`     - isStatic: ${isStaticModifier(mod)}, isOngoing: ${isOngoingDuration(mod.duration)}, isTurnCount: ${typeof mod.duration === 'number'}`);
-                    
+
+
                     // Apply static modifiers with ongoing OR numeric duration
                     if (isStaticModifier(mod) && (isOngoingDuration(mod.duration) || typeof mod.duration === 'number')) {
                         const current = modifiersByResource.get(mod.resource) || 0;
                         const newValue = current + mod.value;
                         modifiersByResource.set(mod.resource, newValue);
-                        logger.debug(`     ✓ Added ${mod.value} to ${mod.resource} (total: ${newValue})`);
-                        
+
                         // Track numeric durations for decrementing
                         if (typeof mod.duration === 'number') {
                             modifiersToDecrement.push({ modifierId: modifier.id, modifierIndex: i });
                         }
                     } else {
-                        logger.debug(`     ✗ Skipped (not static+ongoing/numeric)`);
+
                     }
                 }
             }
@@ -525,21 +513,19 @@ export async function createEventPhaseController(_eventService?: any) {
                 resource: resource as any,
                 value
             }));
-            
-            logger.debug(`📊 [EventPhaseController] Total modifiers to apply: ${numericModifiers.length}`);
+
             numericModifiers.forEach(m => logger.debug(`   ${m.resource}: ${m.value}`));
             
             if (numericModifiers.length > 0) {
                 await gameCommandsService.applyNumericModifiers(numericModifiers);
-                logger.debug(`✅ [EventPhaseController] Applied ${numericModifiers.length} numeric modifier(s) from ${customModifiers.length} custom modifier(s)`);
+
             } else {
-                logger.debug(`⚠️ [EventPhaseController] No numeric modifiers to apply`);
+
             }
             
             // Decrement turn-based durations and remove expired modifiers
             if (modifiersToDecrement.length > 0) {
-                logger.debug(`⏬ [EventPhaseController] Decrementing ${modifiersToDecrement.length} turn-based modifier(s)...`);
-                
+
                 await updateKingdom(kingdom => {
                     const modifiersToRemove: string[] = [];
                     
@@ -549,8 +535,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             const mod = modifier.modifiers[modifierIndex];
                             if (typeof mod.duration === 'number') {
                                 mod.duration -= 1;
-                                logger.debug(`   Decremented ${modifier.id}.modifiers[${modifierIndex}] to ${mod.duration} turns remaining`);
-                                
+
                                 // Mark modifier for removal if all its modifiers are expired
                                 if (mod.duration <= 0) {
                                     const allExpired = modifier.modifiers.every(m => 
@@ -566,7 +551,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     
                     // Remove expired modifiers
                     if (modifiersToRemove.length > 0) {
-                        logger.debug(`🗑️ [EventPhaseController] Removing ${modifiersToRemove.length} expired modifier(s)`);
+
                         kingdom.activeModifiers = kingdom.activeModifiers?.filter(m => 
                             !modifiersToRemove.includes(m.id)
                         ) || [];
@@ -580,8 +565,7 @@ export async function createEventPhaseController(_eventService?: any) {
          * Architecture: UI delegates to controller for all business logic
          */
         async ignoreEvent(eventId: string): Promise<{ success: boolean; error?: string }> {
-            logger.debug(`🚫 [EventPhaseController] Ignoring event: ${eventId}`);
-            
+
             const event = eventService.getEventById(eventId);
             if (!event) {
                 return { success: false, error: 'Event not found' };
@@ -593,8 +577,7 @@ export async function createEventPhaseController(_eventService?: any) {
             
             // Handle beneficial events: Apply failure outcome immediately
             if (isBeneficial && !isDangerous && outcomeData) {
-                logger.debug(`🎁 [EventPhaseController] Beneficial event ignored - applying failure effects: ${eventId}`);
-                
+
                 // Apply failure outcome using existing resolveEvent logic
                 const result = await this.resolveEvent(
                     eventId,
@@ -609,8 +592,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     '',
                     undefined
                 );
-                
-                logger.debug(`✅ [EventPhaseController] Beneficial event failure effects applied: ${eventId}`);
+
                 return result;
             }
             
@@ -633,7 +615,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     if (existingInstance) {
                         // Use existing instance from performEventCheck
                         instanceId = existingInstance.instanceId;
-                        logger.debug(`🔍 [EventPhaseController] Found existing instance for ignored event: ${instanceId}`);
+
                     } else {
                         // Create new instance (fallback for edge cases)
                         instanceId = await checkInstanceService.createInstance(
@@ -642,7 +624,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             event,
                             kingdom.currentTurn
                         );
-                        logger.debug(`✅ [EventPhaseController] Created new instance for ignored event: ${instanceId}`);
+
                     }
                     
                     // Build failure outcome preview
@@ -663,7 +645,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
                         if (instance) {
                             instance.appliedOutcome = resolution;
-                            logger.debug(`✅ [EventPhaseController] Stored failure preview in instance: ${instanceId}`);
+
                         }
                     });
                 }
@@ -675,7 +657,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     kingdom.turnState.eventsPhase.eventId = null;
                     kingdom.turnState.eventsPhase.eventInstanceId = null;
                     kingdom.turnState.eventsPhase.eventTriggered = false;
-                    logger.debug(`✅ [EventPhaseController] Cleared current event from turnState`);
+
                 }
             });
             
@@ -710,7 +692,6 @@ export async function createEventPhaseController(_eventService?: any) {
             const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
             const allComplete = totalSteps > 0 && completedCount === totalSteps;
 
-            logger.debug(`[EventPhaseController] Phase ${kingdom.currentPhase} completion: ${completedCount}/${totalSteps} steps`);
             return allComplete;
         }
     };

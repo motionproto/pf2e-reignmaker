@@ -71,7 +71,7 @@
       const kingdom = get(kingdomData);
       
       if (!kingdom.turnState) {
-         console.warn('[DebugEventSelector] No turnState found, cannot set item');
+         logger.warn('[DebugEventSelector] No turnState found, cannot set item');
          return;
       }
       
@@ -81,7 +81,7 @@
             // Find event data
             const event = eventService.getEventById(itemId);
             if (!event) {
-               console.error(`[DebugEventSelector] Event not found: ${itemId}`);
+               logger.error(`[DebugEventSelector] Event not found: ${itemId}`);
                return;
             }
             
@@ -109,8 +109,7 @@
                kingdom.turnState.eventsPhase.eventInstanceId = instanceId; // Store instance ID for lookup
                kingdom.eventDC = 15; // Reset DC (matches normal event trigger behavior)
             });
-            
-            console.log(`[DebugEventSelector] Created event instance: ${instanceId}`);
+
          } else {
             // Clear event
             const existing = checkInstanceService.getPendingInstances('event', kingdom);
@@ -127,8 +126,7 @@
                kingdom.turnState.eventsPhase.eventId = null;
                kingdom.turnState.eventsPhase.eventInstanceId = null;
             });
-            
-            console.log('[DebugEventSelector] Cleared event');
+
          }
       } else {
          // INCIDENT: NEW ARCHITECTURE (ActiveCheckInstance + turnState)
@@ -136,7 +134,7 @@
             // Find incident data
             const incident = incidentLoader.getIncidentById(itemId);
             if (!incident) {
-               console.error(`[DebugEventSelector] Incident not found: ${itemId}`);
+               logger.error(`[DebugEventSelector] Incident not found: ${itemId}`);
                return;
             }
             
@@ -161,8 +159,7 @@
                kingdom.turnState.unrestPhase.incidentTriggered = true;
                kingdom.turnState.unrestPhase.incidentRoll = 50; // Simulated 50% roll
             });
-            
-            console.log(`[DebugEventSelector] Created incident instance: ${instanceId}`);
+
          } else {
             // Clear incident
             const existing = checkInstanceService.getPendingInstances('incident', kingdom);
@@ -177,8 +174,7 @@
                kingdom.turnState.unrestPhase.incidentTriggered = false;
                kingdom.turnState.unrestPhase.incidentRoll = undefined;
             });
-            
-            console.log('[DebugEventSelector] Cleared incident');
+
          }
       }
    }

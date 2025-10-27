@@ -154,11 +154,11 @@
       const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
       if (event) {
          currentEvent = event;
-         console.log('[EventsPhase] Event updated via reactive statement:', event.name);
+
       }
    } else if ($kingdomData.turnState?.eventsPhase?.eventId === null) {
       currentEvent = null;
-      console.log('[EventsPhase] Event cleared via reactive statement');
+
    }
    
    onMount(async () => {
@@ -169,15 +169,14 @@
       
       // Initialize the phase (this sets up currentPhaseSteps!)
       await eventPhaseController.startPhase();
-      console.log('[EventsPhase] Phase initialized with controller');
-      
+
       // Store current user ID
       const game = (window as any).game;
       currentUserId = game?.user?.id || null;
       
       // Check if an event was already rolled by another client
       if ($kingdomData.turnState?.eventsPhase?.eventId) {
-         console.log('[EventsPhase] Loading existing event from turnState:', $kingdomData.turnState.eventsPhase.eventId);
+
          const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
             currentEvent = event;
@@ -218,7 +217,7 @@
       
       // Check if another client already rolled for an event
       if ($kingdomData.turnState?.eventsPhase?.eventId) {
-         console.log('[EventsPhase] Event already rolled by another client, loading existing event');
+
          // Load the event by ID
          const event = eventService.getEventById($kingdomData.turnState.eventsPhase.eventId);
          if (event) {
@@ -318,7 +317,7 @@
       }
       
       if (!targetEvent) {
-         console.error('[EventsPhase] No event found for skill check');
+         logger.error('[EventsPhase] No event found for skill check');
          return;
       }
       
@@ -359,12 +358,12 @@
          enabledModifiers,
          
          onStart: () => {
-            console.log(`🎬 [EventsPhase] Starting event check with skill: ${skill}`);
+
             isRolling = true;
          },
          
          onComplete: async (result: any) => {
-            console.log(`✅ [EventsPhase] Event check completed:`, result.outcome);
+
             isRolling = false;
             
             // ARCHITECTURE: Delegate to controller for outcome data extraction
@@ -390,9 +389,9 @@
                   const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = resolution;
-                     console.log(`✅ [EventsPhase] Stored ongoing event resolution in instance: ${instance.instanceId}`);
+
                   } else {
-                     console.error(`❌ [EventsPhase] Could not find instance with ID: ${instanceId}`);
+                     logger.error(`❌ [EventsPhase] Could not find instance with ID: ${instanceId}`);
                   }
                });
             } else {
@@ -403,7 +402,7 @@
          },
          
          onCancel: () => {
-            console.log(`🚫 [EventsPhase] Event check cancelled - resetting state`);
+
             isRolling = false;
             
             if (isOngoingEvent && instanceId) {
@@ -413,7 +412,7 @@
                   const instance = kingdom.activeCheckInstances.find((i: any) => i.instanceId === instanceId);
                   if (instance) {
                      instance.appliedOutcome = undefined;
-                     console.log(`🚫 [EventsPhase] Cleared ongoing event resolution from instance`);
+
                   }
                });
             } else {
@@ -425,7 +424,7 @@
          },
          
          onError: (error: Error) => {
-            console.error(`❌ [EventsPhase] Error in event check:`, error);
+            logger.error(`❌ [EventsPhase] Error in event check:`, error);
             isRolling = false;
             ui?.notifications?.error(`Failed to perform event check: ${error.message}`);
          }
@@ -434,16 +433,12 @@
    
    // Event handler - apply result
    async function handleApplyResult(event: CustomEvent) {
-      console.log(`📝 [EventsPhase] handleApplyResult called`);
-      
+
       // NEW ARCHITECTURE: event.detail contains both resolution and checkId
       const resolutionData = event.detail.resolution;
       const checkId = event.detail.checkId;
-      
-      console.log(`� [EventsPhase] Event detail received:`, event.detail);
-      console.log(`📋 [EventsPhase] ResolutionData:`, resolutionData);
-      console.log(`🔍 [EventsPhase] CheckId:`, checkId);
-      
+
+
       // Determine which event and resolution to use
       let targetEvent: EventData | null = null;
       let resolution: any = null;
@@ -455,23 +450,21 @@
          if (ongoingEvent) {
             targetEvent = ongoingEvent.event;
             resolution = ongoingEvent.instance.appliedOutcome;  // ✅ Get from instance
-            console.log(`🔄 [EventsPhase] Applying ongoing event: ${targetEvent.name}`);
+
          }
       } else {
          // Current event
          targetEvent = currentEvent;
          resolution = eventResolution;
-         console.log(`📍 [EventsPhase] Applying current event: ${targetEvent?.name}`);
+
       }
       
       // Validate we have what we need
       if (!resolution || !targetEvent) {
-         console.error(`❌ [EventsPhase] Missing resolution or event:`, { resolution, targetEvent });
+         logger.error(`❌ [EventsPhase] Missing resolution or event:`, { resolution, targetEvent });
          return;
       }
-      
-      console.log(`� [EventsPhase] Applying event result for ${targetEvent?.name}:`, resolution.outcome);
-      
+
       // Call controller directly with ResolutionData
       const { createEventPhaseController } = await import('../../../controllers/EventPhaseController');
       const controller = await createEventPhaseController(null);
@@ -490,8 +483,7 @@
       );
       
       if (result.success) {
-         console.log(`✅ [EventsPhase] Event resolution applied successfully`);
-         
+
          // Parse shortfall information from the new result structure
          const shortfalls: string[] = [];
          if (result.applied?.applied?.specialEffects) {
@@ -509,15 +501,14 @@
          // Note: No manual clearing needed - the reactive statement will handle it
          // when the controller updates turnState.eventsPhase.eventId = null
       } else {
-         console.error(`❌ [EventsPhase] Failed to apply event resolution:`, result.error);
+         logger.error(`❌ [EventsPhase] Failed to apply event resolution:`, result.error);
          ui?.notifications?.error(`Failed to apply result: ${result.error || 'Unknown error'}`);
       }
    }
    
    // Event handler - cancel resolution
    async function handleCancel() {
-      console.log(`🔄 [EventsPhase] User cancelled outcome - resetting for re-roll`);
-      
+
       // Clear local UI state
       eventResolution = null;
       eventResolved = false;
@@ -529,7 +520,6 @@
    async function handlePerformReroll(event: CustomEvent) {
       if (!currentEvent) return;
       const { skill, previousFame, enabledModifiers } = event.detail;
-      console.log(`🔁 [EventsPhase] Performing reroll with skill: ${skill}`, { enabledModifiers });
 
       // Reset UI state for new roll
       await handleCancel();
@@ -541,7 +531,7 @@
       try {
          await executeSkillCheck(skill, null, enabledModifiers);
       } catch (error) {
-         console.error('[EventsPhase] Error during reroll:', error);
+         logger.error('[EventsPhase] Error during reroll:', error);
          // Restore fame if the roll failed
          const { restoreFameAfterFailedReroll } = await import('../../../controllers/shared/RerollHelpers');
          if (previousFame !== undefined) {
@@ -571,12 +561,10 @@
       }
       
       if (!targetEventId) {
-         console.error('[EventsPhase] No event found for ignore');
+         logger.error('[EventsPhase] No event found for ignore');
          return;
       }
-      
-      console.log(`🚫 [EventsPhase] Delegating ignore to controller: ${targetEventId}`);
-      
+
       // ✅ ARCHITECTURE FIX: Delegate to controller, no business logic in UI
       const result = await eventPhaseController.ignoreEvent(targetEventId);
       
@@ -586,9 +574,9 @@
             eventResolution = null;
             eventResolved = false;
          }
-         console.log(`✅ [EventsPhase] Event ignored successfully`);
+
       } else {
-         console.error(`❌ [EventsPhase] Failed to ignore event: ${result.error}`);
+         logger.error(`❌ [EventsPhase] Failed to ignore event: ${result.error}`);
          ui?.notifications?.error(`Failed to ignore event: ${result.error}`);
       }
    }
@@ -609,7 +597,7 @@
       }
       
       if (!targetEvent) {
-         console.error('[EventsPhase] No event found for aid');
+         logger.error('[EventsPhase] No event found for aid');
          return;
       }
       
@@ -764,7 +752,7 @@
          );
       } catch (error) {
          window.removeEventListener('kingdomRollComplete', aidRollListener as any);
-         console.error('Error performing aid roll:', error);
+         logger.error('Error performing aid roll:', error);
          ui?.notifications?.error(`Failed to perform aid: ${error}`);
       }
    }
@@ -774,8 +762,7 @@
       if (!currentEvent || !eventResolution) return;
       
       const newOutcome = event.detail.outcome;
-      console.log(`🐛 [EventsPhase] Debug outcome changed to: ${newOutcome}`);
-      
+
       // Fetch new modifiers for the new outcome
       const outcomeData = eventPhaseController.getEventModifiers(currentEvent, newOutcome);
       
@@ -807,7 +794,7 @@
                   const afterCount = kingdom.turnState.eventsPhase.activeAids.length;
                   
                   if (beforeCount > afterCount) {
-                     console.log(`🧹 [EventsPhase] Cleared ${beforeCount - afterCount} aid(s) for event: ${checkId}`);
+
                   }
                }
             });

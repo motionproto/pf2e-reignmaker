@@ -30,13 +30,7 @@
    
    // Debug logging
    $: {
-      console.log('[PhaseProgressionDebug] Phase completion check:', {
-         currentPhase: actualPhase,
-         currentPhaseComplete,
-         canAdvance,
-         currentSteps,
-         phasesCompleted: []
-      });
+
    }
    
    // Helper function for next phase calculation

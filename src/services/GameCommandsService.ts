@@ -92,8 +92,7 @@ export async function createGameCommandsService() {
       modifiers: Array<{ resource: ResourceType; value: number }>,
       outcome?: OutcomeDegree
     ): Promise<ApplyOutcomeResult> {
-      logger.debug(`🎯 [GameCommands] Applying ${modifiers.length} numeric modifiers`);
-      
+
       const result: ApplyOutcomeResult = {
         success: true,
         applied: {
@@ -115,9 +114,7 @@ export async function createGameCommandsService() {
           const current = accumulated.get(resource) || 0;
           accumulated.set(resource, current + value);
         }
-        
-        logger.debug(`📊 [GameCommands] Accumulated modifiers:`, Object.fromEntries(accumulated));
-        
+
         // Step 2: Pre-detect shortfalls for standard resources
         const shortfallResources: ResourceType[] = [];
         const actor = getKingdomActor();
@@ -131,7 +128,7 @@ export async function createGameCommandsService() {
               const targetValue = currentValue + value;
               if (value < 0 && targetValue < 0) {
                 shortfallResources.push(resource);
-                logger.debug(`  ⚠️ Shortfall detected: ${resource} (${currentValue} + ${value} = ${targetValue})`);
+
               }
             }
           }
@@ -151,8 +148,7 @@ export async function createGameCommandsService() {
           await this.applyUnrestChange(totalUnrestPenalty, 'Resource shortfall', result);
           result.applied.specialEffects.push(...shortfallResources.map(r => `shortage_penalty:${r}`));
         }
-        
-        logger.debug(`✅ [GameCommands] All modifiers applied successfully`);
+
         return result;
       } catch (error) {
         logger.error(`❌ [GameCommands] Failed to apply modifiers:`, error);
@@ -200,8 +196,7 @@ export async function createGameCommandsService() {
         };
 
         kingdom.turnState.actionLog.push(entry);
-        
-        logger.debug(`📝 [GameCommands] Tracked action: ${characterName} performed ${actionName} in ${phase}`);
+
       });
     },
 
@@ -228,11 +223,6 @@ export async function createGameCommandsService() {
      * It handles immediate effects and delegates to ModifierService for ongoing effects.
      */
     async applyOutcome(params: ApplyOutcomeParams): Promise<ApplyOutcomeResult> {
-      logger.debug(`🎯 [GameCommands] Applying ${params.type} outcome:`, {
-        source: params.sourceName,
-        outcome: params.outcome,
-        modifierCount: params.modifiers.length
-      });
 
       const result: ApplyOutcomeResult = {
         success: true,
@@ -259,7 +249,6 @@ export async function createGameCommandsService() {
           await this.createOngoingModifier(params);
         }
 
-        logger.debug(`✅ [GameCommands] Outcome applied successfully:`, result.applied);
         return result;
 
       } catch (error) {
@@ -292,7 +281,7 @@ export async function createGameCommandsService() {
         
         // Skip permanent modifiers (applied during Status phase for structures)
         if (modifier.duration === 'ongoing') {
-          logger.debug(`⏭️ [GameCommands] Skipping ongoing modifier (tracked separately): ${modifier.resource}`);
+
           return;
         }
         
@@ -306,10 +295,10 @@ export async function createGameCommandsService() {
         let numericValue: number;
         if (params.preRolledValues && params.preRolledValues.has(modifierIndex)) {
           numericValue = params.preRolledValues.get(modifierIndex)!;
-          logger.debug(`🎲 [GameCommands] Using pre-rolled value for modifier ${modifierIndex}: ${numericValue}`);
+
         } else if (params.preRolledValues && params.preRolledValues.has(`state:${modifier.resource}`)) {
           numericValue = params.preRolledValues.get(`state:${modifier.resource}`)!;
-          logger.debug(`🎲 [GameCommands] Using pre-rolled state value for ${modifier.resource}: ${numericValue}`);
+
         } else {
           // Roll the dice
           numericValue = this.evaluateDiceFormula(modifier.formula);
@@ -347,7 +336,7 @@ export async function createGameCommandsService() {
         for (let i = 0; i < numDice; i++) {
           total += Math.floor(Math.random() * diceSides) + 1;
         }
-        logger.debug(`🎲 [GameCommands] Rolled ${formula}: ${total}`);
+
         return total;
       }
       // If it's not a dice formula, try parsing as a number
@@ -402,7 +391,6 @@ export async function createGameCommandsService() {
         const newValue = Math.max(0, targetValue); // Resources can't go negative
         kingdom.resources[resource] = newValue;
 
-        logger.debug(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} ${resource} (${currentValue} → ${newValue})${hasShortfall ? ' [SHORTFALL]' : ''}`);
       });
 
       // Apply shortfall penalty per Kingdom Rules (only if not skipped)
@@ -424,7 +412,6 @@ export async function createGameCommandsService() {
         const newUnrest = Math.max(0, currentUnrest + value);
         kingdom.unrest = newUnrest;
 
-        logger.debug(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} unrest (${currentUnrest} → ${newUnrest})`);
       });
 
       result.applied.resources.push({ resource: 'unrest', value });
@@ -439,7 +426,6 @@ export async function createGameCommandsService() {
         const newFame = Math.max(0, currentFame + value);
         kingdom.fame = newFame;
 
-        logger.debug(`  ✓ ${modifierName}: ${value > 0 ? '+' : ''}${value} fame (${currentFame} → ${newFame})`);
       });
 
       result.applied.resources.push({ resource: 'fame', value });
@@ -456,8 +442,6 @@ export async function createGameCommandsService() {
         logger.warn(`  ⚠️ Cannot apply negative imprisoned unrest`);
         return;
       }
-
-      logger.debug(`⛓️ [GameCommands] Applying ${value} imprisoned unrest`);
 
       const actor = getKingdomActor();
       const kingdom = actor?.getKingdomData();
@@ -486,8 +470,6 @@ export async function createGameCommandsService() {
         }
       }
 
-      logger.debug(`  ℹ️ Total prison capacity available: ${totalCapacity}`);
-
       if (totalCapacity === 0) {
         // No capacity - convert to regular unrest
         logger.warn(`  ⚠️ No prison capacity available - converting ${value} imprisoned unrest to regular unrest`);
@@ -513,8 +495,7 @@ export async function createGameCommandsService() {
           const toAllocate = Math.min(remaining, available);
           const currentImprisoned = settlement.imprisonedUnrest || 0;
           settlement.imprisonedUnrest = currentImprisoned + toAllocate;
-          
-          logger.debug(`  ✓ Allocated ${toAllocate} imprisoned unrest to ${name} (${currentImprisoned} → ${settlement.imprisonedUnrest})`);
+
           remaining -= toAllocate;
         }
       });
@@ -536,8 +517,7 @@ export async function createGameCommandsService() {
      * This delegates to ModifierService for tracking and applying effects each turn.
      */
     async createOngoingModifier(params: ApplyOutcomeParams): Promise<void> {
-      logger.debug(`🔄 [GameCommands] Creating ongoing modifier for ${params.sourceName}`);
-      
+
       // TODO: Implement when we have proper event/incident objects
       // For now, this is a placeholder for future implementation
       logger.warn(`⚠️ [GameCommands] Ongoing modifier creation not yet implemented`);
@@ -553,7 +533,6 @@ export async function createGameCommandsService() {
       params: ApplyOutcomeParams,
       result: ApplyOutcomeResult
     ): Promise<void> {
-      logger.debug(`🔧 [GameCommands] Applying special effect: ${effectType}`);
 
       switch (effectType) {
         case 'damage_structure':
@@ -574,7 +553,7 @@ export async function createGameCommandsService() {
      * Damage a random structure in a settlement
      */
     async damageStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`🏚️ [GameCommands] Damaging structure in settlement`);
+
       // TODO: Implement when structure system is ready
       result.applied.specialEffects.push('structure_damaged');
     },
@@ -583,7 +562,7 @@ export async function createGameCommandsService() {
      * Destroy a random structure in a settlement
      */
     async destroyStructure(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`💥 [GameCommands] Destroying structure in settlement`);
+
       // TODO: Implement when structure system is ready
       result.applied.specialEffects.push('structure_destroyed');
     },
@@ -597,8 +576,7 @@ export async function createGameCommandsService() {
     async allocateImprisonedUnrest(
       allocations: Record<string, number>
     ): Promise<ApplyOutcomeResult> {
-      logger.debug(`⛓️ [GameCommands] Allocating imprisoned unrest:`, allocations);
-      
+
       const result: ApplyOutcomeResult = {
         success: true,
         applied: {
@@ -643,19 +621,18 @@ export async function createGameCommandsService() {
 
             // Apply allocation
             settlement.imprisonedUnrest = currentImprisoned + amount;
-            logger.debug(`  ✓ Allocated ${amount} imprisoned unrest to ${settlement.name} (${currentImprisoned} → ${settlement.imprisonedUnrest}/${capacity})`);
+
           }
 
           // Reduce kingdom unrest by total allocated
           kingdom.unrest -= totalToAllocate;
-          logger.debug(`  ✓ Reduced kingdom unrest by ${totalToAllocate} (${kingdom.unrest + totalToAllocate} → ${kingdom.unrest})`);
+
         });
 
         // Record in result
         result.applied.resources.push({ resource: 'unrest', value: -totalToAllocate });
         result.applied.specialEffects.push('imprisoned_unrest_allocated');
 
-        logger.debug(`✅ [GameCommands] Imprisoned unrest allocation complete`);
         return result;
 
       } catch (error) {
@@ -670,7 +647,7 @@ export async function createGameCommandsService() {
      * Claim a hex for the kingdom
      */
     async claimHex(params: ApplyOutcomeParams, result: ApplyOutcomeResult): Promise<void> {
-      logger.debug(`🗺️ [GameCommands] Claiming hex`);
+
       // TODO: Implement when hex system is ready
       result.applied.specialEffects.push('hex_claimed');
     }

@@ -183,7 +183,7 @@
          
          cancelCreatingOrEditing();
       } catch (error) {
-         console.error('Failed to create/update custom modifier:', error);
+         logger.error('Failed to create/update custom modifier:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to create/update custom modifier');
       } finally {
@@ -242,7 +242,7 @@
          // @ts-ignore
          ui.notifications?.info(`Deleted ${modifier.name}`);
       } catch (error) {
-         console.error('Failed to delete custom modifier:', error);
+         logger.error('Failed to delete custom modifier:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to delete modifier');
       }
@@ -283,7 +283,7 @@
          // @ts-ignore
          ui.notifications?.info('Effect added');
       } catch (error) {
-         console.error('Failed to add effect:', error);
+         logger.error('Failed to add effect:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to add effect');
       }
@@ -301,7 +301,7 @@
             }
          });
       } catch (error) {
-         console.error('Failed to remove effect:', error);
+         logger.error('Failed to remove effect:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to remove effect');
       }

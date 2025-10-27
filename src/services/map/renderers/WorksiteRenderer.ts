@@ -4,6 +4,7 @@
 
 import { WORKSITE_ICONS } from '../types';
 import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Draw worksite icons on hexes
@@ -18,10 +19,9 @@ export async function renderWorksiteIcons(
   worksiteData: Array<{ id: string; worksiteType: string }>,
   canvas: any
 ): Promise<number> {
-  console.log(`[WorksiteRenderer] 🏗️ Rendering worksite icons for ${worksiteData.length} hexes...`);
 
   if (!canvas?.grid) {
-    console.warn('[WorksiteRenderer] ❌ Canvas grid not available');
+    logger.warn('[WorksiteRenderer] ❌ Canvas grid not available');
     return 0;
   }
 
@@ -34,14 +34,14 @@ export async function renderWorksiteIcons(
       // Get icon path for this worksite type
       const iconPath = WORKSITE_ICONS[worksiteType];
       if (!iconPath) {
-        console.warn(`[WorksiteRenderer] No icon found for worksite type: ${worksiteType}`);
+        logger.warn(`[WorksiteRenderer] No icon found for worksite type: ${worksiteType}`);
         continue;
       }
 
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
-        console.warn(`[WorksiteRenderer] ⚠️ Invalid hex ID format: ${id}`);
+        logger.warn(`[WorksiteRenderer] ⚠️ Invalid hex ID format: ${id}`);
         continue;
       }
 
@@ -49,7 +49,7 @@ export async function renderWorksiteIcons(
       const j = parseInt(parts[1], 10);
       
       if (isNaN(i) || isNaN(j)) {
-        console.warn(`[WorksiteRenderer] ⚠️ Invalid hex coordinates: ${id}`);
+        logger.warn(`[WorksiteRenderer] ⚠️ Invalid hex coordinates: ${id}`);
         continue;
       }
 
@@ -90,10 +90,9 @@ export async function renderWorksiteIcons(
       successCount++;
       
     } catch (error) {
-      console.error(`[WorksiteRenderer] Failed to draw worksite icon for hex ${id}:`, error);
+      logger.error(`[WorksiteRenderer] Failed to draw worksite icon for hex ${id}:`, error);
     }
   }
 
-  console.log(`[WorksiteRenderer] ✅ Drew ${successCount}/${worksiteData.length} worksite icons`);
   return successCount;
 }

@@ -27,7 +27,7 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   
   // Check 1: Cannot already be selected as a pending placement
   if (isHexPending(hexId, pendingClaims)) {
-    console.log(`[SettlementValidator] ❌ Hex ${hexId} already selected`);
+
     return false;
   }
   
@@ -46,7 +46,7 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   
   // Check 2: Cannot place on hex that already has a settlement
   if (existingSettlements.includes(hexId)) {
-    console.log(`[SettlementValidator] ❌ Hex ${hexId} already has a settlement`);
+
     return false;
   }
   
@@ -56,18 +56,17 @@ export function validateSettlementPlacement(hexId: string, pendingClaims: string
   const isAdjacentToSettlement = adjacentHexIds.some(adjHex => allSettlementHexes.includes(adjHex));
   
   if (isAdjacentToSettlement) {
-    console.log(`[SettlementValidator] ❌ Hex ${hexId} is adjacent to another settlement`);
+
     return false;
   }
   
   // Check 4: Must be in claimed territory (unless first settlement)
   if (!isFirstSettlement) {
     if (!isHexClaimedByPlayer(hexId, kingdom)) {
-      console.log(`[SettlementValidator] ❌ Hex ${hexId} is not in claimed territory`);
+
       return false;
     }
   }
-  
-  console.log(`[SettlementValidator] ✅ Hex ${hexId} valid for settlement${isFirstSettlement ? ' (first settlement)' : ''}`);
+
   return true;
 }

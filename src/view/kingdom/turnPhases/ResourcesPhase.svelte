@@ -42,7 +42,7 @@
          try {
             previewData = await resourceController.getPreviewData();
          } catch (error) {
-            console.error('❌ [ResourcesPhase] Failed to get preview data:', error);
+            logger.error('❌ [ResourcesPhase] Failed to get preview data:', error);
             previewData = null;
          }
       }
@@ -70,7 +70,7 @@
          // Load initial preview data
          await updatePreviewData();
       } catch (error) {
-         console.error('❌ [ResourcesPhase] Failed to initialize:', error);
+         logger.error('❌ [ResourcesPhase] Failed to initialize:', error);
       }
    }
    
@@ -84,10 +84,10 @@
          const result = await resourceController.collectResources();
          
          if (!result.success) {
-            console.error('❌ [ResourcesPhase] Collection failed:', result.error);
+            logger.error('❌ [ResourcesPhase] Collection failed:', result.error);
          }
       } catch (error) {
-         console.error('❌ [ResourcesPhase] Error:', error);
+         logger.error('❌ [ResourcesPhase] Error:', error);
       } finally {
          isCollecting = false;
       }

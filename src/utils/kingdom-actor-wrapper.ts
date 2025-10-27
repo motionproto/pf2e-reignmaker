@@ -13,6 +13,7 @@
 
 import type { KingdomData } from '../actors/KingdomActor';
 import { createDefaultKingdom } from '../actors/KingdomActor';
+import { logger } from '../utils/Logger';
 
 const MODULE_ID = 'pf2e-reignmaker';
 const KINGDOM_DATA_KEY = 'kingdom-data';
@@ -44,7 +45,7 @@ export function wrapKingdomActor(actor: any): any {
   actor.updateKingdomData = async function(updater: (kingdom: KingdomData) => void): Promise<void> {
     const kingdom = this.getKingdomData();
     if (!kingdom) {
-      console.warn('[KingdomActor] No kingdom data found, cannot update');
+      logger.warn('[KingdomActor] No kingdom data found, cannot update');
       return;
     }
     updater(kingdom);
@@ -162,7 +163,7 @@ export async function updateKingdomData(
   
   const kingdom = getKingdomData(actor);
   if (!kingdom) {
-    console.warn('[Kingdom Data] No kingdom data found on actor');
+    logger.warn('[Kingdom Data] No kingdom data found on actor');
     return;
   }
   

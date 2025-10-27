@@ -65,9 +65,7 @@ export async function deductFameForReroll(): Promise<RerollResult> {
     await actor.updateKingdomData((k) => {
       k.fame = previousFame - 1;
     });
-    
-    logger.debug(`💎 [RerollHelpers] Deducted 1 fame for reroll (${previousFame} → ${previousFame - 1})`);
-    
+
     return { success: true, previousFame };
   } catch (error) {
     logger.error('❌ [RerollHelpers] Error deducting fame:', error);
@@ -90,8 +88,7 @@ export async function restoreFameAfterFailedReroll(previousFame: number): Promis
     await actor.updateKingdomData((k) => {
       k.fame = previousFame;
     });
-    
-    logger.debug(`🔄 [RerollHelpers] Restored fame to ${previousFame} after failed reroll`);
+
   } catch (error) {
     logger.error('❌ [RerollHelpers] Error restoring fame:', error);
   }
@@ -151,9 +148,7 @@ export async function handleRerollWithFame(options: {
     ui.notifications?.error(deductResult.error || 'Failed to deduct fame');
     return;
   }
-  
-  logger.debug(`💎 [${phaseName}] Rerolling with fame (${fameCheck.currentFame} → ${fameCheck.currentFame - 1})`);
-  
+
   // Reset UI state for new roll
   resetUiState();
   

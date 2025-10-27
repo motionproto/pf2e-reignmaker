@@ -29,8 +29,7 @@
     // IMPORTANT: Ensure PIXI container is visible when toolbar opens
     // This is critical for overlays to be visible
     mapLayer.showPixiContainer();
-    console.log('[MapOverlayToolbar] Ensured PIXI container is visible');
-    
+
     // Restore overlay states using OverlayManager
     await overlayManager.restoreState();
   });
@@ -65,14 +64,14 @@
       await overlayManager.toggleOverlay(overlayId);
       // No manual state update needed - reactive store will update automatically
     } catch (error) {
-      console.error(`[MapOverlayToolbar] Failed to toggle overlay ${overlayId}:`, error);
+      logger.error(`[MapOverlayToolbar] Failed to toggle overlay ${overlayId}:`, error);
       // State will be automatically rolled back by OverlayManager
     }
   }
 
   // Reset all overlays using OverlayManager
   function resetMap() {
-    console.log('[MapOverlayToolbar] Resetting all map overlays');
+
     overlayManager.clearAll();
     // No manual state update needed - reactive store will update automatically
     ui?.notifications?.info('Map overlays cleared');

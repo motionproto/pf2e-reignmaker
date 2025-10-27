@@ -40,8 +40,7 @@ export async function createGameCommandsResolver() {
      * @returns ResolveResult with created army data
      */
     async recruitArmy(level: number, name?: string): Promise<ResolveResult> {
-      logger.debug(`🪖 [GameCommandsResolver] Recruiting army at level ${level}...`);
-      
+
       try {
         const actor = getKingdomActor();
         if (!actor) {
@@ -101,8 +100,7 @@ export async function createGameCommandsResolver() {
      * @returns ResolveResult with refund data
      */
     async disbandArmy(armyId: string): Promise<ResolveResult> {
-      logger.debug(`🪖 [GameCommandsResolver] Disbanding army ${armyId}...`);
-      
+
       try {
         // Delegate to ArmyService
         const { armyService } = await import('./army');
@@ -139,8 +137,7 @@ export async function createGameCommandsResolver() {
       location: { x: number; y: number } = { x: 0, y: 0 },
       grantFreeStructure: boolean = false
     ): Promise<ResolveResult> {
-      logger.debug(`🏘️ [GameCommandsResolver] Founding settlement: ${name}...`);
-      
+
       try {
         const actor = getKingdomActor();
         if (!actor) {
@@ -175,8 +172,6 @@ export async function createGameCommandsResolver() {
         const message = grantFreeStructure
           ? `Founded ${name} (Village, Level 1) with 1 free structure slot!`
           : `Founded ${name} (Village, Level 1)`;
-
-        logger.debug(`✅ [GameCommandsResolver] ${message}`);
 
         return {
           success: true,

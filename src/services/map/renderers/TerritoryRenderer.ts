@@ -5,6 +5,7 @@
 import type { HexStyle } from '../types';
 import { MAP_HEX_STYLES, TERRITORY_BORDER_COLORS } from '../../../view/kingdom/utils/presentation';
 import { generateTerritoryOutline } from '../TerritoryOutline';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Draw territory fill hexes
@@ -20,18 +21,16 @@ export function renderTerritoryFill(
   canvas: any,
   drawHexesFn: (hexIds: string[], style: HexStyle, layerId: string, zIndex?: number) => void
 ): void {
-  console.log(`[TerritoryRenderer] 🎨 Rendering territory fill for ${hexIds.length} hexes...`);
-  
+
   if (!canvas?.grid) {
-    console.warn('[TerritoryRenderer] ❌ Canvas grid not available');
+    logger.warn('[TerritoryRenderer] ❌ Canvas grid not available');
     return;
   }
 
   // Note: drawHexesFn will handle creating the graphics and adding to layer
   // We just pass through the parameters
   drawHexesFn(hexIds, MAP_HEX_STYLES.kingdomTerritory, 'kingdom-territory', 10);
-  
-  console.log('[TerritoryRenderer] ✅ Territory fill complete');
+
 }
 
 /**
@@ -45,17 +44,14 @@ export function renderTerritoryOutline(
   layer: PIXI.Container,
   hexIds: string[]
 ): void {
-  console.log(`[TerritoryRenderer] 🎨 Drawing territory outline for ${hexIds.length} hexes...`);
 
   // Generate outline paths
   const outlineResult = generateTerritoryOutline(hexIds);
   
   if (outlineResult.outlines.length === 0) {
-    console.warn('[TerritoryRenderer] ⚠️ No outline paths generated');
+    logger.warn('[TerritoryRenderer] ⚠️ No outline paths generated');
     return;
   }
-
-  console.log(`[TerritoryRenderer] Generated ${outlineResult.outlines.length} outline path(s)`);
 
   // Create graphics object for the outline
   const graphics = new PIXI.Graphics();
@@ -90,10 +86,8 @@ export function renderTerritoryOutline(
       graphics.closePath();
     }
 
-    console.log(`[TerritoryRenderer] Path ${pathIndex}: ${path.length} segments, loop: ${isLoop}`);
   });
 
   layer.addChild(graphics);
 
-  console.log(`[TerritoryRenderer] ✅ Territory outline drawn with ${outlineResult.debugInfo?.boundaryEdges} boundary edges`);
 }

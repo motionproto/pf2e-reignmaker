@@ -31,14 +31,12 @@ export class WorldExplorerService {
    */
   revealHexes(hexIds: string[], partial: boolean = false): void {
     if (!this.isAvailable()) {
-      console.warn('[WorldExplorer] Module not available - skipping hex reveal');
+      logger.warn('[WorldExplorer] Module not available - skipping hex reveal');
       return;
     }
 
     const canvas = (globalThis as any).canvas;
     const revealState = partial ? 'partial' : true;
-
-    console.log(`[WorldExplorer] Revealing ${hexIds.length} hex(es) with state:`, revealState);
 
     hexIds.forEach(hexId => {
       try {
@@ -46,15 +44,15 @@ export class WorldExplorerService {
         const [i, j] = hexId.split('.').map(Number);
 
         if (isNaN(i) || isNaN(j)) {
-          console.warn(`[WorldExplorer] Invalid hex ID format: ${hexId}`);
+          logger.warn(`[WorldExplorer] Invalid hex ID format: ${hexId}`);
           return;
         }
 
         // Call World Explorer API
         canvas.worldExplorer.setRevealed({ offset: { i, j } }, revealState);
-        console.log(`[WorldExplorer] ✅ Revealed hex: ${hexId}`);
+
       } catch (error) {
-        console.error(`[WorldExplorer] Failed to reveal hex ${hexId}:`, error);
+        logger.error(`[WorldExplorer] Failed to reveal hex ${hexId}:`, error);
       }
     });
   }
@@ -66,27 +64,25 @@ export class WorldExplorerService {
    */
   hideHexes(hexIds: string[]): void {
     if (!this.isAvailable()) {
-      console.warn('[WorldExplorer] Module not available - skipping hex hide');
+      logger.warn('[WorldExplorer] Module not available - skipping hex hide');
       return;
     }
 
     const canvas = (globalThis as any).canvas;
-
-    console.log(`[WorldExplorer] Hiding ${hexIds.length} hex(es)`);
 
     hexIds.forEach(hexId => {
       try {
         const [i, j] = hexId.split('.').map(Number);
 
         if (isNaN(i) || isNaN(j)) {
-          console.warn(`[WorldExplorer] Invalid hex ID format: ${hexId}`);
+          logger.warn(`[WorldExplorer] Invalid hex ID format: ${hexId}`);
           return;
         }
 
         canvas.worldExplorer.setRevealed({ offset: { i, j } }, false);
-        console.log(`[WorldExplorer] ✅ Hidden hex: ${hexId}`);
+
       } catch (error) {
-        console.error(`[WorldExplorer] Failed to hide hex ${hexId}:`, error);
+        logger.error(`[WorldExplorer] Failed to hide hex ${hexId}:`, error);
       }
     });
   }
@@ -108,7 +104,7 @@ export class WorldExplorerService {
       const [i, j] = hexId.split('.').map(Number);
       return canvas.worldExplorer.isRevealed({ offset: { i, j } });
     } catch (error) {
-      console.error(`[WorldExplorer] Failed to check hex ${hexId}:`, error);
+      logger.error(`[WorldExplorer] Failed to check hex ${hexId}:`, error);
       return null;
     }
   }
@@ -130,7 +126,7 @@ export class WorldExplorerService {
       const [i, j] = hexId.split('.').map(Number);
       return canvas.worldExplorer.isPartial({ offset: { i, j } });
     } catch (error) {
-      console.error(`[WorldExplorer] Failed to check hex ${hexId}:`, error);
+      logger.error(`[WorldExplorer] Failed to check hex ${hexId}:`, error);
       return null;
     }
   }

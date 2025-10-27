@@ -25,13 +25,13 @@
   async function loadEligibleFactions() {
     const actor = getKingdomActor();
     if (!actor) {
-      console.error('❌ [FactionSelectionDialog] No kingdom actor available');
+      logger.error('❌ [FactionSelectionDialog] No kingdom actor available');
       return;
     }
     
     const kingdom = actor.getKingdomData();
     if (!kingdom) {
-      console.error('❌ [FactionSelectionDialog] No kingdom data available');
+      logger.error('❌ [FactionSelectionDialog] No kingdom data available');
       return;
     }
     
@@ -53,8 +53,7 @@
         const bIndex = ATTITUDE_ORDER.indexOf(b.attitude);
         return bIndex - aIndex; // Reverse order (worst first)
       });
-    
-    console.log(`🤝 [FactionSelectionDialog] Found ${eligibleFactions.length} eligible factions`);
+
   }
   
   function selectFaction(faction: Faction) {
@@ -76,12 +75,10 @@
     
     const selectedFaction = eligibleFactions.find(f => f.id === selectedFactionId);
     if (!selectedFaction) {
-      console.error('❌ [FactionSelectionDialog] Selected faction not found');
+      logger.error('❌ [FactionSelectionDialog] Selected faction not found');
       return;
     }
-    
-    console.log('🤝 [FactionSelectionDialog] Faction selected:', selectedFactionId);
-    
+
     // Dispatch confirmation event
     dispatch('confirm', {
       factionId: selectedFactionId,

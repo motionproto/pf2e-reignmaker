@@ -5,6 +5,7 @@
 
 import { SETTLEMENT_ICONS } from '../types';
 import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Draw settlement icons on hexes
@@ -19,12 +20,10 @@ export async function renderSettlementIcons(
   settlementData: Array<{ id: string; tier: string; mapIconPath?: string }>,
   canvas: any
 ): Promise<number> {
-  console.log(`[SettlementIconRenderer] 🏛️ Rendering settlement icons for ${settlementData.length} hexes...`);
-  console.log(`[SettlementIconRenderer] Settlement data:`, settlementData);
-  console.log(`[SettlementIconRenderer] SETTLEMENT_ICONS mapping:`, SETTLEMENT_ICONS);
+
 
   if (!canvas?.grid) {
-    console.warn('[SettlementIconRenderer] ❌ Canvas grid not available');
+    logger.warn('[SettlementIconRenderer] ❌ Canvas grid not available');
     return 0;
   }
 
@@ -32,24 +31,22 @@ export async function renderSettlementIcons(
   let successCount = 0;
 
   // Process each settlement
-  console.log(`[SettlementIconRenderer] Starting loop over ${settlementData.length} settlements`);
+
   for (const settlement of settlementData) {
     const { id, tier, mapIconPath } = settlement;
-    console.log(`[SettlementIconRenderer] Processing settlement:`, { id, tier, mapIconPath });
+
     try {
       // Use custom map icon if available, otherwise fall back to default tier icon
       const iconPath = mapIconPath || SETTLEMENT_ICONS[tier];
       if (!iconPath) {
-        console.warn(`[SettlementIconRenderer] No icon found for settlement tier: ${tier}`);
+        logger.warn(`[SettlementIconRenderer] No icon found for settlement tier: ${tier}`);
         continue;
       }
-
-      console.log(`[SettlementIconRenderer] Loading icon for settlement at ${id}, tier ${tier}, path: ${iconPath} ${mapIconPath ? '(custom)' : '(default)'}`);
 
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
-        console.warn(`[SettlementIconRenderer] ⚠️ Invalid hex ID format: ${id}`);
+        logger.warn(`[SettlementIconRenderer] ⚠️ Invalid hex ID format: ${id}`);
         continue;
       }
 
@@ -57,7 +54,7 @@ export async function renderSettlementIcons(
       const j = parseInt(parts[1], 10);
       
       if (isNaN(i) || isNaN(j)) {
-        console.warn(`[SettlementIconRenderer] ⚠️ Invalid hex coordinates: ${id}`);
+        logger.warn(`[SettlementIconRenderer] ⚠️ Invalid hex coordinates: ${id}`);
         continue;
       }
 
@@ -66,13 +63,13 @@ export async function renderSettlementIcons(
       const center = hex.center;
 
       // Load texture and create sprite
-      console.log(`[SettlementIconRenderer] Attempting to load texture from: ${iconPath}`);
+
       let texture;
       try {
         texture = await PIXI.Assets.load(iconPath);
-        console.log(`[SettlementIconRenderer] Texture loaded successfully:`, texture);
+
       } catch (loadError) {
-        console.error(`[SettlementIconRenderer] Failed to load texture from ${iconPath}:`, loadError);
+        logger.error(`[SettlementIconRenderer] Failed to load texture from ${iconPath}:`, loadError);
         continue; // Skip this settlement and continue with the rest
       }
       
@@ -106,10 +103,9 @@ export async function renderSettlementIcons(
       successCount++;
       
     } catch (error) {
-      console.error(`[SettlementIconRenderer] Failed to draw settlement icon for hex ${id}:`, error);
+      logger.error(`[SettlementIconRenderer] Failed to draw settlement icon for hex ${id}:`, error);
     }
   }
 
-  console.log(`[SettlementIconRenderer] ✅ Drew ${successCount}/${settlementData.length} settlement icons`);
   return successCount;
 }

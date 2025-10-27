@@ -34,8 +34,7 @@
       if (previousValue !== undefined && value !== previousValue && !isEditing) {
          animationDelta = value - previousValue;
          showAnimation = true;
-         console.log(`🎬 [ResourceCard] Animation triggered: ${resource} ${previousValue} → ${value} (Δ${animationDelta})`);
-         
+
          // Auto-hide after animation completes (4.6s)
          setTimeout(() => {
             showAnimation = false;

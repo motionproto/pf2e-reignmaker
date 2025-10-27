@@ -90,7 +90,6 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       }
 
       // Data initialization is now handled by KingdomAppShell to ensure proper timing
-      console.log('[KingdomApp] Data initialization delegated to KingdomAppShell');
 
       return super._render(force, options);
    }
@@ -100,11 +99,9 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
     */
    async close(options?: { force?: boolean }): Promise<void>
    {
-      console.log('[KingdomApp] Closing window...');
-      
+
       // Data is now automatically saved via KingdomActor system
-      console.log('[KingdomApp] Data automatically managed by Foundry actor system');
-      
+
       return super.close(options);
    }
 }

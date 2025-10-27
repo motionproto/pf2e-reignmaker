@@ -129,7 +129,7 @@
             step = 'select';
          }
       } catch (error) {
-         console.error('Import failed:', error);
+         logger.error('Import failed:', error);
          isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Import failed. See console for details.');
@@ -164,7 +164,7 @@
             step = 'select';
          }
       } catch (error) {
-         console.error('Custom map import failed:', error);
+         logger.error('Custom map import failed:', error);
          isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Failed to create kingdom. See console for details.');

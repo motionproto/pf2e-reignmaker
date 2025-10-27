@@ -15,8 +15,6 @@ import { updateKingdom } from '../stores/KingdomStore';
 import type { ActiveCheckInstance } from '../models/CheckInstance';
 import type { KingdomData } from '../actors/KingdomActor';
 import type { ResolutionData } from '../types/modifiers';
-import { logger } from '../utils/Logger';
-
 /**
  * Service for managing check instances (incidents, events, actions)
  * Provides lifecycle management and state synchronization across clients
@@ -46,7 +44,7 @@ export class CheckInstanceService {
     await updateKingdom(kingdom => {
       if (!kingdom.activeCheckInstances) kingdom.activeCheckInstances = [];
       kingdom.activeCheckInstances.push(instance);
-      logger.debug(`✅ [CheckInstanceService] Created ${checkType} instance: ${instanceId}`);
+
     });
     
     return instanceId;
@@ -107,7 +105,7 @@ export class CheckInstanceService {
           effectsApplied: false
         };
         instance.status = 'resolved';
-        logger.debug(`✅ [CheckInstanceService] Stored outcome for: ${instanceId}`);
+
       }
     });
   }
@@ -134,8 +132,7 @@ export class CheckInstanceService {
         }
         return instance;
       });
-      
-      logger.debug(`✅ [CheckInstanceService] Marked applied: ${instanceId}`);
+
     });
   }
   
@@ -164,13 +161,13 @@ export class CheckInstanceService {
         kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
           i.checkType !== 'event' || i.status === 'pending'
         ) || [];
-        logger.debug(`🧹 [CheckInstanceService] Cleared ${before - kingdom.activeCheckInstances.length} resolved/applied event(s), kept pending (ongoing)`);
+
       } else {
         // Incidents: Clear all non-pending (incidents don't have ongoing state)
         kingdom.activeCheckInstances = kingdom.activeCheckInstances?.filter(i => 
           i.checkType !== checkType || i.status === 'pending'
         ) || [];
-        logger.debug(`🧹 [CheckInstanceService] Cleared ${before - kingdom.activeCheckInstances.length} ${checkType} instance(s)`);
+
       }
     });
   }
@@ -186,11 +183,11 @@ export class CheckInstanceService {
       ) || [];
       
       if (pendingEvents.length > 0) {
-        logger.debug(`🔄 [CheckInstanceService] Clearing appliedOutcome from ${pendingEvents.length} ongoing event(s)`);
+
         pendingEvents.forEach(instance => {
           instance.appliedOutcome = undefined;
           instance.resolutionProgress = undefined;
-          logger.debug(`   ✓ Reset: ${instance.checkData?.name || instance.checkId} (${instance.instanceId})`);
+
         });
       }
     });
@@ -207,7 +204,7 @@ export class CheckInstanceService {
       ) || [];
       const after = kingdom.activeCheckInstances.length;
       if (before > after) {
-        logger.debug(`🧹 [CheckInstanceService] Cleared instance: ${instanceId}`);
+
       }
     });
   }
@@ -248,8 +245,7 @@ export class CheckInstanceService {
             ...updates.rolledDice
           };
         }
-        
-        logger.debug(`🔄 [CheckInstanceService] Updated resolution progress: ${instanceId}`);
+
       }
     });
   }
@@ -262,7 +258,7 @@ export class CheckInstanceService {
       const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
       if (instance) {
         instance.resolutionProgress = undefined;
-        logger.debug(`🧹 [CheckInstanceService] Cleared resolution progress: ${instanceId}`);
+
       }
     });
   }

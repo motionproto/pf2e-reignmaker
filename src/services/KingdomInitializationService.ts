@@ -16,8 +16,7 @@ import type { KingdomActor } from '../actors/KingdomActor';
  * @param actor - The kingdom actor (wrapped with kingdom methods)
  */
 export async function initializeKingdomData(actor: any): Promise<void> {
-  logger.info('🔧 [KingdomInit] Starting complete initialization...');
-  
+
   try {
     // 1. Recalculate settlement properties
     const kingdom = actor.getKingdomData();
@@ -26,9 +25,9 @@ export async function initializeKingdomData(actor: any): Promise<void> {
       for (const settlement of kingdom.settlements) {
         await settlementService.updateSettlementDerivedProperties(settlement.id);
       }
-      logger.info(`  ✓ ${kingdom.settlements.length} settlement(s) initialized`);
+
     } else {
-      logger.info('  ✓ No settlements to initialize');
+
     }
     
     // 2. Build production cache
@@ -38,8 +37,7 @@ export async function initializeKingdomData(actor: any): Promise<void> {
       kingdom.worksiteProduction = Object.fromEntries(result.totalProduction);
       kingdom.worksiteProductionByHex = result.byHex.map((e: any) => [e.hex, e.production]);
     });
-    logger.info('  ✓ Production cache built');
-    
+
     // 3. Initialize all resource types (ensure they exist even if 0)
     await actor.updateKingdomData((kingdom: any) => {
       const requiredResources = [
@@ -53,13 +51,11 @@ export async function initializeKingdomData(actor: any): Promise<void> {
         }
       }
     });
-    logger.info('  ✓ Resources initialized');
-    
+
     // 4. Wait for Foundry flag synchronization to propagate
     // Give the Foundry actor update system time to sync across clients
     await new Promise(resolve => setTimeout(resolve, 150));
-    
-    logger.info('✅ [KingdomInit] Initialization complete - all derived data ready!');
+
   } catch (error) {
     logger.error('❌ [KingdomInit] Initialization failed:', error);
     throw error;

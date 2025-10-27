@@ -9,15 +9,22 @@
   
   export let show: boolean = false;
   export let settlement: Settlement | null = null;
+  export let requiredCount: number | undefined = undefined;
   
   const dispatch = createEventDispatcher();
   
   // State
   let activeTab: 'skill' | 'support' = 'skill';
   let selectedStructureId: string = '';
+  let selectedStructureIds: string[] = [];
   let errorMessage: string = '';
   let successMessage: string = '';
   let isProcessing: boolean = false;
+  let tierWarningMessage: string = '';
+  let showingTierWarning: boolean = false;
+  
+  // Selection limit: requiredCount if specified, otherwise 1 for single selection
+  $: selectionLimit = requiredCount || 1;
   
   // Grouped structures
   let skillGroups: Array<{ category: string; displayName: string; structures: Structure[] }> = [];
@@ -34,8 +41,11 @@
   // Reset state when dialog opens
   $: if (show) {
     selectedStructureId = '';
+    selectedStructureIds = [];
     errorMessage = '';
     successMessage = '';
+    tierWarningMessage = '';
+    showingTierWarning = false;
   }
   
   // Get current tab's groups
@@ -46,33 +56,96 @@
     dispatch('close');
   }
   
-  async function handleAddStructure(structure: Structure) {
-    if (!settlement || isProcessing) return;
+  function toggleStructureSelection(structureId: string) {
+    if (selectedStructureIds.includes(structureId)) {
+      selectedStructureIds = selectedStructureIds.filter(id => id !== structureId);
+    } else {
+      if (selectedStructureIds.length >= selectionLimit) {
+        return; // Don't allow more selections than limit
+      }
+      selectedStructureIds = [...selectedStructureIds, structureId];
+    }
+  }
+  
+  function isStructureSelected(structureId: string): boolean {
+    return selectedStructureIds.includes(structureId);
+  }
+  
+  async function handleAddSelectedStructures() {
+    if (!settlement || isProcessing || selectedStructureIds.length === 0) return;
+    
+    // If warning is already showing, proceed with build (user clicked "Build Anyway")
+    if (showingTierWarning) {
+      await proceedWithBuild();
+      return;
+    }
+    
+    // Check if any selected structures exceed tier
+    const exceedingStructures = selectedStructureIds
+      .map(id => [...skillGroups, ...supportGroups]
+        .flatMap(g => g.structures)
+        .find(s => s.id === id))
+      .filter(s => s && structureExceedsTier(s));
+    
+    if (exceedingStructures.length > 0) {
+      // Show inline warning
+      const structure = exceedingStructures[0];
+      if (structure) {
+        const requiredTierMap: Record<number, string> = {
+          1: 'Village', 2: 'Town', 3: 'City', 4: 'Metropolis'
+        };
+        const requiredTier = requiredTierMap[structure.minimumSettlementTier || 1];
+        tierWarningMessage = `${structure.name} requires a ${requiredTier}.`;
+        showingTierWarning = true;
+        return;
+      }
+    }
+    
+    // No tier issues, proceed normally
+    await proceedWithBuild();
+  }
+  
+  async function proceedWithBuild() {
+    if (!settlement || isProcessing || selectedStructureIds.length === 0) return;
     
     isProcessing = true;
     errorMessage = '';
     successMessage = '';
+    tierWarningMessage = '';
+    showingTierWarning = false;
     
     try {
-      const result = await settlementStructureManagement.addStructureToSettlement(
-        structure.id,
-        settlement.id
-      );
+      let successCount = 0;
+      let errorCount = 0;
       
-      if (result.success) {
-        successMessage = `Added ${structure.name}`;
-        dispatch('structureAdded', { structureId: structure.id });
+      for (const structureId of selectedStructureIds) {
+        const result = await settlementStructureManagement.addStructureToSettlement(
+          structureId,
+          settlement.id
+        );
         
-        // Close after brief delay
+        if (result.success) {
+          successCount++;
+          dispatch('structureAdded', { structureId });
+        } else {
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        successMessage = `Added ${successCount} structure${successCount > 1 ? 's' : ''}`;
+        
         setTimeout(() => {
           handleClose();
         }, 1500);
-      } else {
-        errorMessage = result.error || 'Failed to add structure';
+      }
+      
+      if (errorCount > 0) {
+        errorMessage = `Failed to add ${errorCount} structure${errorCount > 1 ? 's' : ''}`;
       }
     } catch (error) {
-      console.error('Error adding structure:', error);
-      errorMessage = error instanceof Error ? error.message : 'Failed to add structure';
+      console.error('Error adding structures:', error);
+      errorMessage = error instanceof Error ? error.message : 'Failed to add structures';
     } finally {
       isProcessing = false;
     }
@@ -98,6 +171,15 @@
     return '';
   }
   
+  function structureExceedsTier(structure: Structure): boolean {
+    if (!settlement || !structure.minimumSettlementTier) return false;
+    const tierMap: Record<string, number> = {
+      'Village': 1, 'Town': 2, 'City': 3, 'Metropolis': 4
+    };
+    const settlementTierNum = tierMap[settlement.tier] || 1;
+    return structure.minimumSettlementTier > settlementTierNum;
+  }
+  
 </script>
 
 {#if show && settlement}
@@ -110,6 +192,12 @@
           Add Structure to {settlement.name}
         </h2>
         <div class="header-info">
+          {#if requiredCount}
+            <span class="selection-counter">
+              <i class="fas fa-check-square"></i>
+              {selectedStructureIds.length}/{requiredCount} selected
+            </span>
+          {/if}
           <span class="capacity-badge">
             <i class="fas fa-layer-group"></i>
             {getSettlementCapacityText()}
@@ -167,8 +255,20 @@
               {#each group.structures as structure}
                 {@const isBuilt = isStructureBuilt(structure.id)}
                 {@const skillsText = getSkillsText(structure)}
+                {@const isSelected = isStructureSelected(structure.id)}
+                {@const canSelect = !isBuilt && (selectedStructureIds.length < selectionLimit || isSelected)}
                 
-                <div class="structure-item" class:built={isBuilt}>
+                <div 
+                  class="structure-item" 
+                  class:built={isBuilt}
+                  class:selected={isSelected}
+                  class:selectable={canSelect}
+                  on:click={() => {
+                    if (canSelect) {
+                      toggleStructureSelection(structure.id);
+                    }
+                  }}
+                >
                   <div class="structure-info">
                     <div class="structure-name-row">
                       <span class="structure-name">
@@ -177,12 +277,6 @@
                           <span class="skills-text">({skillsText})</span>
                         {/if}
                       </span>
-                      {#if isBuilt}
-                        <span class="built-badge">
-                          <i class="fas fa-check"></i>
-                          Built
-                        </span>
-                      {/if}
                     </div>
                     
                     {#if structure.description}
@@ -200,24 +294,63 @@
                     {/if}
                   </div>
                   
-                  {#if !isBuilt}
-                    <button 
-                      class="add-button"
-                      on:click={() => handleAddStructure(structure)}
-                      disabled={isProcessing}
-                    >
-                      Add
-                    </button>
-                  {/if}
+                  <div class="structure-badges">
+                    {#if isBuilt}
+                      <span class="built-badge">
+                        <i class="fas fa-check"></i>
+                        Built
+                      </span>
+                    {:else if isSelected}
+                      <span class="pending-badge">
+                        <i class="fas fa-clock"></i>
+                        Pending
+                      </span>
+                    {/if}
+                  </div>
                 </div>
               {/each}
             </div>
           </div>
         {/each}
       </div>
+      
+      <!-- Footer (always shown) -->
+      <div class="dialog-footer">
+        {#if tierWarningMessage}
+          <div class="tier-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            {tierWarningMessage}
+          </div>
+        {/if}
+        <div class="footer-buttons">
+          <button 
+            class="cancel-button"
+            on:click={handleClose}
+            disabled={isProcessing}
+          >
+            Cancel
+          </button>
+          <div class="build-button-wrapper">
+            {#if requiredCount && requiredCount > 1}
+              <div class="selection-count">
+                {selectedStructureIds.length}/{requiredCount} Selected
+              </div>
+            {/if}
+            <button 
+              class="add-selected-button"
+              on:click={handleAddSelectedStructures}
+              disabled={isProcessing || selectedStructureIds.length === 0}
+            >
+              <i class="fas fa-plus"></i>
+              {showingTierWarning ? 'Build Anyway' : (selectedStructureIds.length === 1 ? 'Build Structure' : 'Build Structures')}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 {/if}
+
 
 <style lang="scss">
   .dialog-overlay {
@@ -385,8 +518,14 @@
     margin-bottom: 0.25rem;
     background: var(--bg-base);
     transition: all 0.2s ease;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm, 0.25rem);
     
-    &:hover:not(.built) {
+    &.selectable {
+      cursor: pointer;
+    }
+    
+    &:hover:not(.built):not(.selected) {
       background: var(--bg-elevated);
     }
     
@@ -394,6 +533,11 @@
       opacity: 0.6;
       background: rgba(34, 197, 94, 0.05);
       border-color: rgba(34, 197, 94, 0.2);
+    }
+    
+    &.selected {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: var(--color-amber, #f59e0b);
     }
   }
   
@@ -423,6 +567,13 @@
     }
   }
   
+  .structure-badges {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  
   .built-badge {
     display: inline-flex;
     align-items: center;
@@ -430,6 +581,18 @@
     padding: 0.25rem 0.75rem;
     background: rgba(34, 197, 94, 0.2);
     color: #86efac;
+    border-radius: var(--radius-full, 9999px);
+    font-size: var(--font-sm, 0.75rem);
+    font-weight: 600;
+  }
+  
+  .pending-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--color-amber, #f59e0b);
     border-radius: var(--radius-full, 9999px);
     font-size: var(--font-sm, 0.75rem);
     font-weight: 600;
@@ -484,6 +647,202 @@
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+  }
+  
+  .selection-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: var(--radius-md, 0.375rem);
+    color: var(--color-amber, #f59e0b);
+    font-size: var(--font-sm, 0.875rem);
+    font-weight: 600;
+  }
+  
+  .dialog-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+    
+    .tier-warning {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: var(--radius-md, 0.375rem);
+      color: #fbbf24;
+      font-size: var(--font-sm, 0.875rem);
+      font-weight: 500;
+      
+      i {
+        font-size: 1.25rem;
+      }
+    }
+    
+    .footer-buttons {
+      display: flex;
+      justify-content: flex-end;
+      align-items: flex-end;
+      gap: 1rem;
+    }
+    
+    .build-button-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .selection-count {
+      color: var(--text-secondary, #9ca3af);
+      font-size: var(--font-sm, 0.875rem);
+      font-weight: 500;
+    }
+    
+    .cancel-button {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md, 0.375rem);
+      color: var(--text-secondary, #9ca3af);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary, #f3f4f6);
+        border-color: var(--border-strong);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+    
+    .add-selected-button {
+      padding: 0.75rem 1.5rem;
+      background: var(--color-amber, #f59e0b);
+      border: none;
+      border-radius: var(--radius-md, 0.375rem);
+      color: #1f2937;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+        background: #f59e0b;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+      
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+  
+  .warning-dialog {
+    background: var(--bg-base);
+    border-radius: var(--radius-lg, 0.5rem);
+    border: 2px solid #f59e0b;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    
+    .warning-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: rgba(251, 191, 36, 0.1);
+      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+      
+      i {
+        font-size: 2rem;
+        color: #fbbf24;
+      }
+      
+      h3 {
+        margin: 0;
+        color: #fbbf24;
+        font-size: var(--font-xl, 1.25rem);
+      }
+    }
+    
+    .warning-body {
+      padding: 1.5rem;
+      
+      p {
+        margin: 0 0 1rem 0;
+        color: var(--text-primary);
+        line-height: 1.5;
+        
+        &:last-child {
+          margin-bottom: 0;
+        }
+        
+        strong {
+          color: var(--color-amber, #f59e0b);
+        }
+      }
+    }
+    
+    .warning-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-default);
+      background: var(--bg-elevated);
+      
+      .warning-cancel-btn {
+        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md, 0.375rem);
+        color: var(--text-secondary, #9ca3af);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: var(--text-primary, #f3f4f6);
+          border-color: var(--border-strong);
+        }
+      }
+      
+      .warning-confirm-btn {
+        padding: 0.75rem 1.5rem;
+        background: #fbbf24;
+        border: none;
+        border-radius: var(--radius-md, 0.375rem);
+        color: #1f2937;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        
+        &:hover {
+          background: #f59e0b;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+      }
     }
   }
 </style>

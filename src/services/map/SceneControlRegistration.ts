@@ -5,17 +5,16 @@
 import { getKingdomActor } from '../../main.kingdom';
 import type { KingdomData } from '../../actors/KingdomActor';
 import { ReignMakerMapLayer } from './ReignMakerMapLayer';
+import { logger } from '../../utils/Logger';
 
 /**
  * Register the kingdom hex control button in the scene controls
  */
 export function registerKingdomHexControl(): void {
-  console.log('[SceneControlRegistration] Registering scene control button...');
-  
+
   Hooks.on('getSceneControlButtons', (controls: any) => {
-    console.log('[SceneControlRegistration] getSceneControlButtons hook fired');
-    console.log('[SceneControlRegistration] Controls type:', typeof controls, 'Is array:', Array.isArray(controls));
-    
+
+
     // Find the tokens control group (controls is an array in Foundry v11-12, might be object in v13)
     let tokensControl;
     if (Array.isArray(controls)) {
@@ -26,8 +25,8 @@ export function registerKingdomHexControl(): void {
     }
     
     if (!tokensControl) {
-      console.warn('[SceneControlRegistration] Tokens control group not found');
-      console.log('[SceneControlRegistration] Available controls:', Object.keys(controls));
+      logger.warn('[SceneControlRegistration] Tokens control group not found');
+
       return;
     }
     
@@ -37,17 +36,14 @@ export function registerKingdomHexControl(): void {
     }
     
     const toolsArray = Array.isArray(tokensControl.tools) ? tokensControl.tools : Object.values(tokensControl.tools);
-    console.log('[SceneControlRegistration] Found tokens control group, current tools:', toolsArray.length);
-    console.log('[SceneControlRegistration] Tool names:', toolsArray.map((t: any) => t?.name));
-    
+
+
     // Check individual settings for hiding Kingmaker module's controls
     // @ts-ignore - Foundry globals
     const hideHexControls = game.settings?.get('pf2e-reignmaker', 'hideKingmakerHexControls');
     // @ts-ignore - Foundry globals
     const hideShowRegions = game.settings?.get('pf2e-reignmaker', 'hideKingmakerShowRegions');
-    
-    console.log('[SceneControlRegistration] Hide settings:', { hideHexControls, hideShowRegions });
-    
+
     // Remove Kingmaker controls based on user settings
     if (hideHexControls || hideShowRegions) {
       if (Array.isArray(tokensControl.tools)) {
@@ -55,25 +51,25 @@ export function registerKingdomHexControl(): void {
         const before = tokensControl.tools.length;
         tokensControl.tools = tokensControl.tools.filter((tool: any) => {
           if (hideHexControls && tool.name === 'km-hex-overlay') {
-            console.log('[SceneControlRegistration] Filtering out Kingmaker "Hex Controls" button');
+
             return false;
           }
           if (hideShowRegions && tool.name === 'km-show-regions') {
-            console.log('[SceneControlRegistration] Filtering out Kingmaker "Show Regions" button');
+
             return false;
           }
           return true;
         });
-        console.log(`[SceneControlRegistration] Removed ${before - tokensControl.tools.length} Kingmaker button(s)`);
+
       } else {
         // Object format
         if (hideHexControls && tokensControl.tools['km-hex-overlay']) {
           delete tokensControl.tools['km-hex-overlay'];
-          console.log('[SceneControlRegistration] Removed Kingmaker "Hex Controls" button');
+
         }
         if (hideShowRegions && tokensControl.tools['km-show-regions']) {
           delete tokensControl.tools['km-show-regions'];
-          console.log('[SceneControlRegistration] Removed Kingmaker "Show Regions" button');
+
         }
       }
     }
@@ -84,7 +80,7 @@ export function registerKingdomHexControl(): void {
       : !!tokensControl.tools['reignmaker-hexes'];
     
     if (rookExists) {
-      console.log('[SceneControlRegistration] Rook button already exists, skipping');
+
       return;
     }
     
@@ -108,15 +104,13 @@ export function registerKingdomHexControl(): void {
         ]
       },
       onClick: async (toggled: boolean) => {
-        console.log('[SceneControlRegistration] Rook button clicked, toggled:', toggled);
-        
+
         clickCount++;
         
         // If this is the first click, start the timer
         if (clickCount === 1) {
           clickTimer = window.setTimeout(async () => {
-            console.log('[SceneControlRegistration] Single-click detected - toggling overlays');
-            
+
             // Single click: toggle overlays
             // Check if map has been imported yet
             const kingdomActor = await getKingdomActor();
@@ -125,8 +119,7 @@ export function registerKingdomHexControl(): void {
               const hasImportedMap = kingdom?.hexes && kingdom.hexes.length > 0;
               
               if (!hasImportedMap) {
-                console.log('[SceneControlRegistration] No map data found, opening Kingdom UI to show import dialog...');
-                
+
                 // Open Kingdom UI - it will automatically show the WelcomeDialog for first-time setup
                 const { openKingdomUI } = await import('../../ui/KingdomIcon');
                 const actorId = kingdomActor.id;
@@ -149,8 +142,7 @@ export function registerKingdomHexControl(): void {
         } 
         // If this is the second click within the delay, it's a double-click
         else if (clickCount === 2) {
-          console.log('[SceneControlRegistration] Double-click detected - opening Kingdom UI');
-          
+
           // Cancel the single-click timer
           if (clickTimer !== null) {
             window.clearTimeout(clickTimer);
@@ -180,8 +172,7 @@ export function registerKingdomHexControl(): void {
     } else {
       tokensControl.tools['reignmaker-hexes'] = rookButton;
     }
-    
-    console.log('[SceneControlRegistration] ✅ Rook button added successfully');
+
   });
 
   // Initialize PIXI container when canvas is ready
@@ -189,13 +180,12 @@ export function registerKingdomHexControl(): void {
     const layer = ReignMakerMapLayer.getInstance();
     layer.showPixiContainer(); // Ensures initialization
     layer.hidePixiContainer(); // Start hidden (controlled by scene toggle)
-    console.log('[SceneControlRegistration] Initialized PIXI container on canvasReady');
+
   });
 
   // Clean up on canvas tear down
   Hooks.on('canvasTearDown', async () => {
-    console.log('[SceneControlRegistration] 🧹 Canvas tearing down - cleaning up overlays and layers...');
-    
+
     // Step 1: Clear all overlay subscriptions before destroying
     const { getOverlayManager } = await import('./OverlayManager');
     const overlayManager = getOverlayManager();
@@ -204,11 +194,9 @@ export function registerKingdomHexControl(): void {
     // Step 2: Destroy the map layer
     const layer = ReignMakerMapLayer.getInstance();
     layer.destroy();
-    
-    console.log('[SceneControlRegistration] ✅ Canvas cleanup complete');
+
   });
-  
-  console.log('[SceneControlRegistration] Hook listeners registered');
+
 }
 
 /**

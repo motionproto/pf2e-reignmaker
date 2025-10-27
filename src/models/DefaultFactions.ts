@@ -5,6 +5,7 @@
 import { createDefaultFaction } from './Faction';
 import type { Faction, AttitudeLevel } from './Faction';
 import factionsData from '../data-compiled/factions.json';
+import { logger } from '../utils/Logger';
 
 interface DefaultFactionData {
   id: string;
@@ -28,7 +29,7 @@ export async function loadDefaultFactions(): Promise<Faction[]> {
       return faction;
     });
   } catch (error) {
-    console.error('[DefaultFactions] Error loading default factions:', error);
+    logger.error('[DefaultFactions] Error loading default factions:', error);
     return [];
   }
 }

@@ -77,7 +77,7 @@
       repairableBySettlement.sort((a, b) => a.settlement.name.localeCompare(b.settlement.name));
       
     } catch (error) {
-      console.error('Error loading repairable structures:', error);
+      logger.error('Error loading repairable structures:', error);
       errorMessage = error instanceof Error ? error.message : 'Failed to load structures';
     } finally {
       isLoading = false;

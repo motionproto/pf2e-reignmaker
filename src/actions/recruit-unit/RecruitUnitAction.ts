@@ -27,6 +27,7 @@ import engineersImg from '../../../img/army_tokens/army-engineers.webp';
 import infantryImg from '../../../img/army_tokens/army-infantry.webp';
 import koboldImg from '../../../img/army_tokens/army-kobold.webp';
 import wolvesImg from '../../../img/army_tokens/army-wolves.webp';
+import { logger } from '../../utils/Logger';
 
 // Army type definitions
 const ARMY_TYPES = {
@@ -231,12 +232,10 @@ export const RecruitUnitAction = {
    * Check if action can be performed
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {
-    console.log('🔍 [RecruitUnit] Checking requirements');
-    
+
     // Check if we have any settlements (informational only)
     const settlementCount = kingdomData.settlements?.length || 0;
-    console.log(`   Existing settlements: ${settlementCount}`);
-    
+
     // Get party level for army level
     const game = (globalThis as any).game;
     let partyLevel = 1;
@@ -248,8 +247,7 @@ export const RecruitUnitAction = {
         partyLevel = (partyActors[0] as any).level || 1;
       }
     }
-    console.log(`   Party level: ${partyLevel}`);
-    
+
     return {
       met: true
     };
@@ -277,8 +275,7 @@ export const RecruitUnitAction = {
         }
         
         const { name, settlementId, armyType } = armyDetails;
-        console.log(`🪖 [RecruitUnit] Creating army: ${name}, type: ${armyType}, settlement: ${settlementId || 'none'}`);
-        
+
         // Step 2: Get party level for army level
         const game = (globalThis as any).game;
         let armyLevel = 1;
@@ -290,10 +287,9 @@ export const RecruitUnitAction = {
             armyLevel = (partyActors[0] as any).level || 1;
           }
         }
-        console.log(`🎖️ [RecruitUnit] Army level: ${armyLevel}`);
-        
+
         // Step 3: Apply resource costs (unrest reduction for critical success)
-        console.log('💰 [RecruitUnit] Applying effects:', resolutionData.numericModifiers);
+
         const { createGameCommandsService } = await import('../../services/GameCommandsService');
         const gameCommands = await createGameCommandsService();
         
@@ -303,29 +299,20 @@ export const RecruitUnitAction = {
         );
         
         if (!costResult.success) {
-          console.error('❌ [RecruitUnit] Failed to apply effects:', costResult.error);
+          logger.error('❌ [RecruitUnit] Failed to apply effects:', costResult.error);
           return createErrorResult(costResult.error || 'Failed to apply army recruitment effects');
         }
-        
-        console.log('✅ [RecruitUnit] Effects applied');
-        
+
         // Step 4: Create army with NPC actor and army type
         const { armyService } = await import('../../services/army');
         const army = await armyService.createArmy(name, armyLevel, {
           type: armyType,
           image: ARMY_TYPES[armyType].image
         });
-        
-        console.log('🏗️ [RecruitUnit] Army created:', {
-          id: army.id,
-          name: army.name,
-          level: army.level,
-          actorId: army.actorId
-        });
-        
+
         // Step 5: Assign to selected settlement (if any)
         if (settlementId && settlementId !== army.supportedBySettlementId) {
-          console.log(`🏘️ [RecruitUnit] Assigning to settlement: ${settlementId}`);
+
           await armyService.assignArmyToSettlement(army.id, settlementId);
         }
         
@@ -335,8 +322,7 @@ export const RecruitUnitAction = {
           const settlement = kingdom.settlements.find(s => s.id === army.supportedBySettlementId);
           
           if (settlement && settlement.location && (settlement.location.x !== 0 || settlement.location.y !== 0)) {
-            console.log(`📍 [RecruitUnit] Placing token on settlement at (${settlement.location.x}, ${settlement.location.y})`);
-            
+
             try {
               const scene = game?.scenes?.current;
               if (scene) {
@@ -347,13 +333,12 @@ export const RecruitUnitAction = {
                 
                 // Place token via GM-safe service method
                 await armyService.placeArmyToken(army.actorId, scene.id, x, y);
-                
-                console.log(`✅ [RecruitUnit] Token placed at (${x}, ${y})`);
+
               } else {
-                console.log('⚠️ [RecruitUnit] No active scene - token not placed');
+
               }
             } catch (error) {
-              console.error('⚠️ [RecruitUnit] Failed to place token:', error);
+              logger.error('⚠️ [RecruitUnit] Failed to place token:', error);
               // Don't fail the whole action if token placement fails
             }
           }
@@ -369,7 +354,7 @@ export const RecruitUnitAction = {
         return createSuccessResult(message);
         
       } catch (error) {
-        console.error('❌ [RecruitUnit] Error:', error);
+        logger.error('❌ [RecruitUnit] Error:', error);
         logActionError('recruit-unit', error as Error);
         return createErrorResult(error instanceof Error ? error.message : 'Failed to recruit army');
       }

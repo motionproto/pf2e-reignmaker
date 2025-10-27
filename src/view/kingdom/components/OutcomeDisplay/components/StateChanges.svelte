@@ -21,8 +21,8 @@
   
   // Debug logging
   $: {
-    console.log('🔍 [StateChanges] customComponentData:', customComponentData);
-    console.log('🔍 [StateChanges] hasCustomCost:', hasCustomCost);
+
+
   }
   
   // Extract dice modifiers that should be shown as rollers
@@ -98,7 +98,7 @@
   function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
     // Handle undefined or empty resource
     if (!resource) {
-      console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
+      logger.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
       return `Unknown modifier: ${value}`;
     }
     

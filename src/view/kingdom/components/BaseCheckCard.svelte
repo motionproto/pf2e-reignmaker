@@ -217,8 +217,7 @@
   function handleApplyResult(event: CustomEvent) {
     // NEW ARCHITECTURE: Forward ResolutionData directly from OutcomeDisplay
     // event.detail is already a ResolutionData object (numericModifiers, manualEffects, complexActions)
-    console.log('📤 [BaseCheckCard] Forwarding ResolutionData:', event.detail);
-    
+
     dispatch('primary', {
       checkId: id,
       checkType,

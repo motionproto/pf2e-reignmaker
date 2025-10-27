@@ -10,6 +10,7 @@
  */
 
 import { hexToKingmakerId } from '../hex-selector/coordinates';
+import { logger } from '../../utils/Logger';
 
 export interface OutlineSegment {
   start: { x: number; y: number };
@@ -71,11 +72,10 @@ const CUBE_DIR_TO_EDGE = [
  * Uses Foundry's shiftCube to test neighbors in cube coordinate space
  */
 export function generateTerritoryOutline(hexIds: string[]): TerritoryOutlineResult {
-  console.log(`[TerritoryOutline] Generating outline for ${hexIds.length} hexes...`);
-  
+
   const canvas = (globalThis as any).canvas;
   if (!canvas?.grid) {
-    console.warn('[TerritoryOutline] Canvas grid not available');
+    logger.warn('[TerritoryOutline] Canvas grid not available');
     return { outlines: [] };
   }
 
@@ -114,11 +114,7 @@ export function generateTerritoryOutline(hexIds: string[]): TerritoryOutlineResu
       
       // Debug: Log first hex's vertices
       if (DEBUG_VERTICES && hexId === hexIds[0]) {
-        console.log('[TerritoryOutline] DEBUG - First hex vertices:', {
-          hexId,
-          center,
-          vertices: worldVertices.map((v: any, idx: number) => ({ idx, ...v }))
-        });
+
       }
       
       // Test each of the 6 directions
@@ -140,17 +136,13 @@ export function generateTerritoryOutline(hexIds: string[]): TerritoryOutlineResu
       }
       
     } catch (error) {
-      console.error(`[TerritoryOutline] Failed to process hex ${hexId}:`, error);
+      logger.error(`[TerritoryOutline] Failed to process hex ${hexId}:`, error);
     }
   }
-  
-  console.log(`[TerritoryOutline] Found ${boundaryEdges.length} boundary edges`);
-  
+
   // Connect boundary edges into continuous paths
   const outlinePaths = connectEdges(boundaryEdges);
-  
-  console.log(`[TerritoryOutline] ✅ Created ${outlinePaths.length} outline path(s)`);
-  
+
   return {
     outlines: outlinePaths,
     debugInfo: {

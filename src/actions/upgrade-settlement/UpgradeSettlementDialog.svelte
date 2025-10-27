@@ -89,13 +89,13 @@
   async function loadEligibleSettlements() {
     const actor = getKingdomActor();
     if (!actor) {
-      console.error('❌ [UpgradeSettlementDialog] No kingdom actor available');
+      logger.error('❌ [UpgradeSettlementDialog] No kingdom actor available');
       return;
     }
     
     const kingdom = actor.getKingdomData();
     if (!kingdom) {
-      console.error('❌ [UpgradeSettlementDialog] No kingdom data available');
+      logger.error('❌ [UpgradeSettlementDialog] No kingdom data available');
       return;
     }
     
@@ -105,8 +105,7 @@
     eligibleSettlements = kingdom.settlements
       .map(s => canUpgradeSettlement(s, availableGold))
       .filter((info): info is SettlementUpgradeInfo => info !== null);
-    
-    console.log(`🏰 [UpgradeSettlementDialog] Found ${eligibleSettlements.length} eligible settlements`);
+
   }
   
   async function selectSettlement(info: SettlementUpgradeInfo) {
@@ -117,16 +116,7 @@
     }
     
     selectedSettlementId = info.settlement.id;
-    
-    console.log('🏰 [UpgradeSettlementDialog] Settlement selected:', {
-      settlementId: info.settlement.id,
-      name: info.settlement.name,
-      currentLevel: info.currentLevel,
-      newLevel: info.newLevel,
-      cost: info.actualCost,
-      outcome
-    });
-    
+
     // Store settlement metadata
     if (instance) {
       const metadata = {
@@ -139,8 +129,7 @@
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: metadata
       });
-      
-      console.log('✅ [UpgradeSettlementDialog] Settlement metadata stored');
+
     }
     
     // Dispatch selection event with modifiers (gold cost)
@@ -156,8 +145,7 @@
         }
       ]
     };
-    
-    console.log('📤 [UpgradeSettlementDialog] Dispatching selection event:', selectionData);
+
     dispatch('selection', selectionData);
   }
   

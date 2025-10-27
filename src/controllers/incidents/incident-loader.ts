@@ -44,12 +44,10 @@ export class IncidentLoader {
      */
     loadIncidents(): void {
         if (this.incidentsLoaded) {
-            logger.debug('Incidents already loaded, skipping...');
+
             return;
         }
 
-        logger.debug('Loading incidents from imported data...');
-        
         try {
             // Load incidents from the imported JSON data
             const rawIncidentsList = incidentsData as RawIncidentData[];
@@ -95,11 +93,10 @@ export class IncidentLoader {
             }
             
             this.incidentsLoaded = true;
-            logger.debug(`Successfully loaded ${this.incidents.size} incidents`);
-            
+
             // Log incident counts by severity for verification
             const severityCounts = this.getIncidentCountsBySeverity();
-            logger.debug('Incidents loaded by severity:', severityCounts);
+
         } catch (error) {
             logger.error('Failed to load incidents:', error);
             // Fallback to empty map
@@ -117,8 +114,7 @@ export class IncidentLoader {
         }
 
         const incidentsBySeverity = this.getIncidentsBySeverity(severity);
-        logger.debug(`Getting random ${severity} incident from ${incidentsBySeverity.length} available incidents`);
-        
+
         if (incidentsBySeverity.length === 0) {
             logger.error(`No ${severity} incidents available`);
             return null;
@@ -126,8 +122,7 @@ export class IncidentLoader {
 
         const randomIndex = Math.floor(Math.random() * incidentsBySeverity.length);
         const selectedIncident = incidentsBySeverity[randomIndex];
-        logger.debug(`Selected incident: ${selectedIncident.name} (${selectedIncident.id})`);
-        
+
         return selectedIncident;
     }
 

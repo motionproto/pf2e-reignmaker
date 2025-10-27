@@ -71,8 +71,7 @@ export class StructuresService {
             previousStructureId = structure.id;
           }
         }
-        
-        logger.debug(`Loaded ${this.families.length} structure families (${this.structures.size} total structures)`);
+
       } else {
         logger.error('Invalid structures data format - expected families array');
       }
@@ -414,9 +413,7 @@ export class StructuresService {
    */
   calculateDiplomaticCapacity(settlement: Settlement): number {
     let total = 0;
-    
-    logger.info(`🏛️ [StructuresService] Calculating diplomatic capacity for ${settlement.name}...`);
-    
+
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
       if (this.isStructureDamaged(settlement, structureId)) {
@@ -428,14 +425,13 @@ export class StructuresService {
         // Look for diplomaticCapacity modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'diplomaticCapacity' && modifier.type === 'static') {
-            logger.info(`  ✅ ${structure.name} (T${structure.tier}): +${modifier.value}`);
+
             total += modifier.value;
           }
         }
       }
     }
-    
-    logger.info(`  📊 Total diplomatic capacity: ${total}`);
+
     return total;
   }
   

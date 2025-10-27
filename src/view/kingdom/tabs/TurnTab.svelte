@@ -29,15 +29,7 @@
       : actualPhase;
    
    // Debug which phase is being displayed
-   $: console.log('🔍 [TurnTab DEBUG] Current phase display:', {
-      actualPhase,
-      viewingPhase: $viewingPhase,
-      displayPhase,
-      isUpkeepPhase: displayPhase === TurnPhase.UPKEEP,
-      turnPhaseUpkeepValue: TurnPhase.UPKEEP,
-      stringComparison: displayPhase === 'Upkeep'
-   });
-   
+
    // Initialize viewingPhase to match actual phase only on mount
    // Don't use reactive statement as it interferes with manual phase selection
    onMount(() => {

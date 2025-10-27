@@ -3,6 +3,7 @@
 
 import type { TerrainType, TravelDifficulty } from '../types/terrain';
 import type { OwnershipValue } from '../types/ownership';
+import { logger } from '../utils/Logger';
 
 /**
  * Types of worksites that can be built according to Kingdom Rules
@@ -68,7 +69,7 @@ export class Worksite {
           default:
             // Any terrain with farmland should produce something
             // This ensures farmland features always work
-            console.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
+            logger.warn(`Farmstead on unexpected terrain: ${terrain}, defaulting to 1 food`);
             return new Map([['food', 1]]);
         }
         

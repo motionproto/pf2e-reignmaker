@@ -23,6 +23,7 @@ import { getOverlayManager } from '../map/OverlayManager';
 import type { HexStyle } from '../map/types';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { getAdjacentRoadsAndSettlements } from '../../actions/build-roads/roadValidator';
+import { logger } from '../../utils/Logger';
 
 export type { HexSelectionConfig, HexSelectionType, ColorConfig } from './types';
 
@@ -80,10 +81,9 @@ export class HexSelectorService {
         // 7. Notify user
         const ui = (globalThis as any).ui;
         ui?.notifications?.info(`Click hexes on the map to select them`);
-        
-        console.log(`🗺️ [HexSelector] Started selection mode: ${config.title} (${config.count} hexes)`);
+
       } catch (error) {
-        console.error('[HexSelector] Failed to start selection:', error);
+        logger.error('[HexSelector] Failed to start selection:', error);
         this.cleanup();
         resolve(null);
       }
@@ -94,45 +94,40 @@ export class HexSelectorService {
    * Switch to the kingdom map scene
    */
   private async switchToKingdomScene(): Promise<void> {
-    console.log('[HexSelector] Attempting scene switch...');
-    
+
     try {
       const game = (globalThis as any).game;
       
       // Get kingdom scene ID from settings
       const sceneId = game.settings?.get('pf2e-reignmaker', 'kingdomSceneId');
-      console.log('[HexSelector] Kingdom scene ID from settings:', sceneId);
-      
+
       if (!sceneId) {
-        console.warn('[HexSelector] ⚠️  No kingdom scene configured in settings - skipping scene switch');
-        console.log('[HexSelector] 💡 Configure scene in Module Settings to enable auto-switching');
+        logger.warn('[HexSelector] ⚠️  No kingdom scene configured in settings - skipping scene switch');
+
         return;
       }
       
       const scene = game.scenes?.get(sceneId);
-      console.log('[HexSelector] Scene lookup result:', scene?.name || 'NOT FOUND');
-      
+
       if (!scene) {
-        console.warn('[HexSelector] ⚠️  Kingdom scene not found:', sceneId);
+        logger.warn('[HexSelector] ⚠️  Kingdom scene not found:', sceneId);
         return;
       }
       
       // Only switch if not already viewing this scene
       const currentSceneId = game.scenes?.active?.id;
-      console.log('[HexSelector] Current scene:', currentSceneId, '- Target scene:', sceneId);
-      
+
       if (currentSceneId !== sceneId) {
-        console.log('[HexSelector] Switching to scene:', scene.name);
+
         await scene.view();
-        console.log('✅ [HexSelector] Switched to kingdom scene:', scene.name);
-        
+
         // Give the scene time to render
         await new Promise(resolve => setTimeout(resolve, 300));
       } else {
-        console.log('✅ [HexSelector] Already viewing kingdom scene');
+
       }
     } catch (error) {
-      console.warn('[HexSelector] ❌ Failed to switch scene:', error);
+      logger.warn('[HexSelector] ❌ Failed to switch scene:', error);
     }
   }
   
@@ -140,8 +135,7 @@ export class HexSelectorService {
    * Minimize the Reignmaker Application window
    */
   private minimizeReignmakerApp(): void {
-    console.log('[HexSelector] Attempting to minimize Reignmaker app...');
-    
+
     try {
       const ui = (globalThis as any).ui;
       
@@ -154,15 +148,13 @@ export class HexSelectorService {
         w.element?.id === 'pf2e-reignmaker' ||
         w.element?.[0]?.id === 'pf2e-reignmaker'
       );
-      
-      console.log('[HexSelector] Strategy 1 (element id="pf2e-reignmaker") result:', reignmakerApp ? 'FOUND' : 'not found');
-      
+
       // Strategy 2: Find by constructor name
       if (!reignmakerApp) {
         reignmakerApp = ui?.windows?.find((w: any) => 
           w.constructor?.name === 'KingdomApp'
         );
-        console.log('[HexSelector] Strategy 2 (constructor name) result:', reignmakerApp ? 'FOUND' : 'not found');
+
       }
       
       // Strategy 3: Find by title
@@ -170,32 +162,25 @@ export class HexSelectorService {
         reignmakerApp = ui?.windows?.find((w: any) => 
           w.title?.includes('ReignMaker')
         );
-        console.log('[HexSelector] Strategy 3 (title) result:', reignmakerApp ? 'FOUND' : 'not found');
+
       }
       
       if (reignmakerApp) {
-        console.log('[HexSelector] Found app:', {
-          constructor: reignmakerApp.constructor?.name,
-          title: reignmakerApp.title,
-          elementId: reignmakerApp.element?.id || reignmakerApp.element?.[0]?.id,
-          minimized: reignmakerApp.minimized,
-          hasMinimize: typeof reignmakerApp.minimize === 'function'
-        });
-        
+
         if (reignmakerApp.minimize && !reignmakerApp.minimized) {
           reignmakerApp.minimize();
-          console.log('✅ [HexSelector] Minimized Reignmaker app');
+
         } else if (reignmakerApp.minimized) {
-          console.log('ℹ️  [HexSelector] Reignmaker app already minimized');
+
         } else {
-          console.warn('[HexSelector] ⚠️  App found but no minimize() method available');
+          logger.warn('[HexSelector] ⚠️  App found but no minimize() method available');
         }
       } else {
-        console.warn('[HexSelector] ⚠️  Could not find Reignmaker app to minimize');
-        console.log('[HexSelector] 💡 App will need to be manually minimized');
+        logger.warn('[HexSelector] ⚠️  Could not find Reignmaker app to minimize');
+
       }
     } catch (error) {
-      console.warn('[HexSelector] ❌ Failed to minimize Reignmaker app:', error);
+      logger.warn('[HexSelector] ❌ Failed to minimize Reignmaker app:', error);
     }
   }
   
@@ -221,10 +206,10 @@ export class HexSelectorService {
       
       if (reignmakerApp && reignmakerApp.minimized) {
         reignmakerApp.maximize();
-        console.log('✅ [HexSelector] Restored Reignmaker app');
+
       }
     } catch (error) {
-      console.warn('[HexSelector] Failed to restore Reignmaker app:', error);
+      logger.warn('[HexSelector] Failed to restore Reignmaker app:', error);
     }
   }
   
@@ -242,16 +227,14 @@ export class HexSelectorService {
     
     canvas.stage.on('click', this.canvasClickHandler);
     canvas.stage.on('mousemove', this.canvasMoveHandler);
-    
-    console.log('[HexSelector] Attached canvas click and mousemove listeners');
+
   }
   
   /**
    * Show relevant overlays based on action type
    */
   private async showRelevantOverlays(colorType: string): Promise<void> {
-    console.log(`[HexSelector] Showing overlays for action type: ${colorType}`);
-    
+
     // Clear any existing selection/hover layers
     this.mapLayer.clearSelection();
     this.mapLayer.hideInteractiveHover();
@@ -413,9 +396,7 @@ export class HexSelectorService {
       
       // Convert to Kingmaker format
       const hexId = hexToKingmakerId(offset);
-      
-      console.log(`🖱️ [HexSelector] Clicked hex: ${hexId}`);
-      
+
       // Validate hex if validation function provided (pass pending selections for road chaining)
       if (this.config.validationFn && !this.config.validationFn(hexId, this.selectedHexes)) {
         const ui = (globalThis as any).ui;
@@ -433,12 +414,11 @@ export class HexSelectorService {
           this.selectedHexes.splice(index, 1);
           this.selectedRoadConnections.delete(hexId);
           this.mapLayer.removeHexFromSelection(hexId);
-          console.log(`  ↩️  Deselected hex: ${hexId}`);
-          
+
           // Validate remaining selections and remove orphaned hexes
           const removed = this.validateAndPruneInvalidSelections();
           if (removed.length > 0) {
-            console.log(`  ⚠️  [HexSelector] Cascading removal: ${removed.length} orphaned hex(es) removed`);
+
           }
           
           this.updatePanel();
@@ -460,10 +440,10 @@ export class HexSelectorService {
         const style = this.getSelectionStyle();
         this.mapLayer.addHexToSelection(hexId, style, roadConnections);
         this.updatePanel();
-        console.log(`  ✅ Selected hex: ${hexId} (${this.selectedHexes.length}/${this.config.count})`);
+
       }
     } catch (error) {
-      console.error('[HexSelector] Error handling canvas click:', error);
+      logger.error('[HexSelector] Error handling canvas click:', error);
     }
   }
   
@@ -502,7 +482,7 @@ export class HexSelectorService {
         const isValid = this.config.validationFn(hexId, otherPending);
         
         if (!isValid) {
-          console.log(`  🔗 [HexSelector] Removing orphaned hex: ${hexId}`);
+
           this.selectedHexes.splice(i, 1);
           this.selectedRoadConnections.delete(hexId);
           this.mapLayer.removeHexFromSelection(hexId);
@@ -632,12 +612,11 @@ export class HexSelectorService {
             this.selectedHexes.splice(index, 1);
             this.selectedRoadConnections.delete(hexId);
             this.mapLayer.removeHexFromSelection(hexId);
-            console.log(`  ↩️  [HexSelector] Deselected hex from panel: ${hexId}`);
-            
+
             // Validate remaining selections and remove orphaned hexes
             const removed = this.validateAndPruneInvalidSelections();
             if (removed.length > 0) {
-              console.log(`  ⚠️  [HexSelector] Cascading removal: ${removed.length} orphaned hex(es) removed`);
+
             }
             
             this.updatePanel();
@@ -663,9 +642,7 @@ export class HexSelectorService {
     if (!this.config || this.selectedHexes.length !== this.config.count) {
       return;
     }
-    
-    console.log(`✅ [HexSelector] Selection complete: ${this.selectedHexes.join(', ')}`);
-    
+
     const hexes = [...this.selectedHexes];
     const resolver = this.resolve; // Save resolver before cleanup
     this.cleanup();
@@ -676,8 +653,7 @@ export class HexSelectorService {
    * Handle Cancel button click
    */
   private handleCancel(): void {
-    console.log(`❌ [HexSelector] Selection cancelled`);
-    
+
     const resolver = this.resolve; // Save resolver before cleanup
     this.cleanup();
     resolver?.(null); // Call after cleanup

@@ -7,6 +7,7 @@ import fortificationEarthenImg from '../../../../img/map_icons/fortification_ear
 import fortificationTowerWoodImg from '../../../../img/map_icons/fortification_tower_wood.webp';
 import fortificationTowerStoneImg from '../../../../img/map_icons/fortification_tower_stone.webp';
 import fortificationKeepImg from '../../../../img/map_icons/fortification_keep.webp';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Fortification icon mapping (tier → image path)
@@ -32,10 +33,9 @@ export async function renderFortificationIcons(
   fortificationData: Array<{ id: string; tier: number; maintenancePaid: boolean }>,
   canvas: any
 ): Promise<number> {
-  console.log(`[FortificationRenderer] 🏰 Rendering fortification icons for ${fortificationData.length} hexes...`);
 
   if (!canvas?.grid) {
-    console.warn('[FortificationRenderer] ❌ Canvas grid not available');
+    logger.warn('[FortificationRenderer] ❌ Canvas grid not available');
     return 0;
   }
 
@@ -48,14 +48,14 @@ export async function renderFortificationIcons(
       // Get icon path for this tier
       const iconPath = FORTIFICATION_ICONS[tier];
       if (!iconPath) {
-        console.warn(`[FortificationRenderer] No icon found for tier: ${tier}`);
+        logger.warn(`[FortificationRenderer] No icon found for tier: ${tier}`);
         continue;
       }
 
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
-        console.warn(`[FortificationRenderer] ⚠️ Invalid hex ID format: ${id}`);
+        logger.warn(`[FortificationRenderer] ⚠️ Invalid hex ID format: ${id}`);
         continue;
       }
 
@@ -63,7 +63,7 @@ export async function renderFortificationIcons(
       const j = parseInt(parts[1], 10);
       
       if (isNaN(i) || isNaN(j)) {
-        console.warn(`[FortificationRenderer] ⚠️ Invalid hex coordinates: ${id}`);
+        logger.warn(`[FortificationRenderer] ⚠️ Invalid hex coordinates: ${id}`);
         continue;
       }
 
@@ -107,17 +107,15 @@ export async function renderFortificationIcons(
         borderGraphics.lineStyle(3, 0xff0000, 0.8); // Red border, 80% opacity
         borderGraphics.drawCircle(center.x, center.y, iconSize / 2 + 5);
         layer.addChild(borderGraphics);
-        
-        console.log(`[FortificationRenderer] ⚠️ Hex ${id} - unpaid maintenance (red border)`);
+
       }
       
       successCount++;
       
     } catch (error) {
-      console.error(`[FortificationRenderer] Failed to draw fortification icon for hex ${id}:`, error);
+      logger.error(`[FortificationRenderer] Failed to draw fortification icon for hex ${id}:`, error);
     }
   }
 
-  console.log(`[FortificationRenderer] ✅ Drew ${successCount}/${fortificationData.length} fortification icons`);
   return successCount;
 }

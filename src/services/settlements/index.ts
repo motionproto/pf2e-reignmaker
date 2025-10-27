@@ -255,8 +255,7 @@ export class SettlementService {
    * @param settlementId - Settlement ID to update
    */
   async updateSettlementSkillBonuses(settlementId: string): Promise<void> {
-    logger.debug(`🎯 [SettlementService] Updating skill bonuses for settlement: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -285,7 +284,7 @@ export class SettlementService {
       const s = k.settlements.find(s => s.id === settlementId);
       if (s) {
         s.skillBonuses = newBonuses;
-        logger.debug(`✅ [SettlementService] Updated skill bonuses:`, newBonuses);
+
       }
     });
   }
@@ -295,8 +294,7 @@ export class SettlementService {
    * Automatically recalculates settlement and kingdom capacities
    */
   async addStructure(settlementId: string, structureId: string): Promise<void> {
-    logger.info(`🏗️ [SettlementService] Adding structure ${structureId} to settlement ${settlementId}`);
-    
+
     const { updateKingdom } = await import('../../stores/KingdomStore');
     
     await updateKingdom(k => {
@@ -308,8 +306,7 @@ export class SettlementService {
     
     await this.recalculateSettlement(settlementId);
     await this.recalculateKingdom();
-    
-    logger.info(`✅ [SettlementService] Structure added and capacities recalculated`);
+
   }
   
   /**
@@ -317,8 +314,7 @@ export class SettlementService {
    * Automatically recalculates settlement and kingdom capacities
    */
   async removeStructure(settlementId: string, structureId: string): Promise<void> {
-    logger.debug(`🏗️ [SettlementService] Removing structure ${structureId} from settlement ${settlementId}`);
-    
+
     const { updateKingdom } = await import('../../stores/KingdomStore');
     
     await updateKingdom(k => {
@@ -330,8 +326,7 @@ export class SettlementService {
     
     await this.recalculateSettlement(settlementId);
     await this.recalculateKingdom();
-    
-    logger.debug(`✅ [SettlementService] Structure removed and capacities recalculated`);
+
   }
   
   /**
@@ -339,8 +334,7 @@ export class SettlementService {
    * Called automatically when structures change
    */
   private async recalculateSettlement(settlementId: string): Promise<void> {
-    logger.info(`🔄 [SettlementService] Recalculating settlement: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -407,14 +401,7 @@ export class SettlementService {
       
       // Skill bonuses
       s.skillBonuses = this.calculateSkillBonuses(s);
-      
-      logger.debug(`✅ [SettlementService] Settlement recalculated:`, {
-        foodStorageCapacity: s.foodStorageCapacity,
-        imprisonedUnrestCapacity: s.imprisonedUnrestCapacityValue,
-        goldIncome: s.goldIncome,
-        armySupport: s.armySupport,
-        skillBonuses: Object.keys(s.skillBonuses).length
-      });
+
     });
   }
   
@@ -423,8 +410,7 @@ export class SettlementService {
    * Called automatically when settlement capacities change
    */
   private async recalculateKingdom(): Promise<void> {
-    logger.info(`🔄 [SettlementService] Recalculating kingdom capacities`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -476,8 +462,7 @@ export class SettlementService {
       // Base diplomatic capacity is 1, plus any bonuses from structures
       k.resources.diplomaticCapacity = 1 + totals.diplomaticCapacity;
       k.resources.imprisonedUnrestCapacity = totals.imprisonedUnrestCapacity;
-      
-      logger.debug(`✅ [SettlementService] Kingdom capacities updated:`, totals);
+
     });
   }
   
@@ -499,8 +484,7 @@ export class SettlementService {
    * @param imagePath - New image path (empty string to use default)
    */
   async updateSettlementImage(settlementId: string, imagePath: string): Promise<void> {
-    logger.debug(`🏰 [SettlementService] Updating settlement image: ${settlementId}`);
-    
+
     const { getKingdomActor } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -522,8 +506,7 @@ export class SettlementService {
     const finalImagePath = imagePath || undefined;
     
     await this.updateSettlement(settlementId, { imagePath: finalImagePath });
-    
-    logger.debug(`✅ [SettlementService] Updated image for ${settlement.name}`);
+
   }
   
   /**
@@ -535,8 +518,7 @@ export class SettlementService {
    * @param iconPath - New map icon path (undefined to use default tier icon)
    */
   async updateSettlementMapIcon(settlementId: string, iconPath: string | undefined): Promise<void> {
-    logger.debug(`🗺️ [SettlementService] Updating settlement map icon: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -569,12 +551,11 @@ export class SettlementService {
         );
         if (settlementFeature) {
           settlementFeature.mapIconPath = iconPath;
-          logger.debug(`✅ [SettlementService] Synced map icon to hex feature at ${hexId}`);
+
         }
       }
     });
-    
-    logger.debug(`✅ [SettlementService] Updated map icon for ${settlement.name}`);
+
   }
   
   /**
@@ -584,8 +565,7 @@ export class SettlementService {
    * @param updates - Partial settlement updates
    */
   async updateSettlement(settlementId: string, updates: Partial<Settlement>): Promise<void> {
-    logger.debug(`🏰 [SettlementService] Updating settlement: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -629,12 +609,11 @@ export class SettlementService {
             if (settlementFeature) {
               if (nameChanged) settlementFeature.name = s.name;
               if (tierChanged) settlementFeature.tier = s.tier;
-              logger.debug(`🔄 [SettlementService] Synced settlement data to hex feature at ${hexId}`);
+
             }
           }
         }
-        
-        logger.debug(`✅ [SettlementService] Updated ${s.name}`);
+
       }
     });
     
@@ -649,18 +628,18 @@ export class SettlementService {
       if (oldHasLocation) {
         // Remove settlement feature from old location
         await territoryService.deleteKingmakerSettlement(oldLocation);
-        logger.debug(`🗺️ [SettlementService] Removed ${updatedSettlement.name} from Kingmaker map at ${oldLocation.x}:${oldLocation.y}`);
+
       }
       
       if (newHasLocation) {
         // Add settlement feature to new location
         await territoryService.updateKingmakerSettlement(updatedSettlement);
-        logger.debug(`🗺️ [SettlementService] Added ${updatedSettlement.name} to Kingmaker map at ${updatedSettlement.location.x}:${updatedSettlement.location.y}`);
+
       }
     } else if ((nameChanged || tierChanged) && (updatedSettlement.location.x !== 0 || updatedSettlement.location.y !== 0)) {
       // Name or tier changed - update existing feature
       await territoryService.updateKingmakerSettlement(updatedSettlement);
-      logger.debug(`🗺️ [SettlementService] Updated ${updatedSettlement.name} ${tierChanged ? 'tier' : 'name'} on Kingmaker map`);
+
     }
   }
   
@@ -669,8 +648,7 @@ export class SettlementService {
    * This should be called whenever settlement structures change
    */
   async updateKingdomCapacities(): Promise<void> {
-    logger.debug(`🎯 [SettlementService] Updating kingdom-level capacities`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -722,12 +700,7 @@ export class SettlementService {
       k.resources.armyCapacity = totalArmyCapacity;
       // Base diplomatic capacity is 1, plus any bonuses from structures
       k.resources.diplomaticCapacity = 1 + totalDiplomaticCapacity;
-      
-      logger.debug(`✅ [SettlementService] Updated kingdom capacities:`, {
-        foodCapacity: totalFoodCapacity,
-        armyCapacity: totalArmyCapacity,
-        diplomaticCapacity: totalDiplomaticCapacity
-      });
+
     });
   }
   
@@ -743,8 +716,7 @@ export class SettlementService {
     structuresRemoved: number;
     armiesMarkedUnsupported: number;
   }> {
-    logger.debug(`🏰 [SettlementService] Deleting settlement: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -787,7 +759,7 @@ export class SettlementService {
         const hasActualRoad = k.roadsBuilt?.includes(settlementHexId);
         if (!hasActualRoad) {
           hex.hasRoad = false;
-          logger.debug(`🛣️ [SettlementService] Cleared hasRoad flag from hex ${settlementHexId}`);
+
         }
       }
       
@@ -797,9 +769,7 @@ export class SettlementService {
     
     // Remove from Kingmaker map
     await territoryService.deleteKingmakerSettlement(settlementLocation);
-    
-    logger.debug(`✅ [SettlementService] Deleted ${settlementName}: ${structuresRemoved} structures, ${armiesMarkedUnsupported} armies unsupported`);
-    
+
     return {
       name: settlementName,
       structuresRemoved,
@@ -814,8 +784,7 @@ export class SettlementService {
    * @param settlementId - Settlement ID
    */
   async upgradeSettlement(settlementId: string): Promise<void> {
-    logger.debug(`🏰 [SettlementService] Upgrading settlement: ${settlementId}`);
-    
+
     const { getKingdomActor, updateKingdom } = await import('../../stores/KingdomStore');
     
     const actor = getKingdomActor();
@@ -859,7 +828,7 @@ export class SettlementService {
         // Update to new tier's default image if settlement was using old default
         if (isUsingDefaultImage) {
           s.imagePath = getDefaultSettlementImage(nextTier);
-          logger.debug(`🖼️ [SettlementService] Updated default image to ${nextTier} tier`);
+
         }
         
         upgradedSettlement = s;
@@ -870,8 +839,7 @@ export class SettlementService {
     if (upgradedSettlement) {
       await territoryService.updateKingmakerSettlement(upgradedSettlement);
     }
-    
-    logger.debug(`✅ [SettlementService] Upgraded ${settlement.name} to ${nextTier}`);
+
   }
   
   
@@ -882,8 +850,7 @@ export class SettlementService {
    * @param newLevel - New settlement level (1-20)
    */
   async updateSettlementLevel(settlementId: string, newLevel: number): Promise<void> {
-    logger.debug(`🏰 [SettlementService] Updating settlement level: ${settlementId} → ${newLevel}`);
-    
+
     // Validate level range
     if (newLevel < 1 || newLevel > 20) {
       throw new Error(`Invalid settlement level: ${newLevel} (must be 1-20)`);
@@ -913,13 +880,13 @@ export class SettlementService {
     
     if (newLevel >= 8 && structureCount >= 8 && oldTier !== SettlementTier.METROPOLIS) {
       newTier = SettlementTier.METROPOLIS;
-      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to Metropolis!`);
+
     } else if (newLevel >= 5 && structureCount >= 4 && oldTier === SettlementTier.TOWN) {
       newTier = SettlementTier.CITY;
-      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to City!`);
+
     } else if (newLevel >= 2 && structureCount >= 2 && oldTier === SettlementTier.VILLAGE) {
       newTier = SettlementTier.TOWN;
-      logger.info(`🎉 [SettlementService] ${settlement.name} transitions to Town!`);
+
     }
     
     // Check if settlement is using the old tier's default image
@@ -934,13 +901,12 @@ export class SettlementService {
       // Update to new tier's default image if settlement was using old default
       if (isUsingDefaultImage) {
         updates.imagePath = getDefaultSettlementImage(newTier);
-        logger.debug(`🖼️ [SettlementService] Updated default image to ${newTier} tier`);
+
       }
     }
     
     await this.updateSettlement(settlementId, updates);
-    
-    logger.debug(`✅ [SettlementService] Settlement level updated to ${newLevel}${newTier !== oldTier ? ` (tier: ${newTier})` : ''}`);
+
   }
 }
 

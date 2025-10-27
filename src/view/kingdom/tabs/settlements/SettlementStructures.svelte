@@ -11,6 +11,7 @@
    export let settlement: Settlement;
    
    let showAddDialog = false;
+   let dialogRequiredCount: number | undefined = undefined;
    let expandedCategories: Set<string> = new Set();
    let dismissedWarning = false;
    
@@ -115,6 +116,12 @@
    }
    
    function openAddDialog() {
+      dialogRequiredCount = undefined;
+      showAddDialog = true;
+   }
+   
+   function openAddDialogWithRequired() {
+      dialogRequiredCount = requiredStructures - currentStructures;
       showAddDialog = true;
    }
    
@@ -179,6 +186,9 @@
             <div class="warning-text">
                <strong>Insufficient Structures for {settlement.tier}</strong>
                <p>This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)</p>
+               <Button variant="small_secondary" icon="fas fa-plus" on:click={openAddDialogWithRequired}>
+                  Add Structures
+               </Button>
             </div>
             <button 
                class="dismiss-button" 
@@ -323,6 +333,7 @@
 <SettlementStructureDialog 
    bind:show={showAddDialog}
    {settlement}
+   requiredCount={dialogRequiredCount}
    on:close={() => showAddDialog = false}
    on:structureAdded={() => {
       // Dialog handles closing, structures update automatically via store

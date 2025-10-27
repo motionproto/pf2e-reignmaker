@@ -94,9 +94,7 @@ export class TerritoryService {
             const grid = canvas.grid;
             const gridWidth = Math.floor(canvas.dimensions.width / grid.size);
             const gridHeight = Math.floor(canvas.dimensions.height / grid.size);
-            
-            logger.info(`[Territory Service] Importing custom hex grid: ${gridWidth}x${gridHeight}`);
-            
+
             // Generate hexes for entire grid
             const hexes: Hex[] = [];
             for (let i = 0; i < gridHeight; i++) {
@@ -117,9 +115,7 @@ export class TerritoryService {
                     hexes.push(hex);
                 }
             }
-            
-            logger.info(`[Territory Service] Generated ${hexes.length} hexes from grid`);
-            
+
             // Update kingdom store with territory data
             await this.updateKingdomStore(hexes);
             
@@ -184,9 +180,7 @@ export class TerritoryService {
             
             // Convert and filter claimed hexes
             const hexes: Hex[] = [];
-            
-            logger.debug('Starting Kingmaker sync, found region hexes:', regionHexes.size);
-            
+
             // Iterate through REGION hexes (map data) instead of state hexes (player data)
             // This ensures we get all ~300 map hexes, not just the ones with state
             for (const [numericId, regionHex] of regionHexes.entries()) {
@@ -209,7 +203,7 @@ export class TerritoryService {
                     terrainType = normalizeTerrainType(rawTerrain);
                 } else {
                     terrainType = 'plains'; // Default to plains if no terrain data
-                    logger.debug(`Hex ${dotNotationId} has no terrain data, using plains`);
+
                 }
                 
                 // Normalize travel difficulty
@@ -223,15 +217,7 @@ export class TerritoryService {
                 
                 // Debug log for each hex (reduced logging for performance)
                 if (claimedBy === PLAYER_KINGDOM || hexState.camp || hexState.features?.length > 0) {
-                    logger.debug(`Processing hex ${dotNotationId}:`, {
-                        terrain: terrainType,
-                        travel: travelDifficulty,
-                        zone: zoneId,
-                        claimedBy: claimedBy,
-                        camp: hexState.camp,
-                        commodity: hexState.commodity,
-                        features: hexState.features
-                    });
+
                 }
                 
                 // Convert worksite (if hex has state)
@@ -242,12 +228,7 @@ export class TerritoryService {
                 
                 // Log commodity detection for debugging
                 if (commodities.size > 0) {
-                    logger.debug(`Hex ${dotNotationId} commodity analysis:`, {
-                        worksiteType: worksite?.type || 'none',
-                        rawCommodity: hexState.commodity || 'none',
-                        convertedCommodities: Array.from(commodities.entries()),
-                        expectedProduction: worksite?.getBaseProduction(terrainType)
-                    });
+
                 }
                 
                 // Parse row and col from dotNotationId
@@ -279,23 +260,17 @@ export class TerritoryService {
                 );
                 hexes.push(hex);
             }
-            
-            logger.debug(`Synced ${hexes.length} hexes with hex features`);
-            
+
             // Count settlement features for logging (settlements remain as hex features only)
             let settlementFeatureCount = 0;
             for (const hex of hexes) {
                 settlementFeatureCount += hex.features.filter(f => f.type === 'settlement').length;
             }
-            
-            logger.info(`[Territory Service] Found ${settlementFeatureCount} settlement features in hexes`);
-            logger.info(`[Territory Service] Settlement objects are created via UI, not during import`);
-            
+
+
             // Update kingdom store with territory data (no Settlement objects created here)
             await this.updateKingdomStore(hexes);
-            
-            logger.info(`[Territory Service] Kingdom store update completed successfully`);
-            
+
             return {
                 success: true,
                 hexesSynced: hexes.length,
@@ -319,8 +294,7 @@ export class TerritoryService {
      */
     private async updateKingdomStore(hexes: Hex[], settlements?: Settlement[]): Promise<void> {
         // Log territory update attempt
-        logger.info(`[Territory Service] Updating kingdom store with ${hexes.length} hexes`);
-        
+
         // Extract roads from hex hasRoad property
         const roadsBuilt: string[] = [];
         for (const hex of hexes) {
@@ -374,7 +348,7 @@ export class TerritoryService {
                 
                 if (newSettlements.length > 0) {
                     state.settlements = [...existingSettlements, ...newSettlements];
-                    logger.info(`[Territory Service] Imported ${newSettlements.length} settlements from Kingmaker`);
+
                 }
             }
             
@@ -389,7 +363,7 @@ export class TerritoryService {
                     existingRoads.add(hexId);
                 }
                 state.roadsBuilt = Array.from(existingRoads);
-                logger.info(`[Territory Service] Imported ${roadsBuilt.length} roads from Kingmaker`);
+
             }
             
             // Update worksite counts for UI display
@@ -424,14 +398,7 @@ export class TerritoryService {
             
             state.worksiteProduction = worksiteProduction;
             state.worksiteProductionByHex = worksiteProductionByHex;
-            
-            logger.debug('[Territory Service] Updated kingdom store with:', {
-                hexes: state.hexes.length,
-                worksiteCount: state.worksiteCount,
-                worksiteProduction: state.worksiteProduction,
-                productionByHexCount: state.worksiteProductionByHex.length
-            });
-            
+
             return state;
         });
         
@@ -605,7 +572,7 @@ export class TerritoryService {
         // Convert Kingmaker luxury to gold
         if (commodityType === 'luxury') {
             commodities.set('gold', 1);
-            logger.debug(`Converting Kingmaker luxury commodity to gold`);
+
         }
         // Map standard commodities
         else if (['food', 'lumber', 'stone', 'ore'].includes(commodityType)) {
@@ -641,7 +608,7 @@ export class TerritoryService {
         // Check if we already have this settlement
         const existing = existingSettlements.find(s => s.id === settlementId);
         if (existing) {
-            logger.debug(`Settlement ${settlementId} already exists, skipping duplicate creation`);
+
             return [];
         }
         
@@ -682,7 +649,7 @@ export class TerritoryService {
         
         // Skip unnamed/vacant features - they remain as hex features for location picker
         if (!hasName) {
-            logger.debug(`Skipping unnamed/vacant settlement feature at ${hexId}`);
+
             return [];
         }
         
@@ -697,14 +664,7 @@ export class TerritoryService {
         // Factory creates the ID, but we need to ensure it's correct
         settlement.id = settlementId;
         settlement.kingmakerLocation = kingmakerLocation;
-        
-        logger.debug(`Created settlement ${settlementId}:`, {
-            name: settlement.name,
-            tier: highestTierFeature.tier,
-            kingmakerLocation,
-            linked: true // Always linked since we only create named settlements
-        });
-        
+
         return [settlement];
     }
     
@@ -899,13 +859,13 @@ export class TerritoryService {
    */
   async updateKingmakerSettlement(settlement: Settlement): Promise<void> {
     if (!this.isKingmakerAvailable()) {
-      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+
       return;
     }
     
     // Skip if settlement has no location
     if (!settlement.location || (settlement.location.x === 0 && settlement.location.y === 0)) {
-      logger.debug(`[Territory Service] Settlement ${settlement.name} has no location, skipping map update`);
+
       return;
     }
     
@@ -919,28 +879,14 @@ export class TerritoryService {
       
       // Calculate hex key from settlement location (Kingmaker format: i * 1000 + j)
       const hexKey = (1000 * settlement.location.x) + settlement.location.y;
-      
-      logger.debug(`🗺️ [Territory Service] Updating settlement on map:`, {
-        settlement: settlement.name,
-        tier: settlement.tier,
-        location: `${settlement.location.x}.${settlement.location.y}`,
-        hexKey: hexKey
-      });
-      
+
       // Convert our tier to Kingmaker feature type
       const kingmakerType = this.tierToKingmakerFeatureType(settlement.tier);
       
       // Get existing hex state to preserve other properties
       const existingHexState = km.state.hexes[hexKey] || {};
       const existingFeatures = existingHexState.features || [];
-      
-      logger.debug(`🗺️ [Territory Service] Existing hex state:`, {
-        hexKey,
-        existingFeatures: existingFeatures.map((f: any) => ({ type: f.type, name: f.name })),
-        claimed: existingHexState.claimed,
-        explored: existingHexState.explored
-      });
-      
+
       // Remove any existing settlement features from this hex
       const nonSettlementFeatures = existingFeatures.filter((f: any) => 
         !['village', 'town', 'city', 'metropolis'].includes(f.type?.toLowerCase())
@@ -958,13 +904,7 @@ export class TerritoryService {
         ...nonSettlementFeatures,
         settlementFeature
       ];
-      
-      logger.debug(`🗺️ [Territory Service] Updated features:`, {
-        removed: existingFeatures.length - nonSettlementFeatures.length,
-        added: settlementFeature,
-        totalFeatures: updatedFeatures.length
-      });
-      
+
       // Update Kingmaker state - DEFAULT recursive behavior is what we want
       // This merges our hex into the existing hexes object
       km.state.updateSource({
@@ -977,9 +917,7 @@ export class TerritoryService {
       });
       
       await km.state.save();
-      
-      logger.info(`✅ [Territory Service] Updated Kingmaker map for "${settlement.name}" at ${settlement.location.x}:${settlement.location.y} (${kingmakerType})`);
-      
+
     } catch (error) {
       logger.error('[Territory Service] Failed to update Kingmaker settlement:', error);
     }
@@ -991,13 +929,13 @@ export class TerritoryService {
    */
   async clearKingmakerSettlementName(location: { x: number, y: number }): Promise<void> {
     if (!this.isKingmakerAvailable()) {
-      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+
       return;
     }
     
     // Skip if no valid location
     if (!location || (location.x === 0 && location.y === 0)) {
-      logger.debug('[Territory Service] Invalid location, skipping map update');
+
       return;
     }
     
@@ -1011,16 +949,11 @@ export class TerritoryService {
       
       // Calculate hex key (Kingmaker format: i * 1000 + j)
       const hexKey = (1000 * location.x) + location.y;
-      
-      logger.debug(`🗺️ [Territory Service] Clearing settlement name from map:`, {
-        location: `${location.x}.${location.y}`,
-        hexKey: hexKey
-      });
-      
+
       // Get existing hex state
       const existingHexState = km.state.hexes[hexKey];
       if (!existingHexState || !existingHexState.features) {
-        logger.debug(`[Territory Service] No features at ${location.x}:${location.y}, nothing to clear`);
+
         return;
       }
       
@@ -1037,12 +970,7 @@ export class TerritoryService {
         }
         return f;
       });
-      
-      logger.debug(`🗺️ [Territory Service] Settlement name cleared:`, {
-        existingCount: existingFeatures.length,
-        updatedCount: updatedFeatures.length
-      });
-      
+
       // Update Kingmaker state
       km.state.updateSource({
         hexes: {
@@ -1054,9 +982,7 @@ export class TerritoryService {
       });
       
       await km.state.save();
-      
-      logger.info(`✅ [Territory Service] Cleared settlement name from Kingmaker map at ${location.x}:${location.y}`);
-      
+
     } catch (error) {
       logger.error('[Territory Service] Failed to clear Kingmaker settlement name:', error);
     }
@@ -1068,13 +994,13 @@ export class TerritoryService {
    */
   async deleteKingmakerSettlement(location: { x: number, y: number }): Promise<void> {
     if (!this.isKingmakerAvailable()) {
-      logger.debug('[Territory Service] Kingmaker module not available, skipping map update');
+
       return;
     }
     
     // Skip if no valid location
     if (!location || (location.x === 0 && location.y === 0)) {
-      logger.debug('[Territory Service] Invalid location, skipping map update');
+
       return;
     }
     
@@ -1088,16 +1014,11 @@ export class TerritoryService {
       
       // Calculate hex key (Kingmaker format: i * 1000 + j)
       const hexKey = (1000 * location.x) + location.y;
-      
-      logger.debug(`🗺️ [Territory Service] Removing settlement from map:`, {
-        location: `${location.x}.${location.y}`,
-        hexKey: hexKey
-      });
-      
+
       // Get existing hex state
       const existingHexState = km.state.hexes[hexKey];
       if (!existingHexState || !existingHexState.features) {
-        logger.debug(`[Territory Service] No features at ${location.x}:${location.y}, nothing to delete`);
+
         return;
       }
       
@@ -1107,13 +1028,7 @@ export class TerritoryService {
       const nonSettlementFeatures = existingFeatures.filter((f: any) => 
         !['village', 'town', 'city', 'metropolis'].includes(f.type?.toLowerCase())
       );
-      
-      logger.debug(`🗺️ [Territory Service] Feature removal:`, {
-        existingCount: existingFeatures.length,
-        removedCount: existingFeatures.length - nonSettlementFeatures.length,
-        remainingCount: nonSettlementFeatures.length
-      });
-      
+
       // Update Kingmaker state - DEFAULT recursive behavior is what we want
       km.state.updateSource({
         hexes: {
@@ -1125,9 +1040,7 @@ export class TerritoryService {
       });
       
       await km.state.save();
-      
-      logger.info(`✅ [Territory Service] Removed settlement from Kingmaker map at ${location.x}:${location.y}`);
-      
+
     } catch (error) {
       logger.error('[Territory Service] Failed to delete Kingmaker settlement:', error);
     }

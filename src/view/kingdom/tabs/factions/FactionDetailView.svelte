@@ -124,7 +124,7 @@
             ui.notifications?.info(`Created actor: ${name}`);
          }
       } catch (error) {
-         console.error('Failed to create actor:', error);
+         logger.error('Failed to create actor:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to create actor');
       }
@@ -237,7 +237,7 @@
             ui.notifications?.info(`Created actor: ${person.name}`);
          }
       } catch (error) {
-         console.error('Failed to create actor:', error);
+         logger.error('Failed to create actor:', error);
          // @ts-ignore
          ui.notifications?.error('Failed to create actor');
       }
@@ -324,7 +324,7 @@
          ui.notifications?.info(`Saved ${editedFaction.name}`);
          dispatch('back');
       } catch (error) {
-         console.error('Failed to save faction:', error);
+         logger.error('Failed to save faction:', error);
          // @ts-ignore
          ui.notifications?.error(error instanceof Error ? error.message : 'Failed to save faction');
       } finally {

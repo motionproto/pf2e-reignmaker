@@ -111,7 +111,7 @@
          dispatch('settlementDeleted');
          
       } catch (error) {
-         console.error('Failed to delete settlement:', error);
+         logger.error('Failed to delete settlement:', error);
          // @ts-ignore - Foundry global
          ui.notifications?.error(`Failed to delete settlement: ${error.message}`);
       } finally {
