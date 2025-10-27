@@ -5,6 +5,7 @@
    import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
    import Button from '../../components/baseComponents/Button.svelte';
    import InlineEditActions from '../../components/baseComponents/InlineEditActions.svelte';
+   import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
 
    const dispatch = createEventDispatcher();
 
@@ -206,6 +207,14 @@
       if (!newFactionName.trim()) {
          // @ts-ignore
          ui.notifications?.warn('Faction name is required');
+         return;
+      }
+      
+      // Validate faction name (prevent reserved names like "player")
+      const validation = validateKingdomOrFactionName(newFactionName.trim());
+      if (!validation.valid) {
+         // @ts-ignore
+         ui.notifications?.error(validation.error || 'Invalid faction name');
          return;
       }
       

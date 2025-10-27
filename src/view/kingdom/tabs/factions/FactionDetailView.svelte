@@ -4,6 +4,7 @@
    import type { Faction, NotablePerson, AttitudeLevel } from '../../../../models/Faction';
    import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
    import Button from '../../components/baseComponents/Button.svelte';
+   import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
 
    export let factionId: string;
 
@@ -339,6 +340,15 @@
    
    function saveNameChange() {
       if (!editedFaction || !tempName.trim()) return;
+      
+      // Validate faction name (prevent reserved names like "player")
+      const validation = validateKingdomOrFactionName(tempName.trim());
+      if (!validation.valid) {
+         // @ts-ignore
+         ui.notifications?.error(validation.error || 'Invalid faction name');
+         return;
+      }
+      
       editedFaction.name = tempName.trim();
       editedFaction = { ...editedFaction };
       isEditingName = false;

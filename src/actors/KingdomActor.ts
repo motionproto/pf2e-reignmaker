@@ -4,7 +4,8 @@
  */
 
 import type { Settlement } from '../models/Settlement';
-import type { BuildProject, Army } from '../services/buildQueue/BuildProject';
+import type { Army } from '../models/Army';
+import type { BuildProject } from '../services/buildQueue/BuildProject';
 import type { ActiveModifier, ActiveEventInstance } from '../models/Modifiers';
 import type { ActiveCheckInstance } from '../models/CheckInstance';
 import type { TurnState } from '../models/TurnState';

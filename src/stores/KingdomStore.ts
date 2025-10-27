@@ -36,18 +36,27 @@ export const imprisonedUnrest = derived(settlements, $settlements => {
 });
 export const fame = derived(kingdomData, $data => $data.fame);
 
+// Current faction view (GM-only feature)
+// Allows GMs to switch between viewing different factions' territories
+// Must be declared before derived stores that use it
+export const currentFaction = writable<string>(PLAYER_KINGDOM);
+
 // ===== CLAIMED TERRITORY DERIVED STORES =====
 // Single source of truth for territory filtering logic
 // These automatically update when kingdom data changes
 
 /**
- * Hexes claimed by the player kingdom (claimedBy === PLAYER_KINGDOM)
+ * Hexes claimed by the current faction (claimedBy === currentFaction)
  * Filtered by World Explorer visibility (GMs see all, players see revealed only)
+ * Reactive to faction changes when GMs switch factions
  */
-export const claimedHexes = derived(kingdomData, $data => {
-  const claimed = $data.hexes.filter(h => h.claimedBy === PLAYER_KINGDOM);
-  return filterVisibleHexes(claimed);
-});
+export const claimedHexes = derived(
+  [kingdomData, currentFaction],
+  ([$data, $faction]) => {
+    const claimed = $data.hexes.filter(h => h.claimedBy === $faction);
+    return filterVisibleHexes(claimed);
+  }
+);
 
 /**
  * All settlements with valid map locations
@@ -62,20 +71,36 @@ export const allSettlements = derived(kingdomData, $data => {
 });
 
 /**
- * Owned settlements - settlements belonging to the player's kingdom
- * Uses the explicit `owned` property (simpler than checking hex claiming)
- * Filters for player-owned settlements only (owned === PLAYER_KINGDOM)
- * Excludes faction-owned settlements and unowned settlements
+ * Owned settlements - settlements belonging to the current faction
+ * Uses the explicit `ownedBy` property (simpler than checking hex claiming)
+ * Filters for settlements owned by the current faction (ownedBy === currentFaction)
+ * Reactive to faction changes when GMs switch factions
  */
-export const ownedSettlements = derived(kingdomData, $data => {
-  return $data.settlements.filter(s => s.owned === PLAYER_KINGDOM);
-});
+export const ownedSettlements = derived(
+  [kingdomData, currentFaction],
+  ([$data, $faction]) => {
+    return $data.settlements.filter(s => s.ownedBy === $faction);
+  }
+);
 
 /**
  * Legacy alias for backward compatibility
  * @deprecated Use ownedSettlements instead
  */
 export const claimedSettlements = ownedSettlements;
+
+/**
+ * Led armies - armies commanded by the current faction
+ * Uses the explicit `ledBy` property
+ * Filters for armies led by the current faction (ledBy === currentFaction)
+ * Reactive to faction changes when GMs switch factions
+ */
+export const ledArmies = derived(
+  [kingdomData, currentFaction],
+  ([$data, $faction]) => {
+    return $data.armies.filter(a => a.ledBy === $faction);
+  }
+);
 
 /**
  * Worksite counts from claimed hexes only
@@ -172,6 +197,66 @@ export const viewingPhase = writable<TurnPhase>(TurnPhase.STATUS);
 export const phaseViewLocked = writable<boolean>(true); // Lock viewing phase to current phase
 export const selectedSettlement = writable<string | null>(null);
 export const expandedSections = writable<Set<string>>(new Set());
+
+// Available factions (derived from kingdom.factions array + hexes + settlements)
+// Grouped by whether they have claimed territories
+export const availableFactions = derived(kingdomData, $data => {
+  const allFactions = new Set<string>();
+  const factionsWithTerritories = new Set<string>();
+  
+  // Always include player kingdom
+  allFactions.add(PLAYER_KINGDOM);
+  
+  // Extract from diplomatic factions list (primary source)
+  ($data.factions || []).forEach(f => {
+    if (f.name && f.name.trim()) {
+      allFactions.add(f.name);
+    }
+  });
+  
+  // Track which factions have territories (hexes)
+  $data.hexes.forEach(h => {
+    if (h.claimedBy && typeof h.claimedBy === 'string') {
+      allFactions.add(h.claimedBy);
+      factionsWithTerritories.add(h.claimedBy);
+    }
+  });
+  
+  // Track which factions have settlements
+  $data.settlements.forEach(s => {
+    if (s.ownedBy && s.ownedBy !== null) {
+      allFactions.add(s.ownedBy);
+      factionsWithTerritories.add(s.ownedBy);
+    }
+  });
+  
+  // Split into two groups with Player Kingdom always first
+  const withTerritories = Array.from(allFactions)
+    .filter(f => factionsWithTerritories.has(f))
+    .sort((a, b) => {
+      // Player Kingdom always first
+      if (a === PLAYER_KINGDOM) return -1;
+      if (b === PLAYER_KINGDOM) return 1;
+      // Then alphabetical
+      return a.localeCompare(b);
+    });
+  
+  const withoutTerritories = Array.from(allFactions)
+    .filter(f => !factionsWithTerritories.has(f))
+    .sort((a, b) => {
+      // Player Kingdom always first (in case it has no territories)
+      if (a === PLAYER_KINGDOM) return -1;
+      if (b === PLAYER_KINGDOM) return 1;
+      // Then alphabetical
+      return a.localeCompare(b);
+    });
+  
+  return {
+    withTerritories,
+    withoutTerritories,
+    all: Array.from(allFactions).sort() // For backwards compatibility
+  };
+});
 
 // Online players store - reactive to Foundry user connections
 export interface OnlinePlayer {

@@ -1,6 +1,11 @@
 // Auto-converted and fixed from BuildProject.kt
 // Build project management for Kingdom construction
 
+import type { Army } from '../../models/Army';
+
+// Re-export Army for backward compatibility
+export type { Army };
+
 /**
  * Represents a construction project in the build queue
  * This interface extends the KingdomState BuildProject for compatibility
@@ -19,20 +24,6 @@ export interface BuildProject {
   category: string; // Structure category
   isCompleted?: boolean; // True when project is finished
   completedTurn?: number; // Turn number when completed
-}
-
-/**
- * Army unit in the kingdom
- */
-export interface Army {
-  id: string;
-  name: string;
-  level: number;
-  type?: string; // Army type (cavalry, engineers, infantry, kobold, wolves)
-  isSupported: boolean;
-  turnsUnsupported: number;
-  actorId?: string; // Reference to the NPC actor in Foundry
-  supportedBySettlementId?: string; // Settlement providing support
 }
 
 /**

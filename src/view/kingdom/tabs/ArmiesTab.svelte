@@ -1,6 +1,6 @@
 <script lang="ts">
-   import { kingdomData } from '../../../stores/KingdomStore';
-   import type { Army } from '../../../models/BuildProject';
+   import { kingdomData, ledArmies } from '../../../stores/KingdomStore';
+   import type { Army } from '../../../models/Army';
    import { SettlementTierConfig } from '../../../models/Settlement';
    import Button from '../components/baseComponents/Button.svelte';
    import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
@@ -45,7 +45,7 @@
    
    // Apply filters
    $: filteredArmies = (() => {
-      let armies = [...$kingdomData.armies];
+      let armies = [...$ledArmies];
       
       // Search filter
       if (searchTerm) {
@@ -79,8 +79,8 @@
    }
    
    // Calculate army statistics
-   $: totalArmies = $kingdomData.armies.length;
-   $: supportedArmies = $kingdomData.armies.filter(a => a.isSupported).length;
+   $: totalArmies = $ledArmies.length;
+   $: supportedArmies = $ledArmies.filter(a => a.isSupported).length;
    $: unsupportedArmies = totalArmies - supportedArmies;
    
    // Helper functions

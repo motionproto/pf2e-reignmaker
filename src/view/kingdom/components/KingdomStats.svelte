@@ -10,15 +10,20 @@
     resources,
     updateKingdom,
     getKingdomActor,
+    currentFaction,
+    availableFactions,
   } from "../../../stores/KingdomStore";
   import type { KingdomData } from "../../../actors/KingdomActor";
   import { tick } from "svelte";
   import EditableStat from "./EditableStat.svelte";
   import ResourceCard from "./baseComponents/ResourceCard.svelte";
   import FameCard from "./baseComponents/FameCard.svelte";
+  import Button from "./baseComponents/Button.svelte";
   import { economicsService } from "../../../services/economics";
   import { calculateSizeUnrest } from "../../../services/domain/unrest/UnrestService";
   import { getResourceIcon, getResourceColor } from "../utils/presentation";
+  import { PLAYER_KINGDOM } from "../../../types/ownership";
+  import { validateKingdomOrFactionName } from "../../../utils/reserved-names";
 
   // Kingdom name state
   let isEditingName = false;
@@ -28,6 +33,11 @@
   // Initialize kingdom name from actor or fallback to localStorage
   $: kingdomName = $kingdomData.name || localStorage.getItem("kingdomName") || "Kingdom Name";
   
+  // Display name changes based on selected faction
+  $: displayedName = $currentFaction === PLAYER_KINGDOM 
+    ? kingdomName 
+    : $currentFaction;
+  
   // Update edit input when kingdomName changes
   $: if (!isEditingName) {
     editNameInput = kingdomName;
@@ -35,9 +45,16 @@
 
   // Save kingdom name to both actor and localStorage
   async function saveKingdomName() {
-    if (editNameInput.trim()) {
-      const newName = editNameInput.trim();
-      
+    const newName = editNameInput.trim();
+    
+    // Validate name
+    const validation = validateKingdomOrFactionName(newName);
+    if (!validation.valid) {
+      ui.notifications?.error(validation.error || 'Invalid kingdom name');
+      return; // Don't save
+    }
+    
+    if (newName) {
       // Save to actor
       await updateKingdom((k) => {
         k.name = newName;
@@ -54,6 +71,17 @@
     editNameInput = kingdomName;
     isEditingName = false;
   }
+
+  // Faction display name helper
+  function getFactionDisplayName(factionId: string): string {
+    if (factionId === PLAYER_KINGDOM) return 'Player Kingdom';
+    return factionId;
+  }
+  
+  // Only show faction switcher for GMs
+  $: isGM = game.user?.isGM ?? false;
+  
+  // No dropdown state needed - using native select
 
   // Fame adjustment
   function adjustFame(delta: number) {
@@ -158,19 +186,21 @@
   <!-- Kingdom Name Header -->
   <div class="kingdom-name-header">
     {#if !isEditingName}
-      <h3>{kingdomName}</h3>
-      <button
-        class="edit-btn"
-        on:click={async () => {
-          isEditingName = true;
-          await tick();
-          nameInputElement?.focus();
-          nameInputElement?.select();
-        }}
-        title="Edit kingdom name"
-      >
-        <i class="fa-solid fa-pen-fancy"></i>
-      </button>
+      <h3 class:faction-title={$currentFaction !== PLAYER_KINGDOM}>{displayedName}</h3>
+      {#if $currentFaction === PLAYER_KINGDOM}
+        <button
+          class="edit-btn"
+          on:click={async () => {
+            isEditingName = true;
+            await tick();
+            nameInputElement?.focus();
+            nameInputElement?.select();
+          }}
+          title="Edit kingdom name"
+        >
+          <i class="fa-solid fa-pen-fancy"></i>
+        </button>
+      {/if}
     {:else}
       <input
         bind:this={nameInputElement}
@@ -189,6 +219,35 @@
     <div class="kingdom-stats-content">
       <!-- Resource Dashboard -->
       <div class="stat-group-wrapper">
+        {#if isGM && $availableFactions.all.length > 1}
+          <div class="faction-selector-wrapper">
+            <label for="faction-select" class="faction-label">Faction</label>
+            <select 
+              id="faction-select"
+              class="faction-select"
+              bind:value={$currentFaction}
+            >
+              {#if $availableFactions.withTerritories.length > 0}
+                <optgroup label="With Territories">
+                  {#each $availableFactions.withTerritories as faction}
+                    <option value={faction}>
+                      {getFactionDisplayName(faction)}
+                    </option>
+                  {/each}
+                </optgroup>
+              {/if}
+              {#if $availableFactions.withoutTerritories.length > 0}
+                <optgroup label="Without Territories">
+                  {#each $availableFactions.withoutTerritories as faction}
+                    <option value={faction}>
+                      {getFactionDisplayName(faction)}
+                    </option>
+                  {/each}
+                </optgroup>
+              {/if}
+            </select>
+          </div>
+        {/if}
         <h4 class="stat-group-header">Turn {$currentTurn}</h4>
         <div class="stat-group-card">
           <div class="resource-dashboard-grid">
@@ -451,6 +510,10 @@
     font-family: var(--font-serif-rm);
   }
 
+  .kingdom-name-header h3.faction-title {
+    font-size: var(--font-xl);
+  }
+
   .kingdom-name-header input {
     flex: 1;
     max-width: calc(100% - 1rem);
@@ -498,6 +561,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.125rem;
+      overflow: visible;
    }
    
    .stat-group-wrapper:first-child {
@@ -511,6 +575,7 @@
     box-shadow: var(--shadow-card);
     border: 1px solid var(--border-default);
     margin: 0 0.5rem 0 0.5rem;
+    overflow: visible;
   }
 
   .stat-group-header {
@@ -521,8 +586,41 @@
     letter-spacing: 0.025em;
     background: transparent;
     margin-bottom: .5rem;
-    margin-top: 1.5rem;
+    margin-top: 0.75rem;
     font-family: var(--font-serif-rm);
+  }
+
+  .faction-selector-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1.25rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .faction-label {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+  }
+  
+  .faction-select {
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 0.25rem;
+    color: var(--text-primary);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    min-width: 150px;
+  }
+  
+  .faction-select:focus {
+    outline: none;
+    border-color: var(--border-primary);
+    box-shadow: var(--shadow-focus);
   }
 
   .stat-item {

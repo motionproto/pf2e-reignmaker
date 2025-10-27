@@ -1,11 +1,13 @@
 // Army Service for PF2e Kingdom Lite
 // Manages army operations, NPC actor integration, and support calculations
 
-import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
-import type { Army } from '../buildQueue/BuildProject';
+import { updateKingdom, getKingdomActor, currentFaction } from '../../stores/KingdomStore';
+import { get } from 'svelte/store';
+import type { Army } from '../../models/Army';
 import type { Settlement } from '../../models/Settlement';
 import { SettlementTierConfig } from '../../models/Settlement';
 import type { KingdomData } from '../../actors/KingdomActor';
+import { PLAYER_KINGDOM } from '../../types/ownership';
 import { logger } from '../../utils/Logger';
 
 export class ArmyService {
@@ -54,15 +56,19 @@ export class ArmyService {
     const settlement = this.findRandomSettlementWithCapacity();
     
     // Create army record
+    // Default to current faction (PLAYER_KINGDOM if not GM switching factions)
+    const faction = get(currentFaction) || PLAYER_KINGDOM;
+    
     const army: Army = {
       id: armyId,
       name: name,
       level: level,
       type: type,
+      ledBy: faction, // Set ledBy based on current faction view
       isSupported: !!settlement,
       turnsUnsupported: settlement ? 0 : 1,
       actorId: actorId,
-      supportedBySettlementId: settlement?.id
+      supportedBySettlementId: settlement?.id ?? null
     };
     
     // Add to kingdom armies
@@ -518,7 +524,7 @@ export class ArmyService {
         logger.debug(`✅ [ArmyService] Army ${armyId} assigned to ${newSettlement.name}`);
       } else {
         // Manually unassigned
-        army.supportedBySettlementId = undefined;
+        army.supportedBySettlementId = null;
         army.isSupported = false;
         // turnsUnsupported increments during Upkeep phase
         

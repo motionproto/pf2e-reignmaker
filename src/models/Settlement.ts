@@ -82,10 +82,10 @@ export interface Settlement {
   isCapital?: boolean; // Whether this settlement is the faction's capital
   
   // Ownership tracking
-  // - "player" = Owned by player kingdom
+  // - PLAYER_KINGDOM = Owned by player kingdom
   // - string = Owned by named faction (e.g., "Pitax", "Brevoy")
   // - null = Unowned/neutral
-  owned: OwnershipValue;
+  ownedBy: OwnershipValue;
   
   // Resources and state
   storedFood: number;
@@ -209,7 +209,7 @@ export function createSettlement(
     structureConditions: {},
     connectedByRoads: false,
     isCapital: false, // Initialize as not a capital
-    owned: PLAYER_KINGDOM, // All created settlements are owned by the player kingdom
+    ownedBy: PLAYER_KINGDOM, // All created settlements are owned by the player kingdom
     storedFood: 0,
     imprisonedUnrest: 0,
     supportedUnits: [],
