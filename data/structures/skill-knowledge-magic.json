@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "scholars-table",
-      "name": "Scholar's Table",
-      "description": "Basic study area for researchers and scribes",
+      "name": "Schoolhouse",
+      "description": "A modest building where basic literacy and learning begin",
       "cost": {
         "stone": 2
       },
@@ -21,7 +21,7 @@
     {
       "id": "library",
       "name": "Library",
-      "description": "Repository of books and arcane knowledge",
+      "description": "A repository of books and knowledge for scholars",
       "cost": {
         "lumber": 1,
         "stone": 3
@@ -41,8 +41,8 @@
     },
     {
       "id": "university",
-      "name": "University",
-      "description": "Prestigious center of higher learning",
+      "name": "Mage's Tower",
+      "description": "A tall structure dedicated to arcane study and magical research",
       "cost": {
         "lumber": 2,
         "stone": 4,
@@ -68,8 +68,8 @@
     },
     {
       "id": "arcane-academy",
-      "name": "Arcane Academy",
-      "description": "Elite magical research institution",
+      "name": "Arcane University",
+      "description": "A grand institution of magical learning and mystical scholarship",
       "cost": {
         "lumber": 4,
         "stone": 6,

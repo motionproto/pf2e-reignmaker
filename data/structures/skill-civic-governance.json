@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "town-hall",
-      "name": "Town Hall",
-      "description": "Basic civic administrative building",
+      "name": "Meeting House",
+      "description": "A humble hall where townsfolk gather to settle disputes and make communal decisions",
       "cost": {
         "stone": 2
       },
@@ -20,8 +20,8 @@
     },
     {
       "id": "city-hall",
-      "name": "City Hall",
-      "description": "Advanced government center for diplomacy",
+      "name": "Town Hall",
+      "description": "The organized seat of local leadership, housing records, officials, and civic meetings",
       "cost": {
         "lumber": 2,
         "stone": 2
@@ -41,8 +41,8 @@
     },
     {
       "id": "diplomatic-quarter",
-      "name": "Diplomatic Quarter",
-      "description": "Prestigious district for foreign relations",
+      "name": "Council Chambers",
+      "description": "A stately building where magistrates and advisors convene to deliberate policy and law",
       "cost": {
         "lumber": 2,
         "stone": 4,
@@ -68,8 +68,8 @@
     },
     {
       "id": "grand-forum",
-      "name": "Grand Forum",
-      "description": "Magnificent hall for political discourse",
+      "name": "Royal Court",
+      "description": "The grand seat of royal authority, where nobles gather to debate governance, justice, and decree",
       "cost": {
         "lumber": 4,
         "stone": 6,

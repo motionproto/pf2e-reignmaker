@@ -6,7 +6,7 @@
     {
       "id": "healers-hut",
       "name": "Healer's Hut",
-      "description": "Simple medical clinic for basic treatments",
+      "description": "A humble shelter where simple remedies and divine prayers mend the wounded",
       "cost": {
         "lumber": 2
       },
@@ -21,7 +21,7 @@
     {
       "id": "infirmary",
       "name": "Infirmary",
-      "description": "Dedicated medical facility with trained staff",
+      "description": "A modest building where trained healers provide consistent care and treatment",
       "cost": {
         "lumber": 1,
         "stone": 3
@@ -42,7 +42,7 @@
     {
       "id": "hospital",
       "name": "Hospital",
-      "description": "Advanced medical center with magical healing",
+      "description": "A respected center of healing, combining skill, alchemy, and divine magic",
       "cost": {
         "lumber": 2,
         "stone": 4,
@@ -68,8 +68,8 @@
     },
     {
       "id": "medical-college",
-      "name": "Medical College",
-      "description": "Premier institution for medical research and training",
+      "name": "Medical Academy",
+      "description": "A grand institution where masters of medicine teach, research, and advance the healing arts",
       "cost": {
         "lumber": 4,
         "stone": 6,

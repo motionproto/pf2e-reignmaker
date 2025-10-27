@@ -7,8 +7,8 @@
             "tiers": [
                 {
                     "id": "town-hall",
-                    "name": "Town Hall",
-                    "description": "Basic civic administrative building",
+                    "name": "Meeting House",
+                    "description": "A humble hall where townsfolk gather to settle disputes and make communal decisions",
                     "cost": {
                         "stone": 2
                     },
@@ -22,8 +22,8 @@
                 },
                 {
                     "id": "city-hall",
-                    "name": "City Hall",
-                    "description": "Advanced government center for diplomacy",
+                    "name": "Town Hall",
+                    "description": "The organized seat of local leadership, housing records, officials, and civic meetings",
                     "cost": {
                         "lumber": 2,
                         "stone": 2
@@ -43,8 +43,8 @@
                 },
                 {
                     "id": "diplomatic-quarter",
-                    "name": "Diplomatic Quarter",
-                    "description": "Prestigious district for foreign relations",
+                    "name": "Council Chambers",
+                    "description": "A stately building where magistrates and advisors convene to deliberate policy and law",
                     "cost": {
                         "lumber": 2,
                         "stone": 4,
@@ -70,8 +70,8 @@
                 },
                 {
                     "id": "grand-forum",
-                    "name": "Grand Forum",
-                    "description": "Magnificent hall for political discourse",
+                    "name": "Royal Court",
+                    "description": "The grand seat of royal authority, where nobles gather to debate governance, justice, and decree",
                     "cost": {
                         "lumber": 4,
                         "stone": 6,
@@ -419,8 +419,8 @@
             "tiers": [
                 {
                     "id": "shrine",
-                    "name": "Shrine",
-                    "description": "Small sacred place of worship",
+                    "name": "Sacred Grove",
+                    "description": "A simple glade or standing stones tended by a few faithful",
                     "cost": {
                         "stone": 2
                     },
@@ -434,8 +434,8 @@
                 },
                 {
                     "id": "temple",
-                    "name": "Temple",
-                    "description": "Dedicated house of worship with healing services",
+                    "name": "Shrine",
+                    "description": "A humble structure honoring the spirits and gods of the wild",
                     "cost": {
                         "lumber": 1,
                         "stone": 3
@@ -455,8 +455,8 @@
                 },
                 {
                     "id": "temple-district",
-                    "name": "Temple District",
-                    "description": "Sacred quarter with multiple shrines and gardens",
+                    "name": "Temple",
+                    "description": "A grand hall entwined with gardens and sacred trees",
                     "cost": {
                         "lumber": 2,
                         "stone": 4,
@@ -482,8 +482,8 @@
                 },
                 {
                     "id": "grand-basilica",
-                    "name": "Grand Basilica",
-                    "description": "Magnificent cathedral of divine power",
+                    "name": "Cathedral",
+                    "description": "A magnificent seat of divine and natural reverence, where faith and the living world unite",
                     "cost": {
                         "lumber": 4,
                         "stone": 6,
@@ -522,8 +522,8 @@
             "tiers": [
                 {
                     "id": "scholars-table",
-                    "name": "Scholar's Table",
-                    "description": "Basic study area for researchers and scribes",
+                    "name": "Schoolhouse",
+                    "description": "A modest building where basic literacy and learning begin",
                     "cost": {
                         "stone": 2
                     },
@@ -538,7 +538,7 @@
                 {
                     "id": "library",
                     "name": "Library",
-                    "description": "Repository of books and arcane knowledge",
+                    "description": "A repository of books and knowledge for scholars",
                     "cost": {
                         "lumber": 1,
                         "stone": 3
@@ -558,8 +558,8 @@
                 },
                 {
                     "id": "university",
-                    "name": "University",
-                    "description": "Prestigious center of higher learning",
+                    "name": "Mage's Tower",
+                    "description": "A tall structure dedicated to arcane study and magical research",
                     "cost": {
                         "lumber": 2,
                         "stone": 4,
@@ -585,8 +585,8 @@
                 },
                 {
                     "id": "arcane-academy",
-                    "name": "Arcane Academy",
-                    "description": "Elite magical research institution",
+                    "name": "Arcane University",
+                    "description": "A grand institution of magical learning and mystical scholarship",
                     "cost": {
                         "lumber": 4,
                         "stone": 6,
@@ -626,7 +626,7 @@
                 {
                     "id": "healers-hut",
                     "name": "Healer's Hut",
-                    "description": "Simple medical clinic for basic treatments",
+                    "description": "A humble shelter where simple remedies and divine prayers mend the wounded",
                     "cost": {
                         "lumber": 2
                     },
@@ -641,7 +641,7 @@
                 {
                     "id": "infirmary",
                     "name": "Infirmary",
-                    "description": "Dedicated medical facility with trained staff",
+                    "description": "A modest building where trained healers provide consistent care and treatment",
                     "cost": {
                         "lumber": 1,
                         "stone": 3
@@ -662,7 +662,7 @@
                 {
                     "id": "hospital",
                     "name": "Hospital",
-                    "description": "Advanced medical center with magical healing",
+                    "description": "A respected center of healing, combining skill, alchemy, and divine magic",
                     "cost": {
                         "lumber": 2,
                         "stone": 4,
@@ -688,8 +688,8 @@
                 },
                 {
                     "id": "medical-college",
-                    "name": "Medical College",
-                    "description": "Premier institution for medical research and training",
+                    "name": "Medical Academy",
+                    "description": "A grand institution where masters of medicine teach, research, and advance the healing arts",
                     "cost": {
                         "lumber": 4,
                         "stone": 6,
@@ -728,8 +728,8 @@
             "tiers": [
                 {
                     "id": "gymnasium",
-                    "name": "Gymnasium",
-                    "description": "Basic physical training facility",
+                    "name": "Sparring Ring",
+                    "description": "Simple open-air ring for combat practice and weapons training",
                     "cost": {
                         "lumber": 2
                     },
@@ -744,7 +744,7 @@
                 {
                     "id": "training-yard",
                     "name": "Training Yard",
-                    "description": "Combat training grounds for soldiers",
+                    "description": "Organized military training ground for disciplined forces",
                     "cost": {
                         "lumber": 2,
                         "stone": 2
@@ -764,8 +764,8 @@
                 },
                 {
                     "id": "warriors-hall",
-                    "name": "Warrior's Hall",
-                    "description": "Prestigious barracks for elite warriors",
+                    "name": "Champions Hall",
+                    "description": "Prestigious facility dedicated to elite warriors and champions",
                     "cost": {
                         "lumber": 2,
                         "stone": 3,
@@ -791,8 +791,8 @@
                 },
                 {
                     "id": "military-academy",
-                    "name": "Military Academy",
-                    "description": "Premier institution for tactical and physical training",
+                    "name": "Grand Coliseum",
+                    "description": "Magnificent arena and training center for legendary warriors",
                     "cost": {
                         "lumber": 4,
                         "stone": 6,
@@ -831,8 +831,8 @@
             "tiers": [
                 {
                     "id": "buskers-alley",
-                    "name": "Busker's Alley",
-                    "description": "Street venue for musicians and entertainers",
+                    "name": "Busker's Row",
+                    "description": "Street performers and traveling entertainers",
                     "cost": {
                         "lumber": 2
                     },
@@ -846,8 +846,8 @@
                 },
                 {
                     "id": "famous-tavern",
-                    "name": "Famous Tavern",
-                    "description": "Popular gathering place for performances and socializing",
+                    "name": "Minstrel's Stage",
+                    "description": "Small raised platform for organized shows",
                     "cost": {
                         "lumber": 2,
                         "stone": 2
@@ -867,8 +867,8 @@
                 },
                 {
                     "id": "performance-hall",
-                    "name": "Performance Hall",
-                    "description": "Dedicated theater for cultural performances",
+                    "name": "Theater",
+                    "description": "Professional indoor performance venue",
                     "cost": {
                         "lumber": 4,
                         "stone": 2,
@@ -894,8 +894,8 @@
                 },
                 {
                     "id": "grand-amphitheater",
-                    "name": "Grand Amphitheater",
-                    "description": "Spectacular venue for legendary performances",
+                    "name": "Grand Opera House",
+                    "description": "Elite venue for legendary performers",
                     "cost": {
                         "lumber": 6,
                         "stone": 6,
@@ -1056,8 +1056,8 @@
             "tiers": [
                 {
                     "id": "open-stage",
-                    "name": "Open Stage",
-                    "description": "Simple performance venue for entertainers",
+                    "name": "Dive Bar",
+                    "description": "Rough drinking establishment for frontier folk",
                     "cost": {
                         "lumber": 2
                     },
@@ -1074,8 +1074,8 @@
                 },
                 {
                     "id": "amphitheater",
-                    "name": "Amphitheater",
-                    "description": "Large open-air theater for public performances",
+                    "name": "Public House",
+                    "description": "Medieval-style communal drinking hall",
                     "cost": {
                         "lumber": 3,
                         "stone": 1
@@ -1093,8 +1093,8 @@
                 },
                 {
                     "id": "playhouse",
-                    "name": "Playhouse",
-                    "description": "Dedicated theater building for elaborate productions",
+                    "name": "Respectable Tavern",
+                    "description": "Well-maintained establishment serving quality food and drink",
                     "cost": {
                         "lumber": 4,
                         "stone": 3,
@@ -1113,8 +1113,8 @@
                 },
                 {
                     "id": "auditorium",
-                    "name": "Auditorium",
-                    "description": "Grand performance hall that uplifts the entire kingdom",
+                    "name": "Pleasure Palace",
+                    "description": "Luxurious indoor entertainment complex with opulent amenities",
                     "cost": {
                         "lumber": 6,
                         "stone": 6,

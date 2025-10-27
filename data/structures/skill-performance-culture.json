@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "buskers-alley",
-      "name": "Busker's Alley",
-      "description": "Street venue for musicians and entertainers",
+      "name": "Busker's Row",
+      "description": "Street performers and traveling entertainers",
       "cost": {
         "lumber": 2
       },
@@ -20,8 +20,8 @@
     },
     {
       "id": "famous-tavern",
-      "name": "Famous Tavern",
-      "description": "Popular gathering place for performances and socializing",
+      "name": "Minstrel's Stage",
+      "description": "Small raised platform for organized shows",
       "cost": {
         "lumber": 2,
         "stone": 2
@@ -41,8 +41,8 @@
     },
     {
       "id": "performance-hall",
-      "name": "Performance Hall",
-      "description": "Dedicated theater for cultural performances",
+      "name": "Theater",
+      "description": "Professional indoor performance venue",
       "cost": {
         "lumber": 4,
         "stone": 2,
@@ -68,8 +68,8 @@
     },
     {
       "id": "grand-amphitheater",
-      "name": "Grand Amphitheater",
-      "description": "Spectacular venue for legendary performances",
+      "name": "Grand Opera House",
+      "description": "Elite venue for legendary performers",
       "cost": {
         "lumber": 6,
         "stone": 6,

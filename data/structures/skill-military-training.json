@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "gymnasium",
-      "name": "Gymnasium",
-      "description": "Basic physical training facility",
+      "name": "Sparring Ring",
+      "description": "Simple open-air ring for combat practice and weapons training",
       "cost": {
         "lumber": 2
       },
@@ -21,7 +21,7 @@
     {
       "id": "training-yard",
       "name": "Training Yard",
-      "description": "Combat training grounds for soldiers",
+      "description": "Organized military training ground for disciplined forces",
       "cost": {
         "lumber": 2,
         "stone": 2
@@ -41,8 +41,8 @@
     },
     {
       "id": "warriors-hall",
-      "name": "Warrior's Hall",
-      "description": "Prestigious barracks for elite warriors",
+      "name": "Champions Hall",
+      "description": "Prestigious facility dedicated to elite warriors and champions",
       "cost": {
         "lumber": 2,
         "stone": 3,
@@ -68,8 +68,8 @@
     },
     {
       "id": "military-academy",
-      "name": "Military Academy",
-      "description": "Premier institution for tactical and physical training",
+      "name": "Grand Coliseum",
+      "description": "Magnificent arena and training center for legendary warriors",
       "cost": {
         "lumber": 4,
         "stone": 6,

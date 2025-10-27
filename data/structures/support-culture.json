@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "open-stage",
-      "name": "Open Stage",
-      "description": "Simple performance venue for entertainers",
+      "name": "Dive Bar",
+      "description": "Rough drinking establishment for frontier folk",
       "cost": {
         "lumber": 2
       },
@@ -23,8 +23,8 @@
     },
     {
       "id": "amphitheater",
-      "name": "Amphitheater",
-      "description": "Large open-air theater for public performances",
+      "name": "Public House",
+      "description": "Medieval-style communal drinking hall",
       "cost": {
         "lumber": 3,
         "stone": 1
@@ -42,8 +42,8 @@
     },
     {
       "id": "playhouse",
-      "name": "Playhouse",
-      "description": "Dedicated theater building for elaborate productions",
+      "name": "Respectable Tavern",
+      "description": "Well-maintained establishment serving quality food and drink",
       "cost": {
         "lumber": 4,
         "stone": 3,
@@ -62,8 +62,8 @@
     },
     {
       "id": "auditorium",
-      "name": "Auditorium",
-      "description": "Grand performance hall that uplifts the entire kingdom",
+      "name": "Pleasure Palace",
+      "description": "Luxurious indoor entertainment complex with opulent amenities",
       "cost": {
         "lumber": 6,
         "stone": 6,

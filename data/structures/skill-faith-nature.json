@@ -5,8 +5,8 @@
   "tiers": [
     {
       "id": "shrine",
-      "name": "Shrine",
-      "description": "Small sacred place of worship",
+      "name": "Sacred Grove",
+      "description": "A simple glade or standing stones tended by a few faithful",
       "cost": {
         "stone": 2
       },
@@ -20,8 +20,8 @@
     },
     {
       "id": "temple",
-      "name": "Temple",
-      "description": "Dedicated house of worship with healing services",
+      "name": "Shrine",
+      "description": "A humble structure honoring the spirits and gods of the wild",
       "cost": {
         "lumber": 1,
         "stone": 3
@@ -41,8 +41,8 @@
     },
     {
       "id": "temple-district",
-      "name": "Temple District",
-      "description": "Sacred quarter with multiple shrines and gardens",
+      "name": "Temple",
+      "description": "A grand hall entwined with gardens and sacred trees",
       "cost": {
         "lumber": 2,
         "stone": 4,
@@ -68,8 +68,8 @@
     },
     {
       "id": "grand-basilica",
-      "name": "Grand Basilica",
-      "description": "Magnificent cathedral of divine power",
+      "name": "Cathedral",
+      "description": "A magnificent seat of divine and natural reverence, where faith and the living world unite",
       "cost": {
         "lumber": 4,
         "stone": 6,
