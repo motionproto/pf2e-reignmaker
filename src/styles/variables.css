@@ -60,6 +60,8 @@
   
   --color-red: hsla(4, 66%, 58%, 1);
   --color-red-bg: hsla(4, 90%, 59%, 0.2);
+  --color-red-dark: hsla(0, 75%, 12%, 1);
+  --color-red-darker: hsla(0, 80%, 8%, 1);
   
   /* Brown/Tan Colors - Used for resource icons */
   --color-brown-light: hsla(29, 48%, 64%, 1);

@@ -246,7 +246,7 @@ export class ArmyService {
   
   /**
    * Create NPC actor in Foundry for an army
-   * Places actor in "Kingdom Armies" folder
+   * Places actor in "Reignmaker Armies" folder
    * 
    * @param name - Actor name
    * @param level - Actor level
@@ -265,9 +265,9 @@ export class ArmyService {
       throw new Error('Foundry VTT not initialized - cannot create actors');
     }
     
-    // Find "Kingdom Armies" folder (should be created by initialization hook)
-    const folderName = "Kingdom Armies";
-    let folder = game.folders.find((f: any) => 
+    // Find "Reignmaker Armies" folder (should be created by initialization hook)
+    const folderName = "Reignmaker Armies";
+    let folder = game.folders.find((f: any) =>
       f.type === "Actor" && f.name === folderName
     );
     

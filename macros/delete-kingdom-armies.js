@@ -1,11 +1,11 @@
 /**
- * Delete all NPC actors in the Kingdom Armies folder
+ * Delete all NPC actors in the Reignmaker Armies folder
  * 
  * CAUTION: This is a destructive operation that cannot be undone!
  */
 
-// Find the Kingdom Armies folder
-const folderName = "Kingdom Armies";
+// Find the Reignmaker Armies folder
+const folderName = "Reignmaker Armies";
 const folder = game.folders.find(f => f.name === folderName && f.type === "Actor");
 
 if (!folder) {

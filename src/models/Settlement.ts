@@ -186,12 +186,14 @@ export function createKingmakerSettlementId(location: { x: number; y: number }):
  * @param location Settlement location (source of truth)
  * @param tier Settlement tier
  * @param kingmakerLocation Optional - Only used during import, will be removed by sync service
+ * @param ownedBy Optional - Faction that owns this settlement (defaults to PLAYER_KINGDOM)
  */
 export function createSettlement(
   name: string,
   location: { x: number; y: number },
   tier: SettlementTier = SettlementTier.VILLAGE,
-  kingmakerLocation?: { x: number; y: number }
+  kingmakerLocation?: { x: number; y: number },
+  ownedBy: OwnershipValue = PLAYER_KINGDOM
 ): Settlement {
   // Use location-based ID if from Kingmaker, otherwise random
   const id = kingmakerLocation 
@@ -209,7 +211,7 @@ export function createSettlement(
     structureConditions: {},
     connectedByRoads: false,
     isCapital: false, // Initialize as not a capital
-    ownedBy: PLAYER_KINGDOM, // All created settlements are owned by the player kingdom
+    ownedBy, // Use the provided ownedBy value
     storedFood: 0,
     imprisonedUnrest: 0,
     supportedUnits: [],

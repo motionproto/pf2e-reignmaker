@@ -181,7 +181,10 @@ export class Hex {
   fortified: number; // 0-4, represents fortification level
   
   // Game mechanics
-  hasCommodityBonus: boolean; // Hex has matching commodity for worksite (e.g., lumber commodity + logging camp)
+  // Commodities are bonus resources available on this hex
+  // Valid types: 'food', 'lumber', 'stone', 'ore', 'gold'
+  // Example: {food: 2, gold: 1} means +2 food and +1 gold when exploited
+  commodities: Map<string, number>;
   
   // Our own features (NOT Kingmaker)
   features: HexFeature[];
@@ -192,7 +195,7 @@ export class Hex {
     terrain: TerrainType,
     travel: TravelDifficulty = 'open', // Default to open terrain
     worksite: Worksite | null = null,
-    hasCommodityBonus: boolean = false,
+    commodities: Map<string, number> = new Map(),
     name: string | null = null,
     claimedBy: OwnershipValue = null,
     hasRoad: boolean = false,
@@ -204,7 +207,7 @@ export class Hex {
     this.terrain = terrain;
     this.travel = travel;
     this.worksite = worksite;
-    this.hasCommodityBonus = hasCommodityBonus;
+    this.commodities = commodities;
     this.name = name;
     this.claimedBy = claimedBy;
     this.hasRoad = hasRoad;
@@ -237,22 +240,29 @@ export class Hex {
   
   /**
    * Calculate the production from this hex
+   * Includes base worksite production + commodity bonuses
    */
   getProduction(): Map<string, number> {
     if (!this.worksite) {
       return new Map();
     }
     
-    const baseProduction = new Map(this.worksite.getBaseProduction(this.terrain));
+    const production = new Map(this.worksite.getBaseProduction(this.terrain));
     
-    // Commodity bonus adds +1 to production
-    if (this.hasCommodityBonus) {
-      baseProduction.forEach((amount, resource) => {
-        baseProduction.set(resource, amount + 1);
-      });
-    }
+    // Apply commodity bonuses
+    this.commodities.forEach((amount, resource) => {
+      if (resource === 'gold') {
+        // Gold commodities are always collected by any worksite
+        production.set('gold', (production.get('gold') || 0) + amount);
+      } else {
+        // Other commodities only apply to matching resources
+        if (production.has(resource)) {
+          production.set(resource, production.get(resource)! + amount);
+        }
+      }
+    });
     
-    return baseProduction;
+    return production;
   }
 }
 

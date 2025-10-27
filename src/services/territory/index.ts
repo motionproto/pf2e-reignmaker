@@ -237,17 +237,16 @@ export class TerritoryService {
                 // Convert worksite (if hex has state)
                 const worksite = hexState.camp || hexState.features ? this.convertWorksite(hexState) : null;
                 
-                // Check for special commodity trait
-                const hasSpecialTrait = this.hasMatchingCommodity(hexState, worksite);
+                // Convert commodities from Kingmaker format
+                const commodities = this.convertCommodities(hexState);
                 
                 // Log commodity detection for debugging
-                if (worksite) {
-                    logger.debug(`Hex ${dotNotationId} worksite analysis:`, {
-                        worksiteType: worksite.type,
-                        commodity: hexState.commodity || 'none',
-                        hasMatchingCommodity: hasSpecialTrait,
-                        expectedProduction: worksite.getBaseProduction(terrainType),
-                        bonusApplied: hasSpecialTrait ? '+1' : 'none'
+                if (commodities.size > 0) {
+                    logger.debug(`Hex ${dotNotationId} commodity analysis:`, {
+                        worksiteType: worksite?.type || 'none',
+                        rawCommodity: hexState.commodity || 'none',
+                        convertedCommodities: Array.from(commodities.entries()),
+                        expectedProduction: worksite?.getBaseProduction(terrainType)
                     });
                 }
                 
@@ -271,7 +270,7 @@ export class TerritoryService {
                     terrainType,
                     travelDifficulty,
                     worksite,
-                    hasSpecialTrait,  // hasCommodityBonus
+                    commodities,      // Pass commodities Map
                     null,             // Name can be added later if available
                     claimedBy,        // Track hex ownership
                     hasRoad,          // Road flag
@@ -341,13 +340,19 @@ export class TerritoryService {
                     throw new Error(`Invalid hex ID format: ${hex.id}. Expected format: "i.j" (e.g., "2.19")`);
                 }
                 
+                // Convert Map to plain object for JSON storage
+                const commoditiesObj: Record<string, number> = {};
+                hex.commodities.forEach((amount, resource) => {
+                    commoditiesObj[resource] = amount;
+                });
+                
                 return {
                     id: hex.id,
                     row: hex.row,
                     col: hex.col,
                     terrain: hex.terrain,
                     worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
-                    hasCommodityBonus: hex.hasCommodityBonus || false,
+                    commodities: commoditiesObj, // Store as plain object
                     hasRoad: hex.hasRoad || false,
                     fortified: hex.fortified || 0,
                     name: hex.name || undefined,
@@ -585,24 +590,33 @@ export class TerritoryService {
     }
     
     /**
-     * Check if hex has commodity matching its worksite production
+     * Convert Kingmaker commodity string to our commodity Map
+     * Handles "luxury" → "gold" conversion
      */
-    private hasMatchingCommodity(hexState: HexState, worksite: Worksite | null): boolean {
-        if (!worksite || !hexState.commodity || hexState.commodity.trim() === '') return false;
+    private convertCommodities(hexState: HexState): Map<string, number> {
+        const commodities = new Map<string, number>();
         
-        // Check worksite-commodity matches
-        switch (worksite.type) {
-            case WorksiteType.FARMSTEAD: 
-                return hexState.commodity.toLowerCase() === 'food';
-            case WorksiteType.LOGGING_CAMP: 
-                return hexState.commodity.toLowerCase() === 'lumber';
-            case WorksiteType.QUARRY: 
-                return hexState.commodity.toLowerCase() === 'stone';
-            case WorksiteType.MINE: 
-                return hexState.commodity.toLowerCase() === 'ore';
-            default: 
-                return false;
+        if (!hexState.commodity || hexState.commodity.trim() === '') {
+            return commodities;
         }
+        
+        const commodityType = hexState.commodity.toLowerCase().trim();
+        
+        // Convert Kingmaker luxury to gold
+        if (commodityType === 'luxury') {
+            commodities.set('gold', 1);
+            logger.debug(`Converting Kingmaker luxury commodity to gold`);
+        }
+        // Map standard commodities
+        else if (['food', 'lumber', 'stone', 'ore'].includes(commodityType)) {
+            commodities.set(commodityType, 1);
+        }
+        // Unknown commodity type
+        else {
+            logger.warn(`Unknown Kingmaker commodity type: ${hexState.commodity}`);
+        }
+        
+        return commodities;
     }
     
     /**
@@ -757,13 +771,19 @@ export class TerritoryService {
                 const row = (hexData as any).row ?? parseInt(hexData.id.split('.')[0]);
                 const col = (hexData as any).col ?? parseInt(hexData.id.split('.')[1]);
                 
+                // Convert commodities object back to Map
+                const commoditiesData = (hexData as any).commodities || {};
+                const commodities = new Map(
+                    Object.entries(commoditiesData).map(([k, v]) => [k, Number(v)])
+                );
+                
                 return new Hex(
                     row,
                     col,
                     hexData.terrain as TerrainType,
                     (hexData as any).travel || 'open', // Default to open if not stored
                     hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
-                    (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
+                    commodities, // Pass reconstructed Map
                     hexData.name || null,
                     (hexData as any).claimedBy ?? null,
                     (hexData as any).hasRoad || false,
@@ -816,15 +836,21 @@ export class TerritoryService {
         const row = (hexData as any).row ?? parseInt(hexId.split('.')[0]);
         const col = (hexData as any).col ?? parseInt(hexId.split('.')[1]);
         
+        // Convert commodities object back to Map
+        const commoditiesData = (hexData as any).commodities || {};
+        const commodities = new Map(
+            Object.entries(commoditiesData).map(([k, v]) => [k, Number(v)])
+        );
+        
         return new Hex(
             row,
             col,
             hexData.terrain as TerrainType,
             (hexData as any).travel || 'open', // Default to open if not stored
             hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
-            (hexData as any).hasCommodityBonus || (hexData as any).hasSpecialTrait || false,
+            commodities, // Pass reconstructed Map
             hexData.name || null,
-            (hexData as any).claimedBy ?? 0,
+            (hexData as any).claimedBy ?? null,
             (hexData as any).hasRoad || false,
             (hexData as any).fortified || 0,
             (hexData as any).features || []

@@ -1,9 +1,10 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
    import { createSettlement, SettlementTier } from '../../../../models/Settlement';
-   import { kingdomData, updateKingdom } from '../../../../stores/KingdomStore';
+   import { kingdomData, updateKingdom, currentFaction, availableFactions } from '../../../../stores/KingdomStore';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
    import { PLAYER_KINGDOM } from '../../../../types/ownership';
+   import { get } from 'svelte/store';
    
    export let settlements: Settlement[] = [];
    export let selectedSettlement: Settlement | null = null;
@@ -12,14 +13,35 @@
    let searchTerm = '';
    let filterTier = 'all';
    
+   // GM-only: Show all settlements (including unclaimed)
+   let showAllSettlements = false;
+   
+   // Check if current user is GM
+   $: isGM = (game as any)?.user?.isGM || false;
+   
+   // Edit state for unlinked features
+   let editingHexId: string | null = null;
+   let editForm = {
+      name: '',
+      tier: SettlementTier.VILLAGE,
+      claimedBy: PLAYER_KINGDOM
+   };
+   
    // Get unique tiers from settlements
    $: settlementTiers = [...new Set(settlements.map(s => s.tier))].sort();
    
    // Detect unassigned hexes (hexes with unlinked settlement features)
    $: unassignedHexes = ($kingdomData.hexes || [])
       .filter((h: any) => {
-         // Must be in claimed territory
-         if (h.claimedBy !== PLAYER_KINGDOM) return false;
+         // If GM is showing all settlements, include unclaimed territory too
+         if (showAllSettlements && isGM) {
+            // Any hex with settlement features
+            const features = h.features || [];
+            return features.some((f: any) => f.type === 'settlement' && f.linked === false);
+         }
+         
+         // Must be in claimed territory by current faction
+         if (h.claimedBy !== $currentFaction) return false;
          
          // Must have unlinked settlement features
          const features = h.features || [];
@@ -62,11 +84,13 @@
       try {
          console.log('🏘️ Creating new settlement...');
          
-         // Create a new settlement at (0,0) - unlinked
+         // Create a new settlement at (0,0) - unlinked, owned by current faction
          const newSettlement = createSettlement(
             'New Settlement',
             { x: 0, y: 0 },
-            SettlementTier.VILLAGE
+            SettlementTier.VILLAGE,
+            undefined, // kingmakerLocation
+            get(currentFaction) // Use current faction
          );
          
          console.log('✅ Created settlement:', newSettlement);
@@ -97,12 +121,34 @@
    
    // Create settlement for unassigned hex
    async function handleCreateSettlementAtHex(hex: { x: number; y: number; tier: SettlementTier; name?: string }) {
-      // Create a settlement at the hex location
+      // Determine minimum level based on tier
+      let initialLevel = 1;
+      switch (hex.tier) {
+         case SettlementTier.VILLAGE:
+            initialLevel = 1;
+            break;
+         case SettlementTier.TOWN:
+            initialLevel = 2;
+            break;
+         case SettlementTier.CITY:
+            initialLevel = 5;
+            break;
+         case SettlementTier.METROPOLIS:
+            initialLevel = 8;
+            break;
+      }
+      
+      // Create a settlement at the hex location, owned by current faction
       const newSettlement = createSettlement(
          hex.name || 'New Settlement',  // Use feature name if available
          { x: hex.x, y: hex.y },
-         hex.tier
+         hex.tier,
+         undefined, // kingmakerLocation
+         get(currentFaction) // Use current faction
       );
+      
+      // Set the appropriate level for the tier
+      newSettlement.level = initialLevel;
       
       // Add to kingdom and link hex feature
       await updateKingdom(k => {
@@ -127,6 +173,51 @@
       
       // Select the new settlement
       onSelectSettlement(newSettlement);
+   }
+   
+   // Edit feature handlers (GM only)
+   function startEditingFeature(hexId: string) {
+      const hex = $kingdomData.hexes.find((h: any) => h.id === hexId) as any;
+      if (!hex) return;
+      
+      const feature = hex.features?.find((f: any) => f.type === 'settlement' && !f.linked);
+      if (!feature) return;
+      
+      editingHexId = hexId;
+      editForm.name = feature.name || '';
+      editForm.tier = feature.tier || SettlementTier.VILLAGE;
+      editForm.claimedBy = hex.claimedBy || PLAYER_KINGDOM;
+   }
+   
+   function cancelEditingFeature() {
+      editingHexId = null;
+      editForm = {
+         name: '',
+         tier: SettlementTier.VILLAGE,
+         claimedBy: PLAYER_KINGDOM
+      };
+   }
+   
+   async function saveFeatureEdit() {
+      if (!editingHexId) return;
+      
+      await updateKingdom(k => {
+         const hex = k.hexes.find((h: any) => h.id === editingHexId) as any;
+         if (!hex) return;
+         
+         // Update hex ownership
+         hex.claimedBy = editForm.claimedBy;
+         
+         // Update settlement feature
+         const feature = hex.features?.find((f: any) => f.type === 'settlement' && !f.linked);
+         if (feature) {
+            feature.name = editForm.name;
+            feature.tier = editForm.tier;
+         }
+      });
+      
+      console.log(`✅ Updated settlement feature at ${editingHexId}`);
+      cancelEditingFeature();
    }
    
    // Apply filters
@@ -167,6 +258,19 @@
             {/each}
          </select>
       </div>
+      
+      <!-- GM-only: Show all settlements checkbox -->
+      {#if isGM}
+         <div class="gm-filter">
+            <label class="checkbox-label">
+               <input 
+                  type="checkbox" 
+                  bind:checked={showAllSettlements}
+               />
+               <span>Show All Settlement Features</span>
+            </label>
+         </div>
+      {/if}
    </div>
    
    <div class="settlements-list">
@@ -216,28 +320,104 @@
                
                {#each unassignedHexes as hex}
                   <div class="unassigned-item">
-                     <div class="unassigned-content">
-                        <div class="unassigned-left">
-                           <i class="fas fa-exclamation-triangle unassigned-icon"></i>
-                           <div class="unassigned-info">
-                              <div class="unassigned-name">
-                              {#if hex.name}
-                                 <strong>{hex.name}</strong> at {hex.x}:{hex.y.toString().padStart(2, '0')}
-                              {:else}
-                                 Settlement at <strong>{hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
-                              {/if}
+                     {#if editingHexId === hex.id}
+                        <!-- Edit Form -->
+                        <div class="edit-form">
+                           <div class="edit-header">
+                              <span>Edit Settlement Feature</span>
+                              <button 
+                                 class="btn-close"
+                                 on:click={cancelEditingFeature}
+                                 title="Cancel"
+                              >
+                                 <i class="fas fa-times"></i>
+                              </button>
                            </div>
+                           
+                           <div class="edit-fields">
+                              <div class="edit-field">
+                                 <label>Name:</label>
+                                 <input 
+                                    type="text" 
+                                    bind:value={editForm.name}
+                                    placeholder="Settlement name"
+                                 />
+                              </div>
+                              
+                              <div class="edit-field">
+                                 <label>Tier:</label>
+                                 <select bind:value={editForm.tier}>
+                                    <option value={SettlementTier.VILLAGE}>Village</option>
+                                    <option value={SettlementTier.TOWN}>Town</option>
+                                    <option value={SettlementTier.CITY}>City</option>
+                                    <option value={SettlementTier.METROPOLIS}>Metropolis</option>
+                                 </select>
+                              </div>
+                              
+                              <div class="edit-field">
+                                 <label>Claimed By:</label>
+                                 <select bind:value={editForm.claimedBy}>
+                                    <option value={null}>Unclaimed</option>
+                                    {#each $availableFactions.all as factionId}
+                                       <option value={factionId}>{factionId === PLAYER_KINGDOM ? 'Player Kingdom' : factionId}</option>
+                                    {/each}
+                                 </select>
+                              </div>
+                           </div>
+                           
+                           <div class="edit-actions">
+                              <button 
+                                 class="btn-cancel"
+                                 on:click={cancelEditingFeature}
+                              >
+                                 Cancel
+                              </button>
+                              <button 
+                                 class="btn-save"
+                                 on:click={saveFeatureEdit}
+                              >
+                                 <i class="fas fa-check"></i>
+                                 Save
+                              </button>
                            </div>
                         </div>
-                        <button 
-                           class="btn-create-at-hex"
-                           on:click|stopPropagation={() => handleCreateSettlementAtHex(hex)}
-                           title="Create settlement at this location"
-                        >
-                           <i class="fas fa-plus"></i>
-                           Create
-                        </button>
-                     </div>
+                     {:else}
+                        <!-- Normal View -->
+                        <div class="unassigned-content">
+                           <div class="unassigned-left">
+                              <i class="fas fa-exclamation-triangle unassigned-icon"></i>
+                              <div class="unassigned-info">
+                                 <div class="unassigned-name">
+                                 {#if hex.name}
+                                    <strong>{hex.name}</strong> at {hex.x}:{hex.y.toString().padStart(2, '0')}
+                                 {:else}
+                                    Settlement at <strong>{hex.x}:{hex.y.toString().padStart(2, '0')}</strong>
+                                 {/if}
+                              </div>
+                              </div>
+                           </div>
+                           <div class="unassigned-actions">
+                              {#if isGM}
+                                 <button 
+                                    class="btn-edit-feature"
+                                    on:click|stopPropagation={() => startEditingFeature(hex.id)}
+                                    title="Edit feature properties"
+                                 >
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                 </button>
+                              {/if}
+                              <button 
+                                 class="btn-create-at-hex"
+                                 on:click|stopPropagation={() => handleCreateSettlementAtHex(hex)}
+                                 title="Create settlement at this location"
+                              >
+                                 <i class="fas fa-plus"></i>
+                                 Create
+                              </button>
+                           </div>
+                        </div>
+                     {/if}
                   </div>
                {/each}
             </div>
@@ -303,6 +483,35 @@
          
          .tier-filter {
             padding: 0.5rem 1.5rem 0.5rem 0.75rem;
+         }
+      }
+      
+      .gm-filter {
+         margin-top: 0.5rem;
+         padding: 0.5rem 0.75rem;
+         background: rgba(128, 0, 128, 0.15);
+         border: 1px solid rgba(128, 0, 128, 0.3);
+         border-radius: var(--radius-lg);
+         
+         .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            user-select: none;
+            
+            input[type="checkbox"] {
+               width: 1rem;
+               height: 1rem;
+               cursor: pointer;
+               accent-color: var(--color-primary);
+            }
+            
+            span {
+               color: var(--text-primary);
+               font-size: var(--font-sm);
+               font-weight: var(--font-weight-medium);
+            }
          }
       }
    }
@@ -524,6 +733,14 @@
          }
       }
       
+      .unassigned-actions {
+         display: flex;
+         align-items: center;
+         gap: 0.5rem;
+         flex-shrink: 0;
+      }
+      
+      .btn-edit-feature,
       .btn-create-at-hex {
          padding: 0.5rem 1rem;
          background: rgba(128, 128, 128, 0.2);
@@ -551,6 +768,126 @@
          
          i {
             font-size: var(--font-xs);
+         }
+      }
+      
+      .btn-edit-feature {
+         background: rgba(100, 100, 255, 0.15);
+         border-color: rgba(100, 100, 255, 0.4);
+         
+         &:hover {
+            background: rgba(100, 100, 255, 0.25);
+            border-color: rgba(100, 100, 255, 0.6);
+         }
+      }
+      
+      // Edit form styles
+      .edit-form {
+         display: flex;
+         flex-direction: column;
+         gap: 1rem;
+         
+         .edit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            
+            span {
+               font-weight: var(--font-weight-semibold);
+               color: var(--text-primary);
+               font-size: var(--font-md);
+            }
+            
+            .btn-close {
+               padding: 0.25rem 0.5rem;
+               background: transparent;
+               border: none;
+               color: var(--text-secondary);
+               cursor: pointer;
+               border-radius: var(--radius-md);
+               transition: var(--transition-base);
+               
+               &:hover {
+                  background: rgba(255, 255, 255, 0.1);
+                  color: var(--text-primary);
+               }
+            }
+         }
+         
+         .edit-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            
+            .edit-field {
+               display: flex;
+               flex-direction: column;
+               gap: 0.25rem;
+               
+               label {
+                  font-size: var(--font-sm);
+                  color: var(--text-secondary);
+                  font-weight: var(--font-weight-medium);
+               }
+               
+               input,
+               select {
+                  padding: 0.5rem;
+                  background: var(--bg-elevated);
+                  border: 1px solid var(--border-default);
+                  border-radius: var(--radius-md);
+                  color: var(--text-primary);
+                  font-size: var(--font-sm);
+                  
+                  &:focus {
+                     outline: none;
+                     border-color: var(--color-primary);
+                  }
+               }
+            }
+         }
+         
+         .edit-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            
+            button {
+               padding: 0.5rem 1rem;
+               border-radius: var(--radius-md);
+               font-size: var(--font-sm);
+               font-weight: var(--font-weight-semibold);
+               cursor: pointer;
+               transition: var(--transition-base);
+               display: flex;
+               align-items: center;
+               gap: 0.5rem;
+            }
+            
+            .btn-cancel {
+               background: transparent;
+               border: 1px solid var(--border-default);
+               color: var(--text-secondary);
+               
+               &:hover {
+                  background: var(--bg-overlay);
+                  color: var(--text-primary);
+               }
+            }
+            
+            .btn-save {
+               background: var(--color-success);
+               border: 1px solid var(--color-success);
+               color: white;
+               
+               &:hover {
+                  background: var(--color-success-dark, #1e7e34);
+               }
+            }
          }
       }
    }

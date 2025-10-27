@@ -99,7 +99,7 @@ async function initializeKingdomActor(): Promise<void> {
 }
 
 /**
- * Initialize Kingdom Armies folder with proper permissions
+ * Initialize Reignmaker Armies folder with proper permissions
  * Called during module startup to ensure folder exists before armies are created
  */
 async function initializeKingdomArmiesFolder(): Promise<void> {
@@ -109,7 +109,7 @@ async function initializeKingdomArmiesFolder(): Promise<void> {
       return;
     }
 
-    const folderName = "Kingdom Armies";
+    const folderName = "Reignmaker Armies";
     
     // Check if folder already exists
     let folder = game.folders?.find((f: any) => 
@@ -153,7 +153,7 @@ async function initializeKingdomArmiesFolder(): Promise<void> {
       }
     }
   } catch (error) {
-    console.error('[Kingdom Sync] Error initializing Kingdom Armies folder:', error);
+    console.error('[Kingdom Sync] Error initializing Reignmaker Armies folder:', error);
   }
 }
 

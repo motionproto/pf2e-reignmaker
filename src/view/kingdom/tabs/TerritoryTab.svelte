@@ -1,19 +1,51 @@
 <script lang="ts">
-   import { kingdomData, currentFaction } from '../../../stores/KingdomStore';
+   import { kingdomData, currentFaction, allSettlements } from '../../../stores/KingdomStore';
    import { WorksiteConfig } from '../../../models/Hex';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
+   import { filterVisibleHexes } from '../../../utils/visibility-filter';
    
    // View mode toggle
    let viewMode: 'territory' | 'world' = 'territory';
+   
+   // Check if current user is GM
+   $: isGM = (game as any)?.user?.isGM || false;
    
    // Calculate hex counts for view selector (reactive to currentFaction)
    $: claimedHexCount = ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === $currentFaction).length;
    $: totalHexCount = ($kingdomData.hexes || []).length;
    
    // Get hex source based on view mode (reactive to currentFaction)
-   $: sourceHexes = viewMode === 'territory' 
-      ? ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === $currentFaction) // Only current faction's hexes
-      : ($kingdomData.hexes || []); // All hexes
+   $: sourceHexes = (() => {
+      if (viewMode === 'territory') {
+         // Territory view: only current faction's hexes
+         return ($kingdomData.hexes || []).filter((h: any) => h.claimedBy === $currentFaction);
+      } else {
+         // Known World view: all hexes PLUS create entries for settlements without hexes
+         let hexes = [...($kingdomData.hexes || [])];
+         const hexIds = new Set(hexes.map(h => h.id));
+         
+         // Add virtual hex entries for settlements that don't have a hex
+         $allSettlements.forEach(settlement => {
+            const hexId = `${settlement.location.x}.${settlement.location.y}`;
+            if (!hexIds.has(hexId)) {
+               // Create a minimal hex entry for this settlement
+               hexes.push({
+                  id: hexId,
+                  row: settlement.location.x,
+                  col: settlement.location.y,
+                  terrain: 'Unknown',
+                  claimedBy: settlement.ownedBy || null,
+                  worksite: null,
+                  hasCommodityBonus: false,
+                  features: []
+               } as any);
+            }
+         });
+         
+         // Apply World Explorer visibility filter (GM sees all, players see only discovered)
+         return filterVisibleHexes(hexes);
+      }
+   })();
    
    // Map worksite types to their resource colors
    function getWorksiteColor(worksiteType: string): string {
@@ -50,7 +82,7 @@
       .filter(h => h.worksite)
       .map(h => h.worksite!.type))].sort();
    
-   // Apply filters and sorting to SOURCE hexes
+   // Apply filters and sorting to source hexes
    $: filteredAndSortedHexes = (() => {
       let hexes = [...sourceHexes];
       
@@ -62,10 +94,27 @@
          hexes = hexes.filter(h => h.worksite && h.worksite.type === filterWorksite);
       }
       
+      // Helper function to get settlement name for a hex
+      const getSettlementName = (hex: any): string => {
+         const hexCoords = hex.id.split('.');
+         const hexRow = parseInt(hexCoords[0]);
+         const hexCol = parseInt(hexCoords[1]);
+         const settlement = $allSettlements.find(s => s.location.x === hexRow && s.location.y === hexCol);
+         if (settlement) return settlement.name;
+         
+         const hexAny = hex;
+         const settlementFeature = hexAny.features && hexAny.features.find(f => f.type === 'settlement');
+         if (settlementFeature) return settlementFeature.name || 'Settlement';
+         
+         return '';
+      };
+      
       // Apply sorting
       hexes.sort((a, b) => {
          let aValue: any;
          let bValue: any;
+         let aIsEmpty = false;
+         let bIsEmpty = false;
          
          switch(sortColumn) {
             case 'id':
@@ -79,16 +128,47 @@
             case 'worksite':
                aValue = a.worksite?.type || '';
                bValue = b.worksite?.type || '';
+               aIsEmpty = !a.worksite;
+               bIsEmpty = !b.worksite;
+               break;
+            case 'commodities':
+               // Sort by total commodity count
+               const aCommodities = getCommoditiesForDisplay(a);
+               const bCommodities = getCommoditiesForDisplay(b);
+               aValue = aCommodities.reduce((sum, c) => sum + c.amount, 0);
+               bValue = bCommodities.reduce((sum, c) => sum + c.amount, 0);
+               aIsEmpty = aCommodities.length === 0;
+               bIsEmpty = bCommodities.length === 0;
                break;
             case 'production':
                aValue = getProductionString(a);
                bValue = getProductionString(b);
+               aIsEmpty = aValue === '-';
+               bIsEmpty = bValue === '-';
+               break;
+            case 'roads':
+               // Sort by road presence (has road = 1, no road = 0)
+               aValue = ($kingdomData.roadsBuilt && $kingdomData.roadsBuilt.includes(a.id)) ? 1 : 0;
+               bValue = ($kingdomData.roadsBuilt && $kingdomData.roadsBuilt.includes(b.id)) ? 1 : 0;
+               aIsEmpty = aValue === 0;
+               bIsEmpty = bValue === 0;
+               break;
+            case 'settlement':
+               aValue = getSettlementName(a);
+               bValue = getSettlementName(b);
+               aIsEmpty = aValue === '';
+               bIsEmpty = bValue === '';
                break;
             default:
                aValue = a.id;
                bValue = b.id;
          }
          
+         // Empty values always go to the bottom
+         if (aIsEmpty && !bIsEmpty) return 1;
+         if (!aIsEmpty && bIsEmpty) return -1;
+         
+         // Normal sorting for non-empty values
          if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
          if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
          return 0;
@@ -165,14 +245,44 @@
             break;
       }
       
-      // Apply commodity bonus
-      if (hex.hasCommodityBonus) {
-         production.forEach((amount, resource) => {
-            production.set(resource, amount + 1);
-         });
+      // Apply commodity bonuses (new system)
+      // Handle both Map and plain object formats
+      const commodities = hex.commodities || {};
+      const commodityEntries = commodities instanceof Map 
+         ? Array.from(commodities.entries())
+         : Object.entries(commodities);
+      
+      for (const [resource, amount] of commodityEntries) {
+         const numAmount = Number(amount);
+         if (resource === 'gold') {
+            // Gold commodities are always collected
+            production.set('gold', (production.get('gold') || 0) + numAmount);
+         } else {
+            // Other commodities only apply to matching resources
+            if (production.has(resource)) {
+               production.set(resource, production.get(resource)! + numAmount);
+            }
+         }
       }
       
       return production;
+   }
+   
+   // Get commodities for display (returns array of {resource, amount} objects)
+   function getCommoditiesForDisplay(hex: any): Array<{resource: string, amount: number}> {
+      const commodities = hex.commodities || {};
+      const result: Array<{resource: string, amount: number}> = [];
+      
+      // Handle both Map and plain object formats
+      const commodityEntries = commodities instanceof Map 
+         ? Array.from(commodities.entries())
+         : Object.entries(commodities);
+      
+      for (const [resource, amount] of commodityEntries) {
+         result.push({ resource, amount: Number(amount) });
+      }
+      
+      return result;
    }
 </script>
 
@@ -228,7 +338,7 @@
                   class="radio-input"
                />
                <span class="radio-content">
-                  <span class="radio-label">World</span>
+                  <span class="radio-label">Known World</span>
                   <span class="radio-icon-count">
                      <i class="fas fa-globe"></i>
                      ({totalHexCount})
@@ -246,7 +356,7 @@
             <thead>
                <tr>
                   <th class="sortable" on:click={() => handleSort('id')}>
-                     <span>Hex Coordinate</span>
+                     <span>Location</span>
                      {#if sortColumn === 'id'}
                         <i class="fas fa-sort-{sortDirection === 'asc' ? 'up' : 'down'}"></i>
                      {:else}
@@ -269,7 +379,14 @@
                         <i class="fas fa-sort"></i>
                      {/if}
                   </th>
-                  <th>Commodities</th>
+                  <th class="sortable" on:click={() => handleSort('commodities')}>
+                     <span>Bounty</span>
+                     {#if sortColumn === 'commodities'}
+                        <i class="fas fa-sort-{sortDirection === 'asc' ? 'up' : 'down'}"></i>
+                     {:else}
+                        <i class="fas fa-sort"></i>
+                     {/if}
+                  </th>
                   <th class="sortable" on:click={() => handleSort('production')}>
                      <span>Production</span>
                      {#if sortColumn === 'production'}
@@ -278,8 +395,22 @@
                         <i class="fas fa-sort"></i>
                      {/if}
                   </th>
-                  <th>Roads</th>
-                  <th>Settlement</th>
+                  <th class="sortable" on:click={() => handleSort('roads')}>
+                     <span>Roads</span>
+                     {#if sortColumn === 'roads'}
+                        <i class="fas fa-sort-{sortDirection === 'asc' ? 'up' : 'down'}"></i>
+                     {:else}
+                        <i class="fas fa-sort"></i>
+                     {/if}
+                  </th>
+                  <th class="sortable" on:click={() => handleSort('settlement')}>
+                     <span>Settlement</span>
+                     {#if sortColumn === 'settlement'}
+                        <i class="fas fa-sort-{sortDirection === 'asc' ? 'up' : 'down'}"></i>
+                     {:else}
+                        <i class="fas fa-sort"></i>
+                     {/if}
+                  </th>
                </tr>
             </thead>
             <tbody>
@@ -297,7 +428,6 @@
                      <td class="worksite">
                         {#if hex.worksite}
                            <span class="worksite-badge" style="background: {getWorksiteColor(hex.worksite.type)}20; border-color: {getWorksiteColor(hex.worksite.type)}50;">
-                              <i class="fas {WorksiteConfig[hex.worksite.type]?.icon || 'fa-tools'}" style="color: {getWorksiteColor(hex.worksite.type)};"></i>
                               {WorksiteConfig[hex.worksite.type]?.displayName || hex.worksite.type}
                            </span>
                         {:else}
@@ -305,11 +435,19 @@
                         {/if}
                      </td>
                      <td class="commodities">
-                        {#if hex.hasCommodityBonus}
-                           <span class="commodity-bonus" title="This hex has a commodity bonus">
-                              <i class="fas fa-plus-circle"></i>
-                              +1 Bonus
-                           </span>
+                        {#if getCommoditiesForDisplay(hex).length > 0}
+                           {@const commoditiesList = getCommoditiesForDisplay(hex)}
+                           <div class="commodity-icons">
+                              {#each commoditiesList as commodity}
+                                 {#each Array(commodity.amount) as _, i}
+                                    <i 
+                                       class="fas {getResourceIcon(commodity.resource)} commodity-icon" 
+                                       style="color: {getResourceColor(commodity.resource)}"
+                                       title="{commodity.resource} bounty"
+                                    ></i>
+                                 {/each}
+                              {/each}
+                           </div>
                         {:else}
                            <span class="no-commodity">-</span>
                         {/if}
@@ -319,8 +457,7 @@
                            <div class="production-list">
                               {#each Array.from(calculateHexProduction(hex).entries()) as [resource, amount]}
                                  <span class="production-item">
-                                    <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)};"></i>
-                                    +{amount} {resource}
+                                    {amount} {resource}
                                  </span>
                               {/each}
                            </div>
@@ -338,25 +475,30 @@
                         {/if}
                      </td>
                      <td class="settlement">
-                        {#if $kingdomData.settlements}
-                           {@const hexCoords = hex.id.split('.')}
+                        {#each [hex.id] as hexId}
+                           {@const hexCoords = hexId.split('.')}
                            {@const hexRow = parseInt(hexCoords[0])}
                            {@const hexCol = parseInt(hexCoords[1])}
-                           {@const settlement = $kingdomData.settlements.find(s => s.location.x === hexRow && s.location.y === hexCol)}
+                           {@const settlement = $allSettlements.find(s => s.location.x === hexRow && s.location.y === hexCol)}
+                           {@const hexAny = hex}
+                           {@const settlementFeature = hexAny.features && hexAny.features.find(f => f.type === 'settlement')}
+                           
                            {#if settlement}
                               <div class="settlement-info">
-                                 <span class="settlement-badge tier-{settlement.tier.toLowerCase()}">
-                                    <i class="fas fa-city"></i>
-                                    {settlement.name}
-                                 </span>
-                                 <span class="settlement-tier">{settlement.tier}</span>
+                                 <div class="settlement-name">{settlement.name}</div>
+                                 <div class="settlement-tier">{settlement.tier}</div>
+                              </div>
+                           {:else if settlementFeature}
+                              <div class="settlement-info">
+                                 <div class="settlement-name">{settlementFeature.name || 'Settlement'}</div>
+                                 {#if settlementFeature.tier}
+                                    <div class="settlement-tier">{settlementFeature.tier}</div>
+                                 {/if}
                               </div>
                            {:else}
                               <span class="no-settlement">-</span>
                            {/if}
-                        {:else}
-                           <span class="no-settlement">-</span>
-                        {/if}
+                        {/each}
                      </td>
                   </tr>
                {/each}
@@ -549,7 +691,7 @@
          }
          
          td {
-            padding: 0.75rem;
+            padding: 0.35rem 0.75rem;
             color: var(--text-secondary);
             border-bottom: 1px solid var(--border-subtle);
             
@@ -620,12 +762,14 @@
                font-size: var(--font-sm);
             }
             
-            .commodity-bonus {
-               color: var(--color-success);
-               font-size: var(--font-sm);
+            .commodity-icons {
+               display: flex;
+               gap: 0.25rem;
+               flex-wrap: wrap;
                
-               i {
-                  margin-right: 0.25rem;
+               .commodity-icon {
+                  font-size: var(--font-sm);
+                  opacity: 0.9;
                }
             }
             
@@ -742,6 +886,13 @@
                font-size: var(--font-xs);
                color: var(--text-muted);
                font-style: italic;
+            }
+            
+            .settlement-note {
+               font-size: var(--font-xs);
+               color: var(--text-muted);
+               font-style: italic;
+               opacity: 0.7;
             }
             
             .no-worksite,

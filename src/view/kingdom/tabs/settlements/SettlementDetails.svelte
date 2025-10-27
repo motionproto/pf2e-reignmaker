@@ -9,6 +9,7 @@
    import SettlementImage from './SettlementImage.svelte';
    import SettlementManagement from './SettlementManagement.svelte';
    import SettlementLocationPicker from './SettlementLocationPicker.svelte';
+   import Button from '../../components/baseComponents/Button.svelte';
    import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement | null;
@@ -229,14 +230,15 @@
          <SettlementStructures {settlement} />
          
          <!-- Delete Settlement Button -->
-         <button 
+         <Button 
             on:click={openDeleteConfirm} 
             disabled={isDeleting}
-            class="delete-settlement-btn"
+            variant="danger"
+            fullWidth={true}
+            icon="fas fa-trash"
          >
-            <i class="fas fa-trash"></i>
             Delete Settlement
-         </button>
+         </Button>
       </div>
    {:else}
       <div class="empty-selection">

@@ -166,13 +166,9 @@
             ({getStructureCount(settlement)}/{getMaxStructures(settlement)})
          </span>
       </h4>
-      <Button variant="small_secondary" icon="fas fa-plus">
-         Test Button
-      </Button>
-      <button class="add-structure-button" on:click={openAddDialog}>
-         <i class="fas fa-plus"></i>
+      <Button variant="small_secondary" icon="fas fa-plus" on:click={openAddDialog}>
          Add Structure
-      </button>
+      </Button>
    </div>
    
    <!-- Minimum Structures Warning -->
@@ -199,10 +195,9 @@
       <div class="empty-structures">
          <i class="fas fa-tools"></i>
          <p>No structures built yet.</p>
-         <button class="add-structure-button" on:click={openAddDialog}>
-            <i class="fas fa-plus"></i>
+         <Button variant="outline" size="small" icon="fas fa-plus" on:click={openAddDialog}>
             Add Structure
-         </button>
+         </Button>
       </div>
    {:else}
       <table class="structures-table">
@@ -359,34 +354,11 @@
             }
          }
          
-         .add-structure-button {
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-weight: var(--font-weight-semibold);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-            
-            &:hover {
-               background: rgba(255, 255, 255, 0.15);
-               border-color: rgba(255, 255, 255, 0.3);
-               transform: translateY(-1px);
-            }
-         }
       }
    }
    
    .empty-structures {
       @extend .empty-state;
-      
-      .add-structure-button {
-         margin-top: 1rem;
-      }
    }
    
    .minimum-structures-warning {

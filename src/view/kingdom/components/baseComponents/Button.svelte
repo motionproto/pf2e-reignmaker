@@ -99,6 +99,7 @@
          padding: 0.5rem 1rem;
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
+         line-height: 1.5;
          
          :global(i) {
             font-size: var(--font-sm);
@@ -196,7 +197,8 @@
          color: var(--text-primary);
          border: 1px solid rgba(255, 255, 255, 0.2);
          font-size: var(--font-sm);
-           font-weight: var(--font-weight-semibold);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.5;
          
          &::before {
             background: linear-gradient(90deg,
@@ -254,20 +256,20 @@
       
       // Danger variant
       &.danger {
-         background: var(--color-red);
-         border: 1px solid var(--color-red-dark);
-         color: var(--color-white);
+         background: var(--color-red-darker);
+         border: 1px solid var(--color-red);
+         color: var(--color-red);
          
          &::before {
             background: linear-gradient(90deg,
                transparent,
-               rgba(255, 255, 255, 0.2),
+               rgba(237, 67, 55, 0.15),
                transparent);
          }
          
          &:hover:not(:disabled) {
             background: var(--color-red-dark);
-            border-color: var(--color-red-darker);
+            border-color: var(--color-red);
          }
          
          &:disabled {
