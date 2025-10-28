@@ -101,9 +101,9 @@ export async function createUnrestPhaseController() {
     },
 
     /**
-     * Calculate and display current unrest level (auto-completed on init)
+     * Roll for incident occurrence based on current unrest level
      */
-    async calculateUnrest() {
+    async rollForIncident() {
       const actor = getKingdomActor();
       if (!actor) {
         logger.error('❌ [UnrestPhaseController] No kingdom actor available');

@@ -518,7 +518,12 @@ export async function createUpkeepPhaseController() {
         }
       }
       
-      // Calculate excess food (what would be lost after feeding)
+      // Deduct army food consumption before calculating excess
+      // This ensures the storage warning accounts for ALL upkeep costs
+      const armyFoodRequired = consumption.armyFood;
+      availableFood = Math.max(0, availableFood - armyFoodRequired);
+      
+      // Calculate excess food (what would be lost after ALL upkeep)
       const excessFood = Math.max(0, availableFood - foodStorageCapacity);
       
       const foodRemainingForArmies = Math.max(0, availableFood);

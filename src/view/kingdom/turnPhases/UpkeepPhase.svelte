@@ -13,6 +13,7 @@
    import Button from '../components/baseComponents/Button.svelte';
    import BuildQueueItem from '../components/buildQueue/BuildQueueItem.svelte';
    import Notification from '../components/baseComponents/Notification.svelte';
+   import ResourceStat from '../components/baseComponents/ResourceStat.svelte';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Controller instance
@@ -216,29 +217,30 @@
          <div class="card-content">
             <div class="content-area">
             <div class="consumption-display">
-               <div class="consumption-stat required">
-                  <i class="fas fa-home"></i>
-                  <div class="stat-value">{settlementConsumption}</div>
-                  <div class="stat-label">Food Required</div>
-               </div>
+               <ResourceStat 
+                  icon="fas fa-home"
+                  value={settlementConsumption}
+                  label="Food Required"
+                  variant="required"
+               />
                
-               <div class="consumption-stat available" class:danger={currentFood < settlementConsumption}>
-                  <i class="fas fa-wheat-awn resource-food"></i>
-                  <div class="stat-value">{currentFood}</div>
-                  <div class="stat-label">Food Available</div>
-               </div>
-               
-               <div class="consumption-stat storage" class:warning={excessFood > 0}>
-                  <i class="fas fa-boxes-stacked"></i>
-                  <div class="stat-value">
-                     {#if consumeCompleted}
-                        {currentFood} / {foodStorageCapacity}
-                     {:else}
-                        {Math.max(0, currentFood - settlementConsumption)} / {foodStorageCapacity}
-                     {/if}
-                  </div>
-                  <div class="stat-label">Food Stored / Capacity</div>
-               </div>
+               <ResourceStat 
+                  icon="fas fa-wheat-awn resource-food"
+                  value={currentFood}
+                  label="Food Available"
+                  variant="available"
+                  status={currentFood < settlementConsumption ? 'danger' : 'normal'}
+               />
+            </div>
+            
+            <div class="consumption-display">
+               <ResourceStat 
+                  icon="fas fa-boxes-stacked"
+                  value={consumeCompleted ? `${currentFood} / ${foodStorageCapacity}` : `${Math.max(0, currentFood - settlementConsumption)} / ${foodStorageCapacity}`}
+                  label="Food Stored / Capacity"
+                  variant="storage"
+                  status={excessFood > 0 ? 'warning' : 'normal'}
+               />
             </div>
             
             {#if foodStorageCapacity === 0 && currentFood > settlementConsumption && !consumeCompleted}
@@ -268,8 +270,8 @@
                   class="unfed-dropdown-toggle" 
                   on:click={() => showUnfedSettlements = !showUnfedSettlements}
                >
-                  <i class="fas fa-chevron-{showUnfedSettlements ? 'up' : 'down'}"></i>
                   {showUnfedSettlements ? 'Hide' : 'Show'} unfed settlements ({unfedSettlements.length})
+                  <i class="fas fa-chevron-{showUnfedSettlements ? 'up' : 'down'}"></i>
                </button>
                
                {#if showUnfedSettlements}
@@ -343,17 +345,20 @@
                
                <!-- Food Consumption (always show, 0 if no armies) -->
                <div class="consumption-display">
-                  <div class="consumption-stat required">
-                     <i class="fas fa-utensils"></i>
-                     <div class="stat-value">{armyConsumption}</div>
-                     <div class="stat-label">Food Required</div>
-                  </div>
+                  <ResourceStat 
+                     icon="fas fa-utensils"
+                     value={armyConsumption}
+                     label="Food Required"
+                     variant="required"
+                  />
                   
-                  <div class="consumption-stat available" class:danger={armyFoodShortage > 0}>
-                     <i class="fas fa-wheat-awn resource-food"></i>
-                     <div class="stat-value">{foodRemainingForArmies}</div>
-                     <div class="stat-label">Food Remaining</div>
-                  </div>
+                  <ResourceStat 
+                     icon="fas fa-wheat-awn resource-food"
+                     value={foodRemainingForArmies}
+                     label="Food Remaining"
+                     variant="available"
+                     status={armyFoodShortage > 0 ? 'danger' : 'normal'}
+                  />
                </div>
                
                {#if armyCount > 0 && armyFoodShortage > 0 && !militaryCompleted}
@@ -376,17 +381,20 @@
                
                <!-- Consolidated Gold Display -->
                <div class="consumption-display">
-                  <div class="consumption-stat required">
-                     <i class="fas fa-coins"></i>
-                     <div class="stat-value">{armyCount + fortificationMaintenanceCost}</div>
-                     <div class="stat-label">Gold Required</div>
-                  </div>
+                  <ResourceStat 
+                     icon="fas fa-coins"
+                     value={armyCount + fortificationMaintenanceCost}
+                     label="Gold Required"
+                     variant="required"
+                  />
                   
-                  <div class="consumption-stat available" class:danger={$resources?.gold < (armyCount + fortificationMaintenanceCost)}>
-                     <i class="fas fa-coins resource-gold"></i>
-                     <div class="stat-value">{$resources?.gold || 0}</div>
-                     <div class="stat-label">Gold Available</div>
-                  </div>
+                  <ResourceStat 
+                     icon="fas fa-coins resource-gold"
+                     value={$resources?.gold || 0}
+                     label="Gold Available"
+                     variant="available"
+                     status={$resources?.gold < (armyCount + fortificationMaintenanceCost) ? 'danger' : 'normal'}
+                  />
                </div>
                
                {#if !militaryCompleted && ($resources?.gold || 0) < (armyCount + fortificationMaintenanceCost)}
@@ -771,78 +779,7 @@
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       padding: 12px;
-   }
-   
-   .consumption-stat {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      flex: 1;
-      min-width: 80px;
-      
-      i {
-         font-size: var(--font-3xl);
-         color: var(--color-amber);
-         margin-bottom: 4px;
-         
-         &.resource-food {
-            color: var(--color-green);
-         }
-         
-         &.resource-gold {
-            color: var(--color-gold);
-         }
-      }
-      
-      &.required i {
-         color: var(--text-secondary);
-      }
-      
-      &.available i:not(.resource-food):not(.resource-gold) {
-         color: var(--color-amber);
-      }
-      
-      .stat-value {
-         font-size: 18px;
-         font-weight: var(--font-weight-bold);
-         color: var(--text-primary);
-         margin: 2px 0;
-      }
-      
-      .stat-label {
-         font-size: var(--font-xs);
-         font-weight: var(--font-weight-medium);
-         letter-spacing: 0.025em;
-         color: var(--text-secondary);
-         text-transform: uppercase;
-      }
-      
-      &.danger {
-         i {
-            color: var(--color-red);
-         }
-         
-         .stat-value {
-            color: var(--color-red);
-         }
-      }
-      
-      &.warning {
-         i {
-            color: var(--color-amber);
-         }
-         
-         .stat-value {
-            color: var(--color-amber-light);
-         }
-      }
-      
-      &.storage {
-         i {
-            color: var(--color-blue);
-         }
-      }
+      width: 100%;
    }
    
    .military-capacity-display {
@@ -852,6 +789,7 @@
       padding: 12px;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
+      width: 100%;
    }
    
    .capacity-item {
@@ -998,12 +936,12 @@
       border: 1px solid var(--color-amber);
       border-radius: var(--radius-sm);
       color: var(--color-amber-light);
-      font-size: var(--font-sm);
+      font-size: var(--font-lg);
       cursor: pointer;
       transition: all var(--transition-fast);
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 8px;
       
       &:hover {
@@ -1028,13 +966,13 @@
    
    .unfed-settlement-item {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       justify-content: space-between;
       gap: 8px;
       padding: 6px 8px;
       background: rgba(245, 158, 11, 0.1);
       border-radius: var(--radius-sm);
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       
       .settlement-name {
          flex: 1;
@@ -1044,13 +982,13 @@
       
       .settlement-tier {
          color: var(--text-tertiary);
-         font-size: var(--font-xs);
+         font-size: var(--font-md);
       }
       
       .settlement-unrest {
          color: var(--color-red);
          font-weight: var(--font-weight-semibold);
-         font-size: var(--font-sm);
+         font-size: var(--font-);
       }
    }
    

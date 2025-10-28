@@ -3,6 +3,7 @@
    import { kingdomData, unrest, isPhaseStepCompleted } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
    import { getUnrestTierInfo, getUnrestStatus } from '../../../controllers/UnrestPhaseController';
+   import { logger } from '../../../utils/Logger';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -193,7 +194,7 @@
          const controller = await createUnrestPhaseController();
 
       // Call the manual incident check method that completes the step
-      const result = await controller.checkForIncidents();
+      const result = await controller.rollForIncident();
 
       // Store roll results for display
       incidentCheckRoll = result.roll || 0;
