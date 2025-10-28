@@ -24,10 +24,6 @@
     {
       "skill": "crafting",
       "description": "repair equipment"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "veteran experience"
     }
   ],
   "effects": {

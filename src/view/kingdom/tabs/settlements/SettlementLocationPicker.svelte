@@ -25,39 +25,36 @@
          const features = (h as any).features || [];
          if (!features || features.length === 0) return false;
          
-         return features.some((f: any) => 
-            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
-         );
+         // Features have type='settlement' and tier='Village'/'Town'/etc
+         return features.some((f: any) => f.type === 'settlement');
       })
       .map(h => {
-         // Parse hex coordinates from ID (e.g., "40.12" -> x: 40, y: 12)
-         const [xStr, yStr] = h.id.split('.');
-         const x = parseInt(xStr) || 0;
-         const y = parseInt(yStr) || 0;
+         // Use stored row/col properties directly (already numbers)
+         // Note: hexes use {row, col} but settlements use {x, y}
+         // where x=row and y=col
+         const row = (h as any).row ?? 0;
+         const col = (h as any).col ?? 0;
          
-         // Get settlement type from features
+         // Get settlement feature (type='settlement', tier has Village/Town/City/Metropolis)
          const features = (h as any).features || [];
-         const settlementFeature = features.find((f: any) => 
-            f.type && ['village', 'town', 'city', 'metropolis'].includes(f.type.toLowerCase())
-         );
+         const settlementFeature = features.find((f: any) => f.type === 'settlement');
          
-         // Capitalize settlement type for display
-         const settlementType = settlementFeature?.type 
-            ? settlementFeature.type.charAt(0).toUpperCase() + settlementFeature.type.slice(1).toLowerCase()
-            : 'Settlement';
+         // Get tier for display (Village, Town, City, Metropolis)
+         const settlementType = settlementFeature?.tier || 'Settlement';
          
          // Get settlement name (if available)
          const settlementName = (settlementFeature as any)?.name || null;
          
          // Check if this hex already has a settlement assigned
+         // Compare hex.row to settlement.location.x and hex.col to settlement.location.y
          const assignedSettlement = $kingdomData.settlements.find(s => 
-            s.location.x === x && s.location.y === y && s.id !== currentSettlement.id
+            s.location.x === row && s.location.y === col && s.id !== currentSettlement.id
          );
          
          return {
             id: h.id,
-            x,
-            y,
+            x: row,  // For UI display (settlement coordinate system)
+            y: col,  // For UI display (settlement coordinate system)
             settlementType,
             settlementName,
             isAssigned: !!assignedSettlement,
@@ -98,14 +95,41 @@
          return;
       }
       
-      // Update settlement's rmLocation (usage location) to link it
+      // Update settlement's location and link the hex feature
+      // Also clean up any stale links to ensure data integrity
       let updatedSettlement: typeof settlement | undefined;
       await updateKingdom(k => {
          const s = k.settlements.find(s => s.id === settlement.id);
          if (s) {
-            // Update rmLocation to mark as actively used
+            // STEP 1: Clean up any stale links to this settlement in ALL hexes
+            // This ensures no leftover data from previous assignments
+            for (const hex of k.hexes) {
+               const hexData = hex as any;
+               if (hexData.features) {
+                  for (const feature of hexData.features) {
+                     if (feature.type === 'settlement' && feature.settlementId === s.id) {
+                        // Unlink any stale references
+                        feature.linked = false;
+                        feature.settlementId = null;
+                     }
+                  }
+               }
+            }
+            
+            // STEP 2: Update settlement location
             s.location = { x, y };
             updatedSettlement = s;
+            
+            // STEP 3: Link the hex feature at the new location
+            const hexId = `${x}.${String(y).padStart(2, '0')}`;
+            const hexData = k.hexes.find(h => h.id === hexId) as any;
+            if (hexData?.features) {
+               const feature = hexData.features.find((f: any) => f.type === 'settlement' && !f.linked);
+               if (feature) {
+                  feature.linked = true;
+                  feature.settlementId = s.id;
+               }
+            }
          }
       });
       
@@ -130,12 +154,27 @@
       // Use kingmakerLocation if available, otherwise use current location
       const kmLocation = currentSettlement.kingmakerLocation || currentSettlement.location;
       
-      // Update settlement's rmLocation to (0,0) to mark as unlinked
+      // Update settlement location to (0,0) and unlink ALL hex features
+      // Scan all hexes to ensure complete cleanup of stale data
       await updateKingdom(k => {
          const s = k.settlements.find(s => s.id === settlement.id);
          if (s) {
-            s.location = { x: 0, y: 0 }; // rmLocation
-            // kingmakerLocation stays unchanged - it's the source of truth
+            // STEP 1: Unlink ALL hex features linked to this settlement
+            // This ensures complete cleanup even if there's stale data
+            for (const hex of k.hexes) {
+               const hexData = hex as any;
+               if (hexData.features) {
+                  for (const feature of hexData.features) {
+                     if (feature.type === 'settlement' && feature.settlementId === s.id) {
+                        feature.linked = false;
+                        feature.settlementId = null;
+                     }
+                  }
+               }
+            }
+            
+            // STEP 2: Clear settlement location
+            s.location = { x: 0, y: 0 };
          }
       });
       
@@ -203,8 +242,8 @@
                   No map settlements found
                </div>
             {:else}
-               {#each availableLocations as location}
-                  {@const isSelected = currentSettlement.location.x === location.x && currentSettlement.location.y === location.y}
+            {#each availableLocations as location}
+               {@const isSelected = currentSettlement.location.x === location.x && currentSettlement.location.y === location.y}
                   <button
                      class="location-item"
                      class:selected={isSelected}

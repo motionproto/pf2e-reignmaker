@@ -126,8 +126,14 @@
   // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
   $: outcomeApplied = resolution?.effectsApplied || false;
   
-  // Get skill bonuses for all skills
-  $: skillBonuses = getSkillBonuses(skills.map(s => s.skill));
+  // Inject "applicable-lore" as a global option for all checks
+  $: skillsWithLore = [
+    ...skills,
+    { skill: 'applicable lore', description: 'relevant expertise' }
+  ];
+  
+  // Get skill bonuses for all skills (including injected lore)
+  $: skillBonuses = getSkillBonuses(skillsWithLore.map(s => s.skill));
   
   // Get the skill that was used
   $: usedSkill = resolution?.skillName || localUsedSkill || '';
@@ -405,7 +411,7 @@
                 {/if}
               {/if}
               
-              {#each skills as skillOption}
+              {#each skillsWithLore as skillOption}
                 {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
                 <SkillTag
                   skill={skillOption.skill}

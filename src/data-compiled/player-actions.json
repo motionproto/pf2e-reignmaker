@@ -195,10 +195,6 @@
             {
                 "skill": "deception",
                 "description": "misleading negotiations"
-            },
-            {
-                "skill": "mercantile-lore",
-                "description": "market expertise"
             }
         ],
         "effects": {
@@ -247,10 +243,6 @@
             {
                 "skill": "thievery",
                 "description": "black market"
-            },
-            {
-                "skill": "mercantile-lore",
-                "description": "trade expertise"
             }
         ],
         "effects": {
@@ -337,16 +329,8 @@
                 "description": "wilderness expertise"
             },
             {
-                "skill": "exploration-lore",
-                "description": "surveying knowledge"
-            },
-            {
                 "skill": "society",
                 "description": "administrative control"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "military expansion"
             }
         ],
         "effects": {
@@ -463,10 +447,6 @@
             {
                 "skill": "survival",
                 "description": "wilderness defenses"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "strategic defenses"
             }
         ],
         "effects": {
@@ -845,10 +825,6 @@
             {
                 "skill": "arcana",
                 "description": "magical pacts"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "strategic necessity"
             }
         ],
         "effects": {
@@ -899,10 +875,6 @@
             {
                 "skill": "crafting",
                 "description": "repair equipment"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "veteran experience"
             }
         ],
         "effects": {
@@ -946,10 +918,6 @@
             {
                 "skill": "stealth",
                 "description": "covert movement"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "military tactics"
             }
         ],
         "effects": {
@@ -1001,10 +969,6 @@
             {
                 "skill": "performance",
                 "description": "farewell ceremony"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "military protocol"
             }
         ],
         "effects": {
@@ -1070,10 +1034,6 @@
             {
                 "skill": "thievery",
                 "description": "acquire through subterfuge"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "military procurement"
             }
         ],
         "effects": {
@@ -1196,10 +1156,6 @@
             {
                 "skill": "survival",
                 "description": "endurance exercises"
-            },
-            {
-                "skill": "warfare-lore",
-                "description": "tactical doctrine"
             }
         ],
         "effects": {

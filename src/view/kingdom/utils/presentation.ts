@@ -16,9 +16,9 @@ export function getCategoryIcon(category: string): string {
     'Knowledge & Magic': 'fa-book',
     'Medicine & Healing': 'fa-medkit',
     'Military & Training': 'fa-shield-alt',
-    'Performance & Culture': 'fa-theater-masks',
+    'Hospitality': 'fa-theater-masks',
     'Commerce': 'fa-coins',
-    'Culture': 'fa-palette',
+    'Culture': 'fa-people-roof',
     'Diplomacy': 'fa-handshake',
     'Food Storage': 'fa-warehouse',
     'Fortifications': 'fa-castle',
@@ -76,6 +76,20 @@ export function getResourceColor(resource: string): string {
     prison: 'var(--icon-prison)'
   };
   return colors[resource] || 'var(--text-primary)';
+}
+
+/**
+ * Get icon for settlement status indicators
+ */
+export function getSettlementStatusIcon(status: string): string {
+  const icons: Record<string, string> = {
+    'mapped': 'fa-map-marker-alt',
+    'unmapped': 'fa-map-marker-alt-slash',
+    'hex': 'far fa-hexagon',  // Unfilled/empty hex
+    'road': 'fa-road',
+    'unfed': 'fa-wheat-awn'  // Use existing food icon
+  };
+  return icons[status] || 'fa-circle';
 }
 
 /**

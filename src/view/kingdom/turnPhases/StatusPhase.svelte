@@ -4,6 +4,7 @@ import { kingdomData, kingdomActor, isInitialized } from '../../../stores/Kingdo
 import { TurnPhase } from '../../../actors/KingdomActor';
 import ModifierCard from '../components/ModifierCard.svelte';
 import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
+import Notification from '../components/baseComponents/Notification.svelte';
 import { setSelectedTab } from '../../../stores/ui';
 import { SettlementTier } from '../../../models/Settlement';
 import { logger } from '../../../utils/Logger';
@@ -12,28 +13,41 @@ import { logger } from '../../../utils/Logger';
 export let isViewingCurrentPhase: boolean = true;
 
 // Reactive: Get hexes with unlinked settlement features (in claimed territory)
+// Explicitly track dependencies for Svelte reactivity
+$: hexes = $kingdomData.hexes || [];
+$: settlements = $kingdomData.settlements || [];
+
+// Reactive: Get settlements that exist but aren't placed on map (location is 0,0)
+$: unlinkedSettlements = settlements.filter(s => 
+  s.location.x === 0 && s.location.y === 0
+);
+
 // This matches the pattern from SettlementsList.svelte
-$: unassignedHexes = ($kingdomData.hexes || [])
+$: unassignedHexes = hexes
    .filter((h: any) => {
       // Must be in claimed territory
       if (h.claimedBy !== PLAYER_KINGDOM) return false;
       
       // Must have unlinked settlement features
+      // Use !f.linked to catch both undefined and false
       const features = h.features || [];
       const hasUnlinkedSettlement = features.some((f: any) => 
-         f.type === 'settlement' && f.linked === false
+         f.type === 'settlement' && !f.linked
       );
       
       return hasUnlinkedSettlement;
    })
    .map((h: any) => {
-      const [xStr, yStr] = h.id.split('.');
-      const x = parseInt(xStr) || 0;
-      const y = parseInt(yStr) || 0;
+      // Use stored row/col properties directly (already numbers)
+      // Note: hexes use {row, col} but settlements use {x, y}
+      // where x=row and y=col
+      const row = h.row ?? 0;
+      const col = h.col ?? 0;
       
       const features = h.features || [];
+      // Use !f.linked to catch both undefined and false
       const settlementFeature = features.find((f: any) => 
-         f.type === 'settlement' && f.linked === false
+         f.type === 'settlement' && !f.linked
       );
       
       // Map feature tier to SettlementTier
@@ -47,11 +61,21 @@ $: unassignedHexes = ($kingdomData.hexes || [])
       
       return {
          id: h.id,
-         x,
-         y,
+         x: row,  // For settlement coordinate system
+         y: col,  // For settlement coordinate system
          tier,
          name: settlementFeature?.name  // Use feature name (may be undefined)
       };
+   })
+   // CRITICAL: Filter out hexes that actually have settlements assigned
+   // This catches stale data where linked flag isn't set but settlement exists
+   .filter(hex => {
+      // Use settlements variable to ensure Svelte tracks this dependency
+      const hasAssignedSettlement = settlements.some(s => 
+         s.location.x === hex.x && s.location.y === hex.y
+      );
+      // Only include if NO settlement is assigned to this location
+      return !hasAssignedSettlement;
    });
 
 // Reactive: Check if kingdom has a capital
@@ -90,35 +114,30 @@ async function initializePhase() {
 <div class="status-phase">
    <!-- No Capital Alert Section -->
    {#if !hasCapital && $kingdomData.settlements && $kingdomData.settlements.length > 0}
-      <div class="phase-section no-capital-alert">
-         <div class="section-header">
-            <i class="fas fa-crown"></i>
-            <h3>No Capital Designated</h3>
-         </div>
-         
-         <div class="alerts-stack">
-            <div 
-               class="settlement-alert clickable"
-               on:click={navigateToSettlements}
-               on:keypress={(e) => e.key === 'Enter' && navigateToSettlements()}
-               role="button"
-               tabindex="0"
-               title="Click to go to Settlements tab"
-            >
-               <div class="alert-content">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <div class="settlement-info">
-                     <strong>Your kingdom needs a capital settlement</strong>
-                  </div>
-                  <span class="click-hint">
-                     <i class="fas fa-arrow-right"></i>
-                     Click to designate
-                  </span>
-               </div>
-            </div>
-         </div>
-      </div>
+      <Notification
+         variant="warning"
+         title="No Capital Designated"
+         description="Mark one of your settlements as the capital to enable full gold generation."
+         emphasis={true}
+         actionText="Go to Settlements"
+         actionIcon="fas fa-arrow-right"
+         onAction={navigateToSettlements}
+         actionInline={true}
+      />
    {/if}
+
+   <!-- Unlinked Settlements Alert Section -->
+   {#each unlinkedSettlements as settlement}
+      <Notification
+         variant="warning"
+         title="{settlement.name} is not linked to a map hex."
+         description=""
+         actionText="Go to Settlements"
+         actionIcon="fas fa-arrow-right"
+         onAction={navigateToSettlements}
+         actionHeader={true}
+      />
+   {/each}
 
    <!-- Unassigned Settlements Alert Section -->
    {#if unassignedHexes.length > 0}
@@ -329,9 +348,8 @@ async function initializePhase() {
       gap: 15px;
    }
 
-   // Alert Styles (shared between unassigned settlements and no capital)
-   .unassigned-settlements-alert,
-   .no-capital-alert {
+   // Alert Styles for unassigned settlements
+   .unassigned-settlements-alert {
       background: transparent;
       border: 2px solid #fbbf24;
 

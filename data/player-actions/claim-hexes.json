@@ -10,16 +10,8 @@
       "description": "wilderness expertise"
     },
     {
-      "skill": "exploration-lore",
-      "description": "surveying knowledge"
-    },
-    {
       "skill": "society",
       "description": "administrative control"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "military expansion"
     }
   ],
   "effects": {

@@ -102,16 +102,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: var(--z-overlay);
   }
   
   .dialog {
-    background: var(--color-gray-900, #1f1f23);
-    border: 2px solid var(--border-highlight, #4a4a4d);
-    border-radius: var(--radius-lg, 8px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    animation: dialogSlideIn 0.2s ease-out;
+    background: var(--bg-surface);
+    border: 2px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
+    animation: dialogSlideIn var(--transition-base);
   }
   
   @keyframes dialogSlideIn {
@@ -130,9 +129,9 @@
   }
   
   .dialog-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-light, #3a3a3d);
-    background: var(--color-gray-950, #18181b);
+    padding: .5rem 1.5rem;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-base);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -140,39 +139,39 @@
   
   .dialog-title {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: var(--font-2xl);
     font-weight: var(--font-weight-semibold);
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
   }
   
   .dialog-close {
     background: none;
     border: none;
-    color: var(--text-secondary, #b0b0b3);
-    font-size: 1.25rem;
+    color: var(--text-secondary);
+    font-size: var(--font-xl);
     cursor: pointer;
-    padding: 0.25rem;
+    margin-right: -1rem;
     width: 2rem;
     height: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-sm, 4px);
-    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
   }
   
   .dialog-close:hover {
     background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
   }
   
   .dialog-body {
-    padding: 1.5rem 1rem;
+    padding: 1rem 1.5rem;
   }
   
   .dialog-footer {
     padding: 1rem;
-    border-top: 1px solid var(--border-light, #3a3a3d);
+    border-top: 1px solid var(--border-default);
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
@@ -180,43 +179,44 @@
   
   .dialog-button {
     padding: 0.5rem 1rem;
-    border: 1px solid var(--border-default, #3a3a3d);
-    border-radius: var(--radius-sm, 4px);
-    font-size: 0.9rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all var(--transition-base);
     min-width: 80px;
   }
   
   .dialog-button:disabled {
-    opacity: 0.5;
+    opacity: var(--opacity-disabled);
     cursor: not-allowed;
   }
   
   .dialog-button-primary {
-    background: var(--color-amber, #fbbf24);
-    color: var(--color-gray-950, #18181b);
-    border-color: var(--color-amber, #fbbf24);
+    background: var(--btn-secondary-bg);
+    color: var(--text-primary);
+    border-color: var(--border-medium);
   }
   
   .dialog-button-primary:hover:not(:disabled) {
-    background: var(--color-amber-dark, #f59e0b);
-    border-color: var(--color-amber-dark, #f59e0b);
+    background: var(--btn-secondary-hover);
+    border-color: var(--border-strong);
   }
   
   .dialog-button-primary:focus {
-    outline: 2px solid var(--color-amber, #fbbf24);
+    outline: 2px solid var(--border-strong);
     outline-offset: 2px;
   }
   
   .dialog-button-secondary {
-    background: var(--color-gray-800, #27272a);
-    color: var(--text-secondary, #b0b0b3);
-    border-color: var(--border-default, #3a3a3d);
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-medium);
   }
   
-  .dialog-button-secondary:hover {
-    background: var(--color-gray-700, #3a3a3d);
+  .dialog-button-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-strong);
   }
 </style>

@@ -6,6 +6,8 @@
 
 import { getKingdomData, updateKingdom } from '../stores/KingdomStore';
 import { logger } from '../utils/Logger';
+import { mountSvelteDialog } from '../utils/SvelteDialog';
+import DeleteArmyDialog from '../view/kingdom/components/DeleteArmyDialog.svelte';
 
 /**
  * Register army actor deletion hooks
@@ -21,7 +23,6 @@ export function registerArmyActorHooks(): void {
   Hooks.on('preDeleteActor', (actor: any, options: any, userId: string) => {
     // If already confirmed, allow deletion
     if (options.reignmakerConfirmed) {
-
       return true;
     }
     
@@ -41,52 +42,25 @@ export function registerArmyActorHooks(): void {
       return true; // Orphaned actor, allow deletion
     }
     
-    // Show warning dialog
-    const Dialog = (globalThis as any).Dialog;
+    // Find supporting settlement name
+    const supportedBySettlement = army.supportedBySettlementId 
+      ? kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId)?.name || ''
+      : '';
     
-    new Dialog({
-      title: `Delete Army Actor?`,
-      content: `
-        <div style="padding: 1rem;">
-          <p><strong>⚠️ This is a Kingdom Army actor</strong></p>
-          <hr style="margin: 1rem 0;">
-          <p><strong>${actor.name}</strong> (Level ${army.level})</p>
-          <p>Status: ${army.isSupported ? '✅ Supported' : '⚠️ Unsupported'}</p>
-          ${army.supportedBySettlementId ? `<p>Supported by: ${kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId)?.name || 'Unknown'}</p>` : ''}
-          <hr style="margin: 1rem 0;">
-          <p><strong>Recommended:</strong></p>
-          <p>Use the <em>Disband Army</em> player action during the Actions phase for proper cleanup.</p>
-          <hr style="margin: 1rem 0;">
-          <p><strong>If you delete anyway:</strong></p>
-          <ul>
-            <li>Actor will be permanently deleted</li>
-            <li>Army will be removed from kingdom records</li>
-            <li>Settlement support slots will be freed</li>
-          </ul>
-        </div>
-      `,
-      buttons: {
-        cancel: {
-          icon: '<i class="fas fa-times"></i>',
-          label: 'Cancel',
-          callback: () => {
-
-          }
-        },
-        delete: {
-          icon: '<i class="fas fa-trash"></i>',
-          label: 'Delete Anyway',
-          callback: () => {
-
-            // Delete with confirmation flag to bypass hook
-            actor.delete({ reignmakerConfirmed: true });
-          }
-        }
-      },
-      default: 'cancel'
-    }).render(true);
+    // Show custom Svelte dialog asynchronously (don't await)
+    mountSvelteDialog(DeleteArmyDialog, {
+      actorName: actor.name,
+      armyLevel: army.level,
+      isSupported: army.isSupported,
+      supportedBySettlement,
+    }).then(result => {
+      // If confirmed, manually trigger deletion with confirmation flag
+      if (result.confirmed) {
+        actor.delete({ reignmakerConfirmed: true });
+      }
+    });
     
-    // Prevent immediate deletion - dialog will handle it
+    // Always prevent the original deletion - we'll handle it manually if confirmed
     return false;
   });
   

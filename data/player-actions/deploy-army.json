@@ -20,10 +20,6 @@
     {
       "skill": "stealth",
       "description": "covert movement"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "military tactics"
     }
   ],
   "effects": {

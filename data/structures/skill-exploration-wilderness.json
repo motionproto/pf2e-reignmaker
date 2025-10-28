@@ -6,7 +6,7 @@
     {
       "id": "hunters-lodge",
       "name": "Hunter's Lodge",
-      "description": "Basic wilderness tracking and hunting post",
+      "description": "A rugged shelter where hunters share trails, trophies, and hard-won survival lore.",
       "cost": {
         "lumber": 2
       },
@@ -19,9 +19,9 @@
       ]
     },
     {
-      "id": "rangers-outpost",
-      "name": "Ranger's Outpost",
-      "description": "Frontier station for wilderness scouts",
+      "id": "outfitter",
+      "name": "Outfitter",
+      "description": "A well-stocked post supplying gear, maps, and training for wilderness expeditions.",
       "cost": {
         "lumber": 2,
         "stone": 2
@@ -40,9 +40,9 @@
       ]
     },
     {
-      "id": "druids-grove",
-      "name": "Druid's Grove",
-      "description": "Sacred natural sanctuary for nature wardens",
+      "id": "wardens-hall",
+      "name": "Warden's Hall",
+      "description": "Headquarters for rangers and scouts who safeguard the wilds and guide explorers.",
       "cost": {
         "lumber": 4,
         "stone": 2,
@@ -67,9 +67,9 @@
       ]
     },
     {
-      "id": "wildskeepers-enclave",
-      "name": "Wildskeeper's Enclave",
-      "description": "Elite wilderness mastery compound",
+      "id": "wildkeepers-sanctuary",
+      "name": "Wildkeepers' Sanctuary",
+      "description": "A revered haven where the realm's greatest wardens preserve the balance between nature and civilization.",
       "cost": {
         "lumber": 6,
         "stone": 6,

@@ -20,10 +20,6 @@
     {
       "skill": "thievery",
       "description": "acquire through subterfuge"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "military procurement"
     }
   ],
   "effects": {

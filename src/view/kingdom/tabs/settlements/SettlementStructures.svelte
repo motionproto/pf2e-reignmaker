@@ -6,6 +6,7 @@
    import { structuresService } from '../../../../services/structures';
    import SettlementStructureDialog from '../../components/SettlementStructureDialog.svelte';
    import Button from '../../components/baseComponents/Button.svelte';
+   import Notification from '../../components/baseComponents/Notification.svelte';
    import type { Structure } from '../../../../models/Structure';
    
    export let settlement: Settlement;
@@ -180,21 +181,16 @@
    
    <!-- Minimum Structures Warning -->
    {#if showWarning}
-      <div class="minimum-structures-warning">
-         <div class="warning-content">
-            <i class="fas fa-exclamation-triangle"></i>
-         <div class="warning-text">
-            <strong>Insufficient Structures for {settlement.tier}</strong>
-            <p>This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)</p>
-         </div>
-            <button 
-               class="dismiss-button" 
-               on:click={() => dismissedWarning = true}
-               title="Dismiss warning"
-            >
-               <i class="fas fa-times"></i>
-            </button>
-         </div>
+      <div class="minimum-structures-warning-wrapper">
+         <Notification
+            variant="warning"
+            title="Insufficient Structures for {settlement.tier}"
+            description="This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)"
+            dismissible={true}
+            emphasis={true}
+            icon=""
+            on:dismiss={() => dismissedWarning = true}
+         />
       </div>
    {/if}
    
@@ -369,64 +365,8 @@
       @extend .empty-state;
    }
    
-   .minimum-structures-warning {
+   .minimum-structures-warning-wrapper {
       margin-bottom: 1rem;
-      background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      border-left: 4px solid #fbbf24;
-      border-radius: var(--radius-md);
-      padding: 1rem;
-      
-      .warning-content {
-         display: flex;
-         align-items: flex-start;
-         gap: 1rem;
-         
-         > i {
-            font-size: 1.5rem;
-            color: #fbbf24;
-            flex-shrink: 0;
-            margin-top: 0.125rem;
-         }
-         
-         .warning-text {
-            flex: 1;
-            
-            strong {
-               display: block;
-               font-size: var(--font-lg);
-               font-weight: var(--font-weight-semibold);
-               color: #fbbf24;
-               margin-bottom: 0.25rem;
-            }
-            
-            p {
-               margin: 0;
-               font-size: var(--font-md);
-               color: var(--text-secondary);
-            }
-         }
-         
-         .dismiss-button {
-            background: transparent;
-            border: none;
-            color: rgba(251, 191, 36, 0.6);
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: var(--radius-sm);
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-            
-            &:hover {
-               color: #fbbf24;
-               background: rgba(251, 191, 36, 0.1);
-            }
-            
-            i {
-               font-size: 1rem;
-            }
-         }
-      }
    }
    
    .structures-table {

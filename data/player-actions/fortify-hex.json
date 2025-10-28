@@ -85,10 +85,6 @@
     {
       "skill": "survival",
       "description": "wilderness defenses"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "strategic defenses"
     }
   ],
   "effects": {

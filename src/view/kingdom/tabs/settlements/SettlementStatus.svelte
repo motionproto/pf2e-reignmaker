@@ -2,6 +2,7 @@
    import type { Settlement } from '../../../../models/Settlement';
    import { updateKingdom, kingdomData } from '../../../../stores/KingdomStore';
    import { settlementService } from '../../../../services/settlements';
+   import { getSettlementStatusIcon } from '../../utils/presentation';
    import Dialog from '../../components/baseComponents/Dialog.svelte';
    
    export let settlement: Settlement;
@@ -161,7 +162,7 @@
                <i class="fas fa-check-circle status-good"></i>
                <span>Fed last turn ({settlement.goldIncome || 0} gold/turn)</span>
             {:else}
-               <i class="fas fa-exclamation-triangle status-warning"></i>
+               <i class="fas {getSettlementStatusIcon('unfed')} status-unfed"></i>
                <span>Not fed last turn (no gold generation)</span>
             {/if}
          </div>
@@ -357,6 +358,10 @@
             
             &.status-bad {
                color: var(--color-danger);
+            }
+            
+            &.status-unfed {
+               color: #dc3545; // Red color for unfed
             }
          }
       }

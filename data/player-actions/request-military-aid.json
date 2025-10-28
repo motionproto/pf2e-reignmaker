@@ -20,10 +20,6 @@
     {
       "skill": "arcana",
       "description": "magical pacts"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "strategic necessity"
     }
   ],
   "effects": {

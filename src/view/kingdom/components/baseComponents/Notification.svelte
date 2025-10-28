@@ -1,5 +1,6 @@
 <script lang="ts">
    import { createEventDispatcher } from 'svelte';
+   import Button from './Button.svelte';
    
    export let title: string;
    export let description: string;
@@ -8,6 +9,13 @@
    export let icon: string = '';
    export let dismissible: boolean = false;
    export let emphasis: boolean = false;
+   
+   // Action button props
+   export let actionText: string = '';
+   export let actionIcon: string = '';
+   export let onAction: (() => void) | undefined = undefined;
+   export let actionInline: boolean = false;
+   export let actionHeader: boolean = false; // NEW: Show action button in header row
    
    const dispatch = createEventDispatcher();
    
@@ -27,18 +35,43 @@
 </script>
 
 <div class="notification-rm" class:info={variant === 'info'} class:warning={variant === 'warning'} class:danger={variant === 'danger'} class:success={variant === 'success'} class:emphasis={emphasis}>
-   <div class="notification-rm-header">
+   <div class="notification-rm-header" class:has-action={actionHeader && onAction}>
       <i class={displayIcon}></i>
       <span class="notification-rm-title">{title}</span>
+      {#if actionHeader && onAction}
+         <Button variant="outline" icon={actionIcon} on:click={onAction}>
+            {actionText}
+         </Button>
+      {/if}
       {#if dismissible}
          <button class="notification-rm-close" on:click={handleDismiss} type="button" aria-label="Dismiss">
             <i class="fas fa-times"></i>
          </button>
       {/if}
    </div>
-   <div class="notification-rm-description">{description}</div>
+   {#if description && !actionInline}
+      <div class="notification-rm-description">{description}</div>
+   {/if}
    {#if impact}
       <div class="notification-rm-impact">{impact}</div>
+   {/if}
+   {#if onAction && !actionHeader}
+      {#if actionInline}
+         <div class="notification-rm-actions-inline">
+            {#if description}
+               <span class="description-text">{description}</span>
+            {/if}
+            <Button variant="outline" icon={actionIcon} on:click={onAction}>
+               {actionText}
+            </Button>
+         </div>
+      {:else}
+         <div class="notification-rm-actions">
+            <Button variant="outline" icon={actionIcon} on:click={onAction}>
+               {actionText}
+            </Button>
+         </div>
+      {/if}
    {/if}
 </div>
 
@@ -63,14 +96,14 @@
       
       // Info variant (blue)
       &.info {
-         border-color: var(--color-blue);
-         color: var(--color-blue-light, #93c5fd);
+         border-color: var(--info-border);
+         color: var(--info-text);
          
          .notification-rm-header {
-            background: rgba(59, 130, 246, 0.15);
+            background: var(--info-background);
             
             i {
-               color: var(--color-blue);
+               color: var(--info-icon);
             }
          }
       }
@@ -127,6 +160,11 @@
       padding: .5rem 1rem;
       position: relative;
       
+      // When action button is in header, add spacing
+      &.has-action {
+         gap: 12px;
+      }
+      
       i {
          font-size: 16px;
          flex-shrink: 0;
@@ -137,6 +175,11 @@
          font-size: var(--font-lg);
          text-align: left;
          flex: 1;
+      }
+      
+      // Action button in header
+      :global(button) {
+         flex-shrink: 0;
       }
       
       .notification-rm-close {
@@ -187,5 +230,35 @@
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       font-size: var(--font-md);
       text-align: left;
+   }
+   
+   // Action buttons - inline variant
+   .notification-rm-actions-inline {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      
+      .description-text {
+         flex: 1;
+         line-height: 1.4;
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-light);
+      }
+      
+      // Button stays on the right (doesn't shrink or grow)
+      :global(button) {
+         flex-shrink: 0;
+         margin-left: auto;
+      }
+   }
+   
+   // Action buttons - standard (below description)
+   .notification-rm-actions {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
    }
 </style>

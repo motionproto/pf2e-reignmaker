@@ -60,9 +60,7 @@ export class PF2eSkillService {
     'acrobatics': 'acrobatics',
     'thievery': 'thievery',
     'lore': 'lore',
-    'warfare lore': 'lore',
-    'warfare': 'lore', // Alternative mapping
-    'mercantile lore': 'lore'
+    'applicable-lore': 'lore'
   };
 
   constructor() {
@@ -522,46 +520,39 @@ export class PF2eSkillService {
 
   /**
    * Show a dialog to select which lore skill to use
+   * Uses the standard LoreSelectionDialog Svelte component
    */
   private async showLoreSelectionDialog(loreItems: any[]): Promise<any | null> {
-    return new Promise((resolve) => {
-      const options = loreItems
-        .map(item => `<option value="${item.slug}">${item.name}</option>`)
-        .join('');
-
-      const content = `
-        <form>
-          <div class="form-group">
-            <label>Select which Lore skill to use:</label>
-            <select id="lore-selection" style="width: 100%; padding: 5px;">
-              ${options}
-            </select>
-          </div>
-        </form>
-      `;
-
-      const DialogClass = (globalThis as any).Dialog;
-      new DialogClass({
-        title: 'Select Lore Skill',
-        content,
-        buttons: {
-          roll: {
-            icon: '<i class="fas fa-dice-d20"></i>',
-            label: 'Roll',
-            callback: (html: any) => {
-              const selectedSlug = html.find('#lore-selection').val() as string;
-              const selectedItem = loreItems.find(item => item.slug === selectedSlug);
-              resolve(selectedItem || null);
-            }
-          },
-          cancel: {
-            icon: '<i class="fas fa-times"></i>',
-            label: 'Cancel',
-            callback: () => resolve(null)
-          }
-        },
-        default: 'roll'
-      }).render(true);
+    return new Promise(async (resolve) => {
+      // Dynamically import the dialog component
+      const { default: LoreSelectionDialog } = await import('../../view/kingdom/components/LoreSelectionDialog.svelte');
+      
+      // Create a container for the dialog
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      
+      // Instantiate the Svelte component
+      const dialog = new LoreSelectionDialog({
+        target: container,
+        props: {
+          show: true,
+          loreItems
+        }
+      });
+      
+      // Listen for events
+      dialog.$on('select', (event: CustomEvent) => {
+        const loreItem = event.detail.loreItem;
+        dialog.$destroy();
+        container.remove();
+        resolve(loreItem);
+      });
+      
+      dialog.$on('cancel', () => {
+        dialog.$destroy();
+        container.remove();
+        resolve(null);
+      });
     });
   }
 }

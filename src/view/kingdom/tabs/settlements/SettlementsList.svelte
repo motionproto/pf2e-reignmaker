@@ -3,6 +3,7 @@
    import { createSettlement, SettlementTier } from '../../../../models/Settlement';
    import { kingdomData, updateKingdom, currentFaction, availableFactions } from '../../../../stores/KingdomStore';
    import { getTierIcon, getTierColor, getStructureCount, getMaxStructures, getLocationString } from './settlements.utils';
+   import { getSettlementStatusIcon } from '../../utils/presentation';
    import { PLAYER_KINGDOM } from '../../../../types/ownership';
    import { get } from 'svelte/store';
    
@@ -35,30 +36,34 @@
       .filter((h: any) => {
          // If GM is showing all settlements, include unclaimed territory too
          if (showAllSettlements && isGM) {
-            // Any hex with settlement features
+            // Any hex with settlement features that are NOT linked
             const features = h.features || [];
-            return features.some((f: any) => f.type === 'settlement' && f.linked === false);
+            return features.some((f: any) => f.type === 'settlement' && !f.linked);
          }
          
          // Must be in claimed territory by current faction
          if (h.claimedBy !== $currentFaction) return false;
          
          // Must have unlinked settlement features
+         // Use !f.linked to catch both undefined and false
          const features = h.features || [];
          const hasUnlinkedSettlement = features.some((f: any) => 
-            f.type === 'settlement' && f.linked === false
+            f.type === 'settlement' && !f.linked
          );
          
          return hasUnlinkedSettlement;
       })
       .map((h: any) => {
-         const [xStr, yStr] = h.id.split('.');
-         const x = parseInt(xStr) || 0;
-         const y = parseInt(yStr) || 0;
+         // Use stored row/col properties directly (already numbers)
+         // Note: hexes use {row, col} but settlements use {x, y}
+         // where x=row and y=col
+         const row = h.row ?? 0;
+         const col = h.col ?? 0;
          
          const features = h.features || [];
+         // Use !f.linked to catch both undefined and false
          const settlementFeature = features.find((f: any) => 
-            f.type === 'settlement' && f.linked === false
+            f.type === 'settlement' && !f.linked
          );
          
          // Map feature tier to SettlementTier
@@ -72,11 +77,21 @@
          
          return {
             id: h.id,
-            x,
-            y,
+            x: row,  // For settlement coordinate system
+            y: col,  // For settlement coordinate system
             tier,
             name: settlementFeature?.name  // Use feature name (may be undefined)
          };
+      })
+      // CRITICAL: Filter out hexes that actually have settlements assigned
+      // This catches stale data where linked flag isn't set but settlement exists
+      .filter(hex => {
+         // Check if ANY settlement has this location (cross-check with settlement data)
+         const hasAssignedSettlement = $kingdomData.settlements.some(s => 
+            s.location.x === hex.x && s.location.y === hex.y
+         );
+         // Only include if NO settlement is assigned to this location
+         return !hasAssignedSettlement;
       });
    
    // Create new settlement handler (manual creation)
@@ -287,14 +302,14 @@
                      <i class="fas {getTierIcon(settlement.tier)} tier-icon {getTierColor(settlement.tier)}"></i>
                      <div class="settlement-info">
                         <div class="settlement-name">{settlement.name}</div>
-                        {#if settlement.connectedByRoads}
-                           <i class="fas fa-road road-icon" title="Connected by roads"></i>
-                        {/if}
                      </div>
                   </div>
                   <div class="settlement-right">
+                     {#if settlement.location.x === 0 && settlement.location.y === 0}
+                        <i class="{getSettlementStatusIcon('hex')} unmapped-icon" title="Not placed on map"></i>
+                     {/if}
                      {#if settlement.wasFedLastTurn === false}
-                        <i class="fas fa-exclamation-triangle status-unfed" title="Not fed - No gold"></i>
+                        <i class="fas {getSettlementStatusIcon('unfed')} status-unfed" title="Not fed - No gold"></i>
                      {/if}
                      <span class="tier-badge {getTierColor(settlement.tier)}">{settlement.tier}</span>
                      <span class="level-number">{settlement.level}</span>
@@ -562,6 +577,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      outline: 2px solid transparent;
       
       &:hover {
          border-color: var(--border-strong);
@@ -618,12 +634,6 @@
                overflow: hidden;
                text-overflow: ellipsis;
             }
-            
-            .road-icon {
-               color: var(--color-success);
-               font-size: var(--font-md);
-               flex-shrink: 0;
-            }
          }
       }
       
@@ -633,17 +643,27 @@
          gap: 0.5rem;
          flex-shrink: 0;
          
-         .status-fed,
-         .status-unfed {
-            font-size: var(--font-md);
+         .tier-badge {
+            background: rgba(128, 128, 128, 0.2);
+            color: var(--text-secondary);
          }
          
-         .status-fed {
+         .road-icon {
             color: var(--color-success);
+            font-size: var(--font-md);
+            flex-shrink: 0;
+         }
+         
+         .unmapped-icon {
+            color: var(--color-warning);
+            font-size: var(--font-md);
+            flex-shrink: 0;
          }
          
          .status-unfed {
-            color: var(--color-warning);
+            color: #dc3545; // Red color for unfed
+            font-size: var(--font-md);
+            flex-shrink: 0;
          }
          
          .level-number {
@@ -651,11 +671,6 @@
             font-weight: var(--font-weight-semibold);
             color: var(--text-secondary);
             line-height: 1;
-         }
-         
-         .tier-badge {
-            background: rgba(128, 128, 128, 0.2);
-            color: var(--text-secondary);
          }
       }
    }

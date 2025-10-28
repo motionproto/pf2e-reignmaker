@@ -20,10 +20,6 @@
     {
       "skill": "survival",
       "description": "endurance exercises"
-    },
-    {
-      "skill": "warfare-lore",
-      "description": "tactical doctrine"
     }
   ],
   "effects": {

@@ -402,7 +402,7 @@ export function getCategoryDisplayName(category: StructureCategory): string {
     [StructureCategory.KNOWLEDGE_MAGIC]: 'Knowledge & Magic',
     [StructureCategory.FAITH_NATURE]: 'Faith & Nature',
     [StructureCategory.MEDICINE_HEALING]: 'Medicine & Healing',
-    [StructureCategory.PERFORMANCE_CULTURE]: 'Performance & Culture',
+    [StructureCategory.PERFORMANCE_CULTURE]: 'Hospitality',
     [StructureCategory.EXPLORATION_WILDERNESS]: 'Exploration & Wilderness',
     [StructureCategory.FOOD_STORAGE]: 'Food Storage',
     [StructureCategory.FORTIFICATIONS]: 'Fortifications',

@@ -24,15 +24,11 @@
     {
       "skill": "thievery",
       "description": "black market"
-    },
-    {
-      "skill": "mercantile-lore",
-      "description": "trade expertise"
     }
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Use trade rate one tier higher than your commerce structure (e.g., Market Square → Bazaar rate). Imperial Bank achieves legendary 1:3 rate!",
+      "description": "Use trade rate one tier higher than your commerce structure (e.g., Market Square \u2192 Bazaar rate). Imperial Bank achieves legendary 1:3 rate!",
       "modifiers": []
     },
     "success": {
@@ -48,5 +44,5 @@
       "modifiers": []
     }
   },
-  "special": "Trade a single resource type for gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, trade in sets of 3). Commerce tier determines rate: T1 Market Square (2:1) → T2 Bazaar (3:2) → T3 Merchant Guild (1:1) → T4 Imperial Bank (1:2) → Bonus Tier (1:3, critical success only)"
+  "special": "Trade a single resource type for gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, trade in sets of 3). Commerce tier determines rate: T1 Market Square (2:1) \u2192 T2 Bazaar (3:2) \u2192 T3 Merchant Guild (1:1) \u2192 T4 Imperial Bank (1:2) \u2192 Bonus Tier (1:3, critical success only)"
 }

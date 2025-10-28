@@ -11,6 +11,7 @@
    import SettlementLocationPicker from './SettlementLocationPicker.svelte';
    import Button from '../../components/baseComponents/Button.svelte';
    import Dialog from '../../components/baseComponents/Dialog.svelte';
+   import Notification from '../../components/baseComponents/Notification.svelte';
    import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement | null;
@@ -212,12 +213,12 @@
       
       <!-- Unmapped Settlement Alert -->
       {#if settlement.location.x === 0 && settlement.location.y === 0}
-         <div class="unmapped-alert">
-            <div class="alert-content">
-               <i class="fas fa-exclamation-triangle"></i>
-               <span>This settlement is not placed on the map. Please select a hex.</span>
-            </div>
-            <SettlementLocationPicker {settlement} />
+         <div class="unmapped-alert-wrapper">
+            <Notification
+               variant="warning"
+               title="Settlement Not Placed"
+               description="This settlement is not placed on the map. Please select a hex location."
+            />
          </div>
       {/if}
       
@@ -681,32 +682,9 @@
    }
    
    /* Unmapped Settlement Alert */
-   .unmapped-alert {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+   .unmapped-alert-wrapper {
       padding: 0.75rem 1rem;
-      background: rgba(251, 191, 36, 0.15);
-      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
-      color: #fbbf24;
-      gap: 1rem;
-      
-      .alert-content {
-         display: flex;
-         align-items: center;
-         gap: 0.75rem;
-         flex: 1;
-         
-         i {
-            font-size: 1.25rem;
-            flex-shrink: 0;
-         }
-         
-         span {
-            font-size: var(--font-sm);
-            font-weight: var(--font-weight-medium);
-         }
-      }
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
    }
    
    /* Delete Dialog Content Styling */
