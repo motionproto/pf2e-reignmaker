@@ -106,7 +106,7 @@
          onSelectSettlement(newSettlement);
 
       } catch (error) {
-         logger.error('❌ Error creating settlement:', error);
+         console.error('❌ Error creating settlement:', error);
          ui.notifications?.error('Failed to create settlement. Check console for details.');
       }
    }
@@ -550,25 +550,36 @@
    
    .settlement-item {
       position: relative;
-      background: var(--bg-color-gray-900);
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg,
+         rgba(24, 24, 27, 0.6),
+         rgba(31, 31, 35, 0.4));
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-md);
       padding: 0.75rem;
       margin-bottom: 0.5rem;
       cursor: pointer;
-      transition: var(--transition-base);
+      transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
       justify-content: center;
       
       &:hover {
-         border-color: var(--border-medium);
-         background: var(--bg-overlay);
+         border-color: var(--border-strong);
+         transform: translateY(-1px);
+         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
-         border-color: var(--color-primary);
-         background: var(--color-gray-850);
+         outline: 2px solid var(--color-accent);
+         background: linear-gradient(135deg,
+            rgba(20, 20, 23, 0.7),
+            rgba(15, 15, 17, 0.5));
+         box-shadow: 0 4px 12px rgba(var(--color-primary), 0.1);
+         
+         &:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(var(--color-primary), 0.15);
+         }
       }
       
       .settlement-content {

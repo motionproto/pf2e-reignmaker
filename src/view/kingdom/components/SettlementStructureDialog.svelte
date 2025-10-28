@@ -6,6 +6,7 @@
   import type { Structure } from '../../../models/Structure';
   import type { Settlement } from '../../../models/Settlement';
   import { SettlementTierConfig } from '../../../models/Settlement';
+  import { getCategoryIcon } from '../../kingdom/utils/presentation';
   
   export let show: boolean = false;
   export let settlement: Settlement | null = null;
@@ -57,14 +58,46 @@
   }
   
   function toggleStructureSelection(structureId: string) {
+    const allStructures = [...skillGroups, ...supportGroups].flatMap(g => g.structures);
+    const structure = allStructures.find(s => s.id === structureId);
+    
+    if (!structure) return;
+    
+    // If deselecting, remove it and cascade to dependent structures
     if (selectedStructureIds.includes(structureId)) {
-      selectedStructureIds = selectedStructureIds.filter(id => id !== structureId);
-    } else {
-      if (selectedStructureIds.length >= selectionLimit) {
-        return; // Don't allow more selections than limit
-      }
-      selectedStructureIds = [...selectedStructureIds, structureId];
+      // Find all dependent structures (same category, higher tier, currently selected)
+      const dependents = allStructures.filter(s => 
+        s.category === structure.category && 
+        s.tier > structure.tier &&
+        selectedStructureIds.includes(s.id)
+      );
+      
+      // Remove the clicked structure and all its dependents
+      const idsToRemove = [structureId, ...dependents.map(s => s.id)];
+      selectedStructureIds = selectedStructureIds.filter(id => !idsToRemove.includes(id));
+      return;
     }
+    
+    // If selecting, add prerequisites if needed
+    // Find all prerequisite structures (same category, lower tier, not built, not selected)
+    const prerequisites = allStructures.filter(s => 
+      s.category === structure.category && 
+      s.tier < structure.tier &&
+      !isStructureBuilt(s.id) &&
+      !selectedStructureIds.includes(s.id)
+    );
+    
+    // Total structures to add (clicked + prerequisites)
+    const totalToAdd = 1 + prerequisites.length;
+    
+    // Check if adding all would exceed limit
+    if (selectedStructureIds.length + totalToAdd > selectionLimit) {
+      return; // Don't allow if it would exceed limit
+    }
+    
+    // Select the clicked structure and all prerequisites
+    const idsToAdd = [structureId, ...prerequisites.map(s => s.id)];
+    selectedStructureIds = [...selectedStructureIds, ...idsToAdd];
   }
   
   function isStructureSelected(structureId: string): boolean {
@@ -208,24 +241,41 @@
         </div>
       </div>
       
-      <!-- Tabs -->
-      <div class="tabs">
-        <button 
-          class="tab" 
-          class:active={activeTab === 'skill'}
-          on:click={() => activeTab = 'skill'}
-        >
-          <i class="fas fa-graduation-cap"></i>
-          Skill Structures
-        </button>
-        <button 
-          class="tab" 
-          class:active={activeTab === 'support'}
-          on:click={() => activeTab = 'support'}
-        >
-          <i class="fas fa-hands-helping"></i>
-          Support Structures
-        </button>
+      <!-- Structure Type Selection -->
+      <div class="structure-type-selector">
+        <div class="radio-group" role="radiogroup" aria-label="Structure type">
+          <label class="radio-option" class:selected={activeTab === 'skill'}>
+            <input 
+              type="radio" 
+              name="structureType" 
+              value="skill" 
+              bind:group={activeTab}
+              class="radio-input"
+            />
+            <span class="radio-content">
+              <span class="radio-icon">
+                <i class="fas fa-graduation-cap"></i>
+              </span>
+              <span class="radio-label">Skill Structures</span>
+            </span>
+          </label>
+          
+          <label class="radio-option" class:selected={activeTab === 'support'}>
+            <input 
+              type="radio" 
+              name="structureType" 
+              value="support" 
+              bind:group={activeTab}
+              class="radio-input"
+            />
+            <span class="radio-content">
+              <span class="radio-icon">
+                <i class="fas fa-hands-helping"></i>
+              </span>
+              <span class="radio-label">Support Structures</span>
+            </span>
+          </label>
+        </div>
       </div>
       
       <!-- Messages -->
@@ -248,6 +298,7 @@
         {#each currentGroups as group}
           <div class="category-section">
             <div class="category-header">
+              <i class="fas {getCategoryIcon(group.displayName)}"></i>
               {group.displayName}
             </div>
             
@@ -382,14 +433,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-default);
-    background: var(--bg-elevated);
+    padding: .75rem;
+    padding-left: 1.5rem;
+    border-bottom: 1px solid var(--border-light, #3a3a3d);
+    background: var(--color-gray-950, #18181b);
     
     h2 {
       margin: 0;
-      color: var(--color-amber, #f59e0b);
-      font-size: var(--font-2xl, 1.5rem);
+      color: var(--text-primary, #ffffff);
+      font-size: 1.2rem;
+      font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
       gap: 0.75rem;
@@ -429,36 +482,84 @@
     }
   }
   
-  .tabs {
+  .structure-type-selector {
     display: flex;
-    border-bottom: 1px solid var(--border-default);
+    gap: 1rem;
+    padding: 1rem;
     background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border-default);
+    align-items: center;
     
-    .tab {
-      flex: 1;
-      padding: 1rem;
-      background: none;
-      border: none;
-      color: var(--text-secondary, #9ca3af);
+    .selector-label {
+      padding: 0.5rem 0.75rem;
+      color: rgba(255, 255, 255, 0.8);
       font-size: var(--font-md, 1rem);
-      cursor: pointer;
+      font-weight: var(--font-weight-medium);
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.25rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .radio-option {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
-      border-bottom: 2px solid transparent;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      border: 2px solid transparent;
+      user-select: none;
       
       &:hover {
         background: rgba(255, 255, 255, 0.05);
-        color: var(--text-primary, #f3f4f6);
       }
       
-      &.active {
-        color: var(--color-amber, #f59e0b);
-        border-bottom-color: var(--color-amber, #f59e0b);
-        background: rgba(245, 158, 11, 0.1);
+      &.selected {
+        background: rgba(94, 0, 0, 0.3);
+        border-color: var(--color-primary);
+        
+        .radio-content {
+          color: var(--text-primary);
+        }
       }
+    }
+    
+    .radio-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .radio-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    
+    .radio-icon {
+      font-size: 1.25rem;
+      
+      i {
+        font-size: inherit;
+      }
+    }
+    
+    .radio-label {
+      font-size: var(--font-xs);
+      font-weight: var(--font-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
     }
   }
   
@@ -485,59 +586,80 @@
   .dialog-content {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 0rem;
   }
   
   .category-section {
-    margin-bottom: 0.75rem;
-    border: 1px solid var(--border-default);
+    margin-bottom: 0.5rem;
+    border: 0px solid var(--border-default);
     border-radius: var(--radius-md, 0.375rem);
     background: var(--bg-surface);
     overflow: hidden;
   }
   
   .category-header {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1.5rem;
     background: var(--bg-overlay);
     color: var(--color-accent, #f59e0b);
-    font-size: var(--font-lg, 0.875rem);
+    font-size: var(--font-xl);
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    
+    i {
+      font-size: 1.25rem;
+    }
   }
   
   .structures-list {
-    padding: 0.25rem;
+    padding-left: .5rem;
+    padding-top: .5rem;
   }
   
   .structure-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.625rem 0.75rem;
-    margin-bottom: 0.25rem;
-    background: var(--bg-base);
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
-    border-radius: var(--radius-sm, 0.25rem);
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg,
+      rgba(24, 24, 27, 0.6),
+      rgba(31, 31, 35, 0.4));
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-medium);
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
     
     &.selectable {
       cursor: pointer;
     }
     
     &:hover:not(.built):not(.selected) {
-      background: var(--bg-elevated);
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
     
     &.built {
       opacity: 0.6;
-      background: rgba(34, 197, 94, 0.05);
-      border-color: rgba(34, 197, 94, 0.2);
+      background: linear-gradient(135deg,
+        rgba(34, 197, 94, 0.15),
+        rgba(34, 197, 94, 0.1));
+      border-color: rgba(34, 197, 94, 0.3);
+      cursor: not-allowed;
     }
     
     &.selected {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: var(--color-amber, #f59e0b);
+      border-width: 2px;
+      border-style: solid;
+      border-color: #f59e0b;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.1);
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(245, 158, 11, 0.15);
+      }
     }
   }
   
@@ -557,7 +679,7 @@
   .structure-name {
     font-weight: 600;
     color: var(--text-primary, #f3f4f6);
-    font-size: var(--font-md, 1rem);
+    font-size: var(--font-lg, 1rem);
     
     .skills-text {
       font-weight: normal;
@@ -599,11 +721,11 @@
   }
   
   .structure-description {
-    color: var(--text-secondary, #9ca3af);
-    font-size: var(--font-sm, 0.875rem);
-    font-style: italic;
+    color: var(--text-tertiary, #9ca3af);
+    font-size: var(--font-md);
     margin-top: 0.25rem;
     line-height: 1.3;
+    font-weight: var(--font-weight-medium);
   }
   
   .structure-modifiers {
@@ -709,19 +831,19 @@
     }
     
     .cancel-button {
-      padding: 0.75rem 1.5rem;
-      background: transparent;
-      border: 1px solid var(--border-default);
-      border-radius: var(--radius-md, 0.375rem);
-      color: var(--text-secondary, #9ca3af);
-      font-weight: 600;
+      padding: 0.5rem 1rem;
+      background: var(--color-gray-800, #27272a);
+      border: 1px solid var(--border-default, #3a3a3d);
+      border-radius: var(--radius-sm, 4px);
+      color: var(--text-secondary, #b0b0b3);
+      font-size: 0.9rem;
+      font-weight: var(--font-weight-medium);
       cursor: pointer;
       transition: all 0.2s ease;
+      min-width: 80px;
       
       &:hover:not(:disabled) {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-primary, #f3f4f6);
-        border-color: var(--border-strong);
+        background: var(--color-gray-700, #3a3a3d);
       }
       
       &:disabled {
@@ -731,22 +853,23 @@
     }
     
     .add-selected-button {
-      padding: 0.75rem 1.5rem;
-      background: var(--color-amber, #f59e0b);
-      border: none;
-      border-radius: var(--radius-md, 0.375rem);
-      color: #1f2937;
-      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: var(--color-amber, #fbbf24);
+      border: 1px solid var(--color-amber, #fbbf24);
+      border-radius: var(--radius-sm, 4px);
+      color: var(--color-gray-950, #18181b);
+      font-size: 0.9rem;
+      font-weight: var(--font-weight-medium);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
       transition: all 0.2s ease;
+      min-width: 80px;
       
       &:hover:not(:disabled) {
-        background: #f59e0b;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        background: var(--color-amber-dark, #f59e0b);
+        border-color: var(--color-amber-dark, #f59e0b);
       }
       
       &:disabled {
@@ -756,93 +879,4 @@
     }
   }
   
-  .warning-dialog {
-    background: var(--bg-base);
-    border-radius: var(--radius-lg, 0.5rem);
-    border: 2px solid #f59e0b;
-    max-width: 500px;
-    width: 90%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    
-    .warning-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.5rem;
-      background: rgba(251, 191, 36, 0.1);
-      border-bottom: 1px solid rgba(251, 191, 36, 0.3);
-      
-      i {
-        font-size: 2rem;
-        color: #fbbf24;
-      }
-      
-      h3 {
-        margin: 0;
-        color: #fbbf24;
-        font-size: var(--font-xl, 1.25rem);
-      }
-    }
-    
-    .warning-body {
-      padding: 1.5rem;
-      
-      p {
-        margin: 0 0 1rem 0;
-        color: var(--text-primary);
-        line-height: 1.5;
-        
-        &:last-child {
-          margin-bottom: 0;
-        }
-        
-        strong {
-          color: var(--color-amber, #f59e0b);
-        }
-      }
-    }
-    
-    .warning-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--border-default);
-      background: var(--bg-elevated);
-      
-      .warning-cancel-btn {
-        padding: 0.75rem 1.5rem;
-        background: transparent;
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-md, 0.375rem);
-        color: var(--text-secondary, #9ca3af);
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &:hover {
-          background: rgba(255, 255, 255, 0.05);
-          color: var(--text-primary, #f3f4f6);
-          border-color: var(--border-strong);
-        }
-      }
-      
-      .warning-confirm-btn {
-        padding: 0.75rem 1.5rem;
-        background: #fbbf24;
-        border: none;
-        border-radius: var(--radius-md, 0.375rem);
-        color: #1f2937;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        
-        &:hover {
-          background: #f59e0b;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
-        }
-      }
-    }
-  }
 </style>

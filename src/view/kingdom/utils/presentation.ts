@@ -22,7 +22,9 @@ export function getCategoryIcon(category: string): string {
     'Diplomacy': 'fa-handshake',
     'Food Storage': 'fa-warehouse',
     'Fortifications': 'fa-castle',
-    'Justice': 'fa-balance-scale'
+    'Justice': 'fa-balance-scale',
+    'Logistics': 'fa-boxes',
+    'Revenue': 'fa-hand-holding-usd'
   };
   return icons[category] || 'fa-building';
 }

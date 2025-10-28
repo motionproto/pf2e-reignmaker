@@ -3,6 +3,7 @@
    import { get } from 'svelte/store';
    import { kingdomData, resources, settlements, updateKingdom } from '../../../stores/KingdomStore';
    import { TurnPhase } from '../../../actors/KingdomActor';
+   import { logger } from '../../../utils/Logger';
    
    // Props
    export let isViewingCurrentPhase: boolean = true;
@@ -11,7 +12,7 @@
    import { createUpkeepPhaseController } from '../../../controllers/UpkeepPhaseController';
    import Button from '../components/baseComponents/Button.svelte';
    import BuildQueueItem from '../components/buildQueue/BuildQueueItem.svelte';
-   import WarningNotification from '../components/baseComponents/WarningNotification.svelte';
+   import Notification from '../components/baseComponents/Notification.svelte';
    import { getResourceIcon, getResourceColor } from '../utils/presentation';
    
    // Controller instance
@@ -241,19 +242,22 @@
             </div>
             
             {#if foodStorageCapacity === 0 && currentFood > settlementConsumption && !consumeCompleted}
-               <div class="info-box">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <div class="info-message">Build a Granary to store food.</div>
-               </div>
+               <Notification 
+                  variant="info"
+                  title="No food storage"
+                  description="Build a Granary to store food."
+               />
             {:else if excessFood > 0 && !consumeCompleted}
-               <div class="info-box">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <div class="info-message">Storage capacity exceeded.</div>
-               </div>
+               <Notification 
+                  variant="info"
+                  title="Storage capacity exceeded"
+                  description="Excess food will be lost at end of turn."
+               />
             {/if}
             
             {#if unfedSettlements.length > 0 && !consumeCompleted}
-               <WarningNotification 
+               <Notification 
+                  variant="warning"
                   title="Food shortage"
                   description="Unfed settlements generate unrest based on their tier and will not generate gold next turn."
                   impact="+{unfedUnrest} Unrest"
@@ -353,7 +357,8 @@
                </div>
                
                {#if armyCount > 0 && armyFoodShortage > 0 && !militaryCompleted}
-                  <WarningNotification 
+                  <Notification 
+                     variant="warning"
                      title="Food shortage"
                      description="Short by {armyFoodShortage} food."
                      impact="+{armyFoodShortage} Unrest"
@@ -361,7 +366,8 @@
                {/if}
                
                {#if armyCount > 0 && unsupportedCount > 0 && !militaryCompleted}
-                  <WarningNotification 
+                  <Notification 
+                     variant="warning"
                      title="Unsupported armies"
                      description="{unsupportedCount} {unsupportedCount === 1 ? 'army' : 'armies'} without support. Future update: Morale checks will be required."
                      impact="+{unsupportedCount} Unrest"
@@ -384,7 +390,8 @@
                </div>
                
                {#if !militaryCompleted && ($resources?.gold || 0) < (armyCount + fortificationMaintenanceCost)}
-                  <WarningNotification 
+                  <Notification 
+                     variant="danger"
                      title="Insufficient gold"
                      description={($resources?.gold || 0) < armyCount 
                         ? "Cannot afford army upkeep." 
@@ -644,6 +651,7 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
       gap: 12px;
    }
    
@@ -883,23 +891,6 @@
       }
    }
    
-   .info-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid var(--color-amber);
-      border-radius: var(--radius-sm);
-      color: var(--color-amber-light);
-      font-size: var(--font-sm);
-      
-      i {
-         font-size: 16px;
-         color: var(--color-amber);
-         flex-shrink: 0;
-      }
-   }
    
    .info-text {
       text-align: center;

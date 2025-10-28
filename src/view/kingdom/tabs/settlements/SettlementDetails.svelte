@@ -10,6 +10,7 @@
    import SettlementManagement from './SettlementManagement.svelte';
    import SettlementLocationPicker from './SettlementLocationPicker.svelte';
    import Button from '../../components/baseComponents/Button.svelte';
+   import Dialog from '../../components/baseComponents/Dialog.svelte';
    import { createEventDispatcher } from 'svelte';
    
    export let settlement: Settlement | null;
@@ -111,7 +112,7 @@
          dispatch('settlementDeleted');
          
       } catch (error) {
-         logger.error('Failed to delete settlement:', error);
+         console.error('Failed to delete settlement:', error);
          // @ts-ignore - Foundry global
          ui.notifications?.error(`Failed to delete settlement: ${error.message}`);
       } finally {
@@ -248,55 +249,38 @@
    {/if}
    
    <!-- Delete Confirmation Dialog -->
-   {#if showDeleteConfirm && settlement}
-      <div class="modal-backdrop" on:click={closeDeleteConfirm}>
-         <div class="modal-dialog" on:click|stopPropagation>
-            <div class="modal-header">
-               <h3><i class="fas fa-exclamation-triangle"></i> Delete Settlement?</h3>
-               <button class="close-button" on:click={closeDeleteConfirm}>
-                  <i class="fas fa-times"></i>
-               </button>
+   {#if settlement}
+      <Dialog 
+         bind:show={showDeleteConfirm}
+         title="Delete Settlement?"
+         confirmLabel={isDeleting ? 'Deleting...' : 'Delete Settlement'}
+         cancelLabel="Cancel"
+         confirmDisabled={isDeleting}
+         width="600px"
+         on:confirm={confirmDelete}
+         on:cancel={closeDeleteConfirm}
+      >
+         <div class="delete-dialog-content">
+            <div class="warning-icon">
+               <i class="fas fa-exclamation-triangle"></i>
             </div>
-            
-            <div class="modal-content">
-               <p class="warning-text">
-                  This will permanently remove:
-               </p>
-               <ul class="delete-details">
-                  <li><strong>{settlement.name}</strong> ({settlement.tier})</li>
-                  <li>{settlement.structureIds.length} structures</li>
-                  {#if settlement.supportedUnits.length > 0}
-                     <li>{settlement.supportedUnits.length} armies will become unsupported</li>
-                  {/if}
-                  <li>All tributes and settlement data</li>
-               </ul>
-               <p class="warning-note">
-                  <strong>This cannot be undone.</strong>
-               </p>
-            </div>
-            
-            <div class="modal-footer">
-               <button 
-                  class="button button-secondary" 
-                  on:click={closeDeleteConfirm}
-                  disabled={isDeleting}
-               >
-                  Cancel
-               </button>
-               <button 
-                  class="button button-danger" 
-                  on:click={confirmDelete}
-                  disabled={isDeleting}
-               >
-                  {#if isDeleting}
-                     <i class="fas fa-spinner fa-spin"></i> Deleting...
-                  {:else}
-                     <i class="fas fa-trash"></i> Delete Settlement
-                  {/if}
-               </button>
+            <p class="warning-text">
+               This will permanently remove:
+            </p>
+            <ul class="delete-details">
+               <li><strong>{settlement.name}</strong> ({settlement.tier})</li>
+               <li>{settlement.structureIds.length} structures</li>
+               {#if settlement.supportedUnits.length > 0}
+                  <li>{settlement.supportedUnits.length} armies will become unsupported</li>
+               {/if}
+               <li>All tributes and settlement data</li>
+            </ul>
+            <div class="warning-note">
+               <i class="fas fa-exclamation-circle"></i>
+               <strong>This action cannot be undone.</strong>
             </div>
          </div>
-      </div>
+      </Dialog>
    {/if}
 </div>
 
@@ -399,7 +383,7 @@
    }
    
    .status-wrapper {
-      border: 1px solid var(--color-accent);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       padding: 0.75rem;
       margin-bottom: 1.5rem;
@@ -721,6 +705,59 @@
          span {
             font-size: var(--font-sm);
             font-weight: var(--font-weight-medium);
+         }
+      }
+   }
+   
+   /* Delete Dialog Content Styling */
+   .delete-dialog-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      
+      .warning-icon {
+         text-align: center;
+         
+         i {
+            font-size: 3rem;
+            color: #fbbf24;
+         }
+      }
+      
+      .warning-text {
+         margin: 0;
+         color: var(--text-primary);
+         font-size: var(--font-md);
+         font-weight: var(--font-weight-medium);
+      }
+      
+      .delete-details {
+         margin: 0;
+         padding-left: 1.5rem;
+         list-style-type: disc;
+         
+         li {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: var(--font-sm);
+            line-height: 1.5;
+         }
+      }
+      
+      .warning-note {
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         gap: 0.5rem;
+         padding: 0.75rem 1rem;
+         background: rgba(220, 53, 69, 0.1);
+         border: 1px solid rgba(220, 53, 69, 0.3);
+         border-radius: var(--radius-md);
+         color: #dc3545;
+         font-size: var(--font-sm);
+         
+         i {
+            font-size: var(--font-md);
          }
       }
    }

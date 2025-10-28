@@ -116,12 +116,12 @@
    }
    
    function openAddDialog() {
-      dialogRequiredCount = undefined;
-      showAddDialog = true;
-   }
-   
-   function openAddDialogWithRequired() {
-      dialogRequiredCount = requiredStructures - currentStructures;
+      // If there's a warning, automatically open in multi-select mode
+      if (showWarning) {
+         dialogRequiredCount = requiredStructures - currentStructures;
+      } else {
+         dialogRequiredCount = undefined;
+      }
       showAddDialog = true;
    }
    
@@ -183,13 +183,10 @@
       <div class="minimum-structures-warning">
          <div class="warning-content">
             <i class="fas fa-exclamation-triangle"></i>
-            <div class="warning-text">
-               <strong>Insufficient Structures for {settlement.tier}</strong>
-               <p>This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)</p>
-               <Button variant="small_secondary" icon="fas fa-plus" on:click={openAddDialogWithRequired}>
-                  Add Structures
-               </Button>
-            </div>
+         <div class="warning-text">
+            <strong>Insufficient Structures for {settlement.tier}</strong>
+            <p>This {settlement.tier} requires at least {requiredStructures} structures ({currentStructures}/{requiredStructures} built)</p>
+         </div>
             <button 
                class="dismiss-button" 
                on:click={() => dismissedWarning = true}
