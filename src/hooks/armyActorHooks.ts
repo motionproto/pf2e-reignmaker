@@ -18,9 +18,9 @@ export function registerArmyActorHooks(): void {
   /**
    * Hook: preDeleteActor
    * Intercepts actor deletion attempts
-   * Shows warning dialog for army actors with option to cancel or proceed
+   * Shows dialog with options: Unlink, Delete Army, or Cancel
    */
-  Hooks.on('preDeleteActor', (actor: any, options: any, userId: string) => {
+  Hooks.on('preDeleteActor', async (actor: any, options: any, userId: string) => {
     // If already confirmed, allow deletion
     if (options.reignmakerConfirmed) {
       return true;
@@ -42,25 +42,75 @@ export function registerArmyActorHooks(): void {
       return true; // Orphaned actor, allow deletion
     }
     
-    // Find supporting settlement name
-    const supportedBySettlement = army.supportedBySettlementId 
-      ? kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId)?.name || ''
-      : '';
-    
-    // Show custom Svelte dialog asynchronously (don't await)
-    mountSvelteDialog(DeleteArmyDialog, {
-      actorName: actor.name,
-      armyLevel: army.level,
-      isSupported: army.isSupported,
-      supportedBySettlement,
-    }).then(result => {
-      // If confirmed, manually trigger deletion with confirmation flag
-      if (result.confirmed) {
-        actor.delete({ reignmakerConfirmed: true });
-      }
+    // Show dialog with three options
+    const Dialog = (globalThis as any).Dialog;
+    const choice = await Dialog.wait({
+      title: 'Delete Army Actor',
+      content: `
+        <p>This actor is linked to the army <strong>"${army.name}"</strong>.</p>
+        <p>What would you like to do?</p>
+      `,
+      buttons: {
+        unlink: {
+          icon: '<i class="fas fa-unlink"></i>',
+          label: 'Unlink & Delete Actor (Keep Army)',
+          callback: () => 'unlink'
+        },
+        deleteArmy: {
+          icon: '<i class="fas fa-trash"></i>',
+          label: 'Delete Army Too',
+          callback: () => 'deleteArmy'
+        },
+        cancel: {
+          icon: '<i class="fas fa-times"></i>',
+          label: 'Cancel',
+          callback: () => 'cancel'
+        }
+      },
+      default: 'cancel',
+      close: () => 'cancel'
     });
     
-    // Always prevent the original deletion - we'll handle it manually if confirmed
+    if (choice === 'cancel') {
+      return false; // Cancel deletion
+    }
+    
+    if (choice === 'unlink') {
+      // Unlink actor from army and allow actor deletion
+      const { armyService } = await import('../services/army');
+      try {
+        await armyService.unlinkActor(armyMetadata.armyId);
+        logger.info(`🔓 [ArmyActorHooks] Unlinked army ${army.name} from actor ${actor.name}`);
+        
+        // Allow actor deletion to proceed
+        return true;
+      } catch (error) {
+        logger.error('❌ [ArmyActorHooks] Failed to unlink army:', error);
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.error('Failed to unlink army');
+        return false;
+      }
+    }
+    
+    if (choice === 'deleteArmy') {
+      // Delete the army (which will remove metadata and delete actor if requested)
+      const { armyService } = await import('../services/army');
+      try {
+        // Don't delete actor in disbandArmy since we're already deleting it here
+        await armyService.disbandArmy(armyMetadata.armyId, false);
+        logger.info(`🗑️ [ArmyActorHooks] Disbanded army ${army.name} along with actor`);
+        
+        // Allow actor deletion to proceed
+        return true;
+      } catch (error) {
+        logger.error('❌ [ArmyActorHooks] Failed to disband army:', error);
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.error('Failed to disband army');
+        return false;
+      }
+    }
+    
+    // Shouldn't reach here, but prevent deletion by default
     return false;
   });
   

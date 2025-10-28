@@ -1,9 +1,11 @@
 <script lang="ts">
    import { kingdomData, ledArmies } from '../../../stores/KingdomStore';
    import type { Army } from '../../../models/Army';
-   import { SettlementTierConfig } from '../../../models/Settlement';
+   import { SettlementTierConfig, type SettlementTier } from '../../../models/Settlement';
    import Button from '../components/baseComponents/Button.svelte';
    import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
+   import DisbandArmyDialog from '../components/DisbandArmyDialog.svelte';
+   import { logger } from '../../../utils/Logger';
 
    // Table state
    let searchTerm = '';
@@ -23,6 +25,16 @@
    let newArmyName = '';
    let newArmyLevel = 1;
    let isCreatingArmy = false;
+   
+   // Actor linking state
+   let linkingArmyId: string | null = null;
+   let actorSearchTerm: string = '';
+   let searchInputRef: HTMLInputElement | null = null;
+   
+   // Disband army dialog state
+   let showDisbandDialog = false;
+   let disbandingArmyId: string | null = null;
+   let disbandingArmy: Army | null = null;
    
    // Get current user's character level for validation
    $: userCharacterLevel = (() => {
@@ -126,7 +138,7 @@
    
    // Get capacity text for settlement in dropdown
    function getSettlementCapacityText(settlement: any, armyId: string): string {
-      const capacity = SettlementTierConfig[settlement.tier].armySupport;
+      const capacity = SettlementTierConfig[settlement.tier as SettlementTier].armySupport;
       const current = settlement.supportedUnits.filter((id: string) => id !== armyId).length;
       
       if (current >= capacity) {
@@ -134,6 +146,127 @@
       }
       return `${current + 1}/${capacity}`;
    }
+   
+   // Actor linking functions
+   function startLinking(armyId: string) {
+      linkingArmyId = armyId;
+      actorSearchTerm = '';
+      setTimeout(() => {
+         searchInputRef?.focus();
+      }, 10);
+   }
+   
+   function cancelLinking() {
+      linkingArmyId = null;
+      actorSearchTerm = '';
+   }
+   
+   async function linkActor(armyId: string, actorId: string) {
+      if (armyId === 'new') {
+         // Linking to new army - create army from actor
+         const actor = (globalThis as any).game?.actors?.get(actorId);
+         if (!actor) return;
+         
+         try {
+            const { armyService } = await import('../../../services/army');
+            // Create army with actor's name and user's character level
+            await armyService.createArmy(actor.name, userCharacterLevel);
+            
+            // Find the newly created army and link it
+            const newArmy = $kingdomData.armies.find(a => a.name === actor.name && !a.actorId);
+            if (newArmy) {
+               await armyService.linkExistingActor(newArmy.id, actorId);
+            }
+            
+            cancelLinking();
+            // @ts-ignore
+            ui.notifications?.info(`Created army and linked to ${actor.name}`);
+         } catch (error) {
+            logger.error('Failed to create army and link actor:', error);
+            // @ts-ignore
+            ui.notifications?.error(error instanceof Error ? error.message : 'Failed to create army');
+         }
+      } else {
+         // Linking to existing army
+         try {
+            const { armyService } = await import('../../../services/army');
+            await armyService.linkExistingActor(armyId, actorId);
+            cancelLinking();
+            // @ts-ignore
+            ui.notifications?.info('Actor linked successfully');
+         } catch (error) {
+            logger.error('Failed to link actor:', error);
+            // @ts-ignore
+            ui.notifications?.error(error instanceof Error ? error.message : 'Failed to link actor');
+         }
+      }
+   }
+   
+   async function unlinkActor(armyId: string) {
+      try {
+         const { armyService } = await import('../../../services/army');
+         await armyService.unlinkActor(armyId);
+         // @ts-ignore
+         ui.notifications?.info('Actor unlinked successfully');
+      } catch (error) {
+         logger.error('Failed to unlink actor:', error);
+         // @ts-ignore
+         ui.notifications?.error(error instanceof Error ? error.message : 'Failed to unlink actor');
+      }
+   }
+   
+   async function createActorForArmy(armyId: string) {
+      const army = $kingdomData.armies.find(a => a.id === armyId);
+      if (!army) return;
+      
+      try {
+         // @ts-ignore - Foundry VTT API
+         const actor = await Actor.create({
+            name: army.name,
+            type: 'npc',
+            folder: null
+         });
+         
+         if (actor) {
+            const { armyService } = await import('../../../services/army');
+            await armyService.linkExistingActor(armyId, actor.id);
+            // @ts-ignore
+            ui.notifications?.info(`Created and linked actor: ${army.name}`);
+         }
+      } catch (error) {
+         logger.error('Failed to create actor:', error);
+         // @ts-ignore
+         ui.notifications?.error('Failed to create actor');
+      }
+   }
+   
+   function getActorName(actorId: string): string {
+      // @ts-ignore - Foundry VTT API
+      const actor = (globalThis as any).game?.actors?.get(actorId);
+      return actor?.name || 'Unknown Actor';
+   }
+   
+   // Filter actors - ONLY NPC actors (armies should not link to PCs)
+   $: filteredActors = (() => {
+      if (!linkingArmyId) return [];
+      
+      const game = (globalThis as any).game;
+      const allActors = game?.actors?.filter((a: any) => a.type === 'npc') || [];
+      
+      if (!actorSearchTerm.trim()) {
+         return allActors;
+      }
+      
+      const searchLower = actorSearchTerm.toLowerCase();
+      return allActors.filter((a: any) => a.name.toLowerCase().includes(searchLower));
+   })();
+   
+   // Group actors by type (armies only show NPCs)
+   $: groupedActors = (() => {
+      const characters: any[] = [];
+      const npcs: any[] = filteredActors;
+      return { characters, npcs };
+   })();
    
    // Inline editing functions
    function startEdit(army: Army, field: 'name' | 'level') {
@@ -298,23 +431,24 @@
    }
    
    // Delete army
-   async function deleteArmy(armyId: string) {
+   function deleteArmy(armyId: string) {
       const army = $kingdomData.armies.find(a => a.id === armyId);
       if (!army) return;
       
-      // @ts-ignore
-      const confirmed = await Dialog.confirm({
-         title: 'Disband Army',
-         content: `<p>Are you sure you want to disband <strong>${army.name}</strong>?</p><p>This action cannot be undone.</p>`,
-         yes: () => true,
-         no: () => false
-      });
+      disbandingArmyId = armyId;
+      disbandingArmy = army;
+      showDisbandDialog = true;
+   }
+   
+   async function handleDisbandConfirm(event: CustomEvent<{ deleteActor: boolean }>) {
+      if (!disbandingArmyId) return;
       
-      if (!confirmed) return;
+      const { deleteActor } = event.detail;
+      const armyName = disbandingArmy?.name || 'Army';
       
       try {
          const { armyService } = await import('../../../services/army');
-         const result = await armyService.disbandArmy(armyId);
+         const result = await armyService.disbandArmy(disbandingArmyId, deleteActor);
          
          // For players, result may be undefined (fire-and-forget)
          // The operation still succeeds on GM side and syncs back
@@ -323,7 +457,7 @@
             ui.notifications?.info(`Disbanded ${result.armyName}`);
          } else {
             // @ts-ignore
-            ui.notifications?.info(`Army disbanded successfully`);
+            ui.notifications?.info(`${armyName} disbanded successfully`);
          }
       } catch (error) {
          // Error message already shown by ActionDispatcher or lower-level service
@@ -331,7 +465,15 @@
          const errorMessage = error instanceof Error ? error.message : 'Failed to disband army';
          // @ts-ignore
          ui.notifications?.error(errorMessage);
+      } finally {
+         disbandingArmyId = null;
+         disbandingArmy = null;
       }
+   }
+   
+   function handleDisbandCancel() {
+      disbandingArmyId = null;
+      disbandingArmy = null;
    }
    
    // Pagination
@@ -351,6 +493,22 @@
       currentPage = Math.max(1, Math.min(page, totalPages));
    }
 </script>
+
+<!-- Disband Army Dialog -->
+{#if disbandingArmy}
+   <DisbandArmyDialog
+      bind:show={showDisbandDialog}
+      armyName={disbandingArmy.name}
+      armyLevel={disbandingArmy.level}
+      hasLinkedActor={!!disbandingArmy.actorId}
+      isSupported={disbandingArmy.isSupported}
+      supportedBySettlement={disbandingArmy.supportedBySettlementId 
+         ? $kingdomData.settlements.find(s => s.id === disbandingArmy?.supportedBySettlementId)?.name || ''
+         : ''}
+      on:confirm={handleDisbandConfirm}
+      on:cancel={handleDisbandCancel}
+   />
+{/if}
 
 <div class="armies-tab">
    <!-- Summary Stats -->
@@ -376,15 +534,6 @@
             <div class="summary-label">Unsupported</div>
          </div>
       </div>
-      <Button 
-         variant="primary" 
-         icon="fas fa-plus" 
-         iconPosition="left"
-         disabled={isCreating}
-         on:click={startCreating}
-      >
-         Create Army
-      </Button>
    </div>
    
    <!-- Filters -->
@@ -398,7 +547,8 @@
    
    <!-- Table -->
    <div class="armies-table-container">
-      <table class="armies-table">
+      <div class="armies-table-wrapper">
+         <table class="armies-table">
          <thead>
             <tr>
                <th>Name</th>
@@ -409,185 +559,328 @@
             </tr>
          </thead>
          <tbody>
-            <!-- Create Row -->
-            {#if isCreating}
-               <tr class="create-row">
-                  <td>
-                     <input 
-                        type="text" 
-                        bind:value={newArmyName}
-                        placeholder="Army name"
-                        class="inline-input"
-                        disabled={isCreatingArmy}
-                     />
-                  </td>
-                  <td>
-                     <input 
-                        type="number" 
-                        bind:value={newArmyLevel}
-                        min="1"
-                        max="20"
-                        class="inline-input"
-                        disabled={isCreatingArmy}
-                     />
-                  </td>
-                  <td>—</td>
-                  <td>—</td>
-                  <td>
-                     <InlineEditActions
-                        onSave={createArmy}
-                        onCancel={cancelCreating}
-                        disabled={isCreatingArmy}
-                        saveTitle="Create"
-                        cancelTitle="Cancel"
-                     />
-                  </td>
-               </tr>
-            {/if}
-            
             <!-- Data Rows -->
             {#each paginatedArmies as army}
                <tr>
-                  <!-- Name Column -->
-                  <td>
-                     {#if editingArmyId === army.id && editingField === 'name'}
-                        <div class="inline-edit">
+                  {#if linkingArmyId === army.id}
+                     <!-- Linking mode: Full-width actor search -->
+                     <td colspan="4">
+                        <div class="actor-autosuggest">
                            <input 
                               type="text" 
-                              bind:value={editedValue}
-                              on:keydown={(e) => handleKeydown(e, army.id)}
-                              class="inline-input"
-                              disabled={isSaving}
+                              bind:value={actorSearchTerm}
+                              bind:this={searchInputRef}
+                              placeholder="Search actors..."
+                              class="autosuggest-input"
                            />
-                           <InlineEditActions
-                              onSave={() => saveEdit(army.id)}
-                              onCancel={cancelEdit}
-                              disabled={isSaving}
-                           />
+                           
+                           {#if filteredActors.length > 0}
+                              <div class="suggestions-dropdown">
+                                 {#if groupedActors.characters.length > 0}
+                                    <div class="suggestion-group">
+                                       <div class="group-header">Characters ({groupedActors.characters.length})</div>
+                                       {#each groupedActors.characters as actor}
+                                          <button 
+                                             class="suggestion-item"
+                                             on:click={() => linkActor(army.id, actor.id)}
+                                          >
+                                             {actor.name}
+                                          </button>
+                                       {/each}
+                                    </div>
+                                 {/if}
+                                 
+                                 {#if groupedActors.npcs.length > 0}
+                                    <div class="suggestion-group">
+                                       <div class="group-header">NPCs ({groupedActors.npcs.length})</div>
+                                       {#each groupedActors.npcs as actor}
+                                          <button 
+                                             class="suggestion-item"
+                                             on:click={() => linkActor(army.id, actor.id)}
+                                          >
+                                             {actor.name}
+                                          </button>
+                                       {/each}
+                                    </div>
+                                 {/if}
+                              </div>
+                           {:else if actorSearchTerm.trim() !== ''}
+                              <div class="suggestions-dropdown">
+                                 <div class="no-results">No actors found</div>
+                              </div>
+                           {/if}
                         </div>
-                     {:else}
-                        <button
-                           class="editable-cell" 
-                           on:click={() => startEdit(army, 'name')}
-                           title="Click to edit"
-                        >
-                           {army.name}
-                        </button>
-                     {/if}
-                  </td>
-                  
-                  <!-- Level Column -->
-                  <td>
-                     {#if editingArmyId === army.id && editingField === 'level'}
-                        <div class="inline-edit">
-                           <input 
-                              type="number" 
-                              bind:value={editedValue}
-                              on:keydown={(e) => handleKeydown(e, army.id)}
-                              min="1"
-                              max="20"
-                              class="inline-input"
-                              disabled={isSaving}
-                           />
-                           <InlineEditActions
-                              onSave={() => saveEdit(army.id)}
-                              onCancel={cancelEdit}
-                              disabled={isSaving}
-                           />
-                        </div>
-                     {:else}
-                        <button
-                           class="editable-cell" 
-                           on:click={() => startEdit(army, 'level')}
-                           title="Click to edit"
-                        >
-                           {army.level}
-                        </button>
-                     {/if}
-                  </td>
-                  
-                  <!-- Support Status Column -->
-                  <td>
-                     {#if editingArmyId === army.id && editingField === 'settlement'}
-                        <!-- Editing: Show dropdown -->
-                        <div class="inline-edit">
-                           <select 
-                              bind:value={editedSettlementId}
-                              class="settlement-dropdown"
-                              disabled={isSaving}
+                     </td>
+                     <td>
+                        <div class="person-actions">
+                           <button class="action-btn" on:click={cancelLinking} title="Cancel">
+                              <i class="fas fa-times"></i>
+                           </button>
+                           <button 
+                              class="delete-btn" 
+                              on:click={() => deleteArmy(army.id)}
+                              title="Disband army"
                            >
-                              <option value="">Unsupported</option>
-                              {#each getAvailableSettlements(army.id) as settlement}
-                                 <option value={settlement.id}>
-                                    {settlement.name} ({settlement.tier} {getSettlementCapacityText(settlement, army.id)})
-                                 </option>
-                              {/each}
-                           </select>
-                           <InlineEditActions
-                              onSave={() => saveEdit(army.id)}
-                              onCancel={cancelEdit}
-                              disabled={isSaving}
-                           />
+                              <i class="fas fa-trash"></i>
+                           </button>
                         </div>
-                     {:else}
-                        <!-- Display: Click to edit -->
-                        <button
-                           class="support-status-btn {getSupportStatusColor(army)}"
-                           on:click={() => startEditingSettlement(army)}
-                           title="Click to change settlement"
-                        >
-                           <i class="fas {getSupportStatusIcon(army)}"></i>
-                           {getSupportStatusText(army)}
-                        </button>
-                     {/if}
-                  </td>
-                  
-                  <!-- NPC Actor Column -->
-                  <td>
-                     {#if army.actorId}
-                        <button 
-                           class="actor-link" 
-                           on:click={() => openActorSheet(army)}
-                           title="Open character sheet"
-                        >
-                           <i class="fas fa-external-link-alt"></i>
-                           Open Sheet
-                        </button>
-                     {:else}
-                        <span class="no-actor">—</span>
-                     {/if}
-                  </td>
-                  
-                  <!-- Actions Column -->
-                  <td>
-                     <button 
-                        class="delete-btn" 
-                        on:click={() => deleteArmy(army.id)}
-                        title="Disband army"
-                     >
-                        <i class="fas fa-trash"></i>
-                     </button>
-                  </td>
+                     </td>
+                  {:else}
+                     <!-- Normal mode: All columns visible -->
+                     <!-- Name Column -->
+                     <td>
+                        {#if editingArmyId === army.id && editingField === 'name'}
+                           <div class="inline-edit">
+                              <input 
+                                 type="text" 
+                                 bind:value={editedValue}
+                                 on:keydown={(e) => handleKeydown(e, army.id)}
+                                 class="inline-input"
+                                 disabled={isSaving}
+                              />
+                              <InlineEditActions
+                                 onSave={() => saveEdit(army.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
+                        {:else}
+                           <button
+                              class="editable-cell" 
+                              on:click={() => startEdit(army, 'name')}
+                              title="Click to edit"
+                           >
+                              {army.name}
+                           </button>
+                        {/if}
+                     </td>
+                     
+                     <!-- Level Column -->
+                     <td>
+                        {#if editingArmyId === army.id && editingField === 'level'}
+                           <div class="inline-edit">
+                              <input 
+                                 type="number" 
+                                 bind:value={editedValue}
+                                 on:keydown={(e) => handleKeydown(e, army.id)}
+                                 min="1"
+                                 max="20"
+                                 class="inline-input"
+                                 disabled={isSaving}
+                              />
+                              <InlineEditActions
+                                 onSave={() => saveEdit(army.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
+                        {:else}
+                           <button
+                              class="editable-cell" 
+                              on:click={() => startEdit(army, 'level')}
+                              title="Click to edit"
+                           >
+                              {army.level}
+                           </button>
+                        {/if}
+                     </td>
+                     
+                     <!-- Support Status Column -->
+                     <td>
+                        {#if editingArmyId === army.id && editingField === 'settlement'}
+                           <!-- Editing: Show dropdown -->
+                           <div class="inline-edit">
+                              <select 
+                                 bind:value={editedSettlementId}
+                                 class="settlement-dropdown"
+                                 disabled={isSaving}
+                              >
+                                 <option value="">Unsupported</option>
+                                 {#each getAvailableSettlements(army.id) as settlement}
+                                    <option value={settlement.id}>
+                                       {settlement.name} ({settlement.tier} {getSettlementCapacityText(settlement, army.id)})
+                                    </option>
+                                 {/each}
+                              </select>
+                              <InlineEditActions
+                                 onSave={() => saveEdit(army.id)}
+                                 onCancel={cancelEdit}
+                                 disabled={isSaving}
+                              />
+                           </div>
+                        {:else}
+                           <!-- Display: Click to edit -->
+                           <button
+                              class="support-status-btn {getSupportStatusColor(army)}"
+                              on:click={() => startEditingSettlement(army)}
+                              title="Click to change settlement"
+                           >
+                              <i class="fas {getSupportStatusIcon(army)}"></i>
+                              {getSupportStatusText(army)}
+                           </button>
+                        {/if}
+                     </td>
+                     
+                     <!-- NPC Actor Column -->
+                     <td>
+                        {#if army.actorId}
+                           <button 
+                              class="actor-link" 
+                              on:click={() => openActorSheet(army)}
+                              title="Open character sheet"
+                           >
+                              <i class="fas fa-external-link-alt"></i>
+                              {getActorName(army.actorId)}
+                           </button>
+                        {:else}
+                           <span class="no-actor">
+                              <i class="fas fa-unlink"></i>
+                              Not linked
+                           </span>
+                        {/if}
+                     </td>
+                     
+                     <!-- Actions Column -->
+                     <td>
+                        <div class="person-actions">
+                           {#if army.actorId}
+                              <button 
+                                 class="action-btn" 
+                                 on:click={() => unlinkActor(army.id)}
+                                 title="Unlink actor"
+                              >
+                                 <i class="fas fa-unlink"></i>
+                              </button>
+                           {:else}
+                              <button 
+                                 class="action-btn" 
+                                 on:click={() => startLinking(army.id)}
+                                 title="Link existing actor"
+                              >
+                                 <i class="fas fa-link"></i>
+                              </button>
+                              <button 
+                                 class="action-btn primary" 
+                                 on:click={() => createActorForArmy(army.id)}
+                                 title="Create new actor"
+                              >
+                                 <i class="fas fa-plus"></i>
+                              </button>
+                           {/if}
+                           <button 
+                              class="delete-btn" 
+                              on:click={() => deleteArmy(army.id)}
+                              title="Disband army"
+                           >
+                              <i class="fas fa-trash"></i>
+                           </button>
+                        </div>
+                     </td>
+                  {/if}
                </tr>
             {/each}
             
-            <!-- Empty State -->
-            {#if paginatedArmies.length === 0 && !isCreating}
-               <tr>
-                  <td colspan="5" class="empty-state">
-                     {#if searchTerm || filterSupport !== 'all'}
-                        <i class="fas fa-search"></i>
-                        <p>No armies match your filters</p>
+            <!-- Add Army Row -->
+            <tr class="add-row">
+               <td colspan="4">
+                  {#if linkingArmyId === 'new'}
+                     <!-- Linking mode: Actor search autosuggest -->
+                     <div class="actor-autosuggest">
+                        <input 
+                           type="text" 
+                           bind:value={actorSearchTerm}
+                           bind:this={searchInputRef}
+                           placeholder="Search actors..."
+                           class="autosuggest-input"
+                        />
+                        
+                        {#if filteredActors.length > 0}
+                           <div class="suggestions-dropdown">
+                              {#if groupedActors.characters.length > 0}
+                                 <div class="suggestion-group">
+                                    <div class="group-header">Characters ({groupedActors.characters.length})</div>
+                                    {#each groupedActors.characters as actor}
+                                       <button 
+                                          class="suggestion-item"
+                                          on:click={() => linkActor('new', actor.id)}
+                                       >
+                                          {actor.name}
+                                       </button>
+                                    {/each}
+                                 </div>
+                              {/if}
+                              
+                              {#if groupedActors.npcs.length > 0}
+                                 <div class="suggestion-group">
+                                    <div class="group-header">NPCs ({groupedActors.npcs.length})</div>
+                                    {#each groupedActors.npcs as actor}
+                                       <button 
+                                          class="suggestion-item"
+                                          on:click={() => linkActor('new', actor.id)}
+                                       >
+                                          {actor.name}
+                                       </button>
+                                    {/each}
+                                 </div>
+                              {/if}
+                           </div>
+                        {:else if actorSearchTerm.trim() !== ''}
+                           <div class="suggestions-dropdown">
+                              <div class="no-results">No actors found</div>
+                           </div>
+                        {/if}
+                     </div>
+                  {:else if isCreating}
+                     <!-- Creating mode: Name and level inputs -->
+                     <div class="add-army-inputs">
+                        <input 
+                           type="text" 
+                           bind:value={newArmyName}
+                           placeholder="Army name..."
+                           class="text-input small"
+                           on:keydown={(e) => e.key === 'Enter' && createArmy()}
+                        />
+                        <input 
+                           type="number" 
+                           bind:value={newArmyLevel}
+                           min="1"
+                           max="20"
+                           class="text-input small level-input"
+                           placeholder="Level"
+                        />
+                     </div>
+                  {:else}
+                     <!-- Default: Empty -->
+                     <span></span>
+                  {/if}
+               </td>
+               <td>
+                  <div class="person-actions">
+                     {#if linkingArmyId === 'new'}
+                        <button class="action-btn" on:click={cancelLinking} title="Cancel">
+                           <i class="fas fa-times"></i>
+                        </button>
+                     {:else if isCreating}
+                        <button class="action-btn primary" on:click={createArmy} title="Create Army">
+                           <i class="fas fa-check"></i>
+                        </button>
+                        <button class="action-btn" on:click={cancelCreating} title="Cancel">
+                           <i class="fas fa-times"></i>
+                        </button>
                      {:else}
-                        <i class="fas fa-shield-alt"></i>
-                        <p>No armies recruited yet</p>
-                        <p class="hint">Click "Create Army" to get started</p>
+                        <button class="action-btn" on:click={() => startLinking('new')} title="Link existing actor">
+                           <i class="fas fa-link"></i>
+                        </button>
+                        <button class="action-btn primary" on:click={startCreating} title="Create new army">
+                           <i class="fas fa-plus"></i>
+                        </button>
                      {/if}
-                  </td>
-               </tr>
-            {/if}
-         </tbody>
-      </table>
+                  </div>
+               </td>
+            </tr>
+            </tbody>
+         </table>
+      </div>
    </div>
    
    <!-- Pagination -->
@@ -690,15 +983,25 @@
    
    .armies-table-container {
       flex: 1;
-      overflow: auto;
+      overflow-y: auto;
       background: rgba(0, 0, 0, 0.2);
       border-radius: 0.375rem;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      position: relative;
+   }
+   
+   .armies-table-wrapper {
+      overflow: visible;
+      position: relative;
+      z-index: auto;
    }
    
    .armies-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
+      position: relative;
+      overflow: visible;
       
       thead {
          background: rgba(0, 0, 0, 0.3);
@@ -723,14 +1026,16 @@
                background: rgba(255, 255, 255, 0.05);
             }
             
-            &.create-row {
-               background: rgba(94, 0, 0, 0.1);
+            &.add-row {
+               background: rgba(0, 0, 0, 0.2);
             }
          }
          
          td {
             padding: 0.75rem 1rem;
             color: var(--color-text-dark-primary, #b5b3a4);
+            position: relative;
+            overflow: visible;
             
             &.empty-state {
                padding: 3rem;
@@ -901,6 +1206,168 @@
    
    .no-actor {
       color: var(--color-text-dark-secondary, #7a7971);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-style: italic;
+   }
+   
+   .add-prompt {
+      color: var(--color-text-dark-secondary, #7a7971);
+      font-style: italic;
+   }
+   
+   .add-army-inputs {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      
+      .level-input {
+         width: 5rem;
+      }
+   }
+   
+   .text-input {
+      width: 100%;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 0.25rem;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      font-family: inherit;
+      font-size: var(--font-md);
+      
+      &::placeholder {
+         color: var(--color-text-dark-secondary, #7a7971);
+         font-weight: var(--font-weight-normal);
+         font-style: italic;
+      }
+      
+      &:focus {
+         outline: none;
+         background: rgba(0, 0, 0, 0.5);
+         border-color: rgba(255, 255, 255, 0.5);
+      }
+      
+      &.small {
+         padding: 0.25rem 0.5rem;
+         font-size: var(--font-sm);
+      }
+   }
+   
+   .person-actions {
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      position: relative;
+      overflow: visible;
+   }
+   
+   .action-btn {
+      padding: 0.25rem 0.5rem;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: transparent;
+      color: var(--color-text-dark-primary, #b5b3a4);
+      
+      &:hover {
+         background: rgba(255, 255, 255, 0.1);
+      }
+      
+      &.primary {
+         background: rgba(144, 238, 144, 0.2);
+         color: #90ee90;
+         
+         &:hover {
+            background: rgba(144, 238, 144, 0.3);
+         }
+      }
+      
+      &.unlink-btn {
+         color: #ffa500;
+      }
+      
+      &.cancel-link {
+         color: #ff6b6b;
+      }
+   }
+   
+   /* Actor Autosuggest */
+   .actor-autosuggest {
+      position: relative;
+      display: flex;
+      gap: 0.25rem;
+      align-items: center;
+      flex: 1;
+      
+      .autosuggest-input {
+         flex: 1;
+         padding: 0.25rem 0.5rem;
+         background: rgba(0, 0, 0, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.3);
+         border-radius: 0.25rem;
+         color: var(--color-text-dark-primary, #b5b3a4);
+         
+         &:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.5);
+         }
+      }
+      
+      .suggestions-dropdown {
+         position: absolute;
+         top: 100%;
+         left: 0;
+         right: 0;
+         width: auto;
+         min-width: 300px;
+         max-height: 200px;
+         overflow-y: auto;
+         background: rgba(0, 0, 0, 0.95);
+         border: 1px solid rgba(255, 255, 255, 0.3);
+         border-radius: 0.25rem;
+         margin-top: 0.25rem;
+         z-index: 10000;
+         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+         
+         .suggestion-group {
+            .group-header {
+               padding: 0.5rem;
+               font-size: 0.75rem;
+               font-weight: var(--font-weight-semibold);
+               color: var(--color-text-dark-secondary, #7a7971);
+               text-transform: uppercase;
+               background: rgba(0, 0, 0, 0.3);
+               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+         }
+         
+         .suggestion-item {
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            text-align: left;
+            border: none;
+            background: transparent;
+            color: var(--color-text-dark-primary, #b5b3a4);
+            cursor: pointer;
+            transition: background 0.2s;
+            
+            &:hover {
+               background: rgba(255, 255, 255, 0.1);
+            }
+         }
+         
+         .no-results {
+            padding: 1rem;
+            text-align: center;
+            color: var(--color-text-dark-secondary, #7a7971);
+            font-style: italic;
+         }
+      }
    }
    
    /* Pagination */

@@ -4,7 +4,10 @@
    import type { Faction, NotablePerson, AttitudeLevel } from '../../../../models/Faction';
    import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
    import Button from '../../components/baseComponents/Button.svelte';
+   import ActorLinker from '../../components/baseComponents/ActorLinker.svelte';
+   import { getAvailableActors, filterActors, groupActorsByType, getActorName as getActorNameUtil } from '../../logic/actorLinkingLogic';
    import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
+   import { logger } from '../../../../utils/Logger';
 
    export let factionId: string;
 
@@ -136,20 +139,20 @@
       editedFaction.notablePeople = editedFaction.notablePeople.filter(p => p.id !== personId);
    }
    
-   // Inline autosuggest functions
+   // Actor linking functions
    function startLinking(personId: string) {
       linkingPersonId = personId;
       actorSearchTerm = '';
       isAddingNew = false; // Close add mode if open
-      // Focus the search input on next tick
-      setTimeout(() => {
-         searchInputRef?.focus();
-      }, 10);
    }
    
    function cancelLinking() {
       linkingPersonId = null;
       actorSearchTerm = '';
+   }
+   
+   function handleSearchChange(term: string) {
+      actorSearchTerm = term;
    }
    
    function selectActor(personId: string, actorId: string) {
@@ -181,40 +184,10 @@
       cancelLinking();
    }
    
-   // Reactive filtered actors
-   $: filteredActors = (() => {
-      if (!linkingPersonId || linkingPersonId === '') return [];
-      
-      // @ts-ignore - Foundry VTT API
-      const allActors = game.actors?.filter((a: any) => a.type === 'character' || a.type === 'npc') || [];
-      
-      if (actorSearchTerm.trim() === '') {
-         // Show ALL actors (no limit)
-         return allActors;
-      }
-      
-      // Filter by search term - show ALL matching results
-      const searchLower = actorSearchTerm.toLowerCase();
-      return allActors.filter((a: any) => a.name.toLowerCase().includes(searchLower));
-   })();
-   
-   // Group actors by type (optional - for better UX)
-   $: groupedActors = (() => {
-      if (!linkingPersonId || filteredActors.length === 0) return { characters: [], npcs: [] };
-      
-      const characters: any[] = [];
-      const npcs: any[] = [];
-      
-      filteredActors.forEach((actor: any) => {
-         if (actor.type === 'character') {
-            characters.push(actor);
-         } else {
-            npcs.push(actor);
-         }
-      });
-      
-      return { characters, npcs };
-   })();
+   // Use shared actor linking logic
+   $: availableActors = getAvailableActors();
+   $: filteredActors = linkingPersonId ? filterActors(availableActors, actorSearchTerm) : [];
+   $: groupedActors = groupActorsByType(filteredActors);
    
    async function createActorForPerson(personId: string) {
       if (!editedFaction) return;
@@ -372,9 +345,7 @@
    }
    
    function getActorName(actorId: string): string {
-      // @ts-ignore - Foundry VTT API
-      const actor = game.actors?.get(actorId);
-      return actor?.name || 'Unknown Actor';
+      return getActorNameUtil(actorId);
    }
    
    // Attitude change
@@ -1093,6 +1064,8 @@
       border-radius: 0.375rem;
       padding: 1rem;
       overflow: visible;
+      position: relative;
+      z-index: auto;
       
       h3 {
          margin: 0 0 1rem 0;
@@ -1323,13 +1296,17 @@
    
    .notable-people {
       overflow: visible;
+      position: relative;
+      z-index: 1;
    }
    
    .people-table {
       width: 100%;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       overflow: visible;
       font-size: var(--font-md);
+      position: relative;
       
       thead {
          background: rgba(0, 0, 0, 0.3);
@@ -1364,6 +1341,7 @@
       display: flex;
       gap: 0.25rem;
       overflow: visible;
+      position: relative;
    }
    
    .linked-actor {

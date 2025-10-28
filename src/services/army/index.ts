@@ -97,12 +97,102 @@ export class ArmyService {
   }
   
   /**
+   * Link an existing NPC actor to an army
+   * Validates actor exists, is an NPC, and is not already linked
+   * 
+   * @param armyId - Army ID to link
+   * @param actorId - Actor ID to link to army
+   * @throws Error if validation fails
+   */
+  async linkExistingActor(armyId: string, actorId: string): Promise<void> {
+    const game = (globalThis as any).game;
+    
+    // Validate actor exists and is NPC
+    const actor = game?.actors?.get(actorId);
+    if (!actor) {
+      throw new Error('Actor not found');
+    }
+    
+    if (actor.type !== 'npc') {
+      throw new Error('Only NPC actors can be linked to armies');
+    }
+    
+    // Check if actor already linked to another army
+    const existingMetadata = actor.getFlag('pf2e-reignmaker', 'army-metadata');
+    if (existingMetadata) {
+      const kingdom = getKingdomActor()?.getKingdomData();
+      const linkedArmy = kingdom?.armies?.find(a => a.id === existingMetadata.armyId);
+      throw new Error(`Actor already linked to army: ${linkedArmy?.name || existingMetadata.armyId}`);
+    }
+    
+    // Update army record
+    await updateKingdom(k => {
+      const army = k.armies.find((a: Army) => a.id === armyId);
+      if (!army) {
+        throw new Error('Army not found');
+      }
+      army.actorId = actorId;
+    });
+    
+    // Add metadata to actor
+    const kingdom = getKingdomActor()?.getKingdomData();
+    const army = kingdom?.armies?.find(a => a.id === armyId);
+    await this.addArmyMetadata(actorId, armyId, army?.type);
+    
+    // Sync name/level from army to actor
+    await this.syncArmyToActor(armyId);
+    
+    logger.info(`🔗 [ArmyService] Linked actor ${actor.name} to army ${army?.name}`);
+  }
+  
+  /**
+   * Unlink an actor from an army
+   * Removes metadata from actor and clears actorId from army
+   * Does NOT delete either the actor or the army
+   * 
+   * @param armyId - Army ID to unlink
+   * @throws Error if army not found or has no linked actor
+   */
+  async unlinkActor(armyId: string): Promise<void> {
+    const kingdom = getKingdomActor()?.getKingdomData();
+    const army = kingdom?.armies?.find(a => a.id === armyId);
+    
+    if (!army) {
+      throw new Error('Army not found');
+    }
+    
+    if (!army.actorId) {
+      throw new Error('Army has no linked actor');
+    }
+    
+    const game = (globalThis as any).game;
+    const actor = game?.actors?.get(army.actorId);
+    
+    // Remove metadata from actor (if actor still exists)
+    if (actor) {
+      await actor.unsetFlag('pf2e-reignmaker', 'army-metadata');
+      logger.info(`🔓 [ArmyService] Removed army metadata from actor ${actor.name}`);
+    }
+    
+    // Remove actorId from army
+    await updateKingdom(k => {
+      const a = k.armies.find((army: Army) => army.id === armyId);
+      if (a) {
+        a.actorId = undefined;
+      }
+    });
+    
+    logger.info(`🔓 [ArmyService] Unlinked actor from army ${army.name}`);
+  }
+  
+  /**
    * Disband an army (routes through GM via ActionDispatcher)
    * 
    * @param armyId - ID of army to disband
+   * @param deleteActor - Whether to delete the linked actor (default: true)
    * @returns Refund amount and army details
    */
-  async disbandArmy(armyId: string): Promise<{ 
+  async disbandArmy(armyId: string, deleteActor: boolean = true): Promise<{ 
     armyName: string; 
     refund: number;
     actorId?: string;
@@ -113,7 +203,7 @@ export class ArmyService {
       throw new Error('Action dispatcher not initialized. Please reload the game.');
     }
     
-    return await actionDispatcher.dispatch('disbandArmy', { armyId });
+    return await actionDispatcher.dispatch('disbandArmy', { armyId, deleteActor });
   }
   
   /**
@@ -183,9 +273,11 @@ export class ArmyService {
    * This is called by the socket handler on the GM's client
    * DO NOT call this directly from UI - use disbandArmy() instead
    * 
+   * @param armyId - Army ID to disband
+   * @param deleteActor - Whether to delete the linked actor (default: true)
    * @internal
    */
-  async _disbandArmyInternal(armyId: string): Promise<{ 
+  async _disbandArmyInternal(armyId: string, deleteActor: boolean = true): Promise<{ 
     armyName: string; 
     refund: number;
     actorId?: string;
@@ -202,7 +294,7 @@ export class ArmyService {
     }
     
     // Find the army
-    const army = kingdom.armies?.find(a => a.id === armyId);
+    const army = kingdom.armies?.find((a: Army) => a.id === armyId);
     if (!army) {
       throw new Error(`Army with ID ${armyId} not found`);
     }
@@ -211,22 +303,32 @@ export class ArmyService {
     
     // Remove army from kingdom (no refund)
     await updateKingdom(kingdom => {
-      kingdom.armies = kingdom.armies.filter(a => a.id !== armyId);
+      kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
       
       // Also remove from any settlement's supportedUnits
-      kingdom.settlements.forEach(s => {
+      kingdom.settlements.forEach((s: Settlement) => {
         s.supportedUnits = s.supportedUnits.filter(id => id !== armyId);
       });
     });
     
-    // Delete the NPC actor if it exists
-    if (actorId) {
+    // Delete the NPC actor if requested and it exists
+    if (deleteActor && actorId) {
       const game = (globalThis as any).game;
       const npcActor = game?.actors?.get(actorId);
       
       if (npcActor) {
+        // Remove metadata before deleting to prevent hook interference
+        await npcActor.unsetFlag('pf2e-reignmaker', 'army-metadata');
         await npcActor.delete();
-
+        logger.info(`🗑️ [ArmyService] Deleted actor ${npcActor.name} with army`);
+      }
+    } else if (!deleteActor && actorId) {
+      // Unlink the actor (remove metadata only)
+      const game = (globalThis as any).game;
+      const npcActor = game?.actors?.get(actorId);
+      if (npcActor) {
+        await npcActor.unsetFlag('pf2e-reignmaker', 'army-metadata');
+        logger.info(`🔓 [ArmyService] Unlinked actor ${npcActor.name} from disbanded army`);
       }
     }
 
@@ -367,7 +469,7 @@ export class ArmyService {
       throw new Error('No kingdom data available');
     }
     
-    const army = kingdom.armies?.find(a => a.id === armyId);
+    const army = kingdom.armies?.find((a: Army) => a.id === armyId);
     if (!army) {
       throw new Error(`Army with ID ${armyId} not found`);
     }
@@ -408,7 +510,7 @@ export class ArmyService {
     
     // Find army with this actorId
     await updateKingdom(kingdom => {
-      const army = kingdom.armies?.find(a => a.actorId === actorId);
+      const army = kingdom.armies?.find((a: Army) => a.actorId === actorId);
       if (army) {
         army.name = npcActor.name;
         army.level = npcActor.system?.details?.level?.value || army.level;
@@ -429,7 +531,7 @@ export class ArmyService {
   async updateArmyLevel(armyId: string, newLevel: number): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const army = kingdom.armies?.find(a => a.id === armyId);
+      const army = kingdom.armies?.find((a: Army) => a.id === armyId);
       if (army) {
         army.level = newLevel;
       }
@@ -461,7 +563,7 @@ export class ArmyService {
     }
     
     await updateKingdom(k => {
-      const army = k.armies.find(a => a.id === armyId);
+      const army = k.armies.find((a: Army) => a.id === armyId);
       if (!army) {
         throw new Error(`Army not found: ${armyId}`);
       }
@@ -529,12 +631,12 @@ export class ArmyService {
     
     // Find all settlements with available capacity
     // Only count settlements with valid locations (exclude unmapped at 0,0)
-    const available = kingdom.settlements.filter(s => {
+    const available = kingdom.settlements.filter((s: Settlement) => {
       // Must have a valid map location
       const hasLocation = s.location.x !== 0 || s.location.y !== 0;
       if (!hasLocation) return false;
       
-      const capacity = SettlementTierConfig[s.tier].armySupport;
+      const capacity = SettlementTierConfig[s.tier]?.armySupport || 0;
       const current = s.supportedUnits.length;
       return current < capacity;
     });

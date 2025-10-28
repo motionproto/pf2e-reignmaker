@@ -28,9 +28,10 @@ export function registerArmyHandlers(): void {
   // Register disbandArmy handler
   actionDispatcher.register('disbandArmy', async (data: {
     armyId: string;
+    deleteActor?: boolean;
   }) => {
 
-    const result = await armyService._disbandArmyInternal(data.armyId);
+    const result = await armyService._disbandArmyInternal(data.armyId, data.deleteActor ?? true);
 
     return result;
   });
