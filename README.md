@@ -1,323 +1,237 @@
 # PF2E ReignMaker
 
-This module ships all OGL licensed rules to run the Kingdom Building rule system for the most popular adventure for PFRPG 2e.
+A Kingdom Building management system for Pathfinder 2e in Foundry VTT. This module provides a full implementation of the kingdom management rules with an intuitive UI built with Svelte and TypeScript.
 
-**Documentation is included in a journal inside FoundryVTT!**
+## Features
 
-## Support
+- **Kingdom Management** - Complete kingdom sheet with all statistics, abilities, and resources
+- **Turn-Based Gameplay** - Six-phase turn system (Status → Upkeep → Event → Action → Resource → Unrest)
+- **Events & Incidents** - Dynamic kingdom events with skill checks and meaningful outcomes
+- **Settlement Management** - Build and manage settlements with structures and upgrades
+- **Territory Control** - Claim hexes, build roads, fortify borders
+- **Faction System** - Track relationships with various factions
+- **Army Management** - Recruit, train, and deploy military units
+- **Type-Safe Architecture** - Full TypeScript implementation with auto-generated types from data
 
-If you are having issues, you can either file an issue on GitHub or drop into our [Discord Server](https://discord.com/invite/pf2e) ([Channel](https://discord.com/channels/880968862240239708/1079113556823396352))
+## Requirements
 
-## Licensing
-
-All PFRPG 2e content uses the [Open Gaming License](./OpenGameLicense.md). If you find non OGL content, please file an
-issue and I'll get it removed ASAP. I've tried my best to scrub existing content, but there might still be leftovers.
-
-The source code is licensed under the AGPLv3 license, except for
-the [src/jsMain/kotlin/com/foundryvtt](./src/jsMain/kotlin/com/foundryvtt) folder which is licensed
-under [Apache License 2.0](./src/jsMain/kotlin/com/foundryvtt/LICENSE).
-
-All images in the [img/structures](./img/structures) and [img/kingdom/backgrounds](./img/kingdom/backgrounds) are
-licensed under [CC0 - Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
-by [Mark Pearce](https://github.com/MarkPearce). They
-were [generated and retouched using a MidJourney subscriber account](https://github.com/BernhardPosselt/pf2e-reignmaker/issues/76).
-According to their [Terms of Service](https://docs.midjourney.com/docs/terms-of-service), subscribers to MidJourney that
-are not part of a company own all the generated images.
-
-All images in [img/settlements/backgrounds](./img/settlements/backgrounds) are
-licensed under [CC0 - Public Domain](https://creativecommons.org/publicdomain/zero/1.0/)
-by dbavirt on Discord.
+- **Node.js** 18+ (tested with v24.11.0)
+- **npm** 7+ (tested with 11.6.1)
+- **Python** 3.8+ (for build scripts - uses only standard library)
+- **Foundry VTT** v13+
+- **PF2e System** 7.2.0+
 
 ## Installation
 
-The package is available through the [module registry](https://foundryvtt.com/packages/pf2e-reignmaker)
+### For Players
 
-## Functionality
+Install directly from Foundry VTT's module browser, or use this manifest URL:
+```
+https://github.com/motionproto/pf2e-reignmaker/releases/latest/download/module.json
+```
 
-This module ships with implementations for the Kingdom Building mechanics provided in the best sandbox PFRPG 2e adventure,
-including optional and popular homebrew from Vance & Kerenshara:
+### For Developers
 
-* Kingdom Sheet
-* Combat Tracks
+1. Clone the repository into your Foundry modules directory:
+   ```bash
+   cd /path/to/FoundryVTT/Data/modules/
+   git clone https://github.com/motionproto/pf2e-reignmaker.git
+   cd pf2e-reignmaker
+   ```
 
-### House Rules & GM Tips
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-You can look up my tips and house rules [here](./docs/house-rules.md)
+3. Build the module:
+   ```bash
+   npm run build
+   ```
 
-### Official Module Integration
-
-If you've enabled the official module, the following things are automatically taken care of:
-
-* Token Mappings for structures
-* Default and Region combat tracks
-* Rolltable integration for:
-    * Kingdom Events
-    * Cult Events
-
-### Screenshots
-
-![Kingdom Sheet](./img/kingdom/docs/kingdom-sheet.webp)
-
-![Settlements](./img/kingdom/docs/settlement.webp)
+4. Launch Foundry VTT and enable the module in your world.
 
 ## Development
 
-If you are interested in hacking on the code base, take a look at the [Kotlin JS Primer](./docs/Kotlin%20JS%20Primer.md)
-for a quick intro on how to interact with the js api.
+### Quick Start
 
-I highly recommend [IntelliJ Idea Ultimate or IntelliJ Community Edition](https://www.jetbrains.com/idea/download/?section=linux)
+```bash
+# Install dependencies (first time only)
+npm install
 
-Community Edition is free while Ultimate offers better integration. Scroll down a bit to find the Community Edition download link.
+# Start development server (with hot reload)
+npm run dev
 
-### Windows Setup
+# Build for production
+npm run build
 
-Make sure you have FoundryVTT installed, and that you've launched it at least once to ensure all directories are created properly.
-
-Install the following things:
-
-* [git](https://git-scm.com/downloads/win) (pick all the default options)
-* [node](https://nodejs.org/en/download) click the green button named **Windows Installer (.msi)**
-* [JDK 21](https://adoptium.net/installation/) launch a Windows terminal and paste the following:
-
-      winget install EclipseAdoptium.Temurin.21.JDK
-
-Then, restart your PC.
-
-Next, open your file explorer and paste the following path into the URL bar (CTRL + l):
-
-    %localappdata%/FoundryVTT/Data/modules/ 
-
-This will take you to Foundry's modules folder. Inside the folder, right click onto an empty space and click **Open Git Bash here** (in Windows 11, that option is hidden under **Show more options**).
-
-From now on, all commands will be run via the Git Bash instead of the Windows terminal.
-
-Paste (right click -> paste) the following command into the Git Bash to install yarn:
-
-    npm install --global yarn
-
-Then, download the code (if you are more well versed with Windows, you can probably also clone the code somewhere else and create a symlink):
-
-    git clone https://github.com/motionproto/pf2e-reignmaker.git 
-
-The folder **pf2e-reignmaker** should now exist. Change into it:
-
-    cd pf2e-reignmaker
-
-If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
-
-    ./gradlew createDummyTranslations
-
-If you have access to Transifex, log into your Transifex account and retrieve your token from your [account settings page]( https://app.transifex.com/user/settings/api/). Then create your rc file using:
-
-    nano ~/.transifexrc
-
-Paste the following contents and change **TX_TOKEN** to your token
-
-```ini
-[https://app.transifex.com]
-rest_hostname = https://rest.api.transifex.com
-token         = TX_TOKEN
+# Generate TypeScript types from JSON data
+npm run generate-types
 ```
 
-Save the file with **CTRL + o**, then exit with **CTRL + x**.
+### Development Workflow
 
-Pull all translation files using:
+1. **Start Foundry VTT** on `http://localhost:30000`
+2. **Run development server**: `npm run dev`
+3. The dev server runs on port `30001` and proxies to Foundry
+4. Make changes to code - Vite will hot-reload automatically
+5. **Build for production** when ready: `npm run build`
 
-    ./gradlew txPull
+### Available Scripts
 
-Then compile the application using:
+| Command | Description |
+|---------|-------------|
+| `npm run build` | Full production build (combines data, generates types, builds bundle) |
+| `npm run dev` | Start Vite dev server with hot reload |
+| `npm run dev:setup` | Setup development environment configuration |
+| `npm run dev:start` | Setup + start dev server |
+| `npm run generate-types` | Generate TypeScript types from JSON data files |
+| `npm run clean` | Remove dist directory |
+| `npm run preview` | Preview production build |
 
-    ./gradlew assemble
+### Build Process
 
-Now open FoundryVTT. The module should be listed as installed. You will need to run the **assemble** command again each time you change a file, git pull or pull  translations from Transifex
+The build process involves three steps:
 
-You can pull the latest changes inside the folder using:
+1. **Combine Data** (`python3 buildscripts/combine-data.py`)
+   - Combines individual JSON files from `data/` into monolithic files
+   - Organizes events, incidents, factions, and player actions
+   - Outputs to `src/data-compiled/`
 
-    git pull
+2. **Generate Types** (`python3 buildscripts/generate-types.py`)
+   - Generates TypeScript types from combined JSON data
+   - Creates type-safe interfaces for events, incidents, and actions
+   - Outputs to `src/types/`
 
-### Linux & macOS Setup
+3. **Vite Build** (`vite build`)
+   - Compiles TypeScript and Svelte components
+   - Processes TailwindCSS styles
+   - Bundles everything to `dist/`
 
-Install the following things using your package manager or homebrew:
+## Project Structure
 
-* JDK 21
-* git
-* node
-* yarn
-
-Ubuntu:
-
-    sudo apt install nodejs git openjdk-21-jdk
-    sudo npm install --global yarn
-
-Arch:
-
-    sudo pacman -S nodejs git jdk21-openjdk yarn
-
-macOS:
-
-    brew install --cask temurin@21
-    brew install git node@22 yarn
-
-Then restart your machine for the JVM changes to take effect.
-
-First, create a folder to clone the repository into:
-
-    mkdir dev
-    cd dev
-
-Then, clone the repository:
-
-    git clone https://github.com/motionproto/pf2e-reignmaker.git
-
-Then link this directory to your foundry data folder:
-
-Linux:
-
-    ln -s /home/$(whoami)/dev/pf2e-reignmaker/ /home/$(whoami)/.local/share/FoundryVTT/Data/modules/pf2e-reignmaker/
-
-macOS:
-
-    ln -s /Users/$(whoami)/dev/pf2e-reignmaker/ /Users/$(whoami)/Library/Application Support/FoundryVTT/Data/modules/pf2e-reignmaker/
-
-If you **don't have access to Transifex and aren't interested in becoming a translator**, you need to create dummy localization files locally, otherwise the app won't load:
-
-    ./gradlew createDummyTranslations
-
-If you have access to Transifex, you need to pull all language files from Transifex where TX_TOKEN is obtained from your [account settings page]( https://app.transifex.com/user/settings/api/). Create your rc file using:
-
-    nano ~/.transifexrc
-
-Paste the following contents and change **TX_TOKEN** to your token
-
-```ini
-[https://app.transifex.com]
-rest_hostname = https://rest.api.transifex.com
-token         = TX_TOKEN
+```
+pf2e-reignmaker/
+├── src/
+│   ├── index.ts                 # Module entry point
+│   ├── actors/                  # Kingdom and Army actor definitions
+│   ├── controllers/             # Phase controllers and business logic
+│   ├── data-compiled/           # Generated JSON data (from data/)
+│   ├── models/                  # Data models (Kingdom, Settlement, etc)
+│   ├── services/                # Business logic services
+│   ├── stores/                  # Svelte stores for reactive state
+│   ├── styles/                  # CSS and TailwindCSS styles
+│   ├── types/                   # TypeScript type definitions
+│   ├── ui/                      # Reusable UI components
+│   ├── utils/                   # Utility functions
+│   └── view/                    # Svelte components (main UI)
+│       └── kingdom/
+│           ├── KingdomSheet.svelte      # Main kingdom sheet
+│           ├── turnPhases/              # Phase-specific UI components
+│           └── components/              # Reusable kingdom UI components
+├── data/                        # Source JSON data files
+│   ├── events/                  # Kingdom events
+│   ├── incidents/               # Kingdom incidents
+│   ├── factions/                # Faction definitions
+│   ├── player-actions/          # Player action definitions
+│   └── structures/              # Structure definitions
+├── buildscripts/                # Python build scripts
+│   ├── combine-data.py          # Combines JSON files
+│   └── generate-types.py        # Generates TypeScript types
+├── docs/                        # Architecture documentation
+│   ├── ARCHITECTURE.md          # Complete system overview
+│   └── systems/                 # System-specific documentation
+├── dist/                        # Build output (gitignored)
+├── img/                         # Module images and assets
+├── module.json                  # Foundry module manifest
+├── package.json                 # Node.js dependencies
+├── vite.config.ts               # Vite configuration
+├── vite.config.dev.ts           # Development server config
+├── tsconfig.json                # TypeScript configuration
+└── tailwind.config.cjs          # TailwindCSS configuration
 ```
 
-Save the file with **CTRL + o**, then exit with **CTRL + x**.
+## Documentation
 
-Pull all translation files using:
+Comprehensive documentation is available in the `docs/` directory:
 
-    ./gradlew txPull
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Complete system architecture overview
+- **[Check Instance System](docs/systems/check-instance-system.md)** - Unified check architecture
+- **[Turn and Phase System](docs/systems/turn-and-phase-system.md)** - Turn progression system
+- **[Typed Modifiers System](docs/systems/typed-modifiers-system.md)** - Type-safe resource modifications
+- **[Game Commands System](docs/systems/game-commands-system.md)** - Structured gameplay commands
+- **[Phase Controllers](docs/systems/phase-controllers.md)** - Phase-specific business logic
 
-Then compile the application using:
+## Technology Stack
 
-    ./gradlew assemble
+- **TypeScript** - Type-safe JavaScript with full type inference
+- **Svelte 4** - Reactive UI framework
+- **Vite 5** - Fast build tool with hot module reload
+- **TailwindCSS 4** - Utility-first CSS framework
+- **DaisyUI** - Component library for TailwindCSS
+- **TyphonJS Runtime** - Foundry VTT framework utilities
+- **Python 3** - Build scripts for data processing
 
-or if you want to both build it and run its tests:
+## Architecture Principles
 
-    ./gradlew build
+1. **Single Source of Truth** - `KingdomActor` is the only persistent data source
+2. **Reactive Bridge Pattern** - Svelte stores provide reactive access to actor data
+3. **Type Safety** - Explicit TypeScript types, auto-generated from JSON data
+4. **Clean Separation** - Components (UI) → Controllers (Logic) → Services (Utilities)
+5. **Self-Executing Phases** - Phase components auto-start their controllers on mount
 
-To execute tests run:
+## Data Files
 
-    ./gradlew jsTest
+Game data is stored as individual JSON files in the `data/` directory:
 
-Finally, start Foundry.
+- **Events** - Random kingdom events that occur during the Event Phase
+- **Incidents** - Triggered events based on kingdom unrest levels
+- **Factions** - Faction definitions with relationships and benefits
+- **Player Actions** - Available actions during the Action Phase
+- **Structures** - Buildings and improvements for settlements
 
-You can release a new version by changing the version in **build.gradle.kts** and then executing:
+These files are combined during the build process into monolithic files in `src/data-compiled/`, which are then used to generate TypeScript types.
 
-    GITHUB_TOKEN="token_here" FOUNDRY_TOKEN="token_here" ./gradlew release
+## Contributing
 
-### Enable Schema Autocompletion Support in IntelliJ
+Contributions are welcome! Please:
 
-Some files are in JSON rather than actual code. To get autocompletion for these in IntelliJ, you need to enable custom
-schemas.
+1. Follow the existing architectural patterns (see [ARCHITECTURE.md](docs/ARCHITECTURE.md))
+2. Use TypeScript strict mode - no `any` types
+3. Write reactive Svelte components that respond to store changes
+4. Add/update data files in `data/` directory, not `src/data-compiled/`
+5. Run `npm run generate-types` after modifying JSON data
+6. Test in Foundry VTT before submitting PRs
 
-In settings, go to **Languages & Frameworks > Schemas and DTDs > JSON Schema Mappings**.
+### Adding New Content
 
-Click on the + to add a new mapping for each schema. Then add the following (see a list of values further down below):
+**To add a new event:**
+1. Create a JSON file in `data/events/`
+2. Run `npm run build` to combine data and regenerate types
+3. The event will automatically appear in-game
 
-* **Name**: Name of the Schema
-* **Schema file or URL**: Path to the Schema file in [./schemas/](./schemas/)
-* **Schema Version**: Always **JSON Schema version 7**
-* Then click on the **+** below and **Directory**
+**To add a new player action:**
+1. Create a JSON file in `data/player-actions/`
+2. Create the action implementation in `src/actions/`
+3. Run `npm run build`
 
-## Translations
+See the existing files for schema examples.
 
-### Help out as a Translator
+## License
 
-If you want to help translating this module as a Translator open an issue on GitHub with your email and language or contact me on Discord, so I can send you an invite to the project on Transifex.
+- **Source Code**: MIT License (except TyphonJS components which are Apache 2.0)
+- **Game Content**: Open Gaming License (OGL) for Pathfinder 2e content
+- **Images**: CC0 Public Domain (see individual folders for attribution)
 
-Don't edit the files in **lang/** directly. Every file except for **en.json** will be overridden by changes from Transifex. Instead, edit the translations in Transifex.
+## Support
 
-You can pull changes either by setting up the project locally (check out the relevant Setup section above!):
+- **Issues**: [GitHub Issues](https://github.com/motionproto/pf2e-reignmaker/issues)
+- **Discord**: [PF2e Discord](https://discord.com/invite/pf2e) - #reignmaker channel
 
-    ./gradlew txPull
-    ./gradlew assemble
+## Credits
 
-or by manually downloading by clicking on your language in Transifex and choosing **Download for use** ![](docs/img/transifex-download.png) Then place the downloaded file into **Data/modules/pf2e-reignmaker/dist/lang/ru.json** (adjust name depending on your translation). The location of the data folder [depends on your Operating System](https://foundryvtt.com/article/user-data/). However, make sure to only perform this **on your local dev instance and not on your hosted services due to security reasons**: translations might include malicious HTML and those strings are only stripped when building the project.
+Created by **Mark Pearce & Anthropic Claude**
 
-**A note on Lores**: Lores in the 2e system can currently not be translated properly and if you use translated lores, you lose automation that matches on the lore name. You can use translated lores in this module by overriding activities and lores manually. Translations will be implemented once the 2e system allows for it
+Built with the [TyphonJS Runtime Library](https://github.com/typhonjs-fvtt/runtime) for Foundry VTT.
 
-### Help out as a Developer
-
-This module skips the built-in Foundry translation system since it's broken and unusable. Nonetheless, you need to link your json files in the module.json file for each language, otherwise Foundry will not let you change your language in the settings.
-
-#### Making Changes in Code
-
-Translations are persisted in **lang/en.json**. **DO NOT EDIT other translation files directly since they will be overridden by changes from Transifex**. You can arbitrarily nest JSON values and reference them using the path. For instance: 
-
-```json
-{
-  "key": {
-    "something": "value"
-  }
-}
-```
-
-would be referenced using **key.something**. Translations can be parameterized:
-
-```json
-{
-  "key": {
-    "something": "{greeting} to you"
-  }
-}
-```
-
-Plurals can be translated using [ICU](https://unicode-org.github.io/icu/userguide/format_parse/messages/) (with **coins** being passed as an int parameter):
-
-```json
-{
-  "key": {
-    "something": "He paid {coins, plural, =0 {nothing} =1 {one coin} =other{# coins}} for his groceries"
-  }
-}
-```
-
-It's also possible to use different translations based on a parameter, e.g. gender (with **gender** being passed as either "male" or "female"; other is the catchall case):
-
-```json
-{
-  "key": {
-    "something": "{gender, select, female {She} male {He} other {They}} went to the party"
-  }
-}
-```
-
-There are 2 places where you can translate strings:
-
-In Kotlin code:
-
-```kt
-// single value
-t("key.something")
-// values with context
-t("key.something", recordOf("greeting" to "hello"))
-```
-
-In Handlebars templates:
-
-```handlebars
-{{localizeKM "key.something"}}
-{{localizeKM "key.something" greeting="hello"}}
-```
-
-#### Pushing Changes
-
-Strings are not edited in the repository. Instead, they are pushed to Transifex first, edited and then pulled.
-
-After you've made your changes in **lang/en.json**, you need to push it to your translators using:
-
-    ./gradlew txPush
+Images generated and retouched using MidJourney (licensed CC0 by Mark Pearce).
