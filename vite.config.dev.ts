@@ -1,5 +1,5 @@
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { postcssConfig, terserConfig } from '@typhonjs-fvtt/runtime/rollup';
+import { terserConfig } from '@typhonjs-fvtt/runtime/rollup';
 import { sveltePreprocess } from 'svelte-preprocess';
 import { defineConfig } from 'vite';
 import { foundryHMR } from './vite-foundry-hmr';
@@ -32,11 +32,6 @@ export default defineConfig(({ mode }) => {
 
     esbuild: {
       target: ['es2022']
-    },
-
-    css: {
-      // Creates a standard configuration for PostCSS with autoprefixer & postcss-preset-env.
-      postcss: postcssConfig({ compress: s_COMPRESS, sourceMap: s_SOURCEMAPS })
     },
 
     // About server options:

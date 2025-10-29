@@ -1,8 +1,6 @@
 import { svelte }             from '@sveltejs/vite-plugin-svelte';
 
-import {
-   postcssConfig,
-   terserConfig }             from '@typhonjs-fvtt/runtime/rollup';
+import { terserConfig }       from '@typhonjs-fvtt/runtime/rollup';
 
 import { sveltePreprocess }   from 'svelte-preprocess';
 import { defineConfig }       from 'vite';
@@ -57,11 +55,6 @@ export default defineConfig(({ mode }) =>
 
       esbuild: {
          target: ['es2022']
-      },
-
-      css: {
-         // Use our PostCSS configuration that includes Tailwind
-         postcss: './postcss.config.js'
       },
 
       // About server options:

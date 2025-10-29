@@ -6,6 +6,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 /dist
+.vite-cache/
+src/data-compiled/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

@@ -13,7 +13,7 @@ A Kingdom Building management system for Pathfinder 2e in Foundry VTT. This modu
 - **Army Management** - Recruit, train, and deploy military units
 - **Type-Safe Architecture** - Full TypeScript implementation with auto-generated types from data
 
-## Requirements
+## Developer Requirements
 
 - **Node.js** 18+ (tested with v24.11.0)
 - **npm** 7+ (tested with 11.6.1)
@@ -105,7 +105,7 @@ The build process involves three steps:
 
 3. **Vite Build** (`vite build`)
    - Compiles TypeScript and Svelte components
-   - Processes TailwindCSS styles
+   - Processes and bundles CSS
    - Bundles everything to `dist/`
 
 ## Project Structure
@@ -147,8 +147,7 @@ pf2e-reignmaker/
 ├── package.json                 # Node.js dependencies
 ├── vite.config.ts               # Vite configuration
 ├── vite.config.dev.ts           # Development server config
-├── tsconfig.json                # TypeScript configuration
-└── tailwind.config.cjs          # TailwindCSS configuration
+└── tsconfig.json                # TypeScript configuration
 ```
 
 ## Documentation
@@ -167,8 +166,6 @@ Comprehensive documentation is available in the `docs/` directory:
 - **TypeScript** - Type-safe JavaScript with full type inference
 - **Svelte 4** - Reactive UI framework
 - **Vite 5** - Fast build tool with hot module reload
-- **TailwindCSS 4** - Utility-first CSS framework
-- **DaisyUI** - Component library for TailwindCSS
 - **TyphonJS Runtime** - Foundry VTT framework utilities
 - **Python 3** - Build scripts for data processing
 

@@ -16,17 +16,44 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-// Foundry VTT modules directory - adjust this path if needed
-const FOUNDRY_MODULES_PATH = path.join(
-    process.env.HOME || process.env.USERPROFILE,
-    'Library/Application Support/FoundryVTT/Data/modules'
-);
+// Foundry VTT modules directory - automatically detects OS
+function getFoundryModulesPath() {
+    // Check for custom path via environment variable first
+    if (process.env.FOUNDRY_MODULES_PATH) {
+        return process.env.FOUNDRY_MODULES_PATH;
+    }
+
+    const platform = process.platform;
+    const homeDir = process.env.HOME || process.env.USERPROFILE;
+
+    switch (platform) {
+        case 'win32':
+            // Windows: C:\Users\username\AppData\Local\FoundryVTT\Data\modules
+            return path.join(process.env.LOCALAPPDATA, 'FoundryVTT', 'Data', 'modules');
+        
+        case 'darwin':
+            // macOS: ~/Library/Application Support/FoundryVTT/Data/modules
+            return path.join(homeDir, 'Library', 'Application Support', 'FoundryVTT', 'Data', 'modules');
+        
+        case 'linux':
+            // Linux: ~/.local/share/FoundryVTT/Data/modules
+            return path.join(homeDir, '.local', 'share', 'FoundryVTT', 'Data', 'modules');
+        
+        default:
+            console.error(`❌ Unsupported platform: ${platform}`);
+            process.exit(1);
+    }
+}
+
+const FOUNDRY_MODULES_PATH = getFoundryModulesPath();
 
 const MODULE_NAME = 'pf2e-reignmaker';
 const TARGET_DIR = path.join(FOUNDRY_MODULES_PATH, MODULE_NAME);
 
 console.log('🏰 PF2e ReignMaker - Deploy Script');
 console.log('=====================================');
+console.log(`📍 Platform: ${process.platform}`);
+console.log(`📂 Target: ${FOUNDRY_MODULES_PATH}\n`);
 
 // Check if Foundry modules directory exists
 if (!fs.existsSync(FOUNDRY_MODULES_PATH)) {

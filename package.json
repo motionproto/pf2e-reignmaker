@@ -19,14 +19,8 @@
     "svelte": "^4.2.20"
   },
   "devDependencies": {
-    "@fullhuman/postcss-purgecss": "^7.0.2",
     "@sveltejs/vite-plugin-svelte": "^3.1.2",
-    "@tailwindcss/postcss": "^4.1.13",
-    "autoprefixer": "^10.4.21",
-    "daisyui": "^5.1.13",
     "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
-    "postcss": "^8.5.6",
-    "postcss-load-config": "^6.0.1",
     "svelte-check": "^4.0.9",
     "svelte-preprocess": "^6.0.3",
     "tslib": "^2.8.1",
@@ -39,14 +33,14 @@
     "not IE 11"
   ],
   "scripts": {
-    "build": "python3 buildscripts/combine-data.py && python3 buildscripts/generate-types.py && vite build",
-    "generate-types": "python3 buildscripts/generate-types.py",
+    "build": "python buildscripts/combine-data.py && python buildscripts/generate-types.py && vite build",
+    "generate-types": "python buildscripts/generate-types.py",
     "dev": "vite --config vite.config.dev.ts",
     "dev:setup": "node buildscripts/setup-dev.js",
     "dev:start": "npm run dev:setup && npm run dev",
     "dev:proxy": "vite --config vite.config.dev.ts",
     "dev:standalone": "vite --config vite.config.dev.ts",
-    "clean": "rm -rf dist",
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
     "deploy": "npm run clean && node buildscripts/deploy.js",
     "deploy:dev": "npm run dev:setup",
     "preview": "vite preview",
