@@ -105,7 +105,7 @@ export class TerritoryService {
                         'plains',   // Default terrain (editable later)
                         'open',     // Default travel (editable later)
                         null,       // No worksite
-                        false,      // No commodity bonus
+                        new Map(),  // No commodities
                         null,       // No name
                         null,       // Wilderness (unclaimed)
                         false,      // No road
@@ -271,6 +271,10 @@ export class TerritoryService {
             // Update kingdom store with territory data (no Settlement objects created here)
             await this.updateKingdomStore(hexes);
 
+            // Switch to setup tab after successful import
+            const { setSelectedTab } = await import('../../stores/ui');
+            setSelectedTab('setup');
+            
             return {
                 success: true,
                 hexesSynced: hexes.length,

@@ -35,8 +35,8 @@ export interface Faction {
   };
   assets: string;         // Faction resources/assets
   quirks: string;         // Unique characteristics
-  allies: string;         // Comma-separated ally names
-  enemies: string;        // Comma-separated enemy names
+  allies: string[];       // Array of ally names
+  enemies: string[];      // Array of enemy names
 }
 
 /**
@@ -116,7 +116,7 @@ export function createDefaultFaction(name: string, attitude: AttitudeLevel = 'In
     },
     assets: '',
     quirks: '',
-    allies: '',
-    enemies: ''
+    allies: [],
+    enemies: []
   };
 }

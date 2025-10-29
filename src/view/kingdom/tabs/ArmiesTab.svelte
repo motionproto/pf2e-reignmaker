@@ -15,7 +15,7 @@
    
    // Inline editing state
    let editingArmyId: string | null = null;
-   let editingField: 'name' | 'level' | 'settlement' | null = null;
+   let editingField: 'level' | 'settlement' | null = null;
    let editedValue: string | number = '';
    let editedSettlementId: string = '';
    let isSaving = false;
@@ -246,12 +246,15 @@
       return actor?.name || 'Unknown Actor';
    }
    
-   // Filter actors - ONLY NPC actors (armies should not link to PCs)
+   // Filter actors - Include NPCs and characters, exclude system actors
    $: filteredActors = (() => {
       if (!linkingArmyId) return [];
       
       const game = (globalThis as any).game;
-      const allActors = game?.actors?.filter((a: any) => a.type === 'npc') || [];
+      // Include 'npc' and 'character' types, exclude 'loot', 'hazard', 'vehicle', etc.
+      const allActors = game?.actors?.filter((a: any) => 
+         a.type === 'npc' || a.type === 'character'
+      ) || [];
       
       if (!actorSearchTerm.trim()) {
          return allActors;
@@ -261,15 +264,15 @@
       return allActors.filter((a: any) => a.name.toLowerCase().includes(searchLower));
    })();
    
-   // Group actors by type (armies only show NPCs)
+   // Group actors by type
    $: groupedActors = (() => {
-      const characters: any[] = [];
-      const npcs: any[] = filteredActors;
+      const characters: any[] = filteredActors.filter((a: any) => a.type === 'character');
+      const npcs: any[] = filteredActors.filter((a: any) => a.type === 'npc');
       return { characters, npcs };
    })();
    
    // Inline editing functions
-   function startEdit(army: Army, field: 'name' | 'level') {
+   function startEdit(army: Army, field: 'level') {
       editingArmyId = army.id;
       editingField = field;
       editedValue = army[field];
@@ -293,18 +296,8 @@
       isSaving = true;
       try {
          const { armyService } = await import('../../../services/army');
-         const { updateKingdom } = await import('../../../stores/KingdomStore');
          
-         if (editingField === 'name') {
-            // Update name and sync to actor
-            await updateKingdom(k => {
-               const army = k.armies.find(a => a.id === armyId);
-               if (army) {
-                  army.name = String(editedValue).trim();
-               }
-            });
-            await armyService.syncArmyToActor(armyId);
-         } else if (editingField === 'level') {
+         if (editingField === 'level') {
             // Update level
             await armyService.updateArmyLevel(armyId, Number(editedValue));
          } else if (editingField === 'settlement') {
@@ -554,7 +547,6 @@
                <th>Name</th>
                <th>Level</th>
                <th>Support Status</th>
-               <th>NPC Actor</th>
                <th>Actions</th>
             </tr>
          </thead>
@@ -564,7 +556,7 @@
                <tr>
                   {#if linkingArmyId === army.id}
                      <!-- Linking mode: Full-width actor search -->
-                     <td colspan="4">
+                     <td colspan="3">
                         <div class="actor-autosuggest">
                            <input 
                               type="text" 
@@ -629,30 +621,16 @@
                      <!-- Normal mode: All columns visible -->
                      <!-- Name Column -->
                      <td>
-                        {#if editingArmyId === army.id && editingField === 'name'}
-                           <div class="inline-edit">
-                              <input 
-                                 type="text" 
-                                 bind:value={editedValue}
-                                 on:keydown={(e) => handleKeydown(e, army.id)}
-                                 class="inline-input"
-                                 disabled={isSaving}
-                              />
-                              <InlineEditActions
-                                 onSave={() => saveEdit(army.id)}
-                                 onCancel={cancelEdit}
-                                 disabled={isSaving}
-                              />
-                           </div>
-                        {:else}
-                           <button
-                              class="editable-cell" 
-                              on:click={() => startEdit(army, 'name')}
-                              title="Click to edit"
-                           >
-                              {army.name}
-                           </button>
-                        {/if}
+                        <button
+                           class="army-name-btn" 
+                           on:click={() => openActorSheet(army)}
+                           title={army.actorId ? "Open actor sheet" : "Create actor"}
+                        >
+                           {army.actorId ? getActorName(army.actorId) : army.name}
+                           {#if army.actorId}
+                              <i class="fas fa-link link-icon"></i>
+                           {/if}
+                        </button>
                      </td>
                      
                      <!-- Level Column -->
@@ -721,25 +699,6 @@
                         {/if}
                      </td>
                      
-                     <!-- NPC Actor Column -->
-                     <td>
-                        {#if army.actorId}
-                           <button 
-                              class="actor-link" 
-                              on:click={() => openActorSheet(army)}
-                              title="Open character sheet"
-                           >
-                              <i class="fas fa-external-link-alt"></i>
-                              {getActorName(army.actorId)}
-                           </button>
-                        {:else}
-                           <span class="no-actor">
-                              <i class="fas fa-unlink"></i>
-                              Not linked
-                           </span>
-                        {/if}
-                     </td>
-                     
                      <!-- Actions Column -->
                      <td>
                         <div class="person-actions">
@@ -782,7 +741,7 @@
             
             <!-- Add Army Row -->
             <tr class="add-row">
-               <td colspan="4">
+               <td colspan="3">
                   {#if linkingArmyId === 'new'}
                      <!-- Linking mode: Actor search autosuggest -->
                      <div class="actor-autosuggest">
@@ -1060,6 +1019,34 @@
             }
          }
       }
+   }
+   
+   .army-name-btn {
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+      display: inline-block;
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: var(--font-md);
+      text-align: left;
+      font-weight: var(--font-weight-semibold);
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 3px;
+      
+      &:hover {
+         background: rgba(255, 255, 255, 0.1);
+         text-decoration-style: solid;
+      }
+   }
+   
+   .link-icon {
+      margin-left: 0.375rem;
+      font-size: 0.75em;
+      opacity: 0.7;
    }
    
    .editable-cell {

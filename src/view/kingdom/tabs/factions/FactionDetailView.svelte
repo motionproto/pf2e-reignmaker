@@ -6,6 +6,7 @@
    import Button from '../../components/baseComponents/Button.svelte';
    import ActorLinker from '../../components/baseComponents/ActorLinker.svelte';
    import RemoveNotablePersonDialog from '../../components/RemoveNotablePersonDialog.svelte';
+   import FactionTokenInput from './FactionTokenInput.svelte';
    import { getAvailableActors, filterActors, groupActorsByType, getActorName as getActorNameUtil } from '../../logic/actorLinkingLogic';
    import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
    import { logger } from '../../../../utils/Logger';
@@ -44,8 +45,11 @@
          },
          assets: faction.assets || '',
          quirks: faction.quirks || '',
-         allies: faction.allies || '',
-         enemies: faction.enemies || ''
+         // Migrate old string format to array format if needed
+         allies: Array.isArray(faction.allies) ? faction.allies : 
+                 (faction.allies ? (faction.allies as any).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+         enemies: Array.isArray(faction.enemies) ? faction.enemies : 
+                  (faction.enemies ? (faction.enemies as any).split(',').map((s: string) => s.trim()).filter(Boolean) : [])
       };
    }
    
@@ -223,10 +227,11 @@
          editedFaction.notablePeople = [...editedFaction.notablePeople, newPerson];
          editedFaction = { ...editedFaction };
       } else {
-         // Linking to existing person
+         // Linking to existing person - update both actorId and name
          const person = editedFaction.notablePeople.find(p => p.id === personId);
          if (person) {
             person.actorId = actorId;
+            person.name = actorName;
             editedFaction = { ...editedFaction };
          }
       }
@@ -400,10 +405,29 @@
       return getActorNameUtil(actorId);
    }
    
+   function openPersonActorSheet(actorId: string | undefined) {
+      if (!actorId) return;
+      const actor = (globalThis as any).game?.actors?.get(actorId);
+      if (actor) actor.sheet.render(true);
+   }
+   
    // Attitude change
    function changeAttitude(attitude: AttitudeLevel) {
       if (!editedFaction) return;
       editedFaction.attitude = attitude;
+      editedFaction = { ...editedFaction };
+   }
+   
+   // Handle allies/enemies changes
+   function handleAlliesChange(newAllies: string[]) {
+      if (!editedFaction) return;
+      editedFaction.allies = newAllies;
+      editedFaction = { ...editedFaction };
+   }
+   
+   function handleEnemiesChange(newEnemies: string[]) {
+      if (!editedFaction) return;
+      editedFaction.enemies = newEnemies;
       editedFaction = { ...editedFaction };
    }
 </script>
@@ -533,7 +557,6 @@
                      <thead>
                         <tr>
                            <th>Name</th>
-                           <th>Linked Actor</th>
                            <th>Actions</th>
                         </tr>
                      </thead>
@@ -541,16 +564,17 @@
                         {#each editedFaction.notablePeople as person}
                            <tr>
                               <td>
-                                 {person.name}
-                              </td>
-                              <td>
                                  {#if person.actorId}
-                                    <span class="linked-actor">
-                                       <i class="fas fa-link"></i>
+                                    <button
+                                       class="person-name-btn"
+                                       on:click={() => openPersonActorSheet(person.actorId)}
+                                       title="Open actor sheet"
+                                    >
                                        {getActorName(person.actorId)}
-                                    </span>
+                                       <i class="fas fa-link link-icon"></i>
+                                    </button>
                                  {:else}
-                                    <span class="no-link">Not linked</span>
+                                    <span class="person-name-unlinked">{person.name}</span>
                                  {/if}
                               </td>
                               <td>
@@ -627,7 +651,7 @@
                         {/each}
                         <!-- Add row -->
                         <tr class="add-row">
-                           <td colspan="2">
+                           <td>
                               {#if linkingPersonId === 'new'}
                                  <!-- Inline actor search autosuggest for new person -->
                                  <div class="actor-autosuggest">
@@ -744,21 +768,21 @@
                <div class="allies-enemies-row">
                   <div class="allies-column">
                      <h3><i class="fas fa-handshake"></i> Allies</h3>
-                     <textarea 
-                        bind:value={editedFaction.allies}
-                        class="textarea-input"
-                        placeholder="Friendly factions..."
-                        rows="3"
-                     ></textarea>
+                     <FactionTokenInput 
+                        values={editedFaction.allies}
+                        placeholder="Enter ally name..."
+                        excludeValues={[editedFaction.name, ...editedFaction.enemies]}
+                        onChange={handleAlliesChange}
+                     />
                   </div>
                   <div class="enemies-column">
                      <h3><i class="fas fa-skull-crossbones"></i> Enemies</h3>
-                     <textarea 
-                        bind:value={editedFaction.enemies}
-                        class="textarea-input"
-                        placeholder="Hostile factions..."
-                        rows="3"
-                     ></textarea>
+                     <FactionTokenInput 
+                        values={editedFaction.enemies}
+                        placeholder="Enter enemy name..."
+                        excludeValues={[editedFaction.name, ...editedFaction.allies]}
+                        onChange={handleEnemiesChange}
+                     />
                   </div>
                </div>
             </section>
@@ -1408,20 +1432,38 @@
       position: relative;
    }
    
-   .linked-actor {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+   .person-name-btn {
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s;
+      display: inline-block;
+      background: transparent;
+      border: none;
       color: var(--text-primary);
+      font-size: var(--font-md);
+      text-align: left;
+      font-weight: var(--font-weight-semibold);
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 3px;
       
-      i {
-         color: var(--color-success);
+      &:hover {
+         background: rgba(255, 255, 255, 0.1);
+         text-decoration-style: solid;
       }
    }
    
-   .no-link {
+   .person-name-unlinked {
       color: var(--text-secondary);
       font-style: italic;
+      padding: 0.25rem 0.5rem;
+   }
+   
+   .link-icon {
+      margin-left: 0.375rem;
+      font-size: 0.75em;
+      opacity: 0.7;
    }
    
    .person-actions {

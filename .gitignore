@@ -48,6 +48,10 @@ bin/
 .kotlin
 .idea
 
+### Windows symbolic links (junction points) ###
+__foundryData/
+__reignmakerRules/
+
 ### Development server files (should not exist for Foundry modules) ###
 webpack-dev-server.pid
 .webpack/
