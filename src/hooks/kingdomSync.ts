@@ -53,7 +53,6 @@ function setupGameHooks(): void {
   // Hook for ready state - find or create kingdom actor
   Hooks.on('ready', () => {
     initializeKingdomActor();
-    initializeKingdomArmiesFolder();
     // NOTE: Territory data loading is now handled by KingdomAppShell.svelte
     // after the actor is properly initialized. Do NOT call loadTerritoryData() here.
   });
@@ -94,65 +93,6 @@ async function initializeKingdomActor(): Promise<void> {
   // Load territory data from Kingmaker module if available
   await loadTerritoryData();
 
-}
-
-/**
- * Initialize Reignmaker Armies folder with proper permissions
- * Called during module startup to ensure folder exists before armies are created
- */
-async function initializeKingdomArmiesFolder(): Promise<void> {
-  try {
-    // Only GMs can create folders
-    if (!game.user?.isGM) {
-      return;
-    }
-
-    const folderName = "Reignmaker Armies";
-    
-    // Check if folder already exists
-    let folder = game.folders?.find((f: any) => 
-      f.type === "Actor" && f.name === folderName
-    );
-    
-    if (folder) {
-      // Folder exists - verify and fix permissions if needed
-      const currentOwnership = folder.ownership || {};
-      const needsUpdate = currentOwnership.default !== CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER;
-      
-      if (needsUpdate) {
-
-        await folder.update({
-          ownership: {
-            ...currentOwnership,
-            default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
-          }
-        });
-
-      } else {
-
-      }
-    } else {
-      // Folder doesn't exist - create it
-
-      folder = await game.folders.documentClass.create({
-        name: folderName,
-        type: "Actor",
-        color: "#5e0000",
-        img: "icons/svg/castle.svg",
-        ownership: {
-          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
-        }
-      });
-      
-      if (folder) {
-
-      } else {
-        logger.error(`❌ [Kingdom Sync] Failed to create "${folderName}" folder`);
-      }
-    }
-  } catch (error) {
-    logger.error('[Kingdom Sync] Error initializing Reignmaker Armies folder:', error);
-  }
 }
 
 /**

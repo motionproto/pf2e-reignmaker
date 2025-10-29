@@ -5,6 +5,7 @@
    import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
    import Button from '../../components/baseComponents/Button.svelte';
    import ActorLinker from '../../components/baseComponents/ActorLinker.svelte';
+   import RemoveNotablePersonDialog from '../../components/RemoveNotablePersonDialog.svelte';
    import { getAvailableActors, filterActors, groupActorsByType, getActorName as getActorNameUtil } from '../../logic/actorLinkingLogic';
    import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
    import { logger } from '../../../../utils/Logger';
@@ -58,6 +59,10 @@
    let actorSearchTerm: string = '';
    let searchInputRef: HTMLInputElement | null = null;
    
+   // Remove person dialog state
+   let showRemoveDialog = false;
+   let removingPerson: NotablePerson | null = null;
+   
    // Click outside to close dropdown
    function handleClickOutside(event: MouseEvent) {
       if (!linkingPersonId && !isAddingNew) return;
@@ -107,12 +112,14 @@
       if (!editedFaction) return;
       
       try {
-         // @ts-ignore - Foundry VTT API
-         const actor = await Actor.create({
-            name: name,
-            type: 'npc',
-            folder: null
-         });
+         // Route through GM via ActionDispatcher
+         const { actionDispatcher } = await import('../../../../services/ActionDispatcher');
+         
+         if (!actionDispatcher.isAvailable()) {
+            throw new Error('Action dispatcher not initialized. Please reload the game.');
+         }
+         
+         const actor = await actionDispatcher.dispatch('createFactionActor', { name });
          
          if (actor) {
             const newPerson: NotablePerson = {
@@ -129,14 +136,57 @@
       } catch (error) {
          logger.error('Failed to create actor:', error);
          // @ts-ignore
-         ui.notifications?.error('Failed to create actor');
+         ui.notifications?.error(error instanceof Error ? error.message : 'Failed to create actor');
       }
    }
    
    function removeNotablePerson(personId: string) {
       if (!editedFaction) return;
-      // Only remove from faction's list - does NOT delete the linked actor
-      editedFaction.notablePeople = editedFaction.notablePeople.filter(p => p.id !== personId);
+      const person = editedFaction.notablePeople.find(p => p.id === personId);
+      if (!person) return;
+      
+      removingPerson = person;
+      showRemoveDialog = true;
+   }
+   
+   async function handleRemoveConfirm(event: CustomEvent<{ deleteActor: boolean }>) {
+      if (!editedFaction || !removingPerson) return;
+      
+      const { deleteActor } = event.detail;
+      const personName = removingPerson.name;
+      const actorId = removingPerson.actorId;
+      
+      // Remove from faction's list
+      editedFaction.notablePeople = editedFaction.notablePeople.filter(p => p.id !== removingPerson?.id);
+      editedFaction = { ...editedFaction };
+      
+      // Delete actor if requested
+      if (deleteActor && actorId) {
+         try {
+            const actor = (globalThis as any).game?.actors?.get(actorId);
+            if (actor) {
+               await actor.delete();
+               // @ts-ignore
+               ui.notifications?.info(`Removed ${personName} and deleted NPC actor`);
+            } else {
+               // @ts-ignore
+               ui.notifications?.info(`Removed ${personName} (actor already deleted)`);
+            }
+         } catch (error) {
+            logger.error('Failed to delete actor:', error);
+            // @ts-ignore
+            ui.notifications?.warn(`Removed ${personName} but failed to delete actor`);
+         }
+      } else {
+         // @ts-ignore
+         ui.notifications?.info(`Removed ${personName} from notable people`);
+      }
+      
+      removingPerson = null;
+   }
+   
+   function handleRemoveCancel() {
+      removingPerson = null;
    }
    
    // Actor linking functions
@@ -196,12 +246,14 @@
       if (!person) return;
       
       try {
-         // @ts-ignore - Foundry VTT API
-         const actor = await Actor.create({
-            name: person.name,
-            type: 'npc',
-            folder: null
-         });
+         // Route through GM via ActionDispatcher
+         const { actionDispatcher } = await import('../../../../services/ActionDispatcher');
+         
+         if (!actionDispatcher.isAvailable()) {
+            throw new Error('Action dispatcher not initialized. Please reload the game.');
+         }
+         
+         const actor = await actionDispatcher.dispatch('createFactionActor', { name: person.name });
          
          if (actor) {
             person.actorId = actor.id;
@@ -212,7 +264,7 @@
       } catch (error) {
          logger.error('Failed to create actor:', error);
          // @ts-ignore
-         ui.notifications?.error('Failed to create actor');
+         ui.notifications?.error(error instanceof Error ? error.message : 'Failed to create actor');
       }
    }
    
@@ -356,6 +408,18 @@
    }
 </script>
 
+<!-- Remove Notable Person Dialog -->
+{#if removingPerson}
+   <RemoveNotablePersonDialog
+      bind:show={showRemoveDialog}
+      personName={removingPerson.name}
+      factionName={editedFaction?.name || ''}
+      hasLinkedActor={!!removingPerson.actorId}
+      on:confirm={handleRemoveConfirm}
+      on:cancel={handleRemoveCancel}
+   />
+{/if}
+
 {#if editedFaction}
    <div class="faction-detail">
       <!-- Back Button and Action Buttons (Fixed) -->
@@ -463,7 +527,7 @@
             
             <!-- Notable People Section -->
             <section class="detail-section">
-               <h3><i class="fas fa-users"></i> Notable People</h3>
+               <h3><i class="fas fa-users"></i> Notable NPCs</h3>
                <div class="notable-people">
                   <table class="people-table">
                      <thead>
@@ -550,12 +614,12 @@
                                        <button class="action-btn" on:click={() => startLinking(person.id)} title="Link Actor">
                                           <i class="fas fa-link"></i>
                                        </button>
-                                       <button class="action-btn" on:click={() => createActorForPerson(person.id)} title="Create Actor">
-                                          <i class="fas fa-plus-circle"></i>
+                                       <button class="action-btn primary" on:click={() => createActorForPerson(person.id)} title="Create Actor">
+                                          <i class="fas fa-plus"></i>
                                        </button>
                                     {/if}
-                                    <button class="action-btn danger" on:click={() => removeNotablePerson(person.id)} title="Remove from list (does not delete actor)">
-                                       <i class="fas fa-minus"></i>
+                                    <button class="action-btn danger" on:click={() => removeNotablePerson(person.id)} title="Remove from list">
+                                       <i class="fas fa-trash"></i>
                                     </button>
                                  </div>
                               </td>
@@ -620,9 +684,9 @@
                                     placeholder="Enter actor name..."
                                     on:keydown={(e) => e.key === 'Enter' && confirmAddPerson()}
                                  />
-                              {:else}
-                                 <span class="add-prompt">Add notable person</span>
-                              {/if}
+                        {:else}
+                           <span class="add-prompt">Add NPC</span>
+                        {/if}
                            </td>
                            <td>
                               <div class="person-actions">
@@ -1401,6 +1465,11 @@
       display: flex;
       gap: 0.5rem;
       align-items: center;
+   }
+   
+   .add-prompt {
+      color: var(--text-tertiary, #5a5850);
+      font-weight: var(--font-weight-thin, 300);
    }
    
    .allies-enemies-row {

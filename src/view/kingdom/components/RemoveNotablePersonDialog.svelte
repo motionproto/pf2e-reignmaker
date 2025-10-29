@@ -4,13 +4,9 @@
   import Notification from './baseComponents/Notification.svelte';
   
   export let show: boolean = false;
-  export let armyName: string = '';
-  export let armyLevel: number = 0;
+  export let personName: string = '';
+  export let factionName: string = '';
   export let hasLinkedActor: boolean = false;
-  export let isSupported: boolean = false;
-  export let supportedBySettlement: string = '';
-  
-  $: armyDescription = `Level ${armyLevel} ${armyName}${isSupported && supportedBySettlement ? `, supported by ${supportedBySettlement}` : ', unsupported'}`;
   
   const dispatch = createEventDispatcher<{
     confirm: { deleteActor: boolean };
@@ -32,27 +28,24 @@
 
 <Dialog 
   bind:show 
-  title="Disband Army?" 
-  confirmLabel="Disband Army"
+  title="Remove Notable Person?" 
+  confirmLabel="Remove Person"
   cancelLabel="Cancel"
   width="600px"
   on:confirm={handleConfirm}
   on:cancel={handleCancel}
 >
-  <div class="disband-army-content">
+  <div class="remove-person-content">
     <Notification
       variant="warning"
-      title="Disband Army"
-      description={armyDescription}
+      title="Remove Notable Person"
+      description={`${personName} from ${factionName}`}
     />
     
     <div class="consequences-section">
       <h4>This will:</h4>
       <ul>
-        <li>Remove the army from kingdom records</li>
-        {#if isSupported && supportedBySettlement}
-          <li>Free the support slot in {supportedBySettlement}</li>
-        {/if}
+        <li>Remove {personName} from the notable people list</li>
         {#if !hasLinkedActor}
           <li>No linked NPC actor to delete</li>
         {/if}
@@ -78,16 +71,16 @@
 </Dialog>
 
 <style>
-  .disband-army-content {
+  .remove-person-content {
     color: var(--text-primary, #ffffff);
     font-family: var(--font-sans-rm);
   }
   
-  .disband-army-content :global(.notification-rm) {
+  .remove-person-content :global(.notification-rm) {
     margin-bottom: 1.5rem;
   }
   
-  .disband-army-content :global(.notification-rm-description) {
+  .remove-person-content :global(.notification-rm-description) {
     font-size: var(--font-xl);
     color: var(--text-primary);
   }

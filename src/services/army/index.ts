@@ -341,7 +341,7 @@ export class ArmyService {
   
   /**
    * Create NPC actor in Foundry for an army
-   * Places actor in "Reignmaker Armies" folder
+   * Places actor in "Reignmaker/Armies" folder
    * 
    * @param name - Actor name
    * @param level - Actor level
@@ -352,48 +352,11 @@ export class ArmyService {
    */
   async createNPCActor(name: string, level: number, image?: string, customData?: any): Promise<string> {
 
-    const game = (globalThis as any).game;
+    const { createNPCInFolder } = await import('../actors/folderManager');
     
-    // Fail fast if Foundry not ready
-    if (!game?.actors || !game?.folders) {
-      throw new Error('Foundry VTT not initialized - cannot create actors');
-    }
-    
-    // Find "Reignmaker Armies" folder (should be created by initialization hook)
-    const folderName = "Reignmaker Armies";
-    let folder = game.folders.find((f: any) =>
-      f.type === "Actor" && f.name === folderName
-    );
-    
-    if (!folder) {
-      // Fallback: Create folder if it doesn't exist (shouldn't happen if hooks ran properly)
-      logger.warn(`📁 [ArmyService] "${folderName}" folder not found, creating as fallback...`);
-      folder = await game.folders.documentClass.create({
-        name: folderName,
-        type: "Actor",
-        color: "#5e0000",
-        img: "icons/svg/castle.svg",
-        ownership: {
-          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER // Allow all players to create armies
-        }
-      });
-      
-      if (!folder) {
-        throw new Error(`Failed to create "${folderName}" folder`);
-      }
-
-    }
-    
-    // Default NPC actor data
-    const npcData = customData || {
-      name: name,
-      type: 'npc',
-      folder: folder.id, // Place in folder
+    // Build additional actor data for armies
+    const additionalData = customData || {
       img: image, // Portrait image
-      // Set ownership so all players can see/edit the army actor
-      ownership: {
-        default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
-      },
       prototypeToken: {
         texture: {
           src: image // Token image
@@ -413,12 +376,8 @@ export class ArmyService {
       }
     };
     
-    // Create the actor
-    const npcActor = await game.actors.documentClass.create(npcData);
-    
-    if (!npcActor?.id) {
-      throw new Error(`Failed to create NPC actor: ${name}`);
-    }
+    // Use shared folder manager to create actor
+    const npcActor = await createNPCInFolder(name, 'Armies', additionalData);
 
     return npcActor.id;
   }
@@ -540,6 +499,66 @@ export class ArmyService {
     // Sync to actor
     await this.syncArmyToActor(armyId);
 
+  }
+  
+  /**
+   * Update army actor properties (routes through GM via ActionDispatcher)
+   * Updates both the actor and syncs changes back to kingdom data
+   * 
+   * @param actorId - Army actor ID
+   * @param updateData - Data to update (name, level, hp, etc.)
+   * @returns Updated actor
+   */
+  async updateArmyActor(actorId: string, updateData: any): Promise<any> {
+    const { actionDispatcher } = await import('../ActionDispatcher');
+    
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
+    }
+    
+    return await actionDispatcher.dispatch('updateArmyActor', {
+      actorId,
+      updateData
+    });
+  }
+  
+  /**
+   * Add an item to an army actor (routes through GM via ActionDispatcher)
+   * 
+   * @param actorId - Army actor ID
+   * @param itemData - Item data to add (name, type, etc.)
+   * @returns Created item
+   */
+  async addItemToArmy(actorId: string, itemData: any): Promise<any> {
+    const { actionDispatcher } = await import('../ActionDispatcher');
+    
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
+    }
+    
+    return await actionDispatcher.dispatch('addItemToArmy', {
+      actorId,
+      itemData
+    });
+  }
+  
+  /**
+   * Remove an item from an army actor (routes through GM via ActionDispatcher)
+   * 
+   * @param actorId - Army actor ID
+   * @param itemId - Item ID to remove
+   */
+  async removeItemFromArmy(actorId: string, itemId: string): Promise<void> {
+    const { actionDispatcher } = await import('../ActionDispatcher');
+    
+    if (!actionDispatcher.isAvailable()) {
+      throw new Error('Action dispatcher not initialized. Please reload the game.');
+    }
+    
+    return await actionDispatcher.dispatch('removeItemFromArmy', {
+      actorId,
+      itemId
+    });
   }
   
   /**

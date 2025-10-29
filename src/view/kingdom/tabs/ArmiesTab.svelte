@@ -850,8 +850,8 @@
                         />
                      </div>
                   {:else}
-                     <!-- Default: Empty -->
-                     <span></span>
+                     <!-- Default: Show prompt -->
+                     <span class="add-prompt">Add Army</span>
                   {/if}
                </td>
                <td>
@@ -1213,8 +1213,8 @@
    }
    
    .add-prompt {
-      color: var(--color-text-dark-secondary, #7a7971);
-      font-style: italic;
+      color: var(--text-tertiary, #5a5850);
+      font-weight: var(--font-weight-thin, 300);
    }
    
    .add-army-inputs {

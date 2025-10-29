@@ -238,6 +238,9 @@ Hooks.once('init', () => {
         import('./services/army/handlers').then(({ registerArmyHandlers }) => {
             registerArmyHandlers();
         });
+        import('./services/factions/handlers').then(({ registerFactionHandlers }) => {
+            registerFactionHandlers();
+        });
         import('./services/kingdom/handlers').then(({ registerKingdomHandlers }) => {
             registerKingdomHandlers();
         });

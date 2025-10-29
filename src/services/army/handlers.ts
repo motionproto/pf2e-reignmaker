@@ -5,6 +5,9 @@
 
 import { actionDispatcher } from '../ActionDispatcher';
 import { armyService } from './index';
+import { updateActor, addItemToActor, removeItemFromActor } from '../actors/folderManager';
+import type { ActorUpdateData, ItemData } from '../actors/folderManager';
+
 /**
  * Register all army operation handlers with the ActionDispatcher
  * Should be called during module initialization
@@ -45,6 +48,38 @@ export function registerArmyHandlers(): void {
   }) => {
 
     await armyService._placeArmyTokenInternal(data.actorId, data.sceneId, data.x, data.y);
+
+  });
+
+  // Register updateArmyActor handler
+  actionDispatcher.register('updateArmyActor', async (data: {
+    actorId: string;
+    updateData: ActorUpdateData;
+  }) => {
+
+    const actor = await updateActor(data.actorId, data.updateData);
+
+    return actor;
+  });
+
+  // Register addItemToArmy handler
+  actionDispatcher.register('addItemToArmy', async (data: {
+    actorId: string;
+    itemData: ItemData;
+  }) => {
+
+    const item = await addItemToActor(data.actorId, data.itemData);
+
+    return item;
+  });
+
+  // Register removeItemFromArmy handler
+  actionDispatcher.register('removeItemFromArmy', async (data: {
+    actorId: string;
+    itemId: string;
+  }) => {
+
+    await removeItemFromActor(data.actorId, data.itemId);
 
   });
 
