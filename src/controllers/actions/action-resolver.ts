@@ -297,6 +297,26 @@ export class ActionResolver {
                 );
             }
             
+            case 'giveActorGold': {
+                // Get settlementId from gameEffect OR from pending action state
+                let settlementId = gameEffect.settlementId;
+                
+                // If not in gameEffect, check for pending state (for pre-dialog actions)
+                if (!settlementId && (globalThis as any).__pendingStipendSettlement) {
+                    settlementId = (globalThis as any).__pendingStipendSettlement;
+                }
+                
+                if (!settlementId) {
+                    return {
+                        success: false,
+                        error: 'No settlement selected for stipend collection'
+                    };
+                }
+                
+                const multiplier = parseFloat(gameEffect.multiplier) || 1;
+                return await resolver.giveActorGold(multiplier, settlementId);
+            }
+            
             // TODO: Add more game effect handlers as we implement them
             // case 'claimHexes': return await resolver.claimHexes(...)
             // case 'buildRoads': return await resolver.buildRoads(...)

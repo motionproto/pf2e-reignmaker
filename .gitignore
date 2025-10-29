@@ -51,6 +51,7 @@ bin/
 ### Windows symbolic links (junction points) ###
 __foundryData/
 __reignmakerRules/
+__pf2e/
 
 ### Development server files (should not exist for Foundry modules) ###
 webpack-dev-server.pid

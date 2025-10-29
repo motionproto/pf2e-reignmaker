@@ -159,7 +159,12 @@
   
   // Determine if custom component requires resolution
   $: hasCustomComponent = customComponent !== null;
-  $: customComponentResolved = !hasCustomComponent || (customComponentData !== undefined && customComponentData !== null);
+  $: customComponentResolved = !hasCustomComponent || (
+    customComponentData !== undefined && 
+    customComponentData !== null && 
+    customComponentData.selectedSettlementId && 
+    customComponentData.selectedSettlementId !== ''
+  );
   
   // Button visibility and state
   $: showCancelButton = showCancel && !applied && !isIgnored;
@@ -289,6 +294,10 @@
    * This is the single source of truth for what gets applied to the kingdom
    */
   function computeResolutionData(): ResolutionData {
+    logger.info('🔍 [computeResolutionData] Building resolution data...');
+    logger.info('   customComponentData:', customComponentData);
+    logger.info('   selectedChoice:', selectedChoice);
+    logger.info('   resolvedDice size:', resolvedDice.size);
 
     const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
     
@@ -462,10 +471,14 @@
   async function handleCustomSelection(event: CustomEvent) {
     if (!instance) return;
     
+    console.log('🔍 [handleCustomSelection] Received event:', event.detail);
     const { modifiers, ...metadata } = event.detail;
+    console.log('   modifiers:', modifiers);
+    console.log('   metadata:', metadata);
 
     // Store metadata (for UI display, like settlement name/level)
     if (metadata && Object.keys(metadata).length > 0) {
+      console.log('   Updating instance with metadata:', metadata);
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: metadata
       });

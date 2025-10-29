@@ -3,7 +3,7 @@
   "name": "Collect Stipend",
   "category": "economic-resources",
   "brief": "Extract personal income (requires Counting House)",
-  "description": "Draw personal funds from the kingdom's treasury as compensation for your service",
+  "description": "Draw personal funds from the kingdom's treasury as compensation for your service.",
   "skills": [
     {
       "skill": "intimidation",
@@ -32,15 +32,27 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain double the listed amount",
-      "modifiers": []
+      "description": "You are handsomly compensated! Gain <amount> gold.",
+      "modifiers": [],
+       "gameCommands": [
+        {
+          "type": "giveActorGold",
+          "multiplier": "2"
+        }
+      ]
     },
     "success": {
-      "description": "Gain the listed amount",
-      "modifiers": []
+      "description": "Gain <amount> gold.",
+      "modifiers": [],
+             "gameCommands": [
+        {
+          "type": "giveActorGold",
+          "multiplier": "1"
+        }
+      ]
     },
     "failure": {
-      "description": "Gain half the listed amount, and the kingdom gains +1 Unrest",
+      "description": "Two things in life are certain. Gain <amount> gold.",
       "modifiers": [
         {
           "type": "static",
@@ -48,10 +60,16 @@
           "value": 1,
           "duration": "immediate"
         }
+      ],
+             "gameCommands": [
+        {
+          "type": "giveActorGold",
+          "multiplier": ".5"
+        }
       ]
     },
     "criticalFailure": {
-      "description": "Gain nothing, and the kingdom gains +1d4 Unrest",
+      "description": "You can't take blood from a stone!",
       "modifiers": [
         {
           "type": "dice",
@@ -65,6 +83,5 @@
   "failureCausesUnrest": true,
   "requirements": [
     "Counting House (T2) or higher Taxation structure"
-  ],
-  "special": "The PC gains personal Gold based on the settlement's level and the highest active Taxation tier in the kingdom"
+  ]
 }

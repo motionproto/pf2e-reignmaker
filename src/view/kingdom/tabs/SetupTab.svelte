@@ -120,6 +120,7 @@
     try {
       await startKingdom();
       ui.notifications?.info('Kingdom turns have begun! Starting Turn 1.');
+      setSelectedTab('turn');
     } catch (error) {
       logger.error('Failed to start kingdom:', error);
       ui.notifications?.error('Failed to start kingdom. See console for details.');

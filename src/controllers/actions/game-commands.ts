@@ -47,6 +47,9 @@ export type GameCommandType =
   | 'aidBonus'
   | 'grantReroll'
   
+  // Personal Actions
+  | 'giveActorGold'
+  
   // Structure Management
   | 'damageStructure';
 
@@ -233,6 +236,15 @@ export interface GrantRerollCommand extends BaseGameCommand {
 }
 
 /**
+ * Give gold to actor command (personal stipend)
+ */
+export interface GiveActorGoldCommand extends BaseGameCommand {
+  type: 'giveActorGold';
+  multiplier: number; // Income multiplier (2 = double, 1 = normal, 0.5 = half)
+  settlementId?: string; // Settlement to calculate income from (from pending action state)
+}
+
+/**
  * Damage structure command
  */
 export interface DamageStructureCommand extends BaseGameCommand {
@@ -287,6 +299,7 @@ export type GameCommand =
   | PardonPrisonersCommand
   | AidBonusCommand
   | GrantRerollCommand
+  | GiveActorGoldCommand
   | InfiltrationCommand
   | SendScoutsCommand
   | FortifyHexCommand

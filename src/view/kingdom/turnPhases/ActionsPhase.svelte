@@ -10,6 +10,7 @@
   import RepairStructureDialog from "../../../actions/repair-structure/RepairStructureDialog.svelte";
   import UpgradeSettlementSelectionDialog from "../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte";
   import FactionSelectionDialog from "../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte";
+  import SettlementSelectionDialog from "../../../actions/collect-stipend/SettlementSelectionDialog.svelte";
   import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
   import {
     getPlayerCharacters,
@@ -19,6 +20,7 @@
     showCharacterSelectionDialog
   } from "../../../services/pf2e";
   import { onMount, onDestroy, tick } from "svelte";
+  import { logger } from '../../../utils/Logger';
 
   // Props
   export let isViewingCurrentPhase: boolean = true;
@@ -53,6 +55,11 @@
       requiresPreDialog: true,
       showDialog: () => { showFactionSelectionDialog = true; },
       storePending: (skill: string) => { pendingDiplomaticAction = { skill }; }
+    },
+    'collect-stipend': {
+      requiresPreDialog: true,
+      showDialog: () => { showSettlementSelectionDialog = true; },
+      storePending: (skill: string) => { pendingStipendAction = { skill }; }
     }
   };
 
@@ -63,11 +70,13 @@
   let showUpgradeSettlementSelectionDialog: boolean = false;
   let showFactionSelectionDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
+  let showSettlementSelectionDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
+  let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -1047,6 +1056,71 @@
     }
   }
   
+  // Handle when a settlement is selected for collect stipend
+  async function handleSettlementSelected(event: CustomEvent) {
+    const { settlementId } = event.detail;
+    
+    if (pendingStipendAction) {
+      pendingStipendAction.settlementId = settlementId;
+      showSettlementSelectionDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingStipendSettlement = settlementId;
+      
+      await executeStipendRoll(pendingStipendAction);
+    }
+  }
+  
+  async function executeStipendRoll(stipendAction: { skill: string; settlementId?: string }) {
+    if (!stipendAction.settlementId) {
+      ui.notifications?.warn('Please select a settlement for stipend collection');
+      return;
+    }
+    
+    // Get character for roll
+    let actingCharacter = getCurrentUserCharacter();
+    
+    if (!actingCharacter) {
+      actingCharacter = await showCharacterSelectionDialog();
+      if (!actingCharacter) {
+        // User cancelled - reset pending action
+        pendingStipendAction = null;
+        delete (globalThis as any).__pendingStipendSettlement;
+        return;
+      }
+    }
+    
+    try {
+      const characterLevel = actingCharacter.level || 1;
+      const dc = controller.getActionDC(characterLevel);
+      
+      const action = actionLoader.getAllActions().find(a => a.id === 'collect-stipend');
+      if (!action) return;
+      
+      // Perform the roll
+      await performKingdomActionRoll(
+        actingCharacter,
+        stipendAction.skill,
+        dc,
+        action.name,
+        action.id,
+        {
+          criticalSuccess: action.criticalSuccess,
+          success: action.success,
+          failure: action.failure,
+          criticalFailure: action.criticalFailure
+        }
+      );
+      
+      // Roll completion handled by handleRollComplete
+    } catch (error) {
+      logger.error("Error executing collect stipend roll:", error);
+      ui.notifications?.error(`Failed to perform action: ${error}`);
+      pendingStipendAction = null;
+      delete (globalThis as any).__pendingStipendSettlement;
+    }
+  }
+  
   // Execute the repair structure skill roll
   async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
     if (!repairAction.structureId || !repairAction.settlementId) {
@@ -1540,6 +1614,12 @@
   actionName={pendingAidAction?.name || ''}
   on:confirm={handleAidConfirm}
   on:cancel={handleAidCancel}
+/>
+
+<!-- Settlement Selection Dialog (Collect Stipend) -->
+<SettlementSelectionDialog
+  bind:show={showSettlementSelectionDialog}
+  on:settlementSelected={handleSettlementSelected}
 />
 
 <style lang="scss">

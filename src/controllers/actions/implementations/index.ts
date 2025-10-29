@@ -21,7 +21,6 @@ import ClaimHexesAction from '../../../actions/claim-hexes/ClaimHexesAction';
 import FortifyHexAction from '../../../actions/fortify-hex/FortifyHexAction';
 import SendScoutsAction from '../../../actions/send-scouts/SendScoutsAction';
 import RecruitUnitAction from '../../../actions/recruit-unit/RecruitUnitAction';
-import CollectStipendAction from '../../../actions/collect-stipend/CollectStipendAction';
 import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestResourcesAction';
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
@@ -62,7 +61,6 @@ actionImplementations.set(ClaimHexesAction.id, ClaimHexesAction);
 actionImplementations.set(FortifyHexAction.id, FortifyHexAction);
 actionImplementations.set(SendScoutsAction.id, SendScoutsAction);
 actionImplementations.set(RecruitUnitAction.id, RecruitUnitAction);
-actionImplementations.set(CollectStipendAction.id, CollectStipendAction);
 actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
 actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
@@ -169,7 +167,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, CollectStipendAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction };
 
 // TODO: Export additional implementations as they're created
 // export { BuildStructureAction };

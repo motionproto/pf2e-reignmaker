@@ -163,8 +163,7 @@ export function registerKingdomHexControl(): void {
             ui.notifications?.warn('No Kingdom actor found. Please create or assign a party actor first.');
           }
         }
-      },
-      button: true
+      }
     };
     
     if (Array.isArray(tokensControl.tools)) {

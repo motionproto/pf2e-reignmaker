@@ -535,8 +535,13 @@ export class StructuresService {
     for (const settlement of settlements) {
       for (const structureId of settlement.structureIds) {
         const structure = this.getStructure(structureId);
-        if (structure?.effects.allowsPersonalIncome) {
-          return true;
+        // Check gameEffects for unlock of personalIncome action
+        if (structure?.gameEffects) {
+          for (const effect of structure.gameEffects) {
+            if (effect.type === 'unlock' && effect.actions?.includes('personalIncome')) {
+              return true;
+            }
+          }
         }
       }
     }
