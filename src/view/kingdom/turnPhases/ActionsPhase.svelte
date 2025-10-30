@@ -43,12 +43,14 @@
   let showFactionSelectionDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let showSettlementSelectionDialog: boolean = false;
+  let showExecuteOrPardonSettlementDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
+  let pendingExecuteOrPardonAction: { skill: string; settlementId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -60,11 +62,19 @@
   ).length;
   
   // Check if current player has already acted (for all BaseCheckCards)
-  $: hasPlayerActed = ($kingdomData.turnState?.actionLog || []).some((entry: any) => {
+  let hasPlayerActed = false;
+  $: {
     const game = (window as any).game;
-    return entry.playerId === game?.user?.id && 
-      (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS);
-  });
+    if (!game?.user?.id) {
+      hasPlayerActed = false;
+    } else {
+      const actionLog = $kingdomData.turnState?.actionLog || [];
+      hasPlayerActed = actionLog.some((entry: any) => 
+        entry.playerId === game.user.id && 
+        (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
+      ) ? true : false;
+    }
+  }
   
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
@@ -84,11 +94,13 @@
     setShowUpgradeSettlementDialog: (show) => { showUpgradeSettlementSelectionDialog = show; },
     setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
+    setShowExecuteOrPardonSettlementDialog: (show) => { showExecuteOrPardonSettlementDialog = show; },
     setPendingBuildAction: (action) => { pendingBuildAction = action; },
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
-    setPendingStipendAction: (action) => { pendingStipendAction = action; }
+    setPendingStipendAction: (action) => { pendingStipendAction = action; },
+    setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; }
   });
 
   // UI helper - toggle action expansion
@@ -310,6 +322,7 @@
     // Initialize controller and service
     controller = await createActionPhaseController();
     gameCommandsService = await createGameCommandsService();
+    checkInstanceService = await createCheckInstanceService();
     
     // Initialize aid manager
     aidManager = createAidManager({
@@ -676,6 +689,21 @@
     }
   }
   
+  // Handle when a settlement is selected for execute or pardon prisoners
+  async function handleExecuteOrPardonSettlementSelected(event: CustomEvent) {
+    const { settlementId } = event.detail;
+    
+    if (pendingExecuteOrPardonAction) {
+      pendingExecuteOrPardonAction.settlementId = settlementId;
+      showExecuteOrPardonSettlementDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingExecuteOrPardonSettlement = settlementId;
+      
+      await executeExecuteOrPardonRoll(pendingExecuteOrPardonAction);
+    }
+  }
+  
   // Execute collect stipend skill roll - using ActionExecutionHelpers
   async function executeStipendRoll(stipendAction: { skill: string; settlementId?: string }) {
     await executeActionRoll(
@@ -687,6 +715,22 @@
         onRollCancel: () => { 
           pendingStipendAction = null;
           delete (globalThis as any).__pendingStipendSettlement;
+        }
+      }
+    );
+  }
+  
+  // Execute execute or pardon prisoners skill roll - using ActionExecutionHelpers
+  async function executeExecuteOrPardonRoll(executeOrPardonAction: { skill: string; settlementId?: string }) {
+    await executeActionRoll(
+      createExecutionContext('execute-or-pardon-prisoners', executeOrPardonAction.skill, {
+        settlementId: executeOrPardonAction.settlementId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingExecuteOrPardonAction = null;
+          delete (globalThis as any).__pendingExecuteOrPardonSettlement;
         }
       }
     );
@@ -827,7 +871,7 @@
   </div>
 </div>
 
-<!-- Dialog Manager - handles all 6 dialogs -->
+<!-- Dialog Manager - handles all 7 dialogs -->
 <ActionDialogManager
   bind:showBuildStructureDialog
   bind:showRepairStructureDialog
@@ -835,12 +879,14 @@
   bind:showFactionSelectionDialog
   bind:showAidSelectionDialog
   bind:showSettlementSelectionDialog
+  bind:showExecuteOrPardonSettlementDialog
   {pendingAidAction}
   on:structureQueued={handleStructureQueued}
   on:repairStructureSelected={handleRepairStructureSelected}
   on:upgradeSettlementSelected={handleUpgradeSettlementSelected}
   on:factionSelected={handleFactionSelected}
   on:settlementSelected={handleSettlementSelected}
+  on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
   on:aidConfirm={handleAidConfirm}
   on:aidCancel={handleAidCancel}
   on:upgradeCancel={() => { pendingUpgradeAction = null; }}

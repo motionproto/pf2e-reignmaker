@@ -289,6 +289,14 @@ export async function createGameCommandsService() {
         
       } else if (isDiceModifier(modifier)) {
         // Dice modifier: { type: 'dice', resource, formula, negative?, duration? }
+        
+        // Skip UI-only modifiers (handled by game commands)
+        // "imprisoned" is not a valid ResourceType - it's a pseudo-resource for UI display only
+        if ((modifier.resource as string) === 'imprisoned') {
+          logger.info(`  ℹ️ Skipping UI-only dice modifier for '${modifier.resource}' (handled by game command)`);
+          return;
+        }
+        
         const modifierLabel = `${params.sourceName} (${params.outcome})`;
         
         // Check for pre-rolled value

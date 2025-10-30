@@ -6,6 +6,15 @@
     detectResourceArrayModifiers,
     computeDisplayStateChanges
   } from './logic/OutcomeDisplayLogic';
+  
+  // Helper to get settlement name from pending state
+  function getSelectedSettlementName(): string | null {
+    const settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
+    if (!settlementId) return null;
+    
+    const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
+    return settlement?.name || null;
+  }
   import {
     updateInstanceResolutionState,
     getInstanceResolutionState,
@@ -129,17 +138,18 @@
   
   // Detect dice formula modifiers that are NOT part of choices
   // Supports BOTH legacy (value as string) and typed (formula field) formats
-  $: diceModifiers = modifiers?.filter(m => {
-    if (Array.isArray(m.resources)) return false; // Not a resource array
-    
-    // Legacy format: value as string matching dice pattern
-    const hasLegacyDice = typeof m.value === 'string' && /^-?\\d+d\\d+([+-]\\d+)?$/.test(m.value);
-    
-    // Typed format: has formula field
-    const hasTypedDice = m.type === 'dice' && m.formula;
-    
-    return hasLegacyDice || hasTypedDice;
-  }).map((m, idx) => ({ ...m, originalIndex: idx })) || [];
+  $: diceModifiers = modifiers?.map((m, originalIdx) => ({ ...m, originalIndex: originalIdx }))
+    .filter(m => {
+      if (Array.isArray(m.resources)) return false; // Not a resource array
+      
+      // Legacy format: value as string matching dice pattern
+      const hasLegacyDice = typeof m.value === 'string' && /^-?\d+d\d+([+-]\d+)?$/.test(m.value);
+      
+      // Typed format: has formula field
+      const hasTypedDice = m.type === 'dice' && m.formula;
+      
+      return hasLegacyDice || hasTypedDice;
+    }) || [];
   
   // FIXED: Show ALL dice modifiers, even when choices exist
   // Choices and dice modifiers can coexist (e.g., choice + 1d4 penalty)
@@ -162,8 +172,7 @@
   $: customComponentResolved = !hasCustomComponent || (
     customComponentData !== undefined && 
     customComponentData !== null && 
-    customComponentData.selectedSettlementId && 
-    customComponentData.selectedSettlementId !== ''
+    Object.keys(customComponentData).length > 0
   );
   
   // Button visibility and state
@@ -205,7 +214,6 @@
 
     // If there's no content at all, this is a data error
     if (!hasContent && !applied) {
-      logger.error('❌ [OutcomeDisplay] Invalid outcome - no message or modifiers');
       ui.notifications?.error('Outcome data error: No message or modifiers to display');
     }
     
@@ -226,7 +234,22 @@
   
   // Display effective message and state changes
   // When choices are present, don't show choice result in effect (it's in the button)
-  $: displayEffect = hasChoices ? effect : (choiceResult ? choiceResult.effect : effect);
+  // Special handling for imprisoned unrest - inject settlement name
+  $: displayEffect = (() => {
+    let baseEffect = hasChoices ? effect : (choiceResult ? choiceResult.effect : effect);
+    
+    // If we have imprisoned unrest modifier, inject settlement name
+    if (modifiers?.some(m => (m.resource as string) === 'imprisoned')) {
+      const settlementName = getSelectedSettlementName();
+      if (settlementName) {
+        baseEffect = baseEffect.replace('the settlement', settlementName);
+        baseEffect = baseEffect.replace('in the settlement', `in ${settlementName}`);
+        baseEffect = baseEffect.replace('from the settlement', `from ${settlementName}`);
+      }
+    }
+    
+    return baseEffect;
+  })();
   $: displayStateChanges = computeDisplayStateChanges(
     stateChanges,
     choiceResult,
@@ -294,11 +317,6 @@
    * This is the single source of truth for what gets applied to the kingdom
    */
   function computeResolutionData(): ResolutionData {
-    logger.info('🔍 [computeResolutionData] Building resolution data...');
-    logger.info('   customComponentData:', customComponentData);
-    logger.info('   selectedChoice:', selectedChoice);
-    logger.info('   resolvedDice size:', resolvedDice.size);
-
     const numericModifiers: Array<{ resource: ResourceType; value: number }> = [];
     
     // Case 1: Choice was made (resource arrays are replaced by choice)
@@ -341,7 +359,6 @@
 
           // Skip resource arrays if no choice (shouldn't happen, but safety)
           if (Array.isArray(mod.resources)) {
-            logger.warn(`⚠️ [computeResolutionData] Resource array without choice: [${i}]`);
             continue;
           }
           
@@ -350,13 +367,8 @@
 
           if (typeof value === 'number') {
             numericModifiers.push({ resource: mod.resource as ResourceType, value });
-
-          } else {
-            logger.warn(`⚠️ [computeResolutionData] Skipped modifier [${i}] - value is not a number:`, value);
           }
         }
-      } else {
-        logger.warn('⚠️ [computeResolutionData] No modifiers array provided!');
       }
     }
     
@@ -471,14 +483,10 @@
   async function handleCustomSelection(event: CustomEvent) {
     if (!instance) return;
     
-    console.log('🔍 [handleCustomSelection] Received event:', event.detail);
     const { modifiers, ...metadata } = event.detail;
-    console.log('   modifiers:', modifiers);
-    console.log('   metadata:', metadata);
 
     // Store metadata (for UI display, like settlement name/level)
     if (metadata && Object.keys(metadata).length > 0) {
-      console.log('   Updating instance with metadata:', metadata);
       await updateInstanceResolutionState(instance.instanceId, {
         customComponentData: metadata
       });
@@ -571,6 +579,7 @@
           {outcome}
           {modifiers}
           {stateChanges}
+          {applied}
           on:selection={handleCustomSelection}
         />
       </div>

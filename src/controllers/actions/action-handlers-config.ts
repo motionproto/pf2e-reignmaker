@@ -28,11 +28,13 @@ export function createCustomActionHandlers(context: {
   setShowUpgradeSettlementDialog: (show: boolean) => void;
   setShowFactionSelectionDialog: (show: boolean) => void;
   setShowSettlementSelectionDialog: (show: boolean) => void;
+  setShowExecuteOrPardonSettlementDialog: (show: boolean) => void;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
   setPendingUpgradeAction: (action: { skill: string }) => void;
   setPendingDiplomaticAction: (action: { skill: string }) => void;
   setPendingStipendAction: (action: { skill: string }) => void;
+  setPendingExecuteOrPardonAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -59,6 +61,11 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowSettlementSelectionDialog(true),
       storePending: (skill: string) => context.setPendingStipendAction({ skill })
+    },
+    'execute-or-pardon-prisoners': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowExecuteOrPardonSettlementDialog(true),
+      storePending: (skill: string) => context.setPendingExecuteOrPardonAction({ skill })
     }
   };
 }

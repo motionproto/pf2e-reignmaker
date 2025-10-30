@@ -183,9 +183,14 @@ export async function createActionCheckInstance(context: {
   );
   
   // Build preliminary resolution data with dynamic modifiers
+  // IMPORTANT: Keep raw modifiers (with formulas) for OutcomeDisplay
   let preliminaryModifiers = modifiers.map((m: any) => ({ 
     resource: m.resource, 
-    value: m.value 
+    value: m.value,
+    type: m.type,  // Preserve type (static/dice)
+    formula: m.formula,  // Preserve formula for dice rolls
+    operation: m.operation,
+    duration: m.duration
   }));
   
   // Special handling for upgrade-settlement: inject cost modifier

@@ -36,11 +36,31 @@
           "value": -1,
           "duration": "immediate"
         }
+      ],
+      "gameCommands": [
+        {
+          "type": "reduceImprisoned",
+          "amount": "all"
+        }
       ]
     },
     "success": {
       "description": "Remove 1d4 imprisoned Unrest from the settlement",
-      "modifiers": []
+      "modifiers": [
+        {
+          "type": "dice",
+          "resource": "imprisoned",
+          "formula": "1d4",
+          "operation": "subtract",
+          "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "reduceImprisoned",
+          "amount": "rolled"
+        }
+      ]
     },
     "failure": {
       "description": "Remove none",

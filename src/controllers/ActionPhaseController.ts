@@ -98,7 +98,6 @@ export async function createActionPhaseController() {
           `${actionId}-${outcome}`,
           TurnPhase.ACTIONS
         );
-
       }
       
       // Check if action has custom resolution logic
@@ -108,7 +107,6 @@ export async function createActionPhaseController() {
       
       // Use custom resolution if available and needed for this outcome
       if (impl?.customResolution && impl.needsCustomResolution?.(outcome)) {
-
         // Create instance metadata for custom resolution
         const instance = {
           metadata: {
@@ -128,15 +126,36 @@ export async function createActionPhaseController() {
         return result;
       }
       
-      // Use unified resolution wrapper (consolidates duplicate logic)
-      // Note: Actions don't complete phase steps (phase auto-completes on init)
-      return await resolvePhaseOutcome(
-        actionId,
-        'action',
+      // FIXED: Use ActionResolver.executeAction() instead of resolvePhaseOutcome()
+      // This ensures game commands from action JSON are executed (e.g., reduceImprisoned)
+      
+      // Convert ResolutionData.numericModifiers back to preRolledValues Map
+      // The UI has already rolled all dice and stored results in numericModifiers
+      const preRolledValues = new Map<number | string, number>();
+      
+      // Get modifiers from action to match indices
+      const actionModifiers = this.getActionModifiers(action, outcome);
+      
+      // Map rolled values back to their modifier indices
+      if (resolutionData.numericModifiers && actionModifiers) {
+        resolutionData.numericModifiers.forEach(rolled => {
+          // Find matching modifier by resource
+          const modifierIndex = actionModifiers.findIndex(m => m.resource === rolled.resource);
+          if (modifierIndex !== -1) {
+            preRolledValues.set(modifierIndex, rolled.value);
+          }
+        });
+      }
+      
+      // Execute action via ActionResolver (handles BOTH modifiers AND game commands)
+      const result = await actionResolver.executeAction(
+        action,
         outcome,
-        resolutionData,
-        []  // No steps to complete for actions (auto-complete phase)
+        kingdom,
+        preRolledValues
       );
+      
+      return result;
     },
 
     /**

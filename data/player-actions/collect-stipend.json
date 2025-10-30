@@ -34,7 +34,7 @@
     "criticalSuccess": {
       "description": "You are handsomly compensated! Gain <amount> gold.",
       "modifiers": [],
-       "gameCommands": [
+      "gameCommands": [
         {
           "type": "giveActorGold",
           "multiplier": "2"
@@ -44,7 +44,7 @@
     "success": {
       "description": "Gain <amount> gold.",
       "modifiers": [],
-             "gameCommands": [
+      "gameCommands": [
         {
           "type": "giveActorGold",
           "multiplier": "1"
@@ -61,7 +61,7 @@
           "duration": "immediate"
         }
       ],
-             "gameCommands": [
+      "gameCommands": [
         {
           "type": "giveActorGold",
           "multiplier": ".5"

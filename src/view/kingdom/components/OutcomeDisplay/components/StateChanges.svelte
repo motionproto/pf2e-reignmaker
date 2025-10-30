@@ -19,22 +19,10 @@
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
   
-  // Debug logging
-  $: {
-
-
-  }
-  
-  // Extract dice modifiers that should be shown as rollers
-  // These are modifiers with dice formulas that are NOT choice modifiers or resource arrays
-  $: diceModifiersToShow = modifiers?.filter(m => 
-    m.type !== 'choice' &&           // Exclude choice modifiers (handled by ChoiceButtons)
-    !m.resources &&                  // Exclude modifiers with resources array (also choice modifiers)
-    !Array.isArray(m.resource) &&    // Exclude resource arrays
-    typeof m.value === 'string' && 
-    DICE_PATTERN.test(m.value)
-  ) || [];
-  $: hasDiceModifiers = diceModifiersToShow.length > 0;
+  // StateChanges does NOT render dice rollers - that's DiceRoller.svelte's job
+  // This component only shows RESOLVED dice results and static modifiers
+  $: diceModifiersToShow = [];
+  $: hasDiceModifiers = false;
   
   $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost;
   
@@ -67,7 +55,7 @@
     // Check if this dice is from modifiers
     if (modifiers) {
       const modifierIndex = modifiers.findIndex(m => 
-        m.resource === key && m.value === formula
+        m.resource === key && (m.value === formula || m.formula === formula)
       );
       
       if (modifierIndex !== -1) {
@@ -98,8 +86,21 @@
   function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
     // Handle undefined or empty resource
     if (!resource) {
-      logger.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
+      console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
       return `Unknown modifier: ${value}`;
+    }
+    
+    // Special handling for "imprisoned" pseudo-resource (UI-only)
+    if (resource === 'imprisoned') {
+      if (resolved !== undefined) {
+        return `Remove ${resolved} imprisoned unrest`;
+      } else {
+        let displayValue = value;
+        if (typeof displayValue === 'string') {
+          displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
+        }
+        return `Remove ${displayValue} imprisoned unrest`;
+      }
     }
     
     const isNegative = (typeof value === 'string' && value.startsWith('-')) || 
@@ -113,7 +114,7 @@
     } else {
       let displayValue = value;
       if (typeof displayValue === 'string') {
-        displayValue = displayValue.replace(/^-/, '').replace(/^\\((.+)\\)$/, '$1');
+        displayValue = displayValue.replace(/^-/, '').replace(/^\((.+)\)$/, '$1');
       }
       return `${action} ${displayValue} ${resourceName}`;
     }
@@ -143,44 +144,11 @@
       </div>
     {/if}
     
-    {#if hasDiceModifiers}
-      <!-- Show dice rollers from modifiers array - card style like choices -->
-      <div class="dice-rollers-section">
-        <div class="dice-rollers-header">Roll the outcome:</div>
-        <div class="outcome-cards">
-        {#each diceModifiersToShow as modifier, index}
-          {@const modifierIndex = modifiers?.indexOf(modifier) ?? index}
-          {@const resolvedValue = resolvedDice.get(modifierIndex)}
-          {@const icon = getResourceIcon(modifier.resource)}
-          
-          <button 
-            class="outcome-card {resolvedValue !== undefined ? 'rolled' : ''}"
-            on:click={() => handleDiceRoll(modifier.resource, modifier.value)}
-            disabled={resolvedValue !== undefined}
-          >
-            <div class="card-header">
-              {#if icon}
-                <i class="fas {icon} resource-icon"></i>
-              {/if}
-              <div class="card-label">
-                {getModifierLabel(modifier.resource, modifier.value, resolvedValue)}
-              </div>
-              {#if resolvedValue === undefined}
-                <span class="dice-indicator">🎲</span>
-              {/if}
-            </div>
-          </button>
-        {/each}
-        </div>
-      </div>
-    {/if}
-    
     {#if hasStateChanges && stateChanges}
       <!-- Show numeric state changes (non-dice) - card style -->
-      <!-- Filter out resources that are already shown in dice section -->
-      {@const diceResources = new Set(diceModifiersToShow.map(m => m.resource))}
+      <!-- Filter out resources that are hidden (handled by DiceRoller or ChoiceButtons) -->
       {@const hiddenResources = new Set(hideResources)}
-      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !diceResources.has(key) && !hiddenResources.has(key))}
+      {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))}
       
       {#if nonDiceStateChanges.length > 0}
         <div class="dice-rollers-section">

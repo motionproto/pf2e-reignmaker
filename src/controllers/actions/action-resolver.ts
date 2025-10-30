@@ -167,6 +167,7 @@ export class ActionResolver {
         kingdomData: KingdomData,
         preRolledValues?: Map<number | string, number>
     ): Promise<ActionOutcome> {
+        logger.info(`🎮 [ActionResolver] Executing action: ${action.id} (${outcome})`);
         const messages: string[] = [];
         
         // Get outcome message
@@ -177,9 +178,17 @@ export class ActionResolver {
         
         // Get modifiers for this outcome
         const modifiers = this.getOutcomeModifiers(action, outcome);
+        logger.info(`  📋 Found ${modifiers.length} modifiers`);
         
         // Get game effects for this outcome
         const gameCommands = effect?.gameCommands || [];
+        logger.info(`  🎯 Found ${gameCommands.length} game commands`);
+        if (gameCommands.length > 0) {
+            logger.info(`  🎯 Game commands:`, gameCommands);
+        }
+        if (preRolledValues && preRolledValues.size > 0) {
+            logger.info(`  🎲 Pre-rolled values:`, Array.from(preRolledValues.entries()));
+        }
         
         // Track overall success and applied changes
         let overallSuccess = true;
@@ -221,7 +230,9 @@ export class ActionResolver {
                     gameEffect,
                     resolver,
                     kingdomData,
-                    outcome === 'criticalSuccess'
+                    outcome === 'criticalSuccess',
+                    preRolledValues,
+                    modifiers  // Pass modifiers so we can look up dice values
                 );
                 
                 if (result.success) {
@@ -255,7 +266,9 @@ export class ActionResolver {
         gameEffect: any,
         resolver: any,
         kingdomData: KingdomData,
-        isCriticalSuccess: boolean
+        isCriticalSuccess: boolean,
+        preRolledValues?: Map<number | string, number>,
+        modifiers?: any[]
     ) {
 
         switch (gameEffect.type) {
@@ -315,6 +328,57 @@ export class ActionResolver {
                 
                 const multiplier = parseFloat(gameEffect.multiplier) || 1;
                 return await resolver.giveActorGold(multiplier, settlementId);
+            }
+            
+            case 'reduceImprisoned': {
+                // Get settlementId from pending state (pre-dialog action)
+                let settlementId = (globalThis as any).__pendingExecuteOrPardonSettlement;
+                
+                if (!settlementId) {
+                    return {
+                        success: false,
+                        error: 'No settlement selected for execute/pardon'
+                    };
+                }
+                
+                // Handle amount - could be "all", "rolled", or a dice formula
+                let amount = gameEffect.amount;
+                
+                if (amount === 'rolled') {
+                    // Find the dice modifier for "imprisoned" resource and get its rolled value
+                    // Dice rolls are stored by modifier index in preRolledValues
+                    if (!modifiers) {
+                        return {
+                            success: false,
+                            error: 'No modifiers provided for rolled dice lookup'
+                        };
+                    }
+                    
+                    const imprisonedModifierIndex = modifiers.findIndex(m => 
+                        m.resource === 'imprisoned' && (m.type === 'dice' || m.formula)
+                    );
+                    
+                    if (imprisonedModifierIndex === -1) {
+                        return {
+                            success: false,
+                            error: 'No dice modifier found for imprisoned unrest'
+                        };
+                    }
+                    
+                    // Look up by modifier index
+                    const rolledValue = preRolledValues?.get(imprisonedModifierIndex);
+                    
+                    if (rolledValue === undefined) {
+                        return {
+                            success: false,
+                            error: 'Dice roll required before executing game command'
+                        };
+                    }
+                    
+                    amount = rolledValue;
+                }
+                
+                return await resolver.reduceImprisoned(settlementId, amount);
             }
             
             // TODO: Add more game effect handlers as we implement them

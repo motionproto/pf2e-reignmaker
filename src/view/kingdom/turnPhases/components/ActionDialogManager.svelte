@@ -6,6 +6,7 @@
   import FactionSelectionDialog from '../../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
   import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
+  import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -16,6 +17,7 @@
   export let showFactionSelectionDialog: boolean = false;
   export let showAidSelectionDialog: boolean = false;
   export let showSettlementSelectionDialog: boolean = false;
+  export let showExecuteOrPardonSettlementDialog: boolean = false;
 
   // Pending action data props
   export let pendingAidAction: { id: string; name: string } | null = null;
@@ -39,6 +41,10 @@
 
   function handleSettlementSelected(event: CustomEvent) {
     dispatch('settlementSelected', event.detail);
+  }
+
+  function handleExecuteOrPardonSettlementSelected(event: CustomEvent) {
+    dispatch('executeOrPardonSettlementSelected', event.detail);
   }
 
   function handleAidConfirm(event: CustomEvent) {
@@ -96,4 +102,10 @@
 <SettlementSelectionDialog
   bind:show={showSettlementSelectionDialog}
   on:settlementSelected={handleSettlementSelected}
+/>
+
+<!-- Settlement Selection Dialog (Execute or Pardon Prisoners) -->
+<ExecuteOrPardonSettlementDialog
+  bind:show={showExecuteOrPardonSettlementDialog}
+  on:settlementSelected={handleExecuteOrPardonSettlementSelected}
 />

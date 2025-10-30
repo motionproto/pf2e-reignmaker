@@ -25,6 +25,7 @@ import RecruitUnitAction from '../../../actions/recruit-unit/RecruitUnitAction';
 import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestResourcesAction';
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
+import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
 
 /**
  * Interface for custom action implementations
@@ -66,9 +67,9 @@ actionImplementations.set(RecruitUnitAction.id, RecruitUnitAction);
 actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
 actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
+actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
 
 // TODO: Add more action implementations as they're created
-// actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
 // actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
 // etc.
 
@@ -168,9 +169,8 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction };
 
 // TODO: Export additional implementations as they're created
-// export { ExecuteOrPardonPrisonersAction };
 // export { RecruitArmyAction };
 // etc.

@@ -13,6 +13,7 @@
   export let outcome: string;
   export let modifiers: any[] | undefined = undefined;
   export let stateChanges: Record<string, any> | undefined = undefined;
+  export let applied: boolean = false;  // Track if result has been applied
 
   const dispatch = createEventDispatcher();
 
@@ -129,7 +130,7 @@
         {@const availableSpace = settlement.justiceCapacity - settlement.imprisonedUnrest - settlement.allocated}
         {@const canAdd = availableSpace > 0 && canAllocate}
         {@const canRemove = settlement.allocated > 0}
-        {@const currentImprisoned = settlement.imprisonedUnrest + settlement.allocated}
+        {@const currentImprisoned = applied ? settlement.imprisonedUnrest : (settlement.imprisonedUnrest + settlement.allocated)}
         
         <div class="settlement-row">
           <div class="allocation-controls">

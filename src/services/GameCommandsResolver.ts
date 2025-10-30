@@ -334,7 +334,93 @@ export async function createGameCommandsResolver() {
 
       const tierKey = `t${tier}` as 't2' | 't3' | 't4';
       return incomeRow[tierKey] || 0;
-    }
+    },
+
+    /**
+     * Reduce Imprisoned - Remove imprisoned unrest from a settlement
+     * Used by Execute or Pardon Prisoners action
+     * 
+     * @param settlementId - Settlement ID containing prisoners
+     * @param amount - Amount to reduce ('all', dice formula like '1d4', or numeric value)
+     * @returns ResolveResult with amount reduced
+     */
+    async reduceImprisoned(settlementId: string, amount: string | number): Promise<ResolveResult> {
+      logger.info(`⚖️ [reduceImprisoned] Reducing imprisoned unrest in settlement ${settlementId} by ${amount}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Find the settlement
+        const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
+        if (!settlement) {
+          return { success: false, error: `Settlement ${settlementId} not found` };
+        }
+
+        const currentImprisoned = settlement.imprisonedUnrest || 0;
+        if (currentImprisoned === 0) {
+          return { success: false, error: `${settlement.name} has no imprisoned unrest` };
+        }
+
+        let amountToReduce = 0;
+
+        // Handle different amount types
+        if (amount === 'all') {
+          amountToReduce = currentImprisoned;
+        } else if (typeof amount === 'number') {
+          // Already rolled - use the value directly
+          amountToReduce = Math.min(amount, currentImprisoned);
+        } else if (amount.includes('d')) {
+          // Dice formula (e.g., '1d4') - should not happen with new system, but kept for compatibility
+          const roll = new Roll(amount);
+          await roll.evaluate();
+          amountToReduce = Math.min(roll.total || 0, currentImprisoned);
+          
+          // Show dice roll in chat
+          await roll.toMessage({
+            flavor: `Imprisoned Unrest Reduced in ${settlement.name}`,
+            speaker: { alias: 'Kingdom' }
+          });
+        } else {
+          // Numeric string
+          amountToReduce = Math.min(parseInt(amount, 10), currentImprisoned);
+        }
+
+        // Update settlement imprisoned unrest
+        await updateKingdom(kingdom => {
+          const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
+          if (settlement) {
+            settlement.imprisonedUnrest = Math.max(0, (settlement.imprisonedUnrest || 0) - amountToReduce);
+          }
+        });
+
+        logger.info(`✅ [reduceImprisoned] Reduced ${amountToReduce} imprisoned unrest in ${settlement.name}`);
+
+        return {
+          success: true,
+          data: {
+            settlementName: settlement.name,
+            amountReduced: amountToReduce,
+            remainingImprisoned: Math.max(0, currentImprisoned - amountToReduce),
+            message: `Reduced ${amountToReduce} imprisoned unrest in ${settlement.name}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to reduce imprisoned unrest:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
 
     // TODO: Additional methods will be added as we implement more actions
     // - claimHexes(count, hexes)
@@ -354,8 +440,6 @@ export async function createGameCommandsResolver() {
     // - infiltration(targetNationId)
     // - sendScouts(purpose)
     // - arrestDissidents()
-    // - executePrisoners()
-    // - pardonPrisoners()
     // - hireAdventurers(eventId?)
   };
 }
