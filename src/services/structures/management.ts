@@ -160,25 +160,17 @@ export class SettlementStructureManagementService {
       }
     }
 
-    // Remove the structure and its condition
+    // Remove condition entry first
     await updateKingdom(k => {
       const s = k.settlements.find(s => s.id === settlementId);
-      if (s) {
-        s.structureIds = s.structureIds.filter(id => id !== structureId);
-        
-        // Remove condition entry
-        if (s.structureConditions) {
-          delete s.structureConditions[structureId];
-        }
+      if (s?.structureConditions) {
+        delete s.structureConditions[structureId];
       }
     });
 
-    // Update settlement skill bonuses after removing structure
+    // Remove the structure using proper service (handles all recalculation)
     const { settlementService } = await import('../settlements');
-    await settlementService.updateSettlementSkillBonuses(settlementId);
-    
-    // Update derived properties (imprisoned unrest capacity, food storage, etc.)
-    await settlementService.updateSettlementDerivedProperties(settlementId);
+    await settlementService.removeStructure(settlementId, structureId);
 
     return { success: true, warning };
   }
@@ -300,10 +292,11 @@ export class SettlementStructureManagementService {
       }
     });
     
-    // Recalculate settlement derived properties immediately
+    // Recalculate settlement skill bonuses (condition affects skill structures)
+    // Note: Derived properties (food storage, etc.) will be recalculated automatically
+    // when structures are added/removed via proper service methods
     const { settlementService } = await import('../settlements');
     await settlementService.updateSettlementSkillBonuses(settlementId);
-    await settlementService.updateSettlementDerivedProperties(settlementId);
     
     return { success: true };
   }

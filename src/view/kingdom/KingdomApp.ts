@@ -2,6 +2,8 @@ import { SvelteApp } from '#runtime/svelte/application';
 import { deepMerge } from '#runtime/util/object';
 
 import KingdomAppShell from './KingdomAppShell.svelte';
+import { getHighestPartyLevel } from '../../hooks/partyLevelHooks';
+import { getKingdomActor } from '../../stores/KingdomStore';
 
 /**
  * Kingdom management application using TyphonJS Runtime Library
@@ -87,6 +89,21 @@ class KingdomApp extends SvelteApp<KingdomApp.Options>
       if (this.svelte.context)
       {
          this.svelte.context.actorId = actorId;
+      }
+
+      // Sync party level when app opens
+      const actor = getKingdomActor();
+      if (actor) {
+         const kingdom = actor.getKingdomData();
+         if (kingdom) {
+            const currentPartyLevel = getHighestPartyLevel();
+            if (kingdom.partyLevel !== currentPartyLevel) {
+               console.log(`🎯 [KingdomApp] Syncing party level: ${kingdom.partyLevel} → ${currentPartyLevel}`);
+               await actor.updateKingdomData((k: any) => {
+                  k.partyLevel = currentPartyLevel;
+               });
+            }
+         }
       }
 
       // Data initialization is now handled by KingdomAppShell to ensure proper timing

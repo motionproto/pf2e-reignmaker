@@ -10,6 +10,9 @@
    // Import territory service for syncing
    import { territoryService }                    from '../../services/territory';
    
+   // Utils
+   import { logger }                              from '../../utils/Logger';
+   
    // Components
    import ContentSelector from './components/ContentSelector.svelte';
    import KingdomStats    from './components/KingdomStats.svelte';
@@ -126,17 +129,6 @@
             // Run settlement skill bonuses migration if needed
             const { autoMigrateSettlements } = await import('../../services/migrations/SettlementSkillBonusesMigration');
             await autoMigrateSettlements();
-            
-            // Recalculate all settlement derived properties to ensure consistency
-
-            const { settlementService } = await import('../../services/settlements');
-            const kingdom = kingdomActor.getKingdomData();
-            if (kingdom?.settlements) {
-               for (const settlement of kingdom.settlements) {
-                  await settlementService.updateSettlementDerivedProperties(settlement.id);
-               }
-
-            }
          } else {
             logger.error('[KingdomAppShell] No kingdom actor found! This is the problem - initialization stopped here.');
             logger.error('[KingdomAppShell] Please ensure your party actor has kingdom data initialized.');

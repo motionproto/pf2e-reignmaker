@@ -467,16 +467,6 @@ export class SettlementService {
   }
   
   /**
-   * @deprecated Use addStructure() instead
-   * Update a settlement's derived properties based on its current structures
-   */
-  async updateSettlementDerivedProperties(settlementId: string): Promise<void> {
-    logger.warn(`⚠️ [SettlementService] updateSettlementDerivedProperties is deprecated, use addStructure/removeStructure`);
-    await this.recalculateSettlement(settlementId);
-    await this.recalculateKingdom();
-  }
-  
-  /**
    * Update settlement image path
    * Convenience method for image updates
    * 

@@ -249,15 +249,12 @@ export async function createBuildStructureController() {
         return { success: false, error: 'Structure definition not found' };
       }
 
-      // Add structure to settlement and remove from queue
+      // Add structure to settlement using proper service (handles recalculation)
+      const { settlementService } = await import('../services/settlements');
+      await settlementService.addStructure(settlement.id, project.structureId);
+      
+      // Handle structure modifiers and remove from queue
       await updateKingdom(k => {
-        const s = k.settlements.find(s => s.name === project.settlementName);
-        if (s) {
-          if (!s.structureIds.includes(project.structureId)) {
-            s.structureIds.push(project.structureId);
-          }
-        }
-
         // Remove from build queue
         if (k.buildQueue) {
           k.buildQueue = k.buildQueue.filter(p => p.id !== projectId);
@@ -301,13 +298,6 @@ export async function createBuildStructureController() {
 
         }
       });
-
-      // Update settlement derived properties and skill bonuses
-      const { settlementService } = await import('../services/settlements');
-      if (settlement) {
-        await settlementService.updateSettlementSkillBonuses(settlement.id);
-        await settlementService.updateSettlementDerivedProperties(settlement.id);
-      }
 
       return { success: true, project };
     },

@@ -29,12 +29,14 @@ export function createCustomActionHandlers(context: {
   setShowFactionSelectionDialog: (show: boolean) => void;
   setShowSettlementSelectionDialog: (show: boolean) => void;
   setShowExecuteOrPardonSettlementDialog: (show: boolean) => void;
+  setShowTrainArmyDialog: (show: boolean) => void;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
   setPendingUpgradeAction: (action: { skill: string }) => void;
   setPendingDiplomaticAction: (action: { skill: string }) => void;
   setPendingStipendAction: (action: { skill: string }) => void;
   setPendingExecuteOrPardonAction: (action: { skill: string }) => void;
+  setPendingTrainArmyAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -66,6 +68,11 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowExecuteOrPardonSettlementDialog(true),
       storePending: (skill: string) => context.setPendingExecuteOrPardonAction({ skill })
+    },
+    'train-army': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowTrainArmyDialog(true),
+      storePending: (skill: string) => context.setPendingTrainArmyAction({ skill })
     }
   };
 }

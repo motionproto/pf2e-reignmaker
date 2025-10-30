@@ -7,7 +7,7 @@
 import { getKingdomData, updateKingdom } from '../stores/KingdomStore';
 import { logger } from '../utils/Logger';
 import { mountSvelteDialog } from '../utils/SvelteDialog';
-import DeleteArmyDialog from '../view/kingdom/components/DeleteArmyDialog.svelte';
+import DisbandArmyDialog from '../view/kingdom/components/DisbandArmyDialog.svelte';
 
 /**
  * Register army actor deletion hooks
@@ -42,40 +42,72 @@ export function registerArmyActorHooks(): void {
       return true; // Orphaned actor, allow deletion
     }
     
-    // Show dialog with three options
-    const Dialog = (globalThis as any).Dialog;
-    const choice = await Dialog.wait({
-      title: 'Delete Army Actor',
-      content: `
-        <p>This actor is linked to the army <strong>"${army.name}"</strong>.</p>
-        <p>What would you like to do?</p>
-      `,
-      buttons: {
-        unlink: {
-          icon: '<i class="fas fa-unlink"></i>',
-          label: 'Unlink & Delete Actor (Keep Army)',
-          callback: () => 'unlink'
-        },
-        deleteArmy: {
-          icon: '<i class="fas fa-trash"></i>',
-          label: 'Delete Army Too',
-          callback: () => 'deleteArmy'
-        },
-        cancel: {
-          icon: '<i class="fas fa-times"></i>',
-          label: 'Cancel',
-          callback: () => 'cancel'
+    // Get settlement info for dialog
+    const settlement = kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId);
+    
+    // Show custom Svelte dialog
+    const result = await new Promise<'unlink' | 'disband' | 'cancel'>((resolve) => {
+      // Create container for dialog
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '100%';
+      container.style.height = '100%';
+      container.style.zIndex = '1000';
+      container.style.pointerEvents = 'none';
+      document.body.appendChild(container);
+      
+      // Mount Svelte component
+      const dialogComponent = new DisbandArmyDialog({
+        target: container,
+        props: {
+          show: true,
+          armyName: army.name,
+          armyLevel: army.level,
+          hasLinkedActor: true,
+          isSupported: army.isSupported,
+          supportedBySettlement: settlement?.name || ''
         }
-      },
-      default: 'cancel',
-      close: () => 'cancel'
+      });
+      
+      // Enable pointer events for dialog content
+      setTimeout(() => {
+        const dialogElements = container.querySelectorAll('.dialog-backdrop, .dialog');
+        dialogElements.forEach(el => {
+          (el as HTMLElement).style.pointerEvents = 'auto';
+        });
+      }, 0);
+      
+      // Cleanup function
+      const cleanup = () => {
+        dialogComponent.$destroy();
+        document.body.removeChild(container);
+      };
+      
+      // Handle confirm - user chose to disband the army
+      dialogComponent.$on('confirm', (event: CustomEvent<{ deleteActor: boolean }>) => {
+        cleanup();
+        // If user unchecked "Delete NPC Actor", just unlink
+        if (!event.detail.deleteActor) {
+          resolve('unlink');
+        } else {
+          resolve('disband');
+        }
+      });
+      
+      // Handle cancel
+      dialogComponent.$on('cancel', () => {
+        cleanup();
+        resolve('cancel');
+      });
     });
     
-    if (choice === 'cancel') {
+    if (result === 'cancel') {
       return false; // Cancel deletion
     }
     
-    if (choice === 'unlink') {
+    if (result === 'unlink') {
       // Unlink actor from army and allow actor deletion
       const { armyService } = await import('../services/army');
       try {
@@ -92,7 +124,7 @@ export function registerArmyActorHooks(): void {
       }
     }
     
-    if (choice === 'deleteArmy') {
+    if (result === 'disband') {
       // Delete the army (which will remove metadata and delete actor if requested)
       const { armyService } = await import('../services/army');
       try {
@@ -112,6 +144,36 @@ export function registerArmyActorHooks(): void {
     
     // Shouldn't reach here, but prevent deletion by default
     return false;
+  });
+  
+  /**
+   * Hook: updateActor
+   * Syncs army name and level changes from actor back to kingdom data
+   */
+  Hooks.on('updateActor', async (actor: any, changes: any, options: any, userId: string) => {
+    // Check if this actor is an army
+    const armyMetadata = actor.getFlag('pf2e-reignmaker', 'army-metadata');
+    
+    if (!armyMetadata?.armyId) {
+      return; // Not an army
+    }
+    
+    // Check if name or level changed
+    const nameChanged = changes.name !== undefined;
+    const levelChanged = changes.system?.details?.level !== undefined;
+    
+    if (!nameChanged && !levelChanged) {
+      return; // No relevant changes
+    }
+    
+    // Sync changes back to kingdom data
+    const { armyService } = await import('../services/army');
+    try {
+      await armyService.syncActorToArmy(actor.id);
+      logger.info(`🔄 [ArmyActorHooks] Synced army ${actor.name} (name: ${nameChanged}, level: ${levelChanged})`);
+    } catch (error) {
+      logger.error('❌ [ArmyActorHooks] Failed to sync army:', error);
+    }
   });
   
   /**

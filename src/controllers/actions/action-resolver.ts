@@ -153,7 +153,7 @@ export class ActionResolver {
         action: PlayerAction,
         outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
     ) {
-        const effect = action[outcome];
+        const effect = (action as any).effects?.[outcome] || action[outcome];
         // ActionModifier is compatible with EventModifier - resource is always a ResourceType in practice
         return (effect?.modifiers || []) as any[];
     }
@@ -170,8 +170,8 @@ export class ActionResolver {
         logger.info(`🎮 [ActionResolver] Executing action: ${action.id} (${outcome})`);
         const messages: string[] = [];
         
-        // Get outcome message
-        const effect = action[outcome];
+        // Get outcome message (check both effects.* and direct properties)
+        const effect = (action as any).effects?.[outcome] || action[outcome];
         if (effect?.description) {
             messages.push(effect.description);
         }
@@ -379,6 +379,23 @@ export class ActionResolver {
                 }
                 
                 return await resolver.reduceImprisoned(settlementId, amount);
+            }
+            
+            case 'trainArmy': {
+                // Get armyId from pending state (pre-dialog action)
+                const armyId = (globalThis as any).__pendingTrainArmyArmy;
+                
+                if (!armyId) {
+                    return {
+                        success: false,
+                        error: 'No army selected for training'
+                    };
+                }
+                
+                // Get outcome from gameEffect (passed from action JSON)
+                const outcomeString = gameEffect.outcome || 'success';
+                
+                return await resolver.trainArmy(armyId, outcomeString);
             }
             
             // TODO: Add more game effect handlers as we implement them

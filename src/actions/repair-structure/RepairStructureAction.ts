@@ -144,15 +144,12 @@ const RepairStructureAction: CustomActionImplementation = {
         }
         
         // Remove damaged condition (only reaches here if cost was paid or free)
+        // This also recalculates settlement skill bonuses via updateStructureCondition
         await settlementStructureManagement.updateStructureCondition(
           structureId,
           settlementId,
           StructureCondition.GOOD
         );
-        
-        // Recalculate settlement properties
-        const { settlementService } = await import('../../services/settlements');
-        await settlementService.updateSettlementDerivedProperties(settlementId);
         
         // Get structure name for template replacement
         const structure = structuresService.getStructure(structureId);

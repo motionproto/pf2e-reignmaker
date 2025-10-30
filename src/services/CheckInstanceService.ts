@@ -106,6 +106,8 @@ export class CheckInstanceService {
         };
         instance.status = 'resolved';
 
+      } else {
+        console.error(`❌ [CheckInstanceService] Instance ${instanceId} not found when storing outcome`);
       }
     });
   }

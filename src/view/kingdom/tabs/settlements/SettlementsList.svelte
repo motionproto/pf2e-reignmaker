@@ -113,10 +113,6 @@
             k.settlements.push(newSettlement);
          });
 
-         // Calculate derived properties (goldIncome, capacities, etc.)
-         const { settlementService } = await import('../../../../services/settlements');
-         await settlementService.updateSettlementDerivedProperties(newSettlement.id);
-
          // Select the new settlement
          onSelectSettlement(newSettlement);
 
@@ -173,10 +169,6 @@
             }
          }
       });
-      
-      // Calculate derived properties (goldIncome, capacities, etc.)
-      const { settlementService } = await import('../../../../services/settlements');
-      await settlementService.updateSettlementDerivedProperties(newSettlement.id);
       
       // Select the new settlement
       onSelectSettlement(newSettlement);

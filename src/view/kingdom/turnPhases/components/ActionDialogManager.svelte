@@ -7,6 +7,7 @@
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
   import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
   import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
+  import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -18,6 +19,7 @@
   export let showAidSelectionDialog: boolean = false;
   export let showSettlementSelectionDialog: boolean = false;
   export let showExecuteOrPardonSettlementDialog: boolean = false;
+  export let showTrainArmyDialog: boolean = false;
 
   // Pending action data props
   export let pendingAidAction: { id: string; name: string } | null = null;
@@ -45,6 +47,10 @@
 
   function handleExecuteOrPardonSettlementSelected(event: CustomEvent) {
     dispatch('executeOrPardonSettlementSelected', event.detail);
+  }
+
+  function handleArmySelectedForTraining(event: CustomEvent) {
+    dispatch('armySelectedForTraining', event.detail);
   }
 
   function handleAidConfirm(event: CustomEvent) {
@@ -108,4 +114,10 @@
 <ExecuteOrPardonSettlementDialog
   bind:show={showExecuteOrPardonSettlementDialog}
   on:settlementSelected={handleExecuteOrPardonSettlementSelected}
+/>
+
+<!-- Army Selection Dialog (Train Army) -->
+<ArmySelectionDialog
+  bind:show={showTrainArmyDialog}
+  on:armySelected={handleArmySelectedForTraining}
 />

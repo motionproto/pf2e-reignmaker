@@ -422,6 +422,148 @@ export async function createGameCommandsResolver() {
       }
     },
 
+    /**
+     * Train Army - Improve army level to party level and apply training effects
+     * 
+     * @param armyId - ID of army to train
+     * @param outcome - Action outcome (criticalSuccess, success, failure, criticalFailure)
+     * @returns ResolveResult with training details
+     */
+    async trainArmy(armyId: string, outcome: string): Promise<ResolveResult> {
+      logger.info(`🎖️ [trainArmy] Training army ${armyId} with outcome ${outcome}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Find the army
+        const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+        if (!army) {
+          return { success: false, error: `Army ${armyId} not found` };
+        }
+
+        // Get party level from kingdom data (synced by partyLevelHooks)
+        const partyLevel = kingdom.partyLevel || 1;
+        
+        // Check if army is already at party level
+        if (army.level >= partyLevel && outcome !== 'failure') {
+          return { 
+            success: false, 
+            error: `${army.name} is already at party level (${partyLevel})` 
+          };
+        }
+
+        // Failure: No change
+        if (outcome === 'failure') {
+          return {
+            success: true,
+            data: {
+              armyName: army.name,
+              message: `Training had no effect on ${army.name}`
+            }
+          };
+        }
+
+        // Update army level to party level
+        const { armyService } = await import('./army');
+        await armyService.updateArmyLevel(armyId, partyLevel);
+
+        // Apply outcome-specific effects
+        if (outcome === 'criticalSuccess') {
+          // Add Heroism effect to actor
+          if (army.actorId) {
+            try {
+              const heroism = await fromUuid('Compendium.pf2e.spell-effects.Item.l9HRQggofFGIxEse');
+              if (heroism) {
+                await armyService.addItemToArmy(army.actorId, heroism.toObject());
+                logger.info(`✨ [trainArmy] Added Heroism to ${army.name}`);
+              }
+            } catch (error) {
+              logger.warn(`⚠️ [trainArmy] Failed to add Heroism effect:`, error);
+            }
+          }
+          
+          return {
+            success: true,
+            data: {
+              armyName: army.name,
+              oldLevel: army.level,
+              newLevel: partyLevel,
+              message: `${army.name} trained to level ${partyLevel} and gained Heroism for their next combat!`
+            }
+          };
+        } else if (outcome === 'criticalFailure') {
+          // Add Frightened condition (10-minute duration) to actor
+          if (army.actorId) {
+            try {
+              const frightened = await fromUuid('Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL');
+              if (frightened) {
+                // Clone and modify duration
+                const modifiedFrightened = frightened.clone({
+                  'system.duration': { value: 10, unit: 'minutes', sustained: false, expiry: 'turn-end' }
+                });
+                await armyService.addItemToArmy(army.actorId, modifiedFrightened.toObject());
+                logger.info(`😰 [trainArmy] Added Frightened to ${army.name}`);
+              }
+            } catch (error) {
+              logger.warn(`⚠️ [trainArmy] Failed to add Frightened condition:`, error);
+            }
+          }
+          
+          return {
+            success: true,
+            data: {
+              armyName: army.name,
+              oldLevel: army.level,
+              newLevel: partyLevel,
+              message: `${army.name} trained to level ${partyLevel} but is Frightened for their next combat (10 minutes)`
+            }
+          };
+        } else {
+          // Success: Just level up, no additional effects
+          return {
+            success: true,
+            data: {
+              armyName: army.name,
+              oldLevel: army.level,
+              newLevel: partyLevel,
+              message: `${army.name} successfully trained to level ${partyLevel}`
+            }
+          };
+        }
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to train army:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Helper: Get party level from game actors
+     */
+    getPartyLevel(): number {
+      const game = (globalThis as any).game;
+      if (game?.actors) {
+        const partyActors = Array.from(game.actors).filter((a: any) => 
+          a.type === 'character' && a.hasPlayerOwner
+        );
+        if (partyActors.length > 0) {
+          return (partyActors[0] as any).level || 1;
+        }
+      }
+      return 1;
+    },
+
     // TODO: Additional methods will be added as we implement more actions
     // - claimHexes(count, hexes)
     // - buildRoads(hexes)
@@ -430,7 +572,6 @@ export async function createGameCommandsResolver() {
     // - buildStructure(settlementId, structureId, costReduction?)
     // - repairStructure(structureId)
     // - createWorksite(hexId, worksiteType)
-    // - trainArmy(armyId, levelIncrease)
     // - deployArmy(armyId, targetHexId)
     // - outfitArmy(armyId, equipmentUpgrades)
     // - recoverArmy(armyId)

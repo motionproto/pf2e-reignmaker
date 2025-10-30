@@ -19,6 +19,7 @@
   export let expandedActions: Set<string>;
   export let controller: any;
   export let activeAidsCount: number;
+  export let armyDataKey: string;
   export let isViewingCurrentPhase: boolean;
   export let actionsUsed: number;
   export let currentFame: number;
@@ -84,7 +85,7 @@
         {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
-        {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}`}
+        {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}`}
           <BaseCheckCard
             id={action.id}
             checkInstance={checkInstance || null}

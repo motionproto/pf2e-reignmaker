@@ -26,6 +26,7 @@ import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestRe
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
 import ExecuteOrPardonPrisonersAction from '../../../actions/execute-or-pardon-prisoners/ExecuteOrPardonPrisonersAction';
+import TrainArmyAction from '../../../actions/train-army/TrainArmyAction';
 
 /**
  * Interface for custom action implementations
@@ -68,6 +69,7 @@ actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
 actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
 actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
+actionImplementations.set(TrainArmyAction.id, TrainArmyAction);
 
 // TODO: Add more action implementations as they're created
 // actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
@@ -169,7 +171,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction, TrainArmyAction };
 
 // TODO: Export additional implementations as they're created
 // export { RecruitArmyAction };

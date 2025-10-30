@@ -18,19 +18,7 @@ import type { KingdomActor } from '../actors/KingdomActor';
 export async function initializeKingdomData(actor: any): Promise<void> {
 
   try {
-    // 1. Recalculate settlement properties
-    const kingdom = actor.getKingdomData();
-    if (kingdom?.settlements && kingdom.settlements.length > 0) {
-      const { settlementService } = await import('./settlements');
-      for (const settlement of kingdom.settlements) {
-        await settlementService.updateSettlementDerivedProperties(settlement.id);
-      }
-
-    } else {
-
-    }
-    
-    // 2. Build production cache
+    // 1. Build production cache
     const { calculateProduction } = await import('./economics/production');
     await actor.updateKingdomData((kingdom: any) => {
       const result = calculateProduction(kingdom.hexes || [], []);

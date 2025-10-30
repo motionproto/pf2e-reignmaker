@@ -44,6 +44,7 @@
   let showAidSelectionDialog: boolean = false;
   let showSettlementSelectionDialog: boolean = false;
   let showExecuteOrPardonSettlementDialog: boolean = false;
+  let showTrainArmyDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
@@ -51,6 +52,7 @@
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
   let pendingExecuteOrPardonAction: { skill: string; settlementId?: string } | null = null;
+  let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -79,6 +81,11 @@
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
   
+  // Create a reactive key that changes when army data OR party level changes
+  // This forces action requirement checks to re-run when armies or party level are modified
+  $: armyDataKey = $kingdomData ? 
+    `${$kingdomData.partyLevel || 1}|${$kingdomData.armies?.map(a => `${a.id}:${a.level}`).join(',') || ''}` : '';
+  
   // Removed: completionsByAction - now using actionLog directly in CompletionNotifications
   
   // Track current user ID
@@ -95,12 +102,14 @@
     setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
     setShowExecuteOrPardonSettlementDialog: (show) => { showExecuteOrPardonSettlementDialog = show; },
+    setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
     setPendingBuildAction: (action) => { pendingBuildAction = action; },
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
     setPendingStipendAction: (action) => { pendingStipendAction = action; },
-    setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; }
+    setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; },
+    setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; }
   });
 
   // UI helper - toggle action expansion
@@ -736,6 +745,37 @@
     );
   }
   
+  // Handle when an army is selected for training
+  async function handleArmySelectedForTraining(event: CustomEvent) {
+    const { armyId } = event.detail;
+    
+    if (pendingTrainArmyAction) {
+      pendingTrainArmyAction.armyId = armyId;
+      showTrainArmyDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingTrainArmyArmy = armyId;
+      
+      await executeTrainArmyRoll(pendingTrainArmyAction);
+    }
+  }
+  
+  // Execute train army skill roll - using ActionExecutionHelpers
+  async function executeTrainArmyRoll(trainArmyAction: { skill: string; armyId?: string }) {
+    await executeActionRoll(
+      createExecutionContext('train-army', trainArmyAction.skill, {
+        armyId: trainArmyAction.armyId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingTrainArmyAction = null;
+          delete (globalThis as any).__pendingTrainArmyArmy;
+        }
+      }
+    );
+  }
+  
   // Execute the repair structure skill roll - using ActionExecutionHelpers
   async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
     await executeActionRoll(
@@ -853,6 +893,7 @@
         {expandedActions}
         {controller}
         {activeAidsCount}
+        {armyDataKey}
         {isViewingCurrentPhase}
         {actionsUsed}
         currentFame={$kingdomData?.fame || 0}
@@ -871,7 +912,7 @@
   </div>
 </div>
 
-<!-- Dialog Manager - handles all 7 dialogs -->
+<!-- Dialog Manager - handles all 8 dialogs -->
 <ActionDialogManager
   bind:showBuildStructureDialog
   bind:showRepairStructureDialog
@@ -880,6 +921,7 @@
   bind:showAidSelectionDialog
   bind:showSettlementSelectionDialog
   bind:showExecuteOrPardonSettlementDialog
+  bind:showTrainArmyDialog
   {pendingAidAction}
   on:structureQueued={handleStructureQueued}
   on:repairStructureSelected={handleRepairStructureSelected}
@@ -887,6 +929,7 @@
   on:factionSelected={handleFactionSelected}
   on:settlementSelected={handleSettlementSelected}
   on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
+  on:armySelectedForTraining={handleArmySelectedForTraining}
   on:aidConfirm={handleAidConfirm}
   on:aidCancel={handleAidCancel}
   on:upgradeCancel={() => { pendingUpgradeAction = null; }}

@@ -23,21 +23,45 @@
     }
   ],
   "effects": {
-    "criticalSuccess": {
-      "description": "Troop is promoted up to party level",
-      "modifiers": []
-    },
-    "success": {
-      "description": "+1 level (max party level)",
-      "modifiers": []
-    },
-    "failure": {
-      "description": "No change",
-      "modifiers": []
-    },
-    "criticalFailure": {
-      "description": "No change",
-      "modifiers": []
-    }
+  "criticalSuccess": {
+    "description": "Your army trains to the current party level and gains the Heroism spell effect for their next combat.",
+    "modifiers": [],
+    "gameCommands": [
+      {
+        "type": "trainArmy",
+        "outcome": "criticalSuccess"
+      }
+    ]
+  },
+  "success": {
+    "description": "Your army trains to the current party level.",
+    "modifiers": [],
+    "gameCommands": [
+      {
+        "type": "trainArmy",
+        "outcome": "success"
+      }
+    ]
+  },
+  "failure": {
+    "description": "Your army does not improve.",
+    "modifiers": [],
+    "gameCommands": [
+      {
+        "type": "trainArmy",
+        "outcome": "failure"
+      }
+    ]
+  },
+  "criticalFailure": {
+    "description": "Your army trains to the current party level but gains the Frightened condition with a 10-minute duration for their next combat.",
+    "modifiers": [],
+    "gameCommands": [
+      {
+        "type": "trainArmy",
+        "outcome": "criticalFailure"
+      }
+    ]
+  }
   }
 }

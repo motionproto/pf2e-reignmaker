@@ -11,6 +11,7 @@ import type { ActiveCheckInstance } from '../models/CheckInstance';
 import type { TurnState } from '../models/TurnState';
 import type { Faction } from '../models/Faction';
 import { loadDefaultFactions } from '../models/DefaultFactions';
+import { getHighestPartyLevel } from '../hooks/partyLevelHooks';
 import { logger } from '../utils/Logger';
 
 // Turn phases based on Reignmaker Lite rules - using semantic names
@@ -118,6 +119,7 @@ export interface KingdomData {
   imprisonedUnrest: number;
   fame: number;
   isAtWar: boolean;
+  partyLevel: number;  // Highest level among player characters
   
   // Events & Modifiers (persistent across turns)
   ongoingEvents: string[];  // Event IDs that persist across turns (legacy - may be deprecated)
@@ -256,6 +258,10 @@ export class KingdomActor extends Actor {
     // Load default factions from data file
     const defaultFactions = await loadDefaultFactions();
     
+    // Get current party level from player characters
+    const partyLevel = getHighestPartyLevel();
+    console.log(`🎯 [KingdomActor] Initializing kingdom with party level: ${partyLevel}`);
+    
     const defaultKingdom: KingdomData = {
       name,
       currentTurn: 0,
@@ -287,6 +293,7 @@ export class KingdomActor extends Actor {
       imprisonedUnrest: 0,
       fame: 0,
       isAtWar: false,
+      partyLevel: partyLevel,  // Synced from party actors during initialization
       ongoingEvents: [],
       activeCheckInstances: [],
       activeModifiers: [],
@@ -422,6 +429,9 @@ export class KingdomActor extends Actor {
  * Factions will be empty - use initializeKingdom() for full initialization with default factions.
  */
 export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData {
+    // Get current party level from player characters
+    const partyLevel = getHighestPartyLevel();
+    
     return {
       name,
       currentTurn: 0,
@@ -453,6 +463,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       imprisonedUnrest: 0,
       fame: 0,
       isAtWar: false,
+      partyLevel: partyLevel,  // Synced from party actors during initialization
       ongoingEvents: [],
       activeCheckInstances: [],
       activeModifiers: [],

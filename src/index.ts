@@ -315,6 +315,10 @@ Hooks.once('ready', async () => {
             initializeKingdomActor(kingdomActor);
             console.log('PF2E ReignMaker | KingdomStore initialized globally');
         }
+        
+        // Initialize party level sync hooks
+        const { initializePartyLevelHooks } = await import('./hooks/partyLevelHooks');
+        initializePartyLevelHooks();
     } catch (error) {
         console.error('[Module] Failed to initialize kingdom system:', error);
     }
