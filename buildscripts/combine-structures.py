@@ -7,18 +7,13 @@ This ensures the monolithic file accurately reflects the individual files' conte
 import json
 from pathlib import Path
 
-def derive_category_from_filename(filename: str) -> str:
-    """Derive category enum value from filename."""
-    # Remove .json extension
-    name = filename.replace('.json', '')
-    
-    # Extract category portion after type prefix
-    if name.startswith('skill-'):
-        return name.replace('skill-', '')
-    elif name.startswith('support-'):
-        return name.replace('support-', '')
-    
-    return name
+def derive_category_from_family(family: str) -> str:
+    """Convert family name to kebab-case category."""
+    # Convert "Hospitality" -> "hospitality", "Crime & Intrigue" -> "crime-intrigue"
+    category = family.lower()
+    category = category.replace(' & ', '-')
+    category = category.replace(' ', '-')
+    return category
 
 def combine_structures():
     """Read all individual structure JSON files and combine them into one, preserving hierarchical structure."""
@@ -48,8 +43,20 @@ def combine_structures():
             with open(json_file, 'r') as f:
                 data = json.load(f)
                 
-                # Derive category from filename
-                category = derive_category_from_filename(json_file.name)
+                # Derive category from family field in JSON content
+                family = data.get('family', '')
+                if family:
+                    category = derive_category_from_family(family)
+                else:
+                    # Fallback to filename if no family field
+                    print(f"  ⚠ Warning: {json_file.name} has no 'family' field, using filename")
+                    name = json_file.name.replace('.json', '')
+                    if name.startswith('skill-'):
+                        category = name.replace('skill-', '')
+                    elif name.startswith('support-'):
+                        category = name.replace('support-', '')
+                    else:
+                        category = name
                 
                 # Add category to family data
                 data['category'] = category

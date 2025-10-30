@@ -1,7 +1,7 @@
 {
   "type": "skill",
-  "family": "Hospitality",
-  "description": "Tier progression for Hospitality",
+  "family": "Performance & Culture",
+  "description": "Tier progression for Performance and Culture",
   "tiers": [
     {
       "id": "buskers-alley",

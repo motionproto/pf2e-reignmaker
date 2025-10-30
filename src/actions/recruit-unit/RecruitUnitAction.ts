@@ -1,5 +1,5 @@
 /**
- * RecruitUnitAction - Custom implementation for Recruit Unit
+ * RecruitArmyAction - Custom implementation for Recruit Army
  * 
  * Opens dialogue for army name and settlement selection,
  * creates NPC actor, and places it on the settlement location.
@@ -225,7 +225,7 @@ async function promptForArmyDetails_OLD(): Promise<{
   });
 }
 
-export const RecruitUnitAction = {
+export const RecruitArmyAction = {
   id: 'recruit-unit',
   
   /**
@@ -299,7 +299,7 @@ export const RecruitUnitAction = {
         );
         
         if (!costResult.success) {
-          logger.error('❌ [RecruitUnit] Failed to apply effects:', costResult.error);
+          logger.error('❌ [RecruitArmy] Failed to apply effects:', costResult.error);
           return createErrorResult(costResult.error || 'Failed to apply army recruitment effects');
         }
 
@@ -338,7 +338,7 @@ export const RecruitUnitAction = {
 
               }
             } catch (error) {
-              logger.error('⚠️ [RecruitUnit] Failed to place token:', error);
+              logger.error('⚠️ [RecruitArmy] Failed to place token:', error);
               // Don't fail the whole action if token placement fails
             }
           }
@@ -354,7 +354,7 @@ export const RecruitUnitAction = {
         return createSuccessResult(message);
         
       } catch (error) {
-        logger.error('❌ [RecruitUnit] Error:', error);
+        logger.error('❌ [RecruitArmy] Error:', error);
         logActionError('recruit-unit', error as Error);
         return createErrorResult(error instanceof Error ? error.message : 'Failed to recruit army');
       }
@@ -369,4 +369,4 @@ export const RecruitUnitAction = {
   }
 };
 
-export default RecruitUnitAction;
+export default RecruitArmyAction;

@@ -21,7 +21,7 @@ import BuildRoadsAction from '../../../actions/build-roads/BuildRoadsAction';
 import ClaimHexesAction from '../../../actions/claim-hexes/ClaimHexesAction';
 import FortifyHexAction from '../../../actions/fortify-hex/FortifyHexAction';
 import SendScoutsAction from '../../../actions/send-scouts/SendScoutsAction';
-import RecruitUnitAction from '../../../actions/recruit-unit/RecruitUnitAction';
+import RecruitArmyAction from '../../../actions/recruit-unit/RecruitUnitAction';
 import HarvestResourcesAction from '../../../actions/harvest-resources/HarvestResourcesAction';
 import PurchaseResourcesAction from '../../../actions/purchase-resources/PurchaseResourcesAction';
 import SellSurplusAction from '../../../actions/sell-surplus/SellSurplusAction';
@@ -63,7 +63,7 @@ actionImplementations.set(BuildRoadsAction.id, BuildRoadsAction);
 actionImplementations.set(ClaimHexesAction.id, ClaimHexesAction);
 actionImplementations.set(FortifyHexAction.id, FortifyHexAction);
 actionImplementations.set(SendScoutsAction.id, SendScoutsAction);
-actionImplementations.set(RecruitUnitAction.id, RecruitUnitAction);
+actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
 actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
 actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
@@ -169,7 +169,7 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitArmyAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction, ExecuteOrPardonPrisonersAction };
 
 // TODO: Export additional implementations as they're created
 // export { RecruitArmyAction };

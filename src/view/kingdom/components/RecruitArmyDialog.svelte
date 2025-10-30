@@ -31,7 +31,7 @@
   }>();
   
   let armyName: string = '';
-  let selectedSettlementId: string | null = null;
+  let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
   let availableSettlements: Array<{ id: string; name: string; tier: string; current: number; capacity: number }> = [];
   
@@ -76,14 +76,18 @@
   });
   
   function handleConfirm() {
+    // Called by base Dialog component when confirm button clicked
     if (armyName.trim()) {
       dispatch('confirm', {
         name: armyName.trim(),
         settlementId: selectedSettlementId || null,
         armyType: selectedArmyType
       });
-      show = false;
+    } else {
+      // Cancel if name is empty (shouldn't happen due to confirmDisabled)
+      dispatch('cancel');
     }
+    show = false;
   }
   
   function handleCancel() {
@@ -98,8 +102,8 @@
   confirmLabel="Recruit Army"
   {confirmDisabled}
   width="600px"
-  on:confirm={handleConfirm}
-  on:cancel={handleCancel}
+  onConfirm={handleConfirm}
+  onCancel={handleCancel}
 >
   <div class="form-group">
     <label for="army-name">Army Name:</label>
@@ -136,7 +140,7 @@
     <label for="settlement-select">Supported By Settlement:</label>
     {#if availableSettlements.length > 0}
       <select id="settlement-select" bind:value={selectedSettlementId}>
-        <option value={null}>Unsupported (No Settlement)</option>
+        <option value="">Unsupported (No Settlement)</option>
         {#each availableSettlements as settlement}
           <option value={settlement.id}>
             {settlement.name} ({settlement.tier} - {settlement.current}/{settlement.capacity})

@@ -25,8 +25,8 @@ export interface ItemData {
 // ===== FOLDER MANAGEMENT =====
 
 /**
- * Ensure a folder structure exists for Reignmaker actors
- * Creates parent "Reignmaker" folder and specified subfolder if they don't exist
+ * Ensure a folder structure exists for ReignMaker actors
+ * Creates parent "ReignMaker" folder and specified subfolder if they don't exist
  * 
  * @param subfolderName - Name of subfolder to create (e.g., "Armies", "Factions")
  * @returns The subfolder ID for actor creation
@@ -38,7 +38,7 @@ export async function ensureReignmakerFolder(subfolderName: string): Promise<str
     throw new Error('Foundry VTT not initialized - cannot create folders');
   }
   
-  const parentFolderName = "Reignmaker";
+  const parentFolderName = "ReignMaker";
   
   // 1. Find or create parent folder
   let parentFolder = game.folders.find((f: any) =>
@@ -90,7 +90,7 @@ export async function ensureReignmakerFolder(subfolderName: string): Promise<str
 }
 
 /**
- * Create an NPC actor in a Reignmaker subfolder
+ * Create an NPC actor in a ReignMaker subfolder
  * 
  * @param name - Actor name
  * @param subfolderName - Subfolder to place actor in (e.g., "Armies", "Factions")
@@ -128,7 +128,7 @@ export async function createNPCInFolder(
     throw new Error(`Failed to create NPC actor: ${name}`);
   }
   
-  logger.info(`✅ [ActorManager] Created actor "${name}" in Reignmaker/${subfolderName}`);
+  logger.info(`✅ [ActorManager] Created actor "${name}" in ReignMaker/${subfolderName}`);
   
   return actor;
 }

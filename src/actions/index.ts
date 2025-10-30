@@ -9,7 +9,7 @@
 export { default as ArrestDissidentsAction } from './arrest-dissidents/ArrestDissidentsAction';
 export { default as EstablishSettlementAction } from './establish-settlement/EstablishSettlementAction';
 export { default as RepairStructureAction } from './repair-structure/RepairStructureAction';
-export { default as RecruitUnitAction } from './recruit-unit/RecruitUnitAction';
+export { default as RecruitArmyAction } from './recruit-unit/RecruitUnitAction';
 export { default as UpgradeSettlementAction } from './upgrade-settlement/UpgradeSettlementAction';
 
 // Re-export shared helpers

@@ -10,6 +10,10 @@
   export let confirmDisabled: boolean = false;
   export let width: string = '500px';
   
+  // Optional callbacks for parent dialogs to control behavior
+  export let onConfirm: (() => void) | undefined = undefined;
+  export let onCancel: (() => void) | undefined = undefined;
+  
   const dispatch = createEventDispatcher<{
     confirm: void;
     cancel: void;
@@ -18,14 +22,26 @@
   
   function handleConfirm() {
     if (!confirmDisabled) {
-      dispatch('confirm');
+      if (onConfirm) {
+        // Parent dialog controls the flow
+        onConfirm();
+      } else {
+        // Default behavior for backward compatibility
+        dispatch('confirm');
+      }
     }
   }
   
   function handleCancel() {
-    dispatch('cancel');
-    dispatch('close');
-    show = false;
+    if (onCancel) {
+      // Parent dialog controls the flow
+      onCancel();
+    } else {
+      // Default behavior for backward compatibility
+      dispatch('cancel');
+      dispatch('close');
+      show = false;
+    }
   }
   
   function handleKeydown(event: KeyboardEvent) {
