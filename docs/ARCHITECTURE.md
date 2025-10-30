@@ -38,7 +38,10 @@ Write: Component → Controller → KingdomActor → Foundry → All Clients
 - `src/controllers/actions/game-commands.ts` - 25+ typed game command definitions
 - `src/controllers/actions/action-loader.ts` - Load/query actions from JSON
 - `src/controllers/actions/action-execution.ts` - Execute actions, apply effects
+- `src/controllers/actions/ActionExecutionHelpers.ts` - Roll orchestration (NEW Oct 2025)
+- `src/actions/[action]/` - Custom action implementations (post-roll behavior)
 - `data/player-actions/*.json` - 29 action definitions (structured effects)
+- **See:** `docs/systems/actions-architecture.md` for complete action lifecycle documentation
 
 **UI Layer:**
 - `src/view/kingdom/turnPhases/*.svelte` - Phase UI components (presentation only)
@@ -1256,9 +1259,19 @@ try {
 
 ## Additional Documentation
 
-- **Game Effects System**: See `docs/GAME_EFFECTS_SYSTEM.md` for detailed action effect documentation
-- **Phase Controllers**: See `docs/PHASE_CONTROLLER_GUIDE.md` for phase implementation patterns  
-- **TurnManager Reference**: See `docs/TURNMANAGER_REFERENCE.md` for turn/phase coordination details
+### System Documentation
+
+- **Actions Architecture**: See `docs/systems/actions-architecture.md` for complete action lifecycle, refactoring details, and best practices
+- **Game Commands System**: See `docs/systems/game-commands-system.md` for action effect system documentation
+- **Check Instance System**: See `docs/systems/check-instance-system.md` for outcome tracking and resolution
+- **Phase Controllers**: See `docs/systems/phase-controllers.md` for phase implementation patterns
+- **Turn & Phase System**: See `docs/systems/turn-and-phase-system.md` for turn/phase coordination details
+
+### Legacy Documentation
+
+- **Game Effects System**: See `docs/GAME_EFFECTS_SYSTEM.md` for detailed action effect documentation (archived)
+- **Phase Controller Guide**: See `docs/PHASE_CONTROLLER_GUIDE.md` for phase implementation patterns (archived)
+- **TurnManager Reference**: See `docs/TURNMANAGER_REFERENCE.md` for turn/phase coordination details (archived)
 
 ## Worksite Production Recalculation Pattern
 

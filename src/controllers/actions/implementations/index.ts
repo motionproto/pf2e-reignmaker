@@ -15,6 +15,7 @@ import ArrestDissidentsAction from '../../../actions/arrest-dissidents/ArrestDis
 import RepairStructureAction from '../../../actions/repair-structure/RepairStructureAction';
 import EstablishSettlementAction from '../../../actions/establish-settlement/EstablishSettlementAction';
 import UpgradeSettlementAction from '../../../actions/upgrade-settlement/UpgradeSettlementAction';
+import BuildStructureAction from '../../../actions/build-structure/BuildStructureAction';
 import EstablishDiplomaticRelationsAction from '../../../actions/establish-diplomatic-relations/EstablishDiplomaticRelationsAction';
 import BuildRoadsAction from '../../../actions/build-roads/BuildRoadsAction';
 import ClaimHexesAction from '../../../actions/claim-hexes/ClaimHexesAction';
@@ -55,6 +56,7 @@ actionImplementations.set(ArrestDissidentsAction.id, ArrestDissidentsAction);
 actionImplementations.set(RepairStructureAction.id, RepairStructureAction);
 actionImplementations.set(EstablishSettlementAction.id, EstablishSettlementAction);
 actionImplementations.set(UpgradeSettlementAction.id, UpgradeSettlementAction);
+actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
 actionImplementations.set(EstablishDiplomaticRelationsAction.id, EstablishDiplomaticRelationsAction);
 actionImplementations.set(BuildRoadsAction.id, BuildRoadsAction);
 actionImplementations.set(ClaimHexesAction.id, ClaimHexesAction);
@@ -66,7 +68,6 @@ actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
 
 // TODO: Add more action implementations as they're created
-// actionImplementations.set(BuildStructureAction.id, BuildStructureAction);
 // actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
 // actionImplementations.set(RecruitArmyAction.id, RecruitArmyAction);
 // etc.
@@ -167,10 +168,9 @@ export async function executeCustomResolution(
 }
 
 // Export all implementations for direct use if needed
-export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction };
+export { ArrestDissidentsAction, RepairStructureAction, EstablishSettlementAction, UpgradeSettlementAction, BuildStructureAction, EstablishDiplomaticRelationsAction, BuildRoadsAction, ClaimHexesAction, FortifyHexAction, SendScoutsAction, RecruitUnitAction, HarvestResourcesAction, PurchaseResourcesAction, SellSurplusAction };
 
 // TODO: Export additional implementations as they're created
-// export { BuildStructureAction };
 // export { ExecuteOrPardonPrisonersAction };
 // export { RecruitArmyAction };
 // etc.

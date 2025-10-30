@@ -1,17 +1,14 @@
 <script lang="ts">
   import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
-  import { TurnPhase } from "../../../actors/KingdomActor";
+  import { TurnPhase, type KingdomData } from "../../../actors/KingdomActor";
   import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createCheckInstanceService } from '../../../services/CheckInstanceService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
   import BaseCheckCard from "../components/BaseCheckCard.svelte";
-  import AidSelectionDialog from "../../kingdom/components/AidSelectionDialog.svelte";
-  import BuildStructureDialog from "../../kingdom/components/BuildStructureDialog/BuildStructureDialog.svelte";
-  import RepairStructureDialog from "../../../actions/repair-structure/RepairStructureDialog.svelte";
-  import UpgradeSettlementSelectionDialog from "../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte";
-  import FactionSelectionDialog from "../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte";
-  import SettlementSelectionDialog from "../../../actions/collect-stipend/SettlementSelectionDialog.svelte";
-  import OtherPlayersActions from "../../kingdom/components/OtherPlayersActions.svelte";
+  import ActionDialogManager from "./components/ActionDialogManager.svelte";
+  import ActionCategorySection from "./components/ActionCategorySection.svelte";
+  import { createAidManager, type AidManager } from '../../../controllers/shared/AidSystemHelpers';
+  import { executeActionRoll, createExecutionContext } from '../../../controllers/actions/ActionExecutionHelpers';
   import {
     getPlayerCharacters,
     getCurrentUserCharacter,
@@ -33,6 +30,7 @@
   let controller: any = null;
   let gameCommandsService: any = null;
   let checkInstanceService: any = null;
+  let aidManager: AidManager | null = null;
 
   // Custom Action Registry - Declarative pattern for actions requiring pre-roll dialogs
   const CUSTOM_ACTION_HANDLERS = {
@@ -255,7 +253,7 @@
           const actor = getKingdomActor();
           if (actor) {
             const kingdom = actor.getKingdomData();
-            const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+            const settlement = kingdom?.settlements.find((s: any) => s.id === pendingUpgradeAction!.settlementId);
 
             if (settlement) {
               effectMessage = effectMessage.replace(/{Settlement}/g, settlement.name);
@@ -304,7 +302,7 @@
       const actor = getKingdomActor();
       if (actor && pendingUpgradeAction) {
         const kingdom = actor.getKingdomData();
-        const settlement = kingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
+        const settlement = kingdom?.settlements.find((s: any) => s.id === pendingUpgradeAction!.settlementId);
         
         if (settlement) {
           const newLevel = settlement.level + 1;
@@ -400,11 +398,26 @@
 
     }
 
-    // First, apply modifiers via controller for ALL actions (including build-structure)
+    // Prepare resolution data with custom component data if needed
+    const finalResolutionData = { ...resolutionData };
+    
+    // Add custom data for actions that need it
+    if (actionId === 'build-structure' && pendingBuildAction) {
+      finalResolutionData.customComponentData = {
+        structureId: pendingBuildAction.structureId,
+        settlementId: pendingBuildAction.settlementId
+      };
+    } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
+      finalResolutionData.customComponentData = {
+        settlementId: pendingUpgradeAction.settlementId
+      };
+    }
+    
+    // Apply action via controller - handles both standard and custom resolutions
     const result = await controller.resolveAction(
       actionId,
       instance.appliedOutcome.outcome,
-      resolutionData,
+      finalResolutionData,
       instance.appliedOutcome.actorName,
       instance.appliedOutcome.skillName || '',
       currentUserId || undefined
@@ -416,25 +429,11 @@
       return; // Don't track failed actions
     }
     
-    // Then, special post-resolution handling for actions with pre-roll selection
-    if (actionId === 'build-structure' && pendingBuildAction) {
-      const outcome = instance.appliedOutcome.outcome;
-      if (outcome === 'success' || outcome === 'criticalSuccess') {
-        await handleBuildStructureCompletion(outcome, instance.appliedOutcome.actorName);
-      }
-      // For failure/criticalFailure, modifiers have already been applied above
-    } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
-      const outcome = instance.appliedOutcome.outcome;
-      if (outcome === 'success' || outcome === 'criticalSuccess') {
-        await handleUpgradeSettlementCompletion(outcome, instance.appliedOutcome.actorName);
-      }
-      // For failure/criticalFailure, modifiers have already been applied above
-    }
-    
     // Show success notification with applied effects (if any resources were changed)
-    // Skip for actions with custom completion notifications
-    const hasCustomNotification = actionId === 'upgrade-settlement' || actionId === 'build-structure';
-    if (!hasCustomNotification && result.applied?.resources && result.applied.resources.length > 0) {
+    // Skip for actions with custom notifications (they handle their own)
+    const { hasCustomImplementation } = await import('../../../controllers/actions/implementations');
+    const hasCustom = hasCustomImplementation(actionId);
+    if (!hasCustom && result.applied?.resources && result.applied.resources.length > 0) {
       const effectsMsg = result.applied.resources
         .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
         .join(', ');
@@ -467,166 +466,6 @@
     await tick();
   }
   
-  // Handle upgrade settlement completion after roll
-  async function handleUpgradeSettlementCompletion(outcome: string, actorName: string) {
-    if (!pendingUpgradeAction?.settlementId) {
-      ui.notifications?.error('Settlement upgrade data missing');
-      pendingUpgradeAction = null;
-      return;
-    }
-    
-    const actor = getKingdomActor();
-    if (!actor) {
-      ui.notifications?.error('No kingdom actor available');
-      pendingUpgradeAction = null;
-      return;
-    }
-    
-    const kingdom = actor.getKingdomData();
-    if (!kingdom) {
-      ui.notifications?.error('No kingdom data available');
-      pendingUpgradeAction = null;
-      return;
-    }
-    
-    const settlement = kingdom.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
-    if (!settlement) {
-      ui.notifications?.error('Settlement not found');
-      pendingUpgradeAction = null;
-      return;
-    }
-    
-    const currentLevel = settlement.level;
-    const newLevel = currentLevel + 1;
-    const fullCost = newLevel;
-    
-    // Calculate actual cost based on outcome
-    const isCriticalSuccess = outcome === 'criticalSuccess';
-    const actualCost = isCriticalSuccess ? Math.ceil(fullCost / 2) : fullCost;
-
-    // Deduct gold cost
-    try {
-      await updateKingdom(k => {
-        if (k.resources.gold >= actualCost) {
-          k.resources.gold -= actualCost;
-        } else {
-          throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
-        }
-      });
-
-      // Upgrade settlement level (handles automatic tier transitions)
-      const { settlementService } = await import('../../../services/settlements');
-      await settlementService.updateSettlementLevel(pendingUpgradeAction.settlementId, newLevel);
-      
-      // Get updated settlement for message
-      const updatedKingdom = actor.getKingdomData();
-      const updatedSettlement = updatedKingdom?.settlements.find(s => s.id === pendingUpgradeAction!.settlementId);
-      
-      if (updatedSettlement) {
-        // Check if tier changed
-        const tierChanged = updatedSettlement.tier !== settlement.tier;
-        
-        const message = tierChanged
-          ? `${updatedSettlement.name} upgraded to level ${newLevel} and became a ${updatedSettlement.tier}!`
-          : `${updatedSettlement.name} upgraded to level ${newLevel}`;
-        
-        if (isCriticalSuccess) {
-          ui.notifications?.info(`🎉 Critical Success! ${message} (50% off gold cost)`);
-        } else {
-          ui.notifications?.info(`✅ ${message}`);
-        }
-      }
-      
-    } catch (error) {
-      logger.error('❌ [UpgradeSettlement] Error:', error);
-      ui.notifications?.error(error instanceof Error ? error.message : 'Failed to upgrade settlement');
-    }
-    
-    // Clear pending upgrade action
-    pendingUpgradeAction = null;
-  }
-  
-  // Handle build structure completion after roll
-  async function handleBuildStructureCompletion(outcome: string, actorName: string) {
-    if (!pendingBuildAction?.structureId || !pendingBuildAction?.settlementId) {
-      ui.notifications?.error('Build structure data missing');
-      pendingBuildAction = null;
-      return;
-    }
-    
-    const { structuresService } = await import('../../../services/structures');
-    const structure = structuresService.getStructure(pendingBuildAction.structureId);
-    
-    if (!structure) {
-      ui.notifications?.error('Structure not found');
-      pendingBuildAction = null;
-      return;
-    }
-    
-    const game = (window as any).game;
-    
-    // Only build on success or critical success
-    if (outcome === 'success' || outcome === 'criticalSuccess') {
-      const { createBuildStructureController } = await import('../../../controllers/BuildStructureController');
-      const buildController = await createBuildStructureController();
-      
-      // Add to build queue
-      const result = await buildController.addToBuildQueue(
-        pendingBuildAction.structureId,
-        pendingBuildAction.settlementId
-      );
-      
-      if (result.success && result.project) {
-        // Calculate cost modifier (50% off for critical success)
-        const costModifier = outcome === 'criticalSuccess' ? 0.5 : 1.0;
-        
-        // Apply cost modifier to project if critical success
-        if (costModifier !== 1.0) {
-          const actor = getKingdomActor();
-          if (actor) {
-            await actor.updateKingdomData((kingdom) => {
-              const project = kingdom.buildQueue?.find(p => p.id === result.project!.id);
-              if (project && project.totalCost) {
-                // Work with plain objects (already converted by BuildQueueService)
-                const totalCostObj = project.totalCost as any;
-                const remainingCostObj = project.remainingCost as any;
-                
-                // Update totalCost with reduced amounts (rounded up)
-                for (const [resource, amount] of Object.entries(totalCostObj)) {
-                  totalCostObj[resource] = Math.ceil((amount as number) * costModifier);
-                }
-                
-                // Also update remainingCost to match
-                if (remainingCostObj) {
-                  for (const [resource, amount] of Object.entries(remainingCostObj)) {
-                    remainingCostObj[resource] = Math.ceil((amount as number) * costModifier);
-                  }
-                }
-
-              }
-            });
-          }
-        }
-        
-        // Show appropriate success message
-        if (outcome === 'criticalSuccess') {
-          ui.notifications?.info(`🎉 Critical Success! ${structure.name} added to build queue at half cost!`);
-        } else {
-          ui.notifications?.info(`✅ ${structure.name} added to build queue!`);
-        }
-        
-        ui.notifications?.info(`Pay for construction during the Upkeep phase.`);
-      } else {
-        ui.notifications?.error(result.error || 'Failed to start construction');
-      }
-    }
-    // For failure/criticalFailure, modifiers (like unrest) are already applied via controller.resolveAction()
-    // No need for additional notification - the generic resource change notification handles it
-    
-    // Clear pending build action
-    pendingBuildAction = null;
-  }
-
 
   // Listen for roll completion events
   async function handleRollComplete(event: CustomEvent) {
@@ -638,12 +477,12 @@
       // Clear aid modifiers for this specific action after roll completes
       const actor = getKingdomActor();
       if (actor) {
-        await actor.updateKingdomData((kingdom) => {
+        await actor.updateKingdomData((kingdom: KingdomData) => {
           if (kingdom.turnState?.actionsPhase?.activeAids) {
             const beforeCount = kingdom.turnState.actionsPhase.activeAids.length;
             kingdom.turnState.actionsPhase.activeAids = 
               kingdom.turnState.actionsPhase.activeAids.filter(
-                aid => aid.targetActionId !== checkId
+                (aid: any) => aid.targetActionId !== checkId
               );
             const afterCount = kingdom.turnState.actionsPhase.activeAids.length;
             
@@ -661,6 +500,13 @@
     // Initialize controller and service
     controller = await createActionPhaseController();
     gameCommandsService = await createGameCommandsService();
+    
+    // Initialize aid manager
+    aidManager = createAidManager({
+      checkType: 'action',
+      getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+      gameCommandsService
+    });
     
     // Initialize the phase (this auto-completes immediately to allow players to skip actions)
     await controller.startPhase();
@@ -684,6 +530,11 @@
       "kingdomRollComplete",
       handleRollComplete as any
     );
+    
+    // Cleanup aid manager
+    if (aidManager) {
+      aidManager.cleanup();
+    }
   });
 
   // Helper functions delegating to controller
@@ -944,56 +795,18 @@
     }
   }
   
-  // Execute the build structure skill roll
+  // Execute the build structure skill roll - using ActionExecutionHelpers
   async function executeBuildStructureRoll(buildAction: { skill: string; structureId?: string; settlementId?: string }) {
-    if (!buildAction.structureId || !buildAction.settlementId) {
-      ui.notifications?.warn('Please select a structure to build');
-      return;
-    }
-    
-    const game = (window as any).game;
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // User cancelled - reset pending action
-        pendingBuildAction = null;
-        return;
+    await executeActionRoll(
+      createExecutionContext('build-structure', buildAction.skill, {
+        structureId: buildAction.structureId,
+        settlementId: buildAction.settlementId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { pendingBuildAction = null; }
       }
-    }
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      
-      const action = actionLoader.getAllActions().find(a => a.id === 'build-structure');
-      if (!action) return;
-      
-      // Perform the roll
-      await performKingdomActionRoll(
-        actingCharacter,
-        buildAction.skill,
-        dc,
-        action.name,
-        action.id,
-        {
-          criticalSuccess: action.criticalSuccess,
-          success: action.success,
-          failure: action.failure,
-          criticalFailure: action.criticalFailure
-        }
-      );
-      
-      // The roll completion will be handled by handleRollComplete
-      // which will trigger onActionResolved with the outcome
-    } catch (error) {
-      logger.error("Error executing build structure roll:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
-      pendingBuildAction = null;
-    }
+    );
   }
   
   // Handle when a repair structure is selected
@@ -1025,7 +838,7 @@
       const actor = getKingdomActor();
       if (actor) {
         const kingdom = actor.getKingdomData();
-        const settlement = kingdom?.settlements.find(s => s.id === settlementId);
+        const settlement = kingdom?.settlements.find((s: any) => s.id === settlementId);
         if (settlement) {
           (pendingUpgradeAction as any).settlementName = settlement.name;
         }
@@ -1071,204 +884,61 @@
     }
   }
   
+  // Execute collect stipend skill roll - using ActionExecutionHelpers
   async function executeStipendRoll(stipendAction: { skill: string; settlementId?: string }) {
-    if (!stipendAction.settlementId) {
-      ui.notifications?.warn('Please select a settlement for stipend collection');
-      return;
-    }
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // User cancelled - reset pending action
-        pendingStipendAction = null;
-        delete (globalThis as any).__pendingStipendSettlement;
-        return;
-      }
-    }
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      
-      const action = actionLoader.getAllActions().find(a => a.id === 'collect-stipend');
-      if (!action) return;
-      
-      // Perform the roll
-      await performKingdomActionRoll(
-        actingCharacter,
-        stipendAction.skill,
-        dc,
-        action.name,
-        action.id,
-        {
-          criticalSuccess: action.criticalSuccess,
-          success: action.success,
-          failure: action.failure,
-          criticalFailure: action.criticalFailure
+    await executeActionRoll(
+      createExecutionContext('collect-stipend', stipendAction.skill, {
+        settlementId: stipendAction.settlementId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingStipendAction = null;
+          delete (globalThis as any).__pendingStipendSettlement;
         }
-      );
-      
-      // Roll completion handled by handleRollComplete
-    } catch (error) {
-      logger.error("Error executing collect stipend roll:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
-      pendingStipendAction = null;
-      delete (globalThis as any).__pendingStipendSettlement;
-    }
+      }
+    );
   }
   
-  // Execute the repair structure skill roll
+  // Execute the repair structure skill roll - using ActionExecutionHelpers
   async function executeRepairStructureRoll(repairAction: { skill: string; structureId?: string; settlementId?: string }) {
-    if (!repairAction.structureId || !repairAction.settlementId) {
-      ui.notifications?.warn('Please select a structure to repair');
-      return;
-    }
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // User cancelled - reset pending action
-        pendingRepairAction = null;
-        return;
+    await executeActionRoll(
+      createExecutionContext('repair-structure', repairAction.skill, {
+        structureId: repairAction.structureId,
+        settlementId: repairAction.settlementId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { pendingRepairAction = null; }
       }
-    }
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      
-      const action = actionLoader.getAllActions().find(a => a.id === 'repair-structure');
-      if (!action) return;
-      
-      // Perform the roll
-      await performKingdomActionRoll(
-        actingCharacter,
-        repairAction.skill,
-        dc,
-        action.name,
-        action.id,
-        {
-          criticalSuccess: action.criticalSuccess,
-          success: action.success,
-          failure: action.failure,
-          criticalFailure: action.criticalFailure
-        }
-      );
-      
-      // The roll completion will be handled by handleRollComplete
-      // which will trigger onActionResolved with the outcome
-    } catch (error) {
-      logger.error("Error executing repair structure roll:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
-      pendingRepairAction = null;
-    }
+    );
   }
   
-  // Execute the upgrade settlement skill roll
+  // Execute the upgrade settlement skill roll - using ActionExecutionHelpers
   async function executeUpgradeSettlementRoll(upgradeAction: { skill: string; settlementId?: string }) {
-    if (!upgradeAction.settlementId) {
-      ui.notifications?.warn('Please select a settlement to upgrade');
-      return;
-    }
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // User cancelled - reset pending action
-        pendingUpgradeAction = null;
-        return;
+    await executeActionRoll(
+      createExecutionContext('upgrade-settlement', upgradeAction.skill, {
+        settlementId: upgradeAction.settlementId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { pendingUpgradeAction = null; }
       }
-    }
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      
-      const action = actionLoader.getAllActions().find(a => a.id === 'upgrade-settlement');
-      if (!action) return;
-      
-      // Perform the roll
-      await performKingdomActionRoll(
-        actingCharacter,
-        upgradeAction.skill,
-        dc,
-        action.name,
-        action.id,
-        {
-          criticalSuccess: action.criticalSuccess,
-          success: action.success,
-          failure: action.failure,
-          criticalFailure: action.criticalFailure
-        }
-      );
-      
-      // The roll completion will be handled by handleRollComplete
-      // which will trigger onActionResolved with the outcome
-    } catch (error) {
-      logger.error("Error executing upgrade settlement roll:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
-      pendingUpgradeAction = null;
-    }
+    );
   }
   
-  // Execute the establish diplomatic relations skill roll
+  // Execute the establish diplomatic relations skill roll - using ActionExecutionHelpers
   async function executeEstablishDiplomaticRelationsRoll(diplomaticAction: { skill: string; factionId?: string; factionName?: string }) {
-    if (!diplomaticAction.factionId) {
-      ui.notifications?.warn('Please select a faction');
-      return;
-    }
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        // User cancelled - reset pending action
-        pendingDiplomaticAction = null;
-        return;
+    await executeActionRoll(
+      createExecutionContext('dimplomatic-mission', diplomaticAction.skill, {
+        factionId: diplomaticAction.factionId,
+        factionName: diplomaticAction.factionName
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { pendingDiplomaticAction = null; }
       }
-    }
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      
-      const action = actionLoader.getAllActions().find(a => a.id === 'dimplomatic-mission');
-      if (!action) return;
-      
-      // Perform the roll
-      await performKingdomActionRoll(
-        actingCharacter,
-        diplomaticAction.skill,
-        dc,
-        action.name,
-        action.id,
-        {
-          criticalSuccess: action.criticalSuccess,
-          success: action.success,
-          failure: action.failure,
-          criticalFailure: action.criticalFailure
-        }
-      );
-      
-      // The roll completion will be handled by handleRollComplete
-      // which will trigger onActionResolved with the outcome
-    } catch (error) {
-      logger.error("Error executing establish diplomatic relations roll:", error);
-      ui.notifications?.error(`Failed to perform action: ${error}`);
-      pendingDiplomaticAction = null;
-    }
+    );
   }
   
   // Handle Aid Another button click - check if player has acted, then open skill selection dialog
@@ -1314,159 +984,20 @@
     pendingAidAction = null;
   }
   
-  // Execute aid roll
+  // Execute aid roll - delegate to aid manager
   async function executeAidRoll(skill: string, targetActionId: string, targetActionName: string) {
-    const game = (window as any).game;
-    
-    // Note: Aid action spending is handled by GameCommandsService.trackPlayerAction()
-    // after the roll completes (see aidRollListener below)
-    
-    // Get character for roll
-    let actingCharacter = getCurrentUserCharacter();
-    
-    if (!actingCharacter) {
-      actingCharacter = await showCharacterSelectionDialog();
-      if (!actingCharacter) {
-        return; // User cancelled
-      }
+    if (!aidManager) {
+      logger.error('[executeAidRoll] Aid manager not initialized');
+      return;
     }
     
-    // Declare aidRollListener outside try block so it can be referenced in catch
-    let aidRollListener: ((e: any) => Promise<void>) | null = null;
-    
-    try {
-      const characterLevel = actingCharacter.level || 1;
-      const dc = controller.getActionDC(characterLevel);
-      const skillSlug = skill.toLowerCase();
-      const skillData = actingCharacter.skills?.[skillSlug];
-      const proficiencyRank = skillData?.rank || 0;
-      
-      // Listen for the roll completion BEFORE starting the roll
-      aidRollListener = async (e: any) => {
-        const { checkId, outcome, actorName } = e.detail;
-
-        if (checkId === `aid-${targetActionId}`) {
-          window.removeEventListener('kingdomRollComplete', aidRollListener as any);
-          
-          // Calculate bonus based on outcome and proficiency (including penalty for critical failure)
-          let bonus = 0;
-          let grantKeepHigher = false;
-          
-          if (outcome === 'criticalSuccess') {
-            bonus = 4;
-            grantKeepHigher = true;
-          } else if (outcome === 'success') {
-            // Calculate based on proficiency
-            if (proficiencyRank === 0) bonus = 1; // Untrained
-            else if (proficiencyRank <= 2) bonus = 2; // Trained/Expert
-            else if (proficiencyRank === 3) bonus = 3; // Master
-            else bonus = 4; // Legendary
-          } else if (outcome === 'criticalFailure') {
-            bonus = -1;  // PF2e rules: critical failure imposes a -1 penalty
-          }
-          // outcome === 'failure' stays at 0 (no effect)
-
-          // Store aids that have any effect (bonus or penalty)
-          if (bonus !== 0) {
-            const actor = getKingdomActor();
-            if (actor) {
-              await actor.updateKingdomData((kingdom) => {
-              if (!kingdom.turnState) return;
-              if (!kingdom.turnState.actionsPhase.activeAids) {
-                kingdom.turnState.actionsPhase.activeAids = [];
-              }
-              
-              kingdom.turnState.actionsPhase.activeAids.push({
-                playerId: game.user.id,
-                playerName: game.user.name,
-                characterName: actorName,
-                targetActionId,
-                skillUsed: skill,
-                outcome: outcome as any,
-                bonus,
-                grantKeepHigher,
-                timestamp: Date.now()
-              });
-              });
-              
-              // Track the aid check in the action log
-              if (gameCommandsService) {
-                await gameCommandsService.trackPlayerAction(
-                  game.user.id,
-                  game.user.name,
-                  actorName,
-                  `aid-${targetActionId}-${outcome}`,
-                  TurnPhase.ACTIONS
-                );
-              }
-              
-              const bonusText = bonus > 0 ? `+${bonus}` : `${bonus}`;
-              ui.notifications?.info(`You are now aiding ${targetActionName} with a ${bonusText} ${bonus > 0 ? 'bonus' : 'penalty'}${grantKeepHigher ? ' and keep higher roll' : ''}!`);
-            }
-          } else {
-            // Failed aid (no bonus/penalty) - track action but don't store (allows retry)
-            if (gameCommandsService) {
-              await gameCommandsService.trackPlayerAction(
-                game.user.id,
-                game.user.name,
-                actorName,
-                `aid-${targetActionId}-${outcome}`,
-                TurnPhase.ACTIONS
-              );
-            }
-            
-            ui.notifications?.warn(`Your aid attempt for ${targetActionName} failed. You can try again with a different skill.`);
-          }
-        }
-      };
-      
-      window.addEventListener('kingdomRollComplete', aidRollListener);
-      
-      // Perform the roll - pass targetActionId so modifiers can be applied
-      await performKingdomActionRoll(
-        actingCharacter,
-        skill,
-        dc,
-        `Aid Another: ${targetActionName}`,
-        `aid-${targetActionId}`,
-        {
-          criticalSuccess: { description: 'You provide exceptional aid (+4 bonus and keep higher roll)' },
-          success: { description: 'You provide helpful aid (bonus based on proficiency)' },
-          failure: { description: 'Your aid has no effect' },
-          criticalFailure: { description: 'Your aid has no effect' }
-        },
-        targetActionId  // Pass the target action ID so aid modifiers are applied to the correct action
-      );
-      
-    } catch (error) {
-      // Clean up listener on error
-      if (aidRollListener) {
-        window.removeEventListener('kingdomRollComplete', aidRollListener as any);
-      }
-      logger.error('Error performing aid roll:', error);
-      ui.notifications?.error(`Failed to perform aid: ${error}`);
-    }
+    await aidManager.executeAidRoll(skill, targetActionId, targetActionName);
   }
   
-  
-  // Get aid result for an action from shared kingdom state
+  // Get aid result for an action - delegate to aid manager
   function getAidResultForAction(actionId: string): { outcome: string; bonus: number } | null {
-    const activeAids = $kingdomData?.turnState?.actionsPhase?.activeAids;
-    if (!activeAids || activeAids.length === 0) return null;
-    
-    // Find the most recent aid for this action
-    const aidsForAction = activeAids.filter((aid: any) => aid.targetActionId === actionId);
-    if (aidsForAction.length === 0) return null;
-    
-    // Return the most recent aid (highest timestamp)
-    const mostRecentAid = aidsForAction.reduce((latest: any, current: any) => 
-      current.timestamp > latest.timestamp ? current : latest
-    );
-    
-    return {
-      outcome: mostRecentAid.outcome,
-      bonus: mostRecentAid.bonus
-    };
+    if (!aidManager) return null;
+    return aidManager.getAidResult(actionId);
   }
 
 </script>
@@ -1475,151 +1006,53 @@
 
   <!-- Scrollable content area -->
   <div class="actions-content">
-    <!-- Category sections -->
+    <!-- Category sections - using ActionCategorySection component -->
     {#each categoryConfig as category}
       {@const actions = getActionsByCategory(category.id)}
-      {#if actions.length > 0}
-        <div class="action-category">
-          <div class="category-header">
-            <i class="fas {category.icon} category-icon"></i>
-            <div class="category-info">
-              <h3 class="category-name">{category.name}</h3>
-              <p class="category-description">{category.description}</p>
-            </div>
-          </div>
-
-          <div class="actions-list">
-            {#each actions as action (action.id)}
-              {@const instanceId = currentActionInstances.get(action.id)}
-              {@const checkInstance = instanceId ? $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId) : null}
-              {@const isResolved = !!(checkInstance && checkInstance.status !== 'pending')}
-              {@const resolution = checkInstance?.appliedOutcome ? {
-                outcome: checkInstance.appliedOutcome.outcome,
-                actorName: checkInstance.appliedOutcome.actorName,
-                skillName: checkInstance.appliedOutcome.skillName || '',
-                modifiers: checkInstance.appliedOutcome.modifiers || [],
-                effect: checkInstance.appliedOutcome.effect || '',
-                rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
-                effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
-              } : undefined}
-              {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
-              <!-- Reactive availability checks - re-evaluate when $kingdomData changes -->
-              {@const isAvailable = (controller && $kingdomData) ? isActionAvailable(action) : false}
-              {@const missingRequirements = (!isAvailable && controller && $kingdomData) ? getMissingRequirements(action) : []}
-              <!-- Key block only controls BaseCheckCard re-mounting, not availability reactivity -->
-              {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}`}
-                <BaseCheckCard
-                  id={action.id}
-                  checkInstance={checkInstance || null}
-                  customResolutionComponent={customComponent}
-                  name={action.name}
-                  description={action.description}
-                  brief={action.brief || ''}
-                  skills={action.skills}
-                  outcomes={[
-                    {
-                      type: 'criticalSuccess',
-                      description: action.criticalSuccess?.description || action.success?.description || '—',
-                      modifiers: action.criticalSuccess?.modifiers || []
-                    },
-                    {
-                      type: 'success',
-                      description: action.success?.description || '—',
-                      modifiers: action.success?.modifiers || []
-                    },
-                    {
-                      type: 'failure',
-                      description: action.failure?.description || '—',
-                      modifiers: action.failure?.modifiers || []
-                    },
-                    {
-                      type: 'criticalFailure',
-                      description: action.criticalFailure?.description || '—',
-                      modifiers: action.criticalFailure?.modifiers || []
-                    }
-                  ]}
-                  checkType="action"
-                  expandable={true}
-                  showCompletions={true}
-                  showAvailability={true}
-                  showSpecial={true}
-                  showIgnoreButton={false}
-                  special={action.special}
-                  cost={action.cost}
-                  expanded={expandedActions.has(action.id)}
-                  available={isAvailable}
-                  {missingRequirements}
-                  resolved={isResolved}
-                  {resolution}
-                  canPerformMore={actionsUsed < 4 && !isResolved}
-                  currentFame={$kingdomData?.fame || 0}
-                  showFameReroll={true}
-                  showAidButton={true}
-                  aidResult={getAidResultForAction(action.id)}
-                  resolvedBadgeText="Resolved"
-                  primaryButtonLabel="Apply Result"
-                  skillSectionTitle="Choose Skill:"
-                  isViewingCurrentPhase={isViewingCurrentPhase}
-                  on:toggle={() => toggleAction(action.id)}
-                  on:executeSkill={(e) => handleExecuteSkill(e, action)}
-                  on:performReroll={(e) => handlePerformReroll(e, action)}
-                  on:debugOutcomeChanged={(e) => handleDebugOutcomeChange(e, action)}
-                  on:aid={handleAid}
-                  on:primary={(e) => {
-                    // Apply the effects using new ResolutionData architecture
-                    applyActionEffects(e);
-                    // Keep the card expanded to show completion notifications
-                  }}
-                  on:cancel={(e) => handleActionResultCancel(e.detail.checkId)}
-                />
-              {/key}
-            {/each}
-          </div>
-        </div>
-      {/if}
+      <ActionCategorySection
+        {category}
+        {actions}
+        {currentActionInstances}
+        activeCheckInstances={$kingdomData.activeCheckInstances || []}
+        {expandedActions}
+        {controller}
+        {activeAidsCount}
+        {isViewingCurrentPhase}
+        {actionsUsed}
+        currentFame={$kingdomData?.fame || 0}
+        {getAidResultForAction}
+        {isActionAvailable}
+        {getMissingRequirements}
+        on:toggle={(e) => toggleAction(e.detail.actionId)}
+        on:executeSkill={(e) => handleExecuteSkill(e.detail.event, e.detail.action)}
+        on:performReroll={(e) => handlePerformReroll(e.detail.event, e.detail.action)}
+        on:debugOutcomeChange={(e) => handleDebugOutcomeChange(e.detail.event, e.detail.action)}
+        on:aid={handleAid}
+        on:primary={applyActionEffects}
+        on:cancel={(e) => handleActionResultCancel(e.detail.actionId)}
+      />
     {/each}
-
   </div>
 </div>
 
-<!-- Build Structure Dialog -->
-<BuildStructureDialog
-  bind:show={showBuildStructureDialog}
+<!-- Dialog Manager - handles all 6 dialogs -->
+<ActionDialogManager
+  bind:showBuildStructureDialog
+  bind:showRepairStructureDialog
+  bind:showUpgradeSettlementSelectionDialog
+  bind:showFactionSelectionDialog
+  bind:showAidSelectionDialog
+  bind:showSettlementSelectionDialog
+  {pendingAidAction}
   on:structureQueued={handleStructureQueued}
-/>
-
-<!-- Repair Structure Dialog -->
-<RepairStructureDialog
-  bind:show={showRepairStructureDialog}
-  on:structureSelected={handleRepairStructureSelected}
-/>
-
-<!-- Upgrade Settlement Selection Dialog -->
-<UpgradeSettlementSelectionDialog
-  bind:show={showUpgradeSettlementSelectionDialog}
-  on:confirm={handleUpgradeSettlementSelected}
-  on:cancel={() => { pendingUpgradeAction = null; }}
-/>
-
-<!-- Faction Selection Dialog -->
-<FactionSelectionDialog
-  bind:show={showFactionSelectionDialog}
-  on:confirm={handleFactionSelected}
-  on:cancel={() => { pendingDiplomaticAction = null; }}
-/>
-
-<!-- Aid Selection Dialog -->
-<AidSelectionDialog
-  bind:show={showAidSelectionDialog}
-  actionName={pendingAidAction?.name || ''}
-  on:confirm={handleAidConfirm}
-  on:cancel={handleAidCancel}
-/>
-
-<!-- Settlement Selection Dialog (Collect Stipend) -->
-<SettlementSelectionDialog
-  bind:show={showSettlementSelectionDialog}
+  on:repairStructureSelected={handleRepairStructureSelected}
+  on:upgradeSettlementSelected={handleUpgradeSettlementSelected}
+  on:factionSelected={handleFactionSelected}
   on:settlementSelected={handleSettlementSelected}
+  on:aidConfirm={handleAidConfirm}
+  on:aidCancel={handleAidCancel}
+  on:upgradeCancel={() => { pendingUpgradeAction = null; }}
+  on:factionCancel={() => { pendingDiplomaticAction = null; }}
 />
 
 <style lang="scss">
@@ -1683,50 +1116,7 @@
     }
   }
 
-  .action-category {
-    background: var(--color-gray-900);
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-accent-75);
-    padding: 20px;
-  }
-
-  .category-header {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
-    align-items: start;
-
-    .category-icon {
-      font-size: 32px;
-      color: var(--color-amber);
-      margin-top: 3px;
-    }
-
-    .category-info {
-      flex: 1;
-    }
-
-    .category-name {
-      margin: 0 0 5px 0;
-      font-size: var(--font-3xl);
-      font-weight: var(--font-weight-semibold);
-      line-height: 1.3;
-      color: var(--color-amber);
-    }
-
-    .category-description {
-      margin: 0;
-      color: var(--text-secondary);
-      font-size: var(--font-md);
-      line-height: 1.5;
-    }
-  }
-
-  .actions-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+  /* Category styles moved to ActionCategorySection component */
 
   .phase-completion {
     background: linear-gradient(135deg,

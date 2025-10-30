@@ -53,6 +53,14 @@ __foundryData/
 __reignmakerRules/
 __pf2e/
 
+### Reference/documentation directories ###
+_pf2e-kingmaker-module
+_pf2e-kingmaker-tools
+_pf2e-system
+_reignmaker_rules_docs
+_svelte_sample
+_world-explorer
+
 ### Development server files (should not exist for Foundry modules) ###
 webpack-dev-server.pid
 .webpack/
