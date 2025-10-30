@@ -81,4 +81,14 @@ When working with structures:
 
 ## Future Items
 
+### Fame Reroll Bonus Duplication
+
+**Issue:** When spending fame to reroll a check, skill bonuses and stat bonuses are being duplicated in the reroll calculation.
+
+**Impact:** Rerolls with fame produce incorrect results with inflated bonuses, giving players an unintended advantage.
+
+**Status:** Needs investigation and fix
+
+---
+
 Additional known issues and technical debt items will be documented here as they arise.

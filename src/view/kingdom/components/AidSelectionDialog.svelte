@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Dialog from './baseComponents/Dialog.svelte';
   import { getSkillBonuses } from '../../../services/pf2e';
 
   export let show: boolean = false;
@@ -17,8 +18,6 @@
   $: if (show) {
     selectedSkill = PLACEHOLDER;
   }
-
-  // Reactive statement to log the current selection for debugging
 
   const skills = [
     { value: 'acrobatics', label: 'Acrobatics' },
@@ -68,138 +67,54 @@
     dispatch('cancel');
     show = false;
   }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (!show) return;
-
-    if (event.key === 'Enter') {
-      handleConfirm();
-    } else if (event.key === 'Escape') {
-      handleCancel();
-    }
-  }
-
-  function handleBackdropClick(event: MouseEvent) {
-    if (event.target === event.currentTarget) {
-      handleCancel();
-    }
-  }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
-{#if show}
-  <div class="dialog-backdrop" on:click={handleBackdropClick}>
-    <div class="dialog">
-      <div class="dialog-content">
-        <div class="dialog-header">
-          <h3 class="dialog-title">Aid Another: {actionName}</h3>
-        </div>
-        <div class="dialog-body">
-          <p class="dialog-description">
-            Select which skill you want to use to aid this action. Your aid check will use the standard Aid Another DC(15).
-          </p>
-          <div class="skill-select-group">
-            <label for="skill-select">Skill:</label>
-            <div class="custom-select-wrapper">
-              <select 
-                id="skill-select" 
-                bind:value={selectedSkill} 
-                class="skill-select"
-                data-placeholder={selectedSkill === PLACEHOLDER}
-              >
-                <option value={PLACEHOLDER} disabled>Pick a skill</option>
-                {#each skillsWithBonuses as skill}
-                  <option value={skill.value}>
-                    {skill.displayLabel}
-                  </option>
-                {/each}
-              </select>
-              <div class="select-display">
-                {selectedLabel}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="dialog-footer">
-          <button 
-            class="dialog-button dialog-button-secondary" 
-            on:click={handleCancel}
-          >
-            Cancel
-          </button>
-          <button 
-            class="dialog-button dialog-button-primary" 
-            on:click={handleConfirm}
-            disabled={selectedSkill === PLACEHOLDER}
-            autofocus
-          >
-            Roll
-          </button>
+<Dialog 
+  bind:show 
+  title="Aid Another: {actionName}"
+  confirmLabel="Roll"
+  confirmDisabled={selectedSkill === PLACEHOLDER}
+  width="450px"
+  on:confirm={handleConfirm}
+  on:cancel={handleCancel}
+>
+  <div class="aid-dialog-content">
+    <p class="dialog-description">
+      Select which skill you want to use to aid this action. Your aid check will use the standard Aid Another DC(15).
+    </p>
+    <div class="skill-select-group">
+      <label for="skill-select">Skill:</label>
+      <div class="custom-select-wrapper">
+        <select 
+          id="skill-select" 
+          bind:value={selectedSkill} 
+          class="skill-select"
+          data-placeholder={selectedSkill === PLACEHOLDER}
+        >
+          <option value={PLACEHOLDER} disabled>Pick a skill</option>
+          {#each skillsWithBonuses as skill}
+            <option value={skill.value}>
+              {skill.displayLabel}
+            </option>
+          {/each}
+        </select>
+        <div class="select-display">
+          {selectedLabel}
         </div>
       </div>
     </div>
   </div>
-{/if}
+</Dialog>
 
 <style>
-  .dialog-backdrop {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+  .aid-dialog-content {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-
-  .dialog {
-    background: var(--color-gray-900, #1f1f23);
-    border: 2px solid var(--border-highlight, #4a4a4d);
-    border-radius: var(--radius-lg, 8px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    max-width: 450px;
-    width: 90%;
-    animation: dialogSlideIn 0.2s ease-out;
-  }
-
-  @keyframes dialogSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .dialog-content {
-    padding: 0;
-  }
-
-  .dialog-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-light, #3a3a3d);
-    background: var(--color-gray-950, #18181b);
-  }
-
-  .dialog-title {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary, #ffffff);
-  }
-
-  .dialog-body {
-    padding: 1.5rem 1rem;
+    flex-direction: column;
+    gap: 1.5rem;
   }
 
   .dialog-description {
-    margin: 0 0 1.5rem 0;
+    margin: 0;
     color: var(--text-secondary, #b0b0b3);
     font-size: 0.95rem;
     line-height: 1.5;
@@ -267,50 +182,5 @@
   .custom-select-wrapper:has(.skill-select[data-placeholder="true"]) .select-display {
     color: var(--text-tertiary, #6b7280);
     font-style: italic;
-  }
-
-  .dialog-footer {
-    padding: 1rem;
-    border-top: 1px solid var(--border-light, #3a3a3d);
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
-
-  .dialog-button {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-default, #3a3a3d);
-    border-radius: var(--radius-sm, 4px);
-    font-size: 0.9rem;
-    font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 80px;
-  }
-
-  .dialog-button-primary {
-    background: var(--color-amber, #fbbf24);
-    color: var(--color-gray-950, #18181b);
-    border-color: var(--color-amber, #fbbf24);
-  }
-
-  .dialog-button-primary:hover {
-    background: var(--color-amber-dark, #f59e0b);
-    border-color: var(--color-amber-dark, #f59e0b);
-  }
-
-  .dialog-button-primary:focus {
-    outline: 2px solid var(--color-amber, #fbbf24);
-    outline-offset: 2px;
-  }
-
-  .dialog-button-secondary {
-    background: var(--color-gray-800, #27272a);
-    color: var(--text-secondary, #b0b0b3);
-    border-color: var(--border-default, #3a3a3d);
-  }
-
-  .dialog-button-secondary:hover {
-    background: var(--color-gray-700, #3a3a3d);
   }
 </style>

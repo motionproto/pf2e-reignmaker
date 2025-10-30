@@ -21,7 +21,9 @@
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
    import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
+   import EventInstanceList from './components/EventInstanceList.svelte';
    import { createGameCommandsService } from '../../../services/GameCommandsService';
+   import { logger } from '../../../utils/Logger';
    import {
      getCurrentUserCharacter,
      showCharacterSelectionDialog,
@@ -30,7 +32,9 @@
    } from '../../../services/pf2e';
    import { createCheckHandler } from '../../../controllers/shared/CheckHandler';
    import { buildPossibleOutcomes } from '../../../controllers/shared/PossibleOutcomeHelpers';
-   // Removed: createCheckResultHandler - now calling controller directly
+   import { buildEventOutcomes } from '../../../controllers/shared/EventOutcomeHelpers';
+   import { createEventContext, executeRoll } from '../../../controllers/shared/ExecutionHelpers';
+   import { createAidManager } from '../../../controllers/shared/AidSystemHelpers';
    
    // Initialize controller and service
    let eventPhaseController: any;
@@ -684,7 +688,7 @@
                // Store aid in turnState
                const actor = getKingdomActor();
                if (actor) {
-                  await actor.updateKingdomData((kingdom) => {
+                  await actor.updateKingdomData((kingdom: any) => {
                      if (!kingdom.turnState?.eventsPhase) return;
                      if (!kingdom.turnState.eventsPhase.activeAids) {
                         kingdom.turnState.eventsPhase.activeAids = [];
@@ -784,12 +788,12 @@
          // Clear aid modifiers for this specific event after roll completes
          const actor = getKingdomActor();
          if (actor) {
-            await actor.updateKingdomData((kingdom) => {
+            await actor.updateKingdomData((kingdom: any) => {
                if (kingdom.turnState?.eventsPhase?.activeAids) {
                   const beforeCount = kingdom.turnState.eventsPhase.activeAids.length;
                   kingdom.turnState.eventsPhase.activeAids = 
                      kingdom.turnState.eventsPhase.activeAids.filter(
-                        aid => aid.targetActionId !== checkId
+                        (aid: any) => aid.targetActionId !== checkId
                      );
                   const afterCount = kingdom.turnState.eventsPhase.activeAids.length;
                   

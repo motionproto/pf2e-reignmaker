@@ -25,41 +25,15 @@
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
   import { getCustomResolutionComponent } from '../../../controllers/actions/implementations';
+  import { createCustomActionHandlers, type CustomActionHandlers } from '../../../controllers/actions/action-handlers-config';
+  import { ACTION_CATEGORIES } from './action-categories-config';
+  import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
 
   // Initialize controller and services
   let controller: any = null;
   let gameCommandsService: any = null;
   let checkInstanceService: any = null;
   let aidManager: AidManager | null = null;
-
-  // Custom Action Registry - Declarative pattern for actions requiring pre-roll dialogs
-  const CUSTOM_ACTION_HANDLERS = {
-    'build-structure': {
-      requiresPreDialog: true,
-      showDialog: () => { showBuildStructureDialog = true; },
-      storePending: (skill: string) => { pendingBuildAction = { skill }; }
-    },
-    'repair-structure': {
-      requiresPreDialog: true,
-      showDialog: () => { showRepairStructureDialog = true; },
-      storePending: (skill: string) => { pendingRepairAction = { skill }; }
-    },
-    'upgrade-settlement': {
-      requiresPreDialog: true,
-      showDialog: () => { showUpgradeSettlementSelectionDialog = true; },
-      storePending: (skill: string) => { pendingUpgradeAction = { skill }; }
-    },
-    'dimplomatic-mission': {
-      requiresPreDialog: true,
-      showDialog: () => { showFactionSelectionDialog = true; },
-      storePending: (skill: string) => { pendingDiplomaticAction = { skill }; }
-    },
-    'collect-stipend': {
-      requiresPreDialog: true,
-      showDialog: () => { showSettlementSelectionDialog = true; },
-      storePending: (skill: string) => { pendingStipendAction = { skill }; }
-    }
-  };
 
   // UI State (not business logic)
   let expandedActions = new Set<string>();
@@ -100,46 +74,22 @@
   // Track current user ID
   let currentUserId: string | null = null;
 
-  // Categories configuration (UI concern, stays here)
-  const categoryConfig = [
-    {
-      id: "uphold-stability",
-      name: "Uphold Stability",
-      icon: "fa-shield-alt",
-      description:
-        "Maintain the kingdom's cohesion by resolving crises and quelling unrest.",
-    },
-    {
-      id: "military-operations",
-      name: "Military Operations",
-      icon: "fa-chess-knight",
-      description: "War must be waged with steel and strategy.",
-    },
-    {
-      id: "expand-borders",
-      name: "Expand the Borders",
-      icon: "fa-map-marked-alt",
-      description: "Seize new territory to grow your influence and resources.",
-    },
-    {
-      id: "urban-planning",
-      name: "Urban Planning",
-      icon: "fa-city",
-      description: "Your people need places to live, work, trade, and worship.",
-    },
-    {
-      id: "foreign-affairs",
-      name: "Foreign Affairs",
-      icon: "fa-handshake",
-      description: "No kingdom stands alone.",
-    },
-    {
-      id: "economic-resources",
-      name: "Economic Actions",
-      icon: "fa-coins",
-      description: "Manage trade and personal wealth.",
-    },
-  ];
+  // Custom Action Registry - initialized after state setters are available
+  let CUSTOM_ACTION_HANDLERS: CustomActionHandlers;
+  
+  // Initialize custom action handlers with component state setters
+  $: CUSTOM_ACTION_HANDLERS = createCustomActionHandlers({
+    setShowBuildStructureDialog: (show) => { showBuildStructureDialog = show; },
+    setShowRepairStructureDialog: (show) => { showRepairStructureDialog = show; },
+    setShowUpgradeSettlementDialog: (show) => { showUpgradeSettlementSelectionDialog = show; },
+    setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
+    setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
+    setPendingBuildAction: (action) => { pendingBuildAction = action; },
+    setPendingRepairAction: (action) => { pendingRepairAction = action; },
+    setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
+    setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
+    setPendingStipendAction: (action) => { pendingStipendAction = action; }
+  });
 
   // UI helper - toggle action expansion
   function toggleAction(actionId: string) {
@@ -170,7 +120,6 @@
     // Check if already resolved by current player
     const existingInstanceId = currentActionInstances.get(actionId);
     if (existingInstanceId) {
-
       return;
     }
 
@@ -181,16 +130,6 @@
     if (!action) {
       return;
     }
-
-    // Always mark the action as resolved to show the roll result
-    const outcomeType = outcome as
-      | "success"
-      | "criticalSuccess"
-      | "failure"
-      | "criticalFailure";
-    
-    // Get modifiers from the action for preview
-    const modifiers = controller.getActionModifiers(action, outcomeType);
     
     // Make sure the action is expanded FIRST
     if (!expandedActions.has(actionId)) {
@@ -199,153 +138,24 @@
       expandedActions = new Set(expandedActions);
     }
     
-    // Create check instance for this action
-    if (!checkInstanceService) {
-      checkInstanceService = await createCheckInstanceService();
-    }
-    
-    // Get base outcome description (handle both nested and top-level)
-    const outcomeData = (action as any).effects?.[outcomeType] || action[outcomeType];
-    let effectMessage = outcomeData?.description || 'Action completed';
-    
-    // Special handling for build-structure to replace {structure} placeholder
-    if (action.id === 'build-structure' && effectMessage.includes('{structure}')) {
-      if (pendingBuildAction?.structureId) {
-        const { structuresService } = await import('../../../services/structures');
-        const structure = structuresService.getStructure(pendingBuildAction.structureId);
-        
-        if (structure) {
-          effectMessage = effectMessage.replace(/{structure}/g, structure.name);
-        } else {
-          // Structure not found - use generic replacement
-          effectMessage = effectMessage.replace(/{structure}/g, 'structure');
-        }
-      } else {
-        // No structure ID yet - use generic replacement
-        effectMessage = effectMessage.replace(/{structure}/g, 'structure');
-      }
-    }
-    
-    // Special handling for repair-structure to replace {structure} placeholder
-    if (action.id === 'repair-structure' && effectMessage.includes('{structure}')) {
-      if (pendingRepairAction?.structureId) {
-        const { structuresService } = await import('../../../services/structures');
-        const structure = structuresService.getStructure(pendingRepairAction.structureId);
-        
-        if (structure) {
-          effectMessage = effectMessage.replace(/{structure}/g, structure.name);
-        } else {
-          // Structure not found - use generic replacement
-          effectMessage = effectMessage.replace(/{structure}/g, 'structure');
-        }
-      } else {
-        // No structure ID yet - use generic replacement
-        effectMessage = effectMessage.replace(/{structure}/g, 'structure');
-      }
-    }
-    
-    // Special handling for upgrade-settlement to replace {Settlement} placeholder
-    if (action.id === 'upgrade-settlement') {
-
-
-      if (effectMessage.includes('{Settlement}')) {
-        if (pendingUpgradeAction?.settlementId) {
-          const actor = getKingdomActor();
-          if (actor) {
-            const kingdom = actor.getKingdomData();
-            const settlement = kingdom?.settlements.find((s: any) => s.id === pendingUpgradeAction!.settlementId);
-
-            if (settlement) {
-              effectMessage = effectMessage.replace(/{Settlement}/g, settlement.name);
-
-            } else {
-              logger.warn('   ⚠️ Settlement not found, using generic');
-              effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
-            }
-          } else {
-            logger.warn('   ⚠️ No actor, using generic');
-            effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
-          }
-        } else {
-          logger.warn('   ⚠️ No settlementId in pendingUpgradeAction, using generic');
-          effectMessage = effectMessage.replace(/{Settlement}/g, 'settlement');
-        }
-      }
-    }
-    
-    // Store action metadata if needed
-    let metadata = undefined;
-    if (actionId === 'repair-structure' && pendingRepairAction) {
-      metadata = { 
-        structureId: pendingRepairAction.structureId,
-        settlementId: pendingRepairAction.settlementId
-      };
-    } else if (actionId === 'upgrade-settlement' && pendingUpgradeAction) {
-      metadata = {
-        settlementId: pendingUpgradeAction.settlementId
-      };
-    }
-    
-    const instanceId = await checkInstanceService.createInstance(
-      'action',
-      actionId,
-      action,
-      $currentTurn,
-      metadata
-    );
-    
-    // Build preliminary resolution data with dynamic modifiers
-    let preliminaryModifiers = modifiers.map((m: any) => ({ resource: m.resource, value: m.value }));
-    
-    // Special handling for upgrade-settlement: inject cost modifier
-    if (actionId === 'upgrade-settlement' && pendingUpgradeAction?.settlementId) {
-      const actor = getKingdomActor();
-      if (actor && pendingUpgradeAction) {
-        const kingdom = actor.getKingdomData();
-        const settlement = kingdom?.settlements.find((s: any) => s.id === pendingUpgradeAction!.settlementId);
-        
-        if (settlement) {
-          const newLevel = settlement.level + 1;
-          const fullCost = newLevel;
-          const isCriticalSuccess = outcomeType === 'criticalSuccess';
-          
-          // Calculate cost based on outcome
-          let actualCost = fullCost;
-          if (outcomeType === 'success') {
-            actualCost = fullCost;
-          } else if (outcomeType === 'criticalSuccess') {
-            actualCost = Math.ceil(fullCost / 2);
-          } else if (outcomeType === 'failure') {
-            actualCost = Math.ceil(fullCost / 2);
-          } else if (outcomeType === 'criticalFailure') {
-            actualCost = fullCost;
-          }
-          
-          // Add cost modifier
-          preliminaryModifiers.push({
-            resource: 'gold',
-            value: -actualCost
-          });
-
-        }
-      }
-    }
-    
-    const preliminaryResolutionData = {
-      numericModifiers: preliminaryModifiers,
-      manualEffects: [],
-      complexActions: []
+    // Create check instance using helper (handles all placeholder replacement, metadata, etc.)
+    const pendingActions: PendingActionsState = {
+      pendingBuildAction,
+      pendingRepairAction,
+      pendingUpgradeAction
     };
     
-    await checkInstanceService.storeOutcome(
-      instanceId,
-      outcomeType,
-      preliminaryResolutionData,
+    const instanceId = await createActionCheckInstance({
+      actionId,
+      action,
+      outcome,
       actorName,
-      skillName || '',
-      effectMessage,
-      rollBreakdown  // Pass rollBreakdown from the roll result
-    );
+      skillName,
+      rollBreakdown,
+      currentTurn: $currentTurn,
+      pendingActions,
+      controller
+    });
     
     // Track instanceId for this action
     currentActionInstances.set(actionId, instanceId);
@@ -601,7 +411,7 @@
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
     // Check custom action registry for pre-dialog requirements
-    const customHandler = CUSTOM_ACTION_HANDLERS[action.id as keyof typeof CUSTOM_ACTION_HANDLERS];
+    const customHandler = CUSTOM_ACTION_HANDLERS?.[action.id];
     
     if (customHandler && customHandler.requiresPreDialog === true) {
       // Custom action requires pre-roll dialog (e.g., structure selection)
@@ -669,40 +479,22 @@
     const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
     if (!instance) return;
     
-    // Get modifiers for the new outcome
-    const modifiers = controller.getActionModifiers(action, newOutcome);
-    
-    // Regenerate custom effect if needed (for actions with dynamic messages)
-    let customEffect: string | undefined = undefined;
-    if (action.id === 'build-structure' && pendingBuildAction?.structureId) {
-      const { structuresService } = await import('../../../services/structures');
-      const structure = structuresService.getStructure(pendingBuildAction.structureId);
-      
-      if (structure) {
-        const outcomeData = action[newOutcome];
-        if (outcomeData?.description) {
-          customEffect = outcomeData.description.replace(/{structure}/g, structure.name);
-        }
-      }
-    }
-    
-    // Update instance with new outcome
-    const resolutionData = {
-      numericModifiers: modifiers.map((m: any) => ({ resource: m.resource, value: m.value })),
-      manualEffects: [],
-      complexActions: []
+    // Update instance using helper (handles placeholder replacement)
+    const pendingActions: PendingActionsState = {
+      pendingBuildAction,
+      pendingRepairAction,
+      pendingUpgradeAction
     };
     
-    await checkInstanceService.storeOutcome(
+    await updateCheckInstanceOutcome({
       instanceId,
+      actionId: action.id,
+      action,
       newOutcome,
-      resolutionData,
-      instance.appliedOutcome?.actorName || 'Unknown',
-      instance.appliedOutcome?.skillName || '',
-      customEffect || (action[newOutcome] as any)?.description || 'Action completed',
-      instance.appliedOutcome?.rollBreakdown  // Preserve existing rollBreakdown
-    );
-
+      instance,
+      pendingActions,
+      controller
+    });
   }
   
   // Handle performReroll from OutcomeDisplay (via BaseCheckCard)
@@ -1007,7 +799,7 @@
   <!-- Scrollable content area -->
   <div class="actions-content">
     <!-- Category sections - using ActionCategorySection component -->
-    {#each categoryConfig as category}
+    {#each ACTION_CATEGORIES as category}
       {@const actions = getActionsByCategory(category.id)}
       <ActionCategorySection
         {category}

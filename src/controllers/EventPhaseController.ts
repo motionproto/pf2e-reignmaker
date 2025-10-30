@@ -80,7 +80,8 @@ export async function createEventPhaseController(_eventService?: any) {
                 const kingdom = actor?.getKingdomData();
                 
                 // Apply custom modifiers at the start of Events phase
-                await this.applyCustomModifiers();
+                const { applyCustomModifiers } = await import('../services/domain/CustomModifierService');
+                await applyCustomModifiers({ phase: 'Events' });
                 
                 // NEW ARCHITECTURE: Clear completed events and reset ongoing event resolutions
                 await checkInstanceService.clearCompleted('event', kingdom?.currentTurn);
@@ -156,7 +157,7 @@ export async function createEventPhaseController(_eventService?: any) {
                     if (actor && kingdom && event) {
                         // Check if this event already exists as an ongoing instance
                         const existingInstance = kingdom.activeCheckInstances?.find(
-                            i => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
+                            (i: any) => i.checkType === 'event' && i.checkId === event!.id && i.status === 'pending'
                         );
                         
                         let instanceId: string;
@@ -178,7 +179,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         
                         // Update persistent DC and turnState (mark as current event)
                         const eventId = event.id; // Capture for callback
-                        await actor.updateKingdomData((kingdom) => {
+                        await actor.updateKingdomData((kingdom: any) => {
                             // Update persistent DC (survives across turns)
                             kingdom.eventDC = newDC;
                             
@@ -205,7 +206,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 const { getKingdomActor } = await import('../stores/KingdomStore');
                 const actor = getKingdomActor();
                 if (actor) {
-                    await actor.updateKingdomData((kingdom) => {
+                    await actor.updateKingdomData((kingdom: any) => {
                         // Update persistent DC (survives across turns)
                         kingdom.eventDC = newDC;
                         
@@ -284,7 +285,7 @@ export async function createEventPhaseController(_eventService?: any) {
             
             // Check if this event already exists as an ongoing instance (NEW system)
             const existingInstance = kingdom?.activeCheckInstances?.find(
-                instance => instance.checkType === 'event' && instance.checkId === event.id && instance.status === 'pending'
+                (instance: any) => instance.checkType === 'event' && instance.checkId === event.id && instance.status === 'pending'
             );
             
             // NEW ARCHITECTURE: Create or update ActiveCheckInstance for ongoing events
@@ -429,9 +430,9 @@ export async function createEventPhaseController(_eventService?: any) {
             const updatedActor = getKingdomActor();
             const updatedKingdomState = updatedActor?.getKingdomData();
             const pendingInstances = updatedKingdomState?.activeCheckInstances?.filter(
-                i => i.checkType === 'event' && i.status === 'pending'
+                (i: any) => i.checkType === 'event' && i.status === 'pending'
             ) || [];
-            const allEffectsApplied = pendingInstances.length === 0 || pendingInstances.every(i => 
+            const allEffectsApplied = pendingInstances.length === 0 || pendingInstances.every((i: any) => 
                 i.appliedOutcome?.effectsApplied === true
             );
             
@@ -442,122 +443,6 @@ export async function createEventPhaseController(_eventService?: any) {
             }
             
             return result;
-        },
-        /**
-         * Apply custom modifiers at the start of Events phase
-         * Custom modifiers have no resolution path (sourceType === 'custom' and no originalEventData)
-         */
-        async applyCustomModifiers() {
-            const { getKingdomActor } = await import('../stores/KingdomStore');
-            const actor = getKingdomActor();
-            if (!actor) {
-
-                return;
-            }
-            
-            const kingdom = actor.getKingdomData();
-            if (!kingdom || !kingdom.activeModifiers || kingdom.activeModifiers.length === 0) {
-
-                return;
-            }
-
-            kingdom.activeModifiers.forEach(m => {
-
-            });
-            
-            // Filter for custom modifiers only (sourceType === 'custom')
-            const customModifiers = kingdom.activeModifiers.filter(m => m.sourceType === 'custom');
-            
-            if (customModifiers.length === 0) {
-
-                return;
-            }
-
-            // Batch modifiers by resource to avoid collisions
-            const modifiersByResource = new Map<string, number>();
-            const modifiersToDecrement: Array<{ modifierId: string; modifierIndex: number }> = [];
-            
-            for (const modifier of customModifiers) {
-
-
-                for (let i = 0; i < modifier.modifiers.length; i++) {
-                    const mod = modifier.modifiers[i];
-                    let resourceInfo = 'unknown';
-                    if (isStaticModifier(mod) || isDiceModifier(mod)) {
-                        resourceInfo = mod.resource;
-                    } else if (Array.isArray((mod as any).resource)) {
-                        resourceInfo = (mod as any).resource.join(', ');
-                    } else {
-                        resourceInfo = (mod as any).resource || 'unknown';
-                    }
-
-
-                    // Apply static modifiers with ongoing OR numeric duration
-                    if (isStaticModifier(mod) && (isOngoingDuration(mod.duration) || typeof mod.duration === 'number')) {
-                        const current = modifiersByResource.get(mod.resource) || 0;
-                        const newValue = current + mod.value;
-                        modifiersByResource.set(mod.resource, newValue);
-
-                        // Track numeric durations for decrementing
-                        if (typeof mod.duration === 'number') {
-                            modifiersToDecrement.push({ modifierId: modifier.id, modifierIndex: i });
-                        }
-                    } else {
-
-                    }
-                }
-            }
-            
-            // Apply all at once (single batch)
-            const numericModifiers = Array.from(modifiersByResource.entries()).map(([resource, value]) => ({
-                resource: resource as any,
-                value
-            }));
-
-            numericModifiers.forEach(m => logger.debug(`   ${m.resource}: ${m.value}`));
-            
-            if (numericModifiers.length > 0) {
-                await gameCommandsService.applyNumericModifiers(numericModifiers);
-
-            } else {
-
-            }
-            
-            // Decrement turn-based durations and remove expired modifiers
-            if (modifiersToDecrement.length > 0) {
-
-                await updateKingdom(kingdom => {
-                    const modifiersToRemove: string[] = [];
-                    
-                    for (const { modifierId, modifierIndex } of modifiersToDecrement) {
-                        const modifier = kingdom.activeModifiers?.find(m => m.id === modifierId);
-                        if (modifier && modifier.modifiers[modifierIndex]) {
-                            const mod = modifier.modifiers[modifierIndex];
-                            if (typeof mod.duration === 'number') {
-                                mod.duration -= 1;
-
-                                // Mark modifier for removal if all its modifiers are expired
-                                if (mod.duration <= 0) {
-                                    const allExpired = modifier.modifiers.every(m => 
-                                        typeof m.duration === 'number' && m.duration <= 0
-                                    );
-                                    if (allExpired && !modifiersToRemove.includes(modifierId)) {
-                                        modifiersToRemove.push(modifierId);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Remove expired modifiers
-                    if (modifiersToRemove.length > 0) {
-
-                        kingdom.activeModifiers = kingdom.activeModifiers?.filter(m => 
-                            !modifiersToRemove.includes(m.id)
-                        ) || [];
-                    }
-                });
-            }
         },
         
         /**
@@ -607,7 +492,7 @@ export async function createEventPhaseController(_eventService?: any) {
                 if (kingdom) {
                     // Check if an instance already exists (created by performEventCheck)
                     const existingInstance = kingdom.activeCheckInstances?.find(
-                        i => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
+                        (i: any) => i.checkType === 'event' && i.checkId === event.id && i.status === 'pending'
                     );
                     
                     let instanceId: string;
