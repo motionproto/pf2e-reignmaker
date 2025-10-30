@@ -103,7 +103,7 @@ export function registerKingdomHexControl(): void {
           { paragraph: 'Double-click to open the ReignMaker UI' }
         ]
       },
-      onClick: async (toggled: boolean) => {
+      onChange: async (toggled: boolean) => {
 
         clickCount++;
         

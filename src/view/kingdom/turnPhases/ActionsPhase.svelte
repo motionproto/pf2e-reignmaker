@@ -45,6 +45,8 @@
   let showSettlementSelectionDialog: boolean = false;
   let showExecuteOrPardonSettlementDialog: boolean = false;
   let showTrainArmyDialog: boolean = false;
+  let showDisbandArmyDialog: boolean = false;
+  let showOutfitArmyDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
@@ -53,6 +55,8 @@
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
   let pendingExecuteOrPardonAction: { skill: string; settlementId?: string } | null = null;
   let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
+  let pendingDisbandArmyAction: { skill: string; armyId?: string } | null = null;
+  let pendingOutfitArmyAction: { skill: string; armyId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -103,13 +107,17 @@
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
     setShowExecuteOrPardonSettlementDialog: (show) => { showExecuteOrPardonSettlementDialog = show; },
     setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
+    setShowDisbandArmyDialog: (show) => { showDisbandArmyDialog = show; },
+    setShowOutfitArmyDialog: (show) => { showOutfitArmyDialog = show; },
     setPendingBuildAction: (action) => { pendingBuildAction = action; },
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
     setPendingStipendAction: (action) => { pendingStipendAction = action; },
     setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; },
-    setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; }
+    setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; },
+    setPendingDisbandArmyAction: (action) => { pendingDisbandArmyAction = action; },
+    setPendingOutfitArmyAction: (action) => { pendingOutfitArmyAction = action; }
   });
 
   // UI helper - toggle action expansion
@@ -760,6 +768,36 @@
     }
   }
   
+  // Handle when an army is selected for disbanding
+  async function handleArmySelectedForDisbanding(event: CustomEvent) {
+    const { armyId } = event.detail;
+    
+    if (pendingDisbandArmyAction) {
+      pendingDisbandArmyAction.armyId = armyId;
+      showDisbandArmyDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingDisbandArmyArmy = armyId;
+      
+      await executeDisbandArmyRoll(pendingDisbandArmyAction);
+    }
+  }
+  
+  // Handle when an army is selected for outfitting
+  async function handleArmySelectedForOutfitting(event: CustomEvent) {
+    const { armyId } = event.detail;
+    
+    if (pendingOutfitArmyAction) {
+      pendingOutfitArmyAction.armyId = armyId;
+      showOutfitArmyDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingOutfitArmyArmy = armyId;
+      
+      await executeOutfitArmyRoll(pendingOutfitArmyAction);
+    }
+  }
+  
   // Execute train army skill roll - using ActionExecutionHelpers
   async function executeTrainArmyRoll(trainArmyAction: { skill: string; armyId?: string }) {
     await executeActionRoll(
@@ -771,6 +809,38 @@
         onRollCancel: () => { 
           pendingTrainArmyAction = null;
           delete (globalThis as any).__pendingTrainArmyArmy;
+        }
+      }
+    );
+  }
+  
+  // Execute disband army skill roll - using ActionExecutionHelpers
+  async function executeDisbandArmyRoll(disbandArmyAction: { skill: string; armyId?: string }) {
+    await executeActionRoll(
+      createExecutionContext('disband-army', disbandArmyAction.skill, {
+        armyId: disbandArmyAction.armyId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingDisbandArmyAction = null;
+          delete (globalThis as any).__pendingDisbandArmyArmy;
+        }
+      }
+    );
+  }
+  
+  // Execute outfit army skill roll - using ActionExecutionHelpers
+  async function executeOutfitArmyRoll(outfitArmyAction: { skill: string; armyId?: string }) {
+    await executeActionRoll(
+      createExecutionContext('outfit-army', outfitArmyAction.skill, {
+        armyId: outfitArmyAction.armyId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingOutfitArmyAction = null;
+          delete (globalThis as any).__pendingOutfitArmyArmy;
         }
       }
     );
@@ -912,7 +982,7 @@
   </div>
 </div>
 
-<!-- Dialog Manager - handles all 8 dialogs -->
+<!-- Dialog Manager - handles all 10 dialogs -->
 <ActionDialogManager
   bind:showBuildStructureDialog
   bind:showRepairStructureDialog
@@ -922,6 +992,8 @@
   bind:showSettlementSelectionDialog
   bind:showExecuteOrPardonSettlementDialog
   bind:showTrainArmyDialog
+  bind:showDisbandArmyDialog
+  bind:showOutfitArmyDialog
   {pendingAidAction}
   on:structureQueued={handleStructureQueued}
   on:repairStructureSelected={handleRepairStructureSelected}
@@ -930,6 +1002,8 @@
   on:settlementSelected={handleSettlementSelected}
   on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
   on:armySelectedForTraining={handleArmySelectedForTraining}
+  on:armySelectedForDisbanding={handleArmySelectedForDisbanding}
+  on:armySelectedForOutfitting={handleArmySelectedForOutfitting}
   on:aidConfirm={handleAidConfirm}
   on:aidCancel={handleAidCancel}
   on:upgradeCancel={() => { pendingUpgradeAction = null; }}

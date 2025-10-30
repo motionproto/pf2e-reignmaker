@@ -8,6 +8,8 @@
   import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
   import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
   import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
+  import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
+  import OutfitArmyDialog from '../../../../actions/outfit-army/ArmySelectionDialog.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -20,6 +22,8 @@
   export let showSettlementSelectionDialog: boolean = false;
   export let showExecuteOrPardonSettlementDialog: boolean = false;
   export let showTrainArmyDialog: boolean = false;
+  export let showDisbandArmyDialog: boolean = false;
+  export let showOutfitArmyDialog: boolean = false;
 
   // Pending action data props
   export let pendingAidAction: { id: string; name: string } | null = null;
@@ -51,6 +55,14 @@
 
   function handleArmySelectedForTraining(event: CustomEvent) {
     dispatch('armySelectedForTraining', event.detail);
+  }
+
+  function handleArmySelectedForDisbanding(event: CustomEvent) {
+    dispatch('armySelectedForDisbanding', event.detail);
+  }
+
+  function handleArmySelectedForOutfitting(event: CustomEvent) {
+    dispatch('armySelectedForOutfitting', event.detail);
   }
 
   function handleAidConfirm(event: CustomEvent) {
@@ -120,4 +132,16 @@
 <ArmySelectionDialog
   bind:show={showTrainArmyDialog}
   on:armySelected={handleArmySelectedForTraining}
+/>
+
+<!-- Army Selection Dialog (Disband Army) -->
+<DisbandArmyDialog
+  bind:show={showDisbandArmyDialog}
+  on:armySelected={handleArmySelectedForDisbanding}
+/>
+
+<!-- Army Selection Dialog (Outfit Army) -->
+<OutfitArmyDialog
+  bind:show={showOutfitArmyDialog}
+  on:armySelected={handleArmySelectedForOutfitting}
 />

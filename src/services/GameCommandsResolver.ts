@@ -97,21 +97,26 @@ export async function createGameCommandsResolver() {
      * Delegates to ArmyService for implementation
      * 
      * @param armyId - ID of army to disband
+     * @param deleteActor - Whether to delete the linked NPC actor (default: true)
      * @returns ResolveResult with refund data
      */
-    async disbandArmy(armyId: string): Promise<ResolveResult> {
+    async disbandArmy(armyId: string, deleteActor: boolean = true): Promise<ResolveResult> {
 
       try {
-        // Delegate to ArmyService
+        // Delegate to ArmyService with deleteActor parameter
         const { armyService } = await import('./army');
-        const result = await armyService.disbandArmy(armyId);
+        const result = await armyService.disbandArmy(armyId, deleteActor);
+
+        const actorMessage = result.actorId 
+          ? (deleteActor ? ' (NPC actor deleted)' : ' (NPC actor unlinked)')
+          : '';
 
         return {
           success: true,
           data: {
             armyName: result.armyName,
             refund: result.refund,
-            message: `Disbanded ${result.armyName} and refunded ${result.refund} gold`
+            message: `Disbanded ${result.armyName}${actorMessage}`
           }
         };
 
@@ -562,6 +567,200 @@ export async function createGameCommandsResolver() {
         }
       }
       return 1;
+    },
+
+    /**
+     * Outfit Army - Equip army with gear upgrades
+     * Applies PF2e effects (armor, runes, weapons, equipment) to army actor
+     * Each army can receive each equipment type only once
+     * 
+     * @param armyId - ID of army to outfit
+     * @param equipmentType - Type of equipment (armor, runes, weapons, equipment)
+     * @param outcome - Action outcome (success, criticalSuccess, failure, criticalFailure)
+     * @returns ResolveResult with equipment details
+     */
+    async outfitArmy(armyId: string, equipmentType: string, outcome: string): Promise<ResolveResult> {
+      logger.info(`⚔️ [outfitArmy] Outfitting army ${armyId} with ${equipmentType} (outcome: ${outcome})`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Find the army
+        const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+        if (!army) {
+          return { success: false, error: `Army ${armyId} not found` };
+        }
+
+        if (!army.actorId) {
+          return { success: false, error: `${army.name} has no linked NPC actor` };
+        }
+
+        // Validate equipment type
+        const validTypes = ['armor', 'runes', 'weapons', 'equipment'];
+        if (!validTypes.includes(equipmentType)) {
+          return { success: false, error: `Invalid equipment type: ${equipmentType}` };
+        }
+
+        // Check if army already has this equipment
+        if (army.equipment?.[equipmentType as keyof typeof army.equipment]) {
+          return { 
+            success: false, 
+            error: `${army.name} already has ${equipmentType} upgrade` 
+          };
+        }
+
+        // Failure outcomes: No effect (costs already handled by JSON)
+        if (outcome === 'failure' || outcome === 'criticalFailure') {
+          return {
+            success: true,
+            data: {
+              armyName: army.name,
+              message: outcome === 'failure' 
+                ? `Failed to outfit ${army.name}`
+                : `Botched acquisition for ${army.name}, suppliers took the gold`
+            }
+          };
+        }
+
+        // Success/Critical Success: Apply equipment upgrade
+        const bonus = outcome === 'criticalSuccess' ? 2 : 1;
+        
+        // Create PF2e effect with Rule Elements
+        const effectData = this.createEquipmentEffect(equipmentType, bonus);
+        
+        // Add effect to army actor
+        const { armyService } = await import('./army');
+        await armyService.addItemToArmy(army.actorId, effectData);
+        
+        // Mark equipment as applied
+        await updateKingdom(k => {
+          const a = k.armies.find((army: Army) => army.id === armyId);
+          if (a) {
+            if (!a.equipment) a.equipment = {};
+            a.equipment[equipmentType as keyof typeof a.equipment] = true;
+          }
+        });
+
+        const bonusText = bonus === 2 ? ' (exceptional, +2)' : '';
+        const effectName = this.getEquipmentDisplayName(equipmentType);
+        
+        logger.info(`✅ [outfitArmy] Applied ${equipmentType} (+${bonus}) to ${army.name}`);
+
+        return {
+          success: true,
+          data: {
+            armyName: army.name,
+            equipmentType,
+            bonus,
+            message: `${army.name} outfitted with ${effectName}${bonusText}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to outfit army:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Helper: Create PF2e effect data for equipment upgrade
+     */
+    createEquipmentEffect(equipmentType: string, bonus: number): any {
+      const baseEffect = {
+        type: 'effect',
+        system: {
+          slug: `army-equipment-${equipmentType}`,
+          rules: [] as any[]
+        }
+      };
+
+      switch (equipmentType) {
+        case 'armor':
+          return {
+            ...baseEffect,
+            name: `Army Equipment: Armor (+${bonus} AC)`,
+            system: {
+              ...baseEffect.system,
+              rules: [{
+                key: 'FlatModifier',
+                selector: 'ac',
+                value: bonus,
+                type: 'item'
+              }]
+            }
+          };
+
+        case 'runes':
+          return {
+            ...baseEffect,
+            name: `Army Equipment: Runes (+${bonus} to hit)`,
+            system: {
+              ...baseEffect.system,
+              rules: [{
+                key: 'FlatModifier',
+                selector: 'strike-attack-roll',
+                value: bonus,
+                type: 'item'
+              }]
+            }
+          };
+
+        case 'weapons':
+          return {
+            ...baseEffect,
+            name: `Army Equipment: Weapons (+${bonus} damage dice)`,
+            system: {
+              ...baseEffect.system,
+              rules: [{
+                key: 'DamageDice',
+                selector: 'strike-damage',
+                diceNumber: bonus
+              }]
+            }
+          };
+
+        case 'equipment':
+          return {
+            ...baseEffect,
+            name: `Army Equipment: Enhanced Gear (+${bonus} saves)`,
+            system: {
+              ...baseEffect.system,
+              rules: [{
+                key: 'FlatModifier',
+                selector: 'saving-throw',
+                value: bonus,
+                type: 'item'
+              }]
+            }
+          };
+
+        default:
+          throw new Error(`Unknown equipment type: ${equipmentType}`);
+      }
+    },
+
+    /**
+     * Helper: Get display name for equipment type
+     */
+    getEquipmentDisplayName(equipmentType: string): string {
+      switch (equipmentType) {
+        case 'armor': return 'Armor';
+        case 'runes': return 'Runes';
+        case 'weapons': return 'Weapons';
+        case 'equipment': return 'Enhanced Gear';
+        default: return equipmentType;
+      }
     },
 
     // TODO: Additional methods will be added as we implement more actions

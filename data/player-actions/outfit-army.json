@@ -24,20 +24,56 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Outfit a troop with two upgrades, or 2 troops with the same upgrade",
-      "modifiers": []
+      "description": "Outfit an army with truly exceptional gear, +2 bonus",
+      "cost": {
+        "ore": 1,
+        "gold": 2
+      },
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "outfitArmy",
+          "outcome": "criticalSuccess"
+        }
+      ]
     },
     "success": {
-      "description": "Outfit troop",
-      "modifiers": []
+      "description": "Outfit an army",
+      "cost": {
+        "ore": 1,
+        "gold": 2
+      },
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "outfitArmy",
+          "outcome": "success"
+        }
+      ]
     },
     "failure": {
-      "description": "No gear",
-      "modifiers": []
+      "description": "No gear, wasted effort",
+      "cost": {},
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "outfitArmy",
+          "outcome": "failure"
+        }
+      ]
     },
     "criticalFailure": {
-      "description": "No gear",
-      "modifiers": []
+      "description": "Botched acquisition, suppliers take the gold",
+      "cost": {
+        "gold": 2
+      },
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "outfitArmy",
+          "outcome": "criticalFailure"
+        }
+      ]
     }
   },
   "special": "Equipment types: armor (+1 AC), runes (+1 to hit), weapons (+1 damage dice), equipment (+1 saving throws)"

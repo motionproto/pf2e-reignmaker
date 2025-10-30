@@ -297,8 +297,19 @@ export class ActionResolver {
                 return await resolver.recruitArmy(level);
             }
             
-            case 'disbandArmy':
-                return await resolver.disbandArmy(gameEffect.targetArmy);
+            case 'disbandArmy': {
+                // Get armyId from pending state (pre-dialog action)
+                const armyId = (globalThis as any).__pendingDisbandArmyArmy;
+                
+                if (!armyId) {
+                    return {
+                        success: false,
+                        error: 'No army selected for disbanding'
+                    };
+                }
+                
+                return await resolver.disbandArmy(armyId);
+            }
             
             case 'foundSettlement': {
                 // For critical success on Establish Settlement, grant free structure

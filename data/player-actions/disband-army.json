@@ -32,6 +32,12 @@
           "value": -2,
           "duration": "immediate"
         }
+      ],
+      "gameCommands": [
+        {
+          "type": "disbandArmy",
+          "outcome": "criticalSuccess"
+        }
       ]
     },
     "success": {
@@ -43,11 +49,23 @@
           "value": -1,
           "duration": "immediate"
         }
+      ],
+      "gameCommands": [
+        {
+          "type": "disbandArmy",
+          "outcome": "success"
+        }
       ]
     },
     "failure": {
       "description": "Army disbands",
-      "modifiers": []
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "disbandArmy",
+          "outcome": "failure"
+        }
+      ]
     },
     "criticalFailure": {
       "description": "Army disbands, +1 Unrest",
@@ -57,6 +75,12 @@
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "disbandArmy",
+          "outcome": "criticalFailure"
         }
       ]
     }

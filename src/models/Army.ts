@@ -26,6 +26,14 @@ export interface Army {
   
   // NPC actor link
   actorId?: string; // Reference to the NPC actor in Foundry
+  
+  // Equipment upgrades (each can only be applied once)
+  equipment?: {
+    armor?: boolean;      // +1 AC (+2 on critical success)
+    runes?: boolean;      // +1 to hit (+2 on critical success)
+    weapons?: boolean;    // +1 damage dice (+2 on critical success)
+    equipment?: boolean;  // +1 saves (+2 on critical success)
+  };
 }
 
 /**

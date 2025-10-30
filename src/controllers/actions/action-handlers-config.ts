@@ -30,6 +30,8 @@ export function createCustomActionHandlers(context: {
   setShowSettlementSelectionDialog: (show: boolean) => void;
   setShowExecuteOrPardonSettlementDialog: (show: boolean) => void;
   setShowTrainArmyDialog: (show: boolean) => void;
+  setShowDisbandArmyDialog: (show: boolean) => void;
+  setShowOutfitArmyDialog: (show: boolean) => void;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
   setPendingUpgradeAction: (action: { skill: string }) => void;
@@ -37,6 +39,8 @@ export function createCustomActionHandlers(context: {
   setPendingStipendAction: (action: { skill: string }) => void;
   setPendingExecuteOrPardonAction: (action: { skill: string }) => void;
   setPendingTrainArmyAction: (action: { skill: string }) => void;
+  setPendingDisbandArmyAction: (action: { skill: string }) => void;
+  setPendingOutfitArmyAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -73,6 +77,16 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowTrainArmyDialog(true),
       storePending: (skill: string) => context.setPendingTrainArmyAction({ skill })
+    },
+    'disband-army': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowDisbandArmyDialog(true),
+      storePending: (skill: string) => context.setPendingDisbandArmyAction({ skill })
+    },
+    'outfit-army': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowOutfitArmyDialog(true),
+      storePending: (skill: string) => context.setPendingOutfitArmyAction({ skill })
     }
   };
 }
