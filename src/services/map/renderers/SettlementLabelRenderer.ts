@@ -3,6 +3,8 @@
  * Displays text labels below settlement icons with background panels for readability
  */
 
+import { logger } from '../../../utils/Logger';
+
 /**
  * Styling configuration for settlement labels
  */
@@ -79,9 +81,8 @@ export async function renderSettlementLabels(
         continue;
       }
 
-      // Get hex center
-      const hex = new GridHex({i, j}, canvas.grid);
-      const center = hex.center;
+      // Get hex center using Foundry's official API
+      const center = canvas.grid.getCenterPoint({i, j});
       
       // Calculate position for label baseline just above bottom hex vertex
       const hexSize = canvas.grid.sizeY;

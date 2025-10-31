@@ -11,25 +11,25 @@ import type { KingdomData } from '../../actors/KingdomActor';
 import { logger } from '../../utils/Logger';
 
 /**
- * Get adjacent hex IDs for a given hex using Foundry's GridHex API
- * Uses official grid neighbor detection instead of manual offset calculations
+ * Get adjacent hex IDs for a given hex using Foundry's grid API
+ * Uses canvas.grid.getNeighbors() directly (Foundry v13+)
  * 
  * SHARED utility - used by all validators that need adjacency checks
  */
 export function getAdjacentHexIds(hexId: string): string[] {
   const canvas = (globalThis as any).canvas;
-  const GridHex = (globalThis as any).foundry?.grid?.GridHex;
   
-  if (!canvas?.grid || !GridHex) {
-    logger.warn(`[HexValidation] Canvas grid or GridHex not available`);
+  if (!canvas?.grid) {
+    logger.warn(`[HexValidation] Canvas grid not available`);
     return [];
   }
   
   try {
     const offset = kingmakerIdToOffset(hexId);
-    const hex = new GridHex(offset, canvas.grid);
+    const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
     
-    return hex.getNeighbors().map((neighbor: any) => hexToKingmakerId(neighbor.offset));
+    // Use Foundry's native format (no zero-padding)
+    return neighbors.map((neighbor: any) => `${neighbor.i}.${neighbor.j}`);
   } catch (error) {
     logger.warn(`[HexValidation] Error getting neighbors for ${hexId}:`, error);
     return [];
@@ -99,7 +99,7 @@ export function isHexPending(hexId: string, pendingSelections: string[]): boolea
 export function hexHasSettlement(hexId: string, kingdom: KingdomData): boolean {
   return (kingdom.settlements || []).some(s => {
     if (!s.location || (s.location.x === 0 && s.location.y === 0)) return false;
-    const settlementHexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+    const settlementHexId = `${s.location.x}.${s.location.y}`;
     return settlementHexId === hexId;
   });
 }

@@ -158,14 +158,19 @@
          if (!k.settlements) k.settlements = [];
          k.settlements.push(newSettlement);
          
-         // Link the hex feature to this settlement
-         const hexId = `${hex.x}.${String(hex.y).padStart(2, '0')}`;
+         // Set hasRoad flag for settlement hex (settlements count as roads)
+         const hexId = `${hex.x}.${hex.y}`;
          const hexData = k.hexes.find(h => h.id === hexId) as any;
-         if (hexData?.features) {
-            const feature = hexData.features.find((f: any) => f.type === 'settlement' && !f.linked);
-            if (feature) {
-               feature.linked = true;
-               feature.settlementId = newSettlement.id;
+         if (hexData) {
+            hexData.hasRoad = true;
+            
+            // Link the hex feature to this settlement
+            if (hexData.features) {
+               const feature = hexData.features.find((f: any) => f.type === 'settlement' && !f.linked);
+               if (feature) {
+                  feature.linked = true;
+                  feature.settlementId = newSettlement.id;
+               }
             }
          }
       });

@@ -177,7 +177,7 @@ export function getSettlementMapIcon(settlement: Settlement): string {
  * This ensures consistent IDs across imports
  */
 export function createKingmakerSettlementId(location: { x: number; y: number }): string {
-  return `settlement_${location.x}.${location.y.toString().padStart(2, '0')}`;
+  return `settlement_${location.x}.${location.y}`;
 }
 
 /**

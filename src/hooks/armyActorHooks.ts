@@ -20,7 +20,7 @@ export function registerArmyActorHooks(): void {
    * Intercepts actor deletion attempts
    * Shows dialog with options: Unlink, Delete Army, or Cancel
    */
-  Hooks.on('preDeleteActor', async (actor: any, options: any, userId: string) => {
+  Hooks.on('preDeleteActor', (actor: any, options: any, userId: string) => {
     // If already confirmed, allow deletion
     if (options.reignmakerConfirmed) {
       return true;
@@ -42,12 +42,14 @@ export function registerArmyActorHooks(): void {
       return true; // Orphaned actor, allow deletion
     }
     
-    // Get settlement info for dialog
-    const settlement = kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId);
-    
-    // Show custom Svelte dialog
-    const result = await new Promise<'unlink' | 'disband' | 'cancel'>((resolve) => {
-      // Create container for dialog
+    // Block deletion immediately and handle asynchronously
+    (async () => {
+      // Get settlement info for dialog
+      const settlement = kingdom.settlements?.find((s: any) => s.id === army.supportedBySettlementId);
+      
+      // Show custom Svelte dialog
+      const result = await new Promise<'unlink' | 'disband' | 'cancel'>(async (resolve) => {
+        // Create container for dialog
       const container = document.createElement('div');
       container.style.position = 'fixed';
       container.style.top = '0';
@@ -103,46 +105,38 @@ export function registerArmyActorHooks(): void {
       });
     });
     
-    if (result === 'cancel') {
-      return false; // Cancel deletion
-    }
-    
-    if (result === 'unlink') {
-      // Unlink actor from army and allow actor deletion
-      const { armyService } = await import('../services/army');
-      try {
-        await armyService.unlinkActor(armyMetadata.armyId);
-        logger.info(`🔓 [ArmyActorHooks] Unlinked army ${army.name} from actor ${actor.name}`);
-        
-        // Allow actor deletion to proceed
-        return true;
-      } catch (error) {
-        logger.error('❌ [ArmyActorHooks] Failed to unlink army:', error);
-        const ui = (globalThis as any).ui;
-        ui?.notifications?.error('Failed to unlink army');
-        return false;
+      if (result === 'cancel') {
+        logger.info('🚫 [ArmyActorHooks] User cancelled army deletion');
+        return;
       }
-    }
-    
-    if (result === 'disband') {
-      // Delete the army (which will remove metadata and delete actor if requested)
-      const { armyService } = await import('../services/army');
-      try {
-        // Don't delete actor in disbandArmy since we're already deleting it here
-        await armyService.disbandArmy(armyMetadata.armyId, false);
-        logger.info(`🗑️ [ArmyActorHooks] Disbanded army ${army.name} along with actor`);
-        
-        // Allow actor deletion to proceed
-        return true;
-      } catch (error) {
-        logger.error('❌ [ArmyActorHooks] Failed to disband army:', error);
-        const ui = (globalThis as any).ui;
-        ui?.notifications?.error('Failed to disband army');
-        return false;
+      
+      if (result === 'unlink') {
+        // Unlink actor from army and delete actor
+        const { armyService } = await import('../services/army');
+        try {
+          await armyService.unlinkActor(armyMetadata.armyId);
+          logger.info(`🔓 [ArmyActorHooks] Unlinked army ${army.name} from actor ${actor.name}`);
+          
+          // Now delete the actor with confirmation flag, suppress Foundry's dialog
+          await actor.delete({ reignmakerConfirmed: true }, { render: false });
+        } catch (error) {
+          logger.error('❌ [ArmyActorHooks] Failed to unlink army:', error);
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.error('Failed to unlink army');
+        }
+        return;
       }
-    }
+      
+      if (result === 'disband') {
+        // Delete actor with confirmation flag, suppress Foundry's dialog
+        // The deleteActor hook will handle cleaning up the army from kingdom data
+        logger.info(`🗑️ [ArmyActorHooks] User confirmed disbanding army ${army.name}`);
+        await actor.delete({ reignmakerConfirmed: true }, { render: false });
+        return;
+      }
+    })();
     
-    // Shouldn't reach here, but prevent deletion by default
+    // Block deletion immediately - the async handler above will re-trigger if confirmed
     return false;
   });
   

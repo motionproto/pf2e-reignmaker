@@ -281,7 +281,7 @@ export class SettlementService {
     
     // Update settlement
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s) {
         s.skillBonuses = newBonuses;
 
@@ -298,7 +298,7 @@ export class SettlementService {
     const { updateKingdom } = await import('../../stores/KingdomStore');
     
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s && !s.structureIds.includes(structureId)) {
         s.structureIds.push(structureId);
       }
@@ -318,7 +318,7 @@ export class SettlementService {
     const { updateKingdom } = await import('../../stores/KingdomStore');
     
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s) {
         s.structureIds = s.structureIds.filter(id => id !== structureId);
       }
@@ -356,7 +356,7 @@ export class SettlementService {
     }
     
     await updateKingdom(k => {
-      const s = k.settlements.find(s => s.id === settlementId);
+      const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (!s) return;
       
       // Recalculate ALL derived properties from structures
@@ -366,7 +366,7 @@ export class SettlementService {
       // Calculate road connectivity (if not capital)
       if (!s.isCapital) {
         const capital = k.settlements.find(
-          set => set.isCapital && set.owned === s.owned
+          set => set.isCapital && set.ownedBy === s.ownedBy
         );
         
         s.connectedByRoads = capital
@@ -530,7 +530,7 @@ export class SettlementService {
     await this.updateSettlement(settlementId, { mapIconPath: iconPath });
     
     // Sync mapIconPath to hex feature
-    const hexId = `${settlement.location.x}.${String(settlement.location.y).padStart(2, '0')}`;
+    const hexId = `${settlement.location.x}.${settlement.location.y}`;
     await updateKingdom(k => {
       // @ts-ignore - Hex features typing will be updated
       const hex = k.hexes.find((h: any) => h.id === hexId);
@@ -590,7 +590,7 @@ export class SettlementService {
         
         // SYNC: Update hex feature to keep settlement data consistent
         if (nameChanged || tierChanged) {
-          const hexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+          const hexId = `${s.location.x}.${s.location.y}`;
           const hex = k.hexes.find((h: any) => h.id === hexId) as any;
           if (hex?.features) {
             const settlementFeature = hex.features.find((f: any) => 
@@ -732,17 +732,17 @@ export class SettlementService {
     // Delete settlement and mark armies as unsupported
     await updateKingdom(k => {
       // Mark armies as unsupported
-      settlement.supportedUnits.forEach(armyId => {
+      settlement.supportedUnits.forEach((armyId: string) => {
         const army = k.armies.find(a => a.id === armyId);
         if (army) {
-          army.supportedBySettlementId = undefined;
+          army.supportedBySettlementId = null;
           army.isSupported = false;
           // Don't increment turnsUnsupported yet - happens during Upkeep phase
         }
       });
       
       // Clear hasRoad flag from settlement hex (only if no actual road was built)
-      const settlementHexId = `${settlementLocation.x}.${String(settlementLocation.y).padStart(2, '0')}`;
+      const settlementHexId = `${settlementLocation.x}.${settlementLocation.y}`;
       const hex = k.hexes.find((h: any) => h.id === settlementHexId);
       if (hex && hex.hasRoad) {
         // Only clear if hex doesn't have an actual road built (not in roadsBuilt array)

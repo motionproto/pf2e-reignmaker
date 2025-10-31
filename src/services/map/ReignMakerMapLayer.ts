@@ -21,6 +21,7 @@ import { generateTerritoryOutline } from './TerritoryOutline';
 import { isWaterTerrain } from '../../types/terrain';
 import { ToolbarManager } from './ToolbarManager';
 import { renderTerrainOverlay } from './renderers/TerrainRenderer';
+import { renderTerrainDifficultyOverlay } from './renderers/TerrainDifficultyRenderer';
 import { renderTerritoryOutline } from './renderers/TerritoryRenderer';
 import { renderRoadConnections } from './renderers/RoadRenderer';
 import { renderWorksiteIcons } from './renderers/WorksiteRenderer';
@@ -369,12 +370,12 @@ export class ReignMakerMapLayer {
         return false;
       }
       
-      // Use GridHex class for proper coordinate handling
+      // Get hex center using Foundry's official API
+      const center = canvas.grid.getCenterPoint({i, j});
+      
+      // Use GridHex class for vertex calculation
       const GridHex = (globalThis as any).foundry.grid.GridHex;
       const hex = new GridHex({i, j}, canvas.grid);
-      
-      // Get hex center in world coordinates
-      const center = hex.center;
       
       // Get vertices in grid-relative coordinates
       // getShape() returns vertices relative to (0,0), not world coordinates!
@@ -459,7 +460,8 @@ export class ReignMakerMapLayer {
   private getDefaultZIndex(layerId: LayerId): number {
     switch (layerId) {
       case 'terrain-overlay':
-        return 5; // Terrain at very bottom
+      case 'terrain-difficulty-overlay':
+        return 5; // Terrain/difficulty overlays at very bottom (never shown together)
       case 'kingdom-territory':
       case 'kingdom-territory-outline':
         return 10; // Territory layers above terrain
@@ -497,6 +499,29 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     renderTerrainOverlay(layer, hexData, canvas, this.drawSingleHex.bind(this));
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
+
+  /**
+   * Draw terrain difficulty overlay for hexes with terrain type data
+   * Colors hexes based on travel difficulty (green, yellow, crimson)
+   */
+  drawTerrainDifficultyOverlay(hexData: Array<{ id: string; terrain: string }>): void {
+    this.ensureInitialized();
+    
+    const layerId: LayerId = 'terrain-difficulty-overlay';
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 5); // Same z-index as terrain overlay (they're never shown together)
+    const canvas = (globalThis as any).canvas;
+    
+    // Delegate to renderer
+    renderTerrainDifficultyOverlay(layer, hexData, canvas, this.drawSingleHex.bind(this));
     
     // Show layer after drawing
     this.showLayer(layerId);

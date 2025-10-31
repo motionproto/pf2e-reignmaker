@@ -41,7 +41,7 @@ export function isAdjacentToRoadOrSettlement(hexId: string, kingdom: KingdomData
       continue; // Skip unmapped settlements
     }
     
-    const settlementHexId = `${settlement.location.x}.${String(settlement.location.y).padStart(2, '0')}`;
+    const settlementHexId = `${settlement.location.x}.${settlement.location.y}`;
     if (adjacentHexIds.includes(settlementHexId)) {
       return true;
     }
@@ -78,7 +78,7 @@ export function getAdjacentRoadsAndSettlements(hexId: string, kingdom: KingdomDa
     // Check if adjacent hex has a settlement (settlements = roads)
     const hasSettlement = (kingdom.settlements || []).some(s => {
       if (!s.location || (s.location.x === 0 && s.location.y === 0)) return false;
-      const settlementHexId = `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
+      const settlementHexId = `${s.location.x}.${s.location.y}`;
       return settlementHexId === adjacentId;
     });
     

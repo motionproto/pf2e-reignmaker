@@ -6,25 +6,35 @@
  * - Dot notation hex IDs (i.j format like "50.18")
  * - Pixel positions
  * 
- * IMPORTANT: Uses dot notation consistently with ReignMakerMapLayer
+ * Uses Foundry's native hex coordinate format (no zero-padding)
  */
 
 /**
- * Convert GridHex offset to dot notation hex ID (i.j format)
- * Example: {i: 50, j: 18} -> "50.18"
+ * Convert offset coordinates to hex ID (Foundry's native i.j format)
+ * Example: {i: 5, j: 8} -> "5.8"
  */
-export function hexToKingmakerId(offset: { i: number; j: number }): string {
+export function offsetToHexId(offset: { i: number; j: number }): string {
   return `${offset.i}.${offset.j}`;
 }
 
 /**
- * Convert dot notation hex ID to offset coordinates
- * Example: "50.18" -> {i: 50, j: 18}
+ * Convert hex ID to offset coordinates
+ * Example: "5.8" -> {i: 5, j: 8}
  */
-export function kingmakerIdToOffset(hexId: string): { i: number; j: number } {
+export function hexIdToOffset(hexId: string): { i: number; j: number } {
   const [i, j] = hexId.split('.').map(Number);
   return { i, j };
 }
+
+/**
+ * @deprecated Use offsetToHexId instead
+ */
+export const hexToKingmakerId = offsetToHexId;
+
+/**
+ * @deprecated Use hexIdToOffset instead
+ */
+export const kingmakerIdToOffset = hexIdToOffset;
 
 /**
  * Convert pixel position to hex offset using canvas grid

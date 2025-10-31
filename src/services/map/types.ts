@@ -25,6 +25,7 @@ import stoneIcon from '../../../img/map_icons/commodity_stone.webp';
  */
 export type LayerId = 
   | 'terrain-overlay'             // Terrain type coloring (bottom layer)
+  | 'terrain-difficulty-overlay'  // Terrain difficulty coloring (travel speed indicator)
   | 'kingdom-territory'           // Scene control toggle for kingdom hexes
   | 'kingdom-territory-outline'   // Territory outline border
   | 'interactive-hover'           // Interactive hex hover (hex + road preview)
@@ -39,6 +40,10 @@ export type LayerId =
   | 'resources'                   // Resource/commodity icons (food, lumber, ore, stone)
   | 'routes'                      // Road connections (curved lines between road hexes)
   | 'fortifications'              // Fortification icons (walls, towers, keeps)
+  | 'army-movement-origin'        // Army movement: origin hex highlight (green)
+  | 'army-movement-range'         // Army movement: reachable hexes overlay (light green)
+  | 'army-movement-path'          // Army movement: path preview lines
+  | 'army-movement-hover'         // Army movement: hover endpoint indicator (circle/X)
   | string;                       // Custom layer IDs
 
 /**

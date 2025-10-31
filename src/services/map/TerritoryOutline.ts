@@ -98,9 +98,11 @@ export function generateTerritoryOutline(hexIds: string[]): TerritoryOutlineResu
       if (isNaN(i) || isNaN(j)) continue;
       
       const hex = new GridHex({i, j}, canvas.grid);
+
+      // Get hex center using Foundry's official API
+      const center = canvas.grid.getCenterPoint({i, j});
       
       // Get hex vertices
-      const center = hex.center;
       const relativeVertices = canvas.grid.getShape(hex.offset);
       
       if (!relativeVertices || relativeVertices.length !== 6) continue;

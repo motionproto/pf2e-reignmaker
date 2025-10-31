@@ -34,7 +34,7 @@ import type { Settlement, SettlementTier } from '../../models/Settlement';
 import { createSettlement, createKingmakerSettlementId } from '../../models/Settlement';
 import type { HexFeature as KingmakerHexFeature, HexState } from '../../api/kingmaker';
 import { logger } from '../../utils/Logger';
-import { normalizeTerrainType, normalizeTravelDifficulty } from '../../types/terrain';
+import { normalizeTerrainType, getTravelDifficultyFromTerrain } from '../../types/terrain';
 import type { TerrainType, TravelDifficulty } from '../../types/terrain';
 import { PLAYER_KINGDOM } from '../../types/ownership';
 
@@ -195,7 +195,6 @@ export class TerritoryService {
                 // Get terrain and travel from the hex's data (this is the source of truth)
                 const hexData = regionHex.data;
                 const rawTerrain = hexData.terrain;
-                const rawTravel = hexData.travel;
                 const zoneId = hexData.zone || null;
                 
                 let terrainType: TerrainType;
@@ -206,8 +205,8 @@ export class TerritoryService {
 
                 }
                 
-                // Normalize travel difficulty
-                const travelDifficulty = normalizeTravelDifficulty(rawTravel);
+                // Set travel difficulty based on terrain type (not Kingmaker's values)
+                const travelDifficulty = getTravelDifficultyFromTerrain(terrainType);
                 
                 // Look up hex state to get ownership data
                 // If hex has no state, it's wilderness (claimedBy = null)
@@ -329,6 +328,7 @@ export class TerritoryService {
                     row: hex.row,
                     col: hex.col,
                     terrain: hex.terrain,
+                    travel: hex.travel, // ✅ Store travel difficulty
                     worksite: hex.worksite ? { type: hex.worksite.type as string } : undefined,
                     commodities: commoditiesObj, // Store as plain object
                     hasRoad: hex.hasRoad || false,
@@ -517,6 +517,8 @@ export class TerritoryService {
     /**
      * Convert Kingmaker features to our feature format
      * Extracts only what we need, discards Kingmaker-specific data
+     * 
+     * NOTE: Roads are NOT stored as features - they're tracked via hasRoad flag only
      */
     private convertKingmakerFeatures(kingmakerFeatures: KingmakerHexFeature[]): HexFeature[] {
         const ourFeatures: HexFeature[] = [];
@@ -541,11 +543,10 @@ export class TerritoryService {
                     name: hasName ? featureName : undefined  // Preserve Kingmaker name
                 });
             }
-            // Convert road features
+            // Skip road features - roads are tracked via hasRoad flag, not in features array
             else if (featureType === 'road') {
-                ourFeatures.push({
-                    type: 'road'
-                });
+                // Intentionally skip - hasRoad flag is set separately
+                continue;
             }
             // Convert landmarks (if any)
             else if ((kmFeature as any).name) {

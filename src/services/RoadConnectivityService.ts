@@ -18,41 +18,31 @@ import { hexHasRoads } from '../actions/shared/hexValidation';
 
 class RoadConnectivityService {
   /**
-   * Get adjacent hex IDs using axial/cube coordinates
-   * Based on Foundry's GridHex system
+   * Get adjacent hex IDs using Foundry's grid API
+   * Uses canvas.grid.getNeighbors() directly (Foundry v13+)
    */
   private getAdjacentHexIds(hexId: string): string[] {
-    const [rowStr, colStr] = hexId.split('.');
-    const row = parseInt(rowStr);
-    const col = parseInt(colStr);
+    const canvas = (globalThis as any).canvas;
     
-    // Hex grid neighbors (axial coordinates)
-    // For odd-q vertical layout (typical for Foundry)
-    const neighbors: Array<[number, number]> = [];
-    
-    if (col % 2 === 0) {
-      // Even column
-      neighbors.push(
-        [row - 1, col],     // N
-        [row - 1, col + 1], // NE
-        [row, col + 1],     // SE
-        [row + 1, col],     // S
-        [row, col - 1],     // SW
-        [row - 1, col - 1]  // NW
-      );
-    } else {
-      // Odd column
-      neighbors.push(
-        [row - 1, col],     // N
-        [row, col + 1],     // NE
-        [row + 1, col + 1], // SE
-        [row + 1, col],     // S
-        [row + 1, col - 1], // SW
-        [row, col - 1]      // NW
-      );
+    if (!canvas?.grid) {
+      return [];
     }
     
-    return neighbors.map(([r, c]) => `${r}.${c.toString().padStart(2, '0')}`);
+    try {
+      const [rowStr, colStr] = hexId.split('.');
+      const i = parseInt(rowStr);
+      const j = parseInt(colStr);
+      
+      if (isNaN(i) || isNaN(j)) return [];
+      
+      const neighbors = canvas.grid.getNeighbors(i, j);
+      
+      return neighbors.map((neighbor: any) => 
+        `${neighbor.i}.${neighbor.j}`
+      );
+    } catch (error) {
+      return [];
+    }
   }
   
   /**
@@ -102,14 +92,14 @@ class RoadConnectivityService {
     }
     
     // Must be same faction
-    if (settlement.owned !== capital.owned) {
+    if (settlement.ownedBy !== capital.ownedBy) {
 
       return false;
     }
     
     // Get hex IDs
-    const startHexId = `${settlement.location.x}.${settlement.location.y.toString().padStart(2, '0')}`;
-    const targetHexId = `${capital.location.x}.${capital.location.y.toString().padStart(2, '0')}`;
+    const startHexId = `${settlement.location.x}.${settlement.location.y}`;
+    const targetHexId = `${capital.location.x}.${capital.location.y}`;
     
     // Same hex = connected
     if (startHexId === targetHexId) {
@@ -156,14 +146,14 @@ class RoadConnectivityService {
    * @param factionId - Faction ID (owned value) to recalculate
    */
   recalculateAllConnectivity(kingdom: KingdomData, factionId: number = 1): void {
-    const capital = kingdom.settlements?.find(s => s.isCapital && s.owned === factionId as any);
+    const capital = kingdom.settlements?.find(s => s.isCapital && s.ownedBy === factionId as any);
     
     if (!capital) {
 
       return;
     }
 
-    const settlements = kingdom.settlements?.filter(s => s.owned === factionId as any) || [];
+    const settlements = kingdom.settlements?.filter(s => s.ownedBy === factionId as any) || [];
     
     for (const settlement of settlements) {
       if (settlement.isCapital) {

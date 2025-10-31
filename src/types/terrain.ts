@@ -5,6 +5,8 @@
  * Water provides automatic road benefits and supports fishing (farmstead worksite).
  */
 
+import { logger } from '../utils/Logger';
+
 /**
  * Valid terrain types for kingdom hexes
  */
@@ -62,6 +64,35 @@ export function normalizeTravelDifficulty(travel: string | null | undefined): Tr
     
     default:
       logger.warn(`Unknown travel difficulty: "${travel}", defaulting to open`);
+      return 'open';
+  }
+}
+
+/**
+ * Get travel difficulty based on terrain type
+ * Used during Kingmaker import to set difficulty by terrain instead of using Kingmaker's values
+ */
+export function getTravelDifficultyFromTerrain(terrain: TerrainType): TravelDifficulty {
+  switch (terrain) {
+    case 'plains':
+      return 'open';
+    
+    case 'hills':
+    case 'forest':
+      return 'difficult';
+    
+    case 'mountains':
+    case 'swamp':
+      return 'greater-difficult';
+    
+    case 'water':
+      return 'water';
+    
+    case 'desert':
+      // Default desert to open (can be changed if needed)
+      return 'open';
+    
+    default:
       return 'open';
   }
 }

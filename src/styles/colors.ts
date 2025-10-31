@@ -106,3 +106,15 @@ export const ICON_SHADOW_COLOR = {
   color: 0x000000,           // Black
   alpha: 0.5                 // Semi-transparent
 } as const;
+
+/**
+ * Terrain difficulty overlay colors (PIXI format with alpha)
+ * Used for coloring hexes based on travel difficulty
+ */
+export const TERRAIN_DIFFICULTY_COLORS: Record<string, { color: number; alpha: number }> = {
+  'open': { color: 0x00FF00, alpha: 0.15 },                    // Green - easy travel
+  'difficult': { color: 0xFFFF00, alpha: 0.15 },                // Yellow - difficult terrain
+  'greater-difficult': { color: 0xDC143C, alpha: 0.15 },       // Crimson - very difficult terrain
+  'water': { color: 0x1E90FF, alpha: 0.15 },                    // Blue - water travel
+  'default': { color: 0xCCCCCC, alpha: 0.15 }                  // Light grey fallback
+};

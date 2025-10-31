@@ -217,10 +217,10 @@ export class Hex {
   }
   
   /**
-   * Get hex ID in dot notation (for backwards compatibility)
+   * Get hex ID in dot notation using Foundry's native format
    */
   get id(): string {
-    return `${this.row}.${this.col.toString().padStart(2, '0')}`;
+    return `${this.row}.${this.col}`;
   }
   
   /**

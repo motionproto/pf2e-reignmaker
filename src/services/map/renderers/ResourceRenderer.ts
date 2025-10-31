@@ -54,9 +54,8 @@ export async function renderResourceIcons(
         continue;
       }
 
-      // Get hex center
-      const hex = new GridHex({i, j}, canvas.grid);
-      const center = hex.center;
+      // Get hex center using Foundry's official API
+      const center = canvas.grid.getCenterPoint({i, j});
 
       // Load texture and create sprite
       const texture = await PIXI.Assets.load(iconPath);

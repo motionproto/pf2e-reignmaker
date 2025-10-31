@@ -1,8 +1,8 @@
 <script lang="ts">
-   import { PLAYER_KINGDOM } from '../../../types/ownership';
+  import { PLAYER_KINGDOM } from '../../../types/ownership';
   import { createEventDispatcher, onMount } from 'svelte';
   import Dialog from './baseComponents/Dialog.svelte';
-  import { getKingdomData } from '../../../stores/KingdomStore';
+  import { kingdomData } from '../../../stores/KingdomStore';
   import { SettlementTierConfig } from '../../../models/Settlement';
   
   // Import army token images
@@ -33,15 +33,11 @@
   let armyName: string = '';
   let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
-  let availableSettlements: Array<{ id: string; name: string; tier: string; current: number; capacity: number }> = [];
   
   $: confirmDisabled = !armyName.trim();
   
-  onMount(() => {
-    const kingdom = getKingdomData();
-    
-    // Get settlements with available army capacity in claimed hexes only
-    availableSettlements = kingdom.settlements
+  // Reactively calculate available settlements from kingdom store
+  $: availableSettlements = $kingdomData.settlements
       .filter(s => {
         // Must have a valid map location
         const hasLocation = s.location.x !== 0 || s.location.y !== 0;
@@ -52,7 +48,7 @@
           ? `${s.kingmakerLocation.x}.${String(s.kingmakerLocation.y).padStart(2, '0')}`
           : `${s.location.x}.${String(s.location.y).padStart(2, '0')}`;
         
-        const hex = kingdom.hexes?.find((h: any) => h.id === hexId) as any;
+        const hex = $kingdomData.hexes?.find((h: any) => h.id === hexId) as any;
         const isClaimed = hex && hex.claimedBy === PLAYER_KINGDOM;
         
         if (!isClaimed) return false;
@@ -70,8 +66,10 @@
         capacity: SettlementTierConfig[s.tier]?.armySupport || 0
       }));
     
+  
+  onMount(() => {
     // Generate default army name
-    const armyNumber = (kingdom.armies?.length || 0) + 1;
+    const armyNumber = ($kingdomData.armies?.length || 0) + 1;
     armyName = `Army ${armyNumber}`;
   });
   
@@ -185,8 +183,12 @@
     color: var(--text-primary);
     font-size: 0.9rem;
     font-family: inherit;
-    min-height: 2rem;
-    line-height: 1.5;
+    height: auto;
+    line-height: 1.75;
+  }
+  
+  .form-group select {
+    padding: 0.5rem 0.625rem;
   }
   
   .form-group select {

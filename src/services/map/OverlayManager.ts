@@ -37,6 +37,9 @@ export interface MapOverlay {
   icon: string;
   layerIds: LayerId[]; // Which layers this overlay manages
   
+  // Mutual exclusivity - overlays in the same group can't be active together
+  exclusiveGroup?: string;  // Optional group ID for mutual exclusivity
+  
   // Reactive pattern (preferred)
   store?: Readable<any>;  // Store to subscribe to for automatic updates
   render?: (data: any) => void | Promise<void>;  // How to render when data changes
@@ -56,6 +59,7 @@ export class OverlayManager {
   private overlays: Map<string, MapOverlay> = new Map();
   private subscriptions: Map<string, Unsubscriber> = new Map();  // Store subscriptions
   private zoomSubscriptions: Map<string, { callback: Function; lastScale: number }> = new Map();  // Zoom hook tracking
+  private renderLocks: Map<string, Promise<void>> = new Map();  // Rendering locks to prevent race conditions
   private mapLayer: ReignMakerMapLayer;
   private readonly STORAGE_KEY = 'reignmaker-overlay-states';
   
@@ -128,6 +132,18 @@ export class OverlayManager {
       return;
     }
 
+    // ✅ MUTUAL EXCLUSIVITY: If overlay belongs to an exclusive group, hide others in that group
+    if (overlay.exclusiveGroup) {
+      const overlaysInGroup = Array.from(this.overlays.values())
+        .filter(o => o.exclusiveGroup === overlay.exclusiveGroup && o.id !== id);
+      
+      for (const otherOverlay of overlaysInGroup) {
+        if (this.isOverlayActive(otherOverlay.id)) {
+          logger.info(`[OverlayManager] Hiding ${otherOverlay.id} (exclusive group: ${overlay.exclusiveGroup})`);
+          this.hideOverlay(otherOverlay.id);
+        }
+      }
+    }
 
     try {
       // Mark as active FIRST (before subscription fires)
@@ -151,11 +167,28 @@ export class OverlayManager {
         const unsubscribe = overlay.store.subscribe(async ($data) => {
           // Only render if overlay is still active
           if (this.isOverlayActive(id)) {
-
             try {
-              await overlay.render!($data);
+              // 🔒 RENDERING LOCK: Wait for any in-progress render to complete
+              // This prevents race conditions when store updates rapidly (e.g., army deletion)
+              const existingRender = this.renderLocks.get(id);
+              if (existingRender) {
+                logger.info(`[OverlayManager] ⏳ Waiting for in-progress render: ${id}`);
+                await existingRender;
+              }
+              
+              // Start new render and store the promise (wrap in Promise.resolve for sync renders)
+              const renderPromise = Promise.resolve(overlay.render!($data));
+              this.renderLocks.set(id, renderPromise);
+              
+              // Wait for render to complete
+              await renderPromise;
+              
+              // Clear the lock after successful render
+              this.renderLocks.delete(id);
             } catch (error) {
               logger.error(`[OverlayManager] ❌ Render failed for ${id}:`, error);
+              // Clear lock even on error to prevent permanent deadlock
+              this.renderLocks.delete(id);
             }
           } else {
             logger.warn(`[OverlayManager] ⚠️ Subscription fired for inactive overlay: ${id} - this shouldn't happen!`);
@@ -219,8 +252,10 @@ export class OverlayManager {
       if (unsubscribe) {
         unsubscribe();
         this.subscriptions.delete(id);
-
       }
+      
+      // Clear any in-progress render lock
+      this.renderLocks.delete(id);
       
       // Cleanup zoom subscription if exists
       const zoomSub = this.zoomSubscriptions.get(id);
@@ -434,6 +469,7 @@ export class OverlayManager {
       name: 'Terrain',
       icon: 'fa-mountain',
       layerIds: ['terrain-overlay'],
+      exclusiveGroup: 'terrain-display',  // ✅ Mutually exclusive with terrain-difficulty
       store: derived(kingdomData, $data => 
         $data.hexes.filter((h: any) => h.terrain)
       ),  // ✅ Reactive subscription
@@ -452,6 +488,33 @@ export class OverlayManager {
         // Cleanup handled by OverlayManager
       },
       isActive: () => this.isOverlayActive('terrain')
+    });
+
+    // Terrain Difficulty Overlay - REACTIVE (uses hexesWithTerrain store)
+    this.registerOverlay({
+      id: 'terrain-difficulty',
+      name: 'Travel Speed',
+      icon: 'fa-shoe-prints',
+      layerIds: ['terrain-difficulty-overlay'],
+      exclusiveGroup: 'terrain-display',  // ✅ Mutually exclusive with terrain
+      store: derived(kingdomData, $data => 
+        $data.hexes.filter((h: any) => h.terrain)
+      ),  // ✅ Reactive subscription
+      render: (hexes) => {
+        const hexData = hexes.map((h: any) => ({ id: h.id, terrain: h.terrain }));
+
+        if (hexData.length === 0) {
+
+          this.mapLayer.clearLayer('terrain-difficulty-overlay');
+          return;
+        }
+
+        this.mapLayer.drawTerrainDifficultyOverlay(hexData);
+      },
+      hide: () => {
+        // Cleanup handled by OverlayManager
+      },
+      isActive: () => this.isOverlayActive('terrain-difficulty')
     });
 
     // Territory Overlay - REACTIVE (uses claimedHexes store)

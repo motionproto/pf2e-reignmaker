@@ -6,6 +6,8 @@
 import { KingdomActor } from './actors/KingdomActor';
 import { initializeKingdomSync } from './hooks/kingdomSync';
 import { registerArmyActorHooks } from './hooks/armyActorHooks';
+import { registerDebugUtils } from './debug/armyMovement';
+import { registerHexCenterTestUtils } from './debug/hex-center-test';
 
 declare const Hooks: any;
 declare const CONFIG: any;
@@ -25,6 +27,14 @@ export function initializeKingdomSystem(): void {
   
   // Register army actor deletion hooks
   registerArmyActorHooks();
+  
+  // Register debug utilities immediately (no hook needed - already in ready hook)
+  try {
+    registerDebugUtils();
+    registerHexCenterTestUtils();
+  } catch (error) {
+    console.error('[Kingdom System] Failed to register debug utilities:', error);
+  }
   
   console.log('[Kingdom System] Initialization complete');
 }

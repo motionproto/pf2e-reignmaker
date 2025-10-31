@@ -79,7 +79,6 @@ export async function renderRoadConnections(
   // Track connections we've already drawn (to avoid duplicates)
   const drawnConnections = new Set<string>();
 
-  const GridHex = (globalThis as any).foundry.grid.GridHex;
   let connectionCount = 0;
 
   // Store road segments by type (land roads vs water roads)
@@ -95,17 +94,18 @@ export async function renderRoadConnections(
       const j = parseInt(parts[1], 10);
       if (isNaN(i) || isNaN(j)) return;
 
-      const hex = new GridHex({i, j}, canvas.grid);
-      const hexCenter = hex.center;
-      const neighbors: any[] = hex.getNeighbors();
+      const hexCenter = canvas.grid.getCenterPoint({i, j});
+      
+      // Get neighbors directly from grid API (Foundry v13+)
+      const neighbors = canvas.grid.getNeighbors(i, j);
 
       // Check if this hex is water
       const normalizedHexId = normalizeHexId(hexId);
       const isWater = waterHexSet.has(normalizedHexId);
 
       neighbors.forEach((neighbor: any) => {
-        const neighborI = neighbor.offset.i;
-        const neighborJ = neighbor.offset.j;
+        const neighborI = neighbor.i;
+        const neighborJ = neighbor.j;
         const neighborId = `${neighborI}.${neighborJ}`;
 
         if (!roadHexSet.has(neighborId)) return;
@@ -119,7 +119,7 @@ export async function renderRoadConnections(
         const isNeighborWater = waterHexSet.has(neighborId);
         const isWaterConnection = isWater || isNeighborWater;
 
-        const neighborCenter = neighbor.center;
+        const neighborCenter = canvas.grid.getCenterPoint({i: neighborI, j: neighborJ});
 
         // Calculate Bezier curve control point
         const midX = (hexCenter.x + neighborCenter.x) / 2;

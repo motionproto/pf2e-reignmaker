@@ -5,6 +5,7 @@
    import Button from '../components/baseComponents/Button.svelte';
    import InlineEditActions from '../components/baseComponents/InlineEditActions.svelte';
    import DisbandArmyDialog from '../components/DisbandArmyDialog.svelte';
+   import RecruitArmyDialog from '../components/RecruitArmyDialog.svelte';
    import { logger } from '../../../utils/Logger';
 
    // Table state
@@ -20,10 +21,8 @@
    let editedSettlementId: string = '';
    let isSaving = false;
    
-   // Create army state
-   let isCreating = false;
-   let newArmyName = '';
-   let newArmyLevel = 1;
+   // Create army dialog state
+   let showRecruitDialog = false;
    let isCreatingArmy = false;
    
    // Actor linking state
@@ -330,40 +329,93 @@
    
    // Create army functions
    function startCreating() {
-      isCreating = true;
-      newArmyName = '';
-      newArmyLevel = userCharacterLevel;
+      showRecruitDialog = true;
    }
    
-   function cancelCreating() {
-      isCreating = false;
-      newArmyName = '';
-      newArmyLevel = 1;
-   }
-   
-   async function createArmy() {
-      if (!newArmyName.trim()) {
-         // @ts-ignore
-         ui.notifications?.warn('Army name is required');
-         return;
-      }
+   async function handleRecruitConfirm(event: CustomEvent<{ name: string; settlementId: string | null; armyType: string }>) {
+      const { name, settlementId, armyType } = event.detail;
       
       isCreatingArmy = true;
       try {
          const { armyService } = await import('../../../services/army');
-         await armyService.createArmy(newArmyName.trim(), newArmyLevel);
-         cancelCreating();
+         const { ARMY_TYPES } = await import('../../../utils/armyHelpers');
+         
+         // Create army with selected type and image
+         const army = await armyService.createArmy(name, userCharacterLevel, {
+            type: armyType,
+            image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image
+         });
+         
+         // Assign to selected settlement if provided
+         if (settlementId) {
+            await armyService.assignArmyToSettlement(army.id, settlementId);
+         }
+         
+         // Place token on map
+         if (army.actorId) {
+            const game = (globalThis as any).game;
+            const scene = game?.scenes?.current;
+            
+            logger.info(`🗺️ [ArmiesTab] Attempting token placement for ${name} (actorId: ${army.actorId})`);
+            
+            if (!scene) {
+               logger.warn('⚠️ [ArmiesTab] No active scene found, cannot place token');
+            } else {
+               try {
+                  let targetSettlement = null;
+                  
+                  if (settlementId) {
+                     // Supported: place at supporting settlement
+                     targetSettlement = $kingdomData.settlements.find(s => s.id === settlementId);
+                     logger.info(`🗺️ [ArmiesTab] Placing at supporting settlement: ${targetSettlement?.name}`);
+                  } else {
+                     // Unsupported: place at capital, or first settlement if no capital
+                     targetSettlement = $kingdomData.settlements.find(s => s.isCapital);
+                     if (!targetSettlement && $kingdomData.settlements.length > 0) {
+                        targetSettlement = $kingdomData.settlements[0];
+                        logger.info(`🗺️ [ArmiesTab] No capital defined, placing at first settlement: ${targetSettlement?.name}`);
+                     } else {
+                        logger.info(`🗺️ [ArmiesTab] No settlement selected, placing at capital: ${targetSettlement?.name}`);
+                     }
+                  }
+                  
+                  if (!targetSettlement) {
+                     logger.warn('⚠️ [ArmiesTab] No target settlement found for token placement');
+                  } else if (!targetSettlement.location) {
+                     logger.warn('⚠️ [ArmiesTab] Target settlement has no location data');
+                  } else {
+                     const hasLocation = targetSettlement.location.x !== 0 || targetSettlement.location.y !== 0;
+                     
+                     if (!hasLocation) {
+                        logger.warn(`⚠️ [ArmiesTab] Settlement ${targetSettlement.name} has invalid location (0,0)`);
+                     } else {
+                        // Use shared helper for token placement
+                        const { placeArmyTokenAtSettlement } = await import('../../../utils/armyHelpers');
+                        await placeArmyTokenAtSettlement(armyService, army.actorId, targetSettlement, name);
+                     }
+                  }
+               } catch (error) {
+                  logger.error('❌ [ArmiesTab] Failed to place token:', error);
+                  // Don't fail the whole action if token placement fails
+               }
+            }
+         } else {
+            logger.warn(`⚠️ [ArmiesTab] Army ${name} has no actorId, cannot place token`);
+         }
+         
          // @ts-ignore
-         ui.notifications?.info(`Created ${newArmyName}`);
+         ui.notifications?.info(`Recruited ${name}!`);
       } catch (error) {
-         // Error message already shown by ActionDispatcher or lower-level service
-         // Just show user-friendly notification
-         const errorMessage = error instanceof Error ? error.message : 'Failed to create army';
+         const errorMessage = error instanceof Error ? error.message : 'Failed to recruit army';
          // @ts-ignore
          ui.notifications?.error(errorMessage);
       } finally {
          isCreatingArmy = false;
       }
+   }
+   
+   function handleRecruitCancel() {
+      // Dialog handles its own state
    }
    
    // Open NPC actor sheet or offer to recreate if missing
@@ -486,6 +538,13 @@
       currentPage = Math.max(1, Math.min(page, totalPages));
    }
 </script>
+
+<!-- Recruit Army Dialog -->
+<RecruitArmyDialog
+   bind:show={showRecruitDialog}
+   on:confirm={handleRecruitConfirm}
+   on:cancel={handleRecruitCancel}
+/>
 
 <!-- Disband Army Dialog -->
 {#if disbandingArmy}
@@ -789,28 +848,9 @@
                            </div>
                         {/if}
                      </div>
-                  {:else if isCreating}
-                     <!-- Creating mode: Name and level inputs -->
-                     <div class="add-army-inputs">
-                        <input 
-                           type="text" 
-                           bind:value={newArmyName}
-                           placeholder="Army name..."
-                           class="text-input small"
-                           on:keydown={(e) => e.key === 'Enter' && createArmy()}
-                        />
-                        <input 
-                           type="number" 
-                           bind:value={newArmyLevel}
-                           min="1"
-                           max="20"
-                           class="text-input small level-input"
-                           placeholder="Level"
-                        />
-                     </div>
                   {:else}
                      <!-- Default: Show prompt -->
-                     <span class="add-prompt">Add Army</span>
+                     <span class="add-prompt">Recruit Army</span>
                   {/if}
                </td>
                <td>
@@ -819,18 +859,11 @@
                         <button class="action-btn" on:click={cancelLinking} title="Cancel">
                            <i class="fas fa-times"></i>
                         </button>
-                     {:else if isCreating}
-                        <button class="action-btn primary" on:click={createArmy} title="Create Army">
-                           <i class="fas fa-check"></i>
-                        </button>
-                        <button class="action-btn" on:click={cancelCreating} title="Cancel">
-                           <i class="fas fa-times"></i>
-                        </button>
                      {:else}
                         <button class="action-btn" on:click={() => startLinking('new')} title="Link existing actor">
                            <i class="fas fa-link"></i>
                         </button>
-                        <button class="action-btn primary" on:click={startCreating} title="Create new army">
+                        <button class="action-btn primary" on:click={startCreating} title="Recruit new army">
                            <i class="fas fa-plus"></i>
                         </button>
                      {/if}
