@@ -32,6 +32,7 @@ export function createCustomActionHandlers(context: {
   setShowTrainArmyDialog: (show: boolean) => void;
   setShowDisbandArmyDialog: (show: boolean) => void;
   setShowOutfitArmyDialog: (show: boolean) => void;
+  handleArmyDeployment?: (skill: string) => Promise<void>;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
   setPendingUpgradeAction: (action: { skill: string }) => void;
@@ -41,6 +42,7 @@ export function createCustomActionHandlers(context: {
   setPendingTrainArmyAction: (action: { skill: string }) => void;
   setPendingDisbandArmyAction: (action: { skill: string }) => void;
   setPendingOutfitArmyAction: (action: { skill: string }) => void;
+  setPendingDeployArmyAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -87,6 +89,21 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowOutfitArmyDialog(true),
       storePending: (skill: string) => context.setPendingOutfitArmyAction({ skill })
+    },
+    'deploy-army': {
+      requiresPreDialog: true,
+      showDialog: () => {
+        // Deploy army doesn't use a traditional dialog - it uses ArmyDeploymentPanel service
+        // The showDialog method is called, but we don't actually show a dialog
+        // Instead, the storePending method will handle the actual deployment
+      },
+      storePending: (skill: string) => {
+        context.setPendingDeployArmyAction({ skill });
+        // Trigger the deployment panel directly
+        if (context.handleArmyDeployment) {
+          context.handleArmyDeployment(skill);
+        }
+      }
     }
   };
 }

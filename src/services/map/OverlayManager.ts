@@ -599,9 +599,8 @@ export class OverlayManager {
       icon: 'fa-road',
       layerIds: ['routes'],
       store: derived(kingdomData, $data => 
-        // Use getRoads() to get road hex IDs from territory service
-        // This ensures we use the same logic as before
-        ($data.roadsBuilt || []).length > 0 ? territoryService.getRoads() : []
+        // Always derive from hex.hasRoad flags (source of truth)
+        territoryService.getRoads()
       ),  // ✅ Reactive subscription
       render: (roadHexIds) => {
         if (roadHexIds.length === 0) {

@@ -47,6 +47,7 @@
   let showTrainArmyDialog: boolean = false;
   let showDisbandArmyDialog: boolean = false;
   let showOutfitArmyDialog: boolean = false;
+  let showDeployArmyDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
@@ -57,6 +58,7 @@
   let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingDisbandArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingOutfitArmyAction: { skill: string; armyId?: string } | null = null;
+  let pendingDeployArmyAction: { skill: string; armyId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
   // Map<actionId, instanceId> - one active instance per action per player
@@ -109,6 +111,7 @@
     setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
     setShowDisbandArmyDialog: (show) => { showDisbandArmyDialog = show; },
     setShowOutfitArmyDialog: (show) => { showOutfitArmyDialog = show; },
+    handleArmyDeployment: handleArmyDeployment,
     setPendingBuildAction: (action) => { pendingBuildAction = action; },
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
@@ -117,7 +120,8 @@
     setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; },
     setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; },
     setPendingDisbandArmyAction: (action) => { pendingDisbandArmyAction = action; },
-    setPendingOutfitArmyAction: (action) => { pendingOutfitArmyAction = action; }
+    setPendingOutfitArmyAction: (action) => { pendingOutfitArmyAction = action; },
+    setPendingDeployArmyAction: (action) => { pendingDeployArmyAction = action; }
   });
 
   // UI helper - toggle action expansion
@@ -796,6 +800,58 @@
       
       await executeOutfitArmyRoll(pendingOutfitArmyAction);
     }
+  }
+  
+  // Handle army deployment (uses ArmyDeploymentPanel service, not a dialog)
+  async function handleArmyDeployment(skill: string) {
+    try {
+      // Import the deployment panel service
+      const { armyDeploymentPanel } = await import('../../../services/army/ArmyDeploymentPanel');
+      
+      // Open the deployment panel (shows floating UI on map)
+      const result = await armyDeploymentPanel.selectArmyAndPlotPath(skill);
+      
+      if (!result) {
+        // User cancelled
+        pendingDeployArmyAction = null;
+        return;
+      }
+      
+      // Store result in pending action
+      if (pendingDeployArmyAction) {
+        pendingDeployArmyAction.armyId = result.armyId;
+      }
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingDeployArmy = {
+        armyId: result.armyId,
+        path: result.path
+      };
+      
+      // Trigger skill roll
+      await executeDeployArmyRoll({ skill, armyId: result.armyId });
+      
+    } catch (error) {
+      logger.error('[handleArmyDeployment] Error:', error);
+      ui.notifications?.error(`Failed to deploy army: ${error}`);
+      pendingDeployArmyAction = null;
+    }
+  }
+  
+  // Execute deploy army skill roll - using ActionExecutionHelpers
+  async function executeDeployArmyRoll(deployArmyAction: { skill: string; armyId?: string }) {
+    await executeActionRoll(
+      createExecutionContext('deploy-army', deployArmyAction.skill, {
+        armyId: deployArmyAction.armyId
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingDeployArmyAction = null;
+          delete (globalThis as any).__pendingDeployArmy;
+        }
+      }
+    );
   }
   
   // Execute train army skill roll - using ActionExecutionHelpers

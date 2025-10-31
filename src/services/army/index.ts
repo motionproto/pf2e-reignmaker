@@ -251,7 +251,7 @@ export class ArmyService {
       throw new Error(`Actor not found: ${actorId}`);
     }
     
-    // Create token data using actor's prototype token
+    // Create token data using actor's prototype token (initial position at hex center)
     const tokenData = {
       actorId: actorId,
       x: x,
@@ -264,7 +264,29 @@ export class ArmyService {
       }
     };
     
-    await scene.createEmbeddedDocuments('Token', [tokenData]);
+    // Create the token first
+    const createdTokens = await scene.createEmbeddedDocuments('Token', [tokenData]);
+    const createdToken = createdTokens[0];
+    
+    // Get canvas for grid size
+    const canvas = (globalThis as any).canvas;
+    const gridSize = canvas?.grid?.size || 100;
+    
+    // Calculate pixel dimensions from the CREATED token
+    const widthPx = createdToken.width * gridSize;
+    const heightPx = createdToken.height * gridSize;
+    
+    // Calculate centered position (Foundry positions tokens by top-left corner)
+    const centeredX = x - widthPx / 2;
+    const centeredY = y - heightPx / 2;
+    
+    logger.info(`🎯 [ArmyService] Token dimensions: ${widthPx}x${heightPx}px (${createdToken.width}x${createdToken.height} grid units), adjusting position from (${x},${y}) to (${centeredX},${centeredY})`);
+    
+    // Update token position to center it on the hex
+    await createdToken.update({
+      x: centeredX,
+      y: centeredY
+    });
 
   }
   
@@ -303,11 +325,11 @@ export class ArmyService {
     
     // Remove army from kingdom (no refund)
     await updateKingdom(kingdom => {
-      kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
+      kingdom.armies = kingdom.armies.filter((a: Army): boolean => a.id !== armyId);
       
       // Also remove from any settlement's supportedUnits
       kingdom.settlements.forEach((s: Settlement) => {
-        s.supportedUnits = s.supportedUnits.filter(id => id !== armyId);
+        s.supportedUnits = s.supportedUnits.filter((id: string): boolean => id !== armyId);
       });
     });
     

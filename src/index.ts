@@ -5,6 +5,8 @@
 
 // Import styles for hiding Kingmaker controls
 import './styles/hide-kingmaker-controls.css';
+// Import styles for map interaction mode
+import './styles/map-interaction.css';
 
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';

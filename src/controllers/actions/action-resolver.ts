@@ -409,6 +409,36 @@ export class ActionResolver {
                 return await resolver.trainArmy(armyId, outcomeString);
             }
             
+            case 'deployArmy': {
+                // Get armyId and path from pending state (set by ArmyDeploymentPanel)
+                const pendingData = (globalThis as any).__pendingDeployArmy;
+                
+                if (!pendingData) {
+                    return {
+                        success: false,
+                        error: 'No army deployment data available'
+                    };
+                }
+                
+                const { armyId, path } = pendingData;
+                
+                if (!armyId || !path || path.length < 2) {
+                    return {
+                        success: false,
+                        error: 'Invalid deployment data - missing army or path'
+                    };
+                }
+                
+                // Get outcome and conditions from gameEffect (passed from action JSON)
+                const outcomeString = gameEffect.outcome || 'success';
+                const conditionsToApply = gameEffect.conditionsToApply || [];
+                
+                // Clean up pending data
+                delete (globalThis as any).__pendingDeployArmy;
+                
+                return await resolver.deployArmy(armyId, path, outcomeString, conditionsToApply);
+            }
+            
             // TODO: Add more game effect handlers as we implement them
             // case 'claimHexes': return await resolver.claimHexes(...)
             // case 'buildRoads': return await resolver.buildRoads(...)

@@ -156,9 +156,10 @@ export function getNeighborHexIds(hexId: string): string[] {
     const hexNeighbors = canvas.grid.getNeighbors(offset.i, offset.j);
     
     // Convert to hex ID format
+    // Foundry returns [i, j] arrays, not {i, j} objects
     const neighbors: string[] = [];
     hexNeighbors.forEach((neighbor: any) => {
-      const neighborId = `${neighbor.i}.${neighbor.j}`;
+      const neighborId = `${neighbor[0]}.${neighbor[1]}`;
       neighbors.push(neighborId);
     });
     

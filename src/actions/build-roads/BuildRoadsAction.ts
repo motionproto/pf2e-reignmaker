@@ -128,12 +128,15 @@ const BuildRoadsAction: CustomActionImplementation = {
           return createSuccessResult('Road selection cancelled');
         }
         
-        // Update Kingdom Store
+        // Update Kingdom Store - Set hasRoad flag on each hex
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
-          if (!kingdom.roadsBuilt) kingdom.roadsBuilt = [];
-          kingdom.roadsBuilt.push(...selectedHexes);
-
+          selectedHexes.forEach(hexId => {
+            const hex = kingdom.hexes.find((h: any) => h.id === hexId);
+            if (hex) {
+              hex.hasRoad = true;
+            }
+          });
         });
         
         // Clear interactive layers - roads now permanent in 'routes' layer (via reactive overlay)

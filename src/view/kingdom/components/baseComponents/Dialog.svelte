@@ -47,9 +47,24 @@
   function handleKeydown(event: KeyboardEvent) {
     if (!show) return;
     
+    // Check if event came from within a form element
+    const target = event.target as HTMLElement;
+    const isFormElement = target.tagName === 'INPUT' || 
+                          target.tagName === 'TEXTAREA' || 
+                          target.tagName === 'SELECT' ||
+                          target.isContentEditable;
+    
+    // NEVER handle Enter/Escape if user is in a form element
+    if (isFormElement) {
+      return;
+    }
+    
+    // Only handle shortcuts when focus is outside form elements
     if (event.key === 'Escape') {
+      event.preventDefault();
       handleCancel();
     } else if (event.key === 'Enter' && !confirmDisabled) {
+      event.preventDefault();
       handleConfirm();
     }
   }
@@ -95,7 +110,6 @@
                 class="dialog-button dialog-button-primary" 
                 on:click={handleConfirm}
                 disabled={confirmDisabled}
-                autofocus
               >
                 {confirmLabel}
               </button>

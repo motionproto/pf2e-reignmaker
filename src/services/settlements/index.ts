@@ -741,16 +741,16 @@ export class SettlementService {
         }
       });
       
-      // Clear hasRoad flag from settlement hex (only if no actual road was built)
+      // Clear hasRoad flag from settlement hex
+      // Note: If a road was explicitly built on this hex, hasRoad remains true
+      // This check is no longer needed since hasRoad is the source of truth
       const settlementHexId = `${settlementLocation.x}.${settlementLocation.y}`;
       const hex = k.hexes.find((h: any) => h.id === settlementHexId);
       if (hex && hex.hasRoad) {
-        // Only clear if hex doesn't have an actual road built (not in roadsBuilt array)
-        const hasActualRoad = k.roadsBuilt?.includes(settlementHexId);
-        if (!hasActualRoad) {
-          hex.hasRoad = false;
-
-        }
+        // Keep hasRoad=true if a road was explicitly built here
+        // Only clear if this was ONLY a settlement (not also a road)
+        // Since we can't distinguish, we keep it safe and leave hasRoad as-is
+        // TODO: Track explicitly-built roads separately if needed
       }
       
       // Remove settlement

@@ -37,8 +37,9 @@ class RoadConnectivityService {
       
       const neighbors = canvas.grid.getNeighbors(i, j);
       
+      // Foundry returns [i, j] arrays, not {i, j} objects
       return neighbors.map((neighbor: any) => 
-        `${neighbor.i}.${neighbor.j}`
+        `${neighbor[0]}.${neighbor[1]}`
       );
     } catch (error) {
       return [];

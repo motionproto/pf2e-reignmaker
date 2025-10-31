@@ -105,7 +105,6 @@ export interface KingdomData {
   // Must be recalculated whenever hexes or worksites change
   worksiteProduction: Record<string, number>;
   worksiteProductionByHex?: Array<[any, Map<string, number>]>;
-  roadsBuilt?: string[];  // Hex IDs where roads have been built
   
   // Military & Construction
   armies: Army[];

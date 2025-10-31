@@ -104,8 +104,9 @@ export async function renderRoadConnections(
       const isWater = waterHexSet.has(normalizedHexId);
 
       neighbors.forEach((neighbor: any) => {
-        const neighborI = neighbor.i;
-        const neighborJ = neighbor.j;
+        // Foundry returns [i, j] arrays, not {i, j} objects
+        const neighborI = neighbor[0];
+        const neighborJ = neighbor[1];
         const neighborId = `${neighborI}.${neighborJ}`;
 
         if (!roadHexSet.has(neighborId)) return;

@@ -150,8 +150,10 @@ export const hexesWithTerrain = derived(kingdomData, $data => {
  * Filtered by World Explorer visibility (GMs see all, players see revealed only)
  */
 export const kingdomRoads = derived(kingdomData, $data => {
-  // Roads are stored as an array of hex IDs in kingdom data
-  const roads = $data.roadsBuilt || [];
+  // Derive from hexes with hasRoad flag (source of truth)
+  const roads = ($data.hexes || [])
+    .filter((h: any) => h.hasRoad === true)
+    .map((h: any) => h.id);
   return filterVisibleHexIds(roads);
 });
 

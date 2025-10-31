@@ -57,6 +57,7 @@ export class ArmyMovementMode {
   private canvasClickHandler: ((event: any) => void) | null = null;
   private canvasMoveHandler: ((event: any) => void) | null = null;
   private currentHoveredHex: string | null = null;
+  private pathChangedCallback: ((path: string[]) => void) | null = null;
 
   constructor() {
     // Lazy load map layer to avoid circular dependency
@@ -84,6 +85,26 @@ export class ArmyMovementMode {
    */
   getSelectedArmy(): Army | null {
     return this.selectedArmy;
+  }
+  
+  /**
+   * Get the currently plotted path
+   */
+  getPlottedPath(): string[] {
+    if (!this.startHexId) return [];
+    
+    const fullPath: string[] = [this.startHexId];
+    for (const waypoint of this.waypoints) {
+      fullPath.push(...waypoint.pathFromPrevious.slice(1));
+    }
+    return fullPath;
+  }
+  
+  /**
+   * Set callback for path changes
+   */
+  setPathChangedCallback(callback: (path: string[]) => void): void {
+    this.pathChangedCallback = callback;
   }
 
   /**
@@ -376,6 +397,11 @@ export class ArmyMovementMode {
 
       // Render waypoints
       this.renderWaypoints();
+      
+      // Notify callback of path change
+      if (this.pathChangedCallback) {
+        this.pathChangedCallback(this.getPlottedPath());
+      }
 
       // Check if at max movement (auto-finalize)
       if (this.totalCostSpent >= this.maxMovement) {
@@ -396,14 +422,14 @@ export class ArmyMovementMode {
   /**
    * Finalize the path and execute the move
    */
-  private finalizePath(): void {
+  private async finalizePath(): Promise<void> {
     if (this.waypoints.length === 0) {
       logger.warn('[ArmyMovementMode] No waypoints to finalize');
       return;
     }
 
-    if (!this.startHexId) {
-      logger.error('[ArmyMovementMode] Cannot finalize - no start hex');
+    if (!this.startHexId || !this.selectedArmy) {
+      logger.error('[ArmyMovementMode] Cannot finalize - missing start hex or army');
       return;
     }
 
@@ -421,10 +447,34 @@ export class ArmyMovementMode {
     logger.info(`[ArmyMovementMode] Finalizing path to ${finalHex} (${this.waypoints.length} waypoints, cost: ${totalCost})`);
     logger.info(`[ArmyMovementMode] Full path:`, fullPath);
 
-    // TODO: Actually move the army token along the path
-    // For now, just notify
-    const ui = (globalThis as any).ui;
-    ui?.notifications?.info(`${this.selectedArmy!.name} would move along ${this.waypoints.length} waypoints (${totalCost} movement)`);
+    // Animate the army token along the path
+    try {
+      const { getArmyToken, animateTokenAlongPath } = await import('./tokenAnimation');
+      
+      const tokenDoc = await getArmyToken(this.selectedArmy.id);
+      
+      if (tokenDoc) {
+        logger.info(`[ArmyMovementMode] Starting token animation for ${this.selectedArmy.name}`);
+        
+        // Animate token along full path (100ms per hex with ease-in-out)
+        await animateTokenAlongPath(tokenDoc, fullPath, 100);
+        
+        logger.info(`[ArmyMovementMode] Token animation complete`);
+        
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.info(`${this.selectedArmy.name} moved to ${finalHex} (${totalCost} movement)`);
+      } else {
+        logger.warn(`[ArmyMovementMode] No token found for ${this.selectedArmy.name} - skipping animation`);
+        
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.info(`${this.selectedArmy.name} would move to ${finalHex} (${totalCost} movement)`);
+      }
+    } catch (error) {
+      logger.error('[ArmyMovementMode] Error animating token:', error);
+      
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Failed to animate army movement');
+    }
 
     // Deactivate mode
     this.deactivate();

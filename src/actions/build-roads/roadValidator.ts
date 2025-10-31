@@ -23,11 +23,15 @@ import { PLAYER_KINGDOM } from '../../types/ownership';
  */
 export function isAdjacentToRoadOrSettlement(hexId: string, kingdom: KingdomData, pendingRoads: string[] = []): boolean {
   const adjacentHexIds = getAdjacentHexIds(hexId);
+  console.log(`🔍 [RoadValidator] Checking adjacency for ${hexId}, adjacent hexes:`, adjacentHexIds);
   
-  // Check if any adjacent hex has an existing road
-  const existingRoads = kingdom.roadsBuilt || [];
-  if (adjacentHexIds.some(id => existingRoads.includes(id))) {
-    return true;
+  // Check if any adjacent hex has an existing road (hasRoad flag)
+  for (const adjHexId of adjacentHexIds) {
+    const adjHex = kingdom.hexes.find((h: any) => h.id === adjHexId);
+    if (adjHex?.hasRoad) {
+      console.log(`✅ [RoadValidator] ${hexId} is adjacent to road at ${adjHexId}`);
+      return true;
+    }
   }
   
   // Check if any adjacent hex has a pending road
@@ -36,17 +40,22 @@ export function isAdjacentToRoadOrSettlement(hexId: string, kingdom: KingdomData
   }
   
   // Check if any adjacent hex has a settlement (settlements = roads)
-  for (const settlement of kingdom.settlements || []) {
+  const settlements = kingdom.settlements || [];
+  console.log(`🏘️ [RoadValidator] Checking ${settlements.length} settlements`);
+  for (const settlement of settlements) {
     if (!settlement.location || (settlement.location.x === 0 && settlement.location.y === 0)) {
       continue; // Skip unmapped settlements
     }
     
     const settlementHexId = `${settlement.location.x}.${settlement.location.y}`;
+    console.log(`   Settlement "${settlement.name}" at ${settlementHexId}`);
     if (adjacentHexIds.includes(settlementHexId)) {
+      console.log(`✅ [RoadValidator] ${hexId} is adjacent to settlement at ${settlementHexId}`);
       return true;
     }
   }
   
+  console.log(`❌ [RoadValidator] ${hexId} is not adjacent to any roads or settlements`);
   return false;
 }
 
@@ -60,11 +69,10 @@ export function getAdjacentRoadsAndSettlements(hexId: string, kingdom: KingdomDa
   const adjacentHexIds = getAdjacentHexIds(hexId);
   const result: string[] = [];
   
-  const existingRoads = kingdom.roadsBuilt || [];
-  
   for (const adjacentId of adjacentHexIds) {
-    // Check if adjacent hex has an existing road
-    if (existingRoads.includes(adjacentId)) {
+    // Check if adjacent hex has an existing road (hasRoad flag)
+    const adjHex = kingdom.hexes.find((h: any) => h.id === adjacentId);
+    if (adjHex?.hasRoad) {
       result.push(adjacentId);
       continue;
     }
@@ -124,10 +132,20 @@ export function validateRoadHex(hexId: string, pendingRoads: string[] = []): boo
   }
   
   // Check 4: Must be adjacent to existing roads, pending roads, or settlements
-  if (!isAdjacentToRoadOrSettlement(hexId, kingdom, pendingRoads)) {
-
-    return false;
+  // EXCEPTION: If there are NO roads and NO settlements yet, allow first road anywhere
+  const hasAnyRoads = kingdom.hexes.some((h: any) => h.hasRoad);
+  const hasAnySettlements = (kingdom.settlements || []).some(s => 
+    s.location && !(s.location.x === 0 && s.location.y === 0)
+  );
+  const hasAnyPendingRoads = pendingRoads.length > 0;
+  
+  // If there are roads, settlements, or pending roads, enforce adjacency
+  if (hasAnyRoads || hasAnySettlements || hasAnyPendingRoads) {
+    if (!isAdjacentToRoadOrSettlement(hexId, kingdom, pendingRoads)) {
+      return false;
+    }
   }
+  // Otherwise (first road), allow anywhere in claimed territory
 
   return true;
 }

@@ -28,8 +28,11 @@ export function getAdjacentHexIds(hexId: string): string[] {
     const offset = kingmakerIdToOffset(hexId);
     const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
     
-    // Use Foundry's native format (no zero-padding)
-    return neighbors.map((neighbor: any) => `${neighbor.i}.${neighbor.j}`);
+    console.log(`🔍 [HexValidation] getNeighbors(${offset.i}, ${offset.j}) returned:`, neighbors);
+    
+    // Foundry returns array of [i, j] coordinate pairs (arrays, not objects)
+    // Example: [[5,8], [5,9], [6,8], ...]
+    return neighbors.map((neighbor: any) => `${neighbor[0]}.${neighbor[1]}`);
   } catch (error) {
     logger.warn(`[HexValidation] Error getting neighbors for ${hexId}:`, error);
     return [];
@@ -113,9 +116,9 @@ export function hexHasSettlement(hexId: string, kingdom: KingdomData): boolean {
  * @returns true if hex has roads or a settlement
  */
 export function hexHasRoads(hexId: string, kingdom: KingdomData): boolean {
-  // Check roadsBuilt array first (most common case)
-  const roadsBuilt = kingdom.roadsBuilt || [];
-  if (roadsBuilt.includes(hexId)) return true;
+  // Check hex hasRoad flag
+  const hex = getHex(hexId, kingdom);
+  if (hex?.hasRoad) return true;
   
   // Check if hex has a settlement (settlements = roads)
   return hexHasSettlement(hexId, kingdom);

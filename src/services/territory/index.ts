@@ -356,19 +356,8 @@ export class TerritoryService {
                 }
             }
             
-            // Import roads from Kingmaker features
-            if (roadsBuilt.length > 0) {
-                if (!state.roadsBuilt) {
-                    state.roadsBuilt = [];
-                }
-                // Merge with existing roads, avoiding duplicates
-                const existingRoads = new Set(state.roadsBuilt);
-                for (const hexId of roadsBuilt) {
-                    existingRoads.add(hexId);
-                }
-                state.roadsBuilt = Array.from(existingRoads);
-
-            }
+            // Roads are tracked via hex.hasRoad flag only (no separate roadsBuilt array)
+            // The roadsBuilt array was used during import but is now deprecated
             
             // Update worksite counts for UI display
             const worksiteCount: Record<string, number> = {};
@@ -824,18 +813,13 @@ export class TerritoryService {
     
   /**
    * Get all roads in the kingdom
-   * Single source of truth for road data
+   * Derives from hex.hasRoad flags (single source of truth)
    * Returns array of hex IDs that have roads
    */
   getRoads(): string[] {
     const state = get(kingdomData);
     
-    // Prefer roadsBuilt array if it exists and has data
-    if (state.roadsBuilt && state.roadsBuilt.length > 0) {
-      return state.roadsBuilt;
-    }
-    
-    // Fallback: derive from hexes with hasRoad flag
+    // Derive from hexes with hasRoad flag (source of truth)
     if (state.hexes) {
       return state.hexes
         .filter((h: any) => h.hasRoad === true)

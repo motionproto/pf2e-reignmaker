@@ -762,9 +762,9 @@ export class ReignMakerMapLayer {
       roadGraphics.name = `RoadPreview_${hexId}`;
       roadGraphics.visible = true;
       this.drawRoadPreviewLines(roadGraphics, hexId, roadPreview, {
-        color: 0x4CAF50,  // Green
-        alpha: 0.8,       // Slightly transparent
-        width: 8,         // 8px for hover
+        color: 0x64e76a,  // Green
+        alpha: 0.65,       // Slightly transparent
+        width: 20,         // 8px for hover
         dashed: false     // Solid line
       });
       layer.addChild(roadGraphics);
@@ -811,7 +811,7 @@ export class ReignMakerMapLayer {
       roadGraphics.name = `RoadConnection_${hexId}`;
       roadGraphics.visible = true;
       this.drawRoadPreviewLines(roadGraphics, hexId, roadConnections, {
-        color: 0x4CAF50,  // Green
+        color: 0x64e76a,  // Green
         alpha: 1.0,       // Solid
         width: 20,        // 20px for selection
         dashed: false     // Solid line

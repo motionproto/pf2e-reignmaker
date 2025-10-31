@@ -1,0 +1,46 @@
+/**
+ * Map Interaction Mode Styles
+ * 
+ * CSS-based app visibility control during map interactions
+ * (hex selection, army deployment, etc.)
+ * 
+ * Applied by AppWindowManager service
+ */
+
+/* Base map interaction mode - prevent interaction */
+#pf2e-reignmaker.map-interaction-mode {
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  z-index: 1; /* Below map controls */
+}
+
+/* Slide to right (recommended - clear but not intrusive) */
+#pf2e-reignmaker.map-interaction-slide {
+  transform: translateX(calc(100% - 40px)); /* Peek 40px from edge */
+  opacity: 0.6;
+}
+
+/* Fade out (subtle) */
+#pf2e-reignmaker.map-interaction-fade {
+  opacity: 0.15;
+}
+
+/* Minimize effect (scale down to corner) */
+#pf2e-reignmaker.map-interaction-minimize {
+  transform: scale(0.2) translate(200%, 200%);
+  opacity: 0.5;
+}
+
+/* Hide completely */
+#pf2e-reignmaker.map-interaction-hide {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+/* Hover to peek at app during map mode (except when completely hidden) */
+#pf2e-reignmaker.map-interaction-mode:not(.map-interaction-hide):hover {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  z-index: 100; /* Above map controls when hovering */
+}

@@ -8,6 +8,7 @@ import { initializeKingdomSync } from './hooks/kingdomSync';
 import { registerArmyActorHooks } from './hooks/armyActorHooks';
 import { registerDebugUtils } from './debug/armyMovement';
 import { registerHexCenterTestUtils } from './debug/hex-center-test';
+import { initializeHexInspector } from './debug/hex-inspector';
 
 declare const Hooks: any;
 declare const CONFIG: any;
@@ -32,6 +33,7 @@ export function initializeKingdomSystem(): void {
   try {
     registerDebugUtils();
     registerHexCenterTestUtils();
+    initializeHexInspector();
   } catch (error) {
     console.error('[Kingdom System] Failed to register debug utilities:', error);
   }

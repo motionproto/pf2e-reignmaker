@@ -24,6 +24,7 @@ import type { HexStyle } from '../map/types';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { getAdjacentRoadsAndSettlements } from '../../actions/build-roads/roadValidator';
 import { logger } from '../../utils/Logger';
+import { appWindowManager } from '../ui/AppWindowManager';
 
 export type { HexSelectionConfig, HexSelectionType, ColorConfig } from './types';
 
@@ -135,82 +136,14 @@ export class HexSelectorService {
    * Minimize the Reignmaker Application window
    */
   private minimizeReignmakerApp(): void {
-
-    try {
-      const ui = (globalThis as any).ui;
-      
-      // IMPORTANT: The app's HTML element has id="pf2e-reignmaker"
-      // Try multiple strategies to find the Reignmaker app
-      let reignmakerApp = null;
-      
-      // Strategy 1: Find by element ID
-      reignmakerApp = ui?.windows?.find((w: any) => 
-        w.element?.id === 'pf2e-reignmaker' ||
-        w.element?.[0]?.id === 'pf2e-reignmaker'
-      );
-
-      // Strategy 2: Find by constructor name
-      if (!reignmakerApp) {
-        reignmakerApp = ui?.windows?.find((w: any) => 
-          w.constructor?.name === 'KingdomApp'
-        );
-
-      }
-      
-      // Strategy 3: Find by title
-      if (!reignmakerApp) {
-        reignmakerApp = ui?.windows?.find((w: any) => 
-          w.title?.includes('ReignMaker')
-        );
-
-      }
-      
-      if (reignmakerApp) {
-
-        if (reignmakerApp.minimize && !reignmakerApp.minimized) {
-          reignmakerApp.minimize();
-
-        } else if (reignmakerApp.minimized) {
-
-        } else {
-          logger.warn('[HexSelector] ⚠️  App found but no minimize() method available');
-        }
-      } else {
-        logger.warn('[HexSelector] ⚠️  Could not find Reignmaker app to minimize');
-
-      }
-    } catch (error) {
-      logger.warn('[HexSelector] ❌ Failed to minimize Reignmaker app:', error);
-    }
+    appWindowManager.enterMapMode('slide');
   }
   
   /**
    * Restore the Reignmaker Application window
    */
   private restoreReignmakerApp(): void {
-    try {
-      const ui = (globalThis as any).ui;
-      
-      // Find by element ID (matching minimize logic)
-      let reignmakerApp = ui?.windows?.find((w: any) => 
-        w.element?.id === 'pf2e-reignmaker' ||
-        w.element?.[0]?.id === 'pf2e-reignmaker'
-      );
-      
-      // Fallback to constructor name
-      if (!reignmakerApp) {
-        reignmakerApp = ui?.windows?.find((w: any) => 
-          w.constructor?.name === 'KingdomApp'
-        );
-      }
-      
-      if (reignmakerApp && reignmakerApp.minimized) {
-        reignmakerApp.maximize();
-
-      }
-    } catch (error) {
-      logger.warn('[HexSelector] Failed to restore Reignmaker app:', error);
-    }
+    appWindowManager.exitMapMode();
   }
   
   /**
@@ -249,10 +182,12 @@ export class HexSelectorService {
         break;
         
       case 'road':
-        // Show territory AND existing roads for road building
+        // Show territory, existing roads, AND settlements for road building
+        // (settlements count as roads for adjacency)
         await this.overlayManager.showOverlay('territories');
         await this.overlayManager.showOverlay('territory-border');
         await this.overlayManager.showOverlay('roads');
+        await this.overlayManager.showOverlay('settlement-icons');
         break;
         
       case 'settlement':

@@ -279,14 +279,37 @@
     }
 
     // Extract enabled modifiers from rollBreakdown and store for next roll
+    // FILTER: Only preserve kingdom modifiers and custom modifiers, exclude system-generated ones
     const enabledModifiers: Array<{ label: string; modifier: number }> = [];
     if (rollBreakdown?.modifiers) {
       for (const mod of rollBreakdown.modifiers) {
         if (mod.enabled === true) {
-          enabledModifiers.push({
-            label: mod.label,
-            modifier: mod.modifier
-          });
+          // Kingdom modifier patterns to preserve:
+          const isUnrestPenalty = mod.label === 'Unrest Penalty';
+          const isInfrastructureBonus = mod.label.includes(' Infrastructure');
+          const isAidBonus = mod.label.startsWith('Aid from ');
+          
+          // System-generated patterns to exclude (these are added automatically by PF2e):
+          const isSkillBonus = mod.label.match(/^\\+?\\d+\\s+[A-Z]/); // e.g., "+15 Diplomacy", "12 Society"
+          const isAbilityScore = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'].some(
+            ability => mod.label.includes(ability)
+          );
+          const isProficiency = mod.label.toLowerCase().includes('proficiency');
+          const isProficiencyRank = ['Untrained', 'Trained', 'Expert', 'Master', 'Legendary'].some(
+            rank => mod.label.includes(rank)
+          );
+          const isLevel = mod.label.toLowerCase().includes('level');
+          
+          // Include if it's a kingdom modifier OR a custom modifier (not system-generated)
+          const isKingdomModifier = isUnrestPenalty || isInfrastructureBonus || isAidBonus;
+          const isSystemGenerated = isSkillBonus || isAbilityScore || isProficiency || isProficiencyRank || isLevel;
+          
+          if (isKingdomModifier || !isSystemGenerated) {
+            enabledModifiers.push({
+              label: mod.label,
+              modifier: mod.modifier
+            });
+          }
         }
       }
 

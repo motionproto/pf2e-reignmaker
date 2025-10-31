@@ -4,6 +4,7 @@
    import { activeEditingCard } from '../../../../stores/EditingStore';
    import FloatingNumber from '../FloatingNumber.svelte';
    import { getUnrestIconAndColor } from '../../../../services/domain/unrest/UnrestService';
+   import type { KingdomData } from '../../../../actors/KingdomActor';
    
    // Props
    export let resource: string;
@@ -78,7 +79,7 @@
          // Default behavior: update via KingdomActor
          const actor = getKingdomActor();
          if (actor) {
-            actor.updateKingdomData((kingdom) => {
+            actor.updateKingdomData((kingdom: KingdomData) => {
                kingdom.resources[resource] = newValue;
             });
          }
@@ -156,7 +157,7 @@
          <div class="edit-buttons">
             <button 
                class="save-btn" 
-               on:click|stopPropagation={saveEdit} 
+               on:mousedown|preventDefault|stopPropagation={saveEdit} 
                aria-label="Save"
                title="Save"
             >
@@ -164,7 +165,7 @@
             </button>
             <button 
                class="cancel-btn" 
-               on:click|stopPropagation={cancelEdit} 
+               on:mousedown|preventDefault|stopPropagation={cancelEdit} 
                aria-label="Cancel"
                title="Cancel"
             >

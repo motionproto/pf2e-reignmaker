@@ -400,7 +400,7 @@ export async function createGameCommandsResolver() {
 
         // Update settlement imprisoned unrest
         await updateKingdom(kingdom => {
-          const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
+          const settlement = kingdom.settlements?.find(s => s.id === settlementId);
           if (settlement) {
             settlement.imprisonedUnrest = Math.max(0, (settlement.imprisonedUnrest || 0) - amountToReduce);
           }
@@ -763,6 +763,284 @@ export async function createGameCommandsResolver() {
       }
     },
 
+    /**
+     * Deploy Army - Move army along path with animation and apply outcome conditions
+     * 
+     * @param armyId - ID of army to deploy
+     * @param path - Array of hex IDs representing the movement path
+     * @param outcome - Action outcome (criticalSuccess, success, failure, criticalFailure)
+     * @param conditionsToApply - Array of condition strings to apply to army actor
+     * @returns ResolveResult with deployment details
+     */
+    async deployArmy(
+      armyId: string, 
+      path: string[], 
+      outcome: string, 
+      conditionsToApply: string[]
+    ): Promise<ResolveResult> {
+      logger.info(`🚀 [deployArmy] Deploying army ${armyId} with outcome ${outcome}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Find the army
+        const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+        if (!army) {
+          return { success: false, error: `Army ${armyId} not found` };
+        }
+
+        if (!army.actorId) {
+          return { success: false, error: `${army.name} has no linked NPC actor` };
+        }
+
+        // Validate path
+        if (!path || path.length < 2) {
+          return { success: false, error: 'Invalid path - must have at least 2 hexes' };
+        }
+
+        let finalPath = path;
+        let randomHexMessage = '';
+
+        // Critical failure: Calculate random nearby hex
+        if (outcome === 'criticalFailure') {
+          const originHex = path[0];
+          const randomHex = this.calculateRandomNearbyHex(originHex);
+          finalPath = [originHex, randomHex];
+          randomHexMessage = ` (arrived at random hex ${randomHex})`;
+          logger.info(`❌ [deployArmy] Critical failure - redirecting to random hex ${randomHex}`);
+        }
+
+        // Animate token along path
+        try {
+          const { getArmyToken, animateTokenAlongPath } = await import('./army/tokenAnimation');
+          const tokenDoc = await getArmyToken(armyId);
+          
+          if (tokenDoc) {
+            logger.info(`🎬 [deployArmy] Animating ${army.name} along ${finalPath.length} hexes`);
+            await animateTokenAlongPath(tokenDoc, finalPath, 100);
+          } else {
+            logger.warn(`⚠️ [deployArmy] No token found for ${army.name} - skipping animation`);
+          }
+        } catch (error) {
+          logger.error('❌ [deployArmy] Animation failed:', error);
+          // Continue even if animation fails
+        }
+
+        // Apply conditions to army actor
+        if (conditionsToApply && conditionsToApply.length > 0) {
+          try {
+            const game = (globalThis as any).game;
+            const armyActor = game.actors.get(army.actorId);
+            
+            if (armyActor) {
+              for (const conditionString of conditionsToApply) {
+                await this.applyConditionToActor(armyActor, conditionString);
+              }
+              logger.info(`✅ [deployArmy] Applied ${conditionsToApply.length} conditions to ${army.name}`);
+            } else {
+              logger.warn(`⚠️ [deployArmy] Could not find actor for ${army.name}`);
+            }
+          } catch (error) {
+            logger.error('❌ [deployArmy] Failed to apply conditions:', error);
+            // Continue even if conditions fail
+          }
+        }
+
+        const finalHex = finalPath[finalPath.length - 1];
+        const movementCost = finalPath.length - 1;
+
+        return {
+          success: true,
+          data: {
+            armyName: army.name,
+            finalHex,
+            movementCost,
+            conditionsApplied: conditionsToApply.length,
+            message: `${army.name} deployed to ${finalHex} (${movementCost} movement)${randomHexMessage}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to deploy army:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Helper: Calculate random nearby hex for critical failure
+     * Uses 1d6 for direction (6 hex directions) and 1d3 for distance
+     */
+    calculateRandomNearbyHex(originHexId: string): string {
+      // Parse origin hex
+      const [i, j] = originHexId.split('.').map(Number);
+      
+      // Roll 1d6 for direction (0-5)
+      const direction = Math.floor(Math.random() * 6);
+      
+      // Roll 1d3 for distance (1-3)
+      const distance = Math.floor(Math.random() * 3) + 1;
+      
+      // Hex neighbor offsets (flat-top hexagons)
+      // Even rows (j % 2 === 0): NE, E, SE, SW, W, NW
+      // Odd rows (j % 2 === 1): NE, E, SE, SW, W, NW (different offsets)
+      const evenRowOffsets = [
+        { di: 0, dj: -1 },  // NE
+        { di: 1, dj: 0 },   // E
+        { di: 0, dj: 1 },   // SE
+        { di: -1, dj: 1 },  // SW
+        { di: -1, dj: 0 },  // W
+        { di: -1, dj: -1 }  // NW
+      ];
+      
+      const oddRowOffsets = [
+        { di: 1, dj: -1 },  // NE
+        { di: 1, dj: 0 },   // E
+        { di: 1, dj: 1 },   // SE
+        { di: 0, dj: 1 },   // SW
+        { di: -1, dj: 0 },  // W
+        { di: 0, dj: -1 }   // NW
+      ];
+      
+      // Apply direction offset multiple times for distance
+      let currentI = i;
+      let currentJ = j;
+      
+      for (let step = 0; step < distance; step++) {
+        const offsets = currentJ % 2 === 0 ? evenRowOffsets : oddRowOffsets;
+        const offset = offsets[direction];
+        currentI += offset.di;
+        currentJ += offset.dj;
+      }
+      
+      return `${currentI}.${currentJ}`;
+    },
+
+    /**
+     * Helper: Apply condition string to army actor
+     * Parses condition strings like "+1 initiative (status bonus)", "fatigued", "enfeebled 1"
+     */
+    async applyConditionToActor(actor: any, conditionString: string): Promise<void> {
+      logger.info(`🎭 [applyConditionToActor] Applying "${conditionString}" to ${actor.name}`);
+      
+      // Parse condition string
+      const lowerCondition = conditionString.toLowerCase().trim();
+      
+      // Handle initiative modifiers
+      if (lowerCondition.includes('initiative')) {
+        const isPositive = lowerCondition.includes('+');
+        const match = lowerCondition.match(/([+-]?\d+)/);
+        const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
+        
+        // Create initiative modifier effect
+        await actor.createEmbeddedDocuments('Item', [{
+          type: 'effect',
+          name: `Army Deployment: Initiative ${bonus > 0 ? '+' : ''}${bonus}`,
+          system: {
+            slug: 'army-deployment-initiative',
+            rules: [{
+              key: 'FlatModifier',
+              selector: 'initiative',
+              value: bonus,
+              type: 'status'
+            }],
+            duration: { value: -1, unit: 'unlimited', expiry: 'turn-end' }
+          }
+        }]);
+        
+        logger.info(`✅ Applied initiative ${bonus > 0 ? '+' : ''}${bonus} to ${actor.name}`);
+        return;
+      }
+      
+      // Handle saving throw modifiers
+      if (lowerCondition.includes('saving throw') || lowerCondition.includes('saves')) {
+        const isPositive = lowerCondition.includes('+');
+        const match = lowerCondition.match(/([+-]?\d+)/);
+        const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
+        
+        await actor.createEmbeddedDocuments('Item', [{
+          type: 'effect',
+          name: `Army Deployment: Saves ${bonus > 0 ? '+' : ''}${bonus}`,
+          system: {
+            slug: 'army-deployment-saves',
+            rules: [{
+              key: 'FlatModifier',
+              selector: 'saving-throw',
+              value: bonus,
+              type: 'status'
+            }],
+            duration: { value: -1, unit: 'unlimited', expiry: 'turn-end' }
+          }
+        }]);
+        
+        logger.info(`✅ Applied saves ${bonus > 0 ? '+' : ''}${bonus} to ${actor.name}`);
+        return;
+      }
+      
+      // Handle attack modifiers
+      if (lowerCondition.includes('attack')) {
+        const isPositive = lowerCondition.includes('+');
+        const match = lowerCondition.match(/([+-]?\d+)/);
+        const bonus = match ? parseInt(match[1], 10) : (isPositive ? 1 : -1);
+        
+        await actor.createEmbeddedDocuments('Item', [{
+          type: 'effect',
+          name: `Army Deployment: Attack ${bonus > 0 ? '+' : ''}${bonus}`,
+          system: {
+            slug: 'army-deployment-attack',
+            rules: [{
+              key: 'FlatModifier',
+              selector: 'strike-attack-roll',
+              value: bonus,
+              type: 'status'
+            }],
+            duration: { value: -1, unit: 'unlimited', expiry: 'turn-end' }
+          }
+        }]);
+        
+        logger.info(`✅ Applied attack ${bonus > 0 ? '+' : ''}${bonus} to ${actor.name}`);
+        return;
+      }
+      
+      // Handle PF2e conditions (fatigued, enfeebled, etc.)
+      if (lowerCondition.includes('fatigued')) {
+        const condition = await fromUuid('Compendium.pf2e.conditionitems.Item.HL2l2VRSaQHu9lUw');
+        if (condition) {
+          await actor.createEmbeddedDocuments('Item', [condition.toObject()]);
+          logger.info(`✅ Applied Fatigued condition to ${actor.name}`);
+        }
+        return;
+      }
+      
+      if (lowerCondition.includes('enfeebled')) {
+        const match = lowerCondition.match(/enfeebled\s+(\d+)/);
+        const value = match ? parseInt(match[1], 10) : 1;
+        
+        const condition = await fromUuid('Compendium.pf2e.conditionitems.Item.MIRkyAjyBeXivMa7');
+        if (condition) {
+          const conditionData = condition.toObject();
+          if (conditionData.system && typeof conditionData.system === 'object') {
+            (conditionData.system as any).value = { value };
+          }
+          await actor.createEmbeddedDocuments('Item', [conditionData]);
+          logger.info(`✅ Applied Enfeebled ${value} condition to ${actor.name}`);
+        }
+        return;
+      }
+      
+      logger.warn(`⚠️ Unknown condition format: "${conditionString}"`);
+    },
+
     // TODO: Additional methods will be added as we implement more actions
     // - claimHexes(count, hexes)
     // - buildRoads(hexes)
@@ -771,8 +1049,6 @@ export async function createGameCommandsResolver() {
     // - buildStructure(settlementId, structureId, costReduction?)
     // - repairStructure(structureId)
     // - createWorksite(hexId, worksiteType)
-    // - deployArmy(armyId, targetHexId)
-    // - outfitArmy(armyId, equipmentUpgrades)
     // - recoverArmy(armyId)
     // - establishDiplomaticRelations(nationId)
     // - requestEconomicAid(nationId)
