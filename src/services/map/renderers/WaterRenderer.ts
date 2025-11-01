@@ -1,5 +1,6 @@
 /**
- * RoadRenderer - Renders road connections between adjacent hexes
+ * WaterRenderer - Renders water and river connections between adjacent hexes
+ * Separated from RoadRenderer to allow independent overlay control
  */
 
 import { getKingdomActor } from '../../../main.kingdom';
@@ -25,48 +26,50 @@ function normalizeHexId(hexId: string): string {
 }
 
 /**
- * Draw road connections between adjacent hexes with roads
- * Creates a network of lines connecting road hexes
- * Water hexes automatically count as roads with special styling
+ * Draw water/river connections between adjacent water hexes
+ * Creates a network of blue lines connecting water hexes
  * 
  * @param layer - PIXI container to add graphics to
- * @param roadHexIds - Array of hex IDs with roads
  * @param canvas - Foundry canvas object
  */
-export async function renderRoadConnections(
+export async function renderWaterConnections(
   layer: PIXI.Container,
-  roadHexIds: string[],
   canvas: any
 ): Promise<void> {
 
   if (!canvas?.grid) {
-    logger.warn('[RoadRenderer] ❌ Canvas grid not available');
+    logger.warn('[WaterRenderer] ❌ Canvas grid not available');
     return;
   }
 
-  // Get kingdom data to check for water hexes
+  // Get kingdom data to find water hexes
   const kingdomActor = await getKingdomActor();
   const kingdom = kingdomActor?.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
   
-  // Build water hex set for quick lookup
-  const waterHexSet = new Set<string>();
+  // Build water hex set
+  const waterHexIds: string[] = [];
   if (kingdom?.hexes) {
     kingdom.hexes.forEach(hex => {
       if (isWaterTerrain(hex.terrain)) {
-        waterHexSet.add(normalizeHexId(hex.id));
+        waterHexIds.push(hex.id);
       }
     });
   }
 
-  // DO NOT include water hexes - they are now handled by WaterRenderer
-  // Only process actual road hexes (land roads)
-  const normalizedRoadHexIds = roadHexIds.map(id => normalizeHexId(id));
-  const roadHexSet = new Set(normalizedRoadHexIds);
+  if (waterHexIds.length === 0) {
+    logger.info('[WaterRenderer] No water hexes found');
+    return;
+  }
 
+  // Normalize all water hex IDs for consistent matching
+  const normalizedWaterHexIds = waterHexIds.map(id => normalizeHexId(id));
+  const waterHexSet = new Set(normalizedWaterHexIds);
+
+  logger.info(`[WaterRenderer] Drawing connections for ${waterHexIds.length} water hexes`);
 
   // Graphics object for drawing lines
   const graphics = new PIXI.Graphics();
-  graphics.name = 'RoadConnections';
+  graphics.name = 'WaterConnections';
   graphics.visible = true;
 
   // Track connections we've already drawn (to avoid duplicates)
@@ -74,10 +77,10 @@ export async function renderRoadConnections(
 
   let connectionCount = 0;
 
-  // Store land road segments only
-  const landRoadSegments: Array<Array<{x: number, y: number}>> = [];
+  // Store water segments
+  const waterSegments: Array<Array<{x: number, y: number}>> = [];
   
-  roadHexIds.forEach(hexId => {
+  waterHexIds.forEach(hexId => {
     try {
       const parts = hexId.split('.');
       if (parts.length !== 2) return;
@@ -99,7 +102,8 @@ export async function renderRoadConnections(
         const neighborJ = neighbor[1];
         const neighborId = `${neighborI}.${neighborJ}`;
 
-        if (!roadHexSet.has(neighborId)) return;
+        // Only connect to other water hexes
+        if (!waterHexSet.has(neighborId)) return;
 
         const connectionId = [normalizedHexId, neighborId].sort().join('|');
         if (drawnConnections.has(connectionId)) return;
@@ -134,31 +138,31 @@ export async function renderRoadConnections(
           points.push({x, y});
         }
         
-        // Add to land road segments
-        landRoadSegments.push(points);
+        waterSegments.push(points);
         connectionCount++;
       });
     } catch (error) {
-      logger.error(`[RoadRenderer] Failed to process hex ${hexId}:`, error);
+      logger.error(`[WaterRenderer] Failed to process hex ${hexId}:`, error);
     }
   });
   
-  // Get road width from settings (borders are 4 pixels wider)
+  // Get road width from settings (use same width as roads)
   // @ts-ignore - Foundry globals
   const roadWidth = game.settings?.get('pf2e-reignmaker', 'roadWidth') as number || 32;
-  const borderWidth = roadWidth + 4;
+  const waterRoadWidth = roadWidth / 2;
+  const waterBorderWidth = waterRoadWidth + 2;
   
-  // PASS 1: Draw land road borders (black)
-  if (landRoadSegments.length > 0) {
+  // PASS 1: Draw water borders (darker blue)
+  if (waterSegments.length > 0) {
     graphics.lineStyle({
-      width: borderWidth,
-      color: ROAD_COLORS.roadBorder,
-      alpha: ROAD_COLORS.roadBorderAlpha,
+      width: waterBorderWidth,
+      color: ROAD_COLORS.waterBorder,
+      alpha: ROAD_COLORS.waterBorderAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });
     
-    landRoadSegments.forEach(points => {
+    waterSegments.forEach(points => {
       graphics.moveTo(points[0].x, points[0].y);
       for (let i = 1; i < points.length; i++) {
         graphics.lineTo(points[i].x, points[i].y);
@@ -166,17 +170,17 @@ export async function renderRoadConnections(
     });
   }
   
-  // PASS 2: Draw land roads (brown) on top of borders
-  if (landRoadSegments.length > 0) {
+  // PASS 2: Draw water (light blue) on top of borders
+  if (waterSegments.length > 0) {
     graphics.lineStyle({
-      width: roadWidth,
-      color: ROAD_COLORS.landRoad,
-      alpha: ROAD_COLORS.landRoadAlpha,
+      width: waterRoadWidth,
+      color: ROAD_COLORS.waterRoad,
+      alpha: ROAD_COLORS.waterRoadAlpha,
       cap: PIXI.LINE_CAP.ROUND,
       join: PIXI.LINE_JOIN.ROUND
     });
     
-    landRoadSegments.forEach(points => {
+    waterSegments.forEach(points => {
       graphics.moveTo(points[0].x, points[0].y);
       for (let i = 1; i < points.length; i++) {
         graphics.lineTo(points[i].x, points[i].y);
@@ -185,8 +189,9 @@ export async function renderRoadConnections(
   }
 
   layer.addChild(graphics);
+  logger.info(`[WaterRenderer] ✅ Drew ${connectionCount} water connections`);
 
   if (connectionCount === 0) {
-    logger.warn('[RoadRenderer] ⚠️ No road connections drawn - check that hex IDs match neighbor format');
+    logger.warn('[WaterRenderer] ⚠️ No water connections drawn - check that hex IDs match neighbor format');
   }
 }

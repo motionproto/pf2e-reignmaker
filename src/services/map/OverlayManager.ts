@@ -724,6 +724,31 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('roads')
     });
 
+    // Rivers and Water Overlay - REACTIVE (uses water hexes from kingdom data)
+    this.registerOverlay({
+      id: 'water',
+      name: 'Rivers and Water',
+      icon: 'fa-water',
+      layerIds: ['water'],
+      store: derived(kingdomData, $data => 
+        // Filter for water terrain hexes
+        $data.hexes.filter((h: any) => h.terrain === 'water')
+      ),  // ✅ Reactive subscription
+      render: async (waterHexes) => {
+        if (waterHexes.length === 0) {
+
+          this.mapLayer.clearLayer('water');
+          return;
+        }
+
+        await this.mapLayer.drawWaterConnections('water');
+      },
+      hide: () => {
+        // Cleanup handled by OverlayManager
+      },
+      isActive: () => this.isOverlayActive('water')
+    });
+
     // Worksites Overlay - REACTIVE (uses claimedHexesWithWorksites store)
     this.registerOverlay({
       id: 'worksites',

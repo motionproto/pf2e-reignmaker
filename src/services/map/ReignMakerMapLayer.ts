@@ -598,7 +598,7 @@ export class ReignMakerMapLayer {
   /**
    * Draw road connections between adjacent hexes with roads
    * Creates a network of lines connecting road hexes
-   * Water hexes automatically count as roads with special styling
+   * Water hexes are NOT included (handled by drawWaterConnections)
    */
   async drawRoadConnections(roadHexIds: string[], layerId: LayerId = 'routes'): Promise<void> {
     this.ensureInitialized();
@@ -612,6 +612,28 @@ export class ReignMakerMapLayer {
     
     // Delegate to renderer
     await renderRoadConnections(layer, roadHexIds, canvas);
+    
+    // Show layer after drawing
+    this.showLayer(layerId);
+  }
+
+  /**
+   * Draw water/river connections between adjacent water hexes
+   * Creates a network of blue lines connecting water hexes
+   */
+  async drawWaterConnections(layerId: LayerId = 'water'): Promise<void> {
+    this.ensureInitialized();
+    
+    // Validate and clear content
+    this.validateLayerEmpty(layerId);
+    this.clearLayerContent(layerId);
+    
+    const layer = this.createLayer(layerId, 41); // Just above roads (40)
+    const canvas = (globalThis as any).canvas;
+    
+    // Delegate to renderer
+    const { renderWaterConnections } = await import('./renderers/WaterRenderer');
+    await renderWaterConnections(layer, canvas);
     
     // Show layer after drawing
     this.showLayer(layerId);

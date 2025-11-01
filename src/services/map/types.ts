@@ -39,6 +39,7 @@ export type LayerId =
   | 'worksites'                   // Worksite icons (farm, mine, quarry, etc.)
   | 'resources'                   // Resource/commodity icons (food, lumber, ore, stone)
   | 'routes'                      // Road connections (curved lines between road hexes)
+  | 'water'                       // Water/river connections (blue curved lines)
   | 'fortifications'              // Fortification icons (walls, towers, keeps)
   | 'army-movement-origin'        // Army movement: origin hex highlight (green)
   | 'army-movement-range'         // Army movement: reachable hexes overlay (light green)
