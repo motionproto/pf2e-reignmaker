@@ -145,7 +145,7 @@ export async function renderRoadConnections(
   
   // Get road width from settings (borders are 4 pixels wider)
   // @ts-ignore - Foundry globals
-  const roadWidth = game.settings?.get('pf2e-reignmaker', 'roadWidth') as number || 32;
+  const roadWidth = game.settings?.get('pf2e-reignmaker', 'roadWidth') as number || 20;
   const borderWidth = roadWidth + 4;
   
   // PASS 1: Draw land road borders (black)

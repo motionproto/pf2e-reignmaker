@@ -90,6 +90,8 @@ export async function renderWaterConnections(
       if (isNaN(i) || isNaN(j)) return;
 
       const hexCenter = canvas.grid.getCenterPoint({i, j});
+      // Offset water 32 pixels to the right so it doesn't overlap with roads
+      const offsetHexCenter = { x: hexCenter.x + 24, y: hexCenter.y };
       
       // Get neighbors directly from grid API (Foundry v13+)
       const neighbors = canvas.grid.getNeighbors(i, j);
@@ -111,12 +113,14 @@ export async function renderWaterConnections(
         drawnConnections.add(connectionId);
 
         const neighborCenter = canvas.grid.getCenterPoint({i: neighborI, j: neighborJ});
+        // Offset neighbor water 32 pixels to the right as well
+        const offsetNeighborCenter = { x: neighborCenter.x + 32, y: neighborCenter.y };
 
-        // Calculate Bezier curve control point
-        const midX = (hexCenter.x + neighborCenter.x) / 2;
-        const midY = (hexCenter.y + neighborCenter.y) / 2;
-        const dx = neighborCenter.x - hexCenter.x;
-        const dy = neighborCenter.y - hexCenter.y;
+        // Calculate Bezier curve control point (using offset centers)
+        const midX = (offsetHexCenter.x + offsetNeighborCenter.x) / 2;
+        const midY = (offsetHexCenter.y + offsetNeighborCenter.y) / 2;
+        const dx = offsetNeighborCenter.x - offsetHexCenter.x;
+        const dy = offsetNeighborCenter.y - offsetHexCenter.y;
         const length = Math.sqrt(dx * dx + dy * dy);
         const perpX = -dy / length;
         const perpY = dx / length;
@@ -129,12 +133,12 @@ export async function renderWaterConnections(
         const points: Array<{x: number, y: number}> = [];
         for (let t = 0; t <= segments; t++) {
           const u = t / segments;
-          const x = Math.pow(1 - u, 2) * hexCenter.x +
+          const x = Math.pow(1 - u, 2) * offsetHexCenter.x +
                    2 * (1 - u) * u * controlX +
-                   Math.pow(u, 2) * neighborCenter.x;
-          const y = Math.pow(1 - u, 2) * hexCenter.y +
+                   Math.pow(u, 2) * offsetNeighborCenter.x;
+          const y = Math.pow(1 - u, 2) * offsetHexCenter.y +
                    2 * (1 - u) * u * controlY +
-                   Math.pow(u, 2) * neighborCenter.y;
+                   Math.pow(u, 2) * offsetNeighborCenter.y;
           points.push({x, y});
         }
         
