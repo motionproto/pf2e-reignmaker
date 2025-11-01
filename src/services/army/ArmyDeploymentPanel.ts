@@ -41,7 +41,7 @@ export class ArmyDeploymentPanel {
   private onRollTrigger: ((skill: string, armyId: string, path: string[]) => Promise<void>) | null = null;
   
   // Panel state machine
-  private panelState: 'selection' | 'waiting-for-roll' | 'showing-result' | 'animating' = 'selection';
+  private panelState: 'selection' | 'waiting-for-roll' | 'showing-result' | 'animating' | 'completed' = 'selection';
   private rollResult: RollResultData | null = null;
   
   /**
@@ -374,6 +374,9 @@ export class ArmyDeploymentPanel {
     } else if (this.panelState === 'animating') {
       this.renderAnimatingState();
       return;
+    } else if (this.panelState === 'completed') {
+      this.renderCompletedState();
+      return;
     }
     
     // Default: selection state
@@ -594,6 +597,94 @@ export class ArmyDeploymentPanel {
   }
   
   /**
+   * Render completed state with outcome message and OK button
+   */
+  private renderCompletedState(): void {
+    if (!this.panelMountPoint || !this.rollResult) return;
+    
+    const panel = this.panelMountPoint.querySelector('.army-deployment-panel');
+    if (!panel) return;
+    
+    // Get outcome styling
+    const outcomeColors: Record<string, string> = {
+      criticalSuccess: '#4CAF50',
+      success: '#8BC34A',
+      failure: '#ff9800',
+      criticalFailure: '#f44336'
+    };
+    
+    const outcomeLabels: Record<string, string> = {
+      criticalSuccess: 'Critical Success',
+      success: 'Success',
+      failure: 'Failure',
+      criticalFailure: 'Critical Failure'
+    };
+    
+    const outcomeColor = outcomeColors[this.rollResult.outcome] || '#999';
+    const outcomeLabel = outcomeLabels[this.rollResult.outcome] || this.rollResult.outcome;
+    
+    // Get army name
+    const kingdom = getKingdomData();
+    const army = kingdom?.armies?.find((a: any) => a.id === this.selectedArmyId);
+    const armyName = army?.name || 'Unknown Army';
+    
+    // Get final hex
+    const finalHex = this.plottedPath[this.plottedPath.length - 1];
+    const movementCost = this.plottedPath.length - 1;
+    
+    panel.innerHTML = `
+      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
+        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="fas fa-check-circle"></i>
+          Deployment Complete
+        </h3>
+      </div>
+      <div style="padding: 20px;">
+        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+              <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Outcome</div>
+              <div style="font-size: 18px; font-weight: bold; color: ${outcomeColor};"><i class="fas fa-trophy" style="margin-right: 8px;"></i>${outcomeLabel}</div>
+            </div>
+            <i class="fas fa-chess-knight" style="font-size: 32px; color: #D2691E; opacity: 0.5;"></i>
+          </div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Army</div>
+          <div style="font-size: 14px; color: white; margin-bottom: 12px;">${armyName}</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Destination</div>
+          <div style="font-size: 14px; color: white; margin-bottom: 12px; font-family: monospace;">${finalHex}</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Movement</div>
+          <div style="font-size: 14px; color: white;">${movementCost} hexes</div>
+        </div>
+        <button id="btn-ok" style="width: 100%; padding: 12px; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px; font-weight: bold;">
+          <i class="fas fa-check"></i> OK
+        </button>
+      </div>
+    `;
+    
+    // Wire up OK button
+    const btnOk = panel.querySelector('#btn-ok') as HTMLButtonElement;
+    btnOk?.addEventListener('click', () => this.handleCompletedOk());
+  }
+  
+  /**
+   * Handle OK button click in completed state
+   */
+  private handleCompletedOk(): void {
+    logger.info('[ArmyDeploymentPanel] OK clicked, completing deployment');
+    
+    // Complete successfully
+    const deploymentResult: DeploymentResult = {
+      armyId: this.selectedArmyId!,
+      path: this.plottedPath,
+      skill: this.skill
+    };
+    
+    const resolver_callback = this.resolve;
+    this.cleanup();
+    resolver_callback?.(deploymentResult);
+  }
+  
+  /**
    * Handle Done button click - triggers roll instead of completing
    */
   private async handleDone(): Promise<void> {
@@ -666,21 +757,11 @@ export class ArmyDeploymentPanel {
         throw new Error(result.error || 'Failed to deploy army');
       }
       
-      logger.info('[ArmyDeploymentPanel] Effects applied, waiting 500ms before cleanup');
+      logger.info('[ArmyDeploymentPanel] Effects applied, switching to completed state');
       
-      // Wait 500ms after animation completes (animation is handled by deployArmy)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Complete successfully
-      const deploymentResult: DeploymentResult = {
-        armyId: this.selectedArmyId,
-        path: this.plottedPath,
-        skill: this.skill
-      };
-      
-      const resolver_callback = this.resolve;
-      this.cleanup();
-      resolver_callback?.(deploymentResult);
+      // Switch to completed state - user must click OK to dismiss
+      this.panelState = 'completed';
+      this.updatePanel();
       
     } catch (error) {
       logger.error('[ArmyDeploymentPanel] Failed to apply effects:', error);

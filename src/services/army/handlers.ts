@@ -13,6 +13,7 @@ import type { ActorUpdateData, ItemData } from '../actors/folderManager';
  * Should be called during module initialization
  */
 export function registerArmyHandlers(): void {
+  console.log('🔧 [ArmyHandlers] Registering army handlers...');
 
   // Register createArmy handler
   actionDispatcher.register('createArmy', async (data: {
@@ -84,4 +85,5 @@ export function registerArmyHandlers(): void {
 
   });
 
+  console.log('✅ [ArmyHandlers] All army handlers registered successfully');
 }

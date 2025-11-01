@@ -84,19 +84,13 @@ export class PF2eRollService {
     
     // Hook into chat message creation to process kingdom check results  
     Hooks.on('createChatMessage', async (message: any) => {
-      console.log('🎲 [PF2eRollService] Chat message created');
-
       // Check for both old and new flag names for backward compatibility
       let pendingCheck: any = game.user?.getFlag('pf2e-reignmaker', 'pendingCheck');
       let isLegacyAction = false;
-      
-      console.log('🎲 [PF2eRollService] Checking for pendingCheck flag...');
-      console.log('🎲 [PF2eRollService] pendingCheck:', pendingCheck);
 
       if (!pendingCheck) {
         // Check for legacy pendingAction flag
         const legacyCheck: any = game.user?.getFlag('pf2e-reignmaker', 'pendingAction');
-        console.log('🎲 [PF2eRollService] No pendingCheck, checking legacy pendingAction:', legacyCheck);
 
         if (legacyCheck) {
           // Convert legacy action to new format
@@ -111,45 +105,24 @@ export class PF2eRollService {
             actorName: legacyCheck.actorName,
             dc: legacyCheck.dc
           };
-          console.log('🎲 [PF2eRollService] Converted legacy action to pendingCheck:', pendingCheck);
         }
       }
       
       if (!pendingCheck) {
-        console.log('❌ [PF2eRollService] No pending check found - exiting');
         return;
       }
-      
-      console.log('✅ [PF2eRollService] Found pending check:', pendingCheck);
 
       // Check if the message is from the correct actor
-      console.log('🎲 [PF2eRollService] Checking actor match...');
-      console.log('🎲 [PF2eRollService] message.speaker:', message.speaker);
-      console.log('🎲 [PF2eRollService] message.speaker.actor:', message.speaker?.actor);
-      console.log('🎲 [PF2eRollService] pendingCheck.actorId:', pendingCheck.actorId);
-      
       if (message.speaker?.actor !== pendingCheck.actorId) {
-        console.log('❌ [PF2eRollService] Actor ID mismatch - exiting');
         return;
       }
-      
-      console.log('✅ [PF2eRollService] Actor IDs match');
       
       // Check if this is a skill check roll
       const roll = message.rolls?.[0];
-      console.log('🎲 [PF2eRollService] Checking for roll and DC...');
-      console.log('🎲 [PF2eRollService] roll:', roll);
-      console.log('🎲 [PF2eRollService] message.flags:', message.flags);
-      console.log('🎲 [PF2eRollService] message.flags.pf2e:', message.flags?.pf2e);
-      console.log('🎲 [PF2eRollService] message.flags.pf2e.context:', message.flags?.pf2e?.context);
-      console.log('🎲 [PF2eRollService] message.flags.pf2e.context.dc:', message.flags?.pf2e?.context?.dc);
 
       if (!roll || !message.flags?.pf2e?.context?.dc) {
-        console.log('❌ [PF2eRollService] Missing roll or DC - exiting');
         return;
       }
-      
-      console.log('✅ [PF2eRollService] Roll and DC found, proceeding with event dispatch');
       
       const dc = message.flags.pf2e.context.dc.value;
       const outcome = this.parseRollOutcome(roll, dc);

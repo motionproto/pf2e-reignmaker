@@ -158,17 +158,18 @@ export class ActionResolver {
         return (effect?.modifiers || []) as any[];
     }
     
-    /**
-     * Execute an action and apply its effects using GameCommandsService + GameCommandsResolver
-     */
-    async executeAction(
-        action: PlayerAction,
-        outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
-        kingdomData: KingdomData,
-        preRolledValues?: Map<number | string, number>
-    ): Promise<ActionOutcome> {
-        logger.info(`🎮 [ActionResolver] Executing action: ${action.id} (${outcome})`);
-        const messages: string[] = [];
+  /**
+   * Execute an action and apply its effects using GameCommandsService + GameCommandsResolver
+   */
+  async executeAction(
+    action: PlayerAction,
+    outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure',
+    kingdomData: KingdomData,
+    preRolledValues?: Map<number | string, number>
+  ): Promise<ActionOutcome> {
+    console.log(`🎮 [ActionResolver] Executing action: ${action.id} (${outcome})`);
+    logger.info(`🎮 [ActionResolver] Executing action: ${action.id} (${outcome})`);
+    const messages: string[] = [];
         
         // Get outcome message (check both effects.* and direct properties)
         const effect = (action as any).effects?.[outcome] || action[outcome];
@@ -180,12 +181,14 @@ export class ActionResolver {
         const modifiers = this.getOutcomeModifiers(action, outcome);
         logger.info(`  📋 Found ${modifiers.length} modifiers`);
         
-        // Get game effects for this outcome
-        const gameCommands = effect?.gameCommands || [];
-        logger.info(`  🎯 Found ${gameCommands.length} game commands`);
-        if (gameCommands.length > 0) {
-            logger.info(`  🎯 Game commands:`, gameCommands);
-        }
+    // Get game effects for this outcome
+    const gameCommands = effect?.gameCommands || [];
+    console.log(`  🎯 [ActionResolver] Found ${gameCommands.length} game commands for ${action.id}`);
+    logger.info(`  🎯 Found ${gameCommands.length} game commands`);
+    if (gameCommands.length > 0) {
+      console.log(`  🎯 [ActionResolver] Game commands:`, gameCommands);
+      logger.info(`  🎯 Game commands:`, gameCommands);
+    }
         if (preRolledValues && preRolledValues.size > 0) {
             logger.info(`  🎲 Pre-rolled values:`, Array.from(preRolledValues.entries()));
         }
@@ -273,6 +276,9 @@ export class ActionResolver {
 
         switch (gameEffect.type) {
             case 'recruitArmy': {
+                console.log('🪖 [ActionResolver] recruitArmy gameCommand triggered');
+                console.log('🪖 [ActionResolver] Checking globalThis.__pendingRecruitArmy:', (globalThis as any).__pendingRecruitArmy);
+                
                 // Determine army level
                 // For 'kingdom-level', we need to get the party level from game.actors
                 let level = 1; // Default level
@@ -293,8 +299,11 @@ export class ActionResolver {
                 } else if (typeof gameEffect.level === 'number') {
                     level = gameEffect.level;
                 }
-                    
-                return await resolver.recruitArmy(level);
+                
+                console.log(`🪖 [ActionResolver] Calling resolver.recruitArmy(${level})`);
+                const result = await resolver.recruitArmy(level);
+                console.log('🪖 [ActionResolver] recruitArmy result:', result);
+                return result;
             }
             
             case 'disbandArmy': {

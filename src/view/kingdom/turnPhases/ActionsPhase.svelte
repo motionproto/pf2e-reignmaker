@@ -208,28 +208,36 @@
   // NEW ARCHITECTURE: Receives ResolutionData from OutcomeDisplay via primary event
   async function applyActionEffects(event: CustomEvent) {
     const { checkId: actionId, resolution: resolutionData } = event.detail;
-
+    console.log('🎬 [ActionsPhase] applyActionEffects called for:', actionId);
+    console.log('🎬 [ActionsPhase] Resolution data:', resolutionData);
 
     const action = actionLoader.getAllActions().find(
       (a) => a.id === actionId
     );
     if (!action) {
+      console.error('❌ [applyActionEffects] Action not found:', actionId);
       logger.error('❌ [applyActionEffects] Action not found:', actionId);
       return;
     }
+    console.log('🎬 [ActionsPhase] Found action:', action.name);
 
     // Get instance from storage
     const instanceId = currentActionInstances.get(actionId);
+    console.log('🎬 [ActionsPhase] Looking for instance ID:', instanceId);
     if (!instanceId) {
+      console.error('❌ [applyActionEffects] No instance found for action:', actionId);
       logger.error('❌ [applyActionEffects] No instance found for action:', actionId);
       return;
     }
     
     const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
+    console.log('🎬 [ActionsPhase] Found instance:', instance);
     if (!instance?.appliedOutcome) {
+      console.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
       logger.error('❌ [applyActionEffects] Instance has no outcome:', instanceId);
       return;
     }
+    console.log('🎬 [ActionsPhase] Instance has outcome:', instance.appliedOutcome.outcome);
 
     // Update instance with final resolution data and mark as applied
     if (checkInstanceService) {
@@ -261,6 +269,11 @@
     }
     
     // Apply action via controller - handles both standard and custom resolutions
+    console.log('🎬 [ActionsPhase] About to call controller.resolveAction with:', {
+      actionId,
+      outcome: instance.appliedOutcome.outcome,
+      actorName: instance.appliedOutcome.actorName
+    });
     const result = await controller.resolveAction(
       actionId,
       instance.appliedOutcome.outcome,
@@ -269,6 +282,7 @@
       instance.appliedOutcome.skillName || '',
       currentUserId || undefined
     );
+    console.log('🎬 [ActionsPhase] controller.resolveAction returned:', result);
 
     if (!result.success) {
       // Show error to user about requirements not being met
@@ -809,6 +823,7 @@
   // Handle when an army is recruited (dialog confirms)
   async function handleArmyRecruited(event: CustomEvent) {
     const { name, settlementId, armyType } = event.detail;
+    console.log('🎯 [ActionsPhase] handleArmyRecruited called with:', { name, settlementId, armyType });
     
     if (pendingRecruitArmyAction) {
       showRecruitArmyDialog = false;
@@ -819,8 +834,11 @@
         settlementId,
         armyType
       };
+      console.log('📦 [ActionsPhase] Set globalThis.__pendingRecruitArmy:', (globalThis as any).__pendingRecruitArmy);
       
       await executeRecruitArmyRoll(pendingRecruitArmyAction);
+    } else {
+      console.warn('⚠️ [ActionsPhase] No pendingRecruitArmyAction when dialog confirmed');
     }
   }
   
@@ -956,16 +974,19 @@
   
   // Execute recruit army skill roll - using ActionExecutionHelpers
   async function executeRecruitArmyRoll(recruitArmyAction: { skill: string }) {
+    console.log('🎲 [ActionsPhase] executeRecruitArmyRoll starting with skill:', recruitArmyAction.skill);
     await executeActionRoll(
       createExecutionContext('recruit-unit', recruitArmyAction.skill, {}),
       {
         getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
         onRollCancel: () => { 
+          console.log('❌ [ActionsPhase] Recruit army roll cancelled');
           pendingRecruitArmyAction = null;
           delete (globalThis as any).__pendingRecruitArmy;
         }
       }
     );
+    console.log('✅ [ActionsPhase] executeRecruitArmyRoll completed');
   }
   
   // Execute the repair structure skill roll - using ActionExecutionHelpers

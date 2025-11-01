@@ -101,18 +101,25 @@ export class ArmyService {
     
     // Place token at settlement location (if settlement has valid location)
     if (settlement && actorId) {
+      logger.info(`🗺️ [ArmyService] Checking token placement for ${name} at ${settlement.name} (${settlement.location.x}, ${settlement.location.y})`);
+      
       const hasLocation = settlement.location && (settlement.location.x !== 0 || settlement.location.y !== 0);
       
-      if (hasLocation) {
+      if (!hasLocation) {
+        logger.warn(`⚠️ [ArmyService] Settlement ${settlement.name} has invalid location (0,0), skipping token placement`);
+      } else {
         try {
+          logger.info(`🎯 [ArmyService] Attempting to place token for ${name} at ${settlement.name}`);
           const { placeArmyTokenAtSettlement } = await import('../../utils/armyHelpers');
           await placeArmyTokenAtSettlement(this, actorId, settlement, name);
-          logger.info(`✅ [ArmyService] Placed token for ${name} at ${settlement.name}`);
+          logger.info(`✅ [ArmyService] Successfully placed token for ${name} at ${settlement.name}`);
         } catch (error) {
           logger.error(`❌ [ArmyService] Failed to place token for ${name}:`, error);
           // Don't fail army creation if token placement fails
         }
       }
+    } else {
+      logger.warn(`⚠️ [ArmyService] Cannot place token - settlement: ${!!settlement}, actorId: ${!!actorId}`);
     }
     
     const supportMsg = settlement 

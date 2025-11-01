@@ -29,7 +29,7 @@ export class PathfindingService {
       this.buildHexMap(kingdom.hexes || []);
     });
     
-    logger.debug('[Pathfinding] Service initialized with reactive store subscription');
+    // logger.debug('[Pathfinding] Service initialized with reactive store subscription');
   }
 
   /**
@@ -44,7 +44,7 @@ export class PathfindingService {
       this.hexMap.set(normalized, hex as Hex);
     });
     
-    logger.debug(`[Pathfinding] Hex map rebuilt with ${this.hexMap.size} hexes`);
+    // logger.debug(`[Pathfinding] Hex map rebuilt with ${this.hexMap.size} hexes`);
   }
 
   /**
@@ -54,7 +54,7 @@ export class PathfindingService {
   refresh(): void {
     const kingdom = get(kingdomData);
     this.buildHexMap(kingdom.hexes || []);
-    logger.debug('[Pathfinding] Manual refresh triggered');
+    // logger.debug('[Pathfinding] Manual refresh triggered');
   }
   
   /**
@@ -65,7 +65,7 @@ export class PathfindingService {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-      logger.debug('[Pathfinding] Store subscription cleaned up');
+      // logger.debug('[Pathfinding] Store subscription cleaned up');
     }
   }
 

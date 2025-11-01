@@ -11,7 +11,6 @@
   // Filter: Only armies below party level
   $: eligibleArmies = ($kingdomData?.armies || [])
     .filter(army => {
-      console.log(`[ArmySelectionDialog] Checking army "${army.name}" - Level ${army.level} vs Party Level ${partyLevel}`);
       return army.level < partyLevel;
     })
     .sort((a, b) => a.level - b.level);
