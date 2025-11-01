@@ -94,7 +94,7 @@ export interface KingdomData {
       turnBuilt: number;  // Turn number when built/upgraded (no maintenance required on this turn)
     };
     name?: string;
-    kingmakerFeatures?: Array<{ type: string | null; [key: string]: any }>;
+    features?: Array<{ type: string; [key: string]: any }>;  // Our features only (settlements, landmarks, rivers, etc.)
     claimedBy?: number | string | null;
   }>;
   settlements: Settlement[];

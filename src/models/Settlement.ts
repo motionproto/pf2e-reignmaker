@@ -2,16 +2,16 @@
 // Based on Reignmaker Lite rules
 
 // Import settlement tier images
-import villageImg from '../../img/settlements/village.webp';
-import townImg from '../../img/settlements/town.webp';
-import cityImg from '../../img/settlements/city.webp';
-import metropolisImg from '../../img/settlements/metropolis.webp';
+import villageImg from '../img/settlements/village.webp';
+import townImg from '../img/settlements/town.webp';
+import cityImg from '../img/settlements/city.webp';
+import metropolisImg from '../img/settlements/metropolis.webp';
 
 // Import map icon images
-import villageMapIcon from '../../img/map_icons/settlement_village.webp';
-import townMapIcon from '../../img/map_icons/settlement_town.webp';
-import cityMapIcon from '../../img/map_icons/settlement_city.webp';
-import metropolisMapIcon from '../../img/map_icons/settlement_metropolis.webp';
+import villageMapIcon from '../img/map_icons/settlement_village.webp';
+import townMapIcon from '../img/map_icons/settlement_town.webp';
+import cityMapIcon from '../img/map_icons/settlement_city.webp';
+import metropolisMapIcon from '../img/map_icons/settlement_metropolis.webp';
 
 // Import ownership types
 import type { OwnershipValue } from '../types/ownership';

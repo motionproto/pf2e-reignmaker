@@ -153,20 +153,17 @@ export const EstablishSettlementAction = {
           
           // First settlement: Automatically claim all adjacent hexes
           if (isFirstSettlement) {
-
             const adjacentHexIds = getAdjacentHexIds(selectedHexId);
             
             adjacentHexIds.forEach(hexId => {
               const hex = kingdom.hexes.find((h: any) => h.id === hexId);
               if (hex && hex.claimedBy !== PLAYER_KINGDOM) {
-                hex.claimedBy = 1;
-
+                hex.claimedBy = PLAYER_KINGDOM;  // Use the constant, not hardcoded value
               }
             });
             
             // Update kingdom size
             kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
-
           }
         });
 

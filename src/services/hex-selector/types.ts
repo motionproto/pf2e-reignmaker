@@ -5,7 +5,7 @@
 /**
  * Type of hex selection action
  */
-export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout';
+export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify';
 
 /**
  * Color configuration for hex highlighting
@@ -36,8 +36,8 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   
   // Claim Hexes action
   claimedHex: { color: 0x8B4513, alpha: 0.3 },  // Brown (existing)
-  newClaim: { color: 0xD2691E, alpha: 0.5 },    // Light brown (new selection)
-  hoverClaim: { color: 0xFFD700, alpha: 0.4 },  // Gold (hover)
+  newClaim: { color: 0x90EE90, alpha: 0.7 },    // Light green (selected) - more opaque
+  hoverClaim: { color: 0x90EE90, alpha: 0.4 },  // Light green (hover) - less opaque
   
   // Build Roads action
   existingRoad: { color: 0x4B0082, alpha: 0.3 },  // Dark purple
@@ -52,5 +52,10 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   // Scout Terrain
   existingScouted: { color: 0x3CB371, alpha: 0.3 },  // Dark green
   newScout: { color: 0x90EE90, alpha: 0.5 },          // Light green
-  hoverScout: { color: 0x98FB98, alpha: 0.4 }         // Pale green (hover)
+  hoverScout: { color: 0x98FB98, alpha: 0.4 },        // Pale green (hover)
+  
+  // Fortify Hex
+  existingFortification: { color: 0x696969, alpha: 0.3 },  // Dark gray
+  newFortify: { color: 0xA9A9A9, alpha: 0.5 },              // Gray (reuse claim colors)
+  hoverFortify: { color: 0x90EE90, alpha: 0.4 }             // Light green (hover)
 };

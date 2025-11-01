@@ -136,7 +136,7 @@ export class HexSelectorService {
    * Minimize the Reignmaker Application window
    */
   private minimizeReignmakerApp(): void {
-    appWindowManager.enterMapMode('slide');
+    appWindowManager.enterMapMode('hide');
   }
   
   /**
@@ -165,6 +165,7 @@ export class HexSelectorService {
   
   /**
    * Show relevant overlays based on action type
+   * Uses temporary overlay state to preserve player preferences
    */
   private async showRelevantOverlays(colorType: string): Promise<void> {
 
@@ -172,32 +173,36 @@ export class HexSelectorService {
     this.mapLayer.clearSelection();
     this.mapLayer.hideInteractiveHover();
     
-    // Show appropriate overlays based on action type
+    // Determine which overlays to show for this action type
+    let actionViewOverlays: string[] = [];
+    
     switch (colorType) {
       case 'claim':
       case 'scout':
         // Show territory for claiming/scouting
-        await this.overlayManager.showOverlay('territories');
-        await this.overlayManager.showOverlay('territory-border');
+        actionViewOverlays = ['territories', 'territory-border'];
         break;
         
       case 'road':
         // Show territory, existing roads, AND settlements for road building
         // (settlements count as roads for adjacency)
-        await this.overlayManager.showOverlay('territories');
-        await this.overlayManager.showOverlay('territory-border');
-        await this.overlayManager.showOverlay('roads');
-        await this.overlayManager.showOverlay('settlement-icons');
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels'];
         break;
         
       case 'settlement':
-        // Show territory, existing settlements, and settlement icons
-        await this.overlayManager.showOverlay('territories');
-        await this.overlayManager.showOverlay('territory-border');
-        await this.overlayManager.showOverlay('settlements');
-        await this.overlayManager.showOverlay('settlement-icons');
+        // Show territory, existing settlements, and settlement icons/labels
+        actionViewOverlays = ['territories', 'territory-border', 'settlements', 'settlement-icons', 'settlement-labels'];
+        break;
+        
+      case 'fortify':
+        // Show territory, roads, settlements, and existing fortifications
+        actionViewOverlays = ['territories', 'territory-border', 'roads', 'settlement-icons', 'settlement-labels', 'fortifications'];
         break;
     }
+    
+    // Apply temporary overlay configuration (saves current state automatically)
+    await this.overlayManager.setTemporaryOverlays(actionViewOverlays);
+    logger.info(`[HexSelector] 📌 Applied action view overlays for '${colorType}':`, actionViewOverlays);
   }
   
   /**
@@ -243,6 +248,7 @@ export class HexSelectorService {
       case 'road': return 'hoverRoad';
       case 'settlement': return 'hoverSettlement';
       case 'scout': return 'hoverScout';
+      case 'fortify': return 'hoverFortify';
       default: return 'hoverClaim';
     }
   }
@@ -256,6 +262,7 @@ export class HexSelectorService {
       case 'road': return 'newRoad';
       case 'settlement': return 'newSettlement';
       case 'scout': return 'newScout';
+      case 'fortify': return 'newFortify';
       default: return 'newClaim';
     }
   }
@@ -372,8 +379,9 @@ export class HexSelectorService {
           this.selectedRoadConnections.set(hexId, roadConnections);
         }
         
+        // Render selection using explicit type-based rendering
         const style = this.getSelectionStyle();
-        this.mapLayer.addHexToSelection(hexId, style, roadConnections);
+        this.renderSelection(hexId, style, roadConnections);
         this.updatePanel();
 
       }
@@ -388,6 +396,70 @@ export class HexSelectorService {
   private getAdjacentRoadsForPreview(hexId: string): string[] {
     const kingdom = getKingdomData();
     return getAdjacentRoadsAndSettlements(hexId, kingdom, this.selectedHexes);
+  }
+  
+  /**
+   * Render selection based on action type (explicit routing)
+   */
+  private renderSelection(hexId: string, style: HexStyle, roadConnections?: string[]): void {
+    const layer = this.mapLayer.getLayer('interactive-selection');
+    if (!layer) return;
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return;
+    
+    // Route to type-specific renderer
+    if (this.config?.colorType === 'road') {
+      this.renderRoadSelection(hexId, roadConnections);
+    } else {
+      // For claim, settlement, scout - always render hex fill
+      this.renderHexSelection(hexId, style);
+    }
+  }
+  
+  /**
+   * Render hex fill selection (claim, settlement, scout actions)
+   */
+  private renderHexSelection(hexId: string, style: HexStyle): void {
+    const layer = this.mapLayer.getLayer('interactive-selection');
+    if (!layer) return;
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return;
+    
+    const hexGraphics = new PIXI.Graphics();
+    hexGraphics.name = `Selection_${hexId}`;
+    hexGraphics.visible = true;
+    
+    // Draw hex fill
+    const drawn = this.mapLayer['drawSingleHex'](hexGraphics, hexId, style, canvas);
+    if (drawn) {
+      layer.addChild(hexGraphics);
+    }
+  }
+  
+  /**
+   * Render road connection lines (roads action only)
+   */
+  private renderRoadSelection(hexId: string, roadConnections?: string[]): void {
+    if (!roadConnections || roadConnections.length === 0) return;
+    
+    const layer = this.mapLayer.getLayer('interactive-selection');
+    if (!layer) return;
+    
+    const roadGraphics = new PIXI.Graphics();
+    roadGraphics.name = `RoadConnection_${hexId}`;
+    roadGraphics.visible = true;
+    
+    // Use mapLayer's drawRoadPreviewLines method
+    this.mapLayer['drawRoadPreviewLines'](roadGraphics, hexId, roadConnections, {
+      color: 0x64e76a,  // Green
+      alpha: 1.0,       // Solid
+      width: 20,        // 20px for selection
+      dashed: false     // Solid line
+    });
+    
+    layer.addChild(roadGraphics);
   }
   
   /**
@@ -573,31 +645,31 @@ export class HexSelectorService {
   /**
    * Handle Done button click
    */
-  private handleDone(): void {
+  private async handleDone(): Promise<void> {
     if (!this.config || this.selectedHexes.length !== this.config.count) {
       return;
     }
 
     const hexes = [...this.selectedHexes];
     const resolver = this.resolve; // Save resolver before cleanup
-    this.cleanup();
+    await this.cleanup();
     resolver?.(hexes); // Call after cleanup
   }
   
   /**
    * Handle Cancel button click
    */
-  private handleCancel(): void {
+  private async handleCancel(): Promise<void> {
 
     const resolver = this.resolve; // Save resolver before cleanup
-    this.cleanup();
+    await this.cleanup();
     resolver?.(null); // Call after cleanup
   }
   
   /**
    * Cleanup and restore state
    */
-  private cleanup(): void {
+  private async cleanup(): Promise<void> {
     // Remove canvas listeners
     const canvas = (globalThis as any).canvas;
     if (this.canvasClickHandler) {
@@ -615,9 +687,9 @@ export class HexSelectorService {
     this.currentHoveredHex = null;
     this.selectedRoadConnections.clear();
     
-    // Hide overlays that were shown
-    // Note: We don't clear ALL overlays, just the ones we might have shown
-    // This allows users to keep their toolbar overlays active
+    // Restore player's overlay preferences
+    await this.overlayManager.popOverlayState();
+    logger.info('[HexSelector] 📍 Restored player overlay preferences');
     
     // Remove panel
     if (this.panelMountPoint) {

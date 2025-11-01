@@ -316,6 +316,13 @@ Hooks.once('ready', async () => {
         if (kingdomActor) {
             initializeKingdomActor(kingdomActor);
             console.log('PF2E ReignMaker | KingdomStore initialized globally');
+            
+            // Auto-migrate kingmakerFeatures if needed
+            const { needsKingmakerFeaturesMigration, migrateKingmakerFeatures } = await import('./utils/migrateKingmakerFeatures');
+            if (await needsKingmakerFeaturesMigration()) {
+                console.log('PF2E ReignMaker | Detected kingmakerFeatures in kingdom data, running migration...');
+                await migrateKingmakerFeatures();
+            }
         }
         
         // Initialize party level sync hooks

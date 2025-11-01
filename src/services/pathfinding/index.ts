@@ -73,21 +73,52 @@ export class PathfindingService {
    * Get movement cost for entering a hex
    * 
    * Movement costs:
-   * - Open terrain: 1
-   * - Difficult terrain: 2
-   * - Greater difficult terrain: 3
-   * - Roads reduce cost by 1 step (min 1)
+   * - Flying armies: Always 1 (ignores terrain)
+   * - Swimming armies: Cost 1 on water/river hexes
+   * - Swim-only armies: Can ONLY move on water/river hexes (others are impassable)
+   * - Grounded armies:
+   *   - Open terrain: 1
+   *   - Difficult terrain: 2
+   *   - Greater difficult terrain: 3
+   *   - Roads reduce cost by 1 step (min 1)
    * 
    * @param hexId - Target hex ID
-   * @returns Movement cost (or Infinity if hex doesn't exist)
+   * @param canFly - Whether the army can fly (ignores terrain costs)
+   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
+   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
+   * @returns Movement cost (or Infinity if hex doesn't exist or impassable)
    */
-  getMovementCost(hexId: string): number {
+  getMovementCost(hexId: string, canFly: boolean = false, canSwim: boolean = false, hasOnlySwim: boolean = false): number {
     const normalized = normalizeHexId(hexId);
     const hex = this.hexMap.get(normalized);
 
     if (!hex) {
       // Hex doesn't exist in our data - treat as impassable
       return Infinity;
+    }
+
+    // Check if hex is water or has river feature
+    const isWaterTerrain = hex.terrain === 'water';
+    const hasRiver = hex.features?.some((f: any) => 
+      f.type === 'river' || 
+      f.name?.toLowerCase().includes('river') || 
+      f.name?.toLowerCase().includes('stream')
+    ) ?? false;
+    const isWaterHex = isWaterTerrain || hasRiver;
+
+    // Flying armies always cost 1 per hex (ignore terrain)
+    if (canFly) {
+      return 1;
+    }
+
+    // Swim-only armies can ONLY move on water/river hexes
+    if (hasOnlySwim) {
+      return isWaterHex ? 1 : Infinity;
+    }
+
+    // Swimming armies get cost 1 on water/river hexes
+    if (canSwim && isWaterHex) {
+      return 1;
     }
 
     // Base cost from travel difficulty
@@ -117,9 +148,12 @@ export class PathfindingService {
    * 
    * @param startHexId - Starting hex ID
    * @param maxMovement - Maximum movement points (default: 20)
+   * @param canFly - Whether the army can fly (ignores terrain costs)
+   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
+   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
    * @returns Map of hex ID -> movement cost to reach
    */
-  getReachableHexes(startHexId: string, maxMovement: number = DEFAULT_MOVEMENT_RANGE): ReachabilityMap {
+  getReachableHexes(startHexId: string, maxMovement: number = DEFAULT_MOVEMENT_RANGE, canFly: boolean = false, canSwim: boolean = false, hasOnlySwim: boolean = false): ReachabilityMap {
     const normalized = normalizeHexId(startHexId);
     const reachable: ReachabilityMap = new Map();
     const frontier: Array<{ hexId: string; cost: number }> = [];
@@ -143,7 +177,7 @@ export class PathfindingService {
       
       for (const neighbor of neighbors) {
         const neighborNormalized = normalizeHexId(neighbor);
-        const moveCost = this.getMovementCost(neighborNormalized);
+        const moveCost = this.getMovementCost(neighborNormalized, canFly, canSwim, hasOnlySwim);
         
         // Skip impassable hexes
         if (moveCost === Infinity) {
@@ -178,12 +212,18 @@ export class PathfindingService {
    * @param startHexId - Starting hex ID
    * @param targetHexId - Target hex ID
    * @param maxMovement - Maximum movement points (default: 20)
+   * @param canFly - Whether the army can fly (ignores terrain costs)
+   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
+   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
    * @returns PathResult with path, cost, and reachability
    */
   findPath(
     startHexId: string,
     targetHexId: string,
-    maxMovement: number = DEFAULT_MOVEMENT_RANGE
+    maxMovement: number = DEFAULT_MOVEMENT_RANGE,
+    canFly: boolean = false,
+    canSwim: boolean = false,
+    hasOnlySwim: boolean = false
   ): PathResult | null {
     const startNormalized = normalizeHexId(startHexId);
     const targetNormalized = normalizeHexId(targetHexId);
@@ -246,7 +286,7 @@ export class PathfindingService {
           continue;
         }
 
-        const moveCost = this.getMovementCost(neighborNormalized);
+        const moveCost = this.getMovementCost(neighborNormalized, canFly, canSwim, hasOnlySwim);
 
         // Skip impassable hexes
         if (moveCost === Infinity) {

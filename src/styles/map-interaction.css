@@ -16,7 +16,7 @@
 
 /* Slide to right (recommended - clear but not intrusive) */
 #pf2e-reignmaker.map-interaction-slide {
-  transform: translateX(calc(100% - 40px)); /* Peek 40px from edge */
+  transform: translateX(calc(100% - 40px)) !important; /* Peek 40px from edge */
   opacity: 0.6;
 }
 
@@ -27,20 +27,20 @@
 
 /* Minimize effect (scale down to corner) */
 #pf2e-reignmaker.map-interaction-minimize {
-  transform: scale(0.2) translate(200%, 200%);
+  transform: scale(0.2) translate(200%, 200%) !important;
   opacity: 0.5;
 }
 
 /* Hide completely */
 #pf2e-reignmaker.map-interaction-hide {
-  transform: translateX(100%);
+  transform: translateX(100%) !important;
   opacity: 0;
 }
 
 /* Hover to peek at app during map mode (except when completely hidden) */
 #pf2e-reignmaker.map-interaction-mode:not(.map-interaction-hide):hover {
   opacity: 1;
-  transform: translateX(0);
+  transform: translateX(0) !important;
   pointer-events: auto;
   z-index: 100; /* Above map controls when hovering */
 }

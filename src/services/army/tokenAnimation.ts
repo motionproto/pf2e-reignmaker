@@ -154,6 +154,7 @@ async function animateSegment(
  */
 export async function getArmyToken(armyId: string): Promise<any | null> {
   const { getKingdomActor } = await import('../../stores/KingdomStore');
+  const { TokenHelpers } = await import('../tokens/TokenHelpers');
   
   const kingdomActor = getKingdomActor();
   const kingdom = kingdomActor?.getKingdomData();
@@ -166,46 +167,15 @@ export async function getArmyToken(armyId: string): Promise<any | null> {
   
   logger.info(`[TokenAnimation] Looking for token for army ${army.name} (actorId: ${army.actorId})`);
   
-  // Get actor
-  const game = (globalThis as any).game;
-  const actor = game?.actors?.get(army.actorId);
+  // Use TokenHelpers to find token
+  const token = TokenHelpers.findTokenByActor(army.actorId);
   
-  if (!actor) {
-    logger.warn(`[TokenAnimation] Actor not found: ${army.actorId}`);
-    return null;
-  }
-  
-  logger.info(`[TokenAnimation] Found actor: ${actor.name}`);
-  
-  // Get active tokens for this actor on current scene
-  const canvas = (globalThis as any).canvas;
-  if (!canvas?.scene) {
-    logger.warn('[TokenAnimation] No active scene');
-    return null;
-  }
-  
-  logger.info(`[TokenAnimation] Searching scene ${canvas.scene.name} for tokens...`);
-  
-  // Find tokens for this actor on the current scene
-  const allTokens: any[] = Array.from(canvas.scene.tokens);
-  logger.info(`[TokenAnimation] Total tokens in scene: ${allTokens.length}`);
-  
-  const tokens = allTokens.filter((t: any) => {
-    const matches = t.actorId === army.actorId;
-    logger.info(`[TokenAnimation] Token ${t.name} (actorId: ${t.actorId}): ${matches ? 'MATCH' : 'no match'}`);
-    return matches;
-  });
-  
-  if (tokens.length === 0) {
-    logger.warn(`[TokenAnimation] No tokens found for army ${army.name} (actorId: ${army.actorId}) on current scene`);
+  if (!token) {
+    logger.warn(`[TokenAnimation] No token found for army ${army.name} (actorId: ${army.actorId}) on current scene`);
     logger.warn(`[TokenAnimation] Try placing the army token on the scene first`);
     return null;
   }
   
-  if (tokens.length > 1) {
-    logger.warn(`[TokenAnimation] Multiple tokens found for army ${army.name}, using first one`);
-  }
-  
-  logger.info(`[TokenAnimation] Found token: ${tokens[0].name}`);
-  return tokens[0];
+  logger.info(`[TokenAnimation] Found token: ${token.name}`);
+  return token;
 }

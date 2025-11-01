@@ -10,6 +10,7 @@
   import ArmySelectionDialog from '../../../../actions/train-army/ArmySelectionDialog.svelte';
   import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
   import OutfitArmyDialog from '../../../../actions/outfit-army/ArmySelectionDialog.svelte';
+  import RecruitArmyDialog from '../../../kingdom/components/RecruitArmyDialog.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -24,6 +25,7 @@
   export let showTrainArmyDialog: boolean = false;
   export let showDisbandArmyDialog: boolean = false;
   export let showOutfitArmyDialog: boolean = false;
+  export let showRecruitArmyDialog: boolean = false;
 
   // Pending action data props
   export let pendingAidAction: { id: string; name: string } | null = null;
@@ -63,6 +65,10 @@
 
   function handleArmySelectedForOutfitting(event: CustomEvent) {
     dispatch('armySelectedForOutfitting', event.detail);
+  }
+
+  function handleArmyRecruited(event: CustomEvent) {
+    dispatch('armyRecruited', event.detail);
   }
 
   function handleAidConfirm(event: CustomEvent) {
@@ -144,4 +150,10 @@
 <OutfitArmyDialog
   bind:show={showOutfitArmyDialog}
   on:armySelected={handleArmySelectedForOutfitting}
+/>
+
+<!-- Recruit Army Dialog -->
+<RecruitArmyDialog
+  bind:show={showRecruitArmyDialog}
+  on:confirm={handleArmyRecruited}
 />

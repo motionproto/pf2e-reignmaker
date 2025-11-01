@@ -17,6 +17,9 @@ export class AppWindowManager {
   private static instance: AppWindowManager | null = null;
   private appElement: HTMLElement | null = null;
   private currentStyle: MapModeStyle | null = null;
+  private originalTransform: string = '';
+  private originalOpacity: string = '';
+  private overlayWasActive: boolean = false; // Track if overlays were already active before map mode
   
   private constructor() {}
   
@@ -59,16 +62,45 @@ export class AppWindowManager {
    *   - 'minimize': Scale down to corner
    *   - 'hide': Hide completely
    */
-  enterMapMode(style: MapModeStyle = 'slide'): void {
+  async enterMapMode(style: MapModeStyle = 'slide'): Promise<void> {
     const app = this.findAppElement();
     if (!app) {
       logger.warn('[AppWindowManager] Cannot enter map mode - app not found');
       return;
     }
     
-    // Add base class and style-specific class
+    // Save original inline styles
+    this.originalTransform = app.style.transform;
+    this.originalOpacity = app.style.opacity;
+    
+    // Activate overlay scene control if not already active
+    await this.activateOverlayControl();
+    
+    // Add base class (for pointer-events and transition)
     app.classList.add('map-interaction-mode');
     app.classList.add(`map-interaction-${style}`);
+    
+    // Apply visibility directly to inline style
+    // For simplicity, just hide completely (best UX for map interactions)
+    switch (style) {
+      case 'hide':
+      default:
+        // Simply hide off-screen to the right
+        app.style.visibility = 'hidden';
+        break;
+      case 'slide':
+        // Keep original positioning, just shift right
+        app.style.transform = this.originalTransform + ' translateX(calc(100% - 40px))';
+        app.style.opacity = '0.6';
+        break;
+      case 'fade':
+        app.style.opacity = '0.15';
+        break;
+      case 'minimize':
+        app.style.transform = this.originalTransform + ' scale(0.2) translate(200%, 200%)';
+        app.style.opacity = '0.5';
+        break;
+    }
     
     this.currentStyle = style;
     logger.info(`[AppWindowManager] ✅ Entered map mode (${style})`);
@@ -77,12 +109,20 @@ export class AppWindowManager {
   /**
    * Exit map interaction mode (restore app)
    */
-  exitMapMode(): void {
+  async exitMapMode(): Promise<void> {
     const app = this.findAppElement();
     if (!app) {
       logger.warn('[AppWindowManager] Cannot exit map mode - app not found');
       return;
     }
+    
+    // Restore original inline styles
+    app.style.visibility = '';
+    app.style.transform = this.originalTransform;
+    app.style.opacity = this.originalOpacity;
+    
+    // Restore overlay control state if we activated it
+    await this.restoreOverlayControl();
     
     // Remove all map interaction classes
     app.classList.remove(
@@ -113,6 +153,51 @@ export class AppWindowManager {
   }
   
   /**
+   * Activate overlay scene control if not already active
+   * Saves the previous state so we can restore it later
+   */
+  private async activateOverlayControl(): Promise<void> {
+    try {
+      const { ReignMakerMapLayer } = await import('../map/ReignMakerMapLayer');
+      const mapLayer = ReignMakerMapLayer.getInstance();
+      
+      // Save current state
+      this.overlayWasActive = mapLayer.getToggleState();
+      
+      // Only activate if not already active
+      if (!this.overlayWasActive) {
+        logger.info('[AppWindowManager] 🗺️ Activating overlay scene control for map interaction');
+        await mapLayer.handleSceneControlToggle();
+      } else {
+        logger.info('[AppWindowManager] 🗺️ Overlay scene control already active');
+      }
+    } catch (error) {
+      logger.error('[AppWindowManager] Failed to activate overlay control:', error);
+    }
+  }
+  
+  /**
+   * Restore overlay scene control state
+   * Deactivates overlays only if we activated them (restores to original state)
+   */
+  private async restoreOverlayControl(): Promise<void> {
+    try {
+      const { ReignMakerMapLayer } = await import('../map/ReignMakerMapLayer');
+      const mapLayer = ReignMakerMapLayer.getInstance();
+      
+      // Only deactivate if we activated it (wasn't active before)
+      if (!this.overlayWasActive && mapLayer.getToggleState()) {
+        logger.info('[AppWindowManager] 🗺️ Restoring overlay scene control (deactivating)');
+        await mapLayer.handleSceneControlToggle();
+      } else {
+        logger.info('[AppWindowManager] 🗺️ Leaving overlay scene control as-is (was already active)');
+      }
+    } catch (error) {
+      logger.error('[AppWindowManager] Failed to restore overlay control:', error);
+    }
+  }
+  
+  /**
    * Change style while in map mode
    */
   changeStyle(newStyle: MapModeStyle): void {
@@ -124,11 +209,35 @@ export class AppWindowManager {
     const app = this.findAppElement();
     if (!app) return;
     
-    // Remove old style, add new style
+    // Remove old style class
     if (this.currentStyle) {
       app.classList.remove(`map-interaction-${this.currentStyle}`);
     }
     app.classList.add(`map-interaction-${newStyle}`);
+    
+    // Apply new transform/opacity directly to inline style
+    switch (newStyle) {
+      case 'hide':
+        app.style.visibility = 'hidden';
+        app.style.transform = this.originalTransform;
+        app.style.opacity = this.originalOpacity;
+        break;
+      case 'slide':
+        app.style.visibility = '';
+        app.style.transform = this.originalTransform + ' translateX(calc(100% - 40px))';
+        app.style.opacity = '0.6';
+        break;
+      case 'fade':
+        app.style.visibility = '';
+        app.style.transform = this.originalTransform;
+        app.style.opacity = '0.15';
+        break;
+      case 'minimize':
+        app.style.visibility = '';
+        app.style.transform = this.originalTransform + ' scale(0.2) translate(200%, 200%)';
+        app.style.opacity = '0.5';
+        break;
+    }
     
     this.currentStyle = newStyle;
     logger.info(`[AppWindowManager] Changed style to ${newStyle}`);

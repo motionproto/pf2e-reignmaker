@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   import { kingdomData } from '../../stores/KingdomStore';
   import type { ActiveCheckInstance } from '../../models/CheckInstance';
   import { 
@@ -17,6 +17,21 @@
   // Get resolution state from instance
   $: resolutionState = getInstanceResolutionState(instance);
   $: deleteActor = resolutionState.customComponentData?.deleteActor ?? true;
+  
+  // Initialize default state on mount so Apply Result button is immediately active
+  onMount(async () => {
+    if (!instance || applied) return;
+    
+    // Only initialize if state is not already set
+    if (!resolutionState.customComponentData?.hasOwnProperty('deleteActor')) {
+      await updateInstanceResolutionState(instance.instanceId, {
+        customComponentData: { deleteActor: true }
+      });
+      
+      // Emit initial selection event
+      dispatch('selection', { deleteActor: true });
+    }
+  });
 
   // Get army details from global state (set during pre-roll dialog)
   $: armyId = (globalThis as any).__pendingDisbandArmyArmy;

@@ -28,8 +28,6 @@ export function getAdjacentHexIds(hexId: string): string[] {
     const offset = kingmakerIdToOffset(hexId);
     const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
     
-    console.log(`🔍 [HexValidation] getNeighbors(${offset.i}, ${offset.j}) returned:`, neighbors);
-    
     // Foundry returns array of [i, j] coordinate pairs (arrays, not objects)
     // Example: [[5,8], [5,9], [6,8], ...]
     return neighbors.map((neighbor: any) => `${neighbor[0]}.${neighbor[1]}`);

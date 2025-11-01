@@ -32,6 +32,7 @@ export function createCustomActionHandlers(context: {
   setShowTrainArmyDialog: (show: boolean) => void;
   setShowDisbandArmyDialog: (show: boolean) => void;
   setShowOutfitArmyDialog: (show: boolean) => void;
+  setShowRecruitArmyDialog: (show: boolean) => void;
   handleArmyDeployment?: (skill: string) => Promise<void>;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
@@ -42,6 +43,7 @@ export function createCustomActionHandlers(context: {
   setPendingTrainArmyAction: (action: { skill: string }) => void;
   setPendingDisbandArmyAction: (action: { skill: string }) => void;
   setPendingOutfitArmyAction: (action: { skill: string }) => void;
+  setPendingRecruitArmyAction: (action: { skill: string }) => void;
   setPendingDeployArmyAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
@@ -89,6 +91,11 @@ export function createCustomActionHandlers(context: {
       requiresPreDialog: true,
       showDialog: () => context.setShowOutfitArmyDialog(true),
       storePending: (skill: string) => context.setPendingOutfitArmyAction({ skill })
+    },
+    'recruit-unit': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowRecruitArmyDialog(true),
+      storePending: (skill: string) => context.setPendingRecruitArmyAction({ skill })
     },
     'deploy-army': {
       requiresPreDialog: true,

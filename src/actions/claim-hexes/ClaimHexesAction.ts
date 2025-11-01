@@ -95,29 +95,34 @@ const ClaimHexesAction: CustomActionImplementation = {
           validationFn: validateClaimHex
         });
         
-        // Handle cancellation
+        // Handle cancellation - this is normal user behavior, not an error
         if (!selectedHexes || selectedHexes.length === 0) {
-          logActionError('claim-hexes', new Error('Hex selection cancelled'));
-          return createErrorResult('Hex selection cancelled');
+          logger.info('[ClaimHexes] User cancelled hex selection');
+          return createSuccessResult('Hex selection cancelled - action not completed');
         }
         
         // Update Kingdom Store directly (Kingdom Store is the source of truth, NOT Kingmaker)
+        logger.info('[ClaimHexes] Updating kingdom with selected hexes:', selectedHexes);
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
+          logger.info('[ClaimHexes] Current hexes count:', kingdom.hexes?.length);
           for (const hexId of selectedHexes) {
             const hex = kingdom.hexes.find((h: any) => h.id === hexId);
             if (hex) {
-              hex.claimedBy = 1;
-
+              logger.info(`[ClaimHexes] Claiming hex ${hexId}, was: ${hex.claimedBy}, setting to: ${PLAYER_KINGDOM}`);
+              hex.claimedBy = PLAYER_KINGDOM;  // Use the constant, not hardcoded value
             } else {
               logger.warn(`[ClaimHexes] Hex ${hexId} not found in Kingdom Store`);
             }
           }
           
           // Update kingdom size (count of claimed hexes)
-          kingdom.size = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
-
+          const newSize = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM).length;
+          logger.info(`[ClaimHexes] Updating kingdom size from ${kingdom.size} to ${newSize}`);
+          kingdom.size = newSize;
         });
+        
+        logger.info('[ClaimHexes] Kingdom update completed successfully');
         
         // Ensure PIXI container is visible (scene control active)
         const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');

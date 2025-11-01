@@ -33,10 +33,10 @@ export async function createGameCommandsResolver() {
   return {
     /**
      * Recruit Army - Create a new army unit at specified level with NPC actor
-     * Delegates to ArmyService for implementation
+     * Uses pending data from globalThis.__pendingRecruitArmy (set by dialog)
      * 
      * @param level - Army level (typically party level)
-     * @param name - Optional custom name for the army
+     * @param name - Optional custom name for the army (deprecated, use pending data)
      * @returns ResolveResult with created army data
      */
     async recruitArmy(level: number, name?: string): Promise<ResolveResult> {
@@ -58,28 +58,47 @@ export async function createGameCommandsResolver() {
           };
         }
 
-        // Get kingdom data for naming
-        const kingdom = actor.getKingdomData();
-        if (!kingdom) {
+        // Get pending recruit data from dialog
+        const pendingData = (globalThis as any).__pendingRecruitArmy;
+        if (!pendingData) {
           return {
             success: false,
-            error: 'No kingdom data available'
+            error: 'No army recruitment data available'
           };
         }
 
-        // Generate army number (count existing armies + 1)
-        const armyNumber = kingdom.armies.length + 1;
-        const armyName = name || `Army ${armyNumber}`;
+        const { name: armyName, settlementId, armyType } = pendingData;
 
-        // Delegate to ArmyService
+        // Import army helpers for type and image
+        const { ARMY_TYPES } = await import('../utils/armyHelpers');
+        
+        // Validate army type
+        if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
+          return {
+            success: false,
+            error: `Invalid army type: ${armyType}`
+          };
+        }
+
+        // Pass settlement info to army service so token can be placed during creation (on GM's client)
         const { armyService } = await import('./army');
-        const army = await armyService.createArmy(armyName, level);
+        await armyService.createArmy(armyName, level, {
+          type: armyType,
+          image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
+          settlementId: settlementId  // Pass settlementId so GM can place token
+        });
+
+        // Clean up pending data
+        delete (globalThis as any).__pendingRecruitArmy;
+
+        const settlementMessage = settlementId 
+          ? ' (supported by settlement)' 
+          : ' (unsupported)';
 
         return {
           success: true,
           data: {
-            army: army,
-            message: `Recruited ${armyName} at level ${level}${army.actorId ? ' (NPC actor created)' : ''}`
+            message: `Recruited ${armyName} at level ${level}${settlementMessage}`
           }
         };
 
@@ -364,7 +383,7 @@ export async function createGameCommandsResolver() {
         }
 
         // Find the settlement
-        const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
+        const settlement = kingdom.settlements?.find(s => s.id === settlementId);
         if (!settlement) {
           return { success: false, error: `Settlement ${settlementId} not found` };
         }
@@ -809,13 +828,16 @@ export async function createGameCommandsResolver() {
         let finalPath = path;
         let randomHexMessage = '';
 
-        // Critical failure: Calculate random nearby hex
+        // Critical failure: Calculate random nearby hex (1-2 hexes from DESTINATION)
         if (outcome === 'criticalFailure') {
           const originHex = path[0];
-          const randomHex = this.calculateRandomNearbyHex(originHex);
-          finalPath = [originHex, randomHex];
-          randomHexMessage = ` (arrived at random hex ${randomHex})`;
-          logger.info(`❌ [deployArmy] Critical failure - redirecting to random hex ${randomHex}`);
+          const destinationHex = path[path.length - 1];
+          const randomHex = this.calculateRandomNearbyHex(destinationHex, 2); // 1-2 hexes from destination
+          
+          // Build path to random hex instead of intended destination
+          finalPath = [...path.slice(0, -1), randomHex];
+          randomHexMessage = ` (got lost, arrived at ${randomHex} instead of ${destinationHex})`;
+          logger.info(`❌ [deployArmy] Critical failure - redirecting to random hex ${randomHex} near destination ${destinationHex}`);
         }
 
         // Animate token along path
@@ -879,17 +901,19 @@ export async function createGameCommandsResolver() {
 
     /**
      * Helper: Calculate random nearby hex for critical failure
-     * Uses 1d6 for direction (6 hex directions) and 1d3 for distance
+     * Uses 1d6 for direction (6 hex directions) and 1dN for distance
+     * @param hexId - Starting hex ID
+     * @param maxDistance - Maximum distance (default 3)
      */
-    calculateRandomNearbyHex(originHexId: string): string {
-      // Parse origin hex
-      const [i, j] = originHexId.split('.').map(Number);
+    calculateRandomNearbyHex(hexId: string, maxDistance: number = 3): string {
+      // Parse hex
+      const [i, j] = hexId.split('.').map(Number);
       
       // Roll 1d6 for direction (0-5)
       const direction = Math.floor(Math.random() * 6);
       
-      // Roll 1d3 for distance (1-3)
-      const distance = Math.floor(Math.random() * 3) + 1;
+      // Roll for distance (1 to maxDistance)
+      const distance = Math.floor(Math.random() * maxDistance) + 1;
       
       // Hex neighbor offsets (flat-top hexagons)
       // Even rows (j % 2 === 0): NE, E, SE, SW, W, NW

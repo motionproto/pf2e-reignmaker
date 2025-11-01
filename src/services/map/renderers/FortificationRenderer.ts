@@ -3,10 +3,10 @@
  */
 
 import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
-import fortificationEarthenImg from '../../../../img/map_icons/fortification_earthen.webp';
-import fortificationTowerWoodImg from '../../../../img/map_icons/fortification_tower_wood.webp';
-import fortificationTowerStoneImg from '../../../../img/map_icons/fortification_tower_stone.webp';
-import fortificationKeepImg from '../../../../img/map_icons/fortification_keep.webp';
+import fortificationEarthenImg from '../../../img/map_icons/fortification_earthen.webp';
+import fortificationTowerWoodImg from '../../../img/map_icons/fortification_tower_wood.webp';
+import fortificationTowerStoneImg from '../../../img/map_icons/fortification_tower_stone.webp';
+import fortificationKeepImg from '../../../img/map_icons/fortification_keep.webp';
 import { logger } from '../../../utils/Logger';
 
 /**

@@ -5,12 +5,12 @@
   import { kingdomData } from '../../../stores/KingdomStore';
   import { SettlementTierConfig } from '../../../models/Settlement';
   
-  // Import army token images
-  import cavalryImg from '../../../../img/army_tokens/army-calvary.webp';
-  import engineersImg from '../../../../img/army_tokens/army-engineers.webp';
-  import infantryImg from '../../../../img/army_tokens/army-infantry.webp';
-  import koboldImg from '../../../../img/army_tokens/army-kobold.webp';
-  import wolvesImg from '../../../../img/army_tokens/army-wolves.webp';
+// Import army token images
+  import cavalryImg from '../../../img/army_tokens/army-calvary.webp';
+  import engineersImg from '../../../img/army_tokens/army-engineers.webp';
+  import infantryImg from '../../../img/army_tokens/army-infantry.webp';
+  import koboldImg from '../../../img/army_tokens/army-kobold.webp';
+  import wolvesImg from '../../../img/army_tokens/army-wolves.webp';
   
   // Army type definitions
   const ARMY_TYPES = {
@@ -92,6 +92,14 @@
     dispatch('cancel');
     show = false;
   }
+  
+  function handleInputKeydown(event: KeyboardEvent) {
+    // Standard input behavior: Enter blurs the input without closing dialog
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      (event.target as HTMLInputElement).blur();
+    }
+  }
 </script>
 
 <Dialog 
@@ -111,6 +119,7 @@
       bind:value={armyName}
       placeholder="Enter army name..." 
       autofocus
+      on:keydown={handleInputKeydown}
     />
   </div>
   

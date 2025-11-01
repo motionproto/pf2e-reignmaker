@@ -77,17 +77,8 @@ const FortifyHexAction: CustomActionImplementation = {
         // Import validator
         const { validateFortifyHex } = await import('./fortifyHexValidator');
         
-        // Ensure PIXI container and fortification overlay are visible BEFORE selection starts
-        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
-        const mapLayer = ReignMakerMapLayer.getInstance();
-        mapLayer.showPixiContainer();
-        
-        // Enable fortification overlay so user can see existing fortifications
-        const { OverlayManager } = await import('../../services/map/OverlayManager');
-        const overlayManager = OverlayManager.getInstance();
-        await overlayManager.showOverlay('fortifications');
-
         // Invoke hex selector service with validation
+        // (hexSelectorService now handles all overlay management via temporary overlay system)
         const { hexSelectorService } = await import('../../services/hex-selector');
         
         // Retry loop - keep selector open until affordable hex selected or explicit cancel
@@ -102,7 +93,7 @@ const FortifyHexAction: CustomActionImplementation = {
           const selectedHexes = await hexSelectorService.selectHexes({
             title: 'Select Hex to Fortify',
             count: 1,
-            colorType: 'claim' // Use claim color for fortifications
+            colorType: 'fortify' // Shows territory, roads, settlements, and fortifications
             // No validationFn - we validate affordability in the retry loop
           });
           

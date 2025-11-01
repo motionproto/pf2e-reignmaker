@@ -3,22 +3,22 @@
  */
 
 // Import settlement icons
-import villageIcon from '../../../img/map_icons/settlement_village.webp';
-import townIcon from '../../../img/map_icons/settlement_town.webp';
-import cityIcon from '../../../img/map_icons/settlement_city.webp';
-import metropolisIcon from '../../../img/map_icons/settlement_metropolis.webp';
+import villageIcon from '../../img/map_icons/settlement_village.webp';
+import townIcon from '../../img/map_icons/settlement_town.webp';
+import cityIcon from '../../img/map_icons/settlement_city.webp';
+import metropolisIcon from '../../img/map_icons/settlement_metropolis.webp';
 
 // Import worksite icons
-import farmIcon from '../../../img/map_icons/worksite_farm.webp';
-import lumberIcon from '../../../img/map_icons/worksite_lumber_mill.webp';
-import mineIcon from '../../../img/map_icons/worksite_mine.webp';
-import quarryIcon from '../../../img/map_icons/worksite_quarry.webp';
+import farmIcon from '../../img/map_icons/worksite_farm.webp';
+import lumberIcon from '../../img/map_icons/worksite_lumber_mill.webp';
+import mineIcon from '../../img/map_icons/worksite_mine.webp';
+import quarryIcon from '../../img/map_icons/worksite_quarry.webp';
 
 // Import resource/commodity icons
-import foodIcon from '../../../img/map_icons/commodity_food.webp';
-import lumberCommodityIcon from '../../../img/map_icons/commodity_lumber.webp';
-import oreIcon from '../../../img/map_icons/commodity_ore.webp';
-import stoneIcon from '../../../img/map_icons/commodity_stone.webp';
+import foodIcon from '../../img/map_icons/commodity_food.webp';
+import lumberCommodityIcon from '../../img/map_icons/commodity_lumber.webp';
+import oreIcon from '../../img/map_icons/commodity_ore.webp';
+import stoneIcon from '../../img/map_icons/commodity_stone.webp';
 
 /**
  * Predefined and custom layer identifiers

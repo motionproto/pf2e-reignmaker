@@ -21,9 +21,10 @@ export function registerArmyHandlers(): void {
     type?: string;
     image?: string;
     actorData?: any;
+    settlementId?: string | null;
   }) => {
 
-    const army = await armyService._createArmyInternal(data.name, data.level, data.type, data.image, data.actorData);
+    const army = await armyService._createArmyInternal(data.name, data.level, data.type, data.image, data.actorData, data.settlementId);
 
     return army;
   });

@@ -65,6 +65,9 @@ export class OverlayManager {
   
   // Single source of truth for active overlay IDs - both runtime and reactive UI state
   private activeOverlaysStore: Writable<Set<string>> = writable(new Set());
+  
+  // Overlay state stack for temporary overlay views (e.g., during map interactions)
+  private overlayStateStack: Set<string>[] = [];
 
   private constructor() {
     this.mapLayer = ReignMakerMapLayer.getInstance();
@@ -318,6 +321,110 @@ export class OverlayManager {
     return Array.from($active);
   }
 
+  /**
+   * Push current overlay state onto stack (for temporary overlay changes)
+   * Use this before showing temporary overlays during map interactions
+   * 
+   * @returns The saved state (for debugging/verification)
+   */
+  pushOverlayState(): Set<string> {
+    const $active = get(this.activeOverlaysStore);
+    const savedState = new Set($active);
+    this.overlayStateStack.push(savedState);
+    logger.info(`[OverlayManager] 📌 Pushed overlay state (stack depth: ${this.overlayStateStack.length}):`, Array.from(savedState));
+    return savedState;
+  }
+  
+  /**
+   * Pop and restore previous overlay state from stack
+   * Use this to restore player's overlay preferences after map interaction
+   * 
+   * @returns true if state was restored, false if stack was empty
+   */
+  async popOverlayState(): Promise<boolean> {
+    if (this.overlayStateStack.length === 0) {
+      logger.warn('[OverlayManager] ⚠️ Cannot pop overlay state - stack is empty');
+      return false;
+    }
+    
+    const previousState = this.overlayStateStack.pop()!;
+    logger.info(`[OverlayManager] 📍 Popping overlay state (stack depth: ${this.overlayStateStack.length}):`, Array.from(previousState));
+    
+    // Get current active overlays
+    const $active = get(this.activeOverlaysStore);
+    
+    // Hide overlays that weren't in the previous state
+    const toHide = Array.from($active).filter(id => !previousState.has(id));
+    for (const id of toHide) {
+      logger.info(`[OverlayManager]   - Hiding: ${id}`);
+      this.hideOverlay(id, true); // Skip state save during batch operation
+    }
+    
+    // Show overlays that were in the previous state but aren't active now
+    const toShow = Array.from(previousState).filter(id => !$active.has(id));
+    for (const id of toShow) {
+      logger.info(`[OverlayManager]   + Showing: ${id}`);
+      await this.showOverlay(id);
+    }
+    
+    // Save the restored state to localStorage
+    this.saveState();
+    
+    return true;
+  }
+  
+  /**
+   * Set temporary overlays for map interaction (auto-saves current state)
+   * This is a convenience method that combines pushOverlayState() + showing specific overlays
+   * 
+   * @param overlayIds - Array of overlay IDs to show (all others will be hidden)
+   * @param skipPush - If true, don't push state (useful if already pushed manually)
+   */
+  async setTemporaryOverlays(overlayIds: string[], skipPush: boolean = false): Promise<void> {
+    // Save current state first (unless told to skip)
+    if (!skipPush) {
+      this.pushOverlayState();
+    }
+    
+    logger.info('[OverlayManager] 🔄 Setting temporary overlays:', overlayIds);
+    
+    // Get current active overlays
+    const $active = get(this.activeOverlaysStore);
+    
+    // Hide overlays not in the target list
+    const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
+    for (const id of toHide) {
+      this.hideOverlay(id, true); // Skip state save during batch operation
+    }
+    
+    // Show overlays in the target list
+    for (const id of overlayIds) {
+      if (!$active.has(id)) {
+        await this.showOverlay(id);
+      }
+    }
+    
+    logger.info('[OverlayManager] ✅ Temporary overlays set');
+  }
+  
+  /**
+   * Clear the overlay state stack (use sparingly - mainly for cleanup/reset)
+   */
+  clearOverlayStateStack(): void {
+    const depth = this.overlayStateStack.length;
+    this.overlayStateStack = [];
+    if (depth > 0) {
+      logger.info(`[OverlayManager] 🗑️ Cleared overlay state stack (was ${depth} deep)`);
+    }
+  }
+  
+  /**
+   * Get current overlay state stack depth (for debugging)
+   */
+  getOverlayStateStackDepth(): number {
+    return this.overlayStateStack.length;
+  }
+  
   /**
    * Clear all overlays
    * 

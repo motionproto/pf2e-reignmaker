@@ -47,6 +47,7 @@
   let showTrainArmyDialog: boolean = false;
   let showDisbandArmyDialog: boolean = false;
   let showOutfitArmyDialog: boolean = false;
+  let showRecruitArmyDialog: boolean = false;
   let showDeployArmyDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
@@ -58,6 +59,7 @@
   let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingDisbandArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingOutfitArmyAction: { skill: string; armyId?: string } | null = null;
+  let pendingRecruitArmyAction: { skill: string; armyId?: string } | null = null;
   let pendingDeployArmyAction: { skill: string; armyId?: string } | null = null;
 
   // Track action ID to current instance ID mapping for this player
@@ -111,6 +113,7 @@
     setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
     setShowDisbandArmyDialog: (show) => { showDisbandArmyDialog = show; },
     setShowOutfitArmyDialog: (show) => { showOutfitArmyDialog = show; },
+    setShowRecruitArmyDialog: (show) => { showRecruitArmyDialog = show; },
     handleArmyDeployment: handleArmyDeployment,
     setPendingBuildAction: (action) => { pendingBuildAction = action; },
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
@@ -121,6 +124,7 @@
     setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; },
     setPendingDisbandArmyAction: (action) => { pendingDisbandArmyAction = action; },
     setPendingOutfitArmyAction: (action) => { pendingOutfitArmyAction = action; },
+    setPendingRecruitArmyAction: (action) => { pendingRecruitArmyAction = action; },
     setPendingDeployArmyAction: (action) => { pendingDeployArmyAction = action; }
   });
 
@@ -802,39 +806,87 @@
     }
   }
   
+  // Handle when an army is recruited (dialog confirms)
+  async function handleArmyRecruited(event: CustomEvent) {
+    const { name, settlementId, armyType } = event.detail;
+    
+    if (pendingRecruitArmyAction) {
+      showRecruitArmyDialog = false;
+      
+      // Store in global state for action-resolver to access
+      (globalThis as any).__pendingRecruitArmy = {
+        name,
+        settlementId,
+        armyType
+      };
+      
+      await executeRecruitArmyRoll(pendingRecruitArmyAction);
+    }
+  }
+  
   // Handle army deployment (uses ArmyDeploymentPanel service, not a dialog)
   async function handleArmyDeployment(skill: string) {
     try {
       // Import the deployment panel service
       const { armyDeploymentPanel } = await import('../../../services/army/ArmyDeploymentPanel');
       
+      // Create callback that triggers the roll
+      const onRollTrigger = async (skill: string, armyId: string, path: string[]) => {
+        // Store data for action-resolver to access
+        (globalThis as any).__pendingDeployArmy = {
+          armyId,
+          path
+        };
+        
+        // Store in pending action
+        if (pendingDeployArmyAction) {
+          pendingDeployArmyAction.armyId = armyId;
+        }
+        
+        // Trigger the Foundry roll dialog
+        await executeDeployArmyRoll({ skill, armyId });
+      };
+      
       // Open the deployment panel (shows floating UI on map)
-      const result = await armyDeploymentPanel.selectArmyAndPlotPath(skill);
+      // Panel will handle: selection -> roll -> result display -> animation -> cleanup
+      const result = await armyDeploymentPanel.selectArmyAndPlotPath(skill, onRollTrigger);
       
       if (!result) {
         // User cancelled
         pendingDeployArmyAction = null;
+        delete (globalThis as any).__pendingDeployArmy;
+        
+        // Clear check instance if any
+        const instanceId = currentActionInstances.get('deploy-army');
+        if (instanceId && checkInstanceService) {
+          await checkInstanceService.clearInstance(instanceId);
+          currentActionInstances.delete('deploy-army');
+          currentActionInstances = currentActionInstances;
+        }
         return;
       }
       
-      // Store result in pending action
-      if (pendingDeployArmyAction) {
-        pendingDeployArmyAction.armyId = result.armyId;
+      // At this point, everything is complete (roll, animation, etc.)
+      // Clear check instance to reset Deploy Army action card to default state
+      const instanceId = currentActionInstances.get('deploy-army');
+      if (instanceId && checkInstanceService) {
+        await checkInstanceService.clearInstance(instanceId);
+        currentActionInstances.delete('deploy-army');
+        currentActionInstances = currentActionInstances;
       }
       
-      // Store in global state for action-resolver to access
-      (globalThis as any).__pendingDeployArmy = {
-        armyId: result.armyId,
-        path: result.path
-      };
+      // Clean up pending state
+      pendingDeployArmyAction = null;
+      delete (globalThis as any).__pendingDeployArmy;
       
-      // Trigger skill roll
-      await executeDeployArmyRoll({ skill, armyId: result.armyId });
+      // Force UI update
+      await tick();
       
     } catch (error) {
       logger.error('[handleArmyDeployment] Error:', error);
       ui.notifications?.error(`Failed to deploy army: ${error}`);
       pendingDeployArmyAction = null;
+      delete (globalThis as any).__pendingDeployArmy;
     }
   }
   
@@ -897,6 +949,20 @@
         onRollCancel: () => { 
           pendingOutfitArmyAction = null;
           delete (globalThis as any).__pendingOutfitArmyArmy;
+        }
+      }
+    );
+  }
+  
+  // Execute recruit army skill roll - using ActionExecutionHelpers
+  async function executeRecruitArmyRoll(recruitArmyAction: { skill: string }) {
+    await executeActionRoll(
+      createExecutionContext('recruit-unit', recruitArmyAction.skill, {}),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingRecruitArmyAction = null;
+          delete (globalThis as any).__pendingRecruitArmy;
         }
       }
     );
@@ -1038,7 +1104,7 @@
   </div>
 </div>
 
-<!-- Dialog Manager - handles all 10 dialogs -->
+<!-- Dialog Manager - handles all 11 dialogs -->
 <ActionDialogManager
   bind:showBuildStructureDialog
   bind:showRepairStructureDialog
@@ -1050,6 +1116,7 @@
   bind:showTrainArmyDialog
   bind:showDisbandArmyDialog
   bind:showOutfitArmyDialog
+  bind:showRecruitArmyDialog
   {pendingAidAction}
   on:structureQueued={handleStructureQueued}
   on:repairStructureSelected={handleRepairStructureSelected}
@@ -1060,6 +1127,7 @@
   on:armySelectedForTraining={handleArmySelectedForTraining}
   on:armySelectedForDisbanding={handleArmySelectedForDisbanding}
   on:armySelectedForOutfitting={handleArmySelectedForOutfitting}
+  on:armyRecruited={handleArmyRecruited}
   on:aidConfirm={handleAidConfirm}
   on:aidCancel={handleAidCancel}
   on:upgradeCancel={() => { pendingUpgradeAction = null; }}

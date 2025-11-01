@@ -17,10 +17,10 @@ export class ArmyService {
    * 
    * @param name - Army name
    * @param level - Army level (typically party level)
-   * @param options - Optional army options (type, image, custom actor data)
+   * @param options - Optional army options (type, image, custom actor data, settlement assignment)
    * @returns Created army with actorId
    */
-  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any }): Promise<Army> {
+  async createArmy(name: string, level: number, options?: { type?: string; image?: string; actorData?: any; settlementId?: string | null }): Promise<Army> {
     const { actionDispatcher } = await import('../ActionDispatcher');
     
     if (!actionDispatcher.isAvailable()) {
@@ -32,7 +32,8 @@ export class ArmyService {
       level,
       type: options?.type,
       image: options?.image,
-      actorData: options?.actorData
+      actorData: options?.actorData,
+      settlementId: options?.settlementId
     });
   }
 
@@ -43,7 +44,7 @@ export class ArmyService {
    * 
    * @internal
    */
-  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any): Promise<Army> {
+  async _createArmyInternal(name: string, level: number, type?: string, image?: string, actorData?: any, settlementId?: string | null): Promise<Army> {
 
     // Generate unique army ID
     const armyId = `army-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -51,8 +52,17 @@ export class ArmyService {
     // Create NPC actor in Foundry with army type image
     const actorId = await this.createNPCActor(name, level, image, actorData);
     
-    // Auto-assign to random settlement with capacity
-    const settlement = this.findRandomSettlementWithCapacity();
+    // Determine which settlement to assign to
+    let settlement: Settlement | null = null;
+    if (settlementId) {
+      // Use specified settlement
+      const actor = getKingdomActor();
+      const kingdom = actor?.getKingdomData();
+      settlement = kingdom?.settlements?.find((s: Settlement) => s.id === settlementId) || null;
+    } else {
+      // Auto-assign to random settlement with capacity
+      settlement = this.findRandomSettlementWithCapacity();
+    }
     
     // Create army record
     // Default to current faction (PLAYER_KINGDOM if not GM switching factions)
@@ -79,7 +89,7 @@ export class ArmyService {
       
       // Update settlement's supportedUnits
       if (settlement) {
-        const s = kingdom.settlements.find(s => s.id === settlement.id);
+        const s = kingdom.settlements.find((s: Settlement) => s.id === settlement.id);
         if (s) {
           s.supportedUnits.push(armyId);
         }
@@ -88,6 +98,22 @@ export class ArmyService {
     
     // Add metadata flag to actor for identification
     await this.addArmyMetadata(actorId, armyId, type);
+    
+    // Place token at settlement location (if settlement has valid location)
+    if (settlement && actorId) {
+      const hasLocation = settlement.location && (settlement.location.x !== 0 || settlement.location.y !== 0);
+      
+      if (hasLocation) {
+        try {
+          const { placeArmyTokenAtSettlement } = await import('../../utils/armyHelpers');
+          await placeArmyTokenAtSettlement(this, actorId, settlement, name);
+          logger.info(`✅ [ArmyService] Placed token for ${name} at ${settlement.name}`);
+        } catch (error) {
+          logger.error(`❌ [ArmyService] Failed to place token for ${name}:`, error);
+          // Don't fail army creation if token placement fails
+        }
+      }
+    }
     
     const supportMsg = settlement 
       ? ` assigned to ${settlement.name}`

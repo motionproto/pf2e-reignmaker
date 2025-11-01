@@ -6,11 +6,11 @@
 import { logger } from './Logger';
 
 // Import army token images
-import cavalryImg from '../../img/army_tokens/army-calvary.webp';
-import engineersImg from '../../img/army_tokens/army-engineers.webp';
-import infantryImg from '../../img/army_tokens/army-infantry.webp';
-import koboldImg from '../../img/army_tokens/army-kobold.webp';
-import wolvesImg from '../../img/army_tokens/army-wolves.webp';
+import cavalryImg from '../img/army_tokens/army-calvary.webp';
+import engineersImg from '../img/army_tokens/army-engineers.webp';
+import infantryImg from '../img/army_tokens/army-infantry.webp';
+import koboldImg from '../img/army_tokens/army-kobold.webp';
+import wolvesImg from '../img/army_tokens/army-wolves.webp';
 
 /**
  * Army type definitions with images
