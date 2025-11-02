@@ -10,6 +10,10 @@
  */
 
 import { logger } from '../../utils/Logger';
+import { 
+  disableCanvasLayerInteractivity, 
+  restoreCanvasLayerInteractivity 
+} from '../../utils/canvasLayerInteractivity';
 
 export type MapModeStyle = 'slide' | 'fade' | 'minimize' | 'hide';
 
@@ -20,6 +24,7 @@ export class AppWindowManager {
   private originalTransform: string = '';
   private originalOpacity: string = '';
   private overlayWasActive: boolean = false; // Track if overlays were already active before map mode
+  private savedLayerInteractivity: Map<string, boolean> = new Map(); // Track canvas layer interactivity state
   
   private constructor() {}
   
@@ -76,6 +81,9 @@ export class AppWindowManager {
     // Activate overlay scene control if not already active
     await this.activateOverlayControl();
     
+    // Disable canvas layer interactivity (prevents token/tile selection during map interactions)
+    this.savedLayerInteractivity = disableCanvasLayerInteractivity();
+    
     // Add base class (for pointer-events and transition)
     app.classList.add('map-interaction-mode');
     app.classList.add(`map-interaction-${style}`);
@@ -120,6 +128,10 @@ export class AppWindowManager {
     app.style.visibility = '';
     app.style.transform = this.originalTransform;
     app.style.opacity = this.originalOpacity;
+    
+    // Restore canvas layer interactivity
+    restoreCanvasLayerInteractivity(this.savedLayerInteractivity);
+    this.savedLayerInteractivity.clear();
     
     // Restore overlay control state if we activated it
     await this.restoreOverlayControl();

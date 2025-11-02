@@ -135,6 +135,15 @@ export const claimedHexesWithWorksites = derived(claimedHexes, $hexes =>
 );
 
 /**
+ * Hexes with bounties/commodities (for resources overlay)
+ * Returns full hex objects that have commodity data
+ * Includes the commodities record for rendering
+ */
+export const hexesWithBounties = derived(claimedHexes, $hexes => 
+  $hexes.filter(h => h.commodities && Object.keys(h.commodities).length > 0)
+);
+
+/**
  * Hexes with terrain data (for terrain overlay)
  * Returns all hexes that have terrain information
  * Filtered by World Explorer visibility (GMs see all, players see revealed only)

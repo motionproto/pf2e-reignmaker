@@ -776,26 +776,29 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('worksites')
     });
 
-    // Resources Overlay - REACTIVE (uses claimedHexesWithWorksites store)
+    // Resources Overlay - REACTIVE (uses derived store for hexes with bounties)
     this.registerOverlay({
       id: 'resources',
       name: 'Resources',
       icon: 'fa-gem',
       layerIds: ['resources'],
-      store: claimedHexesWithWorksites,  // ✅ Reactive subscription
+      store: derived(claimedHexes, $hexes => 
+        // Filter claimed hexes that have commodities
+        $hexes.filter((h: any) => h.commodities && Object.keys(h.commodities).length > 0)
+      ),  // ✅ Reactive subscription to claimed hexes with bounties
       render: async (hexes) => {
-        const worksiteData = hexes.map((h: any) => ({ 
+        const bountyData = hexes.map((h: any) => ({ 
           id: h.id, 
-          worksiteType: h.worksite.type 
+          commodities: h.commodities 
         }));
 
-        if (worksiteData.length === 0) {
+        if (bountyData.length === 0) {
 
           this.mapLayer.clearLayer('resources');
           return;
         }
 
-        await this.mapLayer.drawResourceIcons(worksiteData);
+        await this.mapLayer.drawResourceIcons(bountyData);
       },
       hide: () => {
         // Cleanup handled by OverlayManager

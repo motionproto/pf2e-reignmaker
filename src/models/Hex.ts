@@ -140,11 +140,62 @@ export class Worksite {
 }
 
 /**
+ * Edge directions for pointy-top hexes
+ * NW = Northwest, NE = Northeast, E = East, SE = Southeast, SW = Southwest, W = West
+ */
+export type EdgeDirection = 'nw' | 'ne' | 'e' | 'se' | 'sw' | 'w';
+
+/**
+ * Connector states for edge connectors
+ * - flow: River flows through this edge (direction shown by chevron)
+ * - source: River starts here (no neighbor connection)
+ * - end: River terminates here (no neighbor connection)
+ * - inactive: No river at this edge
+ */
+export type ConnectorState = 'flow' | 'source' | 'end' | 'inactive';
+
+/**
+ * Connector states for center connector
+ * - flow-through: River passes through center (connects 2+ edges)
+ * - source: River originates at center
+ * - end: River terminates at center
+ * - inactive: No river at center
+ */
+export type CenterConnectorState = 'flow-through' | 'source' | 'end' | 'inactive';
+
+/**
+ * River connector at hex edge
+ */
+export interface RiverConnector {
+  edge: EdgeDirection;
+  state: ConnectorState;
+  flowDirection?: EdgeDirection; // Direction water flows (for 'flow' state only)
+}
+
+/**
+ * River connector at hex center (optional)
+ */
+export interface CenterConnector {
+  state: CenterConnectorState;
+}
+
+/**
+ * River segment - represents one or more connected water flows through a hex
+ * A hex can have multiple independent river segments
+ */
+export interface RiverSegment {
+  id: string;  // Unique ID for this segment (UUID)
+  connectors: RiverConnector[];  // Edge connectors (2+ for a valid segment)
+  centerConnector?: CenterConnector;  // Optional center point for bending
+  navigable: boolean;  // Can boats travel on it?
+}
+
+/**
  * Hex Feature - Our own feature system (NOT Kingmaker)
  * Extensible for future features like roads, landmarks, etc.
  */
 export interface HexFeature {
-  type: 'settlement' | 'road' | 'landmark' | 'other';
+  type: 'settlement' | 'road' | 'landmark' | 'river' | 'other';
   
   // Settlement-specific fields (when type = 'settlement')
   linked?: boolean;          // true = has Settlement object, false = vacant marker
@@ -152,6 +203,9 @@ export interface HexFeature {
   tier?: string;             // Village/Town/City/Metropolis (for display on vacant settlements)
   name?: string;             // Settlement/landmark name (preserved from Kingmaker import)
   mapIconPath?: string;      // Custom map icon path for settlement (overrides default tier icon)
+  
+  // River-specific fields (when type = 'river')
+  segments?: RiverSegment[];  // River segments (new edge-to-edge system)
   
   // Extensible for future feature types
   [key: string]: any;

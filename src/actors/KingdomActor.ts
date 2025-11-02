@@ -85,7 +85,8 @@ export interface KingdomData {
     col: number;
     terrain: string;
     worksite?: { type: string } | null;
-    hasCommodityBonus?: boolean;
+    commodities?: Record<string, number>;  // Bounty resources on this hex (stored as object for JSON serialization)
+    hasCommodityBonus?: boolean;  // Legacy field - deprecated in favor of commodities
     hasRoad?: boolean;
     fortified?: number;  // Legacy field - may be deprecated in favor of fortification
     fortification?: {
@@ -95,7 +96,7 @@ export interface KingdomData {
     };
     name?: string;
     features?: Array<{ type: string; [key: string]: any }>;  // Our features only (settlements, landmarks, rivers, etc.)
-    claimedBy?: number | string | null;
+    claimedBy?: string | null;  // "player" for player kingdom, faction name for other factions, null for wilderness
   }>;
   settlements: Settlement[];
   size: number;
@@ -141,6 +142,26 @@ export interface KingdomData {
   // NEW: Comprehensive turn state - single source of truth for UI behavior
   // Optional during migration from scattered fields to consolidated turnState
   turnState?: TurnState;
+  
+  // NEW: Canonical river edge storage
+  // Edges are stored using cube coordinate-based canonical IDs to eliminate duplicates
+  // Each edge between two hexes has exactly ONE entry, regardless of which hex you're viewing from
+  rivers?: {
+    edges: { [edgeId: string]: RiverEdgeState };
+  };
+}
+
+/**
+ * River edge state - stored once per edge using canonical ID
+ */
+export interface RiverEdgeState {
+  state: 'flow' | 'source' | 'end';  // 'inactive' edges are not stored
+  
+  // Flow direction: offset coordinates of hex water flows TOWARD
+  // Only applicable for 'flow' edges (optional for source/end)
+  flowsToHex?: { i: number; j: number };
+  
+  navigable?: boolean;
 }
 
 export class KingdomActor extends Actor {

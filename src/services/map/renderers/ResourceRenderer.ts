@@ -1,23 +1,25 @@
 /**
- * ResourceRenderer - Renders resource/commodity icons on map hexes
- * Maps worksite positions to their corresponding resource production icons
+ * ResourceRenderer - Renders bounty/commodity icons on map hexes
+ * Shows bonus resources available on hexes (from hex.commodities)
  */
 
-import { RESOURCE_ICONS } from '../types';
+import { BOUNTY_ICONS } from '../types';
 import { ICON_SHADOW_COLOR } from '../../../view/kingdom/utils/presentation';
 import { logger } from '../../../utils/Logger';
+import { getResourceColor } from '../../../view/kingdom/utils/presentation';
 
 /**
- * Draw resource icons on hexes (mapped from worksite types)
- * Places commodity icon sprites at hex centers based on what the worksite produces
+ * Draw bounty icons on hexes
+ * Places commodity icon sprites at hex centers
+ * Stacks multiple bounties with 4px offset
  * 
  * @param layer - PIXI container to add sprites to
- * @param worksiteData - Array of hex IDs with their worksite types (used to determine resource type)
+ * @param bountyData - Array of hex IDs with their commodities
  * @param canvas - Foundry canvas object
  */
 export async function renderResourceIcons(
   layer: PIXI.Container,
-  worksiteData: Array<{ id: string; worksiteType: string }>,
+  bountyData: Array<{ id: string; commodities: Record<string, number> }>,
   canvas: any
 ): Promise<number> {
 
@@ -26,19 +28,11 @@ export async function renderResourceIcons(
     return 0;
   }
 
-  const GridHex = (globalThis as any).foundry.grid.GridHex;
   let successCount = 0;
 
-  // Process each worksite and map to its resource
-  for (const { id, worksiteType } of worksiteData) {
+  // Process each hex with bounties
+  for (const { id, commodities } of bountyData) {
     try {
-      // Get resource icon path for this worksite type
-      const iconPath = RESOURCE_ICONS[worksiteType];
-      if (!iconPath) {
-        logger.warn(`[ResourceRenderer] No resource icon found for worksite type: ${worksiteType}`);
-        continue;
-      }
-
       // Parse hex ID
       const parts = id.split('.');
       if (parts.length !== 2) {
@@ -56,41 +50,112 @@ export async function renderResourceIcons(
 
       // Get hex center using Foundry's official API
       const center = canvas.grid.getCenterPoint({i, j});
-
-      // Load texture and create sprite
-      const texture = await PIXI.Assets.load(iconPath);
       
       // Scale to appropriate size (45% of hex height)
       const hexSize = canvas.grid.sizeY;
       const iconSize = hexSize * 0.45;
       
-      // Create shadow sprite (darker, offset copy)
-      const shadowSprite = new PIXI.Sprite(texture);
-      shadowSprite.anchor.set(0.5, 0.5);
-      shadowSprite.position.set(center.x + 3, center.y + 3); // Offset for shadow
-      const scale = iconSize / shadowSprite.height;
-      shadowSprite.scale.set(scale, scale);
-      shadowSprite.tint = ICON_SHADOW_COLOR.color;
-      shadowSprite.alpha = ICON_SHADOW_COLOR.alpha;
+      // Get bounty resources as array for stacking
+      const bounties = Object.entries(commodities).filter(([_, amount]) => amount > 0);
       
-      // Add blur filter to shadow for softer effect
-      const blurFilter = new PIXI.filters.BlurFilter();
-      blurFilter.blur = 8; // Moderate blur
-      shadowSprite.filters = [blurFilter];
+      // Calculate container offset to center the stack
+      // Each icon adds 4px to the total width (except the first)
+      const stackSpacing = 4;
+      const totalStackWidth = (bounties.length - 1) * stackSpacing;
+      const containerOffsetX = -totalStackWidth / 2;
+      const containerOffsetY = -totalStackWidth / 2;
       
-      layer.addChild(shadowSprite);
+      let stackOffset = 0;
       
-      // Create main sprite on top
-      const sprite = new PIXI.Sprite(texture);
-      sprite.anchor.set(0.5, 0.5);
-      sprite.position.set(center.x, center.y);
-      sprite.scale.set(scale, scale);
-      layer.addChild(sprite);
-      
-      successCount++;
+      // Render each bounty resource
+      for (const [resource, amount] of bounties) {
+        // Skip if no bounty for this resource
+        if (amount <= 0) continue;
+        
+        // Get icon path for this resource type
+        const iconPath = BOUNTY_ICONS[resource];
+        if (!iconPath) {
+          logger.warn(`[ResourceRenderer] No bounty icon found for resource: ${resource}`);
+          continue;
+        }
+        
+        // Handle gold differently (FA icon vs webp)
+        if (resource === 'gold') {
+          // Create FontAwesome icon using PIXI.Text
+          const goldIcon = new PIXI.Text('', {
+            fontFamily: 'Font Awesome 6 Free',
+            fontSize: iconSize,
+            fill: 0xFFD700, // Gold color
+            fontWeight: '900'
+          });
+          goldIcon.anchor.set(0.5, 0.5);
+          goldIcon.position.set(
+            center.x + containerOffsetX + stackOffset, 
+            center.y + containerOffsetY + stackOffset
+          );
+          
+          // Create shadow for gold icon
+          const shadowIcon = new PIXI.Text('', {
+            fontFamily: 'Font Awesome 6 Free',
+            fontSize: iconSize,
+            fill: ICON_SHADOW_COLOR.color,
+            fontWeight: '900'
+          });
+          shadowIcon.anchor.set(0.5, 0.5);
+          shadowIcon.position.set(
+            center.x + containerOffsetX + stackOffset + 3, 
+            center.y + containerOffsetY + stackOffset + 3
+          );
+          shadowIcon.alpha = ICON_SHADOW_COLOR.alpha;
+          
+          // Add blur filter to shadow
+          const blurFilter = new PIXI.filters.BlurFilter();
+          blurFilter.blur = 8;
+          shadowIcon.filters = [blurFilter];
+          
+          layer.addChild(shadowIcon);
+          layer.addChild(goldIcon);
+        } else {
+          // Load texture and create sprite for webp icons
+          const texture = await PIXI.Assets.load(iconPath);
+          
+          // Create shadow sprite (darker, offset copy)
+          const shadowSprite = new PIXI.Sprite(texture);
+          shadowSprite.anchor.set(0.5, 0.5);
+          shadowSprite.position.set(
+            center.x + containerOffsetX + stackOffset + 3, 
+            center.y + containerOffsetY + stackOffset + 3
+          );
+          const scale = iconSize / shadowSprite.height;
+          shadowSprite.scale.set(scale, scale);
+          shadowSprite.tint = ICON_SHADOW_COLOR.color;
+          shadowSprite.alpha = ICON_SHADOW_COLOR.alpha;
+          
+          // Add blur filter to shadow for softer effect
+          const blurFilter = new PIXI.filters.BlurFilter();
+          blurFilter.blur = 8;
+          shadowSprite.filters = [blurFilter];
+          
+          layer.addChild(shadowSprite);
+          
+          // Create main sprite on top
+          const sprite = new PIXI.Sprite(texture);
+          sprite.anchor.set(0.5, 0.5);
+          sprite.position.set(
+            center.x + containerOffsetX + stackOffset, 
+            center.y + containerOffsetY + stackOffset
+          );
+          sprite.scale.set(scale, scale);
+          layer.addChild(sprite);
+        }
+        
+        // Increment stack offset for next icon (4px offset)
+        stackOffset += 4;
+        successCount++;
+      }
       
     } catch (error) {
-      logger.error(`[ResourceRenderer] Failed to draw resource icon for hex ${id}:`, error);
+      logger.error(`[ResourceRenderer] Failed to draw bounty icons for hex ${id}:`, error);
     }
   }
 

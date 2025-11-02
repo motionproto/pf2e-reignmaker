@@ -106,6 +106,20 @@ export const RESOURCE_ICONS: Record<string, string> = {
 };
 
 /**
+ * Bounty/Commodity icon mappings
+ * Maps resource types to their icon paths
+ * Used for displaying bounty resources on hexes
+ * Gold uses FA icon (no webp asset), others use webp assets
+ */
+export const BOUNTY_ICONS: Record<string, string> = {
+  'food': foodIcon,
+  'lumber': lumberCommodityIcon,
+  'ore': oreIcon,
+  'stone': stoneIcon,
+  'gold': 'fa-coins'  // FA icon for gold (no webp asset)
+};
+
+/**
  * Settlement icon mappings
  * Maps settlement tier NAME to appropriate icon
  * Settlement data uses tier names ('Village', 'Town', 'City', 'Metropolis')

@@ -48,15 +48,21 @@ export async function recalculateWorksiteProduction(): Promise<boolean> {
       const row = hexData.row ?? parseInt(hexData.id.split('.')[0]);
       const col = hexData.col ?? parseInt(hexData.id.split('.')[1]);
       
+      // Convert commodities object back to Map
+      const commoditiesData = hexData.commodities || {};
+      const commodities = new Map(
+        Object.entries(commoditiesData).map(([k, v]) => [k, Number(v)])
+      );
+      
       return new Hex(
         row,
         col,
         hexData.terrain as TerrainType,
         hexData.travel || 'open',
         hexData.worksite ? new Worksite(hexData.worksite.type as WorksiteType) : null,
-        hexData.hasCommodityBonus || hexData.hasSpecialTrait || false,
+        commodities,  // Fixed: Pass commodities Map, not boolean
         hexData.name || null,
-        hexData.claimedBy ?? 0,
+        hexData.claimedBy ?? null,  // Fixed: Default to null, not 0
         hexData.hasRoad || false,
         hexData.fortified || 0,
         hexData.features || []
@@ -67,7 +73,7 @@ export async function recalculateWorksiteProduction(): Promise<boolean> {
     const result = calculateProduction(hexes, []);
     
     // Update kingdom data with recalculated production
-    await actor.updateKingdomData(kingdom => {
+    await actor.updateKingdomData((kingdom: any) => {
       // Convert Map to object for storage
       kingdom.worksiteProduction = Object.fromEntries(result.totalProduction);
       

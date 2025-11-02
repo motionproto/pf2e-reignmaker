@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { ReignMakerMapLayer } from '../../services/map/ReignMakerMapLayer';
   import { getOverlayManager } from '../../services/map/OverlayManager';
+  import { getEditorModeService } from '../../services/map/EditorModeService';
+  import EditorModePanel from './EditorModePanel.svelte';
+  import { logger } from '../../utils/Logger';
 
   // Toolbar state
   let isDragging = false;
@@ -9,9 +12,23 @@
   let dragStart = { x: 0, y: 0 };
   let toolbarElement: HTMLDivElement;
 
+  // Editor panel state
+  let showEditorPanel = false;
+  let editorPanelMountPoint: HTMLElement | null = null;
+  let editorPanelComponent: any = null;
+
+  // Debug mode states
+  let debugHexMode = false;
+  let debugEdgeMode = false;
+  let debugNeighborsMode = false;
+
+  // Check if user is GM
+  const isGM = (globalThis as any).game?.user?.isGM ?? false;
+
   // Map layer and overlay manager instances
   const mapLayer = ReignMakerMapLayer.getInstance();
   const overlayManager = getOverlayManager();
+  const editorService = getEditorModeService();
 
   // Get all registered overlays (static list)
   const overlays = overlayManager.getAllOverlays();
@@ -69,14 +86,6 @@
     }
   }
 
-  // Reset all overlays using OverlayManager
-  function resetMap() {
-
-    overlayManager.clearAll();
-    // No manual state update needed - reactive store will update automatically
-    ui?.notifications?.info('Map overlays cleared');
-  }
-
   // Add global mouse event listeners
   onMount(() => {
     window.addEventListener('mousemove', handleMouseMove);
@@ -95,6 +104,65 @@
     
     // Dispatch close event
     toolbarElement.dispatchEvent(new CustomEvent('close', { bubbles: true }));
+  }
+
+  // Open editor panel
+  async function openEditor() {
+    if (showEditorPanel) return;
+    
+    showEditorPanel = true;
+    
+    // Ensure water overlay is active for river editing
+    if (!$activeOverlaysStore.has('water')) {
+      await overlayManager.toggleOverlay('water');
+    }
+    
+    // Create mount point
+    editorPanelMountPoint = document.createElement('div');
+    editorPanelMountPoint.id = 'editor-panel-mount';
+    document.body.appendChild(editorPanelMountPoint);
+    
+    // Mount editor panel
+    editorPanelComponent = new EditorModePanel({
+      target: editorPanelMountPoint,
+      props: {
+        onClose: closeEditor
+      }
+    });
+  }
+  
+  // Close editor panel
+  function closeEditor() {
+    if (!showEditorPanel) return;
+    
+    showEditorPanel = false;
+    
+    // Unmount component
+    if (editorPanelComponent) {
+      editorPanelComponent.$destroy();
+      editorPanelComponent = null;
+    }
+    
+    // Remove mount point
+    if (editorPanelMountPoint) {
+      editorPanelMountPoint.remove();
+      editorPanelMountPoint = null;
+    }
+  }
+
+  // Toggle hex debug mode
+  function toggleDebugHex() {
+    debugHexMode = editorService.toggleDebugHex();
+  }
+  
+  // Toggle edge debug mode
+  function toggleDebugEdge() {
+    debugEdgeMode = editorService.toggleDebugEdge();
+  }
+  
+  // Toggle neighbors debug mode
+  function toggleDebugNeighbors() {
+    debugNeighborsMode = editorService.toggleDebugNeighbors();
   }
 </script>
 
@@ -117,6 +185,33 @@
     </button>
   </div>
   
+  <div class="debug-tools">
+    <button 
+      class="debug-toggle" 
+      class:active={debugHexMode}
+      on:click={toggleDebugHex} 
+      title="Toggle Hex Debug (logs hex IDs on click)"
+    >
+      <i class="fas fa-hexagon"></i>
+    </button>
+    <button 
+      class="debug-toggle" 
+      class:active={debugEdgeMode}
+      on:click={toggleDebugEdge} 
+      title="Toggle Edge Debug (logs edge IDs on click)"
+    >
+      <i class="fas fa-grip-lines"></i>
+    </button>
+    <button 
+      class="debug-toggle" 
+      class:active={debugNeighborsMode}
+      on:click={toggleDebugNeighbors} 
+      title="Toggle Neighbors Debug (logs neighbor hex IDs)"
+    >
+      <i class="fas fa-arrows-alt"></i>
+    </button>
+  </div>
+  
   <div class="toolbar-buttons">
     {#each overlays as overlay}
       <button 
@@ -130,16 +225,18 @@
       </button>
     {/each}
     
-    <div class="toolbar-divider"></div>
-    
-    <button 
-      class="toolbar-button reset-button" 
-      on:click={resetMap}
-      title="Clear All Map Overlays"
-    >
-      <i class="fas fa-eraser"></i>
-      <span>Reset Map</span>
-    </button>
+    {#if isGM}
+      <div class="toolbar-divider"></div>
+      
+      <button 
+        class="toolbar-button editor-button" 
+        on:click={openEditor}
+        title="Open Map Editor (GM Only)"
+      >
+        <i class="fas fa-pencil-alt"></i>
+        <span>Map Editor</span>
+      </button>
+    {/if}
   </div>
 </div>
 
@@ -213,6 +310,58 @@
     }
   }
   
+  .debug-tools {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .debug-toggle {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:hover {
+      color: rgba(100, 200, 255, 0.9);
+      background: rgba(100, 200, 255, 0.1);
+      border-color: rgba(100, 200, 255, 0.3);
+    }
+    
+    &.active {
+      color: #00FF00;
+      background: rgba(0, 255, 0, 0.15);
+      border-color: rgba(0, 255, 0, 0.4);
+      
+      i {
+        animation: pulse 2s ease-in-out infinite;
+      }
+    }
+    
+    i {
+      color: inherit;
+      font-size: 1rem;
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  
   .toolbar-buttons {
     display: flex;
     flex-direction: column;
@@ -269,17 +418,17 @@
       text-align: left;
     }
     
-    &.reset-button {
-      background: rgba(255, 100, 100, 0.1);
-      border-color: rgba(255, 100, 100, 0.3);
+    &.editor-button {
+      background: rgba(100, 150, 255, 0.1);
+      border-color: rgba(100, 150, 255, 0.3);
       
       &:hover {
-        background: rgba(255, 100, 100, 0.2);
-        border-color: rgba(255, 100, 100, 0.5);
+        background: rgba(100, 150, 255, 0.2);
+        border-color: rgba(100, 150, 255, 0.5);
       }
       
       i {
-        color: rgba(255, 150, 150, 0.9);
+        color: rgba(150, 180, 255, 0.9);
       }
     }
   }

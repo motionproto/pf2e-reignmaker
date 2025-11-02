@@ -9,6 +9,10 @@ build/
 .vite-cache/
 src/data-compiled/
 
+### Distribution packaging ###
+package/
+*.zip
+
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
