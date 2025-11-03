@@ -37,10 +37,12 @@ const OUTLINE_WIDTH = 2;
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
+ * @param selectedConnector - Currently selected connector (if any) for visual highlight
  */
 export async function renderRiverConnectors(
   layer: PIXI.Container,
-  canvas: any
+  canvas: any,
+  selectedConnector?: { hexI: number; hexJ: number; edge?: EdgeDirection; isCenter?: boolean } | null
 ): Promise<void> {
   if (!canvas?.grid) {
     logger.warn('[RiverConnectorRenderer] Canvas grid not available');
@@ -67,41 +69,84 @@ export async function renderRiverConnectors(
 
   logger.info(`[RiverConnectorRenderer] Rendering connectors for ${hexesToRender.length} hexes (all hexes on map)`);
 
-  // Render edge connectors for ALL hexes (no deduplication)
-  // Each hex renders all 6 edges from its own perspective
-  // This ensures control points appear in the correct visual positions
+  // Render edge connectors using canonical edge map (prevents duplicates)
+  // Import edge utilities
+  const edgeEntries = Object.entries(kingdom.rivers?.edges || {});
+  const renderedEdges = new Set<string>();
+  
+  // First pass: render all edges from canonical map (active edges)
+  for (const [edgeId, edgeData] of edgeEntries) {
+    if (renderedEdges.has(edgeId)) continue;
+    
+    const { parseCanonicalEdgeId } = await import('../../../utils/edgeUtils');
+    const { hex1, hex2 } = parseCanonicalEdgeId(edgeId);
+    
+    // Use hex1's perspective for rendering (arbitrary choice - both are equivalent)
+    const position = getEdgeMidpoint(hex1.i, hex1.j, hex1.dir as EdgeDirection, canvas);
+    if (!position) continue;
+    
+    // Check if this connector is selected
+    const isSelected = selectedConnector && 
+      selectedConnector.hexI === hex1.i && 
+      selectedConnector.hexJ === hex1.j && 
+      selectedConnector.edge === (hex1.dir as EdgeDirection);
+    
+    // Render the edge connector ONCE
+    renderEdgeConnector(
+      graphics, 
+      position.x, 
+      position.y, 
+      hex1.dir as EdgeDirection, 
+      edgeData.state, 
+      true,  // Always visible (no hover filter)
+      edgeId,
+      edgeData.flowsToHex,
+      canvas,
+      hex1.i,
+      hex1.j,
+      isSelected || false
+    );
+    
+    renderedEdges.add(edgeId);
+  }
+  
+  // Second pass: render inactive edges for all hexes
   for (const hex of hexesToRender) {
     const edges = getAllEdges();
     
     for (const edge of edges) {
-      // Convert edge name to proper direction index (0-5)
       const edgeIndex = edgeNameToIndex(edge);
-      
-      // Generate canonical edge ID (for state lookup only)
       const edgeId = getEdgeIdForDirection(hex.i, hex.j, edgeIndex, canvas);
       
-      // Get edge position from THIS hex's perspective
+      // Skip if already rendered as active
+      if (renderedEdges.has(edgeId)) continue;
+      
       const position = getEdgeMidpoint(hex.i, hex.j, edge, canvas);
       if (!position) continue;
       
-      // Look up state from canonical edge map
-      const edgeState = kingdom.rivers?.edges?.[edgeId];
-      const state: ConnectorState = edgeState?.state || 'inactive';
+      // Check if this connector is selected
+      const isSelected = selectedConnector && 
+        selectedConnector.hexI === hex.i && 
+        selectedConnector.hexJ === hex.j && 
+        selectedConnector.edge === edge;
       
-      // Render the edge connector at THIS hex's edge position
+      // Render inactive edge connector
       renderEdgeConnector(
         graphics, 
         position.x, 
         position.y, 
         edge, 
-        state, 
-        hex.isHovered,
+        'inactive', 
+        true,
         edgeId,
-        edgeState?.flowsToHex,
+        undefined,
         canvas,
         hex.i,
-        hex.j
+        hex.j,
+        isSelected || false
       );
+      
+      renderedEdges.add(edgeId);
     }
   }
 
@@ -215,8 +260,21 @@ function renderEdgeConnector(
   flowsToHex?: { i: number; j: number },
   canvas?: any,
   hexI?: number,
-  hexJ?: number
+  hexJ?: number,
+  isSelected?: boolean
 ): void {
+  // Draw selection highlight (yellow glow) if selected
+  if (isSelected) {
+    graphics.lineStyle({
+      width: 4,
+      color: 0xFFAA00,  // Orange/yellow
+      alpha: 0.8,
+    });
+    graphics.beginFill(0xFFAA00, 0.3);
+    graphics.drawCircle(x, y, EDGE_DOT_RADIUS + 6);
+    graphics.endFill();
+  }
+  
   // Type guard: CenterConnectorState should never be passed here, but handle gracefully
   const edgeState: ConnectorState = (state === 'flow-through') ? 'inactive' : state as ConnectorState;
   

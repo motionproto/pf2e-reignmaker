@@ -35,11 +35,11 @@
     
     console.log(`[ClearRiverData] Found ${existingEdges} canonical edges and ${hexesWithRivers} hexes with river features`);
     
-    // Create updated kingdom data - clear both canonical edges and hex features
+    // Create updated kingdom data - clear all river paths (sequential system)
     const updatedData = {
       ...kingdomData,
       rivers: {
-        edges: {}  // Clear all canonical edge IDs (now using readable format: i:j:dir,i:j:dir)
+        paths: []  // Clear all river paths (sequential connect-the-dots system)
       },
       hexes: kingdomData.hexes.map(hex => ({
         ...hex,
@@ -47,8 +47,11 @@
       }))
     };
     
-    // Update the kingdom actor with cleared data
-    await kingdomActor.setFlag('pf2e-reignmaker', 'kingdom-data', updatedData);
+    // CRITICAL: Use update() instead of setFlag() to ensure proper save
+    // setFlag may not trigger reactivity properly
+    await kingdomActor.update({
+      'flags.pf2e-reignmaker.kingdom-data': updatedData
+    });
     
     console.log('[ClearRiverData] ✅ Cleared all river data (canonical edges + hex features)');
     

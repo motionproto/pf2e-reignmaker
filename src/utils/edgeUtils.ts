@@ -139,9 +139,10 @@ export function edgeIndexToName(index: number): string {
 
 /**
  * Parse canonical edge ID back into hex coordinates and directions
+ * Supports both normal edges ("i:j:dir,i:j:dir") and center connectors ("i:j:dir,i:j:c" or "i:j:c,i:j:dir")
  * 
- * @param edgeId - Canonical edge ID (e.g., "4:4:se,5:4:nw")
- * @returns Object with both hexes and their edge directions
+ * @param edgeId - Canonical edge ID (e.g., "4:4:se,5:4:nw" or "4:4:e,4:4:c")
+ * @returns Object with both hexes and their edge directions ('c' for center)
  */
 export function parseCanonicalEdgeId(
   edgeId: string
@@ -149,7 +150,7 @@ export function parseCanonicalEdgeId(
   hex1: { i: number; j: number; dir: string };
   hex2: { i: number; j: number; dir: string };
 } {
-  // Parse "i:j:dir,i:j:dir"
+  // Parse "i:j:dir,i:j:dir" (also handles "i:j:c" for center)
   const [hex1Str, hex2Str] = edgeId.split(',');
   const [i1, j1, dir1] = hex1Str.split(':');
   const [i2, j2, dir2] = hex2Str.split(':');

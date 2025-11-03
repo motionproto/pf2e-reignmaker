@@ -26,9 +26,15 @@ const ARROW_SIZE = 12;
 const ARROW_COLOR = 0xFFFFFF;      // White arrows
 const ARROW_ALPHA = 0.9;
 
+// Lake/Swamp constants
+const LAKE_COLOR = 0x87CEEB;       // Light blue - sky blue
+const LAKE_ALPHA = 0.6;
+const SWAMP_COLOR = 0x556B2F;      // Murky green - dark olive green
+const SWAMP_ALPHA = 0.6;
+
 /**
  * Render all river segments across the map
- * Now includes flow direction visualization with arrows and state-specific colors
+ * Uses canonical edge map to prevent duplicate rendering
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
@@ -42,26 +48,38 @@ export async function renderWaterConnections(
     return;
   }
 
-  // Get kingdom data to find river features
+  // Get kingdom data
   const kingdomActor = await getKingdomActor();
   const kingdom = kingdomActor?.getFlag('pf2e-reignmaker', 'kingdom-data') as KingdomData | null;
   
-  if (!kingdom?.hexes) {
-    // logger.info('[WaterRenderer] No kingdom hexes found');
+  if (!kingdom) {
+    return;
+  }
+  
+  // Render lakes first (bottom layer)
+  if (kingdom.waterFeatures?.lakes && kingdom.waterFeatures.lakes.length > 0) {
+    renderLakes(layer, canvas, kingdom.waterFeatures.lakes);
+  }
+  
+  // Render swamps second (above lakes)
+  if (kingdom.waterFeatures?.swamps && kingdom.waterFeatures.swamps.length > 0) {
+    renderSwamps(layer, canvas, kingdom.waterFeatures.swamps);
+  }
+  
+  if (!kingdom?.rivers?.paths) {
+    // logger.info('[WaterRenderer] No rivers found');
     return;
   }
 
-  // Find all hexes with river features
-  const riverHexes = kingdom.hexes.filter(hex => 
-    hex.features?.some(f => f.type === 'river' && f.segments && f.segments.length > 0)
-  );
-
-  if (riverHexes.length === 0) {
-    // logger.info('[WaterRenderer] No river segments found');
+  // Get all paths
+  const paths = kingdom.rivers.paths;
+  
+  if (paths.length === 0) {
+    // logger.info('[WaterRenderer] No river paths found');
     return;
   }
 
-  // logger.info(`[WaterRenderer] Rendering rivers for ${riverHexes.length} hexes`);
+  // logger.info(`[WaterRenderer] Rendering ${paths.length} river paths`);
 
   // Graphics objects for multi-pass rendering
   const borderGraphics = new PIXI.Graphics();
@@ -70,216 +88,54 @@ export async function renderWaterConnections(
   const riverGraphics = new PIXI.Graphics();
   riverGraphics.name = 'Rivers';
 
+  // Create graphics for arrows (on top)
   const arrowGraphics = new PIXI.Graphics();
-  arrowGraphics.name = 'FlowArrows';
+  arrowGraphics.name = 'RiverArrows';
 
-  // Collect all river paths
-  let segmentCount = 0;
-
-  riverHexes.forEach(hex => {
-    const riverFeature = hex.features?.find(f => f.type === 'river');
-    if (!riverFeature?.segments) return;
-
-    const hexCoords = parseHexId(hex.id);
-    if (!hexCoords) return;
-
-    riverFeature.segments.forEach((segment: any) => {
-      const pathData = buildSegmentPath(segment, hexCoords.i, hexCoords.j, canvas);
-      if (pathData && pathData.path.length > 0) {
-        // Draw border (same for all states)
-        drawRiverPath(borderGraphics, pathData.path, RIVER_BORDER_WIDTH, RIVER_BORDER_COLOR, RIVER_BORDER_ALPHA);
-        
-        // Draw river with state-specific color
-        const riverColor = getRiverColor(pathData.state);
-        drawRiverPath(riverGraphics, pathData.path, RIVER_WIDTH, riverColor, RIVER_ALPHA);
-        
-        // Draw flow arrow for 'flow' state
-        if (pathData.state === 'flow' && pathData.path.length >= 2) {
-          drawFlowArrow(arrowGraphics, pathData.path);
-        }
-        
-        segmentCount++;
+  // Render each path
+  for (const path of paths) {
+    // Sort points by order
+    const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
+    
+    // Get positions for each point
+    const positions: Array<{x: number, y: number}> = [];
+    
+    for (const point of sortedPoints) {
+      let pos;
+      if (point.isCenter) {
+        pos = getHexCenter(point.hexI, point.hexJ, canvas);
+      } else if (point.edge) {
+        pos = getEdgeMidpoint(point.hexI, point.hexJ, point.edge as EdgeDirection, canvas);
       }
-    });
-  });
+      
+      if (pos) {
+        positions.push(pos);
+      }
+    }
+    
+    if (positions.length < 2) continue;
+    
+    // Determine color (use navigable property or default to blue)
+    const riverColor = path.navigable !== false ? FLOW_COLOR : FLOW_COLOR;
+    
+    // Draw border
+    drawRiverPath(borderGraphics, positions, RIVER_BORDER_WIDTH, RIVER_BORDER_COLOR, RIVER_BORDER_ALPHA);
+    
+    // Draw river
+    drawRiverPath(riverGraphics, positions, RIVER_WIDTH, riverColor, RIVER_ALPHA);
+    
+    // Draw flow arrows
+    drawFlowArrows(arrowGraphics, positions);
+  }
 
-  // Add to layer (borders first, rivers, then arrows on top)
+  // Add to layer (borders first, then rivers, then arrows on top)
   layer.addChild(borderGraphics);
   layer.addChild(riverGraphics);
   layer.addChild(arrowGraphics);
 
-  // logger.info(`[WaterRenderer] ✅ Rendered ${segmentCount} river segments`);
+  // logger.info(`[WaterRenderer] ✅ Rendered ${paths.length} river paths`);
 }
 
-/**
- * Build path points for a river segment with state information
- * 
- * @param segment - River segment data
- * @param hexI - Hex row coordinate
- * @param hexJ - Hex column coordinate
- * @param canvas - Foundry canvas object
- * @returns Object with path points and state, or null if no path
- */
-function buildSegmentPath(
-  segment: RiverSegment,
-  hexI: number,
-  hexJ: number,
-  canvas: any
-): { path: Array<{ x: number; y: number }>; state: 'flow' | 'source' | 'end' } | null {
-  if (!segment.connectors || segment.connectors.length === 0) {
-    return null;
-  }
-
-  // Get positions for all active connectors (not inactive)
-  const connectorPositions: Array<{ edge: EdgeDirection; x: number; y: number }> = [];
-  
-  // Determine segment state (use first active connector's state)
-  let segmentState: 'flow' | 'source' | 'end' = 'flow';
-  
-  segment.connectors.forEach(connector => {
-    if (connector.state === 'inactive') return;
-    
-    // Capture state from first active connector
-    if (connectorPositions.length === 0) {
-      segmentState = connector.state === 'source' ? 'source' : 
-                     connector.state === 'end' ? 'end' : 'flow';
-    }
-    
-    const pos = getEdgeMidpoint(hexI, hexJ, connector.edge, canvas);
-    if (pos) {
-      connectorPositions.push({
-        edge: connector.edge,
-        x: pos.x,
-        y: pos.y
-      });
-    }
-  });
-
-  if (connectorPositions.length === 0) {
-    return null;
-  }
-
-  // Check if center connector is active
-  const centerConnector = segment.centerConnector;
-  const hasCenterConnector = centerConnector && centerConnector.state !== 'inactive';
-
-  if (hasCenterConnector) {
-    // Bent river: draw through center
-    const centerPos = getHexCenter(hexI, hexJ, canvas);
-    if (!centerPos) return null;
-
-    // Draw from each edge to center
-    const path: Array<{ x: number; y: number }> = [];
-    
-    // For a bent river, we draw each edge → center as a curved segment
-    // Then connect center to other edges
-    connectorPositions.forEach((connector, index) => {
-      if (index === 0) {
-        // Start at first edge
-        path.push({ x: connector.x, y: connector.y });
-        // Curve to center
-        const midX = (connector.x + centerPos.x) / 2;
-        const midY = (connector.y + centerPos.y) / 2;
-        path.push({ x: midX, y: midY });
-        path.push({ x: centerPos.x, y: centerPos.y });
-      } else {
-        // Continue from center to next edge
-        const midX = (centerPos.x + connector.x) / 2;
-        const midY = (centerPos.y + connector.y) / 2;
-        path.push({ x: midX, y: midY });
-        path.push({ x: connector.x, y: connector.y });
-      }
-    });
-
-    return { path, state: segmentState };
-  } else {
-    // Straight river: draw directly between edges
-    if (connectorPositions.length < 2) {
-      // Need at least 2 edges for a straight river
-      return null;
-    }
-
-    // Draw straight line between the two edge connectors
-    const path: Array<{ x: number; y: number }> = [];
-    
-    // Add all connector positions in order
-    connectorPositions.forEach(connector => {
-      path.push({ x: connector.x, y: connector.y });
-    });
-
-    return { path, state: segmentState };
-  }
-}
-
-/**
- * Get river color based on connector state
- * 
- * @param state - Connector state
- * @returns Color value for the state
- */
-function getRiverColor(state: 'flow' | 'source' | 'end'): number {
-  switch (state) {
-    case 'source':
-      return SOURCE_COLOR;
-    case 'end':
-      return END_COLOR;
-    case 'flow':
-    default:
-      return FLOW_COLOR;
-  }
-}
-
-/**
- * Draw flow direction arrow at midpoint of river path
- * 
- * @param graphics - PIXI Graphics object
- * @param path - River path points
- */
-function drawFlowArrow(
-  graphics: PIXI.Graphics,
-  path: Array<{ x: number; y: number }>
-): void {
-  if (path.length < 2) return;
-
-  // Find midpoint of path for arrow placement
-  const midIndex = Math.floor(path.length / 2);
-  const p1 = path[midIndex - 1];
-  const p2 = path[midIndex];
-
-  // Calculate midpoint between these two points
-  const mx = (p1.x + p2.x) / 2;
-  const my = (p1.y + p2.y) / 2;
-
-  // Calculate angle of flow direction
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const angle = Math.atan2(dy, dx);
-
-  // Draw chevron arrow pointing in flow direction
-  const arrowLength = ARROW_SIZE;
-  const arrowWidth = ARROW_SIZE * 0.6;
-
-  // Calculate arrow points (chevron shape: >)
-  const tipX = mx + Math.cos(angle) * arrowLength / 2;
-  const tipY = my + Math.sin(angle) * arrowLength / 2;
-
-  const baseX = mx - Math.cos(angle) * arrowLength / 2;
-  const baseY = my - Math.sin(angle) * arrowLength / 2;
-
-  const leftX = baseX - Math.cos(angle + Math.PI / 2) * arrowWidth / 2;
-  const leftY = baseY - Math.sin(angle + Math.PI / 2) * arrowWidth / 2;
-
-  const rightX = baseX + Math.cos(angle + Math.PI / 2) * arrowWidth / 2;
-  const rightY = baseY + Math.sin(angle + Math.PI / 2) * arrowWidth / 2;
-
-  // Draw arrow as filled triangle
-  graphics.beginFill(ARROW_COLOR, ARROW_ALPHA);
-  graphics.moveTo(tipX, tipY);
-  graphics.lineTo(leftX, leftY);
-  graphics.lineTo(rightX, rightY);
-  graphics.lineTo(tipX, tipY);
-  graphics.endFill();
-}
 
 /**
  * Draw a river path using PIXI graphics
@@ -314,4 +170,195 @@ function drawRiverPath(
   for (let i = 1; i < path.length; i++) {
     graphics.lineTo(path[i].x, path[i].y);
   }
+}
+
+/**
+ * Draw flow direction arrows along a river path
+ * Places arrows at regular intervals to show flow direction
+ * 
+ * @param graphics - PIXI Graphics object
+ * @param path - Array of {x, y} points defining the path
+ */
+function drawFlowArrows(
+  graphics: PIXI.Graphics,
+  path: Array<{ x: number; y: number }>
+): void {
+  if (path.length < 2) return;
+
+  // Calculate total path length
+  let totalLength = 0;
+  for (let i = 1; i < path.length; i++) {
+    const dx = path[i].x - path[i-1].x;
+    const dy = path[i].y - path[i-1].y;
+    totalLength += Math.sqrt(dx * dx + dy * dy);
+  }
+
+  // Place arrows every 100 pixels along the path
+  const ARROW_SPACING = 100;
+  const numArrows = Math.floor(totalLength / ARROW_SPACING);
+  
+  if (numArrows === 0) return;
+
+  // Calculate positions for arrows
+  for (let arrowIndex = 0; arrowIndex < numArrows; arrowIndex++) {
+    const targetDistance = (arrowIndex + 1) * ARROW_SPACING;
+    
+    // Find the segment and position for this arrow
+    let currentDistance = 0;
+    for (let i = 1; i < path.length; i++) {
+      const p1 = path[i - 1];
+      const p2 = path[i];
+      
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const segmentLength = Math.sqrt(dx * dx + dy * dy);
+      
+      if (currentDistance + segmentLength >= targetDistance) {
+        // Arrow should be placed on this segment
+        const distanceAlongSegment = targetDistance - currentDistance;
+        const t = distanceAlongSegment / segmentLength;
+        
+        // Interpolate position
+        const arrowX = p1.x + dx * t;
+        const arrowY = p1.y + dy * t;
+        
+        // Calculate angle (direction of flow)
+        const angle = Math.atan2(dy, dx);
+        
+        // Draw arrow at this position
+        drawSingleArrow(graphics, arrowX, arrowY, angle);
+        break;
+      }
+      
+      currentDistance += segmentLength;
+    }
+  }
+}
+
+/**
+ * Draw a single flow arrow
+ * 
+ * @param graphics - PIXI Graphics object
+ * @param x - X position
+ * @param y - Y position
+ * @param angle - Angle in radians (direction of flow)
+ */
+function drawSingleArrow(
+  graphics: PIXI.Graphics,
+  x: number,
+  y: number,
+  angle: number
+): void {
+  const arrowLength = ARROW_SIZE;
+  const arrowWidth = ARROW_SIZE * 0.6;
+
+  // Calculate arrow points (triangle/chevron shape: >)
+  const tipX = x + Math.cos(angle) * arrowLength / 2;
+  const tipY = y + Math.sin(angle) * arrowLength / 2;
+
+  const baseX = x - Math.cos(angle) * arrowLength / 2;
+  const baseY = y - Math.sin(angle) * arrowLength / 2;
+
+  const leftX = baseX - Math.cos(angle + Math.PI / 2) * arrowWidth / 2;
+  const leftY = baseY - Math.sin(angle + Math.PI / 2) * arrowWidth / 2;
+
+  const rightX = baseX + Math.cos(angle + Math.PI / 2) * arrowWidth / 2;
+  const rightY = baseY + Math.sin(angle + Math.PI / 2) * arrowWidth / 2;
+
+  // Draw arrow as filled triangle
+  graphics.beginFill(ARROW_COLOR, ARROW_ALPHA);
+  graphics.moveTo(tipX, tipY);
+  graphics.lineTo(leftX, leftY);
+  graphics.lineTo(rightX, rightY);
+  graphics.lineTo(tipX, tipY);
+  graphics.endFill();
+}
+
+/**
+ * Render lake features (full hex fills)
+ * 
+ * @param layer - PIXI container to add graphics to
+ * @param canvas - Foundry canvas object
+ * @param lakes - Array of lake features
+ */
+function renderLakes(
+  layer: PIXI.Container,
+  canvas: any,
+  lakes: Array<{ hexI: number; hexJ: number }>
+): void {
+  const lakeGraphics = new PIXI.Graphics();
+  lakeGraphics.name = 'Lakes';
+  
+  for (const lake of lakes) {
+    drawHexFill(lakeGraphics, lake.hexI, lake.hexJ, canvas, LAKE_COLOR, LAKE_ALPHA);
+  }
+  
+  layer.addChild(lakeGraphics);
+}
+
+/**
+ * Render swamp features (full hex fills)
+ * 
+ * @param layer - PIXI container to add graphics to
+ * @param canvas - Foundry canvas object
+ * @param swamps - Array of swamp features
+ */
+function renderSwamps(
+  layer: PIXI.Container,
+  canvas: any,
+  swamps: Array<{ hexI: number; hexJ: number }>
+): void {
+  const swampGraphics = new PIXI.Graphics();
+  swampGraphics.name = 'Swamps';
+  
+  for (const swamp of swamps) {
+    drawHexFill(swampGraphics, swamp.hexI, swamp.hexJ, canvas, SWAMP_COLOR, SWAMP_ALPHA);
+  }
+  
+  layer.addChild(swampGraphics);
+}
+
+/**
+ * Draw a filled hex at the specified grid position
+ * 
+ * @param graphics - PIXI Graphics object
+ * @param hexI - Hex row index
+ * @param hexJ - Hex column index
+ * @param canvas - Foundry canvas object
+ * @param color - Fill color
+ * @param alpha - Fill alpha
+ */
+function drawHexFill(
+  graphics: PIXI.Graphics,
+  hexI: number,
+  hexJ: number,
+  canvas: any,
+  color: number,
+  alpha: number
+): void {
+  // Get hex center and size
+  const center = getHexCenter(hexI, hexJ, canvas);
+  if (!center) return;
+  
+  const hexSize = canvas.grid.size;
+  const hexWidth = hexSize;
+  const hexHeight = hexSize;
+  
+  // Calculate hex vertices (pointy-top hexagon)
+  const vertices: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 6; // Start from top-right, rotate 30 degrees
+    const x = center.x + hexWidth * 0.5 * Math.cos(angle);
+    const y = center.y + hexHeight * 0.5 * Math.sin(angle);
+    vertices.push({ x, y });
+  }
+  
+  // Draw filled hexagon
+  graphics.beginFill(color, alpha);
+  graphics.moveTo(vertices[0].x, vertices[0].y);
+  for (let i = 1; i < vertices.length; i++) {
+    graphics.lineTo(vertices[i].x, vertices[i].y);
+  }
+  graphics.closePath();
+  graphics.endFill();
 }

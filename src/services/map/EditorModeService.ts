@@ -10,16 +10,16 @@
 
 import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
 import type { KingdomData } from '../../actors/KingdomActor';
-import type { HexFeature, EdgeDirection, ConnectorState, CenterConnectorState, RiverSegment, RiverConnector } from '../../models/Hex';
 import { logger } from '../../utils/Logger';
 import { 
   disableCanvasLayerInteractivity, 
   restoreCanvasLayerInteractivity 
 } from '../../utils/canvasLayerInteractivity';
-import { renderRiverConnectors, clearRiverConnectors, getConnectorAtPosition } from './renderers/RiverConnectorRenderer';
-import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
+import { renderRiverConnectors } from './renderers/RiverConnectorRenderer';
+import { EditorDebugHandlers } from './EditorDebugHandlers';
+import { RiverEditorHandlers } from './RiverEditorHandlers';
 
-export type EditorTool = 'river-edit' | 'inactive';
+export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'inactive';
 
 /**
  * Singleton service for map editing
@@ -36,19 +36,17 @@ export class EditorModeService {
   private pointerDownHandler: ((event: PointerEvent) => void) | null = null;
   private pointerMoveHandler: ((event: PointerEvent) => void) | null = null;
   private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
+  private keyDownHandler: ((event: KeyboardEvent) => void) | null = null;
   
   // Store layer interactivity state for restoration
   private savedLayerInteractivity: Map<string, boolean> = new Map();
   
   // River editing state
-  private currentHoveredHex: { i: number; j: number } | null = null;
   private connectorLayer: PIXI.Container | null = null;
   
-  // Debug modes - log hex IDs, edge IDs, and neighbors on click
-  private debugHexMode = false;
-  private debugEdgeMode = false;
-  private debugNeighborsMode = false;
-  private debugClickHandler: ((event: PointerEvent) => void) | null = null;
+  // Handler modules
+  private debugHandlers = new EditorDebugHandlers();
+  private riverHandlers = new RiverEditorHandlers();
   
   private constructor() {}
   
@@ -66,174 +64,42 @@ export class EditorModeService {
    * Toggle hex debug mode (logs hex IDs on click anywhere on canvas)
    */
   toggleDebugHex(): boolean {
-    this.debugHexMode = !this.debugHexMode;
-    const status = this.debugHexMode ? 'enabled' : 'disabled';
-    
-    this.updateDebugListener();
-    
-    console.log(`%c🐛 Hex Debug: ${status.toUpperCase()}`, 'font-size: 14px; font-weight: bold; color: ' + (this.debugHexMode ? '#00FF00' : '#FF0000'));
-    return this.debugHexMode;
+    return this.debugHandlers.toggleDebugHex();
   }
   
   /**
    * Toggle edge debug mode (logs edge IDs on click anywhere on canvas)
    */
   toggleDebugEdge(): boolean {
-    this.debugEdgeMode = !this.debugEdgeMode;
-    const status = this.debugEdgeMode ? 'enabled' : 'disabled';
-    
-    this.updateDebugListener();
-    
-    console.log(`%c🐛 Edge Debug: ${status.toUpperCase()}`, 'font-size: 14px; font-weight: bold; color: ' + (this.debugEdgeMode ? '#00FF00' : '#FF0000'));
-    return this.debugEdgeMode;
+    return this.debugHandlers.toggleDebugEdge();
   }
   
   /**
    * Check if hex debug mode is active
    */
   isDebugHexMode(): boolean {
-    return this.debugHexMode;
+    return this.debugHandlers.isDebugHexMode();
   }
   
   /**
    * Check if edge debug mode is active
    */
   isDebugEdgeMode(): boolean {
-    return this.debugEdgeMode;
+    return this.debugHandlers.isDebugEdgeMode();
   }
   
   /**
    * Toggle neighbors debug mode (logs neighbor hex IDs on click)
    */
   toggleDebugNeighbors(): boolean {
-    this.debugNeighborsMode = !this.debugNeighborsMode;
-    const status = this.debugNeighborsMode ? 'enabled' : 'disabled';
-    
-    this.updateDebugListener();
-    
-    console.log(`%c🐛 Neighbors Debug: ${status.toUpperCase()}`, 'font-size: 14px; font-weight: bold; color: ' + (this.debugNeighborsMode ? '#00FF00' : '#FF0000'));
-    return this.debugNeighborsMode;
+    return this.debugHandlers.toggleDebugNeighbors();
   }
   
   /**
    * Check if neighbors debug mode is active
    */
   isDebugNeighborsMode(): boolean {
-    return this.debugNeighborsMode;
-  }
-  
-  /**
-   * Update debug listener based on active modes
-   */
-  private updateDebugListener(): void {
-    // Remove existing listener
-    this.removeDebugListener();
-    
-    // Re-attach if any debug mode is active
-    if (this.debugHexMode || this.debugEdgeMode || this.debugNeighborsMode) {
-      this.attachDebugListener();
-    }
-  }
-  
-  /**
-   * Attach global debug click listener (works regardless of editor state)
-   */
-  private attachDebugListener(): void {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.stage) {
-      logger.warn('[EditorModeService] Cannot attach debug listener - canvas not available');
-      return;
-    }
-    
-    // Create debug handler that logs hex/edge info
-    this.debugClickHandler = async (event: PointerEvent) => {
-      // Only handle left-click
-      if (event.button !== 0) return;
-      
-      const canvas = (globalThis as any).canvas;
-      if (!canvas?.grid) return;
-      
-      const point = { x: event.clientX, y: event.clientY };
-      const canvasPos = canvas.canvasCoordinatesFromClient(point);
-      const offset = canvas.grid.getOffset(canvasPos);
-      const hexId = `${offset.i}.${offset.j}`;
-      
-      // Log hex if hex debug is active
-      if (this.debugHexMode) {
-        console.log(`%c🗺️ Clicked Hex: ${hexId} [${offset.i}:${offset.j}]`, 'font-size: 12px; color: #00BFFF; font-weight: bold;');
-      }
-      
-      // Log edge if edge debug is active
-      if (this.debugEdgeMode) {
-        const edge = await this.findNearestEdge(offset.i, offset.j, canvasPos, canvas);
-        if (edge) {
-          console.log(`%c📐 Clicked Edge: ${edge.id} (${edge.direction})`, 'font-size: 12px; color: #FFD700; font-weight: bold;');
-        }
-      }
-      
-      // Log neighbors if neighbors debug is active
-      if (this.debugNeighborsMode) {
-        const neighbors = canvas.grid.getNeighbors(offset.i, offset.j);
-        if (neighbors) {
-          const neighborStrs = neighbors.map((n: [number, number]) => `${n[0]}:${n[1]}`);
-          console.log(`%c🔗 Neighbors of ${hexId}: [${neighborStrs.join(', ')}]`, 'font-size: 12px; color: #FF69B4; font-weight: bold;');
-        }
-      }
-    };
-    
-    // Attach to canvas stage (use capture to get all clicks)
-    canvas.stage.addEventListener('pointerdown', this.debugClickHandler, { capture: true });
-  }
-  
-  /**
-   * Find nearest edge to click position
-   */
-  private async findNearestEdge(
-    hexI: number, 
-    hexJ: number, 
-    clickPos: { x: number; y: number },
-    canvas: any
-  ): Promise<{ id: string; direction: string } | null> {
-    const EDGE_THRESHOLD = 30; // pixels
-    
-    const { getEdgeMidpoint, getAllEdges } = await import('../../utils/riverUtils');
-    const { getEdgeIdForDirection, edgeNameToIndex } = await import('../../utils/edgeUtils');
-    
-    const edges = getAllEdges();
-    let nearestEdge: { id: string; direction: string; distance: number } | null = null;
-    
-    for (const edge of edges) {
-      const position = getEdgeMidpoint(hexI, hexJ, edge, canvas);
-      if (!position) continue;
-      
-      const dx = clickPos.x - position.x;
-      const dy = clickPos.y - position.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance <= EDGE_THRESHOLD) {
-        if (!nearestEdge || distance < nearestEdge.distance) {
-          const edgeIndex = edgeNameToIndex(edge);
-          const edgeId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
-          nearestEdge = { id: edgeId, direction: edge, distance };
-        }
-      }
-    }
-    
-    return nearestEdge ? { id: nearestEdge.id, direction: nearestEdge.direction } : null;
-  }
-  
-  /**
-   * Remove global debug click listener
-   */
-  private removeDebugListener(): void {
-    if (!this.debugClickHandler) return;
-    
-    const canvas = (globalThis as any).canvas;
-    if (canvas?.stage) {
-      canvas.stage.removeEventListener('pointerdown', this.debugClickHandler, { capture: true });
-    }
-    
-    this.debugClickHandler = null;
+    return this.debugHandlers.isDebugNeighborsMode();
   }
   
   /**
@@ -259,12 +125,15 @@ export class EditorModeService {
     
     // Attach direct event listeners to canvas stage
     this.attachDirectEventListeners();
+    
+    // Attach keyboard listener for Escape key
+    this.attachKeyboardListener();
   }
   
   /**
    * Exit editor mode - restore original mouse manager
    */
-  exitEditorMode(): void {
+  async exitEditorMode(): Promise<void> {
     if (!this.active) return;
     
     logger.info('[EditorModeService] Exiting editor mode');
@@ -275,9 +144,15 @@ export class EditorModeService {
     // Remove direct event listeners
     this.removeDirectEventListeners();
     
+    // Remove keyboard listener
+    this.removeKeyboardListener();
+    
     // Restore canvas layer interactivity
     restoreCanvasLayerInteractivity(this.savedLayerInteractivity);
     this.savedLayerInteractivity.clear();
+    
+    // Clean up water layer - refresh or clear based on overlay state
+    await this.cleanupWaterLayer();
     
     this.active = false;
     this.currentTool = 'inactive';
@@ -415,21 +290,57 @@ export class EditorModeService {
   }
   
   /**
+   * Attach keyboard listener for shortcuts (Escape to end path)
+   */
+  private attachKeyboardListener(): void {
+    this.keyDownHandler = async (event: KeyboardEvent) => {
+      // Only handle when editor is active
+      if (!this.active) return;
+      
+      // Escape key - end current river path
+      if (event.key === 'Escape' && this.currentTool === 'river-edit') {
+        await this.riverHandlers.endCurrentPath();
+        await this.renderPathPreview();
+        
+        // Show notification
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.info('River path ended (Escape pressed)');
+        
+        logger.info('[EditorModeService] ⌨️ Escape key - ended river path');
+      }
+    };
+    
+    document.addEventListener('keydown', this.keyDownHandler);
+    logger.info('[EditorModeService] ✅ Attached keyboard listener (Escape to end path)');
+  }
+  
+  /**
+   * Remove keyboard listener
+   */
+  private removeKeyboardListener(): void {
+    if (!this.keyDownHandler) return;
+    
+    document.removeEventListener('keydown', this.keyDownHandler);
+    this.keyDownHandler = null;
+    
+    logger.info('[EditorModeService] ✅ Removed keyboard listener');
+  }
+  
+  /**
    * Handle pointer down event (left or right click)
    */
   private handlePointerDown(event: PointerEvent): void {
-    // Allow right-click for canvas panning
-    if (event.button === 2) return;
-    
     // Only handle when editor is active
     if (!this.active) return;
     
-    // CRITICAL: Stop ALL event propagation to block marquee selection
-    // This blocks marquee even when no tool is selected (inactive state)
+    // Allow right-click to pass through for panning
+    if (event.button === 2) return;
+    
+    // CRITICAL: Stop left-click event propagation to block marquee selection
     event.stopImmediatePropagation();
     event.stopPropagation();
     
-    // Get canvas position (needed for debug logging even if no tool active)
+    // Get canvas position
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) return;
     
@@ -441,13 +352,32 @@ export class EditorModeService {
     // If no tool selected, don't apply any tool logic (but marquee is still blocked)
     if (this.currentTool === 'inactive') return;
     
-    logger.info(`[EditorModeService] 🖱️ Pointer down on hex ${hexId} with tool ${this.currentTool}`);
-    
-    // Start dragging
-    this.isDragging = true;
-    
-    // Apply tool immediately at starting position
-    this.applyToolAtHex(hexId, canvasPos);
+    // Handle left-click (either draw or remove with Ctrl)
+    if (event.button === 0) {
+      logger.info(`[EditorModeService] 🖱️ Left-click on hex ${hexId} with tool ${this.currentTool}`);
+      
+      if (this.currentTool === 'river-edit') {
+        if (event.ctrlKey) {
+          // Ctrl+Click → Delete vertex
+          this.handleRiverRemove(hexId, canvasPos);
+        } else {
+          // Normal click → Add point to path
+          this.handleRiverClick(hexId, canvasPos);
+        }
+      } else if (this.currentTool === 'river-scissors') {
+        // Scissors tool → Cut segment at click position
+        this.handleRiverScissorClick(canvasPos);
+      } else if (this.currentTool === 'river-reverse') {
+        // Reverser tool → Reverse flow direction of path
+        this.handleRiverReverseClick(canvasPos);
+      } else if (this.currentTool === 'lake-toggle') {
+        // Lake tool → Toggle lake feature on hex
+        this.handleLakeToggle(hexId);
+      } else if (this.currentTool === 'swamp-toggle') {
+        // Swamp tool → Toggle swamp feature on hex
+        this.handleSwampToggle(hexId);
+      }
+    }
   }
   
   /**
@@ -463,20 +393,6 @@ export class EditorModeService {
     // CRITICAL: Stop event propagation (blocks marquee even with no tool)
     event.stopImmediatePropagation();
     event.stopPropagation();
-    
-    // Get canvas position
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
-    
-    const point = { x: event.clientX, y: event.clientY };
-    const canvasPos = canvas.canvasCoordinatesFromClient(point);
-    const offset = canvas.grid.getOffset(canvasPos);
-    
-    // Apply tool if dragging
-    if (this.isDragging && this.currentTool !== 'inactive') {
-      const hexId = `${offset.i}.${offset.j}`;
-      this.applyToolAtHex(hexId, canvasPos);
-    }
   }
   
   /**
@@ -497,9 +413,6 @@ export class EditorModeService {
   
   /**
    * Initialize connector layer and render all control points
-   * Called once when river-edit tool is activated
-   * 
-   * Forces a fresh read of kingdom data to ensure control points reflect current state
    */
   private async initializeConnectorLayer(): Promise<void> {
     const canvas = (globalThis as any).canvas;
@@ -508,41 +421,30 @@ export class EditorModeService {
     // Destroy existing layer if it exists (ensures fresh render)
     this.destroyConnectorLayer();
 
-    // Force refresh kingdom data from actor (in case external scripts changed it)
-    const game = (globalThis as any).game;
-    const kingdomActor = game.actors.find((a: any) => a.getFlag('pf2e-reignmaker', 'kingdom-data'));
-    if (kingdomActor) {
-      const freshData = kingdomActor.getFlag('pf2e-reignmaker', 'kingdom-data');
-      if (freshData) {
-        // Update the store with fresh data
-        await updateKingdom(kingdom => Object.assign(kingdom, freshData));
-        logger.info('[EditorModeService] ✅ Refreshed kingdom data from actor', {
-          edgeCount: Object.keys(freshData.rivers?.edges || {}).length,
-          hexesWithRivers: freshData.hexes?.filter((h: any) => h.features?.some((f: any) => f.type === 'river')).length
-        });
-      }
-    }
+    const kingdom = getKingdomData();
+    
+    logger.info('[EditorModeService] 📊 River editor initialized', {
+      pathCount: kingdom.rivers?.paths?.length || 0,
+      totalHexes: kingdom.hexes?.length || 0
+    });
 
     // Create fresh connector layer
     this.connectorLayer = new PIXI.Container();
     this.connectorLayer.name = 'RiverConnectorLayer';
     this.connectorLayer.sortableChildren = true;
-    
-    // CRITICAL: Add to canvas.primary (world-space group) to match ReignMakerMapLayer
-    // Also set HIGH z-index so control points render above everything
     this.connectorLayer.zIndex = 1000;
     
     const primaryGroup = canvas.primary;
     if (primaryGroup) {
       primaryGroup.addChild(this.connectorLayer);
-      logger.info('[EditorModeService] ✅ Created fresh connector layer (added to canvas.primary with z-index 1000)');
+      logger.info('[EditorModeService] ✅ Created fresh connector layer');
     } else {
-      logger.error('[EditorModeService] ❌ canvas.primary not found! Falling back to canvas.stage');
+      logger.error('[EditorModeService] ❌ canvas.primary not found!');
       canvas.stage.addChild(this.connectorLayer);
     }
 
-    // Render all connector dots with fresh data
-    await renderRiverConnectors(this.connectorLayer, canvas);
+    // Render all connector dots
+    await renderRiverConnectors(this.connectorLayer, canvas, null);
   }
 
   /**
@@ -551,93 +453,131 @@ export class EditorModeService {
   private destroyConnectorLayer(): void {
     if (!this.connectorLayer) return;
 
-    const canvas = (globalThis as any).canvas;
-    // Remove from parent (either canvas.primary or canvas.stage)
     if (this.connectorLayer.parent) {
       this.connectorLayer.parent.removeChild(this.connectorLayer);
     }
 
-    // Destroy all graphics
     this.connectorLayer.destroy({ children: true });
     this.connectorLayer = null;
+    
+    // Also destroy river preview graphics
+    this.riverHandlers.destroyPreviewGraphics();
     
     logger.info('[EditorModeService] ✅ Destroyed connector layer');
   }
 
   /**
-   * Check if a hex is a neighbor of another hex
+   * Handle river click - delegates to RiverEditorHandlers
    */
-  private isNeighborOf(
-    hexI: number,
-    hexJ: number,
-    centerI: number,
-    centerJ: number,
-    canvas: any
-  ): boolean {
-    const neighbors = canvas.grid.getNeighbors(centerI, centerJ);
-    if (!neighbors) return false;
-
-    return neighbors.some((neighbor: any) => {
-      const [neighborI, neighborJ] = neighbor;
-      return neighborI === hexI && neighborJ === hexJ;
-    });
+  private async handleRiverClick(hexId: string, position: { x: number; y: number }): Promise<void> {
+    await this.riverHandlers.handleRiverClick(hexId, position);
+    await this.refreshWaterLayer();
+    await this.renderPathPreview();
   }
 
   /**
-   * Apply current tool at hex position
+   * Handle river remove - delegates to RiverEditorHandlers
    */
-  private applyToolAtHex(hexId: string, position: { x: number; y: number }): void {
-    try {
-      switch (this.currentTool) {
-        case 'river-edit':
-          this.handleRiverEdit(hexId, position);
-          break;
+  private async handleRiverRemove(hexId: string, position: { x: number; y: number }): Promise<void> {
+    await this.riverHandlers.handleRiverRemove(hexId, position);
+    await this.refreshWaterLayer();
+    await this.renderPathPreview();
+  }
+
+  /**
+   * Render preview of current path - delegates to RiverEditorHandlers
+   */
+  private async renderPathPreview(): Promise<void> {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.primary) return;
+    
+    await this.riverHandlers.renderPathPreview(canvas.primary);
+  }
+
+  /**
+   * Handle river scissor click - cuts a segment at click position
+   */
+  private async handleRiverScissorClick(position: { x: number; y: number }): Promise<void> {
+    const result = await this.riverHandlers.handleScissorClick(position);
+    
+    if (result.success) {
+      await this.refreshWaterLayer();
+      
+      const ui = (globalThis as any).ui;
+      if (result.pathsDeleted > 0) {
+        ui?.notifications?.info(`Path cut - ${result.pathsDeleted} orphaned path(s) removed`);
+      } else {
+        ui?.notifications?.info('Path cut successfully');
       }
-    } catch (error) {
-      logger.debug('[EditorModeService] Error applying tool:', error);
+    } else {
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn('No river segment found at click position');
     }
   }
 
   /**
-   * Handle river connector editing (click to cycle states)
+   * Handle river reverse click - reverses flow direction of path
    */
-  private async handleRiverEdit(hexId: string, position: { x: number; y: number }): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
+  private async handleRiverReverseClick(position: { x: number; y: number }): Promise<void> {
+    const result = await this.riverHandlers.handleReverseClick(position);
+    
+    if (result.success) {
+      await this.refreshWaterLayer();
+      
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.info('River flow direction reversed');
+    } else {
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn('No river path found at click position');
+    }
+  }
 
-    // Parse hex ID
+  /**
+   * Handle lake toggle - add/remove lake feature on hex
+   */
+  private async handleLakeToggle(hexId: string): Promise<void> {
     const parts = hexId.split('.');
     if (parts.length !== 2) return;
-
+    
     const hexI = parseInt(parts[0], 10);
     const hexJ = parseInt(parts[1], 10);
     if (isNaN(hexI) || isNaN(hexJ)) return;
-
-    // Get connector at click position
-    const connector = getConnectorAtPosition(hexI, hexJ, position, canvas);
-    if (!connector) {
-      logger.info('[EditorModeService] ❌ No connector at click position');
-      return;
-    }
-
-    // Log click details
-    if ('center' in connector) {
-      logger.info(`[EditorModeService] 🎯 CLICKED CENTER of hex ${hexId}, current state: ${connector.state}`);
-      await this.cycleCenterConnector(hexId, connector.state);
-    } else {
-      logger.info(`[EditorModeService] 🎯 CLICKED EDGE ${connector.edge} of hex ${hexId}, current state: ${connector.state}`);
-      await this.cycleEdgeConnector(hexId, connector.edge, connector.state);
-    }
-
-    // Re-render connectors to show updated state (force refresh)
-    logger.info('[EditorModeService] 🔄 Re-rendering connectors...');
-    if (this.connectorLayer) {
-      const canvas = (globalThis as any).canvas;
-      await renderRiverConnectors(this.connectorLayer, canvas);
-    }
-
-    // Re-render water layer to show updated rivers
+    
+    const { waterFeatureService } = await import('./WaterFeatureService');
+    const wasAdded = await waterFeatureService.toggleLake(hexI, hexJ);
+    
     await this.refreshWaterLayer();
+    
+    const ui = (globalThis as any).ui;
+    if (wasAdded) {
+      ui?.notifications?.info(`Lake added at hex (${hexI}, ${hexJ})`);
+    } else {
+      ui?.notifications?.info(`Lake removed from hex (${hexI}, ${hexJ})`);
+    }
+  }
+
+  /**
+   * Handle swamp toggle - add/remove swamp feature on hex
+   */
+  private async handleSwampToggle(hexId: string): Promise<void> {
+    const parts = hexId.split('.');
+    if (parts.length !== 2) return;
+    
+    const hexI = parseInt(parts[0], 10);
+    const hexJ = parseInt(parts[1], 10);
+    if (isNaN(hexI) || isNaN(hexJ)) return;
+    
+    const { waterFeatureService } = await import('./WaterFeatureService');
+    const wasAdded = await waterFeatureService.toggleSwamp(hexI, hexJ);
+    
+    await this.refreshWaterLayer();
+    
+    const ui = (globalThis as any).ui;
+    if (wasAdded) {
+      ui?.notifications?.info(`Swamp added at hex (${hexI}, ${hexJ})`);
+    } else {
+      ui?.notifications?.info(`Swamp removed from hex (${hexI}, ${hexJ})`);
+    }
   }
 
   /**
@@ -653,247 +593,35 @@ export class EditorModeService {
       logger.error('[EditorModeService] ❌ Failed to refresh water layer:', error);
     }
   }
-
+  
   /**
-   * Sync canonical edge map to hex features for WaterRenderer
-   * This allows WaterRenderer to draw river lines from canonical edge data
-   * Now includes flow direction information for visualization
+   * Cleanup water layer when exiting editor
+   * Either refreshes or clears based on overlay state
    */
-  private async syncCanonicalEdgesToHexFeatures(hexI: number, hexJ: number, canvas: any): Promise<void> {
-    const kingdom = getKingdomData();
-    const hexId = `${hexI}.${hexJ}`;
-    
-    // Import edge utilities
-    const { parseCanonicalEdgeId } = await import('../../utils/edgeUtils');
-    
-    await updateKingdom(kingdom => {
-      const hex = kingdom.hexes.find(h => h.id === hexId);
-      if (!hex) return;
+  private async cleanupWaterLayer(): Promise<void> {
+    try {
+      const { getOverlayManager } = await import('./OverlayManager');
+      const overlayManager = getOverlayManager();
       
-      // Ensure features array exists
-      if (!hex.features) hex.features = [];
+      // Check if water overlay is active
+      const isWaterActive = overlayManager.isOverlayActive('water');
       
-      // Find or create river feature
-      let riverFeature = hex.features.find(f => f.type === 'river') as any;
-      if (!riverFeature) {
-        riverFeature = {
-          type: 'river',
-          segments: []
-        };
-        hex.features.push(riverFeature);
-      }
-      
-      // Clear existing segments and rebuild from canonical map
-      riverFeature.segments = [];
-      
-      // Get all edges for this hex and check canonical map
-      const edges: EdgeDirection[] = ['e', 'se', 'sw', 'w', 'nw', 'ne'];
-      const activeConnectors: RiverConnector[] = [];
-      
-      for (const edgeDir of edges) {
-        const edgeIndex = edgeNameToIndex(edgeDir);
-        const edgeId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
-        const edgeData = kingdom.rivers?.edges?.[edgeId];
-        
-        // If edge exists in canonical map, it's active
-        if (edgeData) {
-          // Determine flow direction from this hex's perspective
-          let flowDirection: EdgeDirection | undefined;
-          
-          if (edgeData.state === 'flow' && edgeData.flowsToHex) {
-            // Parse edge ID to get both hexes
-            const { hex1, hex2 } = parseCanonicalEdgeId(edgeId);
-            
-            // Check if flow is toward or away from this hex
-            const isThisHex1 = hex1.i === hexI && hex1.j === hexJ;
-            const flowsToThisHex = edgeData.flowsToHex.i === hexI && edgeData.flowsToHex.j === hexJ;
-            
-            if (flowsToThisHex) {
-              // Water flows INTO this hex through this edge
-              flowDirection = edgeDir;  // Flow direction is the edge itself (inward)
-            } else {
-              // Water flows OUT of this hex through this edge
-              flowDirection = edgeDir;  // Flow direction is the edge itself (outward)
-            }
-          }
-          
-          activeConnectors.push({
-            edge: edgeDir,
-            state: edgeData.state,
-            flowDirection  // Include flow direction for rendering
-          });
-        }
-      }
-      
-      // If we have active connectors, create a segment
-      if (activeConnectors.length > 0) {
-        riverFeature.segments.push({
-          id: crypto.randomUUID(),
-          connectors: activeConnectors,
-          navigable: true
-        });
+      if (isWaterActive) {
+        // Refresh to show the saved state
+        await this.refreshWaterLayer();
+        logger.info('[EditorModeService] ✅ Refreshed water layer (overlay active)');
       } else {
-        // No active connectors - remove river feature entirely
-        hex.features = hex.features.filter(f => f.type !== 'river');
+        // Clear the water layer
+        const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+        const mapLayer = ReignMakerMapLayer.getInstance();
+        mapLayer.clearLayer('water');
+        mapLayer.hideLayer('water');
+        logger.info('[EditorModeService] ✅ Cleared water layer (overlay inactive)');
       }
-    });
-  }
-
-  /**
-   * Cycle edge connector state using canonical edge IDs with direction cycling
-   * 
-   * Cycle: inactive → flow(→) → flow(←) → source → end → inactive
-   */
-  private async cycleEdgeConnector(
-    hexId: string,
-    edge: EdgeDirection,
-    currentState: ConnectorState
-  ): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
-
-    // Parse hex coordinates
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-
-    // Get canonical edge ID
-    const edgeIndex = edgeNameToIndex(edge);
-    const edgeId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
-
-    // Get current edge data to check flow direction
-    const kingdom = await import('../../stores/KingdomStore').then(m => m.getKingdomData());
-    const currentEdge = kingdom.rivers?.edges?.[edgeId];
-    
-    // Parse canonical ID to get both hexes
-    const { parseCanonicalEdgeId } = await import('../../utils/edgeUtils');
-    const { hex1, hex2 } = parseCanonicalEdgeId(edgeId);
-
-    // Determine next state based on current state and flow direction
-    let nextState: ConnectorState;
-    let flowsToHex: { i: number; j: number } | undefined;
-
-    if (currentState === 'inactive') {
-      // inactive → flow (toward second hex by default)
-      nextState = 'flow';
-      flowsToHex = { i: hex2.i, j: hex2.j };
-    } else if (currentState === 'flow') {
-      // Check current flow direction
-      const flowsToSecond = currentEdge?.flowsToHex &&
-        currentEdge.flowsToHex.i === hex2.i &&
-        currentEdge.flowsToHex.j === hex2.j;
-
-      if (flowsToSecond) {
-        // flow(→) → flow(←) - reverse direction
-        nextState = 'flow';
-        flowsToHex = { i: hex1.i, j: hex1.j };
-      } else {
-        // flow(←) → source
-        nextState = 'source';
-        flowsToHex = undefined;  // Not needed for source
-      }
-    } else if (currentState === 'source') {
-      // source → end
-      nextState = 'end';
-      flowsToHex = undefined;  // Not needed for end
-    } else {
-      // end → inactive
-      nextState = 'inactive';
-      flowsToHex = undefined;
+    } catch (error) {
+      logger.error('[EditorModeService] ❌ Failed to cleanup water layer:', error);
     }
-
-    const directionStr = flowsToHex ? 
-      `(flows to ${flowsToHex.i}:${flowsToHex.j})` : 
-      '';
-    
-    const { formatEdgeId } = await import('../../utils/edgeUtils');
-    logger.info(`[EditorModeService] Cycling edge ${formatEdgeId(edgeId)}: ${currentState} → ${nextState} ${directionStr}`);
-
-    // Update kingdom data - SINGLE write to canonical edge map
-    await updateKingdom(kingdom => {
-      // Ensure rivers.edges exists
-      if (!kingdom.rivers) kingdom.rivers = { edges: {} };
-      if (!kingdom.rivers.edges) kingdom.rivers.edges = {};
-
-      if (nextState === 'inactive') {
-        // Remove edge from map
-        delete kingdom.rivers.edges[edgeId];
-      } else {
-        // Update/add edge with flow direction
-        kingdom.rivers.edges[edgeId] = { 
-          state: nextState, 
-          flowsToHex,
-          navigable: true 
-        };
-      }
-    });
-
-    // Sync canonical map to hex features so WaterRenderer can draw lines
-    await this.syncCanonicalEdgesToHexFeatures(hexI, hexJ, canvas);
-    
-    // Also sync the neighbor hex that shares this edge
-    const isHex1 = hex1.i === hexI && hex1.j === hexJ;
-    const neighborCoord = isHex1 ? hex2 : hex1;
-    
-    // Sync the neighbor hex
-    await this.syncCanonicalEdgesToHexFeatures(neighborCoord.i, neighborCoord.j, canvas);
   }
-
-  /**
-   * Cycle center connector state
-   */
-  private async cycleCenterConnector(
-    hexId: string,
-    currentState: CenterConnectorState
-  ): Promise<void> {
-    // Cycle: inactive → flow-through → source → end → inactive
-    const stateOrder: CenterConnectorState[] = ['inactive', 'flow-through', 'source', 'end'];
-    const currentIndex = stateOrder.indexOf(currentState);
-    const nextState = stateOrder[(currentIndex + 1) % stateOrder.length];
-
-    logger.info(`[EditorModeService] Cycling center on hex ${hexId}: ${currentState} → ${nextState}`);
-
-    // Update kingdom data
-    await updateKingdom(kingdom => {
-      const hex = kingdom.hexes.find(h => h.id === hexId);
-      if (!hex) return;
-
-      // Ensure features array exists
-      if (!hex.features) hex.features = [];
-
-      // Find or create river feature
-      let riverFeature = hex.features.find(f => f.type === 'river') as any;
-      if (!riverFeature) {
-        riverFeature = {
-          type: 'river',
-          segments: []
-        };
-        hex.features.push(riverFeature);
-      }
-
-      // Ensure segments array exists
-      if (!riverFeature.segments) riverFeature.segments = [];
-
-      // Update or create center connector in first segment (or create new segment)
-      if (riverFeature.segments.length === 0) {
-        riverFeature.segments.push({
-          id: crypto.randomUUID(),
-          connectors: [],
-          navigable: true
-        });
-      }
-
-      const segment = riverFeature.segments[0];
-      
-      if (nextState === 'inactive') {
-        delete segment.centerConnector;
-      } else {
-        segment.centerConnector = { state: nextState };
-      }
-    });
-  }
-
 }
 
 /**

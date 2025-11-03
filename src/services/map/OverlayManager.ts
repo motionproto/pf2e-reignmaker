@@ -724,10 +724,10 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('roads')
     });
 
-    // Rivers and Water Overlay - REACTIVE (uses water hexes from kingdom data)
+    // Waterways Overlay - REACTIVE (uses water hexes from kingdom data: rivers, lakes, swamps)
     this.registerOverlay({
       id: 'water',
-      name: 'Rivers and Water',
+      name: 'Waterways',
       icon: 'fa-water',
       layerIds: ['water'],
       store: derived(kingdomData, $data => 

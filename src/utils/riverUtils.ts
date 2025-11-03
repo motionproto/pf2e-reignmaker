@@ -17,22 +17,28 @@ import { logger } from './Logger';
  * - SE edge = midpoint between vertices[2] and vertices[3]
  * - SW edge = midpoint between vertices[3] and vertices[4]
  * - W edge = midpoint between vertices[4] and vertices[5]
+ * - C (center) = hex center point (special case for center connectors)
  * 
  * @param hexI - Hex row coordinate
  * @param hexJ - Hex column coordinate
- * @param edge - Edge direction (nw, ne, e, se, sw, w)
+ * @param edge - Edge direction (nw, ne, e, se, sw, w, or 'c' for center)
  * @param canvas - Foundry canvas object
- * @returns {x, y} position of edge midpoint
+ * @returns {x, y} position of edge midpoint or hex center
  */
 export function getEdgeMidpoint(
   hexI: number,
   hexJ: number,
-  edge: EdgeDirection,
+  edge: EdgeDirection | 'c',
   canvas: any
 ): { x: number; y: number } | null {
   if (!canvas?.grid) {
     logger.warn('[riverUtils] Canvas grid not available');
     return null;
+  }
+
+  // Special case: 'c' means hex center (for edge-to-center connections)
+  if (edge === 'c') {
+    return getHexCenter(hexI, hexJ, canvas);
   }
 
   const vertices = canvas.grid.getVertices({ i: hexI, j: hexJ });

@@ -143,25 +143,55 @@ export interface KingdomData {
   // Optional during migration from scattered fields to consolidated turnState
   turnState?: TurnState;
   
-  // NEW: Canonical river edge storage
-  // Edges are stored using cube coordinate-based canonical IDs to eliminate duplicates
-  // Each edge between two hexes has exactly ONE entry, regardless of which hex you're viewing from
+  // NEW: Sequential river path system (replaced canonical edge system)
+  // Rivers are stored as ordered sequences of points (connect-the-dots)
+  // Order increments of 10 allow insertions without renumbering entire path
   rivers?: {
-    edges: { [edgeId: string]: RiverEdgeState };
+    paths: RiverPath[];
+  };
+  
+  // NEW: Water features (lakes and swamps)
+  // Lakes = open water (boats/swimming work, placed on any terrain)
+  // Swamps = difficult water (boats: difficult, auto-granted when terrain='swamp')
+  // Mutually exclusive: hex can have lake OR swamp, not both
+  waterFeatures?: {
+    lakes: WaterFeature[];   // Open water features
+    swamps: WaterFeature[];  // Difficult water features (auto-populated from terrain='swamp')
   };
 }
 
 /**
- * River edge state - stored once per edge using canonical ID
+ * River path - ordered sequence of points that form a continuous river
+ * Multiple paths can share points to form junctions
  */
-export interface RiverEdgeState {
-  state: 'flow' | 'source' | 'end';  // 'inactive' edges are not stored
-  
-  // Flow direction: offset coordinates of hex water flows TOWARD
-  // Only applicable for 'flow' edges (optional for source/end)
-  flowsToHex?: { i: number; j: number };
-  
+export interface RiverPath {
+  id: string;  // Unique path identifier (uuid)
+  points: RiverPathPoint[];
   navigable?: boolean;
+  color?: string;  // Optional debug color
+}
+
+/**
+ * Single point in a river path
+ * Can be an edge midpoint or hex center
+ */
+export interface RiverPathPoint {
+  hexI: number;
+  hexJ: number;
+  edge?: string;  // Edge direction ('e', 'se', 'sw', 'w', 'nw', 'ne') if point is on edge
+  isCenter?: boolean;  // True if point is at hex center
+  order: number;  // Sequence order (increments of 10: 10, 20, 30, ...)
+}
+
+/**
+ * Water feature - represents lakes or swamps on hexes
+ * Lakes = open water terrain (boats/swimming work normally)
+ * Swamps = difficult water terrain (boats: difficult, swimming: open, land: greater difficult)
+ */
+export interface WaterFeature {
+  id: string;  // Unique identifier (uuid)
+  hexI: number;
+  hexJ: number;
 }
 
 export class KingdomActor extends Actor {

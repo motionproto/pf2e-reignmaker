@@ -63,13 +63,25 @@
   
   // Action handlers
   async function handleSave() {
-    await editorService.save();
-    onClose();
+    try {
+      await editorService.save();
+    } catch (error) {
+      console.error('[EditorModePanel] Save error:', error);
+    } finally {
+      // Always close the panel, even if there's an error
+      onClose();
+    }
   }
   
   async function handleCancel() {
-    await editorService.cancel();
-    onClose();
+    try {
+      await editorService.cancel();
+    } catch (error) {
+      console.error('[EditorModePanel] Cancel error:', error);
+    } finally {
+      // Always close the panel, even if there's an error
+      onClose();
+    }
   }
   
   // Global mouse event listeners
@@ -110,13 +122,50 @@
     <!-- Rivers Section -->
     <section class="editor-section">
       <label class="section-label">Rivers</label>
-      <button
-        class="tool-button"
-        class:active={$currentTool === 'river-edit'}
-        on:click={() => setTool('river-edit')}
-        title="Edit Rivers - Click connectors to cycle states">
-        <i class="fas fa-water"></i>
-      </button>
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'river-edit'}
+          on:click={() => setTool('river-edit')}
+          title="Draw Rivers - Click connectors to add points, double-click to finish">
+          <i class="fas fa-water"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'river-scissors'}
+          on:click={() => setTool('river-scissors')}
+          title="Cut Rivers - Click on a segment to split the path">
+          <i class="fas fa-cut"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'river-reverse'}
+          on:click={() => setTool('river-reverse')}
+          title="Reverse Flow - Click on a path to reverse its direction">
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+      </div>
+    </section>
+    
+    <!-- Water Features Section -->
+    <section class="editor-section">
+      <label class="section-label">Water</label>
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'lake-toggle'}
+          on:click={() => setTool('lake-toggle')}
+          title="Lake - Click hex to toggle lake (open water)">
+          <i class="fas fa-tint"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'swamp-toggle'}
+          on:click={() => setTool('swamp-toggle')}
+          title="Swamp - Click hex to toggle swamp (difficult water)">
+          <i class="fas fa-seedling"></i>
+        </button>
+      </div>
     </section>
     
     <!-- Future sections for roads, territories, etc. -->
@@ -230,6 +279,11 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       min-width: 80px;
+    }
+    
+    .tool-buttons {
+      display: flex;
+      gap: 0.5rem;
     }
     
     .tool-button {
