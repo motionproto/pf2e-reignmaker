@@ -217,6 +217,62 @@
       </div>
     </section>
     
+    <!-- Terrain Section -->
+    <section class="editor-section terrain-section">
+      <label class="section-label">Terrain</label>
+      <div class="tool-buttons terrain-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-plains'}
+          on:click={() => setTool('terrain-plains')}
+          title="Plains">
+          <i class="fas fa-seedling" style="color: #90C650;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-forest'}
+          on:click={() => setTool('terrain-forest')}
+          title="Forest">
+          <i class="fas fa-tree" style="color: #228B22;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-hills'}
+          on:click={() => setTool('terrain-hills')}
+          title="Hills">
+          <i class="fas fa-hill-rockslide" style="color: #8B7355;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-mountains'}
+          on:click={() => setTool('terrain-mountains')}
+          title="Mountains">
+          <i class="fas fa-mountain" style="color: #808080;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-swamp'}
+          on:click={() => setTool('terrain-swamp')}
+          title="Swamp">
+          <i class="fas fa-water" style="color: #6B8E23;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-desert'}
+          on:click={() => setTool('terrain-desert')}
+          title="Desert">
+          <i class="fas fa-sun" style="color: #EDC9AF;"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'terrain-water'}
+          on:click={() => setTool('terrain-water')}
+          title="Water">
+          <i class="fas fa-tint" style="color: #4682B4;"></i>
+        </button>
+      </div>
+    </section>
+    
   </div>
   
   <!-- Actions -->

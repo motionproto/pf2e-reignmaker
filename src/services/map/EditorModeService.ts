@@ -20,8 +20,16 @@ import { EditorDebugHandlers } from './EditorDebugHandlers';
 import { RiverEditorHandlers } from './RiverEditorHandlers';
 import { CrossingEditorHandlers } from './CrossingEditorHandlers';
 import { RoadEditorHandlers } from './RoadEditorHandlers';
+import { TerrainEditorHandlers } from './TerrainEditorHandlers';
+import type { TerrainType } from '../../types/terrain';
 
-export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' | 'bridge-toggle' | 'ford-toggle' | 'road-edit' | 'road-scissors' | 'inactive';
+export type EditorTool = 
+  | 'river-edit' | 'river-scissors' | 'river-reverse' 
+  | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' 
+  | 'bridge-toggle' | 'ford-toggle' 
+  | 'road-edit' | 'road-scissors'
+  | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
+  | 'inactive';
 
 /**
  * Singleton service for map editing
@@ -51,11 +59,17 @@ export class EditorModeService {
   private paintedHexesThisDrag = new Set<string>();
   private isErasing = false;
   
+  // Terrain painting state (drag-to-paint)
+  private isTerrainPainting = false;
+  private paintedTerrainHexes = new Set<string>();
+  private currentTerrainType: TerrainType | null = null;
+  
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
   private riverHandlers = new RiverEditorHandlers();
   private crossingHandlers = new CrossingEditorHandlers();
   private roadHandlers = new RoadEditorHandlers();
+  private terrainHandlers = new TerrainEditorHandlers();
   
   private constructor() {}
   
@@ -175,6 +189,9 @@ export class EditorModeService {
   async setTool(tool: EditorTool): Promise<void> {
     logger.info(`[EditorModeService] Setting tool: ${tool}`);
     this.currentTool = tool;
+    
+    // Auto-toggle relevant overlay layer for the tool
+    await this.autoToggleOverlayForTool(tool);
     
     // Render connectors when river-edit tool is activated
     if (tool === 'river-edit') {
@@ -338,7 +355,7 @@ export class EditorModeService {
   /**
    * Handle pointer down event (left or right click)
    */
-  private handlePointerDown(event: PointerEvent): void {
+  private async handlePointerDown(event: PointerEvent): Promise<void> {
     // Only handle when editor is active
     if (!this.active) return;
     
@@ -406,6 +423,17 @@ export class EditorModeService {
       } else if (this.currentTool === 'road-scissors') {
         // Road scissors → Cut road segment at click position
         this.handleRoadScissorClick(canvasPos);
+      } else if (this.currentTool.startsWith('terrain-')) {
+        // Terrain tool → Start painting terrain (drag-to-paint mode)
+        const terrainType = this.currentTool.replace('terrain-', '') as TerrainType;
+        this.currentTerrainType = terrainType;
+        this.isTerrainPainting = true;
+        this.paintedTerrainHexes.clear();
+        
+        // Paint the first hex
+        this.terrainHandlers.paintTerrain(hexId, terrainType);
+        this.paintedTerrainHexes.add(hexId);
+        await this.refreshTerrainOverlay();
       }
     }
   }
@@ -413,7 +441,7 @@ export class EditorModeService {
   /**
    * Handle pointer move event
    */
-  private handlePointerMove(event: PointerEvent): void {
+  private async handlePointerMove(event: PointerEvent): Promise<void> {
     // Allow right-click panning (check buttons bitmask during move)
     if (event.buttons & 2) return;  // Right button is pressed
     
@@ -440,6 +468,24 @@ export class EditorModeService {
         this.paintedHexesThisDrag.add(hexId);
       }
     }
+    
+    // Handle terrain painting (drag-to-paint)
+    if (this.isTerrainPainting && this.currentTerrainType) {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+      
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const offset = canvas.grid.getOffset(canvasPos);
+      const hexId = `${offset.i}.${offset.j}`;
+      
+      // Only paint if we haven't already painted this hex during this drag
+      if (!this.paintedTerrainHexes.has(hexId)) {
+        this.terrainHandlers.paintTerrain(hexId, this.currentTerrainType);
+        this.paintedTerrainHexes.add(hexId);
+        await this.refreshTerrainOverlay();
+      }
+    }
   }
   
   /**
@@ -460,6 +506,20 @@ export class EditorModeService {
       event.stopPropagation();
       
       logger.info('[EditorModeService] 🖱️ Road painting ended');
+      return;
+    }
+    
+    // Handle terrain painting stop
+    if (this.isTerrainPainting) {
+      this.isTerrainPainting = false;
+      this.paintedTerrainHexes.clear();
+      this.currentTerrainType = null;
+      
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Terrain painting ended');
       return;
     }
     
@@ -770,6 +830,97 @@ export class EditorModeService {
       logger.info('[EditorModeService] ✅ Refreshed road layer');
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to refresh road layer:', error);
+    }
+  }
+  
+  /**
+   * Auto-toggle overlay layer for the current tool
+   * Shows the relevant overlay and hides others
+   */
+  private async autoToggleOverlayForTool(tool: EditorTool): Promise<void> {
+    try {
+      const { getOverlayManager } = await import('./OverlayManager');
+      const overlayManager = getOverlayManager();
+      
+      // Map tools to their corresponding overlay IDs
+      const toolOverlayMap: Record<string, string | null> = {
+        'road-edit': 'roads',
+        'road-scissors': 'roads',
+        'river-edit': 'water',
+        'river-scissors': 'water',
+        'river-reverse': 'water',
+        'lake-toggle': 'water',
+        'swamp-toggle': 'water',
+        'waterfall-toggle': 'water',
+        'bridge-toggle': 'water',
+        'ford-toggle': 'water',
+        'terrain-plains': 'terrain',
+        'terrain-forest': 'terrain',
+        'terrain-hills': 'terrain',
+        'terrain-mountains': 'terrain',
+        'terrain-swamp': 'terrain',
+        'terrain-desert': 'terrain',
+        'terrain-water': 'terrain',
+        'inactive': null
+      };
+      
+      const requiredOverlay = toolOverlayMap[tool];
+      
+      if (requiredOverlay) {
+        // Get all currently active overlays
+        const activeOverlays = overlayManager.getActiveOverlayIds();
+        
+        // Hide all overlays except the required one
+        for (const overlayId of activeOverlays) {
+          if (overlayId !== requiredOverlay) {
+            overlayManager.hideOverlay(overlayId, true); // Skip individual state saves
+          }
+        }
+        
+        // Show the required overlay if not already active
+        if (!overlayManager.isOverlayActive(requiredOverlay)) {
+          await overlayManager.showOverlay(requiredOverlay);
+          logger.info(`[EditorModeService] ✅ Auto-enabled ${requiredOverlay} overlay for ${tool} tool`);
+        }
+        
+        // Save the new overlay state
+        overlayManager.saveState();
+      }
+    } catch (error) {
+      logger.error('[EditorModeService] ❌ Failed to auto-toggle overlay:', error);
+    }
+  }
+  
+  /**
+   * Refresh the terrain overlay to show updated terrain types
+   */
+  private async refreshTerrainOverlay(): Promise<void> {
+    try {
+      const { getOverlayManager } = await import('./OverlayManager');
+      const overlayManager = getOverlayManager();
+      
+      // Check if terrain overlay is active
+      const isTerrainActive = overlayManager.isOverlayActive('terrain');
+      
+      if (isTerrainActive) {
+        // Get kingdom data for hex terrain info
+        const kingdom = getKingdomData();
+        const hexData = kingdom.hexes?.map(h => ({
+          id: h.id,
+          terrain: h.terrain || 'plains'
+        })) || [];
+        
+        // Refresh terrain overlay using the map layer
+        const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+        const mapLayer = ReignMakerMapLayer.getInstance();
+        
+        // Clear and redraw terrain overlay
+        mapLayer.clearLayer('terrain-overlay');
+        mapLayer.drawTerrainOverlay(hexData);
+        logger.info('[EditorModeService] ✅ Refreshed terrain overlay');
+      }
+    } catch (error) {
+      logger.error('[EditorModeService] ❌ Failed to refresh terrain overlay:', error);
     }
   }
 }
