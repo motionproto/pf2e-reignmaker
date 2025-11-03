@@ -267,8 +267,11 @@ export class TerritoryService {
             }
 
 
-            // Update kingdom store with territory data (no Settlement objects created here)
-            await this.updateKingdomStore(hexes);
+            // Generate water features from terrain data (lakes from water, swamps from swamp terrain)
+            const waterFeatures = this.generateWaterFeaturesFromTerrain(hexes);
+            
+            // Update kingdom store with territory data and water features
+            await this.updateKingdomStore(hexes, undefined, waterFeatures);
 
             // Switch to setup tab after successful import
             const { setSelectedTab } = await import('../../stores/ui');
@@ -292,10 +295,50 @@ export class TerritoryService {
     }
     
     /**
+     * Generate water features from terrain data during import
+     * Creates lakes from 'water' terrain and swamps from 'swamp' terrain
+     */
+    private generateWaterFeaturesFromTerrain(hexes: Hex[]): { lakes: any[], swamps: any[], waterfalls: any[] } {
+        const lakes: any[] = [];
+        const swamps: any[] = [];
+        
+        for (const hex of hexes) {
+            // Water terrain → Lake feature
+            if (hex.terrain === 'water') {
+                lakes.push({
+                    id: crypto.randomUUID(),
+                    hexI: hex.row,
+                    hexJ: hex.col
+                });
+                logger.info(`[Territory Service] Created lake feature at hex ${hex.id} (water terrain)`);
+            }
+            
+            // Swamp terrain → Swamp feature
+            if (hex.terrain === 'swamp') {
+                swamps.push({
+                    id: crypto.randomUUID(),
+                    hexI: hex.row,
+                    hexJ: hex.col
+                });
+                logger.info(`[Territory Service] Created swamp feature at hex ${hex.id} (swamp terrain)`);
+            }
+        }
+        
+        logger.info(`[Territory Service] Generated ${lakes.length} lakes and ${swamps.length} swamps from terrain data`);
+        
+        return { lakes, swamps, waterfalls: [] };
+    }
+    
+    /**
      * Update the Kingdom store with territory data
      * Optionally accepts settlements to merge into kingdom data (for initial import only)
+     * Optionally accepts water features to initialize waterFeatures structure
      */
-    private async updateKingdomStore(hexes: Hex[], settlements?: Settlement[]): Promise<void> {
+    private async updateKingdomStore(
+        hexes: Hex[], 
+        settlements?: Settlement[], 
+        waterFeatures?: { lakes: any[], swamps: any[], waterfalls: any[] }
+    ): Promise<void> {
         // Log territory update attempt
 
         // Extract roads from hex hasRoad property
@@ -391,6 +434,12 @@ export class TerritoryService {
             
             state.worksiteProduction = worksiteProduction;
             state.worksiteProductionByHex = worksiteProductionByHex;
+            
+            // Initialize water features if provided (from Kingmaker import)
+            if (waterFeatures) {
+                state.waterFeatures = waterFeatures;
+                logger.info(`[Territory Service] Initialized water features: ${waterFeatures.lakes.length} lakes, ${waterFeatures.swamps.length} swamps`);
+            }
 
             return state;
         });

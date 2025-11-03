@@ -18,8 +18,9 @@ import {
 import { renderRiverConnectors } from './renderers/RiverConnectorRenderer';
 import { EditorDebugHandlers } from './EditorDebugHandlers';
 import { RiverEditorHandlers } from './RiverEditorHandlers';
+import { CrossingEditorHandlers } from './CrossingEditorHandlers';
 
-export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'inactive';
+export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' | 'bridge-toggle' | 'ford-toggle' | 'inactive';
 
 /**
  * Singleton service for map editing
@@ -47,6 +48,7 @@ export class EditorModeService {
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
   private riverHandlers = new RiverEditorHandlers();
+  private crossingHandlers = new CrossingEditorHandlers();
   
   private constructor() {}
   
@@ -376,6 +378,15 @@ export class EditorModeService {
       } else if (this.currentTool === 'swamp-toggle') {
         // Swamp tool → Toggle swamp feature on hex
         this.handleSwampToggle(hexId);
+      } else if (this.currentTool === 'waterfall-toggle') {
+        // Waterfall tool → Toggle waterfall on edge
+        this.handleWaterfallToggle(hexId, canvasPos);
+      } else if (this.currentTool === 'bridge-toggle') {
+        // Bridge tool → Toggle bridge crossing on edge
+        this.handleBridgeToggle(hexId, canvasPos);
+      } else if (this.currentTool === 'ford-toggle') {
+        // Ford tool → Toggle ford crossing on edge
+        this.handleFordToggle(hexId, canvasPos);
       }
     }
   }
@@ -578,6 +589,30 @@ export class EditorModeService {
     } else {
       ui?.notifications?.info(`Swamp removed from hex (${hexI}, ${hexJ})`);
     }
+  }
+
+  /**
+   * Handle waterfall toggle - add/remove waterfall on hex edge
+   */
+  private async handleWaterfallToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
+    await this.crossingHandlers.handleWaterfallClick(hexId, position);
+    await this.refreshWaterLayer();
+  }
+
+  /**
+   * Handle bridge toggle - add/remove bridge crossing on hex edge
+   */
+  private async handleBridgeToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
+    await this.crossingHandlers.handleBridgeClick(hexId, position);
+    await this.refreshWaterLayer();
+  }
+
+  /**
+   * Handle ford toggle - add/remove ford crossing on hex edge
+   */
+  private async handleFordToggle(hexId: string, position: { x: number; y: number }): Promise<void> {
+    await this.crossingHandlers.handleFordClick(hexId, position);
+    await this.refreshWaterLayer();
   }
 
   /**

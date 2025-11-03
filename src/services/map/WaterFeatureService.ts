@@ -33,7 +33,7 @@ export class WaterFeatureService {
     await updateKingdom(kingdom => {
       // Initialize waterFeatures if not present
       if (!kingdom.waterFeatures) {
-        kingdom.waterFeatures = { lakes: [], swamps: [] };
+        kingdom.waterFeatures = { lakes: [], swamps: [], waterfalls: [] };
       }
 
       let added = 0;
@@ -74,7 +74,7 @@ export class WaterFeatureService {
 
     await updateKingdom(kingdom => {
       if (!kingdom.waterFeatures) {
-        kingdom.waterFeatures = { lakes: [], swamps: [] };
+        kingdom.waterFeatures = { lakes: [], swamps: [], waterfalls: [] };
       }
 
       // Check if lake already exists
@@ -129,7 +129,7 @@ export class WaterFeatureService {
 
     await updateKingdom(kingdom => {
       if (!kingdom.waterFeatures) {
-        kingdom.waterFeatures = { lakes: [], swamps: [] };
+        kingdom.waterFeatures = { lakes: [], swamps: [], waterfalls: [] };
       }
 
       // Check if this is a terrain='swamp' hex (locked)
@@ -195,6 +195,161 @@ export class WaterFeatureService {
     return kingdom.waterFeatures?.swamps.some(
       s => s.hexI === hexI && s.hexJ === hexJ
     ) ?? false;
+  }
+
+  /**
+   * Toggle waterfall on a hex edge
+   * Waterfalls block naval travel but not swimmers
+   * 
+   * @param hexI - Hex I coordinate
+   * @param hexJ - Hex J coordinate
+   * @param edge - Edge direction ('e', 'se', 'sw', 'w', 'nw', 'ne')
+   * @returns true if waterfall was added, false if removed
+   */
+  async toggleWaterfall(hexI: number, hexJ: number, edge: string): Promise<boolean> {
+    let wasAdded = false;
+
+    await updateKingdom(kingdom => {
+      if (!kingdom.waterFeatures) {
+        kingdom.waterFeatures = { lakes: [], swamps: [], waterfalls: [] };
+      }
+
+      // Check if waterfall already exists
+      const existingIndex = kingdom.waterFeatures.waterfalls.findIndex(
+        w => w.hexI === hexI && w.hexJ === hexJ && w.edge === edge
+      );
+
+      if (existingIndex !== -1) {
+        // Remove existing waterfall
+        kingdom.waterFeatures.waterfalls.splice(existingIndex, 1);
+        logger.info(`[WaterFeatureService] ❌ Removed waterfall at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = false;
+      } else {
+        // Add waterfall
+        kingdom.waterFeatures.waterfalls.push({
+          id: crypto.randomUUID(),
+          hexI,
+          hexJ,
+          edge
+        });
+        logger.info(`[WaterFeatureService] ✅ Added waterfall at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = true;
+      }
+    });
+
+    return wasAdded;
+  }
+
+  /**
+   * Toggle bridge crossing on a hex edge
+   * Bridges allow grounded armies to cross water
+   * 
+   * @param hexI - Hex I coordinate
+   * @param hexJ - Hex J coordinate
+   * @param edge - Edge direction ('e', 'se', 'sw', 'w', 'nw', 'ne')
+   * @returns true if bridge was added, false if removed
+   */
+  async toggleBridge(hexI: number, hexJ: number, edge: string): Promise<boolean> {
+    let wasAdded = false;
+
+    await updateKingdom(kingdom => {
+      if (!kingdom.rivers) {
+        kingdom.rivers = { paths: [], crossings: [] };
+      }
+      if (!kingdom.rivers.crossings) {
+        kingdom.rivers.crossings = [];
+      }
+
+      // Check if bridge already exists
+      const existingIndex = kingdom.rivers.crossings.findIndex(
+        c => c.hexI === hexI && c.hexJ === hexJ && c.edge === edge && c.type === 'bridge'
+      );
+
+      if (existingIndex !== -1) {
+        // Remove existing bridge
+        kingdom.rivers.crossings.splice(existingIndex, 1);
+        logger.info(`[WaterFeatureService] ❌ Removed bridge at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = false;
+      } else {
+        // Remove ford if present (mutually exclusive)
+        const fordIndex = kingdom.rivers.crossings.findIndex(
+          c => c.hexI === hexI && c.hexJ === hexJ && c.edge === edge && c.type === 'ford'
+        );
+        if (fordIndex !== -1) {
+          kingdom.rivers.crossings.splice(fordIndex, 1);
+          logger.info(`[WaterFeatureService] ⚠️ Removed ford at (${hexI}, ${hexJ}) edge ${edge} (replaced by bridge)`);
+        }
+
+        // Add bridge
+        kingdom.rivers.crossings.push({
+          id: crypto.randomUUID(),
+          hexI,
+          hexJ,
+          edge,
+          type: 'bridge'
+        });
+        logger.info(`[WaterFeatureService] ✅ Added bridge at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = true;
+      }
+    });
+
+    return wasAdded;
+  }
+
+  /**
+   * Toggle ford crossing on a hex edge
+   * Fords allow grounded armies to cross water (natural shallow crossing)
+   * 
+   * @param hexI - Hex I coordinate
+   * @param hexJ - Hex J coordinate
+   * @param edge - Edge direction ('e', 'se', 'sw', 'w', 'nw', 'ne')
+   * @returns true if ford was added, false if removed
+   */
+  async toggleFord(hexI: number, hexJ: number, edge: string): Promise<boolean> {
+    let wasAdded = false;
+
+    await updateKingdom(kingdom => {
+      if (!kingdom.rivers) {
+        kingdom.rivers = { paths: [], crossings: [] };
+      }
+      if (!kingdom.rivers.crossings) {
+        kingdom.rivers.crossings = [];
+      }
+
+      // Check if ford already exists
+      const existingIndex = kingdom.rivers.crossings.findIndex(
+        c => c.hexI === hexI && c.hexJ === hexJ && c.edge === edge && c.type === 'ford'
+      );
+
+      if (existingIndex !== -1) {
+        // Remove existing ford
+        kingdom.rivers.crossings.splice(existingIndex, 1);
+        logger.info(`[WaterFeatureService] ❌ Removed ford at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = false;
+      } else {
+        // Remove bridge if present (mutually exclusive)
+        const bridgeIndex = kingdom.rivers.crossings.findIndex(
+          c => c.hexI === hexI && c.hexJ === hexJ && c.edge === edge && c.type === 'bridge'
+        );
+        if (bridgeIndex !== -1) {
+          kingdom.rivers.crossings.splice(bridgeIndex, 1);
+          logger.info(`[WaterFeatureService] ⚠️ Removed bridge at (${hexI}, ${hexJ}) edge ${edge} (replaced by ford)`);
+        }
+
+        // Add ford
+        kingdom.rivers.crossings.push({
+          id: crypto.randomUUID(),
+          hexI,
+          hexJ,
+          edge,
+          type: 'ford'
+        });
+        logger.info(`[WaterFeatureService] ✅ Added ford at (${hexI}, ${hexJ}) edge ${edge}`);
+        wasAdded = true;
+      }
+    });
+
+    return wasAdded;
   }
 }
 

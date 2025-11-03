@@ -21,6 +21,7 @@ import {
 import { getKingdomActor } from '../../main.kingdom';
 import { positionToOffset, hexToKingmakerId } from '../hex-selector/coordinates';
 import { logger } from '../../utils/Logger';
+import { getArmyMovementTraits, type ArmyMovementTraits } from '../../utils/armyMovementTraits';
 
 /**
  * Layer IDs for army movement visualization
@@ -52,9 +53,7 @@ export class ArmyMovementMode {
   private waypoints: Waypoint[] = [];
   private totalCostSpent: number = 0;
   private maxMovement: number = 20;
-  private canFly: boolean = false;
-  private canSwim: boolean = false;
-  private hasOnlySwim: boolean = false;
+  private traits: ArmyMovementTraits = { canFly: false, canSwim: false, hasBoats: false };
   private reachableHexes: ReachabilityMap = new Map();
   private mapLayer: ReignMakerMapLayer | null = null;
   private canvasClickHandler: ((event: any) => void) | null = null;
@@ -148,23 +147,19 @@ export class ArmyMovementMode {
     this.startHexId = startHexId;
     this.active = true;
 
+    // Get army movement traits from actor
+    this.traits = getArmyMovementTraits(army);
+    
     // Calculate movement range based on army's actor speed
     // (always half speed, special movement types have terrain advantages)
     const { getArmyMovementRange } = await import('../../utils/armyMovementRange');
     const movementData = await getArmyMovementRange(army.actorId);
     this.maxMovement = movementData.range;
-    this.canFly = movementData.canFly;
-    this.canSwim = movementData.canSwim;
-    this.hasOnlySwim = movementData.hasOnlySwim;
     
-    logger.info(`[ArmyMovementMode] Army ${army.name}: range=${this.maxMovement}, canFly=${this.canFly}, canSwim=${this.canSwim}, hasOnlySwim=${this.hasOnlySwim}`);
+    logger.info(`[ArmyMovementMode] Army ${army.name}: range=${this.maxMovement}, traits:`, this.traits);
 
-    // Calculate reachable hexes with army's movement range
-    // Note: PathfindingService auto-updates via KingdomStore subscription
-    // - Flying armies use cost=1 per hex (ignore terrain)
-    // - Swimming armies use cost=1 on water/river hexes
-    // - Swim-only armies can ONLY move on water/river hexes
-    this.reachableHexes = pathfindingService.getReachableHexes(startHexId, this.maxMovement, this.canFly, this.canSwim, this.hasOnlySwim);
+    // Calculate reachable hexes with army's movement range and traits
+    this.reachableHexes = pathfindingService.getReachableHexes(startHexId, this.maxMovement, this.traits);
 
     logger.info(`[ArmyMovementMode] Calculated ${this.reachableHexes.size} reachable hexes`);
 
@@ -177,15 +172,9 @@ export class ArmyMovementMode {
 
     // Notify user
     const ui = (globalThis as any).ui;
-    let movementNote = '';
-    if (this.canFly) {
-      movementNote = ' [Flying - ignores terrain]';
-    } else if (this.hasOnlySwim) {
-      movementNote = ' [Swimming - water/river only]';
-    } else if (this.canSwim) {
-      movementNote = ' [Can swim on water/river]';
-    }
-    ui?.notifications?.info(`Click a hex to move ${army.name} (${this.maxMovement} movement range)${movementNote}`);
+    const { getMovementTraitDescription } = await import('../../utils/armyMovementTraits');
+    const traitDesc = getMovementTraitDescription(this.traits);
+    ui?.notifications?.info(`Click a hex to move ${army.name} (${this.maxMovement} movement range, ${traitDesc})`);
   }
 
   /**
@@ -285,7 +274,7 @@ export class ArmyMovementMode {
       const remainingMovement = this.maxMovement - this.totalCostSpent;
 
       // Check if hex is reachable from current position
-      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.canFly, this.canSwim, this.hasOnlySwim);
+      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.traits);
       const isReachable = reachableFromOrigin.has(hexId);
 
       const mapLayer = this.getMapLayer();
@@ -296,7 +285,7 @@ export class ArmyMovementMode {
 
       if (isReachable) {
         // Find path from current origin to hover hex
-        const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.canFly, this.canSwim, this.hasOnlySwim);
+        const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.traits);
 
         if (pathResult && pathResult.isReachable) {
           const canvas = (globalThis as any).canvas;
@@ -377,12 +366,12 @@ export class ArmyMovementMode {
       
       for (const n of neighbors) {
         const exists = pathfindingService.hexExists(n);
-        const cost = pathfindingService.getMovementCost(n, this.canFly, this.canSwim, this.hasOnlySwim);
+        const cost = pathfindingService.getMovementCost(n, this.traits);
         logger.info(`[ArmyMovementMode] Neighbor ${n}: exists=${exists}, cost=${cost}`);
       }
 
       // Check if hex is reachable from current position
-      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.canFly, this.canSwim, this.hasOnlySwim);
+      const reachableFromOrigin = pathfindingService.getReachableHexes(originHexId, remainingMovement, this.traits);
       logger.info(`[ArmyMovementMode] Reachable hexes from ${originHexId}: ${reachableFromOrigin.size}`);
       logger.info(`[ArmyMovementMode] Is ${hexId} reachable?`, reachableFromOrigin.has(hexId));
       
@@ -393,7 +382,7 @@ export class ArmyMovementMode {
       }
 
       // Find path from current origin to clicked hex
-      const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.canFly, this.canSwim, this.hasOnlySwim);
+      const pathResult = pathfindingService.findPath(originHexId, hexId, remainingMovement, this.traits);
 
       if (!pathResult || !pathResult.isReachable) {
         const ui = (globalThis as any).ui;
@@ -427,7 +416,7 @@ export class ArmyMovementMode {
       logger.info(`  Per-Hex Costs:`);
       for (let i = 0; i < pathResult.path.length; i++) {
         const pathHexId = pathResult.path[i];
-        const hexCost = pathfindingService.getMovementCost(pathHexId, this.canFly, this.canSwim, this.hasOnlySwim);
+        const hexCost = pathfindingService.getMovementCost(pathHexId, this.traits);
         const isOrigin = i === 0;
         logger.info(`    [${i}] ${pathHexId}: ${hexCost} movement${isOrigin ? ' (origin - not counted)' : ''}`);
       }

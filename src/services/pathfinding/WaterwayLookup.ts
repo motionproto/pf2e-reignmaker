@@ -1,0 +1,276 @@
+/**
+ * WaterwayLookup - Efficient hex-to-waterway detection service
+ * 
+ * Builds lookup maps from kingdom waterway data (rivers, lakes, swamps, waterfalls, crossings)
+ * to quickly determine what waterway features are present on each hex.
+ * 
+ * Reactive: Automatically rebuilds when kingdom data changes.
+ */
+
+import type { KingdomData, RiverPath, WaterFeature, RiverCrossing } from '../../actors/KingdomActor';
+import { kingdomData } from '../../stores/KingdomStore';
+import { logger } from '../../utils/Logger';
+import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
+import type { EdgeDirection } from '../../models/Hex';
+
+export type WaterwayType = 'river' | 'lake' | 'swamp';
+
+/**
+ * Per-hex waterway data
+ */
+interface HexWaterwayData {
+  waterways: Set<WaterwayType>;
+  crossings: Set<string>;  // Set of crossing types ('bridge', 'ford')
+  waterfalls: WaterFeature[];  // Waterfalls on this hex's edges
+}
+
+/**
+ * WaterwayLookup - Provides fast hex-based waterway queries
+ */
+export class WaterwayLookup {
+  // Map: "hexI,hexJ" → HexWaterwayData
+  private hexLookup: Map<string, HexWaterwayData> = new Map();
+  
+  private unsubscribe: (() => void) | null = null;
+  
+  constructor() {
+    // Subscribe to kingdom data changes for automatic reactivity
+    this.unsubscribe = kingdomData.subscribe(kingdom => {
+      this.buildLookup(kingdom);
+    });
+  }
+  
+  /**
+   * Get hex key for lookup
+   */
+  private getHexKey(hexI: number, hexJ: number): string {
+    return `${hexI},${hexJ}`;
+  }
+  
+  /**
+   * Get or create hex data
+   */
+  private getOrCreateHexData(hexKey: string): HexWaterwayData {
+    if (!this.hexLookup.has(hexKey)) {
+      this.hexLookup.set(hexKey, {
+        waterways: new Set(),
+        crossings: new Set(),
+        waterfalls: []
+      });
+    }
+    return this.hexLookup.get(hexKey)!;
+  }
+  
+  /**
+   * Build lookup maps from kingdom data
+   * Called automatically when kingdom data changes
+   */
+  private buildLookup(kingdom: KingdomData): void {
+    this.hexLookup.clear();
+    
+    // Build river lookup (from sequential paths)
+    if (kingdom.rivers?.paths) {
+      this.buildRiverLookup(kingdom.rivers.paths);
+    }
+    
+    // Build lake lookup
+    if (kingdom.waterFeatures?.lakes) {
+      this.buildFeatureLookup(kingdom.waterFeatures.lakes, 'lake');
+    }
+    
+    // Build swamp lookup
+    if (kingdom.waterFeatures?.swamps) {
+      this.buildFeatureLookup(kingdom.waterFeatures.swamps, 'swamp');
+    }
+    
+    // Build waterfall lookup
+    if (kingdom.waterFeatures?.waterfalls) {
+      this.buildWaterfallLookup(kingdom.waterFeatures.waterfalls);
+    }
+    
+    // Build crossing lookup (for bridges/fords)
+    if (kingdom.rivers?.crossings) {
+      this.buildCrossingLookup(kingdom.rivers.crossings);
+    }
+    
+    logger.debug(`[WaterwayLookup] Built lookup with ${this.hexLookup.size} waterway hexes`);
+  }
+  
+  /**
+   * Build river lookup from river paths
+   * A hex has a river if ANY path point has matching hexI/hexJ
+   * For edge points, mark BOTH hexes that share the edge
+   */
+  private buildRiverLookup(paths: RiverPath[]): void {
+    for (const path of paths) {
+      for (const point of path.points) {
+        // Always mark the primary hex
+        const hexKey = this.getHexKey(point.hexI, point.hexJ);
+        const hexData = this.getOrCreateHexData(hexKey);
+        hexData.waterways.add('river');
+        
+        // If edge point, also mark the adjacent hex sharing this edge
+        if (point.edge && !point.isCenter) {
+          const adjacentHex = this.getAdjacentHexForEdge(point.hexI, point.hexJ, point.edge);
+          if (adjacentHex) {
+            const adjKey = this.getHexKey(adjacentHex.i, adjacentHex.j);
+            const adjData = this.getOrCreateHexData(adjKey);
+            adjData.waterways.add('river');
+          }
+        }
+      }
+    }
+  }
+  
+  /**
+   * Get the adjacent hex that shares a specific edge
+   * Uses canonical edge system for exact accuracy
+   */
+  private getAdjacentHexForEdge(hexI: number, hexJ: number, edge: string): { i: number; j: number } | null {
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return null;
+    
+    // Use canonical edge system to get both hexes that share this edge
+    const edgeIndex = edgeNameToIndex(edge as EdgeDirection);
+    const canonicalId = getEdgeIdForDirection(hexI, hexJ, edgeIndex, canvas);
+    
+    // Parse canonical ID to get both hexes
+    // Format: "hexI:hexJ:edge,hexI2:hexJ2:edge2"
+    const parts = canonicalId.split(',');
+    if (parts.length !== 2) return null;
+    
+    for (const part of parts) {
+      const [i, j] = part.split(':').map(Number);
+      // Return the OTHER hex (not the one we started with)
+      if (i !== hexI || j !== hexJ) {
+        return { i, j };
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Build feature lookup (lakes or swamps)
+   */
+  private buildFeatureLookup(features: WaterFeature[], type: WaterwayType): void {
+    for (const feature of features) {
+      const hexKey = this.getHexKey(feature.hexI, feature.hexJ);
+      const hexData = this.getOrCreateHexData(hexKey);
+      hexData.waterways.add(type);
+    }
+  }
+  
+  /**
+   * Build waterfall lookup
+   * Waterfalls are edge-based features that block naval travel
+   */
+  private buildWaterfallLookup(waterfalls: WaterFeature[]): void {
+    for (const waterfall of waterfalls) {
+      const hexKey = this.getHexKey(waterfall.hexI, waterfall.hexJ);
+      const hexData = this.getOrCreateHexData(hexKey);
+      hexData.waterfalls.push(waterfall);
+    }
+  }
+  
+  /**
+   * Build crossing lookup (bridges/fords)
+   */
+  private buildCrossingLookup(crossings: RiverCrossing[]): void {
+    for (const crossing of crossings) {
+      const hexKey = this.getHexKey(crossing.hexI, crossing.hexJ);
+      const hexData = this.getOrCreateHexData(hexKey);
+      hexData.crossings.add(crossing.type);
+    }
+  }
+  
+  /**
+   * Check if a hex has a waterfall on a specific edge
+   * Waterfalls block naval travel but not swimmers
+   */
+  hasWaterfall(hexI: number, hexJ: number, edge?: string): boolean {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    const hexData = this.hexLookup.get(hexKey);
+    
+    if (!hexData) return false;
+    
+    // If edge specified, check that specific edge
+    if (edge) {
+      return hexData.waterfalls.some(w => w.edge === edge);
+    }
+    
+    // Otherwise, check if hex has any waterfalls
+    return hexData.waterfalls.length > 0;
+  }
+
+  /**
+   * Check if hex has a river
+   */
+  hasRiver(hexI: number, hexJ: number): boolean {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    return this.hexLookup.get(hexKey)?.waterways.has('river') ?? false;
+  }
+  
+  /**
+   * Check if hex has a lake
+   */
+  hasLake(hexI: number, hexJ: number): boolean {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    return this.hexLookup.get(hexKey)?.waterways.has('lake') ?? false;
+  }
+  
+  /**
+   * Check if hex has a swamp
+   */
+  hasSwamp(hexI: number, hexJ: number): boolean {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    return this.hexLookup.get(hexKey)?.waterways.has('swamp') ?? false;
+  }
+  
+  /**
+   * Check if hex has any crossing (bridge or ford)
+   * Allows grounded armies to cross water
+   */
+  hasCrossing(hexI: number, hexJ: number, edge?: string): boolean {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    const hexData = this.hexLookup.get(hexKey);
+    
+    if (!hexData) return false;
+    
+    // For now, just check if any crossings exist
+    // TODO: Edge-specific crossing check when crossings have edge data
+    return hexData.crossings.size > 0;
+  }
+  
+  /**
+   * Get all waterway types present on a hex
+   */
+  getWaterwayTypes(hexI: number, hexJ: number): Set<WaterwayType> {
+    const hexKey = this.getHexKey(hexI, hexJ);
+    return this.hexLookup.get(hexKey)?.waterways ?? new Set();
+  }
+  
+  /**
+   * Check if hex has any water feature (river, lake, or swamp)
+   */
+  hasAnyWater(hexI: number, hexJ: number): boolean {
+    return this.hasRiver(hexI, hexJ) || 
+           this.hasLake(hexI, hexJ) || 
+           this.hasSwamp(hexI, hexJ);
+  }
+  
+  /**
+   * Cleanup store subscription
+   * Call when service is no longer needed
+   */
+  destroy(): void {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+      logger.debug('[WaterwayLookup] Store subscription cleaned up');
+    }
+  }
+}
+
+// Export singleton instance
+export const waterwayLookup = new WaterwayLookup();

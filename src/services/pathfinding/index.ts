@@ -9,6 +9,8 @@ import { hexDistance, getNeighborHexIds, normalizeHexId } from './coordinates';
 import { kingdomData } from '../../stores/KingdomStore';
 import { get } from 'svelte/store';
 import { logger } from '../../utils/Logger';
+import { waterwayLookup } from './WaterwayLookup';
+import type { ArmyMovementTraits } from '../../utils/armyMovementTraits';
 
 /**
  * Default movement range for armies
@@ -70,25 +72,23 @@ export class PathfindingService {
   }
 
   /**
-   * Get movement cost for entering a hex
+   * Get movement cost for entering a hex (NEW: Uses waterways and movement traits)
    * 
    * Movement costs:
-   * - Flying armies: Always 1 (ignores terrain)
-   * - Swimming armies: Cost 1 on water/river hexes
-   * - Swim-only armies: Can ONLY move on water/river hexes (others are impassable)
-   * - Grounded armies:
+   * - Flying armies: Always 1 (ignores all terrain)
+   * - Naval/Swimming armies on water: 1 (rivers, lakes) or 2 (swamps - difficult)
+   * - Grounded armies on water: Infinity (impassable unless crossing exists)
+   * - Grounded armies on land:
    *   - Open terrain: 1
    *   - Difficult terrain: 2
    *   - Greater difficult terrain: 3
    *   - Roads reduce cost by 1 step (min 1)
    * 
    * @param hexId - Target hex ID
-   * @param canFly - Whether the army can fly (ignores terrain costs)
-   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
-   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
+   * @param traits - Army movement traits (canFly, canSwim, hasBoats)
    * @returns Movement cost (or Infinity if hex doesn't exist or impassable)
    */
-  getMovementCost(hexId: string, canFly: boolean = false, canSwim: boolean = false, hasOnlySwim: boolean = false): number {
+  getMovementCost(hexId: string, traits?: ArmyMovementTraits): number {
     const normalized = normalizeHexId(hexId);
     const hex = this.hexMap.get(normalized);
 
@@ -97,31 +97,56 @@ export class PathfindingService {
       return Infinity;
     }
 
-    // Check if hex is water or has river feature
-    const isWaterTerrain = hex.terrain === 'water';
-    const hasRiver = hex.features?.some((f: any) => 
-      f.type === 'river' || 
-      f.name?.toLowerCase().includes('river') || 
-      f.name?.toLowerCase().includes('stream')
-    ) ?? false;
-    const isWaterHex = isWaterTerrain || hasRiver;
+    // Default traits (grounded, no special movement)
+    const { canFly = false, canSwim = false, hasBoats = false } = traits || {};
 
-    // Flying armies always cost 1 per hex (ignore terrain)
+    // Parse hex coordinates for waterway lookup
+    const parts = normalized.split('.');
+    const hexI = parseInt(parts[0], 10);
+    const hexJ = parseInt(parts[1], 10);
+
+    // Check waterways using new lookup service
+    const hasRiver = waterwayLookup.hasRiver(hexI, hexJ);
+    const hasLake = waterwayLookup.hasLake(hexI, hexJ);
+    const hasSwamp = waterwayLookup.hasSwamp(hexI, hexJ);
+    const hasCrossing = waterwayLookup.hasCrossing(hexI, hexJ);
+    const hasWaterfall = waterwayLookup.hasWaterfall(hexI, hexJ);
+    
+    // Check water terrain
+    const isWaterTerrain = hex.terrain === 'water';
+    
+    // Any waterway or water terrain = water hex
+    const isWaterHex = hasRiver || hasLake || hasSwamp || isWaterTerrain;
+
+    // Flying armies always cost 1 per hex (ignore all terrain)
     if (canFly) {
       return 1;
     }
 
-    // Swim-only armies can ONLY move on water/river hexes
-    if (hasOnlySwim) {
-      return isWaterHex ? 1 : Infinity;
+    // Handle water hexes
+    if (isWaterHex) {
+      // Waterfalls block naval travel (boats cannot pass)
+      // But swimmers can navigate waterfalls
+      if (hasWaterfall && hasBoats && !canSwim) {
+        return Infinity;  // Pure naval units blocked by waterfalls
+      }
+      
+      // Naval or swimming armies can traverse water
+      if (canSwim || hasBoats) {
+        // Swamps are difficult even for boats/swimmers
+        return hasSwamp ? 2 : 1;
+      }
+      
+      // Grounded armies can cross if there's a bridge/ford
+      if (hasCrossing) {
+        return 1;  // Crossing allows passage at cost 1
+      }
+      
+      // Grounded army, no crossing = impassable
+      return Infinity;
     }
 
-    // Swimming armies get cost 1 on water/river hexes
-    if (canSwim && isWaterHex) {
-      return 1;
-    }
-
-    // Base cost from travel difficulty
+    // Land movement: Base cost from travel difficulty
     let cost = 1; // open (default)
     
     if (hex.travel === 'difficult') {
@@ -143,17 +168,15 @@ export class PathfindingService {
   }
 
   /**
-   * Calculate all hexes reachable within movement range
+   * Calculate all hexes reachable within movement range (NEW: Uses movement traits)
    * Uses Dijkstra's algorithm (A* without heuristic)
    * 
    * @param startHexId - Starting hex ID
    * @param maxMovement - Maximum movement points (default: 20)
-   * @param canFly - Whether the army can fly (ignores terrain costs)
-   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
-   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
+   * @param traits - Army movement traits (canFly, canSwim, hasBoats)
    * @returns Map of hex ID -> movement cost to reach
    */
-  getReachableHexes(startHexId: string, maxMovement: number = DEFAULT_MOVEMENT_RANGE, canFly: boolean = false, canSwim: boolean = false, hasOnlySwim: boolean = false): ReachabilityMap {
+  getReachableHexes(startHexId: string, maxMovement: number = DEFAULT_MOVEMENT_RANGE, traits?: ArmyMovementTraits): ReachabilityMap {
     const normalized = normalizeHexId(startHexId);
     const reachable: ReachabilityMap = new Map();
     const frontier: Array<{ hexId: string; cost: number }> = [];
@@ -177,7 +200,7 @@ export class PathfindingService {
       
       for (const neighbor of neighbors) {
         const neighborNormalized = normalizeHexId(neighbor);
-        const moveCost = this.getMovementCost(neighborNormalized, canFly, canSwim, hasOnlySwim);
+        const moveCost = this.getMovementCost(neighborNormalized, traits);
         
         // Skip impassable hexes
         if (moveCost === Infinity) {
@@ -207,23 +230,19 @@ export class PathfindingService {
   }
 
   /**
-   * Find optimal path from start to target using A* algorithm
+   * Find optimal path from start to target using A* algorithm (NEW: Uses movement traits)
    * 
    * @param startHexId - Starting hex ID
    * @param targetHexId - Target hex ID
    * @param maxMovement - Maximum movement points (default: 20)
-   * @param canFly - Whether the army can fly (ignores terrain costs)
-   * @param canSwim - Whether the army can swim (water/river hexes cost 1)
-   * @param hasOnlySwim - Whether the army can ONLY swim (restricted to water/river hexes)
+   * @param traits - Army movement traits (canFly, canSwim, hasBoats)
    * @returns PathResult with path, cost, and reachability
    */
   findPath(
     startHexId: string,
     targetHexId: string,
     maxMovement: number = DEFAULT_MOVEMENT_RANGE,
-    canFly: boolean = false,
-    canSwim: boolean = false,
-    hasOnlySwim: boolean = false
+    traits?: ArmyMovementTraits
   ): PathResult | null {
     const startNormalized = normalizeHexId(startHexId);
     const targetNormalized = normalizeHexId(targetHexId);
@@ -286,7 +305,7 @@ export class PathfindingService {
           continue;
         }
 
-        const moveCost = this.getMovementCost(neighborNormalized, canFly, canSwim, hasOnlySwim);
+        const moveCost = this.getMovementCost(neighborNormalized, traits);
 
         // Skip impassable hexes
         if (moveCost === Infinity) {

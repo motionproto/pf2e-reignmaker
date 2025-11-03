@@ -168,6 +168,34 @@
       </div>
     </section>
     
+    <!-- Crossings Section -->
+    <section class="editor-section">
+      <label class="section-label">Crossings</label>
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'waterfall-toggle'}
+          on:click={() => setTool('waterfall-toggle')}
+          title="Waterfall - Click edge to toggle waterfall (blocks boats)">
+          <i class="fas fa-angle-double-down"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bridge-toggle'}
+          on:click={() => setTool('bridge-toggle')}
+          title="Bridge - Click edge to toggle bridge (allows crossing)">
+          <i class="fas fa-archway"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'ford-toggle'}
+          on:click={() => setTool('ford-toggle')}
+          title="Ford - Click edge to toggle ford (allows crossing)">
+          <i class="fas fa-water"></i>
+        </button>
+      </div>
+    </section>
+    
     <!-- Future sections for roads, territories, etc. -->
     <!-- <section class="editor-section">
       <label class="section-label">Roads</label>

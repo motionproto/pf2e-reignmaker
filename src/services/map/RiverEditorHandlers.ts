@@ -75,6 +75,32 @@ export class RiverEditorHandlers {
       this.currentPathId = crypto.randomUUID();
       this.currentPathOrder = 10;
       logger.info(`[RiverEditorHandlers] 🆕 Starting new river path: ${this.currentPathId}`);
+    } else {
+      // Validate adjacency for existing path
+      const kingdom = getKingdomData();
+      const currentPath = kingdom.rivers?.paths?.find(p => p.id === this.currentPathId);
+      
+      if (currentPath && currentPath.points.length > 0) {
+        // Get last point in path
+        const sortedPoints = [...currentPath.points].sort((a, b) => a.order - b.order);
+        const lastPoint = sortedPoints[sortedPoints.length - 1];
+        
+        // Debug logging
+        logger.info(`[RiverEditorHandlers] 🔍 Validating adjacency:`);
+        logger.info(`  Last point: hex=(${lastPoint.hexI},${lastPoint.hexJ}), edge=${lastPoint.edge}, center=${lastPoint.isCenter}`);
+        logger.info(`  New point:  hex=(${hexI},${hexJ}), edge=${edge}, center=${isCenter}`);
+        
+        // Check if new point is adjacent to last point
+        const isAdjacent = await this.isAdjacentPoint(lastPoint, { hexI, hexJ, edge, isCenter });
+        logger.info(`  Result: ${isAdjacent ? '✅ Adjacent' : '❌ Not adjacent'}`);
+        
+        if (!isAdjacent) {
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.error('Rivers must connect to adjacent points. Click a connector next to the last point (same hex or neighboring hex).');
+          logger.warn(`[RiverEditorHandlers] ⚠️ Non-adjacent point rejected`);
+          return;  // Hard reject - do not add point
+        }
+      }
     }
 
     // Create point
@@ -241,6 +267,19 @@ export class RiverEditorHandlers {
     for (let i = 1; i < pathPoints.length; i++) {
       this.previewGraphics.lineTo(pathPoints[i].x, pathPoints[i].y);
     }
+    
+    // Highlight active endpoint (last point in path)
+    const lastPoint = pathPoints[pathPoints.length - 1];
+    
+    // Draw bright blue circle at active endpoint
+    this.previewGraphics.lineStyle({ width: 0 });  // No outline
+    this.previewGraphics.beginFill(0x00BFFF, 0.9);  // Deep sky blue
+    this.previewGraphics.drawCircle(lastPoint.x, lastPoint.y, 10);
+    this.previewGraphics.endFill();
+    
+    // Add white ring around it for extra visibility
+    this.previewGraphics.lineStyle({ width: 2, color: 0xFFFFFF, alpha: 0.8 });
+    this.previewGraphics.drawCircle(lastPoint.x, lastPoint.y, 12);
   }
 
   /**
@@ -282,6 +321,99 @@ export class RiverEditorHandlers {
     
     // Destroy preview graphics
     this.destroyPreviewGraphics();
+  }
+  
+  /**
+   * Check if a new point is adjacent to the last point
+   * Adjacency rules:
+   * - Same hex (edge to center, center to edge, edge to edge)
+   * - Shared edge (both edges reference the same physical edge)
+   * - Adjacent hex (using Foundry's grid API)
+   */
+  private async isAdjacentPoint(
+    lastPoint: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean },
+    newPoint: { hexI: number; hexJ: number; edge?: string; isCenter?: boolean }
+  ): Promise<boolean> {
+    // Same hex - always adjacent
+    if (lastPoint.hexI === newPoint.hexI && lastPoint.hexJ === newPoint.hexJ) {
+      return true;
+    }
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) {
+      logger.warn('[RiverEditorHandlers] Canvas grid not available for adjacency check');
+      return false;
+    }
+    
+    // Check if both points are edges - check canonical edge adjacency
+    if (lastPoint.edge && newPoint.edge) {
+      const { getEdgeIdForDirection, edgeNameToIndex } = await import('../../utils/edgeUtils');
+      
+      const lastEdgeIndex = edgeNameToIndex(lastPoint.edge as EdgeDirection);
+      const newEdgeIndex = edgeNameToIndex(newPoint.edge as EdgeDirection);
+      
+      logger.info(`  🔍 Checking canonical edge adjacency:`);
+      logger.info(`    Last edge: (${lastPoint.hexI},${lastPoint.hexJ}) ${lastPoint.edge} (index ${lastEdgeIndex})`);
+      logger.info(`    New edge:  (${newPoint.hexI},${newPoint.hexJ}) ${newPoint.edge} (index ${newEdgeIndex})`);
+      
+      const lastEdgeId = getEdgeIdForDirection(lastPoint.hexI, lastPoint.hexJ, lastEdgeIndex, canvas);
+      const newEdgeId = getEdgeIdForDirection(newPoint.hexI, newPoint.hexJ, newEdgeIndex, canvas);
+      
+      logger.info(`    Last canonical ID: ${lastEdgeId}`);
+      logger.info(`    New canonical ID:  ${newEdgeId}`);
+      
+      // Parse canonical IDs to get hex pairs
+      // Format: "hexI:hexJ:edge,hexI2:hexJ2:edge2"
+      const parseCanonicalId = (id: string): Array<[number, number]> => {
+        const parts = id.split(',');
+        return parts.map(part => {
+          const [i, j] = part.split(':');
+          return [parseInt(i, 10), parseInt(j, 10)];
+        });
+      };
+      
+      const lastHexes = parseCanonicalId(lastEdgeId);
+      const newHexes = parseCanonicalId(newEdgeId);
+      
+      logger.info(`    Last edge hexes: [${lastHexes.map(h => `(${h[0]},${h[1]})`).join(', ')}]`);
+      logger.info(`    New edge hexes: [${newHexes.map(h => `(${h[0]},${h[1]})`).join(', ')}]`);
+      
+      // Check if any hex from last edge matches or is neighbor to any hex from new edge
+      for (const [lastI, lastJ] of lastHexes) {
+        for (const [newI, newJ] of newHexes) {
+          // Same hex?
+          if (lastI === newI && lastJ === newJ) {
+            logger.info(`  ✅ Edges share hex (${lastI},${lastJ}) - Adjacent!`);
+            return true;
+          }
+          
+          // Are they neighbors?
+          const neighbors = canvas.grid.getNeighbors(lastI, lastJ);
+          const isNeighbor = neighbors.some((n: [number, number]) => n[0] === newI && n[1] === newJ);
+          if (isNeighbor) {
+            logger.info(`  ✅ Edge hex (${lastI},${lastJ}) is neighbor of (${newI},${newJ}) - Adjacent!`);
+            return true;
+          }
+        }
+      }
+      
+      logger.info(`  ❌ No shared or neighboring hexes between edges`);
+    }
+    
+    // Check if hexes are neighbors using Foundry's API
+    
+    const neighbors = canvas.grid.getNeighbors(lastPoint.hexI, lastPoint.hexJ);
+    
+    // Debug: Log what Foundry returns
+    logger.info(`  Foundry neighbors of (${lastPoint.hexI},${lastPoint.hexJ}):`);
+    neighbors.forEach((n: [number, number], idx: number) => {
+      logger.info(`    [${idx}] = (${n[0]},${n[1]}) ${n[0] === newPoint.hexI && n[1] === newPoint.hexJ ? '✓ MATCH' : ''}`);
+    });
+    
+    const isMatch = neighbors.some((n: [number, number]) => n[0] === newPoint.hexI && n[1] === newPoint.hexJ);
+    logger.info(`  Neighbor match: ${isMatch}`);
+    
+    return isMatch;
   }
   
   /**
