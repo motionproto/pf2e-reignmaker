@@ -74,6 +74,9 @@ export async function renderRoadConnections(
 
   let connectionCount = 0;
 
+  // Get blocked connections from kingdom data
+  const blockedConnections = kingdom?.roads?.blockedConnections || [];
+
   // Store land road segments only
   const landRoadSegments: Array<Array<{x: number, y: number}>> = [];
   
@@ -103,6 +106,16 @@ export async function renderRoadConnections(
 
         const connectionId = [normalizedHexId, neighborId].sort().join('|');
         if (drawnConnections.has(connectionId)) return;
+
+        // Check if this connection is blocked (scissor tool)
+        const isBlocked = blockedConnections.some(conn => 
+          (conn.hex1 === normalizedHexId && conn.hex2 === neighborId) ||
+          (conn.hex1 === neighborId && conn.hex2 === normalizedHexId)
+        );
+        if (isBlocked) {
+          logger.info(`[RoadRenderer] ✂️ Skipping blocked connection: ${normalizedHexId} <-> ${neighborId}`);
+          return;
+        }
 
         drawnConnections.add(connectionId);
 

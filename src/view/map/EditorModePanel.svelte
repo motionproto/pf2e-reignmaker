@@ -196,14 +196,26 @@
       </div>
     </section>
     
-    <!-- Future sections for roads, territories, etc. -->
-    <!-- <section class="editor-section">
+    <!-- Roads Section -->
+    <section class="editor-section">
       <label class="section-label">Roads</label>
       <div class="tool-buttons">
-        <button class="tool-button"><i class="fas fa-plus"></i></button>
-        <button class="tool-button"><i class="fas fa-minus"></i></button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'road-edit'}
+          on:click={() => setTool('road-edit')}
+          title="Roads - Click hex to add road, Ctrl+Click to remove">
+          <i class="fas fa-road"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'road-scissors'}
+          on:click={() => setTool('road-scissors')}
+          title="Cut Roads - Click on a segment to break the connection">
+          <i class="fas fa-cut"></i>
+        </button>
       </div>
-    </section> -->
+    </section>
     
   </div>
   

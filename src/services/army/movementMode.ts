@@ -53,7 +53,7 @@ export class ArmyMovementMode {
   private waypoints: Waypoint[] = [];
   private totalCostSpent: number = 0;
   private maxMovement: number = 20;
-  private traits: ArmyMovementTraits = { canFly: false, canSwim: false, hasBoats: false };
+  private traits: ArmyMovementTraits = { canFly: false, canSwim: false, hasBoats: false, amphibious: false };
   private reachableHexes: ReachabilityMap = new Map();
   private mapLayer: ReignMakerMapLayer | null = null;
   private canvasClickHandler: ((event: any) => void) | null = null;

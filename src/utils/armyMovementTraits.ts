@@ -17,6 +17,7 @@ export interface ArmyMovementTraits {
   canFly: boolean;      // Actor has fly speed (ignores all terrain)
   canSwim: boolean;     // Actor has swim speed (water costs 1)
   hasBoats: boolean;    // Army has boats (naval movement)
+  amphibious: boolean;  // Can move optimally on both land and water (chooses best cost)
 }
 
 /**
@@ -32,7 +33,8 @@ export function getArmyMovementTraits(army: Army): ArmyMovementTraits {
   const defaultTraits: ArmyMovementTraits = {
     canFly: false,
     canSwim: false,
-    hasBoats: false
+    hasBoats: false,
+    amphibious: false
   };
   
   // Check if army has linked actor
@@ -63,14 +65,18 @@ export function getArmyMovementTraits(army: Army): ArmyMovementTraits {
   // Check for boats flag (set by GM for naval armies)
   const hasBoats = actor.getFlag('pf2e-reignmaker', 'has-boats') === true;
   
+  // Check for amphibious flag (set by GM for units that excel on both land and water)
+  const amphibious = actor.getFlag('pf2e-reignmaker', 'amphibious') === true;
+  
   const traits: ArmyMovementTraits = {
     canFly,
     canSwim,
-    hasBoats
+    hasBoats,
+    amphibious
   };
   
   // Debug logging
-  if (canFly || canSwim || hasBoats) {
+  if (canFly || canSwim || hasBoats || amphibious) {
     logger.debug(`[ArmyMovementTraits] ${army.name}:`, traits);
   }
   
@@ -102,6 +108,9 @@ export function getMovementTraitDescription(traits: ArmyMovementTraits): string 
   
   if (traits.canFly) {
     capabilities.push('Flying');
+  }
+  if (traits.amphibious) {
+    capabilities.push('Amphibious');
   }
   if (traits.canSwim) {
     capabilities.push('Swimming');

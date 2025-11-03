@@ -19,8 +19,9 @@ import { renderRiverConnectors } from './renderers/RiverConnectorRenderer';
 import { EditorDebugHandlers } from './EditorDebugHandlers';
 import { RiverEditorHandlers } from './RiverEditorHandlers';
 import { CrossingEditorHandlers } from './CrossingEditorHandlers';
+import { RoadEditorHandlers } from './RoadEditorHandlers';
 
-export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' | 'bridge-toggle' | 'ford-toggle' | 'inactive';
+export type EditorTool = 'river-edit' | 'river-scissors' | 'river-reverse' | 'lake-toggle' | 'swamp-toggle' | 'waterfall-toggle' | 'bridge-toggle' | 'ford-toggle' | 'road-edit' | 'road-scissors' | 'inactive';
 
 /**
  * Singleton service for map editing
@@ -45,10 +46,16 @@ export class EditorModeService {
   // River editing state
   private connectorLayer: PIXI.Container | null = null;
   
+  // Road painting state (drag-to-paint)
+  private isRoadPainting = false;
+  private paintedHexesThisDrag = new Set<string>();
+  private isErasing = false;
+  
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
   private riverHandlers = new RiverEditorHandlers();
   private crossingHandlers = new CrossingEditorHandlers();
+  private roadHandlers = new RoadEditorHandlers();
   
   private constructor() {}
   
@@ -387,6 +394,18 @@ export class EditorModeService {
       } else if (this.currentTool === 'ford-toggle') {
         // Ford tool → Toggle ford crossing on edge
         this.handleFordToggle(hexId, canvasPos);
+      } else if (this.currentTool === 'road-edit') {
+        // Road tool → Start painting roads (drag-to-paint mode)
+        this.isRoadPainting = true;
+        this.isErasing = event.ctrlKey;
+        this.paintedHexesThisDrag.clear();
+        
+        // Paint the first hex
+        this.handleRoadToggle(hexId, event.ctrlKey);
+        this.paintedHexesThisDrag.add(hexId);
+      } else if (this.currentTool === 'road-scissors') {
+        // Road scissors → Cut road segment at click position
+        this.handleRoadScissorClick(canvasPos);
       }
     }
   }
@@ -404,6 +423,23 @@ export class EditorModeService {
     // CRITICAL: Stop event propagation (blocks marquee even with no tool)
     event.stopImmediatePropagation();
     event.stopPropagation();
+    
+    // Handle road painting (drag-to-paint)
+    if (this.isRoadPainting && this.currentTool === 'road-edit') {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+      
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const offset = canvas.grid.getOffset(canvasPos);
+      const hexId = `${offset.i}.${offset.j}`;
+      
+      // Only paint if we haven't already painted this hex during this drag
+      if (!this.paintedHexesThisDrag.has(hexId)) {
+        this.handleRoadToggle(hexId, this.isErasing);
+        this.paintedHexesThisDrag.add(hexId);
+      }
+    }
   }
   
   /**
@@ -411,15 +447,32 @@ export class EditorModeService {
    */
   private handlePointerUp(event: PointerEvent): void {
     // Only handle our events
-    if (!this.active || !this.isDragging) return;
+    if (!this.active) return;
     
-    // CRITICAL: Stop event propagation
-    event.stopImmediatePropagation();
-    event.stopPropagation();
+    // Handle road painting stop
+    if (this.isRoadPainting) {
+      this.isRoadPainting = false;
+      this.paintedHexesThisDrag.clear();
+      this.isErasing = false;
+      
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Road painting ended');
+      return;
+    }
     
-    logger.info('[EditorModeService] 🖱️ Pointer up - drag ended');
-    
-    this.isDragging = false;
+    // Handle generic drag end
+    if (this.isDragging) {
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Pointer up - drag ended');
+      
+      this.isDragging = false;
+    }
   }
   
   /**
@@ -616,12 +669,40 @@ export class EditorModeService {
   }
 
   /**
+   * Handle road toggle - add/remove road on hex center
+   */
+  private async handleRoadToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
+    await this.roadHandlers.handleRoadToggle(hexId, isCtrlPressed);
+    await this.refreshRoadLayer();
+  }
+
+  /**
+   * Handle road scissor click - cuts a road segment at click position
+   */
+  private async handleRoadScissorClick(position: { x: number; y: number }): Promise<void> {
+    const result = await this.roadHandlers.handleScissorClick(position);
+    
+    if (result.success) {
+      await this.refreshRoadLayer();
+    } else {
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn('No road segment found at click position');
+    }
+  }
+
+  /**
    * Refresh the water layer to show updated river segments
+   * CRITICAL: Always clears before drawing to prevent graphics stacking
    */
   private async refreshWaterLayer(): Promise<void> {
     try {
       const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
       const mapLayer = ReignMakerMapLayer.getInstance();
+      
+      // ✅ CRITICAL: Clear layer first to prevent stacking graphics
+      // Each call to drawWaterConnections adds new graphics, so we must clear old ones
+      mapLayer.clearLayer('water');
+      
       await mapLayer.drawWaterConnections();
       logger.info('[EditorModeService] ✅ Refreshed water layer');
     } catch (error) {
@@ -655,6 +736,40 @@ export class EditorModeService {
       }
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to cleanup water layer:', error);
+    }
+  }
+
+  /**
+   * Refresh the road layer to show updated road segments
+   */
+  private async refreshRoadLayer(): Promise<void> {
+    try {
+      const { getKingdomActor } = await import('../../main.kingdom');
+      const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+      
+      const mapLayer = ReignMakerMapLayer.getInstance();
+      const kingdomActor = await getKingdomActor();
+      
+      if (!kingdomActor) {
+        logger.warn('[EditorModeService] No kingdom actor found');
+        return;
+      }
+      
+      const kingdom = kingdomActor.getKingdomData();
+      if (!kingdom) {
+        logger.warn('[EditorModeService] No kingdom data found');
+        return;
+      }
+      
+      // Get all hexes with roads
+      const roadHexIds = kingdom.hexes?.filter(h => h.hasRoad).map(h => h.id) || [];
+      
+      // Clear and redraw roads
+      mapLayer.clearLayer('routes');
+      await mapLayer.drawRoadConnections(roadHexIds, 'routes');
+      logger.info('[EditorModeService] ✅ Refreshed road layer');
+    } catch (error) {
+      logger.error('[EditorModeService] ❌ Failed to refresh road layer:', error);
     }
   }
 }

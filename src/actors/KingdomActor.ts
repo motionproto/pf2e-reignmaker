@@ -152,6 +152,13 @@ export interface KingdomData {
     crossings?: RiverCrossing[];  // Optional bridges and fords
   };
   
+  // NEW: Road editing system
+  // Primary storage: hex.hasRoad flags (auto-connects adjacent hexes)
+  // Blocked connections: Allow scissor tool to cut specific segments
+  roads?: {
+    blockedConnections?: RoadBlockedConnection[];  // Segments that should not render
+  };
+  
   // NEW: Water features (lakes, swamps, and waterfalls)
   // Lakes = open water (boats/swimming work, placed on any terrain)
   // Swamps = difficult water (boats: difficult, auto-granted when terrain='swamp')
@@ -211,6 +218,16 @@ export interface RiverCrossing {
   edge: string;  // Which edge the crossing is on ('e', 'se', 'sw', 'w', 'nw', 'ne')
   type: 'bridge' | 'ford';
   name?: string;  // Optional label (e.g., "Stone Bridge", "Miller's Ford")
+}
+
+/**
+ * Road blocked connection - prevents rendering between two adjacent hexes
+ * Used by scissor tool to cut road segments without removing entire hex roads
+ */
+export interface RoadBlockedConnection {
+  id: string;  // Unique identifier (uuid)
+  hex1: string;  // First hex ID (e.g., "5.8")
+  hex2: string;  // Second hex ID (e.g., "5.9")
 }
 
 export class KingdomActor extends Actor {

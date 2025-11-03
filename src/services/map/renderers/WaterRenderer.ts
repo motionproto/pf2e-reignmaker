@@ -10,10 +10,10 @@ import { getEdgeMidpoint, getHexCenter, parseHexId } from '../../../utils/riverU
 import type { RiverSegment, EdgeDirection } from '../../../models/Hex';
 
 // River visual constants
-const RIVER_WIDTH = 16;
-const RIVER_BORDER_WIDTH = 18;
-const RIVER_ALPHA = 0.8;
-const RIVER_BORDER_ALPHA = 0.6;
+const RIVER_WIDTH = 20;
+const RIVER_BORDER_WIDTH = 22;
+const RIVER_ALPHA = 0.5;
+const RIVER_BORDER_ALPHA = 0.5;
 
 // River state colors
 const FLOW_COLOR = 0x4A90E2;      // Medium blue - flowing water
@@ -22,14 +22,14 @@ const END_COLOR = 0x9370DB;        // Medium purple - river terminus
 const RIVER_BORDER_COLOR = 0x00008B;  // Dark blue - border for all states
 
 // Arrow constants
-const ARROW_SIZE = 12;
+const ARROW_SIZE = 24;
 const ARROW_COLOR = 0xFFFFFF;      // White arrows
-const ARROW_ALPHA = 0.9;
+const ARROW_ALPHA = 0.6;
 
 // Lake/Swamp constants
-const LAKE_COLOR = 0x87CEEB;       // Light blue - sky blue
-const LAKE_ALPHA = 0.6;
-const SWAMP_COLOR = 0x556B2F;      // Murky green - dark olive green
+const LAKE_COLOR = 0x4A90E2;       // Match river blue - medium blue
+const LAKE_ALPHA = 0.4;            // More transparent than rivers
+const SWAMP_COLOR = 0x6B8E23;      // Brighter murky green - olive drab
 const SWAMP_ALPHA = 0.6;
 
 /**
@@ -320,6 +320,7 @@ function renderSwamps(
 
 /**
  * Draw a filled hex at the specified grid position
+ * Uses Foundry's grid API for accurate hex vertices (matches terrain overlay pattern)
  * 
  * @param graphics - PIXI Graphics object
  * @param hexI - Hex row index
@@ -336,29 +337,34 @@ function drawHexFill(
   color: number,
   alpha: number
 ): void {
-  // Get hex center and size
-  const center = getHexCenter(hexI, hexJ, canvas);
+  // Get hex center using Foundry's API
+  const center = canvas.grid.getCenterPoint({i: hexI, j: hexJ});
   if (!center) return;
   
-  const hexSize = canvas.grid.size;
-  const hexWidth = hexSize;
-  const hexHeight = hexSize;
+  // Use Foundry's GridHex class for vertex calculation
+  const GridHex = (globalThis as any).foundry.grid.GridHex;
+  const hex = new GridHex({i: hexI, j: hexJ}, canvas.grid);
   
-  // Calculate hex vertices (pointy-top hexagon)
-  const vertices: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < 6; i++) {
-    const angle = (Math.PI / 3) * i - Math.PI / 6; // Start from top-right, rotate 30 degrees
-    const x = center.x + hexWidth * 0.5 * Math.cos(angle);
-    const y = center.y + hexHeight * 0.5 * Math.sin(angle);
-    vertices.push({ x, y });
+  // Get vertices in grid-relative coordinates
+  const relativeVertices = canvas.grid.getShape(hex.offset);
+  
+  if (!relativeVertices || relativeVertices.length === 0) {
+    logger.warn(`[WaterRenderer] No vertices for hex (${hexI}, ${hexJ})`);
+    return;
   }
+  
+  // Apply slight overlap scaling to prevent gaps (matches terrain overlay)
+  // This is ~2% larger than the base hex size
+  const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
+  
+  // Translate vertices to world coordinates
+  const worldVertices = relativeVertices.map((v: any) => ({
+    x: center.x + (v.x * scale),
+    y: center.y + (v.y * scale)
+  }));
   
   // Draw filled hexagon
   graphics.beginFill(color, alpha);
-  graphics.moveTo(vertices[0].x, vertices[0].y);
-  for (let i = 1; i < vertices.length; i++) {
-    graphics.lineTo(vertices[i].x, vertices[i].y);
-  }
-  graphics.closePath();
+  graphics.drawPolygon(worldVertices.flatMap((v: any) => [v.x, v.y]));
   graphics.endFill();
 }

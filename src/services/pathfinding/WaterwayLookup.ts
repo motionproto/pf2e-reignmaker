@@ -25,11 +25,25 @@ interface HexWaterwayData {
 }
 
 /**
+ * River flow direction between two hexes
+ * Stores which direction the river flows (from -> to)
+ */
+interface RiverFlowEdge {
+  fromHex: string;  // "hexI,hexJ"
+  toHex: string;    // "hexI,hexJ"
+  pathId: string;   // Which path this edge belongs to
+}
+
+/**
  * WaterwayLookup - Provides fast hex-based waterway queries
  */
 export class WaterwayLookup {
   // Map: "hexI,hexJ" → HexWaterwayData
   private hexLookup: Map<string, HexWaterwayData> = new Map();
+  
+  // Map: "hexI1,hexJ1->hexI2,hexJ2" → RiverFlowEdge
+  // Stores flow direction between adjacent river hexes
+  private flowEdges: Map<string, RiverFlowEdge> = new Map();
   
   private unsubscribe: (() => void) | null = null;
   
@@ -67,6 +81,7 @@ export class WaterwayLookup {
    */
   private buildLookup(kingdom: KingdomData): void {
     this.hexLookup.clear();
+    this.flowEdges.clear();
     
     // Build river lookup (from sequential paths)
     if (kingdom.rivers?.paths) {
@@ -100,10 +115,16 @@ export class WaterwayLookup {
    * Build river lookup from river paths
    * A hex has a river if ANY path point has matching hexI/hexJ
    * For edge points, mark BOTH hexes that share the edge
+   * Also builds flow direction edges between sequential points
    */
   private buildRiverLookup(paths: RiverPath[]): void {
     for (const path of paths) {
-      for (const point of path.points) {
+      // Sort points by order to get flow direction
+      const sortedPoints = [...path.points].sort((a, b) => a.order - b.order);
+      
+      for (let i = 0; i < sortedPoints.length; i++) {
+        const point = sortedPoints[i];
+        
         // Always mark the primary hex
         const hexKey = this.getHexKey(point.hexI, point.hexJ);
         const hexData = this.getOrCreateHexData(hexKey);
@@ -117,6 +138,20 @@ export class WaterwayLookup {
             const adjData = this.getOrCreateHexData(adjKey);
             adjData.waterways.add('river');
           }
+        }
+        
+        // Build flow edge to next point (if exists)
+        if (i < sortedPoints.length - 1) {
+          const nextPoint = sortedPoints[i + 1];
+          const fromKey = this.getHexKey(point.hexI, point.hexJ);
+          const toKey = this.getHexKey(nextPoint.hexI, nextPoint.hexJ);
+          const edgeKey = `${fromKey}->${toKey}`;
+          
+          this.flowEdges.set(edgeKey, {
+            fromHex: fromKey,
+            toHex: toKey,
+            pathId: path.id
+          });
         }
       }
     }
@@ -257,6 +292,42 @@ export class WaterwayLookup {
     return this.hasRiver(hexI, hexJ) || 
            this.hasLake(hexI, hexJ) || 
            this.hasSwamp(hexI, hexJ);
+  }
+  
+  /**
+   * Check if movement between two hexes is upstream
+   * Returns true if moving against river flow (+1 cost penalty)
+   * Returns false if moving with flow, or not on same river path
+   * 
+   * @param fromHexI - Source hex row
+   * @param fromHexJ - Source hex column
+   * @param toHexI - Destination hex row
+   * @param toHexJ - Destination hex column
+   * @returns true if upstream, false otherwise
+   */
+  isUpstream(fromHexI: number, fromHexJ: number, toHexI: number, toHexJ: number): boolean {
+    // Check if both hexes have rivers
+    if (!this.hasRiver(fromHexI, fromHexJ) || !this.hasRiver(toHexI, toHexJ)) {
+      return false;
+    }
+    
+    const fromKey = this.getHexKey(fromHexI, fromHexJ);
+    const toKey = this.getHexKey(toHexI, toHexJ);
+    
+    // Check if there's a downstream flow edge from -> to (moving with flow)
+    const downstreamKey = `${fromKey}->${toKey}`;
+    if (this.flowEdges.has(downstreamKey)) {
+      return false; // Moving downstream
+    }
+    
+    // Check if there's an upstream flow edge to -> from (moving against flow)
+    const upstreamKey = `${toKey}->${fromKey}`;
+    if (this.flowEdges.has(upstreamKey)) {
+      return true; // Moving upstream
+    }
+    
+    // Not on same river path, or not adjacent in path
+    return false;
   }
   
   /**

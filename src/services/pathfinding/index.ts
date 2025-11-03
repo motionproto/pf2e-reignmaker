@@ -77,6 +77,7 @@ export class PathfindingService {
    * Movement costs:
    * - Flying armies: Always 1 (ignores all terrain)
    * - Naval/Swimming armies on water: 1 (rivers, lakes) or 2 (swamps - difficult)
+   *   - +1 penalty for upstream river travel
    * - Grounded armies on water: Infinity (impassable unless crossing exists)
    * - Grounded armies on land:
    *   - Open terrain: 1
@@ -86,9 +87,10 @@ export class PathfindingService {
    * 
    * @param hexId - Target hex ID
    * @param traits - Army movement traits (canFly, canSwim, hasBoats)
+   * @param fromHexId - Optional source hex (for directional costs like upstream)
    * @returns Movement cost (or Infinity if hex doesn't exist or impassable)
    */
-  getMovementCost(hexId: string, traits?: ArmyMovementTraits): number {
+  getMovementCost(hexId: string, traits?: ArmyMovementTraits, fromHexId?: string): number {
     const normalized = normalizeHexId(hexId);
     const hex = this.hexMap.get(normalized);
 
@@ -123,7 +125,42 @@ export class PathfindingService {
       return 1;
     }
 
-    // Handle water hexes
+    // Amphibious units: Choose best cost between water and land movement
+    const { amphibious = false } = traits || {};
+    if (amphibious) {
+      // Calculate water movement cost
+      let waterCost = Infinity;
+      if (isWaterHex) {
+        // Waterfalls block naval travel (but not swimmers)
+        if (hasWaterfall && hasBoats && !canSwim) {
+          waterCost = Infinity;
+        } else if (canSwim || hasBoats) {
+          waterCost = hasSwamp ? 2 : 1;
+        } else if (hasCrossing) {
+          waterCost = 1;
+        }
+      }
+      
+      // Calculate land movement cost
+      let landCost = 1;
+      if (hex.travel === 'difficult') {
+        landCost = 2;
+      } else if (hex.travel === 'greater-difficult') {
+        landCost = 3;
+      }
+      
+      // Roads reduce land cost by 1 step (min 1)
+      const hasRoad = hex.hasRoad === true;
+      const hasSettlement = hex.features?.some((f: any) => f.type === 'settlement') ?? false;
+      if (hasRoad || hasSettlement) {
+        landCost = Math.max(1, landCost - 1);
+      }
+      
+      // Choose the better (lower) cost
+      return Math.min(waterCost, landCost);
+    }
+
+    // Handle water hexes (non-amphibious units)
     if (isWaterHex) {
       // Waterfalls block naval travel (boats cannot pass)
       // But swimmers can navigate waterfalls
@@ -133,8 +170,25 @@ export class PathfindingService {
       
       // Naval or swimming armies can traverse water
       if (canSwim || hasBoats) {
-        // Swamps are difficult even for boats/swimmers
-        return hasSwamp ? 2 : 1;
+        // Base cost: Swamps are difficult (2), rivers/lakes are easy (1)
+        let waterCost = hasSwamp ? 2 : 1;
+        
+        // Check for upstream travel penalty (only applies to rivers)
+        if (hasRiver && fromHexId) {
+          const parts = fromHexId.split('.');
+          const fromHexI = parseInt(parts[0], 10);
+          const fromHexJ = parseInt(parts[1], 10);
+          
+          if (!isNaN(fromHexI) && !isNaN(fromHexJ)) {
+            const isUpstreamTravel = waterwayLookup.isUpstream(fromHexI, fromHexJ, hexI, hexJ);
+            if (isUpstreamTravel) {
+              waterCost += 1;  // +1 penalty for upstream travel
+              logger.debug(`[Pathfinding] Upstream travel: ${fromHexId} -> ${hexId} (cost +1)`);
+            }
+          }
+        }
+        
+        return waterCost;
       }
       
       // Grounded armies can cross if there's a bridge/ford
@@ -200,7 +254,7 @@ export class PathfindingService {
       
       for (const neighbor of neighbors) {
         const neighborNormalized = normalizeHexId(neighbor);
-        const moveCost = this.getMovementCost(neighborNormalized, traits);
+        const moveCost = this.getMovementCost(neighborNormalized, traits, current.hexId);
         
         // Skip impassable hexes
         if (moveCost === Infinity) {
@@ -305,7 +359,7 @@ export class PathfindingService {
           continue;
         }
 
-        const moveCost = this.getMovementCost(neighborNormalized, traits);
+        const moveCost = this.getMovementCost(neighborNormalized, traits, currentHexId);
 
         // Skip impassable hexes
         if (moveCost === Infinity) {
