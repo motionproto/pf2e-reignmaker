@@ -67,7 +67,6 @@ export async function renderWaterConnections(
   }
   
   if (!kingdom?.rivers?.paths) {
-    // logger.info('[WaterRenderer] No rivers found');
     return;
   }
 
@@ -75,11 +74,8 @@ export async function renderWaterConnections(
   const paths = kingdom.rivers.paths;
   
   if (paths.length === 0) {
-    // logger.info('[WaterRenderer] No river paths found');
     return;
   }
-
-  // logger.info(`[WaterRenderer] Rendering ${paths.length} river paths`);
 
   // Graphics objects for multi-pass rendering
   const borderGraphics = new PIXI.Graphics();
@@ -132,8 +128,6 @@ export async function renderWaterConnections(
   layer.addChild(borderGraphics);
   layer.addChild(riverGraphics);
   layer.addChild(arrowGraphics);
-
-  // logger.info(`[WaterRenderer] ✅ Rendered ${paths.length} river paths`);
 }
 
 
@@ -275,7 +269,7 @@ function drawSingleArrow(
 }
 
 /**
- * Render lake features (full hex fills)
+ * Render lake features (80% hex fills)
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
@@ -290,14 +284,14 @@ function renderLakes(
   lakeGraphics.name = 'Lakes';
   
   for (const lake of lakes) {
-    drawHexFill(lakeGraphics, lake.hexI, lake.hexJ, canvas, LAKE_COLOR, LAKE_ALPHA);
+    drawHexFill(lakeGraphics, lake.hexI, lake.hexJ, canvas, LAKE_COLOR, LAKE_ALPHA, 0.8);
   }
   
   layer.addChild(lakeGraphics);
 }
 
 /**
- * Render swamp features (full hex fills)
+ * Render swamp features (80% hex fills)
  * 
  * @param layer - PIXI container to add graphics to
  * @param canvas - Foundry canvas object
@@ -312,7 +306,7 @@ function renderSwamps(
   swampGraphics.name = 'Swamps';
   
   for (const swamp of swamps) {
-    drawHexFill(swampGraphics, swamp.hexI, swamp.hexJ, canvas, SWAMP_COLOR, SWAMP_ALPHA);
+    drawHexFill(swampGraphics, swamp.hexI, swamp.hexJ, canvas, SWAMP_COLOR, SWAMP_ALPHA, 0.8);
   }
   
   layer.addChild(swampGraphics);
@@ -328,6 +322,7 @@ function renderSwamps(
  * @param canvas - Foundry canvas object
  * @param color - Fill color
  * @param alpha - Fill alpha
+ * @param sizeScale - Scale factor for hex size (default 1.02 for slight overlap, 0.8 for water features)
  */
 function drawHexFill(
   graphics: PIXI.Graphics,
@@ -335,7 +330,8 @@ function drawHexFill(
   hexJ: number,
   canvas: any,
   color: number,
-  alpha: number
+  alpha: number,
+  sizeScale: number = 1.02
 ): void {
   // Get hex center using Foundry's API
   const center = canvas.grid.getCenterPoint({i: hexI, j: hexJ});
@@ -353,9 +349,10 @@ function drawHexFill(
     return;
   }
   
-  // Apply slight overlap scaling to prevent gaps (matches terrain overlay)
-  // This is ~2% larger than the base hex size
-  const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
+  // Apply size scaling
+  // Default 1.02 provides slight overlap to prevent gaps (for terrain)
+  // 0.8 makes water features 80% of hex size (to differentiate from terrain)
+  const scale = sizeScale;
   
   // Translate vertices to world coordinates
   const worldVertices = relativeVertices.map((v: any) => ({

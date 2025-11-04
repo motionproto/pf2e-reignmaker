@@ -19,6 +19,7 @@ import foodIcon from '../../img/map_icons/commodity_food.webp';
 import lumberCommodityIcon from '../../img/map_icons/commodity_lumber.webp';
 import oreIcon from '../../img/map_icons/commodity_ore.webp';
 import stoneIcon from '../../img/map_icons/commodity_stone.webp';
+import goldIcon from '../../img/map_icons/commodity_gold.webp';
 
 /**
  * Predefined and custom layer identifiers
@@ -109,14 +110,14 @@ export const RESOURCE_ICONS: Record<string, string> = {
  * Bounty/Commodity icon mappings
  * Maps resource types to their icon paths
  * Used for displaying bounty resources on hexes
- * Gold uses FA icon (no webp asset), others use webp assets
+ * Using ES module imports for HMR compatibility
  */
 export const BOUNTY_ICONS: Record<string, string> = {
   'food': foodIcon,
   'lumber': lumberCommodityIcon,
   'ore': oreIcon,
   'stone': stoneIcon,
-  'gold': 'fa-coins'  // FA icon for gold (no webp asset)
+  'gold': goldIcon
 };
 
 /**

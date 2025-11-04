@@ -103,8 +103,8 @@ export const ROAD_COLORS = {
  * Icon shadow color (used for all map icons)
  */
 export const ICON_SHADOW_COLOR = {
-  color: 0x000000,           // Black
-  alpha: 0.5                 // Semi-transparent
+  color: 0x081024,           // Very dark deep blue (instead of pure black)
+  alpha: 0.4                 // Semi-transparent
 } as const;
 
 /**

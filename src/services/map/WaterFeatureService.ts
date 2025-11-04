@@ -67,9 +67,12 @@ export class WaterFeatureService {
    * Toggle lake feature on a hex
    * Removes swamp if present (mutually exclusive)
    * 
+   * @param hexI - Hex row coordinate
+   * @param hexJ - Hex column coordinate
+   * @param forceRemove - If true, always remove (Ctrl+click behavior)
    * @returns true if lake was added, false if removed
    */
-  async toggleLake(hexI: number, hexJ: number): Promise<boolean> {
+  async toggleLake(hexI: number, hexJ: number, forceRemove: boolean = false): Promise<boolean> {
     let wasAdded = false;
 
     await updateKingdom(kingdom => {
@@ -82,10 +85,28 @@ export class WaterFeatureService {
         l => l.hexI === hexI && l.hexJ === hexJ
       );
 
-      if (existingIndex !== -1) {
-        // Remove existing lake
-        kingdom.waterFeatures.lakes.splice(existingIndex, 1);
-        logger.info(`[WaterFeatureService] ❌ Removed lake at (${hexI}, ${hexJ})`);
+      if (existingIndex !== -1 || forceRemove) {
+        // Remove existing lake (or any feature if Ctrl+click)
+        if (existingIndex !== -1) {
+          kingdom.waterFeatures.lakes.splice(existingIndex, 1);
+          logger.info(`[WaterFeatureService] ❌ Removed lake at (${hexI}, ${hexJ})`);
+        }
+        
+        // Also remove swamp if Ctrl+click (force remove all water features)
+        if (forceRemove) {
+          const swampIndex = kingdom.waterFeatures.swamps.findIndex(
+            s => s.hexI === hexI && s.hexJ === hexJ
+          );
+          if (swampIndex !== -1) {
+            // Check if this is a terrain='swamp' hex (cannot remove)
+            const hex = kingdom.hexes.find(h => h.row === hexI && h.col === hexJ);
+            if (hex?.terrain !== 'swamp') {
+              kingdom.waterFeatures.swamps.splice(swampIndex, 1);
+              logger.info(`[WaterFeatureService] ❌ Removed swamp at (${hexI}, ${hexJ}) (Ctrl+click)`);
+            }
+          }
+        }
+        
         wasAdded = false;
       } else {
         // Remove swamp if present (mutually exclusive)
@@ -120,11 +141,14 @@ export class WaterFeatureService {
   /**
    * Toggle swamp feature on a hex
    * Removes lake if present (mutually exclusive)
-   * Locked if terrain='swamp' (cannot remove)
+   * Locked if terrain='swamp' (cannot remove unless forceRemove)
    * 
+   * @param hexI - Hex row coordinate
+   * @param hexJ - Hex column coordinate
+   * @param forceRemove - If true, always remove (Ctrl+click behavior)
    * @returns true if swamp was added, false if removed (or locked)
    */
-  async toggleSwamp(hexI: number, hexJ: number): Promise<boolean> {
+  async toggleSwamp(hexI: number, hexJ: number, forceRemove: boolean = false): Promise<boolean> {
     let wasAdded = false;
 
     await updateKingdom(kingdom => {
@@ -141,17 +165,31 @@ export class WaterFeatureService {
         s => s.hexI === hexI && s.hexJ === hexJ
       );
 
-      if (existingIndex !== -1) {
-        // Cannot remove if terrain='swamp'
-        if (isSwampTerrain) {
+      if (existingIndex !== -1 || forceRemove) {
+        // Cannot remove if terrain='swamp' (unless forced)
+        if (isSwampTerrain && !forceRemove) {
           logger.warn('[WaterFeatureService] ⚠️ Cannot remove swamp feature from terrain=swamp hex (locked)');
           wasAdded = true; // Return true to indicate it's locked
           return;
         }
 
         // Remove swamp
-        kingdom.waterFeatures.swamps.splice(existingIndex, 1);
-        logger.info(`[WaterFeatureService] ❌ Removed swamp at (${hexI}, ${hexJ})`);
+        if (existingIndex !== -1) {
+          kingdom.waterFeatures.swamps.splice(existingIndex, 1);
+          logger.info(`[WaterFeatureService] ❌ Removed swamp at (${hexI}, ${hexJ})`);
+        }
+        
+        // Also remove lake if Ctrl+click (force remove all water features)
+        if (forceRemove) {
+          const lakeIndex = kingdom.waterFeatures.lakes.findIndex(
+            l => l.hexI === hexI && l.hexJ === hexJ
+          );
+          if (lakeIndex !== -1) {
+            kingdom.waterFeatures.lakes.splice(lakeIndex, 1);
+            logger.info(`[WaterFeatureService] ❌ Removed lake at (${hexI}, ${hexJ}) (Ctrl+click)`);
+          }
+        }
+        
         wasAdded = false;
       } else {
         // Remove lake if present (mutually exclusive)

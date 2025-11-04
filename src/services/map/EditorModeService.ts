@@ -22,6 +22,8 @@ import { CrossingEditorHandlers } from './CrossingEditorHandlers';
 import { RoadEditorHandlers } from './RoadEditorHandlers';
 import { TerrainEditorHandlers } from './TerrainEditorHandlers';
 import type { TerrainType } from '../../types/terrain';
+import { WorksiteEditorHandlers } from './WorksiteEditorHandlers';
+import type { WorksiteType } from './WorksiteEditorHandlers';
 
 export type EditorTool = 
   | 'river-edit' | 'river-scissors' | 'river-reverse' 
@@ -29,6 +31,8 @@ export type EditorTool =
   | 'bridge-toggle' | 'ford-toggle' 
   | 'road-edit' | 'road-scissors'
   | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
+  | 'bounty-food' | 'bounty-lumber' | 'bounty-stone' | 'bounty-ore' | 'bounty-gold' | 'bounty-minus'
+  | 'worksite-farm' | 'worksite-lumber-mill' | 'worksite-mine' | 'worksite-quarry'
   | 'inactive';
 
 /**
@@ -70,6 +74,8 @@ export class EditorModeService {
   private crossingHandlers = new CrossingEditorHandlers();
   private roadHandlers = new RoadEditorHandlers();
   private terrainHandlers = new TerrainEditorHandlers();
+  private bountyHandlers: any = null; // Lazy loaded
+  private worksiteHandlers = new WorksiteEditorHandlers();
   
   private constructor() {}
   
@@ -397,11 +403,11 @@ export class EditorModeService {
         // Reverser tool → Reverse flow direction of path
         this.handleRiverReverseClick(canvasPos);
       } else if (this.currentTool === 'lake-toggle') {
-        // Lake tool → Toggle lake feature on hex
-        this.handleLakeToggle(hexId);
+        // Lake tool → Toggle lake feature on hex (Ctrl+Click to force remove)
+        this.handleLakeToggle(hexId, event.ctrlKey);
       } else if (this.currentTool === 'swamp-toggle') {
-        // Swamp tool → Toggle swamp feature on hex
-        this.handleSwampToggle(hexId);
+        // Swamp tool → Toggle swamp feature on hex (Ctrl+Click to force remove)
+        this.handleSwampToggle(hexId, event.ctrlKey);
       } else if (this.currentTool === 'waterfall-toggle') {
         // Waterfall tool → Toggle waterfall on edge
         this.handleWaterfallToggle(hexId, canvasPos);
@@ -434,6 +440,12 @@ export class EditorModeService {
         this.terrainHandlers.paintTerrain(hexId, terrainType);
         this.paintedTerrainHexes.add(hexId);
         await this.refreshTerrainOverlay();
+      } else if (this.currentTool.startsWith('bounty-')) {
+        // Bounty tool → Add/subtract commodity on hex
+        await this.handleBountyEdit(hexId, event.ctrlKey);
+      } else if (this.currentTool.startsWith('worksite-')) {
+        // Worksite tool → Place/remove worksite on hex
+        await this.handleWorksiteEdit(hexId, event.ctrlKey);
       }
     }
   }
@@ -658,8 +670,9 @@ export class EditorModeService {
 
   /**
    * Handle lake toggle - add/remove lake feature on hex
+   * Ctrl+Click forces removal regardless of tool
    */
-  private async handleLakeToggle(hexId: string): Promise<void> {
+  private async handleLakeToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
     const parts = hexId.split('.');
     if (parts.length !== 2) return;
     
@@ -668,22 +681,16 @@ export class EditorModeService {
     if (isNaN(hexI) || isNaN(hexJ)) return;
     
     const { waterFeatureService } = await import('./WaterFeatureService');
-    const wasAdded = await waterFeatureService.toggleLake(hexI, hexJ);
+    await waterFeatureService.toggleLake(hexI, hexJ, isCtrlPressed);
     
     await this.refreshWaterLayer();
-    
-    const ui = (globalThis as any).ui;
-    if (wasAdded) {
-      ui?.notifications?.info(`Lake added at hex (${hexI}, ${hexJ})`);
-    } else {
-      ui?.notifications?.info(`Lake removed from hex (${hexI}, ${hexJ})`);
-    }
   }
 
   /**
    * Handle swamp toggle - add/remove swamp feature on hex
+   * Ctrl+Click forces removal regardless of tool
    */
-  private async handleSwampToggle(hexId: string): Promise<void> {
+  private async handleSwampToggle(hexId: string, isCtrlPressed: boolean): Promise<void> {
     const parts = hexId.split('.');
     if (parts.length !== 2) return;
     
@@ -692,16 +699,9 @@ export class EditorModeService {
     if (isNaN(hexI) || isNaN(hexJ)) return;
     
     const { waterFeatureService } = await import('./WaterFeatureService');
-    const wasAdded = await waterFeatureService.toggleSwamp(hexI, hexJ);
+    await waterFeatureService.toggleSwamp(hexI, hexJ, isCtrlPressed);
     
     await this.refreshWaterLayer();
-    
-    const ui = (globalThis as any).ui;
-    if (wasAdded) {
-      ui?.notifications?.info(`Swamp added at hex (${hexI}, ${hexJ})`);
-    } else {
-      ui?.notifications?.info(`Swamp removed from hex (${hexI}, ${hexJ})`);
-    }
   }
 
   /**
@@ -747,6 +747,59 @@ export class EditorModeService {
     } else {
       const ui = (globalThis as any).ui;
       ui?.notifications?.warn('No road segment found at click position');
+    }
+  }
+
+  /**
+   * Handle bounty edit - add/subtract commodity on hex
+   * - Normal click: Add commodity
+   * - Ctrl+Click: Subtract commodity
+   * - Minus tool: Always subtract (regardless of Ctrl)
+   * Overlay automatically updates via reactive subscription
+   */
+  private async handleBountyEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
+    // Lazy load bounty handlers
+    if (!this.bountyHandlers) {
+      const { BountyEditorHandlers } = await import('./BountyEditorHandlers');
+      this.bountyHandlers = new BountyEditorHandlers();
+    }
+    
+    // Determine if we're subtracting
+    const isSubtracting = this.currentTool === 'bounty-minus' || isCtrlPressed;
+    
+    if (isSubtracting) {
+      // Subtract mode - clear all commodities on this hex
+      await this.bountyHandlers.clearCommodities(hexId);
+    } else {
+      // Add mode - extract commodity type from tool name ('bounty-food' -> 'food')
+      const commodityType = this.currentTool.replace('bounty-', '') as any;
+      await this.bountyHandlers.addCommodity(hexId, commodityType);
+    }
+  }
+
+  /**
+   * Handle worksite edit - place/remove worksite on hex
+   * - Normal click: Place worksite (validates terrain)
+   * - Ctrl+Click: Remove worksite
+   * Overlay automatically updates via reactive subscription
+   */
+  private async handleWorksiteEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
+    if (isCtrlPressed) {
+      // Remove mode - remove any worksite
+      await this.worksiteHandlers.removeWorksite(hexId);
+    } else {
+      // Place mode - extract worksite type from tool name and validate
+      const worksiteTypeMap: Record<string, WorksiteType> = {
+        'worksite-farm': 'Farmstead',
+        'worksite-lumber-mill': 'Logging Camp',
+        'worksite-mine': 'Mine',
+        'worksite-quarry': 'Quarry'
+      };
+      
+      const worksiteType = worksiteTypeMap[this.currentTool];
+      if (worksiteType) {
+        await this.worksiteHandlers.placeWorksite(hexId, worksiteType);
+      }
     }
   }
 
@@ -835,7 +888,7 @@ export class EditorModeService {
   
   /**
    * Auto-toggle overlay layer for the current tool
-   * Shows the relevant overlay and hides others
+   * Shows the relevant overlay and hides others using centralized OverlayManager
    */
   private async autoToggleOverlayForTool(tool: EditorTool): Promise<void> {
     try {
@@ -861,30 +914,25 @@ export class EditorModeService {
         'terrain-swamp': 'terrain',
         'terrain-desert': 'terrain',
         'terrain-water': 'terrain',
+        'bounty-food': 'resources',
+      'bounty-lumber': 'resources',
+      'bounty-stone': 'resources',
+      'bounty-ore': 'resources',
+      'bounty-gold': 'resources',
+      'bounty-minus': 'resources',
+      'worksite-farm': 'worksites',
+      'worksite-lumber-mill': 'worksites',
+      'worksite-mine': 'worksites',
+      'worksite-quarry': 'worksites',
         'inactive': null
       };
       
       const requiredOverlay = toolOverlayMap[tool];
       
       if (requiredOverlay) {
-        // Get all currently active overlays
-        const activeOverlays = overlayManager.getActiveOverlayIds();
-        
-        // Hide all overlays except the required one
-        for (const overlayId of activeOverlays) {
-          if (overlayId !== requiredOverlay) {
-            overlayManager.hideOverlay(overlayId, true); // Skip individual state saves
-          }
-        }
-        
-        // Show the required overlay if not already active
-        if (!overlayManager.isOverlayActive(requiredOverlay)) {
-          await overlayManager.showOverlay(requiredOverlay);
-          logger.info(`[EditorModeService] ✅ Auto-enabled ${requiredOverlay} overlay for ${tool} tool`);
-        }
-        
-        // Save the new overlay state
-        overlayManager.saveState();
+        // Use centralized setActiveOverlays to manage overlay state
+        await overlayManager.setActiveOverlays([requiredOverlay]);
+        logger.info(`[EditorModeService] ✅ Set active overlay to ${requiredOverlay} for ${tool} tool`);
       }
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to auto-toggle overlay:', error);

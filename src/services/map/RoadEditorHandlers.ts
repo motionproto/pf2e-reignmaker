@@ -43,14 +43,6 @@ export class RoadEditorHandlers {
       
       logger.info(`[RoadEditorHandlers] ${newState ? '✅ Added' : '🗑️ Removed'} road at ${hexId}`);
     });
-
-    // Show notification
-    const ui = (globalThis as any).ui;
-    if (newState) {
-      ui?.notifications?.info(`Road added at hex (${hexI}, ${hexJ})`);
-    } else {
-      ui?.notifications?.info(`Road removed from hex (${hexI}, ${hexJ})`);
-    }
   }
 
   /**
@@ -127,9 +119,6 @@ export class RoadEditorHandlers {
       
       logger.info(`[RoadEditorHandlers] ✂️ Cut road segment: ${blockedConnection.hex1} <-> ${blockedConnection.hex2}`);
     });
-
-    const ui = (globalThis as any).ui;
-    ui?.notifications?.info('Road segment cut');
 
     return { success: true };
   }

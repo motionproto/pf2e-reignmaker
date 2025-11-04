@@ -9,9 +9,46 @@ import { logger } from '../../../utils/Logger';
 import { getResourceColor } from '../../../view/kingdom/utils/presentation';
 
 /**
+ * Calculate geometric positions for bounty icons
+ * 1 icon: center
+ * 2 icons: side-by-side horizontally
+ * 3 icons: triangle (top, bottom-left, bottom-right)
+ * 4 icons: diamond (top, left, right, bottom)
+ */
+function calculateIconPositions(count: number, spacing: number = 24): Array<{x: number, y: number}> {
+  switch (count) {
+    case 1:
+      return [{x: 0, y: 0}];
+    
+    case 2:
+      return [
+        {x: -spacing/2, y: 0},
+        {x: spacing/2, y: 0}
+      ];
+    
+    case 3:
+      return [
+        {x: 0, y: -spacing},              // top
+        {x: -spacing, y: spacing/2},      // bottom left
+        {x: spacing, y: spacing/2}        // bottom right
+      ];
+    
+    case 4:
+      return [
+        {x: 0, y: -spacing},              // top
+        {x: -spacing, y: 0},              // left
+        {x: spacing, y: 0},               // right
+        {x: 0, y: spacing}                // bottom
+      ];
+    
+    default:
+      return [{x: 0, y: 0}];
+  }
+}
+
+/**
  * Draw bounty icons on hexes
- * Places commodity icon sprites at hex centers
- * Stacks multiple bounties with 4px offset
+ * Places commodity icon sprites at hex centers using geometric layouts
  * 
  * @param layer - PIXI container to add sprites to
  * @param bountyData - Array of hex IDs with their commodities
@@ -58,17 +95,19 @@ export async function renderResourceIcons(
       // Get bounty resources as array for stacking
       const bounties = Object.entries(commodities).filter(([_, amount]) => amount > 0);
       
-      // Calculate container offset to center the stack
-      // Each icon adds 4px to the total width (except the first)
-      const stackSpacing = 4;
-      const totalStackWidth = (bounties.length - 1) * stackSpacing;
-      const containerOffsetX = -totalStackWidth / 2;
-      const containerOffsetY = -totalStackWidth / 2;
+      // Calculate total number of icons to render (sum of all amounts)
+      const totalIcons = bounties.reduce((sum, [_, amount]) => sum + amount, 0);
       
-      let stackOffset = 0;
+      // Get geometric positions for all icons (48px spacing)
+      const positions = calculateIconPositions(totalIcons, 48);
+      
+      logger.debug(`[ResourceRenderer] Hex ${id}: ${bounties.length} resource types, ${totalIcons} total icons`);
+      
+      let currentIconIndex = 0;
       
       // Render each bounty resource
       for (const [resource, amount] of bounties) {
+        logger.debug(`[ResourceRenderer]   - ${resource}: ${amount}x`);
         // Skip if no bounty for this resource
         if (amount <= 0) continue;
         
@@ -79,43 +118,11 @@ export async function renderResourceIcons(
           continue;
         }
         
-        // Handle gold differently (FA icon vs webp)
-        if (resource === 'gold') {
-          // Create FontAwesome icon using PIXI.Text
-          const goldIcon = new PIXI.Text('', {
-            fontFamily: 'Font Awesome 6 Free',
-            fontSize: iconSize,
-            fill: 0xFFD700, // Gold color
-            fontWeight: '900'
-          });
-          goldIcon.anchor.set(0.5, 0.5);
-          goldIcon.position.set(
-            center.x + containerOffsetX + stackOffset, 
-            center.y + containerOffsetY + stackOffset
-          );
+        // Render multiple icons based on amount (e.g., food: 2 renders 2 food icons)
+        for (let count = 0; count < amount; count++) {
+          // Get position for this icon
+          const pos = positions[currentIconIndex];
           
-          // Create shadow for gold icon
-          const shadowIcon = new PIXI.Text('', {
-            fontFamily: 'Font Awesome 6 Free',
-            fontSize: iconSize,
-            fill: ICON_SHADOW_COLOR.color,
-            fontWeight: '900'
-          });
-          shadowIcon.anchor.set(0.5, 0.5);
-          shadowIcon.position.set(
-            center.x + containerOffsetX + stackOffset + 3, 
-            center.y + containerOffsetY + stackOffset + 3
-          );
-          shadowIcon.alpha = ICON_SHADOW_COLOR.alpha;
-          
-          // Add blur filter to shadow
-          const blurFilter = new PIXI.filters.BlurFilter();
-          blurFilter.blur = 8;
-          shadowIcon.filters = [blurFilter];
-          
-          layer.addChild(shadowIcon);
-          layer.addChild(goldIcon);
-        } else {
           // Load texture and create sprite for webp icons
           const texture = await PIXI.Assets.load(iconPath);
           
@@ -123,8 +130,8 @@ export async function renderResourceIcons(
           const shadowSprite = new PIXI.Sprite(texture);
           shadowSprite.anchor.set(0.5, 0.5);
           shadowSprite.position.set(
-            center.x + containerOffsetX + stackOffset + 3, 
-            center.y + containerOffsetY + stackOffset + 3
+            center.x + pos.x + 3, 
+            center.y + pos.y + 3
           );
           const scale = iconSize / shadowSprite.height;
           shadowSprite.scale.set(scale, scale);
@@ -142,16 +149,16 @@ export async function renderResourceIcons(
           const sprite = new PIXI.Sprite(texture);
           sprite.anchor.set(0.5, 0.5);
           sprite.position.set(
-            center.x + containerOffsetX + stackOffset, 
-            center.y + containerOffsetY + stackOffset
+            center.x + pos.x, 
+            center.y + pos.y
           );
           sprite.scale.set(scale, scale);
           layer.addChild(sprite);
-        }
-        
-        // Increment stack offset for next icon (4px offset)
-        stackOffset += 4;
-        successCount++;
+          
+          // Move to next icon position
+          currentIconIndex++;
+          successCount++;
+        } // End inner loop (amount)
       }
       
     } catch (error) {

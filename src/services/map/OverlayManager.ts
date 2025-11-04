@@ -426,6 +426,42 @@ export class OverlayManager {
   }
   
   /**
+   * Set active overlays - show specified overlays and hide all others
+   * This is the centralized way to manage overlay state
+   * 
+   * @param overlayIds - Array of overlay IDs to show (all others will be hidden)
+   * @param saveState - If true, save the new state to localStorage (default: true)
+   */
+  async setActiveOverlays(overlayIds: string[], saveState: boolean = true): Promise<void> {
+    logger.info('[OverlayManager] 🔄 Setting active overlays:', overlayIds);
+    
+    // Get current active overlays
+    const $active = get(this.activeOverlaysStore);
+    
+    // Hide overlays not in the target list (skip individual state saves for batch operation)
+    const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
+    for (const id of toHide) {
+      logger.info(`[OverlayManager]   - Hiding: ${id}`);
+      this.hideOverlay(id, true); // Skip state save during batch operation
+    }
+    
+    // Show overlays in the target list (skip individual state saves for batch operation)
+    for (const id of overlayIds) {
+      if (!$active.has(id)) {
+        logger.info(`[OverlayManager]   + Showing: ${id}`);
+        await this.showOverlay(id);
+      }
+    }
+    
+    // Save the new state if requested
+    if (saveState) {
+      this.saveState();
+    }
+    
+    logger.info('[OverlayManager] ✅ Active overlays set');
+  }
+  
+  /**
    * Clear all overlays
    * 
    * @param preserveState - If true, keeps the active overlay state saved for restoration
@@ -749,13 +785,16 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('water')
     });
 
-    // Worksites Overlay - REACTIVE (uses claimedHexesWithWorksites store)
+    // Worksites Overlay - REACTIVE (shows all worksites, not just claimed territory)
     this.registerOverlay({
       id: 'worksites',
       name: 'Worksites',
       icon: 'fa-industry',
       layerIds: ['worksites'],
-      store: claimedHexesWithWorksites,  // ✅ Reactive subscription
+      store: derived(kingdomData, $data => 
+        // Filter all hexes that have worksites (regardless of claim status)
+        $data.hexes.filter((h: any) => h.worksite && h.worksite.type)
+      ),  // ✅ Reactive subscription
       render: async (hexes) => {
         const worksiteData = hexes.map((h: any) => ({ 
           id: h.id, 
@@ -779,13 +818,15 @@ export class OverlayManager {
     // Resources Overlay - REACTIVE (uses derived store for hexes with bounties)
     this.registerOverlay({
       id: 'resources',
-      name: 'Resources',
+      name: 'Bounty',
       icon: 'fa-gem',
       layerIds: ['resources'],
-      store: derived(claimedHexes, $hexes => 
-        // Filter claimed hexes that have commodities
-        $hexes.filter((h: any) => h.commodities && Object.keys(h.commodities).length > 0)
-      ),  // ✅ Reactive subscription to claimed hexes with bounties
+      store: derived(kingdomData, $data => 
+        // Filter all hexes that have commodities (regardless of claim status)
+        $data.hexes.filter((h: any) => 
+          h.commodities && Object.keys(h.commodities).length > 0
+        )
+      ),  // ✅ Reactive subscription - updates when hex commodities change
       render: async (hexes) => {
         const bountyData = hexes.map((h: any) => ({ 
           id: h.id, 
@@ -793,7 +834,6 @@ export class OverlayManager {
         }));
 
         if (bountyData.length === 0) {
-
           this.mapLayer.clearLayer('resources');
           return;
         }

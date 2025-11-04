@@ -38,6 +38,49 @@
     editorService.setTool(tool);
   }
   
+  // Determine active section based on current tool
+  $: activeSection = getActiveSection($currentTool);
+  
+  function getActiveSection(tool: EditorTool): string | null {
+    if (tool === 'inactive') return null;
+    if (['river-edit', 'river-scissors', 'river-reverse', 'lake-toggle', 'swamp-toggle'].includes(tool)) {
+      return 'waterways';
+    }
+    if (['waterfall-toggle', 'bridge-toggle', 'ford-toggle'].includes(tool)) {
+      return 'crossings';
+    }
+    if (['road-edit', 'road-scissors'].includes(tool)) {
+      return 'roads';
+    }
+    if (tool.startsWith('terrain-')) {
+      return 'terrain';
+    }
+    if (tool.startsWith('bounty-')) {
+      return 'bounty';
+    }
+    if (tool.startsWith('worksite-')) {
+      return 'worksites';
+    }
+    return null;
+  }
+  
+  // Select section (set default tool for that section)
+  function selectSection(section: string) {
+    const defaultTools: Record<string, EditorTool> = {
+      'waterways': 'river-edit',
+      'crossings': 'waterfall-toggle',
+      'roads': 'road-edit',
+      'terrain': 'terrain-plains',
+      'bounty': 'bounty-food',
+      'worksites': 'worksite-farm'
+    };
+    
+    const tool = defaultTools[section];
+    if (tool) {
+      setTool(tool);
+    }
+  }
+  
   // Dragging handlers
   function handleMouseDown(e: MouseEvent) {
     if ((e.target as HTMLElement).closest('.tool-button, .action-button')) return;
@@ -119,9 +162,9 @@
   <!-- Editor Tools -->
   <div class="editor-sections">
     
-    <!-- Rivers Section -->
-    <section class="editor-section">
-      <label class="section-label">Rivers</label>
+    <!-- Waterways Section -->
+    <section class="editor-section" class:active-section={activeSection === 'waterways'}>
+      <label class="section-label" on:click={() => selectSection('waterways')}>Waterways</label>
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -144,13 +187,6 @@
           title="Reverse Flow - Click on a path to reverse its direction">
           <i class="fas fa-exchange-alt"></i>
         </button>
-      </div>
-    </section>
-    
-    <!-- Water Features Section -->
-    <section class="editor-section">
-      <label class="section-label">Water</label>
-      <div class="tool-buttons">
         <button
           class="tool-button"
           class:active={$currentTool === 'lake-toggle'}
@@ -163,14 +199,14 @@
           class:active={$currentTool === 'swamp-toggle'}
           on:click={() => setTool('swamp-toggle')}
           title="Swamp - Click hex to toggle swamp (difficult water)">
-          <i class="fas fa-seedling"></i>
+          <i class="fa-solid fa-seedling"></i>
         </button>
       </div>
     </section>
     
     <!-- Crossings Section -->
-    <section class="editor-section">
-      <label class="section-label">Crossings</label>
+    <section class="editor-section" class:active-section={activeSection === 'crossings'}>
+      <label class="section-label" on:click={() => selectSection('crossings')}>Crossings</label>
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -197,8 +233,8 @@
     </section>
     
     <!-- Roads Section -->
-    <section class="editor-section">
-      <label class="section-label">Roads</label>
+    <section class="editor-section" class:active-section={activeSection === 'roads'}>
+      <label class="section-label" on:click={() => selectSection('roads')}>Roads</label>
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -218,15 +254,15 @@
     </section>
     
     <!-- Terrain Section -->
-    <section class="editor-section terrain-section">
-      <label class="section-label">Terrain</label>
+    <section class="editor-section terrain-section" class:active-section={activeSection === 'terrain'}>
+      <label class="section-label" on:click={() => selectSection('terrain')}>Terrain</label>
       <div class="tool-buttons terrain-buttons">
         <button
           class="tool-button"
           class:active={$currentTool === 'terrain-plains'}
           on:click={() => setTool('terrain-plains')}
           title="Plains">
-          <i class="fas fa-seedling" style="color: #90C650;"></i>
+          <i class="fas fa-wheat-awn" style="color: #90C650;"></i>
         </button>
         <button
           class="tool-button"
@@ -240,7 +276,7 @@
           class:active={$currentTool === 'terrain-hills'}
           on:click={() => setTool('terrain-hills')}
           title="Hills">
-          <i class="fas fa-hill-rockslide" style="color: #8B7355;"></i>
+          <i class="fa-solid fa-mound" style="color: #8B7355;"></i>
         </button>
         <button
           class="tool-button"
@@ -254,7 +290,7 @@
           class:active={$currentTool === 'terrain-swamp'}
           on:click={() => setTool('terrain-swamp')}
           title="Swamp">
-          <i class="fas fa-water" style="color: #6B8E23;"></i>
+          <i class="fa-solid fa-seedling" style="color: #6B8E23;"></i>
         </button>
         <button
           class="tool-button"
@@ -269,6 +305,90 @@
           on:click={() => setTool('terrain-water')}
           title="Water">
           <i class="fas fa-tint" style="color: #4682B4;"></i>
+        </button>
+      </div>
+    </section>
+    
+    <!-- Bounty Section -->
+    <section class="editor-section" class:active-section={activeSection === 'bounty'}>
+      <label class="section-label" on:click={() => selectSection('bounty')}>Bounty</label>
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-food'}
+          on:click={() => setTool('bounty-food')}
+          title="Food - Click to add">
+          <i class="fas fa-wheat-awn" style="color: var(--icon-food);"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-lumber'}
+          on:click={() => setTool('bounty-lumber')}
+          title="Lumber - Click to add">
+          <i class="fas fa-tree" style="color: var(--icon-lumber);"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-stone'}
+          on:click={() => setTool('bounty-stone')}
+          title="Stone - Click to add">
+          <i class="fas fa-cube" style="color: var(--icon-stone);"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-ore'}
+          on:click={() => setTool('bounty-ore')}
+          title="Ore - Click to add">
+          <i class="fas fa-mountain" style="color: var(--icon-ore);"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-gold'}
+          on:click={() => setTool('bounty-gold')}
+          title="Gold - Click to add">
+          <i class="fas fa-coins" style="color: var(--icon-gold);"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'bounty-minus'}
+          on:click={() => setTool('bounty-minus')}
+          title="Remove - Click to clear bounty from hex">
+          <i class="fa-solid fa-minus"></i>
+        </button>
+      </div>
+    </section>
+    
+    <!-- Worksites Section -->
+    <section class="editor-section" class:active-section={activeSection === 'worksites'}>
+      <label class="section-label" on:click={() => selectSection('worksites')}>Worksites</label>
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'worksite-farm'}
+          on:click={() => setTool('worksite-farm')}
+          title="Farmstead - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-wheat-awn"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'worksite-lumber-mill'}
+          on:click={() => setTool('worksite-lumber-mill')}
+          title="Logging Camp - Click to place (forest only), Ctrl+Click to remove">
+          <i class="fas fa-tree"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'worksite-mine'}
+          on:click={() => setTool('worksite-mine')}
+          title="Mine - Click to place (mountains/swamp), Ctrl+Click to remove">
+          <i class="fas fa-hammer"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'worksite-quarry'}
+          on:click={() => setTool('worksite-quarry')}
+          title="Quarry - Click to place (hills/mountains), Ctrl+Click to remove">
+          <i class="fas fa-cube"></i>
         </button>
       </div>
     </section>
@@ -367,6 +487,13 @@
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    
+    &.active-section {
+      background-color: var(--bg-elevated) ;
+    }
     
     .section-label {
       font-size: 0.875rem;
@@ -375,6 +502,15 @@
       text-transform: uppercase;
       letter-spacing: 0.05em;
       min-width: 80px;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
     }
     
     .tool-buttons {
