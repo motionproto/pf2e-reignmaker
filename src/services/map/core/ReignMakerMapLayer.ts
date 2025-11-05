@@ -27,7 +27,11 @@ import { renderRoadConnections } from '../renderers/RoadRenderer';
 import { renderWorksiteIcons } from '../renderers/WorksiteRenderer';
 import { renderResourceIcons } from '../renderers/ResourceRenderer';
 import { renderSettlementIcons } from '../renderers/SettlementIconRenderer';
+import { drawSingleHex } from '../renderers/HexRenderer';
 import { logger } from '../../../utils/Logger';
+import { LayerManager } from './LayerManager';
+import { InteractiveLayerManager } from './InteractiveLayerManager';
+import { RendererOrchestrator, type RendererContext } from './RendererOrchestrator';
 
 /**
  * Main map layer service (Singleton)
@@ -62,7 +66,9 @@ import { logger } from '../../../utils/Logger';
 export class ReignMakerMapLayer {
   private static instance: ReignMakerMapLayer | null = null;
   private container: PIXI.Container | null = null;
-  private layers: Map<LayerId, MapLayer> = new Map();
+  private layerManager: LayerManager | null = null;
+  private interactiveManager: InteractiveLayerManager = new InteractiveLayerManager();
+  private rendererOrchestrator: RendererOrchestrator = new RendererOrchestrator();
   private initialized: boolean = false;
   private toolbarManager: ToolbarManager = new ToolbarManager();
   private toggleState: boolean = false; // Scene control toggle state
@@ -110,6 +116,9 @@ export class ReignMakerMapLayer {
       return;
     }
 
+    // Initialize LayerManager
+    this.layerManager = new LayerManager(this.container);
+
     this.initialized = true;
   }
 
@@ -125,57 +134,32 @@ export class ReignMakerMapLayer {
    */
   createLayer(id: LayerId, zIndex: number = 0): PIXI.Container {
     this.ensureInitialized();
-
-    // SINGLETON: Return existing layer if it already exists
-    if (this.layers.has(id)) {
-      const existingLayer = this.layers.get(id)!;
-
-      // Update z-index if different (allows re-ordering)
-      if (existingLayer.zIndex !== zIndex && zIndex !== 0) {
-
-        existingLayer.container.zIndex = zIndex;
-        existingLayer.zIndex = zIndex;
-      }
-      
-      return existingLayer.container;
+    
+    // Delegate to LayerManager
+    if (this.layerManager) {
+      return this.layerManager.createLayer(id, zIndex);
     }
-
-    // Create new layer
-    const layerContainer = new PIXI.Container();
-    layerContainer.name = `Layer_${id}`;
-    layerContainer.zIndex = zIndex;
-    layerContainer.visible = true; // Explicitly set visible
-
-    const layer: MapLayer = {
-      id,
-      container: layerContainer,
-      visible: true,
-      zIndex
-    };
-
-    this.layers.set(id, layer);
-    this.container?.addChild(layerContainer);
-
-    return layerContainer;
+    
+    // Fallback to legacy implementation (should never happen)
+    throw new Error('[ReignMakerMapLayer] LayerManager not initialized');
   }
 
   /**
    * Get an existing layer
    */
   getLayer(id: LayerId): PIXI.Container | undefined {
-    return this.layers.get(id)?.container;
+    if (this.layerManager) {
+      return this.layerManager.getLayer(id);
+    }
+    return undefined;
   }
 
   /**
    * Remove a layer completely
    */
   removeLayer(id: LayerId): void {
-    const layer = this.layers.get(id);
-    if (layer) {
-      this.container?.removeChild(layer.container);
-      layer.container.destroy({ children: true });
-      this.layers.delete(id);
-
+    if (this.layerManager) {
+      this.layerManager.removeLayer(id);
     }
   }
 
@@ -185,28 +169,8 @@ export class ReignMakerMapLayer {
    * Creates the layer if it doesn't exist yet
    */
   clearLayerContent(id: LayerId): void {
-    // Ensure layer exists (create if needed)
-    let layer = this.layers.get(id);
-    if (!layer) {
-      // Create empty layer with default z-index
-      const zIndex = this.getDefaultZIndex(id);
-      this.createLayer(id, zIndex);
-      return; // Layer is already empty, nothing to clear
-    }
-    
-    const childCount = layer.container.children.length;
-    
-    // Clear and destroy all children
-    layer.container.removeChildren().forEach(child => {
-      // If it's a Graphics object, clear it first
-      if (child instanceof PIXI.Graphics) {
-        child.clear();
-      }
-      child.destroy({ children: true, texture: false, baseTexture: false });
-    });
-    
-    if (childCount > 0) {
-
+    if (this.layerManager) {
+      this.layerManager.clearLayerContent(id);
     }
   }
 
@@ -215,9 +179,9 @@ export class ReignMakerMapLayer {
    * Use this when you want to completely remove a layer from view
    */
   clearLayer(id: LayerId): void {
-    this.clearLayerContent(id);
-    this.hideLayer(id);
-
+    if (this.layerManager) {
+      this.layerManager.clearLayer(id);
+    }
   }
 
   /**
@@ -245,10 +209,8 @@ export class ReignMakerMapLayer {
    * Show a layer
    */
   showLayer(id: LayerId): void {
-    const layer = this.layers.get(id);
-    if (layer) {
-      layer.container.visible = true;
-      layer.visible = true;
+    if (this.layerManager) {
+      this.layerManager.showLayer(id);
     }
   }
 
@@ -256,10 +218,8 @@ export class ReignMakerMapLayer {
    * Hide a layer
    */
   hideLayer(id: LayerId): void {
-    const layer = this.layers.get(id);
-    if (layer) {
-      layer.container.visible = false;
-      layer.visible = false;
+    if (this.layerManager) {
+      this.layerManager.hideLayer(id);
     }
   }
 
@@ -267,26 +227,9 @@ export class ReignMakerMapLayer {
    * Clear all layers and reset the map
    */
   clearAllLayers(): void {
-
-
-    this.layers.forEach((layer, id) => {
-
-      // Clear and destroy all children
-      layer.container.removeChildren().forEach(child => {
-        // If it's a Graphics object, clear it first to remove all drawing commands
-        if (child instanceof PIXI.Graphics) {
-
-          child.clear();
-        }
-        child.destroy({ children: true, texture: false, baseTexture: false });
-      });
-      
-      // Hide the layer
-      layer.container.visible = false;
-      layer.visible = false;
-
-    });
-
+    if (this.layerManager) {
+      this.layerManager.clearAllLayers();
+    }
   }
 
   /**
@@ -351,84 +294,11 @@ export class ReignMakerMapLayer {
 
   /**
    * Internal: Draw a single hex to a graphics object
+   * Delegates to HexRenderer for the actual drawing logic
    * @returns true if hex was drawn successfully
    */
   private drawSingleHex(graphics: PIXI.Graphics, hexId: string, style: HexStyle, canvas: any): boolean {
-    try {
-      // Parse dot notation: "50.18" -> {i: 50, j: 18}
-      const parts = hexId.split('.');
-      if (parts.length !== 2) {
-        logger.warn(`[ReignMakerMapLayer] ⚠️ Invalid hex ID format: ${hexId}`);
-        return false;
-      }
-      
-      const i = parseInt(parts[0], 10);
-      const j = parseInt(parts[1], 10);
-      
-      if (isNaN(i) || isNaN(j)) {
-        logger.warn(`[ReignMakerMapLayer] ⚠️ Invalid hex coordinates: ${hexId}`);
-        return false;
-      }
-      
-      // Get hex center using Foundry's official API
-      const center = canvas.grid.getCenterPoint({i, j});
-      
-      // Use GridHex class for vertex calculation
-      const GridHex = (globalThis as any).foundry.grid.GridHex;
-      const hex = new GridHex({i, j}, canvas.grid);
-      
-      // Get vertices in grid-relative coordinates
-      // getShape() returns vertices relative to (0,0), not world coordinates!
-      const relativeVertices = canvas.grid.getShape(hex.offset);
-      
-      if (!relativeVertices || relativeVertices.length === 0) {
-        logger.warn(`[ReignMakerMapLayer] ⚠️ No vertices for hex ${hexId} (i:${i}, j:${j})`);
-        return false;
-      }
-      
-      // Apply scaling factor to fix slight gaps between hexes
-      const scale = (canvas.grid.sizeY + 2) / canvas.grid.sizeY;
-      
-      // Translate vertices to world coordinates by adding to hex center
-      const worldVertices = relativeVertices.map((v: any) => ({
-        x: center.x + (v.x * scale),
-        y: center.y + (v.y * scale)
-      }));
-      
-      // Draw fill
-      graphics.beginFill(style.fillColor, style.fillAlpha);
-      graphics.drawPolygon(worldVertices.flatMap((v: any) => [v.x, v.y]));
-      graphics.endFill();
-      
-      // Draw border if specified
-      if (style.borderWidth && style.borderWidth > 0) {
-        const borderColor = style.borderColor ?? style.fillColor;
-        const borderAlpha = style.borderAlpha ?? 1.0;
-        graphics.lineStyle(style.borderWidth, borderColor, borderAlpha);
-        graphics.drawPolygon(worldVertices.flatMap((v: any) => [v.x, v.y]));
-      }
-      
-      return true;
-    } catch (error) {
-      logger.error(`[ReignMakerMapLayer] ❌ Failed to draw hex ${hexId}:`, error);
-      return false;
-    }
-  }
-
-  /**
-   * Normalize hex ID format (remove leading zeros for consistent matching)
-   * \"5.08\" -> \"5.8\", \"50.18\" -> \"50.18\"
-   */
-  private normalizeHexId(hexId: string): string {
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return hexId;
-    
-    const i = parseInt(parts[0], 10);
-    const j = parseInt(parts[1], 10);
-    
-    if (isNaN(i) || isNaN(j)) return hexId;
-    
-    return `${i}.${j}`;
+    return drawSingleHex(graphics, hexId, style, canvas);
   }
 
   /**
@@ -439,16 +309,8 @@ export class ReignMakerMapLayer {
    * @returns true if layer is empty or doesn't exist, false if has children
    */
   private validateLayerEmpty(id: LayerId): boolean {
-    const layer = this.layers.get(id);
-    if (!layer) return true;
-    
-    const childCount = layer.container.children.length;
-    if (childCount > 0) {
-      logger.warn(
-        `[ReignMakerMapLayer] ⚠️ Layer '${id}' has ${childCount} children when expected to be empty!`,
-        'Children:', layer.container.children.map(c => c.name || c.constructor.name)
-      );
-      return false;
+    if (this.layerManager) {
+      return this.layerManager.validateLayerEmpty(id);
     }
     return true;
   }
@@ -458,27 +320,10 @@ export class ReignMakerMapLayer {
    * Ensures consistent layer ordering across the application
    */
   private getDefaultZIndex(layerId: LayerId): number {
-    switch (layerId) {
-      case 'terrain-overlay':
-      case 'terrain-difficulty-overlay':
-        return 5; // Terrain/difficulty overlays at very bottom (never shown together)
-      case 'kingdom-territory':
-      case 'kingdom-territory-outline':
-        return 10; // Territory layers above terrain
-      case 'settlements-overlay':
-        return 30; // Settlements in middle
-      case 'routes':
-        return 40; // Roads on top
-      case 'worksites':
-        return 45; // Worksites above roads
-      case 'resources':
-        return 45; // Resources same level as worksites (never shown together)
-      case 'settlement-icons':
-        return 50; // Settlement icons above everything
-      case 'hex-selection':
-      default:
-        return 0; // Default z-index
+    if (this.layerManager) {
+      return this.layerManager.getDefaultZIndex(layerId);
     }
+    return 0;
   }
 
   /**
@@ -663,10 +508,10 @@ export class ReignMakerMapLayer {
   }
 
   /**
-   * Draw resource/commodity icons on hexes (mapped from worksite positions)
-   * Places commodity icon sprites at hex centers based on what the worksite produces
+   * Draw resource/commodity bounty icons on hexes
+   * Places commodity icon sprites at hex centers based on hex.commodities data
    */
-  async drawResourceIcons(worksiteData: Array<{ id: string; worksiteType: string }>): Promise<void> {
+  async drawResourceIcons(bountyData: Array<{ id: string; commodities: Record<string, number> }>): Promise<void> {
     this.ensureInitialized();
     
     const layerId: LayerId = 'resources';
@@ -679,7 +524,7 @@ export class ReignMakerMapLayer {
     const canvas = (globalThis as any).canvas;
     
     // Delegate to renderer
-    await renderResourceIcons(layer, worksiteData, canvas);
+    await renderResourceIcons(layer, bountyData, canvas);
     
     // Show layer after drawing
     this.showLayer(layerId);
@@ -1163,8 +1008,10 @@ export class ReignMakerMapLayer {
    * Check if kingdom hexes are currently visible
    */
   isKingdomHexesVisible(): boolean {
-    const layer = this.layers.get('kingdom-territory');
-    return layer?.visible ?? false;
+    if (this.layerManager) {
+      return this.layerManager.isLayerVisible('kingdom-territory');
+    }
+    return false;
   }
 
   /**
@@ -1174,11 +1021,8 @@ export class ReignMakerMapLayer {
     // Hide toolbar if visible
     this.toolbarManager.hide();
 
-    // Destroy all layers
-    this.layers.forEach(layer => {
-      layer.container.destroy({ children: true });
-    });
-    this.layers.clear();
+    // LayerManager will handle layer cleanup
+    // (layers are children of container, so they'll be destroyed with it)
 
     // Remove main container
     if (this.container) {
@@ -1186,22 +1030,28 @@ export class ReignMakerMapLayer {
       this.container = null;
     }
 
+    this.layerManager = null;
     this.initialized = false;
-
   }
 
   /**
    * Get all layer IDs
    */
   getLayerIds(): LayerId[] {
-    return Array.from(this.layers.keys());
+    if (this.layerManager) {
+      return this.layerManager.getLayerIds();
+    }
+    return [];
   }
 
   /**
    * Get layer count
    */
   getLayerCount(): number {
-    return this.layers.size;
+    if (this.layerManager) {
+      return this.layerManager.getLayerCount();
+    }
+    return 0;
   }
 }
 
