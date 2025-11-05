@@ -9,8 +9,8 @@
  * - Ctrl+Drag: Remove claims from multiple hexes
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
 
 export class ClaimedByEditorHandlers {
   /**

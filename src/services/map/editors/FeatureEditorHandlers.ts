@@ -3,12 +3,12 @@
  * Settlements are placed as hex features with type: 'settlement'
  */
 
-import { updateKingdom, getKingdomData } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
-import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
-import type { SettlementData } from '../../stores/SettlementEditorDialogStore';
-import { createSettlement, SettlementTier } from '../../models/Settlement';
-import type { Settlement } from '../../models/Settlement';
+import { updateKingdom, getKingdomData } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
+import { settlementEditorDialog } from '../../../stores/SettlementEditorDialogStore';
+import type { SettlementData } from '../../../stores/SettlementEditorDialogStore';
+import { createSettlement, SettlementTier } from '../../../models/Settlement';
+import type { Settlement } from '../../../models/Settlement';
 
 export class FeatureEditorHandlers {
   /**

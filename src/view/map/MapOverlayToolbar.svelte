@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { ReignMakerMapLayer } from '../../services/map/ReignMakerMapLayer';
-  import { getOverlayManager } from '../../services/map/OverlayManager';
-  import { getEditorModeService } from '../../services/map/EditorModeService';
+  import { ReignMakerMapLayer } from '../../services/map/core/ReignMakerMapLayer';
+  import { getOverlayManager } from '../../services/map/core/OverlayManager';
+  import { getEditorModeService } from '../../services/map/core/EditorModeService';
   import EditorModePanel from './EditorModePanel.svelte';
   import { logger } from '../../utils/Logger';
 

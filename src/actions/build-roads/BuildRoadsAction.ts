@@ -140,7 +140,7 @@ const BuildRoadsAction: CustomActionImplementation = {
         });
         
         // Clear interactive layers - roads now permanent in 'routes' layer (via reactive overlay)
-        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
+        const { ReignMakerMapLayer } = await import('../../services/map/core/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.clearSelection();
 

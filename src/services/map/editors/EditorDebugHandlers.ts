@@ -3,10 +3,10 @@
  * Logs hex IDs, edge IDs, and neighbor information on click
  */
 
-import { logger } from '../../utils/Logger';
-import { getEdgeIdForDirection, edgeNameToIndex } from '../../utils/edgeUtils';
-import { getEdgeMidpoint, getAllEdges } from '../../utils/riverUtils';
-import type { EdgeDirection } from '../../models/Hex';
+import { logger } from '../../../utils/Logger';
+import { getEdgeIdForDirection, edgeNameToIndex } from '../../../utils/edgeUtils';
+import { getEdgeMidpoint, getAllEdges } from '../../../utils/riverUtils';
+import type { EdgeDirection } from '../../../models/Hex';
 
 export class EditorDebugHandlers {
   private debugHexMode = false;

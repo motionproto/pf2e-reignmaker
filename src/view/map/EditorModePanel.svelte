@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { writable } from 'svelte/store';
-  import { getEditorModeService, type EditorTool } from '../../services/map/EditorModeService';
+  import { getEditorModeService, type EditorTool } from '../../services/map/core/EditorModeService';
   import SettlementEditorDialog from './SettlementEditorDialog.svelte';
   import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
   import { kingdomData } from '../../stores/KingdomStore';

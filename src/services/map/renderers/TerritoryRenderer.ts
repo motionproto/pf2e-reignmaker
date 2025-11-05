@@ -4,7 +4,7 @@
 
 import type { HexStyle } from '../types';
 import { MAP_HEX_STYLES, TERRITORY_BORDER_COLORS } from '../../../view/kingdom/utils/presentation';
-import { generateTerritoryOutline } from '../TerritoryOutline';
+import { generateTerritoryOutline } from '../utils/TerritoryOutline';
 import { logger } from '../../../utils/Logger';
 
 /**

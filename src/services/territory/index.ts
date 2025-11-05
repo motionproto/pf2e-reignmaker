@@ -37,6 +37,8 @@ import { logger } from '../../utils/Logger';
 import { normalizeTerrainType, getTravelDifficultyFromTerrain } from '../../types/terrain';
 import type { TerrainType, TravelDifficulty } from '../../types/terrain';
 import { PLAYER_KINGDOM } from '../../types/ownership';
+// @ts-ignore - Static JSON import for Vite
+import waterwaysData from '../../../data/kingmaker-support/waterways.json';
 
 // Declare Foundry globals
 declare const Hooks: any;
@@ -273,21 +275,8 @@ export class TerritoryService {
             // Load Kingmaker-specific waterways (rivers, crossings, waterfalls)
             const waterwaysData = await this.loadKingmakerWaterways();
             
-            // Merge waterways with auto-generated water features
-            let combinedWaterFeatures = waterFeatures;
-            if (waterwaysData?.rivers) {
-                logger.info('[Territory Service] Merging Kingmaker waterways with terrain-based water features');
-                combinedWaterFeatures = {
-                    lakes: waterFeatures.lakes,
-                    swamps: waterFeatures.swamps,
-                    waterfalls: waterFeatures.waterfalls,
-                    rivers: waterwaysData.rivers
-                };
-                logger.info(`[Territory Service] Added ${waterwaysData.rivers.paths?.length || 0} river paths, ${waterwaysData.rivers.crossings?.length || 0} crossings, ${waterwaysData.rivers.waterfalls?.length || 0} waterfalls`);
-            }
-            
-            // Update kingdom store with territory data and combined water features
-            await this.updateKingdomStore(hexes, undefined, combinedWaterFeatures);
+            // Update kingdom store with territory data, water features, and rivers
+            await this.updateKingdomStore(hexes, undefined, waterFeatures, waterwaysData?.rivers);
 
             // Switch to setup tab after successful import
             const { setSelectedTab } = await import('../../stores/ui');
@@ -326,7 +315,6 @@ export class TerritoryService {
                     hexI: hex.row,
                     hexJ: hex.col
                 });
-                logger.info(`[Territory Service] Created lake feature at hex ${hex.id} (water terrain)`);
             }
             
             // Swamp terrain → Swamp feature
@@ -336,10 +324,10 @@ export class TerritoryService {
                     hexI: hex.row,
                     hexJ: hex.col
                 });
-                logger.info(`[Territory Service] Created swamp feature at hex ${hex.id} (swamp terrain)`);
             }
         }
         
+        // Only log summary (not individual hexes - too verbose for 42 hexes)
         logger.info(`[Territory Service] Generated ${lakes.length} lakes and ${swamps.length} swamps from terrain data`);
         
         return { lakes, swamps, waterfalls: [] };
@@ -351,13 +339,11 @@ export class TerritoryService {
      */
     private async loadKingmakerWaterways(): Promise<any> {
         try {
-            const response = await fetch('modules/pf2e-reignmaker/data/kingmaker-support/waterways.json');
-            if (!response.ok) {
-                logger.warn('[Territory Service] Kingmaker waterways file not found');
-                return null;
-            }
-            const data = await response.json();
+            // Use static import (imported at top of file) - works in both dev and production
+            // Handle both default export and direct object depending on how Vite bundles it
+            const data = (waterwaysData as any).default || waterwaysData;
             logger.info('[Territory Service] Loaded Kingmaker waterways data');
+            logger.info(`[Territory Service] Waterways structure check: has rivers=${!!data?.rivers}, paths=${data?.rivers?.paths?.length || 0}, crossings=${data?.rivers?.crossings?.length || 0}`);
             return data;
         } catch (error) {
             logger.warn('[Territory Service] Could not load Kingmaker waterways:', error);
@@ -368,12 +354,14 @@ export class TerritoryService {
     /**
      * Update the Kingdom store with territory data
      * Optionally accepts settlements to merge into kingdom data (for initial import only)
-     * Optionally accepts water features to initialize waterFeatures structure
+     * Optionally accepts water features (lakes, swamps) to initialize waterFeatures structure
+     * Optionally accepts rivers to initialize rivers structure (stored at root level)
      */
     private async updateKingdomStore(
         hexes: Hex[], 
         settlements?: Settlement[], 
-        waterFeatures?: { lakes: any[], swamps: any[], waterfalls: any[], rivers?: any }
+        waterFeatures?: { lakes: any[], swamps: any[], waterfalls?: any[] },
+        rivers?: { paths: any[], crossings?: any[], waterfalls?: any[] }
     ): Promise<void> {
         // Log territory update attempt
 
@@ -473,8 +461,17 @@ export class TerritoryService {
             
             // Initialize water features if provided (from Kingmaker import)
             if (waterFeatures) {
-                state.waterFeatures = waterFeatures;
+                state.waterFeatures = {
+                    lakes: waterFeatures.lakes,
+                    swamps: waterFeatures.swamps
+                };
                 logger.info(`[Territory Service] Initialized water features: ${waterFeatures.lakes.length} lakes, ${waterFeatures.swamps.length} swamps`);
+            }
+            
+            // Initialize rivers if provided (from Kingmaker import) - stored at ROOT level
+            if (rivers) {
+                state.rivers = rivers;
+                logger.info(`[Territory Service] Initialized rivers: ${rivers.paths?.length || 0} paths, ${rivers.crossings?.length || 0} crossings, ${rivers.waterfalls?.length || 0} waterfalls`);
             }
 
             return state;

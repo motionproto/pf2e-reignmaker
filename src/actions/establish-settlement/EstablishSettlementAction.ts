@@ -185,7 +185,7 @@ export const EstablishSettlementAction = {
         }
         
         // Ensure PIXI container is visible
-        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
+        const { ReignMakerMapLayer } = await import('../../services/map/core/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.showPixiContainer();
 

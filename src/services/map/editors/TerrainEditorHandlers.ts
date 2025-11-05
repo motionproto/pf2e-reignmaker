@@ -3,8 +3,8 @@
  * Allows painting terrain types onto hexes with click or drag
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
 import type { TerrainType } from '../../types/terrain';
 
 export class TerrainEditorHandlers {

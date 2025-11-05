@@ -3,12 +3,12 @@
  * Handles sequential path drawing system
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
-import { getConnectorAtPosition } from './renderers/RiverConnectorRenderer';
-import { getEdgeMidpoint, getHexCenter } from '../../utils/riverUtils';
-import type { EdgeDirection } from '../../models/Hex';
-import type { RiverPathPoint } from '../../actors/KingdomActor';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
+import { getConnectorAtPosition } from '../renderers/RiverConnectorRenderer';
+import { getEdgeMidpoint, getHexCenter } from '../../../utils/riverUtils';
+import type { EdgeDirection } from '../../../models/Hex';
+import type { RiverPathPoint } from '../../../actors/KingdomActor';
 
 export class RiverEditorHandlers {
   // River path being drawn (sequential system)
@@ -347,7 +347,7 @@ export class RiverEditorHandlers {
     
     // Check if both points are edges - check canonical edge adjacency
     if (lastPoint.edge && newPoint.edge) {
-      const { getEdgeIdForDirection, edgeNameToIndex } = await import('../../utils/edgeUtils');
+      const { getEdgeIdForDirection, edgeNameToIndex } = await import('../../../utils/edgeUtils');
       
       const lastEdgeIndex = edgeNameToIndex(lastPoint.edge as EdgeDirection);
       const newEdgeIndex = edgeNameToIndex(newPoint.edge as EdgeDirection);

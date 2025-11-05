@@ -8,24 +8,24 @@
  * during editor mode, preventing marquee selection and other unwanted interactions.
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import type { KingdomData } from '../../actors/KingdomActor';
-import { logger } from '../../utils/Logger';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import type { KingdomData } from '../../../actors/KingdomActor';
+import { logger } from '../../../utils/Logger';
 import { 
   disableCanvasLayerInteractivity, 
   restoreCanvasLayerInteractivity 
-} from '../../utils/canvasLayerInteractivity';
-import { renderRiverConnectors } from './renderers/RiverConnectorRenderer';
-import { EditorDebugHandlers } from './EditorDebugHandlers';
-import { RiverEditorHandlers } from './RiverEditorHandlers';
-import { CrossingEditorHandlers } from './CrossingEditorHandlers';
-import { RoadEditorHandlers } from './RoadEditorHandlers';
-import { TerrainEditorHandlers } from './TerrainEditorHandlers';
-import type { TerrainType } from '../../types/terrain';
-import { WorksiteEditorHandlers } from './WorksiteEditorHandlers';
-import type { WorksiteType } from './WorksiteEditorHandlers';
-import { FeatureEditorHandlers } from './FeatureEditorHandlers';
-import { ClaimedByEditorHandlers } from './ClaimedByEditorHandlers';
+} from '../../../utils/canvasLayerInteractivity';
+import { renderRiverConnectors } from '../renderers/RiverConnectorRenderer';
+import { EditorDebugHandlers } from '../editors/EditorDebugHandlers';
+import { RiverEditorHandlers } from '../editors/RiverEditorHandlers';
+import { CrossingEditorHandlers } from '../editors/CrossingEditorHandlers';
+import { RoadEditorHandlers } from '../editors/RoadEditorHandlers';
+import { TerrainEditorHandlers } from '../editors/TerrainEditorHandlers';
+import type { TerrainType } from '../../../types/terrain';
+import { WorksiteEditorHandlers } from '../editors/WorksiteEditorHandlers';
+import type { WorksiteType } from '../editors/WorksiteEditorHandlers';
+import { FeatureEditorHandlers } from '../editors/FeatureEditorHandlers';
+import { ClaimedByEditorHandlers } from '../editors/ClaimedByEditorHandlers';
 
 export type EditorTool = 
   | 'river-edit' | 'river-scissors' | 'river-reverse' 
@@ -803,7 +803,7 @@ export class EditorModeService {
   private async handleBountyEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
     // Lazy load bounty handlers
     if (!this.bountyHandlers) {
-      const { BountyEditorHandlers } = await import('./BountyEditorHandlers');
+      const { BountyEditorHandlers } = await import('../editors/BountyEditorHandlers');
       this.bountyHandlers = new BountyEditorHandlers();
     }
     
@@ -966,7 +966,7 @@ export class EditorModeService {
    */
   private async refreshRoadLayer(): Promise<void> {
     try {
-      const { getKingdomActor } = await import('../../main.kingdom');
+      const { getKingdomActor } = await import('../../../main.kingdom');
       const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
       
       const mapLayer = ReignMakerMapLayer.getInstance();

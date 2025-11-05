@@ -3,8 +3,8 @@
  * Uses flag-based approach: toggle hex.hasRoad and handle blocked connections
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
 import type { RoadBlockedConnection } from '../../actors/KingdomActor';
 
 export class RoadEditorHandlers {

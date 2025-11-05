@@ -3,8 +3,8 @@
  * Validates terrain compatibility before placing worksites
  */
 
-import { updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
+import { updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
 import type { TerrainType } from '../../types/terrain';
 
 export type WorksiteType = 'Farmstead' | 'Logging Camp' | 'Mine' | 'Quarry';

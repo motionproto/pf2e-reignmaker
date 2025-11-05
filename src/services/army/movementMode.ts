@@ -11,7 +11,7 @@
 import type { Army } from '../../models/Army';
 import type { PathResult, ReachabilityMap } from '../pathfinding/types';
 import { pathfindingService } from '../pathfinding';
-import { ReignMakerMapLayer } from '../map/ReignMakerMapLayer';
+import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
 import { 
   renderOriginHex, 
   renderReachableHexes, 

@@ -170,7 +170,7 @@ export class AppWindowManager {
    */
   private async activateOverlayControl(): Promise<void> {
     try {
-      const { ReignMakerMapLayer } = await import('../map/ReignMakerMapLayer');
+      const { ReignMakerMapLayer } = await import('../map/core/ReignMakerMapLayer');
       const mapLayer = ReignMakerMapLayer.getInstance();
       
       // Save current state
@@ -194,7 +194,7 @@ export class AppWindowManager {
    */
   private async restoreOverlayControl(): Promise<void> {
     try {
-      const { ReignMakerMapLayer } = await import('../map/ReignMakerMapLayer');
+      const { ReignMakerMapLayer } = await import('../map/core/ReignMakerMapLayer');
       const mapLayer = ReignMakerMapLayer.getInstance();
       
       // Only deactivate if we activated it (wasn't active before)

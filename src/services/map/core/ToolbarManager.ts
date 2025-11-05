@@ -3,7 +3,7 @@
  */
 
 import type { SvelteComponent } from 'svelte';
-import { logger } from '../../utils/Logger';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Manages the map overlay toolbar's lifecycle and state
@@ -28,7 +28,7 @@ export class ToolbarManager {
 
     try {
       // Dynamically import the toolbar component
-      const { default: MapOverlayToolbar } = await import('../../view/map/MapOverlayToolbar.svelte');
+      const { default: MapOverlayToolbar } = await import('../../../view/map/MapOverlayToolbar.svelte');
 
       // Create container element
       this.toolbarElement = document.createElement('div');

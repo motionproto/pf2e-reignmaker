@@ -3,8 +3,8 @@
  * Allows adding/removing up to 4 commodity items per hex
  */
 
-import { updateKingdom } from '../../stores/KingdomStore';
-import { logger } from '../../utils/Logger';
+import { updateKingdom } from '../../../stores/KingdomStore';
+import { logger } from '../../../utils/Logger';
 
 export type CommodityType = 'food' | 'lumber' | 'stone' | 'ore' | 'gold';
 

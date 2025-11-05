@@ -4,5 +4,5 @@
  * Public API for the map annotation layer system
  */
 
-export { ReignMakerMapLayer, registerKingdomHexControl } from './ReignMakerMapLayer';
+export { ReignMakerMapLayer, registerKingdomHexControl } from './core/ReignMakerMapLayer';
 export * from './types';

@@ -3,8 +3,8 @@
  * Handles segment-based feature placement (waterfalls, bridges, fords)
  */
 
-import { logger } from '../../utils/Logger';
-import { waterFeatureService } from './WaterFeatureService';
+import { logger } from '../../../utils/Logger';
+import { waterFeatureService } from '../core/WaterFeatureService';
 
 export class CrossingEditorHandlers {
   /**

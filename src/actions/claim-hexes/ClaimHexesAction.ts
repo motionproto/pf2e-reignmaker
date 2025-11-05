@@ -125,7 +125,7 @@ const ClaimHexesAction: CustomActionImplementation = {
         logger.info('[ClaimHexes] Kingdom update completed successfully');
         
         // Ensure PIXI container is visible (scene control active)
-        const { ReignMakerMapLayer } = await import('../../services/map/ReignMakerMapLayer');
+        const { ReignMakerMapLayer } = await import('../../services/map/core/ReignMakerMapLayer');
         const mapLayer = ReignMakerMapLayer.getInstance();
         mapLayer.showPixiContainer();
 

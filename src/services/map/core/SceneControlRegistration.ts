@@ -2,10 +2,10 @@
  * SceneControlRegistration - Registers the kingdom hex control button in Foundry scene controls
  */
 
-import { getKingdomActor } from '../../main.kingdom';
-import type { KingdomData } from '../../actors/KingdomActor';
+import { getKingdomActor } from '../../../main.kingdom';
+import type { KingdomData } from '../../../actors/KingdomActor';
 import { ReignMakerMapLayer } from './ReignMakerMapLayer';
-import { logger } from '../../utils/Logger';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Register the kingdom hex control button in the scene controls
@@ -121,7 +121,7 @@ export function registerKingdomHexControl(): void {
               if (!hasImportedMap) {
 
                 // Open Kingdom UI - it will automatically show the WelcomeDialog for first-time setup
-                const { openKingdomUI } = await import('../../ui/KingdomIcon');
+                const { openKingdomUI } = await import('../../../ui/KingdomIcon');
                 const actorId = kingdomActor.id;
                 openKingdomUI(actorId);
                 
@@ -155,7 +155,7 @@ export function registerKingdomHexControl(): void {
           // Double click: open Kingdom UI
           const kingdomActor = await getKingdomActor();
           if (kingdomActor) {
-            const { openKingdomUI } = await import('../../ui/KingdomIcon');
+            const { openKingdomUI } = await import('../../../ui/KingdomIcon');
             const actorId = kingdomActor.id;
             openKingdomUI(actorId);
           } else {

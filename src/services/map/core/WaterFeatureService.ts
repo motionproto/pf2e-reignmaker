@@ -7,10 +7,10 @@
  * - Toggle lakes/swamps on/off
  */
 
-import { getKingdomData, updateKingdom } from '../../stores/KingdomStore';
-import type { WaterFeature } from '../../actors/KingdomActor';
-import { logger } from '../../utils/Logger';
-import { getHexCenter, getEdgeMidpoint } from '../../utils/riverUtils';
+import { getKingdomData, updateKingdom } from '../../../stores/KingdomStore';
+import type { WaterFeature } from '../../../actors/KingdomActor';
+import { logger } from '../../../utils/Logger';
+import { getHexCenter, getEdgeMidpoint } from '../../../utils/riverUtils';
 
 export class WaterFeatureService {
   /**

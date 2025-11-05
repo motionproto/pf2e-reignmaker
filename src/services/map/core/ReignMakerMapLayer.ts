@@ -10,24 +10,24 @@
  * Rendering is delegated to specialized modules in ./renderers/
  */
 
-import { getKingdomActor } from '../../main.kingdom';
-import { PLAYER_KINGDOM } from '../../types/ownership';
-import type { KingdomData } from '../../actors/KingdomActor';
-import type { LayerId, HexStyle, MapLayer } from './types';
-import { DEFAULT_HEX_STYLES, WORKSITE_ICONS } from './types';
-import { TERRITORY_BORDER_COLORS } from '../../view/kingdom/utils/presentation';
+import { getKingdomActor } from '../../../main.kingdom';
+import { PLAYER_KINGDOM } from '../../../types/ownership';
+import type { KingdomData } from '../../../actors/KingdomActor';
+import type { LayerId, HexStyle, MapLayer } from '../types';
+import { DEFAULT_HEX_STYLES, WORKSITE_ICONS } from '../types';
+import { TERRITORY_BORDER_COLORS } from '../../../view/kingdom/utils/presentation';
 import type { SvelteComponent } from 'svelte';
-import { generateTerritoryOutline } from './TerritoryOutline';
-import { isWaterTerrain } from '../../types/terrain';
+import { generateTerritoryOutline } from '../utils/TerritoryOutline';
+import { isWaterTerrain } from '../../../types/terrain';
 import { ToolbarManager } from './ToolbarManager';
-import { renderTerrainOverlay } from './renderers/TerrainRenderer';
-import { renderTerrainDifficultyOverlay } from './renderers/TerrainDifficultyRenderer';
-import { renderTerritoryOutline } from './renderers/TerritoryRenderer';
-import { renderRoadConnections } from './renderers/RoadRenderer';
-import { renderWorksiteIcons } from './renderers/WorksiteRenderer';
-import { renderResourceIcons } from './renderers/ResourceRenderer';
-import { renderSettlementIcons } from './renderers/SettlementIconRenderer';
-import { logger } from '../../utils/Logger';
+import { renderTerrainOverlay } from '../renderers/TerrainRenderer';
+import { renderTerrainDifficultyOverlay } from '../renderers/TerrainDifficultyRenderer';
+import { renderTerritoryOutline } from '../renderers/TerritoryRenderer';
+import { renderRoadConnections } from '../renderers/RoadRenderer';
+import { renderWorksiteIcons } from '../renderers/WorksiteRenderer';
+import { renderResourceIcons } from '../renderers/ResourceRenderer';
+import { renderSettlementIcons } from '../renderers/SettlementIconRenderer';
+import { logger } from '../../../utils/Logger';
 
 /**
  * Main map layer service (Singleton)
@@ -632,7 +632,7 @@ export class ReignMakerMapLayer {
     const canvas = (globalThis as any).canvas;
     
     // Delegate to renderer
-    const { renderWaterConnections } = await import('./renderers/WaterRenderer');
+    const { renderWaterConnections } = await import('../renderers/WaterRenderer');
     await renderWaterConnections(layer, canvas);
     
     // Show layer after drawing
@@ -725,7 +725,7 @@ export class ReignMakerMapLayer {
     const canvas = (globalThis as any).canvas;
     
     // Delegate to renderer
-    const { renderSettlementLabels } = await import('./renderers/SettlementLabelRenderer');
+    const { renderSettlementLabels } = await import('../renderers/SettlementLabelRenderer');
     await renderSettlementLabels(layer, settlementData, canvas);
     
     // Show layer after drawing
@@ -750,7 +750,7 @@ export class ReignMakerMapLayer {
     const canvas = (globalThis as any).canvas;
     
     // Import and delegate to renderer
-    const { renderFortificationIcons } = await import('./renderers/FortificationRenderer');
+    const { renderFortificationIcons } = await import('../renderers/FortificationRenderer');
     await renderFortificationIcons(layer, fortificationData, canvas);
     
     // Show layer after drawing

@@ -17,7 +17,7 @@ export interface Faction {
   id: string;
   name: string;
   attitude: AttitudeLevel;
-  color: string;          // Faction color (hex or hsl) - auto-generated on creation
+  color: string;          // Faction color (hex format: #RRGGBB) - auto-generated on creation
   goal: string;           // Strategic goal or objective (GM-only)
   notes: string;          // Public notes visible to all players
   gmNotes: string;        // GM-only private notes

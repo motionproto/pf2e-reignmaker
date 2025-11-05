@@ -18,8 +18,8 @@
 import { positionToOffset, hexToKingmakerId } from './coordinates';
 import type { HexSelectionConfig } from './types';
 import { HEX_HIGHLIGHT_COLORS } from './types';
-import { ReignMakerMapLayer } from '../map/ReignMakerMapLayer';
-import { getOverlayManager } from '../map/OverlayManager';
+import { ReignMakerMapLayer } from '../map/core/ReignMakerMapLayer';
+import { getOverlayManager } from '../map/core/OverlayManager';
 import type { HexStyle } from '../map/types';
 import { getKingdomData } from '../../stores/KingdomStore';
 import { getAdjacentRoadsAndSettlements } from '../../actions/build-roads/roadValidator';

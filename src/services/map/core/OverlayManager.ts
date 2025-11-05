@@ -9,7 +9,7 @@
  */
 
 import { ReignMakerMapLayer } from './ReignMakerMapLayer';
-import type { LayerId, HexStyle } from './types';
+import type { LayerId, HexStyle } from '../types';
 import { get, derived, writable, type Readable, type Unsubscriber, type Writable } from 'svelte/store';
 import { 
   kingdomData, 
@@ -19,10 +19,24 @@ import {
   claimedHexesWithWorksites,
   hexesWithSettlementFeatures,
   allClaimedHexesByFaction
-} from '../../stores/KingdomStore';
-import { territoryService } from '../territory';
-import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
-import { logger } from '../../utils/Logger';
+} from '../../../stores/KingdomStore';
+import { territoryService } from '../../territory';
+import { MAP_HEX_STYLES } from '../../../view/kingdom/utils/presentation';
+import { logger } from '../../../utils/Logger';
+import {
+  createTerrainOverlay,
+  createTerrainDifficultyOverlay,
+  createTerritoriesOverlay,
+  createTerritoryBorderOverlay,
+  createSettlementsOverlay,
+  createRoadsOverlay,
+  createWaterOverlay,
+  createWorksitesOverlay,
+  createResourcesOverlay,
+  createSettlementIconsOverlay,
+  createSettlementLabelsOverlay,
+  createFortificationsOverlay
+} from '../overlays';
 
 /**
  * Overlay definition interface
@@ -613,369 +627,24 @@ export class OverlayManager {
 
   /**
    * Register default overlay types
+   * All overlay definitions extracted to individual files in src/services/map/overlays/
+   * This reduces OverlayManager from ~900 lines to ~300 lines
    */
   private registerDefaultOverlays(): void {
-    // Terrain Overlay - REACTIVE (uses hexesWithTerrain store)
-    this.registerOverlay({
-      id: 'terrain',
-      name: 'Terrain',
-      icon: 'fa-mountain',
-      layerIds: ['terrain-overlay'],
-      exclusiveGroup: 'terrain-display',  // ✅ Mutually exclusive with terrain-difficulty
-      store: derived(kingdomData, $data => 
-        $data.hexes.filter((h: any) => h.terrain)
-      ),  // ✅ Reactive subscription
-      render: (hexes) => {
-        const hexData = hexes.map((h: any) => ({ id: h.id, terrain: h.terrain }));
-
-        if (hexData.length === 0) {
-
-          this.mapLayer.clearLayer('terrain-overlay');
-          return;
-        }
-
-        this.mapLayer.drawTerrainOverlay(hexData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('terrain')
-    });
-
-    // Terrain Difficulty Overlay - REACTIVE (uses hexesWithTerrain store)
-    this.registerOverlay({
-      id: 'terrain-difficulty',
-      name: 'Travel Speed',
-      icon: 'fa-shoe-prints',
-      layerIds: ['terrain-difficulty-overlay'],
-      exclusiveGroup: 'terrain-display',  // ✅ Mutually exclusive with terrain
-      store: derived(kingdomData, $data => 
-        $data.hexes.filter((h: any) => h.terrain)
-      ),  // ✅ Reactive subscription
-      render: (hexes) => {
-        const hexData = hexes.map((h: any) => ({ id: h.id, terrain: h.terrain }));
-
-        if (hexData.length === 0) {
-
-          this.mapLayer.clearLayer('terrain-difficulty-overlay');
-          return;
-        }
-
-        this.mapLayer.drawTerrainDifficultyOverlay(hexData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('terrain-difficulty')
-    });
-
-    // Territory Overlay - REACTIVE (uses allClaimedHexesByFaction store)
-    this.registerOverlay({
-      id: 'territories',
-      name: 'Territory',
-      icon: 'fa-flag',
-      layerIds: ['kingdom-territory'],
-      store: derived([allClaimedHexesByFaction, kingdomData], ([$grouped, $data]) => ({ grouped: $grouped, kingdom: $data })),  // ✅ Reactive subscription with faction data
-      render: ({ grouped, kingdom }) => {
-        // Clear previous territory layers
-        this.mapLayer.clearLayer('kingdom-territory');
-        
-        if (grouped.size === 0) {
-          return;
-        }
-
-        // Draw each faction's territory with its specific color
-        grouped.forEach((hexes: any[], factionId: string | null) => {
-          if (!factionId || hexes.length === 0) return;
-          
-          const hexIds = hexes.map((h: any) => h.id);
-          
-          // Determine color for this faction
-          let color = '#5b9bd5'; // Default blue
-          
-          if (factionId === 'player') {
-            // Use player kingdom color
-            color = kingdom.playerKingdomColor || '#5b9bd5';
-          } else {
-            // Find faction in kingdom.factions and use its color
-            const faction = kingdom.factions?.find((f: any) => f.id === factionId);
-            color = faction?.color || '#666666'; // Gray fallback
-          }
-          
-          // Convert hex color string to number (remove # and parse as base 16)
-          const colorNumber = parseInt(color.substring(1), 16);
-          
-          // Create custom style with faction color
-          const style: HexStyle = {
-            fillColor: colorNumber,
-            fillAlpha: 0.25,
-            borderColor: colorNumber,
-            borderAlpha: 0.8,
-            borderWidth: 3
-          };
-
-          this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
-        });
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('territories')
-    });
-
-    // Territory Border Overlay - REACTIVE (uses claimedHexes store)
-    this.registerOverlay({
-      id: 'territory-border',
-      name: 'Border',
-      icon: 'fa-vector-square',
-      layerIds: ['kingdom-territory-outline'],
-      store: claimedHexes,  // ✅ Reactive subscription
-      render: (hexes) => {
-        const hexIds = hexes.map((h: any) => h.id);
-        
-        if (hexIds.length === 0) {
-
-          this.mapLayer.clearLayer('kingdom-territory-outline');
-          return;
-        }
-
-        this.mapLayer.drawTerritoryOutline(hexIds);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('territory-border')
-    });
-
-    // Settlements Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
-    this.registerOverlay({
-      id: 'settlements',
-      name: 'Settlements',
-      icon: 'fa-city',
-      layerIds: ['settlements-overlay'],
-      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
-      render: (hexesWithFeatures) => {
-        const settlementHexIds = hexesWithFeatures.map((h: any) => h.id);
-
-        if (settlementHexIds.length === 0) {
-
-          this.mapLayer.clearLayer('settlements-overlay');
-          return;
-        }
-
-        const style: HexStyle = MAP_HEX_STYLES.settlement;
-        this.mapLayer.drawHexes(settlementHexIds, style, 'settlements-overlay');
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('settlements')
-    });
-
-    // Roads Overlay - REACTIVE (uses kingdomRoads store)
-    this.registerOverlay({
-      id: 'roads',
-      name: 'Roads',
-      icon: 'fa-road',
-      layerIds: ['routes'],
-      store: derived(kingdomData, $data => 
-        // Always derive from hex.hasRoad flags (source of truth)
-        territoryService.getRoads()
-      ),  // ✅ Reactive subscription
-      render: (roadHexIds) => {
-        if (roadHexIds.length === 0) {
-
-          this.mapLayer.clearLayer('routes');
-          return;
-        }
-
-        this.mapLayer.drawRoadConnections(roadHexIds, 'routes');
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('roads')
-    });
-
-    // Waterways Overlay - REACTIVE (uses water hexes from kingdom data: rivers, lakes, swamps)
-    this.registerOverlay({
-      id: 'water',
-      name: 'Waterways',
-      icon: 'fa-water',
-      layerIds: ['water'],
-      store: derived(kingdomData, $data => 
-        // Filter for water terrain hexes
-        $data.hexes.filter((h: any) => h.terrain === 'water')
-      ),  // ✅ Reactive subscription
-      render: async (waterHexes) => {
-        if (waterHexes.length === 0) {
-
-          this.mapLayer.clearLayer('water');
-          return;
-        }
-
-        await this.mapLayer.drawWaterConnections('water');
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('water')
-    });
-
-    // Worksites Overlay - REACTIVE (shows all worksites, not just claimed territory)
-    this.registerOverlay({
-      id: 'worksites',
-      name: 'Worksites',
-      icon: 'fa-industry',
-      layerIds: ['worksites'],
-      store: derived(kingdomData, $data => 
-        // Filter all hexes that have worksites (regardless of claim status)
-        $data.hexes.filter((h: any) => h.worksite && h.worksite.type)
-      ),  // ✅ Reactive subscription
-      render: async (hexes) => {
-        logger.info('[OverlayManager] 🔍 Worksites render() called, hexes:', hexes.length);
-        const worksiteData = hexes.map((h: any) => ({ 
-          id: h.id, 
-          worksiteType: h.worksite.type 
-        }));
-
-        if (worksiteData.length === 0) {
-          logger.info('[OverlayManager] 🔍 No worksite data, clearing layer');
-          this.mapLayer.clearLayer('worksites');
-          return;
-        }
-
-        logger.info('[OverlayManager] 🔍 Drawing', worksiteData.length, 'worksite icons...');
-        await this.mapLayer.drawWorksiteIcons(worksiteData);
-        logger.info('[OverlayManager] 🔍 Worksites render() complete');
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('worksites')
-    });
-
-    // Resources Overlay - REACTIVE (uses derived store for hexes with bounties)
-    this.registerOverlay({
-      id: 'resources',
-      name: 'Bounty',
-      icon: 'fa-gem',
-      layerIds: ['resources'],
-      store: derived(kingdomData, $data => 
-        // Filter all hexes that have commodities (regardless of claim status)
-        $data.hexes.filter((h: any) => 
-          h.commodities && Object.keys(h.commodities).length > 0
-        )
-      ),  // ✅ Reactive subscription - updates when hex commodities change
-      render: async (hexes) => {
-        const bountyData = hexes.map((h: any) => ({ 
-          id: h.id, 
-          commodities: h.commodities 
-        }));
-
-        if (bountyData.length === 0) {
-          this.mapLayer.clearLayer('resources');
-          return;
-        }
-
-        await this.mapLayer.drawResourceIcons(bountyData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('resources')
-    });
-
-    // Settlement Icons Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
-    this.registerOverlay({
-      id: 'settlement-icons',
-      name: 'Settlement Icons',
-      icon: 'fa-castle',
-      layerIds: ['settlement-icons'],
-      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
-      render: async (hexesWithFeatures) => {
-        const settlementData = hexesWithFeatures.map((h: any) => ({
-          id: h.id,
-          tier: h.feature?.tier || 'Village',
-          mapIconPath: h.feature?.mapIconPath  // Custom map icon (optional)
-        }));
-
-        if (settlementData.length === 0) {
-
-          this.mapLayer.clearLayer('settlement-icons');
-          return;
-        }
-
-        await this.mapLayer.drawSettlementIcons(settlementData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('settlement-icons')
-    });
-
-    // Settlement Labels Overlay - REACTIVE (uses hexesWithSettlementFeatures store)
-    this.registerOverlay({
-      id: 'settlement-labels',
-      name: 'Settlement Labels',
-      icon: 'fa-tag',
-      layerIds: ['settlement-labels'],
-      store: hexesWithSettlementFeatures,  // ✅ Reactive subscription - shows hex features
-      render: async (hexesWithFeatures) => {
-
-        const settlementData = hexesWithFeatures.map((h: any) => {
-
-          return {
-            id: h.id,
-            name: h.feature?.name || 'Unnamed',
-            tier: h.feature?.tier || 'Village'
-          };
-        });
-
-        if (settlementData.length === 0) {
-
-          this.mapLayer.clearLayer('settlement-labels');
-          return;
-        }
-
-        await this.mapLayer.drawSettlementLabels(settlementData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('settlement-labels')
-    });
-
-    // Fortifications Overlay - REACTIVE (uses derived store for hexes with fortifications)
-    this.registerOverlay({
-      id: 'fortifications',
-      name: 'Fortifications',
-      icon: 'fa-shield-alt',
-      layerIds: ['fortifications'],
-      store: derived(kingdomData, $data => 
-        $data.hexes.filter((h: any) => h.fortification && h.fortification.tier > 0)
-      ),  // ✅ Reactive subscription
-      render: async (hexes) => {
-        const fortificationData = hexes.map((h: any) => ({ 
-          id: h.id, 
-          tier: h.fortification.tier,
-          maintenancePaid: h.fortification.maintenancePaid
-        }));
-
-        if (fortificationData.length === 0) {
-
-          this.mapLayer.clearLayer('fortifications');
-          return;
-        }
-
-        await this.mapLayer.drawFortificationIcons(fortificationData);
-      },
-      hide: () => {
-        // Cleanup handled by OverlayManager
-      },
-      isActive: () => this.isOverlayActive('fortifications')
-    });
-
+    const boundIsActive = this.isOverlayActive.bind(this);
+    
+    this.registerOverlay(createTerrainOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createTerrainDifficultyOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createTerritoriesOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createTerritoryBorderOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createSettlementsOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createRoadsOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createWaterOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createWorksitesOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createResourcesOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createSettlementIconsOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createSettlementLabelsOverlay(this.mapLayer, boundIsActive));
+    this.registerOverlay(createFortificationsOverlay(this.mapLayer, boundIsActive));
   }
 }
 

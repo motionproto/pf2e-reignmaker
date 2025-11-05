@@ -9,8 +9,8 @@
  * https://www.redblobgames.com/grids/hexagons/
  */
 
-import { hexToKingmakerId } from '../hex-selector/coordinates';
-import { logger } from '../../utils/Logger';
+import { hexToKingmakerId } from '../../hex-selector/coordinates';
+import { logger } from '../../../utils/Logger';
 
 export interface OutlineSegment {
   start: { x: number; y: number };

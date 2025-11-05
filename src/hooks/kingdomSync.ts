@@ -155,7 +155,7 @@ export async function loadTerritoryData(): Promise<void> {
         if (result.success) {
           // Auto-populate swamp features after territory sync
           try {
-            const { waterFeatureService } = await import('../services/map/WaterFeatureService');
+            const { waterFeatureService } = await import('../services/map/core/WaterFeatureService');
             await waterFeatureService.ensureSwampFeatures();
             logger.info('[Kingdom Sync] ✅ Auto-populated swamp features');
           } catch (error) {
