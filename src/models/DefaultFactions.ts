@@ -11,6 +11,7 @@ interface DefaultFactionData {
   id: string;
   name: string;
   attitude: AttitudeLevel;
+  color: string;
 }
 
 /**
@@ -22,10 +23,11 @@ export async function loadDefaultFactions(): Promise<Faction[]> {
     // Use the imported JSON data directly
     const data: DefaultFactionData[] = factionsData as DefaultFactionData[];
     
-    // Convert to Faction objects, using the predefined IDs
+    // Convert to Faction objects, using the predefined IDs and colors
     return data.map(item => {
       const faction = createDefaultFaction(item.name, item.attitude);
-      faction.id = item.id;  // Use the predefined ID from JSON
+      faction.id = item.id;        // Use the predefined ID from JSON
+      faction.color = item.color;  // Use the predefined color from JSON
       return faction;
     });
   } catch (error) {

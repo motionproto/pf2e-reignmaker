@@ -1,52 +1,28 @@
 /**
  * CrossingEditorHandlers - Waterfall, bridge, and ford editing functionality
- * Handles edge-based feature placement (waterfalls, bridges, fords)
+ * Handles segment-based feature placement (waterfalls, bridges, fords)
  */
 
 import { logger } from '../../utils/Logger';
-import { getConnectorAtPosition } from './renderers/RiverConnectorRenderer';
 import { waterFeatureService } from './WaterFeatureService';
 
 export class CrossingEditorHandlers {
   /**
-   * Handle waterfall click - toggle waterfall on edge
+   * Handle waterfall click - toggle waterfall on river segment
    * Waterfalls block naval travel but not swimmers
+   * Uses segment detection (like scissors tool)
    */
   async handleWaterfallClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
+    logger.info(`[CrossingEditorHandlers] 💧 Toggling waterfall at position (${position.x}, ${position.y})`);
 
-    // Parse hex ID
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-
-    // Get connector at click position
-    const connector = getConnectorAtPosition(hexI, hexJ, position, canvas);
-    if (!connector) {
-      logger.info('[CrossingEditorHandlers] ❌ No connector at click position');
-      return;
-    }
-
-    // Waterfalls must be on edges (not centers)
-    if ('center' in connector) {
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.warn('Waterfalls can only be placed on hex edges');
-      return;
-    }
-
-    const edge = connector.edge;
-    logger.info(`[CrossingEditorHandlers] 💧 Toggling waterfall at hex ${hexId}, edge ${edge}`);
-
-    // Toggle waterfall
-    const wasAdded = await waterFeatureService.toggleWaterfall(hexI, hexJ, edge);
+    // Toggle waterfall using segment detection
+    const result = await waterFeatureService.toggleWaterfall(position);
 
     // Show notification
     const ui = (globalThis as any).ui;
-    if (wasAdded) {
+    if (result === null) {
+      ui?.notifications?.warn('Click closer to a river segment to place a waterfall');
+    } else if (result) {
       ui?.notifications?.info('Waterfall added (blocks boats)');
     } else {
       ui?.notifications?.info('Waterfall removed');
@@ -54,44 +30,21 @@ export class CrossingEditorHandlers {
   }
 
   /**
-   * Handle bridge click - toggle bridge crossing on edge
+   * Handle bridge click - toggle bridge crossing on river segment
    * Bridges allow grounded armies to cross water
+   * Uses segment detection (like scissors tool)
    */
   async handleBridgeClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
+    logger.info(`[CrossingEditorHandlers] 🌉 Toggling bridge at position (${position.x}, ${position.y})`);
 
-    // Parse hex ID
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-
-    // Get connector at click position
-    const connector = getConnectorAtPosition(hexI, hexJ, position, canvas);
-    if (!connector) {
-      logger.info('[CrossingEditorHandlers] ❌ No connector at click position');
-      return;
-    }
-
-    // Bridges must be on edges (not centers)
-    if ('center' in connector) {
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.warn('Bridges can only be placed on hex edges');
-      return;
-    }
-
-    const edge = connector.edge;
-    logger.info(`[CrossingEditorHandlers] 🌉 Toggling bridge at hex ${hexId}, edge ${edge}`);
-
-    // Toggle bridge
-    const wasAdded = await waterFeatureService.toggleBridge(hexI, hexJ, edge);
+    // Toggle bridge using segment detection
+    const result = await waterFeatureService.toggleBridge(position);
 
     // Show notification
     const ui = (globalThis as any).ui;
-    if (wasAdded) {
+    if (result === null) {
+      ui?.notifications?.warn('Click closer to a river segment to place a bridge');
+    } else if (result) {
       ui?.notifications?.info('Bridge added (allows crossing)');
     } else {
       ui?.notifications?.info('Bridge removed');
@@ -99,44 +52,21 @@ export class CrossingEditorHandlers {
   }
 
   /**
-   * Handle ford click - toggle ford crossing on edge
+   * Handle ford click - toggle ford crossing on river segment
    * Fords allow grounded armies to cross water (natural shallow crossing)
+   * Uses segment detection (like scissors tool)
    */
   async handleFordClick(hexId: string, position: { x: number; y: number }): Promise<void> {
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
+    logger.info(`[CrossingEditorHandlers] 🚶 Toggling ford at position (${position.x}, ${position.y})`);
 
-    // Parse hex ID
-    const parts = hexId.split('.');
-    if (parts.length !== 2) return;
-
-    const hexI = parseInt(parts[0], 10);
-    const hexJ = parseInt(parts[1], 10);
-    if (isNaN(hexI) || isNaN(hexJ)) return;
-
-    // Get connector at click position
-    const connector = getConnectorAtPosition(hexI, hexJ, position, canvas);
-    if (!connector) {
-      logger.info('[CrossingEditorHandlers] ❌ No connector at click position');
-      return;
-    }
-
-    // Fords must be on edges (not centers)
-    if ('center' in connector) {
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.warn('Fords can only be placed on hex edges');
-      return;
-    }
-
-    const edge = connector.edge;
-    logger.info(`[CrossingEditorHandlers] 🚶 Toggling ford at hex ${hexId}, edge ${edge}`);
-
-    // Toggle ford
-    const wasAdded = await waterFeatureService.toggleFord(hexI, hexJ, edge);
+    // Toggle ford using segment detection
+    const result = await waterFeatureService.toggleFord(position);
 
     // Show notification
     const ui = (globalThis as any).ui;
-    if (wasAdded) {
+    if (result === null) {
+      ui?.notifications?.warn('Click closer to a river segment to place a ford');
+    } else if (result) {
       ui?.notifications?.info('Ford added (allows crossing)');
     } else {
       ui?.notifications?.info('Ford removed');

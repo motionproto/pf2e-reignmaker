@@ -60,6 +60,35 @@ export const claimedHexes = derived(
 );
 
 /**
+ * All claimed hexes grouped by faction (for multi-faction territory display)
+ * Returns a Map where key = faction ID (or 'player'), value = array of hexes
+ * Filtered by World Explorer visibility (GMs see all, players see revealed only)
+ */
+export const allClaimedHexesByFaction = derived(
+  kingdomData,
+  ($data) => {
+    const grouped = new Map<string | null, any[]>();
+    
+    // Group hexes by claimedBy value
+    $data.hexes.forEach(h => {
+      if (h.claimedBy !== null && h.claimedBy !== undefined) {
+        const existing = grouped.get(h.claimedBy) || [];
+        existing.push(h);
+        grouped.set(h.claimedBy, existing);
+      }
+    });
+    
+    // Apply visibility filter to each group
+    const filtered = new Map<string | null, any[]>();
+    grouped.forEach((hexes, faction) => {
+      filtered.set(faction, filterVisibleHexes(hexes));
+    });
+    
+    return filtered;
+  }
+);
+
+/**
  * All settlements with valid map locations
  * Filters out only unmapped settlements (location 0,0)
  * Uses location as the source of truth (kingmakerLocation is discarded after import)

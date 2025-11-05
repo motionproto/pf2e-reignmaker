@@ -103,6 +103,7 @@
     justify-content: center;
     align-items: center;
     z-index: var(--z-overlay);
+    pointer-events: auto;
   }
   
   .dialog {
@@ -111,6 +112,7 @@
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-overlay);
     animation: dialogSlideIn var(--transition-base);
+    pointer-events: auto;
   }
   
   @keyframes dialogSlideIn {

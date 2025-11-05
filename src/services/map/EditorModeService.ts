@@ -24,6 +24,8 @@ import { TerrainEditorHandlers } from './TerrainEditorHandlers';
 import type { TerrainType } from '../../types/terrain';
 import { WorksiteEditorHandlers } from './WorksiteEditorHandlers';
 import type { WorksiteType } from './WorksiteEditorHandlers';
+import { FeatureEditorHandlers } from './FeatureEditorHandlers';
+import { ClaimedByEditorHandlers } from './ClaimedByEditorHandlers';
 
 export type EditorTool = 
   | 'river-edit' | 'river-scissors' | 'river-reverse' 
@@ -33,6 +35,9 @@ export type EditorTool =
   | 'terrain-plains' | 'terrain-forest' | 'terrain-hills' | 'terrain-mountains' | 'terrain-swamp' | 'terrain-desert' | 'terrain-water'
   | 'bounty-food' | 'bounty-lumber' | 'bounty-stone' | 'bounty-ore' | 'bounty-gold' | 'bounty-minus'
   | 'worksite-farm' | 'worksite-lumber-mill' | 'worksite-mine' | 'worksite-quarry'
+  | 'settlement-place'
+  | 'fortification-tier1' | 'fortification-tier2' | 'fortification-tier3' | 'fortification-tier4'
+  | 'claimed-by'
   | 'inactive';
 
 /**
@@ -50,7 +55,6 @@ export class EditorModeService {
   private pointerDownHandler: ((event: PointerEvent) => void) | null = null;
   private pointerMoveHandler: ((event: PointerEvent) => void) | null = null;
   private pointerUpHandler: ((event: PointerEvent) => void) | null = null;
-  private keyDownHandler: ((event: KeyboardEvent) => void) | null = null;
   
   // Store layer interactivity state for restoration
   private savedLayerInteractivity: Map<string, boolean> = new Map();
@@ -68,6 +72,12 @@ export class EditorModeService {
   private paintedTerrainHexes = new Set<string>();
   private currentTerrainType: TerrainType | null = null;
   
+  // Claimed-by painting state (drag-to-paint)
+  private isClaimPainting = false;
+  private paintedClaimHexes = new Set<string>();
+  private currentClaimOwner: string | null = null;  // 'player' or faction ID
+  private paintingClaimOwner: string | null = null;  // Owner being painted during current drag
+  
   // Handler modules
   private debugHandlers = new EditorDebugHandlers();
   private riverHandlers = new RiverEditorHandlers();
@@ -76,6 +86,8 @@ export class EditorModeService {
   private terrainHandlers = new TerrainEditorHandlers();
   private bountyHandlers: any = null; // Lazy loaded
   private worksiteHandlers = new WorksiteEditorHandlers();
+  private featureHandlers = new FeatureEditorHandlers();
+  private claimedByHandlers = new ClaimedByEditorHandlers();
   
   private constructor() {}
   
@@ -152,11 +164,20 @@ export class EditorModeService {
     // Disable canvas layer interactivity (prevents token/tile selection)
     this.savedLayerInteractivity = disableCanvasLayerInteractivity();
     
+    // CRITICAL FIX: Clear ALL map layers before starting editor
+    // This ensures no stale graphics from any source (overlays, scene control, etc.)
+    const { ReignMakerMapLayer } = await import('./ReignMakerMapLayer');
+    const mapLayer = ReignMakerMapLayer.getInstance();
+    mapLayer.clearAllLayers();
+    logger.info('[EditorModeService] Cleared all map layer graphics before editor start');
+    
+    // Also clear overlay manager state
+    const { getOverlayManager } = await import('./OverlayManager');
+    const overlayManager = getOverlayManager();
+    overlayManager.clearAll(false); // Don't preserve state, we'll set fresh overlays
+    
     // Attach direct event listeners to canvas stage
     this.attachDirectEventListeners();
-    
-    // Attach keyboard listener for Escape key
-    this.attachKeyboardListener();
   }
   
   /**
@@ -172,9 +193,6 @@ export class EditorModeService {
     
     // Remove direct event listeners
     this.removeDirectEventListeners();
-    
-    // Remove keyboard listener
-    this.removeKeyboardListener();
     
     // Restore canvas layer interactivity
     restoreCanvasLayerInteractivity(this.savedLayerInteractivity);
@@ -232,6 +250,12 @@ export class EditorModeService {
     }
     
     logger.info('[EditorModeService] Saving changes');
+    
+    // Force Svelte reactivity by creating new array reference
+    // This ensures the Territory tab and other components refresh on save
+    await updateKingdom(kingdom => {
+      kingdom.hexes = [...kingdom.hexes];
+    });
     
     // Kingdom data already updated reactively via updateKingdom calls
     // Just clear backup and notify user
@@ -322,43 +346,6 @@ export class EditorModeService {
   }
   
   /**
-   * Attach keyboard listener for shortcuts (Escape to end path)
-   */
-  private attachKeyboardListener(): void {
-    this.keyDownHandler = async (event: KeyboardEvent) => {
-      // Only handle when editor is active
-      if (!this.active) return;
-      
-      // Escape key - end current river path
-      if (event.key === 'Escape' && this.currentTool === 'river-edit') {
-        await this.riverHandlers.endCurrentPath();
-        await this.renderPathPreview();
-        
-        // Show notification
-        const ui = (globalThis as any).ui;
-        ui?.notifications?.info('River path ended (Escape pressed)');
-        
-        logger.info('[EditorModeService] ⌨️ Escape key - ended river path');
-      }
-    };
-    
-    document.addEventListener('keydown', this.keyDownHandler);
-    logger.info('[EditorModeService] ✅ Attached keyboard listener (Escape to end path)');
-  }
-  
-  /**
-   * Remove keyboard listener
-   */
-  private removeKeyboardListener(): void {
-    if (!this.keyDownHandler) return;
-    
-    document.removeEventListener('keydown', this.keyDownHandler);
-    this.keyDownHandler = null;
-    
-    logger.info('[EditorModeService] ✅ Removed keyboard listener');
-  }
-  
-  /**
    * Handle pointer down event (left or right click)
    */
   private async handlePointerDown(event: PointerEvent): Promise<void> {
@@ -367,6 +354,14 @@ export class EditorModeService {
     
     // Allow right-click to pass through for panning
     if (event.button === 2) return;
+    
+    // CRITICAL: Allow clicks on editor panel UI to pass through
+    // Check if the click is on the editor panel (or its children)
+    const target = event.target as HTMLElement;
+    if (target?.closest?.('.editor-mode-panel')) {
+      // Click is on editor panel UI - let it through
+      return;
+    }
     
     // CRITICAL: Stop left-click event propagation to block marquee selection
     event.stopImmediatePropagation();
@@ -446,6 +441,23 @@ export class EditorModeService {
       } else if (this.currentTool.startsWith('worksite-')) {
         // Worksite tool → Place/remove worksite on hex
         await this.handleWorksiteEdit(hexId, event.ctrlKey);
+      } else if (this.currentTool === 'settlement-place') {
+        // Settlement tool → Place/remove settlement
+        await this.handleSettlementEdit(hexId, event.ctrlKey);
+      } else if (this.currentTool.startsWith('fortification-')) {
+        // Fortification tool → Place/remove fortification
+        await this.handleFortificationEdit(hexId, event.ctrlKey);
+      } else if (this.currentTool === 'claimed-by') {
+        // Claimed-by tool → Start painting territory claims (drag-to-paint mode)
+        this.isClaimPainting = true;
+        this.paintedClaimHexes.clear();
+        
+        // Determine claim owner (null if Ctrl for removal, otherwise use stored owner)
+        this.paintingClaimOwner = event.ctrlKey ? null : this.currentClaimOwner;
+        
+        // Paint the first hex
+        await this.handleClaimEdit(hexId, this.paintingClaimOwner);
+        this.paintedClaimHexes.add(hexId);
       }
     }
   }
@@ -498,6 +510,23 @@ export class EditorModeService {
         await this.refreshTerrainOverlay();
       }
     }
+    
+    // Handle claim painting (drag-to-paint)
+    if (this.isClaimPainting) {
+      const canvas = (globalThis as any).canvas;
+      if (!canvas?.grid) return;
+      
+      const point = { x: event.clientX, y: event.clientY };
+      const canvasPos = canvas.canvasCoordinatesFromClient(point);
+      const offset = canvas.grid.getOffset(canvasPos);
+      const hexId = `${offset.i}.${offset.j}`;
+      
+      // Only paint if we haven't already painted this hex during this drag
+      if (!this.paintedClaimHexes.has(hexId)) {
+        await this.handleClaimEdit(hexId, this.paintingClaimOwner);
+        this.paintedClaimHexes.add(hexId);
+      }
+    }
   }
   
   /**
@@ -532,6 +561,20 @@ export class EditorModeService {
       event.stopPropagation();
       
       logger.info('[EditorModeService] 🖱️ Terrain painting ended');
+      return;
+    }
+    
+    // Handle claim painting stop
+    if (this.isClaimPainting) {
+      this.isClaimPainting = false;
+      this.paintedClaimHexes.clear();
+      this.paintingClaimOwner = null;
+      
+      // CRITICAL: Stop event propagation
+      event.stopImmediatePropagation();
+      event.stopPropagation();
+      
+      logger.info('[EditorModeService] 🖱️ Claim painting ended');
       return;
     }
     
@@ -804,6 +847,72 @@ export class EditorModeService {
   }
 
   /**
+   * Handle settlement edit - place/remove settlement
+   * - Normal click: Place settlement (prompts for name)
+   * - Ctrl+Click: Remove settlement
+   */
+  private async handleSettlementEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
+    if (isCtrlPressed) {
+      // Remove mode - remove settlement
+      await this.featureHandlers.removeSettlement(hexId);
+    } else {
+      // Place mode - prompt for name and place settlement
+      await this.featureHandlers.placeSettlement(hexId);
+    }
+  }
+
+  /**
+   * Handle fortification edit - place/remove fortification
+   * - Normal click: Place fortification at selected tier
+   * - Ctrl+Click: Remove fortification
+   */
+  private async handleFortificationEdit(hexId: string, isCtrlPressed: boolean): Promise<void> {
+    if (isCtrlPressed) {
+      // Remove mode - remove fortification
+      await this.featureHandlers.removeFortification(hexId);
+    } else {
+      // Place mode - extract tier from tool name
+      const tierMap: Record<string, 1 | 2 | 3 | 4> = {
+        'fortification-tier1': 1,
+        'fortification-tier2': 2,
+        'fortification-tier3': 3,
+        'fortification-tier4': 4
+      };
+      
+      const tier = tierMap[this.currentTool];
+      if (tier) {
+        await this.featureHandlers.placeFortification(hexId, tier);
+      }
+    }
+  }
+
+  /**
+   * Handle claim edit - claim/unclaim hex for player or faction
+   * - Normal click/drag: Claim for selected owner (player or faction)
+   * - Ctrl+Click/drag: Remove claim (set to null)
+   * Overlay automatically updates via reactive subscription
+   */
+  private async handleClaimEdit(hexId: string, claimOwner: string | null): Promise<void> {
+    await this.claimedByHandlers.claimHex(hexId, claimOwner);
+  }
+
+  /**
+   * Set the current claim owner for the claimed-by tool
+   * @param owner - 'player' for player kingdom, faction ID, or null for unclaimed
+   */
+  setClaimOwner(owner: string | null): void {
+    this.currentClaimOwner = owner;
+    logger.info(`[EditorModeService] Set claim owner: ${owner || 'unclaimed'}`);
+  }
+
+  /**
+   * Get the current claim owner
+   */
+  getClaimOwner(): string | null {
+    return this.currentClaimOwner;
+  }
+
+  /**
    * Refresh the water layer to show updated river segments
    * CRITICAL: Always clears before drawing to prevent graphics stacking
    */
@@ -895,44 +1004,49 @@ export class EditorModeService {
       const { getOverlayManager } = await import('./OverlayManager');
       const overlayManager = getOverlayManager();
       
-      // Map tools to their corresponding overlay IDs
-      const toolOverlayMap: Record<string, string | null> = {
-        'road-edit': 'roads',
-        'road-scissors': 'roads',
-        'river-edit': 'water',
-        'river-scissors': 'water',
-        'river-reverse': 'water',
-        'lake-toggle': 'water',
-        'swamp-toggle': 'water',
-        'waterfall-toggle': 'water',
-        'bridge-toggle': 'water',
-        'ford-toggle': 'water',
-        'terrain-plains': 'terrain',
-        'terrain-forest': 'terrain',
-        'terrain-hills': 'terrain',
-        'terrain-mountains': 'terrain',
-        'terrain-swamp': 'terrain',
-        'terrain-desert': 'terrain',
-        'terrain-water': 'terrain',
-        'bounty-food': 'resources',
-      'bounty-lumber': 'resources',
-      'bounty-stone': 'resources',
-      'bounty-ore': 'resources',
-      'bounty-gold': 'resources',
-      'bounty-minus': 'resources',
-      'worksite-farm': 'worksites',
-      'worksite-lumber-mill': 'worksites',
-      'worksite-mine': 'worksites',
-      'worksite-quarry': 'worksites',
+      // Map tools to their corresponding overlay IDs (can be single or multiple)
+      const toolOverlayMap: Record<string, string[] | null> = {
+        'road-edit': ['roads'],
+        'road-scissors': ['roads'],
+        'river-edit': ['water'],
+        'river-scissors': ['water'],
+        'river-reverse': ['water'],
+        'lake-toggle': ['water'],
+        'swamp-toggle': ['water'],
+        'waterfall-toggle': ['water'],
+        'bridge-toggle': ['water'],
+        'ford-toggle': ['water'],
+        'terrain-plains': ['terrain'],
+        'terrain-forest': ['terrain'],
+        'terrain-hills': ['terrain'],
+        'terrain-mountains': ['terrain'],
+        'terrain-swamp': ['terrain'],
+        'terrain-desert': ['terrain'],
+        'terrain-water': ['terrain'],
+        'bounty-food': ['resources'],
+        'bounty-lumber': ['resources'],
+        'bounty-stone': ['resources'],
+        'bounty-ore': ['resources'],
+        'bounty-gold': ['resources'],
+        'bounty-minus': ['resources'],
+        'worksite-farm': ['worksites'],
+        'worksite-lumber-mill': ['worksites'],
+        'worksite-mine': ['worksites'],
+        'worksite-quarry': ['worksites'],
+        'settlement-place': ['settlements', 'settlement-labels'],  // Show both hex highlights and labels
+        'fortification-tier1': ['fortifications'],
+        'fortification-tier2': ['fortifications'],
+        'fortification-tier3': ['fortifications'],
+        'fortification-tier4': ['fortifications'],
+        'claimed-by': ['territories'],
         'inactive': null
       };
       
-      const requiredOverlay = toolOverlayMap[tool];
+      const requiredOverlays = toolOverlayMap[tool];
       
-      if (requiredOverlay) {
+      if (requiredOverlays) {
         // Use centralized setActiveOverlays to manage overlay state
-        await overlayManager.setActiveOverlays([requiredOverlay]);
-        logger.info(`[EditorModeService] ✅ Set active overlay to ${requiredOverlay} for ${tool} tool`);
+        await overlayManager.setActiveOverlays(requiredOverlays);
       }
     } catch (error) {
       logger.error('[EditorModeService] ❌ Failed to auto-toggle overlay:', error);

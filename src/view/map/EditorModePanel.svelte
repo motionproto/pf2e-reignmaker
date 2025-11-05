@@ -2,6 +2,9 @@
   import { onMount, onDestroy } from 'svelte';
   import { writable } from 'svelte/store';
   import { getEditorModeService, type EditorTool } from '../../services/map/EditorModeService';
+  import SettlementEditorDialog from './SettlementEditorDialog.svelte';
+  import { settlementEditorDialog } from '../../stores/SettlementEditorDialogStore';
+  import { kingdomData } from '../../stores/KingdomStore';
   
   // Props
   export let onClose: () => void;
@@ -16,6 +19,14 @@
   let dragStart = { x: 0, y: 0 };
   let panelElement: HTMLDivElement;
   
+  // Minimize state
+  let isMinimized = false;
+  let selectedSection = 'settlements';
+  let isChangingSection = false;
+  
+  // Territory claim state
+  let selectedClaimOwner: string | null = 'player';  // 'player' or faction.id
+  
   onMount(async () => {
     // Load saved position
     const savedPosition = localStorage.getItem('reignmaker-editor-panel-position');
@@ -23,8 +34,23 @@
       position = JSON.parse(savedPosition);
     }
     
-    // Enter editor mode
+    // Load saved minimize state
+    const savedMinimized = localStorage.getItem('reignmaker-editor-panel-minimized');
+    if (savedMinimized) {
+      isMinimized = savedMinimized === 'true';
+    }
+    
+    // Load saved selected section (defaults to 'settlements' if not set)
+    const savedSection = localStorage.getItem('reignmaker-editor-panel-section');
+    if (savedSection) {
+      selectedSection = savedSection;
+    }
+    
+    // Enter editor mode (automatically clears all stale overlays)
     await editorService.enterEditorMode();
+    
+    // Set initial tool and overlay to match the selected section (await to ensure overlays are set)
+    await selectSection(selectedSection);
   });
   
   onDestroy(() => {
@@ -33,9 +59,47 @@
   });
   
   // Tool selection
-  function setTool(tool: EditorTool) {
+  async function setTool(tool: EditorTool): Promise<void> {
     currentTool.set(tool);
-    editorService.setTool(tool);
+    await editorService.setTool(tool);
+  }
+  
+  // Toggle minimize state
+  function toggleMinimize() {
+    isMinimized = !isMinimized;
+    localStorage.setItem('reignmaker-editor-panel-minimized', String(isMinimized));
+  }
+  
+  // Handle section selection from dropdown
+  function handleSectionChange(event: Event) {
+    event.stopPropagation();
+    const target = event.target as HTMLSelectElement;
+    const newSection = target.value;
+    
+    isChangingSection = true;
+    selectedSection = newSection;
+    localStorage.setItem('reignmaker-editor-panel-section', newSection);
+    
+    // Ensure the tool is set for the new section
+    const defaultTools: Record<string, EditorTool> = {
+      'waterways': 'river-edit',
+      'crossings': 'waterfall-toggle',
+      'roads': 'road-edit',
+      'terrain': 'terrain-plains',
+      'bounty': 'bounty-food',
+      'worksites': 'worksite-farm',
+      'settlements': 'settlement-place',
+      'fortifications': 'fortification-tier1',
+      'territory': 'claimed-by'
+    };
+    
+    const tool = defaultTools[newSection];
+    if (tool) {
+      currentTool.set(tool);
+      editorService.setTool(tool);
+    }
+    
+    setTimeout(() => { isChangingSection = false; }, 100);
   }
   
   // Determine active section based on current tool
@@ -61,29 +125,52 @@
     if (tool.startsWith('worksite-')) {
       return 'worksites';
     }
+    if (tool === 'settlement-place') {
+      return 'settlements';
+    }
+    if (tool.startsWith('fortification-')) {
+      return 'fortifications';
+    }
+    if (tool === 'claimed-by') {
+      return 'territory';
+    }
     return null;
   }
   
   // Select section (set default tool for that section)
-  function selectSection(section: string) {
+  async function selectSection(section: string): Promise<void> {
     const defaultTools: Record<string, EditorTool> = {
       'waterways': 'river-edit',
       'crossings': 'waterfall-toggle',
       'roads': 'road-edit',
       'terrain': 'terrain-plains',
       'bounty': 'bounty-food',
-      'worksites': 'worksite-farm'
+      'worksites': 'worksite-farm',
+      'settlements': 'settlement-place',
+      'fortifications': 'fortification-tier1',
+      'territory': 'claimed-by'
     };
     
     const tool = defaultTools[section];
     if (tool) {
-      setTool(tool);
+      // Special handling for territory section - must set claim owner
+      if (section === 'territory') {
+        editorService.setClaimOwner(selectedClaimOwner);
+      }
+      await setTool(tool);
     }
+  }
+  
+  // Handle claim owner selection
+  function selectClaimOwner(owner: string | null) {
+    selectedClaimOwner = owner;
+    editorService.setClaimOwner(owner);
+    setTool('claimed-by');
   }
   
   // Dragging handlers
   function handleMouseDown(e: MouseEvent) {
-    if ((e.target as HTMLElement).closest('.tool-button, .action-button')) return;
+    if ((e.target as HTMLElement).closest('.tool-button, .action-button, .section-dropdown, .faction-dropdown, .color-swatch')) return;
     isDragging = true;
     dragStart = { x: e.clientX - position.x, y: e.clientY - position.y };
     e.preventDefault();
@@ -137,7 +224,37 @@
       window.removeEventListener('mouseup', handleMouseUp);
     };
   });
+  
+  // Settlement editor dialog state
+  let showSettlementDialog = false;
+  let settlementDialogHexId = '';
+  let settlementDialogExisting: any = null;
+  
+  // Subscribe to settlement editor dialog store
+  settlementEditorDialog.subscribe(state => {
+    showSettlementDialog = state.show;
+    settlementDialogHexId = state.hexId || '';
+    settlementDialogExisting = state.existingSettlement;
+  });
+  
+  // Handle settlement editor dialog events
+  function handleSettlementConfirm(event: CustomEvent<any>) {
+    settlementEditorDialog.confirm(event.detail);
+  }
+  
+  function handleSettlementCancel() {
+    settlementEditorDialog.cancel();
+  }
 </script>
+
+<!-- Settlement Editor Dialog -->
+<SettlementEditorDialog
+  bind:show={showSettlementDialog}
+  hexId={settlementDialogHexId}
+  existingSettlement={settlementDialogExisting}
+  on:confirm={handleSettlementConfirm}
+  on:cancel={handleSettlementCancel}
+/>
 
 <svelte:window />
 
@@ -154,6 +271,9 @@
   <div class="panel-header">
     <i class="fas fa-pencil-alt"></i>
     <span>Map Editor</span>
+    <button class="minimize-button" on:click={toggleMinimize} title={isMinimized ? "Expand all sections" : "Minimize to dropdown"}>
+      <i class="fas {isMinimized ? 'fa-expand' : 'fa-compress'}"></i>
+    </button>
     <button class="close-button" on:click={handleCancel} title="Close editor (discard changes)">
       <i class="fas fa-times"></i>
     </button>
@@ -162,9 +282,29 @@
   <!-- Editor Tools -->
   <div class="editor-sections">
     
+    <!-- Minimized mode: Single persistent dropdown -->
+    {#if isMinimized}
+      <section class="editor-section dropdown-section">
+        <select class="section-dropdown" bind:value={selectedSection} on:change={handleSectionChange}>
+          <option value="waterways">Waterways</option>
+          <option value="crossings">Crossings</option>
+          <option value="roads">Roads</option>
+          <option value="terrain">Terrain</option>
+          <option value="bounty">Bounty</option>
+          <option value="worksites">Worksites</option>
+          <option value="settlements">Settlements</option>
+          <option value="fortifications">Fortifications</option>
+          <option value="territory">Territory</option>
+        </select>
+      </section>
+    {/if}
+    
     <!-- Waterways Section -->
+    {#if !isMinimized || selectedSection === 'waterways'}
     <section class="editor-section" class:active-section={activeSection === 'waterways'}>
-      <label class="section-label" on:click={() => selectSection('waterways')}>Waterways</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('waterways')}>Waterways</label>
+      {/if}
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -203,10 +343,14 @@
         </button>
       </div>
     </section>
+    {/if}
     
     <!-- Crossings Section -->
+    {#if !isMinimized || selectedSection === 'crossings'}
     <section class="editor-section" class:active-section={activeSection === 'crossings'}>
-      <label class="section-label" on:click={() => selectSection('crossings')}>Crossings</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('crossings')}>Crossings</label>
+      {/if}
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -231,10 +375,14 @@
         </button>
       </div>
     </section>
+    {/if}
     
     <!-- Roads Section -->
+    {#if !isMinimized || selectedSection === 'roads'}
     <section class="editor-section" class:active-section={activeSection === 'roads'}>
-      <label class="section-label" on:click={() => selectSection('roads')}>Roads</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('roads')}>Roads</label>
+      {/if}
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -252,10 +400,14 @@
         </button>
       </div>
     </section>
+    {/if}
     
     <!-- Terrain Section -->
+    {#if !isMinimized || selectedSection === 'terrain'}
     <section class="editor-section terrain-section" class:active-section={activeSection === 'terrain'}>
-      <label class="section-label" on:click={() => selectSection('terrain')}>Terrain</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('terrain')}>Terrain</label>
+      {/if}
       <div class="tool-buttons terrain-buttons">
         <button
           class="tool-button"
@@ -308,10 +460,14 @@
         </button>
       </div>
     </section>
+    {/if}
     
     <!-- Bounty Section -->
+    {#if !isMinimized || selectedSection === 'bounty'}
     <section class="editor-section" class:active-section={activeSection === 'bounty'}>
-      <label class="section-label" on:click={() => selectSection('bounty')}>Bounty</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('bounty')}>Bounty</label>
+      {/if}
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -357,10 +513,14 @@
         </button>
       </div>
     </section>
+    {/if}
     
     <!-- Worksites Section -->
+    {#if !isMinimized || selectedSection === 'worksites'}
     <section class="editor-section" class:active-section={activeSection === 'worksites'}>
-      <label class="section-label" on:click={() => selectSection('worksites')}>Worksites</label>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('worksites')}>Worksites</label>
+      {/if}
       <div class="tool-buttons">
         <button
           class="tool-button"
@@ -392,6 +552,92 @@
         </button>
       </div>
     </section>
+    {/if}
+    
+    <!-- Settlements Section -->
+    {#if !isMinimized || selectedSection === 'settlements'}
+    <section class="editor-section" class:active-section={activeSection === 'settlements'}>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('settlements')}>Settlements</label>
+      {/if}
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'settlement-place'}
+          on:click={() => setTool('settlement-place')}
+          title="Settlement - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-city"></i>
+        </button>
+      </div>
+    </section>
+    {/if}
+    
+    <!-- Fortifications Section -->
+    {#if !isMinimized || selectedSection === 'fortifications'}
+    <section class="editor-section" class:active-section={activeSection === 'fortifications'}>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('fortifications')}>Fortifications</label>
+      {/if}
+      <div class="tool-buttons">
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'fortification-tier1'}
+          on:click={() => setTool('fortification-tier1')}
+          title="Earthworks (Tier 1) - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-border-all"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'fortification-tier2'}
+          on:click={() => setTool('fortification-tier2')}
+          title="Wooden Tower (Tier 2) - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-archway"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'fortification-tier3'}
+          on:click={() => setTool('fortification-tier3')}
+          title="Stone Tower (Tier 3) - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-dungeon"></i>
+        </button>
+        <button
+          class="tool-button"
+          class:active={$currentTool === 'fortification-tier4'}
+          on:click={() => setTool('fortification-tier4')}
+          title="Fortress (Tier 4) - Click to place, Ctrl+Click to remove">
+          <i class="fas fa-fort-awesome"></i>
+        </button>
+      </div>
+    </section>
+    {/if}
+    
+    <!-- Territory Section -->
+    {#if !isMinimized || selectedSection === 'territory'}
+    <section class="editor-section territory-claim-section" class:active-section={activeSection === 'territory'}>
+      {#if !isMinimized}
+        <label class="section-label" on:click={() => selectSection('territory')}>Territory</label>
+      {/if}
+      <div class="territory-controls">
+        <div 
+          class="color-swatch"
+          style="background-color: {selectedClaimOwner === 'player' 
+            ? ($kingdomData.playerKingdomColor || '#5b9bd5')
+            : ($kingdomData.factions?.find(f => f.id === selectedClaimOwner)?.color || '#666666')};"
+          title="Claim color">
+        </div>
+        <select 
+          class="faction-dropdown"
+          bind:value={selectedClaimOwner}
+          on:change={() => selectClaimOwner(selectedClaimOwner)}
+          title="Select owner to claim hexes">
+          <option value="player">{$kingdomData.name || 'Player Kingdom'}</option>
+          {#each $kingdomData.factions || [] as faction}
+            <option value={faction.id}>{faction.name}</option>
+          {/each}
+        </select>
+      </div>
+    </section>
+    {/if}
     
   </div>
   
@@ -443,6 +689,28 @@
       font-size: 1rem;
     }
     
+    .minimize-button {
+      background: transparent;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      transition: all 0.2s;
+      
+      &:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      
+      i {
+        font-size: 0.875rem;
+      }
+    }
+    
     span {
       flex: 1;
       font-weight: 600;
@@ -479,7 +747,7 @@
     padding: 0.75rem;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
   .editor-section {
@@ -496,12 +764,10 @@
     }
     
     .section-label {
-      font-size: 0.875rem;
+      font-size: 1rem;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.9);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      min-width: 80px;
+      width: 100px;
       cursor: pointer;
       padding: 0.25rem;
       border-radius: 4px;
@@ -510,6 +776,42 @@
       &:hover {
         background: rgba(255, 255, 255, 0.1);
         color: #fff;
+      }
+    }
+    
+    .section-dropdown {
+      min-width: 150px;
+      padding: 0.5rem 0.75rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      line-height: normal;
+      height: auto;
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+      
+      &:focus {
+        outline: none;
+        border-color: var(--color-primary, #8b0000);
+        box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+      }
+      
+      option {
+        background: #1a1a1a;
+        color: #fff;
+        padding: 0.5rem;
+        line-height: normal;
       }
     }
     
@@ -541,8 +843,68 @@
       &.active {
         background: rgba(139, 0, 0, 0.4);
         border-color: var(--color-primary, #8b0000);
-        color: var(--color-primary, #8b0000);
         box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+      }
+    }
+    
+    &.territory-claim-section {
+      .territory-controls {
+        display: flex;
+        gap: 0.5rem;
+        flex: 1;
+        align-items: center;
+        
+        .color-swatch {
+          width: 2.5rem;
+          height: 2.5rem;
+          border-radius: 6px;
+          border: 3px solid rgba(255, 255, 255, 0.4);
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+          flex-shrink: 0;
+          transition: all 0.2s;
+          
+          &:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+          }
+        }
+        
+        .faction-dropdown {
+          flex: 1;
+          padding: 0.5rem 0.75rem;
+          background: rgba(255, 255, 255, 0.05);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          color: rgba(255, 255, 255, 0.9);
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.875rem;
+          line-height: 1.5;
+          height: auto;
+          min-height: 2.5rem;
+          display: flex;
+          align-items: center;
+          
+          &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+          }
+          
+          &:focus {
+            outline: none;
+            border-color: var(--color-primary, #8b0000);
+            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+          }
+          
+          option {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 0.5rem;
+            line-height: 1.5;
+          }
+        }
       }
     }
   }

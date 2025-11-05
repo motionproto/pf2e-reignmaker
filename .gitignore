@@ -70,3 +70,4 @@ webpack-dev-server.pid
 .webpack/
 node_modules/
 *.log
+src/img/nul

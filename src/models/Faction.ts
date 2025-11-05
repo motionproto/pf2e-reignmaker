@@ -3,6 +3,8 @@
  * Based on Reignmaker Lite diplomacy rules
  */
 
+import { generateFactionColor } from '../utils/FactionColorGenerator';
+
 export type AttitudeLevel = 'Hostile' | 'Unfriendly' | 'Indifferent' | 'Friendly' | 'Helpful';
 
 export interface NotablePerson {
@@ -15,6 +17,7 @@ export interface Faction {
   id: string;
   name: string;
   attitude: AttitudeLevel;
+  color: string;          // Faction color (hex or hsl) - auto-generated on creation
   goal: string;           // Strategic goal or objective (GM-only)
   notes: string;          // Public notes visible to all players
   gmNotes: string;        // GM-only private notes
@@ -92,13 +95,21 @@ export const ATTITUDE_ORDER: AttitudeLevel[] = [
 ];
 
 /**
- * Create a default faction
+ * Create a default faction with auto-generated color
  */
-export function createDefaultFaction(name: string, attitude: AttitudeLevel = 'Indifferent'): Faction {
+export function createDefaultFaction(
+  name: string, 
+  attitude: AttitudeLevel = 'Indifferent',
+  existingFactions: Faction[] = []
+): Faction {
+  // Extract existing colors
+  const existingColors = existingFactions.map(f => f.color);
+  
   return {
     id: `faction-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     name,
     attitude,
+    color: generateFactionColor(existingColors),  // Auto-generate contrasting color
     goal: '',
     notes: '',
     gmNotes: '',

@@ -160,7 +160,7 @@ export class ArmyService {
     
     // Update army record
     await updateKingdom(k => {
-      const army = k.armies.find((a: Army): boolean => a.id === armyId);
+      const army = k.armies.find((a: Army) => a.id === armyId);
       if (!army) {
         throw new Error('Army not found');
       }
@@ -209,7 +209,7 @@ export class ArmyService {
     
     // Remove actorId from army
     await updateKingdom(k => {
-      const a = k.armies.find((army: Army): boolean => army.id === armyId);
+      const a = k.armies.find((army: Army) => army.id === armyId);
       if (a) {
         a.actorId = undefined;
       }
@@ -358,11 +358,11 @@ export class ArmyService {
     
     // Remove army from kingdom (no refund)
     await updateKingdom(kingdom => {
-      kingdom.armies = kingdom.armies.filter((a: Army): boolean => a.id !== armyId);
+      kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
       
       // Also remove from any settlement's supportedUnits
       kingdom.settlements.forEach((s: Settlement) => {
-        s.supportedUnits = s.supportedUnits.filter((id: string): boolean => id !== armyId);
+        s.supportedUnits = s.supportedUnits.filter((id: string) => id !== armyId);
       });
     });
     
@@ -415,7 +415,8 @@ export class ArmyService {
       prototypeToken: {
         texture: {
           src: image // Token image
-        }
+        },
+        displayName: 30 // Hover by Anyone
       },
       system: {
         details: {
@@ -524,7 +525,7 @@ export class ArmyService {
     
     // Find army with this actorId
     await updateKingdom(kingdom => {
-      const army = kingdom.armies?.find((a: Army): boolean => a.actorId === actorId);
+      const army = kingdom.armies?.find((a: Army) => a.actorId === actorId);
       if (army) {
         army.name = npcActor.name;
         army.level = npcActor.system?.details?.level?.value || army.level;
@@ -545,7 +546,7 @@ export class ArmyService {
   async updateArmyLevel(armyId: string, newLevel: number): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const army = kingdom.armies?.find((a: Army): boolean => a.id === armyId);
+      const army = kingdom.armies?.find((a: Army) => a.id === armyId);
       if (army) {
         army.level = newLevel;
       }
@@ -637,7 +638,7 @@ export class ArmyService {
     }
     
     await updateKingdom(k => {
-      const army = k.armies.find((a: Army): boolean => a.id === armyId);
+      const army = k.armies.find((a: Army) => a.id === armyId);
       if (!army) {
         throw new Error(`Army not found: ${armyId}`);
       }

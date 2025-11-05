@@ -1,7 +1,9 @@
 <script lang="ts">
    import { onMount } from 'svelte';
    import { KingdomSettings } from '../../../api/foundry';
-   import { ResetKingdomDialog } from '../../../ui/ResetKingdomDialog';
+   import { SaveLoadService } from '../../../services/SaveLoadService';
+   import { kingdomData } from '../../../stores/KingdomStore';
+   import { logger } from '../../../utils/Logger';
    
    // Check if user is GM
    let isGM = false;
@@ -99,9 +101,78 @@
       saveSetting('confirmActions', confirmActions);
    }
    
-   // Reset kingdom data - now uses the proper ResetKingdomDialog
-   async function resetKingdom() {
-      await ResetKingdomDialog.show();
+   // Export kingdom data
+   async function exportKingdom() {
+      if (!$kingdomData) {
+         ui.notifications?.error('No kingdom data to export');
+         return;
+      }
+      
+      try {
+         await SaveLoadService.exportKingdom($kingdomData);
+      } catch (error) {
+         logger.error('[SettingsTab] Export failed:', error);
+      }
+   }
+   
+   // Import kingdom data
+   let fileInput: HTMLInputElement;
+   
+   async function importKingdom() {
+      fileInput.click();
+   }
+   
+   async function handleFileSelected(event: Event) {
+      const input = event.target as HTMLInputElement;
+      const file = input.files?.[0];
+      
+      if (!file) return;
+      
+      try {
+         // Create backup before importing
+         if ($kingdomData) {
+            const createBackup = confirm('Create a backup of current kingdom data before importing?');
+            if (createBackup) {
+               await SaveLoadService.createBackup($kingdomData);
+            }
+         }
+         
+         // Import the kingdom data
+         const importedData = await SaveLoadService.importKingdom(file);
+         
+         // Validate the imported data
+         if (!SaveLoadService.validateKingdomData(importedData)) {
+            throw new Error('Imported data failed validation');
+         }
+         
+         // Get kingdom actor and update it
+         const { getKingdomActor } = await import('../../../stores/KingdomStore');
+         const actor = getKingdomActor();
+         
+         if (!actor) {
+            throw new Error('No kingdom actor found');
+         }
+         
+         // Confirm before overwriting
+         const confirmed = confirm(
+            `This will replace your current kingdom data with:\n\n` +
+            `Kingdom: ${importedData.name || 'Unknown'}\n` +
+            `Turn: ${importedData.currentTurn}\n` +
+            `Fame: ${importedData.fame}\n` +
+            `Unrest: ${importedData.unrest}\n\n` +
+            `Are you sure you want to continue?`
+         );
+         
+         if (confirmed) {
+            await actor.setKingdomData(importedData);
+            ui.notifications?.success('Kingdom data imported successfully!');
+         }
+      } catch (error) {
+         logger.error('[SettingsTab] Import failed:', error);
+      } finally {
+         // Clear the file input
+         input.value = '';
+      }
    }
 </script>
 
@@ -203,6 +274,44 @@
          
          <!-- Right Column -->
          <div class="tw-space-y-8">
+            <!-- Save/Load Kingdom Data -->
+            <section class="tw-space-y-4">
+               <h3 class="tw-text-xl tw-font-bold tw-text-accent">Save / Load Kingdom</h3>
+               
+               <div class="tw-space-y-3">
+                  <button 
+                     class="tw-btn tw-btn-primary tw-btn-sm tw-w-full"
+                     on:click={exportKingdom}
+                     disabled={!$kingdomData}
+                  >
+                     <i class="fas fa-download"></i>
+                     Export Kingdom Data
+                  </button>
+                  
+                  <button 
+                     class="tw-btn tw-btn-secondary tw-btn-sm tw-w-full"
+                     on:click={importKingdom}
+                  >
+                     <i class="fas fa-upload"></i>
+                     Import Kingdom Data
+                  </button>
+                  
+                  <!-- Hidden file input -->
+                  <input 
+                     type="file" 
+                     accept=".json"
+                     bind:this={fileInput}
+                     on:change={handleFileSelected}
+                     style="display: none;"
+                  />
+                  
+                  <div class="tw-bg-base-200/50 tw-rounded-lg tw-p-3 tw-text-sm tw-text-base-content/70">
+                     <i class="fas fa-info-circle tw-mr-1.5"></i>
+                     Export saves your kingdom to a JSON file. Import loads kingdom data from a file.
+                  </div>
+               </div>
+            </section>
+            
             <!-- Hexes Per Unrest -->
             <section class="tw-space-y-4">
                <h3 class="tw-text-xl tw-font-bold tw-text-accent">Unrest Scaling</h3>
@@ -237,24 +346,6 @@
                </div>
             </section>
             
-            <!-- Danger Zone -->
-            <section class="tw-space-y-4">
-               <h3 class="tw-text-xl tw-font-bold tw-text-error">Danger Zone</h3>
-               
-               <div class="tw-bg-error/5 tw-border tw-border-error/20 tw-rounded-lg tw-p-4 tw-space-y-3">
-                  <button 
-                     class="tw-btn tw-btn-error tw-btn-sm"
-                     on:click={resetKingdom}
-                  >
-                     <i class="fas fa-exclamation-triangle"></i>
-                     Reset Kingdom Data
-                  </button>
-                  
-                  <p class="tw-text-sm tw-text-error/70">
-                     This will permanently delete all kingdom progress and cannot be undone!
-                  </p>
-               </div>
-            </section>
          </div>
       </div>
    </div>

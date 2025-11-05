@@ -430,6 +430,69 @@
       editedFaction.enemies = newEnemies;
       editedFaction = { ...editedFaction };
    }
+   
+   // Convert HSL to Hex for color picker
+   function hslToHex(hsl: string): string {
+      // Parse HSL string: "hsl(0, 70%, 60%)"
+      const match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+      if (!match) return '#000000';
+      
+      const h = parseInt(match[1]) / 360;
+      const s = parseInt(match[2]) / 100;
+      const l = parseInt(match[3]) / 100;
+      
+      const hue2rgb = (p: number, q: number, t: number) => {
+         if (t < 0) t += 1;
+         if (t > 1) t -= 1;
+         if (t < 1/6) return p + (q - p) * 6 * t;
+         if (t < 1/2) return q;
+         if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+         return p;
+      };
+      
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      
+      const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+      const g = Math.round(hue2rgb(p, q, h) * 255);
+      const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+      
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+   }
+   
+   // Convert Hex to HSL for storage
+   function hexToHsl(hex: string): string {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      
+      if (max !== min) {
+         const d = max - min;
+         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+         
+         switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+         }
+      }
+      
+      return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+   }
+   
+   // Reactive color picker value (hex format)
+   $: colorPickerValue = editedFaction ? hslToHex(editedFaction.color) : '#000000';
+   
+   function handleColorChange(event: Event) {
+      if (!editedFaction) return;
+      const hex = (event.target as HTMLInputElement).value;
+      editedFaction.color = hexToHsl(hex);
+      editedFaction = { ...editedFaction };
+   }
 </script>
 
 <!-- Remove Notable Person Dialog -->
@@ -497,24 +560,39 @@
             {/if}
          </div>
          
-         <div class="faction-attitude">
-            <div class="attitude-icons">
-               <span class="attitude-name">{editedFaction.attitude}</span>
-               {#each ATTITUDE_ORDER as attitude}
-                  <button 
-                     class="attitude-icon-compact {editedFaction.attitude === attitude ? 'active' : ''}"
-                     on:click={() => changeAttitude(attitude)}
-                     title={AttitudeLevelConfig[attitude].description}
-                  >
-                     <i 
-                        class="fas {AttitudeLevelConfig[attitude].icon}" 
-                        style="color: {editedFaction.attitude === attitude ? AttitudeLevelConfig[attitude].color : 'rgba(255,255,255,0.2)'}"
-                     ></i>
-                  </button>
-               {/each}
-            </div>
+      <div class="faction-attitude">
+         <div class="attitude-icons">
+            <span class="attitude-name">{editedFaction.attitude}</span>
+            {#each ATTITUDE_ORDER as attitude}
+               <button 
+                  class="attitude-icon-compact {editedFaction.attitude === attitude ? 'active' : ''}"
+                  on:click={() => changeAttitude(attitude)}
+                  title={AttitudeLevelConfig[attitude].description}
+               >
+                  <i 
+                     class="fas {AttitudeLevelConfig[attitude].icon}" 
+                     style="color: {editedFaction.attitude === attitude ? AttitudeLevelConfig[attitude].color : 'rgba(255,255,255,0.2)'}"
+                  ></i>
+               </button>
+            {/each}
          </div>
       </div>
+      
+      <div class="faction-color-picker">
+         <label for="faction-color">Territory Color</label>
+         <div class="color-picker-wrapper">
+            <input 
+               type="color" 
+               id="faction-color"
+               value={colorPickerValue}
+               on:input={handleColorChange}
+               class="color-input"
+               title="Select faction territory color"
+            />
+            <span class="color-preview" style="background-color: {editedFaction.color}"></span>
+         </div>
+      </div>
+   </div>
       
       <!-- Scrollable Content -->
       <div class="scrollable-content">
@@ -1115,6 +1193,46 @@
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       margin-right: 0.5rem;
+   }
+   
+   .faction-color-picker {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+      
+      label {
+         font-size: var(--font-sm);
+         font-weight: var(--font-weight-semibold);
+         color: var(--text-secondary);
+      }
+   }
+   
+   .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+   }
+   
+   .color-input {
+      width: 60px;
+      height: 36px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 0.25rem;
+      cursor: pointer;
+      background: transparent;
+      
+      &:hover {
+         border-color: rgba(255, 255, 255, 0.5);
+      }
+   }
+   
+   .color-preview {
+      width: 36px;
+      height: 36px;
+      border-radius: 0.25rem;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: inline-block;
    }
    
    .help-text-small {

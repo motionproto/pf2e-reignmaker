@@ -61,8 +61,13 @@ export class WorksiteEditorHandlers {
         logger.info(`[WorksiteEditorHandlers] Auto-converted to Bog Mine on swamp terrain`);
       }
       
-      // Place the worksite
-      hex.worksite = { type: finalWorksiteType };
+      // Place the worksite - create new array reference for Svelte reactivity
+      kingdom.hexes = kingdom.hexes.map(h => {
+        if (h.id === hexId) {
+          return { ...h, worksite: { type: finalWorksiteType } };
+        }
+        return h;
+      });
       logger.info(`[WorksiteEditorHandlers] Placed ${finalWorksiteType} on hex ${hexId}`);
     });
   }
@@ -89,7 +94,14 @@ export class WorksiteEditorHandlers {
       }
       
       const removedType = hex.worksite.type;
-      hex.worksite = null;
+      
+      // Remove the worksite - create new array reference for Svelte reactivity
+      kingdom.hexes = kingdom.hexes.map(h => {
+        if (h.id === hexId) {
+          return { ...h, worksite: null };
+        }
+        return h;
+      });
       logger.info(`[WorksiteEditorHandlers] Removed ${removedType} from hex ${hexId}`);
     });
   }

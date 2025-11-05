@@ -114,6 +114,9 @@ export interface KingdomData {
   // Diplomacy
   factions: Faction[];
   
+  // Map colors
+  playerKingdomColor?: string;  // Player kingdom territory color (default: '#5b9bd5')
+  
   // Kingdom stats
   unrest: number;
   imprisonedUnrest: number;
@@ -146,10 +149,11 @@ export interface KingdomData {
   // NEW: Sequential river path system (replaced canonical edge system)
   // Rivers are stored as ordered sequences of points (connect-the-dots)
   // Order increments of 10 allow insertions without renumbering entire path
-  // Crossings allow grounded armies to traverse rivers via bridges/fords
+  // Crossings and waterfalls are segment-based: attached to specific path segments
   rivers?: {
     paths: RiverPath[];
-    crossings?: RiverCrossing[];  // Optional bridges and fords
+    crossings?: RiverCrossing[];  // Bridges and fords (segment-based)
+    waterfalls?: RiverWaterfall[];  // Waterfalls that block boats (segment-based)
   };
   
   // NEW: Road editing system
@@ -159,15 +163,13 @@ export interface KingdomData {
     blockedConnections?: RoadBlockedConnection[];  // Segments that should not render
   };
   
-  // NEW: Water features (lakes, swamps, and waterfalls)
+  // NEW: Water features (lakes and swamps only - waterfalls moved to rivers)
   // Lakes = open water (boats/swimming work, placed on any terrain)
   // Swamps = difficult water (boats: difficult, auto-granted when terrain='swamp')
-  // Waterfalls = block naval travel (boats cannot pass, but swimmers can)
-  // Note: hex can have lake OR swamp (mutually exclusive), plus any number of waterfalls on edges
+  // Note: hex can have lake OR swamp (mutually exclusive)
   waterFeatures?: {
     lakes: WaterFeature[];      // Open water features
     swamps: WaterFeature[];     // Difficult water features (auto-populated from terrain='swamp')
-    waterfalls: WaterFeature[]; // Waterfalls that block boats (edge-based, can coexist with lakes/swamps)
   };
 }
 
@@ -210,14 +212,28 @@ export interface WaterFeature {
 /**
  * River crossing - allows grounded armies to cross water
  * Can be a bridge (built structure) or ford (natural crossing)
+ * 
+ * Segment-based storage: Crossings are attached to specific river path segments
+ * This ensures crossings move/delete with their rivers and avoids orphaned data
  */
 export interface RiverCrossing {
   id: string;  // Unique identifier (uuid)
-  hexI: number;
-  hexJ: number;
-  edge: string;  // Which edge the crossing is on ('e', 'se', 'sw', 'w', 'nw', 'ne')
+  pathId: string;  // Which river path this crossing belongs to
+  segmentIndex: number;  // Which segment of the path (0 = between points[0] and points[1])
+  position: number;  // Position along segment (0.0 to 1.0, typically 0.5 for center)
   type: 'bridge' | 'ford';
   name?: string;  // Optional label (e.g., "Stone Bridge", "Miller's Ford")
+}
+
+/**
+ * Waterfall feature - blocks naval travel on river segments
+ * Uses same segment-based storage as crossings for consistency
+ */
+export interface RiverWaterfall {
+  id: string;  // Unique identifier (uuid)
+  pathId: string;  // Which river path this waterfall is on
+  segmentIndex: number;  // Which segment of the path
+  position: number;  // Position along segment (0.0 to 1.0)
 }
 
 /**
@@ -375,6 +391,7 @@ export class KingdomActor extends Actor {
       armies: [],
       buildQueue: [],
       factions: defaultFactions,  // Loaded from data/factions/default-factions.json
+      playerKingdomColor: '#5b9bd5',  // Default blue (current territory color)
       unrest: 0,
       imprisonedUnrest: 0,
       fame: 0,
@@ -545,6 +562,7 @@ export function createDefaultKingdom(name: string = 'New Kingdom'): KingdomData 
       armies: [],
       buildQueue: [],
       factions: [],  // Empty - populated by initializeKingdom() or caller
+      playerKingdomColor: '#5b9bd5',  // Default blue (current territory color)
       unrest: 0,
       imprisonedUnrest: 0,
       fame: 0,

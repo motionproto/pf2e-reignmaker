@@ -17,7 +17,8 @@ import {
   claimedSettlements,
   allSettlements,
   claimedHexesWithWorksites,
-  hexesWithSettlementFeatures
+  hexesWithSettlementFeatures,
+  allClaimedHexesByFaction
 } from '../../stores/KingdomStore';
 import { territoryService } from '../territory';
 import { MAP_HEX_STYLES } from '../../view/kingdom/utils/presentation';
@@ -433,32 +434,40 @@ export class OverlayManager {
    * @param saveState - If true, save the new state to localStorage (default: true)
    */
   async setActiveOverlays(overlayIds: string[], saveState: boolean = true): Promise<void> {
-    logger.info('[OverlayManager] 🔄 Setting active overlays:', overlayIds);
+    logger.info('[OverlayManager] � setActiveOverlays START - requested:', overlayIds);
     
     // Get current active overlays
     const $active = get(this.activeOverlaysStore);
+    logger.info('[OverlayManager] 🔍 Current active overlays:', Array.from($active));
     
     // Hide overlays not in the target list (skip individual state saves for batch operation)
     const toHide = Array.from($active).filter(id => !overlayIds.includes(id));
+    logger.info('[OverlayManager] 🔍 Overlays to hide:', toHide);
     for (const id of toHide) {
-      logger.info(`[OverlayManager]   - Hiding: ${id}`);
+      logger.info(`[OverlayManager] 🔍 Hiding overlay: ${id}...`);
       this.hideOverlay(id, true); // Skip state save during batch operation
     }
     
     // Show overlays in the target list (skip individual state saves for batch operation)
+    logger.info('[OverlayManager] 🔍 Overlays to show:', overlayIds.filter(id => !$active.has(id)));
     for (const id of overlayIds) {
       if (!$active.has(id)) {
-        logger.info(`[OverlayManager]   + Showing: ${id}`);
+        logger.info(`[OverlayManager] 🔍 Showing overlay: ${id}...`);
         await this.showOverlay(id);
+        logger.info(`[OverlayManager] 🔍 showOverlay(${id}) completed`);
+      } else {
+        logger.info(`[OverlayManager] 🔍 Overlay ${id} already active, skipping`);
       }
     }
     
     // Save the new state if requested
     if (saveState) {
+      logger.info('[OverlayManager] 🔍 Saving state to localStorage...');
       this.saveState();
     }
     
-    logger.info('[OverlayManager] ✅ Active overlays set');
+    const $activeAfter = get(this.activeOverlaysStore);
+    logger.info('[OverlayManager] ✅ setActiveOverlays COMPLETE - final active overlays:', Array.from($activeAfter));
   }
   
   /**
@@ -660,25 +669,53 @@ export class OverlayManager {
       isActive: () => this.isOverlayActive('terrain-difficulty')
     });
 
-    // Territory Overlay - REACTIVE (uses claimedHexes store)
+    // Territory Overlay - REACTIVE (uses allClaimedHexesByFaction store)
     this.registerOverlay({
       id: 'territories',
       name: 'Territory',
       icon: 'fa-flag',
       layerIds: ['kingdom-territory'],
-      store: claimedHexes,  // ✅ Reactive subscription
-      render: (hexes) => {
-        const hexIds = hexes.map((h: any) => h.id);
+      store: derived([allClaimedHexesByFaction, kingdomData], ([$grouped, $data]) => ({ grouped: $grouped, kingdom: $data })),  // ✅ Reactive subscription with faction data
+      render: ({ grouped, kingdom }) => {
+        // Clear previous territory layers
+        this.mapLayer.clearLayer('kingdom-territory');
         
-        if (hexIds.length === 0) {
-
-          this.mapLayer.clearLayer('kingdom-territory');
+        if (grouped.size === 0) {
           return;
         }
 
-        const style: HexStyle = MAP_HEX_STYLES.partyTerritory;
+        // Draw each faction's territory with its specific color
+        grouped.forEach((hexes: any[], factionId: string | null) => {
+          if (!factionId || hexes.length === 0) return;
+          
+          const hexIds = hexes.map((h: any) => h.id);
+          
+          // Determine color for this faction
+          let color = '#5b9bd5'; // Default blue
+          
+          if (factionId === 'player') {
+            // Use player kingdom color
+            color = kingdom.playerKingdomColor || '#5b9bd5';
+          } else {
+            // Find faction in kingdom.factions and use its color
+            const faction = kingdom.factions?.find((f: any) => f.id === factionId);
+            color = faction?.color || '#666666'; // Gray fallback
+          }
+          
+          // Convert hex color string to number (remove # and parse as base 16)
+          const colorNumber = parseInt(color.substring(1), 16);
+          
+          // Create custom style with faction color
+          const style: HexStyle = {
+            fillColor: colorNumber,
+            fillAlpha: 0.25,
+            borderColor: colorNumber,
+            borderAlpha: 0.8,
+            borderWidth: 3
+          };
 
-        this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
+          this.mapLayer.drawHexes(hexIds, style, 'kingdom-territory');
+        });
       },
       hide: () => {
         // Cleanup handled by OverlayManager
@@ -796,18 +833,21 @@ export class OverlayManager {
         $data.hexes.filter((h: any) => h.worksite && h.worksite.type)
       ),  // ✅ Reactive subscription
       render: async (hexes) => {
+        logger.info('[OverlayManager] 🔍 Worksites render() called, hexes:', hexes.length);
         const worksiteData = hexes.map((h: any) => ({ 
           id: h.id, 
           worksiteType: h.worksite.type 
         }));
 
         if (worksiteData.length === 0) {
-
+          logger.info('[OverlayManager] 🔍 No worksite data, clearing layer');
           this.mapLayer.clearLayer('worksites');
           return;
         }
 
+        logger.info('[OverlayManager] 🔍 Drawing', worksiteData.length, 'worksite icons...');
         await this.mapLayer.drawWorksiteIcons(worksiteData);
+        logger.info('[OverlayManager] 🔍 Worksites render() complete');
       },
       hide: () => {
         // Cleanup handled by OverlayManager
