@@ -128,9 +128,14 @@ const BuildRoadsAction: CustomActionImplementation = {
           return createSuccessResult('Road selection cancelled');
         }
         
-        // Update Kingdom Store - Set hasRoad flag on each hex
+        // Update Kingdom Store - Deduct cost and set hasRoad flag on each hex
         const { updateKingdom } = await import('../../stores/KingdomStore');
         await updateKingdom(kingdom => {
+          // Deduct gold cost (2 gold per action, not per segment)
+          const goldCost = 2;
+          kingdom.resources.gold = Math.max(0, (kingdom.resources.gold || 0) - goldCost);
+          
+          // Mark selected hexes as having roads
           selectedHexes.forEach(hexId => {
             const hex = kingdom.hexes.find((h: any) => h.id === hexId);
             if (hex) {
