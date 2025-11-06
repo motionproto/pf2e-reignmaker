@@ -342,10 +342,8 @@ export function parseStructureFromJSON(data: any): Structure {
     structure.uniqueKingdomWide = true;
   }
   
-  // Set minimum settlement tier based on structure tier for support structures
-  if (structure.type === 'support') {
-    structure.minimumSettlementTier = structure.tier;
-  }
+  // Set minimum settlement tier based on structure tier for ALL structures
+  structure.minimumSettlementTier = structure.tier;
   
   return structure;
 }

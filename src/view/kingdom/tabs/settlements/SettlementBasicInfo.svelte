@@ -4,6 +4,7 @@
    import { kingdomData } from '../../../../stores/KingdomStore';
    import SkillTag from '../../components/CheckCard/components/SkillTag.svelte';
    import { performKingdomSkillCheck } from '../../../../services/pf2e';
+   import { structuresService } from '../../../../services/structures';
    
    export let settlement: Settlement;
    
@@ -21,10 +22,41 @@
    // Calculate imprisoned unrest capacity
    $: imprisonedUnrestCapacity = settlement.imprisonedUnrestCapacityValue || 0;
    
-   // Get skill bonuses (filtered to only show non-zero bonuses)
-   $: skillBonuses = Object.entries(settlement.skillBonuses || {})
-      .filter(([_, bonus]) => bonus > 0)
-      .sort((a, b) => a[0].localeCompare(b[0])); // Sort alphabetically by skill name
+   // Reactively calculate skill bonuses from current structures
+   $: reactiveSkillBonuses = (() => {
+      if (!settlement.structureIds?.length) return [];
+      
+      const bonusMap: Record<string, { bonus: number; structureName: string }> = {};
+      
+      for (const structureId of settlement.structureIds) {
+         // Skip damaged structures
+         if (structuresService.isStructureDamaged(settlement, structureId)) {
+            continue;
+         }
+         
+         const structure = structuresService.getStructure(structureId);
+         if (structure?.type === 'skill' && structure.effects.skillsSupported) {
+            const bonus = structure.effects.skillBonus || 0;
+            for (const skill of structure.effects.skillsSupported) {
+               const currentBonus = bonusMap[skill]?.bonus || 0;
+               if (bonus > currentBonus) {
+                  bonusMap[skill] = {
+                     bonus,
+                     structureName: structure.name
+                  };
+               }
+            }
+         }
+      }
+      
+      return Object.entries(bonusMap)
+         .map(([skill, { bonus, structureName }]) => ({
+            skill,
+            bonus,
+            structureName
+         }))
+         .sort((a, b) => a.skill.localeCompare(b.skill));
+   })();
    
    // Get actual army objects for this settlement
    $: supportedArmies = $kingdomData.armies.filter(army => 
@@ -60,14 +92,32 @@
       });
    }
    
-   async function handleSkillRoll(skill: string, bonus: number) {
+   async function handleSkillRoll(skill: string, bonus: number, structureName: string) {
       // Roll the skill for the user's character with the settlement bonus applied
+      // Pass settlement info in checkEffects so only this settlement's modifier is shown
+      console.log('🎲 [SettlementBasicInfo] Rolling skill:', {
+         skill,
+         bonus,
+         structureName,
+         settlementName: settlement.name,
+         settlementId: settlement.id,
+         checkEffects: {
+            enabledSettlement: settlement.name,
+            enabledStructure: structureName,
+            onlySettlementId: settlement.id  // Only show this settlement
+         }
+      });
+      
       await performKingdomSkillCheck(
          skill,
          'action',
-         `${settlement.name} - ${skill}`,
+         `${settlement.name} ${structureName} - ${skill}`,
          `settlement-skill-${settlement.id}-${skill}`,
-         undefined
+         {
+            enabledSettlement: settlement.name,
+            enabledStructure: structureName,
+            onlySettlementId: settlement.id  // Only show this settlement
+         }
       );
    }
 </script>
@@ -138,15 +188,15 @@
       </div>
    {/if}
    
-   {#if skillBonuses.length > 0}
+   {#if reactiveSkillBonuses.length > 0}
       <div class="detail-item-full skill-bonuses-section">
          <span class="label">Skill Bonuses from Structures</span>
          <div class="skill-bonuses-grid">
-            {#each skillBonuses as [skill, bonus]}
+            {#each reactiveSkillBonuses as { skill, bonus, structureName }}
                <SkillTag
                   skill={skill.charAt(0).toUpperCase() + skill.slice(1)}
                   bonus={bonus}
-                  on:execute={() => handleSkillRoll(skill, bonus)}
+                  on:execute={() => handleSkillRoll(skill, bonus, structureName)}
                />
             {/each}
          </div>

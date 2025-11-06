@@ -60,7 +60,7 @@
         {
           "type": "computed",
           "resource": "gold",
-          "formula": "fullUpgradeCost",
+          "formula": "halfUpgradeCost",
           "negative": true,
           "duration": "immediate"
         }

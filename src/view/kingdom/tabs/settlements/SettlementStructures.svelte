@@ -4,7 +4,7 @@
    import { getStructureCount, getMaxStructures } from './settlements.utils';
    import { settlementStructureManagement } from '../../../../services/structures/management';
    import { structuresService } from '../../../../services/structures';
-   import SettlementStructureDialog from '../../components/SettlementStructureDialog.svelte';
+   import SettlementStructureManager from '../../components/SettlementStructureManager.svelte';
    import Button from '../../components/baseComponents/Button.svelte';
    import Notification from '../../components/baseComponents/Notification.svelte';
    import type { Structure } from '../../../../models/Structure';
@@ -12,19 +12,21 @@
    export let settlement: Settlement;
    
    let showAddDialog = false;
-   let dialogRequiredCount: number | undefined = undefined;
    let expandedCategories: Set<string> = new Set();
    let dismissedWarning = false;
    
    // Get minimum structure requirements for tier
+   // Returns the minimum structures this tier SHOULD have (i.e., what was needed to become this tier)
    function getMinStructuresForTier(tier: SettlementTier): number {
       switch (tier) {
+         case SettlementTier.VILLAGE:
+            return 0; // Starting tier, no requirement
          case SettlementTier.TOWN:
-            return 2;
+            return 3; // Needed 3 structures to become Town
          case SettlementTier.CITY:
-            return 4;
+            return 6; // Needed 6 structures to become City
          case SettlementTier.METROPOLIS:
-            return 8;
+            return 9; // Needed 9 structures to become Metropolis
          default:
             return 0;
       }
@@ -117,12 +119,6 @@
    }
    
    function openAddDialog() {
-      // If there's a warning, automatically open in multi-select mode
-      if (showWarning) {
-         dialogRequiredCount = requiredStructures - currentStructures;
-      } else {
-         dialogRequiredCount = undefined;
-      }
       showAddDialog = true;
    }
    
@@ -174,8 +170,8 @@
             ({getStructureCount(settlement)}/{getMaxStructures(settlement)})
          </span>
       </h4>
-      <Button variant="small_secondary" icon="fas fa-plus" on:click={openAddDialog}>
-         Add Structure
+      <Button variant="small_secondary" on:click={openAddDialog}>
+         Manage Structures
       </Button>
    </div>
    
@@ -198,8 +194,8 @@
       <div class="empty-structures">
          <i class="fas fa-tools"></i>
          <p>No structures built yet.</p>
-         <Button variant="outline" size="small" icon="fas fa-plus" on:click={openAddDialog}>
-            Add Structure
+         <Button variant="outline" size="small" on:click={openAddDialog}>
+            Manage Structures
          </Button>
       </div>
    {:else}
@@ -322,14 +318,16 @@
    {/if}
 </div>
 
-<!-- Add Structure Dialog -->
-<SettlementStructureDialog 
+<!-- Add Structure Manager -->
+<SettlementStructureManager 
    bind:show={showAddDialog}
    {settlement}
-   requiredCount={dialogRequiredCount}
    on:close={() => showAddDialog = false}
    on:structureAdded={() => {
-      // Dialog handles closing, structures update automatically via store
+      // Structures update automatically via store
+   }}
+   on:structureRemoved={() => {
+      // Structures update automatically via store
    }}
 />
 

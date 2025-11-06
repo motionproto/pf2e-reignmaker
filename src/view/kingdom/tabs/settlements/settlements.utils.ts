@@ -40,15 +40,15 @@ export function getStructureCount(settlement: Settlement): number {
 export function getMaxStructures(settlement: Settlement): number {
    switch (settlement.tier) {
       case 'Village':
-         return 2;
+         return 3;
       case 'Town':
-         return 4;
+         return 6;
       case 'City':
-         return 8;
+         return 9;
       case 'Metropolis':
-         return 999; // Effectively unlimited
+         return 20;
       default:
-         return 2;
+         return 3;
    }
 }
 

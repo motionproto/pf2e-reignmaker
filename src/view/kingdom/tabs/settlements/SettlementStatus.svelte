@@ -22,11 +22,11 @@
       
       switch (settlement.tier) {
          case 'Village':
-            return { current: currentCount, required: 2, nextTier: 'Town' };
+            return { current: currentCount, required: 3, nextTier: 'Town' };
          case 'Town':
-            return { current: currentCount, required: 4, nextTier: 'City' };
+            return { current: currentCount, required: 6, nextTier: 'City' };
          case 'City':
-            return { current: currentCount, required: 8, nextTier: 'Metropolis' };
+            return { current: currentCount, required: 9, nextTier: 'Metropolis' };
          case 'Metropolis':
             return null; // Max tier
          default:

@@ -32,20 +32,20 @@ function canUpgradeSettlement(settlement: any): {
   // Check structure requirements based on current tier
   switch (settlement.tier) {
     case SettlementTier.VILLAGE:
-      if (structureCount < 2) {
-        return { canUpgrade: false, reason: '2 structures required for Town' };
+      if (structureCount < 3) {
+        return { canUpgrade: false, reason: '3 structures required for Town' };
       }
       return { canUpgrade: true };
       
     case SettlementTier.TOWN:
-      if (structureCount < 4) {
-        return { canUpgrade: false, reason: '4 structures required for City' };
+      if (structureCount < 6) {
+        return { canUpgrade: false, reason: '6 structures required for City' };
       }
       return { canUpgrade: true };
       
     case SettlementTier.CITY:
-      if (structureCount < 8) {
-        return { canUpgrade: false, reason: '8 structures required for Metropolis' };
+      if (structureCount < 9) {
+        return { canUpgrade: false, reason: '9 structures required for Metropolis' };
       }
       return { canUpgrade: true };
       
@@ -152,14 +152,18 @@ export const UpgradeSettlementAction = {
         
         // Get outcome from instance metadata
         const outcome = instance?.metadata?.outcome || 'success';
-        const isCriticalSuccess = outcome === 'criticalSuccess';
         
         const currentLevel = settlement.level;
         const newLevel = currentLevel + 1;
         const fullCost = newLevel;
         
         // Calculate actual cost based on outcome
-        const actualCost = isCriticalSuccess ? Math.ceil(fullCost / 2) : fullCost;
+        let actualCost = fullCost;
+        if (outcome === 'criticalSuccess' || outcome === 'failure') {
+          // Both critical success and failure use half cost (rounded up)
+          actualCost = Math.ceil(fullCost / 2);
+        }
+        // success and criticalFailure use full cost
         
         // Deduct gold cost
         await actor.updateKingdomData((k: KingdomData) => {
@@ -187,7 +191,7 @@ export const UpgradeSettlementAction = {
             : `${updatedSettlement.name} upgraded to level ${newLevel}`;
           
           const game = (window as any).game;
-          if (isCriticalSuccess) {
+          if (outcome === 'criticalSuccess') {
             game?.ui?.notifications?.info(`🎉 Critical Success! ${message} (50% off gold cost)`);
           } else {
             game?.ui?.notifications?.info(`✅ ${message}`);

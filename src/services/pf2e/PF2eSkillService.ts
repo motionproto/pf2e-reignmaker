@@ -128,8 +128,16 @@ export class PF2eSkillService {
             modifier: modifierValue,
             type: modifierType,
             slug: modifierLabel.toLowerCase().replace(/\s+/g, '-'),
-            enabled: mod.enabled !== false
+            ignored: mod.ignored === true,  // Use ignored instead of enabled for settlement modifiers
+            enabled: mod.enabled === true
           });
+          // Force the ignored state after construction (prevents auto-enable by stacking rules)
+          if (mod.ignored === true) {
+            pf2eMod.ignored = true;
+            pf2eMod.enabled = false;
+          } else if (mod.enabled === true) {
+            pf2eMod.enabled = true;
+          }
           pf2eModifiers.push(pf2eMod);
         } else {
           // Fallback to enhanced object format with test function
@@ -137,7 +145,8 @@ export class PF2eSkillService {
             label: modifierLabel,
             modifier: modifierValue,
             type: modifierType,
-            enabled: mod.enabled !== false,
+            ignored: mod.ignored === true,
+            enabled: mod.enabled === true,
             test: () => true, // Required by PF2e system
             slug: modifierLabel.toLowerCase().replace(/\s+/g, '-')
           };
@@ -150,7 +159,8 @@ export class PF2eSkillService {
           label: mod.name || mod.label || 'Kingdom Modifier',
           modifier: mod.value || mod.modifier || 0,
           type: mod.type || 'circumstance',
-          enabled: mod.enabled !== false,
+          ignored: mod.ignored === true,
+          enabled: mod.enabled === true,
           test: () => true
         });
       }
@@ -164,29 +174,65 @@ export class PF2eSkillService {
    * @param skillName - Skill being checked (for structure bonuses)
    * @param actionId - Optional action ID to retrieve aid bonuses for that specific action/event
    * @param checkType - Optional check type to determine which phase aids to check
+   * @param onlySettlementId - Optional settlement ID to only include that specific settlement's modifiers
    */
-  private getKingdomModifiers(skillName: string, actionId?: string, checkType?: 'action' | 'event' | 'incident'): any[] {
+  private async getKingdomModifiers(skillName: string, actionId?: string, checkType?: 'action' | 'event' | 'incident', onlySettlementId?: string): Promise<any[]> {
     const currentKingdomState = get(kingdomData);
     const kingdomModifiers: any[] = [];
     
-    // Add settlement infrastructure bonuses from cached skillBonuses
+    // Import structures service for on-the-fly calculation
+    const { structuresService } = await import('../structures');
+    
+    // Add settlement infrastructure bonuses - calculate on-the-fly
     // Only include settlements with valid map locations
     // Default to disabled so players can manually enable the relevant settlement
     if (currentKingdomState?.settlements) {
-      // Filter to only mapped settlements (exclude unmapped at 0,0)
-      const mappedSettlements = currentKingdomState.settlements.filter(
+      // Filter settlements
+      let mappedSettlements = currentKingdomState.settlements.filter(
         s => s.location.x !== 0 || s.location.y !== 0
       );
       
+      // If onlySettlementId is specified, filter to just that settlement
+      if (onlySettlementId) {
+        mappedSettlements = mappedSettlements.filter(s => s.id === onlySettlementId);
+        console.log('🏘️ [PF2eSkillService] Filtering to settlement:', onlySettlementId);
+      }
+      
       for (const settlement of mappedSettlements) {
-        const bonus = settlement.skillBonuses?.[skillName] ?? 0;
-        if (bonus > 0) {
-          kingdomModifiers.push({
-            name: `${settlement.name} Infrastructure`,
-            value: bonus,
-            type: 'circumstance',
-            enabled: false  // Player manually enables if action is in this settlement
-          });
+        // Calculate skill bonuses on-the-fly from structures
+        if (settlement.structureIds && settlement.structureIds.length > 0) {
+          const bonusMap: Record<string, { bonus: number; structureName: string }> = {};
+          
+          for (const structureId of settlement.structureIds) {
+            // Skip damaged structures
+            if (structuresService.isStructureDamaged(settlement, structureId)) {
+              continue;
+            }
+            
+            const structure = structuresService.getStructure(structureId);
+            if (structure?.type === 'skill' && structure.effects.skillsSupported) {
+              const bonus = structure.effects.skillBonus || 0;
+              for (const skill of structure.effects.skillsSupported) {
+                const currentBonus = bonusMap[skill]?.bonus || 0;
+                if (bonus > currentBonus) {
+                  bonusMap[skill] = {
+                    bonus,
+                    structureName: structure.name
+                  };
+                }
+              }
+            }
+          }
+          
+          // Add modifier for this settlement if it has a bonus for this skill
+          if (bonusMap[skillName]) {
+            kingdomModifiers.push({
+              name: `${settlement.name} ${bonusMap[skillName].structureName}`,
+              value: bonusMap[skillName].bonus,
+              type: 'circumstance',
+              ignored: true  // Set to false when rolling from specific settlement
+            });
+          }
         }
       }
     }
@@ -324,8 +370,44 @@ export class PF2eSkillService {
       const characterLevel = this.characterService.getCharacterLevel(actor);
       const dc = this.getKingdomActionDC(characterLevel);
       
+      console.log('🎮 [PF2eSkillService] checkEffects received:', checkEffects);
+      
       // Get kingdom modifiers (including aids for this action/event)
-      const kingdomModifiers = this.getKingdomModifiers(skillName, actionId || checkId, checkType);
+      // Pass onlySettlementId if specified in checkEffects
+      const kingdomModifiers = await this.getKingdomModifiers(
+        skillName, 
+        actionId || checkId, 
+        checkType,
+        checkEffects?.onlySettlementId
+      );
+      
+      console.log('🔍 [PF2eSkillService] Kingdom modifiers:', kingdomModifiers.map(m => ({ 
+        name: m.name, 
+        value: m.value, 
+        enabled: m.enabled, 
+        ignored: m.ignored 
+      })));
+      
+      // If checkEffects contains settlement/structure info, enable that specific modifier
+      if (checkEffects?.enabledSettlement && checkEffects?.enabledStructure) {
+        const targetModifierName = `${checkEffects.enabledSettlement} ${checkEffects.enabledStructure}`;
+        console.log('🎯 [PF2eSkillService] Trying to enable modifier:', targetModifierName);
+        
+        let found = false;
+        for (const mod of kingdomModifiers) {
+          if (mod.name === targetModifierName) {
+            mod.ignored = false;  // Un-ignore this specific modifier
+            found = true;
+            console.log('✅ [PF2eSkillService] Enabled modifier:', mod.name);
+            break;
+          }
+        }
+        
+        if (!found) {
+          console.warn('⚠️ [PF2eSkillService] Could not find modifier to enable:', targetModifierName);
+          console.log('Available modifiers:', kingdomModifiers.map(m => m.name));
+        }
+      }
       
       // Apply stored modifiers from previous roll (for rerolls)
       if (lastRollModifiers && lastRollModifiers.length > 0) {
@@ -365,6 +447,12 @@ export class PF2eSkillService {
       
       // Convert to PF2e format
       const pf2eModifiers = this.convertToPF2eModifiers(kingdomModifiers);
+      
+      // Log each modifier individually to avoid console collapsing
+      console.log('🔧 [PF2eSkillService] After conversion - Modifier count:', pf2eModifiers.length);
+      pf2eModifiers.forEach((mod, index) => {
+        console.log(`  [${index}] "${mod.label}" → enabled: ${mod.enabled}, ignored: ${mod.ignored}, modifier: ${mod.modifier}, type: ${mod.type}`);
+      });
       
       // Get skill proficiency rank for aid bonuses
       const proficiencyRank = skill?.rank || 0; // 0=untrained, 1=trained, 2=expert, 3=master, 4=legendary

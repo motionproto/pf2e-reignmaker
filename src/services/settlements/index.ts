@@ -196,15 +196,15 @@ export class SettlementService {
     switch (settlement.tier) {
       case SettlementTier.VILLAGE:
         nextTier = SettlementTier.TOWN;
-        if (settlement.structureIds.length < 2) requirements.push('2 structures required');
+        if (settlement.structureIds.length < 3) requirements.push('3 structures required');
         break;
       case SettlementTier.TOWN:
         nextTier = SettlementTier.CITY;
-        if (settlement.structureIds.length < 4) requirements.push('4 structures required');
+        if (settlement.structureIds.length < 6) requirements.push('6 structures required');
         break;
       case SettlementTier.CITY:
         nextTier = SettlementTier.METROPOLIS;
-        if (settlement.structureIds.length < 8) requirements.push('8 structures required');
+        if (settlement.structureIds.length < 9) requirements.push('9 structures required');
         break;
       case SettlementTier.METROPOLIS:
         // Already at max tier
@@ -224,10 +224,15 @@ export class SettlementService {
    * Only counts non-damaged structures
    * 
    * @param settlement - Settlement to calculate bonuses for
-   * @returns Map of skill name to bonus value
+   * @returns Object with bonuses map and detailed bonus information
    */
-  calculateSkillBonuses(settlement: Settlement): Record<string, number> {
+  calculateSkillBonuses(settlement: Settlement): {
+    bonuses: Record<string, number>;
+    details: import('../../models/Settlement').SkillBonusDetail[];
+  } {
     const bonuses: Record<string, number> = {};
+    const details: import('../../models/Settlement').SkillBonusDetail[] = [];
+    const skillToStructure: Record<string, { structureId: string; structureName: string; bonus: number }> = {};
     
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -240,12 +245,31 @@ export class SettlementService {
         const bonus = structure.effects.skillBonus || 0;
         for (const skill of structure.effects.skillsSupported) {
           // Keep highest bonus per skill (multiple structures of same type)
-          bonuses[skill] = Math.max(bonuses[skill] || 0, bonus);
+          const currentBonus = bonuses[skill] || 0;
+          if (bonus > currentBonus) {
+            bonuses[skill] = bonus;
+            skillToStructure[skill] = {
+              structureId,
+              structureName: structure.name,
+              bonus
+            };
+          }
         }
       }
     }
     
-    return bonuses;
+    // Build details array from the highest bonuses
+    for (const skill in skillToStructure) {
+      const { structureId, structureName, bonus } = skillToStructure[skill];
+      details.push({
+        skill,
+        bonus,
+        structureId,
+        structureName
+      });
+    }
+    
+    return { bonuses, details };
   }
   
   /**
@@ -277,14 +301,14 @@ export class SettlementService {
     }
     
     // Calculate new bonuses
-    const newBonuses = this.calculateSkillBonuses(settlement);
+    const { bonuses, details } = this.calculateSkillBonuses(settlement);
     
     // Update settlement
     await updateKingdom(k => {
       const s = k.settlements.find((s: Settlement) => s.id === settlementId);
       if (s) {
-        s.skillBonuses = newBonuses;
-
+        s.skillBonuses = bonuses;
+        s.skillBonusDetails = details;
       }
     });
   }
@@ -400,8 +424,9 @@ export class SettlementService {
       s.armySupport = baseTier + bonus;
       
       // Skill bonuses
-      s.skillBonuses = this.calculateSkillBonuses(s);
-
+      const { bonuses, details } = this.calculateSkillBonuses(s);
+      s.skillBonuses = bonuses;
+      s.skillBonusDetails = details;
     });
   }
   
@@ -868,13 +893,13 @@ export class SettlementService {
     // Determine new tier based on level and structure count
     let newTier = settlement.tier;
     
-    if (newLevel >= 8 && structureCount >= 8 && oldTier !== SettlementTier.METROPOLIS) {
+    if (newLevel >= 8 && structureCount >= 9 && oldTier !== SettlementTier.METROPOLIS) {
       newTier = SettlementTier.METROPOLIS;
 
-    } else if (newLevel >= 5 && structureCount >= 4 && oldTier === SettlementTier.TOWN) {
+    } else if (newLevel >= 5 && structureCount >= 6 && oldTier === SettlementTier.TOWN) {
       newTier = SettlementTier.CITY;
 
-    } else if (newLevel >= 2 && structureCount >= 2 && oldTier === SettlementTier.VILLAGE) {
+    } else if (newLevel >= 2 && structureCount >= 3 && oldTier === SettlementTier.VILLAGE) {
       newTier = SettlementTier.TOWN;
 
     }

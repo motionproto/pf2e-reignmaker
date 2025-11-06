@@ -101,8 +101,9 @@ export interface Settlement {
   // Optional custom map icon (falls back to default tier icon)
   mapIconPath?: string;
   
-  // Skill bonuses from structures
+  // Skill bonuses from structures (enhanced with source tracking)
   skillBonuses?: Record<string, number>; // Map of skill name -> bonus value (e.g. { athletics: 1, diplomacy: 2 })
+  skillBonusDetails?: SkillBonusDetail[]; // Detailed tracking of which structures provide bonuses
   
   // Computed properties (calculated by services dynamically)
   foodConsumption?: number;
@@ -170,6 +171,16 @@ export function getDefaultMapIcon(tier: SettlementTier): string {
  */
 export function getSettlementMapIcon(settlement: Settlement): string {
   return settlement.mapIconPath || getDefaultMapIcon(settlement.tier);
+}
+
+/**
+ * Detailed skill bonus information with source tracking
+ */
+export interface SkillBonusDetail {
+  skill: string;
+  bonus: number;
+  structureId: string;
+  structureName: string;
 }
 
 /**
