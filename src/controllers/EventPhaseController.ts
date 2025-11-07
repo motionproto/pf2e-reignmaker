@@ -326,31 +326,8 @@ export async function createEventPhaseController(_eventService?: any) {
             }
             
             // Execute game commands if present (structure damage, etc.)
-            const gameCommandEffects: string[] = [];
-            if (outcomeData?.gameCommands) {
-                const { createGameCommandsResolver } = await import('../services/GameCommandsResolver');
-                const resolver = await createGameCommandsResolver();
-                
-                for (const command of outcomeData.gameCommands) {
-                    if (command.type === 'damageStructure') {
-                        const result = await resolver.damageStructure(
-                            command.targetStructure,
-                            command.settlementId,
-                            command.count
-                        );
-                        
-                        // Convert results to specialEffects format for OutcomeDisplay
-                        if (result.success && result.data?.damagedStructures) {
-                            for (const damaged of result.data.damagedStructures) {
-                                // OutcomeDisplay expects: structure_damaged:structureId:settlementId
-                                // IDs are used for lookup, names are for logging only
-                                gameCommandEffects.push(`structure_damaged:${damaged.structureId}:${damaged.settlementId}`);
-                            }
-                        }
-                    }
-                    // Future command types will be handled here
-                }
-            }
+            const { executeGameCommands } = await import('./shared/GameCommandHelpers');
+            const gameCommandEffects = await executeGameCommands(outcomeData?.gameCommands || []);
             
             // Use unified resolution wrapper (consolidates duplicate logic)
             const result = await resolvePhaseOutcome(

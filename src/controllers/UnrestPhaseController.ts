@@ -147,7 +147,7 @@ export async function createUnrestPhaseController() {
             );
             
             // MINIMAL turnState update (only for roll display in UI)
-            await actor.updateKingdomData((kingdom) => {
+            await actor.updateKingdomData((kingdom: any) => {
               if (kingdom.turnState) {
                 kingdom.turnState.unrestPhase.incidentRolled = true;
                 kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
@@ -163,7 +163,7 @@ export async function createUnrestPhaseController() {
       } else {
 
         // MINIMAL turnState update (only for roll display in UI)
-        await actor.updateKingdomData((kingdom) => {
+        await actor.updateKingdomData((kingdom: any) => {
           if (kingdom.turnState) {
             kingdom.turnState.unrestPhase.incidentRolled = true;
             kingdom.turnState.unrestPhase.incidentRoll = Math.round(roll * 100);
@@ -217,20 +217,15 @@ export async function createUnrestPhaseController() {
       const outcomeData = incident?.effects[outcome];
       
       // Execute game commands if present (structure damage, etc.)
-      if (outcomeData?.gameCommands) {
-        const { createGameCommandsResolver } = await import('../services/GameCommandsResolver');
-        const resolver = await createGameCommandsResolver();
-        
-        for (const command of outcomeData.gameCommands) {
-          if (command.type === 'damageStructure') {
-            await resolver.damageStructure(
-              command.targetStructure,
-              command.settlementId,
-              command.count
-            );
-          }
-          // Future command types will be handled here
-        }
+      const { executeGameCommands } = await import('./shared/GameCommandHelpers');
+      const gameCommandEffects = await executeGameCommands((outcomeData as any)?.gameCommands || []);
+      
+      // Merge gameCommand effects into resolutionData
+      if (gameCommandEffects.length > 0) {
+        resolutionData.specialEffects = [
+          ...(resolutionData.specialEffects || []),
+          ...gameCommandEffects
+        ];
       }
       
       // Use unified resolution wrapper (consolidates duplicate logic)
