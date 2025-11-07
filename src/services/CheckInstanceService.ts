@@ -100,6 +100,7 @@ export class CheckInstanceService {
           effect,
           modifiers: resolutionData.numericModifiers as any,
           manualEffects: resolutionData.manualEffects,
+          specialEffects: [],
           shortfallResources: [],
           rollBreakdown,
           effectsApplied: false
@@ -180,18 +181,21 @@ export class CheckInstanceService {
    */
   async clearOngoingResolutions(checkType: 'event'): Promise<void> {
     await updateKingdom(kingdom => {
-      const pendingEvents = kingdom.activeCheckInstances?.filter(i => 
-        i.checkType === checkType && i.status === 'pending'
-      ) || [];
+      if (!kingdom.activeCheckInstances) return;
       
-      if (pendingEvents.length > 0) {
-
-        pendingEvents.forEach(instance => {
-          instance.appliedOutcome = undefined;
-          instance.resolutionProgress = undefined;
-
-        });
-      }
+      // CRITICAL: Create new array atomically (no mutation before reassignment)
+      // This ensures Foundry VTT detects changes and syncs across clients
+      kingdom.activeCheckInstances = kingdom.activeCheckInstances.map(instance => {
+        if (instance.checkType === checkType && instance.status === 'pending') {
+          // Create new instance with cleared resolution data
+          return {
+            ...instance,
+            appliedOutcome: undefined,
+            resolutionProgress: undefined
+          };
+        }
+        return instance;
+      });
     });
   }
   
