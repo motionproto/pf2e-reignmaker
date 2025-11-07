@@ -5,7 +5,12 @@ This ensures the monolithic file accurately reflects the individual files' conte
 """
 
 import json
+import sys
 from pathlib import Path
+
+# Set UTF-8 encoding for stdout to handle Unicode characters
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 
 def derive_category_from_family(family: str) -> str:
     """Convert family name to kebab-case category."""
@@ -49,7 +54,7 @@ def combine_structures():
                     category = derive_category_from_family(family)
                 else:
                     # Fallback to filename if no family field
-                    print(f"  ⚠ Warning: {json_file.name} has no 'family' field, using filename")
+                    print(f"  [WARN] Warning: {json_file.name} has no 'family' field, using filename")
                     name = json_file.name.replace('.json', '')
                     if name.startswith('skill-'):
                         category = name.replace('skill-', '')
@@ -65,10 +70,10 @@ def combine_structures():
                 families.append(data)
                 
                 tier_count = len(data.get('tiers', []))
-                print(f"  ✓ Loaded family: {json_file.name} ({tier_count} tiers)")
+                print(f"  [OK] Loaded family: {json_file.name} ({tier_count} tiers)")
                 
         except Exception as e:
-            print(f"  ✗ Error loading {json_file.name}: {e}")
+            print(f"  [ERROR] Error loading {json_file.name}: {e}")
     
     # Sort families by type and category
     families.sort(key=lambda x: (x.get('type', ''), x.get('category', '')))
@@ -82,8 +87,8 @@ def combine_structures():
     with open(output_file, 'w') as f:
         json.dump(structures_output, f, indent=4)
     
-    print(f"\n✅ Successfully combined {len(families)} structure families")
-    print(f"📁 Output written to: {output_file}")
+    print(f"\n[SUCCESS] Successfully combined {len(families)} structure families")
+    print(f"[OUTPUT] Output written to: {output_file}")
     
     # Calculate statistics
     total_structures = sum(len(family.get('tiers', [])) for family in families)

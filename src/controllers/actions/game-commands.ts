@@ -51,7 +51,11 @@ export type GameCommandType =
   | 'giveActorGold'
   
   // Structure Management
-  | 'damageStructure';
+  | 'damageStructure'
+  | 'destroyStructure'
+  
+  // Unrest Management (Additional)
+  | 'releaseImprisoned';
 
 /**
  * Proficiency scaling for commands
@@ -255,6 +259,24 @@ export interface DamageStructureCommand extends BaseGameCommand {
 }
 
 /**
+ * Destroy structure command (downgrade tier or remove)
+ */
+export interface DestroyStructureCommand extends BaseGameCommand {
+  type: 'destroyStructure';
+  category?: string; // Structure category (e.g., 'justice')
+  targetTier?: 'highest' | 'lowest' | number; // Which tier to target
+  count?: number; // Number of structures to destroy (default: 1)
+}
+
+/**
+ * Release imprisoned unrest command
+ */
+export interface ReleaseImprisonedCommand extends BaseGameCommand {
+  type: 'releaseImprisoned';
+  percentage: number | 'all'; // 0.5 = half, 1 or 'all' = all imprisoned unrest
+}
+
+/**
  * Special operations
  */
 export interface InfiltrationCommand extends BaseGameCommand {
@@ -303,4 +325,6 @@ export type GameCommand =
   | InfiltrationCommand
   | SendScoutsCommand
   | FortifyHexCommand
-  | DamageStructureCommand;
+  | DamageStructureCommand
+  | DestroyStructureCommand
+  | ReleaseImprisonedCommand;

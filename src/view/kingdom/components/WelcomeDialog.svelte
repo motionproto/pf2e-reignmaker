@@ -129,7 +129,7 @@
             step = 'select';
          }
       } catch (error) {
-         logger.error('Import failed:', error);
+         console.error('Import failed:', error);
          isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Import failed. See console for details.');
@@ -164,7 +164,7 @@
             step = 'select';
          }
       } catch (error) {
-         logger.error('Custom map import failed:', error);
+         console.error('Custom map import failed:', error);
          isInitializing = false;
          // @ts-ignore
          ui.notifications?.error('Failed to create kingdom. See console for details.');
@@ -184,8 +184,21 @@
    }
 </script>
 
-<div class="welcome-dialog-backdrop" on:click={skipForNow}>
-   <div class="welcome-dialog" on:click|stopPropagation>
+<div 
+   class="welcome-dialog-backdrop" 
+   on:click={skipForNow}
+   on:keydown={(e) => e.key === 'Escape' && skipForNow()}
+   role="button"
+   tabindex="-1"
+   aria-label="Close dialog"
+>
+   <div 
+      class="welcome-dialog" 
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="dialog"
+      aria-modal="true"
+   >
       
       {#if step === 'select'}
          <!-- Step 1: Scene Type Selection -->
@@ -432,9 +445,7 @@
    .dialog-body {
       padding: 2rem;
       
-      .intro-text,
       .campaign-prompt,
-      .success-text,
       .importing-text {
          margin: 0 0 var(--space-12) 0;
          font-size: var(--font-lg);
@@ -446,11 +457,6 @@
          margin-top: 1rem;
          margin-bottom: 0.75rem;
          font-weight: var(--font-weight-medium);
-      }
-      
-      .success-text {
-         color: var(--color-success);
-         font-weight: var(--font-weight-semibold);
       }
       
       .import-complete-text {
@@ -682,12 +688,6 @@
       padding: 1rem;
       border-radius: 0.375rem;
       margin-top: 0;
-      
-      h4 {
-         margin: 0 0 1rem 0;
-         color: var(--text-primary);
-         font-weight: var(--font-weight-medium);
-      }
       
       ul {
          list-style: none;

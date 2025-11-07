@@ -640,28 +640,6 @@
     background: rgba(0, 0, 0, 0.1);
   }
 
-  /* Styles for editable rows */
-  .stat-item.editable {
-    cursor: pointer;
-    transition: background-color var(--transition-fast);
-    position: relative;
-  }
-
-  .stat-item.editable:hover {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .stat-item.editable.editing {
-    background: rgba(94, 0, 0, 0.1);
-    border-color: var(--color-primary);
-  }
-
-  /* When editing, hide the value's hover effect */
-  .stat-item.editable.editing :global(.stat-value.editable:hover) {
-    background: transparent !important;
-    padding: 0.125rem 0 !important;
-  }
-
   .stat-item label,
   .stat-label {
     font-size: var(--font-md);
@@ -691,48 +669,6 @@
 
   .stat-value.positive {
     color: var(--color-success);
-  }
-
-  .fame-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .fame-controls .fame-value {
-    min-width: 30px;
-    text-align: center;
-    color: var(--text-primary);
-  }
-
-  .stat-adjust-button {
-    width: 24px;
-    height: 24px;
-    border: 1px solid var(--border-default);
-    background: var(--bg-surface);
-    border-radius: 0.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    color: var(--text-primary);
-  }
-
-  .stat-adjust-button:hover:not(:disabled) {
-    background: var(--bg-subtle);
-    border-color: var(--border-primary);
-    transform: scale(1.1);
-  }
-
-  .stat-adjust-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .stat-adjust-button i {
-    font-size: var(--font-xs);
-    color: var(--text-secondary);
   }
 
   .kingdom-select {
@@ -830,55 +766,6 @@
     flex: 1;
     height: 1px;
     background: var(--border-subtle);
-  }
-
-  .resource-section {
-    padding: 1.5rem 0.75rem 1rem 0.75rem;
-    border-top: 1px solid var(--border-default);
-  }
-
-  .resource-section:first-child {
-    margin-top: 0;
-    padding: 0.75rem 1rem;
-    border-top: none;
-  }
-
-  .resource-header {
-    font-size: var(--font-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-    margin-bottom: 0.25rem;
-    margin-top: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .resource-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
-    margin: 0.75rem 0;
-  }
-
-  .resource-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.5rem;
-    background: var(--bg-surface);
-    border-radius: 0.25rem;
-  }
-
-  .resource-label {
-    font-size: var(--font-md);
-    color: var(--text-muted);
-    margin-bottom: 0.25rem;
-  }
-
-  .resource-item > span:last-child {
-    font-size: var(--font-md);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
   }
 
   /* Custom Scrollbar - Dark Theme */

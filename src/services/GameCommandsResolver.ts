@@ -1066,6 +1066,277 @@ export async function createGameCommandsResolver() {
     },
 
     /**
+     * Release Imprisoned Unrest - Convert imprisoned unrest back to regular unrest
+     * Used by incidents like prison breaks
+     * 
+     * @param percentage - Percentage to release (0.5 = half, 1 or 'all' = all)
+     * @returns ResolveResult with release details
+     */
+    async releaseImprisoned(percentage: number | 'all'): Promise<ResolveResult> {
+      logger.info(`🔓 [releaseImprisoned] Releasing ${percentage === 'all' ? 'all' : percentage * 100 + '%'} imprisoned unrest`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Calculate total imprisoned unrest across all settlements
+        let totalImprisoned = 0;
+        for (const settlement of kingdom.settlements || []) {
+          totalImprisoned += settlement.imprisonedUnrest || 0;
+        }
+
+        if (totalImprisoned === 0) {
+          return { 
+            success: true, 
+            data: { 
+              message: 'No imprisoned unrest to release',
+              released: 0
+            } 
+          };
+        }
+
+        // Calculate amount to release
+        const releasePercentage = percentage === 'all' ? 1 : percentage;
+        const amountToRelease = Math.floor(totalImprisoned * releasePercentage);
+
+        if (amountToRelease === 0) {
+          return { 
+            success: true, 
+            data: { 
+              message: 'No imprisoned unrest to release (rounded down to 0)',
+              released: 0
+            } 
+          };
+        }
+
+        // Release imprisoned unrest from settlements and convert to regular unrest
+        await updateKingdom(k => {
+          let remaining = amountToRelease;
+          
+          // Release from each settlement proportionally
+          for (const settlement of k.settlements || []) {
+            if (remaining <= 0) break;
+            
+            const currentImprisoned = settlement.imprisonedUnrest || 0;
+            if (currentImprisoned === 0) continue;
+            
+            const toRelease = Math.min(remaining, Math.ceil(currentImprisoned * releasePercentage));
+            settlement.imprisonedUnrest = Math.max(0, currentImprisoned - toRelease);
+            remaining -= toRelease;
+            
+            logger.info(`  🔓 Released ${toRelease} imprisoned unrest from ${settlement.name}`);
+          }
+          
+          // Add released unrest to kingdom unrest
+          k.unrest = (k.unrest || 0) + amountToRelease;
+          logger.info(`  ⚠️ Added ${amountToRelease} to kingdom unrest (now ${k.unrest})`);
+        });
+
+        return {
+          success: true,
+          data: {
+            released: amountToRelease,
+            message: `Released ${amountToRelease} imprisoned unrest (${Math.round(releasePercentage * 100)}% of ${totalImprisoned})`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to release imprisoned unrest:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Destroy Structure - Remove or downgrade structure(s)
+     * Used by incidents that cause severe structural damage
+     * 
+     * @param category - Structure category to target (e.g., 'justice')
+     * @param targetTier - Which tier to target ('highest', 'lowest', or specific tier number)
+     * @param count - Number of structures to destroy (default: 1)
+     * @returns ResolveResult with destroyed structure details
+     */
+    async destroyStructure(
+      category?: string,
+      targetTier?: 'highest' | 'lowest' | number,
+      count: number = 1
+    ): Promise<ResolveResult> {
+      logger.info(`💥 [destroyStructure] Destroying ${count} structure(s)${category ? ` in category ${category}` : ''}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        const { structuresService } = await import('./structures/index');
+        const { StructureCondition } = await import('../models/Settlement');
+        
+        const destroyedStructures: Array<{ name: string; settlement: string; action: string }> = [];
+
+        // Destroy 'count' structures
+        for (let i = 0; i < count; i++) {
+          // Find target structure based on criteria
+          let targetStructure: any = null;
+          let targetSettlement: any = null;
+
+          // Search all settlements for matching structures
+          for (const settlement of kingdom.settlements || []) {
+            for (const structureId of settlement.structureIds || []) {
+              const structure = structuresService.getStructure(structureId);
+              if (!structure) continue;
+              
+              // Skip damaged structures
+              if (settlement.structureConditions?.[structureId] === StructureCondition.DAMAGED) {
+                continue;
+              }
+              
+              // Apply category filter
+              if (category && structure.category !== category) {
+                continue;
+              }
+              
+              // Apply tier filter
+              if (targetTier !== undefined) {
+                if (targetTier === 'highest') {
+                  if (!targetStructure || structure.tier > targetStructure.tier) {
+                    targetStructure = structure;
+                    targetSettlement = settlement;
+                  }
+                } else if (targetTier === 'lowest') {
+                  if (!targetStructure || structure.tier < targetStructure.tier) {
+                    targetStructure = structure;
+                    targetSettlement = settlement;
+                  }
+                } else if (typeof targetTier === 'number') {
+                  if (structure.tier === targetTier) {
+                    targetStructure = structure;
+                    targetSettlement = settlement;
+                    break;
+                  }
+                }
+              } else {
+                // No tier filter - take first match
+                targetStructure = structure;
+                targetSettlement = settlement;
+                break;
+              }
+            }
+            if (targetStructure && typeof targetTier === 'number') break;
+          }
+
+          if (!targetStructure || !targetSettlement) {
+            logger.warn(`💥 [destroyStructure] No more structures available to destroy (destroyed ${i}/${count})`);
+            break;
+          }
+
+          // Apply destruction based on tier
+          let action = '';
+          
+          if (targetStructure.tier === 1) {
+            // Tier 1: Remove entirely
+            await updateKingdom(k => {
+              const settlement = k.settlements.find(s => s.id === targetSettlement.id);
+              if (settlement) {
+                settlement.structureIds = settlement.structureIds.filter(id => id !== targetStructure.id);
+                if (settlement.structureConditions) {
+                  delete settlement.structureConditions[targetStructure.id];
+                }
+              }
+            });
+            
+            action = 'removed entirely';
+            logger.info(`  💥 Removed tier 1 structure: ${targetStructure.name} from ${targetSettlement.name}`);
+            
+          } else {
+            // Tier 2+: Downgrade to previous tier (damaged)
+            const previousTierId = targetStructure.upgradeFrom;
+            if (!previousTierId) {
+              logger.error(`  ❌ Cannot downgrade - no upgradeFrom found: ${targetStructure.id}`);
+              continue;
+            }
+
+            const previousStructure = structuresService.getStructure(previousTierId);
+            if (!previousStructure) {
+              logger.error(`  ❌ Previous tier structure not found: ${previousTierId}`);
+              continue;
+            }
+
+            await updateKingdom(k => {
+              const settlement = k.settlements.find(s => s.id === targetSettlement.id);
+              if (settlement) {
+                // Remove current tier
+                settlement.structureIds = settlement.structureIds.filter(id => id !== targetStructure.id);
+                
+                // Add previous tier (damaged)
+                settlement.structureIds.push(previousTierId);
+                
+                if (!settlement.structureConditions) {
+                  settlement.structureConditions = {};
+                }
+                settlement.structureConditions[previousTierId] = StructureCondition.DAMAGED;
+                
+                // Remove current tier from conditions
+                delete settlement.structureConditions[targetStructure.id];
+              }
+            });
+            
+            action = `downgraded to ${previousStructure.name} (damaged)`;
+            logger.info(`  💥 Downgraded: ${targetStructure.name} → ${previousStructure.name} (damaged) in ${targetSettlement.name}`);
+          }
+
+          destroyedStructures.push({
+            name: targetStructure.name,
+            settlement: targetSettlement.name,
+            action
+          });
+        }
+
+        if (destroyedStructures.length === 0) {
+          return {
+            success: false,
+            error: `No structures available to destroy${category ? ` in category '${category}'` : ''}`
+          };
+        }
+
+        // Format message
+        const structureList = destroyedStructures
+          .map((s: { name: string; settlement: string; action: string }) => `${s.name} in ${s.settlement} (${s.action})`)
+          .join(', ');
+
+        return {
+          success: true,
+          data: {
+            destroyedStructures,
+            count: destroyedStructures.length,
+            message: `Destroyed structure${destroyedStructures.length > 1 ? 's' : ''}: ${structureList}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to destroy structure:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
      * Damage Structure - Apply damage to structure(s) in settlement
      * Used by events/incidents that cause structural damage
      * 

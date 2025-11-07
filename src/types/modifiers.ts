@@ -138,13 +138,11 @@ export function isPermanentDuration(duration: ModifierDuration | undefined): boo
 }
 
 /**
- * Game command types (for actions like recruiting armies)
+ * Game command types (imported from authoritative source)
+ * Re-exported for convenience - see game-commands.ts for full definitions
  */
-export interface GameCommand {
-  type: 'recruitArmy' | 'disbandArmy' | 'damageStructure' | string;
-  description: string;
-  [key: string]: any;  // Allow additional type-specific properties
-}
+import type { GameCommand as GameCommandType } from '../controllers/actions/game-commands';
+export type GameCommand = GameCommandType;
 
 /**
  * Outcome effects structure (for events/incidents/actions)

@@ -110,10 +110,6 @@
       &.icon-only {
          padding: 8px 12px;
          
-         span {
-            display: none;
-         }
-         
          i {
             font-size: 1.2em;
          }

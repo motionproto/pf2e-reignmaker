@@ -24,20 +24,18 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Mass prison break releases many criminals",
-      "modifiers": [],
-      "manualEffects": [
-        "Convert half of your imprisoned unrest to regular unrest (round down)",
-        "Mark your highest tier justice structure as damaged"
+      "msg": "Mass prison break releases many criminals and damages your justice system",
+      "gameCommands": [
+        { "type": "releaseImprisoned", "percentage": 0.5 },
+        { "type": "damageStructure", "category": "justice", "targetTier": "highest" }
       ],
       "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Complete prison break releases all criminals and destroys your justice system",
-      "modifiers": [],
-      "manualEffects": [
-        "Convert ALL of your imprisoned unrest to regular unrest",
-        "Reduce your highest tier justice structure's tier by one and mark it as damaged. If the tier is reduced to zero, remove it entirely"
+      "gameCommands": [
+        { "type": "releaseImprisoned", "percentage": 1 },
+        { "type": "destroyStructure", "category": "justice", "targetTier": "highest" }
       ],
       "endsEvent": true
     }
