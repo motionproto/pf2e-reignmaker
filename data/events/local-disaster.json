@@ -43,12 +43,12 @@
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
-        },
+        }
+      ],
+      "gameCommands": [
         {
-          "type": "static",
-          "resource": "damage_structure",
-          "value": 1,
-          "duration": "immediate"
+          "type": "damageStructure",
+          "count": 1
         }
       ],
       "endsEvent": true
@@ -61,13 +61,16 @@
           "resource": "unrest",
           "value": 2,
           "duration": "immediate"
-        },
-        {
-          "type": "static",
-          "resource": "destroy_structure",
-          "value": 1,
-          "duration": "immediate"
         }
+      ],
+      "gameCommands": [
+        {
+          "type": "damageStructure",
+          "count": 2
+        }
+      ],
+      "manualEffects": [
+        "One damaged structure is destroyed (removed from settlement)"
       ],
       "endsEvent": true
     }

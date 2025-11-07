@@ -325,6 +325,33 @@ export async function createEventPhaseController(_eventService?: any) {
 
             }
             
+            // Execute game commands if present (structure damage, etc.)
+            const gameCommandEffects: string[] = [];
+            if (outcomeData?.gameCommands) {
+                const { createGameCommandsResolver } = await import('../services/GameCommandsResolver');
+                const resolver = await createGameCommandsResolver();
+                
+                for (const command of outcomeData.gameCommands) {
+                    if (command.type === 'damageStructure') {
+                        const result = await resolver.damageStructure(
+                            command.targetStructure,
+                            command.settlementId,
+                            command.count
+                        );
+                        
+                        // Convert results to specialEffects format for OutcomeDisplay
+                        if (result.success && result.data?.damagedStructures) {
+                            for (const damaged of result.data.damagedStructures) {
+                                // OutcomeDisplay expects: structure_damaged:structureId:settlementId
+                                // IDs are used for lookup, names are for logging only
+                                gameCommandEffects.push(`structure_damaged:${damaged.structureId}:${damaged.settlementId}`);
+                            }
+                        }
+                    }
+                    // Future command types will be handled here
+                }
+            }
+            
             // Use unified resolution wrapper (consolidates duplicate logic)
             const result = await resolvePhaseOutcome(
                 eventId,
@@ -333,6 +360,17 @@ export async function createEventPhaseController(_eventService?: any) {
                 resolutionData,
                 [EventsPhaseSteps.RESOLVE_EVENT, EventsPhaseSteps.APPLY_MODIFIERS]  // Type-safe step indices
             );
+            
+            // Merge gameCommand results into specialEffects for display
+            if (gameCommandEffects.length > 0) {
+                if (!result.applied) {
+                    result.applied = { specialEffects: [] };
+                }
+                if (!result.applied.specialEffects) {
+                    result.applied.specialEffects = [];
+                }
+                result.applied.specialEffects.push(...gameCommandEffects);
+            }
             
             // Store appliedOutcome and mark effects as applied (NEW system)
             if (shouldCreateInstance || existingInstance) {
@@ -361,7 +399,8 @@ export async function createEventPhaseController(_eventService?: any) {
                             effect: outcomeData?.msg || '',
                             modifiers: resolvedModifiers,  // ✅ RESOLVED values, not raw modifiers
                             manualEffects: outcomeData?.manualEffects || [],
-                            shortfallResources: result.applied?.applied?.specialEffects
+                            specialEffects: result.applied?.specialEffects || [],  // ✅ FIXED: Correct path to specialEffects
+                            shortfallResources: result.applied?.specialEffects
                                 ?.filter((e: string) => e.startsWith('shortage_penalty:'))
                                 ?.map((e: string) => e.split(':')[1]) || [],
                             effectsApplied: true  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
@@ -520,6 +559,7 @@ export async function createEventPhaseController(_eventService?: any) {
                         effect: outcomeData.msg,
                         modifiers: outcomeData.modifiers || [],
                         manualEffects: outcomeData.manualEffects || [],
+                        specialEffects: [],  // No special effects for ignored events
                         shortfallResources: [],
                         effectsApplied: false,
                         isIgnored: true  // Flag to hide reroll button

@@ -26,7 +26,7 @@
           "resource": "food",
           "formula": "1d4",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -39,7 +39,7 @@
           "resource": "food",
           "formula": "1d6+1",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -52,13 +52,13 @@
           "resource": "food",
           "formula": "2d4",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
@@ -71,13 +71,13 @@
           "resource": "food",
           "formula": "2d6+1",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false

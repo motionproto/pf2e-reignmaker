@@ -213,6 +213,26 @@ export async function createUnrestPhaseController() {
         return { success: false, error: 'Incident not found' };
       }
 
+      // Get outcome data
+      const outcomeData = incident?.effects[outcome];
+      
+      // Execute game commands if present (structure damage, etc.)
+      if (outcomeData?.gameCommands) {
+        const { createGameCommandsResolver } = await import('../services/GameCommandsResolver');
+        const resolver = await createGameCommandsResolver();
+        
+        for (const command of outcomeData.gameCommands) {
+          if (command.type === 'damageStructure') {
+            await resolver.damageStructure(
+              command.targetStructure,
+              command.settlementId,
+              command.count
+            );
+          }
+          // Future command types will be handled here
+        }
+      }
+      
       // Use unified resolution wrapper (consolidates duplicate logic)
       return await resolvePhaseOutcome(
         incidentId,
@@ -307,10 +327,10 @@ export async function createUnrestPhaseController() {
       }
       
       // ✅ FIX: Find ANY incident (pending, resolved, or applied) and reset it
-      const allIncidents = kingdom.activeCheckInstances?.filter(i => i.checkType === 'incident') || [];
+      const allIncidents = kingdom.activeCheckInstances?.filter((i: any) => i.checkType === 'incident') || [];
       if (allIncidents.length > 0) {
-        await actor.updateKingdomData(k => {
-          const instance = k.activeCheckInstances?.find(i => 
+        await actor.updateKingdomData((k: any) => {
+          const instance = k.activeCheckInstances?.find((i: any) => 
             i.instanceId === allIncidents[0].instanceId
           );
           if (instance) {

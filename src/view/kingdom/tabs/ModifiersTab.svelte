@@ -683,11 +683,15 @@
       gap: 1rem;
       
       .filter-select {
-         padding: 0.5rem;
+         padding: 0.5rem 0.75rem;
+         min-height: 2.5rem;
          background: rgba(0, 0, 0, 0.3);
          border: 1px solid rgba(255, 255, 255, 0.2);
          border-radius: 0.375rem;
          color: var(--color-text-dark-primary, #b5b3a4);
+         line-height: 1.5;
+         vertical-align: middle;
+         box-sizing: border-box;
          
          &:focus {
             outline: none;
@@ -1081,11 +1085,15 @@
    }
    
    .effect-select {
-      padding: 0.25rem 0.5rem;
+      padding: 0.5rem 0.75rem;
+      min-height: 2.5rem;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 0.25rem;
       color: var(--color-text-dark-primary, #b5b3a4);
+      line-height: 1.5;
+      vertical-align: middle;
+      box-sizing: border-box;
       
       &:focus {
          outline: none;

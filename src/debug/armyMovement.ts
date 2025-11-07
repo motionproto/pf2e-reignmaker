@@ -225,13 +225,5 @@ export function registerDebugUtils(): void {
     module.registerHexDataCheck();
   });
   
-  logger.info('[Debug] ✅ Army movement debug utilities registered on game.reignmaker');
-  logger.info('[Debug] Available commands:');
-  logger.info('  - game.reignmaker.testArmyMovement(armyId, hexId)');
-  logger.info('  - game.reignmaker.testArmyMovementFromSelection() ⭐ NEW!');
-  logger.info('  - game.reignmaker.deactivateArmyMovement()');
-  logger.info('  - game.reignmaker.testPathfinding(startHex, targetHex, maxMovement)');
-  logger.info('  - game.reignmaker.getHexMovementCost(hexId)');
-  logger.info('  - game.reignmaker.listReachableHexes(startHex, maxMovement)');
-  logger.info('  - game.reignmaker.checkHexData(hexId) ⭐ NEW!');
+  // Debug utilities registered - access via game.reignmaker.*
 }

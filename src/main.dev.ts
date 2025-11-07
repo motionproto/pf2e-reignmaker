@@ -1,5 +1,7 @@
 // Development entry point for hot reloading without Foundry
 import './styles/variables.css';
+// Import global form control styles (dropdowns, inputs, etc.)
+import './styles/form-controls.css';
 import KingdomAppShell from './view/kingdom/KingdomAppShell.svelte';
 import { KingdomState } from './models/KingdomState';
 

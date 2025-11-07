@@ -20,35 +20,38 @@ import { updateKingdom } from '../stores/KingdomStore';
 export async function createModifierService() {
   return {
     /**
-     * Apply structure modifiers only during Status phase
-     * Custom modifiers are applied during Events phase by EventPhaseController
+     * Apply ALL ongoing modifiers during Resources phase
+     * Applies custom, event, incident, and structure modifiers
      */
-    async applyOngoingModifiers(): Promise<void> {
+    async applyOngoingModifiers(): Promise<{ success: boolean; appliedCount: number; changes: Record<string, number> }> {
+      const changes: Record<string, number> = {};
+      let appliedCount = 0;
 
       await updateKingdom(kingdom => {
         const modifiers = kingdom.activeModifiers || [];
         
-        // Filter for structure modifiers only (permanent effects)
-        const structureModifiers = modifiers.filter(m => m.sourceType === 'structure');
-        
-        if (structureModifiers.length === 0) {
-
+        if (modifiers.length === 0) {
           return;
         }
         
-        for (const modifier of structureModifiers as ActiveModifier[]) {
+        for (const modifier of modifiers as ActiveModifier[]) {
           for (const mod of modifier.modifiers as EventModifier[]) {
-            // Only apply static modifiers with ongoing duration
+            // Apply static modifiers with ongoing duration
             if (isStaticModifier(mod) && isOngoingDuration(mod.duration)) {
               // Apply resource/stat change
               const current = kingdom.resources[mod.resource] || 0;
-              kingdom.resources[mod.resource] = Math.max(0, current + mod.value);
-
+              const newValue = Math.max(0, current + mod.value);
+              kingdom.resources[mod.resource] = newValue;
+              
+              // Track the change
+              changes[mod.resource] = (changes[mod.resource] || 0) + mod.value;
+              appliedCount++;
             }
           }
         }
       });
 
+      return { success: true, appliedCount, changes };
     },
     
     /**
@@ -88,6 +91,39 @@ export async function createModifierService() {
       
       const kingdom = actor.getKingdomData();
       return kingdom?.activeModifiers || [];
+    },
+    
+    /**
+     * Preview what applying modifiers would do (doesn't modify kingdom state)
+     */
+    async previewModifierEffects(): Promise<{ resource: string; change: number; modifiers: Array<{ name: string; value: number }> }[]> {
+      const { getKingdomActor } = await import('../stores/KingdomStore');
+      const actor = getKingdomActor();
+      if (!actor) return [];
+      
+      const kingdom = actor.getKingdomData();
+      const modifiers = kingdom?.activeModifiers || [];
+      
+      // Group changes by resource with individual modifier details
+      const resourceChanges = new Map<string, { change: number; modifiers: Array<{ name: string; value: number }> }>();
+      
+      for (const modifier of modifiers as ActiveModifier[]) {
+        for (const mod of modifier.modifiers as EventModifier[]) {
+          if (isStaticModifier(mod) && isOngoingDuration(mod.duration)) {
+            const existing = resourceChanges.get(mod.resource) || { change: 0, modifiers: [] };
+            existing.change += mod.value;
+            existing.modifiers.push({ name: modifier.name, value: mod.value });
+            resourceChanges.set(mod.resource, existing);
+          }
+        }
+      }
+      
+      // Convert to array for display
+      return Array.from(resourceChanges.entries()).map(([resource, data]) => ({
+        resource,
+        change: data.change,
+        modifiers: data.modifiers
+      }));
     }
   };
 }

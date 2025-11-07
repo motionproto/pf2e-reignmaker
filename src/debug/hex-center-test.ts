@@ -190,10 +190,5 @@ export function registerHexCenterTestUtils(): void {
   game.reignmaker.testHexCenter = testHexCenter;
   game.reignmaker.deactivateHexCenterTest = deactivateHexCenterTest;
   game.reignmaker.clearHexCenterTest = clearHexCenterTest;
-
-  logger.info('[HexCenterTest] ✅ Hex center test utilities registered on game.reignmaker');
-  logger.info('[HexCenterTest] Available commands:');
-  logger.info('  - game.reignmaker.testHexCenter()');
-  logger.info('  - game.reignmaker.deactivateHexCenterTest()');
-  logger.info('  - game.reignmaker.clearHexCenterTest()');
+  // Hex center test utilities available at game.reignmaker.*
 }

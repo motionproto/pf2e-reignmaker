@@ -91,4 +91,28 @@ When working with structures:
 
 ---
 
+## Architecture Improvements
+
+### Dual Storage Pattern in EventsPhase (Non-critical)
+
+**Issue:** `EventsPhase.svelte` uses a dual storage pattern for event resolutions:
+- Local UI state: `eventResolution` + `eventResolved` (current event only)
+- Kingdom state: `currentEventInstance.appliedOutcome` (ongoing events)
+
+**Why it exists:** The local state provides instant UI updates, while kingdom state ensures persistence and multi-client sync.
+
+**Improvement opportunity:** Eliminate `eventResolution`/`eventResolved` and use only `currentEventInstance.appliedOutcome` for both current and ongoing events. This would:
+- ✅ Single source of truth (kingdom state only)
+- ✅ Consistent behavior for current & ongoing events
+- ✅ Simpler code (~50 lines removed)
+- ⚠️ Might have tiny delay for UI updates (waiting for kingdom state)
+
+**Priority:** Low - System works correctly as-is. This is purely a code simplification.
+
+**References:** 
+- File: `src/view/kingdom/turnPhases/EventsPhase.svelte`
+- Lines: 48-62 (local state variables)
+
+---
+
 Additional known issues and technical debt items will be documented here as they arise.

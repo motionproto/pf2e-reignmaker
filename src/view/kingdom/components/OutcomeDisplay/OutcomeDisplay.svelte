@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { kingdomData } from '../../../../stores/KingdomStore';
+  import { structuresService } from '../../../../services/structures';
   import {
     processChoiceSelection,
     detectResourceArrayModifiers,
@@ -57,6 +58,7 @@
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
   export let manualEffects: string[] | undefined = undefined;
+  export let specialEffects: string[] | undefined = undefined;  // Special effects to parse (structure damage, etc.)
   export const rerollEnabled: boolean = false;
   export const rerollLabel: string = "Reroll";
   export const rerollCount: number | undefined = undefined;
@@ -105,8 +107,105 @@
   let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
   let debugOutcome: OutcomeType = outcome as OutcomeType;
   
+  // Parse special effects into readable messages
+  function parseSpecialEffects(effects: string[] | undefined): string[] {
+    if (!effects || effects.length === 0) return [];
+    
+    const messages: string[] = [];
+    
+    for (const effect of effects) {
+      // Parse structure_damaged:structureId:settlementId
+      if (effect.startsWith('structure_damaged:')) {
+        const parts = effect.split(':');
+        console.log('🔍 [OutcomeDisplay] Parsing structure_damaged effect:', { effect, parts });
+        
+        const [, structureId, settlementId] = parts;
+        console.log('🔍 [OutcomeDisplay] Extracted IDs:', { structureId, settlementId });
+        
+        const structure = structuresService.getStructure(structureId);
+        console.log('🔍 [OutcomeDisplay] Found structure:', structure);
+        
+        const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
+        console.log('🔍 [OutcomeDisplay] Found settlement:', settlement);
+        
+        if (structure && settlement) {
+          const message = `${structure.name} in ${settlement.name} has been damaged and provides no bonuses until repaired.`;
+          console.log('✅ [OutcomeDisplay] Created message:', message);
+          messages.push(message);
+        } else {
+          console.warn('⚠️ [OutcomeDisplay] Failed to create message - missing structure or settlement', {
+            hasStructure: !!structure,
+            hasSettlement: !!settlement,
+            structureId,
+            settlementId,
+            availableSettlements: $kingdomData?.settlements?.map(s => ({ id: s.id, name: s.name }))
+          });
+        }
+      }
+      
+      // Parse structure_destroyed:structureId:settlementId
+      else if (effect.startsWith('structure_destroyed:')) {
+        const [, structureId, settlementId] = effect.split(':');
+        const structure = structuresService.getStructure(structureId);
+        const settlement = $kingdomData?.settlements?.find(s => s.id === settlementId);
+        
+        if (structure && settlement) {
+          if (structure.tier === 1) {
+            messages.push(`${structure.name} in ${settlement.name} has been completely destroyed and removed.`);
+          } else if (structure.upgradeFrom) {
+            const previousStructure = structuresService.getStructure(structure.upgradeFrom);
+            if (previousStructure) {
+              messages.push(`${structure.name} in ${settlement.name} has been destroyed, downgrading to ${previousStructure.name} (damaged).`);
+            }
+          }
+        }
+      }
+      
+      // Parse hex_claimed:count:hexList
+      else if (effect.startsWith('hex_claimed:')) {
+        const [, count, hexList] = effect.split(':');
+        const hexCount = parseInt(count, 10);
+        messages.push(`${hexCount} hex${hexCount !== 1 ? 'es' : ''} claimed: ${hexList}`);
+      }
+      
+      // Critical success fame is handled separately in StateChanges
+      else if (effect === 'critical_success_fame') {
+        // Skip - already displayed by StateChanges
+      }
+      
+      // Shortage penalties are handled separately
+      else if (effect.startsWith('shortage_penalty:')) {
+        // Skip - already displayed as shortfall warning
+      }
+      
+      // Imprisoned unrest effects
+      else if (effect === 'imprisoned_unrest_applied' || effect === 'imprisoned_unrest_allocated') {
+        // Skip - already shown in state changes
+      }
+      else if (effect === 'imprisoned_unrest_overflow') {
+        messages.push('Prison capacity exceeded - excess converted to regular unrest');
+      }
+    }
+    
+    return messages;
+  }
+  
   // Get fame from kingdom state
   $: currentFame = $kingdomData?.fame || 0;
+  
+  // Separate automated effects (specialEffects) from manual effects
+  $: parsedSpecialEffects = parseSpecialEffects(specialEffects);
+  $: automatedEffects = parsedSpecialEffects;  // Automated (already applied)
+  $: effectiveManualEffects = manualEffects || [];  // Manual (requires GM action)
+  
+  // Debug logging
+  $: {
+    if (specialEffects && specialEffects.length > 0) {
+      console.log('🔍 [OutcomeDisplay] Raw specialEffects:', specialEffects);
+      console.log('🔍 [OutcomeDisplay] Parsed specialEffects:', parsedSpecialEffects);
+      console.log('🔍 [OutcomeDisplay] Effective manual effects:', effectiveManualEffects);
+    }
+  }
   
   // Use debug outcome if in debug mode, otherwise use the prop
   $: effectiveOutcome = debugMode ? debugOutcome : outcome;
@@ -586,7 +685,8 @@
       stateChanges={displayStateChanges} 
       {modifiers} 
       {resolvedDice} 
-      {manualEffects} 
+      manualEffects={effectiveManualEffects} 
+      automatedEffects={automatedEffects}
       outcome={effectiveOutcome} 
       hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
       {customComponentData}

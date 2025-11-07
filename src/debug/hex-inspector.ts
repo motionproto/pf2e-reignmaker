@@ -194,8 +194,5 @@ export function initializeHexInspector(): void {
   }
   
   game.reignmaker.hexInspector = hexInspector;
-  
-  console.log('🔍 Hex Inspector initialized');
-  console.log('   Enable: game.reignmaker.hexInspector.enable()');
-  console.log('   Disable: game.reignmaker.hexInspector.disable()');
+  // Hex inspector available at game.reignmaker.hexInspector
 }

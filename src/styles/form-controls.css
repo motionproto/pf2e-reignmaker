@@ -1,0 +1,134 @@
+/* Form Controls - Global Styling for Dropdowns, Selects, Inputs */
+/* Ensures consistent, legible styling across the application */
+
+/* Select/Dropdown Styling */
+#pf2e-reignmaker select {
+  /* Base styling */
+  padding: 0.5rem 0.75rem;
+  min-height: 2.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md, 4px);
+  color: var(--text-primary, #f8f8f8);
+  font-family: var(--font-sans-rm);
+  font-size: var(--font-md, 16px);
+  line-height: 1.5;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: border-color var(--transition-fast, 150ms);
+  /* Prevent clipping */
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+#pf2e-reignmaker select:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#pf2e-reignmaker select:focus {
+  outline: none;
+  border-color: var(--color-primary, #d14343);
+  box-shadow: 0 0 0 2px rgba(209, 67, 67, 0.2);
+}
+
+#pf2e-reignmaker select:disabled {
+  opacity: var(--opacity-disabled, 0.6);
+  cursor: not-allowed;
+}
+
+/* Option Styling - Critical for Legibility */
+/* These styles ensure dropdown options are always readable */
+#pf2e-reignmaker select option {
+  /* Force dark background with light text for all options */
+  background-color: #1a1a1a !important;
+  color: #f8f8f8 !important;
+  padding: 0.5rem 0.75rem !important;
+  min-height: 2rem !important;
+  font-size: var(--font-md, 16px) !important;
+  font-family: var(--font-sans-rm) !important;
+  line-height: 1.5 !important;
+}
+
+/* Hover/Selected state for options */
+#pf2e-reignmaker select option:hover,
+#pf2e-reignmaker select option:checked {
+  background-color: #2a2a2a !important;
+  color: #ffffff !important;
+}
+
+/* Disabled options */
+#pf2e-reignmaker select option:disabled {
+  color: #666666 !important;
+  opacity: 0.5;
+}
+
+/* Input Field Styling (for consistency) */
+#pf2e-reignmaker input[type="text"],
+#pf2e-reignmaker input[type="number"],
+#pf2e-reignmaker input[type="email"],
+#pf2e-reignmaker input[type="password"],
+#pf2e-reignmaker textarea {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md, 4px);
+  color: var(--text-primary, #f8f8f8);
+  font-family: var(--font-sans-rm);
+  font-size: var(--font-md, 16px);
+  transition: border-color var(--transition-fast, 150ms);
+}
+
+#pf2e-reignmaker input[type="text"]:hover:not(:disabled),
+#pf2e-reignmaker input[type="number"]:hover:not(:disabled),
+#pf2e-reignmaker input[type="email"]:hover:not(:disabled),
+#pf2e-reignmaker input[type="password"]:hover:not(:disabled),
+#pf2e-reignmaker textarea:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#pf2e-reignmaker input[type="text"]:focus,
+#pf2e-reignmaker input[type="number"]:focus,
+#pf2e-reignmaker input[type="email"]:focus,
+#pf2e-reignmaker input[type="password"]:focus,
+#pf2e-reignmaker textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #d14343);
+  box-shadow: 0 0 0 2px rgba(209, 67, 67, 0.2);
+}
+
+#pf2e-reignmaker input[type="text"]:disabled,
+#pf2e-reignmaker input[type="number"]:disabled,
+#pf2e-reignmaker input[type="email"]:disabled,
+#pf2e-reignmaker input[type="password"]:disabled,
+#pf2e-reignmaker textarea:disabled {
+  opacity: var(--opacity-disabled, 0.6);
+  cursor: not-allowed;
+}
+
+/* Placeholder text styling */
+#pf2e-reignmaker input::placeholder,
+#pf2e-reignmaker textarea::placeholder {
+  color: var(--text-muted, #9e9b8f);
+  opacity: 0.7;
+}
+
+/* Number input spinner buttons */
+#pf2e-reignmaker input[type="number"]::-webkit-inner-spin-button,
+#pf2e-reignmaker input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+/* Checkbox and Radio Styling (for completeness) */
+#pf2e-reignmaker input[type="checkbox"],
+#pf2e-reignmaker input[type="radio"] {
+  cursor: pointer;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary, #d14343);
+}
+
+#pf2e-reignmaker input[type="checkbox"]:disabled,
+#pf2e-reignmaker input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: var(--opacity-disabled, 0.6);
+}

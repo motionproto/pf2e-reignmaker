@@ -77,5 +77,5 @@ export function registerHexDataCheck(): void {
   }
   
   game.reignmaker.checkHexData = checkHexData;
-  logger.info('[Debug] ✅ Hex data checker registered: game.reignmaker.checkHexData(hexId)');
+  // Hex data checker available at game.reignmaker.checkHexData(hexId)
 }

@@ -48,12 +48,12 @@
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
-        },
+        }
+      ],
+      "gameCommands": [
         {
-          "type": "static",
-          "resource": "damage_structure",
-          "value": 1,
-          "duration": "immediate"
+          "type": "damageStructure",
+          "count": 1
         }
       ],
       "endsEvent": true

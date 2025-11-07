@@ -25,13 +25,13 @@
           "type": "dice",
           "resource": "food",
           "formula": "1d4",
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
@@ -43,7 +43,7 @@
           "type": "dice",
           "resource": "food",
           "formula": "1d4",
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
@@ -60,7 +60,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true

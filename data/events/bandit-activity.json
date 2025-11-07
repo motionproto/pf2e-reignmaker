@@ -25,13 +25,13 @@
           "type": "dice",
           "resource": "gold",
           "formula": "1d4",
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -43,7 +43,7 @@
           "type": "static",
           "resource": "gold",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -56,13 +56,13 @@
           "resource": "gold",
           "formula": "1d4",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
@@ -75,20 +75,20 @@
           "resource": "gold",
           "formula": "1d4+1",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "dice",
           "resource": "food",
           "formula": "1d4",
           "negative": true,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false

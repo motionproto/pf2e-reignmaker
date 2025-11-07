@@ -108,7 +108,7 @@ export class WaterwayLookup {
       this.buildCrossingLookup(kingdom.rivers.crossings, kingdom.rivers.paths);
     }
     
-    logger.debug(`[WaterwayLookup] Built lookup with ${this.hexLookup.size} waterway hexes`);
+    // Lookup built successfully (logging removed - this is normal operation)
   }
   
   /**

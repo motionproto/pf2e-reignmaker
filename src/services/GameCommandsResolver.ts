@@ -1065,6 +1065,105 @@ export async function createGameCommandsResolver() {
       logger.warn(`⚠️ Unknown condition format: "${conditionString}"`);
     },
 
+    /**
+     * Damage Structure - Apply damage to structure(s) in settlement
+     * Used by events/incidents that cause structural damage
+     * 
+     * @param targetStructure - Optional specific structure ID to damage
+     * @param settlementId - Optional settlement filter
+     * @param count - Number of structures to damage (default: 1)
+     * @returns ResolveResult with damaged structure details
+     */
+    async damageStructure(
+      targetStructure?: string,
+      settlementId?: string,
+      count: number = 1
+    ): Promise<ResolveResult> {
+      logger.info(`💥 [damageStructure] Damaging ${count} structure(s)${settlementId ? ` in settlement ${settlementId}` : ''}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // Use structure targeting service to select structures
+        const { structureTargetingService } = await import('./structures/targeting');
+        const { structuresService } = await import('./structures/index');
+        const { StructureCondition } = await import('../models/Settlement');
+        
+        const damagedStructures: Array<{ name: string; settlement: string; structureId: string; settlementId: string }> = [];
+
+        // Damage 'count' structures using the targeting service
+        for (let i = 0; i < count; i++) {
+          const targetResult = structureTargetingService.selectStructureForDamage({
+            type: 'random',
+            fallbackToRandom: true
+          });
+
+          if (!targetResult) {
+            logger.warn(`💥 [damageStructure] No more structures available to damage (damaged ${i}/${count})`);
+            break;
+          }
+
+          // Apply damage by updating structure condition
+          await updateKingdom(k => {
+            const settlement = k.settlements.find((s: any) => s.id === targetResult.settlement.id);
+            if (settlement) {
+              if (!settlement.structureConditions) {
+                settlement.structureConditions = {};
+              }
+              settlement.structureConditions[targetResult.structure.id] = StructureCondition.DAMAGED;
+            }
+          });
+
+          damagedStructures.push({
+            name: targetResult.structure.name,
+            settlement: targetResult.settlement.name,
+            structureId: targetResult.structure.id,
+            settlementId: targetResult.settlement.id
+          });
+
+          logger.info(`💥 Damaged: ${targetResult.structure.name} in ${targetResult.settlement.name}`);
+        }
+
+        if (damagedStructures.length === 0) {
+          return {
+            success: false,
+            error: 'No structures available to damage in the kingdom'
+          };
+        }
+
+        // Format message for outcome display
+        const structureList = damagedStructures
+          .map((s: { name: string; settlement: string }) => `${s.name} in ${s.settlement}`)
+          .join(', ');
+
+        logger.info(`✅ [damageStructure] Damaged: ${structureList}`);
+
+        return {
+          success: true,
+          data: {
+            damagedStructures,
+            count: damagedStructures.length,
+            message: `Damaged structure${damagedStructures.length > 1 ? 's' : ''}: ${structureList}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to damage structure:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
     // TODO: Additional methods will be added as we implement more actions
     // - claimHexes(count, hexes)
     // - buildRoads(hexes)

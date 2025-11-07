@@ -103,7 +103,7 @@ interface ChoiceModifier {
 
 ### Immediate
 
-Applies once and is done. Default if omitted.
+Applies once when outcome is applied. Used for **all event/incident modifiers**.
 
 ```json
 {
@@ -111,9 +111,16 @@ Applies once and is done. Default if omitted.
 }
 ```
 
+**Use Case:** Any modifier that applies when you click "Apply Result"
+- Event outcomes (always immediate)
+- Incident outcomes (always immediate)
+- Action results (usually immediate)
+
+**Important:** Even if the event has trait `"ongoing"` (event repeats), modifiers are still `"immediate"` (apply once per roll).
+
 ### Ongoing
 
-Persists until event/incident is resolved.
+Applies automatically every turn during Status phase. Used for **structures** and **custom modifiers**.
 
 ```json
 {
@@ -121,11 +128,15 @@ Persists until event/incident is resolved.
 }
 ```
 
-**Use Case:** Events with `endsEvent: false` that continue across turns.
+**Use Cases:**
+1. **Structure bonuses** - Farm gives +1 Agriculture every turn
+2. **Custom modifiers** - Created by ModifierService for unresolved events/incidents
+
+**Important:** NOT used for event/incident modifiers. The event itself can be ongoing (repeats), but its modifiers apply immediately each roll.
 
 ### Turn Count
 
-Lasts for specific number of turns.
+Lasts for specific number of turns. Rarely used.
 
 ```json
 {
@@ -133,7 +144,49 @@ Lasts for specific number of turns.
 }
 ```
 
-**Use Case:** Temporary buffs/debuffs with fixed duration.
+**Use Case:** Temporary buffs/debuffs with fixed duration (mostly theoretical, not used in current data).
+
+---
+
+## Duration Semantics
+
+**Key Distinction:**
+
+- **Event trait `"ongoing"`** → Event repeats each turn until resolved
+- **Modifier duration `"immediate"`** → Modifier applies once when you click "Apply Result"
+- **Modifier duration `"ongoing"`** → Modifier applies automatically every turn (structures only)
+
+**Example (drug-den event):**
+```json
+{
+  "traits": ["ongoing"],  // Event repeats
+  "criticalFailure": {
+    "modifiers": [
+      { "resource": "unrest", "value": 2, "duration": "immediate" },  // Apply once
+      { "resource": "damage_structure", "value": 1, "duration": "immediate" }  // Apply once
+    ],
+    "endsEvent": false  // Event will appear again next turn
+  }
+}
+```
+
+**Flow:**
+1. Turn 1: Roll → Critical failure → Click "Apply Result" → +2 unrest, structure damaged (applied once)
+2. Turn 2: Event appears again → Must roll again → New outcome applies
+
+**Wrong Pattern (DON'T DO THIS):**
+```json
+{
+  "traits": ["ongoing"],
+  "failure": {
+    "modifiers": [
+      { "resource": "unrest", "value": 1, "duration": "ongoing" }  // ❌ WRONG
+    ]
+  }
+}
+```
+
+This would skip the modifier during event application (code expects "ongoing" to mean "applied during Status phase").
 
 ---
 

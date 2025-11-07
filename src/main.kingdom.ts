@@ -18,8 +18,6 @@ declare const CONFIG: any;
  * Call this from your main module initialization
  */
 export function initializeKingdomSystem(): void {
-  console.log('[Kingdom System] Initializing Foundry-first architecture...');
-  
   // Register the KingdomActor class with Foundry
   registerKingdomActor();
   
@@ -37,8 +35,6 @@ export function initializeKingdomSystem(): void {
   } catch (error) {
     console.error('[Kingdom System] Failed to register debug utilities:', error);
   }
-  
-  console.log('[Kingdom System] Initialization complete');
 }
 
 /**
@@ -48,7 +44,6 @@ function registerKingdomActor(): void {
   // Extend Foundry's Actor class
   if (typeof CONFIG !== 'undefined' && CONFIG.Actor) {
     // Add our KingdomActor to the registry if needed
-    console.log('[Kingdom System] KingdomActor class registered');
   }
 }
 

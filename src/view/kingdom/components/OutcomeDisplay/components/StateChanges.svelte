@@ -7,6 +7,7 @@
   export let modifiers: any[] | undefined = undefined;
   export let resolvedDice: Map<number | string, number> = new Map();
   export let manualEffects: string[] | undefined = undefined;
+  export let automatedEffects: string[] | undefined = undefined;  // Automated effects (already applied)
   export let outcome: string | undefined = undefined;
   export let hideResources: string[] = []; // Resources to hide (handled elsewhere, e.g., in choice buttons)
   export let customComponentData: any = undefined; // For custom component data (e.g., upgrade cost)
@@ -16,6 +17,7 @@
   
   $: hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
   $: hasManualEffects = manualEffects && manualEffects.length > 0;
+  $: hasAutomatedEffects = automatedEffects && automatedEffects.length > 0;
   $: showCriticalSuccessFame = outcome === 'criticalSuccess';
   $: hasCustomCost = customComponentData && typeof customComponentData.cost === 'number';
   
@@ -24,7 +26,7 @@
   $: diceModifiersToShow = [];
   $: hasDiceModifiers = false;
   
-  $: hasAnyContent = hasStateChanges || hasManualEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost;
+  $: hasAnyContent = hasStateChanges || hasManualEffects || hasAutomatedEffects || showCriticalSuccessFame || hasDiceModifiers || hasCustomCost;
   
   // Detect if a value is a dice formula
   function isDiceFormula(value: any): boolean {
@@ -127,6 +129,14 @@
       <div class="critical-success-fame">
         <i class="fas fa-star"></i>
         <span>Fame increased by 1</span>
+      </div>
+    {/if}
+    
+    {#if hasAutomatedEffects && automatedEffects}
+      <div class="automated-effects">
+        {#each automatedEffects as effect}
+          <p class="effect-message">{effect}</p>
+        {/each}
       </div>
     {/if}
     
@@ -326,6 +336,20 @@
     
     span {
       flex: 1;
+    }
+  }
+  
+  .automated-effects {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    
+    .effect-message {
+      margin: 0;
+      padding: 8px 0;
+      color: var(--text-primary);
+      font-size: var(--font-md);
+      line-height: 1.6;
     }
   }
   

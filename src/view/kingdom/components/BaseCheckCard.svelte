@@ -75,6 +75,7 @@
     stateChanges?: Record<string, any>;
     modifiers?: any[];
     manualEffects?: string[];
+    specialEffects?: string[];  // Special effects like structure_damaged, hex_claimed
     shortfallResources?: string[];
     rollBreakdown?: any;
     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
@@ -320,6 +321,7 @@
           stateChanges={resolution.stateChanges || {}}
           modifiers={resolution.modifiers || []}
           manualEffects={resolution.manualEffects || []}
+          specialEffects={resolution.specialEffects || []}
           shortfallResources={resolution.shortfallResources || []}
           rollBreakdown={resolution.rollBreakdown}
           isIgnored={resolution.isIgnored || false}

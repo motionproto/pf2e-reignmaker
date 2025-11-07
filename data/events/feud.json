@@ -26,13 +26,13 @@
           "type": "static",
           "resource": "unrest",
           "value": -2,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "fame",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ]
     },
@@ -44,7 +44,7 @@
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ]
     },
@@ -56,7 +56,7 @@
           "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ]
     },
@@ -68,13 +68,13 @@
           "type": "static",
           "resource": "unrest",
           "value": 3,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "gold",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ]
     }

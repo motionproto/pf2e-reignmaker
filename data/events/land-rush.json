@@ -23,7 +23,7 @@
       "modifiers": [
         {
           "type": "static",
-          "resource": "hex",
+          "resource": "claim_hex",
           "value": 2,
           "duration": "immediate"
         }
@@ -35,7 +35,7 @@
       "modifiers": [
         {
           "type": "static",
-          "resource": "hex",
+          "resource": "claim_hex",
           "value": 1,
           "duration": "immediate"
         }

@@ -53,6 +53,7 @@ export interface ActiveCheckInstance {
     effect: string;
     modifiers: EventModifier[];  // Resolved static values
     manualEffects: string[];
+    specialEffects: string[];    // Special effects like structure_damaged, hex_claimed
     shortfallResources: string[];
     rollBreakdown?: any;
     effectsApplied: boolean;     // Mark when "Apply Result" clicked

@@ -7,6 +7,8 @@
 import './styles/hide-kingmaker-controls.css';
 // Import styles for map interaction mode
 import './styles/map-interaction.css';
+// Import global form control styles (dropdowns, inputs, etc.)
+import './styles/form-controls.css';
 
 // Import and initialize the Kingdom Icon handler
 import { registerKingdomIconHook } from './ui/KingdomIcon';
@@ -222,8 +224,6 @@ function deactivateKingmakerButton(toolName: string) {
  * Initialize the module when Foundry is ready
  */
 Hooks.once('init', () => {
-    console.log('PF2E ReignMaker | Initializing module (Svelte/TRL version)');
-    
     // Register module settings
     registerModuleSettings();
     
@@ -231,10 +231,8 @@ Hooks.once('init', () => {
     applyKingmakerButtonVisibility();
     
     // Initialize action dispatcher for player-to-GM communication
-    console.log('PF2E ReignMaker | Calling initializeActionDispatcher()...');
     try {
         initializeActionDispatcher();
-        console.log('PF2E ReignMaker | initializeActionDispatcher() completed');
         
         // Register operation handlers
         import('./services/army/handlers').then(({ registerArmyHandlers }) => {
@@ -289,25 +287,17 @@ Hooks.once('init', () => {
  * Setup module once the game is ready
  */
 Hooks.once('ready', async () => {
-    console.log('PF2E ReignMaker | Module ready');
-    console.log('PF2E ReignMaker | Svelte Kingdom system initialized');
-    
     // Initialize logger from setting
-    try {
-        const { logger, LogLevel } = await import('./utils/Logger');
-        // @ts-ignore
-        const logLevelSetting = game.settings.get('pf2e-reignmaker', 'logLevel') as string;
-        const level = parseInt(logLevelSetting);
-        logger.setLevel(level);
-        console.log(`PF2E ReignMaker | Log level initialized to: ${LogLevel[level]}`);
-    } catch (error) {
-        console.error('PF2E ReignMaker | Failed to initialize logger:', error);
-    }
+    const { logger, LogLevel } = await import('./utils/Logger');
+    // @ts-ignore
+    const logLevelSetting = game.settings.get('pf2e-reignmaker', 'logLevel') as string;
+    const level = parseInt(logLevelSetting);
+    logger.setLevel(level);
+    logger.debug(`PF2E ReignMaker | Module ready (log level: ${LogLevel[level]})`);
     
     // Initialize the new Foundry-first kingdom system
     try {
         initializeKingdomSystem();
-        console.log('PF2E ReignMaker | Kingdom system initialized');
         
         // Initialize KingdomStore with the kingdom actor (if available)
         // This ensures the store is ready for all components (Kingdom UI, map overlay, etc.)
@@ -315,7 +305,6 @@ Hooks.once('ready', async () => {
         const kingdomActor = await getKingdomActor();
         if (kingdomActor) {
             initializeKingdomActor(kingdomActor);
-            console.log('PF2E ReignMaker | KingdomStore initialized globally');
             
             // Auto-migrate kingmakerFeatures if needed
             const { needsKingmakerFeaturesMigration, migrateKingmakerFeatures } = await import('./utils/migrateKingmakerFeatures');
@@ -500,7 +489,6 @@ Hooks.once('ready', async () => {
             };
             // For backwards compatibility
             module.openKingdomUI = openKingdomUI;
-            console.log('PF2E ReignMaker | Module API registered');
         }
         
         // Register global function to open Kingdom UI
@@ -529,24 +517,7 @@ Hooks.once('ready', async () => {
             };
         }
         
-        console.log('PF2E ReignMaker | Global functions registered:');
-        console.log('Kingdom UI:');
-        console.log('  - game.pf2eReignMaker.openKingdomUI()');
-        console.log('Data Persistence:');
-        console.log('  - game.pf2eReignMaker.saveKingdom() - Save to Foundry settings');
-        console.log('  - game.pf2eReignMaker.loadKingdom() - Load from Foundry settings');
-        console.log('  - game.pf2eReignMaker.exportKingdom() - Export to JSON file');
-        console.log('  - game.pf2eReignMaker.importKingdom() - Import from JSON file');
-        console.log('  - game.pf2eReignMaker.resetKingdom() - Reset to initial state');
-        if (territoryService.isKingmakerAvailable()) {
-            console.log('Kingmaker Integration:');
-            console.log('  - game.pf2eReignMaker.syncKingmaker() - Sync with Kingmaker module');
-        }
-        if (import.meta.env.DEV) {
-            console.log('Development:');
-            console.log('  - window.openKingdomUI() [DEV ONLY]');
-            console.log('  - All functions also available on window.pf2eReignMaker [DEV ONLY]');
-        }
+        // API functions available via game.pf2eReignMaker.*
 });
 
 // Hot Module Replacement support for development

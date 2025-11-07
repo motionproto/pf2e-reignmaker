@@ -25,7 +25,7 @@
           "type": "static",
           "resource": "unrest",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -37,7 +37,7 @@
           "type": "static",
           "resource": "imprisoned_unrest",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": true
@@ -49,31 +49,31 @@
           "type": "static",
           "resource": "unrest",
           "value": 1,
-          "duration": "ongoing"
+          "duration": "immediate"
         },
         {
           "type": "static",
           "resource": "gold",
           "value": -1,
-          "duration": "ongoing"
+          "duration": "immediate"
         }
       ],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major drug crisis",
+      "msg": "Major drug crisis and urban decay.",
       "modifiers": [
         {
           "type": "static",
           "resource": "unrest",
           "value": 2,
-          "duration": "ongoing"
-        },
+          "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
         {
-          "type": "static",
-          "resource": "damage_structure",
-          "value": 1,
-          "duration": "ongoing"
+          "type": "damageStructure",
+          "count": 1
         }
       ],
       "endsEvent": false

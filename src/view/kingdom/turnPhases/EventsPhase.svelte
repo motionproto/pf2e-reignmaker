@@ -20,7 +20,6 @@
    import DebugEventSelector from '../components/DebugEventSelector.svelte';
    import OngoingEventCard from '../components/OngoingEventCard.svelte';
    import AidSelectionDialog from '../components/AidSelectionDialog.svelte';
-   import CustomModifierDisplay from '../components/CustomModifierDisplay.svelte';
    import EventInstanceList from './components/EventInstanceList.svelte';
    import { createGameCommandsService } from '../../../services/GameCommandsService';
    import { logger } from '../../../utils/Logger';
@@ -55,9 +54,10 @@
      stateChanges?: Record<string, any>;
      modifiers?: any[];
      manualEffects?: string[];
+     specialEffects?: string[];
      shortfallResources?: string[];
      rollBreakdown?: any;
-     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
+     isIgnored?: boolean;
    } | null = null;
    let eventResolved = false;
    
@@ -92,7 +92,6 @@
    $: eventDC = $kingdomData.eventDC || 15;
    // NEW ARCHITECTURE: Read from unified activeCheckInstances filtered by type
    $: activeEventInstances = $kingdomData.activeCheckInstances?.filter(i => i.checkType === 'event') || [];
-   $: activeModifiers = $kingdomData.activeModifiers || [];
    
    // ✅ NEW ARCHITECTURE: Get current event instance from turnState.eventInstanceId (precise matching)
    $: currentEventInstance = $kingdomData.turnState?.eventsPhase?.eventInstanceId 
@@ -105,7 +104,6 @@
       instance.checkId !== $kingdomData.turnState?.eventsPhase?.eventId
    );
    $: resolvedEventInstances = activeEventInstances.filter(instance => instance.status === 'resolved');
-   $: customModifiers = activeModifiers;  // All modifiers are now custom (no event data)
    
    // Build outcomes for ongoing events from activeCheckInstances  
    $: ongoingEventsWithOutcomes = ongoingEventInstances.map(instance => {
@@ -187,23 +185,8 @@
          }
       }
       
-      // Check for persisted applied outcomes
-      if ($kingdomData?.turnState?.eventsPhase?.appliedOutcomes && $kingdomData.turnState.eventsPhase.appliedOutcomes.length > 0) {
-         const appliedOutcome = $kingdomData?.turnState?.eventsPhase.appliedOutcomes[0];
-         if (currentEvent && appliedOutcome && appliedOutcome.eventId === currentEvent.id) {
-            // Restore resolved state
-            eventResolved = true;
-            eventResolution = {
-               outcome: appliedOutcome.outcome,
-               actorName: appliedOutcome.eventName,
-               skillName: appliedOutcome.skillUsed,
-               effect: appliedOutcome.effect,
-               stateChanges: appliedOutcome.stateChanges,
-               modifiers: appliedOutcome.modifiers,
-               manualEffects: appliedOutcome.manualEffects
-            };
-         }
-      }
+      // ✅ REFACTOR: Removed persisted outcome restoration - kingdom state is the source of truth
+      // currentEventInstance.appliedOutcome is automatically restored from KingdomActor flags
       
       // Listen for roll completion to clear aids
       window.addEventListener('kingdomRollComplete', handleRollComplete as any);
@@ -381,7 +364,8 @@
                effect: outcomeData.msg,
                modifiers: outcomeData.modifiers,
                manualEffects: outcomeData.manualEffects,
-               shortfallResources: [],
+               specialEffects: [],  // ✅ Will be populated when outcome is applied
+               shortfallResources: [],  // ✅ Will be populated when outcome is applied
                rollBreakdown: result.rollBreakdown,
                effectsApplied: false
             };
@@ -399,7 +383,7 @@
                   }
                });
             } else {
-               // Store in main event resolution (local state, current event only)
+               // Store in local UI state (current event only)
                eventResolution = resolution;
                eventResolved = true;
             }
@@ -488,18 +472,47 @@
       
       if (result.success) {
 
-         // Parse shortfall information from the new result structure
+         // ✅ FIXED: Reassign to trigger Svelte reactivity
          const shortfalls: string[] = [];
-         if (result.applied?.applied?.specialEffects) {
-            for (const effect of result.applied.applied.specialEffects) {
+         if (result.applied?.specialEffects) {
+            for (const effect of result.applied.specialEffects) {
                if (effect.startsWith('shortage_penalty:')) {
                   shortfalls.push(effect.split(':')[1]);
                }
             }
          }
          
-         if (shortfalls.length > 0) {
-            resolution.shortfallResources = shortfalls;
+         // Create new object to trigger reactivity
+         if (resolution === eventResolution && eventResolution) {
+            // Current event - reassign local state
+            eventResolution = {
+               outcome: eventResolution.outcome,
+               actorName: eventResolution.actorName,
+               skillName: eventResolution.skillName,
+               effect: eventResolution.effect,
+               stateChanges: eventResolution.stateChanges,
+               modifiers: eventResolution.modifiers,
+               manualEffects: eventResolution.manualEffects,
+               rollBreakdown: eventResolution.rollBreakdown,
+               isIgnored: eventResolution.isIgnored,
+               specialEffects: result.applied?.specialEffects || [],
+               shortfallResources: shortfalls
+            };
+         } else {
+            // Ongoing event - update kingdom state
+            await updateKingdom(kingdom => {
+               if (!kingdom.activeCheckInstances) return;
+               const instance = kingdom.activeCheckInstances.find((i: any) => 
+                  i.appliedOutcome === resolution
+               );
+               if (instance && instance.appliedOutcome) {
+                  instance.appliedOutcome = {
+                     ...instance.appliedOutcome,
+                     specialEffects: result.applied?.specialEffects || [],
+                     shortfallResources: shortfalls
+                  };
+               }
+            });
          }
          
          // Note: No manual clearing needed - the reactive statement will handle it
@@ -989,18 +1002,6 @@
          </div>
       </div>
    {/if}
-   
-   <!-- Custom Modifiers - User-created or informational modifiers -->
-   {#if customModifiers.length > 0}
-      <div class="custom-modifiers-section">
-         <h2 class="custom-modifiers-header">Custom Modifiers</h2>
-         <div class="custom-modifiers-list">
-            {#each customModifiers as modifier}
-               <CustomModifierDisplay {modifier} />
-            {/each}
-         </div>
-      </div>
-   {/if}
 </div>
 
 <!-- Aid Selection Dialog -->
@@ -1248,23 +1249,6 @@
    }
    
    .resolved-events-list {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-   }
-   
-   .custom-modifiers-section {
-      padding: 20px 0;
-   }
-   
-   .custom-modifiers-header {
-      margin: 0 0 15px 0;
-      color: var(--text-accent);
-      font-size: var(--font-xl);
-      font-weight: var(--font-weight-normal);
-   }
-   
-   .custom-modifiers-list {
       display: flex;
       flex-direction: column;
       gap: 15px;
