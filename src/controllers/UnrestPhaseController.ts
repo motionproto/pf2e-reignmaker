@@ -216,6 +216,11 @@ export async function createUnrestPhaseController() {
       // Get outcome data
       const outcomeData = incident?.effects[outcome];
       
+      console.log('🔍 [resolveIncident] Incident:', incident?.id);
+      console.log('🔍 [resolveIncident] Outcome:', outcome);
+      console.log('🔍 [resolveIncident] OutcomeData:', outcomeData);
+      console.log('🔍 [resolveIncident] GameCommands:', (outcomeData as any)?.gameCommands);
+      
       // Execute game commands if present (structure damage, etc.)
       const { executeGameCommands } = await import('./shared/GameCommandHelpers');
       const gameCommandEffects = await executeGameCommands((outcomeData as any)?.gameCommands || []);

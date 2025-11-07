@@ -31,6 +31,7 @@ export type GameCommandType =
   
   // Diplomatic & Special
   | 'establishDiplomaticRelations'
+  | 'adjustFactionAttitude'
   | 'requestEconomicAid'
   | 'requestMilitaryAid'
   | 'infiltration'
@@ -55,7 +56,10 @@ export type GameCommandType =
   | 'destroyStructure'
   
   // Unrest Management (Additional)
-  | 'releaseImprisoned';
+  | 'releaseImprisoned'
+  
+  // Territory Management
+  | 'removeBorderHexes';
 
 /**
  * Proficiency scaling for commands
@@ -176,6 +180,18 @@ export interface EstablishDiplomaticRelationsCommand extends BaseGameCommand {
   targetNation: string;
 }
 
+/**
+ * Adjust faction attitude command
+ * Used to improve or worsen relations with factions
+ */
+export interface AdjustFactionAttitudeCommand extends BaseGameCommand {
+  type: 'adjustFactionAttitude';
+  steps: number;              // +1 = improve, -1 = worsen, +2 = improve twice, etc.
+  maxLevel?: string;          // Optional cap (e.g., "Friendly")
+  minLevel?: string;          // Optional floor (e.g., "Unfriendly")
+  factionId?: string;         // Optional pre-selected faction (if null, player selects)
+}
+
 export interface RequestEconomicAidCommand extends BaseGameCommand {
   type: 'requestEconomicAid';
   resourceType: 'gold' | 'food' | 'resources';
@@ -277,6 +293,16 @@ export interface ReleaseImprisonedCommand extends BaseGameCommand {
 }
 
 /**
+ * Remove border hexes command
+ * Used by incidents like border raids that cause loss of territory
+ */
+export interface RemoveBorderHexesCommand extends BaseGameCommand {
+  type: 'removeBorderHexes';
+  count: number | 'dice';  // Number of hexes or 'dice' for rolled value
+  dice?: string;           // Dice formula (e.g., '1d3') if count is 'dice'
+}
+
+/**
  * Special operations
  */
 export interface InfiltrationCommand extends BaseGameCommand {
@@ -312,6 +338,7 @@ export type GameCommand =
   | RecoverArmyCommand
   | DisbandArmyCommand
   | EstablishDiplomaticRelationsCommand
+  | AdjustFactionAttitudeCommand
   | RequestEconomicAidCommand
   | RequestMilitaryAidCommand
   | ResolveEventCommand
@@ -327,4 +354,5 @@ export type GameCommand =
   | FortifyHexCommand
   | DamageStructureCommand
   | DestroyStructureCommand
-  | ReleaseImprisonedCommand;
+  | ReleaseImprisonedCommand
+  | RemoveBorderHexesCommand;

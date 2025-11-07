@@ -249,6 +249,7 @@ export class HexSelectorService {
       case 'settlement': return 'hoverSettlement';
       case 'scout': return 'hoverScout';
       case 'fortify': return 'hoverFortify';
+      case 'unclaim': return 'hoverUnclaim';
       default: return 'hoverClaim';
     }
   }
@@ -263,6 +264,7 @@ export class HexSelectorService {
       case 'settlement': return 'newSettlement';
       case 'scout': return 'newScout';
       case 'fortify': return 'newFortify';
+      case 'unclaim': return 'newUnclaim';
       default: return 'newClaim';
     }
   }
@@ -305,9 +307,14 @@ export class HexSelectorService {
             ? this.getAdjacentRoadsForPreview(hexId)
             : undefined;
           
-          // Show hover with optional road preview
-          const style = this.getHoverStyle();
-          this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
+          // For 'unclaim' type, show red X icon in hover layer
+          if (this.config.colorType === 'unclaim') {
+            this.showUnclaimHover(hexId);
+          } else {
+            // Show hover with optional road preview
+            const style = this.getHoverStyle();
+            this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
+          }
         } else {
           // Show invalid hover (red, no preview)
           const invalidStyle = { fillColor: 0xFF0000, fillAlpha: 0.2 };
@@ -399,6 +406,61 @@ export class HexSelectorService {
   }
   
   /**
+   * Get hex center position for rendering icons
+   */
+  private getHexCenter(hexId: string, canvas: any): { x: number, y: number } | null {
+    if (!canvas?.grid) return null;
+    
+    // Parse hex ID (format: "X.Y")
+    const [xStr, yStr] = hexId.split('.');
+    const col = parseInt(xStr, 10);
+    const row = parseInt(yStr, 10);
+    
+    if (isNaN(col) || isNaN(row)) return null;
+    
+    // Get grid center position
+    const [x, y] = canvas.grid.grid.getCenter(col, row);
+    return { x, y };
+  }
+  
+  /**
+   * Show red X hover for unclaim action
+   */
+  private showUnclaimHover(hexId: string): void {
+    const layer = this.mapLayer.getLayer('interactive-hover');
+    if (!layer) return;
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return;
+    
+    // Clear existing hover
+    layer.removeChildren();
+    
+    // Get hex center position
+    const hexCenter = this.getHexCenter(hexId, canvas);
+    if (!hexCenter) return;
+    
+    const xGraphics = new PIXI.Graphics();
+    xGraphics.name = `HoverUnclaimX_${hexId}`;
+    xGraphics.visible = true;
+    
+    // Draw red X icon (slightly lighter/thinner for hover)
+    const size = canvas.grid.size * 0.4;
+    const lineWidth = 6;
+    const color = 0xFF6B6B; // Light red for hover
+    
+    xGraphics.lineStyle(lineWidth, color, 0.8);
+    
+    // Draw diagonal lines forming X
+    xGraphics.moveTo(hexCenter.x - size, hexCenter.y - size);
+    xGraphics.lineTo(hexCenter.x + size, hexCenter.y + size);
+    xGraphics.moveTo(hexCenter.x + size, hexCenter.y - size);
+    xGraphics.lineTo(hexCenter.x - size, hexCenter.y + size);
+    
+    layer.addChild(xGraphics);
+  }
+  
+  /**
    * Render selection based on action type (explicit routing)
    */
   private renderSelection(hexId: string, style: HexStyle, roadConnections?: string[]): void {
@@ -411,8 +473,11 @@ export class HexSelectorService {
     // Route to type-specific renderer
     if (this.config?.colorType === 'road') {
       this.renderRoadSelection(hexId, roadConnections);
+    } else if (this.config?.colorType === 'unclaim') {
+      // For unclaim - render red X icon
+      this.renderUnclaimSelection(hexId);
     } else {
-      // For claim, settlement, scout - always render hex fill
+      // For claim, settlement, scout, fortify - render hex fill
       this.renderHexSelection(hexId, style);
     }
   }
@@ -463,6 +528,40 @@ export class HexSelectorService {
   }
   
   /**
+   * Render red X icon for unclaim selection
+   */
+  private renderUnclaimSelection(hexId: string): void {
+    const layer = this.mapLayer.getLayer('interactive-selection');
+    if (!layer) return;
+    
+    const canvas = (globalThis as any).canvas;
+    if (!canvas?.grid) return;
+    
+    // Get hex center position
+    const hexCenter = this.getHexCenter(hexId, canvas);
+    if (!hexCenter) return;
+    
+    const xGraphics = new PIXI.Graphics();
+    xGraphics.name = `UnclaimX_${hexId}`;
+    xGraphics.visible = true;
+    
+    // Draw red X icon
+    const size = canvas.grid.size * 0.4; // 40% of hex size
+    const lineWidth = 8;
+    const color = 0xDC143C; // Crimson red
+    
+    xGraphics.lineStyle(lineWidth, color, 1.0);
+    
+    // Draw diagonal lines forming X
+    xGraphics.moveTo(hexCenter.x - size, hexCenter.y - size);
+    xGraphics.lineTo(hexCenter.x + size, hexCenter.y + size);
+    xGraphics.moveTo(hexCenter.x + size, hexCenter.y - size);
+    xGraphics.lineTo(hexCenter.x - size, hexCenter.y + size);
+    
+    layer.addChild(xGraphics);
+  }
+  
+  /**
    * Validate all selected hexes and remove any that are now invalid
    * This handles cascading removals when a hex is deselected
    * 
@@ -489,7 +588,6 @@ export class HexSelectorService {
         const isValid = this.config.validationFn(hexId, otherPending);
         
         if (!isValid) {
-
           this.selectedHexes.splice(i, 1);
           this.selectedRoadConnections.delete(hexId);
           this.mapLayer.removeHexFromSelection(hexId);

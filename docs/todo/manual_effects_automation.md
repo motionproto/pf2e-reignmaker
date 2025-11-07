@@ -148,25 +148,63 @@ Applies ongoing unrest penalties but doesn't track if demand is met.
 
 ---
 
-## Low Priority: Diplomatic Relations
+## Low Priority: Diplomatic Relations ✅ COMPLETED
+
+**Status:** ✅ Fully Implemented (2025-11-07)
 
 **Affected Events (1):**
 - `diplomatic-overture` (improve relations by one step, max Friendly without diplomatic structures)
 
-**Current Implementation:**
-Message describes the effect but no automation to actually change faction relations.
+**Implementation Details:**
 
-**Automation Requirements:**
-1. Prompt player to select which faction
-2. Check current relationship level
-3. Improve by one step (Hostile → Unfriendly → Neutral → Friendly → Helpful)
-4. Respect "Friendly" cap if kingdom lacks diplomatic structures
-5. Display notification of relationship change
+**Files Created:**
+1. `src/utils/faction-attitude-adjuster.ts` - Utility functions for attitude calculations
+   - `adjustAttitudeBySteps()` - Pure function with constraint support
+   - `hasDiplomaticStructures()` - Checks diplomatic capacity
+   - `canAdjustAttitude()` - Validation helper
+   - `getAdjustmentBlockReason()` - Error message generator
 
-**Design Considerations:**
-- How to integrate with faction system (if it exists)?
-- Should some factions be ineligible (already Helpful, etc.)?
-- What counts as a "diplomatic structure"?
+**Files Modified:**
+1. `src/services/factions/index.ts`
+   - Added `FactionService.adjustAttitude()` method
+   - Returns: `{ success, oldAttitude, newAttitude, reason }`
+
+2. `src/services/GameCommandsResolver.ts`
+   - Implemented `adjustFactionAttitude()` game command
+   - Foundry Dialog for faction selection (filtered by eligibility)
+   - Auto-detects diplomatic structures for Friendly cap
+
+3. `src/controllers/actions/game-commands.ts`
+   - Added `AdjustFactionAttitudeCommand` type definition
+   - Supports: `steps`, `maxLevel`, `minLevel`, `factionId` parameters
+
+4. `src/controllers/shared/GameCommandHelpers.ts`
+   - Added routing for `adjustFactionAttitude` commands
+   - Converts results to specialEffects format
+
+5. `data/events/diplomatic-overture.json`
+   - Updated all outcomes with `gameCommands` entries
+   - Critical Success: +1 step (no cap)
+   - Success: +1 step (Friendly cap)
+   - Failure: No effect
+   - Critical Failure: -1 step
+
+**Key Features:**
+- ✅ Player selects faction via dropdown (filtered by eligibility)
+- ✅ Validates current attitude before adjustment
+- ✅ Respects Friendly cap if no diplomatic structures (capacity = 1)
+- ✅ Supports improvement (+steps) and worsening (-steps)
+- ✅ Chat notifications display attitude changes
+- ✅ Fully reactive through KingdomStore
+
+**Design Decisions:**
+- **Diplomatic structures** = Any structure that increases diplomatic capacity > 1
+- **Eligibility** = Factions that can be adjusted based on current attitude and constraints
+- **Caps** = Critical success removes cap, success enforces Friendly cap
+- **Constraints** = maxLevel/minLevel parameters in command definition
+
+**Architecture:**
+Uses gameCommands pattern (type-safe, no pseudo-resources), follows established patterns for structure damage, hex claiming, etc.
 
 ---
 

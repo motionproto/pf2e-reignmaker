@@ -34,11 +34,24 @@
           "duration": "immediate"
         }
       ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": 1
+        }
+      ],
       "endsEvent": true
     },
     "success": {
       "msg": "Relations improve by one step (max Friendly without diplomatic structures)",
       "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": 1,
+          "maxLevel": "Friendly"
+        }
+      ],
       "endsEvent": true
     },
     "failure": {
@@ -54,6 +67,12 @@
           "resource": "unrest",
           "value": 1,
           "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1
         }
       ],
       "endsEvent": true

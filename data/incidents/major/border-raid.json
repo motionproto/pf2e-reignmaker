@@ -38,8 +38,11 @@
           "duration": "immediate"
         }
       ],
-      "manualEffects": [
-        "Remove 1 border hex from your kingdom map"
+      "gameCommands": [
+        {
+          "type": "removeBorderHexes",
+          "count": 1
+        }
       ],
       "endsEvent": true
     },
@@ -54,8 +57,12 @@
           "duration": "immediate"
         }
       ],
-      "manualEffects": [
-        "Roll 1d3 and remove that many border hexes from your kingdom map"
+      "gameCommands": [
+        {
+          "type": "removeBorderHexes",
+          "count": "dice",
+          "dice": "1d3"
+        }
       ],
       "endsEvent": true
     }

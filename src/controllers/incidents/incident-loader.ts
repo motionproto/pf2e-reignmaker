@@ -64,25 +64,29 @@ export class IncidentLoader {
                         msg: raw.effects.criticalSuccess.msg,
                         endsEvent: true,
                         modifiers: raw.effects.criticalSuccess.modifiers || [],
-                        manualEffects: (raw.effects.criticalSuccess as any).manualEffects || []
+                        manualEffects: (raw.effects.criticalSuccess as any).manualEffects || [],
+                        gameCommands: (raw.effects.criticalSuccess as any).gameCommands || []
                     } : undefined,
                     success: raw.effects.success ? {
                         msg: raw.effects.success.msg,
                         endsEvent: true,
                         modifiers: raw.effects.success.modifiers || [],
-                        manualEffects: (raw.effects.success as any).manualEffects || []
+                        manualEffects: (raw.effects.success as any).manualEffects || [],
+                        gameCommands: (raw.effects.success as any).gameCommands || []
                     } : undefined,
                     failure: raw.effects.failure ? {
                         msg: raw.effects.failure.msg,
                         endsEvent: true,
                         modifiers: raw.effects.failure.modifiers || [],
-                        manualEffects: (raw.effects.failure as any).manualEffects || []
+                        manualEffects: (raw.effects.failure as any).manualEffects || [],
+                        gameCommands: (raw.effects.failure as any).gameCommands || []
                     } : undefined,
                     criticalFailure: raw.effects.criticalFailure ? {
                         msg: raw.effects.criticalFailure.msg,
                         endsEvent: true,
                         modifiers: raw.effects.criticalFailure.modifiers || [],
-                        manualEffects: (raw.effects.criticalFailure as any).manualEffects || []
+                        manualEffects: (raw.effects.criticalFailure as any).manualEffects || [],
+                        gameCommands: (raw.effects.criticalFailure as any).gameCommands || []
                     } : undefined,
                 }
             }));

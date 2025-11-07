@@ -237,7 +237,7 @@ export async function createGameCommandsResolver() {
         }
 
         // Find the settlement
-        const settlement = kingdom.settlements?.find(s => s.id === settlementId);
+        const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
         if (!settlement) {
           return { success: false, error: `Settlement ${settlementId} not found` };
         }
@@ -383,7 +383,7 @@ export async function createGameCommandsResolver() {
         }
 
         // Find the settlement
-        const settlement = kingdom.settlements?.find(s => s.id === settlementId);
+        const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
         if (!settlement) {
           return { success: false, error: `Settlement ${settlementId} not found` };
         }
@@ -1428,6 +1428,290 @@ export async function createGameCommandsResolver() {
 
       } catch (error) {
         logger.error('❌ [GameCommandsResolver] Failed to damage structure:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Remove Border Hexes - Player selects border hexes to remove from kingdom
+     * Used by incidents like border raids that cause loss of territory
+     * 
+     * @param count - Number of hexes to remove (or 'dice' for rolled value)
+     * @param dice - Dice formula (e.g., '1d3') if count is 'dice'
+     * @returns ResolveResult with removed hex details
+     */
+    async removeBorderHexes(count: number | 'dice', dice?: string): Promise<ResolveResult> {
+      logger.info(`🏴 [removeBorderHexes] Removing border hexes: count=${count}, dice=${dice}`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom) {
+          return { success: false, error: 'No kingdom data available' };
+        }
+
+        // 1. Handle dice rolling if needed
+        let hexCount: number;
+        if (count === 'dice') {
+          if (!dice) {
+            return { success: false, error: 'Dice formula required when count is "dice"' };
+          }
+          
+          const roll = new Roll(dice);
+          await roll.evaluate();
+          hexCount = roll.total || 1;
+          
+          // Show dice roll in chat
+          await roll.toMessage({
+            flavor: 'Border Hexes Lost',
+            speaker: { alias: 'Kingdom' }
+          });
+          
+          logger.info(`🎲 [removeBorderHexes] Rolled ${dice} = ${hexCount}`);
+        } else {
+          hexCount = count;
+        }
+
+        // 2. Calculate border hexes
+        const borderHexes = await this.getBorderHexes(kingdom);
+        
+        if (borderHexes.length === 0) {
+          return {
+            success: false,
+            error: 'No border hexes available to remove'
+          };
+        }
+
+        logger.info(`🏴 [removeBorderHexes] Found ${borderHexes.length} border hexes:`, borderHexes);
+
+        // Cap hexCount to available border hexes
+        const actualCount = Math.min(hexCount, borderHexes.length);
+        if (actualCount < hexCount) {
+          const ui = (globalThis as any).ui;
+          ui?.notifications?.warn(`Only ${actualCount} border hexes available (requested ${hexCount})`);
+        }
+
+        // 3. Open hex selector
+        const { hexSelectorService } = await import('../services/hex-selector');
+        
+        const selectedHexes = await hexSelectorService.selectHexes({
+          title: `Remove ${actualCount} Border Hex${actualCount !== 1 ? 'es' : ''}`,
+          count: actualCount,
+          colorType: 'unclaim',
+          validationFn: (hexId) => borderHexes.includes(hexId)
+        });
+
+        if (!selectedHexes || selectedHexes.length === 0) {
+          return {
+            success: false,
+            error: 'Hex selection cancelled'
+          };
+        }
+
+        // 4. Remove hexes from kingdom
+        await updateKingdom(k => {
+          selectedHexes.forEach(hexId => {
+            const hex = k.hexes.find(h => h.id === hexId);
+            if (hex) {
+              hex.claimedBy = null;
+              logger.info(`  🏴 Removed hex ${hexId} from kingdom`);
+            }
+          });
+        });
+
+        logger.info(`✅ [removeBorderHexes] Removed ${selectedHexes.length} border hexes`);
+
+        return {
+          success: true,
+          data: {
+            removedHexes: selectedHexes,
+            count: selectedHexes.length,
+            message: `Removed ${selectedHexes.length} border hex${selectedHexes.length !== 1 ? 'es' : ''} from kingdom: ${selectedHexes.join(', ')}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to remove border hexes:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
+    /**
+     * Helper: Get border hexes (hexes with at least one unclaimed adjacent hex)
+     */
+    async getBorderHexes(kingdom: any): Promise<string[]> {
+      const { getAdjacentHexIds } = await import('../actions/shared/hexValidation');
+      const { PLAYER_KINGDOM } = await import('../types/ownership');
+      
+      // Get all claimed hexes
+      const claimedHexes = kingdom.hexes.filter((h: any) => h.claimedBy === PLAYER_KINGDOM);
+      
+      // Filter to only border hexes
+      return claimedHexes.filter((hex: any) => {
+        const adjacentHexIds = getAdjacentHexIds(hex.id);
+        
+        // Check if any adjacent hex is unclaimed
+        return adjacentHexIds.some((adjId: string) => {
+          const adjHex = kingdom.hexes.find((h: any) => h.id === adjId);
+          return !adjHex || adjHex.claimedBy === null || adjHex.claimedBy === undefined;
+        });
+      }).map((h: any) => h.id);
+    },
+
+    /**
+     * Adjust Faction Attitude - Improve or worsen diplomatic relations
+     * 
+     * @param factionId - Optional specific faction (if null, player selects via UI)
+     * @param steps - Number of steps to adjust (+1 = improve, -1 = worsen)
+     * @param options - Optional constraints (maxLevel, minLevel)
+     * @returns ResolveResult with attitude change details
+     */
+    async adjustFactionAttitude(
+      factionId: string | null,
+      steps: number,
+      options?: {
+        maxLevel?: string;
+        minLevel?: string;
+      }
+    ): Promise<ResolveResult> {
+      logger.info(`🤝 [adjustFactionAttitude] Adjusting faction attitude by ${steps} steps`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        const kingdom = actor.getKingdomData();
+        if (!kingdom || !kingdom.factions || kingdom.factions.length === 0) {
+          return { success: false, error: 'No factions available' };
+        }
+
+        // Import utilities
+        const { hasDiplomaticStructures } = await import('../utils/faction-attitude-adjuster');
+        const { factionService } = await import('./factions/index');
+
+        // Check diplomatic structures for maxLevel override
+        const hasDiploStructures = hasDiplomaticStructures(kingdom);
+        const effectiveMaxLevel = hasDiploStructures ? undefined : options?.maxLevel;
+
+        // Get target faction
+        let targetFactionId = factionId;
+        let targetFactionName = '';
+
+        if (!targetFactionId) {
+          // For now, use a simple selection prompt
+          // TODO: Implement proper FactionSelectorService with UI
+          const game = (globalThis as any).game;
+          
+          // Filter eligible factions
+          const { canAdjustAttitude, getAdjustmentBlockReason } = await import('../utils/faction-attitude-adjuster');
+          const eligibleFactions = kingdom.factions.filter((f: any) => {
+            return canAdjustAttitude(f.attitude, steps, {
+              maxLevel: effectiveMaxLevel as any,
+              minLevel: options?.minLevel as any
+            });
+          });
+
+          if (eligibleFactions.length === 0) {
+            return {
+              success: false,
+              error: `No factions available to ${steps > 0 ? 'improve' : 'worsen'} relations with${effectiveMaxLevel ? ` (max: ${effectiveMaxLevel})` : ''}`
+            };
+          }
+
+          // Simple dropdown selection
+          const factionChoices = eligibleFactions.reduce((acc: any, f: any) => {
+            acc[f.id] = `${f.name} (${f.attitude})`;
+            return acc;
+          }, {});
+
+          const selectedId = await new Promise<string | null>((resolve) => {
+            const Dialog = (globalThis as any).Dialog;
+            new Dialog({
+              title: `Select Faction (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`,
+              content: `
+                <form>
+                  <div class="form-group">
+                    <label>Choose Faction:</label>
+                    <select name="factionId" style="width: 100%;">
+                      ${eligibleFactions.map((f: any) => `<option value="${f.id}">${f.name} (${f.attitude})</option>`).join('')}
+                    </select>
+                  </div>
+                </form>
+              `,
+              buttons: {
+                ok: {
+                  label: 'Select',
+                  callback: (html: any) => {
+                    const factionId = html.find('[name="factionId"]').val();
+                    resolve(factionId);
+                  }
+                },
+                cancel: {
+                  label: 'Cancel',
+                  callback: () => resolve(null)
+                }
+              },
+              default: 'ok'
+            }).render(true);
+          });
+
+          if (!selectedId) {
+            return { success: false, error: 'Faction selection cancelled' };
+          }
+
+          targetFactionId = selectedId;
+        }
+
+        const faction = factionService.getFaction(targetFactionId);
+        if (!faction) {
+          return { success: false, error: `Faction not found: ${targetFactionId}` };
+        }
+        targetFactionName = faction.name;
+
+        // Apply adjustment
+        const result = await factionService.adjustAttitude(
+          targetFactionId,
+          steps,
+          {
+            maxLevel: effectiveMaxLevel as any,
+            minLevel: options?.minLevel as any
+          }
+        );
+
+        if (!result.success) {
+          return { success: false, error: result.reason };
+        }
+
+        // Format message
+        const direction = steps > 0 ? 'improved' : 'worsened';
+        const message = `Relations with ${targetFactionName} ${direction}: ${result.oldAttitude} → ${result.newAttitude}`;
+
+        logger.info(`✅ [adjustFactionAttitude] ${message}`);
+
+        return {
+          success: true,
+          data: {
+            factionName: targetFactionName,
+            oldAttitude: result.oldAttitude,
+            newAttitude: result.newAttitude,
+            message
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to adjust faction attitude:', error);
         return {
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error'

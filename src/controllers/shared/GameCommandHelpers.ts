@@ -16,7 +16,10 @@ import type { GameCommand } from '../../types/modifiers';
 export async function executeGameCommands(gameCommands: GameCommand[]): Promise<string[]> {
   const specialEffects: string[] = [];
   
+  console.log('🎮 [executeGameCommands] Received gameCommands:', gameCommands);
+  
   if (!gameCommands || gameCommands.length === 0) {
+    console.log('⚠️ [executeGameCommands] No game commands to execute');
     return specialEffects;
   }
   
@@ -24,6 +27,7 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
   const resolver = await createGameCommandsResolver();
   
   for (const command of gameCommands) {
+    console.log('🎮 [executeGameCommands] Processing command:', command);
     if (command.type === 'damageStructure') {
       const result = await resolver.damageStructure(
         (command as any).targetStructure,
@@ -40,6 +44,32 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
             `structure_damaged:${damaged.structureId}:${damaged.settlementId}`
           );
         }
+      }
+    } else if (command.type === 'removeBorderHexes') {
+      const cmd = command as any;
+      const result = await resolver.removeBorderHexes(
+        cmd.count,
+        cmd.dice
+      );
+      
+      // Convert removal results to specialEffects format
+      if (result.success && result.data?.message) {
+        specialEffects.push(result.data.message);
+      }
+    } else if (command.type === 'adjustFactionAttitude') {
+      const cmd = command as any;
+      const result = await resolver.adjustFactionAttitude(
+        cmd.factionId || null,
+        cmd.steps,
+        {
+          maxLevel: cmd.maxLevel,
+          minLevel: cmd.minLevel
+        }
+      );
+      
+      // Convert attitude change results to specialEffects format
+      if (result.success && result.data?.message) {
+        specialEffects.push(result.data.message);
       }
     }
     // Future command types will be handled here (claimHex, recruitArmy, etc.)

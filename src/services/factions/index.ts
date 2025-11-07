@@ -5,6 +5,7 @@ import { updateKingdom, getKingdomActor } from '../../stores/KingdomStore';
 import type { Faction, AttitudeLevel } from '../../models/Faction';
 import { createDefaultFaction } from '../../models/Faction';
 import { loadDefaultFactions } from '../../models/DefaultFactions';
+import { adjustAttitudeBySteps } from '../../utils/faction-attitude-adjuster';
 export class FactionService {
   /**
    * Create a new faction
@@ -36,7 +37,7 @@ export class FactionService {
   async updateFaction(factionId: string, updates: Partial<Faction>): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const faction = kingdom.factions?.find(f => f.id === factionId);
+      const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
       if (!faction) {
         throw new Error(`Faction not found: ${factionId}`);
       }
@@ -57,7 +58,7 @@ export class FactionService {
   async updateFactionDetails(factionId: string, factionData: Faction): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const factionIndex = kingdom.factions?.findIndex(f => f.id === factionId);
+      const factionIndex = kingdom.factions?.findIndex((f: Faction) => f.id === factionId);
       if (factionIndex === undefined || factionIndex === -1) {
         throw new Error(`Faction not found: ${factionId}`);
       }
@@ -85,13 +86,13 @@ export class FactionService {
       throw new Error('No kingdom data available');
     }
     
-    const faction = kingdom.factions?.find(f => f.id === factionId);
+    const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
     if (!faction) {
       throw new Error(`Faction not found: ${factionId}`);
     }
     
     await updateKingdom(kingdom => {
-      kingdom.factions = kingdom.factions.filter(f => f.id !== factionId);
+      kingdom.factions = kingdom.factions.filter((f: Faction) => f.id !== factionId);
     });
 
   }
@@ -105,7 +106,7 @@ export class FactionService {
   async updateAttitude(factionId: string, attitude: AttitudeLevel): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const faction = kingdom.factions?.find(f => f.id === factionId);
+      const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
       if (!faction) {
         throw new Error(`Faction not found: ${factionId}`);
       }
@@ -113,6 +114,57 @@ export class FactionService {
       faction.attitude = attitude;
     });
 
+  }
+  
+  /**
+   * Adjust faction attitude by N steps (with optional constraints)
+   * 
+   * @param factionId - Faction ID
+   * @param steps - Number of steps to adjust (+1 = improve, -1 = worsen, +2 = improve twice, etc.)
+   * @param options - Optional constraints (maxLevel, minLevel)
+   * @returns Result with old/new attitudes and success status
+   */
+  async adjustAttitude(
+    factionId: string,
+    steps: number,
+    options?: {
+      maxLevel?: AttitudeLevel;
+      minLevel?: AttitudeLevel;
+    }
+  ): Promise<{
+    success: boolean;
+    oldAttitude: AttitudeLevel;
+    newAttitude: AttitudeLevel | null;
+    reason?: string;
+  }> {
+    const faction = this.getFaction(factionId);
+    if (!faction) {
+      return { 
+        success: false, 
+        oldAttitude: 'Indifferent', 
+        newAttitude: null,
+        reason: `Faction not found: ${factionId}`
+      };
+    }
+
+    const newAttitude = adjustAttitudeBySteps(faction.attitude, steps, options);
+    
+    if (!newAttitude) {
+      return {
+        success: false,
+        oldAttitude: faction.attitude,
+        newAttitude: null,
+        reason: `Cannot adjust attitude from ${faction.attitude} by ${steps} steps${options?.maxLevel ? ` (max: ${options.maxLevel})` : ''}${options?.minLevel ? ` (min: ${options.minLevel})` : ''}`
+      };
+    }
+
+    await this.updateAttitude(factionId, newAttitude);
+
+    return {
+      success: true,
+      oldAttitude: faction.attitude,
+      newAttitude
+    };
   }
   
   /**
@@ -125,7 +177,7 @@ export class FactionService {
   async updateProgressClock(factionId: string, current: number, max?: number): Promise<void> {
 
     await updateKingdom(kingdom => {
-      const faction = kingdom.factions?.find(f => f.id === factionId);
+      const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
       if (!faction) {
         throw new Error(`Faction not found: ${factionId}`);
       }
@@ -157,7 +209,7 @@ export class FactionService {
       throw new Error('No kingdom data available');
     }
     
-    const faction = kingdom.factions?.find(f => f.id === factionId);
+    const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
     if (!faction) {
       throw new Error(`Faction not found: ${factionId}`);
     }
@@ -182,7 +234,7 @@ export class FactionService {
       throw new Error('No kingdom data available');
     }
     
-    const faction = kingdom.factions?.find(f => f.id === factionId);
+    const faction = kingdom.factions?.find((f: Faction) => f.id === factionId);
     if (!faction) {
       throw new Error(`Faction not found: ${factionId}`);
     }
@@ -204,7 +256,7 @@ export class FactionService {
     const kingdom = actor.getKingdomData();
     if (!kingdom) return null;
     
-    return kingdom.factions?.find(f => f.id === factionId) || null;
+    return kingdom.factions?.find((f: Faction) => f.id === factionId) || null;
   }
   
   /**
@@ -229,7 +281,7 @@ export class FactionService {
    * @returns Factions with the specified attitude
    */
   getFactionsByAttitude(attitude: AttitudeLevel): Faction[] {
-    return this.getAllFactions().filter(f => f.attitude === attitude);
+    return this.getAllFactions().filter((f: Faction) => f.attitude === attitude);
   }
   
   /**
@@ -267,10 +319,10 @@ export class FactionService {
     }
     
     // Get existing faction IDs
-    const existingIds = new Set((kingdom.factions || []).map(f => f.id));
+    const existingIds = new Set((kingdom.factions || []).map((f: Faction) => f.id));
     
     // Filter to only missing factions
-    const missingFactions = defaultFactions.filter(f => !existingIds.has(f.id));
+    const missingFactions = defaultFactions.filter((f: Faction) => !existingIds.has(f.id));
     
     if (missingFactions.length === 0) {
 
@@ -285,7 +337,7 @@ export class FactionService {
       kingdom.factions.push(...missingFactions);
     });
     
-    const addedNames = missingFactions.map(f => f.name);
+    const addedNames = missingFactions.map((f: Faction) => f.name);
 
     return { 
       added: missingFactions.length, 

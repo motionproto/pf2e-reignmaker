@@ -190,7 +190,7 @@ export class OverlayManager {
               // This prevents race conditions when store updates rapidly (e.g., army deletion)
               const existingRender = this.renderLocks.get(id);
               if (existingRender) {
-                logger.info(`[OverlayManager] ⏳ Waiting for in-progress render: ${id}`);
+                // Silently wait for in-progress render (no log spam needed)
                 await existingRender;
               }
               

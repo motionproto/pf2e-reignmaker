@@ -5,7 +5,7 @@
 /**
  * Type of hex selection action
  */
-export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify';
+export type HexSelectionType = 'claim' | 'road' | 'settlement' | 'scout' | 'fortify' | 'unclaim';
 
 /**
  * Color configuration for hex highlighting
@@ -57,5 +57,10 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   // Fortify Hex
   existingFortification: { color: 0x696969, alpha: 0.3 },  // Dark gray
   newFortify: { color: 0xA9A9A9, alpha: 0.5 },              // Gray (reuse claim colors)
-  hoverFortify: { color: 0x90EE90, alpha: 0.4 }             // Light green (hover)
+  hoverFortify: { color: 0x90EE90, alpha: 0.4 },            // Light green (hover)
+  
+  // Unclaim/Remove Territory
+  existingUnclaim: { color: 0x8B0000, alpha: 0.3 },  // Dark red (border hexes)
+  newUnclaim: { color: 0xDC143C, alpha: 0.6 },        // Crimson (selected to remove)
+  hoverUnclaim: { color: 0xFF6B6B, alpha: 0.4 }       // Light red (hover)
 };
