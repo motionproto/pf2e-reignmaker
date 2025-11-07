@@ -41,6 +41,7 @@
   let showRepairStructureDialog: boolean = false;
   let showUpgradeSettlementSelectionDialog: boolean = false;
   let showFactionSelectionDialog: boolean = false;
+  let showRequestEconomicAidDialog: boolean = false;
   let showAidSelectionDialog: boolean = false;
   let showSettlementSelectionDialog: boolean = false;
   let showExecuteOrPardonSettlementDialog: boolean = false;
@@ -54,6 +55,7 @@
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingUpgradeAction: { skill: string; settlementId?: string } | null = null;
   let pendingDiplomaticAction: { skill: string; factionId?: string; factionName?: string } | null = null;
+  let pendingRequestEconomicAidAction: { skill: string; factionId?: string; factionName?: string } | null = null;
   let pendingStipendAction: { skill: string; settlementId?: string } | null = null;
   let pendingExecuteOrPardonAction: { skill: string; settlementId?: string } | null = null;
   let pendingTrainArmyAction: { skill: string; armyId?: string } | null = null;
@@ -108,6 +110,7 @@
     setShowRepairStructureDialog: (show) => { showRepairStructureDialog = show; },
     setShowUpgradeSettlementDialog: (show) => { showUpgradeSettlementSelectionDialog = show; },
     setShowFactionSelectionDialog: (show) => { showFactionSelectionDialog = show; },
+    setShowRequestEconomicAidDialog: (show) => { showRequestEconomicAidDialog = show; },
     setShowSettlementSelectionDialog: (show) => { showSettlementSelectionDialog = show; },
     setShowExecuteOrPardonSettlementDialog: (show) => { showExecuteOrPardonSettlementDialog = show; },
     setShowTrainArmyDialog: (show) => { showTrainArmyDialog = show; },
@@ -119,6 +122,7 @@
     setPendingRepairAction: (action) => { pendingRepairAction = action; },
     setPendingUpgradeAction: (action) => { pendingUpgradeAction = action; },
     setPendingDiplomaticAction: (action) => { pendingDiplomaticAction = action; },
+    setPendingRequestEconomicAidAction: (action) => { pendingRequestEconomicAidAction = action; },
     setPendingStipendAction: (action) => { pendingStipendAction = action; },
     setPendingExecuteOrPardonAction: (action) => { pendingExecuteOrPardonAction = action; },
     setPendingTrainArmyAction: (action) => { pendingTrainArmyAction = action; },
@@ -700,7 +704,6 @@
   async function handleFactionSelected(event: CustomEvent) {
     const { factionId, factionName } = event.detail;
     
-    // Store faction selection
     if (pendingDiplomaticAction) {
       pendingDiplomaticAction.factionId = factionId;
       pendingDiplomaticAction.factionName = factionName;
@@ -710,6 +713,25 @@
       
       // Now trigger the skill roll with the selected faction context
       await executeEstablishDiplomaticRelationsRoll(pendingDiplomaticAction);
+    }
+  }
+  
+  // Handle when a faction is selected for economic aid request
+  async function handleEconomicAidFactionSelected(event: CustomEvent) {
+    const { factionId, factionName } = event.detail;
+    
+    if (pendingRequestEconomicAidAction) {
+      pendingRequestEconomicAidAction.factionId = factionId;
+      pendingRequestEconomicAidAction.factionName = factionName;
+      
+      // Close dialog
+      showRequestEconomicAidDialog = false;
+      
+      // Store in global state for action-resolver
+      (globalThis as any).__pendingEconomicAidFaction = factionId;
+      
+      // Now trigger the skill roll with the selected faction context
+      await executeRequestEconomicAidRoll(pendingRequestEconomicAidAction);
     }
   }
   
@@ -1030,6 +1052,23 @@
     );
   }
   
+  // Execute the request economic aid skill roll - using ActionExecutionHelpers
+  async function executeRequestEconomicAidRoll(aidAction: { skill: string; factionId?: string; factionName?: string }) {
+    await executeActionRoll(
+      createExecutionContext('request-economic-aid', aidAction.skill, {
+        factionId: aidAction.factionId,
+        factionName: aidAction.factionName
+      }),
+      {
+        getDC: (characterLevel: number) => controller.getActionDC(characterLevel),
+        onRollCancel: () => { 
+          pendingRequestEconomicAidAction = null;
+          delete (globalThis as any).__pendingEconomicAidFaction;
+        }
+      }
+    );
+  }
+  
   // Handle Aid Another button click - check if player has acted, then open skill selection dialog
   function handleAid(event: CustomEvent) {
     const { checkId, checkName } = event.detail;
@@ -1131,6 +1170,7 @@
   bind:showRepairStructureDialog
   bind:showUpgradeSettlementSelectionDialog
   bind:showFactionSelectionDialog
+  bind:showRequestEconomicAidDialog
   bind:showAidSelectionDialog
   bind:showSettlementSelectionDialog
   bind:showExecuteOrPardonSettlementDialog
@@ -1143,6 +1183,7 @@
   on:repairStructureSelected={handleRepairStructureSelected}
   on:upgradeSettlementSelected={handleUpgradeSettlementSelected}
   on:factionSelected={handleFactionSelected}
+  on:economicAidFactionSelected={handleEconomicAidFactionSelected}
   on:settlementSelected={handleSettlementSelected}
   on:executeOrPardonSettlementSelected={handleExecuteOrPardonSettlementSelected}
   on:armySelectedForTraining={handleArmySelectedForTraining}

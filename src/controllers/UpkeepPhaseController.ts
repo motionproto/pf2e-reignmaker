@@ -335,10 +335,15 @@ export async function createUpkeepPhaseController() {
       } else {
         // Can't afford army support - generate unrest
         goldUnrest = armySupportCost - currentGold;
+        
+        // Each army generates MAX 1 unrest (even if both unfed AND unpaid)
+        // Use Math.max() to prevent stacking penalties
+        const armyUnrest = Math.max(armyFoodUnrest, goldUnrest);
+        
         await actor.updateKingdomData((kingdom: any) => {
           kingdom.resources.food = foodAfterArmies;
           kingdom.resources.gold = 0;
-          kingdom.unrest += armyFoodUnrest + goldUnrest;
+          kingdom.unrest += armyUnrest;
           
           // Mark fortifications as unpaid
           for (const hex of kingdom.hexes) {
@@ -351,8 +356,8 @@ export async function createUpkeepPhaseController() {
 
       }
       
-      // Summary
-      const totalUnrest = armyFoodUnrest + goldUnrest;
+      // Summary - use Math.max to reflect actual unrest applied
+      const totalUnrest = Math.max(armyFoodUnrest, goldUnrest);
       if (totalUnrest > 0) {
 
       }

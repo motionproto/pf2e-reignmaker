@@ -190,6 +190,7 @@ export interface AdjustFactionAttitudeCommand extends BaseGameCommand {
   maxLevel?: string;          // Optional cap (e.g., "Friendly")
   minLevel?: string;          // Optional floor (e.g., "Unfriendly")
   factionId?: string;         // Optional pre-selected faction (if null, player selects)
+  count?: number;             // Number of factions to affect (default: 1)
 }
 
 export interface RequestEconomicAidCommand extends BaseGameCommand {

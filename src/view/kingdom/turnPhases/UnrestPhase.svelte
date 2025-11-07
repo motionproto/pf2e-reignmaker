@@ -458,7 +458,7 @@
             on:click={rollForIncident}
             disabled={!isViewingCurrentPhase || isRolling || stepComplete}
          >
-            <i class="fas {stepComplete ? 'fa-check' : 'fa-dice-d20'} {isRolling ? 'spinning' : ''}"></i>
+            <i class="fas {stepComplete ? 'fa-check' : 'fa-dice-d20'} {!stepComplete && isRolling ? 'spinning' : ''}"></i>
             {#if stepComplete}
                Checked
             {:else if isRolling}

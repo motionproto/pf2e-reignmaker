@@ -62,7 +62,7 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
     }
     
     // Check if there are factions that can be improved
-    const improvableFactions = factions.filter(f => 
+    const improvableFactions = factions.filter((f: any) => 
       f.attitude !== 'Helpful' && f.attitude !== 'Hostile'
     );
     
@@ -70,10 +70,10 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
       return { met: false, reason: 'No factions can be improved (all are Helpful or Hostile)' };
     }
     
-    // Check gold (minimum cost is 2 for critical success)
+    // Check gold (maximum cost is 4 for success/failure/critical failure)
     const availableGold = kingdom.resources?.gold || 0;
-    if (availableGold < 2) {
-      return { met: false, reason: 'Insufficient gold (need at least 2 gold)' };
+    if (availableGold < 4) {
+      return { met: false, reason: 'Insufficient gold (need at least 4 gold)' };
     }
     
     return { met: true };

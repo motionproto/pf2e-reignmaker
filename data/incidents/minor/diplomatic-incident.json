@@ -26,16 +26,23 @@
     "failure": {
       "msg": "One neighbouring kingdom's attitude worsens",
       "modifiers": [],
-      "manualEffects": [
-        "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 1 step (e.g., Friendly → Indifferent)"
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1
+        }
       ],
       "endsEvent": true
     },
     "criticalFailure": {
       "msg": "Multiple kingdoms turn against you",
       "modifiers": [],
-      "manualEffects": [
-        "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 1 step (e.g., Friendly → Indifferent)"
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1,
+          "count": 2
+        }
       ],
       "endsEvent": true
     }

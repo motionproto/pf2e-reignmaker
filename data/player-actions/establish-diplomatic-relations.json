@@ -32,7 +32,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Your diplomats achieved exceptional results! {Faction} improves their attitude toward your kingdom.",
+      "description": "Your diplomats achieved exceptional results! The selected faction improves their attitude toward your kingdom.",
       "modifiers": [
         {
           "type": "static",
@@ -40,16 +40,29 @@
           "value": -2,
           "duration": "immediate"
         }
+      ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": 1
+        }
       ]
     },
     "success": {
-      "description": "{Faction} improves their attitude toward your kingdom.",
+      "description": "The selected faction improves their attitude toward your kingdom.",
       "modifiers": [
         {
           "type": "static",
           "resource": "gold",
           "value": -4,
           "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": 1,
+          "maxLevel": "Friendly"
         }
       ]
     },
@@ -65,13 +78,19 @@
       ]
     },
     "criticalFailure": {
-      "description": "Your diplomats offended {Faction}! Their attitude worsens.",
+      "description": "Your diplomats offended the selected faction! Their attitude worsens.",
       "modifiers": [
         {
           "type": "static",
           "resource": "gold",
           "value": -4,
           "duration": "immediate"
+        }
+      ],
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -1
         }
       ]
     }

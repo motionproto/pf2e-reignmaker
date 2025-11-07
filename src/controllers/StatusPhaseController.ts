@@ -65,6 +65,9 @@ export async function createStatusPhaseController() {
         // Apply permanent modifiers from structures
         await this.applyPermanentModifiers();
         
+        // Apply automatic structure effects (Donjon converts unrest, etc.)
+        await this.applyAutomaticStructureEffects();
+        
         // Auto-complete the single step immediately (using type-safe constant)
         await completePhaseStepByIndex(StatusPhaseSteps.STATUS);
 
@@ -366,6 +369,114 @@ export async function createStatusPhaseController() {
 
       // Case 3: turnState exists and matches current turn (phase navigation within same turn)
 
+    },
+
+    /**
+     * Apply automatic structure effects (Donjon convert unrest, etc.)
+     */
+    async applyAutomaticStructureEffects() {
+      const actor = getKingdomActor();
+      if (!actor) {
+        logger.error('❌ [StatusPhaseController] No KingdomActor available');
+        return;
+      }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        logger.error('❌ [StatusPhaseController] No kingdom data available');
+        return;
+      }
+
+      const { structuresService } = await import('../services/structures/index');
+      const effects = structuresService.processAutomaticEffects(kingdom.settlements);
+
+      // Handle unrest conversion (Donjon)
+      if (effects.convertedUnrest > 0 && kingdom.unrest > 0) {
+        // Calculate available imprisoned unrest capacity
+        let availableCapacity = 0;
+        for (const settlement of kingdom.settlements) {
+          const capacity = structuresService.calculateImprisonedUnrestCapacity(settlement);
+          const current = settlement.imprisonedUnrest || 0;
+          availableCapacity += Math.max(0, capacity - current);
+        }
+        
+        // Only convert if we have capacity available
+        if (availableCapacity > 0) {
+          const amountToConvert = Math.min(
+            effects.convertedUnrest,  // How much Donjon can convert
+            kingdom.unrest,           // How much unrest we have
+            availableCapacity         // How much capacity we have
+          );
+          
+          // Use GameCommandsService to allocate imprisoned unrest
+          const { createGameCommandsService } = await import('../services/GameCommandsService');
+          const commandsService = await createGameCommandsService();
+          
+          // Create result tracker
+          const result = {
+            success: true,
+            applied: { resources: [], specialEffects: [] }
+          };
+          
+          // Convert regular unrest to imprisoned unrest
+          await actor.updateKingdomData(k => {
+            k.unrest = (k.unrest || 0) - amountToConvert;
+            
+            // Add notification to Status phase display
+            if (k.turnState?.statusPhase) {
+              if (!k.turnState.statusPhase.displayModifiers) {
+                k.turnState.statusPhase.displayModifiers = [];
+              }
+              k.turnState.statusPhase.displayModifiers.push({
+                id: 'donjon-conversion',
+                name: 'Donjon Automatic Conversion',
+                description: `Your Donjon automatically converted ${amountToConvert} regular unrest to imprisoned unrest`,
+                sourceType: 'structure',
+                modifiers: [
+                  {
+                    resource: 'unrest',
+                    value: -amountToConvert,
+                    duration: 'immediate'
+                  },
+                  {
+                    resource: 'imprisonedUnrest',
+                    value: amountToConvert,
+                    duration: 'immediate'
+                  }
+                ]
+              });
+            }
+          });
+          
+          // Apply imprisoned unrest (auto-allocates to settlements with capacity)
+          await commandsService.applyResourceChange(
+            'imprisonedUnrest',
+            amountToConvert,
+            'Donjon Auto-Convert',
+            result
+          );
+
+          logger.info(`⚖️ [StatusPhaseController] Donjon converted ${amountToConvert} unrest to imprisoned`);
+        } else {
+          // No capacity - add notification
+          await actor.updateKingdomData(k => {
+            if (k.turnState?.statusPhase) {
+              if (!k.turnState.statusPhase.displayModifiers) {
+                k.turnState.statusPhase.displayModifiers = [];
+              }
+              k.turnState.statusPhase.displayModifiers.push({
+                id: 'donjon-capacity-full',
+                name: 'Donjon Conversion Failed',
+                description: 'Your Donjon could not convert unrest - all prisons are at full capacity',
+                sourceType: 'structure',
+                modifiers: []
+              });
+            }
+          });
+          
+          logger.info(`⚖️ [StatusPhaseController] Donjon cannot convert - no prison capacity available`);
+        }
+      }
     }
   };
 }

@@ -4,6 +4,7 @@
   import RepairStructureDialog from '../../../../actions/repair-structure/RepairStructureDialog.svelte';
   import UpgradeSettlementSelectionDialog from '../../../../actions/upgrade-settlement/UpgradeSettlementSelectionDialog.svelte';
   import FactionSelectionDialog from '../../../../actions/establish-diplomatic-relations/FactionSelectionDialog.svelte';
+  import RequestEconomicAidDialog from '../../../../actions/request-economic-aid/RequestEconomicAidDialog.svelte';
   import AidSelectionDialog from '../../../kingdom/components/AidSelectionDialog.svelte';
   import SettlementSelectionDialog from '../../../../actions/collect-stipend/SettlementSelectionDialog.svelte';
   import ExecuteOrPardonSettlementDialog from '../../../../actions/execute-or-pardon-prisoners/SettlementSelectionDialog.svelte';
@@ -19,6 +20,7 @@
   export let showRepairStructureDialog: boolean = false;
   export let showUpgradeSettlementSelectionDialog: boolean = false;
   export let showFactionSelectionDialog: boolean = false;
+  export let showRequestEconomicAidDialog: boolean = false;
   export let showAidSelectionDialog: boolean = false;
   export let showSettlementSelectionDialog: boolean = false;
   export let showExecuteOrPardonSettlementDialog: boolean = false;
@@ -45,6 +47,10 @@
 
   function handleFactionSelected(event: CustomEvent) {
     dispatch('factionSelected', event.detail);
+  }
+
+  function handleEconomicAidFactionSelected(event: CustomEvent) {
+    dispatch('economicAidFactionSelected', event.detail);
   }
 
   function handleSettlementSelected(event: CustomEvent) {
@@ -112,6 +118,12 @@
   bind:show={showFactionSelectionDialog}
   on:confirm={handleFactionSelected}
   on:cancel={handleFactionCancel}
+/>
+
+<!-- Request Economic Aid Dialog -->
+<RequestEconomicAidDialog
+  bind:show={showRequestEconomicAidDialog}
+  on:confirm={handleEconomicAidFactionSelected}
 />
 
 <!-- Aid Selection Dialog -->

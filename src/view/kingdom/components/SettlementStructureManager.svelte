@@ -87,52 +87,54 @@
     isProcessing = true;
     
     try {
-      await updateKingdom(kingdom => {
-        const settlement = kingdom.settlements.find(s => s.id === currentSettlement.id);
-        if (!settlement) {
-          console.log('❌ Settlement not found in kingdom!');
-          return;
-        }
-        
-        console.log('🔵 Settlement found, structureIds:', settlement.structureIds);
-        
-        if (!newCheckedState) {
-          // Unchecking - remove this structure and all higher tiers in same category
-          const toRemove = allStructures
-            .filter(s => 
-              s.category === structure.category && 
-              s.tier >= structure.tier &&
-              settlement.structureIds.includes(s.id)
-            )
-            .map(s => s.id);
-          
-          console.log('🔴 Removing:', toRemove);
-          settlement.structureIds = settlement.structureIds.filter(id => !toRemove.includes(id));
-          console.log('🔴 After removal:', settlement.structureIds);
-          
-          toRemove.forEach(id => dispatch('structureRemoved', { structureId: id }));
-        } else {
-          // Checking - add all lower tier prerequisites first, then this structure
-          const toAdd = allStructures
-            .filter(s => 
-              s.category === structure.category && 
-              s.tier <= structure.tier &&
-              !settlement.structureIds.includes(s.id)
-            )
-            .sort((a, b) => a.tier - b.tier)
-            .map(s => s.id);
-          
-          console.log('🟢 Adding:', toAdd);
-          settlement.structureIds.push(...toAdd);
-          console.log('🟢 After addition:', settlement.structureIds);
-          
-          toAdd.forEach(id => dispatch('structureAdded', { structureId: id }));
-        }
-      });
+      // Import settlementService for proper capacity recalculation
+      const { settlementService } = await import('../../../services/settlements');
       
-      console.log('🔵 After updateKingdom, currentSettlement:', currentSettlement?.structureIds);
+      if (!newCheckedState) {
+        // Unchecking - remove this structure and all higher tiers in same category
+        const toRemove = allStructures
+          .filter(s => 
+            s.category === structure.category && 
+            s.tier >= structure.tier &&
+            currentSettlement.structureIds.includes(s.id)
+          )
+          .sort((a, b) => b.tier - a.tier); // Remove higher tiers first
+        
+        console.log('🔴 Removing:', toRemove.map(s => s.id));
+        
+        // Use service to remove each structure (triggers recalculation)
+        for (const structToRemove of toRemove) {
+          await settlementService.removeStructure(currentSettlement.id, structToRemove.id);
+          dispatch('structureRemoved', { structureId: structToRemove.id });
+        }
+        
+        console.log('🔴 Structures removed via service');
+      } else {
+        // Checking - add all lower tier prerequisites first, then this structure
+        const toAdd = allStructures
+          .filter(s => 
+            s.category === structure.category && 
+            s.tier <= structure.tier &&
+            !currentSettlement.structureIds.includes(s.id)
+          )
+          .sort((a, b) => a.tier - b.tier); // Add lower tiers first
+        
+        console.log('🟢 Adding:', toAdd.map(s => s.id));
+        
+        // Use service to add each structure (triggers recalculation)
+        for (const structToAdd of toAdd) {
+          await settlementService.addStructure(currentSettlement.id, structToAdd.id);
+          dispatch('structureAdded', { structureId: structToAdd.id });
+        }
+        
+        console.log('🟢 Structures added via service');
+      }
+      
+      console.log('🔵 After service calls, currentSettlement:', currentSettlement?.structureIds);
     } catch (error) {
       console.error('Error toggling structure:', error);
+      // @ts-ignore - Foundry global
+      ui.notifications?.error('Failed to update structure');
     } finally {
       isProcessing = false;
     }
@@ -271,24 +273,23 @@
                             <span class="skills-text">({skillsText})</span>
                           {/if}
                         </span>
+                        {#if exceedsTier}
+                          <span class="tier-info">
+                            <i class="fas fa-info-circle"></i>
+                            Requires {getTierName(structure.minimumSettlementTier || 1)}
+                          </span>
+                        {/if}
                       </div>
                       
                       {#if structure.description}
                         <div class="structure-description">{structure.description}</div>
                       {/if}
                       
-                      {#if exceedsTier}
-                        <div class="tier-info">
-                          <i class="fas fa-info-circle"></i>
-                          Requires {getTierName(structure.minimumSettlementTier || 1)}
-                        </div>
-                      {/if}
-                      
                       {#if structure.modifiers && structure.modifiers.length > 0}
                         <div class="structure-modifiers">
                           {#each structure.modifiers as modifier}
                             <span class="modifier-badge">
-                              {modifier.value > 0 ? '+' : ''}{modifier.value} {modifier.resource}
+                              {modifier.resource}: {modifier.value}
                             </span>
                           {/each}
                         </div>
@@ -602,7 +603,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    margin-top: 0.25rem;
+    white-space: nowrap;
   }
   
   .structure-modifiers {

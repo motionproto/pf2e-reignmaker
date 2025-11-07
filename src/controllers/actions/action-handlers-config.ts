@@ -33,6 +33,7 @@ export function createCustomActionHandlers(context: {
   setShowDisbandArmyDialog: (show: boolean) => void;
   setShowOutfitArmyDialog: (show: boolean) => void;
   setShowRecruitArmyDialog: (show: boolean) => void;
+  setShowRequestEconomicAidDialog: (show: boolean) => void;
   handleArmyDeployment?: (skill: string) => Promise<void>;
   setPendingBuildAction: (action: { skill: string }) => void;
   setPendingRepairAction: (action: { skill: string }) => void;
@@ -45,6 +46,7 @@ export function createCustomActionHandlers(context: {
   setPendingOutfitArmyAction: (action: { skill: string }) => void;
   setPendingRecruitArmyAction: (action: { skill: string }) => void;
   setPendingDeployArmyAction: (action: { skill: string }) => void;
+  setPendingRequestEconomicAidAction: (action: { skill: string }) => void;
 }): CustomActionHandlers {
   return {
     'build-structure': {
@@ -111,6 +113,11 @@ export function createCustomActionHandlers(context: {
           context.handleArmyDeployment(skill);
         }
       }
+    },
+    'request-economic-aid': {
+      requiresPreDialog: true,
+      showDialog: () => context.setShowRequestEconomicAidDialog(true),
+      storePending: (skill: string) => context.setPendingRequestEconomicAidAction({ skill })
     }
   };
 }

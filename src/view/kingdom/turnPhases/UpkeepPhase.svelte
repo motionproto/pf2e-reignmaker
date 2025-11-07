@@ -323,7 +323,43 @@
          <div class="card-content">
             <div class="content-area">
             {#if armyCount > 0 || fortificationCount > 0}
-               <!-- Combined Capacity Display - First Thing Shown -->
+               <!-- 1. Food Requirements -->
+               <div class="consumption-display">
+                  <ResourceStat 
+                     icon="fas fa-utensils"
+                     value={armyConsumption}
+                     label="Food Required"
+                     variant="required"
+                  />
+                  
+                  <ResourceStat 
+                     icon="fas fa-wheat-awn resource-food"
+                     value={foodRemainingForArmies}
+                     label="Food Remaining"
+                     variant="available"
+                     status={armyFoodShortage > 0 ? 'danger' : 'normal'}
+                  />
+               </div>
+               
+               <!-- 2. Gold Requirements -->
+               <div class="consumption-display">
+                  <ResourceStat 
+                     icon="fas fa-coins"
+                     value={armyCount + fortificationMaintenanceCost}
+                     label="Gold Required"
+                     variant="required"
+                  />
+                  
+                  <ResourceStat 
+                     icon="fas fa-coins resource-gold"
+                     value={$resources?.gold || 0}
+                     label="Gold Available"
+                     variant="available"
+                     status={$resources?.gold < (armyCount + fortificationMaintenanceCost) ? 'danger' : 'normal'}
+                  />
+               </div>
+               
+               <!-- 3. Summary (Combined Capacity Display) -->
                <div class="military-capacity-display">
                   <div class="capacity-item" class:danger={unsupportedCount > 0} class:warning={armyCount === armySupport && armyCount > 0}>
                      <i class="fas fa-chess-knight"></i>
@@ -343,24 +379,7 @@
                   {/if}
                </div>
                
-               <!-- Food Consumption (always show, 0 if no armies) -->
-               <div class="consumption-display">
-                  <ResourceStat 
-                     icon="fas fa-utensils"
-                     value={armyConsumption}
-                     label="Food Required"
-                     variant="required"
-                  />
-                  
-                  <ResourceStat 
-                     icon="fas fa-wheat-awn resource-food"
-                     value={foodRemainingForArmies}
-                     label="Food Remaining"
-                     variant="available"
-                     status={armyFoodShortage > 0 ? 'danger' : 'normal'}
-                  />
-               </div>
-               
+               <!-- 4. Notifications -->
                {#if armyCount > 0 && armyFoodShortage > 0 && !militaryCompleted}
                   <Notification 
                      variant="warning"
@@ -378,24 +397,6 @@
                      impact="+{unsupportedCount} Unrest"
                   />
                {/if}
-               
-               <!-- Consolidated Gold Display -->
-               <div class="consumption-display">
-                  <ResourceStat 
-                     icon="fas fa-coins"
-                     value={armyCount + fortificationMaintenanceCost}
-                     label="Gold Required"
-                     variant="required"
-                  />
-                  
-                  <ResourceStat 
-                     icon="fas fa-coins resource-gold"
-                     value={$resources?.gold || 0}
-                     label="Gold Available"
-                     variant="available"
-                     status={$resources?.gold < (armyCount + fortificationMaintenanceCost) ? 'danger' : 'normal'}
-                  />
-               </div>
                
                {#if !militaryCompleted && ($resources?.gold || 0) < (armyCount + fortificationMaintenanceCost)}
                   <Notification 
@@ -535,11 +536,6 @@
                   <p>{$settlements.filter(s => !s.wasFedLastTurn).length} settlement{$settlements.filter(s => !s.wasFedLastTurn).length > 1 ? 's' : ''} will not generate gold next turn (unfed).</p>
                </div>
             {/if}
-            
-            <div class="summary-item">
-               <i class="fas fa-chart-line"></i>
-               <p>Phase processing complete - all upkeep operations handled automatically</p>
-            </div>
          </div>
       </div>
    </div>

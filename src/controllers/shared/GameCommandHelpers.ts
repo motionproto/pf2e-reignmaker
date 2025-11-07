@@ -63,7 +63,8 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
         cmd.steps,
         {
           maxLevel: cmd.maxLevel,
-          minLevel: cmd.minLevel
+          minLevel: cmd.minLevel,
+          count: cmd.count
         }
       );
       

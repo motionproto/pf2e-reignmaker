@@ -30,8 +30,11 @@
     "failure": {
       "msg": "Diplomatic relations severely damaged",
       "modifiers": [],
-      "manualEffects": [
-        "Choose or roll for one neighboring kingdom. Their attitude toward you worsens by 2 steps (e.g., Friendly → Indifferent → Unfriendly)"
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -2
+        }
       ],
       "endsEvent": true
     },
@@ -45,8 +48,12 @@
           "duration": "immediate"
         }
       ],
-      "manualEffects": [
-        "Choose or roll for two neighboring kingdoms. Each kingdom's attitude toward you worsens by 2 steps (e.g., Friendly → Indifferent → Unfriendly)"
+      "gameCommands": [
+        {
+          "type": "adjustFactionAttitude",
+          "steps": -2,
+          "count": 2
+        }
       ],
       "endsEvent": true
     }

@@ -1603,7 +1603,7 @@ export async function createGameCommandsResolver() {
      * 
      * @param factionId - Optional specific faction (if null, player selects via UI)
      * @param steps - Number of steps to adjust (+1 = improve, -1 = worsen)
-     * @param options - Optional constraints (maxLevel, minLevel)
+     * @param options - Optional constraints (maxLevel, minLevel, count)
      * @returns ResolveResult with attitude change details
      */
     async adjustFactionAttitude(
@@ -1612,9 +1612,11 @@ export async function createGameCommandsResolver() {
       options?: {
         maxLevel?: string;
         minLevel?: string;
+        count?: number;
       }
     ): Promise<ResolveResult> {
-      logger.info(`🤝 [adjustFactionAttitude] Adjusting faction attitude by ${steps} steps`);
+      const count = options?.count || 1;
+      logger.info(`🤝 [adjustFactionAttitude] Adjusting ${count} faction(s) attitude by ${steps} steps`);
       
       try {
         const actor = getKingdomActor();
@@ -1635,107 +1637,155 @@ export async function createGameCommandsResolver() {
         const hasDiploStructures = hasDiplomaticStructures(kingdom);
         const effectiveMaxLevel = hasDiploStructures ? undefined : options?.maxLevel;
 
-        // Get target faction
-        let targetFactionId = factionId;
-        let targetFactionName = '';
+        // Track results for multiple factions
+        const results: Array<{ factionName: string; oldAttitude: string; newAttitude: string }> = [];
+        const selectedFactionIds = new Set<string>();
 
-        if (!targetFactionId) {
-          // For now, use a simple selection prompt
-          // TODO: Implement proper FactionSelectorService with UI
-          const game = (globalThis as any).game;
-          
-          // Filter eligible factions
-          const { canAdjustAttitude, getAdjustmentBlockReason } = await import('../utils/faction-attitude-adjuster');
-          const eligibleFactions = kingdom.factions.filter((f: any) => {
-            return canAdjustAttitude(f.attitude, steps, {
-              maxLevel: effectiveMaxLevel as any,
-              minLevel: options?.minLevel as any
+        // Loop through count times
+        for (let i = 0; i < count; i++) {
+          // Get target faction
+          let targetFactionId = factionId;
+          let targetFactionName = '';
+
+          if (!targetFactionId) {
+            // For now, use a simple selection prompt
+            // TODO: Implement proper FactionSelectorService with UI
+            const game = (globalThis as any).game;
+            
+            // Filter eligible factions (exclude already selected factions)
+            const { canAdjustAttitude, getAdjustmentBlockReason } = await import('../utils/faction-attitude-adjuster');
+            const eligibleFactions = kingdom.factions.filter((f: any) => {
+              // Skip already selected factions
+              if (selectedFactionIds.has(f.id)) {
+                return false;
+              }
+              return canAdjustAttitude(f.attitude, steps, {
+                maxLevel: effectiveMaxLevel as any,
+                minLevel: options?.minLevel as any
+              });
             });
-          });
 
-          if (eligibleFactions.length === 0) {
-            return {
-              success: false,
-              error: `No factions available to ${steps > 0 ? 'improve' : 'worsen'} relations with${effectiveMaxLevel ? ` (max: ${effectiveMaxLevel})` : ''}`
-            };
-          }
+            if (eligibleFactions.length === 0) {
+              // If no more eligible factions, break loop early
+              const partialMessage = results.length > 0
+                ? `Only ${results.length} faction(s) available (requested ${count})`
+                : `No factions available to ${steps > 0 ? 'improve' : 'worsen'} relations with${effectiveMaxLevel ? ` (max: ${effectiveMaxLevel})` : ''}`;
+              
+              if (results.length === 0) {
+                return {
+                  success: false,
+                  error: partialMessage
+                };
+              }
+              
+              // Return partial success
+              logger.warn(`⚠️ [adjustFactionAttitude] ${partialMessage}`);
+              break;
+            }
 
-          // Simple dropdown selection
-          const factionChoices = eligibleFactions.reduce((acc: any, f: any) => {
-            acc[f.id] = `${f.name} (${f.attitude})`;
-            return acc;
-          }, {});
+            // Simple dropdown selection
+            const promptTitle = count > 1 
+              ? `Select Faction ${i + 1}/${count} (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`
+              : `Select Faction (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`;
 
-          const selectedId = await new Promise<string | null>((resolve) => {
-            const Dialog = (globalThis as any).Dialog;
-            new Dialog({
-              title: `Select Faction (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`,
-              content: `
-                <form>
-                  <div class="form-group">
-                    <label>Choose Faction:</label>
-                    <select name="factionId" style="width: 100%;">
-                      ${eligibleFactions.map((f: any) => `<option value="${f.id}">${f.name} (${f.attitude})</option>`).join('')}
-                    </select>
-                  </div>
-                </form>
-              `,
-              buttons: {
-                ok: {
-                  label: 'Select',
-                  callback: (html: any) => {
-                    const factionId = html.find('[name="factionId"]').val();
-                    resolve(factionId);
+            const selectedId = await new Promise<string | null>((resolve) => {
+              const Dialog = (globalThis as any).Dialog;
+              new Dialog({
+                title: promptTitle,
+                content: `
+                  <form>
+                    <div class="form-group">
+                      <label>Choose Faction:</label>
+                      <select name="factionId" style="width: 100%;">
+                        ${eligibleFactions.map((f: any) => `<option value="${f.id}">${f.name} (${f.attitude})</option>`).join('')}
+                      </select>
+                    </div>
+                  </form>
+                `,
+                buttons: {
+                  ok: {
+                    label: 'Select',
+                    callback: (html: any) => {
+                      const factionId = html.find('[name="factionId"]').val();
+                      resolve(factionId);
+                    }
+                  },
+                  cancel: {
+                    label: 'Cancel',
+                    callback: () => resolve(null)
                   }
                 },
-                cancel: {
-                  label: 'Cancel',
-                  callback: () => resolve(null)
-                }
-              },
-              default: 'ok'
-            }).render(true);
+                default: 'ok'
+              }).render(true);
+            });
+
+            if (!selectedId) {
+              // User cancelled - return partial results if any
+              if (results.length === 0) {
+                return { success: false, error: 'Faction selection cancelled' };
+              }
+              break;
+            }
+
+            targetFactionId = selectedId;
+          }
+
+          const faction = factionService.getFaction(targetFactionId);
+          if (!faction) {
+            return { success: false, error: `Faction not found: ${targetFactionId}` };
+          }
+          targetFactionName = faction.name;
+
+          // Track selected faction
+          selectedFactionIds.add(targetFactionId);
+
+          // Apply adjustment
+          const result = await factionService.adjustAttitude(
+            targetFactionId,
+            steps,
+            {
+              maxLevel: effectiveMaxLevel as any,
+              minLevel: options?.minLevel as any
+            }
+          );
+
+          if (!result.success) {
+            // If adjustment failed, continue to next faction (don't abort entire operation)
+            logger.warn(`⚠️ [adjustFactionAttitude] Failed to adjust ${targetFactionName}: ${result.reason}`);
+            continue;
+          }
+
+          // Track result
+          results.push({
+            factionName: targetFactionName,
+            oldAttitude: result.oldAttitude || 'Unknown',
+            newAttitude: result.newAttitude || 'Unknown'
           });
 
-          if (!selectedId) {
-            return { success: false, error: 'Faction selection cancelled' };
-          }
-
-          targetFactionId = selectedId;
+          logger.info(`✅ [adjustFactionAttitude] ${targetFactionName}: ${result.oldAttitude} → ${result.newAttitude}`);
         }
 
-        const faction = factionService.getFaction(targetFactionId);
-        if (!faction) {
-          return { success: false, error: `Faction not found: ${targetFactionId}` };
-        }
-        targetFactionName = faction.name;
-
-        // Apply adjustment
-        const result = await factionService.adjustAttitude(
-          targetFactionId,
-          steps,
-          {
-            maxLevel: effectiveMaxLevel as any,
-            minLevel: options?.minLevel as any
-          }
-        );
-
-        if (!result.success) {
-          return { success: false, error: result.reason };
+        // Format aggregated message
+        if (results.length === 0) {
+          return {
+            success: false,
+            error: 'No factions were adjusted'
+          };
         }
 
-        // Format message
         const direction = steps > 0 ? 'improved' : 'worsened';
-        const message = `Relations with ${targetFactionName} ${direction}: ${result.oldAttitude} → ${result.newAttitude}`;
-
-        logger.info(`✅ [adjustFactionAttitude] ${message}`);
+        const messages = results.map(r => 
+          `${r.factionName}: ${r.oldAttitude} → ${r.newAttitude}`
+        );
+        const message = count > 1
+          ? `Relations ${direction} with ${results.length} faction(s):\n${messages.join('\n')}`
+          : `Relations with ${results[0].factionName} ${direction}: ${results[0].oldAttitude} → ${results[0].newAttitude}`;
 
         return {
           success: true,
           data: {
-            factionName: targetFactionName,
-            oldAttitude: result.oldAttitude,
-            newAttitude: result.newAttitude,
+            factions: results,
+            count: results.length,
             message
           }
         };

@@ -13,6 +13,7 @@
    
    // UI State only
    let isCollecting = false;
+   let isBreakdownExpanded = false;
    
    // Resource order for display
    const resourceOrder = ['food', 'gold', 'lumber', 'stone', 'ore'];
@@ -204,8 +205,56 @@
                   {/each}
                </div>
             </div>
+         {:else}
+            <div class="no-production">
+               No income this turn
+            </div>
+         {/if}
+         
+         <!-- Settlement Notes -->
+         {#if settlementCount > 0}
+            {#if unfedSettlementsCount > 0}
+               <div class="income-note warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  {unfedSettlementsCount} settlement{unfedSettlementsCount > 1 ? 's' : ''} not generating gold (unfed last turn)
+               </div>
+            {:else if fedSettlementsCount > 0 && potentialGoldIncome > 0}
+               <div class="income-note success">
+                  <i class="fas fa-check-circle"></i>
+                  All settlements were fed last turn and generate gold
+               </div>
+            {/if}
+         {/if}
+         
+         <!-- Unrest Modifier Notes -->
+         {#if modifierPreview.find(m => m.resource === 'unrest')}
+            {@const unrestModifier = modifierPreview.find(m => m.resource === 'unrest')}
+            {#if unrestModifier && unrestModifier.change > 0}
+               <div class="income-note warning">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  Ongoing modifiers will increase Unrest by {unrestModifier.change}
+               </div>
+            {:else if unrestModifier && unrestModifier.change < 0}
+               <div class="income-note success">
+                  <i class="fas fa-check-circle"></i>
+                  Ongoing modifiers will reduce Unrest by {Math.abs(unrestModifier.change)}
+               </div>
+            {:else if unrestModifier && unrestModifier.modifiers.length > 0}
+               <div class="income-note info">
+                  <i class="fas fa-info-circle"></i>
+                  Ongoing modifiers affecting Unrest (net change: 0)
+               </div>
+            {/if}
+         {/if}
+         
+         <!-- Expandable Breakdown Section -->
+         {#if totalsByResource.size > 0}
+            <button class="breakdown-toggle" on:click={() => isBreakdownExpanded = !isBreakdownExpanded}>
+               <i class="fas fa-chevron-{isBreakdownExpanded ? 'up' : 'down'}"></i>
+               {isBreakdownExpanded ? 'Hide' : 'Show'} Breakdown
+            </button>
             
-            <!-- Breakdown Section -->
+            {#if isBreakdownExpanded}
             <div class="income-breakdown">
                <div class="breakdown-title">Breakdown:</div>
                
@@ -260,45 +309,6 @@
                   </div>
                {/if}
             </div>
-         {:else}
-            <div class="no-production">
-               No income this turn
-            </div>
-         {/if}
-         
-         <!-- Settlement Notes -->
-         {#if settlementCount > 0}
-            {#if unfedSettlementsCount > 0}
-               <div class="income-note warning">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  {unfedSettlementsCount} settlement{unfedSettlementsCount > 1 ? 's' : ''} not generating gold (unfed last turn)
-               </div>
-            {:else if fedSettlementsCount > 0 && potentialGoldIncome > 0}
-               <div class="income-note success">
-                  <i class="fas fa-check-circle"></i>
-                  All settlements were fed last turn and generate gold
-               </div>
-            {/if}
-         {/if}
-         
-         <!-- Unrest Modifier Notes -->
-         {#if modifierPreview.find(m => m.resource === 'unrest')}
-            {@const unrestModifier = modifierPreview.find(m => m.resource === 'unrest')}
-            {#if unrestModifier && unrestModifier.change > 0}
-               <div class="income-note warning">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  Ongoing modifiers will increase Unrest by {unrestModifier.change}
-               </div>
-            {:else if unrestModifier && unrestModifier.change < 0}
-               <div class="income-note success">
-                  <i class="fas fa-check-circle"></i>
-                  Ongoing modifiers will reduce Unrest by {Math.abs(unrestModifier.change)}
-               </div>
-            {:else if unrestModifier && unrestModifier.modifiers.length > 0}
-               <div class="income-note info">
-                  <i class="fas fa-info-circle"></i>
-                  Ongoing modifiers affecting Unrest (net change: 0)
-               </div>
             {/if}
          {/if}
       </div>
@@ -630,5 +640,32 @@
    .modifier-detail-list {
       color: var(--text-secondary);
       font-weight: var(--font-weight-normal);
+   }
+   
+   .breakdown-toggle {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      
+      &:hover {
+         background: rgba(0, 0, 0, 0.3);
+         border-color: var(--color-blue);
+      }
+      
+      i {
+         font-size: 12px;
+         transition: transform 0.2s ease;
+      }
    }
 </style>

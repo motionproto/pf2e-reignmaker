@@ -301,10 +301,12 @@ export class StructuresService {
   
   /**
    * Calculate total food storage capacity for a settlement
+   * Only counts the highest tier structure per category (not cumulative)
    * Only counts non-damaged structures
    */
   calculateFoodStorage(settlement: Settlement): number {
-    let total = 0;
+    // Group structures by category that have foodCapacity
+    const capacityByCategory = new Map<string, { tier: number; value: number }>();
     
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -317,10 +319,23 @@ export class StructuresService {
         // Look for foodCapacity modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'foodCapacity' && modifier.type === 'static') {
-            total += modifier.value;
+            // Only keep the highest tier structure per category
+            const existing = capacityByCategory.get(structure.category);
+            if (!existing || structure.tier > existing.tier) {
+              capacityByCategory.set(structure.category, {
+                tier: structure.tier,
+                value: modifier.value
+              });
+            }
           }
         }
       }
+    }
+    
+    // Sum the capacity from the highest tier structure in each category
+    let total = 0;
+    for (const { value } of capacityByCategory.values()) {
+      total += value;
     }
     
     return total;
@@ -328,10 +343,12 @@ export class StructuresService {
   
   /**
    * Calculate total imprisoned unrest capacity for a settlement
+   * Only counts the highest tier structure per category (not cumulative)
    * Only counts non-damaged structures
    */
   calculateImprisonedUnrestCapacity(settlement: Settlement): number {
-    let total = 0;
+    // Group structures by category that have imprisonedUnrestCapacity
+    const capacityByCategory = new Map<string, { tier: number; value: number }>();
     
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -344,10 +361,23 @@ export class StructuresService {
         // Look for imprisonedUnrestCapacity modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'imprisonedUnrestCapacity' && modifier.type === 'static') {
-            total += modifier.value;
+            // Only keep the highest tier structure per category
+            const existing = capacityByCategory.get(structure.category);
+            if (!existing || structure.tier > existing.tier) {
+              capacityByCategory.set(structure.category, {
+                tier: structure.tier,
+                value: modifier.value
+              });
+            }
           }
         }
       }
+    }
+    
+    // Sum the capacity from the highest tier structure in each category
+    let total = 0;
+    for (const { value } of capacityByCategory.values()) {
+      total += value;
     }
     
     return total;
@@ -355,10 +385,12 @@ export class StructuresService {
   
   /**
    * Calculate gold income from structures in a settlement
+   * Only counts the highest tier structure per category (not cumulative)
    * Only counts non-damaged structures
    */
   calculateGoldIncome(settlement: Settlement): number {
-    let total = 0;
+    // Group structures by category that have gold modifiers
+    const incomeByCategory = new Map<string, { tier: number; value: number }>();
     
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -371,10 +403,23 @@ export class StructuresService {
         // Look for gold modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'gold' && modifier.type === 'static') {
-            total += modifier.value;
+            // Only keep the highest tier structure per category
+            const existing = incomeByCategory.get(structure.category);
+            if (!existing || structure.tier > existing.tier) {
+              incomeByCategory.set(structure.category, {
+                tier: structure.tier,
+                value: modifier.value
+              });
+            }
           }
         }
       }
+    }
+    
+    // Sum the income from the highest tier structure in each category
+    let total = 0;
+    for (const { value } of incomeByCategory.values()) {
+      total += value;
     }
     
     return total;
@@ -382,10 +427,12 @@ export class StructuresService {
   
   /**
    * Calculate army support bonus from structures in a settlement
+   * Only counts the highest tier structure per category (not cumulative)
    * Only counts non-damaged structures
    */
   calculateArmySupportBonus(settlement: Settlement): number {
-    let total = 0;
+    // Group structures by category that have armyCapacity
+    const capacityByCategory = new Map<string, { tier: number; value: number }>();
     
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -398,10 +445,23 @@ export class StructuresService {
         // Look for armyCapacity modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'armyCapacity' && modifier.type === 'static') {
-            total += modifier.value;
+            // Only keep the highest tier structure per category
+            const existing = capacityByCategory.get(structure.category);
+            if (!existing || structure.tier > existing.tier) {
+              capacityByCategory.set(structure.category, {
+                tier: structure.tier,
+                value: modifier.value
+              });
+            }
           }
         }
       }
+    }
+    
+    // Sum the capacity from the highest tier structure in each category
+    let total = 0;
+    for (const { value } of capacityByCategory.values()) {
+      total += value;
     }
     
     return total;
@@ -409,10 +469,12 @@ export class StructuresService {
   
   /**
    * Calculate diplomatic capacity from structures in a settlement
+   * Only counts the highest tier structure per category (not cumulative)
    * Only counts non-damaged structures
    */
   calculateDiplomaticCapacity(settlement: Settlement): number {
-    let total = 0;
+    // Group structures by category that have diplomaticCapacity
+    const capacityByCategory = new Map<string, { tier: number; value: number }>();
 
     for (const structureId of settlement.structureIds) {
       // Skip damaged structures
@@ -425,11 +487,23 @@ export class StructuresService {
         // Look for diplomaticCapacity modifier in the modifiers array
         for (const modifier of structure.modifiers) {
           if (modifier.resource === 'diplomaticCapacity' && modifier.type === 'static') {
-
-            total += modifier.value;
+            // Only keep the highest tier structure per category
+            const existing = capacityByCategory.get(structure.category);
+            if (!existing || structure.tier > existing.tier) {
+              capacityByCategory.set(structure.category, {
+                tier: structure.tier,
+                value: modifier.value
+              });
+            }
           }
         }
       }
+    }
+
+    // Sum the capacity from the highest tier structure in each category
+    let total = 0;
+    for (const { value } of capacityByCategory.values()) {
+      total += value;
     }
 
     return total;
