@@ -52,16 +52,37 @@ export class ArmyService {
     // Create NPC actor in Foundry with army type image
     const actorId = await this.createNPCActor(name, level, image, actorData);
     
-    // Determine which settlement to assign to
-    let settlement: Settlement | null = null;
+    // Determine which settlement to assign to (for support tracking)
+    let supportSettlement: Settlement | null = null;
     if (settlementId) {
-      // Use specified settlement
+      // Use specified settlement for support
       const actor = getKingdomActor();
       const kingdom = actor?.getKingdomData();
-      settlement = kingdom?.settlements?.find((s: Settlement) => s.id === settlementId) || null;
+      supportSettlement = kingdom?.settlements?.find((s: Settlement) => s.id === settlementId) || null;
     } else {
       // Auto-assign to random settlement with capacity
-      settlement = this.findRandomSettlementWithCapacity();
+      supportSettlement = this.findRandomSettlementWithCapacity();
+    }
+    
+    // Determine placement location (for token)
+    // If unsupported, place at capital; otherwise place at support settlement
+    let placementSettlement: Settlement | null = supportSettlement;
+    if (!supportSettlement) {
+      // Find capital for unsupported army placement
+      const actor = getKingdomActor();
+      const kingdom = actor?.getKingdomData();
+      const capital = kingdom?.settlements?.find((s: Settlement) => 
+        s.isCapital && (s.location.x !== 0 || s.location.y !== 0)
+      );
+      
+      // Fallback to first valid settlement if no capital is marked
+      if (!capital) {
+        placementSettlement = kingdom?.settlements?.find((s: Settlement) => 
+          s.location.x !== 0 || s.location.y !== 0
+        ) || null;
+      } else {
+        placementSettlement = capital;
+      }
     }
     
     // Create army record
@@ -74,22 +95,22 @@ export class ArmyService {
       level: level,
       type: type,
       ledBy: faction, // Set ledBy based on current faction view
-      isSupported: !!settlement,
-      turnsUnsupported: settlement ? 0 : 1,
+      isSupported: !!supportSettlement,
+      turnsUnsupported: supportSettlement ? 0 : 1,
       actorId: actorId,
-      supportedBySettlementId: settlement?.id ?? null
+      supportedBySettlementId: supportSettlement?.id ?? null
     };
     
     // Add to kingdom armies
-    await updateKingdom(kingdom => {
+    await updateKingdom((kingdom: KingdomData) => {
       if (!kingdom.armies) {
         kingdom.armies = [];
       }
       kingdom.armies.push(army);
       
       // Update settlement's supportedUnits
-      if (settlement) {
-        const s = kingdom.settlements.find((s: Settlement) => s.id === settlement.id);
+      if (supportSettlement) {
+        const s = kingdom.settlements.find((s: Settlement) => s.id === supportSettlement.id);
         if (s) {
           s.supportedUnits.push(armyId);
         }
@@ -99,31 +120,35 @@ export class ArmyService {
     // Add metadata flag to actor for identification
     await this.addArmyMetadata(actorId, armyId, type);
     
-    // Place token at settlement location (if settlement has valid location)
-    if (settlement && actorId) {
-      logger.info(`🗺️ [ArmyService] Checking token placement for ${name} at ${settlement.name} (${settlement.location.x}, ${settlement.location.y})`);
+    // Place token at placement settlement location (capital for unsupported, support settlement otherwise)
+    if (placementSettlement && actorId) {
+      const locationName = supportSettlement 
+        ? `${placementSettlement.name} (support)` 
+        : `${placementSettlement.name} (capital/default placement)`;
       
-      const hasLocation = settlement.location && (settlement.location.x !== 0 || settlement.location.y !== 0);
+      logger.info(`🗺️ [ArmyService] Checking token placement for ${name} at ${locationName} (${placementSettlement.location.x}, ${placementSettlement.location.y})`);
+      
+      const hasLocation = placementSettlement.location && (placementSettlement.location.x !== 0 || placementSettlement.location.y !== 0);
       
       if (!hasLocation) {
-        logger.warn(`⚠️ [ArmyService] Settlement ${settlement.name} has invalid location (0,0), skipping token placement`);
+        logger.warn(`⚠️ [ArmyService] Settlement ${placementSettlement.name} has invalid location (0,0), skipping token placement`);
       } else {
         try {
-          logger.info(`🎯 [ArmyService] Attempting to place token for ${name} at ${settlement.name}`);
+          logger.info(`🎯 [ArmyService] Attempting to place token for ${name} at ${locationName}`);
           const { placeArmyTokenAtSettlement } = await import('../../utils/armyHelpers');
-          await placeArmyTokenAtSettlement(this, actorId, settlement, name);
-          logger.info(`✅ [ArmyService] Successfully placed token for ${name} at ${settlement.name}`);
+          await placeArmyTokenAtSettlement(this, actorId, placementSettlement, name);
+          logger.info(`✅ [ArmyService] Successfully placed token for ${name} at ${locationName}`);
         } catch (error) {
           logger.error(`❌ [ArmyService] Failed to place token for ${name}:`, error);
           // Don't fail army creation if token placement fails
         }
       }
     } else {
-      logger.warn(`⚠️ [ArmyService] Cannot place token - settlement: ${!!settlement}, actorId: ${!!actorId}`);
+      logger.warn(`⚠️ [ArmyService] Cannot place token - placementSettlement: ${!!placementSettlement}, actorId: ${!!actorId}`);
     }
     
-    const supportMsg = settlement 
-      ? ` assigned to ${settlement.name}`
+    const supportMsg = supportSettlement 
+      ? ` assigned to ${supportSettlement.name}`
       : ' (unsupported - no available settlement capacity)';
 
     return army;
@@ -357,7 +382,7 @@ export class ArmyService {
     const actorId = army.actorId;
     
     // Remove army from kingdom (no refund)
-    await updateKingdom(kingdom => {
+    await updateKingdom((kingdom: KingdomData) => {
       kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
       
       // Also remove from any settlement's supportedUnits
@@ -524,7 +549,7 @@ export class ArmyService {
     }
     
     // Find army with this actorId
-    await updateKingdom(kingdom => {
+    await updateKingdom((kingdom: KingdomData) => {
       const army = kingdom.armies?.find((a: Army) => a.actorId === actorId);
       if (army) {
         army.name = npcActor.name;
@@ -545,7 +570,7 @@ export class ArmyService {
    */
   async updateArmyLevel(armyId: string, newLevel: number): Promise<void> {
 
-    await updateKingdom(kingdom => {
+    await updateKingdom((kingdom: KingdomData) => {
       const army = kingdom.armies?.find((a: Army) => a.id === armyId);
       if (army) {
         army.level = newLevel;
@@ -637,7 +662,7 @@ export class ArmyService {
       throw new Error('No kingdom data available');
     }
     
-    await updateKingdom(k => {
+    await updateKingdom((k: KingdomData) => {
       const army = k.armies.find((a: Army) => a.id === armyId);
       if (!army) {
         throw new Error(`Army not found: ${armyId}`);
@@ -646,18 +671,18 @@ export class ArmyService {
       // Remove from old settlement
       if (army.supportedBySettlementId) {
         const oldSettlement = k.settlements.find(
-          s => s.id === army.supportedBySettlementId
+          (s: Settlement) => s.id === army.supportedBySettlementId
         );
         if (oldSettlement) {
           oldSettlement.supportedUnits = oldSettlement.supportedUnits.filter(
-            id => id !== armyId
+            (id: string) => id !== armyId
           );
         }
       }
       
       // Add to new settlement (or unassign)
       if (settlementId) {
-        const newSettlement = k.settlements.find(s => s.id === settlementId);
+        const newSettlement = k.settlements.find((s: Settlement) => s.id === settlementId);
         if (!newSettlement) {
           throw new Error(`Settlement not found: ${settlementId}`);
         }
@@ -665,7 +690,7 @@ export class ArmyService {
         // Validate capacity (allow if army already assigned here)
         const capacity = SettlementTierConfig[newSettlement.tier].armySupport;
         const currentlySupporting = newSettlement.supportedUnits.filter(
-          id => id !== armyId // Exclude current army from count
+          (id: string) => id !== armyId // Exclude current army from count
         ).length;
         
         if (currentlySupporting >= capacity) {

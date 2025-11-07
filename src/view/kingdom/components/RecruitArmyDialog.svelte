@@ -36,8 +36,8 @@
   
   $: confirmDisabled = !armyName.trim();
   
-  // Reactively calculate available settlements from kingdom store
-  $: availableSettlements = $kingdomData.settlements
+  // Reactively calculate ALL claimed settlements (including at-capacity)
+  $: allSettlements = $kingdomData.settlements
       .filter(s => {
         // Must have a valid map location
         const hasLocation = s.location.x !== 0 || s.location.y !== 0;
@@ -51,20 +51,23 @@
         const hex = $kingdomData.hexes?.find((h: any) => h.id === hexId) as any;
         const isClaimed = hex && hex.claimedBy === PLAYER_KINGDOM;
         
-        if (!isClaimed) return false;
-        
-        // Get settlement tier config for army support
+        return isClaimed;
+      })
+      .map(s => {
         const capacity = SettlementTierConfig[s.tier]?.armySupport || 0;
         const current = s.supportedUnits?.length || 0;
-        return current < capacity;
-      })
-      .map(s => ({
-        id: s.id,
-        name: s.name,
-        tier: s.tier,
-        current: s.supportedUnits?.length || 0,
-        capacity: SettlementTierConfig[s.tier]?.armySupport || 0
-      }));
+        return {
+          id: s.id,
+          name: s.name,
+          tier: s.tier,
+          current: current,
+          capacity: capacity,
+          isAtCapacity: current >= capacity
+        };
+      });
+  
+  // Available settlements (not at capacity) - for warning check
+  $: availableSettlements = allSettlements.filter(s => !s.isAtCapacity);
     
   
   onMount(() => {
@@ -145,23 +148,33 @@
   
   <div class="form-group">
     <label for="settlement-select">Supported By Settlement:</label>
-    {#if availableSettlements.length > 0}
+    {#if allSettlements.length > 0}
       <select id="settlement-select" bind:value={selectedSettlementId}>
         <option value="">Unsupported (No Settlement)</option>
-        {#each availableSettlements as settlement}
-          <option value={settlement.id}>
+        {#each allSettlements as settlement}
+          <option value={settlement.id} disabled={settlement.isAtCapacity}>
             {settlement.name} ({settlement.tier} - {settlement.current}/{settlement.capacity})
           </option>
         {/each}
       </select>
-      <small class="help-text">
-        Armies must be supported by settlements or they will cause unrest.
-      </small>
+      {#if availableSettlements.length > 0}
+        <small class="help-text">
+          Armies must be supported by settlements or they will cause unrest.
+        </small>
+      {:else}
+        <div class="warning-box" style="margin-top: 0.5rem;">
+          <div>
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Warning:</strong> No claimed settlements have available army support capacity.
+          </div>
+          <small>This army will be unsupported and may cause unrest.</small>
+        </div>
+      {/if}
     {:else}
       <div class="warning-box">
         <div>
           <i class="fas fa-exclamation-triangle"></i>
-          <strong>Warning:</strong> No claimed settlements have available army support capacity.
+          <strong>Warning:</strong> No claimed settlements available.
         </div>
         <small>This army will be unsupported and may cause unrest.</small>
       </div>
@@ -202,6 +215,11 @@
   
   .form-group select {
     cursor: pointer;
+  }
+  
+  .form-group select option:disabled {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
   }
   
   .form-group input[type="text"]:focus,
