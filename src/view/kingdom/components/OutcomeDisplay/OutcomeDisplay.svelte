@@ -723,7 +723,7 @@
 
 <style lang="scss">
   .resolution-display {
-    margin: 20px 0;
+    margin: px 0;
     padding: 0;
     border-radius: var(--radius-md);
     border: 2px solid var(--border-strong);
@@ -805,7 +805,7 @@
   }
   
   .resolution-details {
-    padding: 18px;
+    padding: .5rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 14px;

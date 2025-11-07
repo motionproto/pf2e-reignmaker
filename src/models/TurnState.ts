@@ -131,6 +131,7 @@ export interface AidEntry {
 export interface ActionsPhaseState {
   completed: boolean;
   activeAids: AidEntry[];  // Aid bonuses available for actions this turn
+  deployedArmyIds: string[];  // Army IDs that have been deployed this turn
   // Removed: playerActions - now using actionLog at top level instead
   // Removed: completionsByAction - now using actionLog instead
 }
@@ -220,7 +221,8 @@ export function createDefaultTurnState(turnNumber: number): TurnState {
     
     actionsPhase: {
       completed: false,
-      activeAids: []
+      activeAids: [],
+      deployedArmyIds: []
     },
     
     upkeepPhase: {

@@ -879,6 +879,36 @@ export async function createGameCommandsResolver() {
         const finalHex = finalPath[finalPath.length - 1];
         const movementCost = finalPath.length - 1;
 
+        // Mark army as deployed this turn
+        await updateKingdom(k => {
+          // Ensure turnState exists
+          if (!k.turnState) {
+            const { createDefaultTurnState } = require('../models/TurnState');
+            k.turnState = createDefaultTurnState(k.currentTurn);
+          }
+          
+          // Ensure actionsPhase exists
+          if (!k.turnState!.actionsPhase) {
+            k.turnState!.actionsPhase = {
+              completed: false,
+              activeAids: [],
+              deployedArmyIds: []
+            };
+          }
+          
+          // Ensure deployedArmyIds array exists
+          if (!k.turnState!.actionsPhase.deployedArmyIds) {
+            k.turnState!.actionsPhase.deployedArmyIds = [];
+          }
+          
+          // Add army to deployed list if not already there
+          if (!k.turnState!.actionsPhase.deployedArmyIds.includes(armyId)) {
+            k.turnState!.actionsPhase.deployedArmyIds.push(armyId);
+          }
+        });
+
+        logger.info(`✅ [deployArmy] Marked ${army.name} as deployed this turn`);
+
         return {
           success: true,
           data: {

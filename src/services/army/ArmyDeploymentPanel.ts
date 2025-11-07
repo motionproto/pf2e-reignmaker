@@ -111,16 +111,20 @@ export class ArmyDeploymentPanel {
   
   /**
    * Get all armies that have tokens on the current scene
+   * Filters out armies that have already been deployed this turn
    */
-  private async getArmiesOnMap(): Promise<Array<{army: Army, hexId: string | null}>> {
+  private async getArmiesOnMap(): Promise<Array<{army: Army, hexId: string | null, deployed: boolean}>> {
     const kingdom = getKingdomData();
     if (!kingdom?.armies) return [];
     
     const canvas = (globalThis as any).canvas;
     if (!canvas?.scene) return [];
     
+    // Get deployed army IDs from turnState
+    const deployedArmyIds = kingdom.turnState?.actionsPhase?.deployedArmyIds || [];
+    
     const { TokenHelpers } = await import('../tokens/TokenHelpers');
-    const result: Array<{army: Army, hexId: string | null}> = [];
+    const result: Array<{army: Army, hexId: string | null, deployed: boolean}> = [];
     
     for (const army of kingdom.armies) {
       if (!army.actorId) continue;
@@ -132,7 +136,10 @@ export class ArmyDeploymentPanel {
         // Get hex ID from token position
         const hexId = TokenHelpers.getTokenHexId(token);
         
-        result.push({ army, hexId });
+        // Check if already deployed this turn
+        const deployed = deployedArmyIds.includes(army.id);
+        
+        result.push({ army, hexId, deployed });
       }
     }
     
@@ -245,6 +252,32 @@ export class ArmyDeploymentPanel {
   private async selectArmy(armyId: string): Promise<void> {
     logger.info('[ArmyDeploymentPanel] Selecting army:', armyId);
     
+    // Get army's current hex and deployment status
+    const armiesOnMap = await this.getArmiesOnMap();
+    const armyData = armiesOnMap.find(a => a.army.id === armyId);
+    
+    if (!armyData) {
+      logger.error('[ArmyDeploymentPanel] Army not found on map');
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Army not found on map');
+      return;
+    }
+    
+    // Check if army has already been deployed this turn
+    if (armyData.deployed) {
+      logger.warn('[ArmyDeploymentPanel] Army already deployed this turn:', armyData.army.name);
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.warn(`${armyData.army.name} has already moved this turn`);
+      return;
+    }
+    
+    if (!armyData.hexId) {
+      logger.error('[ArmyDeploymentPanel] Could not find army hex');
+      const ui = (globalThis as any).ui;
+      ui?.notifications?.error('Could not determine army location');
+      return;
+    }
+    
     // Deactivate current movement if any
     if (armyMovementMode.isActive()) {
       armyMovementMode.deactivate();
@@ -252,17 +285,6 @@ export class ArmyDeploymentPanel {
     
     this.selectedArmyId = armyId;
     this.plottedPath = [];
-    
-    // Get army's current hex
-    const armiesOnMap = await this.getArmiesOnMap();
-    const armyData = armiesOnMap.find(a => a.army.id === armyId);
-    
-    if (!armyData || !armyData.hexId) {
-      logger.error('[ArmyDeploymentPanel] Could not find army hex');
-      const ui = (globalThis as any).ui;
-      ui?.notifications?.error('Could not determine army location');
-      return;
-    }
     
     // Activate movement mode
     await armyMovementMode.activateForArmy(armyId, armyData.hexId);
@@ -390,10 +412,17 @@ export class ArmyDeploymentPanel {
     const armiesOnMap = await this.getArmiesOnMap();
     armyList.innerHTML = '';
     
+    // Separate available and deployed armies
+    const availableArmies = armiesOnMap.filter(a => !a.deployed);
+    const deployedArmies = armiesOnMap.filter(a => a.deployed);
+    
     if (armiesOnMap.length === 0) {
       armyList.innerHTML = '<p style="color: #999; font-size: 12px; text-align: center; padding: 16px;">No armies found on current scene</p>';
+    } else if (availableArmies.length === 0) {
+      armyList.innerHTML = '<p style="color: #ff6b6b; font-size: 12px; text-align: center; padding: 16px;"><i class="fas fa-exclamation-triangle"></i> All armies have already moved this turn</p>';
     } else {
-      for (const { army, hexId } of armiesOnMap) {
+      // Render available armies
+      for (const { army, hexId, deployed } of availableArmies) {
         const isSelected = army.id === this.selectedArmyId;
         
         const armyDiv = document.createElement('div');
@@ -437,6 +466,47 @@ export class ArmyDeploymentPanel {
         });
         
         armyList.appendChild(armyDiv);
+      }
+      
+      // Show deployed armies section if any exist
+      if (deployedArmies.length > 0) {
+        const divider = document.createElement('div');
+        divider.style.cssText = 'margin: 16px 0; border-top: 1px solid #666; padding-top: 12px;';
+        divider.innerHTML = '<p style="font-size: 11px; color: #999; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 1px;">Already Deployed</p>';
+        armyList.appendChild(divider);
+        
+        for (const { army, hexId } of deployedArmies) {
+          const armyDiv = document.createElement('div');
+          armyDiv.style.cssText = `
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid transparent;
+            border-radius: 4px;
+            opacity: 0.5;
+            cursor: not-allowed;
+          `;
+          
+          armyDiv.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-weight: bold; font-size: 14px;">${army.name}</span>
+              <i class="fas fa-check" style="color: #4CAF50;"></i>
+            </div>
+            <div style="font-size: 12px; color: #999;">
+              Level ${army.level} • Already moved this turn
+            </div>
+            <div style="font-size: 11px; color: #666; font-family: monospace; margin-top: 4px;">
+              Hex: ${hexId || 'Unknown'}
+            </div>
+          `;
+          
+          armyDiv.addEventListener('click', () => {
+            const ui = (globalThis as any).ui;
+            ui?.notifications?.warn(`${army.name} has already moved this turn`);
+          });
+          
+          armyList.appendChild(armyDiv);
+        }
       }
     }
     

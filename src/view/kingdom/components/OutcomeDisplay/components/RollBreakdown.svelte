@@ -60,15 +60,15 @@
     
     .roll-breakdown-toggle {
       width: 100%;
-      padding: 16px 18px 12px 18px;
+      padding: 10px 12px;
       background: transparent;
       border: none;
       color: var(--text-primary);
       cursor: pointer;
       display: flex;
       align-items: flex-end;
-      gap: 16px;
-      min-height: 56px;
+      gap: 12px;
+      min-height: 40px;
       transition: background var(--transition-fast);
       
       &:hover {
@@ -82,13 +82,13 @@
         
         .fa-dice-d20 {
           color: var(--text-primary);
-          font-size: var(--font-3xl);
+          font-size: var(--font-xl);
           opacity: 0.9;
           line-height: 1;
         }
         
         .roll-number {
-          font-size: var(--font-4xl);
+          font-size: var(--font-2xl);
           font-weight: var(--font-weight-bold);
           color: var(--text-primary);
           line-height: 1;
@@ -112,18 +112,18 @@
     }
     
     .modifier-breakdown {
-      padding: 12px;
+      padding: 8px;
       background: rgba(0, 0, 0, 0.2);
       border-top: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       
       .modifier-item {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding: 6px 10px;
+        align-items: baseline;
+        padding: 4px 8px;
         background: rgba(255, 255, 255, 0.02);
         border-radius: var(--radius-xs);
         font-size: var(--font-sm);
