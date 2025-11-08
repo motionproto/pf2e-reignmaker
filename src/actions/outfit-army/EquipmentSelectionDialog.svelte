@@ -72,15 +72,6 @@
   <div class="dialog-overlay" on:click={handleCancel} role="presentation">
     <div class="dialog-content" on:click|stopPropagation role="dialog">
       <h2>Outfit {army.name}</h2>
-      {#if outcome === 'criticalSuccess'}
-        <p class="subtitle">
-          🎉 Critical Success! Choose equipment to apply (+2 bonus)
-        </p>
-      {:else}
-        <p class="subtitle">
-          Success! Choose equipment to apply (+1 bonus)
-        </p>
-      {/if}
       
       <div class="equipment-list">
         {#each equipmentTypes as equipment}
@@ -100,11 +91,14 @@
               bind:group={selectedEquipment}
               disabled={isOwned}
             />
+            {#if isOwned || selectedEquipment === equipment.id}
+              <i class="fa-solid fa-check checkmark"></i>
+            {/if}
             <div class="equipment-info">
               <div class="equipment-header">
                 <span class="equipment-name">{equipment.name}</span>
                 {#if isOwned}
-                  <span class="owned-badge">✓ Owned</span>
+                  <span class="owned-badge">Owned</span>
                 {/if}
               </div>
               <span class="equipment-description">
@@ -182,25 +176,26 @@
   }
 
   .equipment-item {
+    position: relative;
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
     padding: 1rem;
-    background: var(--color-bg-secondary, #2a2a2a);
-    border: 2px solid var(--color-border-secondary, #3a3a3a);
+    background: #2a2a2a;
+    border: 2px solid #3a3a3a;
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
   }
 
   .equipment-item.available:hover {
-    background: var(--color-bg-hover, #3a3a3a);
-    border-color: var(--color-border-hover, #5a5a5a);
+    background: #3a3a3a;
+    border-color: #5a5a5a;
   }
 
   .equipment-item.selected {
-    border-color: var(--color-accent, #4a9eff);
-    background: var(--color-bg-selected, #2a3a4a);
+    border-color: #ffffff;
+    background: #3a3a3a;
   }
 
   .equipment-item.owned {
@@ -209,12 +204,17 @@
   }
 
   .equipment-item input[type="radio"] {
-    margin-top: 0.25rem;
-    cursor: pointer;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
   }
 
-  .equipment-item.owned input[type="radio"] {
-    cursor: not-allowed;
+  .checkmark {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    color: #ffffff;
+    font-size: 1.25rem;
   }
 
   .equipment-info {
@@ -237,7 +237,7 @@
   }
 
   .owned-badge {
-    color: var(--color-success, #4ade80);
+    color: #ffffff;
     font-size: 0.85rem;
     font-weight: 600;
   }

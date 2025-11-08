@@ -700,6 +700,7 @@ export async function createGameCommandsResolver() {
         type: 'effect',
         system: {
           slug: `army-equipment-${equipmentType}`,
+          badge: null,  // Hide token icon
           rules: [] as any[]
         }
       };

@@ -344,7 +344,7 @@
   
   .dialog-container {
     background: var(--bg-base);
-    border-radius: var(--radius-lg, 0.5rem);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-strong);
     max-width: 900px;
     width: 90%;
@@ -358,19 +358,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: .75rem;
-    padding-left: 1.5rem;
-    border-bottom: 1px solid var(--border-light, #3a3a3d);
-    background: var(--color-gray-950, #18181b);
+    padding: .5rem 1rem;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--color-gray-950);
     
     h2 {
       margin: 0;
-      color: var(--text-primary, #ffffff);
-      font-size: 1.2rem;
+      color: var(--text-primary);
+      font-size: 1.1rem;
       font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.5rem;
     }
     
     .header-info {
@@ -382,27 +381,27 @@
     .capacity-badge {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
       background: var(--bg-overlay);
-      border-radius: var(--radius-md, 0.375rem);
-      color: var(--text-secondary, #9ca3af);
-      font-size: var(--font-sm, 0.875rem);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
     }
     
     .close-button {
       background: none;
       border: none;
-      color: var(--text-secondary, #9ca3af);
+      color: var(--text-secondary);
       font-size: 1.25rem;
       cursor: pointer;
       padding: 0.5rem;
-      border-radius: var(--radius-sm, 0.25rem);
+      border-radius: var(--radius-sm);
       transition: all 0.2s ease;
       
       &:hover {
         background: rgba(255, 255, 255, 0.1);
-        color: var(--text-primary, #f3f4f6);
+        color: var(--text-primary);
       }
     }
   }
@@ -410,7 +409,7 @@
   .structure-type-selector {
     display: flex;
     gap: 1rem;
-    padding: 1rem;
+    padding: 0.75rem;
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border-default);
     align-items: center;
@@ -427,7 +426,7 @@
     .radio-option {
       display: flex;
       align-items: center;
-      padding: 0.5rem 0.75rem;
+      padding: 0.375rem 0.625rem;
       border-radius: 0.375rem;
       cursor: pointer;
       transition: all 0.2s;
@@ -457,15 +456,15 @@
     
     .radio-content {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      gap: 0.25rem;
+      gap: 0.5rem;
       color: var(--text-secondary);
       transition: color 0.2s;
     }
     
     .radio-icon {
-      font-size: 1.25rem;
+      font-size: 1rem;
       
       i {
         font-size: inherit;
@@ -488,26 +487,26 @@
   }
   
   .category-section {
-    margin-bottom: 0.5rem;
+    padding-bottom: 0rem;
     border: 0px solid var(--border-default);
-    border-radius: var(--radius-md, 0.375rem);
+    border-radius: var(--radius-md);
     background: var(--bg-surface);
     overflow: hidden;
   }
   
   .category-header {
-    padding: 0.5rem 1.5rem;
+    padding: 0.375rem 1rem;
     background: var(--bg-overlay);
-    color: var(--color-accent, #f59e0b);
-    font-size: var(--font-xl);
+    color: var(--color-accent);
+    font-size: var(--font-lg);
     font-weight: 600;
     letter-spacing: 0.05em;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
     
     i {
-      font-size: 1.25rem;
+      font-size: 1rem;
     }
   }
   
@@ -519,14 +518,14 @@
   .structure-item {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 0.75rem 1.5rem;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
     background: linear-gradient(135deg,
       rgba(24, 24, 27, 0.6),
       rgba(31, 31, 35, 0.4));
     border-radius: var(--radius-md);
     border: 1px solid var(--border-medium);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.375rem;
     transition: all 0.2s ease;
     
     &:hover {
@@ -567,7 +566,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
   }
   
   .structure-name-row {
@@ -579,19 +578,19 @@
   
   .structure-name {
     font-weight: 600;
-    color: var(--text-primary, #f3f4f6);
-    font-size: var(--font-lg, 1rem);
+    color: var(--text-primary);
+    font-size: var(--font-md);
     
     .skills-text {
       font-weight: normal;
-      color: var(--text-secondary, #9ca3af);
-      font-size: var(--font-sm, 0.875rem);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
       margin-left: 0.5rem;
     }
   }
   
   .structure-description {
-    color: var(--text-tertiary, #9ca3af);
+    color: var(--text-tertiary);
     font-size: var(--font-md);
     line-height: 1.3;
     font-weight: var(--font-weight-medium);
@@ -609,8 +608,8 @@
   .structure-modifiers {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: 0.375rem;
+    margin-top: 0.375rem;
   }
   
   .modifier-badge {
@@ -619,8 +618,8 @@
     padding: 0.25rem 0.625rem;
     background: rgba(34, 197, 94, 0.15);
     color: #86efac;
-    border-radius: var(--radius-md, 0.375rem);
-    font-size: var(--font-xs, 0.75rem);
+    border-radius: var(--radius-md);
+    font-size: var(--font-xs);
     font-weight: 600;
     border: 1px solid rgba(34, 197, 94, 0.3);
   }
@@ -628,8 +627,8 @@
   .dialog-footer {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem 1.5rem;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     border-top: 1px solid var(--border-default);
     background: var(--bg-elevated);
     
@@ -658,10 +657,10 @@
     
     .close-button {
       padding: 0.5rem 1rem;
-      background: var(--color-gray-800, #27272a);
-      border: 1px solid var(--border-default, #3a3a3d);
-      border-radius: var(--radius-sm, 4px);
-      color: var(--text-secondary, #b0b0b3);
+      background: var(--color-gray-800);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
       font-size: 0.9rem;
       font-weight: var(--font-weight-medium);
       cursor: pointer;
@@ -669,7 +668,7 @@
       min-width: 80px;
       
       &:hover {
-        background: var(--color-gray-700, #3a3a3d);
+        background: var(--color-gray-700);
       }
     }
   }

@@ -672,7 +672,6 @@
   
   <div class="resolution-details">
     <OutcomeMessage effect={displayEffect} />
-    <RollBreakdown {rollBreakdown} />
     <ShortageWarning {shortfallResources} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
     <DiceRoller 
@@ -692,6 +691,7 @@
       {customComponentData}
       on:roll={handleDiceRoll} 
     />
+    <RollBreakdown {rollBreakdown} />
     
     <!-- Custom resolution UI component (action-specific) - shown in addition to standard display -->
     {#if customComponent}

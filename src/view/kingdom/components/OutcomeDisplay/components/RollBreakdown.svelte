@@ -2,6 +2,9 @@
   export let rollBreakdown: any = null;
   
   let expanded = false;
+  
+  // Filter enabled modifiers
+  $: enabledModifiers = rollBreakdown?.modifiers?.filter((m: any) => m.enabled !== false) || [];
 </script>
 
 {#if rollBreakdown}
@@ -24,7 +27,7 @@
           <span class="modifier-label">Base Roll (1d20)</span>
           <span class="modifier-value">{rollBreakdown.d20Result}</span>
         </div>
-        {#each rollBreakdown.modifiers.filter((m) => m.enabled !== false) as mod}
+        {#each enabledModifiers as mod}
           <div class="modifier-item">
             <span class="modifier-label">{mod.label}</span>
             <span class="modifier-value {mod.modifier >= 0 ? 'positive' : 'negative'}">
@@ -129,16 +132,16 @@
         font-size: var(--font-sm);
         
         &.base-roll {
-          background: rgba(59, 130, 246, 0.1);
-          border: 1px solid rgba(59, 130, 246, 0.2);
+          background: rgba(96, 165, 250, 0.15);
+          border: 1px solid rgba(96, 165, 250, 0.3);
           
           .modifier-label {
-            color: rgba(59, 130, 246, 0.9);
+            color: rgb(147, 197, 253);
             font-weight: var(--font-weight-semibold);
           }
           
           .modifier-value {
-            color: rgba(59, 130, 246, 1);
+            color: rgb(191, 219, 254);
             font-weight: var(--font-weight-bold);
           }
         }

@@ -7,6 +7,7 @@
    import DisbandArmyDialog from '../components/DisbandArmyDialog.svelte';
    import RecruitArmyDialog from '../components/RecruitArmyDialog.svelte';
    import { logger } from '../../../utils/Logger';
+   import { EQUIPMENT_ICONS } from '../../../utils/presentation';
 
    // Table state
    let searchTerm = '';
@@ -605,6 +606,7 @@
             <tr>
                <th>Name</th>
                <th>Level</th>
+               <th>Gear</th>
                <th>Support Status</th>
                <th>Actions</th>
             </tr>
@@ -615,7 +617,7 @@
                <tr>
                   {#if linkingArmyId === army.id}
                      <!-- Linking mode: Full-width actor search -->
-                     <td colspan="3">
+                     <td colspan="4">
                         <div class="actor-autosuggest">
                            <input 
                               type="text" 
@@ -722,6 +724,32 @@
                         {/if}
                      </td>
                      
+                     <!-- Gear Column -->
+                     <td>
+                        <div class="gear-icons">
+                           <i 
+                              class="{EQUIPMENT_ICONS.armor} gear-icon" 
+                              class:owned={army.equipment?.armor}
+                              title={army.equipment?.armor ? 'Armor equipped' : 'No armor'}
+                           ></i>
+                           <i 
+                              class="{EQUIPMENT_ICONS.runes} gear-icon" 
+                              class:owned={army.equipment?.runes}
+                              title={army.equipment?.runes ? 'Runes equipped' : 'No runes'}
+                           ></i>
+                           <i 
+                              class="{EQUIPMENT_ICONS.weapons} gear-icon" 
+                              class:owned={army.equipment?.weapons}
+                              title={army.equipment?.weapons ? 'Weapons equipped' : 'No weapons'}
+                           ></i>
+                           <i 
+                              class="{EQUIPMENT_ICONS.equipment} gear-icon" 
+                              class:owned={army.equipment?.equipment}
+                              title={army.equipment?.equipment ? 'Enhanced gear equipped' : 'No enhanced gear'}
+                           ></i>
+                        </div>
+                     </td>
+                     
                      <!-- Support Status Column -->
                      <td>
                         {#if editingArmyId === army.id && editingField === 'settlement'}
@@ -800,7 +828,7 @@
             
             <!-- Add Army Row -->
             <tr class="add-row">
-               <td colspan="3">
+               <td colspan="4">
                   {#if linkingArmyId === 'new'}
                      <!-- Linking mode: Actor search autosuggest -->
                      <div class="actor-autosuggest">
@@ -1418,6 +1446,23 @@
       
       .page-info {
          color: var(--color-text-dark-primary, #b5b3a4);
+      }
+   }
+   
+   /* Gear Icons */
+   .gear-icons {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      
+      .gear-icon {
+         font-size: 1rem;
+         color: rgba(255, 255, 255, 0.3);
+         transition: all 0.2s;
+         
+         &.owned {
+            color: #90ee90;
+         }
       }
    }
    

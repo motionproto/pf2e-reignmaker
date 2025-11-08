@@ -768,6 +768,11 @@ export class ArmyDeploymentPanel {
       skill: this.skill
     });
     
+    // Deactivate movement mode to stop hover graphics and input
+    if (armyMovementMode.isActive()) {
+      armyMovementMode.deactivate();
+    }
+    
     // Switch to waiting state
     this.panelState = 'waiting-for-roll';
     this.updatePanel();

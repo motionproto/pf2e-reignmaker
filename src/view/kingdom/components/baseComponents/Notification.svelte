@@ -6,6 +6,7 @@
    export let description: string;
    export let impact: string = '';
    export let variant: 'info' | 'warning' | 'danger' | 'success' = 'info';
+   export let size: 'normal' | 'compact' = 'normal';
    export let icon: string = '';
    export let dismissible: boolean = false;
    export let emphasis: boolean = false;
@@ -34,7 +35,7 @@
    }
 </script>
 
-<div class="notification-rm" class:info={variant === 'info'} class:warning={variant === 'warning'} class:danger={variant === 'danger'} class:success={variant === 'success'} class:emphasis={emphasis}>
+<div class="notification-rm" class:info={variant === 'info'} class:warning={variant === 'warning'} class:danger={variant === 'danger'} class:success={variant === 'success'} class:emphasis={emphasis} class:compact={size === 'compact'}>
    <div class="notification-rm-header" class:has-action={actionHeader && onAction}>
       <i class={displayIcon}></i>
       <span class="notification-rm-title">{title}</span>
@@ -92,6 +93,44 @@
       
       &.emphasis {
          border-left-width: 6px;
+      }
+      
+      &.compact {
+         font-size: var(--font-sm);
+         
+         .notification-rm-header {
+            padding: 0.375rem 0.75rem;
+            
+            i {
+               font-size: 14px;
+            }
+            
+            .notification-rm-title {
+               font-size: var(--font-md);
+            }
+         }
+         
+         .notification-rm-description {
+            font-size: var(--font-sm);
+            padding: 0.5rem 0.75rem;
+         }
+         
+         .notification-rm-impact {
+            font-size: var(--font-sm);
+            padding: 0.5rem 0.75rem;
+         }
+         
+         .notification-rm-actions-inline {
+            padding: 0.5rem 0.75rem;
+            
+            .description-text {
+               font-size: var(--font-sm);
+            }
+         }
+         
+         .notification-rm-actions {
+            padding: 0.5rem 0.75rem;
+         }
       }
       
       // Info variant (blue)

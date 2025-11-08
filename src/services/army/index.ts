@@ -319,7 +319,8 @@ export class ArmyService {
       // Explicitly set token image from actor's prototype token
       texture: {
         src: actor.prototypeToken?.texture?.src || actor.img
-      }
+      },
+      displayName: actor.prototypeToken?.displayName ?? 30 // Hover by Anyone (copy from prototype)
     };
     
     // Create the token first
@@ -381,6 +382,11 @@ export class ArmyService {
     
     const actorId = army.actorId;
     
+    // Remove all tokens for this army from all scenes
+    if (actorId) {
+      await this._removeArmyTokensFromAllScenes(actorId, army.name);
+    }
+    
     // Remove army from kingdom (no refund)
     await updateKingdom((kingdom: KingdomData) => {
       kingdom.armies = kingdom.armies.filter((a: Army) => a.id !== armyId);
@@ -417,6 +423,49 @@ export class ArmyService {
       refund: 0,
       actorId: actorId
     };
+  }
+  
+  /**
+   * Remove all tokens for an army actor from all scenes
+   * Called when disbanding an army to clean up the map
+   * 
+   * @param actorId - Actor ID of the army
+   * @param armyName - Name of the army (for logging)
+   * @internal
+   */
+  async _removeArmyTokensFromAllScenes(actorId: string, armyName: string): Promise<void> {
+    const game = (globalThis as any).game;
+    
+    if (!game?.scenes) {
+      logger.warn(`⚠️ [ArmyService] Cannot remove tokens - scenes not available`);
+      return;
+    }
+    
+    let totalTokensRemoved = 0;
+    
+    // Iterate through all scenes
+    for (const scene of game.scenes) {
+      try {
+        // Find all tokens for this actor in this scene
+        const tokensToDelete = scene.tokens.filter((token: any) => token.actorId === actorId);
+        
+        if (tokensToDelete.length > 0) {
+          const tokenIds = tokensToDelete.map((token: any) => token.id);
+          await scene.deleteEmbeddedDocuments('Token', tokenIds);
+          totalTokensRemoved += tokenIds.length;
+          logger.info(`🗑️ [ArmyService] Removed ${tokenIds.length} token(s) for ${armyName} from scene ${scene.name}`);
+        }
+      } catch (error) {
+        logger.error(`❌ [ArmyService] Failed to remove tokens from scene ${scene.name}:`, error);
+        // Continue with other scenes even if one fails
+      }
+    }
+    
+    if (totalTokensRemoved > 0) {
+      logger.info(`✅ [ArmyService] Removed ${totalTokensRemoved} total token(s) for ${armyName} from all scenes`);
+    } else {
+      logger.info(`ℹ️ [ArmyService] No tokens found for ${armyName} on any scene`);
+    }
   }
   
   /**

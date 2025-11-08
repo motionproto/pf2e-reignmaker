@@ -61,7 +61,7 @@
           {#each eligibleArmies as army}
             {@const info = getEquipmentInfo(army)}
             {@const equipped = getEquippedList(army)}
-            <button class="army-item" on:click={() => handleSelect(army.id)}>
+            <div class="army-item" on:click={() => handleSelect(army.id)} role="button" tabindex="0">
               <div class="army-header">
                 <span class="army-name">{army.name}</span>
                 <span class="army-level">Level {army.level}</span>
@@ -76,7 +76,7 @@
                   </span>
                 {/if}
               </div>
-            </button>
+            </div>
           {/each}
         </div>
       {/if}
@@ -105,7 +105,7 @@
     border: 2px solid var(--color-border-primary, #4a4a4a);
     border-radius: 8px;
     padding: 1.5rem;
-    min-width: 400px;
+    min-width: 500px;
     max-width: 600px;
     max-height: 80vh;
     overflow-y: auto;
@@ -138,14 +138,12 @@
   .army-item {
     display: flex;
     flex-direction: column;
-    align-items: stretch;
     padding: 0.75rem 1rem;
     background: var(--color-bg-secondary, #2a2a2a);
     border: 1px solid var(--color-border-secondary, #3a3a3a);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-align: left;
   }
 
   .army-item:hover {
@@ -158,6 +156,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
   }
 
@@ -165,11 +164,17 @@
     font-weight: bold;
     color: var(--color-text-primary, #ffffff);
     font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .army-level {
     color: var(--color-text-accent, #4a9eff);
     font-size: 0.9rem;
+    flex-shrink: 0;
   }
 
   .army-details {
@@ -182,11 +187,16 @@
     color: var(--color-success, #4ade80);
     font-size: 0.85rem;
     font-weight: 500;
+    line-height: 1.4;
   }
 
   .equipped-items {
     color: var(--color-text-tertiary, #999999);
     font-size: 0.8rem;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .cancel-button {

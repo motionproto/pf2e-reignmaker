@@ -11,8 +11,8 @@
 <style lang="scss">
   .resolution-effect {
     color: var(--text-primary);
-    font-size: var(--font-3xl);
-    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-lg);
+    font-weight: var(--font-weight-medium);
     line-height: 1.4;
     padding: 0;
   }

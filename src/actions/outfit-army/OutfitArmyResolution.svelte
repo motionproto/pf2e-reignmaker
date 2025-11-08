@@ -3,6 +3,7 @@
   import { kingdomData } from '../../stores/KingdomStore';
   import type { Army } from '../../models/Army';
   import type { ActiveCheckInstance } from '../../models/CheckInstance';
+  import { EQUIPMENT_ICONS, EQUIPMENT_NAMES, EQUIPMENT_BONUSES, type EquipmentType } from '../../utils/presentation';
 
   export let instance: ActiveCheckInstance | null = null;
   export let outcome: 'success' | 'criticalSuccess' = 'success';
@@ -18,32 +19,32 @@
   // Equipment type definitions with bonuses
   const equipmentTypes = [
     { 
-      id: 'armor', 
-      name: 'Armor', 
-      icon: '🛡️',
-      normalBonus: '+1 AC',
-      critBonus: '+2 AC'
+      id: 'armor' as EquipmentType, 
+      name: EQUIPMENT_NAMES.armor, 
+      icon: EQUIPMENT_ICONS.armor,
+      normalBonus: EQUIPMENT_BONUSES.armor.normal,
+      critBonus: EQUIPMENT_BONUSES.armor.critical
     },
     { 
-      id: 'runes', 
-      name: 'Runes', 
-      icon: '✨',
-      normalBonus: '+1 to hit',
-      critBonus: '+2 to hit'
+      id: 'runes' as EquipmentType, 
+      name: EQUIPMENT_NAMES.runes, 
+      icon: EQUIPMENT_ICONS.runes,
+      normalBonus: EQUIPMENT_BONUSES.runes.normal,
+      critBonus: EQUIPMENT_BONUSES.runes.critical
     },
     { 
-      id: 'weapons', 
-      name: 'Weapons', 
-      icon: '⚔️',
-      normalBonus: '+1 damage dice',
-      critBonus: '+2 damage dice'
+      id: 'weapons' as EquipmentType, 
+      name: EQUIPMENT_NAMES.weapons, 
+      icon: EQUIPMENT_ICONS.weapons,
+      normalBonus: EQUIPMENT_BONUSES.weapons.normal,
+      critBonus: EQUIPMENT_BONUSES.weapons.critical
     },
     { 
-      id: 'equipment', 
-      name: 'Enhanced Gear', 
-      icon: '🎒',
-      normalBonus: '+1 to saves',
-      critBonus: '+2 to saves'
+      id: 'equipment' as EquipmentType, 
+      name: EQUIPMENT_NAMES.equipment, 
+      icon: EQUIPMENT_ICONS.equipment,
+      normalBonus: EQUIPMENT_BONUSES.equipment.normal,
+      critBonus: EQUIPMENT_BONUSES.equipment.critical
     }
   ];
 
@@ -116,14 +117,15 @@
             disabled={applied || isOwned}
             on:click={() => selectedEquipment = equipment.id}
           >
-            <div class="equipment-icon">{equipment.icon}</div>
+            <i class="{equipment.icon} equipment-icon"></i>
             <div class="equipment-name">{equipment.name}</div>
-            <div class="equipment-bonus" class:crit={outcome === 'criticalSuccess'}>
-              {bonus}
-            </div>
             {#if isOwned}
-              <div class="owned-overlay">
-                <span>✓ Owned</span>
+              <div class="owned-badge-inline">
+                <i class="fa-solid fa-check"></i> Owned
+              </div>
+            {:else}
+              <div class="equipment-bonus" class:crit={outcome === 'criticalSuccess'}>
+                {bonus}
               </div>
             {/if}
           </button>
@@ -213,15 +215,15 @@
 
     &:hover:not(.disabled) {
       background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(74, 158, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.3);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     &.selected {
-      background: rgba(74, 158, 255, 0.15);
-      border-color: rgba(74, 158, 255, 0.6);
-      box-shadow: 0 0 16px rgba(74, 158, 255, 0.3);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
     }
 
     &.owned {
@@ -237,6 +239,7 @@
   .equipment-icon {
     font-size: 2rem;
     line-height: 1;
+    color: #ffffff;
   }
 
   .equipment-name {
@@ -262,27 +265,14 @@
     }
   }
 
-  .owned-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 6px;
-    
-    span {
-      padding: 0.25rem 0.75rem;
-      background: rgba(34, 197, 94, 0.3);
-      border: 1px solid rgba(34, 197, 94, 0.5);
-      border-radius: 4px;
-      color: var(--color-green);
-      font-weight: 600;
-      font-size: 0.85rem;
-    }
+  .owned-badge-inline {
+    padding: 0.25rem 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
   }
 
   .selection-summary {

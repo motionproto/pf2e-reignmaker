@@ -34,7 +34,12 @@
   let selectedSettlementId: string = '';
   let selectedArmyType: ArmyType = 'infantry';
   
-  $: confirmDisabled = !armyName.trim();
+  // Reactive validation: prevent confirming with an at-capacity settlement
+  $: {
+    const selectedSettlement = allSettlements.find(s => s.id === selectedSettlementId);
+    const isSelectedAtCapacity = selectedSettlement?.isAtCapacity ?? false;
+    confirmDisabled = !armyName.trim() || isSelectedAtCapacity;
+  }
   
   // Reactively calculate ALL claimed settlements (including at-capacity)
   $: allSettlements = $kingdomData.settlements
@@ -68,7 +73,9 @@
   
   // Available settlements (not at capacity) - for warning check
   $: availableSettlements = allSettlements.filter(s => !s.isAtCapacity);
-    
+  
+  // Confirm disabled state
+  let confirmDisabled = true;
   
   onMount(() => {
     // Generate default army name
