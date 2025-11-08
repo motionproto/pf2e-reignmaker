@@ -53,7 +53,7 @@
 <style lang="scss">
   .build-queue-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 10px;
     background: rgba(0, 0, 0, 0.3);
@@ -108,9 +108,8 @@
   
   .item-header {
     display: flex;
-    align-items: baseline;
-    gap: 8px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 2px;
     
     .structure-name {
       font-weight: var(--font-weight-semibold);
@@ -119,9 +118,8 @@
     }
     
     .settlement-location {
-      color: var(--text-tertiary);
+      color: var(--text-secondary);
       font-size: var(--font-sm);
-      font-style: italic;
     }
   }
   

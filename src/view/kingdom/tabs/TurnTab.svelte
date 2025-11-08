@@ -82,8 +82,10 @@
       <!-- Phase Bar underneath phase header -->
       <PhaseBar />
       
-      <!-- Player Action Tracker underneath phase bar -->
-      <PlayerActionTracker />
+      <!-- Player Action Tracker underneath phase bar (only shown in Events and Actions phases) -->
+      {#if displayPhase === TurnPhase.EVENTS || displayPhase === TurnPhase.ACTIONS}
+         <PlayerActionTracker />
+      {/if}
       
       <div class="phase-content">
          {#if displayPhase === TurnPhase.STATUS}

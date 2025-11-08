@@ -12,6 +12,8 @@
   import DisbandArmyDialog from '../../../../actions/disband-army/ArmySelectionDialog.svelte';
   import OutfitArmyDialog from '../../../../actions/outfit-army/ArmySelectionDialog.svelte';
   import RecruitArmyDialog from '../../../kingdom/components/RecruitArmyDialog.svelte';
+  import EstablishSettlementNameDialog from '../../../kingdom/components/EstablishSettlementNameDialog.svelte';
+  import StructureSelectionDialog from '../../../kingdom/components/StructureSelectionDialog.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -169,3 +171,9 @@
   bind:show={showRecruitArmyDialog}
   on:confirm={handleArmyRecruited}
 />
+
+<!-- Establish Settlement Name Dialog -->
+<EstablishSettlementNameDialog />
+
+<!-- Structure Selection Dialog (Critical Success) -->
+<StructureSelectionDialog />

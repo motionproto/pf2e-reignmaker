@@ -24,39 +24,36 @@ import { getAdjacentHexIds } from '../shared/hexValidation';
 import { kingmakerIdToOffset } from '../../services/hex-selector/coordinates';
 import { logger } from '../../utils/Logger';
 
-/**
- * Calculate distance between two hex coordinates
- */
-function hexDistance(x1: number, y1: number, x2: number, y2: number): number {
-  // Use cube coordinates for accurate hex distance
-  // Convert axial to cube
-  const z1 = -x1 - y1;
-  const z2 = -x2 - y2;
-  
-  return Math.max(
-    Math.abs(x1 - x2),
-    Math.abs(y1 - y2),
-    Math.abs(z1 - z2)
-  );
-}
 
 export const EstablishSettlementAction = {
   id: 'establish-settlement',
   
   /**
    * Check if action can be performed
-   * Validates that no other settlement exists within 4 hexes
+   * Validates resource requirements
    */
   checkRequirements(kingdomData: KingdomData): ActionRequirement {
-    // Note: This check would need a target hex coordinate to work properly
-    // For now, we'll skip the distance check during requirements
-    // and rely on manual validation when placing on the map
-
-    // Check if we have any settlements (informational only)
-    const settlementCount = kingdomData.settlements?.length || 0;
-
+    const requirements: string[] = [];
+    
+    // Check resource requirements
+    const resources = kingdomData.resources || {};
+    const gold = resources.gold || 0;
+    const food = resources.food || 0;
+    const lumber = resources.lumber || 0;
+    
+    if (gold < 2) {
+      requirements.push(`Need 2 Gold (have ${gold})`);
+    }
+    if (food < 2) {
+      requirements.push(`Need 2 Food (have ${food})`);
+    }
+    if (lumber < 2) {
+      requirements.push(`Need 2 Lumber (have ${lumber})`);
+    }
+    
     return {
-      met: true
+      met: requirements.length === 0,
+      reason: requirements.length > 0 ? requirements.join(', ') : undefined
     };
   },
   
@@ -99,8 +96,9 @@ export const EstablishSettlementAction = {
         
         const selectedHexId = selectedHexes[0];
 
-        // Step 2: Prompt for settlement name using Foundry Dialog
-        const settlementName = await promptForSettlementName();
+        // Step 2: Prompt for settlement name using our dialog store
+        const { settlementNameDialog } = await import('../../stores/SettlementNameDialogStore');
+        const settlementName = await settlementNameDialog.prompt(selectedHexId);
         if (!settlementName) {
           return createErrorResult('Settlement creation cancelled');
         }
@@ -108,7 +106,8 @@ export const EstablishSettlementAction = {
         // Step 3: If critical success, let user choose a free structure
         let selectedStructureId: string | null = null;
         if (outcome === 'criticalSuccess') {
-          selectedStructureId = await promptForStructureSelection();
+          const { structureSelectionDialog } = await import('../../stores/StructureSelectionDialogStore');
+          selectedStructureId = await structureSelectionDialog.prompt();
         }
         
         // Step 4: Apply resource costs
@@ -148,7 +147,18 @@ export const EstablishSettlementAction = {
           const hex = kingdom.hexes.find((h: any) => h.id === selectedHexId);
           if (hex) {
             hex.hasRoad = true;
-
+            
+            // Add hex feature entry for map rendering
+            if (!hex.features) {
+              hex.features = [];
+            }
+            hex.features.push({
+              type: 'settlement',
+              name: newSettlement.name,
+              tier: newSettlement.tier,
+              linked: true,              // Linked to Settlement object
+              settlementId: newSettlement.id  // Link back to Settlement
+            });
           }
           
           // First settlement: Automatically claim all adjacent hexes
@@ -216,120 +226,5 @@ export const EstablishSettlementAction = {
     return outcome === 'success' || outcome === 'criticalSuccess';
   }
 };
-
-/**
- * Prompt user for settlement name using Foundry Dialog
- */
-async function promptForSettlementName(): Promise<string | null> {
-  return new Promise((resolve) => {
-    const Dialog = (globalThis as any).Dialog;
-    
-    new Dialog({
-      title: 'Name Your New Village',
-      content: `
-        <div style="margin-bottom: 1rem;">
-          <label for="settlement-name" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-            Settlement Name:
-          </label>
-          <input 
-            type="text" 
-            id="settlement-name" 
-            name="settlement-name" 
-            placeholder="Enter settlement name..." 
-            style="width: 100%; padding: 0.5rem;"
-            autofocus
-          />
-        </div>
-      `,
-      buttons: {
-        ok: {
-          icon: '<i class="fas fa-check"></i>',
-          label: 'Create Settlement',
-          callback: (html: any) => {
-            const input = html.find('#settlement-name')[0] as HTMLInputElement;
-            const name = input?.value?.trim() || '';
-            if (name) {
-              resolve(name);
-            } else {
-              const ui = (globalThis as any).ui;
-              ui?.notifications?.warn('Settlement name is required');
-              resolve(null);
-            }
-          }
-        },
-        cancel: {
-          icon: '<i class="fas fa-times"></i>',
-          label: 'Cancel',
-          callback: () => resolve(null)
-        }
-      },
-      default: 'ok',
-      close: () => resolve(null)
-    }).render(true);
-  });
-}
-
-/**
- * Prompt user to select a free tier 1 structure (critical success bonus)
- */
-async function promptForStructureSelection(): Promise<string | null> {
-  return new Promise(async (resolve) => {
-    const { structuresService } = await import('../../services/structures');
-    structuresService.initializeStructures();
-    const allStructures = structuresService.getAllStructures();
-    const tier1Structures = allStructures.filter(s => s.tier === 1);
-    
-    const Dialog = (globalThis as any).Dialog;
-    
-    const structureOptions = tier1Structures
-      .map(s => {
-        const skillInfo = s.type === 'skill' && s.effects.skillsSupported
-          ? ` (${s.effects.skillsSupported.map((sk: string) => sk.charAt(0).toUpperCase() + sk.slice(1)).join(', ')})`
-          : '';
-        return `<option value="${s.id}">${s.name}${skillInfo}</option>`;
-      })
-      .join('\n');
-    
-    new Dialog({
-      title: 'Critical Success! Choose a Free Structure',
-      content: `
-        <div style="margin-bottom: 1rem;">
-          <p style="margin-bottom: 1rem; color: #4CAF50; font-weight: bold;">
-            <i class="fas fa-star"></i> Critical Success Bonus: Choose a free Tier 1 structure!
-          </p>
-          <label for="structure-select" style="display: block; margin-bottom: 0.5rem; font-weight: bold;">
-            Select Structure:
-          </label>
-          <select 
-            id="structure-select" 
-            name="structure-select" 
-            style="width: 100%; padding: 0.5rem;"
-          >
-            <option value="">No structure (start with empty village)</option>
-            ${structureOptions}
-          </select>
-        </div>
-      `,
-      buttons: {
-        ok: {
-          icon: '<i class="fas fa-check"></i>',
-          label: 'Continue',
-          callback: (html: any) => {
-            const select = html.find('#structure-select')[0] as HTMLSelectElement;
-            const structureId = select?.value || null;
-            resolve(structureId);
-          }
-        },
-        cancel: {
-          icon: '<i class="fas fa-times"></i>',
-          label: 'Skip',
-          callback: () => resolve(null)
-        }
-      },
-      default: 'ok',
-      close: () => resolve(null)
-    }).render(true);
-  });
-}
 
 export default EstablishSettlementAction;

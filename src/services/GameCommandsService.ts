@@ -602,12 +602,16 @@ export async function createGameCommandsService() {
           settlement.structureConditions = {};
         }
 
-        // Mark structure as damaged
-        settlement.structureConditions[target.structure.id] = StructureCondition.DAMAGED;
-        logger.info(`[GameCommands] Damaged structure: ${target.structure.name} in ${settlement.name}`);
-      });
+      // Mark structure as damaged
+      settlement.structureConditions[target.structure.id] = StructureCondition.DAMAGED;
+      logger.info(`[GameCommands] Damaged structure: ${target.structure.name} in ${settlement.name}`);
+    });
+    
+    // Recalculate settlement and kingdom capacities (handles imprisoned unrest + food excess)
+    const { settlementService } = await import('./settlements');
+    await settlementService.recalculateAfterStructureChange(target.settlement.id);
 
-      // Log to chat
+    // Log to chat
       const message = `<p><strong>Structure Damaged:</strong> ${target.structure.name} in ${target.settlement.name} has been damaged and provides no bonuses until repaired.</p>`;
       ChatMessage.create({
         content: message,
@@ -705,6 +709,10 @@ export async function createGameCommandsService() {
 
         message = `<p><strong>Structure Destroyed:</strong> ${target.structure.name} in ${target.settlement.name} has been destroyed, downgrading to ${previousStructure.name} (damaged).</p>`;
       }
+      
+      // Recalculate settlement and kingdom capacities (handles imprisoned unrest + food excess)
+      const { settlementService } = await import('./settlements');
+      await settlementService.recalculateAfterStructureChange(target.settlement.id);
 
       // Log to chat
       ChatMessage.create({

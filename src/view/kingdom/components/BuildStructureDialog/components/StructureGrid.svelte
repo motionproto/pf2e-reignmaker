@@ -62,6 +62,24 @@
           {/if}
         </div>
       </div>
+      
+      <div class="header-actions">
+        <button 
+          class="cancel-button"
+          on:click={handleCancel}
+        >
+          Cancel
+        </button>
+        
+        <button 
+          class="build-button" 
+          on:click={() => handleBuild(new CustomEvent('build', { detail: selectedStructureId }))}
+          disabled={!selectedStructureId || !!successMessage}
+        >
+          <i class="fas fa-hammer"></i>
+          Build
+        </button>
+      </div>
     </div>
     
     <div class="structures-grid">
@@ -75,25 +93,23 @@
       
       <!-- Show built structures as simple headers -->
       {#each builtStructures as structure}
-        <BuiltStructureItem {structure} />
+        <BuiltStructureItem {structure} on:select={handleSelect} />
       {/each}
       
-      <!-- Show only the next buildable tier (not locked ones) -->
+      <!-- Show all structures (buildable and locked) -->
       {#each availableStructures as structure}
         {@const locked = isStructureLocked(structure)}
-        {#if !locked}
-          <AvailableStructureItem 
-            {structure}
-            locked={false}
-            {selectedStructureId}
-            {successMessage}
-            {selectedSettlement}
-            atCapacity={false}
-            on:build={handleBuild}
-            on:select={handleSelect}
-            on:cancel={handleCancel}
-          />
-        {/if}
+        <AvailableStructureItem 
+          {structure}
+          {locked}
+          {selectedStructureId}
+          {successMessage}
+          {selectedSettlement}
+          atCapacity={false}
+          on:build={handleBuild}
+          on:select={handleSelect}
+          on:cancel={handleCancel}
+        />
       {/each}
       
       <!-- Requirement message when no available structures -->
@@ -142,11 +158,14 @@
     min-height: 90px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
     
     .header-content {
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      flex: 1;
       
       > i {
         font-size: var(--font-3xl);
@@ -193,6 +212,65 @@
           i {
             font-size: var(--font-sm);
           }
+        }
+      }
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      
+      .cancel-button {
+        padding: 0.75rem 1.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        font-size: var(--font-sm);
+        font-weight: var(--font-weight-medium);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        
+        &:hover {
+          background: rgba(255, 255, 255, 0.15);
+          border-color: var(--border-strong);
+          color: var(--text-primary);
+        }
+      }
+      
+      .build-button {
+        padding: 0.75rem 1.5rem;
+        background: var(--color-amber);
+        border: 1px solid var(--color-amber);
+        border-radius: var(--radius-sm);
+        color: var(--color-gray-900);
+        font-size: var(--font-sm);
+        font-weight: var(--font-weight-semibold);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+        
+        i {
+          font-size: var(--font-sm);
+        }
+        
+        &:hover:not(:disabled) {
+          background: var(--color-amber-light);
+          box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+        }
+        
+        &:disabled {
+          background: transparent;
+          border-color: var(--color-amber);
+          color: var(--color-amber);
+          opacity: 0.5;
+          cursor: not-allowed;
         }
       }
     }

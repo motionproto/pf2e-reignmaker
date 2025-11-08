@@ -113,22 +113,10 @@ const SendScoutsAction: CustomActionImplementation = {
           kingdom.resources.gold -= 1;
         });
 
-        // Reveal hexes in World Explorer (if module is available)
-        let revealMessage = '';
-        if (worldExplorerService.isAvailable()) {
-          worldExplorerService.revealHexes(selectedHexes);
-          revealMessage = ' - Revealed on map';
-          logActionSuccess('send-scouts', 'Hexes revealed in World Explorer');
-          
-          // Show notification to user
-          const ui = (globalThis as any).ui;
-          ui?.notifications?.info(`🗺️ Revealed ${selectedHexes.length} hex${selectedHexes.length !== 1 ? 'es' : ''} on the map`);
-        } else {
-          logger.warn('⚠️ [SendScouts] World Explorer module not available - hexes not revealed');
-          revealMessage = ' - Install World Explorer module to reveal on map';
-        }
-
-        const message = `Scouted ${selectedHexes.length} ${selectedHexes.length === 1 ? 'hex' : 'hexes'}: ${selectedHexes.join(', ')}${revealMessage}`;
+        // Note: Hex reveal now happens in HexSelectorService.handleDone() for scout actions
+        // This allows the user to see the World Explorer fog lift before dismissing the panel
+        
+        const message = `Scouted ${selectedHexes.length} ${selectedHexes.length === 1 ? 'hex' : 'hexes'}: ${selectedHexes.join(', ')}`;
         logActionSuccess('send-scouts', message);
         return createSuccessResult(message);
 

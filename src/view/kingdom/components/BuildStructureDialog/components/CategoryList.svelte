@@ -43,18 +43,10 @@
   $: allSkillCategories = getUniqueCategories(allSkillStructures);
   $: allSupportCategories = getUniqueCategories(allSupportStructures);
   
-  // Get available categories (for determining unavailable state)
-  $: ({ skill: availableSkillStructures, support: availableSupportStructures } = separateStructuresByType(availableStructures));
-  $: availableSkillCategories = getUniqueCategories(availableSkillStructures);
-  $: availableSupportCategories = getUniqueCategories(availableSupportStructures);
-  
-  // Check if a category is unavailable (no structures available in it)
+  // Since we now show ALL structures (built, buildable, and locked), 
+  // categories are never "unavailable" - they just might only have locked structures
   function isCategoryUnavailable(category: string, isSkillCategory: boolean): boolean {
-    if (isSkillCategory) {
-      return !availableSkillCategories.includes(category);
-    } else {
-      return !availableSupportCategories.includes(category);
-    }
+    return false; // Always show categories as available
   }
   
   function selectCategory(category: string) {

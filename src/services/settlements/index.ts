@@ -354,6 +354,15 @@ export class SettlementService {
   }
   
   /**
+   * PUBLIC API: Trigger recalculation after structure damage/repair
+   * This recalculates settlement and kingdom capacities without modifying structure lists
+   */
+  async recalculateAfterStructureChange(settlementId: string): Promise<void> {
+    await this.recalculateSettlement(settlementId);
+    await this.recalculateKingdom();
+  }
+  
+  /**
    * INTERNAL: Recalculate all derived properties for a settlement
    * Called automatically when structures change
    */
@@ -487,6 +496,18 @@ export class SettlementService {
       // Base diplomatic capacity is 1, plus any bonuses from structures
       k.resources.diplomaticCapacity = 1 + totals.diplomaticCapacity;
       k.resources.imprisonedUnrestCapacity = totals.imprisonedUnrestCapacity;
+      
+      // Handle food storage capacity reduction
+      // If current food exceeds new capacity, excess food is lost (spoils)
+      const currentFood = k.resources.food || 0;
+      const newFoodCapacity = totals.foodCapacity;
+      
+      if (currentFood > newFoodCapacity) {
+        const excess = currentFood - newFoodCapacity;
+        k.resources.food = newFoodCapacity;
+        
+        logger.warn(`⚠️ [SettlementService] Food storage capacity reduced: ${excess} food spoiled (${currentFood} → ${newFoodCapacity})`);
+      }
 
     });
   }

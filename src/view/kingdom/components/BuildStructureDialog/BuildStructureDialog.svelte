@@ -78,19 +78,20 @@
   // React to settlements changes to ensure built structures list is current
   $: categoryStructures = getCategoryStructures(selectedCategory, selectedSettlementId, $kingdomData.settlements);
   
-  // Separate built and available structures
+  // Separate built structures from unbuilt
   // React to settlements changes to ensure proper filtering
-  $: ({ built: builtStructures, available: availableInCategoryUnfiltered } = separateBuiltAndAvailable(
-    categoryStructures,
-    availableStructures,
-    selectedSettlementId,
-    $kingdomData.settlements
-  ));
+  $: builtStructures = categoryStructures.filter(s => {
+    const settlement = $kingdomData.settlements.find(st => st.id === selectedSettlementId);
+    return settlement ? settlement.structureIds.includes(s.id) : false;
+  });
   
-  // Separate available structures into buildable and locked
+  // Get all unbuilt structures (regardless of availability)
+  $: unbuiltStructures = categoryStructures.filter(s => !builtStructures.some(b => b.id === s.id));
+  
+  // Separate unbuilt structures into buildable and locked based on tier progression
   // React to settlements changes to ensure tier progression is current
   $: ({ buildable: buildableInCategory, locked: lockedInCategory } = separateByBuildability(
-    availableInCategoryUnfiltered,
+    unbuiltStructures,
     selectedCategory,
     selectedSettlementId,
     $kingdomData.settlements

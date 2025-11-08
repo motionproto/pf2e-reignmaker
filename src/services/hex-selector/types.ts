@@ -59,8 +59,8 @@ export const HEX_HIGHLIGHT_COLORS: Record<string, ColorConfig> = {
   newFortify: { color: 0xA9A9A9, alpha: 0.5 },              // Gray (reuse claim colors)
   hoverFortify: { color: 0x90EE90, alpha: 0.4 },            // Light green (hover)
   
-  // Unclaim/Remove Territory
-  existingUnclaim: { color: 0x8B0000, alpha: 0.3 },  // Dark red (border hexes)
-  newUnclaim: { color: 0xDC143C, alpha: 0.6 },        // Crimson (selected to remove)
-  hoverUnclaim: { color: 0xFF6B6B, alpha: 0.4 }       // Light red (hover)
+  // Unclaim/Remove Territory (uses same colors as settlement for consistency)
+  existingUnclaim: { color: 0xD2691E, alpha: 0.3 },  // Dark orange (same as settlement)
+  newUnclaim: { color: 0xFFA500, alpha: 0.5 },        // Light orange (same as settlement)
+  hoverUnclaim: { color: 0xFFB347, alpha: 0.4 }       // Light orange hover (same as settlement)
 };

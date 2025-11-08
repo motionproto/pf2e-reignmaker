@@ -144,11 +144,11 @@
   
   .structure-thumbnail {
     flex: 0 0 100px;
-    height: 100px;
+    align-self: flex-start;
     
     .thumbnail-placeholder {
-      width: 100%;
-      height: 100%;
+      width: 100px;
+      height: 100px;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);

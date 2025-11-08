@@ -96,6 +96,11 @@
   $: armyDataKey = $kingdomData ? 
     `${$kingdomData.partyLevel || 1}|${$kingdomData.armies?.map(a => `${a.id}:${a.level}`).join(',') || ''}` : '';
   
+  // Create a reactive key that changes when resources change
+  // This forces action requirement checks to re-run when gold, lumber, ore, etc. change
+  $: resourcesKey = $kingdomData?.resources ? 
+    `${$kingdomData.resources.gold || 0}|${$kingdomData.resources.lumber || 0}|${$kingdomData.resources.ore || 0}|${$kingdomData.resources.food || 0}|${$kingdomData.resources.luxuries || 0}` : '';
+  
   // Removed: completionsByAction - now using actionLog directly in CompletionNotifications
   
   // Track current user ID
@@ -1146,6 +1151,7 @@
         {controller}
         {activeAidsCount}
         {armyDataKey}
+        {resourcesKey}
         {isViewingCurrentPhase}
         {actionsUsed}
         currentFame={$kingdomData?.fame || 0}

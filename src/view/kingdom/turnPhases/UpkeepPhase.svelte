@@ -457,15 +457,15 @@
             <div class="content-area">
             {#if $kingdomData.buildQueue?.length > 0}
                <div class="build-resources-available">
-                  <span class="available-label">Available Resources:</span>
                   <div class="resource-list">
                      {#each ['lumber', 'stone', 'ore'] as resource}
                         <div class="resource-item">
                            <i class="fas {getResourceIcon(resource)}" style="color: {getResourceColor(resource)}"></i>
-                           <span>{$resources?.[resource] || 0}</span>
+                           <span class="resource-value">{$resources?.[resource] || 0}</span>
                         </div>
                      {/each}
                   </div>
+                  <div class="available-label">Available Resources</div>
                </div>
                
                <div class="build-queue">
@@ -834,38 +834,49 @@
    }
    
    .build-resources-available {
-      padding: 8px 10px;
+      padding: 12px;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
-      color: var(--text-secondary);
-      font-size: var(--font-sm);
+      width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      gap: 0;
       
       .available-label {
-         font-weight: var(--font-weight-semibold);
-         margin-bottom: 4px;
+         font-size: var(--font-xs);
+         font-weight: var(--font-weight-medium);
+         letter-spacing: 0.025em;
+         color: var(--text-secondary);
+         text-transform: uppercase;
+         width: 100%;
+         text-align: center;
       }
       
       .resource-list {
          display: flex;
-         gap: 16px;
-         flex-wrap: wrap;
+         justify-content: space-evenly;
+         gap: 0;
+         width: 100%;
       }
       
       .resource-item {
          display: flex;
+         flex-direction: column;
          align-items: center;
-         gap: 6px;
+         text-align: center;
+         flex: 1;
          
          i {
-            font-size: 16px;
+            font-size: var(--font-3xl);
+            margin-bottom: 4px;
          }
          
-         span {
-            font-weight: var(--font-weight-semibold);
+         .resource-value {
+            font-size: 18px;
+            font-weight: var(--font-weight-bold);
             color: var(--text-primary);
+            margin: 2px 0;
          }
       }
    }
@@ -876,6 +887,7 @@
       gap: 10px;
       max-height: 200px;
       overflow-y: auto;
+      width: 100%;
    }
    
    

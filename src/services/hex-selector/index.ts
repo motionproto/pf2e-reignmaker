@@ -42,6 +42,9 @@ export class HexSelectorService {
   private panelComponent: any = null;  // Svelte component instance
   private currentHoveredHex: string | null = null;
   
+  // Panel state machine
+  private panelState: 'selection' | 'revealing' | 'completed' = 'selection';
+  
   constructor() {
     this.mapLayer = ReignMakerMapLayer.getInstance();
   }
@@ -307,14 +310,9 @@ export class HexSelectorService {
             ? this.getAdjacentRoadsForPreview(hexId)
             : undefined;
           
-          // For 'unclaim' type, show red X icon in hover layer
-          if (this.config.colorType === 'unclaim') {
-            this.showUnclaimHover(hexId);
-          } else {
-            // Show hover with optional road preview
-            const style = this.getHoverStyle();
-            this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
-          }
+          // Show hover with optional road preview (all types use hex fills now)
+          const style = this.getHoverStyle();
+          this.mapLayer.showInteractiveHover(hexId, style, roadPreview);
         } else {
           // Show invalid hover (red, no preview)
           const invalidStyle = { fillColor: 0xFF0000, fillAlpha: 0.2 };
@@ -406,78 +404,17 @@ export class HexSelectorService {
   }
   
   /**
-   * Get hex center position for rendering icons
-   */
-  private getHexCenter(hexId: string, canvas: any): { x: number, y: number } | null {
-    if (!canvas?.grid) return null;
-    
-    // Parse hex ID (format: "X.Y")
-    const [xStr, yStr] = hexId.split('.');
-    const col = parseInt(xStr, 10);
-    const row = parseInt(yStr, 10);
-    
-    if (isNaN(col) || isNaN(row)) return null;
-    
-    // Get grid center position
-    const [x, y] = canvas.grid.grid.getCenter(col, row);
-    return { x, y };
-  }
-  
-  /**
-   * Show red X hover for unclaim action
-   */
-  private showUnclaimHover(hexId: string): void {
-    const layer = this.mapLayer.getLayer('interactive-hover');
-    if (!layer) return;
-    
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
-    
-    // Clear existing hover
-    layer.removeChildren();
-    
-    // Get hex center position
-    const hexCenter = this.getHexCenter(hexId, canvas);
-    if (!hexCenter) return;
-    
-    const xGraphics = new PIXI.Graphics();
-    xGraphics.name = `HoverUnclaimX_${hexId}`;
-    xGraphics.visible = true;
-    
-    // Draw red X icon (slightly lighter/thinner for hover)
-    const size = canvas.grid.size * 0.4;
-    const lineWidth = 6;
-    const color = 0xFF6B6B; // Light red for hover
-    
-    xGraphics.lineStyle(lineWidth, color, 0.8);
-    
-    // Draw diagonal lines forming X
-    xGraphics.moveTo(hexCenter.x - size, hexCenter.y - size);
-    xGraphics.lineTo(hexCenter.x + size, hexCenter.y + size);
-    xGraphics.moveTo(hexCenter.x + size, hexCenter.y - size);
-    xGraphics.lineTo(hexCenter.x - size, hexCenter.y + size);
-    
-    layer.addChild(xGraphics);
-  }
-  
-  /**
    * Render selection based on action type (explicit routing)
    */
   private renderSelection(hexId: string, style: HexStyle, roadConnections?: string[]): void {
-    const layer = this.mapLayer.getLayer('interactive-selection');
-    if (!layer) return;
-    
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) return;
     
-    // Route to type-specific renderer
+    // Route to type-specific renderer (they handle layer creation)
     if (this.config?.colorType === 'road') {
       this.renderRoadSelection(hexId, roadConnections);
-    } else if (this.config?.colorType === 'unclaim') {
-      // For unclaim - render red X icon
-      this.renderUnclaimSelection(hexId);
     } else {
-      // For claim, settlement, scout, fortify - render hex fill
+      // For claim, settlement, scout, fortify, unclaim - render hex fill
       this.renderHexSelection(hexId, style);
     }
   }
@@ -486,8 +423,7 @@ export class HexSelectorService {
    * Render hex fill selection (claim, settlement, scout actions)
    */
   private renderHexSelection(hexId: string, style: HexStyle): void {
-    const layer = this.mapLayer.getLayer('interactive-selection');
-    if (!layer) return;
+    const layer = this.mapLayer.createLayer('interactive-selection', 20);
     
     const canvas = (globalThis as any).canvas;
     if (!canvas?.grid) return;
@@ -509,8 +445,7 @@ export class HexSelectorService {
   private renderRoadSelection(hexId: string, roadConnections?: string[]): void {
     if (!roadConnections || roadConnections.length === 0) return;
     
-    const layer = this.mapLayer.getLayer('interactive-selection');
-    if (!layer) return;
+    const layer = this.mapLayer.createLayer('interactive-selection', 20);
     
     const roadGraphics = new PIXI.Graphics();
     roadGraphics.name = `RoadConnection_${hexId}`;
@@ -525,40 +460,6 @@ export class HexSelectorService {
     });
     
     layer.addChild(roadGraphics);
-  }
-  
-  /**
-   * Render red X icon for unclaim selection
-   */
-  private renderUnclaimSelection(hexId: string): void {
-    const layer = this.mapLayer.getLayer('interactive-selection');
-    if (!layer) return;
-    
-    const canvas = (globalThis as any).canvas;
-    if (!canvas?.grid) return;
-    
-    // Get hex center position
-    const hexCenter = this.getHexCenter(hexId, canvas);
-    if (!hexCenter) return;
-    
-    const xGraphics = new PIXI.Graphics();
-    xGraphics.name = `UnclaimX_${hexId}`;
-    xGraphics.visible = true;
-    
-    // Draw red X icon
-    const size = canvas.grid.size * 0.4; // 40% of hex size
-    const lineWidth = 8;
-    const color = 0xDC143C; // Crimson red
-    
-    xGraphics.lineStyle(lineWidth, color, 1.0);
-    
-    // Draw diagonal lines forming X
-    xGraphics.moveTo(hexCenter.x - size, hexCenter.y - size);
-    xGraphics.lineTo(hexCenter.x + size, hexCenter.y + size);
-    xGraphics.moveTo(hexCenter.x + size, hexCenter.y - size);
-    xGraphics.lineTo(hexCenter.x - size, hexCenter.y + size);
-    
-    layer.addChild(xGraphics);
   }
   
   /**
@@ -672,10 +573,16 @@ export class HexSelectorService {
   }
   
   /**
-   * Update panel with current selection state
+   * Update panel with current selection state or completion display
    */
   private updatePanel(): void {
     if (!this.panelMountPoint || !this.config) return;
+    
+    // Handle completed state differently
+    if (this.panelState === 'completed') {
+      this.renderCompletedState();
+      return;
+    }
     
     const slotsContainer = this.panelMountPoint.querySelector('#hex-slots');
     const btnDone = this.panelMountPoint.querySelector('#btn-done') as HTMLButtonElement;
@@ -741,17 +648,129 @@ export class HexSelectorService {
   }
   
   /**
-   * Handle Done button click
+   * Render completed state with hex list and OK button
+   */
+  private renderCompletedState(): void {
+    if (!this.panelMountPoint || !this.config) return;
+    
+    const panel = this.panelMountPoint.querySelector('.hex-selection-panel');
+    if (!panel) return;
+    
+    // Get action-specific message
+    const actionMessages: Record<string, string> = {
+      scout: 'Hexes Revealed!',
+      claim: 'Hexes Claimed!',
+      road: 'Roads Built!',
+      settlement: 'Settlement Established!',
+      fortify: 'Hex Fortified!',
+      unclaim: 'Hexes Unclaimed!'
+    };
+    
+    const title = actionMessages[this.config.colorType] || 'Selection Complete!';
+    const icon = this.config.colorType === 'scout' ? 'fa-map-marked-alt' : 'fa-check-circle';
+    
+    panel.innerHTML = `
+      <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #D2691E;">
+        <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+          <i class="fas ${icon}"></i>
+          ${title}
+        </h3>
+      </div>
+      <div style="padding: 20px;">
+        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
+          <div style="max-height: 200px; overflow-y: auto;">
+            ${this.selectedHexes.map(hexId => `
+              <div style="padding: 6px 8px; margin: 4px 0; background: rgba(210, 105, 30, 0.2); border-radius: 4px; font-family: monospace; font-size: 14px; color: #D2691E; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-check-circle" style="color: #4CAF50;"></i>
+                ${hexId}
+              </div>
+            `).join('')}
+          </div>
+          ${this.config.colorType === 'scout' ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #666; font-size: 12px; color: #999; text-align: center;">
+              <i class="fas fa-eye"></i> Check the map to see newly revealed areas!
+            </div>
+          ` : ''}
+        </div>
+        <button id="btn-ok" style="width: 100%; padding: 12px; background: #4CAF50; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 16px; font-weight: bold;">
+          <i class="fas fa-check"></i> OK
+        </button>
+      </div>
+    `;
+    
+    // Wire up OK button
+    const btnOk = panel.querySelector('#btn-ok') as HTMLButtonElement;
+    btnOk?.addEventListener('click', () => this.handleCompletedOk());
+  }
+  
+  /**
+   * Handle OK button click in completed state
+   */
+  private handleCompletedOk(): void {
+    logger.info('[HexSelector] OK clicked, completing selection');
+    
+    const hexes = [...this.selectedHexes];
+    const resolver = this.resolve;
+    this.cleanup();
+    resolver?.(hexes);
+  }
+  
+  /**
+   * Handle Done button click - switches to completed state instead of cleaning up
    */
   private async handleDone(): Promise<void> {
     if (!this.config || this.selectedHexes.length !== this.config.count) {
       return;
     }
-
-    const hexes = [...this.selectedHexes];
-    const resolver = this.resolve; // Save resolver before cleanup
-    await this.cleanup();
-    resolver?.(hexes); // Call after cleanup
+    
+    logger.info('[HexSelector] Done clicked, switching to completed state');
+    
+    // Remove canvas listeners (no more interaction needed)
+    const canvas = (globalThis as any).canvas;
+    if (this.canvasClickHandler) {
+      canvas?.stage?.off('click', this.canvasClickHandler);
+      this.canvasClickHandler = null;
+    }
+    if (this.canvasMoveHandler) {
+      canvas?.stage?.off('mousemove', this.canvasMoveHandler);
+      this.canvasMoveHandler = null;
+    }
+    
+    // Clear interactive layers
+    this.mapLayer.hideInteractiveHover();
+    this.mapLayer.clearSelection();
+    
+    // For scout actions, reveal hexes in World Explorer NOW (before showing completion)
+    if (this.config.colorType === 'scout') {
+      await this.revealHexesInWorldExplorer();
+    }
+    
+    // Switch to completed state
+    this.panelState = 'completed';
+    this.updatePanel();
+  }
+  
+  /**
+   * Reveal selected hexes in World Explorer (for scout actions)
+   */
+  private async revealHexesInWorldExplorer(): Promise<void> {
+    try {
+      const { worldExplorerService } = await import('../WorldExplorerService');
+      
+      if (worldExplorerService.isAvailable()) {
+        worldExplorerService.revealHexes(this.selectedHexes);
+        logger.info('[HexSelector] Revealed hexes in World Explorer:', this.selectedHexes);
+        
+        // Show notification to user
+        const ui = (globalThis as any).ui;
+        ui?.notifications?.info(`🗺️ Revealed ${this.selectedHexes.length} hex${this.selectedHexes.length !== 1 ? 'es' : ''} on the map`);
+      } else {
+        logger.warn('[HexSelector] World Explorer module not available - hexes not revealed');
+      }
+    } catch (error) {
+      logger.error('[HexSelector] Failed to reveal hexes:', error);
+    }
   }
   
   /**
