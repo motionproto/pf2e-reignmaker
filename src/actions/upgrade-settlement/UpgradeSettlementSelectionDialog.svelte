@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import { SettlementTier } from '../../models/Settlement';
   import { getKingdomActor } from '../../stores/KingdomStore';
+  import Dialog from '../../view/kingdom/components/baseComponents/Dialog.svelte';
   
   // Props for pre-roll dialog
   export let show: boolean = false;
@@ -26,8 +27,10 @@
     newTier: SettlementTier;
     cost: number;
     canAfford: boolean;
+    canUpgrade: boolean; // Can meet all requirements
     tierWillChange: boolean;
     structureCount: number;
+    ineligibilityReason?: string; // Why settlement can't be upgraded
   }
   
   /**
@@ -41,26 +44,43 @@
   }
   
   /**
-   * Check if a settlement can be upgraded (structure requirements only)
+   * Get upgrade info for a settlement (always returns info, even if ineligible)
    */
-  function canUpgradeSettlement(settlement: any, gold: number): SettlementUpgradeInfo | null {
+  function getSettlementUpgradeInfo(settlement: any, gold: number): SettlementUpgradeInfo {
     const currentLevel = settlement.level;
     const structureCount = settlement.structureIds?.length || 0;
     const newLevel = currentLevel + 1;
     const cost = newLevel;
     
+    let canUpgrade = true;
+    let ineligibilityReason: string | undefined;
+    
     // Max level check
     if (currentLevel >= 20) {
-      return null;
+      canUpgrade = false;
+      ineligibilityReason = 'Already at maximum level (20)';
     }
     
     // Structure requirement check at tier boundaries
-    if (currentLevel === 1 && structureCount < 2) return null;
-    if (currentLevel === 4 && structureCount < 4) return null;
-    if (currentLevel === 7 && structureCount < 8) return null;
+    if (canUpgrade && currentLevel === 1 && structureCount < 2) {
+      canUpgrade = false;
+      ineligibilityReason = 'Requires 2+ structures to upgrade from village';
+    }
+    if (canUpgrade && currentLevel === 4 && structureCount < 4) {
+      canUpgrade = false;
+      ineligibilityReason = 'Requires 4+ structures to upgrade from town';
+    }
+    if (canUpgrade && currentLevel === 7 && structureCount < 8) {
+      canUpgrade = false;
+      ineligibilityReason = 'Requires 8+ structures to upgrade from city';
+    }
     
     // Gold availability check
     const canAfford = gold >= cost;
+    if (canUpgrade && !canAfford) {
+      canUpgrade = false;
+      ineligibilityReason = 'Insufficient Funds';
+    }
     
     // Determine tiers
     const currentTier = settlement.tier;
@@ -75,37 +95,44 @@
       newTier,
       cost,
       canAfford,
+      canUpgrade,
       tierWillChange,
-      structureCount
+      structureCount,
+      ineligibilityReason
     };
   }
   
   async function loadEligibleSettlements() {
     const actor = getKingdomActor();
     if (!actor) {
-      logger.error('❌ [UpgradeSettlementSelectionDialog] No kingdom actor available');
+      console.error('❌ [UpgradeSettlementSelectionDialog] No kingdom actor available');
       return;
     }
     
     const kingdom = actor.getKingdomData();
     if (!kingdom) {
-      logger.error('❌ [UpgradeSettlementSelectionDialog] No kingdom data available');
+      console.error('❌ [UpgradeSettlementSelectionDialog] No kingdom data available');
       return;
     }
     
     availableGold = kingdom.resources?.gold || 0;
     
-    // Filter settlements that can be upgraded (meet structure requirements)
+    // Get upgrade info for ALL settlements (including ineligible ones)
     eligibleSettlements = kingdom.settlements
-      .map(s => canUpgradeSettlement(s, availableGold))
-      .filter((info): info is SettlementUpgradeInfo => info !== null);
-
+      .map((s: any) => getSettlementUpgradeInfo(s, availableGold))
+      .sort((a: any, b: any) => {
+        // Sort: eligible first, then by name
+        if (a.canUpgrade !== b.canUpgrade) {
+          return a.canUpgrade ? -1 : 1;
+        }
+        return a.settlement.name.localeCompare(b.settlement.name);
+      });
   }
   
   function selectSettlement(info: SettlementUpgradeInfo) {
-    if (!info.canAfford) {
+    if (!info.canUpgrade) {
       // @ts-ignore
-      ui?.notifications?.warn(`Insufficient gold to upgrade ${info.settlement.name} (need ${info.cost}, have ${availableGold})`);
+      ui?.notifications?.warn(info.ineligibilityReason || `Cannot upgrade ${info.settlement.name}`);
       return;
     }
     
@@ -136,236 +163,130 @@
   }
 </script>
 
-{#if show}
-<div class="dialog-overlay" on:click={handleCancel}>
-  <div class="dialog-content" on:click|stopPropagation>
-    <div class="dialog-header">
-      <h2>Select Settlement</h2>
-      <button class="close-button" on:click={handleCancel}>
-        <i class="fas fa-times"></i>
-      </button>
+<Dialog 
+  bind:show
+  title="Select Settlement"
+  confirmLabel="Upgrade settlement"
+  confirmDisabled={!selectedSettlementId}
+  width="600px"
+  on:confirm={handleConfirm}
+  on:cancel={handleCancel}
+>
+  <div slot="footer-left" class="gold-display">
+    <i class="fas fa-coins"></i>
+    <span>Available: {availableGold} gold</span>
+  </div>
+  
+  {#if eligibleSettlements.length === 0}
+    <div class="no-settlements">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>No settlements available to upgrade.</p>
+      <p class="hint">Settlements must meet structure requirements for the next tier.</p>
     </div>
-    
-    <div class="dialog-body">
-      <div class="info-header">
-        <div class="gold-display">
-          <i class="fas fa-coins"></i>
-          <span>Available: {availableGold} gold</span>
+  {:else}
+    <div class="tier-thresholds">
+      <div class="threshold-title">Tier Level Requirements:</div>
+      <div class="threshold-list">
+        <div class="threshold-item">
+          <strong>Village:</strong> 0
+        </div>
+        <div class="threshold-item">
+          <strong>Town:</strong> 2
+        </div>
+        <div class="threshold-item">
+          <strong>City:</strong> 5
+        </div>
+        <div class="threshold-item">
+          <strong>Metropolis:</strong> 8
         </div>
       </div>
-      
-      {#if eligibleSettlements.length === 0}
-        <div class="no-settlements">
-          <i class="fas fa-exclamation-circle"></i>
-          <p>No settlements available to upgrade.</p>
-          <p class="hint">Settlements must meet structure requirements for the next tier.</p>
-        </div>
-      {:else}
-        <div class="settlement-table">
-          <div class="table-header">
-            <div class="col-name">Settlement</div>
-            <div class="col-level">Level</div>
-            <div class="col-cost">Cost</div>
-          </div>
-          
-          <div class="table-body">
-            {#each eligibleSettlements as info (info.settlement.id)}
-              <div
-                class="table-row"
-                class:selected={selectedSettlementId === info.settlement.id}
-                class:cannot-afford={!info.canAfford}
-                on:click={() => selectSettlement(info)}
-              >
-                <div class="col-name">
-                  {info.settlement.name}
-                  {#if !info.canAfford}
-                    <div class="insufficient-gold-label">Requires {info.cost} gold</div>
-                  {/if}
-                </div>
-                <div class="col-level">
-                  {info.currentLevel} → <strong>{info.newLevel}</strong>
-                </div>
-                <div class="col-cost">
-                  <i class="fas fa-coins"></i>
-                  <span class="cost-value">{info.cost}</span>
-                </div>
-              </div>
-            {/each}
-          </div>
-        </div>
-      {/if}
     </div>
     
-    <div class="dialog-footer">
-      <button class="cancel-button" on:click={handleCancel}>
-        Cancel
-      </button>
-      <button 
-        class="confirm-button" 
-        disabled={!selectedSettlementId}
-        on:click={handleConfirm}
-      >
-        <i class="fas fa-check"></i>
-        Upgrade settlement
-      </button>
+    <div class="settlement-table">
+      <div class="table-header">
+        <div class="col-name">Settlement</div>
+        <div class="col-level">Level</div>
+        <div class="col-cost">Cost</div>
+      </div>
+      
+      <div class="table-body">
+        {#each eligibleSettlements as info (info.settlement.id)}
+          <div
+            class="table-row"
+            class:selected={selectedSettlementId === info.settlement.id}
+            class:ineligible={!info.canUpgrade}
+            on:click={() => selectSettlement(info)}
+            title={info.ineligibilityReason || ''}
+          >
+            <div class="col-name">
+              {info.settlement.name}
+              {#if info.ineligibilityReason}
+                <div class="ineligibility-label">{info.ineligibilityReason}</div>
+              {/if}
+            </div>
+            <div class="col-level">
+              {info.currentLevel} → <strong>{info.newLevel}</strong>
+            </div>
+            <div class="col-cost">
+              <i class="fas fa-coins"></i>
+              <span class="cost-value">{info.cost}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
     </div>
-  </div>
-</div>
-{/if}
+  {/if}
+</Dialog>
 
 <style lang="scss">
-  .dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+  .gold-display {
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.2s ease;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  
-  .dialog-content {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    width: 600px;
-    max-width: 90vw;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    animation: slideUp 0.3s ease;
-  }
-  
-  @keyframes slideUp {
-    from {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  
-  .dialog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-medium);
+    gap: 6px;
+    padding: 0.5rem 1rem;
+    background: rgba(234, 179, 8, 0.15);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: 1;
+    white-space: nowrap;
     
-    h2 {
-      margin: 0;
-      font-size: var(--font-2xl);
+    i {
+      color: rgb(234, 179, 8);
+      font-size: var(--font-sm);
+      line-height: 1;
+    }
+  }
+  
+  .tier-thresholds {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: rgba(100, 116, 139, 0.1);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    
+    .threshold-title {
+      font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
-      color: var(--text-primary);
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     
-    .close-button {
-      background: none;
-      border: none;
-      color: var(--text-tertiary);
-      font-size: var(--font-lg);
-      cursor: pointer;
-      padding: 4px 8px;
-      transition: color 0.2s ease;
-      
-      &:hover {
-        color: var(--text-primary);
-      }
-    }
-  }
-  
-  .dialog-body {
-    padding: 20px 24px;
-    overflow-y: auto;
-    flex: 1;
-  }
-  
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    padding: 16px 24px;
-    border-top: 1px solid var(--border-medium);
-    
-    button {
-      padding: 10px 20px;
-      border-radius: var(--radius-md);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+    .threshold-list {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
     }
     
-    .cancel-button {
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+    .threshold-item {
+      font-size: var(--font-sm);
       color: var(--text-secondary);
       
-      &:hover:not(:disabled) {
-        background: var(--bg-overlay);
+      strong {
         color: var(--text-primary);
-      }
-    }
-    
-    .confirm-button {
-      background: var(--color-primary);
-      border: none;
-      color: white;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      &:hover:not(:disabled) {
-        background: var(--color-primary-dark);
-        transform: translateY(-1px);
-      }
-    }
-  }
-  
-  .info-header {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-bottom: 12px;
-    gap: 16px;
-    
-    
-    .gold-display {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      background: rgba(234, 179, 8, 0.15);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      border-radius: var(--radius-sm);
-      font-size: var(--font-md);
-      font-weight: var(--font-weight-medium);
-      white-space: nowrap;
-      
-      i {
-        color: rgb(234, 179, 8);
-        font-size: var(--font-md);
       }
     }
   }
@@ -441,16 +362,21 @@
       padding-left: 13px;
     }
     
-    &.cannot-afford {
+    &.ineligible {
       opacity: 0.5;
       cursor: not-allowed;
+      background: rgba(100, 100, 100, 0.05);
+      
+      &:hover {
+        background: rgba(100, 100, 100, 0.1);
+      }
     }
     
     .col-name {
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
       
-      .insufficient-gold-label {
+      .ineligibility-label {
         margin-top: 4px;
         font-size: var(--font-xs);
         font-weight: normal;

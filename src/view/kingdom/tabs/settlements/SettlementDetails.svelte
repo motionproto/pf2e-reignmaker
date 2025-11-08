@@ -1,5 +1,6 @@
 <script lang="ts">
    import type { Settlement } from '../../../../models/Settlement';
+   import { SettlementTier as SettlementTierEnum } from '../../../../models/Settlement';
    import { updateKingdom } from '../../../../stores/KingdomStore';
    import { settlementService } from '../../../../services/settlements';
    import SettlementTier from './SettlementTier.svelte';
@@ -24,6 +25,42 @@
    let editedLevel = 1;
    let showDeleteConfirm = false;
    let isDeleting = false;
+   
+   // Calculate next tier tooltip
+   $: nextTierTooltip = settlement ? getNextTierTooltip(settlement) : '';
+   
+   function getNextTierTooltip(settlement: Settlement): string {
+      let nextTier: string;
+      let requiredLevel: number;
+      let requiredStructures: number;
+      
+      switch (settlement.tier) {
+         case SettlementTierEnum.VILLAGE:
+            nextTier = 'Town';
+            requiredLevel = 2;
+            requiredStructures = 3;
+            break;
+         case SettlementTierEnum.TOWN:
+            nextTier = 'City';
+            requiredLevel = 5;
+            requiredStructures = 6;
+            break;
+         case SettlementTierEnum.CITY:
+            nextTier = 'Metropolis';
+            requiredLevel = 8;
+            requiredStructures = 9;
+            break;
+         case SettlementTierEnum.METROPOLIS:
+            return 'Maximum tier reached';
+         default:
+            return '';
+      }
+      
+      const currentStructures = settlement.structureIds.length;
+      
+      return `${nextTier} at level ${requiredLevel}\n` +
+             `${currentStructures}/${requiredStructures} structures required`;
+   }
    
    // Auto-start editing for newly created settlements
    $: if (settlement && settlement.name.startsWith('Missing settlement at') && !isEditingName) {
@@ -202,7 +239,7 @@
                      </button>
                   </div>
                {:else}
-                  <div class="level-display" on:click={startEditingLevel}>
+                  <div class="level-display" on:click={startEditingLevel} title={nextTierTooltip}>
                      <span class="level-label">Level</span>
                      <span class="level-value">{settlement.level}</span>
                   </div>

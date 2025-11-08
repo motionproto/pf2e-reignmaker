@@ -50,6 +50,7 @@ export type GameCommandType =
   
   // Personal Actions
   | 'giveActorGold'
+  | 'chooseAndGainResource'
   
   // Structure Management
   | 'damageStructure'
@@ -266,6 +267,16 @@ export interface GiveActorGoldCommand extends BaseGameCommand {
 }
 
 /**
+ * Choose and gain resource command
+ * Prompts player to select a resource type and adds it to kingdom
+ */
+export interface ChooseAndGainResourceCommand extends BaseGameCommand {
+  type: 'chooseAndGainResource';
+  resources: string[]; // Available resource types (e.g., ['food', 'lumber', 'stone', 'ore'])
+  amount: number; // Amount of chosen resource to gain
+}
+
+/**
  * Damage structure command
  */
 export interface DamageStructureCommand extends BaseGameCommand {
@@ -350,6 +361,7 @@ export type GameCommand =
   | AidBonusCommand
   | GrantRerollCommand
   | GiveActorGoldCommand
+  | ChooseAndGainResourceCommand
   | InfiltrationCommand
   | SendScoutsCommand
   | FortifyHexCommand

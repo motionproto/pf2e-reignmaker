@@ -31,7 +31,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "{Settlement} level increases by 1 at half the cost (rounded up)",
+      "description": "Settlement level increases by 1 at half the cost (rounded up)",
       "modifiers": [
         {
           "type": "computed",
@@ -43,7 +43,7 @@
       ]
     },
     "success": {
-      "description": "{Settlement} level increases by 1",
+      "description": "Settlement level increases by 1",
       "modifiers": [
         {
           "type": "computed",
@@ -55,7 +55,7 @@
       ]
     },
     "failure": {
-      "description": "Construction setbacks and delays waste resources and achieve nothing in {Settlement}.",
+      "description": "Construction setbacks and delays waste resources and achieve nothing in the settlement.",
       "modifiers": [
         {
           "type": "computed",
@@ -67,7 +67,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Accidents and incompetance waste the full investment in {Settlement} achieving nothing.",
+      "description": "Accidents and incompetance waste the full investment in the settlement achieving nothing.",
       "modifiers": [
         {
           "type": "computed",
@@ -83,7 +83,7 @@
     "At least one settlement available",
     "Settlement not at maximum level (20)",
     "Settlement meets structure requirements for next tier",
-    "Sufficient gold for upgrade cost"
+    "Sufficient gold (minimum 2 for lowest level settlement)"
   ],
   "special": "Cost equals the settlement's NEW level in gold."
 }

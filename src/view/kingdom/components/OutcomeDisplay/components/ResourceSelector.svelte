@@ -1,86 +1,140 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { formatStateChangeLabel } from '../../../../../services/resolution';
-  import { detectResourceArrayModifiers } from '../logic/OutcomeDisplayLogic';
+  import { getResourceIcon } from '../../../../kingdom/utils/presentation';
   
   export let modifiers: any[] | undefined = undefined;
   export let selectedResources: Map<number, string> = new Map();
   
   const dispatch = createEventDispatcher();
   
-  $: resourceArrayModifiers = detectResourceArrayModifiers(modifiers);
-  $: hasResourceArrays = resourceArrayModifiers.length > 0;
+  // Filter to only choice-dropdown modifiers (those with resources array)
+  // BREAKING CHANGE: Only recognizes explicit type: "choice-dropdown"
+  $: choiceModifiers = (modifiers || [])
+    .map((m, originalIdx) => ({ ...m, originalIndex: originalIdx }))
+    .filter(m => m.type === 'choice-dropdown' && Array.isArray(m.resources));
   
-  function handleResourceSelect(modifierIndex: number, resourceType: string) {
-    dispatch('select', {
-      modifierIndex,
-      resourceType
-    });
+  $: hasChoiceModifiers = choiceModifiers.length > 0;
+  
+  function handleResourceSelect(modifierIndex: number, resource: string) {
+    dispatch('select', { modifierIndex, resource });
+  }
+  
+  function getChoiceLabel(modifier: any): string {
+    const action = modifier.negative ? 'Lose' : 'Gain';
+    let valueStr = '';
+    
+    if (typeof modifier.value === 'object' && modifier.value.formula) {
+      valueStr = modifier.value.formula;
+    } else if (typeof modifier.value === 'string') {
+      valueStr = modifier.value;
+    } else {
+      valueStr = String(modifier.value);
+    }
+    
+    return `${action} ${valueStr}`;
   }
 </script>
 
-{#if hasResourceArrays}
-  <div class="resource-array-selectors">
-    {#each resourceArrayModifiers as modifier, index}
-      <div class="resource-selector">
-        <label class="resource-selector-label">
-          Choose resource {modifier.value > 0 ? 'to gain' : 'to lose'} ({modifier.value > 0 ? '+' : ''}{modifier.value}):
-        </label>
-        <select 
-          class="resource-dropdown"
-          value={selectedResources.get(index) || ''}
-          on:change={(e) => handleResourceSelect(index, e.currentTarget.value)}
-        >
-          <option value="" disabled>Select resource...</option>
-          {#each modifier.resource as resourceType}
-            <option value={resourceType}>
-              {formatStateChangeLabel(resourceType)}
-            </option>
-          {/each}
-        </select>
-      </div>
-    {/each}
+{#if hasChoiceModifiers}
+  <div class="resource-selectors">
+    <div class="selectors-header">Choose resource:</div>
+    <div class="selector-cards">
+      {#each choiceModifiers as modifier}
+        {@const selected = selectedResources.get(modifier.originalIndex)}
+        {@const label = getChoiceLabel(modifier)}
+        
+        <div class="selector-card" class:resolved={selected}>
+          <div class="card-header">
+            <div class="card-label">{label}</div>
+          </div>
+          
+          <select 
+            class="resource-dropdown"
+            value={selected || ''}
+            on:change={(e) => handleResourceSelect(modifier.originalIndex, e.currentTarget.value)}
+          >
+            <option value="" disabled>Select resource...</option>
+            {#each modifier.resources as resource}
+              {@const icon = getResourceIcon(resource)}
+              <option value={resource}>
+                {resource.charAt(0).toUpperCase() + resource.slice(1)}
+              </option>
+            {/each}
+          </select>
+        </div>
+      {/each}
+    </div>
   </div>
 {/if}
 
 <style lang="scss">
-  .resource-array-selectors {
+  .resource-selectors {
     margin-top: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
     
-    .resource-selector {
+    .selectors-header {
+      font-size: var(--font-md);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    
+    .selector-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .selector-card {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid var(--border-medium);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+      min-width: 200px;
+      width: auto;
       
-      .resource-selector-label {
-        font-size: var(--font-sm);
-        font-weight: var(--font-weight-medium);
-        color: var(--text-secondary);
+      &.resolved {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: var(--border-strong);
+        box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      }
+      
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        
+        .card-label {
+          font-size: var(--font-md);
+          font-weight: var(--font-weight-medium);
+          color: var(--text-primary);
+          line-height: 1.4;
+          flex: 1;
+        }
       }
       
       .resource-dropdown {
-        padding: 10px 14px;
+        padding: 8px 12px;
         background: rgba(0, 0, 0, 0.3);
-        border: 2px solid var(--border-medium);
-        border-radius: var(--radius-md);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-sm);
         color: var(--text-primary);
         font-size: var(--font-md);
-        font-weight: var(--font-weight-medium);
         cursor: pointer;
-        transition: all var(--transition-fast);
+        width: 100%;
         
         &:hover {
-          background: rgba(0, 0, 0, 0.4);
           border-color: var(--border-strong);
+          background: rgba(0, 0, 0, 0.4);
         }
         
         &:focus {
           outline: none;
           border-color: var(--color-blue);
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
         }
         
         option {

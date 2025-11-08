@@ -26,7 +26,7 @@ export const PurchaseResourcesAction = {
     if (!hasCommerceStructure()) {
       return {
         met: false,
-        reason: 'Requires a commerce structure (Market Square, Bazaar, Merchant Guild, or Imperial Bank)'
+        reason: 'Requires a commerce structure'
       };
     }
     

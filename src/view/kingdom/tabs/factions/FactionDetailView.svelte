@@ -2,7 +2,12 @@
    import { createEventDispatcher } from 'svelte';
    import { kingdomData } from '../../../../stores/KingdomStore';
    import type { Faction, NotablePerson, AttitudeLevel } from '../../../../models/Faction';
-   import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
+   import { ATTITUDE_ORDER } from '../../../../models/Faction';
+   import { 
+      FACTION_ATTITUDE_ICONS, 
+      FACTION_ATTITUDE_COLORS, 
+      FACTION_ATTITUDE_DESCRIPTIONS 
+   } from '../../../../utils/presentation';
    import Button from '../../components/baseComponents/Button.svelte';
    import ActorLinker from '../../components/baseComponents/ActorLinker.svelte';
    import RemoveNotablePersonDialog from '../../components/RemoveNotablePersonDialog.svelte';
@@ -567,11 +572,11 @@
                <button 
                   class="attitude-icon-compact {editedFaction.attitude === attitude ? 'active' : ''}"
                   on:click={() => changeAttitude(attitude)}
-                  title={AttitudeLevelConfig[attitude].description}
+                  title={FACTION_ATTITUDE_DESCRIPTIONS[attitude]}
                >
                   <i 
-                     class="fas {AttitudeLevelConfig[attitude].icon}" 
-                     style="color: {editedFaction.attitude === attitude ? AttitudeLevelConfig[attitude].color : 'rgba(255,255,255,0.2)'}"
+                     class="fas {FACTION_ATTITUDE_ICONS[attitude]}" 
+                     style="color: {editedFaction.attitude === attitude ? FACTION_ATTITUDE_COLORS[attitude] : 'rgba(255,255,255,0.2)'}"
                   ></i>
                </button>
             {/each}

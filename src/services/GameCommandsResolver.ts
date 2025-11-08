@@ -1800,6 +1800,86 @@ export async function createGameCommandsResolver() {
       }
     },
 
+    /**
+     * Choose And Gain Resource - Prompt player to select a resource and add it to kingdom
+     * 
+     * @param resources - Available resource types to choose from
+     * @param amount - Amount of chosen resource to gain
+     * @returns ResolveResult with resource gain details
+     */
+    async chooseAndGainResource(resources: string[], amount: number): Promise<ResolveResult> {
+      logger.info(`🎁 [chooseAndGainResource] Choosing resource to gain (amount: ${amount})`);
+      
+      try {
+        const actor = getKingdomActor();
+        if (!actor) {
+          return { success: false, error: 'No kingdom actor available' };
+        }
+
+        // Prompt player to select resource
+        const selectedResource = await new Promise<string | null>((resolve) => {
+          const Dialog = (globalThis as any).Dialog;
+          new Dialog({
+            title: `Choose Resource to Gain`,
+            content: `
+              <form>
+                <div class="form-group">
+                  <label>Select a resource to gain ${amount}:</label>
+                  <select name="resourceType" style="width: 100%; padding: 5px;">
+                    ${resources.map(r => `<option value="${r}">${r.charAt(0).toUpperCase() + r.slice(1)}</option>`).join('')}
+                  </select>
+                </div>
+              </form>
+            `,
+            buttons: {
+              ok: {
+                label: 'Confirm',
+                callback: (html: any) => {
+                  const resourceType = html.find('[name="resourceType"]').val();
+                  resolve(resourceType);
+                }
+              },
+              cancel: {
+                label: 'Cancel',
+                callback: () => resolve(null)
+              }
+            },
+            default: 'ok'
+          }).render(true);
+        });
+
+        if (!selectedResource) {
+          return { success: false, error: 'Resource selection cancelled' };
+        }
+
+        // Add resource to kingdom
+        await updateKingdom(kingdom => {
+          if (!kingdom.resources) {
+            kingdom.resources = {};
+          }
+          kingdom.resources[selectedResource] = (kingdom.resources[selectedResource] || 0) + amount;
+        });
+
+        logger.info(`✅ [chooseAndGainResource] Added ${amount} ${selectedResource} to kingdom`);
+
+        return {
+          success: true,
+          data: {
+            resource: selectedResource,
+            amount,
+            message: `Gained ${amount} ${selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1)}`
+          }
+        };
+
+      } catch (error) {
+        logger.error('❌ [GameCommandsResolver] Failed to choose and gain resource:', error);
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        };
+      }
+    },
+
     // TODO: Additional methods will be added as we implement more actions
     // - claimHexes(count, hexes)
     // - buildRoads(hexes)

@@ -25,12 +25,22 @@ export interface ActionModifier {
 }
 
 /**
+ * Represents a choice option in an action outcome
+ */
+export interface ActionChoice {
+  label: string;
+  icon?: string;
+  modifiers?: ActionModifier[];
+}
+
+/**
  * Represents the effect of an action outcome
  */
 export interface ActionEffect {
   description: string;
   modifiers?: ActionModifier[]; // Resource changes (gold, food, unrest, etc.)
   gameCommands?: import('./game-commands').GameCommand[]; // Gameplay commands (claim hexes, build structures, etc.)
+  choices?: ActionChoice[]; // Player choice options
 }
 
 /**
@@ -40,6 +50,7 @@ export interface ActionEffectJson {
   description: string;
   modifiers?: ActionModifier[];
   gameCommands?: import('./game-commands').GameCommand[];
+  choices?: ActionChoice[];
 }
 
 /**

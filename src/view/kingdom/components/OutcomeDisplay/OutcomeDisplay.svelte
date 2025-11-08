@@ -43,6 +43,7 @@
   import OutcomeMessage from './components/OutcomeMessage.svelte';
   import RollBreakdown from './components/RollBreakdown.svelte';
   import DiceRoller from './components/DiceRoller.svelte';
+  import ResourceSelector from './components/ResourceSelector.svelte';
   import ChoiceButtons from './components/ChoiceButtons.svelte';
   import StateChanges from './components/StateChanges.svelte';
   import ShortageWarning from './components/ShortageWarning.svelte';
@@ -75,6 +76,7 @@
   export let ignoreEventDisabled: boolean = false;
   export let isIgnored: boolean = false;  // Flag to hide reroll button for ignored events
   export let customComponent: any = null;  // Custom resolution UI component (Svelte constructor)
+  export let customResolutionProps: Record<string, any> = {};  // Props to pass to custom component
   
   const dispatch = createEventDispatcher();
   const DICE_PATTERN = /^-?\(?\d+d\d+([+-]\d+)?\)?$|^-?\d+d\d+([+-]\d+)?$/;
@@ -225,8 +227,11 @@
           label: '', // Label is built dynamically in ChoiceButtons
           icon: getResourceIcon(resourceType),
           modifiers: [{
-            ...modifier,
-            resource: resourceType
+            type: modifier.type,
+            resource: resourceType,  // Single resource, not array
+            value: modifier.value,
+            negative: modifier.negative,
+            duration: modifier.duration
           }]
         }))
       )
@@ -265,6 +270,14 @@
   // Determine if choices are present
   $: hasChoices = effectiveChoices && effectiveChoices.length > 0;
   $: choicesResolved = hasChoices && selectedChoice !== null;
+  
+  // Detect choice modifiers (type: "choice-dropdown") that need resource selection
+  // BREAKING CHANGE (2025-11-08): Only recognizes explicit type: "choice-dropdown"
+  $: choiceModifiers = (modifiers || [])
+    .map((m, idx) => ({ ...m, originalIndex: idx }))
+    .filter(m => m.type === 'choice-dropdown' && Array.isArray(m.resources));
+  $: hasChoiceModifiers = choiceModifiers.length > 0;
+  $: choiceModifiersResolved = hasChoiceModifiers && choiceModifiers.every(m => selectedResources.has(m.originalIndex));
   
   // Determine if custom component requires resolution
   $: hasCustomComponent = customComponent !== null;
@@ -317,16 +330,18 @@
     }
     
     // FIXED: Check ALL resolution requirements independently
-    // Choices, dice, state changes, and custom components can all coexist
+    // Choices, dice, state changes, choice modifiers, and custom components can all coexist
     const choicesNeedResolution = hasChoices && !choicesResolved;
     const diceNeedResolution = hasDiceModifiers && !diceResolved;
     const stateChangeDiceNeedResolution = hasStateChangeDice && !stateChangeDiceResolved;
+    const choiceModifiersNeedResolution = hasChoiceModifiers && !choiceModifiersResolved;
     const customComponentNeedsResolution = hasCustomComponent && !customComponentResolved;
     
     primaryButtonDisabled = applied || 
       choicesNeedResolution ||
       diceNeedResolution ||
       stateChangeDiceNeedResolution ||
+      choiceModifiersNeedResolution ||
       customComponentNeedsResolution ||
       !hasContent;
   }
@@ -479,6 +494,18 @@
         for (let i = 0; i < modifiers.length; i++) {
           const mod = modifiers[i];
 
+          // Handle ChoiceModifiers (type: "choice-dropdown" with resources array)
+          if (mod.type === 'choice-dropdown' && Array.isArray(mod.resources)) {
+            const selectedResource = selectedResources.get(i);
+            if (selectedResource) {
+              numericModifiers.push({ 
+                resource: selectedResource as ResourceType, 
+                value: mod.value as number 
+              });
+            }
+            continue;
+          }
+
           // Skip resource arrays if no choice (shouldn't happen, but safety)
           if (Array.isArray(mod.resources)) {
             continue;
@@ -529,16 +556,23 @@
     dispatch('primary', resolutionData);
   }
   
-  function handleResourceSelect(event: CustomEvent) {
-    const { modifierIndex, resourceType } = event.detail;
-    const newSelections = new Map(selectedResources);
-    newSelections.set(modifierIndex, resourceType);
-    selectedResources = newSelections;
+  async function handleResourceSelect(event: CustomEvent) {
+    const { modifierIndex, resource } = event.detail;
+    
+    if (!instance) return;
+    
+    // ✅ Store in instance via helper (syncs to all clients)
+    await updateInstanceResolutionState(instance.instanceId, {
+      selectedResources: {
+        ...resolutionState.selectedResources,
+        [modifierIndex]: resource
+      }
+    });
     
     dispatch('resourceSelected', {
       modifierIndex,
-      resourceType,
-      allSelections: Object.fromEntries(selectedResources)
+      resourceType: resource,
+      allSelections: { ...resolutionState.selectedResources, [modifierIndex]: resource }
     });
   }
   
@@ -674,6 +708,11 @@
     <OutcomeMessage effect={displayEffect} />
     <ShortageWarning {shortfallResources} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
+    <ResourceSelector 
+      {modifiers}
+      {selectedResources}
+      on:select={handleResourceSelect}
+    />
     <DiceRoller 
       modifiers={standaloneDiceModifiers} 
       {resolvedDice} 
@@ -700,9 +739,7 @@
           this={customComponent} 
           {instance}
           {outcome}
-          {modifiers}
-          {stateChanges}
-          {applied}
+          {...customResolutionProps}
           on:selection={handleCustomSelection}
         />
       </div>

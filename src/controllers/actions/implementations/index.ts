@@ -43,6 +43,7 @@ export interface CustomActionImplementation {
   // Custom resolution for specific outcomes
   customResolution?: {
     component: any; // Svelte component constructor (use any to allow specific component types)
+    getComponentProps?(outcome: string): Record<string, any>; // ✅ NEW: Get props for component
     validateData(resolutionData: ResolutionData): boolean;
     execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult>;
   };
@@ -100,15 +101,15 @@ export function hasCustomImplementation(actionId: string): boolean {
 }
 
 /**
- * Get custom resolution component for an action outcome
+ * Get custom resolution component and props for an action outcome
  * @param actionId - The action ID
  * @param outcome - The outcome degree
- * @returns The Svelte component if custom resolution is needed, null otherwise
+ * @returns Object with component and props, or null if no custom resolution
  */
 export function getCustomResolutionComponent(
   actionId: string,
   outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'
-): any | null {
+): { component: any; props: Record<string, any> } | null {
   const impl = actionImplementations.get(actionId);
   
   if (!impl || !impl.customResolution) {
@@ -120,7 +121,15 @@ export function getCustomResolutionComponent(
     return null;
   }
   
-  return impl.customResolution.component;
+  // Get component props if available
+  const props = impl.customResolution.getComponentProps 
+    ? impl.customResolution.getComponentProps(outcome)
+    : {};
+  
+  return {
+    component: impl.customResolution.component,
+    props
+  };
 }
 
 /**

@@ -67,23 +67,28 @@
         
         {#if showConfirm || showCancel}
           <div class="dialog-footer">
-            {#if showCancel}
-              <button 
-                class="dialog-button dialog-button-secondary" 
-                on:click={handleCancel}
-              >
-                {cancelLabel}
-              </button>
-            {/if}
-            {#if showConfirm}
-              <button 
-                class="dialog-button dialog-button-primary" 
-                on:click={handleConfirm}
-                disabled={confirmDisabled}
-              >
-                {confirmLabel}
-              </button>
-            {/if}
+            <div class="dialog-footer-left">
+              <slot name="footer-left" />
+            </div>
+            <div class="dialog-footer-buttons">
+              {#if showCancel}
+                <button 
+                  class="dialog-button dialog-button-secondary" 
+                  on:click={handleCancel}
+                >
+                  {cancelLabel}
+                </button>
+              {/if}
+              {#if showConfirm}
+                <button 
+                  class="dialog-button dialog-button-primary" 
+                  on:click={handleConfirm}
+                  disabled={confirmDisabled}
+                >
+                  {confirmLabel}
+                </button>
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
@@ -175,7 +180,18 @@
     padding: 1rem;
     border-top: 1px solid var(--border-default);
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .dialog-footer-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .dialog-footer-buttons {
+    display: flex;
     gap: 0.5rem;
   }
   

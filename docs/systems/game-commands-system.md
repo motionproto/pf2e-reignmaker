@@ -737,6 +737,293 @@ Hostile → Unfriendly → Indifferent → Friendly → Helpful
 
 ---
 
+## Custom Resolution Components
+
+**Purpose:** Provide action-specific UI for player choices and complex interactions that require more than simple modifiers.
+
+### Overview
+
+Actions can inject custom Svelte components into `OutcomeDisplay` to handle complex player interactions like resource selection, settlement targeting, or multi-step configurations. These components render inline as part of the outcome resolution flow, maintaining consistent UX across all actions.
+
+**Key Benefits:**
+- ✅ **Consistent UX** - Matches existing UI patterns (no popup dialogs)
+- ✅ **Reactive** - State syncs across all clients via instance storage
+- ✅ **Type-Safe** - Full TypeScript support with props validation
+- ✅ **Outcome-Aware** - Component props can vary by outcome (crit success vs success)
+- ✅ **Reusable** - Same component can be used by multiple actions
+
+### Architecture
+
+```
+ActionCategorySection
+  ↓ getCustomResolutionComponent(actionId, outcome) → { component, props }
+BaseCheckCard
+  ↓ Pass component + props
+OutcomeDisplay
+  ↓ Render with <svelte:component this={component} {...props} />
+Custom Component
+  ↓ User makes selection
+  ↓ updateInstanceResolutionState(customComponentData)
+  ↓ dispatch('selection', { modifiers })
+OutcomeDisplay
+  ↓ Store in choiceResult for display
+  ↓ Include in ResolutionData.customComponentData
+ActionPhaseController
+  ↓ Pass to executeCustomResolution()
+Action Implementation
+  ↓ Validate and execute based on selection
+```
+
+### Implementation Pattern
+
+#### Step 1: Create Svelte Component
+
+**File:** `src/view/kingdom/components/OutcomeDisplay/components/YourComponent.svelte`
+
+```svelte
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import { updateInstanceResolutionState, getInstanceResolutionState } from '../../../../../controllers/shared/ResolutionStateHelpers';
+  import type { ActiveCheckInstance } from '../../../../../models/CheckInstance';
+
+  // Props (passed from action implementation)
+  export let instance: ActiveCheckInstance | null = null;
+  export let outcome: string;
+  export let yourCustomProp: string[] = [];  // Example: resource types
+  export let amount: number = 1;  // Example: amount to gain
+
+  const dispatch = createEventDispatcher();
+
+  // Get resolution state from instance (syncs across clients)
+  $: resolutionState = getInstanceResolutionState(instance);
+  $: selectedValue = resolutionState.customComponentData?.selectedValue || '';
+
+  // Check if resolved
+  $: isResolved = !!selectedValue;
+
+  async function handleSelection(value: string) {
+    if (!instance) return;
+
+    // Store selection in instance (syncs to all clients)
+    await updateInstanceResolutionState(instance.instanceId, {
+      customComponentData: { 
+        selectedValue: value,
+        additionalData: 'any metadata you need'
+      }
+    });
+
+    // Emit modifiers for OutcomeDisplay to process
+    dispatch('selection', { 
+      selectedValue: value,
+      modifiers: [{
+        type: 'static',
+        resource: value,
+        value: amount,
+        duration: 'immediate'
+      }]
+    });
+  }
+</script>
+
+<div class="your-component">
+  <h4>Choose Your Selection</h4>
+  {#each yourCustomProp as option}
+    <button 
+      class:selected={selectedValue === option}
+      on:click={() => handleSelection(option)}
+      disabled={selectedValue && selectedValue !== option}
+    >
+      {option}
+    </button>
+  {/each}
+</div>
+```
+
+**Key Requirements:**
+- Accept `instance` and `outcome` props (always provided)
+- Use `getInstanceResolutionState()` to read shared state
+- Use `updateInstanceResolutionState()` to write shared state
+- Emit `selection` event with modifiers array
+- Store metadata in `customComponentData` for execute() method
+
+#### Step 2: Configure Action Implementation
+
+**File:** `src/actions/your-action/YourAction.ts`
+
+```typescript
+import type { CustomActionImplementation } from '../../controllers/actions/implementations';
+import YourComponent from '../../view/kingdom/components/OutcomeDisplay/components/YourComponent.svelte';
+
+export const YourAction: CustomActionImplementation = {
+  id: 'your-action',
+  
+  customResolution: {
+    // ✅ Provide the Svelte component
+    component: YourComponent,
+    
+    // ✅ NEW: Return outcome-specific props
+    getComponentProps(outcome: string): Record<string, any> {
+      // Example: Critical success gives more options
+      if (outcome === 'criticalSuccess') {
+        return {
+          yourCustomProp: ['option1', 'option2', 'option3', 'option4'],
+          amount: 2
+        };
+      }
+      
+      // Success gives fewer options
+      return {
+        yourCustomProp: ['option1', 'option2'],
+        amount: 1
+      };
+    },
+    
+    validateData(resolutionData) {
+      // Ensure selection was made
+      return !!(resolutionData.customComponentData?.selectedValue);
+    },
+    
+    async execute(resolutionData, instance?) {
+      const { selectedValue, additionalData } = resolutionData.customComponentData || {};
+      
+      if (!selectedValue) {
+        return { success: false, error: 'No selection made' };
+      }
+      
+      // Resource changes are handled by OutcomeDisplay via modifiers
+      // This execute() is just for validation and success message
+      
+      return {
+        success: true,
+        data: {
+          message: `Selected: ${selectedValue}`
+        }
+      };
+    }
+  },
+  
+  needsCustomResolution(outcome) {
+    // Only need custom resolution for successful outcomes
+    return outcome === 'criticalSuccess' || outcome === 'success';
+  }
+};
+```
+
+#### Step 3: Register Action
+
+**File:** `src/controllers/actions/implementations/index.ts`
+
+```typescript
+import YourAction from '../../../actions/your-action/YourAction';
+
+// Add to registry
+actionImplementations.set(YourAction.id, YourAction);
+
+// Add to exports
+export { YourAction };
+```
+
+### Real-World Example: Harvest Resources
+
+**Component:** `ResourceChoiceSelector.svelte`
+
+```svelte
+<script lang="ts">
+  export let resources: string[] = [];  // ['food', 'lumber', 'stone', 'ore']
+  export let amount: number = 1;
+  
+  // ... selection logic with grid display
+</script>
+```
+
+**Action:** `HarvestResourcesAction.ts`
+
+```typescript
+customResolution: {
+  component: ResourceChoiceSelector,
+  
+  getComponentProps(outcome: string) {
+    const amount = outcome === 'criticalSuccess' ? 2 : 1;
+    return {
+      resources: ['food', 'lumber', 'stone', 'ore'],
+      amount: amount
+    };
+  },
+  
+  validateData(resolutionData) {
+    return !!(resolutionData.customComponentData?.selectedResource);
+  }
+}
+```
+
+**JSON:** `data/player-actions/harvest-resources.json`
+
+```json
+{
+  "effects": {
+    "criticalSuccess": {
+      "description": "Exceptional harvest! Choose a resource to gain.",
+      "modifiers": [],
+      "gameCommands": []
+    },
+    "success": {
+      "description": "Good harvest! Choose a resource to gain.",
+      "modifiers": [],
+      "gameCommands": []
+    }
+  }
+}
+```
+
+**Flow:**
+1. Player rolls success → gets `ResourceChoiceSelector` with `amount: 1`
+2. Component renders grid of 4 resources
+3. Player selects "lumber"
+4. Component stores in `customComponentData.selectedResource`
+5. Component emits modifiers: `[{ type: 'static', resource: 'lumber', value: 1 }]`
+6. OutcomeDisplay shows "+1 Lumber" in state changes
+7. Player clicks "Apply Result"
+8. Action's `execute()` validates selection and returns success
+
+### When to Use Custom Components
+
+**✅ USE Custom Components When:**
+- Player must choose from multiple options (resources, settlements, factions)
+- Complex multi-step configuration (army deployment paths, build queue)
+- Visual selection (hex picking already uses HexSelectorService)
+- Outcome-dependent options (crit success unlocks more choices)
+
+**❌ DON'T Use Custom Components When:**
+- Simple numeric modifiers (use static/dice modifiers)
+- Binary choices (use `ChoiceModifier` with 2 options)
+- Automatic effects (use `gameCommands` or modifiers)
+- External UI (use HexSelectorService for hex selection)
+
+### Component Design Guidelines
+
+**DO:**
+- Store ALL state in `customComponentData` (syncs to all clients)
+- Emit modifiers in standard format (for OutcomeDisplay)
+- Disable already-selected options (prevent confusion)
+- Show confirmation when selection is complete
+- Use consistent styling (match CollectStipendResolution, etc.)
+
+**DON'T:**
+- Use local component state for selections (won't sync)
+- Call `updateKingdom()` directly (use modifiers instead)
+- Create popup dialogs (defeats the inline UX benefit)
+- Duplicate business logic (keep it in execute() method)
+
+### Existing Component Examples
+
+**Reference these for patterns:**
+- `ResourceChoiceSelector.svelte` - Grid selection with icons
+- `CollectStipendResolution.svelte` - Dropdown with formatted options
+- `ArrestDissidentsResolution.svelte` - Multi-target allocation with sliders
+- `ExecuteOrPardonPrisonersResolution.svelte` - Settlement selection with validation
+
+---
+
 ## Manual Effects
 
 Some gameplay mechanics cannot be automated and require manual intervention:

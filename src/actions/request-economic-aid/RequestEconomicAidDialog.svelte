@@ -2,7 +2,11 @@
   import { createEventDispatcher } from 'svelte';
   import { getKingdomActor } from '../../stores/KingdomStore';
   import type { Faction, AttitudeLevel } from '../../models/Faction';
-  import { AttitudeLevelConfig } from '../../models/Faction';
+  import { 
+    FACTION_ATTITUDE_ICONS, 
+    FACTION_ATTITUDE_COLORS, 
+    FACTION_ATTITUDE_NAMES 
+  } from '../../utils/presentation';
   import { logger } from '../../utils/Logger';
   
   export let show: boolean = false;
@@ -68,7 +72,11 @@
   }
   
   function getAttitudeConfig(attitude: AttitudeLevel) {
-    return AttitudeLevelConfig[attitude];
+    return {
+      displayName: FACTION_ATTITUDE_NAMES[attitude],
+      icon: FACTION_ATTITUDE_ICONS[attitude],
+      color: FACTION_ATTITUDE_COLORS[attitude]
+    };
   }
 </script>
 

@@ -32,7 +32,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Your diplomats achieved exceptional results! The selected faction improves their attitude toward your kingdom.",
+      "description": "The selected faction's attitude improves at reduced cost!",
       "modifiers": [
         {
           "type": "static",
@@ -49,7 +49,7 @@
       ]
     },
     "success": {
-      "description": "The selected faction improves their attitude toward your kingdom.",
+      "description": "The selected faction's attitude improves by one step.",
       "modifiers": [
         {
           "type": "static",
@@ -72,13 +72,13 @@
         {
           "type": "static",
           "resource": "gold",
-          "value": -4,
+          "value": -2,
           "duration": "immediate"
         }
       ]
     },
     "criticalFailure": {
-      "description": "Your diplomats offended the selected faction! Their attitude worsens.",
+      "description": "Your diplomats offended the selected faction! Their attitude worsens by one step.",
       "modifiers": [
         {
           "type": "static",

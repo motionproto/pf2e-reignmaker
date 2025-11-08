@@ -16,6 +16,7 @@ export interface PendingActionsState {
   pendingBuildAction?: { skill: string; structureId?: string; settlementId?: string } | null;
   pendingRepairAction?: { skill: string; structureId?: string; settlementId?: string } | null;
   pendingUpgradeAction?: { skill: string; settlementId?: string } | null;
+  pendingDiplomaticAction?: { skill: string; factionId?: string; factionName?: string } | null;
 }
 
 /**
@@ -68,26 +69,29 @@ export async function replacePlaceholders(
     }
   }
   
-  // Handle upgrade-settlement: {Settlement} placeholder
-  if (actionId === 'upgrade-settlement' && result.includes('{Settlement}')) {
-    if (pendingActions.pendingUpgradeAction?.settlementId) {
-      const actor = getKingdomActor();
-      if (actor) {
-        const kingdom = actor.getKingdomData();
-        const settlement = kingdom?.settlements.find((s: any) => 
-          s.id === pendingActions.pendingUpgradeAction!.settlementId
-        );
+  // Handle upgrade-settlement: Replace generic text with personalized outcome
+  if (actionId === 'upgrade-settlement' && pendingActions.pendingUpgradeAction?.settlementId) {
+    const actor = getKingdomActor();
+    if (actor) {
+      const kingdom = actor.getKingdomData();
+      const settlement = kingdom?.settlements.find((s: any) => 
+        s.id === pendingActions.pendingUpgradeAction!.settlementId
+      );
+      
+      if (settlement) {
+        const newLevel = settlement.level + 1;
         
-        if (settlement) {
-          result = result.replace(/{Settlement}/g, settlement.name);
-        } else {
-          result = result.replace(/{Settlement}/g, 'settlement');
+        // Replace generic outcome text with personalized versions
+        if (result.includes('Settlement level increases by 1 at half the cost')) {
+          result = `${settlement.name} level increases to ${newLevel} at half the cost (rounded up)`;
+        } else if (result.includes('Settlement level increases by 1')) {
+          result = `${settlement.name} level increases to ${newLevel}`;
+        } else if (result.includes('achieve nothing in the settlement')) {
+          result = result.replace('in the settlement', `in ${settlement.name}`);
+        } else if (result.includes('investment in the settlement')) {
+          result = result.replace('in the settlement', `in ${settlement.name}`);
         }
-      } else {
-        result = result.replace(/{Settlement}/g, 'settlement');
       }
-    } else {
-      result = result.replace(/{Settlement}/g, 'settlement');
     }
   }
   
@@ -116,6 +120,17 @@ export function createActionMetadata(
     return {
       settlementId: pendingActions.pendingUpgradeAction.settlementId
     };
+  }
+  
+  if (actionId === 'dimplomatic-mission' && pendingActions.pendingDiplomaticAction) {
+    console.log('🎯 [CheckInstanceHelpers] Creating metadata for diplomatic mission');
+    console.log('🎯 [CheckInstanceHelpers] pendingDiplomaticAction:', pendingActions.pendingDiplomaticAction);
+    const metadata = {
+      factionId: pendingActions.pendingDiplomaticAction.factionId,
+      factionName: pendingActions.pendingDiplomaticAction.factionName
+    };
+    console.log('🎯 [CheckInstanceHelpers] Created metadata:', metadata);
+    return metadata;
   }
   
   return undefined;
@@ -172,6 +187,8 @@ export async function createActionCheckInstance(context: {
   
   // Create metadata
   const metadata = createActionMetadata(actionId, pendingActions);
+  console.log('🎯 [CheckInstanceHelpers] createActionCheckInstance - actionId:', actionId);
+  console.log('🎯 [CheckInstanceHelpers] createActionCheckInstance - metadata:', metadata);
   
   // Create instance
   const instanceId = await checkInstanceService.createInstance(
@@ -181,6 +198,7 @@ export async function createActionCheckInstance(context: {
     currentTurn,
     metadata
   );
+  console.log('🎯 [CheckInstanceHelpers] Created instance with ID:', instanceId);
   
   // Build preliminary resolution data with dynamic modifiers
   // IMPORTANT: Keep raw modifiers (with formulas) for OutcomeDisplay

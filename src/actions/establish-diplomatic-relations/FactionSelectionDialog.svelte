@@ -2,7 +2,14 @@
   import { createEventDispatcher } from 'svelte';
   import { getKingdomActor } from '../../stores/KingdomStore';
   import type { Faction, AttitudeLevel } from '../../models/Faction';
-  import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../models/Faction';
+  import { ATTITUDE_ORDER } from '../../models/Faction';
+  import { 
+    FACTION_ATTITUDE_ICONS, 
+    FACTION_ATTITUDE_COLORS, 
+    FACTION_ATTITUDE_NAMES,
+    FACTION_ATTITUDE_DESCRIPTIONS 
+  } from '../../utils/presentation';
+  import { logger } from '../../utils/Logger';
   
   // Props for pre-roll dialog
   export let show: boolean = false;
@@ -39,15 +46,15 @@
     diplomaticCapacity = kingdom.resources?.diplomaticCapacity || 1;
     
     // Count current Helpful relationships
-    helpfulCount = (kingdom.factions || []).filter(f => f.attitude === 'Helpful').length;
+    helpfulCount = (kingdom.factions || []).filter((f: Faction) => f.attitude === 'Helpful').length;
     
     // Filter factions that can be improved (not already at Helpful or Hostile)
     eligibleFactions = (kingdom.factions || [])
-      .filter(f => {
+      .filter((f: Faction) => {
         // Can't improve Helpful (already max) or Hostile (requires different action)
         return f.attitude !== 'Helpful' && f.attitude !== 'Hostile';
       })
-      .sort((a, b) => {
+      .sort((a: Faction, b: Faction) => {
         // Sort by attitude (worst to best)
         const aIndex = ATTITUDE_ORDER.indexOf(a.attitude);
         const bIndex = ATTITUDE_ORDER.indexOf(b.attitude);
@@ -97,7 +104,12 @@
   }
   
   function getAttitudeConfig(attitude: AttitudeLevel) {
-    return AttitudeLevelConfig[attitude];
+    return {
+      displayName: FACTION_ATTITUDE_NAMES[attitude],
+      icon: FACTION_ATTITUDE_ICONS[attitude],
+      color: FACTION_ATTITUDE_COLORS[attitude],
+      description: FACTION_ATTITUDE_DESCRIPTIONS[attitude]
+    };
   }
   
   function getNextAttitude(current: AttitudeLevel): AttitudeLevel | null {
@@ -165,8 +177,8 @@
                   {/if}
                 </div>
                 <div class="col-attitude">
-                  <div class="attitude-badge">
-                    <i class="fas {config.icon}"></i>
+                  <div class="attitude-badge" style="border-color: {config.color};">
+                    <i class="fas {config.icon}" style="color: {config.color};"></i>
                     <span>{config.displayName}</span>
                   </div>
                 </div>

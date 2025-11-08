@@ -105,6 +105,7 @@
   
   // Custom resolution UI component (for inline action-specific UIs)
   export let customResolutionComponent: any = null;  // Svelte component constructor
+  export let customResolutionProps: Record<string, any> = {};  // Props to pass to custom component
   
   // Check if current user is GM
   $: isGM = (globalThis as any).game?.user?.isGM || false;
@@ -330,6 +331,7 @@
           {showFameReroll}
           debugMode={effectiveDebugMode}
           customComponent={customResolutionComponent}
+          {...customResolutionProps}
           on:primary={handleApplyResult}
           on:cancel={handleCancel}
           on:performReroll={handlePerformReroll}

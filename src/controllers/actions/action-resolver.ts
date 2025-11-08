@@ -448,6 +448,14 @@ export class ActionResolver {
                 return await resolver.deployArmy(armyId, path, outcomeString, conditionsToApply);
             }
             
+            case 'chooseAndGainResource': {
+                // Player chooses a resource from list and gains specified amount
+                const resources = gameEffect.resources || ['food', 'lumber', 'stone', 'ore'];
+                const amount = gameEffect.amount || 1;
+                
+                return await resolver.chooseAndGainResource(resources, amount);
+            }
+            
             // TODO: Add more game effect handlers as we implement them
             // case 'claimHexes': return await resolver.claimHexes(...)
             // case 'buildRoads': return await resolver.buildRoads(...)

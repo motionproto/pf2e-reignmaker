@@ -72,6 +72,17 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
       if (result.success && result.data?.message) {
         specialEffects.push(result.data.message);
       }
+    } else if (command.type === 'chooseAndGainResource') {
+      const cmd = command as any;
+      const result = await resolver.chooseAndGainResource(
+        cmd.resources,
+        cmd.amount
+      );
+      
+      // Convert resource gain results to specialEffects format
+      if (result.success && result.data?.message) {
+        specialEffects.push(result.data.message);
+      }
     }
     // Future command types will be handled here (claimHex, recruitArmy, etc.)
   }

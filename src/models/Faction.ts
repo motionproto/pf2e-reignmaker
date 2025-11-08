@@ -43,47 +43,6 @@ export interface Faction {
 }
 
 /**
- * Attitude level configuration
- */
-export const AttitudeLevelConfig: Record<AttitudeLevel, {
-  displayName: string;
-  icon: string;
-  color: string;
-  description: string;
-}> = {
-  'Hostile': {
-    displayName: 'Hostile',
-    icon: 'fa-angry',
-    color: '#ff6b6b',
-    description: 'Actively opposes your kingdom'
-  },
-  'Unfriendly': {
-    displayName: 'Unfriendly',
-    icon: 'fa-frown',
-    color: '#ffa500',
-    description: 'Suspicious or hostile to your interests'
-  },
-  'Indifferent': {
-    displayName: 'Indifferent',
-    icon: 'fa-meh',
-    color: '#ffd93d',
-    description: 'No strong feelings either way'
-  },
-  'Friendly': {
-    displayName: 'Friendly',
-    icon: 'fa-smile',
-    color: '#90ee90',
-    description: 'Generally positive relationship'
-  },
-  'Helpful': {
-    displayName: 'Helpful',
-    icon: 'fa-grin-hearts',
-    color: '#4caf50',
-    description: 'Actively supports your kingdom\'s interests'
-  }
-};
-
-/**
  * Ordered attitude levels (best to worst)
  */
 export const ATTITUDE_ORDER: AttitudeLevel[] = [

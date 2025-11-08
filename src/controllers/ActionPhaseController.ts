@@ -66,7 +66,8 @@ export async function createActionPhaseController() {
       resolutionData: import('../types/modifiers').ResolutionData,
       actorName?: string,
       skillName?: string,
-      playerId?: string
+      playerId?: string,
+      instanceId?: string
     ) {
       // Validate action exists
       const { actionLoader } = await import('./actions/action-loader');
@@ -107,15 +108,35 @@ export async function createActionPhaseController() {
       
       // Use custom resolution if available and needed for this outcome
       if (impl?.customResolution && impl.needsCustomResolution?.(outcome)) {
-        // Create instance metadata for custom resolution
+        console.log('🎯 [ActionPhaseController] Using custom resolution for:', actionId);
+        console.log('🎯 [ActionPhaseController] instanceId provided:', instanceId);
+        
+        // Get the stored instance from kingdom data to access its metadata
+        // Use instanceId if provided, otherwise fall back to checkId + status lookup
+        let storedInstance;
+        if (instanceId) {
+          storedInstance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
+          console.log('🎯 [ActionPhaseController] Looking up by instanceId:', instanceId);
+        } else {
+          storedInstance = kingdom.activeCheckInstances?.find(i => 
+            i.checkId === actionId && i.status === 'resolved'
+          );
+          console.log('🎯 [ActionPhaseController] Looking up by checkId + status');
+        }
+        console.log('🎯 [ActionPhaseController] Stored instance:', storedInstance);
+        console.log('🎯 [ActionPhaseController] Stored instance metadata:', storedInstance?.metadata);
+        
+        // Create instance metadata for custom resolution, merging stored metadata with runtime data
         const instance = {
           metadata: {
+            ...storedInstance?.metadata,  // Include stored metadata (e.g., factionId, factionName)
             outcome,
             actorName,
             skillName,
             playerId
           }
         };
+        console.log('🎯 [ActionPhaseController] Merged instance metadata:', instance.metadata);
         
         const result = await executeCustomResolution(actionId, resolutionData, instance);
         

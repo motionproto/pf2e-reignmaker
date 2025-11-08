@@ -31,7 +31,7 @@
       "msg": "Work stoppage halts production",
       "modifiers": [
         {
-          "type": "choice",
+          "type": "choice-dropdown",
           "resources": [
             "lumber",
             "ore",
@@ -55,7 +55,7 @@
           "duration": "immediate"
         },
         {
-          "type": "choice",
+          "type": "choice-dropdown",
           "resources": [
             "lumber",
             "ore",

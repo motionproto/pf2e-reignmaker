@@ -45,11 +45,20 @@ export function processChoiceSelection(choice: any): { effect: string; stateChan
 }
 
 /**
- * Detect modifiers with resource arrays (requiring player selection)
+ * Detect modifiers requiring choice buttons (large visual buttons)
+ * BREAKING CHANGE: Only recognizes explicit type: "choice-buttons"
  */
 export function detectResourceArrayModifiers(modifiers: any[] | undefined): any[] {
   if (!modifiers) return [];
-  return modifiers.filter(m => Array.isArray(m.resources));
+  return modifiers.filter(m => m.type === 'choice-buttons' && Array.isArray(m.resources));
+}
+
+/**
+ * Detect modifiers requiring dropdown selector (inline dropdown)
+ */
+export function detectChoiceDropdownModifiers(modifiers: any[] | undefined): any[] {
+  if (!modifiers) return [];
+  return modifiers.filter(m => m.type === 'choice-dropdown' && Array.isArray(m.resources));
 }
 
 /**
@@ -87,7 +96,16 @@ export function computeDisplayStateChanges(
   // Process all modifiers (static only - dice are handled by DiceRoller component)
   if (modifiers && modifiers.length > 0) {
     modifiers.forEach((modifier, idx) => {
-      // Skip resource arrays (handled separately above)
+      // Handle choice-dropdown modifiers (need resource selection first)
+      if (modifier.type === 'choice-dropdown' && Array.isArray(modifier.resources)) {
+        const selectedResource = selectedResources.get(idx);
+        if (selectedResource) {
+          result[selectedResource] = (result[selectedResource] || 0) + modifier.value;
+        }
+        return;
+      }
+      
+      // Skip other resource arrays (handled separately above)
       if (Array.isArray(modifier.resources)) return;
       
       // Check if this modifier has a rolled value

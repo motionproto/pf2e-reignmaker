@@ -2,8 +2,8 @@
   "id": "harvest-resources",
   "name": "Harvest Resources",
   "category": "economic-resources",
-  "brief": "Harvest materials from controlled hexes",
-  "description": "Harvest materials from your territories through direct extraction from the land",
+  "brief": "Gather materials from your kingdom's lands",
+  "description": "Organize gathering expeditions to collect raw materials from your kingdom's territories. Choose which resource to focus on after seeing how successful your efforts are.",
   "skills": [
     {
       "skill": "nature",
@@ -16,37 +16,45 @@
     {
       "skill": "crafting",
       "description": "process materials"
-    },
-    {
-      "skill": "athletics",
-      "description": "physical labor"
-    },
-    {
-      "skill": "occultism",
-      "description": "mystical gathering"
-    },
-    {
-      "skill": "medicine",
-      "description": "herb collection"
     }
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain 1 resource from the hex + identify ideal location (+2 untyped bonus to Create Worksite in this hex)",
-      "modifiers": []
+      "description": "Exceptional harvest! Choose a resource to gain.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "chooseAndGainResource",
+          "resources": ["food", "lumber", "stone", "ore"],
+          "amount": 2
+        }
+      ]
     },
     "success": {
-      "description": "Gain 1 resource from the hex",
-      "modifiers": []
+      "description": "Good harvest! Choose a resource to gain.",
+      "modifiers": [],
+      "gameCommands": [
+        {
+          "type": "chooseAndGainResource",
+          "resources": ["food", "lumber", "stone", "ore"],
+          "amount": 1
+        }
+      ]
     },
     "failure": {
-      "description": "No effect",
+      "description": "The harvest yields nothing.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "The hex is depleted; it cannot be harvested again next turn",
-      "modifiers": []
+      "description": "Damaged equipment and wasted effort.",
+      "modifiers": [
+        {
+          "type": "static",
+          "resource": "gold",
+          "value": -1,
+          "duration": "immediate"
+        }
+      ]
     }
-  },
-  "special": "May harvest from any controlled hex. Each hex can only be harvested once per turn. Resource type depends on terrain."
+  }
 }

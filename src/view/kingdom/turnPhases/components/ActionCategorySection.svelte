@@ -83,14 +83,15 @@
           rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
           effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
         } : undefined}
-        {@const customComponent = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
+        {@const customResolution = (resolution && controller) ? getCustomResolutionComponent(action.id, resolution.outcome) : null}
         {@const isAvailable = controller ? isActionAvailable(action) : false}
         {@const missingRequirements = !isAvailable && controller ? getMissingRequirements(action) : []}
         {#key `${action.id}-${instanceId || 'none'}-${activeAidsCount}-${isAvailable}-${armyDataKey}-${resourcesKey}`}
           <BaseCheckCard
             id={action.id}
             checkInstance={checkInstance || null}
-            customResolutionComponent={customComponent}
+            customResolutionComponent={customResolution?.component || null}
+            customResolutionProps={customResolution?.props || {}}
             name={action.name}
             description={action.description}
             brief={action.brief || ''}

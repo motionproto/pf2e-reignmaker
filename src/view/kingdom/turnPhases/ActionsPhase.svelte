@@ -188,7 +188,8 @@
     const pendingActions: PendingActionsState = {
       pendingBuildAction,
       pendingRepairAction,
-      pendingUpgradeAction
+      pendingUpgradeAction,
+      pendingDiplomaticAction
     };
     
     const instanceId = await createActionCheckInstance({
@@ -280,6 +281,7 @@
     // Apply action via controller - handles both standard and custom resolutions
     console.log('🎬 [ActionsPhase] About to call controller.resolveAction with:', {
       actionId,
+      instanceId,
       outcome: instance.appliedOutcome.outcome,
       actorName: instance.appliedOutcome.actorName
     });
@@ -289,7 +291,8 @@
       finalResolutionData,
       instance.appliedOutcome.actorName,
       instance.appliedOutcome.skillName || '',
-      currentUserId || undefined
+      currentUserId || undefined,
+      instanceId  // Pass instanceId to look up metadata
     );
     console.log('🎬 [ActionsPhase] controller.resolveAction returned:', result);
 
@@ -544,7 +547,8 @@
     const pendingActions: PendingActionsState = {
       pendingBuildAction,
       pendingRepairAction,
-      pendingUpgradeAction
+      pendingUpgradeAction,
+      pendingDiplomaticAction
     };
     
     await updateCheckInstanceOutcome({
@@ -708,16 +712,20 @@
   // Handle when a faction is selected for diplomatic relations
   async function handleFactionSelected(event: CustomEvent) {
     const { factionId, factionName } = event.detail;
+    console.log('🎯 [ActionsPhase] handleFactionSelected received:', { factionId, factionName });
     
     if (pendingDiplomaticAction) {
       pendingDiplomaticAction.factionId = factionId;
       pendingDiplomaticAction.factionName = factionName;
+      console.log('🎯 [ActionsPhase] Updated pendingDiplomaticAction:', pendingDiplomaticAction);
       
       // Close dialog
       showFactionSelectionDialog = false;
       
       // Now trigger the skill roll with the selected faction context
       await executeEstablishDiplomaticRelationsRoll(pendingDiplomaticAction);
+    } else {
+      console.warn('⚠️ [ActionsPhase] No pendingDiplomaticAction when faction selected');
     }
   }
   

@@ -178,21 +178,38 @@
 
 **Reference:** `docs/systems/typed-modifiers-system.md#choicemodifier`
 
-**How It Works:**
-1. Outcome includes ChoiceModifier
-2. OutcomeDisplay automatically renders dropdown
-3. User selects resource from list
-4. Selected resource receives modifier value
+**⚠️ BREAKING CHANGE (2025-11-08):** Two explicit types for resource selection:
+- `type: "choice-buttons"` - Large visual buttons (for player actions)
+- `type: "choice-dropdown"` - Inline dropdown selector (for events/incidents)
 
-**Example:**
+**Choice Buttons Pattern (Actions):**
+```json
+{
+  "success": {
+    "description": "Gain 2 of your choice",
+    "modifiers": [{
+      "type": "choice-buttons",
+      "resources": ["food", "lumber", "stone", "ore"],
+      "value": 2,
+      "negative": false,
+      "duration": "immediate"
+    }]
+  }
+}
+```
+
+**Display:** 4 large buttons appear inline: "Gain 2 Food", "Gain 2 Lumber", etc.
+
+**Choice Dropdown Pattern (Events/Incidents):**
 ```json
 {
   "failure": {
     "msg": "Minor artifacts; gain 1 of your choice",
     "modifiers": [{
-      "type": "choice",
+      "type": "choice-dropdown",
       "resources": ["food", "lumber", "ore", "stone"],
       "value": 1,
+      "negative": false,
       "duration": "immediate"
     }]
   }
@@ -201,9 +218,14 @@
 
 **Display:** Dropdown appears inline in outcome card with resource options
 
-**Key Difference from Post-Roll Components:**
-- **In-line selection** = Simple dropdown (no custom UI needed)
-- **Post-roll component** = Complex custom UI (ranges, multiple inputs, etc.)
+**Key Differences:**
+- **Choice Buttons** = Large visual buttons for important player decisions (actions)
+- **Choice Dropdown** = Compact dropdown for quick selections (events/incidents)
+- **Post-Roll Component** = Complex custom UI (ranges, multiple inputs, etc.)
+
+**When to Use:**
+- Use `choice-buttons` for **player actions** where choice is a key decision
+- Use `choice-dropdown` for **events/incidents** where choice is minor/incidental
 
 ---
 
@@ -225,10 +247,19 @@
 { "type": "dice", "resource": "gold", "formula": "2d6", "negative": true, "duration": "immediate" }
 ```
 
-**Choice:**
+**Choice Buttons (Actions):**
 ```json
-{ "type": "choice", "resources": ["gold", "food"], "value": 5, "duration": "immediate" }
+{ "type": "choice-buttons", "resources": ["food", "lumber", "stone", "ore"], "value": 2, "negative": false, "duration": "immediate" }
 ```
+
+**Choice Dropdown (Events/Incidents):**
+```json
+{ "type": "choice-dropdown", "resources": ["food", "lumber", "ore", "stone"], "value": 1, "negative": false, "duration": "immediate" }
+```
+
+**⚠️ BREAKING CHANGE (2025-11-08):** Old `type: "choice"` no longer supported. Use explicit types:
+- `choice-buttons` for player actions
+- `choice-dropdown` for events/incidents
 
 **Reference:** `docs/systems/typed-modifiers-system.md#modifier-types`
 
@@ -408,26 +439,49 @@ validationFn: (hexId) => {
 
 ### 3.7 In-Line Selection Not Appearing
 
-**Symptom:** ChoiceModifier in JSON but no dropdown appears
+**Symptom:** ChoiceModifier in JSON but no buttons/dropdown appears
+
+**⚠️ BREAKING CHANGE (2025-11-08):** Must use explicit types `choice-buttons` or `choice-dropdown`
 
 **Check:**
-1. Modifier has `"type": "choice"`?
+1. Modifier has correct explicit type (`"choice-buttons"` or `"choice-dropdown"`)?
 2. `resources` array has 2+ options?
-3. OutcomeDisplay rendering correctly?
-4. No JavaScript errors in console?
+3. `negative` field present (true or false)?
+4. OutcomeDisplay rendering correctly?
+5. No JavaScript errors in console?
 
 **Common Issues:**
+- **Old type** → `type: "choice"` no longer works (BREAKING CHANGE)
 - **Single resource** → No choice needed, shows as static modifier
 - **Empty resources array** → Nothing to choose from
-- **Wrong type** → Must be `"choice"`, not `"select"` or `"option"`
+- **Wrong type** → Must be `"choice-buttons"` or `"choice-dropdown"`, not `"select"` or `"option"`
+- **Missing negative field** → Always include `"negative": true` or `"negative": false`
 
-**Example Fix:**
+**Example Fixes:**
 ```json
-// ❌ Wrong
+// ❌ Wrong - Old pattern (no longer supported)
+{ "type": "choice", "resources": ["gold", "food"], "value": 5 }
+
+// ❌ Wrong - Wrong type
 { "type": "select", "resources": ["gold"] }
 
-// ✅ Correct
-{ "type": "choice", "resources": ["gold", "food"], "value": 5 }
+// ✅ Correct - Choice Buttons (for actions)
+{ 
+  "type": "choice-buttons", 
+  "resources": ["food", "lumber", "stone", "ore"], 
+  "value": 2,
+  "negative": false,
+  "duration": "immediate"
+}
+
+// ✅ Correct - Choice Dropdown (for events/incidents)
+{ 
+  "type": "choice-dropdown", 
+  "resources": ["food", "lumber", "ore", "stone"], 
+  "value": 1,
+  "negative": false,
+  "duration": "immediate"
+}
 ```
 
 ---
@@ -457,15 +511,29 @@ validationFn: (hexId) => {
 }
 ```
 
-**Choice (Player Selects Resource):**
+**Choice Buttons (Player Actions):**
 ```json
 { 
-  "type": "choice", 
-  "resources": ["food", "lumber", "ore", "stone"], 
-  "value": 5,
+  "type": "choice-buttons", 
+  "resources": ["food", "lumber", "stone", "ore"], 
+  "value": 2,
+  "negative": false,
   "duration": "immediate"
 }
 ```
+
+**Choice Dropdown (Events/Incidents):**
+```json
+{ 
+  "type": "choice-dropdown", 
+  "resources": ["food", "lumber", "ore", "stone"], 
+  "value": 1,
+  "negative": false,
+  "duration": "immediate"
+}
+```
+
+**⚠️ BREAKING CHANGE (2025-11-08):** Old `type: "choice"` no longer supported. Use explicit types.
 
 **Full Reference:** `docs/systems/typed-modifiers-system.md`
 

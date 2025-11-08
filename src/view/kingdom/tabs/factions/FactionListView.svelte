@@ -2,7 +2,12 @@
    import { createEventDispatcher } from 'svelte';
    import { kingdomData } from '../../../../stores/KingdomStore';
    import type { Faction, AttitudeLevel } from '../../../../models/Faction';
-   import { AttitudeLevelConfig, ATTITUDE_ORDER } from '../../../../models/Faction';
+   import { ATTITUDE_ORDER } from '../../../../models/Faction';
+   import { 
+      FACTION_ATTITUDE_ICONS, 
+      FACTION_ATTITUDE_COLORS, 
+      FACTION_ATTITUDE_DESCRIPTIONS 
+   } from '../../../../utils/presentation';
    import Button from '../../components/baseComponents/Button.svelte';
    import InlineEditActions from '../../components/baseComponents/InlineEditActions.svelte';
    import { validateKingdomOrFactionName } from '../../../../utils/reserved-names';
@@ -316,8 +321,8 @@
    <!-- Summary Stats -->
    <div class="factions-summary">
       {#each ATTITUDE_ORDER as attitude}
-         <div class="summary-card" style="--attitude-color: {AttitudeLevelConfig[attitude].color}">
-            <i class="fas {AttitudeLevelConfig[attitude].icon}" style="color: {AttitudeLevelConfig[attitude].color}"></i>
+         <div class="summary-card" style="--attitude-color: {FACTION_ATTITUDE_COLORS[attitude]}">
+            <i class="fas {FACTION_ATTITUDE_ICONS[attitude]}" style="color: {FACTION_ATTITUDE_COLORS[attitude]}"></i>
             <div>
                <div class="summary-value">{factionsByAttitude[attitude]}</div>
                <div class="summary-label">{attitude}</div>
@@ -429,10 +434,10 @@
                         <button
                            class="attitude-icon {faction.attitude === attitude ? 'active' : ''}"
                            on:click={() => changeAttitude(faction.id, attitude)}
-                           title={AttitudeLevelConfig[attitude].description}
-                           style="color: {faction.attitude === attitude ? AttitudeLevelConfig[attitude].color : 'rgba(255,255,255,0.2)'}"
+                           title={FACTION_ATTITUDE_DESCRIPTIONS[attitude]}
+                           style="color: {faction.attitude === attitude ? FACTION_ATTITUDE_COLORS[attitude] : 'rgba(255,255,255,0.2)'}"
                         >
-                           <i class="fas {AttitudeLevelConfig[attitude].icon}"></i>
+                           <i class="fas {FACTION_ATTITUDE_ICONS[attitude]}"></i>
                         </button>
                      </td>
                   {/each}

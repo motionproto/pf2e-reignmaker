@@ -86,7 +86,7 @@
   
   // Get label for a modifier (e.g., "Lose 2d4 Food")
   function getModifierLabel(resource: string | undefined, value: any, resolved?: number): string {
-    // Handle undefined or empty resource
+    // Handle undefined or empty resource (should not happen after filtering)
     if (!resource) {
       console.warn('[StateChanges] getModifierLabel called with undefined resource:', { resource, value, resolved });
       return `Unknown modifier: ${value}`;
@@ -156,7 +156,7 @@
     
     {#if hasStateChanges && stateChanges}
       <!-- Show numeric state changes (non-dice) - card style -->
-      <!-- Filter out resources that are hidden (handled by DiceRoller or ChoiceButtons) -->
+      <!-- Filter out resources that are hidden (handled by DiceRoller, ChoiceButtons, or ResourceSelector) -->
       {@const hiddenResources = new Set(hideResources)}
       {@const nonDiceStateChanges = Object.entries(stateChanges).filter(([key]) => !hiddenResources.has(key))}
       

@@ -157,51 +157,89 @@ export const UpgradeSettlementAction = {
         const newLevel = currentLevel + 1;
         const fullCost = newLevel;
         
-        // Calculate actual cost based on outcome
-        let actualCost = fullCost;
-        if (outcome === 'criticalSuccess' || outcome === 'failure') {
-          // Both critical success and failure use half cost (rounded up)
-          actualCost = Math.ceil(fullCost / 2);
-        }
-        // success and criticalFailure use full cost
+        // Load action JSON to get outcome descriptions
+        const { actionLoader } = await import('../../controllers/actions/action-loader');
+        const action = actionLoader.getAllActions().find(a => a.id === 'upgrade-settlement');
         
-        // Deduct gold cost
-        await actor.updateKingdomData((k: KingdomData) => {
-          if (k.resources.gold >= actualCost) {
-            k.resources.gold -= actualCost;
-          } else {
-            throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
+        // Get description template for this outcome
+        const description = (action as any)?.[outcome]?.description || 'Settlement upgrade attempted';
+        
+        // For success and critical success: upgrade the settlement
+        if (outcome === 'success' || outcome === 'criticalSuccess') {
+          // Calculate actual cost based on outcome
+          let actualCost = fullCost;
+          if (outcome === 'criticalSuccess') {
+            actualCost = Math.ceil(fullCost / 2);
           }
-        });
-        
-        // Upgrade settlement level (handles automatic tier transitions)
-        const { settlementService } = await import('../../services/settlements');
-        await settlementService.updateSettlementLevel(settlementId, newLevel);
-        
-        // Get updated settlement for message
-        const updatedKingdom = actor.getKingdomData();
-        const updatedSettlement = updatedKingdom?.settlements.find((s: any) => s.id === settlementId);
-        
-        if (updatedSettlement) {
-          // Check if tier changed
-          const tierChanged = updatedSettlement.tier !== settlement.tier;
           
-          const message = tierChanged
-            ? `${updatedSettlement.name} upgraded to level ${newLevel} and became a ${updatedSettlement.tier}!`
-            : `${updatedSettlement.name} upgraded to level ${newLevel}`;
+          // Deduct gold cost
+          await actor.updateKingdomData((k: KingdomData) => {
+            if (k.resources.gold >= actualCost) {
+              k.resources.gold -= actualCost;
+            } else {
+              throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
+            }
+          });
+          
+          // Upgrade settlement level (handles automatic tier transitions)
+          const { settlementService } = await import('../../services/settlements');
+          await settlementService.updateSettlementLevel(settlementId, newLevel);
+          
+          // Get updated settlement for message
+          const updatedKingdom = actor.getKingdomData();
+          const updatedSettlement = updatedKingdom?.settlements.find((s: any) => s.id === settlementId);
+          
+          if (updatedSettlement) {
+            // Replace placeholders with actual settlement data
+            const finalMessage = replaceTemplatePlaceholders(description, { 
+              settlement: updatedSettlement.name,
+              level: newLevel.toString()
+            });
+            
+            // Check if tier changed for bonus notification
+            const tierChanged = updatedSettlement.tier !== settlement.tier;
+            const game = (window as any).game;
+            
+            if (tierChanged) {
+              game?.ui?.notifications?.info(`✨ ${finalMessage} and became a ${updatedSettlement.tier}!`);
+            } else if (outcome === 'criticalSuccess') {
+              game?.ui?.notifications?.info(`🎉 Critical Success! ${finalMessage}`);
+            } else {
+              game?.ui?.notifications?.info(`✅ ${finalMessage}`);
+            }
+            
+            logActionSuccess('upgrade-settlement', finalMessage);
+            return createSuccessResult(finalMessage);
+          }
+        } else {
+          // For failure and critical failure: only deduct cost, don't upgrade
+          let actualCost = fullCost;
+          if (outcome === 'failure') {
+            actualCost = Math.ceil(fullCost / 2);
+          }
+          
+          // Deduct gold cost
+          await actor.updateKingdomData((k: KingdomData) => {
+            if (k.resources.gold >= actualCost) {
+              k.resources.gold -= actualCost;
+            } else {
+              throw new Error(`Insufficient gold: need ${actualCost}, have ${k.resources.gold}`);
+            }
+          });
+          
+          // Replace placeholders (no level change, so just show settlement name)
+          const finalMessage = replaceTemplatePlaceholders(description, { 
+            settlement: settlement.name
+          });
           
           const game = (window as any).game;
-          if (outcome === 'criticalSuccess') {
-            game?.ui?.notifications?.info(`🎉 Critical Success! ${message} (50% off gold cost)`);
-          } else {
-            game?.ui?.notifications?.info(`✅ ${message}`);
-          }
+          game?.ui?.notifications?.warn(`⚠️ ${finalMessage}`);
           
-          logActionSuccess('upgrade-settlement', message);
-          return createSuccessResult(message);
+          logActionSuccess('upgrade-settlement', finalMessage);
+          return createSuccessResult(finalMessage);
         }
         
-        return createSuccessResult('Settlement upgraded');
+        return createSuccessResult('Settlement upgrade completed');
         
       } catch (error) {
         logActionError('upgrade-settlement', error as Error);
@@ -214,10 +252,11 @@ export const UpgradeSettlementAction = {
   
   /**
    * Determine which outcomes need custom resolution
-   * For upgrade-settlement: success and criticalSuccess need to upgrade settlement
+   * For upgrade-settlement: all outcomes need custom resolution to inject settlement name
+   * Success/criticalSuccess also upgrade the settlement
    */
   needsCustomResolution(outcome: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure'): boolean {
-    return outcome === 'success' || outcome === 'criticalSuccess';
+    return true; // All outcomes need settlement name in description
   }
 };
 

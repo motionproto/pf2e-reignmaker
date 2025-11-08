@@ -38,22 +38,26 @@ export class ActionLoader {
                     criticalSuccess: {
                         description: raw.effects.criticalSuccess?.description || '',
                         modifiers: raw.effects.criticalSuccess?.modifiers,
-                        gameCommands: raw.effects.criticalSuccess?.gameCommands
+                        gameCommands: raw.effects.criticalSuccess?.gameCommands,
+                        choices: raw.effects.criticalSuccess?.choices
                     },
                     success: {
                         description: raw.effects.success?.description || '',
                         modifiers: raw.effects.success?.modifiers,
-                        gameCommands: raw.effects.success?.gameCommands
+                        gameCommands: raw.effects.success?.gameCommands,
+                        choices: raw.effects.success?.choices
                     },
                     failure: {
                         description: raw.effects.failure?.description || '',
                         modifiers: raw.effects.failure?.modifiers,
-                        gameCommands: raw.effects.failure?.gameCommands
+                        gameCommands: raw.effects.failure?.gameCommands,
+                        choices: raw.effects.failure?.choices
                     },
                     criticalFailure: {
                         description: raw.effects.criticalFailure?.description || '',
                         modifiers: raw.effects.criticalFailure?.modifiers,
-                        gameCommands: raw.effects.criticalFailure?.gameCommands
+                        gameCommands: raw.effects.criticalFailure?.gameCommands,
+                        choices: raw.effects.criticalFailure?.choices
                     },
                     proficiencyScaling: raw.proficiencyScaling 
                         ? new Map(Object.entries(raw.proficiencyScaling))

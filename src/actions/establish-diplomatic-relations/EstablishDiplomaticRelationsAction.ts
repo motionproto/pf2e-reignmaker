@@ -92,13 +92,19 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
     
     async execute(resolutionData: ResolutionData, instance?: any): Promise<ResolveResult> {
       logActionStart('establish-diplomatic-relations', 'Processing diplomatic relations');
+      console.log('🎯 [EstablishDiplomaticRelationsAction] execute() called');
+      console.log('🎯 [EstablishDiplomaticRelationsAction] instance:', instance);
+      console.log('🎯 [EstablishDiplomaticRelationsAction] instance.metadata:', instance?.metadata);
       
       try {
         // Get faction info from instance metadata
         const factionId = instance?.metadata?.factionId;
         const factionName = instance?.metadata?.factionName;
+        console.log('🎯 [EstablishDiplomaticRelationsAction] Extracted factionId:', factionId);
+        console.log('🎯 [EstablishDiplomaticRelationsAction] Extracted factionName:', factionName);
         
         if (!factionId) {
+          console.error('❌ [EstablishDiplomaticRelationsAction] Missing faction ID!');
           return createErrorResult('Missing faction ID');
         }
         
@@ -121,8 +127,9 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
         // Determine outcome based on resolution data
         const outcome = instance?.metadata?.outcome || 'success';
 
-        // Handle attitude changes based on outcome
+        // Calculate new attitude BEFORE updating (so we can show it in the message)
         let newAttitude: AttitudeLevel | null = null;
+        let specificMessage = '';
         
         switch (outcome) {
           case 'criticalSuccess':
@@ -131,8 +138,14 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
             newAttitude = getNextAttitude(faction.attitude);
             if (newAttitude) {
               await factionService.updateAttitude(factionId, newAttitude);
+              specificMessage = outcome === 'criticalSuccess'
+                ? `${factionName}'s attitude improved to ${newAttitude}!`
+                : `${factionName}'s attitude improved to ${newAttitude}.`;
               logActionSuccess('establish-diplomatic-relations', 
                 `Improved ${factionName} attitude: ${faction.attitude} → ${newAttitude}`);
+            } else {
+              // Already at maximum (Helpful)
+              specificMessage = `${factionName} is already at maximum attitude (Helpful).`;
             }
             break;
             
@@ -141,28 +154,37 @@ const EstablishDiplomaticRelationsAction: CustomActionImplementation = {
             newAttitude = getPreviousAttitude(faction.attitude);
             if (newAttitude) {
               await factionService.updateAttitude(factionId, newAttitude);
+              specificMessage = `${factionName}'s attitude worsened to ${newAttitude}.`;
               logActionSuccess('establish-diplomatic-relations', 
                 `Worsened ${factionName} attitude: ${faction.attitude} → ${newAttitude}`);
+            } else {
+              // Already at minimum (Hostile)
+              specificMessage = `${factionName} is already at minimum attitude (Hostile).`;
             }
             break;
             
           case 'failure':
             // No attitude change
+            specificMessage = `Your diplomatic mission with ${factionName} yielded no results, but relations remain stable.`;
             logActionSuccess('establish-diplomatic-relations', 
               `No attitude change for ${factionName}`);
             break;
         }
         
-        // Load action JSON to get outcome descriptions
-        const { actionLoader } = await import('../../controllers/actions/action-loader');
-        const action = actionLoader.getAllActions().find(a => a.id === 'dimplomatic-mission');
+        // Show custom notification (like Upgrade Settlement)
+        const game = (window as any).game;
+        if (outcome === 'criticalSuccess') {
+          game?.ui?.notifications?.info(`🎉 Critical Success! ${specificMessage}`);
+        } else if (newAttitude && outcome !== 'failure') {
+          game?.ui?.notifications?.info(`✅ ${specificMessage}`);
+        } else if (outcome === 'criticalFailure') {
+          game?.ui?.notifications?.warn(`⚠️ ${specificMessage}`);
+        } else {
+          game?.ui?.notifications?.info(`ℹ️ ${specificMessage}`);
+        }
         
-        // Get description from JSON and replace {Faction} placeholder
-        const description = (action as any)?.[outcome]?.description || 'Diplomatic mission completed';
-        const finalMessage = replaceTemplatePlaceholders(description, { Faction: factionName });
-        
-        logActionSuccess('establish-diplomatic-relations', finalMessage);
-        return createSuccessResult(finalMessage);
+        logActionSuccess('establish-diplomatic-relations', specificMessage);
+        return createSuccessResult(specificMessage);
         
       } catch (error) {
         logActionError('establish-diplomatic-relations', error as Error);
