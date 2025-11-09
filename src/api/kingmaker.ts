@@ -15,7 +15,7 @@ export interface HexFeature {
 }
 
 export interface HexState {
-    commodity: string | null; // e.g., "food", "ore", "lumber", "stone", "luxuries"
+    commodity: string | null; // e.g., "food", "ore", "lumber", "stone"
     camp: string | null; // Camps/Worksites: "quarry", "lumber", "mine"
     features: HexFeature[] | null;
     claimed: boolean | null;
@@ -84,7 +84,6 @@ export interface WorkSites {
     lumberCamps: WorkSite;
     mines: WorkSite;
     quarries: WorkSite;
-    luxurySources: WorkSite;
 }
 
 /**
@@ -157,9 +156,6 @@ export function getKingmakerRealmData(): RealmData | null {
         const mines = parseWorksite(claimedHexes, "mine", "ore");
         const quarries = parseWorksite(claimedHexes, "quarry", "stone");
         
-        // Special handling for luxury sources - mines with luxury commodities
-        const luxurySources = parseLuxuryWorksite(claimedHexes);
-        
         // Parse settlements from features
         const settlements = parseSettlements(claimedHexes);
         
@@ -169,8 +165,7 @@ export function getKingmakerRealmData(): RealmData | null {
                 farmlands,
                 lumberCamps,
                 mines,
-                quarries,
-                luxurySources
+                quarries
             },
             settlements
         };
@@ -209,26 +204,6 @@ function parseWorksite(
             if (hex.commodity === commodity) {
                 resources++;
             }
-        }
-    }
-    
-    return new WorkSite(quantity, resources);
-}
-
-/**
- * Special parsing for luxury worksites
- * (mines on luxury commodity hexes)
- */
-function parseLuxuryWorksite(hexes: HexState[]): WorkSite {
-    let quantity = 0;
-    let resources = 0;
-    
-    for (const hex of hexes) {
-        // A mine on a luxury commodity hex creates a luxury worksite
-        if (hex.camp === "mine" && hex.commodity === "luxuries") {
-            quantity++;
-            // Note: Luxury mines don't produce additional resources
-            // They just allow luxury collection
         }
     }
     
@@ -295,9 +270,6 @@ export function getRealmSummary(): string {
     }
     if (worksites.quarries.quantity > 0) {
         lines.push(`  Quarries: ${worksites.quarries.quantity} (producing ${worksites.quarries.resources} stone)`);
-    }
-    if (worksites.luxurySources.quantity > 0) {
-        lines.push(`  Luxury Sources: ${worksites.luxurySources.quantity}`);
     }
     
     return lines.join("\n");

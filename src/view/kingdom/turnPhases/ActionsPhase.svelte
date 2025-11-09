@@ -99,7 +99,7 @@
   // Create a reactive key that changes when resources change
   // This forces action requirement checks to re-run when gold, lumber, ore, etc. change
   $: resourcesKey = $kingdomData?.resources ? 
-    `${$kingdomData.resources.gold || 0}|${$kingdomData.resources.lumber || 0}|${$kingdomData.resources.ore || 0}|${$kingdomData.resources.food || 0}|${$kingdomData.resources.luxuries || 0}` : '';
+    `${$kingdomData.resources.gold || 0}|${$kingdomData.resources.lumber || 0}|${$kingdomData.resources.ore || 0}|${$kingdomData.resources.food || 0}` : '';
   
   // Removed: completionsByAction - now using actionLog directly in CompletionNotifications
   

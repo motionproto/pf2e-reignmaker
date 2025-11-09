@@ -7,15 +7,13 @@
 import type { KingdomData } from '../../actors/KingdomActor';
 import type { ActionRequirement } from '../../controllers/actions/action-resolver';
 import type { ResolutionData } from '../../types/modifiers';
-import { updateKingdom } from '../../stores/KingdomStore';
 import {
   logActionStart,
   logActionSuccess,
   logActionError,
-  createSuccessResult,
-  createErrorResult,
   type ResolveResult
 } from '../shared/ActionHelpers';
+import { applyResourceChanges } from '../shared/InlineActionHelpers';
 import { hasCommerceStructure } from '../../services/commerce/tradeRates';
 
 // Import the Svelte component (will be passed to OutcomeDisplay)
@@ -51,23 +49,30 @@ export const PurchaseResourcesAction = {
       try {
         const { selectedResource, selectedAmount, goldCost } = resolutionData.customComponentData || {};
         
-        if (!selectedResource || !selectedAmount) {
-          return createErrorResult('No resource selection was made');
+        if (!selectedResource || !selectedAmount || goldCost === undefined) {
+          return { success: false, error: 'No resource selection was made' };
         }
         
-        // Resource changes are handled by OutcomeDisplay via modifiers
-        // (component emits modifiers which get processed by computeResolutionData)
-        // This execute() is just for validation and success message
+        // Apply resource changes using shared helper
+        const result = await applyResourceChanges([
+          { resource: 'gold', amount: -goldCost },
+          { resource: selectedResource, amount: selectedAmount }
+        ], 'purchase-resources');
         
+        if (!result.success) {
+          return result;
+        }
+        
+        // Build success message
         const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
         const message = `Purchased ${selectedAmount} ${resourceName} for ${goldCost} gold!`;
         
         logActionSuccess('purchase-resources', message);
-        return createSuccessResult(message);
+        return { success: true, data: { message } };
         
       } catch (error) {
         logActionError('purchase-resources', error as Error);
-        return createErrorResult(error instanceof Error ? error.message : 'Failed to purchase resources');
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to purchase resources' };
       }
     }
   },

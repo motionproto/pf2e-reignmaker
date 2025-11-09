@@ -39,8 +39,7 @@ export const SellSurplusAction = {
       (resources.food || 0) >= minAmount ||
       (resources.lumber || 0) >= minAmount ||
       (resources.stone || 0) >= minAmount ||
-      (resources.ore || 0) >= minAmount ||
-      (resources.luxuries || 0) >= minAmount
+      (resources.ore || 0) >= minAmount
     );
     
     if (!hasEnough) {

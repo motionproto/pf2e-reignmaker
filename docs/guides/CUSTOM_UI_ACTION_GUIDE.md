@@ -376,7 +376,90 @@ export const actionImplementations: Record<string, any> = {
 };
 ```
 
-### Step 4: Test Checklist
+### Step 4: Apply Resource Changes (Use InlineActionHelpers)
+
+**When implementing `customResolution.execute()`**, use the shared `InlineActionHelpers` to apply resource changes:
+
+**File:** `src/actions/shared/InlineActionHelpers.ts`
+
+**Purpose:** Provides reusable utilities for actions with custom resolution components that need to modify kingdom resources inline during execution.
+
+**Key function:**
+```typescript
+applyResourceChanges(
+  changes: ResourceChange[],
+  actionId: string
+): Promise<ResolveResult>
+```
+
+**Updated action file pattern:**
+```typescript
+import { applyResourceChanges } from '../shared/InlineActionHelpers';
+
+export const YourAction = {
+  id: 'your-action-id',
+  
+  customResolution: {
+    component: YourCustomComponent,
+    
+    validateData(resolutionData: ResolutionData): boolean {
+      return !!(resolutionData.customComponentData?.selectedOption);
+    },
+    
+    async execute(resolutionData: ResolutionData): Promise<ResolveResult> {
+      logActionStart('your-action-id', 'Applying selection');
+      
+      try {
+        const { selectedResource, amount } = resolutionData.customComponentData || {};
+        
+        if (!selectedResource || !amount) {
+          return { success: false, error: 'No selection was made' };
+        }
+        
+        // ✅ Use shared helper to apply resource changes
+        const result = await applyResourceChanges([
+          { resource: selectedResource, amount }
+        ], 'your-action-id');
+        
+        if (!result.success) {
+          return result;
+        }
+        
+        // Build success message
+        const message = `Applied ${amount} ${selectedResource}!`;
+        logActionSuccess('your-action-id', message);
+        return { success: true, data: { message } };
+        
+      } catch (error) {
+        logActionError('your-action-id', error as Error);
+        return { success: false, error: 'Failed to apply selection' };
+      }
+    }
+  }
+};
+```
+
+**Multiple resource changes (e.g., Purchase Resources):**
+```typescript
+// Purchase 2 stone for 10 gold
+const result = await applyResourceChanges([
+  { resource: 'gold', amount: -10 },      // Deduct gold
+  { resource: 'stone', amount: 2 }        // Add stone
+], 'purchase-resources');
+```
+
+**Why use InlineActionHelpers?**
+- ✅ DRY principle - eliminates duplicated resource application code
+- ✅ Consistent error handling across all actions
+- ✅ Type-safe with `ResourceChange` interface
+- ✅ Handles kingdom actor access and state updates automatically
+- ✅ ~40% less boilerplate code
+
+**InlineActionHelpers vs ActionHelpers:**
+- **InlineActionHelpers** = Custom resolution execution logic (apply resources, calculate outcomes)
+- **ActionHelpers** = General validation/lookup utilities (find settlements, check capacity, validate resources)
+
+### Step 5: Test Checklist
 
 - [ ] Component mounts after outcome displayed
 - [ ] Options display correctly
@@ -384,7 +467,7 @@ export const actionImplementations: Record<string, any> = {
 - [ ] Can change selection freely
 - [ ] "Apply" button disabled until selection made
 - [ ] Selection data accessible in execute()
-- [ ] Resource changes applied correctly
+- [ ] Resource changes applied correctly (using InlineActionHelpers)
 - [ ] Success message displays
 - [ ] Component unmounts after application
 
@@ -631,6 +714,217 @@ validateData(resolutionData: ResolutionData): boolean {
 
 ---
 
+## Performance: Self-Contained UI Pattern
+
+### The Problem: Map Flashing
+
+**Symptom:** Every button click causes settlement labels on the map to flash/redraw
+
+**Root cause:** Excessive actor updates trigger map layer redraws
+
+**Example scenario (Purchase Resources):**
+```typescript
+// ❌ BAD: Persisting on every +/- click
+function incrementAmount() {
+  selectedAmount++;
+  await updateInstanceResolutionState(instance.instanceId, {
+    customComponentData: { selectedAmount }
+  });
+  // Result: Actor update → Map redraw → Flash!
+}
+```
+
+### The Solution: Local State + Single Update
+
+**Architecture:**
+1. **Keep UI state local** - No persistence during interaction
+2. **Persist critical data once** - Only what's needed for validation
+3. **Apply all changes on Apply** - Single final update
+
+**Data flow:**
+```
+User Interaction:
+├─ Select resource → Persist selectedResource (validation)
+├─ Click +/- → Local state only (no persistence)
+├─ Click +/- → Local state only (no persistence)
+└─ Click Apply → Merge all data → Single kingdom update
+```
+
+### Implementation Pattern
+
+**Component structure:**
+```svelte
+<script lang="ts">
+  import { updateInstanceResolutionState, getInstanceResolutionState } from '...';
+  
+  export let instance: ActiveCheckInstance | null = null;
+  export let outcome: string;
+  
+  // ✅ Persist critical data (for validation)
+  $: resolutionState = getInstanceResolutionState(instance);
+  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
+  
+  // ✅ Keep interactive data local (no persistence)
+  let selectedAmount = 2;
+  let customSelectionData: Record<string, any> | null = null;
+  
+  async function handleResourceSelect(resource: string) {
+    // Persist selectedResource (ONCE, for validation)
+    await updateInstanceResolutionState(instance.instanceId, {
+      customComponentData: { selectedResource: resource }
+    });
+    
+    // Store local data for Apply
+    notifySelectionChanged();
+  }
+  
+  function incrementAmount() {
+    // ✅ Local state only - NO persistence
+    selectedAmount++;
+    notifySelectionChanged();
+  }
+  
+  function notifySelectionChanged() {
+    // Dispatch with complete data (not persisted yet)
+    dispatch('selection', {
+      selectedResource,
+      selectedAmount,
+      goldCost: calculateCost(),
+      modifiers: buildModifiers()
+    });
+  }
+</script>
+```
+
+**OutcomeDisplay integration:**
+```typescript
+// OutcomeDisplay.svelte
+let customSelectionData: Record<string, any> | null = null;
+
+async function handleCustomSelection(event: CustomEvent) {
+  const { modifiers, ...metadata } = event.detail;
+  
+  // ✅ Store raw selection data locally
+  customSelectionData = metadata;
+  
+  // Convert to stateChanges for display
+  choiceResult = { effect, stateChanges: buildStateChanges(modifiers) };
+}
+
+function computeResolutionData(): ResolutionData {
+  // ✅ Merge persisted + local data when applying
+  const mergedCustomData = customSelectionData ? {
+    ...customComponentData,    // selectedResource (from instance)
+    ...customSelectionData     // selectedAmount, goldCost (from local state)
+  } : customComponentData;
+  
+  return {
+    numericModifiers,
+    customComponentData: mergedCustomData
+  };
+}
+```
+
+### Performance Comparison
+
+**Before (persisting everything):**
+```
+Select resource → 1 actor update
+Click + → 1 actor update → Map flash
+Click + → 1 actor update → Map flash
+Click + → 1 actor update → Map flash
+Click Apply → 1 actor update
+Total: 5 actor updates, 3 map flashes
+```
+
+**After (local state):**
+```
+Select resource → 1 actor update
+Click + → Local state only
+Click + → Local state only
+Click + → Local state only
+Click Apply → 1 actor update
+Total: 2 actor updates, 0 map flashes ✅
+```
+
+### Best Practices
+
+**✅ DO persist:**
+- Required validation fields (e.g., selectedResource)
+- Data needed across clients (multiplayer sync)
+- Permanent state changes
+
+**❌ DON'T persist:**
+- Interactive UI values (amounts, sliders)
+- Temporary selections (can change freely)
+- Display-only data
+
+**✅ DO use local state for:**
+- Increment/decrement buttons
+- Sliders and inputs
+- Temporary calculations
+- Preview values
+
+**🎯 Performance rule:** Minimize actor updates = minimize map redraws
+
+### Example: Purchase Resources
+
+**What it does:** Select resource and amount to purchase
+
+**Performance needs:**
+- User clicks +/- many times to find right amount
+- Each click should be instant, no lag
+
+**Implementation:**
+```svelte
+<!-- PurchaseResourceSelector.svelte -->
+<script lang="ts">
+  // Persist selectedResource (for validation)
+  $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
+  
+  // Keep amount local (no persistence on +/-)
+  let selectedAmount = 2;
+  
+  async function handleResourceSelect(resource: string) {
+    selectedResource = resource;
+    
+    // Persist ONCE for validation
+    await updateInstanceResolutionState(instance.instanceId, {
+      customComponentData: { selectedResource: resource }
+    });
+    
+    notifySelectionChanged();
+  }
+  
+  function incrementAmount() {
+    // Local state only - instant, no flash
+    selectedAmount += resourceGain;
+    notifySelectionChanged();
+  }
+  
+  function notifySelectionChanged() {
+    // Dispatch complete data (not persisted until Apply)
+    dispatch('selection', {
+      selectedResource,
+      selectedAmount,
+      goldCost: calculateCost(),
+      modifiers: [
+        { type: 'static', resource: 'gold', value: -goldCost },
+        { type: 'static', resource: selectedResource, value: selectedAmount }
+      ]
+    });
+  }
+</script>
+
+<button on:click={decrementAmount}>-</button>
+<input bind:value={selectedAmount} />
+<button on:click={incrementAmount}>+</button>
+```
+
+**Result:** Smooth, responsive UI with no map flashing!
+
+---
+
 ## Key Takeaways
 
 1. **Start simple** - Hardcode data, calculate from outcome
@@ -638,7 +932,8 @@ validateData(resolutionData: ResolutionData): boolean {
 3. **Follow patterns** - Study Harvest Resources (simple) and Arrest Dissidents (complex)
 4. **Use choice-buttons first** - Only create component if truly needed
 5. **Keep UI minimal** - Rely on visual feedback, avoid redundant text
-6. **Test thoroughly** - Use checklist from Step 4
+6. **Optimize performance** - Local state for interactive elements, persist only what's needed
+7. **Test thoroughly** - Use checklist from Step 4
 
 ---
 

@@ -266,7 +266,7 @@ export class EventService {
         const modifiers: EventModifier[] = [];
 
         // Resource type mapping
-        type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'luxuries' | 'unrest' | 'fame';
+        type ResourceType = 'gold' | 'food' | 'lumber' | 'stone' | 'ore' | 'unrest' | 'fame';
         
         const resourceMappings: Record<string, ResourceType> = {
             'gold': 'gold',
@@ -274,7 +274,6 @@ export class EventService {
             'lumber': 'lumber',
             'stone': 'stone',
             'ore': 'ore',
-            'luxuries': 'luxuries',
             'unrest': 'unrest',
             'fame': 'fame'
         };

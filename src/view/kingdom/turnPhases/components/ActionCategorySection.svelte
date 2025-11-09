@@ -149,9 +149,11 @@
             on:primary={handlePrimary}
             on:cancel={(e) => handleCancel(e.detail.checkId)}
           >
-            {#if action.id === 'purchase-resources'}
-              <CommerceTierInfo slot="pre-skill-content" />
-            {/if}
+            <div slot="pre-skill-content">
+              {#if action.id === 'purchase-resources'}
+                <CommerceTierInfo />
+              {/if}
+            </div>
           </BaseCheckCard>
         {/key}
       {/each}

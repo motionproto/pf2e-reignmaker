@@ -185,8 +185,8 @@ async function initializePhase() {
    {/if}
 
    <!-- Fame Display Section -->
-   <div class="phase-section fame-section">
-      <div class="section-header">
+   <div class="fame-section">
+      <div class="section-header-minimal">
          <i class="fas fa-star"></i>
          <h3>Kingdom Fame</h3>
       </div>
@@ -209,8 +209,8 @@ async function initializePhase() {
 
    <!-- Status Phase Modifiers (Size, Metropolises) -->
    {#if $kingdomData.turnState?.statusPhase?.displayModifiers && $kingdomData.turnState.statusPhase.displayModifiers.length > 0}
-      <div class="phase-section status-modifiers">
-         <div class="section-header">
+      <div class="status-modifiers">
+         <div class="section-header-minimal">
             <i class="fas fa-balance-scale"></i>
             <h3>Status Modifiers</h3>
          </div>
@@ -225,8 +225,8 @@ async function initializePhase() {
 
    <!-- Structure Modifiers (Permanent modifiers from built structures) -->
    {#if $kingdomData.activeModifiers && $kingdomData.activeModifiers.filter(m => m.sourceType === 'structure' && m.modifiers?.some(mod => mod.duration === 'permanent')).length > 0}
-      <div class="phase-section structure-modifiers">
-         <div class="section-header">
+      <div class="structure-modifiers">
+         <div class="section-header-minimal">
             <i class="fas fa-building"></i>
             <h3>Structure Modifiers</h3>
          </div>
@@ -277,6 +277,27 @@ async function initializePhase() {
       }
    }
 
+   .section-header-minimal {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+
+      i {
+         font-size: 20px;
+         color: var(--color-amber);
+      }
+
+      h3 {
+         margin: 0;
+         font-size: var(--font-2xl);
+         font-weight: var(--font-weight-semibold);
+         line-height: 1.3;
+         color: var(--text-primary);
+         flex: 1;
+      }
+   }
+
    // Fame Section Styles
    .fame-display {
       display: flex;
@@ -284,8 +305,8 @@ async function initializePhase() {
       align-items: center;
       gap: 15px;
       padding: 20px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: var(--radius-md);
+      background: transparent;
+      border-radius: 0;
    }
 
    .fame-stars {

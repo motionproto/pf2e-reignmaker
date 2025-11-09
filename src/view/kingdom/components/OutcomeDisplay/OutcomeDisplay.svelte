@@ -107,6 +107,7 @@
   
   // Local UI-only state
   let choiceResult: { effect: string; stateChanges: Record<string, any> } | null = null;
+  let customSelectionData: Record<string, any> | null = null;  // Raw custom selection data
   let debugOutcome: OutcomeType = outcome as OutcomeType;
   
   // Parse special effects into readable messages
@@ -282,9 +283,9 @@
   // Determine if custom component requires resolution
   $: hasCustomComponent = customComponent !== null;
   $: customComponentResolved = !hasCustomComponent || (
-    customComponentData !== undefined && 
-    customComponentData !== null && 
-    Object.keys(customComponentData).length > 0
+    choiceResult !== null && 
+    choiceResult.stateChanges !== undefined && 
+    Object.keys(choiceResult.stateChanges).length > 0
   );
   
   // Button visibility and state
@@ -486,7 +487,14 @@
 
       }
     }
-    // Case 2: No choices, apply all modifiers
+    // Case 2: Custom component made a selection (e.g., HarvestResourcesAction)
+    else if (choiceResult?.stateChanges && Object.keys(choiceResult.stateChanges).length > 0) {
+      // Add modifiers from custom component selection
+      for (const [resource, value] of Object.entries(choiceResult.stateChanges)) {
+        numericModifiers.push({ resource: resource as ResourceType, value: value as number });
+      }
+    }
+    // Case 3: No choices, apply all modifiers
     else {
 
 
@@ -522,11 +530,17 @@
     }
     
     // Build complete resolution data
+    // For custom components: merge persisted selectedResource with local selection data
+    const mergedCustomData = customSelectionData ? {
+      ...customComponentData,  // selectedResource from instance
+      ...customSelectionData  // Contains the full selection (selectedAmount, goldCost, etc.)
+    } : customComponentData;
+    
     const resolution: ResolutionData = {
       numericModifiers,
       manualEffects: manualEffects || [],
       complexActions: [], // Phase 3 will add support for this
-      customComponentData  // Include custom component data (e.g., arrest-dissidents allocations)
+      customComponentData: mergedCustomData  // Merged custom component data
     };
 
     return resolution;
@@ -637,17 +651,11 @@
   }
   
   async function handleCustomSelection(event: CustomEvent) {
-    if (!instance) return;
-    
     const { modifiers, ...metadata } = event.detail;
 
-    // Store metadata (for UI display, like settlement name/level)
-    if (metadata && Object.keys(metadata).length > 0) {
-      await updateInstanceResolutionState(instance.instanceId, {
-        customComponentData: metadata
-      });
-    }
-    
+    // Store raw custom selection data (e.g., selectedResource, selectedAmount, goldCost)
+    customSelectionData = metadata;
+
     // Convert modifiers to stateChanges (like choices do)
     if (modifiers && modifiers.length > 0) {
       const customStateChanges: Record<string, number> = {};
@@ -658,7 +666,7 @@
         }
       }
       
-      // Store as a "choice result" so StateChanges displays it
+      // Store as a "choice result" in LOCAL STATE ONLY (no persistence until Apply)
       choiceResult = {
         effect: effect,
         stateChanges: customStateChanges
@@ -666,7 +674,7 @@
 
     }
     
-    // Forward to parent
+    // Forward to parent (no instance state update)
     dispatch('customSelection', event.detail);
   }
   

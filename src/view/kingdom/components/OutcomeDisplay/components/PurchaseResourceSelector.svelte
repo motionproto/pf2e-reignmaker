@@ -15,7 +15,7 @@
   const dispatch = createEventDispatcher();
 
   // Hardcoded resources (always the same for purchase action)
-  const resources = ['food', 'lumber', 'stone', 'ore', 'luxuries'];
+  const resources = ['food', 'lumber', 'stone', 'ore'];
   
   // Get trade rates based on outcome
   $: tradeRates = outcome === 'criticalSuccess' 
@@ -30,14 +30,22 @@
   $: maxSets = Math.floor(availableGold / goldCost);
   $: maxResources = maxSets * resourceGain;
 
-  // Get resolution state from instance
+  // Get resolution state from instance (only for selectedResource)
   $: resolutionState = getInstanceResolutionState(instance);
   $: selectedResource = resolutionState.customComponentData?.selectedResource || '';
-  $: selectedAmount = resolutionState.customComponentData?.selectedAmount || resourceGain;
-
+  
+  // Use local state for amount (no actor updates on every change)
+  // Initialize to default, then update reactively when resourceGain changes
+  let selectedAmount = 2;
+  
+  // Update selectedAmount when resourceGain changes (but only if current amount is invalid)
+  $: if (resourceGain > 0 && (!selectedAmount || selectedAmount < resourceGain)) {
+    selectedAmount = resourceGain;
+  }
+  
   // Validation
   $: isValid = selectedResource && selectedAmount > 0 && selectedAmount <= maxResources && selectedAmount % resourceGain === 0;
-  $: totalCost = Math.ceil(selectedAmount / resourceGain) * goldCost;
+  $: totalCost = selectedAmount > 0 ? Math.ceil(selectedAmount / resourceGain) * goldCost : 0;
 
   // Format resource name for display
   function formatResourceName(resource: string): string {
@@ -47,47 +55,61 @@
   async function handleResourceSelect(resource: string) {
     if (!instance) return;
 
-    // Update instance resolution state
+    // Update local state
+    selectedResource = resource;
+    
+    // Persist selectedResource to metadata (for ActionPhaseController)
+    // This is a ONE-TIME persistence when selecting resource, not on every amount change
     await updateInstanceResolutionState(instance.instanceId, {
       customComponentData: { 
-        selectedResource: resource,
-        selectedAmount: selectedAmount,
-        goldCost: totalCost
+        selectedResource: resource
       }
     });
-
-    // Emit selection event with modifier format
-    emitSelection(resource, selectedAmount);
+    
+    // Notify parent
+    notifySelectionChanged();
   }
   
-  async function handleAmountChange(event: Event) {
+  function handleAmountChange(event: Event) {
     const input = event.target as HTMLInputElement;
     const amount = parseInt(input.value, 10);
     
-    if (!instance || isNaN(amount)) return;
+    if (isNaN(amount)) return;
 
-    // Update instance resolution state
-    await updateInstanceResolutionState(instance.instanceId, {
-      customComponentData: { 
-        selectedResource: selectedResource,
-        selectedAmount: amount,
-        goldCost: Math.ceil(amount / resourceGain) * goldCost
-      }
-    });
-
-    // Emit selection if resource already selected
-    if (selectedResource) {
-      emitSelection(selectedResource, amount);
-    }
+    // Update local state only (no persistence)
+    selectedAmount = amount;
+    notifySelectionChanged();
   }
   
-  function emitSelection(resource: string, amount: number) {
-    const sets = Math.ceil(amount / resourceGain);
+  function incrementAmount() {
+    const newAmount = selectedAmount + resourceGain;
+    if (newAmount > maxResources) return;
+    
+    // Update local state only (no persistence)
+    selectedAmount = newAmount;
+    notifySelectionChanged();
+  }
+  
+  function decrementAmount() {
+    const newAmount = selectedAmount - resourceGain;
+    if (newAmount < resourceGain) return;
+    
+    // Update local state only (no persistence)
+    selectedAmount = newAmount;
+    notifySelectionChanged();
+  }
+  
+  // Notify parent of current selection (enables Apply button, no persistence)
+  function notifySelectionChanged() {
+    if (!selectedResource) return;
+    
+    const sets = Math.ceil(selectedAmount / resourceGain);
     const cost = sets * goldCost;
     
+    // Just dispatch event - no actor update!
     dispatch('selection', { 
-      selectedResource: resource,
-      selectedAmount: amount,
+      selectedResource: selectedResource,
+      selectedAmount: selectedAmount,
       goldCost: cost,
       modifiers: [
         {
@@ -98,13 +120,14 @@
         },
         {
           type: 'static',
-          resource: resource,
-          value: amount,
+          resource: selectedResource,
+          value: selectedAmount,
           duration: 'immediate'
         }
       ]
     });
   }
+  
 </script>
 
 <div class="purchase-resource-selector">
@@ -144,18 +167,38 @@
       <label for="amount-input">
         Amount (in multiples of {resourceGain}):
       </label>
-      <input
-        id="amount-input"
-        type="number"
-        min={resourceGain}
-        max={maxResources}
-        step={resourceGain}
-        value={selectedAmount}
-        on:input={handleAmountChange}
-      />
-      <div class="cost-display">
-        <i class="fas fa-coins"></i>
-        <span>Cost: {totalCost} gold</span>
+      <div class="input-row">
+        <div class="input-with-buttons">
+          <input
+            id="amount-input"
+            type="number"
+            min={resourceGain}
+            max={maxResources}
+            step={resourceGain}
+            value={selectedAmount}
+            on:input={handleAmountChange}
+          />
+          <button 
+            class="decrement-btn"
+            on:click={decrementAmount}
+            disabled={selectedAmount <= resourceGain}
+            title="Decrease amount"
+          >
+            <i class="fas fa-minus"></i>
+          </button>
+          <button 
+            class="increment-btn"
+            on:click={incrementAmount}
+            disabled={selectedAmount >= maxResources}
+            title="Increase amount"
+          >
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <div class="cost-display">
+          <i class="fas fa-coins"></i>
+          <span>{totalCost} gold</span>
+        </div>
       </div>
     </div>
   {/if}
@@ -278,14 +321,62 @@
       color: var(--text-secondary);
     }
     
+    .input-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .input-with-buttons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      
+      button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: rgba(59, 130, 246, 0.2);
+        border: 1px solid var(--color-blue, #60a5fa);
+        border-radius: var(--radius-sm);
+        color: var(--color-blue, #60a5fa);
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+        
+        i {
+          font-size: 12px;
+        }
+        
+        &:hover:not(:disabled) {
+          background: rgba(59, 130, 246, 0.3);
+          transform: scale(1.05);
+        }
+        
+        &:active:not(:disabled) {
+          transform: scale(0.95);
+        }
+        
+        &:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+      }
+    }
+    
     input {
-      padding: 8px 12px;
+      width: 80px;
+      padding: 6px 10px;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-size: var(--font-md);
       font-family: inherit;
+      text-align: center;
       
       &:focus {
         outline: none;
@@ -300,9 +391,10 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--color-amber);
+      white-space: nowrap;
       
       i {
-        font-size: var(--font-sm);
+        font-size: 14px;
       }
     }
   }

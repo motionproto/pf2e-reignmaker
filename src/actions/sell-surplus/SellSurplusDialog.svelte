@@ -22,8 +22,7 @@
     { id: 'food', name: 'Food', icon: 'fa-drumstick-bite' },
     { id: 'lumber', name: 'Lumber', icon: 'fa-tree' },
     { id: 'stone', name: 'Stone', icon: 'fa-gem' },
-    { id: 'ore', name: 'Ore', icon: 'fa-cube' },
-    { id: 'luxuries', name: 'Luxuries', icon: 'fa-crown' }
+    { id: 'ore', name: 'Ore', icon: 'fa-cube' }
   ];
   
   // Track selected resource and amount

@@ -483,7 +483,6 @@ export class SettlementService {
           lumber: 0,
           stone: 0,
           ore: 0,
-          luxuries: 0,
           foodCapacity: 0,
           armyCapacity: 0,
           diplomaticCapacity: 1,

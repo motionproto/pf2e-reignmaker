@@ -29,7 +29,7 @@ export async function initializeKingdomData(actor: any): Promise<void> {
     // 3. Initialize all resource types (ensure they exist even if 0)
     await actor.updateKingdomData((kingdom: any) => {
       const requiredResources = [
-        'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries',
+        'gold', 'food', 'lumber', 'stone', 'ore',
         'foodCapacity', 'armyCapacity', 'diplomaticCapacity', 'imprisonedUnrestCapacity'
       ];
       
@@ -64,7 +64,7 @@ export function isKingdomDataReady(kingdom: any): boolean {
   
   // Check that all required resources exist
   const requiredResources = [
-    'gold', 'food', 'lumber', 'stone', 'ore', 'luxuries',
+    'gold', 'food', 'lumber', 'stone', 'ore',
     'foodCapacity', 'armyCapacity', 'diplomaticCapacity', 'imprisonedUnrestCapacity'
   ];
   

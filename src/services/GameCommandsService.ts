@@ -392,7 +392,7 @@ export async function createGameCommandsService() {
         return;
       }
 
-      // Handle standard resources (gold, food, lumber, stone, ore, luxuries)
+      // Handle standard resources (gold, food, lumber, stone, ore)
       let hasShortfall = false;
       
       await updateKingdom(kingdom => {

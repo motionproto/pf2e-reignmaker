@@ -370,7 +370,6 @@ export interface ActionCosts {
   lumber?: number;
   stone?: number;
   ore?: number;
-  luxuries?: number;
   resources?: number;
 }
 

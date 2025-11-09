@@ -11,10 +11,9 @@ import {
   logActionStart,
   logActionSuccess,
   logActionError,
-  createSuccessResult,
-  createErrorResult,
   type ResolveResult
 } from '../shared/ActionHelpers';
+import { applyResourceChanges } from '../shared/InlineActionHelpers';
 
 // Import the Svelte component (will be passed to OutcomeDisplay)
 import ResourceChoiceSelector from '../../view/kingdom/components/OutcomeDisplay/components/ResourceChoiceSelector.svelte';
@@ -38,26 +37,32 @@ export const HarvestResourcesAction = {
       logActionStart('harvest-resources', 'Applying resource harvest');
       
       try {
-        // ✅ NEW: Get selection from customComponentData (set by component)
+        // Get selection from customComponentData (set by component)
         const { selectedResource, amount } = resolutionData.customComponentData || {};
         
-        if (!selectedResource) {
-          return createErrorResult('No resource was selected');
+        if (!selectedResource || !amount) {
+          return { success: false, error: 'No resource was selected' };
         }
         
-        // Resource changes are handled by OutcomeDisplay via numericModifiers
-        // (component emits modifiers which get processed by computeResolutionData)
-        // This execute() is just for validation and success message
+        // Apply resource using shared helper
+        const result = await applyResourceChanges([
+          { resource: selectedResource, amount }
+        ], 'harvest-resources');
         
+        if (!result.success) {
+          return result;
+        }
+        
+        // Build success message
         const resourceName = selectedResource.charAt(0).toUpperCase() + selectedResource.slice(1);
         const message = `Harvested ${amount} ${resourceName}!`;
         
         logActionSuccess('harvest-resources', message);
-        return createSuccessResult(message);
+        return { success: true, data: { message } };
         
       } catch (error) {
         logActionError('harvest-resources', error as Error);
-        return createErrorResult(error instanceof Error ? error.message : 'Failed to harvest resources');
+        return { success: false, error: error instanceof Error ? error.message : 'Failed to harvest resources' };
       }
     }
   },
