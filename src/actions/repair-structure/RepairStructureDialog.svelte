@@ -247,7 +247,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-elevated);
     
     h2 {
@@ -286,7 +286,7 @@
     &.error {
       background: rgba(239, 68, 68, 0.1);
       color: #fca5a5;
-      border-bottom: 1px solid rgba(239, 68, 68, 0.3);
+      border-bottom: 1px solid var(--border-primary-subtle);
     }
   }
   
@@ -343,7 +343,7 @@
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-md, 0.375rem);
     font-size: var(--font-sm, 0.875rem);
     color: var(--text-secondary, #9ca3af);
@@ -357,7 +357,7 @@
   
   .settlement-section {
     margin-bottom: 0.5rem;
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md, 0.375rem);
     background: var(--bg-surface);
     overflow: hidden;
@@ -418,7 +418,7 @@
   .structure-tier {
     padding: 0.125rem 0.5rem;
     background: rgba(100, 116, 139, 0.2);
-    border: 1px solid rgba(100, 116, 139, 0.3);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-sm, 0.25rem);
     font-size: var(--font-xs, 0.75rem);
     font-weight: 600;
@@ -439,7 +439,7 @@
     justify-content: flex-end;
     gap: 1rem;
     padding: 1rem 1.5rem;
-    border-top: 1px solid var(--border-default);
+    border-top: 1px solid var(--border-subtle);
     background: var(--bg-elevated);
   }
 </style>

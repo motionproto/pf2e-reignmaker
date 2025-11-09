@@ -676,7 +676,7 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-subtle);
     cursor: grab;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
@@ -783,7 +783,7 @@
       min-width: 9.375rem;
       padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid var(--border-default);
       border-radius: var(--radius-lg);
       color: #fff;
       font-size: var(--font-sm);
@@ -798,7 +798,7 @@
       
       &:hover {
         background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
+        border-color: var(--border-medium);
       }
       
       &:focus {
@@ -823,7 +823,7 @@
     .tool-button {
       padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(255, 255, 255, 0.1);
+      border: 2px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       color: rgba(255, 255, 255, 0.7);
       cursor: pointer;
@@ -835,7 +835,7 @@
       
       &:hover {
         background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
+        border-color: var(--border-default);
         color: #fff;
         transform: translateY(-0.0625rem);
       }
@@ -858,14 +858,14 @@
           width: 2.5rem;
           height: 2.5rem;
           border-radius: var(--radius-lg);
-          border: 3px solid rgba(255, 255, 255, 0.4);
+          border: 3px solid var(--border-strong);
           box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.4);
           flex-shrink: 0;
           transition: all 0.2s;
           
           &:hover {
             transform: scale(1.05);
-            border-color: rgba(255, 255, 255, 0.6);
+            border-color: var(--border-strong);
             box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
           }
         }
@@ -874,7 +874,7 @@
           flex: 1;
           padding: var(--space-8) var(--space-12);
           background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.1);
+          border: 2px solid var(--border-subtle);
           border-radius: var(--radius-lg);
           color: rgba(255, 255, 255, 0.9);
           cursor: pointer;
@@ -888,7 +888,7 @@
           
           &:hover {
             background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: var(--border-default);
             color: #fff;
           }
           
@@ -913,7 +913,7 @@
     display: flex;
     gap: var(--space-8);
     padding: var(--space-12);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-subtle);
     
     .action-button {
       flex: 1;
@@ -932,7 +932,7 @@
       &.cancel-button {
         background: rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid var(--border-default);
         
         &:hover {
           background: rgba(255, 255, 255, 0.15);

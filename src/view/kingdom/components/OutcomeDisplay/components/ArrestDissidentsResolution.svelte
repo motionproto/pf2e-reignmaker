@@ -314,7 +314,7 @@
     width: 1.75rem;
     height: 1.75rem;
     border-radius: var(--radius-md);
-    border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+    border: 1px solid var(--border-strong, var(--border-default));
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary, #e0e0e0);
     cursor: pointer;
@@ -325,7 +325,7 @@
     
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.15);
-      border-color: var(--border-strong, rgba(255, 255, 255, 0.3));
+      border-color: var(--border-strong, var(--border-medium));
     }
     
     &:disabled {

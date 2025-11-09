@@ -85,7 +85,7 @@
     width: 100%;
     padding: var(--space-6);
     background: var(--color-gray-800);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-md);

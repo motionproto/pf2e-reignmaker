@@ -1051,7 +1051,7 @@
    .event-header {
       padding: var(--space-20);
       background: rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-faint);
    }
    
    .event-title {
@@ -1080,7 +1080,7 @@
       gap: var(--space-4);
       padding: var(--space-2) var(--space-8);
       background: rgba(100, 116, 139, 0.1);
-      border: 1px solid rgba(100, 116, 139, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
@@ -1122,7 +1122,7 @@
    .ignore-event-section {
       margin-top: var(--space-20);
       padding-top: var(--space-20);
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-faint);
       text-align: center;
       
       .divider-text {
@@ -1151,7 +1151,7 @@
       background: rgba(0, 0, 0, 0.05);
       padding: var(--space-24);
       border-radius: var(--radius-lg);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
       text-align: center;
       
       h3 {
@@ -1173,7 +1173,7 @@
          rgba(24, 24, 27, 0.6),
          rgba(31, 31, 35, 0.4));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       margin-bottom: var(--space-20);
       
       .dc-label {

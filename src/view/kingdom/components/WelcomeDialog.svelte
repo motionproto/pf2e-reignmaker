@@ -529,7 +529,7 @@
       padding: var(--space-5) 2.5rem var(--space-5) var(--space-6);
       margin-bottom: var(--space-8);
       background: var(--bg-surface);
-      border: 1px solid var(--border-secondary);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-size: var(--font-md);
@@ -584,7 +584,7 @@
       gap: var(--space-16);
       padding: var(--space-24) var(--space-16);
       background: var(--bg-surface);
-      border: 2px solid var(--border-secondary);
+      border: 2px solid var(--border-default);
       border-radius: var(--radius-xl);
       cursor: pointer;
       transition: all 0.2s;
@@ -595,7 +595,7 @@
       overflow: hidden;
       
       &.available {
-         border-color: rgba(255, 255, 255, 0.3);
+         border-color: var(--border-medium);
          background: var(--bg-subtle);
          color: rgba(255, 255, 255, 0.9);
          
@@ -611,7 +611,7 @@
          opacity: 0.4;
          cursor: not-allowed;
          background: rgba(0, 0, 0, 0.2);
-         border-color: rgba(255, 255, 255, 0.05);
+         border-color: var(--border-faint);
          
          &:hover {
             transform: none;
@@ -715,7 +715,7 @@
       .note {
          margin: var(--space-16) 0 0 0;
          padding-top: var(--space-16);
-         border-top: 1px solid var(--border-subtle);
+         border-top: 1px solid var(--border-faint);
          font-size: var(--font-md);
          font-weight: var(--font-weight-medium);
          color: var(--text-muted);
@@ -758,7 +758,7 @@
    .dialog-footer {
       padding: var(--space-24);
       background: var(--bg-surface);
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-faint);
       display: flex;
       justify-content: flex-end;
       gap: var(--space-16);
@@ -789,7 +789,7 @@
       &.btn-secondary {
          background: var(--bg-subtle);
          color: var(--text-secondary);
-         border: 1px solid var(--border-secondary);
+         border: 1px solid var(--border-default);
          
          &:hover {
             background: var(--bg-surface);

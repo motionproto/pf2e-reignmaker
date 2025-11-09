@@ -153,7 +153,7 @@
     background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(0.5rem);
     padding: var(--space-24);
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
     box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
     min-height: 5.625rem;
     display: flex;
@@ -206,7 +206,7 @@
           gap: var(--space-8);
           padding: var(--space-8) var(--space-12);
           background: rgba(255, 191, 0, 0.1);
-          border: 1px solid rgba(255, 191, 0, 0.3);
+          border: 1px solid var(--border-accent-subtle);
           border-radius: var(--radius-sm);
           
           i {
@@ -224,7 +224,7 @@
       .cancel-button {
         padding: var(--space-12) var(--space-24);
         background: rgba(255, 255, 255, 0.1);
-        border: 1px solid var(--border-default);
+        border: 1px solid var(--border-subtle);
         border-radius: var(--radius-sm);
         color: var(--text-secondary);
         font-size: var(--font-sm);
@@ -293,7 +293,7 @@
       gap: var(--space-8);
       padding: var(--space-12) var(--space-16);
       background: rgba(255, 191, 0, 0.1);
-      border: 1px solid rgba(255, 191, 0, 0.3);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       margin-bottom: var(--space-8);
       
@@ -308,7 +308,7 @@
       gap: var(--space-16);
       padding: var(--space-20) var(--space-24);
       background: rgba(100, 100, 100, 0.15);
-      border: 1px solid rgba(120, 120, 120, 0.3);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       margin-top: var(--space-8);
       

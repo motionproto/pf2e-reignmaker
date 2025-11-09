@@ -454,7 +454,7 @@
    
    .panel-header {
       padding: var(--space-8);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--border-subtle);
       
       .filters {
          display: flex;
@@ -467,7 +467,7 @@
             min-width: 0;
             padding: var(--space-8);
             background: var(--bg-elevated);
-            border: 1px solid var(--border-default);
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
             color: var(--text-primary);
             font-size: var(--font-md);
@@ -493,7 +493,7 @@
          margin-top: var(--space-8);
          padding: var(--space-8) var(--space-12);
          background: rgba(128, 0, 128, 0.15);
-         border: 1px solid rgba(128, 0, 128, 0.3);
+         border: 1px solid var(--border-special-subtle);
          border-radius: var(--radius-lg);
          
          .checkbox-label {
@@ -527,13 +527,13 @@
    
    .panel-footer {
       padding: var(--space-8);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid var(--border-subtle);
       
       .btn-create-settlement {
          width: 100%;
          padding: var(--space-8) var(--space-16);
          background: transparent;
-         border: 1px solid var(--border-default);
+         border: 1px solid var(--border-subtle);
          border-radius: var(--radius-lg);
          color: var(--text-secondary);
          font-size: var(--font-md);
@@ -685,7 +685,7 @@
          display: inline-block;
          padding: var(--space-4) var(--space-12);
          background: rgba(128, 128, 128, 0.15);
-         border: 1px solid rgba(128, 128, 128, 0.3);
+         border: 1px solid var(--border-default);
          border-radius: var(--radius-md);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
@@ -697,7 +697,7 @@
    
    .unassigned-item {
       background: rgba(128, 128, 128, 0.08);
-      border: 1px dashed rgba(128, 128, 128, 0.3);
+      border: 1px dashed var(--border-default);
       border-radius: var(--radius-lg);
       padding: var(--space-12);
       margin-bottom: var(--space-8);
@@ -705,7 +705,7 @@
       
       &:hover {
          background: rgba(128, 128, 128, 0.12);
-         border-color: rgba(128, 128, 128, 0.5);
+         border-color: var(--border-medium);
       }
       
       .unassigned-content {
@@ -758,7 +758,7 @@
       .btn-create-at-hex {
          padding: var(--space-8) var(--space-16);
          background: rgba(128, 128, 128, 0.2);
-         border: 1px solid rgba(128, 128, 128, 0.4);
+         border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          font-size: var(--font-sm);
@@ -772,7 +772,7 @@
          
          &:hover {
             background: rgba(128, 128, 128, 0.3);
-            border-color: rgba(128, 128, 128, 0.6);
+            border-color: var(--border-strong);
             transform: translateY(-0.0625rem);
          }
          
@@ -787,11 +787,11 @@
       
       .btn-edit-feature {
          background: rgba(100, 100, 255, 0.15);
-         border-color: rgba(100, 100, 255, 0.4);
+         border-color: var(--border-info);
          
          &:hover {
             background: rgba(100, 100, 255, 0.25);
-            border-color: rgba(100, 100, 255, 0.6);
+            border-color: var(--border-info-medium);
          }
       }
       
@@ -806,7 +806,7 @@
             align-items: center;
             justify-content: space-between;
             padding-bottom: var(--space-8);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-subtle);
             
             span {
                font-weight: var(--font-weight-semibold);
@@ -850,7 +850,7 @@
                select {
                   padding: var(--space-8);
                   background: var(--bg-elevated);
-                  border: 1px solid var(--border-default);
+                  border: 1px solid var(--border-subtle);
                   border-radius: var(--radius-md);
                   color: var(--text-primary);
                   font-size: var(--font-sm);
@@ -868,7 +868,7 @@
             justify-content: flex-end;
             gap: var(--space-8);
             padding-top: var(--space-8);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--border-subtle);
             
             button {
                padding: var(--space-8) var(--space-16);
@@ -884,7 +884,7 @@
             
             .btn-cancel {
                background: transparent;
-               border: 1px solid var(--border-default);
+               border: 1px solid var(--border-subtle);
                color: var(--text-secondary);
                
                &:hover {

@@ -411,7 +411,7 @@
     gap: var(--space-16);
     padding: var(--space-12);
     background: var(--bg-elevated);
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
     align-items: center;
     
     .radio-group {
@@ -420,7 +420,7 @@
       padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-xl);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-default);
     }
     
     .radio-option {
@@ -488,7 +488,7 @@
   
   .category-section {
     padding-bottom: var(--space-2);
-    border: 0px solid var(--border-default);
+    border: 0px solid var(--border-subtle);
     border-radius: var(--radius-md);
     background: var(--bg-surface);
     overflow: hidden;
@@ -540,7 +540,7 @@
       background: linear-gradient(135deg,
         rgba(34, 197, 94, 0.15),
         rgba(34, 197, 94, 0.1));
-      border-color: rgba(34, 197, 94, 0.3);
+      border-color: var(--border-success-subtle);
     }
     
     &.disabled {
@@ -621,7 +621,7 @@
     border-radius: var(--radius-md);
     font-size: var(--font-xs);
     font-weight: 600;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid var(--border-success-subtle);
   }
   
   .dialog-footer {
@@ -629,7 +629,7 @@
     flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16);
-    border-top: 1px solid var(--border-default);
+    border-top: 1px solid var(--border-subtle);
     background: var(--bg-elevated);
     
     .warning-section {
@@ -658,7 +658,7 @@
     .close-button {
       padding: var(--space-8) var(--space-16);
       background: var(--color-gray-800);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-secondary);
       font-size: var(--font-sm);

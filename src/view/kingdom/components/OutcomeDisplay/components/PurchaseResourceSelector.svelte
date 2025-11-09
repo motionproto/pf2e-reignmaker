@@ -255,7 +255,7 @@
     justify-content: center;
     padding: var(--space-12);
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+    border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
@@ -290,7 +290,7 @@
     gap: var(--space-8);
     padding: var(--space-12);
     background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-sm);
     
     label {

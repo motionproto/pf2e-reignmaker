@@ -65,7 +65,7 @@
     padding: var(--space-10);
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-faint);
     
     &.compact {
       margin-top: var(--space-4);

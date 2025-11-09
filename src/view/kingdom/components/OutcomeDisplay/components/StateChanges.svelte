@@ -275,7 +275,7 @@
     
     &.no-effect {
       background: rgba(128, 128, 128, 0.05);
-      border-color: rgba(128, 128, 128, 0.3);
+      border-color: var(--border-default);
       
       .resource-icon {
         color: rgba(255, 255, 255, 0.5);
@@ -319,7 +319,7 @@
     background: linear-gradient(135deg, 
       rgba(34, 197, 94, 0.2),
       rgba(34, 197, 94, 0.1));
-    border: 2px solid rgba(34, 197, 94, 0.5);
+    border: 2px solid var(--border-success-medium);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -358,7 +358,7 @@
     background: linear-gradient(135deg, 
       rgba(251, 146, 60, 0.15),
       rgba(251, 146, 60, 0.05));
-    border: 2px solid rgba(251, 146, 60, 0.4);
+    border: 2px solid var(--border-accent);
     border-radius: var(--radius-sm);
     
     .manual-effects-header {

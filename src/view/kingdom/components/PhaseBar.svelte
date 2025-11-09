@@ -385,14 +385,14 @@
     opacity: 0.5;
     background: var(--color-gray-800);
     color: var(--text-disabled);
-    border-color: rgba(120, 120, 120, 0.2);
+    border-color: var(--border-default);
   }
 
   .phase-item.disabled:hover {
     transform: none; /* No hover transform for disabled buttons */
     box-shadow: none; /* No hover shadow for disabled buttons */
     background: var(--color-gray-800); /* Keep same background on hover */
-    border-color: rgba(120, 120, 120, 0.2); /* Keep same border on hover */
+    border-color: var(--border-default); /* Keep same border on hover */
   }
 
   .phase-item.disabled .phase-label {

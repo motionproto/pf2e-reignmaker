@@ -97,7 +97,7 @@
     background: linear-gradient(135deg, 
       rgba(100, 116, 139, 0.1),
       rgba(71, 85, 105, 0.05));
-    border: 1px solid rgba(100, 116, 139, 0.3);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     overflow: hidden;
   }
@@ -105,7 +105,7 @@
   .modifier-header {
     padding: var(--space-12) var(--space-16);
     background: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+    border-bottom: 1px solid var(--border-default);
   }
   
   .modifier-title {
@@ -139,25 +139,25 @@
   
   .tag-ongoing {
     background: rgba(251, 191, 36, 0.1);
-    border-color: rgba(251, 191, 36, 0.4);
+    border-color: var(--border-accent);
     color: var(--color-amber);
   }
   
   .tag-dangerous {
     background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.4);
+    border-color: var(--border-primary);
     color: var(--color-red);
   }
   
   .tag-beneficial {
     background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.4);
+    border-color: var(--border-success);
     color: var(--color-green);
   }
   
   .tag-custom {
     background: rgba(100, 116, 139, 0.1);
-    border-color: rgba(100, 116, 139, 0.4);
+    border-color: var(--border-medium);
     color: var(--text-tertiary);
   }
   

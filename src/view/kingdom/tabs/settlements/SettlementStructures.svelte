@@ -371,7 +371,7 @@
       width: 100%;
       border-collapse: collapse;
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       overflow: hidden;
       
@@ -384,7 +384,7 @@
             font-weight: var(--font-weight-light);
             color: var(--text-secondary);
             font-size: var(--font-md);
-            border-bottom: 1px solid var(--border-default);
+            border-bottom: 1px solid var(--border-subtle);
             
             &.name-col {
                width: 50%;
@@ -410,7 +410,7 @@
       tbody {
             .structure-row {
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+               border-bottom: 1px solid var(--border-faint);
                
                &.lower-tier {
                   background: rgba(0, 0, 0, 0.4);

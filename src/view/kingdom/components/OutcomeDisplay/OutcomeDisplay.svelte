@@ -808,7 +808,7 @@
       background: linear-gradient(135deg,
         rgba(34, 197, 94, 0.15),
         rgba(34, 197, 94, 0.05));
-      border-color: rgba(34, 197, 94, 0.5);
+      border-color: var(--border-success-medium);
       
       &::before {
         color: var(--color-green);
@@ -819,7 +819,7 @@
       background: linear-gradient(135deg,
         rgba(34, 197, 94, 0.1),
         rgba(34, 197, 94, 0.02));
-      border-color: rgba(34, 197, 94, 0.35);
+      border-color: var(--border-success-subtle);
       
       &::before {
         color: var(--color-green-light);
@@ -830,7 +830,7 @@
       background: linear-gradient(135deg,
         rgba(249, 115, 22, 0.1),
         rgba(249, 115, 22, 0.02));
-      border-color: rgba(249, 115, 22, 0.35);
+      border-color: var(--border-accent-subtle);
       
       &::before {
         color: var(--color-orange);
@@ -841,7 +841,7 @@
       background: linear-gradient(135deg,
         rgba(239, 68, 68, 0.15),
         rgba(239, 68, 68, 0.05));
-      border-color: rgba(239, 68, 68, 0.5);
+      border-color: var(--border-primary-medium);
       
       &::before {
         color: var(--color-red);

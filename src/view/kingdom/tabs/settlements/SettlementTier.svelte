@@ -43,7 +43,7 @@
       .tier-select {
          padding: var(--space-4) var(--space-12);
          background: var(--bg-elevated);
-         border: 1px solid var(--border-default);
+         border: 1px solid var(--border-subtle);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          font-size: var(--font-md);

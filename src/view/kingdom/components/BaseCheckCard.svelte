@@ -520,7 +520,7 @@
       background: linear-gradient(135deg,
         rgba(20, 20, 23, 0.7),
         rgba(15, 15, 17, 0.5));
-      border-color: var(--border-subtle);
+      border-color: var(--border-faint);
     }
     
     // Hover states for select state
@@ -547,7 +547,7 @@
     }
     
     &.result-state.expanded {
-      border-color: rgba(34, 197, 94, 0.3);
+      border-color: var(--border-success-subtle);
     }
     
     &.disabled {
@@ -557,17 +557,42 @@
     
     // Style for unavailable actions
     &.not-available {
-      opacity: 0.85;
+      // Remove parent opacity - apply targeted opacity to children instead
       background: linear-gradient(135deg,
         rgba(24, 24, 27, 0.5),
         rgba(31, 31, 35, 0.4));
-      border-color: var(--border-subtle);
+      border-color: var(--border-faint);
+      
+      // Dim header content except requirements badge
+      :global(.card-header-content) {
+        opacity: 0.85;
+      }
+      
+      // Keep requirements badge at full opacity (overrides header opacity)
+      :global(.requirements-badge) {
+        opacity: 1;
+      }
+      
+      // Dim card details content except warning banner
+      .card-details > :not(.skill-options) {
+        opacity: 0.85;
+      }
+      
+      // For skill-options section, dim all children except the warning banner
+      .skill-options > * {
+        opacity: 0.85;
+      }
+      
+      // Keep warning banner at full opacity (overrides above)
+      .availability-notice-banner {
+        opacity: 1;
+      }
     }
   }
   
   .card-details {
     padding: var(--space-16);
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-faint);
     text-align: left;
     
     &.no-border {
@@ -601,7 +626,7 @@
       gap: var(--space-6);
       padding: var(--space-6) var(--space-12);
       background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      border: 1px solid var(--border-primary);
       border-radius: var(--radius-md);
       color: var(--color-red);
       font-size: var(--font-sm);
@@ -616,7 +641,7 @@
       
       &:hover:not(:disabled) {
         background: rgba(239, 68, 68, 0.25);
-        border-color: rgba(239, 68, 68, 0.6);
+        border-color: var(--border-primary-medium);
         transform: translateY(-0.0625rem);
       }
       
@@ -633,9 +658,10 @@
       padding: var(--space-12) var(--space-16);
       margin-bottom: var(--space-16);
       background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.4);
+      border: 1px solid var(--border-accent);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
+      opacity: 1;  // Reset parent's 0.85 opacity to keep warning visible
       
       i {
         color: var(--color-amber);
@@ -662,7 +688,7 @@
   .aid-button-inline {
     padding: var(--space-10) var(--space-16);
     background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(96, 165, 250, 0.5);
+    border: 1px solid var(--border-info-medium);
     border-radius: var(--radius-sm);
     color: rgb(147, 197, 253);
     font-size: var(--font-md);
@@ -679,7 +705,7 @@
   
   .aid-button-inline:hover:not(:disabled) {
     background: rgba(59, 130, 246, 0.25);
-    border-color: rgba(96, 165, 250, 0.7);
+    border-color: var(--border-info-strong);
     color: rgb(191, 219, 254);
     transform: translateY(-0.0625rem);
   }
@@ -703,19 +729,19 @@
   
   .aid-result-badge-inline.critical-success {
     background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    border: 1px solid var(--border-info);
     color: rgb(59, 130, 246);
   }
   
   .aid-result-badge-inline.success {
     background: rgba(34, 197, 94, 0.15);
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    border: 1px solid var(--border-success);
     color: rgb(34, 197, 94);
   }
   
   .aid-result-badge-inline.failure {
     background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    border: 1px solid var(--border-primary);
     color: rgb(239, 68, 68);
   }
   
@@ -733,7 +759,7 @@
     gap: var(--space-4);
     padding: var(--space-2) var(--space-8);
     background: rgba(100, 116, 139, 0.1);
-    border: 1px solid rgba(100, 116, 139, 0.2);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
@@ -750,7 +776,7 @@
     padding: var(--space-10) var(--space-12);
     margin-top: var(--space-12);
     background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-md);
     color: var(--color-blue-light);
     font-size: var(--font-sm);

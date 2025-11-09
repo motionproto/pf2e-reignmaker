@@ -246,7 +246,7 @@
       gap: var(--space-6);
       padding: var(--space-4) var(--space-8);
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       cursor: pointer;
       transition: var(--transition-base);
@@ -275,7 +275,7 @@
       // Active state (is capital)
       &.is-capital {
          background: rgba(251, 191, 36, 0.1);
-         border-color: rgba(251, 191, 36, 0.3);
+         border-color: var(--border-accent-subtle);
          color: var(--text-primary);
          
          i {

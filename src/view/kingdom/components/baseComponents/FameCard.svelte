@@ -113,7 +113,7 @@
       background: rgba(0, 0, 0, 0.2);
       padding: var(--space-12);
       border-radius: var(--radius-lg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       outline: 2px solid transparent;
       outline-offset: 0.125rem;
       transition: all 0.2s ease;
@@ -215,7 +215,7 @@
       .adjust-btn {
          flex: 1;
          padding: var(--space-4);
-         border: 1px solid var(--border-default);
+         border: 1px solid var(--border-subtle);
          background: var(--bg-surface);
          border-radius: var(--radius-md);
          display: flex;

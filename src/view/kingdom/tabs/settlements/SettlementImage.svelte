@@ -323,7 +323,7 @@
          button {
             flex: 1;
             padding: var(--space-8) var(--space-16);
-            border: 1px solid var(--border-default);
+            border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
             background: var(--bg-elevated);
             color: var(--text-primary);

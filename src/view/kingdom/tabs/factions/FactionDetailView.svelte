@@ -967,7 +967,7 @@
 <style lang="scss">
    .faction-detail {
       --color-gm-area: rgba(150, 80, 255, 0.1);
-      --color-gm-border: rgba(150, 80, 255, 0.5);
+      --color-gm-border: var(--border-special-medium);
       
       display: flex;
       flex-direction: column;
@@ -1004,7 +1004,7 @@
       justify-content: space-between;
       gap: var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
       width: 100%;
@@ -1015,7 +1015,7 @@
       grid-template-columns: 1fr 1fr;
       gap: var(--space-24);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
    }
@@ -1033,7 +1033,7 @@
       max-height: 25rem;
       object-fit: cover;
       border-radius: var(--radius-lg);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid var(--border-default);
    }
    
    .portrait-placeholder {
@@ -1044,7 +1044,7 @@
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border: 2px dashed var(--border-default);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1093,7 +1093,7 @@
       flex: 1;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--color-accent);
       font-size: var(--font-3xl);
@@ -1136,7 +1136,7 @@
       height: 18.75rem;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
@@ -1151,7 +1151,7 @@
       &:focus {
          outline: none;
          background: rgba(0, 0, 0, 0.5);
-         border-color: rgba(255, 255, 255, 0.5);
+         border-color: var(--border-faint);
       }
    }
    
@@ -1189,7 +1189,7 @@
       }
       
       &.active {
-         border-color: rgba(255, 255, 255, 0.3);
+         border-color: var(--border-medium);
          transform: scale(1.2);
       }
    }
@@ -1222,13 +1222,13 @@
    .color-input {
       width: 3.75rem;
       height: 2.25rem;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid var(--border-medium);
       border-radius: var(--radius-md);
       cursor: pointer;
       background: transparent;
       
       &:hover {
-         border-color: rgba(255, 255, 255, 0.5);
+         border-color: var(--border-faint);
       }
    }
    
@@ -1236,7 +1236,7 @@
       width: 2.25rem;
       height: 2.25rem;
       border-radius: var(--radius-md);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid var(--border-medium);
       display: inline-block;
    }
    
@@ -1252,7 +1252,7 @@
       align-items: center;
       gap: var(--space-16);
       padding-bottom: var(--space-16);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--border-subtle);
       
       h2 {
          margin: 0;
@@ -1271,7 +1271,7 @@
    
    .detail-section {
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
       overflow: visible;
@@ -1304,7 +1304,7 @@
       max-width: 18.75rem;
       max-height: 18.75rem;
       border-radius: var(--radius-lg);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border: 2px solid var(--border-default);
    }
    
    .no-image {
@@ -1315,7 +1315,7 @@
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border: 2px dashed var(--border-default);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1330,7 +1330,7 @@
       width: 100%;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
@@ -1345,7 +1345,7 @@
       &:focus {
          outline: none;
          background: rgba(0, 0, 0, 0.5);
-         border-color: rgba(255, 255, 255, 0.5);
+         border-color: var(--border-faint);
       }
       
       &.small {
@@ -1440,7 +1440,7 @@
    .clock-btn {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       cursor: pointer;
@@ -1489,14 +1489,14 @@
       width: 3rem;
       padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       text-align: center;
       
       &:focus {
          outline: none;
-         border-color: rgba(255, 255, 255, 0.5);
+         border-color: var(--border-faint);
       }
    }
    
@@ -1527,13 +1527,13 @@
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--text-primary);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-subtle);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border-faint);
             
             &.add-row {
                background: rgba(0, 0, 0, 0.2);
@@ -1709,14 +1709,14 @@
          flex: 1;
          padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.3);
+         border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          
          &:focus {
             outline: none;
             background: rgba(0, 0, 0, 0.5);
-            border-color: rgba(255, 255, 255, 0.5);
+            border-color: var(--border-faint);
          }
       }
       
@@ -1728,7 +1728,7 @@
          max-height: 12.5rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
-         border: 1px solid rgba(255, 255, 255, 0.3);
+         border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
@@ -1742,7 +1742,7 @@
                color: var(--text-secondary);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+               border-bottom: 1px solid var(--border-subtle);
             }
          }
          

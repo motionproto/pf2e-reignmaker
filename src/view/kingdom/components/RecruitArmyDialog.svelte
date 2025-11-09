@@ -207,7 +207,7 @@
     width: 100%;
     padding: var(--space-10);
     background: rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-size: var(--font-sm);
@@ -280,7 +280,7 @@
   .army-type-card {
     padding: var(--space-12);
     background: rgba(0, 0, 0, 0.3);
-    border: 2px solid var(--border-default);
+    border: 2px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     text-align: center;
     transition: all 0.2s;

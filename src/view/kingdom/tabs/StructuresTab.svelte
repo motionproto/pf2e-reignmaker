@@ -232,7 +232,7 @@
     backdrop-filter: blur(0.5rem);
     padding: var(--space-24);
     margin-bottom: 0;
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
     box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
     min-height: 5.625rem; // Fixed minimum height to maintain consistent layout
     display: flex;

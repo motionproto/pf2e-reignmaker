@@ -108,7 +108,7 @@
     display: flex;
     flex-direction: column;
     background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -122,13 +122,13 @@
     &.in-progress {
       pointer-events: none;
       background: rgba(255, 255, 255, 0.05);
-      border-color: var(--border-subtle);
+      border-color: var(--border-faint);
     }
     
     &.locked {
       opacity: 0.5;
       background: rgba(255, 255, 255, 0.03);
-      border-color: var(--border-subtle);
+      border-color: var(--border-faint);
       filter: grayscale(0.4);
       cursor: pointer; // Allow clicking to deselect
     }
@@ -145,7 +145,7 @@
     gap: var(--space-12);
     padding: var(--space-16);
     padding-bottom: var(--space-8);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-faint);
     transition: background 0.2s ease;
     
     &:hover {
@@ -174,7 +174,7 @@
         font-weight: var(--font-weight-semibold);
         padding: var(--space-4) var(--space-8);
         border-radius: var(--radius-sm);
-        border: 1px solid var(--border-subtle);
+        border: 1px solid var(--border-faint);
         display: flex;
         align-items: center;
         gap: var(--space-6);
@@ -198,7 +198,7 @@
       .capacity-badge {
         color: var(--warning-text);
         background: rgba(255, 191, 0, 0.1);
-        border-color: rgba(255, 191, 0, 0.3);
+        border-color: var(--border-accent-subtle);
       }
       
       .in-progress-badge {

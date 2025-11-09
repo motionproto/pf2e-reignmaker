@@ -258,7 +258,7 @@
       margin-left: var(--space-24);
       margin-top: var(--space-8);
       padding: var(--space-8) 0;
-      border-left: 2px solid rgba(255, 255, 255, 0.1);
+      border-left: 2px solid var(--border-subtle);
       
       .army-item {
          display: flex;
@@ -309,7 +309,7 @@
          .control-btn {
             width: 2rem;
             height: 2rem;
-            border: 1px solid var(--border-default);
+            border: 1px solid var(--border-subtle);
             background: var(--bg-surface);
             border-radius: var(--radius-sm);
             display: flex;

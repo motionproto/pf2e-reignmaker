@@ -141,14 +141,47 @@
   --btn-tertiary-hover-border: hsla(214, 14%, 65%, 1);
   --btn-tertiary-text: hsla(214, 17%, 84%, 1);
   
-  /* Borders - Luminance-based for better contrast */
-  --border-subtle: hsla(240, 5%, 22%, 1);   /* Very subtle, barely visible */
-  --border-default: hsla(240, 5%, 28%, 1);  /* Standard border visibility */
-  --border-secondary: hsla(240, 5%, 32%, 1); /* Secondary borders */
+  /* Borders - 5-point luminance scale (faint → strong) */
+  --border-faint: hsla(240, 5%, 22%, 1);    /* Barely visible borders */
+  --border-subtle: hsla(240, 5%, 28%, 1);   /* Low visibility borders */
+  --border-default: hsla(240, 5%, 32%, 1);  /* Standard border visibility (middle point) */
   --border-medium: hsla(240, 5%, 38%, 1);   /* More prominent borders */
   --border-strong: hsla(240, 5%, 48%, 1);   /* High contrast borders */
-  --border-primary: var(--color-crimson);
-  --border-accent: var(--color-amber);
+  
+  /* Primary (Crimson) borders - 5-point scale */
+  --border-primary-faint: hsla(0, 58%, 50%, 0.15);   /* Barely visible */
+  --border-primary-subtle: hsla(0, 58%, 50%, 0.35);  /* Low visibility */
+  --border-primary: var(--color-crimson);             /* Standard (middle point) */
+  --border-primary-medium: hsla(0, 68%, 60%, 1);     /* More prominent */
+  --border-primary-strong: hsla(0, 78%, 70%, 1);     /* High contrast */
+  
+  /* Accent (Amber) borders - 5-point scale */
+  --border-accent-faint: hsla(38, 91%, 50%, 0.15);   /* Barely visible */
+  --border-accent-subtle: hsla(38, 91%, 50%, 0.35);  /* Low visibility */
+  --border-accent: var(--color-amber);                /* Standard (middle point) */
+  --border-accent-medium: hsla(41, 95%, 58%, 1);     /* More prominent */
+  --border-accent-strong: hsla(44, 100%, 65%, 1);    /* High contrast */
+  
+  /* Info (Blue) borders - 5-point scale */
+  --border-info-faint: hsla(217, 100%, 80%, 0.15);   /* Barely visible */
+  --border-info-subtle: hsla(217, 100%, 80%, 0.35);  /* Low visibility */
+  --border-info: var(--color-blue);                   /* Standard (middle point) */
+  --border-info-medium: hsla(217, 100%, 85%, 1);     /* More prominent */
+  --border-info-strong: hsla(217, 100%, 90%, 1);     /* High contrast */
+  
+  /* Success (Green) borders - 5-point scale */
+  --border-success-faint: hsla(142, 71%, 45%, 0.15); /* Barely visible */
+  --border-success-subtle: hsla(142, 71%, 45%, 0.35);/* Low visibility */
+  --border-success: var(--color-green);               /* Standard (middle point) */
+  --border-success-medium: hsla(142, 71%, 55%, 1);   /* More prominent */
+  --border-success-strong: hsla(142, 71%, 65%, 1);   /* High contrast */
+  
+  /* Special (Purple) borders - 5-point scale */
+  --border-special-faint: hsla(258, 90%, 66%, 0.15); /* Barely visible */
+  --border-special-subtle: hsla(258, 90%, 66%, 0.35);/* Low visibility */
+  --border-special: hsl(258, 90%, 66%);               /* Standard (middle point) */
+  --border-special-medium: hsla(258, 90%, 75%, 1);   /* More prominent */
+  --border-special-strong: hsla(258, 90%, 85%, 1);   /* High contrast */
   
   /* Border Radius */
   --radius-sm: 0.125rem;    /* 2px */

@@ -198,7 +198,7 @@
    .cancel-btn {
       width: 1.5rem;
       height: 1.5rem;
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       background: var(--bg-surface);
       border-radius: var(--radius-md);
       display: flex;

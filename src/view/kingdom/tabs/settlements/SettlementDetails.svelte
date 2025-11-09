@@ -337,7 +337,7 @@
    .panel-header {
       padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--border-subtle);
       
       .settlement-title {
          display: flex;
@@ -421,7 +421,7 @@
    }
    
    .status-wrapper {
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-12);
       margin-bottom: var(--space-24);
@@ -441,7 +441,7 @@
    .delete-button {
       padding: var(--space-8) var(--space-12);
       background: rgba(220, 53, 69, 0.1);
-      border: 1px solid rgba(220, 53, 69, 0.3);
+      border: 1px solid var(--border-primary-subtle);
       border-radius: var(--radius-md);
       color: #dc3545;
       cursor: pointer;
@@ -536,7 +536,7 @@
          margin: var(--space-16) 0 0 0;
          padding: var(--space-12);
          background: rgba(220, 53, 69, 0.1);
-         border: 1px solid rgba(220, 53, 69, 0.3);
+         border: 1px solid var(--border-primary-subtle);
          border-radius: var(--radius-md);
          color: #dc3545;
          text-align: center;
@@ -592,7 +592,7 @@
       width: 100%;
       padding: var(--space-12) var(--space-16);
       margin-top: var(--space-24);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       background: var(--color-red-bg);
       color: var(--color-danger);
@@ -622,7 +622,7 @@
       gap: var(--space-8);
       padding: var(--space-6) var(--space-12);
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       cursor: pointer;
       transition: var(--transition-base);
@@ -666,7 +666,7 @@
          width: 3rem;
          padding: var(--space-4) var(--space-8);
          background: var(--bg-overlay);
-         border: 1px solid var(--border-default);
+         border: 1px solid var(--border-subtle);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          font-size: var(--font-md);
@@ -721,7 +721,7 @@
    /* Unmapped Settlement Alert */
    .unmapped-alert-wrapper {
       padding: var(--space-12) var(--space-16);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid var(--border-subtle);
    }
    
    /* Delete Dialog Content Styling */
@@ -766,7 +766,7 @@
          gap: var(--space-8);
          padding: var(--space-12) var(--space-16);
          background: rgba(220, 53, 69, 0.1);
-         border: 1px solid rgba(220, 53, 69, 0.3);
+         border: 1px solid var(--border-primary-subtle);
          border-radius: var(--radius-md);
          color: #dc3545;
          font-size: var(--font-sm);

@@ -128,7 +128,7 @@
     padding: var(--space-12);
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
   }
   
   .actor-choice {
@@ -154,7 +154,7 @@
     padding: var(--space-12);
     background: rgba(255, 107, 107, 0.1);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    border: 1px solid var(--border-primary-medium);
     color: #ff6b6b;
     font-size: var(--font-sm);
   }

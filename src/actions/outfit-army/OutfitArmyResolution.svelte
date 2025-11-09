@@ -151,7 +151,7 @@
     padding: 1rem;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
   }
 
   .resolution-header {
@@ -160,7 +160,7 @@
     align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .resolution-header h4 {
@@ -173,7 +173,7 @@
   .outcome-badge {
     padding: 0.25rem 0.75rem;
     background: rgba(34, 197, 94, 0.2);
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    border: 1px solid var(--border-success);
     border-radius: 12px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -207,7 +207,7 @@
     gap: 0.5rem;
     padding: 1rem;
     background: rgba(255, 255, 255, 0.03);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--border-subtle);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -215,14 +215,14 @@
 
     &:hover:not(.disabled) {
       background: rgba(255, 255, 255, 0.05);
-      border-color: rgba(255, 255, 255, 0.3);
+      border-color: var(--border-medium);
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     &.selected {
       background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.5);
+      border-color: var(--border-faint);
       box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
     }
 
@@ -252,7 +252,7 @@
   .equipment-bonus {
     padding: 0.25rem 0.5rem;
     background: rgba(34, 197, 94, 0.2);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid var(--border-success-subtle);
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -260,7 +260,7 @@
 
     &.crit {
       background: rgba(34, 197, 94, 0.3);
-      border-color: rgba(34, 197, 94, 0.5);
+      border-color: var(--border-success-medium);
       color: var(--color-green-light);
     }
   }
@@ -268,7 +268,7 @@
   .owned-badge-inline {
     padding: 0.25rem 0.5rem;
     background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--border-default);
     border-radius: 4px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -288,7 +288,7 @@
   .all-equipped {
     padding: 1rem;
     background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid var(--border-success-subtle);
     border-radius: 6px;
     color: var(--color-green);
     text-align: center;
@@ -300,7 +300,7 @@
     text-align: center;
     padding: 1rem;
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid var(--border-primary-subtle);
     border-radius: 6px;
   }
 </style>

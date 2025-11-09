@@ -145,7 +145,7 @@
       gap: 0.5rem;
       padding: 0.75rem;
       background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       color: var(--color-amber);
       
@@ -171,7 +171,7 @@
   
   .dialog-button {
     padding: 0.5rem 1rem;
-    border: 1px solid var(--border-default, #3a3a3d);
+    border: 1px solid var(--border-subtle, #3a3a3d);
     border-radius: var(--radius-sm, 4px);
     font-size: 0.9rem;
     font-weight: var(--font-weight-medium);
@@ -199,7 +199,7 @@
   .dialog-button-secondary {
     background: var(--color-gray-800, #27272a);
     color: var(--text-secondary, #b0b0b3);
-    border-color: var(--border-default, #3a3a3d);
+    border-color: var(--border-subtle, #3a3a3d);
   }
   
   .dialog-button-secondary:hover {

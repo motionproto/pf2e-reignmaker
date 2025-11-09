@@ -646,7 +646,7 @@
          background: rgba(0, 0, 0, 0.2);
          padding: var(--space-12) var(--space-16);
          border-radius: var(--radius-lg);
-         border: 1px solid rgba(255, 255, 255, 0.1);
+         border: 1px solid var(--border-subtle);
          
          i {
             font-size: var(--font-2xl);
@@ -686,7 +686,7 @@
          padding: var(--space-8) var(--space-12);
          min-height: 2.5rem;
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.2);
+         border: 1px solid var(--border-default);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          line-height: 1.5;
@@ -730,7 +730,7 @@
       overflow: auto;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-lg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
    }
    
    .modifiers-table {
@@ -748,13 +748,13 @@
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid var(--border-subtle);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid var(--border-faint);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -854,7 +854,7 @@
       align-items: center;
       padding: var(--space-4) var(--space-12);
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       font-size: var(--font-size-medium, 0.875rem);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -899,7 +899,7 @@
       gap: var(--space-8);
       padding: var(--space-6) var(--space-12);
       background: rgba(200, 200, 200, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       font-size: var(--font-size-medium, 0.875rem);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -1088,7 +1088,7 @@
       padding: var(--space-8) var(--space-12);
       min-height: 2.5rem;
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       line-height: 1.5;
@@ -1108,7 +1108,7 @@
    .effect-input {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       width: 6.25rem;

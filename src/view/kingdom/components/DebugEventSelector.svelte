@@ -221,7 +221,7 @@
       gap: var(--space-8);
       padding: var(--space-8) var(--space-12);
       background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid var(--border-special-subtle);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
       margin-bottom: var(--space-16);
@@ -248,7 +248,7 @@
    .nav-btn {
       padding: var(--space-4) var(--space-8);
       background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid var(--border-special-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;
@@ -256,7 +256,7 @@
       
       &:hover:not(:disabled) {
          background: rgba(139, 92, 246, 0.25);
-         border-color: rgba(139, 92, 246, 0.5);
+         border-color: var(--border-special-medium);
       }
       
       &:disabled {
@@ -300,7 +300,7 @@
    .action-btn {
       padding: var(--space-4) var(--space-10);
       background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 1px solid var(--border-special-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;
@@ -314,7 +314,7 @@
       
       &:hover:not(:disabled) {
          background: rgba(139, 92, 246, 0.3);
-         border-color: rgba(139, 92, 246, 0.5);
+         border-color: var(--border-special-medium);
       }
       
       &:disabled {
@@ -324,11 +324,11 @@
       
       &.clear {
          background: rgba(239, 68, 68, 0.15);
-         border-color: rgba(239, 68, 68, 0.3);
+         border-color: var(--border-primary-subtle);
          
          &:hover:not(:disabled) {
             background: rgba(239, 68, 68, 0.25);
-            border-color: rgba(239, 68, 68, 0.5);
+            border-color: var(--border-primary-medium);
          }
       }
       

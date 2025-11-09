@@ -265,7 +265,7 @@
     justify-content: center;
     padding: var(--space-12);
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+    border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
@@ -306,7 +306,7 @@
     gap: var(--space-8);
     padding: var(--space-12);
     background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-sm);
     
     label {
@@ -399,7 +399,7 @@
     gap: var(--space-6);
     padding: var(--space-6) var(--space-10);
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);
     color: rgb(239, 68, 68);

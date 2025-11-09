@@ -264,7 +264,7 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-subtle);
     cursor: grab;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
@@ -314,7 +314,7 @@
     display: flex;
     gap: var(--space-8);
     padding: var(--space-8) var(--space-12);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-subtle);
     background: rgba(0, 0, 0, 0.2);
   }
   
@@ -325,7 +325,7 @@
     justify-content: center;
     padding: var(--space-8);
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
@@ -334,13 +334,13 @@
     &:hover {
       color: rgba(100, 200, 255, 0.9);
       background: rgba(100, 200, 255, 0.1);
-      border-color: rgba(100, 200, 255, 0.3);
+      border-color: var(--border-info-subtle);
     }
     
     &.active {
       color: #00FF00;
       background: rgba(0, 255, 0, 0.15);
-      border-color: rgba(0, 255, 0, 0.4);
+      border-color: var(--border-success);
       
       i {
         animation: pulse 2s ease-in-out infinite;
@@ -381,7 +381,7 @@
     gap: var(--space-12);
     padding: var(--space-12) var(--space-16);
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
@@ -391,7 +391,7 @@
     
     &:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.2);
+      border-color: var(--border-default);
       color: #fff;
       transform: translateY(-0.0625rem);
     }

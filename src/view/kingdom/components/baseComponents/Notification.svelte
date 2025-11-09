@@ -266,7 +266,7 @@
       padding: var(--space-12);
       padding-top: var(--space-8);
       margin-top: 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid var(--border-subtle);
       font-size: var(--font-md);
       text-align: left;
    }
@@ -298,6 +298,6 @@
       gap: var(--space-8);
       padding: var(--space-12) var(--space-16);
       padding-top: var(--space-8);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid var(--border-subtle);
    }
 </style>

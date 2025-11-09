@@ -163,7 +163,7 @@
   .action-category {
     background: var(--color-gray-900);
     border-radius: var(--radius-md);
-    border: 1px solid var(--border-accent-75);
+    border: 1px solid var(--border-accent-subtle);
     padding: var(--space-20);
   }
 

@@ -198,7 +198,7 @@
   .exchange-rate-info {
     padding: 0.75rem 1rem;
     background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-md, 6px);
     
     .rate-text {
@@ -241,7 +241,7 @@
     
     &.selected {
       background: rgba(251, 191, 36, 0.1);
-      border-color: rgba(251, 191, 36, 0.5);
+      border-color: var(--border-accent-medium);
     }
     
     &.disabled {
@@ -304,7 +304,7 @@
       align-items: center;
       justify-content: center;
       background: var(--color-gray-800);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm, 4px);
       color: var(--text-secondary);
       cursor: pointer;
@@ -349,7 +349,7 @@
     gap: 1rem;
     padding: 1rem;
     background: rgba(251, 191, 36, 0.15);
-    border: 2px solid rgba(251, 191, 36, 0.3);
+    border: 2px solid var(--border-accent-subtle);
     border-radius: var(--radius-md, 6px);
     
     .trade-icon {
@@ -375,7 +375,7 @@
     margin: 0;
     padding: 0.5rem 0.75rem;
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm, 4px);
     color: rgb(239, 68, 68);
     font-size: 0.875rem;
@@ -392,7 +392,7 @@
     margin: 0;
     padding: 0.75rem 1rem;
     background: rgba(100, 116, 139, 0.1);
-    border: 1px solid rgba(100, 116, 139, 0.3);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-sm, 4px);
     color: var(--text-tertiary);
     font-size: 0.95rem;

@@ -542,7 +542,7 @@
   }
 
   .kingdom-name-header .edit-btn:hover {
-    background-color: var(--border-default);
+    background-color: var(--border-subtle);
   }
 
   .kingdom-stats-scrollable {
@@ -573,7 +573,7 @@
     border-radius: var(--radius-xl);
     padding: 0 0 var(--space-8) 0;
     box-shadow: var(--shadow-card);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     margin: 0 var(--space-8) 0 var(--space-8);
     overflow: visible;
   }
@@ -609,7 +609,7 @@
   .faction-select {
     padding: var(--space-4) var(--space-8);
     background: var(--bg-surface);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-sm);
@@ -628,7 +628,7 @@
     justify-content: space-between;
     align-items: center;
     padding: var(--space-12) var(--space-16);
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
   }
 
   .stat-item:last-child {
@@ -673,7 +673,7 @@
 
   .kingdom-select {
     padding: var(--space-4) var(--space-8);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     background: var(--bg-surface);
     color: var(--text-primary);
@@ -698,7 +698,7 @@
     background: rgba(0, 0, 0, 0.2);
     padding: var(--space-8);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
     margin: var(--space-12) var(--space-16);
     transition: all 0.2s ease;
   }
@@ -765,7 +765,7 @@
   .divider-line {
     flex: 1;
     height: 0.0625rem;
-    background: var(--border-subtle);
+    background: var(--border-faint);
   }
 
   /* Custom Scrollbar - Dark Theme */

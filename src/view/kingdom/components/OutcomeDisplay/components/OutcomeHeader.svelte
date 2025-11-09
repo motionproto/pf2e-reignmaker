@@ -89,7 +89,7 @@
     justify-content: space-between;
     padding: var(--space-12) var(--space-16);
     background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-faint);
     
     .resolution-header-left {
       display: flex;
@@ -124,7 +124,7 @@
         gap: var(--space-6);
         padding: var(--space-6) var(--space-12);
         background: rgba(239, 68, 68, 0.15);
-        border: 1px solid rgba(239, 68, 68, 0.4);
+        border: 1px solid var(--border-primary);
         border-radius: var(--radius-md);
         color: var(--color-red);
         font-size: var(--font-sm);
@@ -139,7 +139,7 @@
         
         &:hover:not(:disabled) {
           background: rgba(239, 68, 68, 0.25);
-          border-color: rgba(239, 68, 68, 0.6);
+          border-color: var(--border-primary-medium);
           transform: translateY(-0.0625rem);
         }
         

@@ -131,7 +131,7 @@
          
          &:disabled {
             background: var(--color-gray-700);
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }
@@ -156,7 +156,7 @@
          
          &:disabled {
             background: var(--color-gray-700);
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }
@@ -185,7 +185,7 @@
          
          &:disabled {
             background: transparent;
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }
@@ -195,7 +195,7 @@
          padding: var(--space-8) var(--space-16);
          background: rgba(255, 255, 255, 0.1);
          color: var(--text-primary);
-         border: 1px solid rgba(255, 255, 255, 0.2);
+         border: 1px solid var(--border-default);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          line-height: 1.5;
@@ -209,7 +209,7 @@
          
          &:hover:not(:disabled) {
             background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.3);
+            border-color: var(--border-medium);
          }
          
          &:active:not(:disabled) {
@@ -218,7 +218,7 @@
          
          &:disabled {
             background: transparent;
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
          
@@ -249,7 +249,7 @@
          
          &:disabled {
             background: var(--color-gray-700);
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }
@@ -274,7 +274,7 @@
          
          &:disabled {
             background: var(--color-gray-700);
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }
@@ -299,7 +299,7 @@
          
          &:disabled {
             background: var(--color-gray-700);
-            border-color: var(--border-subtle);
+            border-color: var(--border-faint);
             color: var(--text-tertiary);
          }
       }

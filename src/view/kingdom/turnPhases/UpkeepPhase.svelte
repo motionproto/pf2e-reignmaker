@@ -609,14 +609,14 @@
          background: linear-gradient(135deg,
             rgba(35, 35, 40, 0.4),
             rgba(40, 40, 45, 0.3));
-         border-color: var(--border-subtle);
+         border-color: var(--border-faint);
          opacity: 0.9;
       }
    }
    
    .card-header {
       padding: var(--space-16) var(--space-20);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-faint);
       position: relative;
       
       h4 {
@@ -696,13 +696,13 @@
          background: linear-gradient(135deg,
             rgba(35, 35, 40, 0.3),
             rgba(40, 40, 45, 0.2));
-         border-color: var(--border-subtle);
+         border-color: var(--border-faint);
       }
    }
    
    .summary-header {
       padding: var(--space-16) var(--space-20);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-faint);
       position: relative;
       
       h4 {
@@ -752,7 +752,7 @@
       
       &.warning {
          background: rgba(245, 158, 11, 0.1);
-         border: 1px solid rgba(245, 158, 11, 0.3);
+         border: 1px solid var(--border-accent-subtle);
          
          i {
             color: var(--color-amber);
@@ -893,7 +893,7 @@
       padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
       color: var(--text-secondary);
       font-size: var(--font-sm);
       text-align: center;
@@ -966,7 +966,7 @@
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
    }
    
    .unfed-settlement-item {

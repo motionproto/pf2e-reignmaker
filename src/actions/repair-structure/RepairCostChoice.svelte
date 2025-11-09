@@ -194,7 +194,7 @@
     min-height: 80px;
     padding: 16px 18px;
     background: rgba(100, 116, 139, 0.1);
-    border: 2px solid rgba(100, 116, 139, 0.3);
+    border: 2px solid var(--border-default);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-md);
@@ -208,7 +208,7 @@
     
     &:hover:not(:disabled) {
       background: rgba(100, 116, 139, 0.2);
-      border-color: rgba(100, 116, 139, 0.5);
+      border-color: var(--border-medium);
       transform: translateY(-1px);
     }
     

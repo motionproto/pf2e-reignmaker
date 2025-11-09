@@ -97,7 +97,7 @@
 <style lang="scss">
   .structure-card {
     background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: var(--space-16);
     transition: all 0.2s;
@@ -114,7 +114,7 @@
     align-items: baseline;
     gap: var(--space-12);
     margin-bottom: var(--space-16);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-faint);
     padding-bottom: var(--space-8);
     
     .tier-badge {
@@ -124,7 +124,7 @@
       background: rgba(251, 191, 36, 0.1);
       padding: var(--space-4) var(--space-8);
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
     }
     
     h4 {
@@ -150,7 +150,7 @@
       width: 6.25rem;
       height: 6.25rem;
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
@@ -173,7 +173,7 @@
     color: var(--text-secondary);
     font-style: italic;
     padding-bottom: var(--space-8);
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-faint);
   }
   
   /* Cost Section */

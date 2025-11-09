@@ -226,7 +226,7 @@
     font-size: var(--font-md);
     font-family: 'Courier New', monospace;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+    border: 1px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-md);
     color: var(--text-primary, #e0e0e0);
     cursor: pointer;
@@ -234,7 +234,7 @@
     
     &:hover {
       background: rgba(255, 255, 255, 0.08);
-      border-color: var(--border-strong, rgba(255, 255, 255, 0.3));
+      border-color: var(--border-strong, var(--border-medium));
     }
     
     &:focus {

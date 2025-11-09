@@ -344,7 +344,7 @@
   .categories-panel {
     flex: 0 0 21.25rem;
     background: rgba(0, 0, 0, 0.2);
-    border-right: 1px solid var(--border-default);
+    border-right: 1px solid var(--border-subtle);
     padding: var(--space-16);
     overflow-y: auto;
   }

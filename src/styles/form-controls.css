@@ -7,7 +7,7 @@
   padding: 0.5rem 0.75rem;
   min-height: 2.5rem;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md, 0.25rem);
   color: var(--text-primary, #f8f8f8);
   font-family: var(--font-sans-rm);
@@ -22,7 +22,7 @@
 }
 
 #pf2e-reignmaker select:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-medium);
 }
 
 #pf2e-reignmaker select:focus {
@@ -70,7 +70,7 @@
 #pf2e-reignmaker textarea {
   padding: 0.5rem;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md, 0.25rem);
   color: var(--text-primary, #f8f8f8);
   font-family: var(--font-sans-rm);
@@ -83,7 +83,7 @@
 #pf2e-reignmaker input[type="email"]:hover:not(:disabled),
 #pf2e-reignmaker input[type="password"]:hover:not(:disabled),
 #pf2e-reignmaker textarea:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.3);
+  border-color: var(--border-medium);
 }
 
 #pf2e-reignmaker input[type="text"]:focus,

@@ -126,7 +126,7 @@
     margin-top: var(--space-8);
     padding: var(--space-8) var(--space-12);
     background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);
     color: var(--color-amber);

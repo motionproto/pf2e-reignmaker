@@ -348,7 +348,7 @@
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       gap: var(--space-16);
@@ -469,7 +469,7 @@
       padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       font-size: var(--font-sm);
       display: inline-flex;
@@ -492,7 +492,7 @@
          rgba(24, 24, 27, 0.5),
          rgba(31, 31, 35, 0.3));
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
       gap: var(--space-16);
@@ -556,7 +556,7 @@
       flex-direction: column;
       gap: var(--space-8);
       padding-bottom: var(--space-16);
-      border-bottom: 1px solid var(--border-default);
+      border-bottom: 1px solid var(--border-subtle);
    }
    
    .total-income-title {
@@ -646,7 +646,7 @@
       width: 100%;
       padding: var(--space-12) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-size: var(--font-md);

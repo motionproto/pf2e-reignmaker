@@ -256,7 +256,7 @@
     
     .cancel-button {
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       
       &:hover:not(:disabled) {
@@ -286,7 +286,7 @@
     gap: 8px;
     padding: 10px 14px;
     background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-md);
     margin-bottom: 16px;
     font-size: var(--font-md);

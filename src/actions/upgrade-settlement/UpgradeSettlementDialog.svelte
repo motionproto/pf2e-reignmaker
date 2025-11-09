@@ -253,7 +253,7 @@
       gap: 6px;
       padding: 6px 12px;
       background: rgba(234, 179, 8, 0.15);
-      border: 1px solid rgba(234, 179, 8, 0.3);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
@@ -297,7 +297,7 @@
     width: 100%;
     padding: 14px 16px;
     background: rgba(100, 116, 139, 0.1);
-    border: 2px solid rgba(100, 116, 139, 0.3);
+    border: 2px solid var(--border-default);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     cursor: pointer;
@@ -307,7 +307,7 @@
     
     &:hover:not(:disabled) {
       background: rgba(100, 116, 139, 0.2);
-      border-color: rgba(100, 116, 139, 0.5);
+      border-color: var(--border-medium);
       transform: translateX(2px);
     }
     
@@ -407,7 +407,7 @@
     margin-top: 8px;
     padding: 6px 10px;
     background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm);
     color: rgb(239, 68, 68);
     font-size: var(--font-xs);

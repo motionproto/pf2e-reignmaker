@@ -72,7 +72,7 @@
     gap: var(--space-12);
     padding: var(--space-20);
     background: rgba(0, 0, 0, 0.2);
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-faint);
     
     // Cancel button stays on the left
     > :global(.button.outline) {

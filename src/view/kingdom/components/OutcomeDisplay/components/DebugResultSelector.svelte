@@ -50,7 +50,7 @@
     gap: var(--space-12);
     padding: var(--space-10) var(--space-12);
     background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid var(--border-special-subtle);
     border-radius: var(--radius-md);
     margin-bottom: var(--space-16);
   }
@@ -117,13 +117,13 @@
       
       &.success {
         background: rgba(34, 197, 94, 0.15);
-        border-color: rgba(34, 197, 94, 0.5);
+        border-color: var(--border-success-medium);
         color: var(--color-green);
       }
       
       &.failure {
         background: rgba(249, 115, 22, 0.15);
-        border-color: rgba(249, 115, 22, 0.5);
+        border-color: var(--border-accent-medium);
         color: var(--color-orange);
       }
       

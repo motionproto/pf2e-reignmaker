@@ -118,21 +118,20 @@
         
         .requirements-badge {
           display: inline-flex;
-          align-items: center;
-          gap: var(--space-4);
+          align-items: baseline;
+          gap: var(--space-8);
           padding: var(--space-4) var(--space-8);
-          background: rgba(251, 191, 36, 0.15);
-          border: 1px solid rgba(251, 191, 36, 0.3);
-          border-radius: var(--radius-sm);
+         
+          border: 1px solid var(--border-accent);
+          border-radius: var(--radius-md);
           font-size: var(--font-sm);
           font-weight: var(--font-weight-medium);
           line-height: 1.2;
-          letter-spacing: 0.05rem;
           color: var(--color-amber);
           text-transform: none;
           
           i {
-            font-size: var(--font-md);
+            font-size: var(--font-sm);
           }
         }
         
@@ -171,7 +170,7 @@
       gap: var(--space-4);
       padding: var(--space-2) var(--space-8);
       background: rgba(100, 116, 139, 0.1);
-      border: 1px solid rgba(100, 116, 139, 0.2);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);

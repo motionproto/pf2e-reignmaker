@@ -135,7 +135,7 @@
   .player-action-tracker {
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     margin: 0 var(--space-16);
     &.compact {
       background: transparent;
@@ -230,7 +230,7 @@
   .action-details {
     padding: var(--space-16);
     background: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-faint);
     display: flex;
     flex-direction: column;
     gap: var(--space-16);

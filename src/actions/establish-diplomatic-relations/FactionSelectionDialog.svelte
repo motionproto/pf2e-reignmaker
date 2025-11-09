@@ -312,7 +312,7 @@
     
     .cancel-button {
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       
       &:hover:not(:disabled) {
@@ -356,7 +356,7 @@
     
     .gold-display {
       background: rgba(234, 179, 8, 0.15);
-      border: 1px solid rgba(234, 179, 8, 0.3);
+      border: 1px solid var(--border-accent-subtle);
       
       i {
         color: rgb(234, 179, 8);
@@ -366,7 +366,7 @@
     
     .capacity-display {
       background: rgba(59, 130, 246, 0.15);
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      border: 1px solid var(--border-info-subtle);
       
       i {
         color: rgb(59, 130, 246);

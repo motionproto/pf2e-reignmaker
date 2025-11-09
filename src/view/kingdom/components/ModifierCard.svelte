@@ -36,7 +36,7 @@
    .modifier-card {
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
       padding: var(--space-16);
       transition: all 0.2s ease;
       
@@ -98,7 +98,7 @@
             padding: var(--space-4) var(--space-8);
             border-radius: var(--radius-md);
             background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-subtle);
+            border: 1px solid var(--border-faint);
             color: var(--text-secondary);
          }
       }

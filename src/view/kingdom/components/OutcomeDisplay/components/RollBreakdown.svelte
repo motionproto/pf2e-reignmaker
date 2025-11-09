@@ -58,7 +58,7 @@
   .roll-breakdown {
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-faint);
     overflow: hidden;
     
     .roll-breakdown-toggle {
@@ -117,7 +117,7 @@
     .modifier-breakdown {
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.2);
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-faint);
       display: flex;
       flex-direction: column;
       gap: var(--space-4);
@@ -133,7 +133,7 @@
         
         &.base-roll {
           background: rgba(96, 165, 250, 0.15);
-          border: 1px solid rgba(96, 165, 250, 0.3);
+          border: 1px solid var(--border-info-subtle);
           
           .modifier-label {
             color: rgb(147, 197, 253);
@@ -165,7 +165,7 @@
         
         &.dc {
           background: rgba(249, 115, 22, 0.1);
-          border: 1px solid rgba(249, 115, 22, 0.2);
+          border: 1px solid var(--border-accent-subtle);
           
           .modifier-label {
             color: rgba(249, 115, 22, 0.9);

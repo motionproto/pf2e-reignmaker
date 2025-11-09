@@ -245,7 +245,7 @@
     gap: 6px;
     padding: 0.5rem 1rem;
     background: rgba(234, 179, 8, 0.15);
-    border: 1px solid rgba(234, 179, 8, 0.3);
+    border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-md);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);

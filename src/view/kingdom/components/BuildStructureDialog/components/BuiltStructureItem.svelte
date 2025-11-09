@@ -37,7 +37,7 @@
     display: flex;
     flex-direction: column;
     background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     opacity: 0.75;
     
@@ -77,13 +77,13 @@
           background: rgba(255, 255, 255, 0.08);
           padding: var(--space-4) var(--space-8);
           border-radius: var(--radius-sm);
-          border: 1px solid var(--border-default);
+          border: 1px solid var(--border-subtle);
         }
       }
     }
     
     .structure-built-content {
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--border-faint);
       
       // Remove the card's own border and header since we're using our own
       :global(.structure-card) {

@@ -58,7 +58,7 @@
     padding: var(--space-10);
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-faint);
     transition: all 0.2s ease;
     
     &:hover {
@@ -84,7 +84,7 @@
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;

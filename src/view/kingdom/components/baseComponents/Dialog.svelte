@@ -137,7 +137,7 @@
   
   .dialog-header {
     padding: .5rem var(--space-24);
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: 1px solid var(--border-subtle);
     background: var(--bg-base);
     display: flex;
     justify-content: space-between;
@@ -178,7 +178,7 @@
   
   .dialog-footer {
     padding: var(--space-16);
-    border-top: 1px solid var(--border-default);
+    border-top: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -197,7 +197,7 @@
   
   .dialog-button {
     padding: var(--space-8) var(--space-16);
-    border: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);

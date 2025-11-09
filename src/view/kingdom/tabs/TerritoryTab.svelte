@@ -548,7 +548,7 @@
          select {
             padding: var(--space-4) var(--space-8);
             background: var(--bg-subtle);
-            border: 1px solid var(--border-secondary);
+            border: 1px solid var(--border-default);
             border-radius: var(--radius-md);
             color: var(--text-primary);
             
@@ -570,7 +570,7 @@
          padding: var(--space-4);
          background: rgba(0, 0, 0, 0.3);
          border-radius: var(--radius-xl);
-         border: 1px solid rgba(255, 255, 255, 0.2);
+         border: 1px solid var(--border-default);
       }
       
       .radio-option {
@@ -693,7 +693,7 @@
          td {
             padding: var(--space-6) var(--space-12);
             color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-faint);
             
             &.hex-id {
                font-weight: var(--font-weight-semibold);

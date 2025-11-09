@@ -140,7 +140,7 @@
     width: 100%;
     padding: var(--space-16);
     padding-right: var(--space-24);
-    border: 1px solid var(--border-default, #3a3a3d);
+    border: 1px solid var(--border-subtle, #3a3a3d);
     border-radius: var(--radius-sm, 4px);
     background: var(--color-gray-900, #3f3f46);
     color: transparent;

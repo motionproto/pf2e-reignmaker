@@ -487,7 +487,7 @@
     
     padding: var(--space-24);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--border-secondary);
+    border: 1px solid var(--border-default);
     
     h2 {
       margin: 0 0 var(--space-16) 0;
@@ -528,7 +528,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-12);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-faint);
     
     i {
       font-size: var(--font-2xl);
@@ -563,7 +563,7 @@
     padding: var(--space-12) var(--space-16);
     background: var(--bg-surface);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-faint);
     color: var(--text-secondary);
     font-size: var(--font-md);
     font-style: normal;
@@ -588,7 +588,7 @@
     );
     padding: var(--space-8);
     border-radius: var(--radius-lg);
-    border: 1px solid color-mix(in srgb, var(--terrain-color) 30%, rgba(255, 255, 255, 0.1));
+    border: 1px solid color-mix(in srgb, var(--terrain-color) 30%, var(--border-subtle));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -603,7 +603,7 @@
         color-mix(in srgb, var(--terrain-color) 70%, rgba(0, 0, 0, 0.2)),
         color-mix(in srgb, var(--terrain-color) 55%, rgba(0, 0, 0, 0.15))
       );
-      border-color: color-mix(in srgb, var(--terrain-color) 80%, rgba(255, 255, 255, 0.3));
+      border-color: color-mix(in srgb, var(--terrain-color) 80%, var(--border-medium));
     }
     
     .terrain-value {
@@ -637,7 +637,7 @@
   }
   
   .worksite-box {
-    border: 2px solid var(--border-secondary);
+    border: 2px solid var(--border-default);
     border-radius: var(--radius-xl);
     overflow: hidden;
     background: transparent;
@@ -655,7 +655,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-faint);
   }
 
   .worksite-title {
@@ -697,7 +697,7 @@
     background: var(--bg-surface);
     padding: var(--space-16);
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border-secondary);
+    border: 1px solid var(--border-default);
     
     .phase-header {
       display: flex;
@@ -705,7 +705,7 @@
       gap: var(--space-12);
       padding-bottom: var(--space-16);
       margin-bottom: var(--space-16);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-faint);
     }
     
     .phase-icon {
@@ -731,7 +731,7 @@
       line-height: 1;
       padding: var(--space-4) var(--space-8);
       background: var(--bg-elevated);
-      border: 1px solid var(--border-secondary);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       align-self: center;
     }

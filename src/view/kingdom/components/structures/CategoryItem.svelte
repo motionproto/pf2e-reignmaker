@@ -44,12 +44,12 @@
     gap: var(--space-12);
     text-align: left;
     min-height: fit-content;
-    border-color: var(--border-subtle);
+    border-color: var(--border-faint);
     position: relative;
     
     &:hover {
       background: rgba(0, 0, 0, 0.3);
-      border-color: var(--border-default);
+      border-color: var(--border-subtle);
     }
     
     &.selected {
@@ -82,12 +82,12 @@
     &.unavailable {
       opacity: 0.5;
       background: rgba(0, 0, 0, 0.3);
-      border-color: var(--border-subtle);
+      border-color: var(--border-faint);
       
       &:hover {
         opacity: 0.65;
         background: rgba(0, 0, 0, 0.25);
-        border-color: var(--border-default);
+        border-color: var(--border-subtle);
       }
       
       .category-icon {
@@ -148,7 +148,7 @@
       align-items: center;
       padding: var(--space-2) var(--space-8);
       background: rgba(128, 128, 128, 0.15);
-      border: 1px solid rgba(128, 128, 128, 0.3);
+      border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       color: rgba(180, 180, 180, 0.9);
       font-size: var(--font-xs);

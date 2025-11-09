@@ -100,7 +100,7 @@
 
   .dialog-content {
     background: var(--color-gray-900, #1f1f23);
-    border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
+    border: 1px solid var(--border-strong, var(--border-default));
     border-radius: 8px;
     max-width: 600px;
     width: 90%;
@@ -115,7 +115,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    border-bottom: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border-bottom: 1px solid var(--border-medium, var(--border-subtle));
 
     h2 {
       margin: 0;
@@ -144,7 +144,7 @@
     gap: 10px;
     padding: 16px 20px;
     background: rgba(139, 92, 246, 0.1);
-    border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+    border-bottom: 1px solid var(--border-special-subtle);
 
     i {
       color: var(--color-purple, #8b5cf6);
@@ -170,7 +170,7 @@
 
   .settlement-item {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border: 1px solid var(--border-medium, var(--border-subtle));
     border-radius: 6px;
     padding: 16px;
     cursor: pointer;
@@ -231,7 +231,7 @@
     gap: 12px;
     padding: 20px;
     background: rgba(249, 115, 22, 0.1);
-    border: 1px solid rgba(249, 115, 22, 0.2);
+    border: 1px solid var(--border-accent-subtle);
     border-radius: 6px;
     color: var(--text-secondary, #a0a0a0);
 
@@ -248,7 +248,7 @@
 
   .dialog-footer {
     padding: 16px 20px;
-    border-top: 1px solid var(--border-medium, rgba(255, 255, 255, 0.1));
+    border-top: 1px solid var(--border-medium, var(--border-subtle));
     display: flex;
     justify-content: flex-end;
   }

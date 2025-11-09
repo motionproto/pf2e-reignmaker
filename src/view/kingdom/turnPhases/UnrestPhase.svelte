@@ -618,7 +618,7 @@
          align-items: center;
          padding: var(--space-4) var(--space-8);
          background: rgba(245, 158, 11, 0.1);
-         border: 1px solid rgba(245, 158, 11, 0.3);
+         border: 1px solid var(--border-accent-subtle);
          border-radius: var(--radius-sm);
          color: var(--color-amber-light);
          font-size: var(--font-lg);
@@ -771,7 +771,7 @@
       background: rgba(0, 0, 0, 0.05);
       padding: var(--space-20);
       border-radius: var(--radius-md);
-      border: 1px solid var(--border-subtle);
+      border: 1px solid var(--border-faint);
    }
    
    .incident-header {
@@ -839,7 +839,7 @@
          rgba(24, 24, 27, 0.6),
          rgba(31, 31, 35, 0.4));
       border-radius: var(--radius-lg);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
    }
    
    .roll-result {

@@ -32,31 +32,31 @@
     
     &.badge-crit-success {
       background: rgba(34, 197, 94, 0.15);
-      border-color: rgba(34, 197, 94, 0.4);
+      border-color: var(--border-success);
       color: var(--color-green);
     }
     
     &.badge-success {
       background: rgba(34, 197, 94, 0.1);
-      border-color: rgba(34, 197, 94, 0.3);
+      border-color: var(--border-success-subtle);
       color: var(--color-green-light);
     }
     
     &.badge-failure {
       background: rgba(249, 115, 22, 0.1);
-      border-color: rgba(249, 115, 22, 0.3);
+      border-color: var(--border-accent-subtle);
       color: var(--color-orange);
     }
     
     &.badge-crit-failure {
       background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.4);
+      border-color: var(--border-primary);
       color: var(--color-red);
     }
     
     &.badge-neutral {
       background: rgba(100, 116, 139, 0.1);
-      border-color: rgba(100, 116, 139, 0.3);
+      border-color: var(--border-default);
       color: var(--text-secondary);
     }
   }

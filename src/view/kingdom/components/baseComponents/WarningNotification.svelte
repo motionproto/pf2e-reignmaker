@@ -55,6 +55,6 @@
       font-weight: var(--font-weight-semibold);
       color: var(--color-amber-light);
       padding-top: var(--space-4);
-      border-top: 1px solid rgba(245, 158, 11, 0.3);
+      border-top: 1px solid var(--border-accent-subtle);
    }
 </style>

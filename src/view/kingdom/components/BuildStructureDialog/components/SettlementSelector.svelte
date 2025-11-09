@@ -35,7 +35,7 @@
     .settlement-dropdown {
       padding: var(--space-6) var(--space-12);
       background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--border-default);
+      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-size: var(--font-md);

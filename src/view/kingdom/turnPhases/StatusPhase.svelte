@@ -396,7 +396,7 @@ async function initializePhase() {
       justify-content: space-between;
       padding: var(--space-12) 0.9375rem;
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(251, 191, 36, 0.2);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       gap: var(--space-16);
       transition: all 0.2s ease;
@@ -406,7 +406,7 @@ async function initializePhase() {
 
          &:hover {
             background: rgba(251, 191, 36, 0.15);
-            border-color: rgba(251, 191, 36, 0.5);
+            border-color: var(--border-accent-medium);
             transform: translateX(0.25rem);
          }
 
@@ -452,7 +452,7 @@ async function initializePhase() {
    .tier-badge {
       padding: var(--space-2) var(--space-8);
       background: rgba(251, 191, 36, 0.2);
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-sm);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
@@ -480,7 +480,7 @@ async function initializePhase() {
       gap: var(--space-10);
       padding: var(--space-10) var(--space-12);
       background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.2);
+      border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       font-size: var(--font-md);
       color: var(--text-secondary);

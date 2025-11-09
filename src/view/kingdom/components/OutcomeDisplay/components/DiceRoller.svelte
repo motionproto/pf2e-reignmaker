@@ -85,7 +85,7 @@
     padding: var(--space-12) var(--space-16);
     margin-bottom: var(--space-8);
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid var(--border-subtle);
+    border: 2px solid var(--border-faint);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-md);
@@ -102,7 +102,7 @@
     
     &:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: var(--border-default);
+      border-color: var(--border-subtle);
       transform: translateY(-0.125rem);
       box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
     }
