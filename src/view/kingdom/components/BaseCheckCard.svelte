@@ -306,6 +306,9 @@
       <!-- Description -->
       <CheckCardDescription {description} />
       
+      <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
+      <slot name="pre-completion-content"></slot>
+      
       <!-- Completion notifications (actions only, stacked results from all players) -->
       {#if showCompletions}
         <CompletionNotifications actionId={id} />

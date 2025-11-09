@@ -2,6 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import BaseCheckCard from '../../../kingdom/components/BaseCheckCard.svelte';
   import CommerceTierInfo from '../../../kingdom/components/CheckCard/components/CommerceTierInfo.svelte';
+  import SectionHeader from './SectionHeader.svelte';
   import { getCustomResolutionComponent } from '../../../../controllers/actions/implementations';
   import type { PlayerAction } from '../../../../controllers/actions/action-types';
 
@@ -63,11 +64,8 @@
 {#if actions.length > 0}
   <div class="action-category">
     <div class="category-header">
-      <i class="fas {category.icon} category-icon"></i>
-      <div class="category-info">
-        <h3 class="category-name">{category.name}</h3>
-        <p class="category-description">{category.description}</p>
-      </div>
+      <SectionHeader icon={category.icon} name={category.name} />
+      <p class="category-description">{category.description}</p>
     </div>
 
     <div class="actions-list">
@@ -149,8 +147,8 @@
             on:primary={handlePrimary}
             on:cancel={(e) => handleCancel(e.detail.checkId)}
           >
-            <div slot="pre-skill-content">
-              {#if action.id === 'purchase-resources'}
+            <div slot="pre-completion-content">
+              {#if action.id === 'purchase-resources' || action.id === 'sell-surplus'}
                 <CommerceTierInfo />
               {/if}
             </div>
@@ -171,27 +169,9 @@
 
   .category-header {
     display: flex;
-    gap: 15px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 20px;
-    align-items: start;
-
-    .category-icon {
-      font-size: 32px;
-      color: var(--color-amber);
-      margin-top: 3px;
-    }
-
-    .category-info {
-      flex: 1;
-    }
-
-    .category-name {
-      margin: 0 0 5px 0;
-      font-size: var(--font-3xl);
-      font-weight: var(--font-weight-semibold);
-      line-height: 1.3;
-      color: var(--color-amber);
-    }
 
     .category-description {
       margin: 0;

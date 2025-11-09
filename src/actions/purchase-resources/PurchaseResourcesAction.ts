@@ -14,7 +14,9 @@ import {
   type ResolveResult
 } from '../shared/ActionHelpers';
 import { applyResourceChanges } from '../shared/InlineActionHelpers';
-import { hasCommerceStructure } from '../../services/commerce/tradeRates';
+import { hasCommerceStructure, getBestTradeRates } from '../../services/commerce/tradeRates';
+import { get } from 'svelte/store';
+import { kingdomData } from '../../stores/KingdomStore';
 
 // Import the Svelte component (will be passed to OutcomeDisplay)
 import PurchaseResourceSelector from '../../view/kingdom/components/OutcomeDisplay/components/PurchaseResourceSelector.svelte';
@@ -28,6 +30,18 @@ export const PurchaseResourcesAction = {
       return {
         met: false,
         reason: 'Requires a commerce structure'
+      };
+    }
+    
+    // Must have enough gold for at least one transaction
+    const currentGold = kingdomData.resources?.gold || 0;
+    const tradeRates = getBestTradeRates();
+    const goldCostPerTransaction = tradeRates.buy.goldGain;
+    
+    if (currentGold < goldCostPerTransaction) {
+      return {
+        met: false,
+        reason: `Requires at least ${goldCostPerTransaction} gold to purchase resources (current: ${currentGold})`
       };
     }
     

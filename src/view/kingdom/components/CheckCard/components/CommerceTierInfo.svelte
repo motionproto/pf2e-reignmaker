@@ -57,47 +57,30 @@
   })();
 </script>
 
-<div class="commerce-tier-info">
-  <div class="tier-label">Commerce Structures (Trade Rates):</div>
-  <div class="tier-badges">
-    {#each tiers as tier}
-      <div 
-        class="tier-badge"
-        class:active={currentTier === tier.tier}
-      >
-        <span class="tier-name">{tier.name}</span>
-        <span class="tier-ratio">{tier.ratio}</span>
-        {#if currentTier === tier.tier}
-          <i class="fas fa-check-circle"></i>
-        {/if}
-      </div>
-    {/each}
-  </div>
-  {#if currentTier === 0}
-    <div class="no-commerce-notice">
-      <i class="fas fa-info-circle"></i>
-      <span>No commerce structure built. Build one to enable trading!</span>
+<div class="tier-badges">
+  {#each tiers as tier}
+    <div 
+      class="tier-badge"
+      class:active={currentTier === tier.tier}
+    >
+      <span class="tier-name">{tier.name}</span>
+      <span class="tier-ratio">{tier.ratio}</span>
+      {#if currentTier === tier.tier}
+        <i class="fas fa-check-circle"></i>
+      {/if}
     </div>
-  {/if}
+  {/each}
 </div>
+{#if currentTier === 0}
+  <div class="no-commerce-notice">
+    <i class="fas fa-info-circle"></i>
+    <span>No commerce structure built. Build one to enable trading!</span>
+  </div>
+{/if}
 
 <style lang="scss">
-  .commerce-tier-info {
-    margin: 12px 0 16px 0;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-  }
-  
-  .tier-label {
-    font-size: var(--font-sm);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-  }
-  
   .tier-badges {
+    margin: 12px 0;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;

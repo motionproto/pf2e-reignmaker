@@ -43,6 +43,5 @@
       "description": "No buyers found this turn",
       "modifiers": []
     }
-  },
-  "special": "Trade a single resource type for gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, trade in sets of 3). Commerce tier determines rate: T1 Market Square (2:1) \u2192 T2 Bazaar (3:2) \u2192 T3 Merchant Guild (1:1) \u2192 T4 Imperial Bank (1:2) \u2192 Bonus Tier (1:3, critical success only)"
+  }
 }
