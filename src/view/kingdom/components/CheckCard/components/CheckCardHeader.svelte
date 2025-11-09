@@ -194,13 +194,13 @@
       flex-shrink: 0;
       
       &.ongoing {
-        background: rgba(251, 191, 36, 0.2);
+        background: var(--surface-accent-high);
         color: var(--color-amber-light);
         border: 1px solid var(--color-amber);
       }
       
       &.resolved {
-        background: rgba(34, 197, 94, 0.2);
+        background: var(--surface-success-high);
         color: var(--color-green);
         border: 1px solid var(--color-green-border);
       }

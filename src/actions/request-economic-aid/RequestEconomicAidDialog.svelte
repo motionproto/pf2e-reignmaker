@@ -157,7 +157,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-higher);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -175,10 +175,10 @@
   }
   
   .dialog-content {
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 60px var(--overlay-high);
     width: 700px;
     max-width: 90vw;
     max-height: 80vh;
@@ -255,12 +255,12 @@
     }
     
     .cancel-button {
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
       
       &:hover:not(:disabled) {
-        background: var(--bg-overlay);
+        background: var(--surface-low);
         color: var(--text-primary);
       }
     }
@@ -285,7 +285,7 @@
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    background: rgba(59, 130, 246, 0.15);
+    background: var(--surface-info);
     border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-md);
     margin-bottom: 16px;
@@ -363,7 +363,7 @@
     }
     
     &.selected {
-      background: rgba(59, 130, 246, 0.15);
+      background: var(--surface-info);
       border-left: 3px solid var(--color-primary);
       padding-left: 13px;
     }
@@ -382,7 +382,7 @@
         border-radius: var(--radius-sm);
         font-size: var(--font-sm);
         font-weight: var(--font-weight-medium);
-        background: var(--bg-subtle);
+        background: var(--surface);
         border: 1px solid var(--border-medium);
         color: var(--text-primary);
         

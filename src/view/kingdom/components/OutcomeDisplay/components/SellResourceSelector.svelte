@@ -212,7 +212,7 @@
 
 <style lang="scss">
   .sell-resource-selector {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -264,20 +264,20 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-12);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--color-amber, #fbbf24);
       transform: translateY(-0.125rem);
     }
     
     &.selected {
-      background: rgba(251, 191, 36, 0.2);
+      background: var(--surface-accent-high);
       border-color: var(--color-amber, #fbbf24);
       border-width: 3px;
     }
@@ -305,7 +305,7 @@
     flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-12);
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-sm);
     
@@ -333,7 +333,7 @@
         width: 2rem;
         height: 2rem;
         padding: 0;
-        background: rgba(251, 191, 36, 0.2);
+        background: var(--surface-accent-high);
         border: 1px solid var(--color-amber, #fbbf24);
         border-radius: var(--radius-sm);
         color: var(--color-amber, #fbbf24);
@@ -346,7 +346,7 @@
         }
         
         &:hover:not(:disabled) {
-          background: rgba(251, 191, 36, 0.3);
+          background: var(--surface-accent-higher);
           transform: scale(1.05);
         }
         
@@ -364,7 +364,7 @@
     input {
       width: 5rem;
       padding: var(--space-6) var(--space-10);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
@@ -398,7 +398,7 @@
     align-items: center;
     gap: var(--space-6);
     padding: var(--space-6) var(--space-10);
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--surface-primary-low);
     border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);

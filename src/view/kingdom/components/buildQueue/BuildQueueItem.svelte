@@ -56,7 +56,7 @@
     align-items: flex-start;
     gap: var(--space-12);
     padding: var(--space-10);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-faint);
     transition: all 0.2s ease;

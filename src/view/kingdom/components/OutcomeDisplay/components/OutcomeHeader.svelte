@@ -88,7 +88,7 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-12) var(--space-16);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border-bottom: 1px solid var(--border-faint);
     
     .resolution-header-left {
@@ -123,7 +123,7 @@
         align-items: center;
         gap: var(--space-6);
         padding: var(--space-6) var(--space-12);
-        background: rgba(239, 68, 68, 0.15);
+        background: var(--surface-primary);
         border: 1px solid var(--border-primary);
         border-radius: var(--radius-md);
         color: var(--color-red);
@@ -138,7 +138,7 @@
         }
         
         &:hover:not(:disabled) {
-          background: rgba(239, 68, 68, 0.25);
+          background: var(--surface-primary-high);
           border-color: var(--border-primary-medium);
           transform: translateY(-0.0625rem);
         }

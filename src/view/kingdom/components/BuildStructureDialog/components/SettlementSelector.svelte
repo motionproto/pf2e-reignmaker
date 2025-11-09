@@ -44,13 +44,13 @@
       
       &:hover {
         border-color: var(--border-strong);
-        background: rgba(0, 0, 0, 0.5);
+        background: var(--overlay-high);
       }
       
       &:focus {
         outline: none;
         border-color: var(--color-amber);
-        box-shadow: 0 0 0 0.125rem rgba(251, 191, 36, 0.2);
+        box-shadow: 0 0 0 0.125rem var(--surface-accent-high);
       }
     }
   }

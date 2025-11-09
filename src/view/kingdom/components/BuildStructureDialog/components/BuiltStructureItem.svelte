@@ -36,7 +36,7 @@
   .structure-built {
     display: flex;
     flex-direction: column;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     opacity: 0.75;
@@ -50,7 +50,7 @@
       transition: background 0.2s ease;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--hover-low);
       }
       
       .structure-built-name {

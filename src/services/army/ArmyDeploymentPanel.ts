@@ -336,7 +336,7 @@ export class ArmyDeploymentPanel {
       padding: 16px;
       min-width: 320px;
       max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 12px var(--overlay-high);
       color: white;
       font-family: system-ui, -apple-system, sans-serif;
     `;
@@ -354,7 +354,7 @@ export class ArmyDeploymentPanel {
       <div id="army-list" style="margin-bottom: 12px; max-height: 400px; overflow-y: auto;">
         <!-- Armies will be added here -->
       </div>
-      <div id="movement-info" style="margin-bottom: 12px; padding: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; font-size: 12px; color: #999; display: none;">
+      <div id="movement-info" style="margin-bottom: 12px; padding: 8px; background: var(--hover-low); border-radius: 4px; font-size: 12px; color: #999; display: none;">
         <!-- Movement info will be shown here -->
       </div>
       <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #D2691E;">
@@ -429,7 +429,7 @@ export class ArmyDeploymentPanel {
         armyDiv.style.cssText = `
           padding: 12px;
           margin-bottom: 8px;
-          background: ${isSelected ? 'rgba(210, 105, 30, 0.3)' : 'rgba(255, 255, 255, 0.05)'};
+          background: ${isSelected ? 'rgba(210, 105, 30, 0.3)' : 'var(--hover-low)'};
           border: 2px solid ${isSelected ? '#D2691E' : 'transparent'};
           border-radius: 4px;
           cursor: pointer;
@@ -455,13 +455,13 @@ export class ArmyDeploymentPanel {
         
         armyDiv.addEventListener('mouseenter', () => {
           if (!isSelected) {
-            (armyDiv as HTMLElement).style.background = 'rgba(255, 255, 255, 0.1)';
+            (armyDiv as HTMLElement).style.background = 'var(--hover)';
           }
         });
         
         armyDiv.addEventListener('mouseleave', () => {
           if (!isSelected) {
-            (armyDiv as HTMLElement).style.background = 'rgba(255, 255, 255, 0.05)';
+            (armyDiv as HTMLElement).style.background = 'var(--hover-low)';
           }
         });
         
@@ -608,7 +608,7 @@ export class ArmyDeploymentPanel {
         </h3>
       </div>
       <div style="padding: 20px;">
-        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <div style="flex: 1;">
               <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Outcome</div>
@@ -710,7 +710,7 @@ export class ArmyDeploymentPanel {
         </h3>
       </div>
       <div style="padding: 20px;">
-        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
             <div style="flex: 1;">
               <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Outcome</div>

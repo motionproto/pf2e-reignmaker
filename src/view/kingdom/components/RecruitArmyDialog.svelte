@@ -206,7 +206,7 @@
   .form-group select {
     width: 100%;
     padding: var(--space-10);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -233,7 +233,7 @@
   .form-group select:focus {
     outline: none;
     border-color: var(--color-amber);
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-high);
   }
   
   .help-text {
@@ -279,7 +279,7 @@
   
   .army-type-card {
     padding: var(--space-12);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border: 2px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     text-align: center;
@@ -291,12 +291,12 @@
   }
   
   .army-type-card:hover {
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-high);
     border-color: var(--border-highlight);
   }
   
   .army-type-option input[type="radio"]:checked + .army-type-card {
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border-color: var(--color-amber);
     box-shadow: 0 0 0 1px var(--color-amber);
   }

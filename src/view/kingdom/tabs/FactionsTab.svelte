@@ -68,7 +68,7 @@
          display: flex;
          align-items: center;
          gap: var(--space-12);
-         background: rgba(0, 0, 0, 0.2);
+         background: var(--overlay-low);
          padding: var(--space-12) var(--space-16);
          border-radius: var(--radius-lg);
          border: 1px solid var(--border-subtle);
@@ -97,7 +97,7 @@
       .search-input,
       .filter-select {
          padding: var(--space-8);
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border: 1px solid var(--border-default);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
@@ -116,7 +116,7 @@
    .factions-table-container {
       flex: 1;
       overflow: auto;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
    }
@@ -126,7 +126,7 @@
       border-collapse: collapse;
       
       thead {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          position: sticky;
          top: 0;
          z-index: 1;
@@ -149,7 +149,7 @@
             border-bottom: 1px solid var(--border-faint);
             
             &:hover:not(.create-row) {
-               background: rgba(255, 255, 255, 0.05);
+               background: var(--hover-low);
             }
             
             &.create-row {
@@ -203,7 +203,7 @@
       text-align: left;
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
@@ -249,7 +249,7 @@
    
    .clock-btn {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -257,7 +257,7 @@
       transition: all 0.2s;
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
@@ -283,14 +283,14 @@
       color: var(--color-text-dark-primary, #b5b3a4);
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
    .clock-max-input {
       width: 3rem;
       padding: var(--space-4);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -298,7 +298,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
       }
    }
    
@@ -310,7 +310,7 @@
    
    .inline-input {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -318,20 +318,20 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
       }
    }
    
    .attitude-select {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
       }
    }
    
@@ -394,7 +394,7 @@
       
       .page-btn {
          padding: var(--space-8) var(--space-16);
-         background: rgba(0, 0, 0, 0.2);
+         background: var(--overlay-low);
          border: 1px solid var(--border-subtle);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
@@ -402,7 +402,7 @@
          transition: all 0.2s;
          
          &:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--hover);
          }
          
          &:disabled {

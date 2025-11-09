@@ -325,14 +325,14 @@
             padding: var(--space-8) var(--space-16);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
-            background: var(--bg-elevated);
+            background: var(--surface-lower);
             color: var(--text-primary);
             cursor: pointer;
             transition: var(--transition-base);
             font-size: var(--font-md);
             
             &:hover {
-               background: var(--bg-overlay);
+               background: var(--surface-low);
                border-color: var(--color-primary);
             }
             
@@ -345,7 +345,7 @@
             color: var(--color-danger);
             
             &:hover {
-               background: var(--bg-overlay);
+               background: var(--surface-low);
                border-color: var(--color-danger);
             }
          }

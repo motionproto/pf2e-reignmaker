@@ -327,7 +327,7 @@
    
    .settlement-details-panel {
       flex: 1;
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--overlay-lower);
       border-radius: var(--radius-lg);
       display: flex;
       flex-direction: column;
@@ -336,7 +336,7 @@
    
    .panel-header {
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-bottom: 1px solid var(--border-subtle);
       
       .settlement-title {
@@ -362,7 +362,7 @@
          .name-input {
             flex: 1;
             padding: var(--space-8);
-            background: var(--bg-elevated);
+            background: var(--surface-lower);
             border: 1px solid var(--color-primary);
             border-radius: var(--radius-lg);
             color: var(--text-accent);
@@ -372,7 +372,7 @@
             &:focus {
                outline: none;
                border-color: var(--color-primary);
-               background: var(--bg-overlay);
+               background: var(--surface-low);
             }
          }
          
@@ -386,7 +386,7 @@
             font-size: var(--font-sm);
             
             &:hover {
-               background: rgba(255, 255, 255, 0.1);
+               background: var(--hover);
                border-radius: var(--radius-md);
             }
          }
@@ -464,7 +464,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: var(--overlay-higher);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -472,7 +472,7 @@
    }
    
    .modal-dialog {
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-xl);
@@ -509,7 +509,7 @@
          border-radius: var(--radius-md);
          
          &:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--hover);
          }
       }
    }
@@ -568,12 +568,12 @@
    }
    
    .button-secondary {
-      background: var(--bg-subtle);
+      background: var(--surface);
       border: 1px solid var(--color-border);
       color: var(--text-primary);
       
       &:hover:not(:disabled) {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
@@ -621,14 +621,14 @@
       align-items: baseline;
       gap: var(--space-8);
       padding: var(--space-6) var(--space-12);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       cursor: pointer;
       transition: var(--transition-base);
       
       &:hover {
-         background: var(--bg-overlay);
+         background: var(--surface-low);
          border-color: var(--color-primary);
       }
       
@@ -652,7 +652,7 @@
       align-items: center;
       gap: var(--space-8);
       padding: var(--space-6) var(--space-12);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--color-primary);
       border-radius: var(--radius-md);
       
@@ -665,7 +665,7 @@
       .level-input {
          width: 3rem;
          padding: var(--space-4) var(--space-8);
-         background: var(--bg-overlay);
+         background: var(--surface-low);
          border: 1px solid var(--border-subtle);
          border-radius: var(--radius-md);
          color: var(--text-primary);

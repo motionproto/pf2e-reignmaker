@@ -189,7 +189,7 @@
   
   .categories-panel {
     flex: 0 0 21.25rem;
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--overlay-lower);
     border-radius: var(--radius-md);
     padding: var(--space-16);
     overflow-y: auto;
@@ -215,7 +215,7 @@
   
   .progression-panel {
     flex: 1;
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--overlay-lower);
     border-radius: var(--radius-md);
     overflow-y: auto;
     position: relative;
@@ -233,7 +233,7 @@
     padding: var(--space-24);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-subtle);
-    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
     min-height: 5.625rem; // Fixed minimum height to maintain consistent layout
     display: flex;
     align-items: center;

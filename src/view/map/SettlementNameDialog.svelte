@@ -67,7 +67,7 @@
   
   input {
     padding: var(--space-8) var(--space-12);
-    background: var(--bg-base);
+    background: var(--empty);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);
     color: var(--text-primary);
@@ -78,7 +78,7 @@
   input:focus {
     outline: none;
     border-color: var(--border-strong);
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
   }
   
   input::placeholder {

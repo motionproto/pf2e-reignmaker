@@ -107,7 +107,7 @@
   .structure-card-with-build {
     display: flex;
     flex-direction: column;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -115,13 +115,13 @@
     
     &.selected {
       border-color: var(--color-amber);
-      background: rgba(251, 191, 36, 0.1);
-      box-shadow: 0 0 0 0.125rem rgba(251, 191, 36, 0.3);
+      background: var(--surface-accent-low);
+      box-shadow: 0 0 0 0.125rem var(--surface-accent-higher);
     }
     
     &.in-progress {
       pointer-events: none;
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border-color: var(--border-faint);
     }
     
@@ -149,7 +149,7 @@
     transition: background 0.2s ease;
     
     &:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
     }
     
     h4 {
@@ -187,12 +187,12 @@
       
       .tier-badge {
         color: var(--text-secondary);
-        background: rgba(251, 191, 36, 0.1);
+        background: var(--surface-accent-low);
       }
       
       .locked-badge {
         color: var(--text-tertiary);
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--hover-low);
       }
       
       .capacity-badge {
@@ -209,7 +209,7 @@
       
       .build-queue {
         color: var(--color-amber);
-        background: rgba(251, 191, 36, 0.05);
+        background: var(--surface-accent-lower);
       }
     }
   }

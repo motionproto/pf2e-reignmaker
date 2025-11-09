@@ -248,14 +248,14 @@
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
         transform: translateY(-0.125rem);
-        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0.25rem 0.75rem var(--overlay-low);
       }
     }
     
     &.rolled {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-strong);
-      box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 1rem var(--hover-high);
       opacity: 1;
       cursor: default;
     }
@@ -317,8 +317,8 @@
   .critical-success-fame {
     padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
-      rgba(34, 197, 94, 0.2),
-      rgba(34, 197, 94, 0.1));
+      var(--surface-success-high),
+      var(--surface-success-low));
     border: 2px solid var(--border-success-medium);
     border-radius: var(--radius-sm);
     display: flex;

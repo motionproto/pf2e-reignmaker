@@ -63,7 +63,7 @@
   .other-players-actions {
     margin-top: var(--space-10);
     padding: var(--space-10);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-faint);
     
@@ -109,7 +109,7 @@
     
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.125rem 0.5rem var(--overlay);
     }
     
     &.outcome-criticalSuccess {

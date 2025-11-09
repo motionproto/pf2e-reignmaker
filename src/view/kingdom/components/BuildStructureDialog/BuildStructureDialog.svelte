@@ -257,7 +257,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-higher);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -273,7 +273,7 @@
     height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.5rem 2rem var(--overlay-high);
   }
   
   .dialog-header {
@@ -319,7 +319,7 @@
       transition: all 0.2s ease;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         color: var(--text-primary);
       }
     }
@@ -343,7 +343,7 @@
   // Left panel - Categories
   .categories-panel {
     flex: 0 0 21.25rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-right: 1px solid var(--border-subtle);
     padding: var(--space-16);
     overflow-y: auto;
@@ -352,7 +352,7 @@
   // Right panel - Structure selection
   .selection-panel {
     flex: 1;
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--overlay-lower);
     overflow-y: auto;
     position: relative;
   }

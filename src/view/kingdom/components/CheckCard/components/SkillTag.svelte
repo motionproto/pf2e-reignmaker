@@ -46,7 +46,7 @@
       align-items: center;
       gap: var(--space-6);
       padding: var(--space-10) var(--space-16);
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
       cursor: pointer;
@@ -62,7 +62,7 @@
       
       // Secondary button style
       backdrop-filter: blur(0.25rem);
-      box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0.0625rem 0.125rem var(--overlay-lower);
       
       .skill-label {
          color: var(--text-primary);
@@ -129,8 +129,8 @@
          &:hover {
             transform: none;
             border-color: var(--border-strong);
-            background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1);
+            background: var(--hover-low);
+            box-shadow: 0 0.0625rem 0.125rem var(--overlay-lower);
          }
       }
       
@@ -162,7 +162,7 @@
          
          &:hover {
             transform: none;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--hover-low);
          }
       }
    }

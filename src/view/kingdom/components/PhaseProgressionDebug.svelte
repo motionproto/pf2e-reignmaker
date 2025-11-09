@@ -161,7 +161,7 @@
       background: rgba(20, 20, 25, 0.95);
       border: 2px solid var(--color-amber);
       border-radius: var(--radius-lg);
-      box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.25rem 1.25rem var(--overlay-high);
       z-index: 1000;
       display: flex;
       flex-direction: column;
@@ -170,7 +170,7 @@
    
    .debug-header {
       padding: var(--space-12);
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       border-bottom: 1px solid var(--border-medium);
       display: flex;
       align-items: center;
@@ -213,7 +213,7 @@
       display: flex;
       justify-content: space-between;
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-radius: var(--radius-sm);
       
       .label {
@@ -242,13 +242,13 @@
    
    .phase-group {
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-radius: var(--radius-sm);
       border: 1px solid transparent;
       
       &.current {
          border-color: var(--color-amber);
-         background: rgba(251, 191, 36, 0.05);
+         background: var(--surface-accent-lower);
       }
       
       &.complete {
@@ -308,7 +308,7 @@
       padding: var(--space-8) var(--space-12);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-medium);
-      background: rgba(0, 0, 0, 0.5);
+      background: var(--overlay-high);
       color: var(--text-primary);
       cursor: pointer;
       display: flex;
@@ -320,7 +320,7 @@
       transition: all 0.2s ease;
       
       &:hover:not(:disabled) { transform: translateY(-0.0625rem);
-         box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.125rem 0.5rem var(--overlay);
       }
       
       &:disabled {
@@ -333,7 +333,7 @@
          color: var(--color-green);
          
          &:hover:not(:disabled) {
-            background: rgba(34, 197, 94, 0.1);
+            background: var(--surface-success-low);
          }
       }
       
@@ -342,7 +342,7 @@
          color: var(--color-amber);
          
          &:hover:not(:disabled) {
-            background: rgba(251, 191, 36, 0.1);
+            background: var(--surface-accent-low);
          }
       }
       

@@ -84,7 +84,7 @@
     width: 100%;
     padding: var(--space-12) var(--space-16);
     margin-bottom: var(--space-8);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 2px solid var(--border-faint);
     border-radius: var(--radius-md);
     color: var(--text-primary);
@@ -101,10 +101,10 @@
     }
     
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--border-subtle);
       transform: translateY(-0.125rem);
-      box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.25rem 0.75rem var(--overlay);
     }
     
     &:active {
@@ -122,7 +122,7 @@
       font-weight: var(--font-weight-bold);
       color: var(--text-primary);
       padding: var(--space-2) var(--space-8);
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-radius: var(--radius-xs);
     }
     

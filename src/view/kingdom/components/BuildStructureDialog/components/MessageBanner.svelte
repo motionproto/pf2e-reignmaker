@@ -26,13 +26,13 @@
   }
   
   .error-message {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--surface-primary-low);
     border: 1px solid var(--border-primary-subtle);
     color: var(--color-red);
   }
   
   .success-message {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--surface-success-low);
     border: 1px solid var(--border-success-subtle);
     color: var(--color-green);
   }

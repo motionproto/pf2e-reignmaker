@@ -96,15 +96,15 @@
 
 <style lang="scss">
   .structure-card {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: var(--space-16);
     transition: all 0.2s;
     
     &:hover {
-      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
-      background: rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.125rem 0.5rem var(--overlay);
+      background: var(--overlay);
     }
   }
   
@@ -121,7 +121,7 @@
       font-size: var(--font-size-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       padding: var(--space-4) var(--space-8);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-faint);
@@ -149,7 +149,7 @@
     .thumbnail-placeholder {
       width: 6.25rem;
       height: 6.25rem;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-faint);
       border-radius: var(--radius-sm);
       display: flex;
@@ -266,7 +266,7 @@
   .special-note {
     margin-top: var(--space-8);
     padding: var(--space-8);
-    background: rgba(251, 191, 36, 0.05);
+    background: var(--surface-accent-lower);
     border-left: 2px solid var(--color-amber);
     font-size: var(--font-md);
     color: var(--text-accent);

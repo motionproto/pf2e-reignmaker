@@ -643,7 +643,7 @@
          display: flex;
          align-items: center;
          gap: var(--space-12);
-         background: rgba(0, 0, 0, 0.2);
+         background: var(--overlay-low);
          padding: var(--space-12) var(--space-16);
          border-radius: var(--radius-lg);
          border: 1px solid var(--border-subtle);
@@ -685,7 +685,7 @@
       .filter-select {
          padding: var(--space-8) var(--space-12);
          min-height: 2.5rem;
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border: 1px solid var(--border-default);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
@@ -728,7 +728,7 @@
    
    .modifiers-table-container {
       overflow: auto;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
    }
@@ -738,7 +738,7 @@
       border-collapse: collapse;
       
       thead {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          position: sticky;
          top: 0;
          z-index: 1;
@@ -757,7 +757,7 @@
             border-bottom: 1px solid var(--border-faint);
             
             &:hover:not(.create-row) {
-               background: rgba(255, 255, 255, 0.05);
+               background: var(--hover-low);
             }
             
             &.create-row {
@@ -818,7 +818,7 @@
       padding: var(--space-4) var(--space-12);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       
       &.source-event {
          color: #ffa500;
@@ -853,7 +853,7 @@
       display: inline-flex;
       align-items: center;
       padding: var(--space-4) var(--space-12);
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       font-size: var(--font-size-medium, 0.875rem);
@@ -889,7 +889,7 @@
       gap: var(--space-12);
       flex-wrap: wrap;
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-md);
    }
    
@@ -974,7 +974,7 @@
       border-radius: var(--radius-md);
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
@@ -991,7 +991,7 @@
    
    .inline-input {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--color-primary, #5e0000);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -999,7 +999,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
       }
    }
    
@@ -1044,7 +1044,7 @@
       flex-direction: column;
       gap: var(--space-16);
       padding: var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-lg);
    }
    
@@ -1087,7 +1087,7 @@
    .effect-select {
       padding: var(--space-8) var(--space-12);
       min-height: 2.5rem;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -1107,7 +1107,7 @@
    
    .effect-input {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);

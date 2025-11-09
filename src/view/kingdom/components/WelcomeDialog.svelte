@@ -388,7 +388,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: var(--overlay-higher);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -402,9 +402,9 @@
    }
    
    .welcome-dialog {
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border-radius: var(--radius-xl);
-      box-shadow: 0 0.625rem 2.5rem rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.625rem 2.5rem var(--overlay-high);
       max-width: 37.5rem;
       width: 90%;
       max-height: 90vh;
@@ -528,7 +528,7 @@
       width: 100%;
       padding: var(--space-5) 2.5rem var(--space-5) var(--space-6);
       margin-bottom: var(--space-8);
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -558,7 +558,7 @@
       }
       
       option {
-         background: var(--bg-surface);
+         background: var(--surface-lowest);
          color: var(--text-primary);
          padding: var(--space-4);
          line-height: var(--line-height-relaxed);
@@ -583,7 +583,7 @@
       justify-content: flex-start;
       gap: var(--space-16);
       padding: var(--space-24) var(--space-16);
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border: 2px solid var(--border-default);
       border-radius: var(--radius-xl);
       cursor: pointer;
@@ -596,21 +596,21 @@
       
       &.available {
          border-color: var(--border-medium);
-         background: var(--bg-subtle);
+         background: var(--surface);
          color: rgba(255, 255, 255, 0.9);
          
          &:hover {
             border-color: var(--color-primary);
-            background: var(--bg-surface);
+            background: var(--surface-lowest);
             transform: translateY(-0.125rem);
-            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0.25rem 0.75rem var(--overlay);
          }
       }
       
       &.unavailable {
          opacity: 0.4;
          cursor: not-allowed;
-         background: rgba(0, 0, 0, 0.2);
+         background: var(--overlay-low);
          border-color: var(--border-faint);
          
          &:hover {
@@ -684,7 +684,7 @@
    }
    
    .info-box {
-      background: var(--bg-base);
+      background: var(--empty);
       padding: var(--space-16);
       border-radius: var(--radius-lg);
       margin-top: 0;
@@ -757,7 +757,7 @@
    
    .dialog-footer {
       padding: var(--space-24);
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border-top: 1px solid var(--border-faint);
       display: flex;
       justify-content: flex-end;
@@ -782,17 +782,17 @@
          
          &:hover {
             transform: translateY(-0.0625rem);
-            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0.25rem 0.75rem var(--overlay);
          }
       }
       
       &.btn-secondary {
-         background: var(--bg-subtle);
+         background: var(--surface);
          color: var(--text-secondary);
          border: 1px solid var(--border-default);
          
          &:hover {
-            background: var(--bg-surface);
+            background: var(--surface-lowest);
             color: var(--text-primary);
          }
       }

@@ -140,7 +140,7 @@
    }
    
    .stat-value.editable:hover {
-      background: var(--bg-subtle);
+      background: var(--surface);
       padding: var(--space-2) var(--space-8);
    }
    
@@ -171,7 +171,7 @@
       padding: var(--space-4) var(--space-8);
       border: 1px solid var(--border-primary);
       border-radius: var(--radius-md);
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       color: var(--text-primary);
       font-size: var(--font-md);
       font-weight: var(--font-weight-bold);
@@ -199,7 +199,7 @@
       width: 1.5rem;
       height: 1.5rem;
       border: 1px solid var(--border-subtle);
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;

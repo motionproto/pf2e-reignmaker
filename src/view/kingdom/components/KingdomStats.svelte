@@ -483,7 +483,7 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: var(--bg-base);
+    background-color: var(--empty);
     border-radius: var(--radius-xl);
     overflow: hidden;
     color: var(--text-primary);
@@ -569,7 +569,7 @@
    }
 
   .stat-group-card {
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
     border-radius: var(--radius-xl);
     padding: 0 0 var(--space-8) 0;
     box-shadow: var(--shadow-card);
@@ -608,7 +608,7 @@
   
   .faction-select {
     padding: var(--space-4) var(--space-8);
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: var(--text-primary);
@@ -637,7 +637,7 @@
 
   /* Zebra striping for better row differentiation */
   .stat-item:nth-child(even) {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--overlay-lower);
   }
 
   .stat-item label,
@@ -675,7 +675,7 @@
     padding: var(--space-4) var(--space-8);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     color: var(--text-primary);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
@@ -695,7 +695,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-8);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     padding: var(--space-8);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-subtle);
@@ -771,7 +771,7 @@
   /* Custom Scrollbar - Dark Theme */
   .kingdom-stats-scrollable {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-primary) var(--bg-surface);
+    scrollbar-color: var(--color-primary) var(--surface-lowest);
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar {
@@ -779,7 +779,7 @@
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar-track {
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     border-radius: var(--radius-full);
   }
 

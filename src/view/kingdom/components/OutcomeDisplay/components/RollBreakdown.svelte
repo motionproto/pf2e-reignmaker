@@ -56,7 +56,7 @@
 
 <style lang="scss">
   .roll-breakdown {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-faint);
     overflow: hidden;
@@ -75,7 +75,7 @@
       transition: background var(--transition-fast);
       
       &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--hover-low);
       }
       
       .roll-result-large {
@@ -116,7 +116,7 @@
     
     .modifier-breakdown {
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-top: 1px solid var(--border-faint);
       display: flex;
       flex-direction: column;
@@ -147,7 +147,7 @@
         }
         
         &.total {
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--hover-low);
           border: 1px solid var(--border-medium);
           margin-top: var(--space-4);
           

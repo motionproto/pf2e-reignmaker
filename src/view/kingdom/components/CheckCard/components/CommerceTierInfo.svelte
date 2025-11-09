@@ -91,7 +91,7 @@
     align-items: center;
     gap: var(--space-6);
     padding: var(--space-6) var(--space-12);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);
@@ -99,7 +99,7 @@
     transition: all 0.2s ease;
     
     &.active {
-      background: rgba(34, 197, 94, 0.15);
+      background: var(--surface-success);
       border-color: var(--color-green);
       color: var(--color-green);
       
@@ -125,7 +125,7 @@
     gap: var(--space-8);
     margin-top: var(--space-8);
     padding: var(--space-8) var(--space-12);
-    background: rgba(245, 158, 11, 0.1);
+    background: var(--surface-accent-low);
     border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);

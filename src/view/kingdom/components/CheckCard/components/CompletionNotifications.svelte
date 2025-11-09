@@ -119,7 +119,7 @@
   .completion-notifications {
     margin-bottom: var(--space-16);
     padding: var(--space-12);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-medium);
   }

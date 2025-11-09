@@ -31,13 +31,13 @@
     border: 1px solid;
     
     &.badge-crit-success {
-      background: rgba(34, 197, 94, 0.15);
+      background: var(--surface-success);
       border-color: var(--border-success);
       color: var(--color-green);
     }
     
     &.badge-success {
-      background: rgba(34, 197, 94, 0.1);
+      background: var(--surface-success-low);
       border-color: var(--border-success-subtle);
       color: var(--color-green-light);
     }
@@ -49,7 +49,7 @@
     }
     
     &.badge-crit-failure {
-      background: rgba(239, 68, 68, 0.15);
+      background: var(--surface-primary);
       border-color: var(--border-primary);
       color: var(--color-red);
     }

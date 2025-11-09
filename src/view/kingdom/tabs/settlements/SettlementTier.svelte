@@ -42,7 +42,7 @@
       
       .tier-select {
          padding: var(--space-4) var(--space-12);
-         background: var(--bg-elevated);
+         background: var(--surface-lower);
          border: 1px solid var(--border-subtle);
          border-radius: var(--radius-md);
          color: var(--text-primary);
@@ -58,7 +58,7 @@
          -moz-appearance: none;
          
          &:hover {
-            background: var(--bg-overlay);
+            background: var(--surface-low);
             border-color: var(--color-primary);
          }
          

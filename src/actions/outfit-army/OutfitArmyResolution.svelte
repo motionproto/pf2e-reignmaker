@@ -149,7 +149,7 @@
 <style lang="scss">
   .outfit-army-resolution {
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: 6px;
     border: 1px solid var(--border-subtle);
   }
@@ -172,7 +172,7 @@
 
   .outcome-badge {
     padding: 0.25rem 0.75rem;
-    background: rgba(34, 197, 94, 0.2);
+    background: var(--surface-success-high);
     border: 1px solid var(--border-success);
     border-radius: 12px;
     font-size: 0.85rem;
@@ -180,7 +180,7 @@
     color: var(--color-green);
 
     &.crit {
-      background: rgba(34, 197, 94, 0.3);
+      background: var(--surface-success-higher);
       border-color: rgba(34, 197, 94, 0.6);
       color: var(--color-green-light);
     }
@@ -214,14 +214,14 @@
     min-height: 120px;
 
     &:hover:not(.disabled) {
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border-color: var(--border-medium);
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px var(--overlay-low);
     }
 
     &.selected {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--border-faint);
       box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
     }
@@ -251,7 +251,7 @@
 
   .equipment-bonus {
     padding: 0.25rem 0.5rem;
-    background: rgba(34, 197, 94, 0.2);
+    background: var(--surface-success-high);
     border: 1px solid var(--border-success-subtle);
     border-radius: 4px;
     font-size: 0.85rem;
@@ -259,7 +259,7 @@
     color: var(--color-green);
 
     &.crit {
-      background: rgba(34, 197, 94, 0.3);
+      background: var(--surface-success-higher);
       border-color: var(--border-success-medium);
       color: var(--color-green-light);
     }
@@ -267,7 +267,7 @@
 
   .owned-badge-inline {
     padding: 0.25rem 0.5rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--hover);
     border: 1px solid var(--border-default);
     border-radius: 4px;
     font-size: 0.85rem;
@@ -287,7 +287,7 @@
 
   .all-equipped {
     padding: 1rem;
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--surface-success-low);
     border: 1px solid var(--border-success-subtle);
     border-radius: 6px;
     color: var(--color-green);
@@ -299,7 +299,7 @@
     color: var(--color-red);
     text-align: center;
     padding: 1rem;
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--surface-primary-low);
     border: 1px solid var(--border-primary-subtle);
     border-radius: 6px;
   }

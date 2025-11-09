@@ -151,7 +151,7 @@
   .event-header {
     width: 100%;
     padding: var(--space-16) var(--space-20);
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border: none;
     border-bottom: 1px solid var(--color-amber);
     cursor: pointer;
@@ -160,7 +160,7 @@
     position: relative;
     
     &:hover {
-      background: rgba(251, 191, 36, 0.15);
+      background: var(--surface-accent);
     }
     
     .expanded & {
@@ -190,7 +190,7 @@
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
-    background: rgba(251, 191, 36, 0.2);
+    background: var(--surface-accent-high);
     color: var(--color-amber-light);
     border: 1px solid var(--color-amber);
     margin-left: var(--space-12);

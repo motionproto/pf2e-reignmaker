@@ -245,7 +245,7 @@
       align-items: center;
       gap: var(--space-6);
       padding: var(--space-4) var(--space-8);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       cursor: pointer;
@@ -254,7 +254,7 @@
       color: var(--text-tertiary);
       
       &:hover:not(:disabled) {
-         background: var(--bg-overlay);
+         background: var(--surface-low);
          border-color: var(--color-primary);
       }
       
@@ -274,7 +274,7 @@
       
       // Active state (is capital)
       &.is-capital {
-         background: rgba(251, 191, 36, 0.1);
+         background: var(--surface-accent-low);
          border-color: var(--border-accent-subtle);
          color: var(--text-primary);
          
@@ -297,7 +297,7 @@
             transition: var(--transition-base);
             
             &:hover {
-               background: rgba(255, 255, 255, 0.05);
+               background: var(--hover-low);
                border-radius: var(--radius-md);
             }
             

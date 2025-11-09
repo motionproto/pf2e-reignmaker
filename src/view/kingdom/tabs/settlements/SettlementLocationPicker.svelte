@@ -294,7 +294,7 @@
       transition: var(--transition-base);
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
          color: var(--text-accent);
       }
       
@@ -317,7 +317,7 @@
       top: 100%;
       right: 0;
       margin-top: var(--space-8);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow-xl);
@@ -332,7 +332,7 @@
       align-items: center;
       justify-content: space-between;
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-bottom: 1px solid var(--color-border);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
@@ -387,15 +387,15 @@
       }
       
       &:hover {
-         background: rgba(255, 255, 255, 0.05);
+         background: var(--hover-low);
       }
       
       &.selected {
-         background: rgba(34, 197, 94, 0.15);
+         background: var(--surface-success);
          color: var(--color-success, #22c55e);
          
          &:hover {
-            background: rgba(34, 197, 94, 0.2);
+            background: var(--surface-success-high);
          }
       }
    }

@@ -145,7 +145,7 @@
          &::before {
             background: linear-gradient(90deg,
                transparent,
-               rgba(255, 255, 255, 0.1),
+               var(--hover),
                transparent);
          }
          
@@ -170,12 +170,12 @@
          &::before {
             background: linear-gradient(90deg,
                transparent,
-               rgba(255, 255, 255, 0.1),
+               var(--hover),
                transparent);
          }
          
          &:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--hover-low);
             border-color: var(--border-strong);
          }
          
@@ -193,7 +193,7 @@
       // Small Secondary variant (matches add-structure-button)
       &.small_secondary {
          padding: var(--space-8) var(--space-16);
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
          color: var(--text-primary);
          border: 1px solid var(--border-default);
          font-size: var(--font-sm);
@@ -203,12 +203,12 @@
          &::before {
             background: linear-gradient(90deg,
                transparent,
-               rgba(255, 255, 255, 0.1),
+               var(--hover),
                transparent);
          }
          
          &:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.15);
+            background: var(--hover-high);
             border-color: var(--border-medium);
          }
          
@@ -322,7 +322,7 @@
          font-size: var(--font-sm);
          opacity: 0.9;
          padding: var(--space-2) var(--space-6);
-         background: rgba(0, 0, 0, 0.2);
+         background: var(--overlay-low);
          border-radius: var(--radius-sm);
          margin-left: var(--space-4);
       }

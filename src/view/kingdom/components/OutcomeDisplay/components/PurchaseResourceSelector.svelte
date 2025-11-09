@@ -202,7 +202,7 @@
 
 <style lang="scss">
   .purchase-resource-selector {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -254,20 +254,20 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-12);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--color-blue, #60a5fa);
       transform: translateY(-0.125rem);
     }
     
     &.selected {
-      background: rgba(59, 130, 246, 0.2);
+      background: var(--surface-info-high);
       border-color: var(--color-blue, #60a5fa);
       border-width: 3px;
     }
@@ -289,7 +289,7 @@
     flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-12);
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--surface-info-low);
     border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-sm);
     
@@ -317,7 +317,7 @@
         width: 2rem;
         height: 2rem;
         padding: 0;
-        background: rgba(59, 130, 246, 0.2);
+        background: var(--surface-info-high);
         border: 1px solid var(--color-blue, #60a5fa);
         border-radius: var(--radius-sm);
         color: var(--color-blue, #60a5fa);
@@ -330,7 +330,7 @@
         }
         
         &:hover:not(:disabled) {
-          background: rgba(59, 130, 246, 0.3);
+          background: var(--surface-info-higher);
           transform: scale(1.05);
         }
         
@@ -348,7 +348,7 @@
     input {
       width: 5rem;
       padding: var(--space-6) var(--space-10);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
       color: var(--text-primary);

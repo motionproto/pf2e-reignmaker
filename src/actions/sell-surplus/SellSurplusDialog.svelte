@@ -197,7 +197,7 @@
   
   .exchange-rate-info {
     padding: 0.75rem 1rem;
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border: 1px solid var(--border-accent-subtle);
     border-radius: var(--radius-md, 6px);
     
@@ -235,12 +235,12 @@
     transition: all 0.2s ease;
     
     &:not(.disabled):hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border-color: var(--border-highlight);
     }
     
     &.selected {
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       border-color: var(--border-accent-medium);
     }
     
@@ -348,7 +348,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    background: rgba(251, 191, 36, 0.15);
+    background: var(--surface-accent);
     border: 2px solid var(--border-accent-subtle);
     border-radius: var(--radius-md, 6px);
     
@@ -374,7 +374,7 @@
   .warning-text {
     margin: 0;
     padding: 0.5rem 0.75rem;
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--surface-primary-low);
     border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm, 4px);
     color: rgb(239, 68, 68);

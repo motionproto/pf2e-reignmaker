@@ -247,7 +247,7 @@
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid var(--color-primary, #8b0000);
     border-radius: var(--radius-xl);
-    box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.25rem 1.25rem var(--overlay-high);
     min-width: 12.5rem;
     user-select: none;
     backdrop-filter: blur(0.625rem);
@@ -300,7 +300,7 @@
       
       &:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
       }
       
       i {
@@ -315,7 +315,7 @@
     gap: var(--space-8);
     padding: var(--space-8) var(--space-12);
     border-bottom: 1px solid var(--border-subtle);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
   }
   
   .debug-toggle {
@@ -324,7 +324,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-8);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     color: rgba(255, 255, 255, 0.5);
@@ -371,7 +371,7 @@
   
   .toolbar-divider {
     height: 0.0625rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--hover);
     margin: var(--space-4) 0;
   }
   
@@ -380,7 +380,7 @@
     align-items: center;
     gap: var(--space-12);
     padding: var(--space-12) var(--space-16);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 2px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     color: rgba(255, 255, 255, 0.7);
@@ -390,7 +390,7 @@
     font-weight: 500;
     
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--border-default);
       color: #fff;
       transform: translateY(-0.0625rem);

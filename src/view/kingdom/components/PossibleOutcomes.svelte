@@ -166,10 +166,10 @@
     padding: var(--space-8) var(--space-6) var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
     border-left: 4px solid;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     
     &.outcome-criticalSuccess {
-      background: rgba(34, 197, 94, 0.05);
+      background: var(--surface-success-lower);
       border-left-color: var(--color-green);
       
       .outcome-icon {
@@ -186,7 +186,7 @@
     }
     
     &.outcome-success {
-      background: rgba(34, 197, 94, 0.03);
+      background: var(--surface-success-lower);
       border-left-color: var(--color-green-light);
       
       .outcome-icon {
@@ -220,7 +220,7 @@
     }
     
     &.outcome-criticalFailure {
-      background: rgba(239, 68, 68, 0.05);
+      background: var(--surface-primary-lower);
       border-left-color: var(--color-red);
       
       .outcome-icon {
@@ -286,7 +286,7 @@
     font-weight: var(--font-weight-medium);
     line-height: 1.3;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     color: var(--text-secondary);
     border: 1px solid var(--border-medium);
   }

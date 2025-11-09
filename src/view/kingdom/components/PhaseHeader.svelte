@@ -111,7 +111,7 @@
     align-items: flex-start;
     position: relative;
     overflow: hidden;
-    background: linear-gradient(135deg, var(--bg-elevated), var(--bg-overlay));
+    background: linear-gradient(135deg, var(--surface-lower), var(--surface-low));
     border: 1px solid var(--border-medium);
   }
 

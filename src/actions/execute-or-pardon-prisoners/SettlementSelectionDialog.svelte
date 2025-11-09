@@ -91,7 +91,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-higher);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -169,7 +169,7 @@
   }
 
   .settlement-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-medium, var(--border-subtle));
     border-radius: 6px;
     padding: 16px;

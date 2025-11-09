@@ -483,7 +483,7 @@
   }
   
   .setup-section {
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
     
     padding: var(--space-24);
     border-radius: var(--radius-xl);
@@ -522,7 +522,7 @@
   }
   
   .stat-card {
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     padding: var(--space-12);
     border-radius: var(--radius-lg);
     display: flex;
@@ -561,7 +561,7 @@
   .terrain-info {
     margin: var(--space-16) 0 0 0;
     padding: var(--space-12) var(--space-16);
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-faint);
     color: var(--text-secondary);
@@ -583,8 +583,8 @@
     /* Use terrain-specific color with low opacity for tint */
     background: linear-gradient(
       135deg,
-      color-mix(in srgb, var(--terrain-color) 15%, rgba(0, 0, 0, 0.3)),
-      color-mix(in srgb, var(--terrain-color) 8%, rgba(0, 0, 0, 0.2))
+      color-mix(in srgb, var(--terrain-color) 15%, var(--overlay)),
+      color-mix(in srgb, var(--terrain-color) 8%, var(--overlay-low))
     );
     padding: var(--space-8);
     border-radius: var(--radius-lg);
@@ -600,7 +600,7 @@
       transform: translateY(-0.125rem);
       background: linear-gradient(
         135deg,
-        color-mix(in srgb, var(--terrain-color) 70%, rgba(0, 0, 0, 0.2)),
+        color-mix(in srgb, var(--terrain-color) 70%, var(--overlay-low)),
         color-mix(in srgb, var(--terrain-color) 55%, rgba(0, 0, 0, 0.15))
       );
       border-color: color-mix(in srgb, var(--terrain-color) 80%, var(--border-medium));
@@ -668,7 +668,7 @@
     font-size: var(--font-xl);
     font-weight: var(--font-weight-bold);
     color: var(--text-secondary);
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
     padding: var(--space-4) var(--space-8);
     border-radius: var(--radius-md);
     min-width: 2rem;
@@ -694,7 +694,7 @@
   }
   
   .phase-card {
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     padding: var(--space-16);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-default);
@@ -730,7 +730,7 @@
       color: var(--text-secondary);
       line-height: 1;
       padding: var(--space-4) var(--space-8);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       align-self: center;
@@ -770,7 +770,7 @@
     align-items: center;
     gap: var(--space-16);
     padding: var(--space-16);
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     border-radius: var(--radius-md);
     
     i {

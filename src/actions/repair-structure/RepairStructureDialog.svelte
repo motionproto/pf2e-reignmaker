@@ -223,7 +223,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-higher);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -231,7 +231,7 @@
   }
   
   .dialog-container {
-    background: var(--bg-base);
+    background: var(--empty);
     border-radius: var(--radius-lg, 0.5rem);
     border: 1px solid var(--border-strong);
     max-width: 700px;
@@ -239,7 +239,7 @@
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 8px 32px var(--overlay-high);
   }
   
   .dialog-header {
@@ -248,7 +248,7 @@
     align-items: center;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border-subtle);
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
     
     h2 {
       margin: 0;
@@ -270,7 +270,7 @@
       transition: all 0.2s ease;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         color: var(--text-primary, #f3f4f6);
       }
     }
@@ -284,7 +284,7 @@
     font-size: var(--font-sm, 0.875rem);
     
     &.error {
-      background: rgba(239, 68, 68, 0.1);
+      background: var(--surface-primary-low);
       color: #fca5a5;
       border-bottom: 1px solid var(--border-primary-subtle);
     }
@@ -342,7 +342,7 @@
     align-items: start;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--surface-info-low);
     border: 1px solid var(--border-info-subtle);
     border-radius: var(--radius-md, 0.375rem);
     font-size: var(--font-sm, 0.875rem);
@@ -359,7 +359,7 @@
     margin-bottom: 0.5rem;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md, 0.375rem);
-    background: var(--bg-surface);
+    background: var(--surface-lowest);
     overflow: hidden;
   }
   
@@ -382,7 +382,7 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem 1.25rem;
-    background: var(--bg-base);
+    background: var(--empty);
     border: 2px solid transparent;
     border-radius: var(--radius-sm, 0.25rem);
     cursor: pointer;
@@ -392,12 +392,12 @@
     font-family: inherit;
     
     &:hover {
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border-color: var(--border-strong);
     }
     
     &.selected {
-      background: rgba(245, 158, 11, 0.1);
+      background: var(--surface-accent-low);
       border-color: var(--color-amber, #f59e0b);
     }
   }
@@ -440,6 +440,6 @@
     gap: 1rem;
     padding: 1rem 1.5rem;
     border-top: 1px solid var(--border-subtle);
-    background: var(--bg-elevated);
+    background: var(--surface-lower);
   }
 </style>

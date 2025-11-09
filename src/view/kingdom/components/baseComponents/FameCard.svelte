@@ -110,7 +110,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       padding: var(--space-12);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-subtle);
@@ -126,14 +126,14 @@
       
       &.editable:hover:not(.editing) {
          outline-color: var(--resource-color);
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
       }
       
       &.editing {
          outline-width: 3px;
          outline-color: var(--resource-color);
          background: linear-gradient(135deg, 
-            rgba(0, 0, 0, 0.3),
+            var(--overlay),
             color-mix(in srgb, var(--resource-color) 10%, transparent)
          );
       }
@@ -216,7 +216,7 @@
          flex: 1;
          padding: var(--space-4);
          border: 1px solid var(--border-subtle);
-         background: var(--bg-surface);
+         background: var(--surface-lowest);
          border-radius: var(--radius-md);
          display: flex;
          align-items: center;

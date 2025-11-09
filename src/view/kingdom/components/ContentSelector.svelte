@@ -79,7 +79,7 @@
    
    .tab-button {
       padding: var(--space-8) var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
@@ -90,7 +90,7 @@
       gap: var(--space-8);
       
       &:hover {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          color: rgba(255, 255, 255, 1);
          transform: translateY(-0.0625rem);
       }
@@ -99,7 +99,7 @@
          background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
          color: white;
          border-color: var(--color-primary-light);
-         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.125rem 0.25rem var(--overlay);
          
          // Explicitly set white color for all child elements
          i, span {
@@ -132,7 +132,7 @@
    
    .action-button {
       padding: var(--space-8) var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
@@ -144,7 +144,7 @@
       flex: 0 0 auto;
       
       &:hover {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          color: rgba(255, 255, 255, 1);
       }
       

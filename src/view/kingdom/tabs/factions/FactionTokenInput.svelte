@@ -151,7 +151,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-8);
-      background: rgba(100, 149, 237, 0.2);
+      background: var(--surface-info-high);
       border: 1px solid var(--border-info);
       border-radius: var(--radius-lg);
       padding: var(--space-6) var(--space-12);
@@ -160,7 +160,7 @@
       transition: all 0.2s;
       
       &:hover {
-         background: rgba(100, 149, 237, 0.3);
+         background: var(--surface-info-higher);
          border-color: var(--border-info-medium);
       }
    }
@@ -193,7 +193,7 @@
       justify-content: center;
       width: 2rem;
       height: 2rem;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
@@ -201,7 +201,7 @@
       transition: all 0.2s;
       
       &:hover {
-         background: rgba(100, 149, 237, 0.2);
+         background: var(--surface-info-high);
          border-color: var(--border-info);
          color: var(--text-primary);
       }
@@ -215,10 +215,10 @@
       max-width: 25rem;
       max-height: 18.75rem;
       overflow-y: auto;
-      background: rgba(0, 0, 0, 0.95);
+      background: var(--overlay-highest);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-lg);
-      box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.25rem 0.75rem var(--overlay-high);
       z-index: 1000;
       padding: var(--space-8);
    }
@@ -232,7 +232,7 @@
    .dropdown-text-input {
       width: 100%;
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -240,7 +240,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
          border-color: var(--border-info-medium);
       }
       
@@ -259,7 +259,7 @@
    
    .dropdown-divider {
       height: 0.0625rem;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       margin: var(--space-8) 0;
    }
    
@@ -291,7 +291,7 @@
       transition: all 0.2s;
       
       &:hover {
-         background: rgba(100, 149, 237, 0.2);
+         background: var(--surface-info-high);
       }
    }
    

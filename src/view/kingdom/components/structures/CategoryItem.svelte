@@ -33,7 +33,7 @@
   .category-item {
     width: 100%;
     padding: var(--space-8) var(--space-12);
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--overlay-high);
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     margin-bottom: var(--space-8);
@@ -48,12 +48,12 @@
     position: relative;
     
     &:hover {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-color: var(--border-subtle);
     }
     
     &.selected {
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       border-color: var(--color-amber);
       
       .arrow {
@@ -81,7 +81,7 @@
     
     &.unavailable {
       opacity: 0.5;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-color: var(--border-faint);
       
       &:hover {

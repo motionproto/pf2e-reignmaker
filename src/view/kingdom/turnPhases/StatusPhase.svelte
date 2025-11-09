@@ -321,7 +321,7 @@ async function initializePhase() {
 
          &.filled {
             color: var(--color-amber-light);
-            text-shadow: 0 0 1.25rem rgba(251, 191, 36, 0.4), 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+            text-shadow: 0 0 1.25rem rgba(251, 191, 36, 0.4), 0 0.125rem 0.25rem var(--overlay);
             transform: scale(1.05);
          }
 
@@ -395,7 +395,7 @@ async function initializePhase() {
       align-items: center;
       justify-content: space-between;
       padding: var(--space-12) 0.9375rem;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       gap: var(--space-16);
@@ -405,7 +405,7 @@ async function initializePhase() {
          cursor: pointer;
 
          &:hover {
-            background: rgba(251, 191, 36, 0.15);
+            background: var(--surface-accent);
             border-color: var(--border-accent-medium);
             transform: translateX(0.25rem);
          }
@@ -451,7 +451,7 @@ async function initializePhase() {
 
    .tier-badge {
       padding: var(--space-2) var(--space-8);
-      background: rgba(251, 191, 36, 0.2);
+      background: var(--surface-accent-high);
       border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-sm);
       font-size: var(--font-xs);
@@ -479,7 +479,7 @@ async function initializePhase() {
       align-items: flex-start;
       gap: var(--space-10);
       padding: var(--space-10) var(--space-12);
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       font-size: var(--font-md);

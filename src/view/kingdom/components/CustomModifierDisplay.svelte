@@ -104,7 +104,7 @@
   
   .modifier-header {
     padding: var(--space-12) var(--space-16);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-bottom: 1px solid var(--border-default);
   }
   
@@ -138,19 +138,19 @@
   }
   
   .tag-ongoing {
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border-color: var(--border-accent);
     color: var(--color-amber);
   }
   
   .tag-dangerous {
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--surface-primary-low);
     border-color: var(--border-primary);
     color: var(--color-red);
   }
   
   .tag-beneficial {
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--surface-success-low);
     border-color: var(--border-success);
     color: var(--color-green);
   }

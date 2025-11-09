@@ -532,7 +532,7 @@
       gap: var(--space-16);
       flex-wrap: wrap;
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--overlay-lower);
       border-radius: var(--radius-lg);
       
       .filter-group {
@@ -547,7 +547,7 @@
          
          select {
             padding: var(--space-4) var(--space-8);
-            background: var(--bg-subtle);
+            background: var(--surface);
             border: 1px solid var(--border-default);
             border-radius: var(--radius-md);
             color: var(--text-primary);
@@ -568,7 +568,7 @@
          display: flex;
          gap: var(--space-8);
          padding: var(--space-4);
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border-radius: var(--radius-xl);
          border: 1px solid var(--border-default);
       }
@@ -585,7 +585,7 @@
          user-select: none;
          
          &:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--hover-low);
          }
          
          &.selected {
@@ -636,7 +636,7 @@
    .territory-table-container {
       flex: 1;
       overflow-y: auto;
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--overlay-lower);
       border-radius: var(--radius-lg);
       padding: var(--space-8);
    }
@@ -649,7 +649,7 @@
       thead {
          position: sticky;
          top: 0;
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          z-index: 10;
          
          th {
@@ -664,7 +664,7 @@
                user-select: none;
                
                &:hover {
-                  background: rgba(255, 255, 255, 0.05);
+                  background: var(--hover-low);
                }
                
                span {
@@ -686,7 +686,7 @@
             }
             
             &:nth-child(even) {
-               background: rgba(0, 0, 0, 0.1);
+               background: var(--overlay-lower);
             }
          }
          
@@ -866,7 +866,7 @@
                }
                
                &.tier-city {
-                  background: rgba(147, 112, 219, 0.15);
+                  background: var(--surface-special);
                   border-color: rgba(147, 112, 219, 0.4);
                   color: #ba8fd8;
                }

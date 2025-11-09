@@ -215,7 +215,7 @@
     &.selected {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-strong);
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 16px var(--hover-high);
       opacity: 1;
     }
     

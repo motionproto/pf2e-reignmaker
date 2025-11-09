@@ -774,9 +774,9 @@
     border: 2px solid var(--border-strong);
     background: linear-gradient(135deg, 
       rgba(0, 0, 0, 0.4),
-      rgba(0, 0, 0, 0.2));
+      var(--overlay-low));
     overflow: hidden;
-    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.25rem 1rem var(--overlay-low);
     position: relative;
     
     &.compact {
@@ -806,8 +806,8 @@
     
     &.critical-success {
       background: linear-gradient(135deg,
-        rgba(34, 197, 94, 0.15),
-        rgba(34, 197, 94, 0.05));
+        var(--surface-success),
+        var(--surface-success-lower));
       border-color: var(--border-success-medium);
       
       &::before {
@@ -817,7 +817,7 @@
     
     &.success {
       background: linear-gradient(135deg,
-        rgba(34, 197, 94, 0.1),
+        var(--surface-success-low),
         rgba(34, 197, 94, 0.02));
       border-color: var(--border-success-subtle);
       
@@ -839,8 +839,8 @@
     
     &.critical-failure {
       background: linear-gradient(135deg,
-        rgba(239, 68, 68, 0.15),
-        rgba(239, 68, 68, 0.05));
+        var(--surface-primary),
+        var(--surface-primary-lower));
       border-color: var(--border-primary-medium);
       
       &::before {

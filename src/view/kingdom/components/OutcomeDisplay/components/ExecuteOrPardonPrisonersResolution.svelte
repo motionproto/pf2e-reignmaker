@@ -119,7 +119,7 @@
 
 <style lang="scss">
   .execute-pardon-resolution {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -144,7 +144,7 @@
     align-items: center;
     gap: var(--space-6);
     padding: var(--space-4) var(--space-10);
-    background: rgba(34, 197, 94, 0.15);
+    background: var(--surface-success);
     border: 1px solid var(--color-green, #22c55e);
     border-radius: var(--radius-md);
     font-size: var(--font-sm);
@@ -200,7 +200,7 @@
     padding: var(--space-10) var(--space-12);
     font-size: var(--font-md);
     font-family: 'Courier New', monospace;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-md);
     color: var(--text-primary, #e0e0e0);
@@ -215,7 +215,7 @@
     &:focus {
       outline: none;
       border-color: var(--color-purple, #8b5cf6);
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
     }
     
     option {

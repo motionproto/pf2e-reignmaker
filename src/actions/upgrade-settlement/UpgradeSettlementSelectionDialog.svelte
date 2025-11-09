@@ -357,7 +357,7 @@
     }
     
     &.selected {
-      background: rgba(59, 130, 246, 0.15);
+      background: var(--surface-info);
       border-left: 3px solid var(--color-primary);
       padding-left: 13px;
     }

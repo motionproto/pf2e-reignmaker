@@ -1003,7 +1003,7 @@
       align-items: center;
       justify-content: space-between;
       gap: var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
@@ -1014,7 +1014,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--space-24);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
@@ -1043,7 +1043,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 2px dashed var(--border-default);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
@@ -1092,7 +1092,7 @@
    .faction-name-input {
       flex: 1;
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--color-accent);
@@ -1107,7 +1107,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
          border-color: var(--color-accent);
       }
    }
@@ -1122,7 +1122,7 @@
       font-size: var(--font-sm);
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
          border-radius: var(--radius-md);
       }
       
@@ -1135,7 +1135,7 @@
       width: 100%;
       height: 18.75rem;
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -1150,7 +1150,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
          border-color: var(--border-faint);
       }
    }
@@ -1185,7 +1185,7 @@
       
       &:hover {
          transform: scale(1.15);
-         background: rgba(255, 255, 255, 0.05);
+         background: var(--hover-low);
       }
       
       &.active {
@@ -1270,7 +1270,7 @@
    }
    
    .detail-section {
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
@@ -1314,7 +1314,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 2px dashed var(--border-default);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
@@ -1329,7 +1329,7 @@
    .textarea-input {
       width: 100%;
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -1344,7 +1344,7 @@
       
       &:focus {
          outline: none;
-         background: rgba(0, 0, 0, 0.5);
+         background: var(--overlay-high);
          border-color: var(--border-faint);
       }
       
@@ -1364,7 +1364,7 @@
       gap: var(--space-16);
       align-items: center;
       padding: var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-md);
    }
    
@@ -1433,13 +1433,13 @@
       align-items: center;
       gap: var(--space-8);
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-radius: var(--radius-md);
    }
    
    .clock-btn {
       padding: var(--space-4) var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -1447,7 +1447,7 @@
       transition: all 0.2s;
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
    }
    
@@ -1488,7 +1488,7 @@
    .clock-max-input {
       width: 3rem;
       padding: var(--space-4);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
       color: var(--text-primary);
@@ -1520,7 +1520,7 @@
       position: relative;
       
       thead {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          
          th {
             padding: var(--space-8);
@@ -1536,7 +1536,7 @@
             border-bottom: 1px solid var(--border-faint);
             
             &.add-row {
-               background: rgba(0, 0, 0, 0.2);
+               background: var(--overlay-low);
             }
          }
          
@@ -1572,7 +1572,7 @@
       text-underline-offset: 0.1875rem;
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
          text-decoration-style: solid;
       }
    }
@@ -1600,7 +1600,7 @@
       border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       color: var(--text-primary);
       
       &:hover {
@@ -1708,14 +1708,14 @@
       .autosuggest-input {
          flex: 1;
          padding: var(--space-4) var(--space-8);
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          
          &:focus {
             outline: none;
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--overlay-high);
             border-color: var(--border-faint);
          }
       }
@@ -1727,12 +1727,12 @@
          width: 50%;
          max-height: 12.5rem;
          overflow-y: scroll;
-         background: rgba(0, 0, 0, 0.95);
+         background: var(--overlay-highest);
          border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.25rem 0.5rem var(--overlay);
          
          .suggestion-group {
             .group-header {
@@ -1741,7 +1741,7 @@
                font-weight: var(--font-weight-semibold);
                color: var(--text-secondary);
                text-transform: uppercase;
-               background: rgba(0, 0, 0, 0.3);
+               background: var(--overlay);
                border-bottom: 1px solid var(--border-subtle);
             }
          }
@@ -1758,7 +1758,7 @@
             transition: background 0.2s;
             
             &:hover {
-               background: rgba(255, 255, 255, 0.1);
+               background: var(--hover);
             }
          }
          

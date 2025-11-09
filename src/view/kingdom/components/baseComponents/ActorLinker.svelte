@@ -155,7 +155,7 @@
       color: var(--color-text-dark-primary, #b5b3a4);
       
       &:hover {
-         background: rgba(255, 255, 255, 0.1);
+         background: var(--hover);
       }
       
       &.primary {
@@ -187,14 +187,14 @@
       .autosuggest-input {
          flex: 1;
          padding: var(--space-4) var(--space-8);
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          color: var(--color-text-dark-primary, #b5b3a4);
          
          &:focus {
             outline: none;
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--overlay-high);
             border-color: var(--border-faint);
          }
       }
@@ -206,12 +206,12 @@
          width: 50%;
          max-height: 12.5rem;
          overflow-y: scroll;
-         background: rgba(0, 0, 0, 0.95);
+         background: var(--overlay-highest);
          border: 1px solid var(--border-medium);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.25rem 0.5rem var(--overlay);
          
          .suggestion-group {
             .group-header {
@@ -220,7 +220,7 @@
                font-weight: var(--font-weight-semibold, 600);
                color: var(--color-text-dark-secondary, #7a7971);
                text-transform: uppercase;
-               background: rgba(0, 0, 0, 0.3);
+               background: var(--overlay);
                border-bottom: 1px solid var(--border-subtle);
             }
          }
@@ -237,7 +237,7 @@
             transition: background 0.2s;
             
             &:hover {
-               background: rgba(255, 255, 255, 0.1);
+               background: var(--hover);
             }
          }
          

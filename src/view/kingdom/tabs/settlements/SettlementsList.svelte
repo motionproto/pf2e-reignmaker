@@ -445,7 +445,7 @@
    
    .settlements-list-panel {
       flex: 0 0 25rem;
-      background: rgba(0, 0, 0, 0.1);
+      background: var(--overlay-lower);
       border-radius: var(--radius-lg);
       display: flex;
       flex-direction: column;
@@ -466,7 +466,7 @@
             flex: 1;
             min-width: 0;
             padding: var(--space-8);
-            background: var(--bg-elevated);
+            background: var(--surface-lower);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
             color: var(--text-primary);
@@ -545,7 +545,7 @@
          gap: var(--space-8);
          
          &:hover {
-            background: var(--bg-overlay);
+            background: var(--surface-low);
             border-color: var(--border-medium);
             color: var(--text-primary);
          }
@@ -579,7 +579,7 @@
       &:hover {
          border-color: var(--border-strong);
          transform: translateY(-0.0625rem);
-         box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+         box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
       }
       
       &.selected {
@@ -824,7 +824,7 @@
                transition: var(--transition-base);
                
                &:hover {
-                  background: rgba(255, 255, 255, 0.1);
+                  background: var(--hover);
                   color: var(--text-primary);
                }
             }
@@ -849,7 +849,7 @@
                input,
                select {
                   padding: var(--space-8);
-                  background: var(--bg-elevated);
+                  background: var(--surface-lower);
                   border: 1px solid var(--border-subtle);
                   border-radius: var(--radius-md);
                   color: var(--text-primary);
@@ -888,7 +888,7 @@
                color: var(--text-secondary);
                
                &:hover {
-                  background: var(--bg-overlay);
+                  background: var(--surface-low);
                   color: var(--text-primary);
                }
             }

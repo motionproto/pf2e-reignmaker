@@ -165,7 +165,7 @@
 
 <style lang="scss">
   .collect-stipend-resolution {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -200,7 +200,7 @@
     gap: var(--space-8);
     margin-bottom: var(--space-12);
     padding: var(--space-10);
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--surface-info-low);
     border-left: 3px solid var(--color-blue, #3b82f6);
     border-radius: var(--radius-md);
     
@@ -225,7 +225,7 @@
     padding: var(--space-10) var(--space-12);
     font-size: var(--font-md);
     font-family: 'Courier New', monospace;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-md);
     color: var(--text-primary, #e0e0e0);
@@ -240,7 +240,7 @@
     &:focus {
       outline: none;
       border-color: var(--color-amber, #fbbf24);
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
     }
     
     option {

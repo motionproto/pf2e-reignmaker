@@ -32,7 +32,7 @@
   .shortage-warning {
     padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
-      rgba(239, 68, 68, 0.2),
+      var(--surface-primary-high),
       rgba(239, 68, 68, 0.08));
     border: 2px solid var(--border-primary-medium);
     border-radius: var(--radius-sm);
@@ -73,7 +73,7 @@
         align-items: center;
         gap: var(--space-8);
         padding: var(--space-8) var(--space-12);
-        background: rgba(239, 68, 68, 0.15);
+        background: var(--surface-primary);
         border-radius: var(--radius-xs);
         border-left: 3px solid var(--color-red);
         

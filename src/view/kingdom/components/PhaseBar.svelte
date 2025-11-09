@@ -219,7 +219,7 @@
 
 <style>
   .phase-bar {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
+    background: linear-gradient(to bottom, var(--overlay-lowest), var(--overlay-lower));
     border-radius: var(--radius-lg);
     padding: var(--space-24) var(--space-16); /* Symmetrical top/bottom padding for even spacing */
     margin-top: -var(--space-6);
@@ -263,7 +263,7 @@
   .phase-item:hover {
     background: var(--btn-secondary-hover);
     transform: translateY(-0.125rem);
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.25rem 0.5rem var(--overlay-low);
     border-color: var(--border-strong);
   }
 
@@ -559,7 +559,7 @@
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
-    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0.125rem 0.5rem var(--overlay);
     animation: fade-in-out 5s ease-in-out forwards;
     z-index: 100;
   }

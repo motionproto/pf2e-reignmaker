@@ -117,7 +117,7 @@
 
 <style lang="scss">
   .disband-army-resolution {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: 6px;
     padding: 16px;
     margin: 12px 0;
@@ -140,7 +140,7 @@
     gap: 8px;
     margin-bottom: 16px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border-radius: 4px;
   }
 
@@ -171,7 +171,7 @@
 
   .actor-option {
     padding: 12px;
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: 4px;
     border: 1px solid var(--border-subtle);
     margin-bottom: 12px;
@@ -210,7 +210,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border-radius: 4px;
     color: var(--text-secondary, #a0a0a0);
     font-size: var(--font-md);

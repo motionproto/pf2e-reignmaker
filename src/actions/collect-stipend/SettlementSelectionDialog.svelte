@@ -155,7 +155,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-higher);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -207,7 +207,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 20px;
-    background: rgba(251, 191, 36, 0.1);
+    background: var(--surface-accent-low);
     border-bottom: 1px solid var(--border-accent-subtle);
     font-size: var(--font-md);
     color: var(--color-amber, #fbbf24);
@@ -222,7 +222,7 @@
     align-items: flex-start;
     gap: 10px;
     padding: 16px 20px;
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--surface-info-low);
     border-bottom: 1px solid var(--border-info-subtle);
 
     i {
@@ -248,7 +248,7 @@
   }
 
   .settlement-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 1px solid var(--border-medium, var(--border-subtle));
     border-radius: 6px;
     padding: 16px;

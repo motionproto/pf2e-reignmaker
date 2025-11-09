@@ -87,7 +87,7 @@
 
 <style lang="scss">
   .resource-choice-selector {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -133,20 +133,20 @@
     justify-content: center;
     gap: var(--space-6);
     padding: var(--space-12) var(--space-16);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border: 2px solid var(--border-strong, var(--border-default));
     border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border-color: var(--color-green, #22c55e);
       transform: translateY(-0.125rem);
     }
     
     &.selected {
-      background: rgba(34, 197, 94, 0.2);
+      background: var(--surface-success-high);
       border-color: var(--color-green, #22c55e);
       border-width: 3px;
     }
@@ -174,7 +174,7 @@
     align-items: center;
     gap: var(--space-8);
     padding: var(--space-10);
-    background: rgba(34, 197, 94, 0.1);
+    background: var(--surface-success-low);
     border-left: 3px solid var(--color-green, #22c55e);
     border-radius: var(--radius-md);
     

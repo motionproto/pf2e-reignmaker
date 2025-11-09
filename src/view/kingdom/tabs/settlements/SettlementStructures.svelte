@@ -370,13 +370,13 @@
    .structures-table {
       width: 100%;
       border-collapse: collapse;
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       overflow: hidden;
       
       thead {
-         background: rgba(0, 0, 0, 0.1);
+         background: var(--overlay-lower);
          
          th {
             padding: var(--space-12);
@@ -409,7 +409,7 @@
       
       tbody {
             .structure-row {
-               background: rgba(0, 0, 0, 0.3);
+               background: var(--overlay);
                border-bottom: 1px solid var(--border-faint);
                
                &.lower-tier {
@@ -485,7 +485,7 @@
                .tier-label {
                   display: inline-block;
                   padding: var(--space-4) var(--space-8);
-                  background: rgba(0, 0, 0, 0.3);
+                  background: var(--overlay);
                   border-radius: var(--radius-sm);
                   font-size: var(--font-md);
                   color: var(--text-secondary);

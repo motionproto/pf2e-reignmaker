@@ -218,13 +218,13 @@
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
         transform: translateY(-0.125rem);
-        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+        box-shadow: 0 0.25rem 0.75rem var(--overlay-low);
       }
       
       &.selected {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1rem var(--hover-high);
         opacity: 1;
       }
       

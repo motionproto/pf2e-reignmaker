@@ -217,7 +217,7 @@
          border-radius: var(--radius-md);
          
          &:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--hover-low);
          }
          
          .value {
@@ -310,7 +310,7 @@
             width: 2rem;
             height: 2rem;
             border: 1px solid var(--border-subtle);
-            background: var(--bg-surface);
+            background: var(--surface-lowest);
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
@@ -320,7 +320,7 @@
             color: var(--text-primary);
             
             &:hover:not(:disabled) {
-               background: var(--bg-subtle);
+               background: var(--surface);
                border-color: var(--border-primary);
                transform: scale(1.05);
             }

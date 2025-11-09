@@ -314,7 +314,7 @@
     &.selected {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-strong);
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 16px var(--hover-high);
     }
     
     &.cannot-afford {
@@ -406,7 +406,7 @@
   .cannot-afford-label {
     margin-top: 8px;
     padding: 6px 10px;
-    background: rgba(239, 68, 68, 0.15);
+    background: var(--surface-primary);
     border: 1px solid var(--border-primary-subtle);
     border-radius: var(--radius-sm);
     color: rgb(239, 68, 68);

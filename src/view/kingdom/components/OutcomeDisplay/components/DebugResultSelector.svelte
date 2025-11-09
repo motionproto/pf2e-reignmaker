@@ -87,7 +87,7 @@
     justify-content: center;
     gap: var(--space-4);
     padding: var(--space-6) var(--space-10);
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
@@ -102,7 +102,7 @@
     }
     
     &:hover {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-color: var(--border-strong);
     }
     
@@ -110,13 +110,13 @@
       border-width: 2px;
       
       &.criticalSuccess {
-        background: rgba(34, 197, 94, 0.2);
+        background: var(--surface-success-high);
         border-color: var(--color-green);
         color: var(--color-green-light);
       }
       
       &.success {
-        background: rgba(34, 197, 94, 0.15);
+        background: var(--surface-success);
         border-color: var(--border-success-medium);
         color: var(--color-green);
       }
@@ -128,7 +128,7 @@
       }
       
       &.criticalFailure {
-        background: rgba(239, 68, 68, 0.2);
+        background: var(--surface-primary-high);
         border-color: var(--color-red);
         color: var(--color-red);
       }

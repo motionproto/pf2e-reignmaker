@@ -133,7 +133,7 @@
 
 <style lang="scss">
   .player-action-tracker {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-subtle);
     margin: 0 var(--space-16);
@@ -193,7 +193,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--hover);
     
     &.acted {
       box-shadow: 0 0 0.5rem rgba(251, 191, 36, 0.4);
@@ -201,7 +201,7 @@
       i {
         color: white;
         font-size: var(--font-xs);
-        text-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0, 0, 0, 0.5);
+        text-shadow: 0.0625rem 0.0625rem 0.125rem var(--overlay-high);
       }
     }
   }
@@ -217,19 +217,19 @@
     flex-shrink: 0;
     
     &.acted {
-      box-shadow: 0 0 0.375rem rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 0.375rem var(--surface-accent-higher);
       
       i {
         color: white;
         font-size: var(--font-xs);
-        text-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0, 0, 0, 0.5);
+        text-shadow: 0.0625rem 0.0625rem 0.125rem var(--overlay-high);
       }
     }
   }
   
   .action-details {
     padding: var(--space-16);
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--overlay);
     border-top: 1px solid var(--border-faint);
     display: flex;
     flex-direction: column;

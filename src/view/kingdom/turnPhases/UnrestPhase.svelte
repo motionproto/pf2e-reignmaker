@@ -617,7 +617,7 @@
          display: inline-flex;
          align-items: center;
          padding: var(--space-4) var(--space-8);
-         background: rgba(245, 158, 11, 0.1);
+         background: var(--surface-accent-low);
          border: 1px solid var(--border-accent-subtle);
          border-radius: var(--radius-sm);
          color: var(--color-amber-light);
@@ -768,7 +768,7 @@
    }
    
    .incident-section {
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--overlay-lowest);
       padding: var(--space-20);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-faint);
@@ -875,7 +875,7 @@
    .incident-info {
       position: relative;
       padding: var(--space-20);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-md);
       margin-bottom: var(--space-20);
       
@@ -906,7 +906,7 @@
          text-transform: uppercase;
          
          &.level-minor {
-            background: rgba(251, 191, 36, 0.2);
+            background: var(--surface-accent-high);
             color: var(--color-amber-light);
             border: 1px solid var(--color-amber);
          }
@@ -918,7 +918,7 @@
          }
          
          &.level-major {
-            background: rgba(239, 68, 68, 0.2);
+            background: var(--surface-primary-high);
             color: var(--color-red);
             border: 1px solid var(--color-red);
          }
@@ -929,7 +929,7 @@
    .no-incident {
       padding: var(--space-24);
       background: linear-gradient(135deg,
-         rgba(34, 197, 94, 0.05),
+         var(--surface-success-lower),
          rgba(24, 24, 27, 0.3));
       border-radius: var(--radius-lg);
       border: 1px solid var(--color-green-border);

@@ -357,7 +357,7 @@
       &.collected {
          border: 2px solid var(--color-green);
          background: linear-gradient(135deg,
-            rgba(34, 197, 94, 0.15),
+            var(--surface-success),
             rgba(34, 197, 94, 0.08));
       }
    }
@@ -467,7 +467,7 @@
    
    .auto-status {
       padding: var(--space-8) var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
       color: var(--text-secondary);
@@ -645,7 +645,7 @@
    .breakdown-toggle {
       width: 100%;
       padding: var(--space-12) var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
@@ -659,7 +659,7 @@
       transition: all 0.2s ease;
       
       &:hover {
-         background: rgba(0, 0, 0, 0.3);
+         background: var(--overlay);
          border-color: var(--color-blue);
       }
       

@@ -1027,7 +1027,7 @@
       gap: var(--space-8);
       padding: var(--space-10);
       margin-bottom: var(--space-8);
-      background: rgba(251, 191, 36, 0.1);
+      background: var(--surface-accent-low);
       border: 1px solid var(--color-amber);
       border-radius: var(--radius-md);
       color: var(--text-secondary);
@@ -1050,7 +1050,7 @@
    
    .event-header {
       padding: var(--space-20);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-bottom: 1px solid var(--border-faint);
    }
    
@@ -1148,7 +1148,7 @@
    }
    
    .event-check-section {
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--overlay-lowest);
       padding: var(--space-24);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-faint);
@@ -1197,13 +1197,13 @@
          font-size: var(--font-md);
          
          &.success {
-            background: rgba(251, 191, 36, 0.1);
+            background: var(--surface-accent-low);
             color: var(--color-amber-light);
             border: 1px solid var(--color-amber);
          }
          
          &.failure {
-            background: rgba(34, 197, 94, 0.1);
+            background: var(--surface-success-low);
             color: var(--color-green);
             border: 1px solid var(--color-green-border);
          }

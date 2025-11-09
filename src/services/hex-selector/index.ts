@@ -534,7 +534,7 @@ export class HexSelectorService {
       border-radius: 8px;
       padding: 16px;
       min-width: 280px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 12px var(--overlay-high);
       color: white;
       font-family: system-ui, -apple-system, sans-serif;
     `;
@@ -600,7 +600,7 @@ export class HexSelectorService {
         align-items: center;
         gap: 8px;
         padding: 8px;
-        background: ${hexId ? 'rgba(210, 105, 30, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
+        background: ${hexId ? 'rgba(210, 105, 30, 0.2)' : 'var(--hover-low)'};
         border: 1px solid ${hexId ? '#D2691E' : '#333'};
         border-radius: 4px;
         margin-bottom: 4px;
@@ -677,7 +677,7 @@ export class HexSelectorService {
         </h3>
       </div>
       <div style="padding: 20px;">
-        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
+        <div style="background: var(--hover-low); border-radius: 4px; padding: 16px; margin-bottom: 16px;">
           <div style="font-size: 12px; color: #999; margin-bottom: 8px;">Selected ${this.selectedHexes.length} ${this.selectedHexes.length === 1 ? 'hex' : 'hexes'}:</div>
           <div style="max-height: 200px; overflow-y: auto;">
             ${this.selectedHexes.map(hexId => `

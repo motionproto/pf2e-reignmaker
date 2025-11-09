@@ -323,11 +323,11 @@
       }
       
       &.clear {
-         background: rgba(239, 68, 68, 0.15);
+         background: var(--surface-primary);
          border-color: var(--border-primary-subtle);
          
          &:hover:not(:disabled) {
-            background: rgba(239, 68, 68, 0.25);
+            background: var(--surface-primary-high);
             border-color: var(--border-primary-medium);
          }
       }

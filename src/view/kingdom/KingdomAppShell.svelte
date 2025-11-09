@@ -276,14 +276,14 @@
       height: 100%;
       gap: var(--space-8);
       padding: var(--space-2);
-      background-color: var(--bg-base);
+      background-color: var(--empty);
       color: var(--text-primary);
    }
 
    .kingdom-header {
       flex: 0 0 auto;
       padding: var(--space-8);
-      background: var(--bg-elevated);
+      background: var(--surface-lower);
       border-radius: var(--radius-lg);
       color: var(--text-primary);
    }
@@ -297,14 +297,14 @@
 
    .kingdom-sidebar {
       flex: 0 0 15.625rem;
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border-radius: var(--radius-lg);
       overflow-y: auto;
    }
 
    .kingdom-main {
       flex: 1;
-      background: var(--bg-surface);
+      background: var(--surface-lowest);
       border-radius: var(--radius-lg);
       padding: var(--space-8);
       overflow-y: auto;
@@ -352,7 +352,7 @@
    
    /* Override Foundry's window styles for our app specifically */
    :global(.pf2e-reignmaker .window-content) {
-      background: var(--bg-base) !important;
+      background: var(--empty) !important;
       color: var(--text-primary) !important;
 
    }

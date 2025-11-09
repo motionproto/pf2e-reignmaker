@@ -659,7 +659,7 @@
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid var(--color-primary, #8b0000);
     border-radius: var(--radius-xl);
-    box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.25rem 1.25rem var(--overlay-high);
     min-width: 17.5rem;
     user-select: none;
     backdrop-filter: blur(0.625rem);
@@ -703,7 +703,7 @@
       
       &:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
       }
       
       i {
@@ -734,7 +734,7 @@
       
       &:hover {
         color: #fff;
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
       }
       
       i {
@@ -760,7 +760,7 @@
     transition: all 0.2s;
     
     &.active-section {
-      background-color: var(--bg-elevated) ;
+      background-color: var(--surface-lower) ;
     }
     
     .section-label {
@@ -774,7 +774,7 @@
       transition: all 0.2s;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         color: #fff;
       }
     }
@@ -782,7 +782,7 @@
     .section-dropdown {
       min-width: 9.375rem;
       padding: var(--space-8) var(--space-12);
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--hover);
       border: 2px solid var(--border-default);
       border-radius: var(--radius-lg);
       color: #fff;
@@ -797,7 +797,7 @@
       align-items: center;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: var(--hover-high);
         border-color: var(--border-medium);
       }
       
@@ -822,7 +822,7 @@
     
     .tool-button {
       padding: var(--space-8) var(--space-12);
-      background: rgba(255, 255, 255, 0.05);
+      background: var(--hover-low);
       border: 2px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       color: rgba(255, 255, 255, 0.7);
@@ -834,7 +834,7 @@
       justify-content: center;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         border-color: var(--border-default);
         color: #fff;
         transform: translateY(-0.0625rem);
@@ -866,14 +866,14 @@
           &:hover {
             transform: scale(1.05);
             border-color: var(--border-strong);
-            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0.25rem 0.5rem var(--overlay-high);
           }
         }
         
         .faction-dropdown {
           flex: 1;
           padding: var(--space-8) var(--space-12);
-          background: rgba(255, 255, 255, 0.05);
+          background: var(--hover-low);
           border: 2px solid var(--border-subtle);
           border-radius: var(--radius-lg);
           color: rgba(255, 255, 255, 0.9);
@@ -887,7 +887,7 @@
           align-items: center;
           
           &:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--hover);
             border-color: var(--border-default);
             color: #fff;
           }
@@ -930,12 +930,12 @@
       font-size: var(--font-sm);
       
       &.cancel-button {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         color: rgba(255, 255, 255, 0.8);
         border: 1px solid var(--border-default);
         
         &:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: var(--hover-high);
           color: #fff;
         }
       }

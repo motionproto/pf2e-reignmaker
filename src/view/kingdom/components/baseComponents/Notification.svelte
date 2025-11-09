@@ -153,7 +153,7 @@
          color: var(--color-amber-light);
          
          .notification-rm-header {
-            background: rgba(245, 158, 11, 0.15);
+            background: var(--surface-accent);
             
             i {
                color: var(--color-amber);
@@ -167,7 +167,7 @@
          color: var(--color-red-light, #fca5a5);
          
          .notification-rm-header {
-            background: rgba(239, 68, 68, 0.15);
+            background: var(--surface-primary);
             
             i {
                color: var(--color-red);
@@ -181,7 +181,7 @@
          color: var(--color-green-light, #86efac);
          
          .notification-rm-header {
-            background: rgba(34, 197, 94, 0.15);
+            background: var(--surface-success);
             
             i {
                color: var(--color-green);

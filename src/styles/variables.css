@@ -91,12 +91,82 @@
   --color-primary-subtle: hsla(0, 58%, 50%, 0.2);
   --color-warning-subtle: hsla(38, 91%, 50%, 0.1);
 
-  /* Semantic Colors */
-  --bg-base: var(--color-gray-950);
-  --bg-surface: var(--color-gray-900);
-  --bg-elevated: var(--color-gray-850);
-  --bg-overlay: var(--color-gray-800);
-  --bg-subtle: var(--color-gray-700);
+  /* Background & Surface System - 8-point hierarchy (darkest → lightest) */
+  /* The void/empty canvas beneath all UI */
+  --empty: var(--color-gray-950);  /* 6% - Base application background */
+  
+  /* Surfaces - UI elements layered on the background (7-point scale) */
+  --surface-lowest: var(--color-gray-900);  /* 10% - Deepest surface layer */
+  --surface-lower: var(--color-gray-850);   /* 16% - Recessed elements */
+  --surface-low: var(--color-gray-800);     /* 22% - Subtle panels */
+  --surface: var(--color-gray-700);         /* 32% - MIDPOINT - Standard surface */
+  --surface-high: var(--color-gray-600);    /* 44% - Elevated panels */
+  --surface-higher: var(--color-gray-500);  /* 56% - Prominent elements */
+  --surface-highest: var(--color-gray-400); /* 68% - Most elevated (modals, tooltips) */
+  
+  /* Semi-Transparent Overlays - 7-point scale */
+  --overlay-lowest: rgba(0, 0, 0, 0.05);    /* Barely visible tint */
+  --overlay-lower: rgba(0, 0, 0, 0.1);      /* Very subtle overlay */
+  --overlay-low: rgba(0, 0, 0, 0.2);        /* Light overlay */
+  --overlay: rgba(0, 0, 0, 0.3);            /* MIDPOINT - Standard overlay */
+  --overlay-high: rgba(0, 0, 0, 0.5);       /* Heavy overlay */
+  --overlay-higher: rgba(0, 0, 0, 0.7);     /* Modal backdrop */
+  --overlay-highest: rgba(0, 0, 0, 0.95);   /* Nearly opaque */
+  
+  /* Interactive Hover States - 3-point scale */
+  --hover-low: rgba(255, 255, 255, 0.05);   /* Subtle hover effect */
+  --hover: rgba(255, 255, 255, 0.1);        /* Standard hover effect */
+  --hover-high: rgba(255, 255, 255, 0.15);  /* Prominent hover effect */
+  
+  /* Colored Surfaces - 5-point scales for semantic states */
+  /* Primary (Crimson/Red) - Danger, errors, critical states */
+  --surface-primary-lower: var(--surface-primary-lower);   /* Barely perceptible */
+  --surface-primary-low: var(--surface-primary-low);      /* Subtle */
+  --surface-primary: var(--surface-primary);         /* MIDPOINT - Default */
+  --surface-primary-high: var(--surface-primary-high);     /* More prominent */
+  --surface-primary-higher: var(--surface-primary-higher);   /* Most prominent */
+  
+  /* Success (Green) - Success states, confirmations, positive feedback */
+  --surface-success-lower: var(--surface-success-lower);   /* Barely perceptible */
+  --surface-success-low: var(--surface-success-low);      /* Subtle */
+  --surface-success: var(--surface-success);         /* MIDPOINT - Default */
+  --surface-success-high: var(--surface-success-high);     /* More prominent */
+  --surface-success-higher: var(--surface-success-higher);   /* Most prominent */
+  
+  /* Warning (Amber) - Warnings, cautions, attention needed */
+  --surface-warning-lower: var(--surface-accent-lower);  /* Barely perceptible */
+  --surface-warning-low: var(--surface-accent-low);     /* Subtle */
+  --surface-warning: var(--surface-accent);        /* MIDPOINT - Default */
+  --surface-warning-high: var(--surface-accent-high);    /* More prominent */
+  --surface-warning-higher: var(--surface-accent-higher);  /* Most prominent */
+  
+  /* Accent (Amber) - Highlights, emphasis, featured content */
+  --surface-accent-lower: var(--surface-accent-lower);   /* Barely perceptible */
+  --surface-accent-low: var(--surface-accent-low);      /* Subtle */
+  --surface-accent: var(--surface-accent);         /* MIDPOINT - Default */
+  --surface-accent-high: var(--surface-accent-high);     /* More prominent */
+  --surface-accent-higher: var(--surface-accent-higher);   /* Most prominent */
+  
+  /* Info (Blue) - Information, in-progress, neutral notifications */
+  --surface-info-lower: var(--surface-info-lower);     /* Barely perceptible */
+  --surface-info-low: var(--surface-info-low);        /* Subtle */
+  --surface-info: var(--surface-info);           /* MIDPOINT - Default */
+  --surface-info-high: var(--surface-info-high);       /* More prominent */
+  --surface-info-higher: var(--surface-info-higher);     /* Most prominent */
+  
+  /* Special (Purple) - Special items, unique states, premium features */
+  --surface-special-lower: var(--surface-special-lower); /* Barely perceptible */
+  --surface-special-low: var(--surface-special-low);    /* Subtle */
+  --surface-special: var(--surface-special);       /* MIDPOINT - Default */
+  --surface-special-high: var(--surface-special-high);   /* More prominent */
+  --surface-special-higher: var(--surface-special-higher); /* Most prominent */
+  
+  /* Legacy aliases - DEPRECATED, will be removed after migration */
+  --bg-base: var(--empty);
+  --bg-surface: var(--surface-lowest);
+  --bg-elevated: var(--surface-lower);
+  --bg-overlay: var(--surface-low);
+  --bg-subtle: var(--surface);
   
   --text-primary: var(--color-gray-50);
   --text-secondary: var(--color-gray-300);

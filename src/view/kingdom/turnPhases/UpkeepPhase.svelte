@@ -598,7 +598,7 @@
       &:hover:not(.completed) {
          border-color: var(--border-strong);
          transform: translateY(-0.125rem);
-         box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+         box-shadow: 0 0.25rem 0.75rem var(--overlay-low);
          
          &::before {
             opacity: 0.6;
@@ -733,7 +733,7 @@
       align-items: flex-start;
       gap: var(--space-12);
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       
       i {
@@ -751,7 +751,7 @@
       }
       
       &.warning {
-         background: rgba(245, 158, 11, 0.1);
+         background: var(--surface-accent-low);
          border: 1px solid var(--border-accent-subtle);
          
          i {
@@ -769,7 +769,7 @@
       justify-content: space-around;
       gap: var(--space-16);
       flex-wrap: wrap;
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       padding: var(--space-12);
       width: 100%;
@@ -780,7 +780,7 @@
       flex-direction: column;
       gap: var(--space-8);
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       width: 100%;
    }
@@ -832,7 +832,7 @@
    
    .build-resources-available {
       padding: var(--space-12);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       width: 100%;
       display: flex;
@@ -891,7 +891,7 @@
    // Auto-status section for the new architecture
    .auto-status {
       padding: var(--space-8) var(--space-16);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-faint);
       color: var(--text-secondary);
@@ -922,7 +922,7 @@
       justify-content: center;
       gap: var(--space-8);
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.2);
+      background: var(--overlay-low);
       border-radius: var(--radius-sm);
       color: var(--text-tertiary);
       font-size: var(--font-sm);
@@ -937,7 +937,7 @@
    .unfed-dropdown-toggle {
       width: 100%;
       padding: var(--space-8) var(--space-12);
-      background: rgba(245, 158, 11, 0.15);
+      background: var(--surface-accent);
       border: 1px solid var(--color-amber);
       border-radius: var(--radius-sm);
       color: var(--color-amber-light);
@@ -950,7 +950,7 @@
       gap: var(--space-8);
       
       &:hover {
-         background: rgba(245, 158, 11, 0.25);
+         background: var(--surface-accent-high);
          border-color: var(--color-amber-light);
       }
       
@@ -964,7 +964,7 @@
       flex-direction: column;
       gap: var(--space-6);
       padding: var(--space-8);
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-faint);
    }
@@ -975,7 +975,7 @@
       justify-content: space-between;
       gap: var(--space-8);
       padding: var(--space-6) var(--space-8);
-      background: rgba(245, 158, 11, 0.1);
+      background: var(--surface-accent-low);
       border-radius: var(--radius-sm);
       font-size: var(--font-md);
       

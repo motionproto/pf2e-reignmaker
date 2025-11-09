@@ -198,7 +198,7 @@
 
 <style lang="scss">
   .arrest-dissidents-resolution {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--overlay-low);
     border-radius: var(--radius-lg);
     padding: var(--space-16);
     margin: var(--space-12) 0;
@@ -267,7 +267,7 @@
     align-items: center;
     gap: var(--space-16);
     padding: var(--space-10) var(--space-12);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-low);
     border-radius: var(--radius-md);
     transition: background 0.2s;
     
@@ -306,7 +306,7 @@
     font-weight: 600;
     color: var(--color-green, #22c55e);
     padding: var(--space-2) var(--space-6);
-    background: rgba(34, 197, 94, 0.2);
+    background: var(--surface-success-high);
     border-radius: var(--radius-sm);
   }
 
@@ -324,7 +324,7 @@
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--hover-high);
       border-color: var(--border-strong, var(--border-medium));
     }
     
@@ -338,7 +338,7 @@
       color: var(--color-green, #22c55e);
       
       &:hover {
-        background: rgba(34, 197, 94, 0.2);
+        background: var(--surface-success-high);
       }
     }
     

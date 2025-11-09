@@ -154,7 +154,7 @@
     backdrop-filter: blur(0.5rem);
     padding: var(--space-24);
     border-bottom: 1px solid var(--border-subtle);
-    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.125rem 0.5rem var(--overlay-low);
     min-height: 5.625rem;
     display: flex;
     align-items: center;
@@ -223,7 +223,7 @@
       
       .cancel-button {
         padding: var(--space-12) var(--space-24);
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--hover);
         border: 1px solid var(--border-subtle);
         border-radius: var(--radius-sm);
         color: var(--text-secondary);
@@ -234,7 +234,7 @@
         white-space: nowrap;
         
         &:hover {
-          background: rgba(255, 255, 255, 0.15);
+          background: var(--hover-high);
           border-color: var(--border-strong);
           color: var(--text-primary);
         }
@@ -262,7 +262,7 @@
         
         &:hover:not(:disabled) {
           background: var(--color-amber-light);
-          box-shadow: 0 0.125rem 0.5rem rgba(251, 191, 36, 0.3);
+          box-shadow: 0 0.125rem 0.5rem var(--surface-accent-higher);
         }
         
         &:disabled {

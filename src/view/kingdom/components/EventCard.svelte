@@ -252,7 +252,7 @@
       align-items: center;
       gap: var(--space-6);
       padding: var(--space-6) var(--space-12);
-      background: rgba(239, 68, 68, 0.15);
+      background: var(--surface-primary);
       border: 1px solid var(--border-primary);
       border-radius: var(--radius-md);
       color: var(--color-red);
@@ -267,7 +267,7 @@
       }
       
       &:hover:not(:disabled) {
-        background: rgba(239, 68, 68, 0.25);
+        background: var(--surface-primary-high);
         border-color: var(--border-primary-medium);
         transform: translateY(-0.0625rem);
       }
@@ -287,7 +287,7 @@
   
   .aid-button-inline {
     padding: var(--space-10) var(--space-16);
-    background: rgba(59, 130, 246, 0.15);
+    background: var(--surface-info);
     border: 1px solid var(--border-info-medium);
     border-radius: var(--radius-sm);
     color: rgb(147, 197, 253);
@@ -304,7 +304,7 @@
   }
   
   .aid-button-inline:hover:not(:disabled) {
-    background: rgba(59, 130, 246, 0.25);
+    background: var(--surface-info-high);
     border-color: var(--border-info-strong);
     color: rgb(191, 219, 254);
     transform: translateY(-0.0625rem);
@@ -328,19 +328,19 @@
   }
   
   .aid-result-badge-inline.critical-success {
-    background: rgba(59, 130, 246, 0.15);
+    background: var(--surface-info);
     border: 1px solid var(--border-info);
     color: rgb(59, 130, 246);
   }
   
   .aid-result-badge-inline.success {
-    background: rgba(34, 197, 94, 0.15);
+    background: var(--surface-success);
     border: 1px solid var(--border-success);
     color: rgb(34, 197, 94);
   }
   
   .aid-result-badge-inline.failure {
-    background: rgba(239, 68, 68, 0.15);
+    background: var(--surface-primary);
     border: 1px solid var(--border-primary);
     color: rgb(239, 68, 68);
   }

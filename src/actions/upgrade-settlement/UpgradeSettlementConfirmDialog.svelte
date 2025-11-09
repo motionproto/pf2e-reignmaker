@@ -76,7 +76,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--overlay-high);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -87,7 +87,7 @@
     background: var(--color-gray-900, #1f1f23);
     border: 2px solid var(--border-highlight, #4a4a4d);
     border-radius: var(--radius-lg, 8px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 16px var(--overlay);
     max-width: 500px;
     width: 90%;
     animation: dialogSlideIn 0.2s ease-out;
@@ -144,7 +144,7 @@
       align-items: flex-start;
       gap: 0.5rem;
       padding: 0.75rem;
-      background: rgba(245, 158, 11, 0.15);
+      background: var(--surface-accent);
       border: 1px solid var(--border-accent-subtle);
       border-radius: var(--radius-md);
       color: var(--color-amber);

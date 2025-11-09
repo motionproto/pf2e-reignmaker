@@ -34,7 +34,7 @@
 
 <style lang="scss">
    .modifier-card {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--overlay);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-faint);
       padding: var(--space-16);
@@ -44,7 +44,7 @@
          border-color: var(--border-medium);
          background: rgba(0, 0, 0, 0.4);
          transform: translateY(-0.125rem);
-         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+         box-shadow: 0 0.25rem 0.5rem var(--overlay-low);
       }
       
       .modifier-header {
@@ -71,7 +71,7 @@
          color: var(--color-blue);
          padding: var(--space-2) var(--space-8);
          border-radius: var(--radius-md);
-         background: rgba(59, 130, 246, 0.2);
+         background: var(--surface-info-high);
       }
       
       .modifier-desc {
@@ -97,7 +97,7 @@
             font-size: var(--font-xs);
             padding: var(--space-4) var(--space-8);
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--hover);
             border: 1px solid var(--border-faint);
             color: var(--text-secondary);
          }

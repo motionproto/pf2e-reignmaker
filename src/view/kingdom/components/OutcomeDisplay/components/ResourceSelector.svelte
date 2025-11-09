@@ -99,7 +99,7 @@
       &.resolved {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1rem var(--hover-high);
       }
       
       .card-header {
@@ -118,7 +118,7 @@
       
       .resource-dropdown {
         padding: var(--space-8) var(--space-12);
-        background: rgba(0, 0, 0, 0.3);
+        background: var(--overlay);
         border: 1px solid var(--border-medium);
         border-radius: var(--radius-sm);
         color: var(--text-primary);
@@ -134,7 +134,7 @@
         &:focus {
           outline: none;
           border-color: var(--color-blue);
-          box-shadow: 0 0 0 0.125rem rgba(59, 130, 246, 0.3);
+          box-shadow: 0 0 0 0.125rem var(--surface-info-higher);
         }
         
         option {
