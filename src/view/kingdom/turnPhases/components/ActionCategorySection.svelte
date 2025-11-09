@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import BaseCheckCard from '../../../kingdom/components/BaseCheckCard.svelte';
+  import CommerceTierInfo from '../../../kingdom/components/CheckCard/components/CommerceTierInfo.svelte';
   import { getCustomResolutionComponent } from '../../../../controllers/actions/implementations';
   import type { PlayerAction } from '../../../../controllers/actions/action-types';
 
@@ -147,7 +148,11 @@
             on:aid={handleAid}
             on:primary={handlePrimary}
             on:cancel={(e) => handleCancel(e.detail.checkId)}
-          />
+          >
+            {#if action.id === 'purchase-resources'}
+              <CommerceTierInfo slot="pre-skill-content" />
+            {/if}
+          </BaseCheckCard>
         {/key}
       {/each}
     </div>

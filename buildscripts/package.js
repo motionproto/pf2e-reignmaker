@@ -17,6 +17,7 @@ const __dirname = dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 const PACKAGE_DIR = path.join(PROJECT_ROOT, 'package');
+const RELEASES_DIR = path.join(PROJECT_ROOT, 'releases');
 const MODULE_NAME = 'pf2e-reignmaker';
 
 console.log('📦 PF2e ReignMaker - Package Distribution');
@@ -28,7 +29,7 @@ const moduleJson = JSON.parse(fs.readFileSync(moduleJsonPath, 'utf-8'));
 const version = moduleJson.version || '1.0.0';
 
 const ZIP_NAME = `${MODULE_NAME}-v${version}.zip`;
-const ZIP_PATH = path.join(PROJECT_ROOT, ZIP_NAME);
+const ZIP_PATH = path.join(RELEASES_DIR, ZIP_NAME);
 
 console.log(`📌 Version: ${version}`);
 console.log(`📦 Package: ${ZIP_NAME}\n`);
@@ -43,13 +44,13 @@ try {
     process.exit(1);
 }
 
-// Clean up old package directory and zip
+// Clean up old package directory and create releases directory
 console.log('🧹 Cleaning old package artifacts...');
 if (fs.existsSync(PACKAGE_DIR)) {
     fs.rmSync(PACKAGE_DIR, { recursive: true, force: true });
 }
-if (fs.existsSync(ZIP_PATH)) {
-    fs.unlinkSync(ZIP_PATH);
+if (!fs.existsSync(RELEASES_DIR)) {
+    fs.mkdirSync(RELEASES_DIR, { recursive: true });
 }
 console.log('✅ Cleanup complete\n');
 

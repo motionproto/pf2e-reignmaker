@@ -18,7 +18,13 @@ The build system now automatically detects your operating system and deploys to 
 
 ## Commands
 
-### Build and Deploy
+### Development (with HMR)
+```bash
+npm run dev
+```
+Starts the development server with hot module reload.
+
+### Build and Deploy (Local Testing)
 ```bash
 npm run deploy
 ```
@@ -28,17 +34,45 @@ This will:
 3. Build the module with Vite
 4. Copy everything to your FoundryVTT modules directory
 
-### Development (with HMR)
-```bash
-npm run dev
-```
-Starts the development server with hot module reload.
+Use this for local testing in Foundry VTT.
 
 ### Build Only
 ```bash
 npm run build
 ```
 Builds the module without deploying.
+
+### Create Release Package (Production)
+```bash
+npm run package
+```
+**Use this when preparing a release for distribution.**
+
+This will:
+1. Clean old build artifacts
+2. Run Python build scripts to combine data files
+3. Build the module with Vite (production mode, **no source maps**)
+4. Create a clean distribution package
+5. Generate a versioned zip file: `pf2e-reignmaker-v{version}.zip`
+
+**Output:**
+- **File:** `pf2e-reignmaker-v{version}.zip` (e.g., `pf2e-reignmaker-v0.0.1.zip`)
+- **Size:** ~4-5 MB (optimized, no debug files)
+- **Location:** `releases/` folder (created automatically)
+- **Contents:**
+  - `module.json`
+  - `LICENSE`
+  - `README.md`
+  - `dist/` - Compiled module code (no source maps)
+  - `data/` - Game data files
+  - `lang/` - Language files
+  - `macros/` - Helper macros
+
+**Notes:**
+- Source maps are disabled for production releases (configured in `vite.config.ts`)
+- The version number is read from `module.json`
+- Output is organized in the `releases/` folder (ignored by git)
+- This zip file is ready for upload to release platforms or manual installation
 
 ## Custom Path Override
 

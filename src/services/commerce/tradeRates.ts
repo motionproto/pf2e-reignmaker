@@ -74,7 +74,7 @@ export function hasCommerceStructure(): boolean {
 /**
  * Get the current commerce tier based on built structures
  */
-function getCommerceTier(): number {
+export function getCommerceTier(): number {
   const kingdom = getKingdomData();
   
   if (!kingdom.settlements || kingdom.settlements.length === 0) {

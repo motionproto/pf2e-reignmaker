@@ -20,7 +20,7 @@ const s_PACKAGE_ID = `modules/${moduleJSON.id}`;
 const s_SVELTE_HASH_ID = 'prm';
 
 const s_COMPRESS = true;   // Set to true to compress the module bundle.
-const s_SOURCEMAPS = true; // Generate sourcemaps for the bundle (recommended).
+const s_SOURCEMAPS = false; // Generate sourcemaps for the bundle (disabled for production distribution).
 
 export default defineConfig(({ mode }) =>
 {

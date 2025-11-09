@@ -129,13 +129,37 @@
 
 **Files:** `src/view/kingdom/components/OutcomeDisplay/components/YourCustomResolution.svelte`
 
-**Reference:** `docs/systems/action-resolution-complete-flow.md#pattern-5-custom-component-pattern`
+**⚠️ IMPORTANT:** Start with the simple pattern! Most custom UI should hardcode data and calculate from outcome.
 
-**Example:** `arrest-dissidents` (choose how many dissidents to imprison after seeing outcome)
+**Quick Decision:**
+- Simple choice (A/B/C)? → Use `choice-buttons` modifier (Section 1.7)
+- Need custom UI? → Read comprehensive guide: **[Custom UI Action Guide](../guides/CUSTOM_UI_ACTION_GUIDE.md)**
+
+**Two Patterns:**
+
+1. **Simple Pattern (Recommended)** - Component hardcodes data, no props needed
+   - Example: Harvest Resources (choose food/lumber/stone/ore)
+   - Files: 2 (action + component)
+   - Complexity: Low
+
+2. **Complex Pattern (Rare)** - Component reads from stores for dynamic data
+   - Example: Arrest Dissidents (allocate unrest across settlements)
+   - Files: 2 (action + component)
+   - Complexity: High
 
 **Key Difference from Pre-Roll:**
 - **Pre-roll** = Selection needed to determine WHICH skill check to make
 - **Post-roll** = Selection needed to determine HOW to apply the outcome
+
+**Full Implementation Guide:** [Custom UI Action Guide](../guides/CUSTOM_UI_ACTION_GUIDE.md)
+
+**Key Principles:**
+- ✅ Hardcode data in component (don't use props unless needed)
+- ✅ Calculate amounts from `outcome` prop
+- ✅ Keep UI minimal (visual feedback over text)
+- ✅ Study working examples (Harvest Resources, Arrest Dissidents)
+- ❌ Don't over-engineer with props
+- ❌ Don't use custom UI when `choice-buttons` would work
 
 ### 1.6 Hex Selection Pattern
 
@@ -437,7 +461,52 @@ validationFn: (hexId) => {
 
 **Reference:** `docs/systems/game-commands-system.md#hex-selection-integration`
 
-### 3.7 In-Line Selection Not Appearing
+### 3.7 Custom UI Not Rendering
+
+**Symptom:** Custom component not appearing after outcome displayed
+
+**Check:**
+1. ✅ Component exported from action's `customResolution.component`?
+2. ✅ Action registered in `implementations/index.ts`?
+3. ✅ `needsCustomResolution()` returns true for outcome?
+4. ✅ No JavaScript errors in console?
+
+**Common Causes:**
+- **Buttons not appearing** → Resource array empty (check hardcoded data)
+- **Component not mounting** → needsCustomResolution() returns false
+- **Selection not applying** → Missing dispatch('selection', ...) event
+- **Apply stays disabled** → validateData() returns false
+
+**Quick Fix - Debug logging:**
+```typescript
+// In action file
+needsCustomResolution(outcome): boolean {
+  const needs = outcome === 'success' || outcome === 'criticalSuccess';
+  console.log(`[YourAction] needsCustomResolution(${outcome}): ${needs}`);
+  return needs;
+}
+
+validateData(resolutionData: ResolutionData): boolean {
+  console.log('[YourAction] Validating:', resolutionData.customComponentData);
+  const valid = !!(resolutionData.customComponentData?.selectedOption);
+  console.log('[YourAction] Valid:', valid);
+  return valid;
+}
+```
+
+**Detailed Troubleshooting:** [Custom UI Action Guide](../guides/CUSTOM_UI_ACTION_GUIDE.md#troubleshooting)
+
+**Common Mistakes:**
+- ❌ Using getComponentProps() (unnecessary complexity - hardcode data instead)
+- ❌ Using custom component when choice-buttons would work
+- ❌ Forgetting to emit 'selection' event
+- ❌ Not storing state in customComponentData
+
+**Quick Decision:**
+- Simple A/B/C choice? → Use `choice-buttons` modifier (no code needed)
+- Complex UI needed? → Follow [Simple Pattern](../guides/CUSTOM_UI_ACTION_GUIDE.md#the-simple-pattern-recommended)
+
+### 3.8 In-Line Selection Not Appearing
 
 **Symptom:** ChoiceModifier in JSON but no buttons/dropdown appears
 

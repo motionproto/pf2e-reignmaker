@@ -371,6 +371,9 @@
         <!-- Skills section - only show when not resolved or when action (actions can have multiple resolutions) -->
         {#if skills && skills.length > 0 && (!resolved || checkType === 'action')}
           <div class="skill-options">
+            <!-- Slot for pre-skill content (e.g., commerce tier info) -->
+            <slot name="pre-skill-content"></slot>
+            
             <div class="skill-options-header">
               <div class="skill-options-title">{skillSectionTitle}</div>
               {#if showIgnoreButton && checkType === 'event'}

@@ -11,7 +11,7 @@ src/data-compiled/
 
 ### Distribution packaging ###
 package/
-*.zip
+releases/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

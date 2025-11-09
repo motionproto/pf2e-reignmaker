@@ -39,6 +39,5 @@
       "description": "Negotiations fail catastrophically; lose 1d4 gold",
       "modifiers": []
     }
-  },
-  "special": "Purchase a single resource type with gold. Amounts must be divisible by your trade ratio (e.g., with 3:2 rate, buy in sets of 2 resources for 3 gold). Commerce tier determines rate: T1 Market Square (2:1) \u2192 T2 Bazaar (3:2) \u2192 T3 Merchant Guild (1:1) \u2192 T4 Imperial Bank (1:2) \u2192 Bonus Tier (1:3, critical success only)"
+  }
 }
