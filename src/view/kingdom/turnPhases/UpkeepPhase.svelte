@@ -545,26 +545,23 @@
    .upkeep-phase {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--space-20);
    }
    
    // New grid container for responsive columns
    .phase-steps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+      gap: var(--space-20);
+      margin-bottom: var(--space-20);
       
-      @media (max-width: 767px) {
-         grid-template-columns: 1fr;
+      @media (max-width: 47.9375rem) { grid-template-columns: 1fr;
       }
       
-      @media (min-width: 768px) and (max-width: 1023px) {
-         grid-template-columns: repeat(3, 1fr);
+      @media (min-width: 48.0000rem) and (max-width: 63.9375rem) { grid-template-columns: repeat(3, 1fr);
       }
       
-      @media (min-width: 1024px) {
-         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      @media (min-width: 64.0000rem) { grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
       }
    }
    
@@ -588,7 +585,7 @@
          top: 0;
          left: 0;
          right: 0;
-         height: 3px;
+         height: 0.1875rem;
          background: linear-gradient(90deg, 
             transparent, 
             var(--color-amber), 
@@ -600,8 +597,8 @@
       
       &:hover:not(.completed) {
          border-color: var(--border-strong);
-         transform: translateY(-2px);
-         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+         transform: translateY(-0.125rem);
+         box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
          
          &::before {
             opacity: 0.6;
@@ -618,7 +615,7 @@
    }
    
    .card-header {
-      padding: 16px 20px;
+      padding: var(--space-16) var(--space-20);
       border-bottom: 1px solid var(--border-subtle);
       position: relative;
       
@@ -626,26 +623,26 @@
          margin: 0;
          display: flex;
          align-items: center;
-         gap: 10px;
+         gap: var(--space-10);
          
          .step-icon {
             color: var(--color-amber);
-            font-size: 20px;
+            font-size: var(--font-xl);
          }
       }
    }
    
    .phase-complete-indicator {
       position: absolute;
-      top: 18px;
-      right: 20px;
+      top: 1.125rem;
+      right: 1.25rem;
       color: var(--color-green);
-      font-size: 20px;
+      font-size: var(--font-xl);
    }
    
    
    .card-content {
-      padding: 0 20px 12px 20px;
+      padding: 0 var(--space-20) var(--space-12) var(--space-20);
       flex: 1;
       display: flex;
       flex-direction: column;
@@ -656,12 +653,12 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+      gap: var(--space-12);
    }
    
    .button-area {
       margin-top: auto;
-      padding-top: 12px;
+      padding-top: var(--space-12);
       display: flex;
       flex-direction: column;
       
@@ -693,7 +690,7 @@
       border-radius: var(--radius-md);
       border: 1px solid var(--border-medium);
       transition: all 0.3s ease;
-      margin-bottom: 20px;
+      margin-bottom: var(--space-20);
       
       &.completed {
          background: linear-gradient(135deg,
@@ -704,7 +701,7 @@
    }
    
    .summary-header {
-      padding: 16px 20px;
+      padding: var(--space-16) var(--space-20);
       border-bottom: 1px solid var(--border-subtle);
       position: relative;
       
@@ -712,37 +709,37 @@
          margin: 0;
          display: flex;
          align-items: center;
-         gap: 10px;
+         gap: var(--space-10);
          
          i {
             color: var(--color-amber);
-            font-size: 20px;
+            font-size: var(--font-xl);
          }
       }
    }
    
    .summary-content {
-      padding: 20px;
+      padding: var(--space-20);
    }
    
    .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
+      gap: var(--space-16);
    }
    
    .summary-item {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 12px;
+      gap: var(--space-12);
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       
       i {
-         font-size: 18px;
+         font-size: var(--font-lg);
          color: var(--color-blue);
-         margin-top: 2px;
+         margin-top: var(--space-2);
          flex-shrink: 0;
       }
       
@@ -755,7 +752,7 @@
       
       &.warning {
          background: rgba(245, 158, 11, 0.1);
-         border: 1px solid rgba(245, 158, 11, 0.3);
+         border: 0.0625rem solid rgba(245, 158, 11, 0.3);
          
          i {
             color: var(--color-amber);
@@ -770,19 +767,19 @@
    .consumption-display {
       display: flex;
       justify-content: space-around;
-      gap: 15px;
+      gap: var(--space-16);
       flex-wrap: wrap;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
-      padding: 12px;
+      padding: var(--space-12);
       width: 100%;
    }
    
    .military-capacity-display {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 12px;
+      gap: var(--space-8);
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       width: 100%;
@@ -791,14 +788,14 @@
    .capacity-item {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       font-size: var(--font-sm);
       color: var(--text-primary);
       
       i {
-         font-size: 18px;
+         font-size: var(--font-lg);
          color: var(--color-blue);
-         width: 20px;
+         width: 1.25rem;
          text-align: center;
       }
       
@@ -830,11 +827,11 @@
       text-align: center;
       color: var(--text-tertiary);
       font-style: italic;
-      padding: 10px;
+      padding: var(--space-10);
    }
    
    .build-resources-available {
-      padding: 12px;
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       width: 100%;
@@ -846,7 +843,7 @@
       .available-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.025em;
+         letter-spacing: 0.0250rem;
          color: var(--text-secondary);
          text-transform: uppercase;
          width: 100%;
@@ -869,14 +866,14 @@
          
          i {
             font-size: var(--font-3xl);
-            margin-bottom: 4px;
+            margin-bottom: var(--space-4);
          }
          
          .resource-value {
-            font-size: 18px;
+            font-size: var(--font-lg);
             font-weight: var(--font-weight-bold);
             color: var(--text-primary);
-            margin: 2px 0;
+            margin: var(--space-2) 0;
          }
       }
    }
@@ -884,8 +881,8 @@
    .build-queue {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      max-height: 200px;
+      gap: var(--space-10);
+      max-height: 12.5rem;
       overflow-y: auto;
       width: 100%;
    }
@@ -893,7 +890,7 @@
    
    // Auto-status section for the new architecture
    .auto-status {
-      padding: 0.5rem 1rem;
+      padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
@@ -902,7 +899,7 @@
       text-align: center;
       
       i {
-         margin-right: 8px;
+         margin-right: var(--space-8);
          color: var(--color-blue);
          
          &.fa-check {
@@ -923,8 +920,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 8px;
+      gap: var(--space-8);
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       color: var(--text-tertiary);
@@ -939,7 +936,7 @@
    // Unfed settlements dropdown
    .unfed-dropdown-toggle {
       width: 100%;
-      padding: 8px 12px;
+      padding: var(--space-8) var(--space-12);
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid var(--color-amber);
       border-radius: var(--radius-sm);
@@ -950,7 +947,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: var(--space-8);
       
       &:hover {
          background: rgba(245, 158, 11, 0.25);
@@ -958,15 +955,15 @@
       }
       
       i {
-         font-size: 12px;
+         font-size: var(--font-xs);
       }
    }
    
    .unfed-settlements-list {
       display: flex;
       flex-direction: column;
-      gap: 6px;
-      padding: 8px;
+      gap: var(--space-6);
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
@@ -976,8 +973,8 @@
       display: flex;
       align-items: baseline;
       justify-content: space-between;
-      gap: 8px;
-      padding: 6px 8px;
+      gap: var(--space-8);
+      padding: var(--space-6) var(--space-8);
       background: rgba(245, 158, 11, 0.1);
       border-radius: var(--radius-sm);
       font-size: var(--font-md);

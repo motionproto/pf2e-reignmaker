@@ -117,8 +117,8 @@
 
 <style lang="scss">
   .completion-notifications {
-    margin-bottom: 16px;
-    padding: 12px;
+    margin-bottom: var(--space-16);
+    padding: var(--space-12);
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-medium);
@@ -128,31 +128,31 @@
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
-    margin-bottom: 8px;
+    margin-bottom: var(--space-8);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.0500rem;
   }
   
   .notifications-list {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-6);
   }
   
   .notification {
     display: flex;
     align-items: center;
-    gap: .5rem;
-    padding: 8px 10px 8px 0px;
+    gap: .var(--space-24);
+    padding: var(--space-8) var(--space-10) var(--space-8) var(--space-2);
     background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-xs);
-    border-left: 3px solid;
+    border-left: 0.1875rem solid;
     font-size: var(--font-sm);
     transition: all 0.2s ease;
     
     &:hover {
       background: rgba(255, 255, 255, 0.04);
-      transform: translateX(2px);
+      transform: translateX(0.1250rem);
     }
     
     &.outcome-criticalSuccess {
@@ -192,17 +192,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 1.5000rem;
+    height: 1.5000rem;
     flex-shrink: 0;
-    font-size: 14px;
+    font-size: var(--font-sm);
   }
   
   .notification-content {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: .75rem;
+    gap: .var(--space-24);
     flex-wrap: wrap;
     line-height: 1.4;
   }

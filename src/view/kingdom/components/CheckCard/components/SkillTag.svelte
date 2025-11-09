@@ -44,8 +44,8 @@
    .skill-tag {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
+      gap: var(--space-6);
+      padding: var(--space-10) var(--space-16);
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
@@ -61,27 +61,27 @@
       text-align: left;
       
       // Secondary button style
-      backdrop-filter: blur(4px);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(0.2500rem);
+      box-shadow: 0 0.0625rem 0.1250rem rgba(0, 0, 0, 0.1);
       
       .skill-label {
          color: var(--text-primary);
          font-weight: var(--font-weight-medium);
          display: flex;
          align-items: center;
-         gap: 4px;
+         gap: var(--space-4);
       }
       
       .skill-bonus {
          color: var(--text-secondary);
-         font-size: 0.9em;
+         font-size: var(--font-sm);
          opacity: 0.8;
       }
       
       .skill-divider {
          color: var(--text-tertiary);
          opacity: 0.5;
-         margin: 0 2px;
+         margin: 0 var(--space-2);
       }
       
       .skill-description {
@@ -89,11 +89,10 @@
          opacity: 0.8;
       }
       
-      &:hover:not(.disabled):not(.selected) {
-         transform: translateY(-1px);
+      &:hover: not(.disabled):not(.selected) { transform: translateY(-0.0625rem);
          border-color: var(--border-strong);
          background:   var(--btn-secondary-hover);
-         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+         box-shadow: 0 0.1250rem 0.3750rem rgba(0, 0, 0, 0.15);
          
          .skill-label {
             color: white;
@@ -117,8 +116,8 @@
          }
          
          &:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+            transform: translateY(-0.0625rem);
+            box-shadow: 0 0.2500rem 0.7500rem rgba(251, 191, 36, 0.4);
          }
       }
       
@@ -130,7 +129,7 @@
             transform: none;
             border-color: var(--border-strong);
             background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0.0625rem 0.1250rem rgba(0, 0, 0, 0.1);
          }
       }
       
@@ -141,7 +140,7 @@
          .fa-spin {
             color: var(--text-primary);
             animation: spin 1s linear infinite;
-            margin-right: 4px;
+            margin-right: var(--space-4);
          }
          
          .skill-label {

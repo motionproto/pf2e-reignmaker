@@ -403,9 +403,9 @@
    
    .welcome-dialog {
       background: var(--bg-elevated);
-      border-radius: 0.5rem;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      max-width: 600px;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 0.6250rem 2.5000rem rgba(0, 0, 0, 0.5);
+      max-width: 37.5000rem;
       width: 90%;
       max-height: 90vh;
       overflow-y: auto;
@@ -414,7 +414,7 @@
    
    @keyframes slideIn {
       from {
-         transform: translateY(-20px);
+         transform: translateY(-1.2500rem);
          opacity: 0;
       }
       to {
@@ -424,7 +424,7 @@
    }
    
    .dialog-header {
-      padding: 1.5rem;
+      padding: var(--space-24);
       background: var(--gradient-header);
       border-bottom: 2px solid var(--color-primary);
       
@@ -443,7 +443,7 @@
    }
    
    .dialog-body {
-      padding: 2rem;
+      padding: var(--space-24);
       
       .campaign-prompt,
       .importing-text {
@@ -454,8 +454,8 @@
       }
       
       .campaign-prompt {
-         margin-top: 1rem;
-         margin-bottom: 0.75rem;
+         margin-top: var(--space-16);
+         margin-bottom: var(--space-12);
          font-weight: var(--font-weight-medium);
       }
       
@@ -475,12 +475,12 @@
    
    .player-waiting {
       text-align: center;
-      padding: 2rem;
+      padding: var(--space-24);
       
       .waiting-icon {
-         font-size: 4rem;
+         font-size: var(--font-6xl);
          color: var(--text-secondary);
-         margin-bottom: 1.5rem;
+         margin-bottom: var(--space-24);
          
          i {
             animation: pulse 2s ease-in-out infinite;
@@ -488,7 +488,7 @@
       }
       
       h3 {
-         margin: 0 0 1rem 0;
+         margin: 0 0 var(--space-16) 0;
          color: var(--text-primary);
          font-size: var(--font-2xl);
       }
@@ -545,7 +545,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 1.25rem center;
-      background-size: 12px;
+      background-size: 0.7500rem;
       
       &:hover {
          border-color: var(--color-primary);
@@ -570,7 +570,7 @@
    .scene-options {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: var(--space-12);
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
@@ -581,11 +581,11 @@
       flex-direction: row;
       align-items: center;
       justify-content: flex-start;
-      gap: 1rem;
-      padding: 2.75rem 1rem;
+      gap: var(--space-16);
+      padding: var(--space-24) var(--space-16);
       background: var(--bg-surface);
       border: 2px solid var(--border-secondary);
-      border-radius: 0.5rem;
+      border-radius: var(--radius-xl);
       cursor: pointer;
       transition: all 0.2s;
       text-align: left;
@@ -602,8 +602,8 @@
          &:hover {
             border-color: var(--color-primary);
             background: var(--bg-surface);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-0.1250rem);
+            box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
          }
       }
       
@@ -630,8 +630,8 @@
          display: flex;
          align-items: center;
          justify-content: center;
-         border-radius: 0.5rem;
-         font-size: 2rem;
+         border-radius: var(--radius-xl);
+         font-size: var(--font-4xl);
       }
       
       &.stolen-lands .option-icon {
@@ -685,22 +685,22 @@
    
    .info-box {
       background: var(--bg-base);
-      padding: 1rem;
-      border-radius: 0.375rem;
+      padding: var(--space-16);
+      border-radius: var(--radius-lg);
       margin-top: 0;
       
       ul {
          list-style: none;
          padding: 0;
-         margin: 0 0 1rem 0;
+         margin: 0 0 var(--space-16) 0;
          
          li {
-            padding: 0.25rem 0;
+            padding: var(--space-4) 0;
             color: var(--text-secondary);
             font-weight: var(--font-weight-medium);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-8);
             font-size: var(--font-md);
             
             i {
@@ -713,18 +713,18 @@
       }
       
       .note {
-         margin: 1rem 0 0 0;
-         padding-top: 1rem;
+         margin: var(--space-16) 0 0 0;
+         padding-top: var(--space-16);
          border-top: 1px solid var(--border-subtle);
          font-size: var(--font-md);
          font-weight: var(--font-weight-medium);
          color: var(--text-muted);
          display: flex;
          align-items: flex-start;
-         gap: 0.5rem;
+         gap: var(--space-8);
          
          i {
-            margin-top: 0.15rem;
+            margin-top: var(--space-2);
             color: var(--text-secondary);
             opacity: 0.8;
          }
@@ -756,12 +756,12 @@
    }
    
    .dialog-footer {
-      padding: 1.5rem;
+      padding: var(--space-24);
       background: var(--bg-surface);
       border-top: 1px solid var(--border-subtle);
       display: flex;
       justify-content: flex-end;
-      gap: 1rem;
+      gap: var(--space-16);
    }
    
    button {
@@ -781,8 +781,8 @@
          color: white;
          
          &:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(-0.0625rem);
+            box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
          }
       }
       

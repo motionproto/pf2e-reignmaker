@@ -8,10 +8,10 @@
   min-height: 2.5rem;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md, 4px);
+  border-radius: var(--radius-md, 0.25rem);
   color: var(--text-primary, #f8f8f8);
   font-family: var(--font-sans-rm);
-  font-size: var(--font-md, 16px);
+  font-size: var(--font-md, 1rem);
   line-height: 1.5;
   vertical-align: middle;
   cursor: pointer;
@@ -44,7 +44,7 @@
   color: #f8f8f8 !important;
   padding: 0.5rem 0.75rem !important;
   min-height: 2rem !important;
-  font-size: var(--font-md, 16px) !important;
+  font-size: var(--font-md, 1rem) !important;
   font-family: var(--font-sans-rm) !important;
   line-height: 1.5 !important;
 }
@@ -71,10 +71,10 @@
   padding: 0.5rem;
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-md, 4px);
+  border-radius: var(--radius-md, 0.25rem);
   color: var(--text-primary, #f8f8f8);
   font-family: var(--font-sans-rm);
-  font-size: var(--font-md, 16px);
+  font-size: var(--font-md, 1rem);
   transition: border-color var(--transition-fast, 150ms);
 }
 

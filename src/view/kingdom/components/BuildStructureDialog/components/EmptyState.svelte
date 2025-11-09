@@ -35,17 +35,17 @@
     height: 100%;
     text-align: center;
     color: var(--text-tertiary);
-    padding: 2rem 1rem;
+    padding: var(--space-24) var(--space-16);
     
     i {
-      font-size: 48px;
-      margin-bottom: 1rem;
+      font-size: var(--font-6xl);
+      margin-bottom: var(--space-16);
       opacity: 0.3;
       color: var(--text-secondary);
     }
     
     p {
-      margin: 0 0 8px 0;
+      margin: 0 0 var(--space-8) 0;
       font-size: var(--font-md);
       
       &.hint {

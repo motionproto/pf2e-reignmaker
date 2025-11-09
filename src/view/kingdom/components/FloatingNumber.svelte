@@ -50,20 +50,7 @@
     pointer-events: none;
     z-index: 1000;
     /* Outside stroke effect using 8-directional shadows */
-    text-shadow: 
-      /* Stroke outline (8 directions) */
-      -2px -2px 0 rgba(0, 0, 0, 0.8),
-      0 -2px 0 rgba(0, 0, 0, 0.8),
-      2px -2px 0 rgba(0, 0, 0, 0.8),
-      2px 0 0 rgba(0, 0, 0, 0.8),
-      2px 2px 0 rgba(0, 0, 0, 0.8),
-      0 2px 0 rgba(0, 0, 0, 0.8),
-      -2px 2px 0 rgba(0, 0, 0, 0.8),
-      -2px 0 0 rgba(0, 0, 0, 0.8),
-      /* Glow layers for extra visibility */
-      0 0 4px rgba(0, 0, 0, 0.8),
-      0 0 8px rgba(0, 0, 0, 0.7),
-      0 0 12px rgba(0, 0, 0, 0.5);
+    text-shadow: /* Stroke outline (8 directions) */ -0.1250rem -0.1250rem 0 rgba(0, 0, 0, 0.8), 0 -0.1250rem 0 rgba(0, 0, 0, 0.8), 0.1250rem -0.1250rem 0 rgba(0, 0, 0, 0.8), 0.1250rem 0 0 rgba(0, 0, 0, 0.8), 0.1250rem 0.1250rem 0 rgba(0, 0, 0, 0.8), 0 0.1250rem 0 rgba(0, 0, 0, 0.8), -0.1250rem 0.1250rem 0 rgba(0, 0, 0, 0.8), -0.1250rem 0 0 rgba(0, 0, 0, 0.8), /* Glow layers for extra visibility */ 0 0 0.2500rem rgba(0, 0, 0, 0.8), 0 0 0.5000rem rgba(0, 0, 0, 0.7), 0 0 0.7500rem rgba(0, 0, 0, 0.5);
     
     /* Combined animation */
     animation: 

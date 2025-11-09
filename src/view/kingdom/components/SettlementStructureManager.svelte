@@ -346,43 +346,43 @@
     background: var(--bg-base);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-strong);
-    max-width: 900px;
+    max-width: 56.2500rem;
     width: 90%;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.5000rem 2.0000rem rgba(0, 0, 0, 0.5);
   }
   
   .dialog-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: .5rem 1rem;
+    padding: .5rem var(--space-16);
     border-bottom: 1px solid var(--border-light);
     background: var(--color-gray-950);
     
     h2 {
       margin: 0;
       color: var(--text-primary);
-      font-size: 1.1rem;
+      font-size: var(--font-lg);
       font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
     }
     
     .header-info {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: var(--space-16);
     }
     
     .capacity-badge {
       display: flex;
       align-items: center;
-      gap: 0.375rem;
-      padding: 0.375rem 0.75rem;
+      gap: var(--space-6);
+      padding: var(--space-6) var(--space-12);
       background: var(--bg-overlay);
       border-radius: var(--radius-md);
       color: var(--text-secondary);
@@ -393,9 +393,9 @@
       background: none;
       border: none;
       color: var(--text-secondary);
-      font-size: 1.25rem;
+      font-size: var(--font-xl);
       cursor: pointer;
-      padding: 0.5rem;
+      padding: var(--space-8);
       border-radius: var(--radius-sm);
       transition: all 0.2s ease;
       
@@ -408,30 +408,30 @@
   
   .structure-type-selector {
     display: flex;
-    gap: 1rem;
-    padding: 0.75rem;
+    gap: var(--space-16);
+    padding: var(--space-12);
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--border-default);
     align-items: center;
     
     .radio-group {
       display: flex;
-      gap: 0.5rem;
-      padding: 0.25rem;
+      gap: var(--space-8);
+      padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border-radius: 0.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-xl);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
     }
     
     .radio-option {
       display: flex;
       align-items: center;
-      padding: 0.375rem 0.625rem;
-      border-radius: 0.375rem;
+      padding: var(--space-6) var(--space-10);
+      border-radius: var(--radius-lg);
       cursor: pointer;
       transition: all 0.2s;
       background: transparent;
-      border: 2px solid transparent;
+      border: 0.1250rem solid transparent;
       user-select: none;
       
       &:hover {
@@ -458,13 +458,13 @@
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       color: var(--text-secondary);
       transition: color 0.2s;
     }
     
     .radio-icon {
-      font-size: 1rem;
+      font-size: var(--font-md);
       
       i {
         font-size: inherit;
@@ -475,7 +475,7 @@
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       white-space: nowrap;
     }
   }
@@ -483,11 +483,11 @@
   .dialog-content {
     flex: 1;
     overflow-y: auto;
-    padding: 0rem;
+    padding: var(--space-2);
   }
   
   .category-section {
-    padding-bottom: 0rem;
+    padding-bottom: var(--space-2);
     border: 0px solid var(--border-default);
     border-radius: var(--radius-md);
     background: var(--bg-surface);
@@ -495,37 +495,37 @@
   }
   
   .category-header {
-    padding: 0.375rem 1rem;
+    padding: var(--space-6) var(--space-16);
     background: var(--bg-overlay);
     color: var(--color-accent);
     font-size: var(--font-lg);
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.0500rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-8);
     
     i {
-      font-size: 1rem;
+      font-size: var(--font-md);
     }
   }
   
   .structures-list {
-    padding-left: .5rem;
-    padding-top: .5rem;
+    padding-left: .var(--space-24);
+    padding-top: .var(--space-24);
   }
   
   .structure-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
+    gap: var(--space-12);
+    padding: var(--space-8) var(--space-16);
     background: linear-gradient(135deg,
       rgba(24, 24, 27, 0.6),
       rgba(31, 31, 35, 0.4));
     border-radius: var(--radius-md);
     border: 1px solid var(--border-medium);
-    margin-bottom: 0.375rem;
+    margin-bottom: var(--space-6);
     transition: all 0.2s ease;
     
     &:hover {
@@ -549,7 +549,7 @@
     }
     
     .structure-checkbox {
-      margin-top: 0.25rem;
+      margin-top: var(--space-4);
       width: 1.25rem;
       height: 1.25rem;
       cursor: pointer;
@@ -566,14 +566,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: var(--space-2);
   }
   
   .structure-name-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--space-12);
   }
   
   .structure-name {
@@ -585,7 +585,7 @@
       font-weight: normal;
       color: var(--text-secondary);
       font-size: var(--font-sm);
-      margin-left: 0.5rem;
+      margin-left: var(--space-8);
     }
   }
   
@@ -601,49 +601,49 @@
     font-size: var(--font-sm);
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-4);
     white-space: nowrap;
   }
   
   .structure-modifiers {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.375rem;
-    margin-top: 0.375rem;
+    gap: var(--space-6);
+    margin-top: var(--space-6);
   }
   
   .modifier-badge {
     display: inline-flex;
     align-items: center;
-    padding: 0.25rem 0.625rem;
+    padding: var(--space-4) var(--space-10);
     background: rgba(34, 197, 94, 0.15);
     color: #86efac;
     border-radius: var(--radius-md);
     font-size: var(--font-xs);
     font-weight: 600;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 0.0625rem solid rgba(34, 197, 94, 0.3);
   }
   
   .dialog-footer {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: var(--space-8);
+    padding: var(--space-12) var(--space-16);
     border-top: 1px solid var(--border-default);
     background: var(--bg-elevated);
     
     .warning-section {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       .warning-message {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.5rem 0.75rem;
+        gap: var(--space-8);
+        padding: var(--space-8) var(--space-12);
         background: rgba(251, 191, 36, 0.1);
-        border-left: 3px solid #fbbf24;
+        border-left: 0.1875rem solid #fbbf24;
         border-radius: var(--radius-sm);
         color: #fbbf24;
         font-size: var(--font-sm);
@@ -656,16 +656,16 @@
     }
     
     .close-button {
-      padding: 0.5rem 1rem;
+      padding: var(--space-8) var(--space-16);
       background: var(--color-gray-800);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       color: var(--text-secondary);
-      font-size: 0.9rem;
+      font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
       transition: all 0.2s ease;
-      min-width: 80px;
+      min-width: 5.0000rem;
       
       &:hover {
         background: var(--color-gray-700);

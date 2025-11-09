@@ -30,31 +30,31 @@
 
 <style lang="scss">
   .shortage-warning {
-    padding: 14px 16px;
+    padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
       rgba(239, 68, 68, 0.2),
       rgba(239, 68, 68, 0.08));
-    border: 2px solid rgba(239, 68, 68, 0.5);
+    border: 0.1250rem solid rgba(239, 68, 68, 0.5);
     border-radius: var(--radius-sm);
     
     .shortage-warning-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--color-red);
-      margin-bottom: 10px;
+      margin-bottom: var(--space-10);
       
       i {
-        font-size: 18px;
+        font-size: var(--font-lg);
       }
     }
     
     .shortage-warning-content {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-8);
       
       p {
         margin: 0;
@@ -71,15 +71,15 @@
       .shortage-penalty {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
+        gap: var(--space-8);
+        padding: var(--space-8) var(--space-12);
         background: rgba(239, 68, 68, 0.15);
         border-radius: var(--radius-xs);
         border-left: 3px solid var(--color-red);
         
         i {
           color: var(--color-red);
-          font-size: 16px;
+          font-size: var(--font-md);
         }
         
         strong {

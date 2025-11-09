@@ -188,28 +188,28 @@
   }
   
   .categories-panel {
-    flex: 0 0 340px;
+    flex: 0 0 21.2500rem;
     background: rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-md);
-    padding: .75rem;
+    padding: .var(--space-24);
     overflow-y: auto;
   }
   
   .categories-list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .category-type-section {
     .section-title {
-      margin: 0 0 1rem 0;
+      margin: 0 0 var(--space-16) 0;
       color: var(--color-amber);
       font-size: var(--font-lg);
       font-weight: var(--font-weight-semibold);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
     }
   }
   
@@ -229,19 +229,19 @@
   
   .progression-header {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    padding: 1.5rem;
+    backdrop-filter: blur(0.5000rem);
+    padding: var(--space-24);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-default);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    min-height: 90px; // Fixed minimum height to maintain consistent layout
+    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
+    min-height: 5.6250rem; // Fixed minimum height to maintain consistent layout
     display: flex;
     align-items: center;
     
     .header-content {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       
       > i {
         font-size: var(--font-3xl);
@@ -253,7 +253,7 @@
       .text-container {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: var(--space-4);
         min-height: 3.5rem; // Fixed height to prevent layout shift
         justify-content: center;
         
@@ -277,10 +277,10 @@
   .tier-progression {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: 1.5rem;
-    padding-top: 2rem;
-    padding-bottom: 1rem;
+    gap: var(--space-16);
+    padding: var(--space-24);
+    padding-top: var(--space-24);
+    padding-bottom: var(--space-16);
     flex: 1;
     overflow-y: auto;
   }
@@ -298,13 +298,13 @@
   
   .no-structures {
     text-align: center;
-    padding: 2rem;
+    padding: var(--space-24);
     color: var(--text-tertiary);
     
     i {
       font-size: var(--font-4xl);
       opacity: 0.3;
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-8);
     }
     
     p {
@@ -328,18 +328,18 @@
     
     i {
       font-size: var(--font-6xl);
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-16);
       opacity: 0.3;
       color: var(--color-amber);
     }
     
     h3 {
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 var(--space-8) 0;
       color: var(--text-primary);
     }
     
     p {
-      margin: 0.5rem 0;
+      margin: var(--space-8) 0;
       color: var(--text-tertiary);
     }
   }

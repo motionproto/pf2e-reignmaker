@@ -1,16 +1,14 @@
 <script lang="ts">
-  import { kingdomData, currentTurn, updateKingdom, getKingdomActor } from "../../../stores/KingdomStore";
+  import { kingdomData, currentTurn, getKingdomActor } from "../../../stores/KingdomStore";
   import { TurnPhase, type KingdomData } from "../../../actors/KingdomActor";
   import { createGameCommandsService } from '../../../services/GameCommandsService';
   import { createCheckInstanceService } from '../../../services/CheckInstanceService';
   import { actionLoader } from "../../../controllers/actions/action-loader";
-  import BaseCheckCard from "../components/BaseCheckCard.svelte";
   import ActionDialogManager from "./components/ActionDialogManager.svelte";
   import ActionCategorySection from "./components/ActionCategorySection.svelte";
   import { createAidManager, type AidManager } from '../../../controllers/shared/AidSystemHelpers';
   import { executeActionRoll, createExecutionContext } from '../../../controllers/actions/ActionExecutionHelpers';
   import {
-    getPlayerCharacters,
     getCurrentUserCharacter,
     initializeRollResultHandler,
     performKingdomActionRoll,
@@ -24,7 +22,6 @@
 
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
-  import { getCustomResolutionComponent } from '../../../controllers/actions/implementations';
   import { createCustomActionHandlers, type CustomActionHandlers } from '../../../controllers/actions/action-handlers-config';
   import { ACTION_CATEGORIES } from './action-categories-config';
   import { createActionCheckInstance, updateCheckInstanceOutcome, type PendingActionsState } from '../../../controllers/actions/CheckInstanceHelpers';
@@ -49,7 +46,6 @@
   let showDisbandArmyDialog: boolean = false;
   let showOutfitArmyDialog: boolean = false;
   let showRecruitArmyDialog: boolean = false;
-  let showDeployArmyDialog: boolean = false;
   let pendingAidAction: { id: string; name: string } | null = null;
   let pendingBuildAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
   let pendingRepairAction: { skill: string; structureId?: string; settlementId?: string } | null = null;
@@ -72,21 +68,6 @@
   $: actionsUsed = ($kingdomData.turnState?.actionLog || []).filter((entry: any) => 
     entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS
   ).length;
-  
-  // Check if current player has already acted (for all BaseCheckCards)
-  let hasPlayerActed = false;
-  $: {
-    const game = (window as any).game;
-    if (!game?.user?.id) {
-      hasPlayerActed = false;
-    } else {
-      const actionLog = $kingdomData.turnState?.actionLog || [];
-      hasPlayerActed = actionLog.some((entry: any) => 
-        entry.playerId === game.user.id && 
-        (entry.phase === TurnPhase.ACTIONS || entry.phase === TurnPhase.EVENTS)
-      ) ? true : false;
-    }
-  }
   
   // Force UI update when active aids change
   $: activeAidsCount = $kingdomData?.turnState?.actionsPhase?.activeAids?.length || 0;
@@ -444,33 +425,6 @@
     
     return missing;
   }
-
-  
-  // Check if current player has a pending resolution for this action
-  function isActionResolvedByCurrentPlayer(actionId: string): boolean {
-    const instanceId = currentActionInstances.get(actionId);
-    if (!instanceId) return false;
-    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
-    return instance && instance.status !== 'pending';
-  }
-
-  function getCurrentPlayerResolution(actionId: string) {
-    const instanceId = currentActionInstances.get(actionId);
-    if (!instanceId) return null;
-    const instance = $kingdomData.activeCheckInstances?.find(i => i.instanceId === instanceId);
-    if (!instance?.appliedOutcome) return null;
-    
-    // Convert instance appliedOutcome to resolution format for UI
-    return {
-      outcome: instance.appliedOutcome.outcome,
-      actorName: instance.appliedOutcome.actorName,
-      skillName: instance.appliedOutcome.skillName,
-      modifiers: instance.appliedOutcome.modifiers,
-      effect: instance.appliedOutcome.effect
-    };
-  }
-  
-  // Removed: getActionCompletions - completions now handled by CompletionNotifications component
 
   // Handle skill execution from CheckCard (decoupled from component)
   async function handleExecuteSkill(event: CustomEvent, action: any) {
@@ -1218,106 +1172,13 @@
     position: relative;
   }
 
-  .actions-header-fixed {
-    flex-shrink: 0; // Don't shrink - stays at top while content scrolls
-    z-index: 10;
-    background: var(--color-gray-900);
-    border-bottom: 1px solid var(--border-medium);
-  }
-
-  .actions-header {
-    background: linear-gradient(
-      135deg,
-      rgba(31, 31, 35, 0.6),
-      rgba(15, 15, 17, 0.4)
-    );
-    border-top-left-radius: var(--radius-lg);
-    border-top-right-radius: var(--radius-lg);
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    border: 1px solid var(--border-medium);
-    padding-top: .5rem;
-    padding-bottom: .5rem;
-    padding-left: 1rem;
-    padding-right: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-
   .actions-content {
     flex: 1;
-    overflow-y: auto; // Make this section scrollable
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding-bottom: 20px;
-    padding-right: 5px; // Add some padding for scrollbar
-  }
-
-  .actions-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: var(--font-2xl);
-    font-weight: var(--font-weight-semibold);
-    line-height: 1.3;
-    color: var(--text-primary);
-
-    i {
-      color: var(--color-amber);
-    }
-  }
-
-  /* Category styles moved to ActionCategorySection component */
-
-  .phase-completion {
-    background: linear-gradient(135deg,
-      rgba(31, 31, 35, 0.6),
-      rgba(15, 15, 17, 0.4));
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-medium);
-    padding: 20px;
-    margin-top: 20px;
-    text-align: center;
-  }
-
-  .completion-header h3 {
-    margin: 0 0 10px 0;
-    font-size: var(--font-2xl);
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-primary);
-  }
-
-  .completion-header p {
-    margin: 0 0 20px 0;
-    color: var(--text-secondary);
-    font-size: var(--font-md);
-  }
-
-  .complete-phase-btn {
-    background: var(--color-green);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: var(--radius-md);
-    font-size: var(--font-md);
-    font-weight: var(--font-weight-semibold);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: var(--color-green-dark);
-      transform: translateY(-1px);
-    }
-
-    i {
-      font-size: 16px;
-    }
+    gap: var(--space-20);
+    padding-bottom: var(--space-20);
+    padding-right: var(--space-4);
   }
 </style>

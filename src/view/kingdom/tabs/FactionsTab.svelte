@@ -32,9 +32,9 @@
    .factions-tab {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       height: 100%;
-      padding: 1rem;
+      padding: var(--space-16);
    }
    
    .factions-header {
@@ -45,7 +45,7 @@
       .header-left {
          display: flex;
          align-items: baseline;
-         gap: 0.5rem;
+         gap: var(--space-8);
          
          h2 {
             margin: 0;
@@ -53,7 +53,7 @@
          }
          
          .faction-count {
-            font-size: 0.875rem;
+            font-size: var(--font-sm);
             color: var(--color-text-dark-secondary, #7a7971);
          }
       }
@@ -61,30 +61,30 @@
    
    .factions-summary {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       flex-wrap: wrap;
       
       .summary-card {
          display: flex;
          align-items: center;
-         gap: 0.75rem;
+         gap: var(--space-12);
          background: rgba(0, 0, 0, 0.2);
-         padding: 0.75rem 1rem;
-         border-radius: 0.375rem;
-         border: 1px solid rgba(255, 255, 255, 0.1);
+         padding: var(--space-12) var(--space-16);
+         border-radius: var(--radius-lg);
+         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
          
          i {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
          }
          
          .summary-value {
-            font-size: 1.25rem;
+            font-size: var(--font-xl);
             font-weight: var(--font-weight-bold);
             color: var(--color-text-dark-primary, #b5b3a4);
          }
          
          .summary-label {
-            font-size: 0.875rem;
+            font-size: var(--font-sm);
             color: var(--text-medium-light, #9e9b8f);
          }
       }
@@ -92,14 +92,14 @@
    
    .table-controls {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .search-input,
       .filter-select {
-         padding: 0.5rem;
+         padding: var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.2);
-         border-radius: 0.375rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          
          &:focus {
@@ -117,8 +117,8 @@
       flex: 1;
       overflow: auto;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.375rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
    }
    
    .factions-table {
@@ -132,11 +132,11 @@
          z-index: 1;
          
          th {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
             
             &.attitude-header {
                text-align: center;
@@ -146,7 +146,7 @@
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -158,31 +158,31 @@
          }
          
          td {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             color: var(--color-text-dark-primary, #b5b3a4);
             
             &.attitude-cell {
                text-align: center;
-               padding: 0.25rem;
+               padding: var(--space-4);
             }
             
             &.empty-state {
-               padding: 3rem;
+               padding: var(--space-24);
                text-align: center;
                color: var(--color-text-dark-secondary, #7a7971);
                
                i {
-                  font-size: 2rem;
-                  margin-bottom: 1rem;
+                  font-size: var(--font-4xl);
+                  margin-bottom: var(--space-16);
                   opacity: 0.5;
                   display: block;
                }
                
                p {
-                  margin: 0.5rem 0;
+                  margin: var(--space-8) 0;
                   
                   &.hint {
-                     font-size: 0.875rem;
+                     font-size: var(--font-sm);
                      font-style: italic;
                   }
                }
@@ -193,8 +193,8 @@
    
    .editable-cell {
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       display: inline-block;
       background: transparent;
@@ -209,14 +209,14 @@
    
    .attitude-icon {
       cursor: pointer;
-      padding: 0.25rem;
-      border: 1px solid transparent;
+      padding: var(--space-4);
+      border: 0.0625rem solid transparent;
       outline: none;
       background: transparent;
-      font-size: 1.1rem;
+      font-size: var(--font-lg);
       transition: all 0.2s;
       box-shadow: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       
       &:hover {
          transform: scale(1.15);
@@ -243,15 +243,15 @@
    .progress-clock {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       justify-content: center;
    }
    
    .clock-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       cursor: pointer;
       transition: all 0.2s;
@@ -276,8 +276,8 @@
       min-width: 1.5rem;
       text-align: center;
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
       background: transparent;
       border: none;
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -289,10 +289,10 @@
    
    .clock-max-input {
       width: 3rem;
-      padding: 0.25rem;
+      padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       text-align: center;
       
@@ -304,17 +304,17 @@
    
    .inline-edit {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
    }
    
    .inline-input {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 150px;
+      min-width: 9.3750rem;
       
       &:focus {
          outline: none;
@@ -323,10 +323,10 @@
    }
    
    .attitude-select {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       
       &:focus {
@@ -337,20 +337,20 @@
    
    .inline-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .save-btn,
    .cancel-btn,
    .delete-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:disabled {
          opacity: 0.5;
@@ -390,13 +390,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .page-btn {
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          background: rgba(0, 0, 0, 0.2);
-         border: 1px solid rgba(255, 255, 255, 0.1);
-         border-radius: 0.375rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          cursor: pointer;
          transition: all 0.2s;

@@ -220,9 +220,9 @@
 <style>
   .phase-bar {
     background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
-    border-radius: 6px;
-    padding: 1.5rem 1rem; /* Symmetrical top/bottom padding for even spacing */
-    margin-top: -0.4rem;
+    border-radius: var(--radius-lg);
+    padding: var(--space-24) var(--space-16); /* Symmetrical top/bottom padding for even spacing */
+    margin-top: -var(--space-6);
   }
 
   .phase-bar-inner {
@@ -230,40 +230,40 @@
     justify-content: flex-start;
     align-items: center;
     gap: 0;
-    max-width: 900px;
+    max-width: 56.2500rem;
   }
   
   .phase-connector {
-    width: 30px;
-    height: 2px;
+    width: 1.8750rem;
+    height: 0.1250rem;
     background: rgba(180, 170, 150, 0.3);
     transition: background 0.3s ease;
   }
   
   .phase-connector.completed {
     background: #6e6e6e;
-    box-shadow: 0 0 4px rgba(85, 85, 85, 0.4);
+    box-shadow: 0 0 0.2500rem rgba(85, 85, 85, 0.4);
   }
 
   .phase-item {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.6rem 1rem;
+    padding: var(--space-10) var(--space-16);
     background: var(--btn-secondary-bg);
     border: 1px solid var(--border-strong);
-    border-radius: 8px;
+    border-radius: var(--radius-xl);
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 100px;
+    min-width: 6.2500rem;
     position: relative;
     color: var(--text-primary);
   }
 
   .phase-item:hover {
     background: var(--btn-secondary-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transform: translateY(-0.1250rem);
+    box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.2);
     border-color: var(--border-strong);
   }
 
@@ -288,14 +288,14 @@
   .phase-item.selected::after {
     content: '';
     position: absolute;
-    bottom: -6px;
+    bottom: -0.3750rem;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
-    height: 3px;
+    height: 0.1875rem;
     background: #fff;  /* Always white underline for selection */
-    border-radius: 2px;
-    box-shadow: 0 2px 4px rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 0.1250rem 0.2500rem rgba(255, 255, 255, 0.4);
     transition: all 0.3s ease;
     z-index: 10; /* Ensure it's on top */
   }
@@ -308,10 +308,10 @@
   /* Active indicator dot for when active but not selected */
   .active-indicator {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 12px;
-    height: 12px;
+    top: -0.3750rem;
+    right: -0.3750rem;
+    width: 0.7500rem;
+    height: 0.7500rem;
     background: #fff;
     border: 2px solid var(--color-dark-bg, #18181b);
     border-radius: 50%;
@@ -352,7 +352,7 @@
   }
 
   .phase-label {
-    font-size: 1rem;
+    font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
     text-align: center;
     line-height: 1.2;
@@ -365,13 +365,13 @@
   /* Animation for active phase when not selected */
   @keyframes pulse {
     0% {
-      box-shadow: 0 4px 4px rgba(255, 20, 20, 0.4);
+      box-shadow: 0 0.2500rem 0.2500rem rgba(255, 20, 20, 0.4);
     }
     50% {
-      box-shadow: 0 4px 20px rgba(255, 20, 20, 0.8);
+      box-shadow: 0 0.2500rem 1.2500rem rgba(255, 20, 20, 0.8);
     }
     100% {
-      box-shadow: 0 4px 4px rgba(255, 20, 20, 0.4);
+      box-shadow: 0 0.2500rem 0.2500rem rgba(255, 20, 20, 0.4);
     }
   }
 
@@ -418,14 +418,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 1rem;
+    margin-left: var(--space-16);
     background: transparent;
     border: none;
     outline: none;
     cursor: pointer;
     transition: all 0.3s ease;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: var(--font-md);
     padding: 0;
   }
 
@@ -501,7 +501,7 @@
     left: 50%;
     transform: translateX(-50%);
     bottom: 100%;
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-4);
     color: var(--text-secondary);
     font-size: var(--font-md);
     font-weight: var(--font-weight-normal);
@@ -513,7 +513,7 @@
   @keyframes fade-in-above {
     from {
       opacity: 0;
-      transform: translate(-50%, 5px);
+      transform: translate(-50%, 0.3125rem);
     }
     to {
       opacity: 1;
@@ -551,15 +551,15 @@
     position: absolute;
     right: 0;
     top: 100%;
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
+    margin-top: var(--space-8);
+    padding: var(--space-8) var(--space-16);
     background: var(--color-danger, #ff4444);
     color: white;
-    border-radius: 4px;
-    font-size: 0.85rem;
+    border-radius: var(--radius-md);
+    font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
     animation: fade-in-out 5s ease-in-out forwards;
     z-index: 100;
   }
@@ -567,7 +567,7 @@
   @keyframes fade-in-out {
     0% {
       opacity: 0;
-      transform: translateY(-5px);
+      transform: translateY(-0.3125rem);
     }
     10% {
       opacity: 1;
@@ -579,28 +579,26 @@
     }
     100% {
       opacity: 0;
-      transform: translateY(-5px);
+      transform: translateY(-0.3125rem);
     }
   }
 
   /* Responsive design */
-  @media (max-width: 768px) {
-    .phase-bar {
-      padding: 0.5rem;
+  @media (max-width: 48.0000rem) { .phase-bar { padding: var(--space-8);
     }
     
     .phase-bar-inner {
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: var(--space-8);
     }
 
     .phase-item {
-      min-width: 80px;
-      padding: 0.4rem 0.5rem;
+      min-width: 5.0000rem;
+      padding: var(--space-6) var(--space-8);
     }
 
     .phase-label {
-      font-size: 0.65rem;
+      font-size: var(--font-xs);
     }
     
     .phase-connector {
@@ -608,14 +606,14 @@
     }
     
     .active-indicator {
-      width: 8px;
-      height: 8px;
-      top: -2px;
-      right: -2px;
+      width: 0.5000rem;
+      height: 0.5000rem;
+      top: -0.1250rem;
+      right: -0.1250rem;
     }
     
     .lock-button {
-      font-size: 1rem;
+      font-size: var(--font-md);
     }
   }
 </style>

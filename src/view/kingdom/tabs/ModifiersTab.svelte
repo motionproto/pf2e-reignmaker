@@ -627,34 +627,34 @@
    .modifiers-tab {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: var(--space-24);
       height: 100%;
-      padding: 1rem;
+      padding: var(--space-16);
       overflow-y: auto;
    }
    
    .modifiers-summary {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       flex-wrap: wrap;
       align-items: center;
       
       .summary-card {
          display: flex;
          align-items: center;
-         gap: 0.75rem;
+         gap: var(--space-12);
          background: rgba(0, 0, 0, 0.2);
-         padding: 0.75rem 1rem;
-         border-radius: 0.375rem;
-         border: 1px solid rgba(255, 255, 255, 0.1);
+         padding: var(--space-12) var(--space-16);
+         border-radius: var(--radius-lg);
+         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
          
          i {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
             color: var(--color-text-dark-primary, #b5b3a4);
          }
          
          .summary-value {
-            font-size: 1.25rem;
+            font-size: var(--font-xl);
             font-weight: var(--font-weight-bold);
             color: var(--color-text-dark-primary, #b5b3a4);
          }
@@ -680,14 +680,14 @@
    
    .table-controls {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .filter-select {
-         padding: 0.5rem 0.75rem;
+         padding: var(--space-8) var(--space-12);
          min-height: 2.5rem;
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.2);
-         border-radius: 0.375rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          line-height: 1.5;
          vertical-align: middle;
@@ -703,7 +703,7 @@
    .section {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       .section-header {
          display: flex;
@@ -717,7 +717,7 @@
          color: var(--color-text-dark-primary, #b5b3a4);
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          margin: 0;
          
          i {
@@ -729,8 +729,8 @@
    .modifiers-table-container {
       overflow: auto;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.375rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
    }
    
    .modifiers-table {
@@ -744,17 +744,17 @@
          z-index: 1;
          
          th {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -766,27 +766,27 @@
          }
          
          td {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             color: var(--color-text-dark-primary, #b5b3a4);
             font-size: var(--font-size-medium, 0.875rem);
             
             &.empty-state {
-               padding: 3rem;
+               padding: var(--space-24);
                text-align: center;
                color: var(--color-text-dark-secondary, #7a7971);
                
                i {
-                  font-size: 2rem;
-                  margin-bottom: 1rem;
+                  font-size: var(--font-4xl);
+                  margin-bottom: var(--space-16);
                   opacity: 0.5;
                   display: block;
                }
                
                p {
-                  margin: 0.5rem 0;
+                  margin: var(--space-8) 0;
                   
                   &.hint {
-                     font-size: 0.875rem;
+                     font-size: var(--font-sm);
                      font-style: italic;
                   }
                }
@@ -798,7 +798,7 @@
    .modifier-name {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       i {
          color: var(--color-text-dark-primary, #b5b3a4);
@@ -814,10 +814,10 @@
    .source-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.25rem 0.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
+      gap: var(--space-8);
+      padding: var(--space-4) var(--space-12);
+      border-radius: var(--radius-md);
+      font-size: var(--font-sm);
       background: rgba(0, 0, 0, 0.3);
       
       &.source-event {
@@ -840,22 +840,22 @@
    .effects-container {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .effects-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .effect-tag {
       display: inline-flex;
       align-items: center;
-      padding: 0.25rem 0.75rem;
+      padding: var(--space-4) var(--space-12);
       background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
       font-size: var(--font-size-medium, 0.875rem);
       color: var(--color-text-dark-primary, #b5b3a4);
       font-weight: var(--font-weight-semibold);
@@ -874,7 +874,7 @@
       color: #ff6b6b;
       cursor: pointer;
       padding: 0;
-      margin-left: 0.25rem;
+      margin-left: var(--space-4);
       display: flex;
       align-items: center;
       
@@ -886,21 +886,21 @@
    .effects-row-builder {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       flex-wrap: wrap;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
    }
    
    .effect-item {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
+      gap: var(--space-8);
+      padding: var(--space-6) var(--space-12);
       background: rgba(200, 200, 200, 0.12);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.375rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
       font-size: var(--font-size-medium, 0.875rem);
       color: var(--color-text-dark-primary, #b5b3a4);
       white-space: nowrap;
@@ -916,7 +916,7 @@
       }
       
       .effect-duration {
-         font-size: 0.8125rem;
+         font-size: var(--font-xs);
          color: var(--color-text-dark-secondary, #7a7971);
          font-style: italic;
       }
@@ -927,10 +927,10 @@
          color: #ff6b6b;
          cursor: pointer;
          padding: 0;
-         margin-left: 0.25rem;
+         margin-left: var(--space-4);
          display: flex;
          align-items: center;
-         font-size: 0.75rem;
+         font-size: var(--font-xs);
          transition: color 0.2s;
          
          &:hover:not(:disabled) {
@@ -947,23 +947,23 @@
    .add-effect-inline-builder {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .no-effects {
       color: var(--color-text-dark-secondary, #7a7971);
       font-style: italic;
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
    }
    
    .turn-info {
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       color: var(--color-text-dark-secondary, #7a7971);
    }
    
    .modifier-name-clickable {
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: transparent;
       border: none;
       color: var(--color-text-dark-primary, #b5b3a4);
@@ -971,7 +971,7 @@
       font-weight: var(--font-weight-semibold);
       font-size: var(--font-size-large, 1.125rem);
       transition: all 0.2s;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       
       &:hover {
          background: rgba(255, 255, 255, 0.1);
@@ -985,17 +985,17 @@
    
    .inline-edit {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
    }
    
    .inline-input {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--color-primary, #5e0000);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 150px;
+      min-width: 9.3750rem;
       
       &:focus {
          outline: none;
@@ -1005,14 +1005,14 @@
    
    .delete-btn,
    .add-effect-icon-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:disabled {
          opacity: 0.5;
@@ -1042,25 +1042,25 @@
    .create-modifier-form {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
+      gap: var(--space-16);
+      padding: var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
    }
    
    .form-row {
       display: grid;
       grid-template-columns: 1fr 2fr;
-      gap: 1rem;
+      gap: var(--space-16);
    }
    
    .form-field {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       label {
-         font-size: 0.875rem;
+         font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          color: var(--color-text-dark-primary, #b5b3a4);
       }
@@ -1069,27 +1069,27 @@
    .effects-section {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .effects-header {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       label {
-         font-size: 0.875rem;
+         font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          color: var(--color-text-dark-primary, #b5b3a4);
       }
    }
    
    .effect-select {
-      padding: 0.5rem 0.75rem;
+      padding: var(--space-8) var(--space-12);
       min-height: 2.5rem;
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       line-height: 1.5;
       vertical-align: middle;
@@ -1106,12 +1106,12 @@
    }
    
    .effect-input {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      width: 100px;
+      width: 6.2500rem;
       
       &:focus {
          outline: none;
@@ -1124,16 +1124,16 @@
    }
    
    .add-effect-btn {
-      padding: 0.25rem 0.75rem;
+      padding: var(--space-4) var(--space-12);
       background: rgba(94, 0, 0, 0.2);
-      border: 1px solid rgba(94, 0, 0, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(94, 0, 0, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:hover:not(:disabled) {
          background: rgba(94, 0, 0, 0.3);

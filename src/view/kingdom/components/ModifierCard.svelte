@@ -37,21 +37,21 @@
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
-      padding: 1rem;
+      padding: var(--space-16);
       transition: all 0.2s ease;
       
       &:hover {
          border-color: var(--border-medium);
          background: rgba(0, 0, 0, 0.4);
-         transform: translateY(-2px);
-         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+         transform: translateY(-0.1250rem);
+         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.2);
       }
       
       .modifier-header {
          display: flex;
          align-items: center;
-         gap: 8px;
-         margin-bottom: 8px;
+         gap: var(--space-8);
+         margin-bottom: var(--space-8);
          
          i {
             font-size: var(--font-lg);
@@ -69,34 +69,34 @@
       .modifier-tier {
          font-size: var(--font-s);
          color: var(--color-blue);
-         padding: 2px 8px;
-         border-radius: 4px;
+         padding: var(--space-2) var(--space-8);
+         border-radius: var(--radius-md);
          background: rgba(59, 130, 246, 0.2);
       }
       
       .modifier-desc {
          font-size: var(--font-md);
          color: var(--text-secondary);
-         margin-bottom: 10px;
+         margin-bottom: var(--space-10);
          line-height: 1.4;
       }
       
       .modifier-source {
          font-size: var(--font-s);
          color: var(--text-muted);
-         margin-bottom: 8px;
+         margin-bottom: var(--space-8);
       }
       
       .modifier-effects {
          display: flex;
          flex-wrap: wrap;
-         gap: 6px;
-         margin-top: 8px;
+         gap: var(--space-6);
+         margin-top: var(--space-8);
          
          .effect-badge {
             font-size: var(--font-xs);
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: var(--space-4) var(--space-8);
+            border-radius: var(--radius-md);
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);

@@ -154,43 +154,43 @@
 <style lang="scss">
    .phase-debug-panel {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 350px;
-      max-height: 600px;
+      bottom: 1.2500rem;
+      right: 1.2500rem;
+      width: 21.8750rem;
+      max-height: 37.5000rem;
       background: rgba(20, 20, 25, 0.95);
       border: 2px solid var(--color-amber);
       border-radius: var(--radius-lg);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.2500rem 1.2500rem rgba(0, 0, 0, 0.5);
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      font-size: 12px;
+      font-size: var(--font-xs);
    }
    
    .debug-header {
-      padding: 12px;
+      padding: var(--space-12);
       background: rgba(251, 191, 36, 0.1);
       border-bottom: 1px solid var(--border-medium);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       font-weight: bold;
       color: var(--color-amber);
       
       i {
-         font-size: 16px;
+         font-size: var(--font-md);
       }
    }
    
    .debug-content {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
+      padding: var(--space-12);
    }
    
    .debug-section {
-      margin-bottom: 16px;
+      margin-bottom: var(--space-16);
       
       &:last-child {
          margin-bottom: 0;
@@ -200,19 +200,19 @@
    .section-title {
       font-weight: bold;
       color: var(--text-primary);
-      margin-bottom: 8px;
-      font-size: 13px;
+      margin-bottom: var(--space-8);
+      font-size: var(--font-xs);
    }
    
    .status-grid {
       display: grid;
-      gap: 6px;
+      gap: var(--space-6);
    }
    
    .status-item {
       display: flex;
       justify-content: space-between;
-      padding: 4px 8px;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-sm);
       
@@ -237,14 +237,14 @@
    .steps-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-8);
    }
    
    .phase-group {
-      padding: 8px;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-sm);
-      border: 1px solid transparent;
+      border: 0.0625rem solid transparent;
       
       &.current {
          border-color: var(--color-amber);
@@ -259,28 +259,28 @@
    .phase-name {
       font-weight: 600;
       color: var(--text-primary);
-      margin-bottom: 4px;
+      margin-bottom: var(--space-4);
       display: flex;
       align-items: center;
       justify-content: space-between;
       
       i {
          color: var(--color-green);
-         font-size: 12px;
+         font-size: var(--font-xs);
       }
    }
    
    .steps {
-      margin-left: 12px;
+      margin-left: var(--space-12);
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: var(--space-2);
    }
    
    .step {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--space-6);
       color: var(--text-secondary);
       
       &.completed {
@@ -288,12 +288,12 @@
       }
       
       i {
-         font-size: 10px;
+         font-size: var(--font-xs);
       }
    }
    
    .no-steps {
-      margin-left: 12px;
+      margin-left: var(--space-12);
       color: var(--text-tertiary);
       font-style: italic;
    }
@@ -301,11 +301,11 @@
    .action-buttons {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: var(--space-8);
    }
    
    .debug-btn {
-      padding: 8px 12px;
+      padding: var(--space-8) var(--space-12);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-medium);
       background: rgba(0, 0, 0, 0.5);
@@ -314,14 +314,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: var(--space-6);
+      font-size: var(--font-xs);
       font-weight: 500;
       transition: all 0.2s ease;
       
-      &:hover:not(:disabled) {
-         transform: translateY(-1px);
-         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      &:hover: not(:disabled) { transform: translateY(-0.0625rem);
+         box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
       }
       
       &:disabled {
@@ -348,7 +347,7 @@
       }
       
       i {
-         font-size: 12px;
+         font-size: var(--font-xs);
       }
    }
 </style>

@@ -20,37 +20,37 @@
 
 <style lang="scss">
   .manual-effects {
-    padding: 14px 16px;
+    padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
       rgba(251, 146, 60, 0.15),
       rgba(251, 146, 60, 0.05));
-    border: 2px solid rgba(251, 146, 60, 0.4);
+    border: 0.1250rem solid rgba(251, 146, 60, 0.4);
     border-radius: var(--radius-sm);
     
     .manual-effects-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: rgba(251, 146, 60, 1);
-      margin-bottom: 10px;
+      margin-bottom: var(--space-10);
       
       i {
-        font-size: 18px;
+        font-size: var(--font-lg);
       }
     }
     
     .manual-effects-list {
       margin: 0;
-      padding-left: 24px;
+      padding-left: var(--space-24);
       list-style-type: disc;
       
       li {
         color: var(--text-primary);
         font-size: var(--font-md);
         line-height: 1.6;
-        margin-bottom: 6px;
+        margin-bottom: var(--space-6);
         
         &:last-child {
           margin-bottom: 0;

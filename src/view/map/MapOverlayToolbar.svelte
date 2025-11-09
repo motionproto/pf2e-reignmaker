@@ -246,11 +246,11 @@
     z-index: 1000;
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid var(--color-primary, #8b0000);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    min-width: 200px;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0.2500rem 1.2500rem rgba(0, 0, 0, 0.5);
+    min-width: 12.5rem;
     user-select: none;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.625rem);
     
     &.dragging {
       cursor: grabbing;
@@ -261,12 +261,12 @@
   .toolbar-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: var(--space-8);
+    padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
     cursor: grab;
-    border-radius: 6px 6px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
     &:active {
       cursor: grabbing;
@@ -274,15 +274,15 @@
     
     i {
       color: var(--color-primary, #8b0000);
-      font-size: 1rem;
+      font-size: var(--font-md);
     }
     
     span {
       flex: 1;
       font-weight: 600;
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       color: #fff;
     }
     
@@ -291,11 +291,11 @@
       border: none;
       color: rgba(255, 255, 255, 0.6);
       cursor: pointer;
-      padding: 0.25rem;
+      padding: var(--space-4);
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       
       &:hover {
@@ -305,16 +305,16 @@
       
       i {
         color: inherit;
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
       }
     }
   }
   
   .debug-tools {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: var(--space-8);
+    padding: var(--space-8) var(--space-12);
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
   }
   
@@ -323,10 +323,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem;
+    padding: var(--space-8);
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
     color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
     transition: all 0.2s;
@@ -349,7 +349,7 @@
     
     i {
       color: inherit;
-      font-size: 1rem;
+      font-size: var(--font-md);
     }
   }
   
@@ -365,42 +365,42 @@
   .toolbar-buttons {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: var(--space-8);
+    padding: var(--space-12);
   }
   
   .toolbar-divider {
-    height: 1px;
+    height: 0.0625rem;
     background: rgba(255, 255, 255, 0.1);
-    margin: 0.25rem 0;
+    margin: var(--space-4) 0;
   }
   
   .toolbar-button {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-16);
     background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border: 0.1250rem solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
     transition: all 0.2s;
-    font-size: 0.875rem;
+    font-size: var(--font-sm);
     font-weight: 500;
     
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.2);
       color: #fff;
-      transform: translateY(-1px);
+      transform: translateY(-0.0625rem);
     }
     
     &.active {
       background: rgba(139, 0, 0, 0.4);
       border-color: var(--color-primary, #8b0000);
       color: #fff;
-      box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+      box-shadow: 0 0 0.625rem rgba(139, 0, 0, 0.3);
       
       i {
         color: var(--color-primary, #8b0000);
@@ -408,7 +408,7 @@
     }
     
     i {
-      font-size: 1.125rem;
+      font-size: var(--font-lg);
       min-width: 1.25rem;
       text-align: center;
     }

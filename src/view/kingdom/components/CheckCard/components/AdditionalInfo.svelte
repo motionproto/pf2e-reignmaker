@@ -38,9 +38,9 @@
 
 <style lang="scss">
   .additional-info {
-    margin-top: 16px;
+    margin-top: var(--space-16);
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-8);
   }
 </style>

@@ -166,16 +166,16 @@
 <style lang="scss">
   .collect-stipend-resolution {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-12) 0;
   }
 
   .header {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     
     h4 {
-      margin: 0 0 8px 0;
+      margin: 0 0 var(--space-8) 0;
       font-size: var(--font-md);
       font-weight: 600;
       color: var(--text-primary, #e0e0e0);
@@ -185,28 +185,28 @@
   .taxation-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-size: var(--font-md);
     color: var(--color-amber, #fbbf24);
     
     i {
-      font-size: 14px;
+      font-size: var(--font-sm);
     }
   }
 
   .guidance {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 10px;
+    gap: var(--space-8);
+    margin-bottom: var(--space-12);
+    padding: var(--space-10);
     background: rgba(59, 130, 246, 0.1);
     border-left: 3px solid var(--color-blue, #3b82f6);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     
     i {
       color: var(--color-blue, #3b82f6);
-      margin-top: 2px;
+      margin-top: var(--space-2);
     }
     
     p {
@@ -217,17 +217,17 @@
   }
 
   .settlement-selection {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
   }
 
   .settlement-dropdown {
     width: 100%;
-    padding: 10px 14px;
+    padding: var(--space-10) var(--space-12);
     font-size: var(--font-md);
     font-family: 'Courier New', monospace;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     color: var(--text-primary, #e0e0e0);
     cursor: pointer;
     transition: all 0.2s;
@@ -245,22 +245,22 @@
     
     option {
       background: var(--color-gray-900, #1f1f23);
-      padding: 8px;
+      padding: var(--space-8);
     }
   }
 
   .warning {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 10px;
+    gap: var(--space-8);
+    padding: var(--space-10);
     background: rgba(249, 115, 22, 0.1);
     border-left: 3px solid var(--color-orange, #f97316);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     
     i {
       color: var(--color-orange, #f97316);
-      margin-top: 2px;
+      margin-top: var(--space-2);
     }
     
     p {

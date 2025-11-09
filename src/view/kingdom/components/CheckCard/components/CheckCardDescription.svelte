@@ -6,7 +6,7 @@
 
 <style lang="scss">
   .card-full-description {
-    margin: 0 0 16px 0;
+    margin: 0 0 var(--space-16) 0;
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: 1.5;

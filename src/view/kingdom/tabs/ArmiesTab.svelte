@@ -933,28 +933,28 @@
    .armies-tab {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       height: 100%;
-      padding: 1rem;
+      padding: var(--space-16);
    }
    
    .armies-summary {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       flex-wrap: wrap;
       align-items: center;
       
       .summary-card {
          display: flex;
          align-items: center;
-         gap: 0.75rem;
+         gap: var(--space-12);
          background: rgba(0, 0, 0, 0.2);
-         padding: 0.75rem 1rem;
-         border-radius: 0.375rem;
-         border: 1px solid rgba(255, 255, 255, 0.1);
+         padding: var(--space-12) var(--space-16);
+         border-radius: var(--radius-lg);
+         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
          
          i {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
             color: var(--color-white, #ffffff);
             
             &.status-supported {
@@ -967,13 +967,13 @@
          }
          
          .summary-value {
-            font-size: 1.25rem;
+            font-size: var(--font-xl);
             font-weight: var(--font-weight-bold);
             color: var(--color-text-dark-primary, #b5b3a4);
          }
          
          .summary-label {
-            font-size: 0.875rem;
+            font-size: var(--font-sm);
             color: var(--text-medium-light, #9e9b8f);
          }
       }
@@ -985,13 +985,13 @@
    
    .table-controls {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .filter-select {
-         padding: 0.5rem;
+         padding: var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.2);
-         border-radius: 0.375rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          
          &:focus {
@@ -1005,8 +1005,8 @@
       flex: 1;
       overflow-y: auto;
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.375rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
       position: relative;
    }
    
@@ -1030,17 +1030,17 @@
          z-index: 1;
          
          th {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -1052,28 +1052,28 @@
          }
          
          td {
-            padding: 0.75rem 1rem;
+            padding: var(--space-12) var(--space-16);
             color: var(--color-text-dark-primary, #b5b3a4);
             position: relative;
             overflow: visible;
             
             &.empty-state {
-               padding: 3rem;
+               padding: var(--space-24);
                text-align: center;
                color: var(--color-text-dark-secondary, #7a7971);
                
                i {
-                  font-size: 2rem;
-                  margin-bottom: 1rem;
+                  font-size: var(--font-4xl);
+                  margin-bottom: var(--space-16);
                   opacity: 0.5;
                   display: block;
                }
                
                p {
-                  margin: 0.5rem 0;
+                  margin: var(--space-8) 0;
                   
                   &.hint {
-                     font-size: 0.875rem;
+                     font-size: var(--font-sm);
                      font-style: italic;
                   }
                }
@@ -1084,8 +1084,8 @@
    
    .army-name-btn {
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       display: inline-block;
       background: transparent;
@@ -1096,7 +1096,7 @@
       font-weight: var(--font-weight-semibold);
       text-decoration: underline;
       text-decoration-style: dotted;
-      text-underline-offset: 3px;
+      text-underline-offset: 0.1875rem;
       
       &:hover {
          background: rgba(255, 255, 255, 0.1);
@@ -1105,15 +1105,15 @@
    }
    
    .link-icon {
-      margin-left: 0.375rem;
-      font-size: 0.75em;
+      margin-left: var(--space-6);
+      font-size: var(--font-xs);
       opacity: 0.7;
    }
    
    .editable-cell {
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       display: inline-block;
       background: transparent;
@@ -1127,17 +1127,17 @@
    
    .inline-edit {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
    }
    
    .inline-input {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--color-primary, #5e0000);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 150px;
+      min-width: 9.3750rem;
       
       &:focus {
          outline: none;
@@ -1148,14 +1148,14 @@
    .delete-btn,
    .actor-link,
    .edit-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:disabled {
          opacity: 0.5;
@@ -1198,7 +1198,7 @@
    .support-status {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &.status-supported {
          color: #90ee90;
@@ -1210,14 +1210,14 @@
    }
    
    .support-status-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       background: rgba(0, 0, 0, 0.2);
       
       &.status-supported {
@@ -1234,12 +1234,12 @@
    }
    
    .settlement-dropdown {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--color-primary, #5e0000);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 200px;
+      min-width: 12.5000rem;
       
       &:focus {
          outline: none;
@@ -1256,7 +1256,7 @@
       color: var(--color-text-dark-secondary, #7a7971);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       font-style: italic;
    }
    
@@ -1267,7 +1267,7 @@
    
    .add-army-inputs {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
       
       .level-input {
@@ -1277,10 +1277,10 @@
    
    .text-input {
       width: 100%;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       font-family: inherit;
       font-size: var(--font-md);
@@ -1298,23 +1298,23 @@
       }
       
       &.small {
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          font-size: var(--font-sm);
       }
    }
    
    .person-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       align-items: center;
       position: relative;
       overflow: visible;
    }
    
    .action-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       background: transparent;
@@ -1346,16 +1346,16 @@
    .actor-autosuggest {
       position: relative;
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       align-items: center;
       flex: 1;
       
       .autosuggest-input {
          flex: 1;
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
          color: var(--color-text-dark-primary, #b5b3a4);
          
          &:focus {
@@ -1371,32 +1371,32 @@
          left: 0;
          right: 0;
          width: auto;
-         min-width: 300px;
-         max-height: 200px;
+         min-width: 18.7500rem;
+         max-height: 12.5000rem;
          overflow-y: auto;
          background: rgba(0, 0, 0, 0.95);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
-         margin-top: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
+         margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {
-               padding: 0.5rem;
-               font-size: 0.75rem;
+               padding: var(--space-8);
+               font-size: var(--font-xs);
                font-weight: var(--font-weight-semibold);
                color: var(--color-text-dark-secondary, #7a7971);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
             }
          }
          
          .suggestion-item {
             display: block;
             width: 100%;
-            padding: 0.5rem;
+            padding: var(--space-8);
             text-align: left;
             border: none;
             background: transparent;
@@ -1410,7 +1410,7 @@
          }
          
          .no-results {
-            padding: 1rem;
+            padding: var(--space-16);
             text-align: center;
             color: var(--color-text-dark-secondary, #7a7971);
             font-style: italic;
@@ -1423,13 +1423,13 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .page-btn {
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          background: rgba(0, 0, 0, 0.2);
-         border: 1px solid rgba(255, 255, 255, 0.1);
-         border-radius: 0.375rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          cursor: pointer;
          transition: all 0.2s;
@@ -1452,11 +1452,11 @@
    /* Gear Icons */
    .gear-icons {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
       
       .gear-icon {
-         font-size: 1rem;
+         font-size: var(--font-md);
          color: rgba(255, 255, 255, 0.3);
          transition: all 0.2s;
          

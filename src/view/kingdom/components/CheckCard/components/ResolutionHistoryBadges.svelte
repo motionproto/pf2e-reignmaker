@@ -16,19 +16,19 @@
   .resolution-history-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
+    gap: var(--space-6);
+    margin-top: var(--space-8);
   }
   
   .history-badge {
     display: inline-flex;
     align-items: center;
-    padding: 3px 8px;
+    padding: var(--space-2) var(--space-8);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
     line-height: 1.2;
-    border: 1px solid;
+    border: 0.0625rem solid;
     
     &.badge-crit-success {
       background: rgba(34, 197, 94, 0.15);

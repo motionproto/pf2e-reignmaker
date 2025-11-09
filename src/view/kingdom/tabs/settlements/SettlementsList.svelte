@@ -444,28 +444,28 @@
    @use './settlements-shared.scss';
    
    .settlements-list-panel {
-      flex: 0 0 400px;
+      flex: 0 0 25.0000rem;
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
       display: flex;
       flex-direction: column;
       overflow: hidden;
    }
    
    .panel-header {
-      padding: 0.5rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: var(--space-8);
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
       
       .filters {
          display: flex;
-         gap: 0.5rem;
+         gap: var(--space-8);
          width: 100%;
          
          .search-input,
          .tier-filter {
             flex: 1;
             min-width: 0;
-            padding: 0.5rem;
+            padding: var(--space-8);
             background: var(--bg-elevated);
             border: 1px solid var(--border-default);
             border-radius: var(--radius-lg);
@@ -485,21 +485,21 @@
          }
          
          .tier-filter {
-            padding: 0.5rem 1.5rem 0.5rem 0.75rem;
+            padding: var(--space-8) var(--space-24) var(--space-8) var(--space-12);
          }
       }
       
       .gm-filter {
-         margin-top: 0.5rem;
-         padding: 0.5rem 0.75rem;
+         margin-top: var(--space-8);
+         padding: var(--space-8) var(--space-12);
          background: rgba(128, 0, 128, 0.15);
-         border: 1px solid rgba(128, 0, 128, 0.3);
+         border: 0.0625rem solid rgba(128, 0, 128, 0.3);
          border-radius: var(--radius-lg);
          
          .checkbox-label {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-8);
             cursor: pointer;
             user-select: none;
             
@@ -522,16 +522,16 @@
    .settlements-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0.5rem;
+      padding: var(--space-8);
    }
    
    .panel-footer {
-      padding: 0.5rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: var(--space-8);
+      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
       
       .btn-create-settlement {
          width: 100%;
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          background: transparent;
          border: 1px solid var(--border-default);
          border-radius: var(--radius-lg);
@@ -542,7 +542,7 @@
          display: flex;
          align-items: center;
          justify-content: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          
          &:hover {
             background: var(--bg-overlay);
@@ -567,19 +567,19 @@
          rgba(31, 31, 35, 0.4));
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-md);
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
+      padding: var(--space-12);
+      margin-bottom: var(--space-8);
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      outline: 2px solid transparent;
+      outline: 0.1250rem solid transparent;
       
       &:hover {
          border-color: var(--border-strong);
-         transform: translateY(-1px);
-         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+         transform: translateY(-0.0625rem);
+         box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
@@ -590,7 +590,7 @@
          box-shadow: 0 4px 12px rgba(var(--color-primary), 0.1);
          
          &:hover {
-            transform: translateY(-1px);
+            transform: translateY(-0.0625rem);
             box-shadow: 0 6px 16px rgba(var(--color-primary), 0.15);
          }
       }
@@ -599,19 +599,19 @@
          display: flex;
          align-items: center;
          justify-content: space-between;
-         gap: 1rem;
+         gap: var(--space-16);
          width: 100%;
       }
       
       .settlement-left {
          display: flex;
          align-items: center;
-         gap: 0.75rem;
+         gap: var(--space-12);
          flex: 1;
          min-width: 0;
          
          .tier-icon {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
             color: var(--text-secondary);
             flex-shrink: 0;
          }
@@ -619,7 +619,7 @@
          .settlement-info {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-8);
             flex: 1;
             min-width: 0;
             
@@ -637,7 +637,7 @@
       .settlement-right {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          flex-shrink: 0;
          
          .tier-badge {
@@ -673,34 +673,34 @@
    }
    
    .unassigned-section {
-      margin-top: 1rem;
-      padding-top: 0.5rem;
+      margin-top: var(--space-16);
+      padding-top: var(--space-8);
    }
    
    .section-divider {
       text-align: center;
-      margin-bottom: 0.75rem;
+      margin-bottom: var(--space-12);
       
       span {
          display: inline-block;
-         padding: 0.25rem 0.75rem;
+         padding: var(--space-4) var(--space-12);
          background: rgba(128, 128, 128, 0.15);
-         border: 1px solid rgba(128, 128, 128, 0.3);
+         border: 0.0625rem solid rgba(128, 128, 128, 0.3);
          border-radius: var(--radius-md);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          color: var(--text-secondary);
          text-transform: uppercase;
-         letter-spacing: 0.05em;
+         letter-spacing: 0.0500rem;
       }
    }
    
    .unassigned-item {
       background: rgba(128, 128, 128, 0.08);
-      border: 1px dashed rgba(128, 128, 128, 0.3);
+      border: 0.0625rem dashed rgba(128, 128, 128, 0.3);
       border-radius: var(--radius-lg);
-      padding: 0.75rem;
-      margin-bottom: 0.5rem;
+      padding: var(--space-12);
+      margin-bottom: var(--space-8);
       transition: var(--transition-base);
       
       &:hover {
@@ -712,18 +712,18 @@
          display: flex;
          align-items: center;
          justify-content: space-between;
-         gap: 1rem;
+         gap: var(--space-16);
       }
       
       .unassigned-left {
          display: flex;
          align-items: center;
-         gap: 0.75rem;
+         gap: var(--space-12);
          flex: 1;
          min-width: 0;
          
          .unassigned-icon {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
             color: var(--text-secondary);
             flex-shrink: 0;
          }
@@ -731,7 +731,7 @@
          .unassigned-info {
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: var(--space-4);
             flex: 1;
             min-width: 0;
             
@@ -750,15 +750,15 @@
       .unassigned-actions {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          flex-shrink: 0;
       }
       
       .btn-edit-feature,
       .btn-create-at-hex {
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          background: rgba(128, 128, 128, 0.2);
-         border: 1px solid rgba(128, 128, 128, 0.4);
+         border: 0.0625rem solid rgba(128, 128, 128, 0.4);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          font-size: var(--font-sm);
@@ -767,13 +767,13 @@
          transition: var(--transition-base);
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          flex-shrink: 0;
          
          &:hover {
             background: rgba(128, 128, 128, 0.3);
             border-color: rgba(128, 128, 128, 0.6);
-            transform: translateY(-1px);
+            transform: translateY(-0.0625rem);
          }
          
          &:active {
@@ -799,14 +799,14 @@
       .edit-form {
          display: flex;
          flex-direction: column;
-         gap: 1rem;
+         gap: var(--space-16);
          
          .edit-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: var(--space-8);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
             
             span {
                font-weight: var(--font-weight-semibold);
@@ -815,7 +815,7 @@
             }
             
             .btn-close {
-               padding: 0.25rem 0.5rem;
+               padding: var(--space-4) var(--space-8);
                background: transparent;
                border: none;
                color: var(--text-secondary);
@@ -833,12 +833,12 @@
          .edit-fields {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: var(--space-12);
             
             .edit-field {
                display: flex;
                flex-direction: column;
-               gap: 0.25rem;
+               gap: var(--space-4);
                
                label {
                   font-size: var(--font-sm);
@@ -848,7 +848,7 @@
                
                input,
                select {
-                  padding: 0.5rem;
+                  padding: var(--space-8);
                   background: var(--bg-elevated);
                   border: 1px solid var(--border-default);
                   border-radius: var(--radius-md);
@@ -866,12 +866,12 @@
          .edit-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            gap: var(--space-8);
+            padding-top: var(--space-8);
+            border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
             
             button {
-               padding: 0.5rem 1rem;
+               padding: var(--space-8) var(--space-16);
                border-radius: var(--radius-md);
                font-size: var(--font-sm);
                font-weight: var(--font-weight-semibold);
@@ -879,7 +879,7 @@
                transition: var(--transition-base);
                display: flex;
                align-items: center;
-               gap: 0.5rem;
+               gap: var(--space-8);
             }
             
             .btn-cancel {

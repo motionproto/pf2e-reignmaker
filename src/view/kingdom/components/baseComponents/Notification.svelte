@@ -85,24 +85,24 @@
       gap: 0;
       border-radius: var(--radius-md);
       font-size: var(--font-md);
-      border: 1px solid;
+      border: 0.0625rem solid;
       transition: all var(--transition-fast);
       position: relative;
       text-align: left;
       overflow: hidden;
       
       &.emphasis {
-         border-left-width: 6px;
+         border-left-width: 0.3750rem;
       }
       
       &.compact {
          font-size: var(--font-sm);
          
          .notification-rm-header {
-            padding: 0.375rem 0.75rem;
+            padding: var(--space-6) var(--space-12);
             
             i {
-               font-size: 14px;
+               font-size: var(--font-sm);
             }
             
             .notification-rm-title {
@@ -112,16 +112,16 @@
          
          .notification-rm-description {
             font-size: var(--font-sm);
-            padding: 0.5rem 0.75rem;
+            padding: var(--space-8) var(--space-12);
          }
          
          .notification-rm-impact {
             font-size: var(--font-sm);
-            padding: 0.5rem 0.75rem;
+            padding: var(--space-8) var(--space-12);
          }
          
          .notification-rm-actions-inline {
-            padding: 0.5rem 0.75rem;
+            padding: var(--space-8) var(--space-12);
             
             .description-text {
                font-size: var(--font-sm);
@@ -129,7 +129,7 @@
          }
          
          .notification-rm-actions {
-            padding: 0.5rem 0.75rem;
+            padding: var(--space-8) var(--space-12);
          }
       }
       
@@ -194,18 +194,18 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 8px;
+      gap: var(--space-8);
       width: 100%;
-      padding: .5rem 1rem;
+      padding: .5rem var(--space-16);
       position: relative;
       
       // When action button is in header, add spacing
       &.has-action {
-         gap: 12px;
+         gap: var(--space-12);
       }
       
       i {
-         font-size: 16px;
+         font-size: var(--font-md);
          flex-shrink: 0;
       }
       
@@ -229,7 +229,7 @@
          background: none;
          border: none;
          cursor: pointer;
-         padding: 0.25rem;
+         padding: var(--space-4);
          display: flex;
          align-items: center;
          justify-content: center;
@@ -237,7 +237,7 @@
          transition: opacity var(--transition-fast);
          
          i {
-            font-size: 14px;
+            font-size: var(--font-sm);
             color: inherit;
          }
          
@@ -246,9 +246,9 @@
          }
          
          &:focus {
-            outline: 2px solid currentColor;
-            outline-offset: 2px;
-            border-radius: 2px;
+            outline: 0.1250rem solid currentColor;
+            outline-offset: 0.1250rem;
+            border-radius: var(--radius-sm);
          }
       }
    }
@@ -258,15 +258,15 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-light);
       text-align: left;
-      padding: .75rem 1rem;
+      padding: .75rem var(--space-16);
    }
    
    .notification-rm-impact {
       font-weight: var(--font-weight-bold);
-      padding: 12px;
-      padding-top: 8px;
+      padding: var(--space-12);
+      padding-top: var(--space-8);
       margin-top: 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
       font-size: var(--font-md);
       text-align: left;
    }
@@ -275,8 +275,8 @@
    .notification-rm-actions-inline {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 0.75rem 1rem;
+      gap: var(--space-16);
+      padding: var(--space-12) var(--space-16);
       
       .description-text {
          flex: 1;
@@ -295,9 +295,9 @@
    // Action buttons - standard (below description)
    .notification-rm-actions {
       display: flex;
-      gap: 0.5rem;
-      padding: 0.75rem 1rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      gap: var(--space-8);
+      padding: var(--space-12) var(--space-16);
+      padding-top: var(--space-8);
+      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
    }
 </style>

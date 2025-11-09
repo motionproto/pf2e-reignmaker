@@ -67,39 +67,39 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 20px;
+      gap: var(--space-20);
    }
    
    .content-selector {
       display: flex;
-      gap: 1em;
+      gap: var(--space-16);
       flex-wrap: wrap;
       flex: 1;
    }
    
    .tab-button {
-      padding: 8px 16px;
+      padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       
       &:hover {
          background: rgba(0, 0, 0, 0.3);
          color: rgba(255, 255, 255, 1);
-         transform: translateY(-1px);
+         transform: translateY(-0.0625rem);
       }
       
       &.active {
          background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
          color: white;
          border-color: var(--color-primary-light);
-         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.1250rem 0.2500rem rgba(0, 0, 0, 0.3);
          
          // Explicitly set white color for all child elements
          i, span {
@@ -108,15 +108,15 @@
       }
       
       &.icon-only {
-         padding: 8px 12px;
+         padding: var(--space-8) var(--space-12);
          
          i {
-            font-size: 1.2em;
+            font-size: var(--font-xl);
          }
       }
       
       i {
-         font-size: 1.1em;
+         font-size: var(--font-lg);
       }
       
       span {
@@ -126,15 +126,15 @@
    
    .header-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       flex: 0 0 auto;
    }
    
    .action-button {
-      padding: 8px 12px;
+      padding: var(--space-8) var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
       transition: all 0.2s ease;
@@ -149,11 +149,10 @@
       }
       
       i {
-         font-size: 1.2em;
+         font-size: var(--font-xl);
       }
       
-      &.import-button:hover i {
-         transform: translateY(-2px);
+      &.import-button: hover i { transform: translateY(-0.1250rem);
       }
       
       &.settings-button i {

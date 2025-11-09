@@ -61,22 +61,22 @@
 
 <style lang="scss">
   .other-players-actions {
-    margin-top: 10px;
-    padding: 10px;
+    margin-top: var(--space-10);
+    padding: var(--space-10);
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-subtle);
     
     &.compact {
-      margin-top: 5px;
-      padding: 5px;
+      margin-top: var(--space-4);
+      padding: var(--space-4);
       
       .actions-label {
         font-size: var(--font-xs);
       }
       
       .player-badge {
-        padding: 2px 4px;
+        padding: var(--space-2) var(--space-4);
         font-size: var(--font-xs);
       }
     }
@@ -85,23 +85,23 @@
   .actions-label {
     font-size: var(--font-sm);
     color: var(--text-secondary);
-    margin-bottom: 5px;
+    margin-bottom: var(--space-4);
     font-weight: var(--font-weight-semibold);
   }
   
   .player-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: var(--space-4);
   }
   
   .player-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 3px 6px;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-6);
     border-radius: var(--radius-xs);
-    border: 2px solid;
+    border: 0.1250rem solid;
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     cursor: help;
@@ -109,7 +109,7 @@
     
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
     }
     
     &.outcome-criticalSuccess {

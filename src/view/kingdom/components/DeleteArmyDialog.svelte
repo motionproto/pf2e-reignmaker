@@ -61,7 +61,7 @@
   }
   
   .delete-army-content :global(.notification-rm) {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-24);
   }
   
   .delete-army-content :global(.notification-rm-description) {
@@ -70,11 +70,11 @@
   }
   
   .consequences-section {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-16);
   }
   
   .consequences-section h4 {
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 var(--space-12) 0;
     font-size: var(--font-lg);
     font-family: var(--font-sans-rm);
     font-weight: var(--font-weight-bold);
@@ -83,13 +83,13 @@
   
   .consequences-section ul {
     margin: 0;
-    padding-left: 1.5rem;
+    padding-left: var(--space-24);
     color: var(--text-secondary, #b0b0b3);
     font-size: var(--font-md);
     line-height: 1.6;
   }
   
   .consequences-section li {
-    margin-bottom: 0.25rem;
+    margin-bottom: var(--space-4);
   }
 </style>

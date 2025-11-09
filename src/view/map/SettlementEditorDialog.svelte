@@ -130,16 +130,16 @@
   .settlement-editor-dialog {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-8);
     
     &.flags {
-      gap: 0.25rem;
+      gap: var(--space-4);
     }
   }
   
@@ -151,7 +151,7 @@
     &.checkbox-label {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       font-weight: 500;
       cursor: pointer;
       
@@ -166,7 +166,7 @@
   input[type="text"],
   input[type="number"],
   select {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-8) var(--space-12);
     background: var(--bg-base);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);
@@ -198,8 +198,8 @@
   .info-note {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: var(--space-8);
+    padding: var(--space-12);
     background: var(--color-blue-subtle);
     border-left: 3px solid var(--color-blue);
     border-radius: var(--radius-md);
@@ -208,7 +208,7 @@
     
     i {
       color: var(--color-blue);
-      margin-top: 0.1rem;
+      margin-top: var(--space-2);
     }
   }
 </style>

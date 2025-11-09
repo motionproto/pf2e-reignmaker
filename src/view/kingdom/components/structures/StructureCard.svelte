@@ -99,11 +99,11 @@
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: var(--space-16);
     transition: all 0.2s;
     
     &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
       background: rgba(0, 0, 0, 0.3);
     }
   }
@@ -112,17 +112,17 @@
   .structure-card-header {
     display: flex;
     align-items: baseline;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: var(--space-12);
+    margin-bottom: var(--space-16);
     border-bottom: 1px solid var(--border-subtle);
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--space-8);
     
     .tier-badge {
       font-size: var(--font-size-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       background: rgba(251, 191, 36, 0.1);
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
     }
@@ -139,16 +139,16 @@
   /* Details Layout */
   .structure-details {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .structure-thumbnail {
-    flex: 0 0 100px;
+    flex: 0 0 6.2500rem;
     align-self: flex-start;
     
     .thumbnail-placeholder {
-      width: 100px;
-      height: 100px;
+      width: 6.2500rem;
+      height: 6.2500rem;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
@@ -164,7 +164,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   /* Description */
@@ -172,7 +172,7 @@
     font-size: var(--font-md);
     color: var(--text-secondary);
     font-style: italic;
-    padding-bottom: 0.5rem;
+    padding-bottom: var(--space-8);
     border-bottom: 1px solid var(--border-subtle);
   }
   
@@ -182,18 +182,18 @@
       font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--space-4);
     }
     
     .resource-list {
       display: flex;
-      gap: 0.75rem;
+      gap: var(--space-12);
       flex-wrap: wrap;
       
       .resource-item {
         display: flex;
         align-items: center;
-        gap: 0.25rem;
+        gap: var(--space-4);
         font-size: var(--font-md);
         color: var(--text-primary);
         
@@ -216,14 +216,14 @@
       font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--space-4);
     }
     
     .effect-item {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin: 0.25rem 0;
+      gap: var(--space-8);
+      margin: var(--space-4) 0;
       font-size: var(--font-sm);
       color: var(--text-primary);
       
@@ -241,14 +241,14 @@
       font-size: var(--font-sm);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--space-4);
     }
     
     .effect-message-item {
       display: flex;
       align-items: flex-start;
-      gap: 0.5rem;
-      margin: 0.25rem 0;
+      gap: var(--space-8);
+      margin: var(--space-4) 0;
       font-size: var(--font-sm);
       color: var(--text-primary);
       
@@ -256,7 +256,7 @@
         width: 1rem;
         text-align: center;
         font-size: var(--font-sm);
-        margin-top: 0.125rem;
+        margin-top: var(--space-2);
         color: var(--color-amber);
       }
     }
@@ -264,20 +264,20 @@
   
   /* Special Note */
   .special-note {
-    margin-top: 0.5rem;
-    padding: 0.5rem;
+    margin-top: var(--space-8);
+    padding: var(--space-8);
     background: rgba(251, 191, 36, 0.05);
     border-left: 2px solid var(--color-amber);
     font-size: var(--font-md);
     color: var(--text-accent);
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: var(--space-12);
     
     i {
       color: var(--color-amber);
       font-size: var(--font-md);
-      margin-top: 0.125rem;
+      margin-top: var(--space-2);
     }
   }
 </style>

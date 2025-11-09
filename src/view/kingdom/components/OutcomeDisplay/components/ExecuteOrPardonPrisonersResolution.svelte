@@ -120,16 +120,16 @@
 <style lang="scss">
   .execute-pardon-resolution {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-12) 0;
   }
 
   .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     
     h4 {
       margin: 0;
@@ -142,11 +142,11 @@
   .outcome-badge {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
+    gap: var(--space-6);
+    padding: var(--space-4) var(--space-10);
     background: rgba(34, 197, 94, 0.15);
     border: 1px solid var(--color-green, #22c55e);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     font-size: var(--font-sm);
     color: var(--color-green, #22c55e);
     
@@ -157,23 +157,23 @@
     }
     
     i {
-      font-size: 12px;
+      font-size: var(--font-xs);
     }
   }
 
   .guidance {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 12px;
-    padding: 10px;
+    gap: var(--space-8);
+    margin-bottom: var(--space-12);
+    padding: var(--space-10);
     background: rgba(139, 92, 246, 0.1);
     border-left: 3px solid var(--color-purple, #8b5cf6);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     
     i {
       color: var(--color-purple, #8b5cf6);
-      margin-top: 2px;
+      margin-top: var(--space-2);
     }
     
     p {
@@ -184,11 +184,11 @@
   }
 
   .settlement-selection {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     
     label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: var(--space-6);
       font-size: var(--font-md);
       font-weight: 500;
       color: var(--text-secondary, #a0a0a0);
@@ -197,12 +197,12 @@
 
   .settlement-dropdown {
     width: 100%;
-    padding: 10px 14px;
+    padding: var(--space-10) var(--space-12);
     font-size: var(--font-md);
     font-family: 'Courier New', monospace;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     color: var(--text-primary, #e0e0e0);
     cursor: pointer;
     transition: all 0.2s;
@@ -220,22 +220,22 @@
     
     option {
       background: var(--color-gray-900, #1f1f23);
-      padding: 8px;
+      padding: var(--space-8);
     }
   }
 
   .warning {
     display: flex;
     align-items: flex-start;
-    gap: 8px;
-    padding: 10px;
+    gap: var(--space-8);
+    padding: var(--space-10);
     background: rgba(249, 115, 22, 0.1);
     border-left: 3px solid var(--color-orange, #f97316);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     
     i {
       color: var(--color-orange, #f97316);
-      margin-top: 2px;
+      margin-top: var(--space-2);
     }
     
     p {

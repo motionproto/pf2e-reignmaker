@@ -13,27 +13,27 @@
 <style lang="scss">
   .error-message,
   .success-message {
-    padding: 12px;
+    padding: var(--space-12);
     border-radius: var(--radius-md);
-    margin: 15px;
+    margin: var(--space-16);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-10);
     
     i {
-      font-size: 20px;
+      font-size: var(--font-xl);
     }
   }
   
   .error-message {
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 0.0625rem solid rgba(239, 68, 68, 0.3);
     color: var(--color-red);
   }
   
   .success-message {
     background: rgba(34, 197, 94, 0.1);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 0.0625rem solid rgba(34, 197, 94, 0.3);
     color: var(--color-green);
   }
 </style>

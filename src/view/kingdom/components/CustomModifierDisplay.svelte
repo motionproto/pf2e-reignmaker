@@ -97,22 +97,22 @@
     background: linear-gradient(135deg, 
       rgba(100, 116, 139, 0.1),
       rgba(71, 85, 105, 0.05));
-    border: 1px solid rgba(100, 116, 139, 0.3);
+    border: 0.0625rem solid rgba(100, 116, 139, 0.3);
     border-radius: var(--radius-md);
     overflow: hidden;
   }
   
   .modifier-header {
-    padding: 12px 16px;
+    padding: var(--space-12) var(--space-16);
     background: rgba(0, 0, 0, 0.2);
-    border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+    border-bottom: 0.0625rem solid rgba(100, 116, 139, 0.2);
   }
   
   .modifier-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--space-12);
   }
   
   .modifier-name {
@@ -123,18 +123,18 @@
   
   .modifier-tags {
     display: flex;
-    gap: 6px;
+    gap: var(--space-6);
     flex-wrap: wrap;
   }
   
   .tag {
-    padding: 2px 8px;
+    padding: var(--space-2) var(--space-8);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border: 1px solid;
+    letter-spacing: 0.0500rem;
+    border: 0.0625rem solid;
   }
   
   .tag-ongoing {
@@ -162,10 +162,10 @@
   }
   
   .modifier-details {
-    padding: 14px 16px;
+    padding: var(--space-12) var(--space-16);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-12);
   }
   
   .modifier-description {

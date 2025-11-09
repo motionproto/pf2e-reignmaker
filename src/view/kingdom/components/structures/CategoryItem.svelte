@@ -32,16 +32,16 @@
 <style lang="scss">
   .category-item {
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-8) var(--space-12);
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid transparent;
+    border: 0.0625rem solid transparent;
     border-radius: var(--radius-sm);
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-8);
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: var(--space-12);
     text-align: left;
     min-height: fit-content;
     border-color: var(--border-subtle);
@@ -130,7 +130,7 @@
         font-size: var(--font-lg);
         color: var(--text-primary);
         word-wrap: break-word;
-        margin-bottom: 0.25rem;
+        margin-bottom: var(--space-4);
       }
       
       .category-skills {
@@ -146,15 +146,15 @@
       right: 0.75rem;
       display: inline-flex;
       align-items: center;
-      padding: 0.125rem 0.5rem;
+      padding: var(--space-2) var(--space-8);
       background: rgba(128, 128, 128, 0.15);
-      border: 1px solid rgba(128, 128, 128, 0.3);
+      border: 0.0625rem solid rgba(128, 128, 128, 0.3);
       border-radius: var(--radius-sm);
       color: rgba(180, 180, 180, 0.9);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-semibold);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.0312rem;
       flex-shrink: 0;
     }
   }

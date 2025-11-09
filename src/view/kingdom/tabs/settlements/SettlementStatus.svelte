@@ -223,14 +223,14 @@
 
 <style lang="scss">
    .detail-section {
-      margin-bottom: .25rem;
+      margin-bottom: .var(--space-24);
    }
    
    .status-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-8);
       
       h4 {
          margin: 0;
@@ -243,8 +243,8 @@
    .capital-toggle {
       display: flex;
       align-items: center;
-      gap: 0.375rem;
-      padding: 0.25rem 0.5rem;
+      gap: var(--space-6);
+      padding: var(--space-4) var(--space-8);
       background: var(--bg-elevated);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
@@ -288,8 +288,8 @@
       .status-item {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
-         padding: 0.5rem 0;
+         gap: var(--space-8);
+         padding: var(--space-8) 0;
          font-size: var(--font-md);
          
          &.expandable {
@@ -316,7 +316,7 @@
             transition: var(--transition-base);
             text-align: left;
             color: var(--text-primary);
-            padding: 0.5rem 0;
+            padding: var(--space-8) 0;
             border-radius: var(--radius-md);
             
             &:hover:not(:disabled) {

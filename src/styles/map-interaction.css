@@ -16,7 +16,7 @@
 
 /* Slide to right (recommended - clear but not intrusive) */
 #pf2e-reignmaker.map-interaction-slide {
-  transform: translateX(calc(100% - 40px)) !important; /* Peek 40px from edge */
+  transform: translateX(calc(100% - 2.5rem)) !important; /* Peek 2.5rem from edge */
   opacity: 0.6;
 }
 

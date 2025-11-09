@@ -14,6 +14,6 @@
 
 <style lang="scss">
   .outcomes-section {
-    margin-top: 20px;
+    margin-top: var(--space-20);
   }
 </style>

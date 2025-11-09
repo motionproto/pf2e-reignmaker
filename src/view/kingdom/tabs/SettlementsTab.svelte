@@ -48,14 +48,14 @@
    .settlements-tab {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       height: 100%;
    }
    
    .settlements-container {
       display: flex;
       flex: 1;
-      gap: 1rem;
+      gap: var(--space-16);
       min-height: 0;
    }
 </style>

@@ -328,28 +328,28 @@
    .settlement-details-panel {
       flex: 1;
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
       display: flex;
       flex-direction: column;
       overflow: hidden;
    }
    
    .panel-header {
-      padding: 0.75rem;
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
       
       .settlement-title {
          display: flex;
          align-items: flex-start;
          justify-content: space-between;
-         gap: 0.5rem;
+         gap: var(--space-8);
          width: 100%;
          
          .name-wrapper {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: var(--space-4);
          }
          
          h3 {
@@ -361,7 +361,7 @@
          
          .name-input {
             flex: 1;
-            padding: 0.5rem;
+            padding: var(--space-8);
             background: var(--bg-elevated);
             border: 1px solid var(--color-primary);
             border-radius: var(--radius-lg);
@@ -377,7 +377,7 @@
          }
          
          .edit-button {
-            padding: 0.375rem 0.5rem;
+            padding: var(--space-6) var(--space-8);
             background: transparent;
             border: none;
             color: var(--text-secondary);
@@ -395,20 +395,20 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 0.375rem;
+            gap: var(--space-6);
          }
          
          .name-input-row {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-8);
          }
          
          .name-hint {
             font-size: var(--font-xs);
             color: var(--text-tertiary);
             font-style: italic;
-            padding-left: 0.5rem;
+            padding-left: var(--space-8);
          }
          
       }
@@ -417,14 +417,14 @@
    .details-content {
       flex: 1;
       overflow-y: auto;
-      padding: 1rem;
+      padding: var(--space-16);
    }
    
    .status-wrapper {
       border: 1px solid var(--border-default);
       border-radius: var(--radius-lg);
-      padding: 0.75rem;
-      margin-bottom: 1.5rem;
+      padding: var(--space-12);
+      margin-bottom: var(--space-24);
    }
    
    .empty-selection {
@@ -435,13 +435,13 @@
    .tier-and-actions {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .delete-button {
-      padding: 0.5rem 0.75rem;
+      padding: var(--space-8) var(--space-12);
       background: rgba(220, 53, 69, 0.1);
-      border: 1px solid rgba(220, 53, 69, 0.3);
+      border: 0.0625rem solid rgba(220, 53, 69, 0.3);
       border-radius: var(--radius-md);
       color: #dc3545;
       cursor: pointer;
@@ -484,7 +484,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem;
+      padding: var(--space-16);
       border-bottom: 1px solid var(--color-border);
       
       h3 {
@@ -493,7 +493,7 @@
          font-size: var(--font-lg);
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          
          i {
             color: #ffc107;
@@ -501,7 +501,7 @@
       }
       
       .close-button {
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: transparent;
          border: none;
          color: var(--text-secondary);
@@ -515,28 +515,28 @@
    }
    
    .modal-content {
-      padding: 1.5rem;
+      padding: var(--space-24);
       
       .warning-text {
-         margin: 0 0 1rem 0;
+         margin: 0 0 var(--space-16) 0;
          color: var(--text-primary);
       }
       
       .delete-details {
-         margin: 0 0 1rem 0;
-         padding-left: 1.5rem;
+         margin: 0 0 var(--space-16) 0;
+         padding-left: var(--space-24);
          
          li {
-            margin: 0.5rem 0;
+            margin: var(--space-8) 0;
             color: var(--text-secondary);
          }
       }
       
       .warning-note {
-         margin: 1rem 0 0 0;
-         padding: 0.75rem;
+         margin: var(--space-16) 0 0 0;
+         padding: var(--space-12);
          background: rgba(220, 53, 69, 0.1);
-         border: 1px solid rgba(220, 53, 69, 0.3);
+         border: 0.0625rem solid rgba(220, 53, 69, 0.3);
          border-radius: var(--radius-md);
          color: #dc3545;
          text-align: center;
@@ -546,20 +546,20 @@
    .modal-footer {
       display: flex;
       justify-content: flex-end;
-      gap: 0.75rem;
-      padding: 1rem;
+      gap: var(--space-12);
+      padding: var(--space-16);
       border-top: 1px solid var(--color-border);
    }
    
    .button {
-      padding: 0.5rem 1rem;
+      padding: var(--space-8) var(--space-16);
       border-radius: var(--radius-md);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
       transition: var(--transition-base);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:disabled {
          opacity: 0.5;
@@ -579,7 +579,7 @@
    
    .button-danger {
       background: #dc3545;
-      border: 1px solid #dc3545;
+      border: 0.0625rem solid #dc3545;
       color: white;
       
       &:hover:not(:disabled) {
@@ -590,8 +590,8 @@
    
    .delete-settlement-btn {
       width: 100%;
-      padding: 0.75rem 1rem;
-      margin-top: 1.5rem;
+      padding: var(--space-12) var(--space-16);
+      margin-top: var(--space-24);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
       background: var(--color-red-bg);
@@ -612,15 +612,15 @@
       }
       
       i {
-         margin-right: 0.5rem;
+         margin-right: var(--space-8);
       }
    }
    
    .level-display {
       display: flex;
       align-items: baseline;
-      gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
+      gap: var(--space-8);
+      padding: var(--space-6) var(--space-12);
       background: var(--bg-elevated);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-md);
@@ -650,8 +650,8 @@
    .level-editor {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
+      gap: var(--space-8);
+      padding: var(--space-6) var(--space-12);
       background: var(--bg-elevated);
       border: 1px solid var(--color-primary);
       border-radius: var(--radius-md);
@@ -664,7 +664,7 @@
       
       .level-input {
          width: 3rem;
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: var(--bg-overlay);
          border: 1px solid var(--border-default);
          border-radius: var(--radius-md);
@@ -689,7 +689,7 @@
       
       .level-confirm-btn,
       .level-cancel-btn {
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: transparent;
          border: none;
          cursor: pointer;
@@ -720,21 +720,21 @@
    
    /* Unmapped Settlement Alert */
    .unmapped-alert-wrapper {
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: var(--space-12) var(--space-16);
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
    }
    
    /* Delete Dialog Content Styling */
    .delete-dialog-content {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .warning-icon {
          text-align: center;
          
          i {
-            font-size: 3rem;
+            font-size: var(--font-6xl);
             color: #fbbf24;
          }
       }
@@ -748,11 +748,11 @@
       
       .delete-details {
          margin: 0;
-         padding-left: 1.5rem;
+         padding-left: var(--space-24);
          list-style-type: disc;
          
          li {
-            margin: 0.5rem 0;
+            margin: var(--space-8) 0;
             color: var(--text-secondary);
             font-size: var(--font-sm);
             line-height: 1.5;
@@ -763,10 +763,10 @@
          display: flex;
          align-items: center;
          justify-content: center;
-         gap: 0.5rem;
-         padding: 0.75rem 1rem;
+         gap: var(--space-8);
+         padding: var(--space-12) var(--space-16);
          background: rgba(220, 53, 69, 0.1);
-         border: 1px solid rgba(220, 53, 69, 0.3);
+         border: 0.0625rem solid rgba(220, 53, 69, 0.3);
          border-radius: var(--radius-md);
          color: #dc3545;
          font-size: var(--font-sm);

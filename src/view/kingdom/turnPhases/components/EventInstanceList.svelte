@@ -132,13 +132,13 @@
   .ongoing-events-section,
   .resolved-events-section,
   .custom-modifiers-section {
-    padding: 20px 0;
+    padding: var(--space-20) 0;
   }
   
   .ongoing-events-header,
   .resolved-events-header,
   .custom-modifiers-header {
-    margin: 0 0 15px 0;
+    margin: 0 0 var(--space-16) 0;
     color: var(--text-accent);
     font-size: var(--font-xl);
     font-weight: var(--font-weight-normal);
@@ -149,6 +149,6 @@
   .custom-modifiers-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: var(--space-16);
   }
 </style>

@@ -244,7 +244,7 @@ async function initializePhase() {
    .status-phase {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--space-20);
    }
 
    .phase-section {
@@ -253,17 +253,17 @@ async function initializePhase() {
          rgba(15, 15, 17, 0.4));
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-medium);
-      padding: 20px;
+      padding: var(--space-20);
    }
 
    .section-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: var(--space-10);
+      margin-bottom: var(--space-16);
 
       i {
-         font-size: 20px;
+         font-size: var(--font-xl);
          color: var(--color-amber);
       }
 
@@ -280,11 +280,11 @@ async function initializePhase() {
    .section-header-minimal {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: var(--space-10);
+      margin-bottom: var(--space-16);
 
       i {
-         font-size: 20px;
+         font-size: var(--font-xl);
          color: var(--color-amber);
       }
 
@@ -303,27 +303,25 @@ async function initializePhase() {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 15px;
-      padding: 20px;
+      gap: var(--space-16);
+      padding: var(--space-20);
       background: transparent;
       border-radius: 0;
    }
 
    .fame-stars {
       display: flex;
-      gap: 12px;
+      gap: var(--space-12);
       justify-content: center;
 
       .star-icon {
-         font-size: 48px;
+         font-size: var(--font-6xl);
          transition: all 0.3s ease;
          color: var(--color-gray-600);
 
          &.filled {
             color: var(--color-amber-light);
-            text-shadow:
-               0 0 20px rgba(251, 191, 36, 0.4),
-               0 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 0 1.25rem rgba(251, 191, 36, 0.4), 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
             transform: scale(1.05);
          }
 
@@ -359,20 +357,20 @@ async function initializePhase() {
    .modifiers-stack {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: var(--space-16);
    }
 
    // Active Modifiers Grid
    .modifiers-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(15.625rem, 1fr));
+      gap: var(--space-16);
    }
 
    // Alert Styles for unassigned settlements
    .unassigned-settlements-alert {
       background: transparent;
-      border: 2px solid #fbbf24;
+      border: 0.125rem solid #fbbf24;
 
       .section-header {
          i {
@@ -388,19 +386,19 @@ async function initializePhase() {
    .alerts-stack {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-bottom: 15px;
+      gap: var(--space-12);
+      margin-bottom: var(--space-16);
    }
 
    .settlement-alert {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 15px;
+      padding: var(--space-12) 0.9375rem;
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(251, 191, 36, 0.2);
+      border: 0.0625rem solid rgba(251, 191, 36, 0.2);
       border-radius: var(--radius-md);
-      gap: 15px;
+      gap: var(--space-16);
       transition: all 0.2s ease;
 
       &.clickable {
@@ -409,11 +407,11 @@ async function initializePhase() {
          &:hover {
             background: rgba(251, 191, 36, 0.15);
             border-color: rgba(251, 191, 36, 0.5);
-            transform: translateX(4px);
+            transform: translateX(0.25rem);
          }
 
          &:active {
-            transform: translateX(2px);
+            transform: translateX(0.125rem);
          }
       }
    }
@@ -421,11 +419,11 @@ async function initializePhase() {
    .alert-content {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-12);
       flex: 1;
 
       > i {
-         font-size: 1.25rem;
+         font-size: var(--font-xl);
          color: #fbbf24;
          flex-shrink: 0;
       }
@@ -434,7 +432,7 @@ async function initializePhase() {
    .settlement-info {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       flex: 1;
       flex-wrap: wrap;
 
@@ -452,9 +450,9 @@ async function initializePhase() {
    }
 
    .tier-badge {
-      padding: 2px 8px;
+      padding: var(--space-2) var(--space-8);
       background: rgba(251, 191, 36, 0.2);
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      border: 0.0625rem solid rgba(251, 191, 36, 0.3);
       border-radius: var(--radius-sm);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
@@ -465,7 +463,7 @@ async function initializePhase() {
    .click-hint {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--space-6);
       font-size: var(--font-sm);
       color: #fbbf24;
       font-weight: var(--font-weight-medium);
@@ -479,19 +477,19 @@ async function initializePhase() {
    .alert-note {
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
+      gap: var(--space-10);
+      padding: var(--space-10) var(--space-12);
       background: rgba(251, 191, 36, 0.1);
-      border: 1px solid rgba(251, 191, 36, 0.2);
+      border: 0.0625rem solid rgba(251, 191, 36, 0.2);
       border-radius: var(--radius-md);
       font-size: var(--font-md);
       color: var(--text-secondary);
       line-height: 1.5;
 
       i {
-         font-size: 1rem;
+         font-size: var(--font-md);
          color: #fbbf24;
-         margin-top: 2px;
+         margin-top: var(--space-2);
          flex-shrink: 0;
       }
    }

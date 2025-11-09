@@ -80,17 +80,17 @@
 
 <style lang="scss">
   .tier-badges {
-    margin: 12px 0;
+    margin: var(--space-12) 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-8);
   }
   
   .tier-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-12);
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-sm);
@@ -122,11 +122,11 @@
   .no-commerce-notice {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-top: 8px;
-    padding: 8px 12px;
+    gap: var(--space-8);
+    margin-top: var(--space-8);
+    padding: var(--space-8) var(--space-12);
     background: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 0.0625rem solid rgba(245, 158, 11, 0.3);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);
     color: var(--color-amber);

@@ -523,22 +523,22 @@
    .territory-tab {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       height: 100%;
    }
    
    .territory-filters {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       flex-wrap: wrap;
-      padding: 0.75rem;
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
       
       .filter-group {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          
          label {
             color: var(--text-secondary);
@@ -546,10 +546,10 @@
          }
          
          select {
-            padding: 0.25rem 0.5rem;
+            padding: var(--space-4) var(--space-8);
             background: var(--bg-subtle);
             border: 1px solid var(--border-secondary);
-            border-radius: 0.25rem;
+            border-radius: var(--radius-md);
             color: var(--text-primary);
             
             &:focus {
@@ -566,22 +566,22 @@
       
       .radio-group {
          display: flex;
-         gap: 0.5rem;
-         padding: 0.25rem;
+         gap: var(--space-8);
+         padding: var(--space-4);
          background: rgba(0, 0, 0, 0.3);
-         border-radius: 0.5rem;
-         border: 1px solid rgba(255, 255, 255, 0.2);
+         border-radius: var(--radius-xl);
+         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
       }
       
       .radio-option {
          display: flex;
          align-items: center;
-         padding: 0.5rem 0.75rem;
-         border-radius: 0.375rem;
+         padding: var(--space-8) var(--space-12);
+         border-radius: var(--radius-lg);
          cursor: pointer;
          transition: all 0.2s;
          background: transparent;
-         border: 2px solid transparent;
+         border: 0.1250rem solid transparent;
          user-select: none;
          
          &:hover {
@@ -608,7 +608,7 @@
          display: flex;
          flex-direction: column;
          align-items: center;
-         gap: 0.25rem;
+         gap: var(--space-4);
          color: var(--text-secondary);
          transition: color 0.2s;
       }
@@ -617,18 +617,18 @@
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
          text-transform: uppercase;
-         letter-spacing: 0.05em;
+         letter-spacing: 0.0500rem;
       }
       
       .radio-icon-count {
          display: flex;
          align-items: center;
-         gap: 0.375rem;
+         gap: var(--space-6);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-medium);
          
          i {
-            font-size: 1rem;
+            font-size: var(--font-md);
          }
       }
    }
@@ -637,8 +637,8 @@
       flex: 1;
       overflow-y: auto;
       background: rgba(0, 0, 0, 0.1);
-      border-radius: 0.375rem;
-      padding: 0.5rem;
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
    }
    
    .territory-table {
@@ -653,7 +653,7 @@
          z-index: 10;
          
          th {
-            padding: 0.75rem;
+            padding: var(--space-12);
             text-align: left;
             color: var(--text-primary);
             font-weight: var(--font-weight-semibold);
@@ -668,7 +668,7 @@
                }
                
                span {
-                  margin-right: 0.5rem;
+                  margin-right: var(--space-8);
                }
                
                i {
@@ -691,7 +691,7 @@
          }
          
          td {
-            padding: 0.35rem 0.75rem;
+            padding: var(--space-6) var(--space-12);
             color: var(--text-secondary);
             border-bottom: 1px solid var(--border-subtle);
             
@@ -700,15 +700,15 @@
                color: var(--text-primary);
                
                i {
-                  margin-right: 0.5rem;
+                  margin-right: var(--space-8);
                   color: var(--color-primary);
                }
             }
             
             .terrain-badge {
                display: inline-block;
-               padding: 0.25rem 0.5rem;
-               border-radius: 0.25rem;
+               padding: var(--space-4) var(--space-8);
+               border-radius: var(--radius-md);
                font-size: var(--font-sm);
                font-weight: var(--font-weight-medium);
                
@@ -756,15 +756,15 @@
             .worksite-badge {
                display: inline-flex;
                align-items: center;
-               gap: 0.5rem;
-               padding: 0.25rem 0.5rem;
-               border-radius: 0.25rem;
+               gap: var(--space-8);
+               padding: var(--space-4) var(--space-8);
+               border-radius: var(--radius-md);
                font-size: var(--font-sm);
             }
             
             .commodity-icons {
                display: flex;
-               gap: 0.25rem;
+               gap: var(--space-4);
                flex-wrap: wrap;
                
                .commodity-icon {
@@ -776,12 +776,12 @@
             .production-list {
                display: flex;
                flex-direction: column;
-               gap: 0.25rem;
+               gap: var(--space-4);
                
                .production-item {
                   display: inline-flex;
                   align-items: center;
-                  gap: 0.25rem;
+                  gap: var(--space-4);
                   font-size: var(--font-sm);
                   color: var(--color-success);
                   
@@ -794,14 +794,14 @@
             .features-list {
                display: flex;
                flex-direction: column;
-               gap: 0.25rem;
+               gap: var(--space-4);
                
                .feature-badge {
                   display: inline-flex;
                   align-items: center;
-                  gap: 0.25rem;
-                  padding: 0.125rem 0.375rem;
-                  border-radius: 0.25rem;
+                  gap: var(--space-4);
+                  padding: var(--space-2) var(--space-6);
+                  border-radius: var(--radius-md);
                   font-size: var(--font-xs);
                   font-weight: var(--font-weight-medium);
                   background: var(--color-warning-subtle);
@@ -824,7 +824,7 @@
                font-weight: var(--font-weight-medium);
                
                i {
-                  margin-right: 0.25rem;
+                  margin-right: var(--space-4);
                }
             }
             
@@ -833,25 +833,25 @@
                font-size: var(--font-base);
                
                i {
-                  font-size: 1rem;
+                  font-size: var(--font-md);
                }
             }
             
             .settlement-info {
                display: flex;
                flex-direction: column;
-               gap: 0.25rem;
+               gap: var(--space-4);
             }
             
             .settlement-badge {
                display: inline-flex;
                align-items: center;
-               gap: 0.375rem;
-               padding: 0.375rem 0.625rem;
-               border-radius: 0.375rem;
+               gap: var(--space-6);
+               padding: var(--space-6) var(--space-10);
+               border-radius: var(--radius-lg);
                font-size: var(--font-sm);
                font-weight: var(--font-weight-semibold);
-               border: 1px solid;
+               border: 0.0625rem solid;
                
                &.tier-village {
                   background: rgba(139, 69, 19, 0.15);
@@ -913,17 +913,17 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 3rem;
+      padding: var(--space-24);
       text-align: center;
       
       i {
          font-size: var(--font-3xl);
          color: var(--text-disabled);
-         margin-bottom: 1rem;
+         margin-bottom: var(--space-16);
       }
       
       p {
-         margin: 0.5rem 0;
+         margin: var(--space-8) 0;
          color: var(--text-secondary);
          
          &.hint {

@@ -141,14 +141,14 @@
 <style lang="scss">
    .actor-linking-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       align-items: center;
    }
    
    .action-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       background: transparent;
@@ -180,16 +180,16 @@
    .actor-autosuggest {
       position: relative;
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       align-items: center;
       flex: 1;
       
       .autosuggest-input {
          flex: 1;
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
          color: var(--color-text-dark-primary, #b5b3a4);
          
          &:focus {
@@ -204,31 +204,31 @@
          top: 100%;
          left: 0;
          width: 50%;
-         max-height: 200px;
+         max-height: 12.5000rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
-         margin-top: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
+         margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {
-               padding: 0.5rem;
-               font-size: 0.75rem;
+               padding: var(--space-8);
+               font-size: var(--font-xs);
                font-weight: var(--font-weight-semibold, 600);
                color: var(--color-text-dark-secondary, #7a7971);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
             }
          }
          
          .suggestion-item {
             display: block;
             width: 100%;
-            padding: 0.5rem;
+            padding: var(--space-8);
             text-align: left;
             border: none;
             background: transparent;
@@ -242,7 +242,7 @@
          }
          
          .no-results {
-            padding: 1rem;
+            padding: var(--space-16);
             text-align: center;
             color: var(--color-text-dark-secondary, #7a7971);
             font-style: italic;

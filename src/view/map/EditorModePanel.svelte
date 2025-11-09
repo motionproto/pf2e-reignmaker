@@ -658,11 +658,11 @@
     z-index: 1000;
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid var(--color-primary, #8b0000);
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    min-width: 280px;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 0.2500rem 1.2500rem rgba(0, 0, 0, 0.5);
+    min-width: 17.5rem;
     user-select: none;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(0.625rem);
     
     &.dragging {
       cursor: grabbing;
@@ -673,12 +673,12 @@
   .panel-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: var(--space-8);
+    padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
     cursor: grab;
-    border-radius: 6px 6px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
     &:active {
       cursor: grabbing;
@@ -686,7 +686,7 @@
     
     i.fa-pencil-alt {
       color: var(--color-primary, #8b0000);
-      font-size: 1rem;
+      font-size: var(--font-md);
     }
     
     .minimize-button {
@@ -694,11 +694,11 @@
       border: none;
       color: rgba(255, 255, 255, 0.6);
       cursor: pointer;
-      padding: 0.25rem;
+      padding: var(--space-4);
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       
       &:hover {
@@ -707,16 +707,16 @@
       }
       
       i {
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
       }
     }
     
     span {
       flex: 1;
       font-weight: 600;
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       color: #fff;
     }
     
@@ -725,11 +725,11 @@
       border: none;
       color: rgba(255, 255, 255, 0.6);
       cursor: pointer;
-      padding: 0.25rem;
+      padding: var(--space-4);
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       
       &:hover {
@@ -738,25 +738,25 @@
       }
       
       i {
-        font-size: 0.875rem;
+        font-size: var(--font-sm);
       }
     }
   }
   
   .editor-sections {
-    padding: 0.75rem;
+    padding: var(--space-12);
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-8);
   }
   
   .editor-section {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 6px;
+    gap: var(--space-8);
+    padding: var(--space-8);
+    border-radius: var(--radius-lg);
     transition: all 0.2s;
     
     &.active-section {
@@ -764,13 +764,13 @@
     }
     
     .section-label {
-      font-size: 1rem;
+      font-size: var(--font-md);
       font-weight: 600;
       color: rgba(255, 255, 255, 0.9);
-      width: 100px;
+      width: 6.25rem;
       cursor: pointer;
-      padding: 0.25rem;
-      border-radius: 4px;
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       
       &:hover {
@@ -780,13 +780,13 @@
     }
     
     .section-dropdown {
-      min-width: 150px;
-      padding: 0.5rem 0.75rem;
+      min-width: 9.375rem;
+      padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+      border: 0.1250rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
       color: #fff;
-      font-size: 0.875rem;
+      font-size: var(--font-sm);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
@@ -804,31 +804,31 @@
       &:focus {
         outline: none;
         border-color: var(--color-primary, #8b0000);
-        box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+        box-shadow: 0 0 0 0.1250rem rgba(139, 0, 0, 0.2);
       }
       
       option {
         background: #1a1a1a;
         color: #fff;
-        padding: 0.5rem;
+        padding: var(--space-8);
         line-height: normal;
       }
     }
     
     .tool-buttons {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
     }
     
     .tool-button {
-      padding: 0.5rem 0.75rem;
+      padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
+      border: 0.1250rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
       color: rgba(255, 255, 255, 0.7);
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 1rem;
+      font-size: var(--font-md);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -837,49 +837,49 @@
         background: rgba(255, 255, 255, 0.1);
         border-color: rgba(255, 255, 255, 0.2);
         color: #fff;
-        transform: translateY(-1px);
+        transform: translateY(-0.0625rem);
       }
       
       &.active {
         background: rgba(139, 0, 0, 0.4);
         border-color: var(--color-primary, #8b0000);
-        box-shadow: 0 0 10px rgba(139, 0, 0, 0.3);
+        box-shadow: 0 0 0.625rem rgba(139, 0, 0, 0.3);
       }
     }
     
     &.territory-claim-section {
       .territory-controls {
         display: flex;
-        gap: 0.5rem;
+        gap: var(--space-8);
         flex: 1;
         align-items: center;
         
         .color-swatch {
           width: 2.5rem;
           height: 2.5rem;
-          border-radius: 6px;
-          border: 3px solid rgba(255, 255, 255, 0.4);
-          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+          border-radius: var(--radius-lg);
+          border: 0.1875rem solid rgba(255, 255, 255, 0.4);
+          box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.4);
           flex-shrink: 0;
           transition: all 0.2s;
           
           &:hover {
             transform: scale(1.05);
             border-color: rgba(255, 255, 255, 0.6);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.5);
           }
         }
         
         .faction-dropdown {
           flex: 1;
-          padding: 0.5rem 0.75rem;
+          padding: var(--space-8) var(--space-12);
           background: rgba(255, 255, 255, 0.05);
-          border: 2px solid rgba(255, 255, 255, 0.1);
-          border-radius: 6px;
+          border: 0.1250rem solid rgba(255, 255, 255, 0.1);
+          border-radius: var(--radius-lg);
           color: rgba(255, 255, 255, 0.9);
           cursor: pointer;
           transition: all 0.2s;
-          font-size: 0.875rem;
+          font-size: var(--font-sm);
           line-height: 1.5;
           height: auto;
           min-height: 2.5rem;
@@ -895,13 +895,13 @@
           &:focus {
             outline: none;
             border-color: var(--color-primary, #8b0000);
-            box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.2);
+            box-shadow: 0 0 0 0.1250rem rgba(139, 0, 0, 0.2);
           }
           
           option {
             background: #1a1a1a;
             color: #fff;
-            padding: 0.5rem;
+            padding: var(--space-8);
             line-height: 1.5;
           }
         }
@@ -911,28 +911,28 @@
   
   .panel-actions {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    gap: var(--space-8);
+    padding: var(--space-12);
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
     
     .action-button {
       flex: 1;
-      padding: 0.75rem 1rem;
+      padding: var(--space-12) var(--space-16);
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-lg);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
+      gap: var(--space-8);
+      font-size: var(--font-sm);
       
       &.cancel-button {
         background: rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 0.0625rem solid rgba(255, 255, 255, 0.2);
         
         &:hover {
           background: rgba(255, 255, 255, 0.15);
@@ -946,8 +946,8 @@
         
         &:hover {
           background: rgba(139, 0, 0, 0.8);
-          transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(139, 0, 0, 0.4);
+          transform: translateY(-0.0625rem);
+          box-shadow: 0 0.125rem 0.5rem rgba(139, 0, 0, 0.4);
         }
       }
     }

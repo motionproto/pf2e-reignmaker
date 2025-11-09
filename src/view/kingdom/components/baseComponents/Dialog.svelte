@@ -123,7 +123,7 @@
   @keyframes dialogSlideIn {
     from {
       opacity: 0;
-      transform: translateY(-20px);
+      transform: translateY(-1.2500rem);
     }
     to {
       opacity: 1;
@@ -136,7 +136,7 @@
   }
   
   .dialog-header {
-    padding: .5rem 1.5rem;
+    padding: .5rem var(--space-24);
     border-bottom: 1px solid var(--border-default);
     background: var(--bg-base);
     display: flex;
@@ -157,7 +157,7 @@
     color: var(--text-secondary);
     font-size: var(--font-xl);
     cursor: pointer;
-    margin-right: -1rem;
+    margin-right: -var(--space-16);
     width: 2rem;
     height: 2rem;
     display: flex;
@@ -173,16 +173,16 @@
   }
   
   .dialog-body {
-    padding: 1rem 1.5rem;
+    padding: var(--space-16) var(--space-24);
   }
   
   .dialog-footer {
-    padding: 1rem;
+    padding: var(--space-16);
     border-top: 1px solid var(--border-default);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .dialog-footer-left {
@@ -192,18 +192,18 @@
   
   .dialog-footer-buttons {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--space-8);
   }
   
   .dialog-button {
-    padding: 0.5rem 1rem;
+    padding: var(--space-8) var(--space-16);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: all var(--transition-base);
-    min-width: 80px;
+    min-width: 5.0000rem;
   }
   
   .dialog-button:disabled {
@@ -224,7 +224,7 @@
   
   .dialog-button-primary:focus {
     outline: 2px solid var(--border-strong);
-    outline-offset: 2px;
+    outline-offset: 0.1250rem;
   }
   
   .dialog-button-secondary {

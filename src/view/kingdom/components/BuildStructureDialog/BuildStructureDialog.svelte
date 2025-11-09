@@ -268,19 +268,19 @@
     background: var(--color-gray-900);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-strong);
-    max-width: 1200px;
+    max-width: 75.0000rem;
     width: 90%;
     height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.5000rem 2.0000rem rgba(0, 0, 0, 0.5);
   }
   
   .dialog-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: var(--space-16) var(--space-20);
     border-bottom: 1px solid var(--border-medium);
     background: linear-gradient(135deg, rgba(31, 31, 35, 0.8), rgba(15, 15, 17, 0.6));
     
@@ -290,7 +290,7 @@
       font-size: var(--font-2xl);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       
       i {
         font-size: var(--font-xl);
@@ -300,18 +300,18 @@
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: var(--space-20);
     }
     
     .close-button {
       background: none;
       border: none;
       color: var(--text-secondary);
-      font-size: 20px;
+      font-size: var(--font-xl);
       cursor: pointer;
       padding: 0;
-      width: 32px;
-      height: 32px;
+      width: 2.0000rem;
+      height: 2.0000rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -342,10 +342,10 @@
   
   // Left panel - Categories
   .categories-panel {
-    flex: 0 0 340px;
+    flex: 0 0 21.2500rem;
     background: rgba(0, 0, 0, 0.2);
     border-right: 1px solid var(--border-default);
-    padding: 1rem;
+    padding: var(--space-16);
     overflow-y: auto;
   }
   

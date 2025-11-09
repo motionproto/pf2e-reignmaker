@@ -65,7 +65,7 @@
     background: transparent;
     border: none;
     margin: 0;
-    padding: 0.75em 1em;
+    padding: var(--space-12) var(--space-16);
     cursor: pointer;
     text-align: left;
     transition: background 0.2s ease;
@@ -85,19 +85,19 @@
   .card-header-content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-4);
     width: 100%;
     
     .card-title-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 16px;
+      gap: var(--space-16);
       width: 100%;
       
       .card-name {
         color: var(--text-primary);
-        font-size: var(--font-3xl);
+        font-size: var(--font-2xl);
         font-weight: var(--font-weight-semibold);
         line-height: 1.3;
         text-align: left;
@@ -112,34 +112,34 @@
       .card-badges {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: var(--space-8);
         flex-shrink: 0;
         flex-wrap: wrap;
         
         .requirements-badge {
           display: inline-flex;
           align-items: center;
-          gap: 4px;
-          padding: 2px 8px;
+          gap: var(--space-4);
+          padding: var(--space-2) var(--space-8);
           background: rgba(251, 191, 36, 0.15);
-          border: 1px solid rgba(251, 191, 36, 0.3);
+          border: 0.0625rem solid rgba(251, 191, 36, 0.3);
           border-radius: var(--radius-sm);
           font-size: var(--font-sm);
           font-weight: var(--font-weight-medium);
           line-height: 1.2;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.0500rem;
           color: var(--color-amber);
           text-transform: none;
           
           i {
-            font-size: 12px;
+            font-size: .var(--font-6xl);
           }
         }
         
         .expand-icon {
           color: var(--text-tertiary);
           transition: transform 0.3s ease;
-          font-size: 14px;
+          font-size: var(--font-sm);
         }
       }
     }
@@ -160,7 +160,7 @@
     
     .card-traits {
       display: flex;
-      gap: 6px;
+      gap: var(--space-6);
       flex-wrap: wrap;
       align-items: center;
     }
@@ -168,15 +168,15 @@
     .trait-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 2px 8px;
+      gap: var(--space-4);
+      padding: var(--space-2) var(--space-8);
       background: rgba(100, 116, 139, 0.1);
-      border: 1px solid rgba(100, 116, 139, 0.2);
+      border: 0.0625rem solid rgba(100, 116, 139, 0.2);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       color: var(--text-tertiary);
       text-transform: capitalize;
     }
@@ -185,12 +185,12 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 4px 12px;
+      padding: var(--space-4) var(--space-12);
       border-radius: var(--radius-full);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       line-height: 1.2;
       flex-shrink: 0;
       

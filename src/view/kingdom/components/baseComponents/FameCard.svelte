@@ -109,13 +109,13 @@
    .fame-card {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      padding: 0.75rem;
-      border-radius: 0.375rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      outline: 2px solid transparent;
-      outline-offset: 2px;
+      padding: var(--space-12);
+      border-radius: var(--radius-lg);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      outline: 0.1250rem solid transparent;
+      outline-offset: 0.1250rem;
       transition: all 0.2s ease;
       position: relative;
       flex: 0 0 auto;
@@ -130,7 +130,7 @@
       }
       
       &.editing {
-         outline-width: 3px;
+         outline-width: 0.1875rem;
          outline-color: var(--resource-color);
          background: linear-gradient(135deg, 
             rgba(0, 0, 0, 0.3),
@@ -140,14 +140,14 @@
       
       /* Normal size */
       &:not(.compact) {
-         max-width: 112px;
+         max-width: 7.0000rem;
          
          .fame-icon {
-            font-size: 1.5rem;
+            font-size: var(--font-2xl);
          }
          
          .fame-info {
-            min-width: 80px;
+            min-width: 5.0000rem;
          }
          
          .fame-value,
@@ -166,13 +166,13 @@
       
       /* Compact size */
       &.compact {
-         padding: 0.5rem;
-         gap: 0.5rem;
+         padding: var(--space-8);
+         gap: var(--space-8);
          max-width: 100%;
          min-width: 0;
          
          .fame-icon {
-            font-size: 1.25rem;
+            font-size: var(--font-xl);
             flex-shrink: 0;
          }
          
@@ -202,32 +202,32 @@
       }
       
       .fame-value-display {
-         margin-bottom: 0.25rem;
+         margin-bottom: var(--space-4);
          text-align: center;
       }
       
       .edit-buttons {
          display: flex;
-         gap: 0.25rem;
-         margin-bottom: 0.25rem;
+         gap: var(--space-4);
+         margin-bottom: var(--space-4);
       }
       
       .adjust-btn {
          flex: 1;
-         padding: 0.25rem;
+         padding: var(--space-4);
          border: 1px solid var(--border-default);
          background: var(--bg-surface);
-         border-radius: 0.25rem;
+         border-radius: var(--radius-md);
          display: flex;
          align-items: center;
          justify-content: center;
          cursor: pointer;
          transition: all var(--transition-fast);
          color: var(--text-primary);
-         font-size: 0.75rem;
+         font-size: var(--font-xs);
          
          i {
-            font-size: 0.75rem;
+            font-size: var(--font-xs);
          }
          
          &:disabled {

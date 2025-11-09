@@ -93,7 +93,7 @@
     cursor: pointer;
     transition: all var(--transition-base);
     line-height: var(--line-height-relaxed);
-    min-height: 44px;
+    min-height: 2.7500rem;
   }
   
   .lore-select:hover {
@@ -102,7 +102,7 @@
   
   .lore-select:focus {
     outline: 2px solid var(--color-amber);
-    outline-offset: 2px;
+    outline-offset: 0.1250rem;
     border-color: var(--color-amber);
   }
   

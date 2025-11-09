@@ -210,7 +210,7 @@
     margin-top: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-12);
   }
   
   .dice-rollers-section {
@@ -218,28 +218,28 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-bottom: 12px;
+      margin-bottom: var(--space-12);
     }
   }
   
   .outcome-cards {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: var(--space-12);
   }
   
   .outcome-card {
     display: flex;
     flex-direction: column;
-    padding: 14px;
+    padding: var(--space-12);
     background: rgba(255, 255, 255, 0.03);
     border: 2px solid var(--border-medium);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
-    min-width: 200px;
+    min-width: 12.5000rem;
     width: auto;
     text-align: left;
-    min-height: 54px; /* Ensure consistent height */
+    min-height: 3.3750rem; /* Ensure consistent height */
     
     &:not(.static):not(.rolled):not(:disabled) {
       cursor: pointer;
@@ -247,15 +247,15 @@
       &:hover {
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transform: translateY(-0.1250rem);
+        box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.2);
       }
     }
     
     &.rolled {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-strong);
-      box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
       opacity: 1;
       cursor: default;
     }
@@ -290,7 +290,7 @@
     .card-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       
       .resource-icon {
         font-size: var(--font-lg);
@@ -315,23 +315,23 @@
   }
   
   .critical-success-fame {
-    padding: 12px 16px;
+    padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
       rgba(34, 197, 94, 0.2),
       rgba(34, 197, 94, 0.1));
-    border: 2px solid rgba(34, 197, 94, 0.5);
+    border: 0.1250rem solid rgba(34, 197, 94, 0.5);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-10);
     font-size: var(--font-md);
     font-weight: var(--font-weight-semibold);
     color: var(--color-green);
     
     i {
-      font-size: 20px;
+      font-size: var(--font-xl);
       color: #fbbf24;
-      text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+      text-shadow: 0 0 0.5000rem rgba(251, 191, 36, 0.6);
     }
     
     span {
@@ -342,11 +342,11 @@
   .automated-effects {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-8);
     
     .effect-message {
       margin: 0;
-      padding: 8px 0;
+      padding: var(--space-8) 0;
       color: var(--text-primary);
       font-size: var(--font-md);
       line-height: 1.6;
@@ -354,37 +354,37 @@
   }
   
   .manual-effects {
-    padding: 14px 16px;
+    padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
       rgba(251, 146, 60, 0.15),
       rgba(251, 146, 60, 0.05));
-    border: 2px solid rgba(251, 146, 60, 0.4);
+    border: 0.1250rem solid rgba(251, 146, 60, 0.4);
     border-radius: var(--radius-sm);
     
     .manual-effects-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: rgba(251, 146, 60, 1);
-      margin-bottom: 10px;
+      margin-bottom: var(--space-10);
       
       i {
-        font-size: 18px;
+        font-size: var(--font-lg);
       }
     }
     
     .manual-effects-list {
       margin: 0;
-      padding-left: 24px;
+      padding-left: var(--space-24);
       list-style-type: disc;
       
       li {
         color: var(--text-primary);
         font-size: var(--font-md);
         line-height: 1.6;
-        margin-bottom: 6px;
+        margin-bottom: var(--space-6);
         
         &:last-child {
           margin-bottom: 0;

@@ -151,20 +151,20 @@
   
   .selection-header {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    padding: 1.5rem;
+    backdrop-filter: blur(0.5000rem);
+    padding: var(--space-24);
     border-bottom: 1px solid var(--border-default);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    min-height: 90px;
+    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
+    min-height: 5.6250rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: var(--space-24);
     
     .header-content {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       flex: 1;
       
       > i {
@@ -177,7 +177,7 @@
       .text-container {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: var(--space-4);
         min-height: 3.5rem;
         justify-content: center;
         
@@ -197,16 +197,16 @@
         
         .capacity-warning {
           margin: 0;
-          margin-top: 0.5rem;
+          margin-top: var(--space-8);
           color: var(--warning-text);
           font-size: var(--font-sm);
           line-height: 1.4;
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
+          gap: var(--space-8);
+          padding: var(--space-8) var(--space-12);
           background: rgba(255, 191, 0, 0.1);
-          border: 1px solid rgba(255, 191, 0, 0.3);
+          border: 0.0625rem solid rgba(255, 191, 0, 0.3);
           border-radius: var(--radius-sm);
           
           i {
@@ -218,11 +218,11 @@
     
     .header-actions {
       display: flex;
-      gap: 0.75rem;
+      gap: var(--space-12);
       align-items: center;
       
       .cancel-button {
-        padding: 0.75rem 1.5rem;
+        padding: var(--space-12) var(--space-24);
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid var(--border-default);
         border-radius: var(--radius-sm);
@@ -241,7 +241,7 @@
       }
       
       .build-button {
-        padding: 0.75rem 1.5rem;
+        padding: var(--space-12) var(--space-24);
         background: var(--color-amber);
         border: 1px solid var(--color-amber);
         border-radius: var(--radius-sm);
@@ -253,7 +253,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        gap: var(--space-8);
         white-space: nowrap;
         
         i {
@@ -262,7 +262,7 @@
         
         &:hover:not(:disabled) {
           background: var(--color-amber-light);
-          box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+          box-shadow: 0 0.1250rem 0.5000rem rgba(251, 191, 36, 0.3);
         }
         
         &:disabled {
@@ -278,11 +278,11 @@
   
   .structures-grid {
     flex: 1;
-    padding: 1.5rem;
+    padding: var(--space-24);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-12);
     
     .capacity-warning {
       color: var(--warning-text);
@@ -290,12 +290,12 @@
       line-height: 1.4;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1rem;
+      gap: var(--space-8);
+      padding: var(--space-12) var(--space-16);
       background: rgba(255, 191, 0, 0.1);
-      border: 1px solid rgba(255, 191, 0, 0.3);
+      border: 0.0625rem solid rgba(255, 191, 0, 0.3);
       border-radius: var(--radius-md);
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-8);
       
       i {
         font-size: var(--font-sm);
@@ -305,17 +305,17 @@
     .requirement-message {
       display: flex;
       align-items: flex-start;
-      gap: 1rem;
-      padding: 1.25rem 1.5rem;
+      gap: var(--space-16);
+      padding: var(--space-20) var(--space-24);
       background: rgba(100, 100, 100, 0.15);
-      border: 1px solid rgba(120, 120, 120, 0.3);
+      border: 0.0625rem solid rgba(120, 120, 120, 0.3);
       border-radius: var(--radius-md);
-      margin-top: 0.5rem;
+      margin-top: var(--space-8);
       
       > i {
         font-size: var(--font-xl);
         color: var(--text-secondary);
-        margin-top: 0.125rem;
+        margin-top: var(--space-2);
         flex-shrink: 0;
         
         &.fa-check-circle {
@@ -335,7 +335,7 @@
         flex: 1;
         
         .message-title {
-          margin: 0 0 0.375rem 0;
+          margin: 0 0 var(--space-6) 0;
           font-size: var(--font-md);
           font-weight: var(--font-weight-semibold);
           color: var(--text-primary);

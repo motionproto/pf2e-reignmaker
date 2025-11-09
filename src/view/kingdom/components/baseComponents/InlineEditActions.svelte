@@ -33,19 +33,19 @@
 <style lang="scss">
    .inline-actions {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .save-btn,
    .cancel-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       &:disabled {
          opacity: 0.5;

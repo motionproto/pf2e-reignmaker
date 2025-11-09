@@ -69,8 +69,8 @@
   .resolution-actions {
     display: flex;
     justify-content: space-between;
-    gap: 12px;
-    padding: 20px;
+    gap: var(--space-12);
+    padding: var(--space-20);
     background: rgba(0, 0, 0, 0.2);
     border-top: 1px solid var(--border-subtle);
     
@@ -88,14 +88,14 @@
     // Main action buttons group on the right
     .resolution-actions-main {
       display: flex;
-      gap: 12px;
+      gap: var(--space-12);
       flex: 1;
       justify-content: flex-end;
       
       // Main buttons can expand to equal width
       :global(.button) {
         flex: 0 1 auto;
-        min-width: 120px;
+        min-width: 7.5000rem;
       }
     }
   }

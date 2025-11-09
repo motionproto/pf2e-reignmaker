@@ -100,11 +100,11 @@
 
 <style>
   .phase-header-wrapper {
-    margin-bottom: 0.25rem; /* Small bottom margin for compact spacing */
+    margin-bottom: var(--space-4); /* Small bottom margin for compact spacing */
   }
 
   .phase-header {
-    padding: 1rem 1rem;
+    padding: var(--space-16) var(--space-16);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-card);
     display: flex;
@@ -123,7 +123,7 @@
 
   @keyframes fadeIn {
     0% {
-      transform: translateY(-2px);
+      transform: translateY(-0.1250rem);
     }
     100% {
 
@@ -132,13 +132,13 @@
   }
 
   .phase-icon {
-    font-size: 1.5rem;
+    font-size: var(--font-2xl);
     color: var(--text-primary);
     opacity: 0.95;
     z-index: 1;
     position: relative;
-    padding-top: .2rem;
-    margin-right: .75rem;
+    padding-top: .var(--space-24);
+    margin-right: .var(--space-24);
   }
 
 
@@ -154,7 +154,7 @@
     font-weight: var(--font-weight-bold);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-md);
-    letter-spacing: 0.025em;
+    letter-spacing: 0.0250rem;
   }
 
   .phase-text p {
@@ -167,14 +167,12 @@
 
 
   /* Responsive design */
-  @media (max-width: 768px) {
-    .phase-header {
-      padding: 1rem 1.25rem;
+  @media (max-width: 48.0000rem) { .phase-header { padding: var(--space-16) var(--space-20);
     }
     
     .phase-icon {
-      font-size: 1.5rem;
-      margin-right: 0.75rem;
+      font-size: var(--font-2xl);
+      margin-right: var(--space-12);
     }
     
     .phase-text h2 {

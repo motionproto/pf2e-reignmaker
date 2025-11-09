@@ -150,7 +150,7 @@
   
   .event-header {
     width: 100%;
-    padding: 15px 20px;
+    padding: var(--space-16) var(--space-20);
     background: rgba(251, 191, 36, 0.1);
     border: none;
     border-bottom: 1px solid var(--color-amber);
@@ -172,7 +172,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: var(--space-8);
   }
   
   .event-title {
@@ -185,7 +185,7 @@
   }
   
   .ongoing-badge {
-    padding: 4px 10px;
+    padding: var(--space-4) var(--space-10);
     border-radius: var(--radius-full);
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
@@ -193,21 +193,21 @@
     background: rgba(251, 191, 36, 0.2);
     color: var(--color-amber-light);
     border: 1px solid var(--color-amber);
-    margin-left: 12px;
+    margin-left: var(--space-12);
   }
   
   .failure-preview {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-right: 30px;
+    gap: var(--space-4);
+    padding-right: var(--space-24);
     
     .preview-label {
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
       color: var(--color-orange);
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
     }
     
     .preview-text {
@@ -219,7 +219,7 @@
   
   .toggle-icon {
     position: absolute;
-    right: 20px;
+    right: 1.2500rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--color-amber-light);
@@ -228,21 +228,21 @@
   }
   
   .event-body {
-    padding: 20px;
+    padding: var(--space-20);
   }
   
   .event-description {
     font-size: var(--font-md);
     line-height: 1.5;
     color: var(--text-secondary);
-    margin-bottom: 20px;
+    margin-bottom: var(--space-20);
   }
   
   .unresolvable-notice {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 15px;
+    gap: var(--space-10);
+    padding: var(--space-16);
     background: rgba(100, 116, 139, 0.1);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);

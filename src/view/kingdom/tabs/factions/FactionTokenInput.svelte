@@ -142,7 +142,7 @@
    .tokens-container {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
       min-height: 2.5rem;
    }
@@ -150,11 +150,11 @@
    .token {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       background: rgba(100, 149, 237, 0.2);
-      border: 1px solid rgba(100, 149, 237, 0.4);
-      border-radius: 0.375rem;
-      padding: 0.375rem 0.75rem;
+      border: 0.0625rem solid rgba(100, 149, 237, 0.4);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6) var(--space-12);
       color: var(--text-primary);
       font-size: var(--font-sm);
       transition: all 0.2s;
@@ -179,7 +179,7 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
-      font-size: 0.75rem;
+      font-size: var(--font-xs);
       
       &:hover {
          color: var(--color-danger);
@@ -194,8 +194,8 @@
       width: 2rem;
       height: 2rem;
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.375rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
       color: var(--text-secondary);
       cursor: pointer;
       transition: all 0.2s;
@@ -209,32 +209,32 @@
    
    .dropdown-menu {
       position: absolute;
-      top: calc(100% + 0.5rem);
+      top: calc(100% + var(--space-8));
       left: 0;
       width: 100%;
-      max-width: 400px;
-      max-height: 300px;
+      max-width: 25.0000rem;
+      max-height: 18.7500rem;
       overflow-y: auto;
       background: rgba(0, 0, 0, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.375rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.5);
       z-index: 1000;
-      padding: 0.5rem;
+      padding: var(--space-8);
    }
    
    .dropdown-input-section {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--space-4);
    }
    
    .dropdown-text-input {
       width: 100%;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--text-primary);
       font-size: var(--font-sm);
       
@@ -254,13 +254,13 @@
       font-size: var(--font-xs);
       color: var(--text-tertiary);
       font-style: italic;
-      padding: 0 0.25rem;
+      padding: 0 var(--space-4);
    }
    
    .dropdown-divider {
-      height: 1px;
+      height: 0.0625rem;
       background: rgba(255, 255, 255, 0.1);
-      margin: 0.5rem 0;
+      margin: var(--space-8) 0;
    }
    
    .dropdown-section-header {
@@ -268,25 +268,25 @@
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
       text-transform: uppercase;
-      padding: 0.5rem 0.5rem 0.25rem;
+      padding: var(--space-8) var(--space-8) var(--space-4);
    }
    
    .dropdown-items {
       display: flex;
       flex-direction: column;
-      gap: 0.125rem;
+      gap: var(--space-2);
    }
    
    .dropdown-item {
       display: block;
       width: 100%;
-      padding: 0.5rem;
+      padding: var(--space-8);
       text-align: left;
       background: transparent;
       border: none;
       color: var(--text-primary);
       cursor: pointer;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       font-size: var(--font-sm);
       transition: all 0.2s;
       
@@ -296,7 +296,7 @@
    }
    
    .dropdown-empty {
-      padding: 1rem;
+      padding: var(--space-16);
       text-align: center;
       color: var(--text-tertiary);
       font-style: italic;

@@ -285,7 +285,7 @@
       justify-content: center;
       width: 2rem;
       height: 2rem;
-      padding: 0.25rem;
+      padding: var(--space-4);
       background: transparent;
       border: none;
       color: var(--text-secondary);
@@ -316,7 +316,7 @@
       position: absolute;
       top: 100%;
       right: 0;
-      margin-top: 0.5rem;
+      margin-top: var(--space-8);
       background: var(--bg-elevated);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
@@ -331,7 +331,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem;
+      padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
       border-bottom: 1px solid var(--color-border);
       font-size: var(--font-sm);
@@ -339,7 +339,7 @@
       color: var(--text-accent);
       
       .clear-btn {
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: transparent;
          border: 1px solid var(--color-border);
          border-radius: var(--radius-md);
@@ -355,7 +355,7 @@
          }
          
          i {
-            margin-right: 0.25rem;
+            margin-right: var(--space-4);
          }
       }
    }
@@ -363,19 +363,19 @@
    .location-list {
       max-height: 20rem;
       overflow-y: auto;
-      padding: 0.25rem;
+      padding: var(--space-4);
    }
    
    .location-item {
       display: grid;
       grid-template-columns: 1fr auto auto 2rem;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-12);
       width: 100%;
-      padding: 0.5rem 0.75rem;
+      padding: var(--space-8) var(--space-12);
       background: transparent;
       border: none;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
       border-radius: 0;
       color: var(--text-primary);
       cursor: pointer;
@@ -449,7 +449,7 @@
    }
    
    .empty-state {
-      padding: 2rem 1rem;
+      padding: var(--space-24) var(--space-16);
       text-align: center;
       color: var(--text-tertiary);
       font-size: var(--font-sm);

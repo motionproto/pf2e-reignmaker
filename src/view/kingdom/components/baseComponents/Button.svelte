@@ -41,17 +41,17 @@
 
 <style lang="scss">
    .button {
-      padding: 10px 16px;
+      padding: var(--space-10) var(--space-16);
       border-radius: var(--radius-md);
       cursor: pointer;
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.025em;
+      letter-spacing: 0.0250rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: var(--space-8);
       transition: all var(--transition-fast);
       position: relative;
       overflow: hidden;
@@ -76,8 +76,7 @@
          left: 100%;
       }
       
-      &:hover:not(:disabled) {
-         transform: translateY(-1px);
+      &:hover: not(:disabled) { transform: translateY(-0.0625rem);
          box-shadow: var(--shadow-md);
       }
       
@@ -96,7 +95,7 @@
       
       // Small size modifier (applies to any variant)
       &.small {
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          line-height: 1.5;
@@ -192,10 +191,10 @@
       
       // Small Secondary variant (matches add-structure-button)
       &.small_secondary {
-         padding: 0.5rem 1rem;
+         padding: var(--space-8) var(--space-16);
          background: rgba(255, 255, 255, 0.1);
          color: var(--text-primary);
-         border: 1px solid rgba(255, 255, 255, 0.2);
+         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
          line-height: 1.5;
@@ -305,7 +304,7 @@
       }
       
    :global(i) {
-      font-size: 1em;
+      font-size: var(--font-md);
       
       &.spinning {
          animation: spin 1s linear infinite;
@@ -321,10 +320,10 @@
       :global(.badge), :global(.count), :global(.fame-count) {
          font-size: var(--font-sm);
          opacity: 0.9;
-         padding: 2px 6px;
+         padding: var(--space-2) var(--space-6);
          background: rgba(0, 0, 0, 0.2);
          border-radius: var(--radius-sm);
-         margin-left: 4px;
+         margin-left: var(--space-4);
       }
    }
 </style>

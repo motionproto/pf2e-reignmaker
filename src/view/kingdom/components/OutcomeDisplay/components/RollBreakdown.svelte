@@ -63,15 +63,15 @@
     
     .roll-breakdown-toggle {
       width: 100%;
-      padding: 10px 12px;
+      padding: var(--space-10) var(--space-12);
       background: transparent;
       border: none;
       color: var(--text-primary);
       cursor: pointer;
       display: flex;
       align-items: flex-end;
-      gap: 12px;
-      min-height: 40px;
+      gap: var(--space-12);
+      min-height: 2.5000rem;
       transition: background var(--transition-fast);
       
       &:hover {
@@ -81,7 +81,7 @@
       .roll-result-large {
         display: flex;
         align-items: baseline;
-        gap: 12px;
+        gap: var(--space-12);
         
         .fa-dice-d20 {
           color: var(--text-primary);
@@ -103,37 +103,37 @@
         font-size: var(--font-md);
         color: var(--text-secondary);
         text-align: left;
-        padding-bottom: 2px;
+        padding-bottom: var(--space-2);
       }
       
       .toggle-icon {
         color: var(--text-secondary);
-        font-size: 12px;
+        font-size: var(--font-xs);
         transition: transform var(--transition-fast);
-        padding-bottom: 4px;
+        padding-bottom: var(--space-4);
       }
     }
     
     .modifier-breakdown {
-      padding: 8px;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.2);
       border-top: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: var(--space-4);
       
       .modifier-item {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        padding: 4px 8px;
+        padding: var(--space-4) var(--space-8);
         background: rgba(255, 255, 255, 0.02);
         border-radius: var(--radius-xs);
         font-size: var(--font-sm);
         
         &.base-roll {
           background: rgba(96, 165, 250, 0.15);
-          border: 1px solid rgba(96, 165, 250, 0.3);
+          border: 0.0625rem solid rgba(96, 165, 250, 0.3);
           
           .modifier-label {
             color: rgb(147, 197, 253);
@@ -149,7 +149,7 @@
         &.total {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid var(--border-medium);
-          margin-top: 4px;
+          margin-top: var(--space-4);
           
           .modifier-label {
             font-weight: var(--font-weight-semibold);
@@ -165,7 +165,7 @@
         
         &.dc {
           background: rgba(249, 115, 22, 0.1);
-          border: 1px solid rgba(249, 115, 22, 0.2);
+          border: 0.0625rem solid rgba(249, 115, 22, 0.2);
           
           .modifier-label {
             color: rgba(249, 115, 22, 0.9);

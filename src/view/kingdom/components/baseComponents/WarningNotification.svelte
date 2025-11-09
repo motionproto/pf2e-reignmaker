@@ -19,8 +19,8 @@
    .warning-notification {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 12px;
+      gap: var(--space-8);
+      padding: var(--space-12);
       background: rgba(245, 158, 11, 0.1);
       border: 1px solid var(--color-amber);
       border-radius: var(--radius-sm);
@@ -31,10 +31,10 @@
    .warning-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       
       i {
-         font-size: 18px;
+         font-size: var(--font-lg);
          flex-shrink: 0;
          color: var(--color-amber);
       }
@@ -54,7 +54,7 @@
    .warning-impact {
       font-weight: var(--font-weight-semibold);
       color: var(--color-amber-light);
-      padding-top: 4px;
-      border-top: 1px solid rgba(245, 158, 11, 0.3);
+      padding-top: var(--space-4);
+      border-top: 0.0625rem solid rgba(245, 158, 11, 0.3);
    }
 </style>

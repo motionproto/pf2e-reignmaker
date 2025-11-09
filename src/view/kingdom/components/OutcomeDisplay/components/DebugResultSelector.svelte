@@ -47,26 +47,26 @@
   .debug-result-selector {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
+    gap: var(--space-12);
+    padding: var(--space-10) var(--space-12);
     background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 0.0625rem solid rgba(139, 92, 246, 0.3);
     border-radius: var(--radius-md);
-    margin-bottom: 16px;
+    margin-bottom: var(--space-16);
   }
   
   .debug-label {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 8px;
+    gap: var(--space-6);
+    padding: var(--space-4) var(--space-8);
     background: rgba(139, 92, 246, 0.2);
     border-radius: var(--radius-sm);
     color: rgba(196, 181, 253, 1);
     font-weight: var(--font-weight-medium);
     font-size: var(--font-xs);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.0500rem;
     white-space: nowrap;
     
     i {
@@ -76,7 +76,7 @@
   
   .outcome-buttons {
     display: flex;
-    gap: 6px;
+    gap: var(--space-6);
     flex: 1;
   }
   
@@ -85,8 +85,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 10px;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-10);
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-sm);
@@ -107,7 +107,7 @@
     }
     
     &.active {
-      border-width: 2px;
+      border-width: 0.1250rem;
       
       &.criticalSuccess {
         background: rgba(34, 197, 94, 0.2);

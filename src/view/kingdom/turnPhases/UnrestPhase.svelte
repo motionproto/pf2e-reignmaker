@@ -516,7 +516,7 @@
                      />
             {/key}
          {:else}
-            <div style="text-align: center; padding: 20px; color: var(--text-secondary);">
+            <div class="loading-state">
                <i class="fas fa-spinner fa-spin"></i> Loading...
             </div>
          {/if}
@@ -534,7 +534,7 @@
    .unrest-phase {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--space-20);
    }
    
    .unrest-dashboard {
@@ -543,14 +543,14 @@
          rgba(15, 15, 17, 0.4));
       border-radius: var(--radius-lg);
       border: 1px solid var(--border-medium);
-      padding: 20px;
+      padding: var(--space-20);
    }
    
    // Split view layout - Two equal columns
    .unrest-split-view {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 30px;
+      gap: var(--space-24);
       align-items: center;
    }
    
@@ -560,18 +560,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1rem;
+      gap: var(--space-16);
       
       .status-display {
          display: flex;
          align-items: center;
-         gap: 1rem;
+         gap: var(--space-16);
          font-size: var(--font-4xl);
          font-weight: var(--font-weight-semibold);
       
          
          i {
-            font-size: 2.5rem;
+            font-size: var(--font-5xl);
          }
          
          &.tier-stable {
@@ -616,9 +616,9 @@
       .penalty-indicator {
          display: inline-flex;
          align-items: center;
-         padding: 4px 8px;
+         padding: var(--space-4) var(--space-8);
          background: rgba(245, 158, 11, 0.1);
-         border: 1px solid rgba(245, 158, 11, 0.3);
+         border: 0.0625rem solid rgba(245, 158, 11, 0.3);
          border-radius: var(--radius-sm);
          color: var(--color-amber-light);
          font-size: var(--font-lg);
@@ -636,7 +636,7 @@
       .unrest-container {
          display: flex;
          align-items: flex-end;
-         gap: 30px;
+         gap: var(--space-24);
       }
       
       .main-unrest {
@@ -646,7 +646,7 @@
          text-align: center;
          
          .unrest-value {
-            font-size: 56px;
+            font-size: var(--font-6xl);
             font-weight: var(--font-weight-bold);
             line-height: 1;
             color: var(--text-primary);
@@ -657,9 +657,9 @@
             font-size: var(--font-md);
             font-weight: var(--font-weight-medium);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.0500rem;
             color: var(--text-tertiary);
-            margin-top: 8px;
+            margin-top: var(--space-8);
          }
       }
       
@@ -670,7 +670,7 @@
          .imprisoned-value {
             display: flex;
             align-items: flex-end;
-            gap: 1rem;
+            gap: var(--space-16);
             font-size: var(--font-2xl);
             font-weight: var(--font-weight-bold);
             color: var(--text-secondary);
@@ -690,9 +690,9 @@
             font-size: var(--font-md);
             font-weight: var(--font-weight-medium);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.0500rem;
             color: var(--text-tertiary);
-            margin-top: 1rem;
+            margin-top: var(--space-16);
          }
       }
    }
@@ -706,7 +706,7 @@
    
    // Roll for Incident button - standalone, larger size
    .roll-incident-btn {
-      padding: 10px 20px;
+      padding: var(--space-10) var(--space-20);
       background: var(--btn-secondary-bg);
       color: var(--text-primary);
       border: 1px solid var(--border-medium);
@@ -715,16 +715,16 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.025em;
+      letter-spacing: 0.0250rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       transition: all var(--transition-fast);
       
       &:hover:not(:disabled) {
          background: var(--btn-secondary-hover);
          border-color: var(--border-strong);
-         transform: translateY(-1px);
+         transform: translateY(-0.0625rem);
          box-shadow: var(--shadow-md);
       }
       
@@ -741,13 +741,13 @@
    
    .roll-result-text {
       text-align: center;
-      margin-top: 8px;
+      margin-top: var(--space-8);
       font-size: var(--font-sm);
       color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: var(--space-8);
       
       i {
          font-size: var(--font-md);
@@ -769,7 +769,7 @@
    
    .incident-section {
       background: rgba(0, 0, 0, 0.05);
-      padding: 20px;
+      padding: var(--space-20);
       border-radius: var(--radius-md);
       border: 1px solid var(--border-subtle);
    }
@@ -778,9 +778,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: var(--space-20);
       flex-wrap: wrap;
-      gap: 15px;
+      gap: var(--space-16);
    }
    
    .incident-title {
@@ -791,7 +791,7 @@
    }
    
    .roll-incident-btn {
-      padding: 10px 20px;
+      padding: var(--space-10) var(--space-20);
       background: var(--btn-secondary-bg);
       color: var(--text-primary);
       border: 1px solid var(--border-medium);
@@ -800,16 +800,16 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.025em;
+      letter-spacing: 0.0250rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       transition: all var(--transition-fast);
       
       &:hover:not(:disabled) {
          background: var(--btn-secondary-hover);
          border-color: var(--border-strong);
-         transform: translateY(-1px);
+         transform: translateY(-0.0625rem);
          box-shadow: var(--shadow-md);
       }
       
@@ -830,11 +830,11 @@
    }
    
    .incident-result-container {
-      margin-top: 20px;
+      margin-top: var(--space-20);
    }
    
    .incident-display {
-      padding: 20px;
+      padding: var(--space-20);
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.6),
          rgba(31, 31, 35, 0.4));
@@ -844,7 +844,7 @@
    
    .roll-result {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: var(--space-20);
       
       .roll-value {
          font-size: var(--font-5xl);
@@ -860,10 +860,10 @@
       .roll-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.025em;
+         letter-spacing: 0.0250rem;
          color: var(--text-tertiary);
          text-transform: uppercase;
-         margin-top: 5px;
+         margin-top: var(--space-4);
       }
    }
    
@@ -874,17 +874,17 @@
    
    .incident-info {
       position: relative;
-      padding: 20px;
+      padding: var(--space-20);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-md);
-      margin-bottom: 20px;
+      margin-bottom: var(--space-20);
       
       .incident-name {
          font-size: var(--font-3xl);
          font-weight: var(--font-weight-semibold);
          line-height: 1.3;
          color: var(--text-primary);
-         margin-bottom: 10px;
+         margin-bottom: var(--space-10);
       }
       
       .incident-description {
@@ -895,14 +895,14 @@
       
       .incident-level-badge {
          position: absolute;
-         top: 15px;
-         right: 15px;
-         padding: 5px 12px;
+         top: 0.9375rem;
+         right: 0.9375rem;
+         padding: var(--space-4) var(--space-12);
          border-radius: var(--radius-full);
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
          line-height: 1.2;
-         letter-spacing: 0.05em;
+         letter-spacing: 0.0500rem;
          text-transform: uppercase;
          
          &.level-minor {
@@ -927,7 +927,7 @@
    
    
    .no-incident {
-      padding: 40px;
+      padding: var(--space-24);
       background: linear-gradient(135deg,
          rgba(34, 197, 94, 0.05),
          rgba(24, 24, 27, 0.3));
@@ -936,9 +936,9 @@
       text-align: center;
       
       .no-incident-icon {
-         font-size: 48px;
+         font-size: var(--font-6xl);
          color: var(--color-green);
-         margin-bottom: 15px;
+         margin-bottom: var(--space-16);
       }
       
       .no-incident-text {
@@ -946,7 +946,7 @@
          font-weight: var(--font-weight-semibold);
          line-height: 1.3;
          color: var(--text-primary);
-         margin-bottom: 8px;
+         margin-bottom: var(--space-8);
       }
       
       .no-incident-desc {
@@ -954,5 +954,11 @@
          font-size: var(--font-md);
          line-height: 1.5;
       }
+   }
+   
+   .loading-state {
+      text-align: center;
+      padding: var(--space-20);
+      color: var(--text-secondary);
    }
 </style>

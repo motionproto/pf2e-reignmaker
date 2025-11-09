@@ -18,10 +18,10 @@
   .section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-12);
 
     .section-icon {
-      font-size: 2rem;
+      font-size: var(--font-4xl);
       color: var(--color-amber);
       flex-shrink: 0;
     }

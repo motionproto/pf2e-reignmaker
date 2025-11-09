@@ -274,51 +274,51 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 0.5rem;
-      padding: 0rem;
+      gap: var(--space-8);
+      padding: var(--space-2);
       background-color: var(--bg-base);
       color: var(--text-primary);
    }
 
    .kingdom-header {
       flex: 0 0 auto;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: var(--bg-elevated);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
       color: var(--text-primary);
    }
 
    .kingdom-body {
       flex: 1;
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       min-height: 0; /* Important for scrolling */
    }
 
    .kingdom-sidebar {
-      flex: 0 0 250px;
+      flex: 0 0 15.6250rem;
       background: var(--bg-surface);
-      border-radius: 0.375rem;
+      border-radius: var(--radius-lg);
       overflow-y: auto;
    }
 
    .kingdom-main {
       flex: 1;
       background: var(--bg-surface);
-      border-radius: 0.375rem;
-      padding: 0.5rem;
+      border-radius: var(--radius-lg);
+      padding: var(--space-8);
       overflow-y: auto;
    }
 
    .message {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 15px;
-      border-radius: 5px;
+      bottom: 1.2500rem;
+      right: 1.2500rem;
+      padding: var(--space-10) var(--space-16);
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       animation: slideIn 0.3s ease-out;
       z-index: 1000;
    }
@@ -336,7 +336,7 @@
    }
 
    .message i {
-      font-size: 1.2em;
+      font-size: var(--font-xl);
    }
 
    @keyframes slideIn {

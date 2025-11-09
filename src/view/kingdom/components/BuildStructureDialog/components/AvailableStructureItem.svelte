@@ -116,7 +116,7 @@
     &.selected {
       border-color: var(--color-amber);
       background: rgba(251, 191, 36, 0.1);
-      box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 0 0.1250rem rgba(251, 191, 36, 0.3);
     }
     
     &.in-progress {
@@ -133,8 +133,7 @@
       cursor: pointer; // Allow clicking to deselect
     }
     
-    &:hover:not(.selected):not(.in-progress):not(.locked) {
-      transform: translateY(-2px);
+    &:hover: not(.selected):not(.in-progress):not(.locked) { transform: translateY(-0.1250rem);
       border-color: var(--border-strong);
     }
   }
@@ -142,9 +141,9 @@
   .structure-header {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    padding-bottom: 0.5rem;
+    gap: var(--space-12);
+    padding: var(--space-16);
+    padding-bottom: var(--space-8);
     border-bottom: 1px solid var(--border-subtle);
     transition: background 0.2s ease;
     
@@ -163,7 +162,7 @@
     .badges {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       .tier-badge,
       .locked-badge,
@@ -172,12 +171,12 @@
       .build-queue {
         font-size: var(--font-xs);
         font-weight: var(--font-weight-semibold);
-        padding: 0.25rem 0.5rem;
+        padding: var(--space-4) var(--space-8);
         border-radius: var(--radius-sm);
         border: 1px solid var(--border-subtle);
         display: flex;
         align-items: center;
-        gap: 0.375rem;
+        gap: var(--space-6);
         white-space: nowrap;
         
         i {

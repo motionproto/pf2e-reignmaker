@@ -59,7 +59,7 @@
   .settlement-name-dialog {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: var(--space-12);
   }
   
   label {
@@ -69,7 +69,7 @@
   }
   
   input {
-    padding: 0.5rem 0.75rem;
+    padding: var(--space-8) var(--space-12);
     background: var(--bg-base);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);

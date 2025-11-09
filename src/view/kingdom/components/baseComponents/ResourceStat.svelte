@@ -26,11 +26,11 @@
       align-items: center;
       text-align: center;
       flex: 1;
-      min-width: 80px;
+      min-width: 5.0000rem;
       
       i {
          font-size: var(--font-3xl);
-         margin-bottom: 4px;
+         margin-bottom: var(--space-4);
          
          &.resource-food {
             color: var(--color-green);
@@ -54,16 +54,16 @@
       }
       
       .stat-value {
-         font-size: 18px;
+         font-size: var(--font-lg);
          font-weight: var(--font-weight-bold);
          color: var(--text-primary);
-         margin: 2px 0;
+         margin: var(--space-2) 0;
       }
       
       .stat-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.025em;
+         letter-spacing: 0.0250rem;
          color: var(--text-secondary);
          text-transform: uppercase;
       }

@@ -442,35 +442,35 @@
   @import '../../../styles/variables.css';
   
   .setup-container {
-    max-width: 900px;
+    max-width: 56.2500rem;
     margin: 0 auto;
-    padding: 2rem;
+    padding: var(--space-24);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: var(--space-24);
   }
   
   .welcome-header {
     text-align: center;
-    padding: 2rem;
+    padding: var(--space-24);
     background: var(--gradient-header);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-xl);
     color: white;
     
     .kingdom-icon {
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-16);
       display: flex;
       justify-content: center;
       align-items: center;
       
       i {
-        font-size: 6rem;
+        font-size: var(--font-6xl);
         opacity: 0.9;
       }
     }
     
     h1 {
-      margin: 0 0 0.5rem 0;
+      margin: 0 0 var(--space-8) 0;
       font-size: var(--font-5xl);
       font-weight: bold;
     }
@@ -485,17 +485,17 @@
   .setup-section {
     background: var(--bg-elevated);
     
-    padding: 1.5rem;
-    border-radius: 0.5rem;
+    padding: var(--space-24);
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-secondary);
     
     h2 {
-      margin: 0 0 1rem 0;
-      font-size: 1.5rem;
+      margin: 0 0 var(--space-16) 0;
+      font-size: var(--font-2xl);
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       i {
         color: var(--text-secondary);
@@ -503,7 +503,7 @@
     }
     
     h3 {
-      margin: 0.5rem 0;
+      margin: var(--space-8) 0;
       font-size: var(--font-lg);
       color: var(--text-primary);
     }
@@ -517,17 +517,17 @@
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: var(--space-12);
+    margin-bottom: var(--space-16);
   }
   
   .stat-card {
     background: var(--bg-surface);
-    padding: 0.75rem;
-    border-radius: 0.375rem;
+    padding: var(--space-12);
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
-    gap: .75rem;
+    gap: .var(--space-24);
     border: 1px solid var(--border-subtle);
     
     i {
@@ -540,7 +540,7 @@
       display: flex;
       flex-direction: row;
       align-items: baseline;
-      gap: .75rem;
+      gap: .var(--space-24);
       min-width: 0;
     }
     
@@ -559,10 +559,10 @@
   }
   
   .terrain-info {
-    margin: 1rem 0 0 0;
-    padding: 0.75rem 1rem;
+    margin: var(--space-16) 0 0 0;
+    padding: var(--space-12) var(--space-16);
     background: var(--bg-surface);
-    border-radius: 0.375rem;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     font-size: var(--font-md);
@@ -575,8 +575,8 @@
   
   .terrain-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(5.6250rem, 1fr));
+    gap: var(--space-16);
   }
   
   .terrain-card {
@@ -586,18 +586,18 @@
       color-mix(in srgb, var(--terrain-color) 15%, rgba(0, 0, 0, 0.3)),
       color-mix(in srgb, var(--terrain-color) 8%, rgba(0, 0, 0, 0.2))
     );
-    padding: 0.5rem;
-    border-radius: 0.375rem;
+    padding: var(--space-8);
+    border-radius: var(--radius-lg);
     border: 1px solid color-mix(in srgb, var(--terrain-color) 30%, rgba(255, 255, 255, 0.1));
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--space-4);
     text-align: center;
     transition: all 0.2s ease;
     
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-0.1250rem);
       background: linear-gradient(
         135deg,
         color-mix(in srgb, var(--terrain-color) 70%, rgba(0, 0, 0, 0.2)),
@@ -621,10 +621,10 @@
   }
   
   .worksite-production {
-    margin-top: 1rem;
+    margin-top: var(--space-16);
     
     h3 {
-      margin: 0 0 1rem 0;
+      margin: 0 0 var(--space-16) 0;
       font-size: var(--font-lg);
       color: var(--text-primary);
     }
@@ -633,25 +633,25 @@
   .worksite-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .worksite-box {
     border: 2px solid var(--border-secondary);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     background: transparent;
     transition: all 0.2s ease;
     
     &:hover {
       border-color: var(--border-primary);
-      transform: translateY(-2px);
+      transform: translateY(-0.1250rem);
     }
   }
   
   .worksite-header {
     background: color-mix(in srgb, var(--color-gray-700) 50%, transparent);
-    padding: 0.5rem 1rem;
+    padding: var(--space-8) var(--space-16);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -669,8 +669,8 @@
     font-weight: var(--font-weight-bold);
     color: var(--text-secondary);
     background: var(--bg-elevated);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-md);
     min-width: 2rem;
     text-align: center;
   }
@@ -683,28 +683,28 @@
   }
   
   .guide-intro {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-24);
     font-size: var(--font-md);
   }
   
   .phases-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--space-16);
   }
   
   .phase-card {
     background: var(--bg-surface);
-    padding: 1rem;
-    border-radius: 0.375rem;
+    padding: var(--space-16);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-secondary);
     
     .phase-header {
       display: flex;
       align-items: baseline;
-      gap: 0.75rem;
-      padding-bottom: 1rem;
-      margin-bottom: 1rem;
+      gap: var(--space-12);
+      padding-bottom: var(--space-16);
+      margin-bottom: var(--space-16);
       border-bottom: 1px solid var(--border-subtle);
     }
     
@@ -712,7 +712,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.5rem;
+      font-size: var(--font-2xl);
       flex-shrink: 0;
       color: var(--text-secondary);
     }
@@ -729,10 +729,10 @@
       font-weight: var(--font-weight-light);
       color: var(--text-secondary);
       line-height: 1;
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: var(--bg-elevated);
       border: 1px solid var(--border-secondary);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       align-self: center;
     }
     
@@ -744,11 +744,11 @@
   
   .phase-details {
     list-style: disc;
-    padding-left: 1.5rem;
+    padding-left: var(--space-24);
     margin: 0;
     
     li {
-      margin-bottom: 0.5rem;
+      margin-bottom: var(--space-8);
       color: var(--text-secondary);
       font-size: var(--font-md);
       line-height: 1.5;
@@ -762,16 +762,16 @@
   .resource-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: var(--space-12);
   }
   
   .resource-item {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1rem;
+    gap: var(--space-16);
+    padding: var(--space-16);
     background: var(--bg-surface);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-md);
     
     i {
       font-size: var(--font-4xl);
@@ -781,7 +781,7 @@
     .resource-content {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: var(--space-4);
     }
     
     .resource-name {
@@ -799,15 +799,15 @@
     text-align: center;
     
     .ready-message {
-      margin-bottom: 2rem;
+      margin-bottom: var(--space-24);
       font-size: var(--font-lg);
     }
   }
   
   .start-button-wrapper :global(.button) {
-    padding: 16px 24px;
+    padding: var(--space-16) var(--space-24);
     font-size: var(--font-xl);
-    gap: 12px;
+    gap: var(--space-12);
     
     :global(i) {
       font-size: var(--font-lg);

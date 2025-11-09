@@ -57,8 +57,8 @@
 
 <style lang="scss">
   .dice-rollers {
-    margin-top: 10px;
-    padding: 14px 16px;
+    margin-top: var(--space-10);
+    padding: var(--space-12) var(--space-16);
     background: linear-gradient(135deg, 
       rgba(255, 255, 255, 0.08),
       rgba(255, 255, 255, 0.03));
@@ -68,22 +68,22 @@
     .dice-rollers-header {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--space-8);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-bottom: 10px;
+      margin-bottom: var(--space-10);
       
       i {
-        font-size: 18px;
+        font-size: var(--font-lg);
       }
     }
   }
   
   .dice-roller-button {
     width: 100%;
-    padding: 12px 16px;
-    margin-bottom: 8px;
+    padding: var(--space-12) var(--space-16);
+    margin-bottom: var(--space-8);
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid var(--border-subtle);
     border-radius: var(--radius-md);
@@ -94,7 +94,7 @@
     transition: all var(--transition-fast);
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-12);
     
     &:last-child {
       margin-bottom: 0;
@@ -103,8 +103,8 @@
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--border-default);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transform: translateY(-0.1250rem);
+      box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
     }
     
     &:active {
@@ -113,7 +113,7 @@
     
     i.fa-dice-d20 {
       color: var(--text-primary);
-      font-size: 20px;
+      font-size: var(--font-xl);
     }
     
     .dice-formula {
@@ -121,7 +121,7 @@
       font-size: var(--font-lg);
       font-weight: var(--font-weight-bold);
       color: var(--text-primary);
-      padding: 2px 8px;
+      padding: var(--space-2) var(--space-8);
       background: rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-xs);
     }
@@ -134,7 +134,7 @@
     
     i.fa-arrow-right {
       color: var(--text-secondary);
-      font-size: 14px;
+      font-size: var(--font-sm);
     }
   }
 </style>

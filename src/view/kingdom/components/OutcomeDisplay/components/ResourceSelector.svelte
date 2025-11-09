@@ -69,43 +69,43 @@
 
 <style lang="scss">
   .resource-selectors {
-    margin-top: 10px;
+    margin-top: var(--space-10);
     
     .selectors-header {
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-bottom: 12px;
+      margin-bottom: var(--space-12);
     }
     
     .selector-cards {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: var(--space-12);
     }
     
     .selector-card {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: 14px;
+      gap: var(--space-10);
+      padding: var(--space-12);
       background: rgba(255, 255, 255, 0.03);
       border: 2px solid var(--border-medium);
       border-radius: var(--radius-md);
       transition: all var(--transition-fast);
-      min-width: 200px;
+      min-width: 12.5000rem;
       width: auto;
       
       &.resolved {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
       }
       
       .card-header {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--space-10);
         
         .card-label {
           font-size: var(--font-md);
@@ -117,7 +117,7 @@
       }
       
       .resource-dropdown {
-        padding: 8px 12px;
+        padding: var(--space-8) var(--space-12);
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-medium);
         border-radius: var(--radius-sm);
@@ -134,7 +134,7 @@
         &:focus {
           outline: none;
           border-color: var(--color-blue);
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 0 0 0.1250rem rgba(59, 130, 246, 0.3);
         }
         
         option {

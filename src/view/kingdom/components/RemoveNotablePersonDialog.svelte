@@ -77,7 +77,7 @@
   }
   
   .remove-person-content :global(.notification-rm) {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-24);
   }
   
   .remove-person-content :global(.notification-rm-description) {
@@ -86,11 +86,11 @@
   }
   
   .consequences-section {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-16);
   }
   
   .consequences-section h4 {
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 var(--space-12) 0;
     font-size: var(--font-lg);
     font-family: var(--font-sans-rm);
     font-weight: var(--font-weight-bold);
@@ -99,7 +99,7 @@
   
   .consequences-section ul {
     margin: 0;
-    padding-left: 1.5rem;
+    padding-left: var(--space-24);
     color: var(--text-secondary, #b0b0b3);
     font-size: var(--font-md);
     line-height: 1.6;
@@ -107,27 +107,27 @@
   }
   
   .consequences-section li {
-    margin-bottom: 0.5rem;
-    padding-left: 0.25rem;
+    margin-bottom: var(--space-8);
+    padding-left: var(--space-4);
   }
   
   .consequences-section li:not(.actor-option):before {
     content: "•";
-    margin-right: 0.5rem;
+    margin-right: var(--space-8);
   }
   
   .actor-option {
-    margin-top: 1rem;
-    padding: 0.75rem;
+    margin-top: var(--space-16);
+    padding: var(--space-12);
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 0.375rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
   }
   
   .actor-choice {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-8);
     cursor: pointer;
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary, #ffffff);
@@ -142,17 +142,17 @@
   .warning-text {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 1rem 0 0 0;
-    padding: 0.75rem;
+    gap: var(--space-8);
+    margin: var(--space-16) 0 0 0;
+    padding: var(--space-12);
     background: rgba(255, 107, 107, 0.1);
-    border-radius: 0.375rem;
-    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: var(--radius-lg);
+    border: 0.0625rem solid rgba(255, 107, 107, 0.3);
     color: #ff6b6b;
     font-size: var(--font-sm);
   }
   
   .warning-text i {
-    font-size: 1rem;
+    font-size: var(--font-md);
   }
 </style>

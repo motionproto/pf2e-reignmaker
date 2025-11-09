@@ -125,15 +125,15 @@
    }
    
    .stat-value {
-      font-size: 1rem;
+      font-size: var(--font-md);
       font-weight: var(--font-weight-bold);
       color: var(--text-primary);
    }
    
    .stat-value.editable {
       cursor: pointer;
-      padding: 0.125rem 0;
-      border-radius: 0.25rem;
+      padding: var(--space-2) 0;
+      border-radius: var(--radius-md);
       display: inline-flex;
       align-items: center;
       transition: all var(--transition-fast);
@@ -141,39 +141,39 @@
    
    .stat-value.editable:hover {
       background: var(--bg-subtle);
-      padding: 0.125rem 0.5rem;
+      padding: var(--space-2) var(--space-8);
    }
    
    .stat-value.editable:focus {
       outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
+      outline-offset: 0.1250rem;
    }
    
    .edit-icon {
-      font-size: 0.75rem;
+      font-size: var(--font-xs);
       display: none;
       color: var(--text-muted);
    }
    
    .stat-value.editable:hover .edit-icon {
       display: inline;
-      margin-left: 0.25rem;
+      margin-left: var(--space-4);
    }
    
    .edit-container {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: var(--space-4);
    }
    
    .stat-edit-input {
-      width: 80px;
-      padding: 0.25rem 0.5rem;
+      width: 5.0000rem;
+      padding: var(--space-4) var(--space-8);
       border: 1px solid var(--border-primary);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       background: var(--bg-surface);
       color: var(--text-primary);
-      font-size: 1rem;
+      font-size: var(--font-md);
       font-weight: var(--font-weight-bold);
    }
    
@@ -196,11 +196,11 @@
    
    .save-btn,
    .cancel-btn {
-      width: 24px;
-      height: 24px;
+      width: 1.5000rem;
+      height: 1.5000rem;
       border: 1px solid var(--border-default);
       background: var(--bg-surface);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -230,7 +230,7 @@
    
    .save-btn i,
    .cancel-btn i {
-      font-size: 0.75rem;
+      font-size: var(--font-xs);
    }
    
    /* Pass-through classes for special styling */

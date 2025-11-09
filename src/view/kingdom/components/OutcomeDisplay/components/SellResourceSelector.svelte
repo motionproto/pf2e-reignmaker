@@ -213,18 +213,18 @@
 <style lang="scss">
   .sell-resource-selector {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-12) 0;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     flex-wrap: wrap;
-    gap: 8px;
+    gap: var(--space-8);
     
     h4 {
       margin: 0;
@@ -237,12 +237,12 @@
   .rate-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-size: var(--font-sm);
     color: var(--color-amber, #fbbf24);
     
     i {
-      font-size: 14px;
+      font-size: var(--font-sm);
     }
     
     .crit-bonus {
@@ -253,9 +253,9 @@
 
   .resource-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 12px;
-    margin-bottom: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(6.2500rem, 1fr));
+    gap: var(--space-12);
+    margin-bottom: var(--space-12);
   }
 
   .resource-option {
@@ -263,23 +263,23 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: var(--space-12);
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid var(--border-strong, rgba(255, 255, 255, 0.2));
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--color-amber, #fbbf24);
-      transform: translateY(-2px);
+      transform: translateY(-0.1250rem);
     }
     
     &.selected {
       background: rgba(251, 191, 36, 0.2);
       border-color: var(--color-amber, #fbbf24);
-      border-width: 3px;
+      border-width: 0.1875rem;
     }
     
     &:disabled {
@@ -297,16 +297,16 @@
   .resource-count {
     font-size: var(--font-xs);
     color: var(--text-tertiary, #9ca3af);
-    margin-top: 4px;
+    margin-top: var(--space-4);
   }
 
   .amount-selector {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    gap: var(--space-8);
+    padding: var(--space-12);
     background: rgba(251, 191, 36, 0.1);
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    border: 0.0625rem solid rgba(251, 191, 36, 0.3);
     border-radius: var(--radius-sm);
     
     label {
@@ -317,21 +317,21 @@
     
     .input-row {
       display: flex;
-      gap: 12px;
+      gap: var(--space-12);
       align-items: center;
     }
     
     .input-with-buttons {
       display: flex;
-      gap: 6px;
+      gap: var(--space-6);
       align-items: center;
       
       button {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: 2.0000rem;
+        height: 2.0000rem;
         padding: 0;
         background: rgba(251, 191, 36, 0.2);
         border: 1px solid var(--color-amber, #fbbf24);
@@ -342,7 +342,7 @@
         flex-shrink: 0;
         
         i {
-          font-size: 12px;
+          font-size: var(--font-xs);
         }
         
         &:hover:not(:disabled) {
@@ -362,8 +362,8 @@
     }
     
     input {
-      width: 80px;
-      padding: 6px 10px;
+      width: 5.0000rem;
+      padding: var(--space-6) var(--space-10);
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-medium);
       border-radius: var(--radius-sm);
@@ -381,14 +381,14 @@
     .gain-display {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--space-6);
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--color-amber);
       white-space: nowrap;
       
       i {
-        font-size: 14px;
+        font-size: var(--font-sm);
       }
     }
   }
@@ -396,16 +396,16 @@
   .validation-warning {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-10);
     background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 0.0625rem solid rgba(239, 68, 68, 0.3);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);
     color: rgb(239, 68, 68);
     
     i {
-      font-size: 12px;
+      font-size: var(--font-xs);
     }
   }
 </style>

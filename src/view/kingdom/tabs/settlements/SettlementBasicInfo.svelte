@@ -210,9 +210,9 @@
    .detail-item {
       &.expandable {
          cursor: pointer;
-         padding: 0.5rem;
-         margin-left: -0.5rem;
-         margin-right: -0.5rem;
+         padding: var(--space-8);
+         margin-left: -var(--space-8);
+         margin-right: -var(--space-8);
          transition: var(--transition-base);
          border-radius: var(--radius-md);
          
@@ -231,40 +231,40 @@
    }
    
    .detail-item-full {
-      margin-top: 1rem;
+      margin-top: var(--space-16);
       
       .label {
          display: block;
          font-size: var(--font-md);
          color: var(--text-secondary);
-         margin-bottom: 0.5rem;
+         margin-bottom: var(--space-8);
          font-weight: var(--font-weight-light);
       }
       
       .value {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          color: var(--text-primary);
          font-size: var(--font-lg);
          
          i {
-            margin-right: 0.5rem;
+            margin-right: var(--space-8);
          }
       }
    }
    
    .army-list {
-      margin-left: 1.5rem;
-      margin-top: 0.5rem;
-      padding: 0.5rem 0;
-      border-left: 2px solid rgba(255, 255, 255, 0.1);
+      margin-left: var(--space-24);
+      margin-top: var(--space-8);
+      padding: var(--space-8) 0;
+      border-left: 0.1250rem solid rgba(255, 255, 255, 0.1);
       
       .army-item {
          display: flex;
          align-items: center;
-         gap: 0.5rem;
-         padding: 0.25rem 0 0.25rem 1rem;
+         gap: var(--space-8);
+         padding: var(--space-4) 0 var(--space-4) var(--space-16);
          font-size: var(--font-md);
          color: var(--text-secondary);
          
@@ -290,12 +290,12 @@
    .value-with-controls {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       color: var(--text-primary);
       font-size: var(--font-lg);
       
       i {
-         margin-right: 0.5rem;
+         margin-right: var(--space-8);
       }
       
       .value-display {
@@ -304,11 +304,11 @@
       
       .control-buttons {
          display: flex;
-         gap: 0.25rem;
+         gap: var(--space-4);
          
          .control-btn {
-            width: 32px;
-            height: 32px;
+            width: 2.0000rem;
+            height: 2.0000rem;
             border: 1px solid var(--border-default);
             background: var(--bg-surface);
             border-radius: var(--radius-sm);
@@ -339,20 +339,20 @@
    }
    
    .skill-bonuses-section {
-      margin-top: 1rem;
+      margin-top: var(--space-16);
       
       .label {
          display: block;
          font-size: var(--font-md);
          color: var(--text-secondary);
-         margin-bottom: 0.75rem;
+         margin-bottom: var(--space-12);
          font-weight: var(--font-weight-light);
       }
       
       .skill-bonuses-grid {
          display: flex;
          flex-wrap: wrap;
-         gap: 0.5rem;
+         gap: var(--space-8);
       }
    }
 </style>

@@ -116,7 +116,7 @@
    .phase-content {
       flex: 1;
       background: transparent;
-      padding: 12px;
+      padding: var(--space-12);
       border-radius: 0;
       overflow-y: auto;
    }

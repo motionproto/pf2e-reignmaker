@@ -41,7 +41,7 @@
       flex-shrink: 0;
       
       .tier-select {
-         padding: 0.25rem 0.75rem;
+         padding: var(--space-4) var(--space-12);
          background: var(--bg-elevated);
          border: 1px solid var(--border-default);
          border-radius: var(--radius-md);

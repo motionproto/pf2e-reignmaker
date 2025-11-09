@@ -136,7 +136,7 @@
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-default);
-    margin: 0 .75rem;
+    margin: 0 .var(--space-24);
     &.compact {
       background: transparent;
       border: none;
@@ -148,7 +148,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0;
-    gap: 1rem;
+    gap: var(--space-16);
     cursor: pointer;
     transition: opacity 0.2s ease;
 
@@ -160,11 +160,11 @@
   .tracker-title {
     display: flex;
     align-items: center;
-    gap: .75rem;
+    gap: .var(--space-24);
     font-size: var(--font-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    padding: .75rem 1rem;
+    padding: .75rem var(--space-16);
 
     i {
       color: var(--color-amber);
@@ -172,23 +172,23 @@
     
     .toggle-icon {
       font-size: var(--font-sm);
-      margin-left: 6px;
+      margin-left: var(--space-6);
       color: var(--text-secondary);
     }
   }
 
   .player-dots {
     display: flex;
-    gap: 1rem;
+    gap: var(--space-16);
     align-items: center;
-    padding-right: 1rem;
+    padding-right: var(--space-16);
   }
 
   .player-dot {
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    border: 2px solid;
+    border: 0.1250rem solid;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -196,44 +196,44 @@
     background: rgba(255, 255, 255, 0.1);
     
     &.acted {
-      box-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 0.5000rem rgba(251, 191, 36, 0.4);
       
       i {
         color: white;
         font-size: var(--font-xs);
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        text-shadow: 0.0625rem 0.0625rem 0.1250rem rgba(0, 0, 0, 0.5);
       }
     }
   }
   
   .player-dot-small {
-    width: 16px;
-    height: 16px;
+    width: 1.0000rem;
+    height: 1.0000rem;
     border-radius: 50%;
-    border: 2px solid;
+    border: 0.1250rem solid;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     
     &.acted {
-      box-shadow: 0 0 6px rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 0.3750rem rgba(251, 191, 36, 0.3);
       
       i {
         color: white;
-        font-size: 8px;
-        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        font-size: var(--font-xs);
+        text-shadow: 0.0625rem 0.0625rem 0.1250rem rgba(0, 0, 0, 0.5);
       }
     }
   }
   
   .action-details {
-    padding: 15px;
+    padding: var(--space-16);
     background: rgba(0, 0, 0, 0.3);
     border-top: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: var(--space-16);
   }
   
   .no-actions {
@@ -241,19 +241,19 @@
     font-style: italic;
     font-size: var(--font-sm);
     text-align: center;
-    padding: 10px;
+    padding: var(--space-10);
   }
   
   .player-action-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-8);
   }
   
   .player-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-10);
   }
   
   .player-name {
@@ -268,16 +268,16 @@
   }
   
   .action-list {
-    margin-left: 26px;
+    margin-left: var(--space-24);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-6);
   }
   
   .action-entry {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-size: var(--font-sm);
   }
   

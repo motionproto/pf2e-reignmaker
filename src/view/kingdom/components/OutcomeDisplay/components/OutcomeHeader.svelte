@@ -87,19 +87,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: var(--space-12) var(--space-16);
     background: rgba(0, 0, 0, 0.3);
     border-bottom: 1px solid var(--border-subtle);
     
     .resolution-header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
       
       i {
-        font-size: 20px;
+        font-size: var(--font-xl);
       }
       
       > span:first-of-type {
@@ -110,7 +110,7 @@
     .resolution-header-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: var(--space-12);
       
       .actor-info {
         color: var(--text-secondary);
@@ -121,10 +121,10 @@
       .ignore-button {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
+        gap: var(--space-6);
+        padding: var(--space-6) var(--space-12);
         background: rgba(239, 68, 68, 0.15);
-        border: 1px solid rgba(239, 68, 68, 0.4);
+        border: 0.0625rem solid rgba(239, 68, 68, 0.4);
         border-radius: var(--radius-md);
         color: var(--color-red);
         font-size: var(--font-sm);
@@ -140,7 +140,7 @@
         &:hover:not(:disabled) {
           background: rgba(239, 68, 68, 0.25);
           border-color: rgba(239, 68, 68, 0.6);
-          transform: translateY(-1px);
+          transform: translateY(-0.0625rem);
         }
         
         &:disabled {

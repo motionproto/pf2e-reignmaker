@@ -972,8 +972,8 @@
       display: flex;
       flex-direction: column;
       height: 100%;
-      padding: 1rem;
-      gap: 1rem;
+      padding: var(--space-16);
+      gap: var(--space-16);
    }
    
    .back-button-row {
@@ -981,12 +981,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 1rem;
+      gap: var(--space-16);
    }
    
    .action-buttons {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .scrollable-content {
@@ -994,7 +994,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: .5rem;
+      gap: .var(--space-24);
    }
    
    .name-attitude-header {
@@ -1002,55 +1002,55 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0.375rem;
-      padding: 1rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16);
       width: 100%;
    }
    
    .faction-header {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: var(--space-24);
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0.375rem;
-      padding: 1rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16);
    }
    
    .faction-portrait {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
    }
    
    .portrait-image {
       width: 100%;
       height: auto;
-      max-height: 400px;
+      max-height: 25.0000rem;
       object-fit: cover;
-      border-radius: 0.375rem;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
+      border: 0.1250rem solid rgba(255, 255, 255, 0.2);
    }
    
    .portrait-placeholder {
       width: 100%;
-      height: 300px;
+      height: 18.7500rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 2px dashed rgba(255, 255, 255, 0.2);
-      border-radius: 0.375rem;
+      border: 0.1250rem dashed rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
       i {
          font-size: var(--font-6xl);
-         margin-bottom: 0.5rem;
+         margin-bottom: var(--space-8);
       }
       
       p {
@@ -1072,7 +1072,7 @@
    .name-display {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       h2 {
          margin: 0;
@@ -1085,16 +1085,16 @@
    .name-edit-wrapper {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       width: 50%;
    }
    
    .faction-name-input {
       flex: 1;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--color-accent);
       font-size: var(--font-3xl);
       font-weight: var(--font-weight-semibold);
@@ -1113,7 +1113,7 @@
    }
    
    .name-edit-btn {
-      padding: 0.375rem 0.5rem;
+      padding: var(--space-6) var(--space-8);
       background: transparent;
       border: none;
       color: var(--text-secondary);
@@ -1123,7 +1123,7 @@
       
       &:hover {
          background: rgba(255, 255, 255, 0.1);
-         border-radius: 0.25rem;
+         border-radius: var(--radius-md);
       }
       
       &.cancel {
@@ -1133,11 +1133,11 @@
    
    .faction-description-input {
       width: 100%;
-      height: 300px;
-      padding: 0.5rem;
+      height: 18.7500rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
       resize: none;
@@ -1165,16 +1165,16 @@
    .attitude-icons {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .attitude-icon-compact {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0.25rem;
-      border: 1px solid transparent;
-      border-radius: 0.25rem;
+      padding: var(--space-4);
+      border: 0.0625rem solid transparent;
+      border-radius: var(--radius-md);
       background: transparent;
       cursor: pointer;
       transition: all 0.2s;
@@ -1197,13 +1197,13 @@
    .attitude-name {
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-right: 0.5rem;
+      margin-right: var(--space-8);
    }
    
    .faction-color-picker {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
       
       label {
@@ -1216,14 +1216,14 @@
    .color-picker-wrapper {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
    }
    
    .color-input {
-      width: 60px;
-      height: 36px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      width: 3.7500rem;
+      height: 2.2500rem;
+      border: 0.1250rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       cursor: pointer;
       background: transparent;
       
@@ -1233,10 +1233,10 @@
    }
    
    .color-preview {
-      width: 36px;
-      height: 36px;
-      border-radius: 0.25rem;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      width: 2.2500rem;
+      height: 2.2500rem;
+      border-radius: var(--radius-md);
+      border: 0.1250rem solid rgba(255, 255, 255, 0.3);
       display: inline-block;
    }
    
@@ -1250,9 +1250,9 @@
    .detail-header {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      gap: var(--space-16);
+      padding-bottom: var(--space-16);
+      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
       
       h2 {
          margin: 0;
@@ -1266,24 +1266,24 @@
    .detail-sections {
       display: flex;
       flex-direction: column;
-      gap: .5rem;
+      gap: .var(--space-24);
    }
    
    .detail-section {
       background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0.375rem;
-      padding: 1rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-lg);
+      padding: var(--space-16);
       overflow: visible;
       position: relative;
       z-index: auto;
       
       h3 {
-         margin: 0 0 1rem 0;
+         margin: 0 0 var(--space-16) 0;
          color: var(--color-accent);
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          font-size: var(--font-xl);
          
          i {
@@ -1297,41 +1297,41 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1rem;
+      gap: var(--space-16);
    }
    
    .faction-image {
-      max-width: 300px;
-      max-height: 300px;
-      border-radius: 0.375rem;
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      max-width: 18.7500rem;
+      max-height: 18.7500rem;
+      border-radius: var(--radius-lg);
+      border: 0.1250rem solid rgba(255, 255, 255, 0.2);
    }
    
    .no-image {
-      width: 300px;
-      height: 200px;
+      width: 18.7500rem;
+      height: 12.5000rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 2px dashed rgba(255, 255, 255, 0.2);
-      border-radius: 0.375rem;
+      border: 0.1250rem dashed rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
       i {
          font-size: var(--font-6xl);
-         margin-bottom: 0.5rem;
+         margin-bottom: var(--space-8);
       }
    }
    
    .text-input,
    .textarea-input {
       width: 100%;
-      padding: 0.5rem;
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
       font-size: var(--font-md);
@@ -1349,30 +1349,30 @@
       }
       
       &.small {
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          font-size: var(--font-sm);
       }
    }
    
    .textarea-input {
       resize: vertical;
-      min-height: 60px;
+      min-height: 3.7500rem;
    }
    
    .attitude-display {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       align-items: center;
-      padding: 1rem;
+      padding: var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
    }
    
    .attitude-icon-display {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       i {
          font-size: var(--font-4xl);
@@ -1390,7 +1390,7 @@
    }
    
    .help-text {
-      margin: 0.5rem 0 0 0;
+      margin: var(--space-8) 0 0 0;
       font-size: var(--font-sm);
       color: var(--text-secondary);
       font-style: italic;
@@ -1399,14 +1399,14 @@
    .goal-progress {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 1rem;
+      gap: var(--space-16);
       align-items: start;
    }
    
    .goal-input {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       label {
          font-size: var(--font-md);
@@ -1418,7 +1418,7 @@
    .progress-display {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: flex-start;
       
       label {
@@ -1431,17 +1431,17 @@
    .progress-clock {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem;
+      gap: var(--space-8);
+      padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
    }
    
    .clock-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
       color: var(--text-primary);
       cursor: pointer;
       transition: all 0.2s;
@@ -1459,7 +1459,7 @@
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 0.25rem;
+      gap: var(--space-4);
    }
    
    .clock-max-btn {
@@ -1487,10 +1487,10 @@
    
    .clock-max-input {
       width: 3rem;
-      padding: 0.25rem;
+      padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 0.25rem;
+      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border-radius: var(--radius-md);
       color: var(--text-primary);
       text-align: center;
       
@@ -1501,7 +1501,7 @@
    }
    
    .clock-btn.small {
-      padding: 0.125rem 0.25rem;
+      padding: var(--space-2) var(--space-4);
       font-size: var(--font-xs);
    }
    
@@ -1523,17 +1523,17 @@
          background: rgba(0, 0, 0, 0.3);
          
          th {
-            padding: 0.5rem;
+            padding: var(--space-8);
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--text-primary);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
             
             &.add-row {
                background: rgba(0, 0, 0, 0.2);
@@ -1541,7 +1541,7 @@
          }
          
          td {
-            padding: 0.5rem;
+            padding: var(--space-8);
             color: var(--text-primary);
             overflow: visible;
          }
@@ -1550,15 +1550,15 @@
    
    .person-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       overflow: visible;
       position: relative;
    }
    
    .person-name-btn {
       cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
+      padding: var(--space-4) var(--space-8);
+      border-radius: var(--radius-md);
       transition: all 0.2s;
       display: inline-block;
       background: transparent;
@@ -1569,7 +1569,7 @@
       font-weight: var(--font-weight-semibold);
       text-decoration: underline;
       text-decoration-style: dotted;
-      text-underline-offset: 3px;
+      text-underline-offset: 0.1875rem;
       
       &:hover {
          background: rgba(255, 255, 255, 0.1);
@@ -1580,24 +1580,24 @@
    .person-name-unlinked {
       color: var(--text-secondary);
       font-style: italic;
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
    }
    
    .link-icon {
-      margin-left: 0.375rem;
-      font-size: 0.75em;
+      margin-left: var(--space-6);
+      font-size: var(--font-xs);
       opacity: 0.7;
    }
    
    .person-actions {
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
    }
    
    .action-btn {
-      padding: 0.25rem 0.5rem;
+      padding: var(--space-4) var(--space-8);
       border: none;
-      border-radius: 0.25rem;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s;
       background: rgba(255, 255, 255, 0.1);
@@ -1628,7 +1628,7 @@
    
    .add-person {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       align-items: center;
    }
    
@@ -1640,21 +1640,21 @@
    .allies-enemies-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: var(--space-24);
    }
    
    .allies-column,
    .enemies-column {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       
       h3 {
-         margin: 0 0 0.5rem 0;
+         margin: 0 0 var(--space-8) 0;
          color: var(--color-accent);
          display: flex;
          align-items: center;
-         gap: 0.5rem;
+         gap: var(--space-8);
          font-size: var(--font-xl);
          
          i {
@@ -1667,7 +1667,7 @@
    
    .empty-state {
       text-align: center;
-      padding: 2rem;
+      padding: var(--space-24);
       color: var(--text-secondary);
       font-style: italic;
    }
@@ -1682,7 +1682,7 @@
       
       i {
          font-size: var(--font-6xl);
-         margin-bottom: 1rem;
+         margin-bottom: var(--space-16);
          color: var(--color-danger);
       }
    }
@@ -1701,16 +1701,16 @@
    .actor-autosuggest {
       position: relative;
       display: flex;
-      gap: 0.25rem;
+      gap: var(--space-4);
       align-items: center;
       flex: 1;
       
       .autosuggest-input {
          flex: 1;
-         padding: 0.25rem 0.5rem;
+         padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
          color: var(--text-primary);
          
          &:focus {
@@ -1725,31 +1725,31 @@
          top: 100%;
          left: 0;
          width: 50%;
-         max-height: 200px;
+         max-height: 12.5000rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
-         border: 1px solid rgba(255, 255, 255, 0.3);
-         border-radius: 0.25rem;
-         margin-top: 0.25rem;
+         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border-radius: var(--radius-md);
+         margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {
-               padding: 0.5rem;
+               padding: var(--space-8);
                font-size: var(--font-xs);
                font-weight: var(--font-weight-semibold);
                color: var(--text-secondary);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
             }
          }
          
          .suggestion-item {
             display: block;
             width: 100%;
-            padding: 0.5rem;
+            padding: var(--space-8);
             text-align: left;
             border: none;
             background: transparent;
@@ -1763,7 +1763,7 @@
          }
          
          .no-results {
-            padding: 1rem;
+            padding: var(--space-16);
             text-align: center;
             color: var(--text-secondary);
             font-style: italic;

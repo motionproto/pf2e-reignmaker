@@ -320,14 +320,14 @@
    .resources-phase {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: var(--space-20);
    }
    
    .resource-dashboard {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
-      max-width: 800px;
+      gap: var(--space-16);
+      max-width: 50.0000rem;
       margin: 0 auto;
       justify-content: center;
    }
@@ -335,14 +335,14 @@
    .phase-steps-container {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: var(--space-16);
    }
    
    .income-production-summary {
-      margin: 1rem auto;
-      padding: 1.5rem 2rem;
+      margin: var(--space-16) auto;
+      padding: var(--space-24) 2rem;
       width: 100%;
-      max-width: 800px;
+      max-width: 50.0000rem;
       box-sizing: border-box;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
@@ -351,7 +351,7 @@
       border: 1px solid var(--border-default);
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
       transition: all 0.3s ease;
       
       &.collected {
@@ -366,7 +366,7 @@
    .gold-income-section {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       flex-wrap: wrap;
    }
    
@@ -387,7 +387,7 @@
    
    .pipe-separator {
       color: var(--text-secondary);
-      margin: 0 8px;
+      margin: 0 var(--space-8);
    }
    
    .income-amount {
@@ -397,7 +397,7 @@
    
    .worksite-summary {
       width: 100%;
-      margin-top: 5px;
+      margin-top: var(--space-4);
       
       .worksite-count {
          color: var(--text-secondary);
@@ -406,7 +406,7 @@
    }
    
    .no-production {
-      padding: .5rem;
+      padding: .var(--space-24);
       border-radius: var(--radius-md);
       text-align: center;
       color: var(--text-primary);
@@ -416,15 +416,15 @@
    .production-section,
    .gold-income-section {
       i {
-         font-size: 20px;
+         font-size: var(--font-xl);
       }
    }
    
    .income-note {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
+      gap: var(--space-8);
+      padding: var(--space-8) var(--space-12);
       border-radius: var(--radius-sm);
       font-size: var(--font-md);
       
@@ -433,7 +433,7 @@
          border: 1px solid var(--color-amber);
          
          i {
-            font-size: 14px;
+            font-size: var(--font-sm);
             color: var(--color-amber-light);
          }
       }
@@ -443,7 +443,7 @@
          border: 1px solid var(--color-green);
          
          i {
-            font-size: 14px;
+            font-size: var(--font-sm);
             color: var(--color-green-light);
          }
       }
@@ -453,7 +453,7 @@
          border: 1px solid var(--color-blue);
          
          i {
-            font-size: 14px;
+            font-size: var(--font-sm);
             color: var(--color-blue-light);
          }
       }
@@ -466,7 +466,7 @@
    }
    
    .auto-status {
-      padding: 0.5rem 1rem;
+      padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-default);
@@ -476,16 +476,16 @@
       align-items: center;
       
       i {
-         margin-right: 8px;
+         margin-right: var(--space-8);
          color: var(--color-green);
       }
    }
    
    // Modifier Application Section
    .modifier-application-section {
-      margin: 1rem auto;
-      padding: 1.5rem 2rem;
-      max-width: 800px;
+      margin: var(--space-16) auto;
+      padding: var(--space-24) 2rem;
+      max-width: 50.0000rem;
       width: 100%;
       box-sizing: border-box;
       background: linear-gradient(135deg,
@@ -495,7 +495,7 @@
       border: 1px solid var(--border-default);
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: var(--space-16);
    }
    
    .modifier-section-title {
@@ -505,7 +505,7 @@
       color: var(--text-primary);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: var(--space-8);
       width: 100%;
       
       i {
@@ -517,15 +517,15 @@
    .modifier-preview-list {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: var(--space-8);
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
    }
    
    .modifier-row {
       display: grid;
-      grid-template-columns: 60px auto 1fr;
-      gap: 0.5rem;
+      grid-template-columns: 3.7500rem auto 1fr;
+      gap: var(--space-8);
       align-items: center;
    }
    
@@ -540,7 +540,7 @@
       font-size: var(--font-2xl);
       font-weight: var(--font-weight-bold);
       text-align: left;
-      margin-right: 1.5rem;
+      margin-right: var(--space-24);
       white-space: nowrap;
    }
    
@@ -554,25 +554,25 @@
    .total-income-header {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      padding-bottom: 1rem;
+      gap: var(--space-8);
+      padding-bottom: var(--space-16);
       border-bottom: 1px solid var(--border-default);
    }
    
    .total-income-title {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--space-10);
       
       i {
-         font-size: 20px;
+         font-size: var(--font-xl);
          color: var(--text-primary);
       }
    }
    
    .total-income-list {
       display: flex;
-      gap: 1rem;
+      gap: var(--space-16);
       flex-wrap: wrap;
    }
    
@@ -586,31 +586,31 @@
    .income-breakdown {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
-      padding-top: 0.5rem;
+      gap: var(--space-12);
+      padding-top: var(--space-8);
    }
    
    .breakdown-title {
       font-size: var(--font-xl);
       font-weight: var(--font-weight-semibold);
       color: var(--text-secondary);
-      margin-bottom: 0.25rem;
+      margin-bottom: var(--space-4);
    }
    
    .breakdown-row {
       display: flex;
       align-items: flex-start;
-      gap: 0.75rem;
+      gap: var(--space-12);
       font-size: var(--font-lg);
    }
    
    .breakdown-label {
-      width: 150px;
+      width: 9.3750rem;
       flex-shrink: 0;
       white-space: nowrap;
       color: var(--text-primary);
       font-weight: var(--font-weight-medium);
-      margin-right: 1rem;
+      margin-right: var(--space-16);
    }
    
    .breakdown-values {
@@ -619,17 +619,17 @@
    }
    
    .modifier-details-section {
-      margin-left: 1rem;
+      margin-left: var(--space-16);
       display: flex;
       flex-direction: column;
-      margin-top: .5rem;
-      margin-bottom: 1rem;
-      gap: .5rem;
+      margin-top: .var(--space-24);
+      margin-bottom: var(--space-16);
+      gap: .var(--space-24);
    }
    
    .modifier-detail-row {
       display: flex;
-      gap: 0.5rem;
+      gap: var(--space-8);
       font-size: var(--font-md);
    }
    
@@ -644,7 +644,7 @@
    
    .breakdown-toggle {
       width: 100%;
-      padding: 0.75rem 1rem;
+      padding: var(--space-12) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
@@ -655,7 +655,7 @@
       display: flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 0.5rem;
+      gap: var(--space-8);
       transition: all 0.2s ease;
       
       &:hover {
@@ -664,7 +664,7 @@
       }
       
       i {
-         font-size: 12px;
+         font-size: var(--font-xs);
          transition: transform 0.2s ease;
       }
    }

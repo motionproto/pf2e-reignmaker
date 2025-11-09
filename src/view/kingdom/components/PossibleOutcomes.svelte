@@ -127,16 +127,16 @@
     font-weight: var(--font-weight-semibold);
     line-height: 1.3;
     color: var(--text-primary);
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
   }
   
   .outcomes-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: var(--space-8);
   }
   
   /* Ensure critical success appears first, success second, 
@@ -158,16 +158,14 @@
   }
   
   /* On smaller screens, go back to single column */
-  @media (max-width: 640px) {
-    .outcomes-list {
-      grid-template-columns: 1fr;
+  @media (max-width: 40.0000rem) { .outcomes-list { grid-template-columns: 1fr;
     }
   }
   
   .outcome-item {
-    padding: 8px 6px 8px 12px;
+    padding: var(--space-8) var(--space-6) var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
-    border-left: 4px solid;
+    border-left: 0.2500rem solid;
     background: rgba(0, 0, 0, 0.2);
     
     &.outcome-criticalSuccess {
@@ -242,14 +240,14 @@
   .outcome-content-wrapper {
     display: flex;
     align-items: flex-start;
-    gap: 6px;
+    gap: var(--space-6);
   }
   
   .outcome-icon {
     flex-shrink: 0;
-    margin-top: -1px;
-    font-size: 16px;
-    width: 20px;
+    margin-top: -var(--space-2);
+    font-size: var(--font-md);
+    width: 1.2500rem;
   }
   
   .outcome-content {
@@ -260,30 +258,30 @@
     font-size: var(--font-s);
     font-weight: var(--font-weight-medium);
     line-height: 1.4;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.0250rem;
     text-transform: uppercase;
-    margin-bottom: .25rem;
+    margin-bottom: .var(--space-24);
   }
   
   .outcome-description {
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: ver(--line-height-snug);
-    margin-bottom: .5rem;
+    margin-bottom: .var(--space-24);
   }
   
   .outcome-modifiers {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
+    gap: var(--space-8);
+    margin-top: var(--space-6);
   }
   
   .modifier-badge {
     display: inline-flex;
     align-items: center;
-    padding: .25rem .5rem;
-    border-radius: .5rem;
+    padding: .var(--space-24) .var(--space-24);
+    border-radius: .var(--radius-full);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     line-height: 1.3;

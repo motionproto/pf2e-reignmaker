@@ -335,18 +335,18 @@
    @use './settlements-shared.scss';
    
    .detail-section {
-      margin-bottom: 1.5rem;
+      margin-bottom: var(--space-24);
       
       .section-header {
          display: flex;
          justify-content: space-between;
          align-items: center;
-         margin-bottom: 1rem;
+         margin-bottom: var(--space-16);
          
          h4 {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--space-8);
             margin: 0;
             
             .structure-count {
@@ -364,7 +364,7 @@
    }
    
    .minimum-structures-warning-wrapper {
-      margin-bottom: 1rem;
+      margin-bottom: var(--space-16);
    }
    
    .structures-table {
@@ -379,7 +379,7 @@
          background: rgba(0, 0, 0, 0.1);
          
          th {
-            padding: 0.75rem;
+            padding: var(--space-12);
             text-align: left;
             font-weight: var(--font-weight-light);
             color: var(--text-secondary);
@@ -410,7 +410,7 @@
       tbody {
             .structure-row {
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
                
                &.lower-tier {
                   background: rgba(0, 0, 0, 0.4);
@@ -418,7 +418,7 @@
                
                &.damaged {
                   background: rgba(255, 50, 50, 0.15);
-                  border-left: 3px solid #ff6b6b;
+                  border-left: 0.1875rem solid #ff6b6b;
                   
                   .structure-name {
                      color: #ff6b6b;
@@ -426,7 +426,7 @@
                }
             
             td {
-               padding: 0.75rem;
+               padding: var(--space-12);
                color: var(--text-primary);
                font-size: var(--font-md);
                vertical-align: middle;
@@ -438,10 +438,10 @@
                .name-content {
                      display: flex;
                      align-items: center;
-                     gap: 0.5rem;
+                     gap: var(--space-8);
                      
                      &.indented {
-                        padding-left: 0.75rem;
+                        padding-left: var(--space-12);
                      }
                      
                   .expand-button {
@@ -473,7 +473,7 @@
                         font-weight: normal;
                         color: var(--text-tertiary);
                         font-size: var(--font-sm);
-                        margin-left: 0.5rem;
+                        margin-left: var(--space-8);
                      }
                   }
                }
@@ -484,7 +484,7 @@
                
                .tier-label {
                   display: inline-block;
-                  padding: 0.25rem 0.5rem;
+                  padding: var(--space-4) var(--space-8);
                   background: rgba(0, 0, 0, 0.3);
                   border-radius: var(--radius-sm);
                   font-size: var(--font-md);
@@ -498,7 +498,7 @@
                
                .condition-select {
                   width: 100%;
-                  padding: 0.25rem 0.5rem;
+                  padding: var(--space-4) var(--space-8);
                   background: transparent;
                   border: none;
                   color: var(--text-secondary);
@@ -513,8 +513,8 @@
                   font-weight: var(--font-weight-light);
                   
                   &:hover {
-                     outline: 1px solid rgba(255, 255, 255, 0.2);
-                     outline-offset: -1px;
+                     outline: 0.0625rem solid rgba(255, 255, 255, 0.2);
+                     outline-offset: -0.0625rem;
                   }
                   
                   &:focus {
@@ -531,7 +531,7 @@
                   border: none;
                   color: #ff6b6b;
                   cursor: pointer;
-                  padding: 0.5rem;
+                  padding: var(--space-8);
                   border-radius: var(--radius-sm);
                   transition: all 0.2s ease;
                   display: inline-block;

@@ -54,8 +54,8 @@
   .build-queue-item {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 10px;
+    gap: var(--space-12);
+    padding: var(--space-10);
     background: rgba(0, 0, 0, 0.3);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-subtle);
@@ -77,8 +77,8 @@
   }
   
   .queue-item-thumbnail {
-    flex: 0 0 48px;
-    height: 48px;
+    flex: 0 0 3.0000rem;
+    height: 3.0000rem;
     
     .thumbnail-placeholder {
       width: 100%;
@@ -91,7 +91,7 @@
       justify-content: center;
       
       i {
-        font-size: 20px;
+        font-size: var(--font-xl);
         color: var(--color-amber);
         opacity: 0.6;
       }
@@ -102,14 +102,14 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: var(--space-6);
     min-width: 0; // Allow text truncation
   }
   
   .item-header {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-2);
     
     .structure-name {
       font-weight: var(--font-weight-semibold);
@@ -126,20 +126,20 @@
   .completed-badge {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: var(--space-4);
     color: #4caf50;
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     
     i {
-      font-size: 16px;
+      font-size: var(--font-md);
     }
   }
   
   .item-cost {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     flex-wrap: wrap;
     
     .cost-label {
@@ -147,24 +147,24 @@
       font-weight: var(--font-weight-semibold);
       color: var(--text-tertiary);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
     }
     
     .cost-resources {
       display: flex;
-      gap: 12px;
+      gap: var(--space-12);
       flex-wrap: wrap;
     }
     
     .cost-resource {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--space-4);
       font-size: var(--font-sm);
       color: var(--text-secondary);
       
       i {
-        font-size: 14px;
+        font-size: var(--font-sm);
       }
       
       span {

@@ -110,26 +110,26 @@
   .aid-dialog-content {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: var(--space-24);
   }
 
   .dialog-description {
     margin: 0;
     color: var(--text-secondary, #b0b0b3);
-    font-size: 0.95rem;
+    font-size: var(--font-md);
     line-height: 1.5;
   }
 
   .skill-select-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-8);
   }
 
   .skill-select-group label {
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary, #b0b0b3);
-    font-size: 0.95rem;
+    font-size: var(--font-md);
   }
 
   .custom-select-wrapper {
@@ -138,13 +138,13 @@
 
   .skill-select {
     width: 100%;
-    padding: 1rem;
-    padding-right: 2.5rem;
+    padding: var(--space-16);
+    padding-right: var(--space-24);
     border: 1px solid var(--border-default, #3a3a3d);
     border-radius: var(--radius-sm, 4px);
     background: var(--color-gray-900, #3f3f46);
     color: transparent;
-    font-size: 1rem;
+    font-size: var(--font-md);
     cursor: pointer;
     font-family: inherit;
     -webkit-appearance: menulist;
@@ -154,14 +154,14 @@
 
   .skill-select:focus {
     outline: 2px solid var(--color-amber, #fbbf24);
-    outline-offset: 2px;
+    outline-offset: 0.1250rem;
     border-color: var(--color-amber, #fbbf24);
   }
 
   .skill-select option {
     background: var(--color-gray-800, #27272a);
     color: #ffffff;
-    padding: 0.5rem;
+    padding: var(--space-8);
   }
 
   .select-display {
@@ -169,10 +169,10 @@
     top: 50%;
     left: 0;
     right: 2.5rem;
-    padding: 0 1rem;
+    padding: 0 var(--space-16);
     transform: translateY(-50%);
     pointer-events: none;
-    font-size: 1rem;
+    font-size: var(--font-md);
     line-height: 1;
     color: #ffffff;
     font-style: normal;

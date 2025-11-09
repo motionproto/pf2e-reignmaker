@@ -164,14 +164,14 @@
     background: var(--color-gray-900);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-accent-75);
-    padding: 20px;
+    padding: var(--space-20);
   }
 
   .category-header {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+    gap: var(--space-8);
+    margin-bottom: var(--space-20);
 
     .category-description {
       margin: 0;
@@ -184,6 +184,6 @@
   .actions-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-12);
   }
 </style>

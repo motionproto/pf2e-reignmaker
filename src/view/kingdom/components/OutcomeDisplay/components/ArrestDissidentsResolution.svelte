@@ -76,8 +76,8 @@
       customComponentData: { allocations: newAllocations }
     });
 
-    // Emit selection event
-    dispatch('selection', { allocations: newAllocations });
+    // Emit selection event with modifiers (required by OutcomeDisplay)
+    emitSelection(newAllocations);
   }
 
   async function handleDeallocate(settlementId: string) {
@@ -99,8 +99,39 @@
       customComponentData: { allocations: newAllocations }
     });
 
-    // Emit selection event
-    dispatch('selection', { allocations: newAllocations });
+    // Emit selection event with modifiers (required by OutcomeDisplay)
+    emitSelection(newAllocations);
+  }
+
+  function emitSelection(newAllocations: Record<string, number>) {
+    const totalAllocated = Object.values(newAllocations).reduce((sum, val) => sum + val, 0);
+
+    // Build modifiers array for OutcomeDisplay validation
+    // Convert regular unrest to imprisoned unrest
+    const modifiers = [];
+    if (totalAllocated > 0) {
+      // Decrease regular unrest
+      modifiers.push({
+        type: 'static',
+        resource: 'unrest',
+        value: -totalAllocated,
+        duration: 'immediate'
+      });
+
+      // Increase imprisoned unrest (distributed across settlements)
+      modifiers.push({
+        type: 'static',
+        resource: 'imprisoned',
+        value: totalAllocated,
+        duration: 'immediate'
+      });
+    }
+
+    // Emit with modifiers (required for Apply button validation)
+    dispatch('selection', {
+      allocations: newAllocations,  // Metadata for execution
+      modifiers  // Required for OutcomeDisplay to enable Apply button
+    });
   }
 </script>
 
@@ -168,16 +199,16 @@
 <style lang="scss">
   .arrest-dissidents-resolution {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-12) 0;
   }
 
   .header {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-16);
     
     h4 {
-      margin: 0 0 8px 0;
+      margin: 0 0 var(--space-8) 0;
       font-size: var(--font-md);
       font-weight: 600;
       color: var(--text-primary, #e0e0e0);
@@ -186,13 +217,13 @@
 
   .totals {
     display: flex;
-    gap: 16px;
+    gap: var(--space-16);
     font-size: var(--font-md);
   }
 
   .total-item {
     display: flex;
-    gap: 6px;
+    gap: var(--space-6);
     
     .label {
       color: var(--text-secondary, #a0a0a0);
@@ -210,12 +241,12 @@
 
   .no-justice {
     text-align: center;
-    padding: 20px;
+    padding: var(--space-20);
     color: var(--text-secondary, #a0a0a0);
     
     i {
-      font-size: 24px;
-      margin-bottom: 8px;
+      font-size: var(--font-2xl);
+      margin-bottom: var(--space-8);
       color: var(--color-orange, #f97316);
     }
     
@@ -228,16 +259,16 @@
   .settlements-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-8);
   }
 
   .settlement-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 10px 12px;
+    gap: var(--space-16);
+    padding: var(--space-10) var(--space-12);
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     transition: background 0.2s;
     
     &:hover {
@@ -248,7 +279,7 @@
   .settlement-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: var(--space-12);
     flex: 1;
     
     .settlement-name {
@@ -267,22 +298,22 @@
   .allocation-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
   }
 
   .allocated-badge {
     font-size: var(--font-md);
     font-weight: 600;
     color: var(--color-green, #22c55e);
-    padding: 2px 6px;
+    padding: var(--space-2) var(--space-6);
     background: rgba(34, 197, 94, 0.2);
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
   }
 
   .btn-control {
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
+    width: 1.7500rem;
+    height: 1.7500rem;
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary, #e0e0e0);
@@ -312,7 +343,7 @@
     }
     
     i {
-      font-size: 12px;
+      font-size: var(--font-xs);
     }
   }
 </style>

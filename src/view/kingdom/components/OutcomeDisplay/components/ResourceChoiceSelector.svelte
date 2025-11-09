@@ -88,16 +88,16 @@
 <style lang="scss">
   .resource-choice-selector {
     background: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
-    padding: 16px;
-    margin: 12px 0;
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-12) 0;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: var(--space-12);
     
     h4 {
       margin: 0;
@@ -110,20 +110,20 @@
   .amount-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-size: var(--font-md);
     color: var(--color-green, #22c55e);
     
     i {
-      font-size: 14px;
+      font-size: var(--font-sm);
     }
   }
 
   .resource-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-    margin-bottom: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(7.5000rem, 1fr));
+    gap: var(--space-12);
+    margin-bottom: var(--space-12);
   }
 
   .resource-option {
@@ -131,24 +131,24 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 12px 16px;
+    gap: var(--space-6);
+    padding: var(--space-12) var(--space-16);
     background: rgba(255, 255, 255, 0.05);
     border: 2px solid var(--border-strong, rgba(255, 255, 255, 0.2));
-    border-radius: 6px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.2s;
     
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--color-green, #22c55e);
-      transform: translateY(-2px);
+      transform: translateY(-0.1250rem);
     }
     
     &.selected {
       background: rgba(34, 197, 94, 0.2);
       border-color: var(--color-green, #22c55e);
-      border-width: 3px;
+      border-width: 0.1875rem;
     }
     
     &:disabled {
@@ -172,11 +172,11 @@
   .selection-confirmation {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px;
+    gap: var(--space-8);
+    padding: var(--space-10);
     background: rgba(34, 197, 94, 0.1);
     border-left: 3px solid var(--color-green, #22c55e);
-    border-radius: 4px;
+    border-radius: var(--radius-md);
     
     i {
       color: var(--color-green, #22c55e);

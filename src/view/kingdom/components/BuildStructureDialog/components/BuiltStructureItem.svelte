@@ -44,8 +44,8 @@
     .structure-built-header {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 1rem;
+      gap: var(--space-12);
+      padding: var(--space-16);
       cursor: pointer;
       transition: background 0.2s ease;
       
@@ -63,7 +63,7 @@
       .badges {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--space-8);
         
         .check-icon {
           font-size: var(--font-md);
@@ -75,7 +75,7 @@
           font-weight: var(--font-weight-semibold);
           color: var(--text-secondary);
           background: rgba(255, 255, 255, 0.08);
-          padding: 0.25rem 0.5rem;
+          padding: var(--space-4) var(--space-8);
           border-radius: var(--radius-sm);
           border: 1px solid var(--border-default);
         }

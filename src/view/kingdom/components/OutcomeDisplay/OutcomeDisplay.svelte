@@ -776,17 +776,17 @@
       rgba(0, 0, 0, 0.4),
       rgba(0, 0, 0, 0.2));
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.2500rem 1.0000rem rgba(0, 0, 0, 0.2);
     position: relative;
     
     &.compact {
-      margin: 12px 0;
-      border-width: 1px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      margin: var(--space-12) 0;
+      border-width: 0.0625rem;
+      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.15);
       
       .resolution-details {
-        padding: 12px;
-        gap: 10px;
+        padding: var(--space-12);
+        gap: var(--space-10);
       }
     }
     
@@ -796,7 +796,7 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 0.2500rem;
       background: linear-gradient(90deg, 
         transparent,
         currentColor,
@@ -850,9 +850,9 @@
   }
   
   .resolution-details {
-    padding: .5rem 1rem;
+    padding: .5rem var(--space-16);
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: var(--space-12);
   }
 </style>

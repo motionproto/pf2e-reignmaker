@@ -500,7 +500,7 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
+        height: 0.1875rem;
         background: linear-gradient(90deg, 
           transparent, 
           var(--accent-color), 
@@ -526,16 +526,15 @@
     // Hover states for select state
     &.select-state:hover:not(.disabled):not(.expanded) {
       border-color: var(--border-strong);
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      transform: translateY(-0.0625rem);
+      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
     }
     
     &.select-state.expanded {
       border-color: var(--accent-color);
       box-shadow: 0 4px 12px rgba(var(--accent-color), 0.1);
       
-      &:hover:not(.disabled) {
-        transform: translateY(-1px);
+      &:hover: not(.disabled) { transform: translateY(-0.0625rem);
         box-shadow: 0 6px 16px rgba(var(--accent-color), 0.15);
       }
     }
@@ -543,7 +542,7 @@
     // Result state has different hover behavior
     &.result-state:hover:not(.disabled) {
       transform: none;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0.1250rem 0.2500rem rgba(0, 0, 0, 0.1);
     }
     
     &.result-state.expanded {
@@ -566,7 +565,7 @@
   }
   
   .card-details {
-    padding: 16px;
+    padding: var(--space-16);
     border-top: 1px solid var(--border-subtle);
     text-align: left;
     
@@ -576,14 +575,14 @@
   }
   
   .skill-options {
-    margin: 20px 0;
+    margin: var(--space-20) 0;
     
     .skill-options-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      gap: 15px;
+      margin-bottom: var(--space-16);
+      gap: var(--space-16);
       flex-wrap: wrap;
     }
     
@@ -598,10 +597,10 @@
     .ignore-button-inline {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: var(--space-6);
+      padding: var(--space-6) var(--space-12);
       background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.4);
+      border: 0.0625rem solid rgba(239, 68, 68, 0.4);
       border-radius: var(--radius-md);
       color: var(--color-red);
       font-size: var(--font-sm);
@@ -617,7 +616,7 @@
       &:hover:not(:disabled) {
         background: rgba(239, 68, 68, 0.25);
         border-color: rgba(239, 68, 68, 0.6);
-        transform: translateY(-1px);
+        transform: translateY(-0.0625rem);
       }
       
       &:disabled {
@@ -629,11 +628,11 @@
     .availability-notice-banner {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
+      gap: var(--space-8);
+      padding: var(--space-12) var(--space-16);
+      margin-bottom: var(--space-16);
       background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.4);
+      border: 0.0625rem solid rgba(245, 158, 11, 0.4);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
       
@@ -656,13 +655,13 @@
   .skill-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--space-10);
   }
   
   .aid-button-inline {
-    padding: 10px 16px;
+    padding: var(--space-10) var(--space-16);
     background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(96, 165, 250, 0.5);
+    border: 0.0625rem solid rgba(96, 165, 250, 0.5);
     border-radius: var(--radius-sm);
     color: rgb(147, 197, 253);
     font-size: var(--font-md);
@@ -672,7 +671,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-family: inherit;
     white-space: nowrap;
   }
@@ -681,7 +680,7 @@
     background: rgba(59, 130, 246, 0.25);
     border-color: rgba(96, 165, 250, 0.7);
     color: rgb(191, 219, 254);
-    transform: translateY(-1px);
+    transform: translateY(-0.0625rem);
   }
   
   .aid-button-inline:disabled {
@@ -690,12 +689,12 @@
   }
   
   .aid-result-badge-inline {
-    padding: 10px 16px;
+    padding: var(--space-10) var(--space-16);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: var(--space-8);
     font-size: var(--font-md);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
@@ -703,42 +702,42 @@
   
   .aid-result-badge-inline.critical-success {
     background: rgba(59, 130, 246, 0.15);
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    border: 0.0625rem solid rgba(59, 130, 246, 0.4);
     color: rgb(59, 130, 246);
   }
   
   .aid-result-badge-inline.success {
     background: rgba(34, 197, 94, 0.15);
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    border: 0.0625rem solid rgba(34, 197, 94, 0.4);
     color: rgb(34, 197, 94);
   }
   
   .aid-result-badge-inline.failure {
     background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
+    border: 0.0625rem solid rgba(239, 68, 68, 0.4);
     color: rgb(239, 68, 68);
   }
   
   .traits-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 12px;
-    margin-bottom: 8px;
+    gap: var(--space-6);
+    margin-top: var(--space-12);
+    margin-bottom: var(--space-8);
   }
   
   .trait-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-8);
     background: rgba(100, 116, 139, 0.1);
-    border: 1px solid rgba(100, 116, 139, 0.2);
+    border: 0.0625rem solid rgba(100, 116, 139, 0.2);
     border-radius: var(--radius-sm);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     line-height: 1.2;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.0500rem;
     color: var(--text-tertiary);
     text-transform: capitalize;
   }
@@ -746,11 +745,11 @@
   .resolution-progress-notice {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    margin-top: 12px;
+    gap: var(--space-8);
+    padding: var(--space-10) var(--space-12);
+    margin-top: var(--space-12);
     background: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 0.0625rem solid rgba(59, 130, 246, 0.3);
     border-radius: var(--radius-md);
     color: var(--color-blue-light);
     font-size: var(--font-sm);

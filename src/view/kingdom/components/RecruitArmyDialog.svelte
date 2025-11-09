@@ -191,33 +191,33 @@
 
 <style>
   .form-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--space-24);
   }
   
   .form-group label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--space-8);
     font-weight: 600;
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
   }
   
   .form-group input[type="text"],
   .form-group select {
     width: 100%;
-    padding: 0.625rem;
+    padding: var(--space-10);
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
-    font-size: 0.9rem;
+    font-size: var(--font-sm);
     font-family: inherit;
     height: auto;
     line-height: 1.75;
   }
   
   .form-group select {
-    padding: 0.5rem 0.625rem;
+    padding: var(--space-8) var(--space-10);
   }
   
   .form-group select {
@@ -238,23 +238,23 @@
   
   .help-text {
     display: block;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
+    margin-top: var(--space-8);
+    font-size: var(--font-xs);
     color: var(--text-secondary);
     font-style: italic;
   }
   
   .warning-box {
-    padding: 1rem;
+    padding: var(--space-16);
     background: rgba(255, 165, 0, 0.1);
-    border: 1px solid rgba(255, 165, 0, 0.3);
+    border: 0.0625rem solid rgba(255, 165, 0, 0.3);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
   }
   
   .warning-box i {
     color: orange;
-    margin-right: 0.5rem;
+    margin-right: var(--space-8);
   }
   
   .warning-box strong {
@@ -264,8 +264,8 @@
   .army-type-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
-    margin-top: 0.5rem;
+    gap: var(--space-12);
+    margin-top: var(--space-8);
   }
   
   .army-type-option {
@@ -278,7 +278,7 @@
   }
   
   .army-type-card {
-    padding: 0.75rem;
+    padding: var(--space-12);
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid var(--border-default);
     border-radius: var(--radius-sm);
@@ -287,7 +287,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-8);
   }
   
   .army-type-card:hover {
@@ -302,13 +302,13 @@
   }
   
   .army-type-card img {
-    width: 64px;
-    height: 64px;
+    width: 4.0000rem;
+    height: 4.0000rem;
     object-fit: contain;
   }
   
   .army-type-card span {
-    font-size: 0.85rem;
+    font-size: var(--font-sm);
     color: var(--text-primary);
     font-weight: 600;
   }

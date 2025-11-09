@@ -484,7 +484,7 @@
     display: flex;
     flex-direction: column;
     background-color: var(--bg-base);
-    border-radius: 0.5rem;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     color: var(--text-primary);
     position: relative; /* Required for absolute positioning of animations */
@@ -494,10 +494,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: var(--space-12) var(--space-16);
     background: var(--gradient-header);
     border-bottom: 2px solid var(--border-primary);
-    min-height: 60px;
+    min-height: 3.7500rem;
   }
 
   .kingdom-name-header h3 {
@@ -516,22 +516,22 @@
 
   .kingdom-name-header input {
     flex: 1;
-    max-width: calc(100% - 1rem);
+    max-width: calc(100% - var(--space-16));
     font-size: var(--font-xl);
     font-weight: var(--font-weight-bold);
     background-color: transparent;
-    border: 1px solid white;
+    border: 0.0625rem solid white;
     color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-md);
     outline: none;
       font-family: var(--font-serif-rm);
   }
 
   .kingdom-name-header .edit-btn {
     cursor: pointer;
-    padding: 0.375rem 0.5rem;
-    border-radius: 0.25rem;
+    padding: var(--space-6) var(--space-8);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     background: transparent;
@@ -548,7 +548,7 @@
   .kingdom-stats-scrollable {
     flex: 1;
     overflow-y: auto;
-    padding: 0 0 4rem 0;
+    padding: 0 0 var(--space-24) 0;
   }
 
   .kingdom-stats-content {
@@ -560,7 +560,7 @@
    .stat-group-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 0.125rem;
+      gap: var(--space-2);
       overflow: visible;
    }
    
@@ -570,33 +570,33 @@
 
   .stat-group-card {
     background: var(--bg-elevated);
-    border-radius: 0.5rem;
-    padding: 0 0 0.5rem 0;
+    border-radius: var(--radius-xl);
+    padding: 0 0 var(--space-8) 0;
     box-shadow: var(--shadow-card);
     border: 1px solid var(--border-default);
-    margin: 0 0.5rem 0 0.5rem;
+    margin: 0 var(--space-8) 0 var(--space-8);
     overflow: visible;
   }
 
   .stat-group-header {
-    padding: 0rem 1.25rem;
+    padding: 0 var(--space-20);
     color: var(--color-accent);
     font-size: var(--font-2xl);
     font-weight: var(--font-weight-bold);
-    letter-spacing: 0.025em;
+    letter-spacing: 0.0250rem;
     background: transparent;
-    margin-bottom: .5rem;
-    margin-top: 0.75rem;
+    margin-bottom: var(--space-24);
+    margin-top: var(--space-12);
     font-family: var(--font-serif-rm);
   }
 
   .faction-selector-wrapper {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0 1.25rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.5rem;
+    gap: var(--space-8);
+    padding: 0 var(--space-20);
+    margin-top: var(--space-24);
+    margin-bottom: var(--space-8);
   }
   
   .faction-label {
@@ -607,14 +607,14 @@
   }
   
   .faction-select {
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-4) var(--space-8);
     background: var(--bg-surface);
     border: 1px solid var(--border-default);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: var(--font-sm);
     cursor: pointer;
-    min-width: 150px;
+    min-width: 9.3750rem;
   }
   
   .faction-select:focus {
@@ -627,7 +627,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: var(--space-12) var(--space-16);
     border-bottom: 1px solid var(--border-default);
   }
 
@@ -652,7 +652,7 @@
   .stat-icon {
     display: inline-block;
     width: 1.25rem;
-    margin-right: 0.5rem;
+    margin-right: var(--space-8);
     text-align: center;
     color: var(--text-muted);
   }
@@ -672,9 +672,9 @@
   }
 
   .kingdom-select {
-    padding: 0.25rem 0.5rem;
+    padding: var(--space-4) var(--space-8);
     border: 1px solid var(--border-default);
-    border-radius: 0.25rem;
+    border-radius: var(--radius-md);
     background: var(--bg-surface);
     color: var(--text-primary);
     font-size: var(--font-sm);
@@ -694,12 +694,12 @@
   .diplomatic-support-card {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-8);
     background: rgba(0, 0, 0, 0.2);
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    margin: 0.75rem 1rem;
+    padding: var(--space-8);
+    border-radius: var(--radius-lg);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    margin: var(--space-12) var(--space-16);
     transition: all 0.2s ease;
   }
 
@@ -709,7 +709,7 @@
   }
 
   .diplomatic-icon {
-    font-size: 1.25rem;
+    font-size: var(--font-xl);
     color: var(--color-info);
     flex-shrink: 0;
   }
@@ -741,16 +741,16 @@
   .resource-dashboard-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    padding: 0.75rem;
+    gap: var(--space-8);
+    padding: var(--space-12);
   }
 
   .resource-divider {
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0.25rem 0;
+    gap: var(--space-8);
+    margin: var(--space-4) 0;
   }
 
   .divider-label {
@@ -758,13 +758,13 @@
     font-weight: var(--font-weight-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.0500rem;
     white-space: nowrap;
   }
 
   .divider-line {
     flex: 1;
-    height: 1px;
+    height: 0.0625rem;
     background: var(--border-subtle);
   }
 
@@ -775,17 +775,17 @@
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar {
-    width: 8px;
+    width: 0.5000rem;
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar-track {
     background: var(--bg-surface);
-    border-radius: 9999px;
+    border-radius: var(--radius-full);
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar-thumb {
     background: var(--color-primary);
-    border-radius: 9999px;
+    border-radius: var(--radius-full);
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar-thumb:hover {

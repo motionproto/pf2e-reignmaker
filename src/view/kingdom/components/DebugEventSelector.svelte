@@ -218,27 +218,27 @@
    .debug-selector {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
+      gap: var(--space-8);
+      padding: var(--space-8) var(--space-12);
       background: rgba(139, 92, 246, 0.1);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
-      margin-bottom: 16px;
+      margin-bottom: var(--space-16);
    }
    
    .debug-label {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
+      gap: var(--space-6);
+      padding: var(--space-4) var(--space-8);
       background: rgba(139, 92, 246, 0.2);
       border-radius: var(--radius-sm);
       color: rgba(196, 181, 253, 1);
       font-weight: var(--font-weight-medium);
       font-size: var(--font-xs);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.0500rem;
       
       i {
          font-size: var(--font-xs);
@@ -246,9 +246,9 @@
    }
    
    .nav-btn {
-      padding: 4px 8px;
+      padding: var(--space-4) var(--space-8);
       background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;
@@ -273,7 +273,7 @@
       flex: 1;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: var(--space-6);
       color: var(--text-primary);
       font-size: var(--font-sm);
       min-width: 0; // Allow text truncation
@@ -298,15 +298,15 @@
    }
    
    .action-btn {
-      padding: 4px 10px;
+      padding: var(--space-4) var(--space-10);
       background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.3);
+      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: var(--space-4);
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       transition: all var(--transition-fast);

@@ -185,46 +185,46 @@
 
 <style lang="scss">
   .choice-buttons {
-    margin-top: 10px;
+    margin-top: var(--space-10);
     
     .choice-buttons-header {
       font-size: var(--font-md);
       font-weight: var(--font-weight-semibold);
       color: var(--text-primary);
-      margin-bottom: 12px;
+      margin-bottom: var(--space-12);
     }
     
     .choice-cards {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: var(--space-12);
     }
     
     .choice-card {
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: 14px;
+      gap: var(--space-10);
+      padding: var(--space-12);
       background: rgba(255, 255, 255, 0.03);
       border: 2px solid var(--border-medium);
       border-radius: var(--radius-md);
       transition: all var(--transition-fast);
       cursor: pointer;
       text-align: left;
-      min-width: 200px;
+      min-width: 12.5000rem;
       width: auto;
       
       &:hover:not(.disabled):not(.rolling) {
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transform: translateY(-0.1250rem);
+        box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
         opacity: 1;
       }
       
@@ -242,7 +242,7 @@
       .choice-header {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: var(--space-10);
         
         .resource-icon {
           font-size: var(--font-lg);

@@ -24,7 +24,7 @@
   .settlement-selector {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--space-10);
     
     label {
       color: var(--text-secondary);
@@ -33,14 +33,14 @@
     }
     
     .settlement-dropdown {
-      padding: 6px 12px;
+      padding: var(--space-6) var(--space-12);
       background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       font-size: var(--font-md);
       cursor: pointer;
-      min-width: 200px;
+      min-width: 12.5000rem;
       
       &:hover {
         border-color: var(--border-strong);
@@ -50,7 +50,7 @@
       &:focus {
         outline: none;
         border-color: var(--color-amber);
-        box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2);
+        box-shadow: 0 0 0 0.1250rem rgba(251, 191, 36, 0.2);
       }
     }
   }

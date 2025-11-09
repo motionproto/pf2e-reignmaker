@@ -36,6 +36,6 @@
   p {
     margin: 0;
     color: var(--text-secondary, #b0b0b3);
-    font-size: 1rem;
+    font-size: var(--font-md);
   }
 </style>
