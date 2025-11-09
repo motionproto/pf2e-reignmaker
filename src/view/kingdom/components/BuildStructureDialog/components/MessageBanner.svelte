@@ -27,13 +27,13 @@
   
   .error-message {
     background: rgba(239, 68, 68, 0.1);
-    border: 0.0625rem solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.3);
     color: var(--color-red);
   }
   
   .success-message {
     background: rgba(34, 197, 94, 0.1);
-    border: 0.0625rem solid rgba(34, 197, 94, 0.3);
+    border: 1px solid rgba(34, 197, 94, 0.3);
     color: var(--color-green);
   }
 </style>

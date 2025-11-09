@@ -188,7 +188,7 @@
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    border: 0.125rem solid;
+    border: 2px solid;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -210,7 +210,7 @@
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    border: 0.125rem solid;
+    border: 2px solid;
     display: flex;
     align-items: center;
     justify-content: center;

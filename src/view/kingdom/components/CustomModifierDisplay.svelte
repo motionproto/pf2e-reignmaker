@@ -97,7 +97,7 @@
     background: linear-gradient(135deg, 
       rgba(100, 116, 139, 0.1),
       rgba(71, 85, 105, 0.05));
-    border: 0.0625rem solid rgba(100, 116, 139, 0.3);
+    border: 1px solid rgba(100, 116, 139, 0.3);
     border-radius: var(--radius-md);
     overflow: hidden;
   }
@@ -105,7 +105,7 @@
   .modifier-header {
     padding: var(--space-12) var(--space-16);
     background: rgba(0, 0, 0, 0.2);
-    border-bottom: 0.0625rem solid rgba(100, 116, 139, 0.2);
+    border-bottom: 1px solid rgba(100, 116, 139, 0.2);
   }
   
   .modifier-title {
@@ -134,7 +134,7 @@
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
     letter-spacing: 0.05rem;
-    border: 0.0625rem solid;
+    border: 1px solid;
   }
   
   .tag-ongoing {

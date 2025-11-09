@@ -454,7 +454,7 @@
    
    .panel-header {
       padding: var(--space-8);
-      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       
       .filters {
          display: flex;
@@ -493,7 +493,7 @@
          margin-top: var(--space-8);
          padding: var(--space-8) var(--space-12);
          background: rgba(128, 0, 128, 0.15);
-         border: 0.0625rem solid rgba(128, 0, 128, 0.3);
+         border: 1px solid rgba(128, 0, 128, 0.3);
          border-radius: var(--radius-lg);
          
          .checkbox-label {
@@ -527,7 +527,7 @@
    
    .panel-footer {
       padding: var(--space-8);
-      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
       
       .btn-create-settlement {
          width: 100%;
@@ -574,7 +574,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      outline: 0.125rem solid transparent;
+      outline: 2px solid transparent;
       
       &:hover {
          border-color: var(--border-strong);
@@ -685,7 +685,7 @@
          display: inline-block;
          padding: var(--space-4) var(--space-12);
          background: rgba(128, 128, 128, 0.15);
-         border: 0.0625rem solid rgba(128, 128, 128, 0.3);
+         border: 1px solid rgba(128, 128, 128, 0.3);
          border-radius: var(--radius-md);
          font-size: var(--font-sm);
          font-weight: var(--font-weight-semibold);
@@ -697,7 +697,7 @@
    
    .unassigned-item {
       background: rgba(128, 128, 128, 0.08);
-      border: 0.0625rem dashed rgba(128, 128, 128, 0.3);
+      border: 1px dashed rgba(128, 128, 128, 0.3);
       border-radius: var(--radius-lg);
       padding: var(--space-12);
       margin-bottom: var(--space-8);
@@ -758,7 +758,7 @@
       .btn-create-at-hex {
          padding: var(--space-8) var(--space-16);
          background: rgba(128, 128, 128, 0.2);
-         border: 0.0625rem solid rgba(128, 128, 128, 0.4);
+         border: 1px solid rgba(128, 128, 128, 0.4);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          font-size: var(--font-sm);
@@ -806,7 +806,7 @@
             align-items: center;
             justify-content: space-between;
             padding-bottom: var(--space-8);
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             
             span {
                font-weight: var(--font-weight-semibold);
@@ -868,7 +868,7 @@
             justify-content: flex-end;
             gap: var(--space-8);
             padding-top: var(--space-8);
-            border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
             
             button {
                padding: var(--space-8) var(--space-16);

@@ -1080,7 +1080,7 @@
       gap: var(--space-4);
       padding: var(--space-2) var(--space-8);
       background: rgba(100, 116, 139, 0.1);
-      border: 0.0625rem solid rgba(100, 116, 139, 0.2);
+      border: 1px solid rgba(100, 116, 139, 0.2);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);

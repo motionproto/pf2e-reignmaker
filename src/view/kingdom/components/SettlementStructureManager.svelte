@@ -420,7 +420,7 @@
       padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-xl);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .radio-option {
@@ -431,7 +431,7 @@
       cursor: pointer;
       transition: all 0.2s;
       background: transparent;
-      border: 0.125rem solid transparent;
+      border: 2px solid transparent;
       user-select: none;
       
       &:hover {
@@ -621,7 +621,7 @@
     border-radius: var(--radius-md);
     font-size: var(--font-xs);
     font-weight: 600;
-    border: 0.0625rem solid rgba(34, 197, 94, 0.3);
+    border: 1px solid rgba(34, 197, 94, 0.3);
   }
   
   .dialog-footer {
@@ -643,7 +643,7 @@
         gap: var(--space-8);
         padding: var(--space-8) var(--space-12);
         background: rgba(251, 191, 36, 0.1);
-        border-left: 0.1875rem solid #fbbf24;
+        border-left: 3px solid #fbbf24;
         border-radius: var(--radius-sm);
         color: #fbbf24;
         font-size: var(--font-sm);

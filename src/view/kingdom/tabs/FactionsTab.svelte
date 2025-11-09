@@ -71,7 +71,7 @@
          background: rgba(0, 0, 0, 0.2);
          padding: var(--space-12) var(--space-16);
          border-radius: var(--radius-lg);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border: 1px solid rgba(255, 255, 255, 0.1);
          
          i {
             font-size: var(--font-2xl);
@@ -98,7 +98,7 @@
       .filter-select {
          padding: var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border: 1px solid rgba(255, 255, 255, 0.2);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          
@@ -118,7 +118,7 @@
       overflow: auto;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-lg);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
    }
    
    .factions-table {
@@ -136,7 +136,7 @@
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             
             &.attitude-header {
                text-align: center;
@@ -146,7 +146,7 @@
       
       tbody {
          tr {
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -210,7 +210,7 @@
    .attitude-icon {
       cursor: pointer;
       padding: var(--space-4);
-      border: 0.0625rem solid transparent;
+      border: 1px solid transparent;
       outline: none;
       background: transparent;
       font-size: var(--font-lg);
@@ -250,7 +250,7 @@
    .clock-btn {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       cursor: pointer;
@@ -291,7 +291,7 @@
       width: 3rem;
       padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       text-align: center;
@@ -311,7 +311,7 @@
    .inline-input {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       min-width: 9.375rem;
@@ -325,7 +325,7 @@
    .attitude-select {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       
@@ -395,7 +395,7 @@
       .page-btn {
          padding: var(--space-8) var(--space-16);
          background: rgba(0, 0, 0, 0.2);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border: 1px solid rgba(255, 255, 255, 0.1);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          cursor: pointer;

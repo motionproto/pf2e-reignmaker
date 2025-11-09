@@ -781,7 +781,7 @@
     
     &.compact {
       margin: var(--space-12) 0;
-      border-width: 0.0625rem;
+      border-width: 1px;
       box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
       
       .resolution-details {

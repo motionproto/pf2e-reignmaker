@@ -410,7 +410,7 @@
       tbody {
             .structure-row {
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+               border-bottom: 1px solid rgba(255, 255, 255, 0.05);
                
                &.lower-tier {
                   background: rgba(0, 0, 0, 0.4);
@@ -418,7 +418,7 @@
                
                &.damaged {
                   background: rgba(255, 50, 50, 0.15);
-                  border-left: 0.1875rem solid #ff6b6b;
+                  border-left: 3px solid #ff6b6b;
                   
                   .structure-name {
                      color: #ff6b6b;
@@ -513,7 +513,7 @@
                   font-weight: var(--font-weight-light);
                   
                   &:hover {
-                     outline: 0.0625rem solid rgba(255, 255, 255, 0.2);
+                     outline: 1px solid rgba(255, 255, 255, 0.2);
                      outline-offset: -0.0625rem;
                   }
                   

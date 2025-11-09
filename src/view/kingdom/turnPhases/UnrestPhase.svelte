@@ -618,7 +618,7 @@
          align-items: center;
          padding: var(--space-4) var(--space-8);
          background: rgba(245, 158, 11, 0.1);
-         border: 0.0625rem solid rgba(245, 158, 11, 0.3);
+         border: 1px solid rgba(245, 158, 11, 0.3);
          border-radius: var(--radius-sm);
          color: var(--color-amber-light);
          font-size: var(--font-lg);

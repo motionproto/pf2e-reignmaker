@@ -124,7 +124,7 @@
         gap: var(--space-6);
         padding: var(--space-6) var(--space-12);
         background: rgba(239, 68, 68, 0.15);
-        border: 0.0625rem solid rgba(239, 68, 68, 0.4);
+        border: 1px solid rgba(239, 68, 68, 0.4);
         border-radius: var(--radius-md);
         color: var(--color-red);
         font-size: var(--font-sm);

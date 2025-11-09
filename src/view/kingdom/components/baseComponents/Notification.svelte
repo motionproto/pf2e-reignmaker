@@ -85,7 +85,7 @@
       gap: 0;
       border-radius: var(--radius-md);
       font-size: var(--font-md);
-      border: 0.0625rem solid;
+      border: 1px solid;
       transition: all var(--transition-fast);
       position: relative;
       text-align: left;
@@ -246,7 +246,7 @@
          }
          
          &:focus {
-            outline: 0.125rem solid currentColor;
+            outline: 2px solid currentColor;
             outline-offset: 0.125rem;
             border-radius: var(--radius-sm);
          }
@@ -266,7 +266,7 @@
       padding: var(--space-12);
       padding-top: var(--space-8);
       margin-top: 0;
-      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
       font-size: var(--font-md);
       text-align: left;
    }
@@ -298,6 +298,6 @@
       gap: var(--space-8);
       padding: var(--space-12) var(--space-16);
       padding-top: var(--space-8);
-      border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
    }
 </style>

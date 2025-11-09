@@ -244,7 +244,7 @@
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border-radius: var(--radius-sm);
-      border: 0.0625rem solid transparent;
+      border: 1px solid transparent;
       
       &.current {
          border-color: var(--color-amber);

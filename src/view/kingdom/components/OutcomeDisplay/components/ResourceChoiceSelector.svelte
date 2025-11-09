@@ -148,7 +148,7 @@
     &.selected {
       background: rgba(34, 197, 94, 0.2);
       border-color: var(--color-green, #22c55e);
-      border-width: 0.1875rem;
+      border-width: 3px;
     }
     
     &:disabled {

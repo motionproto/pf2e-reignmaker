@@ -375,7 +375,7 @@
       padding: var(--space-8) var(--space-12);
       background: transparent;
       border: none;
-      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 0;
       color: var(--text-primary);
       cursor: pointer;

@@ -146,7 +146,7 @@
     padding: var(--space-8) var(--space-10) var(--space-8) var(--space-2);
     background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-xs);
-    border-left: 0.1875rem solid;
+    border-left: 3px solid;
     font-size: var(--font-sm);
     transition: all 0.2s ease;
     

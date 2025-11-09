@@ -206,7 +206,7 @@
           gap: var(--space-8);
           padding: var(--space-8) var(--space-12);
           background: rgba(255, 191, 0, 0.1);
-          border: 0.0625rem solid rgba(255, 191, 0, 0.3);
+          border: 1px solid rgba(255, 191, 0, 0.3);
           border-radius: var(--radius-sm);
           
           i {
@@ -293,7 +293,7 @@
       gap: var(--space-8);
       padding: var(--space-12) var(--space-16);
       background: rgba(255, 191, 0, 0.1);
-      border: 0.0625rem solid rgba(255, 191, 0, 0.3);
+      border: 1px solid rgba(255, 191, 0, 0.3);
       border-radius: var(--radius-md);
       margin-bottom: var(--space-8);
       
@@ -308,7 +308,7 @@
       gap: var(--space-16);
       padding: var(--space-20) var(--space-24);
       background: rgba(100, 100, 100, 0.15);
-      border: 0.0625rem solid rgba(120, 120, 120, 0.3);
+      border: 1px solid rgba(120, 120, 120, 0.3);
       border-radius: var(--radius-md);
       margin-top: var(--space-8);
       

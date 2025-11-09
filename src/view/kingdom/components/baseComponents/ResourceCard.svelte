@@ -193,8 +193,8 @@
       background: rgba(0, 0, 0, 0.2);
       padding: var(--space-12);
       border-radius: var(--radius-lg);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-      outline: 0.125rem solid transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      outline: 2px solid transparent;
       outline-offset: 0.125rem;
       transition: all 0.2s ease;
       position: relative;
@@ -216,7 +216,7 @@
       }
       
       &.editing {
-         outline-width: 0.1875rem;
+         outline-width: 3px;
          outline-color: var(--resource-color);
          background: linear-gradient(135deg, 
             rgba(0, 0, 0, 0.3),
@@ -435,7 +435,7 @@
          top: 100%;
          left: 50%;
          transform: translateX(-50%);
-         border: 0.25rem solid transparent;
+         border: 4px solid transparent;
          border-top-color: rgba(0, 0, 0, 0.9);
       }
    }

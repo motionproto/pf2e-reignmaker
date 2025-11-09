@@ -520,7 +520,7 @@
     font-size: var(--font-xl);
     font-weight: var(--font-weight-bold);
     background-color: transparent;
-    border: 0.0625rem solid white;
+    border: 1px solid white;
     color: white;
     padding: var(--space-4) var(--space-8);
     border-radius: var(--radius-md);
@@ -698,7 +698,7 @@
     background: rgba(0, 0, 0, 0.2);
     padding: var(--space-8);
     border-radius: var(--radius-lg);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     margin: var(--space-12) var(--space-16);
     transition: all 0.2s ease;
   }

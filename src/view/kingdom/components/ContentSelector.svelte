@@ -80,7 +80,7 @@
    .tab-button {
       padding: var(--space-8) var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
       cursor: pointer;
@@ -133,7 +133,7 @@
    .action-button {
       padding: var(--space-8) var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-md);
       color: rgba(255, 255, 255, 0.8);
       cursor: pointer;

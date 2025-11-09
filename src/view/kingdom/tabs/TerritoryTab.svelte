@@ -570,7 +570,7 @@
          padding: var(--space-4);
          background: rgba(0, 0, 0, 0.3);
          border-radius: var(--radius-xl);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border: 1px solid rgba(255, 255, 255, 0.2);
       }
       
       .radio-option {
@@ -581,7 +581,7 @@
          cursor: pointer;
          transition: all 0.2s;
          background: transparent;
-         border: 0.125rem solid transparent;
+         border: 2px solid transparent;
          user-select: none;
          
          &:hover {
@@ -851,7 +851,7 @@
                border-radius: var(--radius-lg);
                font-size: var(--font-sm);
                font-weight: var(--font-weight-semibold);
-               border: 0.0625rem solid;
+               border: 1px solid;
                
                &.tier-village {
                   background: rgba(139, 69, 19, 0.15);

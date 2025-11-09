@@ -120,9 +120,9 @@
           display: inline-flex;
           align-items: center;
           gap: var(--space-4);
-          padding: var(--space-2) var(--space-8);
+          padding: var(--space-4) var(--space-8);
           background: rgba(251, 191, 36, 0.15);
-          border: 0.0625rem solid rgba(251, 191, 36, 0.3);
+          border: 1px solid rgba(251, 191, 36, 0.3);
           border-radius: var(--radius-sm);
           font-size: var(--font-sm);
           font-weight: var(--font-weight-medium);
@@ -132,7 +132,7 @@
           text-transform: none;
           
           i {
-            font-size: var(--font-6xl);
+            font-size: var(--font-md);
           }
         }
         
@@ -171,7 +171,7 @@
       gap: var(--space-4);
       padding: var(--space-2) var(--space-8);
       background: rgba(100, 116, 139, 0.1);
-      border: 0.0625rem solid rgba(100, 116, 139, 0.2);
+      border: 1px solid rgba(100, 116, 139, 0.2);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
@@ -187,7 +187,7 @@
       justify-content: center;
       padding: var(--space-4) var(--space-12);
       border-radius: var(--radius-full);
-      font-size: var(--font-xs);
+      font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
       letter-spacing: 0.05rem;

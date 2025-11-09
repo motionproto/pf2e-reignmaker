@@ -676,7 +676,7 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     cursor: grab;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
@@ -783,7 +783,7 @@
       min-width: 9.375rem;
       padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.1);
-      border: 0.125rem solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
       color: #fff;
       font-size: var(--font-sm);
@@ -823,7 +823,7 @@
     .tool-button {
       padding: var(--space-8) var(--space-12);
       background: rgba(255, 255, 255, 0.05);
-      border: 0.125rem solid rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-lg);
       color: rgba(255, 255, 255, 0.7);
       cursor: pointer;
@@ -858,7 +858,7 @@
           width: 2.5rem;
           height: 2.5rem;
           border-radius: var(--radius-lg);
-          border: 0.1875rem solid rgba(255, 255, 255, 0.4);
+          border: 3px solid rgba(255, 255, 255, 0.4);
           box-shadow: 0 0.1875rem 0.375rem rgba(0, 0, 0, 0.4);
           flex-shrink: 0;
           transition: all 0.2s;
@@ -874,7 +874,7 @@
           flex: 1;
           padding: var(--space-8) var(--space-12);
           background: rgba(255, 255, 255, 0.05);
-          border: 0.125rem solid rgba(255, 255, 255, 0.1);
+          border: 2px solid rgba(255, 255, 255, 0.1);
           border-radius: var(--radius-lg);
           color: rgba(255, 255, 255, 0.9);
           cursor: pointer;
@@ -913,7 +913,7 @@
     display: flex;
     gap: var(--space-8);
     padding: var(--space-12);
-    border-top: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     
     .action-button {
       flex: 1;
@@ -932,7 +932,7 @@
       &.cancel-button {
         background: rgba(255, 255, 255, 0.1);
         color: rgba(255, 255, 255, 0.8);
-        border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         
         &:hover {
           background: rgba(255, 255, 255, 0.15);

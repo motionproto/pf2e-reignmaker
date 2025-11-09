@@ -951,7 +951,7 @@
          background: rgba(0, 0, 0, 0.2);
          padding: var(--space-12) var(--space-16);
          border-radius: var(--radius-lg);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border: 1px solid rgba(255, 255, 255, 0.1);
          
          i {
             font-size: var(--font-2xl);
@@ -990,7 +990,7 @@
       .filter-select {
          padding: var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+         border: 1px solid rgba(255, 255, 255, 0.2);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          
@@ -1006,7 +1006,7 @@
       overflow-y: auto;
       background: rgba(0, 0, 0, 0.2);
       border-radius: var(--radius-lg);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       position: relative;
    }
    
@@ -1034,13 +1034,13 @@
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--color-text-dark-primary, #b5b3a4);
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             
             &:hover:not(.create-row) {
                background: rgba(255, 255, 255, 0.05);
@@ -1279,7 +1279,7 @@
       width: 100%;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
       font-family: inherit;
@@ -1354,7 +1354,7 @@
          flex: 1;
          padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          color: var(--color-text-dark-primary, #b5b3a4);
          
@@ -1375,7 +1375,7 @@
          max-height: 12.5rem;
          overflow-y: auto;
          background: rgba(0, 0, 0, 0.95);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
@@ -1389,7 +1389,7 @@
                color: var(--color-text-dark-secondary, #7a7971);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             }
          }
          
@@ -1428,7 +1428,7 @@
       .page-btn {
          padding: var(--space-8) var(--space-16);
          background: rgba(0, 0, 0, 0.2);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+         border: 1px solid rgba(255, 255, 255, 0.1);
          border-radius: var(--radius-lg);
          color: var(--color-text-dark-primary, #b5b3a4);
          cursor: pointer;

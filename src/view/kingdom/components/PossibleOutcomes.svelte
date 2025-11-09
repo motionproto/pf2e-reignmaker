@@ -165,7 +165,7 @@
   .outcome-item {
     padding: var(--space-8) var(--space-6) var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
-    border-left: 0.25rem solid;
+    border-left: 4px solid;
     background: rgba(0, 0, 0, 0.2);
     
     &.outcome-criticalSuccess {

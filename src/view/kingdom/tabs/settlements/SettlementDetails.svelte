@@ -337,7 +337,7 @@
    .panel-header {
       padding: var(--space-12);
       background: rgba(0, 0, 0, 0.2);
-      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       
       .settlement-title {
          display: flex;
@@ -441,7 +441,7 @@
    .delete-button {
       padding: var(--space-8) var(--space-12);
       background: rgba(220, 53, 69, 0.1);
-      border: 0.0625rem solid rgba(220, 53, 69, 0.3);
+      border: 1px solid rgba(220, 53, 69, 0.3);
       border-radius: var(--radius-md);
       color: #dc3545;
       cursor: pointer;
@@ -536,7 +536,7 @@
          margin: var(--space-16) 0 0 0;
          padding: var(--space-12);
          background: rgba(220, 53, 69, 0.1);
-         border: 0.0625rem solid rgba(220, 53, 69, 0.3);
+         border: 1px solid rgba(220, 53, 69, 0.3);
          border-radius: var(--radius-md);
          color: #dc3545;
          text-align: center;
@@ -579,7 +579,7 @@
    
    .button-danger {
       background: #dc3545;
-      border: 0.0625rem solid #dc3545;
+      border: 1px solid #dc3545;
       color: white;
       
       &:hover:not(:disabled) {
@@ -721,7 +721,7 @@
    /* Unmapped Settlement Alert */
    .unmapped-alert-wrapper {
       padding: var(--space-12) var(--space-16);
-      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
    }
    
    /* Delete Dialog Content Styling */
@@ -766,7 +766,7 @@
          gap: var(--space-8);
          padding: var(--space-12) var(--space-16);
          background: rgba(220, 53, 69, 0.1);
-         border: 0.0625rem solid rgba(220, 53, 69, 0.3);
+         border: 1px solid rgba(220, 53, 69, 0.3);
          border-radius: var(--radius-md);
          color: #dc3545;
          font-size: var(--font-sm);

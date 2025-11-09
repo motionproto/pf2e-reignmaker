@@ -101,7 +101,7 @@
     gap: var(--space-4);
     padding: var(--space-2) var(--space-6);
     border-radius: var(--radius-xs);
-    border: 0.125rem solid;
+    border: 2px solid;
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     cursor: help;

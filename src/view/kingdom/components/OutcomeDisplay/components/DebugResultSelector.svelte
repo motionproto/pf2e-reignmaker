@@ -50,7 +50,7 @@
     gap: var(--space-12);
     padding: var(--space-10) var(--space-12);
     background: rgba(139, 92, 246, 0.1);
-    border: 0.0625rem solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(139, 92, 246, 0.3);
     border-radius: var(--radius-md);
     margin-bottom: var(--space-16);
   }
@@ -107,7 +107,7 @@
     }
     
     &.active {
-      border-width: 0.125rem;
+      border-width: 2px;
       
       &.criticalSuccess {
         background: rgba(34, 197, 94, 0.2);

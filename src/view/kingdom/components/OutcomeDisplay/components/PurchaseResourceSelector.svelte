@@ -269,7 +269,7 @@
     &.selected {
       background: rgba(59, 130, 246, 0.2);
       border-color: var(--color-blue, #60a5fa);
-      border-width: 0.1875rem;
+      border-width: 3px;
     }
     
     &:disabled {
@@ -290,7 +290,7 @@
     gap: var(--space-8);
     padding: var(--space-12);
     background: rgba(59, 130, 246, 0.1);
-    border: 0.0625rem solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: var(--radius-sm);
     
     label {

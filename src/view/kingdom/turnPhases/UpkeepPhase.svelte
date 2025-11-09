@@ -752,7 +752,7 @@
       
       &.warning {
          background: rgba(245, 158, 11, 0.1);
-         border: 0.0625rem solid rgba(245, 158, 11, 0.3);
+         border: 1px solid rgba(245, 158, 11, 0.3);
          
          i {
             color: var(--color-amber);

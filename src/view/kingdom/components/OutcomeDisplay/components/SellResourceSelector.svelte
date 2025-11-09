@@ -279,7 +279,7 @@
     &.selected {
       background: rgba(251, 191, 36, 0.2);
       border-color: var(--color-amber, #fbbf24);
-      border-width: 0.1875rem;
+      border-width: 3px;
     }
     
     &:disabled {
@@ -306,7 +306,7 @@
     gap: var(--space-8);
     padding: var(--space-12);
     background: rgba(251, 191, 36, 0.1);
-    border: 0.0625rem solid rgba(251, 191, 36, 0.3);
+    border: 1px solid rgba(251, 191, 36, 0.3);
     border-radius: var(--radius-sm);
     
     label {
@@ -399,7 +399,7 @@
     gap: var(--space-6);
     padding: var(--space-6) var(--space-10);
     background: rgba(239, 68, 68, 0.1);
-    border: 0.0625rem solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: var(--radius-sm);
     font-size: var(--font-xs);
     color: rgb(239, 68, 68);

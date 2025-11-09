@@ -1004,7 +1004,7 @@
       justify-content: space-between;
       gap: var(--space-16);
       background: rgba(0, 0, 0, 0.2);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
       width: 100%;
@@ -1015,7 +1015,7 @@
       grid-template-columns: 1fr 1fr;
       gap: var(--space-24);
       background: rgba(0, 0, 0, 0.2);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
    }
@@ -1033,7 +1033,7 @@
       max-height: 25rem;
       object-fit: cover;
       border-radius: var(--radius-lg);
-      border: 0.125rem solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.2);
    }
    
    .portrait-placeholder {
@@ -1044,7 +1044,7 @@
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 0.125rem dashed rgba(255, 255, 255, 0.2);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1093,7 +1093,7 @@
       flex: 1;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-accent);
       font-size: var(--font-3xl);
@@ -1136,7 +1136,7 @@
       height: 18.75rem;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
@@ -1173,7 +1173,7 @@
       align-items: center;
       justify-content: center;
       padding: var(--space-4);
-      border: 0.0625rem solid transparent;
+      border: 1px solid transparent;
       border-radius: var(--radius-md);
       background: transparent;
       cursor: pointer;
@@ -1222,7 +1222,7 @@
    .color-input {
       width: 3.75rem;
       height: 2.25rem;
-      border: 0.125rem solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       cursor: pointer;
       background: transparent;
@@ -1236,7 +1236,7 @@
       width: 2.25rem;
       height: 2.25rem;
       border-radius: var(--radius-md);
-      border: 0.125rem solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       display: inline-block;
    }
    
@@ -1252,7 +1252,7 @@
       align-items: center;
       gap: var(--space-16);
       padding-bottom: var(--space-16);
-      border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       
       h2 {
          margin: 0;
@@ -1271,7 +1271,7 @@
    
    .detail-section {
       background: rgba(0, 0, 0, 0.2);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: var(--radius-lg);
       padding: var(--space-16);
       overflow: visible;
@@ -1304,7 +1304,7 @@
       max-width: 18.75rem;
       max-height: 18.75rem;
       border-radius: var(--radius-lg);
-      border: 0.125rem solid rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.2);
    }
    
    .no-image {
@@ -1315,7 +1315,7 @@
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 0.125rem dashed rgba(255, 255, 255, 0.2);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1330,7 +1330,7 @@
       width: 100%;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       font-family: inherit;
@@ -1440,7 +1440,7 @@
    .clock-btn {
       padding: var(--space-4) var(--space-8);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       cursor: pointer;
@@ -1489,7 +1489,7 @@
       width: 3rem;
       padding: var(--space-4);
       background: rgba(0, 0, 0, 0.3);
-      border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--text-primary);
       text-align: center;
@@ -1527,13 +1527,13 @@
             text-align: left;
             font-weight: var(--font-weight-semibold);
             color: var(--text-primary);
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
          }
       }
       
       tbody {
          tr {
-            border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             
             &.add-row {
                background: rgba(0, 0, 0, 0.2);
@@ -1709,7 +1709,7 @@
          flex: 1;
          padding: var(--space-4) var(--space-8);
          background: rgba(0, 0, 0, 0.3);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          color: var(--text-primary);
          
@@ -1728,7 +1728,7 @@
          max-height: 12.5rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
-         border: 0.0625rem solid rgba(255, 255, 255, 0.3);
+         border: 1px solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
@@ -1742,7 +1742,7 @@
                color: var(--text-secondary);
                text-transform: uppercase;
                background: rgba(0, 0, 0, 0.3);
-               border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+               border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             }
          }
          

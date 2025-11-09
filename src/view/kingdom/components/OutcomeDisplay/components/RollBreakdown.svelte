@@ -133,7 +133,7 @@
         
         &.base-roll {
           background: rgba(96, 165, 250, 0.15);
-          border: 0.0625rem solid rgba(96, 165, 250, 0.3);
+          border: 1px solid rgba(96, 165, 250, 0.3);
           
           .modifier-label {
             color: rgb(147, 197, 253);
@@ -165,7 +165,7 @@
         
         &.dc {
           background: rgba(249, 115, 22, 0.1);
-          border: 0.0625rem solid rgba(249, 115, 22, 0.2);
+          border: 1px solid rgba(249, 115, 22, 0.2);
           
           .modifier-label {
             color: rgba(249, 115, 22, 0.9);

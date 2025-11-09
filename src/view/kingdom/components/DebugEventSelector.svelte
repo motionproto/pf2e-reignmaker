@@ -221,7 +221,7 @@
       gap: var(--space-8);
       padding: var(--space-8) var(--space-12);
       background: rgba(139, 92, 246, 0.1);
-      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
       margin-bottom: var(--space-16);
@@ -248,7 +248,7 @@
    .nav-btn {
       padding: var(--space-4) var(--space-8);
       background: rgba(139, 92, 246, 0.15);
-      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;
@@ -300,7 +300,7 @@
    .action-btn {
       padding: var(--space-4) var(--space-10);
       background: rgba(139, 92, 246, 0.2);
-      border: 0.0625rem solid rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.3);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
       cursor: pointer;

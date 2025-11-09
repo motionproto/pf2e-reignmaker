@@ -34,7 +34,7 @@
     width: 100%;
     padding: var(--space-8) var(--space-12);
     background: rgba(0, 0, 0, 0.5);
-    border: 0.0625rem solid transparent;
+    border: 1px solid transparent;
     border-radius: var(--radius-sm);
     margin-bottom: var(--space-8);
     cursor: pointer;
@@ -148,7 +148,7 @@
       align-items: center;
       padding: var(--space-2) var(--space-8);
       background: rgba(128, 128, 128, 0.15);
-      border: 0.0625rem solid rgba(128, 128, 128, 0.3);
+      border: 1px solid rgba(128, 128, 128, 0.3);
       border-radius: var(--radius-sm);
       color: rgba(180, 180, 180, 0.9);
       font-size: var(--font-xs);

@@ -264,7 +264,7 @@
     gap: var(--space-8);
     padding: var(--space-12) var(--space-16);
     background: rgba(139, 0, 0, 0.3);
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     cursor: grab;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     
@@ -314,7 +314,7 @@
     display: flex;
     gap: var(--space-8);
     padding: var(--space-8) var(--space-12);
-    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: rgba(0, 0, 0, 0.2);
   }
   
@@ -325,7 +325,7 @@
     justify-content: center;
     padding: var(--space-8);
     background: rgba(255, 255, 255, 0.05);
-    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
     color: rgba(255, 255, 255, 0.5);
     cursor: pointer;
@@ -381,7 +381,7 @@
     gap: var(--space-12);
     padding: var(--space-12) var(--space-16);
     background: rgba(255, 255, 255, 0.05);
-    border: 0.125rem solid rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;

@@ -94,7 +94,7 @@
   .aid-button-inline {
     padding: var(--space-10) var(--space-16);
     background: rgba(59, 130, 246, 0.15);
-    border: 0.0625rem solid rgba(96, 165, 250, 0.5);
+    border: 1px solid rgba(96, 165, 250, 0.5);
     border-radius: var(--radius-sm);
     color: rgb(147, 197, 253);
     font-size: var(--font-md);
@@ -135,19 +135,19 @@
   
   .aid-result-badge-inline.critical-success {
     background: rgba(59, 130, 246, 0.15);
-    border: 0.0625rem solid rgba(59, 130, 246, 0.4);
+    border: 1px solid rgba(59, 130, 246, 0.4);
     color: rgb(59, 130, 246);
   }
   
   .aid-result-badge-inline.success {
     background: rgba(34, 197, 94, 0.15);
-    border: 0.0625rem solid rgba(34, 197, 94, 0.4);
+    border: 1px solid rgba(34, 197, 94, 0.4);
     color: rgb(34, 197, 94);
   }
   
   .aid-result-badge-inline.failure {
     background: rgba(239, 68, 68, 0.15);
-    border: 0.0625rem solid rgba(239, 68, 68, 0.4);
+    border: 1px solid rgba(239, 68, 68, 0.4);
     color: rgb(239, 68, 68);
   }
 </style>

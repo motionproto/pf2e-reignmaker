@@ -258,7 +258,7 @@
       margin-left: var(--space-24);
       margin-top: var(--space-8);
       padding: var(--space-8) 0;
-      border-left: 0.125rem solid rgba(255, 255, 255, 0.1);
+      border-left: 2px solid rgba(255, 255, 255, 0.1);
       
       .army-item {
          display: flex;

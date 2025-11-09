@@ -28,7 +28,7 @@
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
     line-height: 1.2;
-    border: 0.0625rem solid;
+    border: 1px solid;
     
     &.badge-crit-success {
       background: rgba(34, 197, 94, 0.15);

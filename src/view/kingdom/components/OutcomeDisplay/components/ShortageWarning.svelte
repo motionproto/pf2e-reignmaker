@@ -34,7 +34,7 @@
     background: linear-gradient(135deg, 
       rgba(239, 68, 68, 0.2),
       rgba(239, 68, 68, 0.08));
-    border: 0.125rem solid rgba(239, 68, 68, 0.5);
+    border: 2px solid rgba(239, 68, 68, 0.5);
     border-radius: var(--radius-sm);
     
     .shortage-warning-header {
