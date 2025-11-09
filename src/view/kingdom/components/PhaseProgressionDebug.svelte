@@ -154,14 +154,14 @@
 <style lang="scss">
    .phase-debug-panel {
       position: fixed;
-      bottom: 1.2500rem;
-      right: 1.2500rem;
-      width: 21.8750rem;
-      max-height: 37.5000rem;
+      bottom: 1.25rem;
+      right: 1.25rem;
+      width: 21.875rem;
+      max-height: 37.5rem;
       background: rgba(20, 20, 25, 0.95);
       border: 2px solid var(--color-amber);
       border-radius: var(--radius-lg);
-      box-shadow: 0 0.2500rem 1.2500rem rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
       z-index: 1000;
       display: flex;
       flex-direction: column;
@@ -319,8 +319,8 @@
       font-weight: 500;
       transition: all 0.2s ease;
       
-      &:hover: not(:disabled) { transform: translateY(-0.0625rem);
-         box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
+      &:hover:not(:disabled) { transform: translateY(-0.0625rem);
+         box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
       }
       
       &:disabled {

@@ -657,7 +657,7 @@
             font-size: var(--font-md);
             font-weight: var(--font-weight-medium);
             text-transform: uppercase;
-            letter-spacing: 0.0500rem;
+            letter-spacing: 0.05rem;
             color: var(--text-tertiary);
             margin-top: var(--space-8);
          }
@@ -690,7 +690,7 @@
             font-size: var(--font-md);
             font-weight: var(--font-weight-medium);
             text-transform: uppercase;
-            letter-spacing: 0.0500rem;
+            letter-spacing: 0.05rem;
             color: var(--text-tertiary);
             margin-top: var(--space-16);
          }
@@ -715,7 +715,7 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.0250rem;
+      letter-spacing: 0.025rem;
       display: flex;
       align-items: center;
       gap: var(--space-8);
@@ -800,7 +800,7 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.0250rem;
+      letter-spacing: 0.025rem;
       display: flex;
       align-items: center;
       gap: var(--space-8);
@@ -860,7 +860,7 @@
       .roll-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.0250rem;
+         letter-spacing: 0.025rem;
          color: var(--text-tertiary);
          text-transform: uppercase;
          margin-top: var(--space-4);
@@ -902,7 +902,7 @@
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
          line-height: 1.2;
-         letter-spacing: 0.0500rem;
+         letter-spacing: 0.05rem;
          text-transform: uppercase;
          
          &.level-minor {

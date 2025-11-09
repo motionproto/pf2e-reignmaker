@@ -994,7 +994,7 @@
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: .var(--space-24);
+      gap: var(--space-16);
    }
    
    .name-attitude-header {
@@ -1030,21 +1030,21 @@
    .portrait-image {
       width: 100%;
       height: auto;
-      max-height: 25.0000rem;
+      max-height: 25rem;
       object-fit: cover;
       border-radius: var(--radius-lg);
-      border: 0.1250rem solid rgba(255, 255, 255, 0.2);
+      border: 0.125rem solid rgba(255, 255, 255, 0.2);
    }
    
    .portrait-placeholder {
       width: 100%;
-      height: 18.7500rem;
+      height: 18.75rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 0.1250rem dashed rgba(255, 255, 255, 0.2);
+      border: 0.125rem dashed rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1133,7 +1133,7 @@
    
    .faction-description-input {
       width: 100%;
-      height: 18.7500rem;
+      height: 18.75rem;
       padding: var(--space-8);
       background: rgba(0, 0, 0, 0.3);
       border: 0.0625rem solid rgba(255, 255, 255, 0.3);
@@ -1220,9 +1220,9 @@
    }
    
    .color-input {
-      width: 3.7500rem;
-      height: 2.2500rem;
-      border: 0.1250rem solid rgba(255, 255, 255, 0.3);
+      width: 3.75rem;
+      height: 2.25rem;
+      border: 0.125rem solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       cursor: pointer;
       background: transparent;
@@ -1233,10 +1233,10 @@
    }
    
    .color-preview {
-      width: 2.2500rem;
-      height: 2.2500rem;
+      width: 2.25rem;
+      height: 2.25rem;
       border-radius: var(--radius-md);
-      border: 0.1250rem solid rgba(255, 255, 255, 0.3);
+      border: 0.125rem solid rgba(255, 255, 255, 0.3);
       display: inline-block;
    }
    
@@ -1266,7 +1266,7 @@
    .detail-sections {
       display: flex;
       flex-direction: column;
-      gap: .var(--space-24);
+      gap: var(--space-16);
    }
    
    .detail-section {
@@ -1301,21 +1301,21 @@
    }
    
    .faction-image {
-      max-width: 18.7500rem;
-      max-height: 18.7500rem;
+      max-width: 18.75rem;
+      max-height: 18.75rem;
       border-radius: var(--radius-lg);
-      border: 0.1250rem solid rgba(255, 255, 255, 0.2);
+      border: 0.125rem solid rgba(255, 255, 255, 0.2);
    }
    
    .no-image {
-      width: 18.7500rem;
-      height: 12.5000rem;
+      width: 18.75rem;
+      height: 12.5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0, 0, 0, 0.3);
-      border: 0.1250rem dashed rgba(255, 255, 255, 0.2);
+      border: 0.125rem dashed rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-lg);
       color: var(--text-secondary);
       
@@ -1356,7 +1356,7 @@
    
    .textarea-input {
       resize: vertical;
-      min-height: 3.7500rem;
+      min-height: 3.75rem;
    }
    
    .attitude-display {
@@ -1725,14 +1725,14 @@
          top: 100%;
          left: 0;
          width: 50%;
-         max-height: 12.5000rem;
+         max-height: 12.5rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
          border: 0.0625rem solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {

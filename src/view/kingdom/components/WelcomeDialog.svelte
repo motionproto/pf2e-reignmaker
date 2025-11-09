@@ -404,8 +404,8 @@
    .welcome-dialog {
       background: var(--bg-elevated);
       border-radius: var(--radius-xl);
-      box-shadow: 0 0.6250rem 2.5000rem rgba(0, 0, 0, 0.5);
-      max-width: 37.5000rem;
+      box-shadow: 0 0.625rem 2.5rem rgba(0, 0, 0, 0.5);
+      max-width: 37.5rem;
       width: 90%;
       max-height: 90vh;
       overflow-y: auto;
@@ -414,7 +414,7 @@
    
    @keyframes slideIn {
       from {
-         transform: translateY(-1.2500rem);
+         transform: translateY(-1.25rem);
          opacity: 0;
       }
       to {
@@ -545,7 +545,7 @@
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 1.25rem center;
-      background-size: 0.7500rem;
+      background-size: 0.75rem;
       
       &:hover {
          border-color: var(--color-primary);
@@ -602,8 +602,8 @@
          &:hover {
             border-color: var(--color-primary);
             background: var(--bg-surface);
-            transform: translateY(-0.1250rem);
-            box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
+            transform: translateY(-0.125rem);
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
          }
       }
       
@@ -782,7 +782,7 @@
          
          &:hover {
             transform: translateY(-0.0625rem);
-            box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
          }
       }
       

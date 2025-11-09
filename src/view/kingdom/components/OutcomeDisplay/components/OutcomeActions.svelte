@@ -95,7 +95,7 @@
       // Main buttons can expand to equal width
       :global(.button) {
         flex: 0 1 auto;
-        min-width: 7.5000rem;
+        min-width: 7.5rem;
       }
     }
   }

@@ -61,8 +61,8 @@
       text-align: left;
       
       // Secondary button style
-      backdrop-filter: blur(0.2500rem);
-      box-shadow: 0 0.0625rem 0.1250rem rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(0.25rem);
+      box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1);
       
       .skill-label {
          color: var(--text-primary);
@@ -89,10 +89,11 @@
          opacity: 0.8;
       }
       
-      &:hover: not(.disabled):not(.selected) { transform: translateY(-0.0625rem);
+      &:hover:not(.disabled):not(.selected) {
+         transform: translateY(-0.0625rem);
          border-color: var(--border-strong);
-         background:   var(--btn-secondary-hover);
-         box-shadow: 0 0.1250rem 0.3750rem rgba(0, 0, 0, 0.15);
+         background: var(--btn-secondary-hover);
+         box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.15);
          
          .skill-label {
             color: white;
@@ -117,7 +118,7 @@
          
          &:hover {
             transform: translateY(-0.0625rem);
-            box-shadow: 0 0.2500rem 0.7500rem rgba(251, 191, 36, 0.4);
+            box-shadow: 0 0.25rem 0.75rem rgba(251, 191, 36, 0.4);
          }
       }
       
@@ -129,7 +130,7 @@
             transform: none;
             border-color: var(--border-strong);
             background: rgba(255, 255, 255, 0.05);
-            box-shadow: 0 0.0625rem 0.1250rem rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1);
          }
       }
       

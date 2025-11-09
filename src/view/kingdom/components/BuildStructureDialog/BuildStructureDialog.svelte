@@ -268,12 +268,12 @@
     background: var(--color-gray-900);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-strong);
-    max-width: 75.0000rem;
+    max-width: 75rem;
     width: 90%;
     height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0.5000rem 2.0000rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.5);
   }
   
   .dialog-header {
@@ -310,8 +310,8 @@
       font-size: var(--font-xl);
       cursor: pointer;
       padding: 0;
-      width: 2.0000rem;
-      height: 2.0000rem;
+      width: 2rem;
+      height: 2rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -342,7 +342,7 @@
   
   // Left panel - Categories
   .categories-panel {
-    flex: 0 0 21.2500rem;
+    flex: 0 0 21.25rem;
     background: rgba(0, 0, 0, 0.2);
     border-right: 1px solid var(--border-default);
     padding: var(--space-16);

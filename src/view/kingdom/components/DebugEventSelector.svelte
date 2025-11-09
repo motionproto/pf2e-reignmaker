@@ -238,7 +238,7 @@
       font-weight: var(--font-weight-medium);
       font-size: var(--font-xs);
       text-transform: uppercase;
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
       
       i {
          font-size: var(--font-xs);

@@ -311,8 +311,8 @@
   }
 
   .btn-control {
-    width: 1.7500rem;
-    height: 1.7500rem;
+    width: 1.75rem;
+    height: 1.75rem;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.2));
     background: rgba(255, 255, 255, 0.08);

@@ -558,10 +558,10 @@
       @media (max-width: 47.9375rem) { grid-template-columns: 1fr;
       }
       
-      @media (min-width: 48.0000rem) and (max-width: 63.9375rem) { grid-template-columns: repeat(3, 1fr);
+      @media (min-width: 48rem) and (max-width: 63.9375rem) { grid-template-columns: repeat(3, 1fr);
       }
       
-      @media (min-width: 64.0000rem) { grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
+      @media (min-width: 64rem) { grid-template-columns: repeat(auto-fit, minmax(17.5rem, 1fr));
       }
    }
    
@@ -843,7 +843,7 @@
       .available-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.0250rem;
+         letter-spacing: 0.025rem;
          color: var(--text-secondary);
          text-transform: uppercase;
          width: 100%;

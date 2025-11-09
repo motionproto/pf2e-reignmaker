@@ -346,12 +346,12 @@
     background: var(--bg-base);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-strong);
-    max-width: 56.2500rem;
+    max-width: 56.25rem;
     width: 90%;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0.5000rem 2.0000rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.5);
   }
   
   .dialog-header {
@@ -431,7 +431,7 @@
       cursor: pointer;
       transition: all 0.2s;
       background: transparent;
-      border: 0.1250rem solid transparent;
+      border: 0.125rem solid transparent;
       user-select: none;
       
       &:hover {
@@ -475,7 +475,7 @@
       font-size: var(--font-xs);
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
       white-space: nowrap;
     }
   }
@@ -500,7 +500,7 @@
     color: var(--color-accent);
     font-size: var(--font-lg);
     font-weight: 600;
-    letter-spacing: 0.0500rem;
+    letter-spacing: 0.05rem;
     display: flex;
     align-items: center;
     gap: var(--space-8);
@@ -511,8 +511,8 @@
   }
   
   .structures-list {
-    padding-left: .var(--space-24);
-    padding-top: .var(--space-24);
+    padding-left: var(--space-24);
+    padding-top: var(--space-24);
   }
   
   .structure-item {
@@ -665,7 +665,7 @@
       font-weight: var(--font-weight-medium);
       cursor: pointer;
       transition: all 0.2s ease;
-      min-width: 5.0000rem;
+      min-width: 5rem;
       
       &:hover {
         background: var(--color-gray-700);

@@ -101,7 +101,7 @@
     gap: var(--space-4);
     padding: var(--space-2) var(--space-6);
     border-radius: var(--radius-xs);
-    border: 0.1250rem solid;
+    border: 0.125rem solid;
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     cursor: help;
@@ -109,7 +109,7 @@
     
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
     }
     
     &.outcome-criticalSuccess {

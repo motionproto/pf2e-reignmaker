@@ -296,7 +296,7 @@
    }
 
    .kingdom-sidebar {
-      flex: 0 0 15.6250rem;
+      flex: 0 0 15.625rem;
       background: var(--bg-surface);
       border-radius: var(--radius-lg);
       overflow-y: auto;
@@ -312,8 +312,8 @@
 
    .message {
       position: absolute;
-      bottom: 1.2500rem;
-      right: 1.2500rem;
+      bottom: 1.25rem;
+      right: 1.25rem;
       padding: var(--space-10) var(--space-16);
       border-radius: var(--radius-md);
       display: flex;

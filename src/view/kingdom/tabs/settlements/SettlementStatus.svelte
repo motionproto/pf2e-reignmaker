@@ -223,7 +223,7 @@
 
 <style lang="scss">
    .detail-section {
-      margin-bottom: .var(--space-24);
+      margin-bottom: var(--space-24);
    }
    
    .status-header {

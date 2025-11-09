@@ -995,7 +995,7 @@
       border: 1px solid var(--color-primary, #5e0000);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 9.3750rem;
+      min-width: 9.375rem;
       
       &:focus {
          outline: none;
@@ -1111,7 +1111,7 @@
       border: 0.0625rem solid rgba(255, 255, 255, 0.2);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      width: 6.2500rem;
+      width: 6.25rem;
       
       &:focus {
          outline: none;

@@ -1085,7 +1085,7 @@
       font-size: var(--font-sm);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
       color: var(--text-tertiary);
       text-transform: capitalize;
    }

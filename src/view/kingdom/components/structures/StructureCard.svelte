@@ -103,7 +103,7 @@
     transition: all 0.2s;
     
     &:hover {
-      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
       background: rgba(0, 0, 0, 0.3);
     }
   }
@@ -143,12 +143,12 @@
   }
   
   .structure-thumbnail {
-    flex: 0 0 6.2500rem;
+    flex: 0 0 6.25rem;
     align-self: flex-start;
     
     .thumbnail-placeholder {
-      width: 6.2500rem;
-      height: 6.2500rem;
+      width: 6.25rem;
+      height: 6.25rem;
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);

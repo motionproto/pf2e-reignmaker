@@ -40,7 +40,7 @@
       color: var(--text-primary);
       font-size: var(--font-md);
       cursor: pointer;
-      min-width: 12.5000rem;
+      min-width: 12.5rem;
       
       &:hover {
         border-color: var(--border-strong);
@@ -50,7 +50,7 @@
       &:focus {
         outline: none;
         border-color: var(--color-amber);
-        box-shadow: 0 0 0 0.1250rem rgba(251, 191, 36, 0.2);
+        box-shadow: 0 0 0 0.125rem rgba(251, 191, 36, 0.2);
       }
     }
   }

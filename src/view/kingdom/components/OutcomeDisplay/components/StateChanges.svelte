@@ -236,10 +236,10 @@
     border: 2px solid var(--border-medium);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
-    min-width: 12.5000rem;
+    min-width: 12.5rem;
     width: auto;
     text-align: left;
-    min-height: 3.3750rem; /* Ensure consistent height */
+    min-height: 3.375rem; /* Ensure consistent height */
     
     &:not(.static):not(.rolled):not(:disabled) {
       cursor: pointer;
@@ -247,15 +247,15 @@
       &:hover {
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
-        transform: translateY(-0.1250rem);
-        box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.2);
+        transform: translateY(-0.125rem);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
       }
     }
     
     &.rolled {
       background: rgba(255, 255, 255, 0.12);
       border-color: var(--border-strong);
-      box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
       opacity: 1;
       cursor: default;
     }
@@ -319,7 +319,7 @@
     background: linear-gradient(135deg, 
       rgba(34, 197, 94, 0.2),
       rgba(34, 197, 94, 0.1));
-    border: 0.1250rem solid rgba(34, 197, 94, 0.5);
+    border: 0.125rem solid rgba(34, 197, 94, 0.5);
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
@@ -331,7 +331,7 @@
     i {
       font-size: var(--font-xl);
       color: #fbbf24;
-      text-shadow: 0 0 0.5000rem rgba(251, 191, 36, 0.6);
+      text-shadow: 0 0 0.5rem rgba(251, 191, 36, 0.6);
     }
     
     span {
@@ -358,7 +358,7 @@
     background: linear-gradient(135deg, 
       rgba(251, 146, 60, 0.15),
       rgba(251, 146, 60, 0.05));
-    border: 0.1250rem solid rgba(251, 146, 60, 0.4);
+    border: 0.125rem solid rgba(251, 146, 60, 0.4);
     border-radius: var(--radius-sm);
     
     .manual-effects-header {

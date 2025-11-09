@@ -112,7 +112,7 @@
     position: relative;
     overflow: hidden;
     background: linear-gradient(135deg, var(--bg-elevated), var(--bg-overlay));
-    border: 1px solid var(--border-m);
+    border: 1px solid var(--border-medium);
   }
 
 
@@ -123,7 +123,7 @@
 
   @keyframes fadeIn {
     0% {
-      transform: translateY(-0.1250rem);
+      transform: translateY(-0.125rem);
     }
     100% {
 
@@ -137,8 +137,8 @@
     opacity: 0.95;
     z-index: 1;
     position: relative;
-    padding-top: .var(--space-24);
-    margin-right: .var(--space-24);
+    padding-top: var(--space-4);
+    margin-right: var(--space-16);
   }
 
 
@@ -154,20 +154,21 @@
     font-weight: var(--font-weight-bold);
     color: var(--text-primary);
     text-shadow: var(--text-shadow-md);
-    letter-spacing: 0.0250rem;
+    letter-spacing: 0.025rem;
   }
 
   .phase-text p {
     margin: var(--space-2) 0 0;
     font-size: var(--font-md);
-    color: var(--text-secondary
-    );
+    color: var(--text-secondary);
     opacity: 0.85;
   }
 
 
   /* Responsive design */
-  @media (max-width: 48.0000rem) { .phase-header { padding: var(--space-16) var(--space-20);
+  @media (max-width: 48rem) {
+    .phase-header {
+      padding: var(--space-16) var(--space-20);
     }
     
     .phase-icon {

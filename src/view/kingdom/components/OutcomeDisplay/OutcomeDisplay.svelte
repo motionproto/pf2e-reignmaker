@@ -776,13 +776,13 @@
       rgba(0, 0, 0, 0.4),
       rgba(0, 0, 0, 0.2));
     overflow: hidden;
-    box-shadow: 0 0.2500rem 1.0000rem rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.2);
     position: relative;
     
     &.compact {
       margin: var(--space-12) 0;
       border-width: 0.0625rem;
-      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.15);
+      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
       
       .resolution-details {
         padding: var(--space-12);
@@ -796,7 +796,7 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 0.2500rem;
+      height: 0.25rem;
       background: linear-gradient(90deg, 
         transparent,
         currentColor,

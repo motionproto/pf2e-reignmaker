@@ -103,8 +103,8 @@
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--border-default);
-      transform: translateY(-0.1250rem);
-      box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.3);
+      transform: translateY(-0.125rem);
+      box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
     }
     
     &:active {

@@ -1137,7 +1137,7 @@
       border: 1px solid var(--color-primary, #5e0000);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 9.3750rem;
+      min-width: 9.375rem;
       
       &:focus {
          outline: none;
@@ -1239,7 +1239,7 @@
       border: 1px solid var(--color-primary, #5e0000);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 12.5000rem;
+      min-width: 12.5rem;
       
       &:focus {
          outline: none;
@@ -1371,15 +1371,15 @@
          left: 0;
          right: 0;
          width: auto;
-         min-width: 18.7500rem;
-         max-height: 12.5000rem;
+         min-width: 18.75rem;
+         max-height: 12.5rem;
          overflow-y: auto;
          background: rgba(0, 0, 0, 0.95);
          border: 0.0625rem solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {

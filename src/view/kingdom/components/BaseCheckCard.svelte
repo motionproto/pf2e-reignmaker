@@ -527,22 +527,23 @@
     &.select-state:hover:not(.disabled):not(.expanded) {
       border-color: var(--border-strong);
       transform: translateY(-0.0625rem);
-      box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
     }
     
     &.select-state.expanded {
       border-color: var(--accent-color);
-      box-shadow: 0 4px 12px rgba(var(--accent-color), 0.1);
+      box-shadow: 0 0.25rem 0.75rem rgba(var(--accent-color), 0.1);
       
-      &:hover: not(.disabled) { transform: translateY(-0.0625rem);
-        box-shadow: 0 6px 16px rgba(var(--accent-color), 0.15);
+      &:hover:not(.disabled) {
+        transform: translateY(-0.0625rem);
+        box-shadow: 0 0.375rem 1rem rgba(var(--accent-color), 0.15);
       }
     }
     
     // Result state has different hover behavior
     &.result-state:hover:not(.disabled) {
       transform: none;
-      box-shadow: 0 0.1250rem 0.2500rem rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
     }
     
     &.result-state.expanded {
@@ -737,8 +738,8 @@
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     line-height: 1.2;
-    letter-spacing: 0.0500rem;
-    color: var(--text-tertiary);
+      letter-spacing: 0.05rem;
+      color: var(--text-tertiary);
     text-transform: capitalize;
   }
   

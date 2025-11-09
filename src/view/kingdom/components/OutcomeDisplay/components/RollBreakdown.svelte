@@ -71,7 +71,7 @@
       display: flex;
       align-items: flex-end;
       gap: var(--space-12);
-      min-height: 2.5000rem;
+      min-height: 2.5rem;
       transition: background var(--transition-fast);
       
       &:hover {

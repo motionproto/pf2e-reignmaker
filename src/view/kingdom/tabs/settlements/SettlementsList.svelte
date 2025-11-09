@@ -444,7 +444,7 @@
    @use './settlements-shared.scss';
    
    .settlements-list-panel {
-      flex: 0 0 25.0000rem;
+      flex: 0 0 25rem;
       background: rgba(0, 0, 0, 0.1);
       border-radius: var(--radius-lg);
       display: flex;
@@ -574,12 +574,12 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      outline: 0.1250rem solid transparent;
+      outline: 0.125rem solid transparent;
       
       &:hover {
          border-color: var(--border-strong);
          transform: translateY(-0.0625rem);
-         box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
+         box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
@@ -691,7 +691,7 @@
          font-weight: var(--font-weight-semibold);
          color: var(--text-secondary);
          text-transform: uppercase;
-         letter-spacing: 0.0500rem;
+         letter-spacing: 0.05rem;
       }
    }
    

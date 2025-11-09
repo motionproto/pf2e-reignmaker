@@ -24,7 +24,7 @@
     background: linear-gradient(135deg, 
       rgba(251, 146, 60, 0.15),
       rgba(251, 146, 60, 0.05));
-    border: 0.1250rem solid rgba(251, 146, 60, 0.4);
+    border: 0.125rem solid rgba(251, 146, 60, 0.4);
     border-radius: var(--radius-sm);
     
     .manual-effects-header {

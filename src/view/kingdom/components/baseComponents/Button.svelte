@@ -47,7 +47,7 @@
       font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       line-height: 1.2;
-      letter-spacing: 0.0250rem;
+      letter-spacing: 0.025rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -76,7 +76,8 @@
          left: 100%;
       }
       
-      &:hover: not(:disabled) { transform: translateY(-0.0625rem);
+      &:hover:not(:disabled) {
+         transform: translateY(-0.0625rem);
          box-shadow: var(--shadow-md);
       }
       

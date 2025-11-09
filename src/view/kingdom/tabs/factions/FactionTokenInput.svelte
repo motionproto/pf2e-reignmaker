@@ -212,13 +212,13 @@
       top: calc(100% + var(--space-8));
       left: 0;
       width: 100%;
-      max-width: 25.0000rem;
-      max-height: 18.7500rem;
+      max-width: 25rem;
+      max-height: 18.75rem;
       overflow-y: auto;
       background: rgba(0, 0, 0, 0.95);
       border: 0.0625rem solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-lg);
-      box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.5);
       z-index: 1000;
       padding: var(--space-8);
    }

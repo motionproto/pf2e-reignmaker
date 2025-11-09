@@ -247,7 +247,7 @@
     background: rgba(20, 20, 20, 0.95);
     border: 2px solid var(--color-primary, #8b0000);
     border-radius: var(--radius-xl);
-    box-shadow: 0 0.2500rem 1.2500rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.25rem 1.25rem rgba(0, 0, 0, 0.5);
     min-width: 12.5rem;
     user-select: none;
     backdrop-filter: blur(0.625rem);
@@ -282,7 +282,7 @@
       font-weight: 600;
       font-size: var(--font-sm);
       text-transform: uppercase;
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
       color: #fff;
     }
     
@@ -381,7 +381,7 @@
     gap: var(--space-12);
     padding: var(--space-12) var(--space-16);
     background: rgba(255, 255, 255, 0.05);
-    border: 0.1250rem solid rgba(255, 255, 255, 0.1);
+    border: 0.125rem solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
     color: rgba(255, 255, 255, 0.7);
     cursor: pointer;

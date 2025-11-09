@@ -77,8 +77,8 @@
   }
   
   .queue-item-thumbnail {
-    flex: 0 0 3.0000rem;
-    height: 3.0000rem;
+    flex: 0 0 3rem;
+    height: 3rem;
     
     .thumbnail-placeholder {
       width: 100%;
@@ -147,7 +147,7 @@
       font-weight: var(--font-weight-semibold);
       color: var(--text-tertiary);
       text-transform: uppercase;
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
     }
     
     .cost-resources {

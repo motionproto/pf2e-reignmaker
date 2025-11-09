@@ -158,14 +158,14 @@
   }
   
   /* On smaller screens, go back to single column */
-  @media (max-width: 40.0000rem) { .outcomes-list { grid-template-columns: 1fr;
+  @media (max-width: 40rem) { .outcomes-list { grid-template-columns: 1fr;
     }
   }
   
   .outcome-item {
     padding: var(--space-8) var(--space-6) var(--space-8) var(--space-12);
     border-radius: var(--radius-md);
-    border-left: 0.2500rem solid;
+    border-left: 0.25rem solid;
     background: rgba(0, 0, 0, 0.2);
     
     &.outcome-criticalSuccess {
@@ -247,7 +247,7 @@
     flex-shrink: 0;
     margin-top: -var(--space-2);
     font-size: var(--font-md);
-    width: 1.2500rem;
+    width: 1.25rem;
   }
   
   .outcome-content {
@@ -258,16 +258,16 @@
     font-size: var(--font-s);
     font-weight: var(--font-weight-medium);
     line-height: 1.4;
-    letter-spacing: 0.0250rem;
+    letter-spacing: 0.025rem;
     text-transform: uppercase;
-    margin-bottom: .var(--space-24);
+    margin-bottom: var(--space-24);
   }
   
   .outcome-description {
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: ver(--line-height-snug);
-    margin-bottom: .var(--space-24);
+    margin-bottom: var(--space-24);
   }
   
   .outcome-modifiers {
@@ -280,8 +280,8 @@
   .modifier-badge {
     display: inline-flex;
     align-items: center;
-    padding: .var(--space-24) .var(--space-24);
-    border-radius: .var(--radius-full);
+    padding: var(--space-24) var(--space-24);
+    border-radius: var(--radius-full);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     line-height: 1.3;

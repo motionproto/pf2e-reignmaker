@@ -93,13 +93,13 @@
       border: 2px solid var(--border-medium);
       border-radius: var(--radius-md);
       transition: all var(--transition-fast);
-      min-width: 12.5000rem;
+      min-width: 12.5rem;
       width: auto;
       
       &.resolved {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
       }
       
       .card-header {
@@ -134,7 +134,7 @@
         &:focus {
           outline: none;
           border-color: var(--color-blue);
-          box-shadow: 0 0 0 0.1250rem rgba(59, 130, 246, 0.3);
+          box-shadow: 0 0 0 0.125rem rgba(59, 130, 246, 0.3);
         }
         
         option {

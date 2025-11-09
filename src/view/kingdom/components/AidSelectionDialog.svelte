@@ -154,7 +154,7 @@
 
   .skill-select:focus {
     outline: 2px solid var(--color-amber, #fbbf24);
-    outline-offset: 0.1250rem;
+    outline-offset: 0.125rem;
     border-color: var(--color-amber, #fbbf24);
   }
 

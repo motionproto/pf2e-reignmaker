@@ -99,7 +99,7 @@
          background: linear-gradient(to top, var(--color-primary-dark), var(--color-primary));
          color: white;
          border-color: var(--color-primary-light);
-         box-shadow: 0 0.1250rem 0.2500rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
          
          // Explicitly set white color for all child elements
          i, span {
@@ -152,7 +152,8 @@
          font-size: var(--font-xl);
       }
       
-      &.import-button: hover i { transform: translateY(-0.1250rem);
+      &.import-button:hover i {
+        transform: translateY(-0.125rem);
       }
       
       &.settings-button i {

@@ -581,7 +581,7 @@
          cursor: pointer;
          transition: all 0.2s;
          background: transparent;
-         border: 0.1250rem solid transparent;
+         border: 0.125rem solid transparent;
          user-select: none;
          
          &:hover {
@@ -617,7 +617,7 @@
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
          text-transform: uppercase;
-         letter-spacing: 0.0500rem;
+         letter-spacing: 0.05rem;
       }
       
       .radio-icon-count {

@@ -306,7 +306,7 @@
    .settlement-image {
       img {
          width: 100%;
-         max-height: 18.7500rem;
+         max-height: 18.75rem;
          object-fit: cover;
          border-radius: var(--radius-lg);
          margin-bottom: var(--space-12);

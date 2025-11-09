@@ -43,8 +43,8 @@
       &:hover {
          border-color: var(--border-medium);
          background: rgba(0, 0, 0, 0.4);
-         transform: translateY(-0.1250rem);
-         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.2);
+         transform: translateY(-0.125rem);
+         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
       }
       
       .modifier-header {

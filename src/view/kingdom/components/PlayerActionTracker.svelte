@@ -136,7 +136,7 @@
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-default);
-    margin: 0 .var(--space-24);
+    margin: 0 var(--space-16);
     &.compact {
       background: transparent;
       border: none;
@@ -160,11 +160,11 @@
   .tracker-title {
     display: flex;
     align-items: center;
-    gap: .var(--space-24);
+    gap: var(--space-8);
     font-size: var(--font-lg);
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
-    padding: .75rem var(--space-16);
+    padding: var(--space-12) var(--space-16);
 
     i {
       color: var(--color-amber);
@@ -188,7 +188,7 @@
     width: 1rem;
     height: 1rem;
     border-radius: 50%;
-    border: 0.1250rem solid;
+    border: 0.125rem solid;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -196,33 +196,33 @@
     background: rgba(255, 255, 255, 0.1);
     
     &.acted {
-      box-shadow: 0 0 0.5000rem rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 0.5rem rgba(251, 191, 36, 0.4);
       
       i {
         color: white;
         font-size: var(--font-xs);
-        text-shadow: 0.0625rem 0.0625rem 0.1250rem rgba(0, 0, 0, 0.5);
+        text-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0, 0, 0, 0.5);
       }
     }
   }
   
   .player-dot-small {
-    width: 1.0000rem;
-    height: 1.0000rem;
+    width: 1rem;
+    height: 1rem;
     border-radius: 50%;
-    border: 0.1250rem solid;
+    border: 0.125rem solid;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     
     &.acted {
-      box-shadow: 0 0 0.3750rem rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 0.375rem rgba(251, 191, 36, 0.3);
       
       i {
         color: white;
         font-size: var(--font-xs);
-        text-shadow: 0.0625rem 0.0625rem 0.1250rem rgba(0, 0, 0, 0.5);
+        text-shadow: 0.0625rem 0.0625rem 0.125rem rgba(0, 0, 0, 0.5);
       }
     }
   }

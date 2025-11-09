@@ -302,8 +302,8 @@
   }
   
   .army-type-card img {
-    width: 4.0000rem;
-    height: 4.0000rem;
+    width: 4rem;
+    height: 4rem;
     object-fit: contain;
   }
   

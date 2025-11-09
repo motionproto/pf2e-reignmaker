@@ -497,7 +497,7 @@
     padding: var(--space-12) var(--space-16);
     background: var(--gradient-header);
     border-bottom: 2px solid var(--border-primary);
-    min-height: 3.7500rem;
+    min-height: var(--space-24);
   }
 
   .kingdom-name-header h3 {
@@ -583,7 +583,7 @@
     color: var(--color-accent);
     font-size: var(--font-2xl);
     font-weight: var(--font-weight-bold);
-    letter-spacing: 0.0250rem;
+    letter-spacing: 0.025rem;
     background: transparent;
     margin-bottom: var(--space-24);
     margin-top: var(--space-12);
@@ -614,7 +614,7 @@
     color: var(--text-primary);
     font-size: var(--font-sm);
     cursor: pointer;
-    min-width: 9.3750rem;
+    min-width: 9.375rem;
   }
   
   .faction-select:focus {
@@ -758,7 +758,7 @@
     font-weight: var(--font-weight-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.0500rem;
+    letter-spacing: 0.05rem;
     white-space: nowrap;
   }
 
@@ -775,7 +775,7 @@
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar {
-    width: 0.5000rem;
+    width: var(--space-8);
   }
 
   .kingdom-stats-scrollable::-webkit-scrollbar-track {

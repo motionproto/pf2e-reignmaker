@@ -204,14 +204,14 @@
          top: 100%;
          left: 0;
          width: 50%;
-         max-height: 12.5000rem;
+         max-height: 12.5rem;
          overflow-y: scroll;
          background: rgba(0, 0, 0, 0.95);
          border: 0.0625rem solid rgba(255, 255, 255, 0.3);
          border-radius: var(--radius-md);
          margin-top: var(--space-4);
          z-index: 10000;
-         box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.3);
+         box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
          
          .suggestion-group {
             .group-header {

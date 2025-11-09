@@ -188,10 +188,10 @@
   }
   
   .categories-panel {
-    flex: 0 0 21.2500rem;
+    flex: 0 0 21.25rem;
     background: rgba(0, 0, 0, 0.1);
     border-radius: var(--radius-md);
-    padding: .var(--space-24);
+    padding: var(--space-16);
     overflow-y: auto;
   }
   
@@ -229,12 +229,12 @@
   
   .progression-header {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(0.5000rem);
+    backdrop-filter: blur(0.5rem);
     padding: var(--space-24);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-default);
-    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
-    min-height: 5.6250rem; // Fixed minimum height to maintain consistent layout
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+    min-height: 5.625rem; // Fixed minimum height to maintain consistent layout
     display: flex;
     align-items: center;
     

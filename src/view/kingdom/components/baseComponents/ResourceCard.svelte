@@ -194,8 +194,8 @@
       padding: var(--space-12);
       border-radius: var(--radius-lg);
       border: 0.0625rem solid rgba(255, 255, 255, 0.1);
-      outline: 0.1250rem solid transparent;
-      outline-offset: 0.1250rem;
+      outline: 0.125rem solid transparent;
+      outline-offset: 0.125rem;
       transition: all 0.2s ease;
       position: relative;
       flex: 0 0 auto;
@@ -231,7 +231,7 @@
          }
          
          .resource-info {
-            min-width: 5.0000rem;
+            min-width: 5rem;
             align-items: flex-start;
          }
          
@@ -248,7 +248,7 @@
          }
          
          .resource-edit-input {
-            width: 5.0000rem;
+            width: 5rem;
             font-size: var(--font-xl);
          }
       }

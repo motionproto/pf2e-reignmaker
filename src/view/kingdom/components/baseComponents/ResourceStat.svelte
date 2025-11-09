@@ -26,7 +26,7 @@
       align-items: center;
       text-align: center;
       flex: 1;
-      min-width: 5.0000rem;
+      min-width: 5rem;
       
       i {
          font-size: var(--font-3xl);
@@ -63,7 +63,7 @@
       .stat-label {
          font-size: var(--font-xs);
          font-weight: var(--font-weight-medium);
-         letter-spacing: 0.0250rem;
+         letter-spacing: 0.025rem;
          color: var(--text-secondary);
          text-transform: uppercase;
       }

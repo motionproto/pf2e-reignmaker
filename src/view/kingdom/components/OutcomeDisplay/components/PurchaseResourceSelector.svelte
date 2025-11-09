@@ -243,7 +243,7 @@
 
   .resource-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(6.2500rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(6.25rem, 1fr));
     gap: var(--space-12);
     margin-bottom: var(--space-12);
   }
@@ -263,7 +263,7 @@
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--color-blue, #60a5fa);
-      transform: translateY(-0.1250rem);
+      transform: translateY(-0.125rem);
     }
     
     &.selected {
@@ -314,8 +314,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2.0000rem;
-        height: 2.0000rem;
+        width: 2rem;
+        height: 2rem;
         padding: 0;
         background: rgba(59, 130, 246, 0.2);
         border: 1px solid var(--color-blue, #60a5fa);
@@ -346,7 +346,7 @@
     }
     
     input {
-      width: 5.0000rem;
+      width: 5rem;
       padding: var(--space-6) var(--space-10);
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid var(--border-medium);

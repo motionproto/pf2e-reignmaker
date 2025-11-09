@@ -327,7 +327,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-16);
-      max-width: 50.0000rem;
+      max-width: 50rem;
       margin: 0 auto;
       justify-content: center;
    }
@@ -340,9 +340,9 @@
    
    .income-production-summary {
       margin: var(--space-16) auto;
-      padding: var(--space-24) 2rem;
+      padding: var(--space-24) var(--space-24);
       width: 100%;
-      max-width: 50.0000rem;
+      max-width: 50rem;
       box-sizing: border-box;
       background: linear-gradient(135deg,
          rgba(24, 24, 27, 0.5),
@@ -406,7 +406,7 @@
    }
    
    .no-production {
-      padding: .var(--space-24);
+      padding: var(--space-16);
       border-radius: var(--radius-md);
       text-align: center;
       color: var(--text-primary);
@@ -484,8 +484,8 @@
    // Modifier Application Section
    .modifier-application-section {
       margin: var(--space-16) auto;
-      padding: var(--space-24) 2rem;
-      max-width: 50.0000rem;
+      padding: var(--space-24) var(--space-24);
+      max-width: 50rem;
       width: 100%;
       box-sizing: border-box;
       background: linear-gradient(135deg,
@@ -524,7 +524,7 @@
    
    .modifier-row {
       display: grid;
-      grid-template-columns: 3.7500rem auto 1fr;
+      grid-template-columns: 3.75rem auto 1fr;
       gap: var(--space-8);
       align-items: center;
    }
@@ -605,7 +605,7 @@
    }
    
    .breakdown-label {
-      width: 9.3750rem;
+      width: 9.375rem;
       flex-shrink: 0;
       white-space: nowrap;
       color: var(--text-primary);
@@ -622,9 +622,9 @@
       margin-left: var(--space-16);
       display: flex;
       flex-direction: column;
-      margin-top: .var(--space-24);
+      margin-top: var(--space-8);
       margin-bottom: var(--space-16);
-      gap: .var(--space-24);
+      gap: var(--space-8);
    }
    
    .modifier-detail-row {

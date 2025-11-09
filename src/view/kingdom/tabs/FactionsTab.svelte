@@ -314,7 +314,7 @@
       border: 0.0625rem solid rgba(255, 255, 255, 0.3);
       border-radius: var(--radius-md);
       color: var(--color-text-dark-primary, #b5b3a4);
-      min-width: 9.3750rem;
+      min-width: 9.375rem;
       
       &:focus {
          outline: none;

@@ -442,7 +442,7 @@
   @import '../../../styles/variables.css';
   
   .setup-container {
-    max-width: 56.2500rem;
+    max-width: 56.25rem;
     margin: 0 auto;
     padding: var(--space-24);
     display: flex;
@@ -527,7 +527,7 @@
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
-    gap: .var(--space-24);
+    gap: var(--space-12);
     border: 1px solid var(--border-subtle);
     
     i {
@@ -540,7 +540,7 @@
       display: flex;
       flex-direction: row;
       align-items: baseline;
-      gap: .var(--space-24);
+      gap: var(--space-8);
       min-width: 0;
     }
     
@@ -575,7 +575,7 @@
   
   .terrain-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(5.6250rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(5.625rem, 1fr));
     gap: var(--space-16);
   }
   
@@ -597,7 +597,7 @@
     transition: all 0.2s ease;
     
     &:hover {
-      transform: translateY(-0.1250rem);
+      transform: translateY(-0.125rem);
       background: linear-gradient(
         135deg,
         color-mix(in srgb, var(--terrain-color) 70%, rgba(0, 0, 0, 0.2)),
@@ -645,7 +645,7 @@
     
     &:hover {
       border-color: var(--border-primary);
-      transform: translateY(-0.1250rem);
+      transform: translateY(-0.125rem);
     }
   }
   
@@ -659,7 +659,7 @@
   }
 
   .worksite-title {
-    font-size: var(--font-);
+    font-size: var(--font-sm);
     font-weight: var(--font-weight-normal);
     color: var(--text-primary);
   }

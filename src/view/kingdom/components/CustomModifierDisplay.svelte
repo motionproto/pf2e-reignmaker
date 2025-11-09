@@ -133,7 +133,7 @@
     font-size: var(--font-xs);
     font-weight: var(--font-weight-medium);
     text-transform: uppercase;
-    letter-spacing: 0.0500rem;
+    letter-spacing: 0.05rem;
     border: 0.0625rem solid;
   }
   

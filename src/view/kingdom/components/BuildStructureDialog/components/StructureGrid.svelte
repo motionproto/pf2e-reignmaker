@@ -151,11 +151,11 @@
   
   .selection-header {
     background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(0.5000rem);
+    backdrop-filter: blur(0.5rem);
     padding: var(--space-24);
     border-bottom: 1px solid var(--border-default);
-    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.2);
-    min-height: 5.6250rem;
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+    min-height: 5.625rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -262,7 +262,7 @@
         
         &:hover:not(:disabled) {
           background: var(--color-amber-light);
-          box-shadow: 0 0.1250rem 0.5000rem rgba(251, 191, 36, 0.3);
+          box-shadow: 0 0.125rem 0.5rem rgba(251, 191, 36, 0.3);
         }
         
         &:disabled {

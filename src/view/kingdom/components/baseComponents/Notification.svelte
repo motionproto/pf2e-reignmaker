@@ -92,7 +92,7 @@
       overflow: hidden;
       
       &.emphasis {
-         border-left-width: 0.3750rem;
+         border-left-width: 0.375rem;
       }
       
       &.compact {
@@ -246,8 +246,8 @@
          }
          
          &:focus {
-            outline: 0.1250rem solid currentColor;
-            outline-offset: 0.1250rem;
+            outline: 0.125rem solid currentColor;
+            outline-offset: 0.125rem;
             border-radius: var(--radius-sm);
          }
       }

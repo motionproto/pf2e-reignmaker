@@ -207,7 +207,7 @@
       font-weight: var(--font-weight-medium);
       text-transform: uppercase;
       color: var(--color-orange);
-      letter-spacing: 0.0500rem;
+      letter-spacing: 0.05rem;
     }
     
     .preview-text {
@@ -219,7 +219,7 @@
   
   .toggle-icon {
     position: absolute;
-    right: 1.2500rem;
+    right: 1.25rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--color-amber-light);

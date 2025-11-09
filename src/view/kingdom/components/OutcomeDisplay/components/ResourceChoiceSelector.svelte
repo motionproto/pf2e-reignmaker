@@ -121,7 +121,7 @@
 
   .resource-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(7.5000rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
     gap: var(--space-12);
     margin-bottom: var(--space-12);
   }
@@ -142,7 +142,7 @@
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--color-green, #22c55e);
-      transform: translateY(-0.1250rem);
+      transform: translateY(-0.125rem);
     }
     
     &.selected {

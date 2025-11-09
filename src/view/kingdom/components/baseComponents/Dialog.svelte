@@ -123,7 +123,7 @@
   @keyframes dialogSlideIn {
     from {
       opacity: 0;
-      transform: translateY(-1.2500rem);
+      transform: translateY(-1.25rem);
     }
     to {
       opacity: 1;
@@ -203,7 +203,7 @@
     font-weight: var(--font-weight-medium);
     cursor: pointer;
     transition: all var(--transition-base);
-    min-width: 5.0000rem;
+    min-width: 5rem;
   }
   
   .dialog-button:disabled {
@@ -224,7 +224,7 @@
   
   .dialog-button-primary:focus {
     outline: 2px solid var(--border-strong);
-    outline-offset: 0.1250rem;
+    outline-offset: 0.125rem;
   }
   
   .dialog-button-secondary {

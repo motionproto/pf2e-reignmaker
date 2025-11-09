@@ -116,7 +116,7 @@
     &.selected {
       border-color: var(--color-amber);
       background: rgba(251, 191, 36, 0.1);
-      box-shadow: 0 0 0 0.1250rem rgba(251, 191, 36, 0.3);
+      box-shadow: 0 0 0 0.125rem rgba(251, 191, 36, 0.3);
     }
     
     &.in-progress {
@@ -133,7 +133,8 @@
       cursor: pointer; // Allow clicking to deselect
     }
     
-    &:hover: not(.selected):not(.in-progress):not(.locked) { transform: translateY(-0.1250rem);
+    &:hover:not(.selected):not(.in-progress):not(.locked) {
+      transform: translateY(-0.125rem);
       border-color: var(--border-strong);
     }
   }

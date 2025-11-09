@@ -211,20 +211,20 @@
       transition: all var(--transition-fast);
       cursor: pointer;
       text-align: left;
-      min-width: 12.5000rem;
+      min-width: 12.5rem;
       width: auto;
       
       &:hover:not(.disabled):not(.rolling) {
         background: rgba(255, 255, 255, 0.06);
         border-color: var(--border-strong);
-        transform: translateY(-0.1250rem);
-        box-shadow: 0 0.2500rem 0.7500rem rgba(0, 0, 0, 0.2);
+        transform: translateY(-0.125rem);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
       }
       
       &.selected {
         background: rgba(255, 255, 255, 0.12);
         border-color: var(--border-strong);
-        box-shadow: 0 0 1.0000rem rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 1rem rgba(255, 255, 255, 0.15);
         opacity: 1;
       }
       

@@ -66,7 +66,7 @@
     font-weight: var(--font-weight-medium);
     font-size: var(--font-xs);
     text-transform: uppercase;
-    letter-spacing: 0.0500rem;
+    letter-spacing: 0.05rem;
     white-space: nowrap;
     
     i {
@@ -107,7 +107,7 @@
     }
     
     &.active {
-      border-width: 0.1250rem;
+      border-width: 0.125rem;
       
       &.criticalSuccess {
         background: rgba(34, 197, 94, 0.2);

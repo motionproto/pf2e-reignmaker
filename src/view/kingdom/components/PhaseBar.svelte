@@ -230,19 +230,19 @@
     justify-content: flex-start;
     align-items: center;
     gap: 0;
-    max-width: 56.2500rem;
+    max-width: 56.25rem;
   }
   
   .phase-connector {
-    width: 1.8750rem;
-    height: 0.1250rem;
+    width: 1.875rem;
+    height: 0.125rem;
     background: rgba(180, 170, 150, 0.3);
     transition: background 0.3s ease;
   }
   
   .phase-connector.completed {
     background: #6e6e6e;
-    box-shadow: 0 0 0.2500rem rgba(85, 85, 85, 0.4);
+    box-shadow: 0 0 0.25rem rgba(85, 85, 85, 0.4);
   }
 
   .phase-item {
@@ -255,15 +255,15 @@
     border-radius: var(--radius-xl);
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 6.2500rem;
+    min-width: 6.25rem;
     position: relative;
     color: var(--text-primary);
   }
 
   .phase-item:hover {
     background: var(--btn-secondary-hover);
-    transform: translateY(-0.1250rem);
-    box-shadow: 0 0.2500rem 0.5000rem rgba(0, 0, 0, 0.2);
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
     border-color: var(--border-strong);
   }
 
@@ -288,14 +288,14 @@
   .phase-item.selected::after {
     content: '';
     position: absolute;
-    bottom: -0.3750rem;
+    bottom: -0.375rem;
     left: 50%;
     transform: translateX(-50%);
     width: 80%;
     height: 0.1875rem;
     background: #fff;  /* Always white underline for selection */
     border-radius: var(--radius-sm);
-    box-shadow: 0 0.1250rem 0.2500rem rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0.125rem 0.25rem rgba(255, 255, 255, 0.4);
     transition: all 0.3s ease;
     z-index: 10; /* Ensure it's on top */
   }
@@ -308,10 +308,10 @@
   /* Active indicator dot for when active but not selected */
   .active-indicator {
     position: absolute;
-    top: -0.3750rem;
-    right: -0.3750rem;
-    width: 0.7500rem;
-    height: 0.7500rem;
+    top: -0.375rem;
+    right: -0.375rem;
+    width: 0.75rem;
+    height: 0.75rem;
     background: #fff;
     border: 2px solid var(--color-dark-bg, #18181b);
     border-radius: 50%;
@@ -365,13 +365,13 @@
   /* Animation for active phase when not selected */
   @keyframes pulse {
     0% {
-      box-shadow: 0 0.2500rem 0.2500rem rgba(255, 20, 20, 0.4);
+      box-shadow: 0 0.25rem 0.25rem rgba(255, 20, 20, 0.4);
     }
     50% {
-      box-shadow: 0 0.2500rem 1.2500rem rgba(255, 20, 20, 0.8);
+      box-shadow: 0 0.25rem 1.25rem rgba(255, 20, 20, 0.8);
     }
     100% {
-      box-shadow: 0 0.2500rem 0.2500rem rgba(255, 20, 20, 0.4);
+      box-shadow: 0 0.25rem 0.25rem rgba(255, 20, 20, 0.4);
     }
   }
 
@@ -559,7 +559,7 @@
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     white-space: nowrap;
-    box-shadow: 0 0.1250rem 0.5000rem rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
     animation: fade-in-out 5s ease-in-out forwards;
     z-index: 100;
   }
@@ -584,7 +584,7 @@
   }
 
   /* Responsive design */
-  @media (max-width: 48.0000rem) { .phase-bar { padding: var(--space-8);
+  @media (max-width: 48rem) { .phase-bar { padding: var(--space-8);
     }
     
     .phase-bar-inner {
@@ -593,7 +593,7 @@
     }
 
     .phase-item {
-      min-width: 5.0000rem;
+      min-width: 5rem;
       padding: var(--space-6) var(--space-8);
     }
 
@@ -606,10 +606,10 @@
     }
     
     .active-indicator {
-      width: 0.5000rem;
-      height: 0.5000rem;
-      top: -0.1250rem;
-      right: -0.1250rem;
+      width: 0.5rem;
+      height: 0.5rem;
+      top: -0.125rem;
+      right: -0.125rem;
     }
     
     .lock-button {

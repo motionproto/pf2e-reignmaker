@@ -146,7 +146,7 @@
    
    .stat-value.editable:focus {
       outline: 2px solid var(--color-primary);
-      outline-offset: 0.1250rem;
+      outline-offset: 0.125rem;
    }
    
    .edit-icon {
@@ -167,7 +167,7 @@
    }
    
    .stat-edit-input {
-      width: 5.0000rem;
+      width: 5rem;
       padding: var(--space-4) var(--space-8);
       border: 1px solid var(--border-primary);
       border-radius: var(--radius-md);
@@ -196,8 +196,8 @@
    
    .save-btn,
    .cancel-btn {
-      width: 1.5000rem;
-      height: 1.5000rem;
+      width: 1.5rem;
+      height: 1.5rem;
       border: 1px solid var(--border-default);
       background: var(--bg-surface);
       border-radius: var(--radius-md);

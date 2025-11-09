@@ -130,7 +130,7 @@
     color: var(--text-secondary);
     margin-bottom: var(--space-8);
     text-transform: uppercase;
-    letter-spacing: 0.0500rem;
+    letter-spacing: 0.05rem;
   }
   
   .notifications-list {
@@ -142,7 +142,7 @@
   .notification {
     display: flex;
     align-items: center;
-    gap: .var(--space-24);
+    gap: var(--space-24);
     padding: var(--space-8) var(--space-10) var(--space-8) var(--space-2);
     background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-xs);
@@ -152,7 +152,7 @@
     
     &:hover {
       background: rgba(255, 255, 255, 0.04);
-      transform: translateX(0.1250rem);
+      transform: translateX(0.125rem);
     }
     
     &.outcome-criticalSuccess {
@@ -192,8 +192,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.5000rem;
-    height: 1.5000rem;
+    width: 1.5rem;
+    height: 1.5rem;
     flex-shrink: 0;
     font-size: var(--font-sm);
   }
@@ -202,7 +202,7 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: .var(--space-24);
+    gap: var(--space-24);
     flex-wrap: wrap;
     line-height: 1.4;
   }
