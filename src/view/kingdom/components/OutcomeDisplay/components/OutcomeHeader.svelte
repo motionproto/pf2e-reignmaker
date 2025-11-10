@@ -58,7 +58,7 @@
 </script>
 
 <div class="resolution-header">
-  <div class="resolution-header-left">
+  <div class="resolution-header-left {outcomeProps.colorClass}">
     <i class={outcomeProps.icon}></i>
     <span>{outcomeProps.label}</span>
   </div>
@@ -104,6 +104,24 @@
       
       > span:first-of-type {
         text-transform: capitalize;
+      }
+      
+      // Success colors
+      &.critical-success {
+        color: var(--color-green);
+      }
+      
+      &.success {
+        color: var(--color-green);
+      }
+      
+      // Fail colors
+      &.failure {
+        color: var(--color-orange);
+      }
+      
+      &.critical-failure {
+        color: var(--color-red);
       }
     }
     

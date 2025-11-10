@@ -22,7 +22,7 @@
   let unlockStartTime: number | null = null;
   let unlockAnimationFrame: number | null = null;
   let unlockTarget: 'lock' | TurnPhase | null = null; // What we're unlocking for
-  let justUnlocked = false; // Flag to prevent click event after successful unlock
+  let didUnlockThisInteraction = false; // Flag to prevent click event after successful unlock
   
   // Lock warning animation state (for quick clicks on locked phases)
   let lockWarningActive = false;
@@ -45,6 +45,9 @@
 
   // Press-and-hold unlock handlers
   function handleUnlockStart(target: 'lock' | TurnPhase) {
+    // Reset the flag at the start of each new interaction
+    didUnlockThisInteraction = false;
+    
     // Don't start if already unlocked
     if (!$phaseViewLocked) return;
     
@@ -100,10 +103,7 @@
       }
       
       // Set flag to prevent click event from re-locking
-      justUnlocked = true;
-      setTimeout(() => {
-        justUnlocked = false;
-      }, 100); // Short delay to ignore the click event
+      didUnlockThisInteraction = true;
       
       // Reset state
       cancelUnlock();
@@ -134,9 +134,8 @@
   
   // Lock toggle handler (only for locking, not unlocking)
   function handleLockToggle() {
-    // Ignore click if we just unlocked via press-and-hold
-    if (justUnlocked) {
-
+    // Ignore click if we just unlocked via press-and-hold in this interaction
+    if (didUnlockThisInteraction) {
       return;
     }
     
@@ -150,31 +149,34 @@
 
 <div class="phase-bar">
   <div class="phase-bar-inner">
-    {#each phases as phase, index (phase.id)}
-      <!-- Phase connector line (before phase except for first) -->
-      {#if index > 0}
-        <div class="phase-connector"></div>
-      {/if}
-      
-      <!-- Phase button -->
-      <button
-        class="phase-item"
-        class:active={phase.id === $currentPhase}
-        class:selected={phase.id === selectedPhase}
-        class:completed={isPhaseCompleted(phase.id, $currentPhase)}
-        on:mousedown={() => handleUnlockStart(phase.id)}
-        on:mouseup={handleUnlockEnd}
-        on:mouseleave={cancelUnlock}
-        on:click={() => handlePhaseClick(phase.id)}
-        title={phase.fullName}
-      >
-        <!-- Active indicator dot -->
-        {#if phase.id === $currentPhase && phase.id !== selectedPhase}
-          <span class="active-indicator"></span>
+    <!-- Wrapper for phase buttons to constrain their max width -->
+    <div class="phases-wrapper">
+      {#each phases as phase, index (phase.id)}
+        <!-- Phase connector line (before phase except for first) -->
+        {#if index > 0}
+          <div class="phase-connector"></div>
         {/if}
-        <span class="phase-label">{phase.label}</span>
-      </button>
-    {/each}
+        
+        <!-- Phase button -->
+        <button
+          class="phase-item"
+          class:active={phase.id === $currentPhase}
+          class:selected={phase.id === selectedPhase}
+          class:completed={isPhaseCompleted(phase.id, $currentPhase)}
+          on:mousedown={() => handleUnlockStart(phase.id)}
+          on:mouseup={handleUnlockEnd}
+          on:mouseleave={cancelUnlock}
+          on:click={() => handlePhaseClick(phase.id)}
+          title={phase.fullName}
+        >
+          <!-- Active indicator dot -->
+          {#if phase.id === $currentPhase && phase.id !== selectedPhase}
+            <span class="active-indicator"></span>
+          {/if}
+          <span class="phase-label">{phase.label}</span>
+        </button>
+      {/each}
+    </div>
     
     <!-- Lock icon button with progress ring -->
     <div class="lock-button-wrapper">
@@ -204,7 +206,7 @@
         on:click={handleLockToggle}
         title={$phaseViewLocked ? 'Press and hold to unlock' : 'Click to lock to current phase'}
       >
-        <i class="fas {$phaseViewLocked ? 'fa-lock' : 'fa-unlock'}"></i>
+        <i class="fas {$phaseViewLocked ? 'fa-link' : 'fa-unlink'}"></i>
       </button>
       
       <!-- Unlock message - small red text below -->
@@ -227,7 +229,14 @@
 
   .phase-bar-inner {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+
+  .phases-wrapper {
+    display: flex;
     align-items: center;
     gap: 0;
     max-width: 56.25rem;
@@ -418,7 +427,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: var(--space-16);
     background: transparent;
     border: none;
     outline: none;
@@ -448,8 +456,9 @@
     color: var(--color-secondary-light);
   }
   
-  .lock-button:not(.locked) i {
-    transform: rotate(-30deg);
+  .lock-button i {
+    border: none;
+    outline: none;
   }
   
   /* Lock button wrapper for progress ring positioning */
@@ -459,6 +468,9 @@
     align-items: center;
     justify-content: center;
     margin-left: auto;
+    margin-right: var(--space-24);
+    border: none;
+    outline: none;
   }
 
   /* Radial progress ring */

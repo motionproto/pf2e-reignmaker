@@ -263,12 +263,13 @@
    
    .notification-rm-impact {
       font-weight: var(--font-weight-bold);
-      padding: var(--space-12);
-      padding-top: var(--space-8);
+      padding: var(--space-8) var(--space-16);
+      padding-bottom: var(--space-12);
       margin-top: 0;
       border-top: 1px solid var(--border-subtle);
       font-size: var(--font-md);
       text-align: left;
+      width: 100%;
    }
    
    // Action buttons - inline variant

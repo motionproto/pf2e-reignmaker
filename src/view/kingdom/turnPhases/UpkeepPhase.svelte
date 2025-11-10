@@ -270,7 +270,7 @@
                   class="unfed-dropdown-toggle" 
                   on:click={() => showUnfedSettlements = !showUnfedSettlements}
                >
-                  {showUnfedSettlements ? 'Hide' : 'Show'} unfed settlements ({unfedSettlements.length})
+                  {showUnfedSettlements ? 'Hide' : 'Show'} Unfed ({unfedSettlements.length})
                   <i class="fas fa-chevron-{showUnfedSettlements ? 'up' : 'down'}"></i>
                </button>
                
@@ -278,8 +278,10 @@
                   <div class="unfed-settlements-list">
                      {#each unfedSettlements as settlement}
                         <div class="unfed-settlement-item">
-                           <span class="settlement-name">{settlement.name}</span>
-                           <span class="settlement-tier">({settlement.tier})</span>
+                           <div class="settlement-info">
+                              <span class="settlement-name">{settlement.name}</span>
+                              <span class="settlement-tier">{settlement.tier}</span>
+                           </div>
                            <span class="settlement-unrest">+{settlement.unrest} Unrest</span>
                         </div>
                      {/each}
@@ -964,36 +966,45 @@
       flex-direction: column;
       gap: var(--space-6);
       padding: var(--space-8);
-      background: var(--overlay);
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-faint);
+      background: transparent;
+      width: 100%;
    }
    
    .unfed-settlement-item {
       display: flex;
-      align-items: baseline;
+      align-items: flex-start;
       justify-content: space-between;
-      gap: var(--space-8);
+      gap: var(--space-12);
       padding: var(--space-6) var(--space-8);
       background: var(--surface-accent-low);
       border-radius: var(--radius-sm);
       font-size: var(--font-md);
+      width: 100%;
+      
+      .settlement-info {
+         display: flex;
+         flex-direction: column;
+         gap: var(--space-2);
+         flex: 1;
+      }
       
       .settlement-name {
-         flex: 1;
          color: var(--text-primary);
          font-weight: var(--font-weight-medium);
+         line-height: 1.2;
       }
       
       .settlement-tier {
          color: var(--text-tertiary);
-         font-size: var(--font-md);
+         font-size: var(--font-sm);
+         line-height: 1.2;
       }
       
       .settlement-unrest {
          color: var(--color-red);
          font-weight: var(--font-weight-semibold);
-         font-size: var(--font-);
+         font-size: var(--font-md);
+         flex-shrink: 0;
       }
    }
    

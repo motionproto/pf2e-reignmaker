@@ -69,7 +69,7 @@
       color: var(--text-primary);
       cursor: pointer;
       display: flex;
-      align-items: flex-end;
+      align-items: baseline;
       gap: var(--space-12);
       min-height: 2.5rem;
       transition: background var(--transition-fast);

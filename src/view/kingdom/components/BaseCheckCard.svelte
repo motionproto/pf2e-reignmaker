@@ -304,7 +304,7 @@
   {#if !expandable || expanded}
     <div class="card-details" class:no-border={!expandable}>
       <!-- Description -->
-      <CheckCardDescription {description} />
+      <CheckCardDescription {description} {brief} />
       
       <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
       <slot name="pre-completion-content"></slot>

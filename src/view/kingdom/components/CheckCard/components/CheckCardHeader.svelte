@@ -55,9 +55,6 @@
           </div>
         </div>
       </div>
-      {#if brief}
-        <span class="card-brief" class:unavailable={!available}>{brief}</span>
-      {/if}
     </div>
   </button>
 {:else}
@@ -84,9 +81,6 @@
           {/if}
         </div>
       </div>
-      {#if brief}
-        <span class="card-brief" class:unavailable={!available}>{brief}</span>
-      {/if}
     </div>
   </div>
 {/if}

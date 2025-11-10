@@ -772,9 +772,6 @@
     padding: 0;
     border-radius: var(--radius-md);
     border: 2px solid var(--border-strong);
-    background: linear-gradient(135deg, 
-      rgba(0, 0, 0, 0.4),
-      var(--overlay-low));
     overflow: hidden;
     box-shadow: 0 0.25rem 1rem var(--overlay-low);
     position: relative;
@@ -790,62 +787,20 @@
       }
     }
     
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 0.25rem;
-      background: linear-gradient(90deg, 
-        transparent,
-        currentColor,
-        transparent);
-      opacity: 0.6;
-    }
-    
     &.critical-success {
-      background: linear-gradient(135deg,
-        var(--surface-success),
-        var(--surface-success-lower));
       border-color: var(--border-success-medium);
-      
-      &::before {
-        color: var(--color-green);
-      }
     }
     
     &.success {
-      background: linear-gradient(135deg,
-        var(--surface-success-low),
-        rgba(34, 197, 94, 0.02));
       border-color: var(--border-success-subtle);
-      
-      &::before {
-        color: var(--color-green-light);
-      }
     }
     
     &.failure {
-      background: linear-gradient(135deg,
-        rgba(249, 115, 22, 0.1),
-        rgba(249, 115, 22, 0.02));
       border-color: var(--border-accent-subtle);
-      
-      &::before {
-        color: var(--color-orange);
-      }
     }
     
     &.critical-failure {
-      background: linear-gradient(135deg,
-        var(--surface-primary),
-        var(--surface-primary-lower));
       border-color: var(--border-primary-medium);
-      
-      &::before {
-        color: var(--color-red);
-      }
     }
   }
   
