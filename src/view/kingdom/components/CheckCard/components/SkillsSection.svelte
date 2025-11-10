@@ -2,8 +2,11 @@
   import { createEventDispatcher } from 'svelte';
   import SkillTag from './SkillTag.svelte';
   import { getSkillBonuses } from '../../../../../services/pf2e';
+  import { structuresService } from '../../../../../services/structures';
+  import type { ConditionalSkillGroup, SkillCondition } from '../../../../../types/player-actions';
   
   export let skills: Array<{ skill: string; description?: string }> = [];
+  export let conditionalSkills: ConditionalSkillGroup[] | undefined = undefined;
   export let skillSectionTitle: string = 'Choose Skill:';
   export let canPerformMore: boolean = true;
   export let resolved: boolean = false;
@@ -14,8 +17,35 @@
   
   const dispatch = createEventDispatcher();
   
-  // Get skill bonuses for all skills in this section
-  $: skillBonuses = getSkillBonuses(skills.map(s => s.skill));
+  /**
+   * Check if a skill condition is met
+   */
+  function isConditionMet(condition: SkillCondition): boolean {
+    if (condition.type === 'structure') {
+      return structuresService.checkStructureCondition(condition.family, condition.minTier);
+    }
+    return false;
+  }
+  
+  /**
+   * Filter skills based on conditional requirements
+   */
+  $: availableSkills = conditionalSkills
+    ? skills.filter(skillOption => {
+        // Check if this skill has any conditional requirements
+        for (const group of conditionalSkills) {
+          if (group.skills.includes(skillOption.skill)) {
+            // This skill requires a condition to be met
+            return isConditionMet(group.condition);
+          }
+        }
+        // No conditional requirement = always available
+        return true;
+      })
+    : skills;
+  
+  // Get skill bonuses for all available skills
+  $: skillBonuses = getSkillBonuses(availableSkills.map(s => s.skill));
   
   function handleExecute(event: CustomEvent) {
     dispatch('execute', event.detail);
@@ -52,7 +82,7 @@
       {/if}
     {/if}
     
-    {#each skills as skillOption}
+    {#each availableSkills as skillOption}
       {@const isDisabled = !canPerformMore || resolved}
       {@const bonus = skillBonuses.get(skillOption.skill) ?? null}
       <SkillTag

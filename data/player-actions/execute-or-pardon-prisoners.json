@@ -4,6 +4,17 @@
   "category": "uphold-stability",
   "brief": "Deal with imprisoned unrest through justice",
   "description": "Pass judgment on those who have threatened the kingdom's stability, choosing between mercy and justice",
+  "conditionalSkills": [
+    {
+      "condition": {
+        "type": "structure",
+        "family": "justice",
+        "minTier": 3
+      },
+      "skills": ["diplomacy", "religion", "performance"],
+      "action": "pardonPrisoners"
+    }
+  ],
   "skills": [
     {
       "skill": "intimidation",
@@ -63,11 +74,11 @@
       ]
     },
     "failure": {
-      "description": "Remove none",
+      "description": "The prisoners you choose are inconsequential.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Remove none; gain 1 current Unrest (riot, scandal, martyrdom)",
+      "description": "Gain 1 Unrest from riot, scandal, or martyrdom)",
       "modifiers": [
         {
           "type": "static",

@@ -6,6 +6,8 @@
 </script>
 
 <script lang="ts">
+  import AdjustmentBadges from './AdjustmentBadges.svelte';
+  
   export let outcomes: PossibleOutcome[];
   export let skill: string | undefined = undefined;
   export let showTitle: boolean = true;
@@ -82,32 +84,7 @@
             <!-- Show modifiers if present -->
             {#if outcome.modifiers && outcome.modifiers.length > 0}
               <div class="outcome-modifiers">
-                {#each outcome.modifiers as modifier}
-                  <span class="modifier-badge">
-                    {#if modifier.type === 'choice'}
-                      <!-- Handle choice modifiers: player chooses from multiple resources -->
-                      {@const action = modifier.negative ? 'Lose' : 'Gain'}
-                      {@const resourceList = modifier.resources
-                        .map(r => r.charAt(0).toUpperCase() + r.slice(1))
-                        .join(', ')
-                        .replace(/, ([^,]*)$/, ', or $1')}
-                      {@const valueStr = typeof modifier.value === 'object' 
-                        ? modifier.value.formula 
-                        : typeof modifier.value === 'string'
-                        ? modifier.value
-                        : String(modifier.value)}
-                      {action} {valueStr} {resourceList}
-                    {:else if modifier.type === 'dice'}
-                      <!-- Handle dice modifiers -->
-                      {@const resourceName = modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)}
-                      {modifier.negative ? 'Lose' : 'Gain'} {modifier.formula} {resourceName}
-                    {:else if modifier.type === 'static'}
-                      <!-- Handle static modifiers -->
-                      {@const resourceName = modifier.resource.charAt(0).toUpperCase() + modifier.resource.slice(1)}
-                      {modifier.value > 0 ? '+' : ''}{modifier.value} {resourceName}
-                    {/if}
-                  </span>
-                {/each}
+                <AdjustmentBadges modifiers={outcome.modifiers} />
               </div>
             {/if}
           </div>
@@ -271,23 +248,6 @@
   }
   
   .outcome-modifiers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-8);
     margin-top: var(--space-6);
-  }
-  
-  .modifier-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: var(--space-4) var(--space-8);
-    border-radius: var(--radius-lg);
-    font-size: var(--font-sm);
-    font-weight: var(--font-weight-medium);
-    line-height: 1.3;
-    white-space: nowrap;
-    background: var(--hover-low);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-medium);
   }
 </style>

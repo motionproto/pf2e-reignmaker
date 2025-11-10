@@ -95,6 +95,7 @@
             description={action.description}
             brief={action.brief || ''}
             skills={action.skills}
+            conditionalSkills={action.conditionalSkills}
             outcomes={[
               {
                 type: 'criticalSuccess',

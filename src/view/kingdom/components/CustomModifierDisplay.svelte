@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ActiveModifier } from '../../../models/Modifiers';
-  import StateChanges from './OutcomeDisplay/components/StateChanges.svelte';
+  import { isStaticModifier } from '../../../types/modifiers';
+  import AdjustmentBadges from './AdjustmentBadges.svelte';
   
   export let modifier: ActiveModifier;
   
@@ -18,25 +19,31 @@
     
     // Check if it's dangerous (negative effects OR positive unrest)
     const hasDangerous = mod.modifiers?.some(m => {
-      // For unrest, positive values are dangerous (increasing unrest is bad)
+      // Only check StaticModifier (has definite values)
+      if (!isStaticModifier(m)) return false;
+      
+      // For regular unrest, positive values are dangerous (increasing unrest is bad)
+      // Note: imprisonedUnrest is NOT dangerous - it's controlled/contained
       if (m.resource === 'unrest') {
-        if (typeof m.value === 'number' && m.value > 0) return true;
-        if (typeof m.value === 'string' && !m.value.startsWith('-')) return true;
+        return m.value > 0;
       }
+      
       // For other resources, negative values are dangerous
-      if (typeof m.value === 'number' && m.value < 0) return true;
-      if (typeof m.value === 'string' && m.value.startsWith('-')) return true;
-      return false;
+      return m.value < 0;
     });
     if (hasDangerous) tags.push('dangerous');
     
-    // Check if it's beneficial (positive effects, but not unrest)
+    // Check if it's beneficial (positive effects, but not unrest types)
     const hasBeneficial = mod.modifiers?.some(m => {
-      // Unrest increases are never beneficial
+      // Only check StaticModifier (has definite values)
+      if (!isStaticModifier(m)) return false;
+      
+      // Regular unrest changes and imprisoned unrest increases are not beneficial
+      // (Though imprisoned unrest is not dangerous either - it's neutral/controlled)
       if (m.resource === 'unrest') return false;
-      if (typeof m.value === 'number' && m.value > 0) return true;
-      if (typeof m.value === 'string' && !m.value.startsWith('-')) return true;
-      return false;
+      if (m.resource === 'imprisonedUnrest' && m.value > 0) return false;
+      
+      return m.value > 0;
     });
     if (hasBeneficial && !hasDangerous) tags.push('beneficial');
     
@@ -48,17 +55,6 @@
     return tags;
   }
   
-  // Convert modifiers to stateChanges format for StateChanges component
-  $: stateChanges = modifier.modifiers?.reduce((acc, mod) => {
-    if (mod.resource && mod.value !== undefined) {
-      const resource = mod.resource;
-      const value = typeof mod.value === 'string' 
-        ? parseInt(mod.value.replace(/[^-\d]/g, '')) 
-        : mod.value;
-      acc[resource] = value;
-    }
-    return acc;
-  }, {} as Record<string, number>) || {};
 </script>
 
 <div class="custom-modifier-display">
@@ -74,21 +70,17 @@
   </div>
   
   <div class="modifier-details">
-    {#if modifier.description}
-      <div class="modifier-description">
-        {modifier.description}
-      </div>
-    {/if}
-    
-    {#if Object.keys(stateChanges).length > 0}
-      <StateChanges 
-        {stateChanges} 
-        modifiers={modifier.modifiers}
-        resolvedDice={new Map()}
-        manualEffects={[]}
-        outcome="applied"
-      />
-    {/if}
+    <div class="modifier-content">
+      {#if modifier.description}
+        <div class="modifier-description">
+          {modifier.description}
+        </div>
+      {/if}
+      
+      {#if modifier.modifiers && modifier.modifiers.length > 0}
+        <AdjustmentBadges modifiers={modifier.modifiers} />
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -104,7 +96,7 @@
   
   .modifier-header {
     padding: var(--space-12) var(--space-16);
-    background: var(--overlay-low);
+    background: var(--surface-low);
     border-bottom: 1px solid var(--border-default);
   }
   
@@ -163,12 +155,17 @@
   
   .modifier-details {
     padding: var(--space-12) var(--space-16);
+  }
+  
+  .modifier-content {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-12);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-16);
   }
   
   .modifier-description {
+    flex: 1;
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: 1.5;

@@ -164,8 +164,15 @@ export async function createUpkeepPhaseController() {
         }
       };
       
-      // Sort settlements by tier (descending: 4 → 3 → 2 → 1)
-      const sortedSettlements = [...settlements].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      // Sort settlements by priority: capital first, then by tier (descending: 4 → 3 → 2 → 1)
+      const sortedSettlements = [...settlements].sort((a, b) => {
+        // Capital always comes first
+        if (a.isCapital && !b.isCapital) return -1;
+        if (!a.isCapital && b.isCapital) return 1;
+        
+        // Otherwise sort by tier (highest first)
+        return tierToNumber(b.tier) - tierToNumber(a.tier);
+      });
       
       let availableFood = currentFood;
       let totalUnrest = 0;
@@ -173,17 +180,21 @@ export async function createUpkeepPhaseController() {
       const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
       
       // Feed settlements in priority order
+      // Always consume available food even if not enough to fully feed
       for (const settlement of sortedSettlements) {
         const config = SettlementTierConfig[settlement.tier];
         const required = config ? config.foodConsumption : 0;
         const tierNum = tierToNumber(settlement.tier);
         
         if (availableFood >= required) {
+          // Fully fed - consume food and mark as fed
           availableFood -= required;
           settlement.wasFedLastTurn = true;
           fedSettlements.push(`${settlement.name} (${settlement.tier})`);
 
         } else {
+          // Not enough food - consume what's available and mark as unfed
+          availableFood = 0;  // Consume all remaining food
           settlement.wasFedLastTurn = false;
           totalUnrest += tierNum;
           unfedSettlements.push({ name: settlement.name, tier: settlement.tier, tierNum, unrest: tierNum });
@@ -500,7 +511,15 @@ export async function createUpkeepPhaseController() {
       const { claimedSettlements: claimedSettlementsStore } = await import('../stores/KingdomStore');
       const claimedSettlementsData = get(claimedSettlementsStore);
       
-      const sortedSettlements = [...claimedSettlementsData].sort((a, b) => tierToNumber(b.tier) - tierToNumber(a.tier));
+      // Sort by priority: capital first, then by tier (descending)
+      const sortedSettlements = [...claimedSettlementsData].sort((a, b) => {
+        // Capital always comes first
+        if (a.isCapital && !b.isCapital) return -1;
+        if (!a.isCapital && b.isCapital) return 1;
+        
+        // Otherwise sort by tier (highest first)
+        return tierToNumber(b.tier) - tierToNumber(a.tier);
+      });
       let availableFood = currentFood;
       const unfedSettlements: Array<{name: string, tier: string, tierNum: number, unrest: number}> = [];
       let unfedUnrest = 0;
@@ -511,8 +530,11 @@ export async function createUpkeepPhaseController() {
         const tierNum = tierToNumber(settlement.tier);
         
         if (availableFood >= required) {
+          // Fully fed - consume food
           availableFood -= required;
         } else {
+          // Not enough food - consume what's available and mark as unfed
+          availableFood = 0;  // Consume all remaining food
           unfedSettlements.push({ 
             name: settlement.name, 
             tier: settlement.tier, 

@@ -22,6 +22,8 @@
   import { getSkillBonuses } from '../../../services/pf2e';
   import { kingdomData } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../actors/KingdomActor';
+  import { structuresService } from '../../../services/structures';
+  import type { ConditionalSkillGroup, SkillCondition } from '../../../types/player-actions';
   
   // Sub-components
   import CheckCardHeader from './CheckCard/components/CheckCardHeader.svelte';
@@ -41,6 +43,7 @@
   export let name: string;
   export let description: string;
   export let skills: Array<{ skill: string; description?: string }> = [];
+  export let conditionalSkills: ConditionalSkillGroup[] | undefined = undefined;
   export let outcomes: Array<{
     type: 'criticalSuccess' | 'success' | 'failure' | 'criticalFailure';
     description: string;
@@ -128,9 +131,36 @@
   // ✅ READ applied state from resolution (synced across all clients via KingdomActor)
   $: outcomeApplied = resolution?.effectsApplied || false;
   
+  /**
+   * Check if a skill condition is met
+   */
+  function isConditionMet(condition: SkillCondition): boolean {
+    if (condition.type === 'structure') {
+      return structuresService.checkStructureCondition(condition.family, condition.minTier);
+    }
+    return false;
+  }
+  
+  /**
+   * Filter skills based on conditional requirements
+   */
+  $: availableSkills = conditionalSkills
+    ? skills.filter(skillOption => {
+        // Check if this skill has any conditional requirements
+        for (const group of conditionalSkills) {
+          if (group.skills.includes(skillOption.skill)) {
+            // This skill requires a condition to be met
+            return isConditionMet(group.condition);
+          }
+        }
+        // No conditional requirement = always available
+        return true;
+      })
+    : skills;
+  
   // Inject "applicable-lore" as a global option for all checks
   $: skillsWithLore = [
-    ...skills,
+    ...availableSkills,
     { skill: 'applicable lore', description: 'relevant expertise' }
   ];
   

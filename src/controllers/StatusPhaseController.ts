@@ -13,11 +13,12 @@ import {
   initializePhaseSteps,
   completePhaseStepByIndex
 } from './shared/PhaseControllerHelpers';
-import { TurnPhase } from '../actors/KingdomActor';
+import { TurnPhase, type KingdomData } from '../actors/KingdomActor';
 import { StatusPhaseSteps } from './shared/PhaseStepConstants';
 import { createDefaultTurnState } from '../models/TurnState';
-import { SettlementTier } from '../models/Settlement';
+import { SettlementTier, type Settlement } from '../models/Settlement';
 import { logger } from '../utils/Logger';
+import type { BuildProject } from '../services/buildQueue/BuildProject';
 
 export async function createStatusPhaseController() {
   return {
@@ -115,11 +116,11 @@ export async function createStatusPhaseController() {
         return;
       }
 
-      await actor.updateKingdomData(k => {
+      await actor.updateKingdomData((k: KingdomData) => {
         if (!k.buildQueue || k.buildQueue.length === 0) return;
         
         const beforeCount = k.buildQueue.length;
-        k.buildQueue = k.buildQueue.filter(p => !p.isCompleted);
+        k.buildQueue = k.buildQueue.filter((p: BuildProject) => !p.isCompleted);
         const removed = beforeCount - k.buildQueue.length;
         
         if (removed > 0) {
@@ -140,7 +141,7 @@ export async function createStatusPhaseController() {
       }
       
       // Clear non-storable resources (lumber, stone, ore)
-      await actor.updateKingdomData((kingdom) => {
+      await actor.updateKingdomData((kingdom: KingdomData) => {
         const decayedLumber = kingdom.resources.lumber || 0;
         const decayedStone = kingdom.resources.stone || 0;
         const decayedOre = kingdom.resources.ore || 0;
@@ -161,7 +162,7 @@ export async function createStatusPhaseController() {
     async initializeFame() {
       const actor = getKingdomActor();
       if (actor) {
-        await actor.updateKingdomData((kingdom) => {
+        await actor.updateKingdomData((kingdom: KingdomData) => {
           kingdom.fame = 1;
         });
 
@@ -200,7 +201,7 @@ export async function createStatusPhaseController() {
       // Calculate base unrest sources
       const hexUnrest = Math.floor(kingdom.size / hexesPerUnrest);
       const metropolisCount = kingdom.settlements.filter(
-        s => s.tier === SettlementTier.METROPOLIS
+        (s: Settlement) => s.tier === SettlementTier.METROPOLIS
       ).length;
       
       const totalBaseUnrest = hexUnrest + metropolisCount;
@@ -213,9 +214,10 @@ export async function createStatusPhaseController() {
           displayModifiers.push({
             id: 'status-size-unrest',
             name: 'Kingdom Size',
-            description: `Your kingdom's ${kingdom.size} hexes generate unrest as it becomes harder to govern`,
+            description: `Larger kingdoms are harder to govern (hexes ÷ ${hexesPerUnrest}, rounded down)`,
             sourceType: 'structure',
             modifiers: [{
+              type: 'static',
               resource: 'unrest',
               value: hexUnrest,
               duration: 'permanent'
@@ -230,6 +232,7 @@ export async function createStatusPhaseController() {
             description: `${metropolisCount} ${metropolisCount === 1 ? 'metropolis' : 'metropolises'} create additional governance complexity`,
             sourceType: 'structure',
             modifiers: [{
+              type: 'static',
               resource: 'unrest',
               value: metropolisCount,
               duration: 'permanent'
@@ -237,7 +240,7 @@ export async function createStatusPhaseController() {
           });
         }
         
-        await actor.updateKingdomData((k) => {
+        await actor.updateKingdomData((k: KingdomData) => {
           k.unrest = (k.unrest || 0) + totalBaseUnrest;
           
           // Store display modifiers in turnState for Status phase UI
@@ -308,7 +311,7 @@ export async function createStatusPhaseController() {
               continue;
             }
 
-            await actor.updateKingdomData((kingdom) => {
+            await actor.updateKingdomData((kingdom: KingdomData) => {
               if (!kingdom.resources) {
                 kingdom.resources = {};
               }
@@ -349,7 +352,7 @@ export async function createStatusPhaseController() {
       if (!kingdom.turnState) {
 
         // Fresh initialization (no migration needed - data is already clean)
-        await actor.updateKingdomData((k) => {
+        await actor.updateKingdomData((k: KingdomData) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
 
@@ -360,7 +363,7 @@ export async function createStatusPhaseController() {
       if (kingdom.turnState.turnNumber !== currentTurn) {
 
 
-        await actor.updateKingdomData((k) => {
+        await actor.updateKingdomData((k: KingdomData) => {
           k.turnState = createDefaultTurnState(currentTurn);
         });
 
@@ -419,7 +422,7 @@ export async function createStatusPhaseController() {
           };
           
           // Convert regular unrest to imprisoned unrest
-          await actor.updateKingdomData(k => {
+          await actor.updateKingdomData((k: KingdomData) => {
             k.unrest = (k.unrest || 0) - amountToConvert;
             
             // Add notification to Status phase display
@@ -434,11 +437,13 @@ export async function createStatusPhaseController() {
                 sourceType: 'structure',
                 modifiers: [
                   {
+                    type: 'static',
                     resource: 'unrest',
                     value: -amountToConvert,
                     duration: 'immediate'
                   },
                   {
+                    type: 'static',
                     resource: 'imprisonedUnrest',
                     value: amountToConvert,
                     duration: 'immediate'
@@ -459,7 +464,7 @@ export async function createStatusPhaseController() {
           logger.info(`⚖️ [StatusPhaseController] Donjon converted ${amountToConvert} unrest to imprisoned`);
         } else {
           // No capacity - add notification
-          await actor.updateKingdomData(k => {
+          await actor.updateKingdomData((k: KingdomData) => {
             if (k.turnState?.statusPhase) {
               if (!k.turnState.statusPhase.displayModifiers) {
                 k.turnState.statusPhase.displayModifiers = [];

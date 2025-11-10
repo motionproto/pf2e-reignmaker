@@ -13,6 +13,34 @@ export interface ActionSkill {
 }
 
 /**
+ * Condition types for conditional skills
+ */
+export type SkillConditionType = 'structure';
+
+/**
+ * Structure-based condition for skills
+ */
+export interface StructureCondition {
+  type: 'structure';
+  family: string;
+  minTier: number;
+}
+
+/**
+ * Union type for all skill conditions
+ */
+export type SkillCondition = StructureCondition;
+
+/**
+ * Conditional skill group
+ */
+export interface ConditionalSkillGroup {
+  condition: SkillCondition;
+  skills: string[];
+  action?: string;  // Optional action name for documentation
+}
+
+/**
  * Action category types
  */
 export type ActionCategory = 
@@ -72,6 +100,7 @@ export interface PlayerAction {
   brief: string;
   description: string;
   skills?: ActionSkill[];
+  conditionalSkills?: ConditionalSkillGroup[];  // Optional conditional skill requirements
   effects: ActionEffects;
   failureCausesUnrest?: boolean;
   costs?: ActionCosts;

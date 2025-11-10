@@ -13,6 +13,7 @@
     label: string;
     icon: string;
     colorClass: string;
+    surfaceClass: string;
   }
   
   function getOutcomeDisplayProps(outcome: string): OutcomeProps {
@@ -21,31 +22,36 @@
         return { 
           label: 'Critical Success', 
           icon: 'fas fa-trophy', 
-          colorClass: 'critical-success' 
+          colorClass: 'critical-success',
+          surfaceClass: 'surface-success'
         };
       case 'success':
         return { 
           label: 'Success', 
           icon: 'fas fa-check-circle', 
-          colorClass: 'success' 
+          colorClass: 'success',
+          surfaceClass: 'surface-success'
         };
       case 'failure':
         return { 
           label: 'Failure', 
           icon: 'fas fa-exclamation-triangle', 
-          colorClass: 'failure' 
+          colorClass: 'failure',
+          surfaceClass: 'surface-warning'
         };
       case 'criticalFailure':
         return { 
           label: 'Critical Failure', 
           icon: 'fas fa-skull-crossbones', 
-          colorClass: 'critical-failure' 
+          colorClass: 'critical-failure',
+          surfaceClass: 'surface-primary'
         };
       default:
         return { 
           label: outcome, 
           icon: 'fas fa-question-circle', 
-          colorClass: 'neutral' 
+          colorClass: 'neutral',
+          surfaceClass: 'surface-neutral'
         };
     }
   }
@@ -57,7 +63,7 @@
   }
 </script>
 
-<div class="resolution-header">
+<div class="resolution-header {outcomeProps.surfaceClass}">
   <div class="resolution-header-left {outcomeProps.colorClass}">
     <i class={outcomeProps.icon}></i>
     <span>{outcomeProps.label}</span>
@@ -88,8 +94,24 @@
     align-items: center;
     justify-content: space-between;
     padding: var(--space-12) var(--space-16);
-    background: var(--overlay);
     border-bottom: 1px solid var(--border-faint);
+    
+    // Surface color variants
+    &.surface-success {
+      background: var(--surface-success-low);
+    }
+    
+    &.surface-warning {
+      background: var(--surface-warning-low);
+    }
+    
+    &.surface-primary {
+      background: var(--surface-primary-low);
+    }
+    
+    &.surface-neutral {
+      background: var(--overlay);
+    }
     
     .resolution-header-left {
       display: flex;

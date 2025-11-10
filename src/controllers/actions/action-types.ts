@@ -63,6 +63,7 @@ export interface PlayerActionJson {
   brief?: string;
   description: string;
   skills: SkillOption[];
+  conditionalSkills?: import('../../types/player-actions').ConditionalSkillGroup[];
   effects: {
     criticalSuccess?: ActionEffectJson;
     success?: ActionEffectJson;
@@ -86,6 +87,7 @@ export interface PlayerAction {
   brief?: string; // Brief one-line description
   description: string; // Full description
   skills: SkillOption[];
+  conditionalSkills?: import('../../types/player-actions').ConditionalSkillGroup[];
   criticalSuccess: ActionEffect;
   success: ActionEffect;
   failure: ActionEffect;

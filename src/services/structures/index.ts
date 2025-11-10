@@ -638,6 +638,33 @@ export class StructuresService {
   }
   
   /**
+   * Check if a structure condition is met across all settlements
+   * Used for conditional skill availability
+   */
+  checkStructureCondition(family: string, minTier: number): boolean {
+    const state = get(kingdomData);
+    if (!state?.settlements) return false;
+    
+    for (const settlement of state.settlements) {
+      for (const structureId of settlement.structureIds) {
+        // Skip damaged structures
+        if (this.isStructureDamaged(settlement, structureId)) {
+          continue;
+        }
+        
+        const structure = this.getStructure(structureId);
+        if (structure && structure.category.toLowerCase() === family.toLowerCase()) {
+          if (structure.tier >= minTier) {
+            return true;
+          }
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  /**
    * Convert settlement tier to number
    */
   private getSettlementTierNumber(tier: string): number {

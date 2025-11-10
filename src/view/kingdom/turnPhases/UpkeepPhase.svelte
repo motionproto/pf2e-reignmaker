@@ -611,8 +611,9 @@
          background: linear-gradient(135deg,
             rgba(35, 35, 40, 0.4),
             rgba(40, 40, 45, 0.3));
-         border-color: var(--border-faint);
-         opacity: 0.9;
+         border-color: var(--color-green);
+         border-width: 2px;
+         opacity: 1;
       }
    }
    
