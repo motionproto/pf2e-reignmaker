@@ -29,6 +29,7 @@
    import ModifiersTab    from './tabs/ModifiersTab.svelte';
    import NotesTab        from './tabs/NotesTab.svelte';
    import SettingsTab     from './tabs/SettingsTab.svelte';
+   import VisualsTab      from './tabs/VisualsTab.svelte';
    
    import type { KingdomApp } from './KingdomApp';
 
@@ -236,6 +237,8 @@
                <ModifiersTab />
             {:else if $uiState.selectedTab === 'notes'}
                <NotesTab />
+            {:else if $uiState.selectedTab === 'visuals'}
+               <VisualsTab />
             {/if}
          </div>
       </div>
@@ -283,7 +286,7 @@
    .kingdom-header {
       flex: 0 0 auto;
       padding: var(--space-8);
-      background: var(--surface-lower);
+      background: var(--empty);
       border-radius: var(--radius-lg);
       color: var(--text-primary);
    }
@@ -297,14 +300,14 @@
 
    .kingdom-sidebar {
       flex: 0 0 15.625rem;
-      background: var(--surface-lowest);
+      background: var(--empty);
       border-radius: var(--radius-lg);
       overflow-y: auto;
    }
 
    .kingdom-main {
       flex: 1;
-      background: var(--surface-lowest);
+      background: var(--empty);
       border-radius: var(--radius-lg);
       padding: var(--space-8);
       overflow-y: auto;

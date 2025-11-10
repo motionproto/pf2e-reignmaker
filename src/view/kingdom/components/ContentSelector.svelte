@@ -13,7 +13,8 @@
       { id: 'modifiers', label: 'Modifiers', icon: 'fa-magic' },
       { id: 'territory', label: 'Territory', icon: 'fa-map' },
       { id: 'structures', label: 'Structures', icon: 'fa-hammer' },
-      { id: 'notes', label: 'Notes', icon: 'fa-book' }
+      { id: 'notes', label: 'Notes', icon: 'fa-book' },
+      { id: 'visuals', label: 'Visuals', icon: 'fa-palette' }
    ];
    
    function selectTab(tabId: string) {

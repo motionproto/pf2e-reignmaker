@@ -80,8 +80,6 @@
   
   // Only show faction switcher for GMs
   $: isGM = game.user?.isGM ?? false;
-  
-  // No dropdown state needed - using native select
 
   // Fame adjustment
   function adjustFame(delta: number) {
@@ -220,32 +218,34 @@
       <!-- Resource Dashboard -->
       <div class="stat-group-wrapper">
         {#if isGM && $availableFactions.all.length > 1}
-          <div class="faction-selector-wrapper">
-            <label for="faction-select" class="faction-label">Faction</label>
-            <select 
-              id="faction-select"
-              class="faction-select"
-              bind:value={$currentFaction}
-            >
-              {#if $availableFactions.withTerritories.length > 0}
-                <optgroup label="With Territories">
-                  {#each $availableFactions.withTerritories as faction}
-                    <option value={faction}>
-                      {getFactionDisplayName(faction)}
-                    </option>
-                  {/each}
-                </optgroup>
-              {/if}
-              {#if $availableFactions.withoutTerritories.length > 0}
-                <optgroup label="Without Territories">
-                  {#each $availableFactions.withoutTerritories as faction}
-                    <option value={faction}>
-                      {getFactionDisplayName(faction)}
-                    </option>
-                  {/each}
-                </optgroup>
-              {/if}
-            </select>
+          <div class="gm-only-panel">
+            <div class="form-field-vertical faction-selector">
+              <label for="faction-select">Faction</label>
+              <select 
+                id="faction-select"
+                class="faction-select"
+                bind:value={$currentFaction}
+              >
+                {#if $availableFactions.withTerritories.length > 0}
+                  <optgroup label="With Territories">
+                    {#each $availableFactions.withTerritories as faction}
+                      <option value={faction}>
+                        {getFactionDisplayName(faction)}
+                      </option>
+                    {/each}
+                  </optgroup>
+                {/if}
+                {#if $availableFactions.withoutTerritories.length > 0}
+                  <optgroup label="Without Territories">
+                    {#each $availableFactions.withoutTerritories as faction}
+                      <option value={faction}>
+                        {getFactionDisplayName(faction)}
+                      </option>
+                    {/each}
+                  </optgroup>
+                {/if}
+              </select>
+            </div>
           </div>
         {/if}
         <h4 class="stat-group-header">Turn {$currentTurn}</h4>
@@ -341,9 +341,8 @@
                 size="compact"
               />
           </div>
-          <div class="stat-item">
-            <label for="war-status-select" class="stat-label">War Status:</label
-            >
+          <div class="stat-item form-field-vertical">
+            <label for="war-status-select" class="stat-label">War Status</label>
             <select
               id="war-status-select"
               class="kingdom-select"
@@ -508,10 +507,12 @@
     flex: 1;
     text-shadow: var(--text-shadow-sm);
     font-family: var(--font-serif-rm);
+    line-height: 1.3;
   }
 
   .kingdom-name-header h3.faction-title {
     font-size: var(--font-xl);
+    line-height: 1.4;
   }
 
   .kingdom-name-header input {
@@ -569,12 +570,11 @@
    }
 
   .stat-group-card {
-    background: var(--surface-lower);
+    background: var(--surface-lowest);
     border-radius: var(--radius-xl);
-    padding: 0 0 var(--space-8) 0;
     box-shadow: var(--shadow-card);
     border: 1px solid var(--border-subtle);
-    margin: 0 var(--space-8) 0 var(--space-8);
+    margin: 0 var(--space-8) var(--space-16) var(--space-8);
     overflow: visible;
   }
 
@@ -585,43 +585,22 @@
     font-weight: var(--font-weight-bold);
     letter-spacing: 0.025rem;
     background: transparent;
-    margin-bottom: var(--space-24);
     margin-top: var(--space-12);
     font-family: var(--font-serif-rm);
   }
 
-  .faction-selector-wrapper {
-    display: flex;
-    align-items: center;
-    gap: var(--space-8);
-    padding: 0 var(--space-20);
-    margin-top: var(--space-24);
-    margin-bottom: var(--space-8);
+  .gm-only-panel {
+    background: var(--surface-special-low);
+    border-radius: var(--radius-lg);
+    padding: var(--space-16);
+    margin: var(--space-24) var(--space-8) var(--space-8) var(--space-8);
+     border: 1px solid var(--border-subtle);
   }
-  
-  .faction-label {
-    font-size: var(--font-sm);
-    color: var(--text-muted);
-    font-weight: var(--font-weight-medium);
-    white-space: nowrap;
+
+  .faction-selector {
+    /* No additional styling needed - uses form-field-vertical from global */
   }
-  
-  .faction-select {
-    padding: var(--space-4) var(--space-8);
-    background: var(--surface-lowest);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    color: var(--text-primary);
-    font-size: var(--font-sm);
-    cursor: pointer;
-    min-width: 9.375rem;
-  }
-  
-  .faction-select:focus {
-    outline: none;
-    border-color: var(--border-primary);
-    box-shadow: var(--shadow-focus);
-  }
+
 
   .stat-item {
     display: flex;
@@ -631,13 +610,14 @@
     border-bottom: 1px solid var(--border-subtle);
   }
 
+
   .stat-item:last-child {
     border-bottom: none;
   }
 
   /* Zebra striping for better row differentiation */
   .stat-item:nth-child(even) {
-    background: var(--overlay-lower);
+    background: var(--overlay-low);
   }
 
   .stat-item label,
@@ -669,25 +649,6 @@
 
   .stat-value.positive {
     color: var(--color-success);
-  }
-
-  .kingdom-select {
-    padding: var(--space-4) var(--space-8);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    background: var(--surface-lowest);
-    color: var(--text-primary);
-    font-size: var(--font-sm);
-    font-weight: var(--font-weight-medium);
-    cursor: pointer;
-    width: auto;
-    min-width: fit-content;
-  }
-
-  .kingdom-select:focus {
-    outline: none;
-    border-color: var(--border-primary);
-    box-shadow: var(--shadow-focus);
   }
 
   /* Diplomatic Support Card - matches ResourceCard compact style */

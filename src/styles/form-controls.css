@@ -1,12 +1,53 @@
 /* Form Controls - Global Styling for Dropdowns, Selects, Inputs */
 /* Ensures consistent, legible styling across the application */
 
+/* ========================================
+   Form Field Layouts
+   ======================================== */
+
+/* Vertical Layout - Label Above Input/Select */
+/* Usage: Add .form-field-vertical to container div wrapping label + input/select */
+#pf2e-reignmaker .form-field-vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+#pf2e-reignmaker .form-field-vertical label {
+  margin-bottom: 0;
+  font-size: var(--font-md);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Horizontal Layout - Label Beside Input/Select */
+/* Usage: Add .form-field-horizontal to container div wrapping label + input/select */
+#pf2e-reignmaker .form-field-horizontal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+#pf2e-reignmaker .form-field-horizontal label {
+  margin-bottom: 0;
+  font-size: var(--font-md);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+/* ========================================
+   Form Control Styling
+   ======================================== */
+
 /* Select/Dropdown Styling */
 #pf2e-reignmaker select {
   /* Base styling */
   padding: 0.5rem 0.75rem;
   min-height: 2.5rem;
-  background: var(--overlay);
+  background: var(--surface-lowest);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md, 0.25rem);
   color: var(--text-primary, #f8f8f8);
@@ -19,6 +60,8 @@
   /* Prevent clipping */
   overflow: visible !important;
   box-sizing: border-box !important;
+  /* Override browser default highlight color */
+  accent-color: var(--color-primary, #d14343);
 }
 
 #pf2e-reignmaker select:hover:not(:disabled) {
@@ -31,15 +74,20 @@
   box-shadow: 0 0 0 2px rgba(209, 67, 67, 0.2);
 }
 
+#pf2e-reignmaker select:focus-visible {
+  outline: 2px solid var(--color-primary, #d14343);
+  outline-offset: 2px;
+}
+
 #pf2e-reignmaker select:disabled {
   opacity: var(--opacity-disabled, 0.6);
   cursor: not-allowed;
 }
 
 /* Option Styling - Critical for Legibility */
-/* These styles ensure dropdown options are always readable */
+/* Note: Most option styling is controlled by browser/OS and cannot be overridden */
+/* These styles apply where browsers allow (limited support) */
 #pf2e-reignmaker select option {
-  /* Force dark background with light text for all options */
   background-color: #1a1a1a !important;
   color: #f8f8f8 !important;
   padding: 0.5rem 0.75rem !important;
@@ -47,13 +95,6 @@
   font-size: var(--font-md, 1rem) !important;
   font-family: var(--font-sans-rm) !important;
   line-height: 1.5 !important;
-}
-
-/* Hover/Selected state for options */
-#pf2e-reignmaker select option:hover,
-#pf2e-reignmaker select option:checked {
-  background-color: #2a2a2a !important;
-  color: #ffffff !important;
 }
 
 /* Disabled options */
