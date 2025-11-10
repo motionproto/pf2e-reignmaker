@@ -309,11 +309,6 @@
       <!-- Slot for content before completion tracking (e.g., CommerceTierInfo) -->
       <slot name="pre-completion-content"></slot>
       
-      <!-- Completion notifications (actions only, stacked results from all players) -->
-      {#if showCompletions}
-        <CompletionNotifications actionId={id} />
-      {/if}
-      
       {#if resolved && resolution}
         <!-- After resolution: Show OutcomeDisplay -->
         <OutcomeDisplay
@@ -369,6 +364,11 @@
             <span class="requirements-label">Requires:</span>
             <span class="requirements-text">{missingRequirements.join(', ')}</span>
           </div>
+        {/if}
+        
+        <!-- Completion notifications (actions only, stacked results from all players) -->
+        {#if showCompletions}
+          <CompletionNotifications actionId={id} />
         {/if}
         
         <!-- Skills section - only show when not resolved or when action (actions can have multiple resolutions) -->
@@ -597,23 +597,24 @@
     
     &.no-border {
       border-top: none;
+      padding-top: 0;
     }
   }
   
   .skill-options {
-    margin: var(--space-20) 0;
+    margin: var(--space-16) 0;
     
     .skill-options-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: var(--space-16);
+      margin-bottom: var(--space-12);
       gap: var(--space-16);
       flex-wrap: wrap;
     }
     
     .skill-options-title {
-      font-size: var(--font-xl);
+      font-size: var(--font-lg);
       font-weight: var(--font-weight-semibold);
       line-height: 1.4;
       color: var(--text-primary);

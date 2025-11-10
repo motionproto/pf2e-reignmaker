@@ -65,7 +65,7 @@
   <div class="action-category">
     <div class="category-header">
       <SectionHeader icon={category.icon} name={category.name} />
-      <p class="category-description">{category.description}</p>
+      <!-- <p class="category-description">{category.description}</p> -->
     </div>
 
     <div class="actions-list">
@@ -161,17 +161,17 @@
 
 <style lang="scss">
   .action-category {
-    background: var(--color-gray-900);
+   // background: var(--surface-lowest);
     border-radius: var(--radius-md);
-    border: 1px solid var(--border-accent-subtle);
-    padding: var(--space-20);
+    //border: 1px solid var(--border-subtle);
+    padding:0 var(--space-20);
   }
 
   .category-header {
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
-    margin-bottom: var(--space-20);
+    margin-bottom: var(--space-16);
 
     .category-description {
       margin: 0;

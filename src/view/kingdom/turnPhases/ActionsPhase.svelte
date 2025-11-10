@@ -1177,8 +1177,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: var(--space-20);
-    padding-bottom: var(--space-20);
+    gap: var(--space-32);
     padding-right: var(--space-4);
   }
 </style>

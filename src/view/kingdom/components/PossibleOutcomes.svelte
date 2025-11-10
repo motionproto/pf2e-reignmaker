@@ -127,7 +127,7 @@
     font-weight: var(--font-weight-semibold);
     line-height: 1.3;
     color: var(--text-primary);
-    margin-bottom: var(--space-12);
+    margin-bottom: var(--space-4);
     display: flex;
     align-items: center;
     gap: var(--space-8);
@@ -260,14 +260,14 @@
     line-height: 1.4;
     letter-spacing: 0.025rem;
     text-transform: uppercase;
-    margin-bottom: var(--space-24);
+    margin-bottom: var(--space-8);
   }
   
   .outcome-description {
     color: var(--text-secondary);
     font-size: var(--font-md);
     line-height: ver(--line-height-snug);
-    margin-bottom: var(--space-24);
+    margin-bottom: var(--space-8);
   }
   
   .outcome-modifiers {
@@ -280,8 +280,8 @@
   .modifier-badge {
     display: inline-flex;
     align-items: center;
-    padding: var(--space-24) var(--space-24);
-    border-radius: var(--radius-full);
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-lg);
     font-size: var(--font-sm);
     font-weight: var(--font-weight-medium);
     line-height: 1.3;

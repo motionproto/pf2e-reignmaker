@@ -231,7 +231,7 @@
   .outcome-card {
     display: flex;
     flex-direction: column;
-    padding: var(--space-12);
+    padding: var(--space-8);
     background: rgba(255, 255, 255, 0.03);
     border: 2px solid var(--border-medium);
     border-radius: var(--radius-md);
@@ -239,7 +239,7 @@
     min-width: 12.5rem;
     width: auto;
     text-align: left;
-    min-height: 3.375rem; /* Ensure consistent height */
+    min-height: 2.25rem; /* Reduced height for more compact badges */
     
     &:not(.static):not(.rolled):not(:disabled) {
       cursor: pointer;

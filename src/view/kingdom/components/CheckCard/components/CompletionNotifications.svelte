@@ -89,45 +89,36 @@
 </script>
 
 {#if completions.length > 0}
-  <div class="completion-notifications">
-    <div class="notifications-label">
-      Completed this turn:
-    </div>
-    <div class="notifications-list">
-      {#each completions as completion, index (index)}
-        <div class="notification outcome-{completion.outcome}">
-          <div class="notification-icon">
-            <i class="fas {getOutcomeIcon(completion.outcome)}"></i>
-          </div>
-          <div class="notification-content">
-            <span class="actor-name">{completion.actorName}</span>
-            {#if completion.skillName}
-              <span class="skill-name">({completion.skillName})</span>
-            {/if}
-            <span class="separator">—</span>
-            <span class="outcome-text">{formatOutcome(completion.outcome)}</span>
-            <span class="separator">—</span>
-            <span class="effects">{formatEffects(completion.stateChanges)}</span>
-          </div>
+  <div class="notifications-label">
+    Completed this turn:
+  </div>
+  <div class="notifications-list">
+    {#each completions as completion, index (index)}
+      <div class="notification outcome-{completion.outcome}">
+        <div class="notification-icon">
+          <i class="fas {getOutcomeIcon(completion.outcome)}"></i>
         </div>
-      {/each}
-    </div>
+        <div class="notification-content">
+          <span class="actor-name">{completion.actorName}</span>
+          {#if completion.skillName}
+            <span class="skill-name">({completion.skillName})</span>
+          {/if}
+          <span class="separator">—</span>
+          <span class="outcome-text">{formatOutcome(completion.outcome)}</span>
+          <span class="separator">—</span>
+          <span class="effects">{formatEffects(completion.stateChanges)}</span>
+        </div>
+      </div>
+    {/each}
   </div>
 {/if}
 
 <style lang="scss">
-  .completion-notifications {
-    margin-bottom: var(--space-16);
-    padding: var(--space-12);
-    background: var(--overlay-low);
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-medium);
-  }
-  
   .notifications-label {
     font-size: var(--font-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-secondary);
+    margin-top: var(--space-16);
     margin-bottom: var(--space-8);
     text-transform: uppercase;
     letter-spacing: 0.05rem;
@@ -142,11 +133,11 @@
   .notification {
     display: flex;
     align-items: center;
-    gap: var(--space-24);
-    padding: var(--space-8) var(--space-10) var(--space-8) var(--space-2);
+    gap: var(--space-6);
+    padding: var(--space-6) 0 var(--space-6) 0;
     background: rgba(255, 255, 255, 0.02);
     border-radius: var(--radius-xs);
-    border-left: 3px solid;
+    border-left: 4px solid;
     font-size: var(--font-sm);
     transition: all 0.2s ease;
     
@@ -192,10 +183,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.25rem;
     flex-shrink: 0;
-    font-size: var(--font-sm);
+    font-size: var(--font-md);
   }
   
   .notification-content {

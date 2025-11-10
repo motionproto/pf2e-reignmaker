@@ -16,70 +16,119 @@
   const dispatch = createEventDispatcher();
   
   function handleClick(event: Event) {
+    if (!expandable) return;
     event.preventDefault();
     event.stopPropagation();
     dispatch('toggle');
   }
 </script>
 
-<button 
-  class="card-header-btn"
-  on:click={handleClick}
-  disabled={false}
->
-  <div class="card-header-content">
-    <div class="card-title-row">
-      <strong class="card-name" class:unavailable={!available}>{name}</strong>
-      <div class="card-badges">
-        {#if statusBadge}
-          <span class="status-badge {statusBadge.type}">{statusBadge.text}</span>
-        {/if}
-        {#if traits && traits.length > 0}
-          <div class="card-traits">
-            {#each traits as trait}
-              <span class="trait-badge">{trait}</span>
-            {/each}
+{#if expandable}
+  <button 
+    class="card-header-btn"
+    class:expanded
+    on:click={handleClick}
+    disabled={false}
+  >
+    <div class="card-header-content">
+      <div class="card-title-row">
+        <strong class="card-name" class:unavailable={!available}>{name}</strong>
+        <div class="card-badges">
+          {#if statusBadge}
+            <span class="status-badge {statusBadge.type}">{statusBadge.text}</span>
+          {/if}
+          {#if traits && traits.length > 0}
+            <div class="card-traits">
+              {#each traits as trait}
+                <span class="trait-badge">{trait}</span>
+              {/each}
+            </div>
+          {/if}
+          {#if !available && missingRequirements.length > 0}
+            <span class="requirements-badge">
+              <i class="fas fa-exclamation-triangle"></i>
+              {missingRequirements.join(', ')}
+            </span>
+          {/if}
+          <div class="expand-icon-wrapper">
+            <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
           </div>
-        {/if}
-        {#if !available && missingRequirements.length > 0}
-          <span class="requirements-badge">
-            <i class="fas fa-exclamation-triangle"></i>
-            {missingRequirements.join(', ')}
-          </span>
-        {/if}
-        {#if expandable}
-          <i class="fas fa-chevron-{expanded ? 'down' : 'right'} expand-icon"></i>
-        {/if}
+        </div>
       </div>
+      {#if brief}
+        <span class="card-brief" class:unavailable={!available}>{brief}</span>
+      {/if}
     </div>
-    {#if brief}
-      <span class="card-brief" class:unavailable={!available}>{brief}</span>
-    {/if}
+  </button>
+{:else}
+  <div class="card-header-static">
+    <div class="card-header-content">
+      <div class="card-title-row">
+        <strong class="card-name" class:unavailable={!available}>{name}</strong>
+        <div class="card-badges">
+          {#if statusBadge}
+            <span class="status-badge {statusBadge.type}">{statusBadge.text}</span>
+          {/if}
+          {#if traits && traits.length > 0}
+            <div class="card-traits">
+              {#each traits as trait}
+                <span class="trait-badge">{trait}</span>
+              {/each}
+            </div>
+          {/if}
+          {#if !available && missingRequirements.length > 0}
+            <span class="requirements-badge">
+              <i class="fas fa-exclamation-triangle"></i>
+              {missingRequirements.join(', ')}
+            </span>
+          {/if}
+        </div>
+      </div>
+      {#if brief}
+        <span class="card-brief" class:unavailable={!available}>{brief}</span>
+      {/if}
+    </div>
   </div>
-</button>
+{/if}
 
 <style lang="scss">
-  .card-header-btn {
+  .card-header-btn,
+  .card-header-static {
     display: flex;
     width: 100%;
     background: transparent;
     border: none;
     margin: 0;
     padding: var(--space-12) var(--space-16);
-    cursor: pointer;
     text-align: left;
-    transition: background 0.2s ease;
     box-sizing: border-box;
     flex-shrink: 0;
     min-height: min-content;
+  }
+  
+  .card-header-btn {
+    cursor: pointer;
+    transition: background 0.2s ease;
+    
+    &.expanded {
+      background: var(--surface-low);
+    }
     
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.02);
+      background: var(--overlay-lower);
+    }
+    
+    &.expanded:hover:not(:disabled) {
+      background: var(--surface-high);
     }
     
     &:disabled {
       cursor: not-allowed;
     }
+  }
+  
+  .card-header-static {
+    cursor: default;
   }
   
   .card-header-content {
@@ -135,6 +184,15 @@
           }
         }
         
+        .expand-icon-wrapper {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: var(--space-16);
+          height: var(--space-16);
+          flex-shrink: 0;
+        }
+        
         .expand-icon {
           color: var(--text-tertiary);
           transition: transform 0.3s ease;
@@ -169,7 +227,7 @@
       align-items: center;
       gap: var(--space-4);
       padding: var(--space-2) var(--space-8);
-      background: rgba(100, 116, 139, 0.1);
+      background: var(--surface-low);
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
       font-size: var(--font-sm);

@@ -266,6 +266,8 @@
   --space-16: 1rem;       /* 16px */
   --space-20: 1.25rem;    /* 20px */
   --space-24: 1.5rem;     /* 24px */
+  --space-32: 2rem;       /* 32px */
+  --space-48: 3rem;       /* 48px */
   
   /* Font Families - Module-scoped to avoid Foundry conflicts */
   --font-sans-rm:   "Signika", "Montserrat", 'Segoe UI', 'Open Sans', 'Helvetica Neue', sans-serif;
