@@ -6,15 +6,22 @@
  */
 
 import type { GameCommand } from '../../types/modifiers';
+import type { SpecialEffect } from '../../types/special-effects';
+import {
+  createAttitudeEffect,
+  createStructureDamageEffect,
+  createHexRemovalEffect,
+  createResourceGainEffect
+} from '../../types/special-effects';
 
 /**
- * Execute game commands from outcome data and convert results to specialEffects
+ * Execute game commands from outcome data and convert results to structured specialEffects
  * 
  * @param gameCommands - Array of game commands to execute
- * @returns Array of specialEffects strings for OutcomeDisplay
+ * @returns Array of structured SpecialEffect objects for OutcomeDisplay
  */
-export async function executeGameCommands(gameCommands: GameCommand[]): Promise<string[]> {
-  const specialEffects: string[] = [];
+export async function executeGameCommands(gameCommands: GameCommand[]): Promise<SpecialEffect[]> {
+  const specialEffects: SpecialEffect[] = [];
   
   console.log('🎮 [executeGameCommands] Received gameCommands:', gameCommands);
   
@@ -35,13 +42,11 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
         (command as any).count
       );
       
-      // Convert damage results to specialEffects format
+      // Convert damage results to structured effects
       if (result.success && result.data?.damagedStructures) {
         for (const damaged of result.data.damagedStructures) {
-          // OutcomeDisplay expects: structure_damaged:structureId:settlementId
-          // IDs are used for lookup, names are for logging only
           specialEffects.push(
-            `structure_damaged:${damaged.structureId}:${damaged.settlementId}`
+            createStructureDamageEffect(damaged.name, damaged.settlement)
           );
         }
       }
@@ -52,9 +57,11 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
         cmd.dice
       );
       
-      // Convert removal results to specialEffects format
-      if (result.success && result.data?.message) {
-        specialEffects.push(result.data.message);
+      // Convert removal results to structured effects
+      if (result.success && result.data?.count) {
+        specialEffects.push(
+          createHexRemovalEffect(result.data.count)
+        );
       }
     } else if (command.type === 'adjustFactionAttitude') {
       const cmd = command as any;
@@ -68,9 +75,18 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
         }
       );
       
-      // Convert attitude change results to specialEffects format
-      if (result.success && result.data?.message) {
-        specialEffects.push(result.data.message);
+      // Convert attitude change results to structured effects
+      if (result.success && result.data?.factions) {
+        for (const faction of result.data.factions) {
+          specialEffects.push(
+            createAttitudeEffect(
+              faction.factionName,
+              faction.oldAttitude,
+              faction.newAttitude,
+              cmd.steps
+            )
+          );
+        }
       }
     } else if (command.type === 'chooseAndGainResource') {
       const cmd = command as any;
@@ -79,9 +95,11 @@ export async function executeGameCommands(gameCommands: GameCommand[]): Promise<
         cmd.amount
       );
       
-      // Convert resource gain results to specialEffects format
-      if (result.success && result.data?.message) {
-        specialEffects.push(result.data.message);
+      // Convert resource gain results to structured effects
+      if (result.success && result.data?.resource && result.data?.amount) {
+        specialEffects.push(
+          createResourceGainEffect(result.data.resource, result.data.amount)
+        );
       }
     }
     // Future command types will be handled here (claimHex, recruitArmy, etc.)

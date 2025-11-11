@@ -49,6 +49,9 @@
   import ShortageWarning from './components/ShortageWarning.svelte';
   import OutcomeActions from './components/OutcomeActions.svelte';
   import DebugResultSelector from './components/DebugResultSelector.svelte';
+  import SpecialEffectBadges from './components/SpecialEffectBadges.svelte';
+  import type { SpecialEffect } from '../../../../types/special-effects';
+  import { parseLegacyEffect } from '../../../../types/special-effects';
   
   // Props
   export let instance: ActiveCheckInstance | null = null;  // NEW: Full instance object for state access
@@ -59,7 +62,7 @@
   export let stateChanges: Record<string, any> | undefined = undefined;
   export let modifiers: any[] | undefined = undefined;
   export let manualEffects: string[] | undefined = undefined;
-  export let specialEffects: string[] | undefined = undefined;  // Special effects to parse (structure damage, etc.)
+  export let specialEffects: (string | SpecialEffect)[] | undefined = undefined;  // Special effects (structured or legacy strings)
   export const rerollEnabled: boolean = false;
   export const rerollLabel: string = "Reroll";
   export const rerollCount: number | undefined = undefined;
@@ -196,17 +199,29 @@
   // Get fame from kingdom state
   $: currentFame = $kingdomData?.fame || 0;
   
-  // Separate automated effects (specialEffects) from manual effects
-  $: parsedSpecialEffects = parseSpecialEffects(specialEffects);
-  $: automatedEffects = parsedSpecialEffects;  // Automated (already applied)
+  // Parse special effects (handles both new structured format and legacy strings)
+  $: structuredEffects = specialEffects?.map(effect => {
+    if (typeof effect === 'string') {
+      // Legacy string format - parse into structured effect
+      return parseLegacyEffect(effect);
+    } else {
+      // Already structured
+      return effect;
+    }
+  }) || [];
+  
+  // Separate legacy parsed string effects from new badge effects
+  $: legacyParsedEffects = parseSpecialEffects(
+    specialEffects?.filter(e => typeof e === 'string') as string[] | undefined
+  );
   $: effectiveManualEffects = manualEffects || [];  // Manual (requires GM action)
   
   // Debug logging
   $: {
     if (specialEffects && specialEffects.length > 0) {
       console.log('🔍 [OutcomeDisplay] Raw specialEffects:', specialEffects);
-      console.log('🔍 [OutcomeDisplay] Parsed specialEffects:', parsedSpecialEffects);
-      console.log('🔍 [OutcomeDisplay] Effective manual effects:', effectiveManualEffects);
+      console.log('🔍 [OutcomeDisplay] Structured effects:', structuredEffects);
+      console.log('🔍 [OutcomeDisplay] Legacy parsed effects:', legacyParsedEffects);
     }
   }
   
@@ -283,10 +298,29 @@
   // Determine if custom component requires resolution
   $: hasCustomComponent = customComponent !== null;
   $: customComponentResolved = !hasCustomComponent || (
-    choiceResult !== null && 
-    choiceResult.stateChanges !== undefined && 
-    Object.keys(choiceResult.stateChanges).length > 0
+    // Check if choiceResult has data (for modifiers-based custom components)
+    (choiceResult !== null && 
+     choiceResult.stateChanges !== undefined && 
+     Object.keys(choiceResult.stateChanges).length > 0) ||
+    // OR check if customComponentData has data (for metadata-only custom components like outfit-army)
+    (customComponentData && Object.keys(customComponentData).length > 0) ||
+    // OR check local customSelectionData
+    (customSelectionData && Object.keys(customSelectionData).length > 0)
   );
+  
+  // Debug logging for custom component resolution
+  $: if (hasCustomComponent) {
+    console.log('🔍 [OutcomeDisplay] Custom component validation:', {
+      hasCustomComponent,
+      customComponentResolved,
+      choiceResult,
+      customComponentData,
+      customSelectionData,
+      choiceResultHasData: choiceResult !== null && choiceResult.stateChanges !== undefined && Object.keys(choiceResult.stateChanges).length > 0,
+      customComponentDataHasData: customComponentData && Object.keys(customComponentData).length > 0,
+      customSelectionDataHasData: customSelectionData && Object.keys(customSelectionData).length > 0
+    });
+  }
   
   // Button visibility and state
   $: showCancelButton = showCancel && !applied && !isIgnored;
@@ -308,7 +342,8 @@
     const hasStateChanges = stateChanges && Object.keys(stateChanges).length > 0;
     const hasCustomData = customComponentData && Object.keys(customComponentData).length > 0;
     const hasChoiceResultData = choiceResult && Object.keys(choiceResult.stateChanges || {}).length > 0;
-    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData;
+    const hasSpecialEffects = specialEffects && specialEffects.length > 0;  // FIXED: Check for special effects
+    const hasContent = hasMessage || hasManualEffects || hasNumericModifiers || hasStateChanges || hasCustomData || hasChoiceResultData || hasSpecialEffects;
     
     const validationState = {
       applied,
@@ -655,6 +690,13 @@
 
     // Store raw custom selection data (e.g., selectedResource, selectedAmount, goldCost)
     customSelectionData = metadata;
+    
+    // ✅ Store in instance via helper (syncs to all clients)
+    if (instance) {
+      await updateInstanceResolutionState(instance.instanceId, {
+        customComponentData: metadata
+      });
+    }
 
     // Convert modifiers to stateChanges (like choices do)
     if (modifiers && modifiers.length > 0) {
@@ -674,7 +716,7 @@
 
     }
     
-    // Forward to parent (no instance state update)
+    // Forward to parent
     dispatch('customSelection', event.detail);
   }
   
@@ -715,6 +757,7 @@
   <div class="resolution-details">
     <OutcomeMessage effect={displayEffect} />
     <ShortageWarning {shortfallResources} />
+    <SpecialEffectBadges effects={structuredEffects} />
     <ChoiceButtons choices={effectiveChoices} {selectedChoice} {choicesResolved} on:select={handleChoiceSelect} />
     <ResourceSelector 
       {modifiers}
@@ -732,7 +775,7 @@
       {modifiers} 
       {resolvedDice} 
       manualEffects={effectiveManualEffects} 
-      automatedEffects={automatedEffects}
+      automatedEffects={legacyParsedEffects}
       outcome={effectiveOutcome} 
       hideResources={choiceResult ? Object.keys(choiceResult.stateChanges) : []}
       {customComponentData}

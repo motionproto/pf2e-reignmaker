@@ -1047,6 +1047,122 @@ Some gameplay mechanics cannot be automated and require manual intervention:
 
 ---
 
+---
+
+## Prepare/Commit Pattern
+
+**Status:** Active (2025-11-11)  
+**Purpose:** Enable preview of game command effects before execution
+
+### Overview
+
+The Prepare/Commit pattern allows game commands to display special effect badges (like "Collected 5 gp" or "Recruited Iron Guard") in the preview BEFORE the user clicks "Apply Result". This ensures users see exactly what will happen before committing to state changes.
+
+**Key Benefits:**
+- ✅ Preview accuracy - What you see is what you get
+- ✅ Clean cancellation - Just discard commit, no rollback needed
+- ✅ Single code path - No duplicate preview/execution logic
+
+### When to Use
+
+**✅ Use Prepare/Commit For:**
+- Pre-roll dialogs (data available before roll): `collect-stipend`, `recruit-unit`, `train-army`
+- Simple entity operations: `establish-settlement`, `found-settlement`, `disband-army`
+- Resource transfers to characters: `giveActorGold`
+
+**❌ Don't Use For:**
+- Post-roll user selection (use custom implementation)
+- Complex calculations (use custom implementation)
+- Actions needing custom UI components
+- Simple resource adjustments (use modifiers directly)
+
+### Implementation
+
+**Step 1: Update GameCommandsResolver Method**
+
+```typescript
+/**
+ * Your Command - Brief description
+ * REFACTORED: Uses prepare/commit pattern
+ */
+async yourCommand(param1: string): Promise<PreparedCommand> {
+  logger.info(`🎯 [yourCommand] PREPARING with ${param1}`);
+  
+  // PHASE 1: PREPARE - Validate & calculate (NO state changes!)
+  const actor = getKingdomActor();
+  if (!actor) {
+    throw new Error('No kingdom actor available');
+  }
+
+  const kingdom = actor.getKingdomData();
+  const capturedValue = calculateData(kingdom, param1);
+  
+  logger.info(`🎯 [yourCommand] PREPARED: Will apply ${capturedValue}`);
+
+  // PHASE 2: RETURN - Preview + commit closure
+  return {
+    specialEffect: {
+      type: 'resource',
+      message: `Action completed: ${capturedValue}`,
+      icon: 'fa-icon',
+      variant: 'positive'
+    },
+    commit: async () => {
+      logger.info(`🎯 [yourCommand] COMMITTING: Applying changes`);
+      
+      await updateKingdom(kingdom => {
+        kingdom.someData = capturedValue;
+      });
+      
+      logger.info(`✅ [yourCommand] Successfully applied changes`);
+    }
+  };
+}
+```
+
+**Step 2: Add Case to CheckInstanceHelpers.ts**
+
+```typescript
+case 'yourCommand': {
+  const param1 = getParam1FromOutcome(outcomeData);
+  result = await resolver.yourCommand(param1);
+  break;
+}
+```
+
+**Step 3: Skip in action-resolver.ts**
+
+```typescript
+case 'yourCommand':
+  console.log('⏭️ [action-resolver] Skipping - handled by prepare/commit pattern');
+  return { success: true };
+```
+
+### Completed Implementations
+
+**✅ giveActorGold** - Collect Stipend (gold to character inventory)  
+**✅ recruitArmy** - Recruit Unit (create army actor)  
+**✅ foundSettlement** - Establish Settlement (create settlement)  
+**✅ disbandArmy** - Disband Army (remove army with refund)  
+**✅ trainArmy** - Train Army (level-up with outcome effects)
+
+### Best Practices
+
+**✅ DO:**
+- Validate everything in PREPARE phase
+- Capture all values in closures
+- Use descriptive messages with names
+- Log at each phase with emoji prefixes
+- Clean up globalThis in commit phase
+
+**❌ DON'T:**
+- Modify state in PREPARE phase
+- Assume data exists in COMMIT (capture in closure)
+- Serialize commits to actor flags (use CommitStorage)
+- Duplicate preview logic
+
+---
+
 ## Summary
 
 The Game Commands System provides:
@@ -1057,5 +1173,6 @@ The Game Commands System provides:
 - ✅ Service-based architecture with delegation
 - ✅ Full integration with player actions
 - ✅ Compile-time validation and IDE support
+- ✅ Prepare/Commit pattern for preview-before-execute
 
 This architecture enables complex kingdom operations while maintaining code clarity and type safety.

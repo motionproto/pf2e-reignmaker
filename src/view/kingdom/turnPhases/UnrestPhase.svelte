@@ -392,11 +392,6 @@
 </script>
 
 <div class="unrest-phase">
-   <!-- Debug Incident Selector (GM Only) -->
-   {#if isGM}
-      <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.checkId || null} />
-   {/if}
-   
    <!-- Step 1: Unrest Dashboard -->
    <div class="unrest-dashboard">
       <div class="unrest-split-view">
@@ -484,6 +479,11 @@
    <!-- Step 2: Incident Results -->
    {#if showIncidentResult}
       {#if currentIncident}
+         <!-- Debug Incident Selector (GM Only) - Positioned directly above incident card -->
+         {#if isGM}
+            <DebugEventSelector type="incident" currentItemId={currentIncidentInstance?.checkId || null} />
+         {/if}
+         
          <!-- Use BaseCheckCard for incident resolution - only show when controller is ready -->
          {#if unrestPhaseController && incidentCheckId}
             {#key incidentCheckId}

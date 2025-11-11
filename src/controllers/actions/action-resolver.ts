@@ -11,6 +11,8 @@ import { createGameCommandsService, type OutcomeDegree } from '../../services/Ga
 import { logger } from '../../utils/Logger';
 import { structuresService } from '../../services/structures';
 import { checkCustomRequirements } from './implementations';
+import type { SpecialEffect } from '../../types/special-effects';
+import { parseLegacyEffect } from '../../types/special-effects';
 
 // TEMPORARY: Inline helpers from deleted resolution-service.ts
 function getLevelBasedDC(level: number): number {
@@ -46,7 +48,7 @@ export interface ActionOutcome {
     error?: string;
     applied?: {
         resources: Array<{ resource: string; value: number }>;
-        specialEffects: string[];
+        specialEffects: SpecialEffect[];
     };
     messages: string[];
 }
@@ -100,6 +102,21 @@ export class ActionResolver {
     ): ActionRequirement {
         switch (action.id) {
             // arrest-dissidents now handled by ArrestDissidentsAction implementation
+            
+            case 'collect-stipend':
+                // Check for taxation structure (Counting House T2+, Treasury T3, Exchequer T4)
+                const REVENUE_STRUCTURES = ['counting-house', 'treasury', 'exchequer'];
+                const hasTaxationStructure = kingdomData.settlements?.some((s: any) => 
+                    s.structureIds?.some((id: string) => REVENUE_STRUCTURES.includes(id))
+                );
+                
+                if (!hasTaxationStructure) {
+                    return {
+                        met: false,
+                        reason: 'Requires Counting House (T2) or higher Taxation structure'
+                    };
+                }
+                break;
                 
             case 'execute-pardon-prisoners':
             case 'execute-or-pardon-prisoners':
@@ -196,7 +213,7 @@ export class ActionResolver {
         // Track overall success and applied changes
         let overallSuccess = true;
         const appliedResources: Array<{ resource: string; value: number }> = [];
-        const appliedSpecialEffects: string[] = [];
+        const appliedSpecialEffects: SpecialEffect[] = [];
         
         // Apply resource modifiers first (if any)
         if (modifiers.length > 0) {
@@ -239,13 +256,20 @@ export class ActionResolver {
                 );
                 
                 if (result.success) {
-                    appliedSpecialEffects.push(gameEffect.type);
+                    // FIXED: Only push the actual message, not the legacy game command name
+                    // Add GameCommand messages to specialEffects (already structured)
                     if (result.data?.message) {
-                        messages.push(result.data.message);
+                        // Check if message is already a SpecialEffect object or needs conversion
+                        const effect = typeof result.data.message === 'string' 
+                            ? parseLegacyEffect(result.data.message)
+                            : result.data.message;
+                        appliedSpecialEffects.push(effect);
+                        logger.info(`  💬 GameCommand effect:`, effect);
                     }
                 } else {
                     overallSuccess = false;
                     if (result.error) {
+                        // Errors still go to messages for now (could show as special effect in future)
                         messages.push(`Error: ${result.error}`);
                     }
                 }
@@ -276,78 +300,43 @@ export class ActionResolver {
 
         switch (gameEffect.type) {
             case 'recruitArmy': {
-                console.log('🪖 [ActionResolver] recruitArmy gameCommand triggered');
-                console.log('🪖 [ActionResolver] Checking globalThis.__pendingRecruitArmy:', (globalThis as any).__pendingRecruitArmy);
-                
-                // Determine army level
-                // For 'kingdom-level', we need to get the party level from game.actors
-                let level = 1; // Default level
-                
-                if (gameEffect.level === 'kingdom-level') {
-                    // Try to get party level from game actors
-                    const game = (globalThis as any).game;
-                    if (game?.actors) {
-                        // Find party actors and get their level
-                        const partyActors = Array.from(game.actors).filter((a: any) => 
-                            a.type === 'character' && a.hasPlayerOwner
-                        );
-                        if (partyActors.length > 0) {
-                            // Use the first party member's level as reference
-                            level = (partyActors[0] as any).level || 1;
-                        }
-                    }
-                } else if (typeof gameEffect.level === 'number') {
-                    level = gameEffect.level;
-                }
-                
-                console.log(`🪖 [ActionResolver] Calling resolver.recruitArmy(${level})`);
-                const result = await resolver.recruitArmy(level);
-                console.log('🪖 [ActionResolver] recruitArmy result:', result);
-                return result;
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping recruitArmy - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
             }
             
             case 'disbandArmy': {
-                // Get armyId from pending state (pre-dialog action)
-                const armyId = (globalThis as any).__pendingDisbandArmyArmy;
-                
-                if (!armyId) {
-                    return {
-                        success: false,
-                        error: 'No army selected for disbanding'
-                    };
-                }
-                
-                return await resolver.disbandArmy(armyId);
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping disbandArmy - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
             }
             
             case 'foundSettlement': {
-                // For critical success on Establish Settlement, grant free structure
-                const grantFreeStructure = isCriticalSuccess;
-                return await resolver.foundSettlement(
-                    gameEffect.name || 'New Settlement',
-                    gameEffect.location || { x: 0, y: 0 },
-                    grantFreeStructure
-                );
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping foundSettlement - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
             }
             
             case 'giveActorGold': {
-                // Get settlementId from gameEffect OR from pending action state
-                let settlementId = gameEffect.settlementId;
-                
-                // If not in gameEffect, check for pending state (for pre-dialog actions)
-                if (!settlementId && (globalThis as any).__pendingStipendSettlement) {
-                    settlementId = (globalThis as any).__pendingStipendSettlement;
-                }
-                
-                if (!settlementId) {
-                    return {
-                        success: false,
-                        error: 'No settlement selected for stipend collection'
-                    };
-                }
-                
-                const multiplier = parseFloat(gameEffect.multiplier) || 1;
-                return await resolver.giveActorGold(multiplier, settlementId);
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping giveActorGold - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
+            }
+            
+            case 'trainArmy': {
+                // PREPARE/COMMIT PATTERN: Skip execution here
+                // This command is prepared in CheckInstanceHelpers and executed in ActionsPhase
+                // Executing it here would cause double execution
+                console.log('⏭️ [ActionResolver] Skipping trainArmy - handled by prepare/commit pattern');
+                return { success: true }; // Don't block resolution
             }
             
             case 'reduceImprisoned': {
@@ -399,23 +388,6 @@ export class ActionResolver {
                 }
                 
                 return await resolver.reduceImprisoned(settlementId, amount);
-            }
-            
-            case 'trainArmy': {
-                // Get armyId from pending state (pre-dialog action)
-                const armyId = (globalThis as any).__pendingTrainArmyArmy;
-                
-                if (!armyId) {
-                    return {
-                        success: false,
-                        error: 'No army selected for training'
-                    };
-                }
-                
-                // Get outcome from gameEffect (passed from action JSON)
-                const outcomeString = gameEffect.outcome || 'success';
-                
-                return await resolver.trainArmy(armyId, outcomeString);
             }
             
             case 'deployArmy': {

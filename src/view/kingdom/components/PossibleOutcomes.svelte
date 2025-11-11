@@ -7,6 +7,7 @@
 
 <script lang="ts">
   import AdjustmentBadges from './AdjustmentBadges.svelte';
+  import GameCommandBadges from './GameCommandBadges.svelte';
   
   export let outcomes: PossibleOutcome[];
   export let skill: string | undefined = undefined;
@@ -81,10 +82,27 @@
               {@html outcome.description}
             </div>
             
-            <!-- Show modifiers if present -->
-            {#if outcome.modifiers && outcome.modifiers.length > 0}
-              <div class="outcome-modifiers">
-                <AdjustmentBadges modifiers={outcome.modifiers} />
+            <!-- Show badges (modifiers and game commands together) -->
+            {#if (outcome.modifiers && outcome.modifiers.length > 0) || (outcome.gameCommands && outcome.gameCommands.length > 0)}
+              <div class="outcome-badges">
+                {#if outcome.modifiers && outcome.modifiers.length > 0}
+                  <AdjustmentBadges modifiers={outcome.modifiers} />
+                {/if}
+                {#if outcome.gameCommands && outcome.gameCommands.length > 0}
+                  <GameCommandBadges gameCommands={outcome.gameCommands} />
+                {/if}
+              </div>
+            {/if}
+            
+            <!-- Show manual effects if present -->
+            {#if outcome.manualEffects && outcome.manualEffects.length > 0}
+              <div class="outcome-manual-effects">
+                {#each outcome.manualEffects as effect}
+                  <div class="manual-effect">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{effect}</span>
+                  </div>
+                {/each}
               </div>
             {/if}
           </div>
@@ -247,7 +265,41 @@
     margin-bottom: var(--space-8);
   }
   
-  .outcome-modifiers {
+  .outcome-badges {
     margin-top: var(--space-6);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+  }
+  
+  .outcome-manual-effects {
+    margin-top: var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  
+  .manual-effect {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-8);
+    padding: var(--space-8);
+    background: var(--overlay-low);
+    border: 1px solid var(--border-accent-subtle);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    color: var(--text-secondary);
+    
+    i {
+      flex-shrink: 0;
+      margin-top: var(--space-2);
+      color: var(--color-amber);
+      font-size: var(--font-sm);
+    }
+    
+    span {
+      flex: 1;
+      line-height: 1.5;
+    }
   }
 </style>

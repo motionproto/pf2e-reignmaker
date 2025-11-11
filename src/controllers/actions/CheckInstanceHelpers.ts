@@ -245,13 +245,136 @@ export async function createActionCheckInstance(context: {
     }
   }
   
+  // PREPARE/COMMIT PATTERN: Execute game commands to PREPARE (not commit)
+  // This allows the OutcomeDisplay to show special effect badges before Apply Result is clicked
+  let preliminarySpecialEffects: any[] = [];
+  let pendingCommits: Array<() => Promise<void>> = [];
+  
+  // Get game commands from action outcome (reuse outcomeData from above)
+  const gameCommands = outcomeData?.gameCommands || [];
+
+  // Skip prepare/commit for actions with custom implementations
+  // These handle their own resolution logic
+  const actionsWithCustomImplementations = ['outfit-army'];
+  const shouldSkipPrepare = actionsWithCustomImplementations.includes(actionId);
+
+  if (gameCommands.length > 0 && !shouldSkipPrepare) {
+    console.log('🎬 [CheckInstanceHelpers] Preparing game commands (not executing)');
+
+    const actor = getKingdomActor();
+    if (actor) {
+      const kingdom = actor.getKingdomData();
+      
+      // Import resolver to prepare commands
+      const { createGameCommandsResolver } = await import('../../services/GameCommandsResolver');
+      const resolver = await createGameCommandsResolver();
+      
+      // Execute each game command to PREPARE (returns PreparedCommand or ResolveResult)
+      for (const gameCommand of gameCommands) {
+        try {
+          let result: any;
+          
+          // Call the appropriate resolver method based on game command type
+          switch (gameCommand.type) {
+            case 'giveActorGold': {
+              // Get settlementId from gameCommand OR from pending action state
+              let settlementId = gameCommand.settlementId;
+              if (!settlementId && (globalThis as any).__pendingStipendSettlement) {
+                settlementId = (globalThis as any).__pendingStipendSettlement;
+              }
+              
+              if (settlementId) {
+                const multiplier = parseFloat(gameCommand.multiplier) || 1;
+                result = await resolver.giveActorGold(multiplier, settlementId);
+              }
+              break;
+            }
+            
+            case 'recruitArmy': {
+              // Determine army level
+              let level = 1; // Default level
+              
+              if (gameCommand.level === 'kingdom-level') {
+                // Get party level from kingdom data (synced by partyLevelHooks)
+                level = kingdom.partyLevel || 1;
+              } else if (typeof gameCommand.level === 'number') {
+                level = gameCommand.level;
+              }
+              
+              result = await resolver.recruitArmy(level);
+              break;
+            }
+            
+            case 'foundSettlement': {
+              // For critical success on Establish Settlement, grant free structure
+              const grantFreeStructure = (outcomeType === 'criticalSuccess');
+              result = await resolver.foundSettlement(
+                gameCommand.name || 'New Settlement',
+                gameCommand.location || { x: 0, y: 0 },
+                grantFreeStructure
+              );
+              break;
+            }
+            
+            case 'disbandArmy': {
+              // Get armyId from pending state (set by pre-roll dialog)
+              const armyId = (globalThis as any).__pendingDisbandArmyArmy;
+              const deleteActor = gameCommand.deleteActor !== false; // Default to true
+              
+              if (!armyId) {
+                console.error('❌ [CheckInstanceHelpers] No army selected for disbanding');
+                break;
+              }
+              
+              result = await resolver.disbandArmy(armyId, deleteActor);
+              break;
+            }
+            
+            case 'trainArmy': {
+              // Get armyId from pending state (set by pre-roll dialog)
+              const armyId = (globalThis as any).__pendingTrainArmyArmy;
+              
+              if (!armyId) {
+                console.error('❌ [CheckInstanceHelpers] No army selected for training');
+                break;
+              }
+              
+              result = await resolver.trainArmy(armyId, outcomeType);
+              break;
+            }
+            
+            // NOTE: outfitArmy uses custom implementation (post-roll dialog)
+            // It's handled by OutfitArmyAction, not the prepare/commit pattern
+            
+            // Add more game command types here as they're refactored to PreparedCommand
+          }
+          
+          // Check if result is a PreparedCommand (has specialEffect and commit)
+          if (result && 'specialEffect' in result && 'commit' in result) {
+            // NEW PATTERN: PreparedCommand
+            preliminarySpecialEffects.push(result.specialEffect);
+            pendingCommits.push(result.commit);
+            console.log('🎬 [CheckInstanceHelpers] Prepared command:', gameCommand.type);
+          } else if (result && 'success' in result) {
+            // LEGACY PATTERN: ResolveResult (will be phased out)
+            // For now, do nothing - these commands execute immediately
+            console.log('⚠️ [CheckInstanceHelpers] Legacy command (not prepared):', gameCommand.type);
+          }
+        } catch (error) {
+          console.error('❌ [CheckInstanceHelpers] Failed to prepare game command:', gameCommand.type, error);
+        }
+      }
+    }
+  }
+  
   const preliminaryResolutionData = {
     numericModifiers: preliminaryModifiers,
     manualEffects: [],
     complexActions: []
   };
   
-  // Store outcome
+  // Store outcome with special effects
+  console.log('🔍 [CheckInstanceHelpers] About to store outcome with specialEffects:', preliminarySpecialEffects);
   await checkInstanceService.storeOutcome(
     instanceId,
     outcomeType,
@@ -259,8 +382,18 @@ export async function createActionCheckInstance(context: {
     actorName,
     skillName || '',
     effectMessage,
-    rollBreakdown
+    rollBreakdown,
+    preliminarySpecialEffects  // Pass special effects to display in preview
   );
+  console.log('✅ [CheckInstanceHelpers] Outcome stored, verifying instance...');
+  
+  // Store pending commits if any (prepare/commit pattern)
+  // IMPORTANT: Store in client-side memory, NOT in actor flags (functions can't be serialized)
+  if (pendingCommits.length > 0) {
+    console.log(`🎬 [CheckInstanceHelpers] Storing ${pendingCommits.length} pending commit(s) in client-side storage`);
+    const { commitStorage } = await import('../../utils/CommitStorage');
+    commitStorage.store(instanceId, pendingCommits);
+  }
   
   return instanceId;
 }

@@ -75,9 +75,6 @@
           "count": 2
         }
       ],
-      "manualEffects": [
-        "One damaged structure is destroyed (removed from settlement)"
-      ],
       "endsEvent": true
     }
   },

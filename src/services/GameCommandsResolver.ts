@@ -16,14 +16,37 @@
 import { updateKingdom, getKingdomActor } from '../stores/KingdomStore';
 import type { Army } from './buildQueue/BuildProject';
 import { logger } from '../utils/Logger';
+import type { SpecialEffect } from '../types/special-effects';
 
 /**
- * Result of game effect resolution
+ * Result of game effect resolution (LEGACY - being replaced by PreparedCommand)
  */
 export interface ResolveResult {
   success: boolean;
   error?: string;
   data?: any; // Action-specific return data
+}
+
+/**
+ * Prepared game command using prepare/commit pattern
+ * 
+ * Commands return preview data + commit function instead of executing immediately.
+ * This allows:
+ * - Special effects to show in preview BEFORE "Apply Result" is clicked
+ * - Clean cancellation (just discard commit, no undo needed)
+ * - Single code path (no duplicate preview logic)
+ * 
+ * Flow:
+ * 1. Roll completes → Execute game command to PREPARE (not commit)
+ * 2. Store specialEffect in instance for preview display
+ * 3. Store commit() function in instance
+ * 4. OutcomeDisplay shows preview with special effects
+ * 5. User clicks "Apply Result" → Execute all stored commit() functions
+ * 6. User clicks "Cancel" → Discard commit functions (no undo needed)
+ */
+export interface PreparedCommand {
+  specialEffect: SpecialEffect;     // Preview data for OutcomeDisplay
+  commit: () => Promise<void>;       // Function to execute on "Apply Result"
 }
 
 /**
@@ -34,268 +57,276 @@ export async function createGameCommandsResolver() {
     /**
      * Recruit Army - Create a new army unit at specified level with NPC actor
      * Uses pending data from globalThis.__pendingRecruitArmy (set by dialog)
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param level - Army level (typically party level)
      * @param name - Optional custom name for the army (deprecated, use pending data)
-     * @returns ResolveResult with created army data
+     * @returns PreparedCommand with preview + commit function
      */
-    async recruitArmy(level: number, name?: string): Promise<ResolveResult> {
-
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return {
-            success: false,
-            error: 'No kingdom actor available'
-          };
-        }
-
-        // Validate level (must be positive)
-        if (level < 1) {
-          return {
-            success: false,
-            error: 'Army level must be at least 1'
-          };
-        }
-
-        // Get pending recruit data from dialog
-        const pendingData = (globalThis as any).__pendingRecruitArmy;
-        if (!pendingData) {
-          return {
-            success: false,
-            error: 'No army recruitment data available'
-          };
-        }
-
-        const { name: armyName, settlementId, armyType } = pendingData;
-
-        // Import army helpers for type and image
-        const { ARMY_TYPES } = await import('../utils/armyHelpers');
-        
-        // Validate army type
-        if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
-          return {
-            success: false,
-            error: `Invalid army type: ${armyType}`
-          };
-        }
-
-        // Pass settlement info to army service so token can be placed during creation (on GM's client)
-        const { armyService } = await import('./army');
-        await armyService.createArmy(armyName, level, {
-          type: armyType,
-          image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
-          settlementId: settlementId  // Pass settlementId so GM can place token
-        });
-
-        // Clean up pending data
-        delete (globalThis as any).__pendingRecruitArmy;
-
-        const settlementMessage = settlementId 
-          ? ' (supported by settlement)' 
-          : ' (unsupported)';
-
-        return {
-          success: true,
-          data: {
-            message: `Recruited ${armyName} at level ${level}${settlementMessage}`
-          }
-        };
-
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to recruit army:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+    async recruitArmy(level: number, name?: string): Promise<PreparedCommand> {
+      logger.info(`🎖️ [recruitArmy] PREPARING recruitment at level ${level}`);
+      
+      // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
       }
+
+      if (level < 1) {
+        throw new Error('Army level must be at least 1');
+      }
+
+      const pendingData = (globalThis as any).__pendingRecruitArmy;
+      if (!pendingData) {
+        throw new Error('No army recruitment data available');
+      }
+
+      const { name: armyName, settlementId, armyType } = pendingData;
+
+      const { ARMY_TYPES } = await import('../utils/armyHelpers');
+      if (!ARMY_TYPES[armyType as keyof typeof ARMY_TYPES]) {
+        throw new Error(`Invalid army type: ${armyType}`);
+      }
+
+      // Get settlement name for message
+      let settlementName = '';
+      if (settlementId) {
+        const kingdom = actor.getKingdomData();
+        const settlement = kingdom?.settlements?.find((s: any) => s.id === settlementId);
+        if (settlement) {
+          settlementName = settlement.name;
+        }
+      }
+      
+      const message = settlementName 
+        ? `Recruited ${armyName} in ${settlementName}`
+        : `Recruited ${armyName} (no settlement support)`;
+      
+      logger.info(`🎖️ [recruitArmy] PREPARED: ${message}`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'status',
+          message: message,
+          icon: 'fa-shield-alt',
+          variant: 'positive'
+        },
+        commit: async () => {
+          logger.info(`🎖️ [recruitArmy] COMMITTING: Creating ${armyName}`);
+          
+          const { armyService } = await import('./army');
+          await armyService.createArmy(armyName, level, {
+            type: armyType,
+            image: ARMY_TYPES[armyType as keyof typeof ARMY_TYPES].image,
+            settlementId: settlementId
+          });
+
+          delete (globalThis as any).__pendingRecruitArmy;
+          
+          logger.info(`✅ [recruitArmy] Successfully recruited ${armyName}`);
+        }
+      };
     },
 
     /**
      * Disband Army - Remove an army unit and refund resources
-     * Delegates to ArmyService for implementation
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param armyId - ID of army to disband
      * @param deleteActor - Whether to delete the linked NPC actor (default: true)
-     * @returns ResolveResult with refund data
+     * @returns PreparedCommand with preview + commit function
      */
-    async disbandArmy(armyId: string, deleteActor: boolean = true): Promise<ResolveResult> {
-
-      try {
-        // Delegate to ArmyService with deleteActor parameter
-        const { armyService } = await import('./army');
-        const result = await armyService.disbandArmy(armyId, deleteActor);
-
-        const actorMessage = result.actorId 
-          ? (deleteActor ? ' (NPC actor deleted)' : ' (NPC actor unlinked)')
-          : '';
-
-        return {
-          success: true,
-          data: {
-            armyName: result.armyName,
-            refund: result.refund,
-            message: `Disbanded ${result.armyName}${actorMessage}`
-          }
-        };
-
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to disband army:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+    async disbandArmy(armyId: string, deleteActor: boolean = true): Promise<PreparedCommand> {
+      logger.info(`🪖 [disbandArmy] PREPARING to disband army ${armyId}`);
+      
+      // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
       }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        throw new Error('No kingdom data available');
+      }
+
+      // Find the army
+      const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+      if (!army) {
+        throw new Error(`Army ${armyId} not found`);
+      }
+
+      // Format message (refund will be calculated and applied in commit phase)
+      const message = `Disbanded ${army.name}`;
+      
+      logger.info(`🪖 [disbandArmy] PREPARED: Will disband ${army.name} with refund`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'status',
+          message: message,
+          icon: 'fa-times-circle',
+          variant: 'negative'
+        },
+        commit: async () => {
+          logger.info(`🪖 [disbandArmy] COMMITTING: Disbanding ${army.name}`);
+          
+          // Execute actual disband
+          const { armyService } = await import('./army');
+          await armyService.disbandArmy(armyId, deleteActor);
+          
+          logger.info(`✅ [disbandArmy] Successfully disbanded ${army.name}`);
+        }
+      };
     },
 
     /**
      * Found Settlement - Create a new village (Level 1)
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param name - Settlement name
      * @param location - Hex coordinates {x, y}
      * @param grantFreeStructure - Whether to grant a free structure slot (critical success)
-     * @returns ResolveResult with created settlement data
+     * @returns PreparedCommand with preview + commit function
      */
     async foundSettlement(
       name: string,
       location: { x: number; y: number } = { x: 0, y: 0 },
       grantFreeStructure: boolean = false
-    ): Promise<ResolveResult> {
-
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return {
-            success: false,
-            error: 'No kingdom actor available'
-          };
-        }
-
-        // Validate name
-        if (!name || name.trim().length === 0) {
-          return {
-            success: false,
-            error: 'Settlement name is required'
-          };
-        }
-
-        // Import createSettlement helper
-        const { createSettlement, SettlementTier } = await import('../models/Settlement');
-
-        // Create new settlement using the helper (Village = Level 1)
-        const newSettlement = createSettlement(name.trim(), location, SettlementTier.VILLAGE);
-
-        // Add to kingdom settlements
-        await updateKingdom(kingdom => {
-          if (!kingdom.settlements) {
-            kingdom.settlements = [];
-          }
-          kingdom.settlements.push(newSettlement);
-        });
-
-        const message = grantFreeStructure
-          ? `Founded ${name} (Village, Level 1) with 1 free structure slot!`
-          : `Founded ${name} (Village, Level 1)`;
-
-        return {
-          success: true,
-          data: {
-            settlement: newSettlement,
-            message,
-            grantFreeStructure // Pass this flag so UI can handle it
-          }
-        };
-
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to found settlement:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+    ): Promise<PreparedCommand> {
+      logger.info(`🏘️ [foundSettlement] PREPARING to found ${name}`);
+      
+      // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
       }
+
+      if (!name || name.trim().length === 0) {
+        throw new Error('Settlement name is required');
+      }
+
+      const { createSettlement, SettlementTier } = await import('../models/Settlement');
+      const trimmedName = name.trim();
+      
+      // Create settlement object for commit (but don't add to kingdom yet)
+      const newSettlement = createSettlement(trimmedName, location, SettlementTier.VILLAGE);
+
+      const message = grantFreeStructure
+        ? `Founded ${trimmedName} (Village, Level 1) with 1 free structure slot!`
+        : `Founded ${trimmedName} (Village, Level 1)`;
+
+      logger.info(`🏘️ [foundSettlement] PREPARED: Will found ${trimmedName} at ${location.x},${location.y}`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'hex',
+          message: message,
+          icon: 'fa-home',
+          variant: 'positive'
+        },
+        commit: async () => {
+          logger.info(`🏘️ [foundSettlement] COMMITTING: Creating ${trimmedName}`);
+          
+          await updateKingdom(kingdom => {
+            if (!kingdom.settlements) {
+              kingdom.settlements = [];
+            }
+            kingdom.settlements.push(newSettlement);
+          });
+
+          logger.info(`✅ [foundSettlement] Successfully founded ${trimmedName}`);
+        }
+      };
     },
 
     /**
      * Give Actor Gold - Add personal stipend to player character inventory
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param multiplier - Income multiplier (2 = double, 1 = normal, 0.5 = half)
      * @param settlementId - Settlement to calculate income from
-     * @returns ResolveResult with gold amount given
+     * @returns PreparedCommand with preview + commit function
      */
-    async giveActorGold(multiplier: number, settlementId: string): Promise<ResolveResult> {
-      logger.info(`💰 [giveActorGold] Starting with multiplier ${multiplier} for settlement ${settlementId}`);
+    async giveActorGold(multiplier: number, settlementId: string): Promise<PreparedCommand> {
+      logger.info(`💰 [giveActorGold] PREPARING with multiplier ${multiplier} for settlement ${settlementId}`);
       
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return { success: false, error: 'No kingdom actor available' };
-        }
-
-        const kingdom = actor.getKingdomData();
-        if (!kingdom) {
-          return { success: false, error: 'No kingdom data available' };
-        }
-
-        // Find the settlement
-        const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
-        if (!settlement) {
-          return { success: false, error: `Settlement ${settlementId} not found` };
-        }
-
-        // Get current player's character
-        const game = (globalThis as any).game;
-        const currentUser = game?.user;
-        if (!currentUser) {
-          return { success: false, error: 'No current user found' };
-        }
-
-        const character = currentUser.character;
-        if (!character) {
-          return { success: false, error: 'No character assigned to current user' };
-        }
-
-        // Get kingdom taxation tier
-        const taxationInfo = this.getKingdomTaxationTier(kingdom);
-        if (!taxationInfo) {
-          return { success: false, error: 'No taxation structures found in kingdom' };
-        }
-
-        // Calculate base income from table
-        const baseIncome = this.calculateIncome(settlement.level, taxationInfo.tier);
-        if (baseIncome === 0) {
-          return { 
-            success: false, 
-            error: `${settlement.name} (Level ${settlement.level}) is not eligible for stipends with T${taxationInfo.tier} taxation` 
-          };
-        }
-
-        // Apply multiplier and round to nearest gold
-        const goldAmount = Math.round(baseIncome * multiplier);
-
-        // Add gold to character inventory
-        if (goldAmount > 0) {
-          await character.inventory.addCoins({ gp: goldAmount });
-        }
-
-        logger.info(`✅ [giveActorGold] Gave ${goldAmount} gp to ${character.name}`);
-
-        return {
-          success: true,
-          data: {
-            goldAmount,
-            settlementName: settlement.name,
-            characterName: character.name,
-            message: `${character.name} collected ${goldAmount} gp from ${settlement.name}`
-          }
-        };
-
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to give actor gold:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
+      // PHASE 1: PREPARE - Calculate everything needed for preview (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
       }
+
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        throw new Error('No kingdom data available');
+      }
+
+      // Find the settlement
+      const settlement = kingdom.settlements?.find((s: any) => s.id === settlementId);
+      if (!settlement) {
+        throw new Error(`Settlement ${settlementId} not found`);
+      }
+
+      // Get current player's character
+      const game = (globalThis as any).game;
+      const currentUser = game?.user;
+      if (!currentUser) {
+        throw new Error('No current user found');
+      }
+
+      const character = currentUser.character;
+      if (!character) {
+        throw new Error('No character assigned to current user');
+      }
+
+      // Get kingdom taxation tier
+      const taxationInfo = this.getKingdomTaxationTier(kingdom);
+      if (!taxationInfo) {
+        throw new Error('No taxation structures found in kingdom');
+      }
+
+      // Calculate base income from table
+      const baseIncome = this.calculateIncome(settlement.level, taxationInfo.tier);
+      if (baseIncome === 0) {
+        throw new Error(`${settlement.name} (Level ${settlement.level}) is not eligible for stipends with T${taxationInfo.tier} taxation`);
+      }
+
+      // Apply multiplier and round to nearest gold
+      const goldAmount = Math.round(baseIncome * multiplier);
+
+      // Capture values in closure for commit phase
+      const characterName = character.name;
+      const settlementName = settlement.name;
+
+      logger.info(`💰 [giveActorGold] PREPARED: ${characterName} will collect ${goldAmount} gp from ${settlementName}`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'resource',
+          message: `${characterName} collected ${goldAmount} gp from ${settlementName}`,
+          icon: 'fa-coins',
+          variant: 'positive'
+        },
+        commit: async () => {
+          // Commit function executes when "Apply Result" is clicked
+          logger.info(`💰 [giveActorGold] COMMITTING: Adding ${goldAmount} gp to ${characterName}'s inventory`);
+          
+          if (goldAmount > 0) {
+            try {
+              await character.inventory.addCoins({ gp: goldAmount });
+              logger.info(`✅ [giveActorGold] Successfully added ${goldAmount} gp to ${characterName}`);
+            } catch (coinError) {
+              logger.error(`❌ [giveActorGold] Failed to add coins to inventory:`, coinError);
+              throw new Error(`Failed to add ${goldAmount} gp to ${characterName}'s inventory: ${coinError instanceof Error ? coinError.message : 'Unknown error'}`);
+            }
+          }
+        }
+      };
     },
 
     /**
@@ -448,61 +479,91 @@ export async function createGameCommandsResolver() {
 
     /**
      * Train Army - Improve army level to party level and apply training effects
+     * REFACTORED: Uses prepare/commit pattern
      * 
      * @param armyId - ID of army to train
      * @param outcome - Action outcome (criticalSuccess, success, failure, criticalFailure)
-     * @returns ResolveResult with training details
+     * @returns PreparedCommand with preview + commit function
      */
-    async trainArmy(armyId: string, outcome: string): Promise<ResolveResult> {
-      logger.info(`🎖️ [trainArmy] Training army ${armyId} with outcome ${outcome}`);
+    async trainArmy(armyId: string, outcome: string): Promise<PreparedCommand> {
+      logger.info(`🎖️ [trainArmy] PREPARING to train army ${armyId} with outcome ${outcome}`);
       
-      try {
-        const actor = getKingdomActor();
-        if (!actor) {
-          return { success: false, error: 'No kingdom actor available' };
-        }
+      // PHASE 1: PREPARE - Validate everything needed for preview (NO state changes)
+      const actor = getKingdomActor();
+      if (!actor) {
+        throw new Error('No kingdom actor available');
+      }
 
-        const kingdom = actor.getKingdomData();
-        if (!kingdom) {
-          return { success: false, error: 'No kingdom data available' };
-        }
+      const kingdom = actor.getKingdomData();
+      if (!kingdom) {
+        throw new Error('No kingdom data available');
+      }
 
-        // Find the army
-        const army = kingdom.armies?.find((a: Army) => a.id === armyId);
-        if (!army) {
-          return { success: false, error: `Army ${armyId} not found` };
-        }
+      // Find the army
+      const army = kingdom.armies?.find((a: Army) => a.id === armyId);
+      if (!army) {
+        throw new Error(`Army ${armyId} not found`);
+      }
 
-        // Get party level from kingdom data (synced by partyLevelHooks)
-        const partyLevel = kingdom.partyLevel || 1;
-        
-        // Check if army is already at party level
-        if (army.level >= partyLevel && outcome !== 'failure') {
-          return { 
-            success: false, 
-            error: `${army.name} is already at party level (${partyLevel})` 
-          };
-        }
+      // Get party level from kingdom data (synced by partyLevelHooks)
+      const partyLevel = kingdom.partyLevel || 1;
+      
+      // Check if army is already at party level (unless failure)
+      if (army.level >= partyLevel && outcome !== 'failure') {
+        throw new Error(`${army.name} is already at party level (${partyLevel})`);
+      }
 
-        // Failure: No change
-        if (outcome === 'failure') {
-          return {
-            success: true,
-            data: {
-              armyName: army.name,
-              message: `Training had no effect on ${army.name}`
-            }
-          };
-        }
+      // Determine preview message based on outcome
+      let message: string;
+      let icon: string;
+      let variant: 'positive' | 'negative' | 'neutral';
 
-        // Update army level to party level
-        const { armyService } = await import('./army');
-        await armyService.updateArmyLevel(armyId, partyLevel);
+      if (outcome === 'failure') {
+        message = `Training had no effect on ${army.name}`;
+        icon = 'fa-times';
+        variant = 'negative';
+      } else if (outcome === 'criticalSuccess') {
+        message = `${army.name} trained to level ${partyLevel} with Heroism!`;
+        icon = 'fa-star';
+        variant = 'positive';
+      } else if (outcome === 'criticalFailure') {
+        message = `${army.name} trained to level ${partyLevel} but is Frightened`;
+        icon = 'fa-exclamation-triangle';
+        variant = 'neutral';
+      } else {
+        // Success
+        message = `${army.name} trained to level ${partyLevel}`;
+        icon = 'fa-level-up-alt';
+        variant = 'positive';
+      }
 
-        // Apply outcome-specific effects
-        if (outcome === 'criticalSuccess') {
-          // Add Heroism effect to actor
-          if (army.actorId) {
+      logger.info(`🎖️ [trainArmy] PREPARED: ${message}`);
+
+      // PHASE 2: RETURN - Preview data + commit function
+      return {
+        specialEffect: {
+          type: 'status',
+          message: message,
+          icon: icon,
+          variant: variant
+        },
+        commit: async () => {
+          logger.info(`🎖️ [trainArmy] COMMITTING: Training ${army.name}`);
+          
+          // Failure: No changes
+          if (outcome === 'failure') {
+            logger.info(`✅ [trainArmy] No changes for failure outcome`);
+            return;
+          }
+
+          // Update army level to party level
+          const { armyService } = await import('./army');
+          await armyService.updateArmyLevel(armyId, partyLevel);
+          logger.info(`✅ [trainArmy] Updated ${army.name} to level ${partyLevel}`);
+
+          // Apply outcome-specific effects
+          if (outcome === 'criticalSuccess' && army.actorId) {
+            // Add Heroism effect to actor
             try {
               const heroism = await fromUuid('Compendium.pf2e.spell-effects.Item.l9HRQggofFGIxEse');
               if (heroism) {
@@ -512,20 +573,8 @@ export async function createGameCommandsResolver() {
             } catch (error) {
               logger.warn(`⚠️ [trainArmy] Failed to add Heroism effect:`, error);
             }
-          }
-          
-          return {
-            success: true,
-            data: {
-              armyName: army.name,
-              oldLevel: army.level,
-              newLevel: partyLevel,
-              message: `${army.name} trained to level ${partyLevel} and gained Heroism for their next combat!`
-            }
-          };
-        } else if (outcome === 'criticalFailure') {
-          // Add Frightened condition (10-minute duration) to actor
-          if (army.actorId) {
+          } else if (outcome === 'criticalFailure' && army.actorId) {
+            // Add Frightened condition (10-minute duration) to actor
             try {
               const frightened = await fromUuid('Compendium.pf2e.conditionitems.Item.TBSHQspnbcqxsmjL');
               if (frightened) {
@@ -540,36 +589,10 @@ export async function createGameCommandsResolver() {
               logger.warn(`⚠️ [trainArmy] Failed to add Frightened condition:`, error);
             }
           }
-          
-          return {
-            success: true,
-            data: {
-              armyName: army.name,
-              oldLevel: army.level,
-              newLevel: partyLevel,
-              message: `${army.name} trained to level ${partyLevel} but is Frightened for their next combat (10 minutes)`
-            }
-          };
-        } else {
-          // Success: Just level up, no additional effects
-          return {
-            success: true,
-            data: {
-              armyName: army.name,
-              oldLevel: army.level,
-              newLevel: partyLevel,
-              message: `${army.name} successfully trained to level ${partyLevel}`
-            }
-          };
-        }
 
-      } catch (error) {
-        logger.error('❌ [GameCommandsResolver] Failed to train army:', error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
+          logger.info(`✅ [trainArmy] Successfully trained ${army.name}`);
+        }
+      };
     },
 
     /**
@@ -596,11 +619,11 @@ export async function createGameCommandsResolver() {
      * @param armyId - ID of army to outfit
      * @param equipmentType - Type of equipment (armor, runes, weapons, equipment)
      * @param outcome - Action outcome (success, criticalSuccess, failure, criticalFailure)
-     * @returns ResolveResult with equipment details
+     * @returns ResolveResult with success status
      */
     async outfitArmy(armyId: string, equipmentType: string, outcome: string): Promise<ResolveResult> {
       logger.info(`⚔️ [outfitArmy] Outfitting army ${armyId} with ${equipmentType} (outcome: ${outcome})`);
-      
+
       try {
         const actor = getKingdomActor();
         if (!actor) {
@@ -630,9 +653,9 @@ export async function createGameCommandsResolver() {
 
         // Check if army already has this equipment
         if (army.equipment?.[equipmentType as keyof typeof army.equipment]) {
-          return { 
-            success: false, 
-            error: `${army.name} already has ${equipmentType} upgrade` 
+          return {
+            success: false,
+            error: `${army.name} already has ${equipmentType} upgrade`
           };
         }
 
@@ -642,7 +665,7 @@ export async function createGameCommandsResolver() {
             success: true,
             data: {
               armyName: army.name,
-              message: outcome === 'failure' 
+              message: outcome === 'failure'
                 ? `Failed to outfit ${army.name}`
                 : `Botched acquisition for ${army.name}, suppliers took the gold`
             }
@@ -651,14 +674,14 @@ export async function createGameCommandsResolver() {
 
         // Success/Critical Success: Apply equipment upgrade
         const bonus = outcome === 'criticalSuccess' ? 2 : 1;
-        
+
         // Create PF2e effect with Rule Elements
         const effectData = this.createEquipmentEffect(equipmentType, bonus);
-        
+
         // Add effect to army actor
         const { armyService } = await import('./army');
         await armyService.addItemToArmy(army.actorId, effectData);
-        
+
         // Mark equipment as applied
         await updateKingdom(k => {
           const a = k.armies.find((army: Army) => army.id === armyId);
@@ -670,7 +693,7 @@ export async function createGameCommandsResolver() {
 
         const bonusText = bonus === 2 ? ' (exceptional, +2)' : '';
         const effectName = this.getEquipmentDisplayName(equipmentType);
-        
+
         logger.info(`✅ [outfitArmy] Applied ${equipmentType} (+${bonus}) to ${army.name}`);
 
         return {

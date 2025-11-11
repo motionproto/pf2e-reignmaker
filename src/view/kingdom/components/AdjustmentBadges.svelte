@@ -34,23 +34,15 @@
 </script>
 
 {#if modifiers && modifiers.length > 0}
-  <div class="adjustment-badges">
-    {#each modifiers as modifier}
-      {@const text = formatModifier(modifier)}
-      {#if text}
-        <span class="badge">{text}</span>
-      {/if}
-    {/each}
-  </div>
+  {#each modifiers as modifier}
+    {@const text = formatModifier(modifier)}
+    {#if text}
+      <span class="badge">{text}</span>
+    {/if}
+  {/each}
 {/if}
 
 <style lang="scss">
-  .adjustment-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-8);
-  }
-  
   .badge {
     display: inline-flex;
     align-items: center;

@@ -476,7 +476,8 @@
          const shortfalls: string[] = [];
          if (result.applied?.specialEffects) {
             for (const effect of result.applied.specialEffects) {
-               if (effect.startsWith('shortage_penalty:')) {
+               // Type guard: ensure effect is a string before calling startsWith
+               if (typeof effect === 'string' && effect.startsWith('shortage_penalty:')) {
                   shortfalls.push(effect.split(':')[1]);
                }
             }
@@ -838,14 +839,46 @@
          bonus: mostRecentAid.bonus
       };
    }
+   
+   // Debug function to clear all events (ongoing and resolved)
+   async function handleClearAllEvents() {
+      if (!isGM) return;
+      
+      const Dialog = (globalThis as any).Dialog;
+      const confirmed = await Dialog.confirm({
+         title: 'Clear All Events',
+         content: '<p>Are you sure you want to clear all ongoing and resolved events? This cannot be undone.</p>',
+         yes: () => true,
+         no: () => false,
+         defaultYes: false
+      });
+      
+      if (!confirmed) return;
+      
+      await updateKingdom(kingdom => {
+         if (!kingdom.activeCheckInstances) return;
+         
+         // Filter out all event check instances (both pending and resolved)
+         const beforeCount = kingdom.activeCheckInstances.length;
+         kingdom.activeCheckInstances = kingdom.activeCheckInstances.filter(
+            (instance: any) => instance.checkType !== 'event'
+         );
+         const afterCount = kingdom.activeCheckInstances.length;
+         const removedCount = beforeCount - afterCount;
+         
+         logger.info(`🗑️ [EventsPhase] Cleared ${removedCount} event instances`);
+      });
+      
+      // Clear local UI state
+      eventResolution = null;
+      eventResolved = false;
+      currentEvent = null;
+      
+      ui?.notifications?.info('All events have been cleared.');
+   }
 </script>
 
 <div class="events-phase">
-   <!-- Debug Event Selector (GM Only) -->
-   {#if isGM}
-      <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
-   {/if}
-   
    <!-- Event Check Section - Always show if event check hasn't been done, or show result after check -->
    {#if !eventChecked || showStabilityResult}
       <div class="event-check-section">
@@ -891,6 +924,11 @@
    
    <!-- Active Event Card - Show when an event needs to be resolved -->
    {#if currentEventInstance && currentEventInstance.checkData}
+      <!-- Debug Event Selector (GM Only) - Positioned directly above event card -->
+      {#if isGM}
+         <DebugEventSelector type="event" currentItemId={$kingdomData.turnState?.eventsPhase?.eventId || null} />
+      {/if}
+      
       {#key `${currentEventInstance.checkId}-${activeAidsCount}`}
          <BaseCheckCard
             id={currentEventInstance.checkId}
@@ -992,12 +1030,11 @@
                   isViewingCurrentPhase={false}
                   possibleOutcomes={[]}
                   showAidButton={false}
-                  resolved={true}
-                  resolution={instance.appliedOutcome || null}
-                  primaryButtonLabel="Apply Result"
-                  skillSectionTitle=""
-                  statusBadge={{ text: 'Resolved', type: 'resolved' }}
-               />
+               resolved={true}
+               resolution={instance.appliedOutcome || null}
+               primaryButtonLabel="Apply Result"
+               skillSectionTitle=""
+            />
             {/each}
          </div>
       </div>

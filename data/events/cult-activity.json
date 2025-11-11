@@ -54,7 +54,7 @@
         {
           "type": "static",
           "resource": "unrest",
-          "value": 2,
+          "value": 1,
           "duration": "immediate"
         }
       ],
@@ -66,13 +66,13 @@
         {
           "type": "static",
           "resource": "unrest",
-          "value": 3,
+          "value": 2,
           "duration": "immediate"
         },
         {
           "type": "dice",
           "resource": "gold",
-          "formula": "1d4",
+          "formula": "1",
           "negative": true,
           "duration": "immediate"
         }

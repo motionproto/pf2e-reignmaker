@@ -24,7 +24,7 @@
         {
           "type": "dice",
           "resource": "gold",
-          "formula": "1d6+1",
+          "formula": "2d4",
           "duration": "immediate"
         }
       ],
@@ -48,7 +48,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "The boom goes bust.",
+      "msg": "Corruption and greed flourish.",
       "modifiers": [
         {
           "type": "static",

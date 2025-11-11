@@ -73,8 +73,12 @@ actionImplementations.set(HarvestResourcesAction.id, HarvestResourcesAction);
 actionImplementations.set(PurchaseResourcesAction.id, PurchaseResourcesAction);
 actionImplementations.set(SellSurplusAction.id, SellSurplusAction);
 actionImplementations.set(ExecuteOrPardonPrisonersAction.id, ExecuteOrPardonPrisonersAction);
-actionImplementations.set(TrainArmyAction.id, TrainArmyAction);
-actionImplementations.set(DisbandArmyAction.id, DisbandArmyAction);
+// REMOVED: TrainArmyAction - migrated to prepare/commit pattern (uses CheckInstanceHelpers + GameCommandsResolver)
+// actionImplementations.set(TrainArmyAction.id, TrainArmyAction);
+// REMOVED: DisbandArmyAction - migrated to prepare/commit pattern (uses CheckInstanceHelpers + GameCommandsResolver)
+// actionImplementations.set(DisbandArmyAction.id, DisbandArmyAction);
+// NOTE: OutfitArmyAction MUST stay registered - it uses post-roll dialog for equipment selection
+// The prepare/commit pattern doesn't work for actions that need post-roll user input
 actionImplementations.set(OutfitArmyAction.id, OutfitArmyAction);
 actionImplementations.set(DeployArmyAction.id, DeployArmyAction);
 

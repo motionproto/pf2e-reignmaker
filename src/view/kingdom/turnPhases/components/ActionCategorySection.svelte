@@ -29,6 +29,7 @@
   export let getAidResultForAction: (actionId: string) => { outcome: string; bonus: number } | null;
   export let isActionAvailable: (action: any) => boolean;
   export let getMissingRequirements: (action: any) => string[];
+  export let hideUntrainedSkills: boolean = true;
 
   // Toggle action expansion
   function handleToggle(actionId: string) {
@@ -79,6 +80,7 @@
           skillName: checkInstance.appliedOutcome.skillName || '',
           modifiers: checkInstance.appliedOutcome.modifiers || [],
           effect: checkInstance.appliedOutcome.effect || '',
+          specialEffects: checkInstance.appliedOutcome.specialEffects || [],
           rollBreakdown: checkInstance.appliedOutcome.rollBreakdown,
           effectsApplied: checkInstance.appliedOutcome.effectsApplied || false
         } : undefined}
@@ -136,6 +138,7 @@
             showFameReroll={true}
             showAidButton={true}
             aidResult={getAidResultForAction(action.id)}
+            {hideUntrainedSkills}
             resolvedBadgeText="Resolved"
             primaryButtonLabel="Apply Result"
             skillSectionTitle="Choose Skill:"

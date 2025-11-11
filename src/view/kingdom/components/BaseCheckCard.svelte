@@ -19,7 +19,8 @@
    */
   
   import { createEventDispatcher } from 'svelte';
-  import { getSkillBonuses } from '../../../services/pf2e';
+  import { getSkillBonuses, getCurrentUserCharacter } from '../../../services/pf2e';
+  import { pf2eSkillService } from '../../../services/pf2e/PF2eSkillService';
   import { kingdomData } from '../../../stores/KingdomStore';
   import { TurnPhase } from '../../../actors/KingdomActor';
   import { structuresService } from '../../../services/structures';
@@ -78,7 +79,7 @@
     stateChanges?: Record<string, any>;
     modifiers?: any[];
     manualEffects?: string[];
-    specialEffects?: string[];  // Special effects like structure_damaged, hex_claimed
+    specialEffects?: (string | import('../../../types/special-effects').SpecialEffect)[];  // Supports both legacy strings and new structured format
     shortfallResources?: string[];
     rollBreakdown?: any;
     isIgnored?: boolean;  // Flag to hide reroll button for ignored events
@@ -90,6 +91,7 @@
   export let possibleOutcomes: any[] = [];
   export let showAidButton: boolean = false;
   export let aidResult: { outcome: string; bonus: number } | null = null;
+  export let hideUntrainedSkills: boolean = true;
   
   // UI customization props
   export let canPerformMore: boolean = true;  // NOT used for blocking, only for parent logic
@@ -158,11 +160,36 @@
       })
     : skills;
   
-  // Inject "applicable-lore" as a global option for all checks
-  $: skillsWithLore = [
+  // Inject "applicable-lore" as a global option for all checks, then filter untrained if needed
+  let baseSkillsWithLore: Array<{ skill: string; description?: string }> = [];
+  $: baseSkillsWithLore = [
     ...availableSkills,
     { skill: 'applicable lore', description: 'relevant expertise' }
   ];
+  
+  // Filter untrained skills if hideUntrainedSkills is enabled
+  $: skillsWithLore = (() => {
+    if (!hideUntrainedSkills) {
+      return baseSkillsWithLore;
+    }
+    
+    const currentCharacter = getCurrentUserCharacter();
+    if (!currentCharacter) {
+      return baseSkillsWithLore;
+    }
+    
+    return baseSkillsWithLore.filter(skillOption => {
+      const skillName = skillOption.skill.toLowerCase();
+      
+      // Always show lore skills (hard to determine proficiency dynamically)
+      if (skillName.includes('lore')) {
+        return true;
+      }
+      
+      // Check proficiency for other skills
+      return pf2eSkillService.isCharacterProficientInSkill(currentCharacter, skillOption.skill);
+    });
+  })();
   
   // Get skill bonuses for all skills (including injected lore)
   $: skillBonuses = getSkillBonuses(skillsWithLore.map(s => s.skill));
@@ -409,6 +436,9 @@
             
             <div class="skill-options-header">
               <div class="skill-options-title">{skillSectionTitle}</div>
+            </div>
+            <div class="skill-tags">
+              <!-- Ignore Event button as first item (events only) -->
               {#if showIgnoreButton && checkType === 'event'}
                 <button
                   class="ignore-button-inline"
@@ -420,9 +450,8 @@
                   Ignore Event
                 </button>
               {/if}
-            </div>
-            <div class="skill-tags">
-              <!-- Aid Another button/badge as first item if enabled (but not on aid actions themselves) -->
+              
+              <!-- Aid Another button/badge as second item if enabled (but not on aid actions themselves) -->
               {#if effectiveShowAidButton}
                 {#if aidResult && aidResult.bonus !== 0}
                   <!-- Aid result badge - shown after aid check completes (bonus or penalty) -->
@@ -654,13 +683,13 @@
     .ignore-button-inline {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-6);
-      padding: var(--space-6) var(--space-12);
+      gap: var(--space-8);
+      padding: var(--space-10) var(--space-16);
       background: var(--surface-primary);
       border: 1px solid var(--border-primary);
-      border-radius: var(--radius-md);
+      border-radius: var(--radius-sm);
       color: var(--color-red);
-      font-size: var(--font-sm);
+      font-size: var(--font-md);
       font-weight: var(--font-weight-medium);
       cursor: pointer;
       transition: all 0.2s ease;

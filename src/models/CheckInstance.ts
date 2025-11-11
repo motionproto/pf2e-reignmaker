@@ -53,11 +53,14 @@ export interface ActiveCheckInstance {
     effect: string;
     modifiers: EventModifier[];  // Resolved static values
     manualEffects: string[];
-    specialEffects: string[];    // Special effects like structure_damaged, hex_claimed
+    specialEffects: (string | import('../types/special-effects').SpecialEffect)[];    // Supports both legacy strings and new structured format
     shortfallResources: string[];
     rollBreakdown?: any;
     effectsApplied: boolean;     // Mark when "Apply Result" clicked
   };
+  
+  // NOTE: Pending commits are stored client-side in CommitStorage (src/utils/CommitStorage.ts)
+  // Functions cannot be serialized in Foundry actor flags, so we store them separately
 }
 
 /**

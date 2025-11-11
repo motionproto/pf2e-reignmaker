@@ -62,7 +62,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "A crime syndicate is exposed.",
+      "msg": "A crime syndicate thrives.",
       "modifiers": [
         {
           "type": "dice",

@@ -10,6 +10,9 @@
   export let onNextPhase: (() => void) | undefined = undefined;
   export let isUpkeepPhase: boolean = false;
   export let isViewingActualPhase: boolean = true;
+  export let showUntrainedToggle: boolean = false;
+  export let hideUntrained: boolean = true;
+  export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
   // currentTurn is now imported from stores, remove the export
   
   // Use the reactive phaseComplete property from KingdomActor
@@ -79,22 +82,36 @@
         <p>{description}</p>
       {/if}
     </div>
-    {#if onNextPhase}
-      <Button 
-        variant="primary"
-        icon={isUpkeepPhase ? 'fas fa-calendar-check' : 'fas fa-arrow-right'}
-        iconPosition="right"
-        on:click={handleNextPhaseClick}
-        disabled={!currentPhaseComplete}
-        tooltip={!currentPhaseComplete ? (isGM ? 'Complete all required steps in this phase first (GM: Shift-click to force)' : 'Complete all required steps in this phase first') : undefined}
-      >
-        {#if isUpkeepPhase}
-          End Turn {$currentTurn}
-        {:else}
-          Next Phase
-        {/if}
-      </Button>
-    {/if}
+    <div class="controls-wrapper">
+      {#if showUntrainedToggle}
+        <div class="untrained-toggle-wrapper">
+          <label class="untrained-toggle">
+            <input 
+              type="checkbox" 
+              checked={hideUntrained}
+              on:change={(e) => onToggleUntrained?.(e.currentTarget.checked)}
+            />
+            <span>Hide Untrained Skills</span>
+          </label>
+        </div>
+      {/if}
+      {#if onNextPhase}
+        <Button 
+          variant="primary"
+          icon={isUpkeepPhase ? 'fas fa-calendar-check' : 'fas fa-arrow-right'}
+          iconPosition="right"
+          on:click={handleNextPhaseClick}
+          disabled={!currentPhaseComplete}
+          tooltip={!currentPhaseComplete ? (isGM ? 'Complete all required steps in this phase first (GM: Shift-click to force)' : 'Complete all required steps in this phase first') : undefined}
+        >
+          {#if isUpkeepPhase}
+            End Turn {$currentTurn}
+          {:else}
+            Next Phase
+          {/if}
+        </Button>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -164,6 +181,43 @@
     opacity: 0.85;
   }
 
+  .controls-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-12);
+    z-index: 1;
+    position: relative;
+  }
+
+  .untrained-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    padding: var(--space-12) var(--space-16);
+    min-height: 2.5rem;
+  }
+
+  .untrained-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .untrained-toggle input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .untrained-toggle span {
+    color: var(--text-primary);
+    font-size: var(--font-md);
+    font-weight: var(--font-weight-medium);
+    user-select: none;
+    line-height: 1.5;
+  }
 
   /* Responsive design */
   @media (max-width: 48rem) {

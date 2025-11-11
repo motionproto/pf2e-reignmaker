@@ -1,6 +1,6 @@
 {
-  "id": "justice-prevails",
-  "name": "Justice Prevails",
+  "id": "criminal-trial",
+  "name": "Criminal Trial",
   "tier": 1,
   "description": "Authorities catch a notorious criminal or resolve a major injustice.",
   "skills": [
@@ -44,14 +44,7 @@
     },
     "failure": {
       "msg": "Complications arise from the trial.",
-      "modifiers": [
-        {
-          "type": "static",
-          "resource": "unrest",
-          "value": 1,
-          "duration": "immediate"
-        }
-      ],
+      "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
@@ -60,7 +53,7 @@
         {
           "type": "static",
           "resource": "unrest",
-          "value": 2,
+          "value": 1,
           "duration": "immediate"
         }
       ],

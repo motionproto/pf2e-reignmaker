@@ -378,7 +378,7 @@ export async function createEventPhaseController(_eventService?: any) {
                             manualEffects: outcomeData?.manualEffects || [],
                             specialEffects: result.applied?.specialEffects || [],  // ✅ FIXED: Correct path to specialEffects
                             shortfallResources: result.applied?.specialEffects
-                                ?.filter((e: string) => e.startsWith('shortage_penalty:'))
+                                ?.filter((e: any) => typeof e === 'string' && e.startsWith('shortage_penalty:'))
                                 ?.map((e: string) => e.split(':')[1]) || [],
                             effectsApplied: true  // ✅ Mark effects as applied inside appliedOutcome (syncs across clients)
                         };

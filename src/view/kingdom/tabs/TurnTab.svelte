@@ -60,6 +60,14 @@
    
    // Helper to show if we're viewing a different phase than active
    $: isViewingDifferentPhase = displayPhase !== actualPhase;
+   
+   // State for Actions Phase hide untrained setting
+   let actionsPhaseHideUntrained = true;
+   
+   // Handler for hide untrained toggle from Actions phase
+   function handleToggleUntrainedFromActions(value: boolean) {
+      actionsPhaseHideUntrained = value;
+   }
 </script>
 
 <div class="turn-management">
@@ -77,6 +85,9 @@
          onNextPhase={handleAdvancePhase}
          isUpkeepPhase={actualPhase === TurnPhase.UPKEEP}
          isViewingActualPhase={displayPhase === actualPhase}
+         showUntrainedToggle={displayPhase === TurnPhase.ACTIONS}
+         hideUntrained={actionsPhaseHideUntrained}
+         onToggleUntrained={handleToggleUntrainedFromActions}
       />
       
       <!-- Phase Bar underneath phase header -->
@@ -97,7 +108,11 @@
          {:else if displayPhase === TurnPhase.EVENTS}
             <EventsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
          {:else if displayPhase === TurnPhase.ACTIONS}
-            <ActionsPhase isViewingCurrentPhase={displayPhase === actualPhase} />
+            <ActionsPhase 
+               isViewingCurrentPhase={displayPhase === actualPhase}
+               bind:hideUntrainedSkills={actionsPhaseHideUntrained}
+               onToggleUntrained={handleToggleUntrainedFromActions}
+            />
          {:else if displayPhase === TurnPhase.UPKEEP}
             <UpkeepPhase isViewingCurrentPhase={displayPhase === actualPhase} />
          {/if}

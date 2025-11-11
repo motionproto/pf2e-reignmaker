@@ -215,6 +215,10 @@
       <i class="fas fa-chevron-left"></i>
    </button>
    
+   <button class="nav-btn" on:click={navigateNext} disabled={totalCount === 0}>
+      <i class="fas fa-chevron-right"></i>
+   </button>
+   
    <div class="current-info">
       {#if currentItem}
          <span class="index">{displayIndex}/{totalCount}:</span>
@@ -224,10 +228,6 @@
       {/if}
    </div>
    
-   <button class="nav-btn" on:click={navigateNext} disabled={totalCount === 0}>
-      <i class="fas fa-chevron-right"></i>
-   </button>
-   
    <button class="action-btn" on:click={setRandom} disabled={totalCount === 0}>
       <i class="fas fa-dice"></i>
       Random
@@ -235,7 +235,7 @@
    
    <button class="action-btn clear" on:click={clearActive} disabled={!currentItemId}>
       <i class="fas fa-times"></i>
-      Clear
+      Clear All
    </button>
 </div>
 
@@ -250,6 +250,7 @@
       border-radius: var(--radius-md);
       font-size: var(--font-sm);
       margin-bottom: var(--space-16);
+      width: 100%;
    }
    
    .debug-label {

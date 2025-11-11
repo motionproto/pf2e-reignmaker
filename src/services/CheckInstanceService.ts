@@ -88,8 +88,10 @@ export class CheckInstanceService {
     actorName: string,
     skillName: string,
     effect: string,
-    rollBreakdown?: any
+    rollBreakdown?: any,
+    specialEffects?: any[]
   ): Promise<void> {
+    console.log('📦 [CheckInstanceService] storeOutcome called with specialEffects:', specialEffects);
     await updateKingdom(kingdom => {
       const instance = kingdom.activeCheckInstances?.find(i => i.instanceId === instanceId);
       if (instance) {
@@ -100,13 +102,13 @@ export class CheckInstanceService {
           effect,
           modifiers: resolutionData.numericModifiers as any,
           manualEffects: resolutionData.manualEffects,
-          specialEffects: [],
+          specialEffects: specialEffects || [],
           shortfallResources: [],
           rollBreakdown,
           effectsApplied: false
         };
         instance.status = 'resolved';
-
+        console.log('✅ [CheckInstanceService] Stored outcome with specialEffects:', instance.appliedOutcome.specialEffects);
       } else {
         console.error(`❌ [CheckInstanceService] Instance ${instanceId} not found when storing outcome`);
       }

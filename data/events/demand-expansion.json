@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "The citizens are satisfied.",
+      "msg": "The people are inspired by your vision of growth.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "The citizens are satisfied.",
+      "msg": "The people accept your promises.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "The citizens remain unhappy.",
+      "msg": "The people continue to demand expansion.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "The dissatisfaction grows.",
+      "msg": "The people grow angry at your inaction.",
       "modifiers": [
         {
           "type": "static",

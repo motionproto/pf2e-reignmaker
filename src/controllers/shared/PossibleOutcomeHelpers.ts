@@ -10,13 +10,15 @@ export interface PossibleOutcome {
   label: string;
   description: string;
   modifiers?: EventModifier[];
+  manualEffects?: string[];
+  gameCommands?: any[];
 }
 
 export interface OutcomeEffects {
-  criticalSuccess?: { msg: string; modifiers?: EventModifier[] };
-  success?: { msg: string; modifiers?: EventModifier[] };
-  failure?: { msg: string; modifiers?: EventModifier[] };
-  criticalFailure?: { msg: string; modifiers?: EventModifier[] };
+  criticalSuccess?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  success?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  failure?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
+  criticalFailure?: { msg: string; modifiers?: EventModifier[]; manualEffects?: string[]; gameCommands?: any[] };
 }
 
 
@@ -75,7 +77,9 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
       result: 'criticalSuccess',
       label: 'Critical Success',
       description: critSuccessEffect.msg,
-      modifiers: critSuccessEffect.modifiers || []
+      modifiers: critSuccessEffect.modifiers || [],
+      manualEffects: critSuccessEffect.manualEffects || [],
+      gameCommands: critSuccessEffect.gameCommands || []
     });
   }
   
@@ -85,7 +89,9 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
       result: 'success',
       label: 'Success',
       description: effects.success.msg,
-      modifiers: effects.success.modifiers || []
+      modifiers: effects.success.modifiers || [],
+      manualEffects: effects.success.manualEffects || [],
+      gameCommands: effects.success.gameCommands || []
     });
   }
   
@@ -95,7 +101,9 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
       result: 'failure',
       label: 'Failure',
       description: effects.failure.msg,
-      modifiers: effects.failure.modifiers || []
+      modifiers: effects.failure.modifiers || [],
+      manualEffects: effects.failure.manualEffects || [],
+      gameCommands: effects.failure.gameCommands || []
     });
   }
   
@@ -105,7 +113,9 @@ export function buildPossibleOutcomes(effects?: OutcomeEffects): PossibleOutcome
       result: 'criticalFailure',
       label: 'Critical Failure',
       description: effects.criticalFailure.msg,
-      modifiers: effects.criticalFailure.modifiers || []
+      modifiers: effects.criticalFailure.modifiers || [],
+      manualEffects: effects.criticalFailure.manualEffects || [],
+      gameCommands: effects.criticalFailure.gameCommands || []
     });
   }
   

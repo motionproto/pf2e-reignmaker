@@ -34,7 +34,65 @@
 
 ## Section 1: Creating New Actions
 
-### 1.1 JSON-Only Action (Simple)
+### 1.1 Prepare/Commit Pattern (New - 2025-11-11)
+
+**When:** Simple game commands that create/modify entities without post-roll user input
+
+**Key Principle:** Commands return `{ specialEffect, commit }` instead of executing immediately.
+
+**Benefits:**
+- ✅ Special effects show in preview BEFORE "Apply Result" is clicked
+- ✅ Clean cancellation (just discard commit, no undo needed)
+- ✅ Single code path (no duplicate preview logic)
+
+**Use Cases:**
+- Pre-roll dialogs (data available before roll): `collect-stipend`, `recruit-unit`, `disband-army`, `train-army`
+- Simple entity operations: `establish-settlement`, `give-gold`, `create-army`
+
+**DON'T Use For:**
+- Post-roll user selection (equipment type, resource allocation, etc.) → Use custom implementation
+- Complex calculations (50% cost reduction, tier transitions) → Use custom implementation
+- Actions needing custom UI components → Use custom implementation
+
+**Implementation:**
+
+```typescript
+// In GameCommandsResolver.ts
+async yourCommand(params): Promise<PreparedCommand> {
+  // PHASE 1: PREPARE - Validate & calculate (NO state changes!)
+  const actor = getKingdomActor();
+  // ... validation ...
+  
+  // Calculate preview data
+  const message = `Preview message`;
+  
+  // PHASE 2: RETURN - Preview + commit closure
+  return {
+    specialEffect: {
+      type: 'status',
+      message: message,
+      icon: 'fa-star',
+      variant: 'positive'
+    },
+    commit: async () => {
+      // Closure captures all necessary data
+      // Execute actual state changes here
+      await updateKingdom(kingdom => {
+        // Apply changes
+      });
+    }
+  };
+}
+```
+
+**Examples:**
+- `giveActorGold` - Collect stipend (lines 169-252 in GameCommandsResolver.ts)
+- `recruitArmy` - Recruit unit (lines 65-121)
+- `trainArmy` - Train army (lines 467-597)
+
+**Reference:** `docs/systems/game-commands-system.md#preparecommit-pattern`
+
+### 1.2 JSON-Only Action (Simple)
 
 **When:** Action only changes resources (gold, unrest, fame, etc.)
 

@@ -20,6 +20,18 @@
   // Props
   export let isViewingCurrentPhase: boolean = true;
 
+  // Hide untrained skills state (persisted per-user in localStorage)
+  const STORAGE_KEY = 'pf2e-reignmaker-hide-untrained-skills';
+  export let hideUntrainedSkills: boolean = true;
+  export let onToggleUntrained: ((value: boolean) => void) | undefined = undefined;
+
+  // Save preference to localStorage when changed internally
+  function handleToggleUntrainedInternal(value: boolean) {
+    hideUntrainedSkills = value;
+    localStorage.setItem(STORAGE_KEY, String(value));
+    onToggleUntrained?.(value);
+  }
+
   // Import controller
   import { createActionPhaseController } from '../../../controllers/ActionPhaseController';
   import { createCustomActionHandlers, type CustomActionHandlers } from '../../../controllers/actions/action-handlers-config';
@@ -173,24 +185,31 @@
       pendingDiplomaticAction
     };
     
-    const instanceId = await createActionCheckInstance({
-      actionId,
-      action,
-      outcome,
-      actorName,
-      skillName,
-      rollBreakdown,
-      currentTurn: $currentTurn,
-      pendingActions,
-      controller
-    });
+    console.log('🎯 [ActionsPhase] About to create check instance for:', actionId);
+    try {
+      const instanceId = await createActionCheckInstance({
+        actionId,
+        action,
+        outcome,
+        actorName,
+        skillName,
+        rollBreakdown,
+        currentTurn: $currentTurn,
+        pendingActions,
+        controller
+      });
+      console.log('✅ [ActionsPhase] Created instance with ID:', instanceId);
     
-    // Track instanceId for this action
-    currentActionInstances.set(actionId, instanceId);
-    currentActionInstances = currentActionInstances;  // Trigger reactivity
+      // Track instanceId for this action
+      currentActionInstances.set(actionId, instanceId);
+      currentActionInstances = currentActionInstances;  // Trigger reactivity
 
-    // Force Svelte to update
-    await tick();
+      // Force Svelte to update
+      await tick();
+    } catch (error) {
+      console.error('❌ [ActionsPhase] Failed to create check instance:', error);
+      ui.notifications?.error(`Failed to create action result: ${error}`);
+    }
   }
 
   // Removed: Old resetAction call - instances are now managed via CheckInstanceService
@@ -230,18 +249,28 @@
     }
     console.log('🎬 [ActionsPhase] Instance has outcome:', instance.appliedOutcome.outcome);
 
-    // Update instance with final resolution data and mark as applied
-    if (checkInstanceService) {
-      await checkInstanceService.storeOutcome(
-        instanceId,
-        instance.appliedOutcome.outcome,
-        resolutionData,
-        instance.appliedOutcome.actorName,
-        instance.appliedOutcome.skillName || '',
-        instance.appliedOutcome.effect
-      );
-      await checkInstanceService.markApplied(instanceId);
-
+    // EXECUTE PENDING COMMITS (prepare/commit pattern)
+    // This executes game commands like giveActorGold that were prepared earlier
+    // Retrieve from client-side storage (functions can't be serialized in actor flags)
+    const { commitStorage } = await import('../../../utils/CommitStorage');
+    const pendingCommits = commitStorage.get(instanceId);
+    
+    if (pendingCommits && pendingCommits.length > 0) {
+      console.log(`🎬 [ActionsPhase] Executing ${pendingCommits.length} pending commit(s)`);
+      try {
+        for (const commit of pendingCommits) {
+          await commit();
+        }
+        console.log('✅ [ActionsPhase] All pending commits executed successfully');
+        
+        // Remove commits from storage after successful execution
+        commitStorage.remove(instanceId);
+      } catch (error) {
+        console.error('❌ [ActionsPhase] Failed to execute pending commits:', error);
+        logger.error('❌ [ActionsPhase] Failed to execute pending commits:', error);
+        ui.notifications?.error(`Failed to apply action effects: ${error}`);
+        return;
+      }
     }
 
     // Prepare resolution data with custom component data if needed
@@ -284,10 +313,11 @@
     }
     
     // Show success notification with applied effects (if any resources were changed)
-    // Skip for actions with custom notifications (they handle their own)
+    // Skip for actions with custom notifications OR prepare/commit pattern (they handle their own)
     const { hasCustomImplementation } = await import('../../../controllers/actions/implementations');
     const hasCustom = hasCustomImplementation(actionId);
-    if (!hasCustom && result.applied?.resources && result.applied.resources.length > 0) {
+    const suppressNotification = ['disband-army']; // Actions using prepare/commit with animations
+    if (!hasCustom && !suppressNotification.includes(actionId) && result.applied?.resources && result.applied.resources.length > 0) {
       const effectsMsg = result.applied.resources
         .map((r: any) => `${r.value > 0 ? '+' : ''}${r.value} ${r.resource}`)
         .join(', ');
@@ -351,6 +381,13 @@
 
   // Component lifecycle
   onMount(async () => {
+    // Load preference from localStorage on mount
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored !== null) {
+      hideUntrainedSkills = stored === 'true';
+      onToggleUntrained?.(hideUntrainedSkills);
+    }
+    
     // Initialize controller and service
     controller = await createActionPhaseController();
     gameCommandsService = await createGameCommandsService();
@@ -1120,6 +1157,7 @@
         {getAidResultForAction}
         {isActionAvailable}
         {getMissingRequirements}
+        {hideUntrainedSkills}
         on:toggle={(e) => toggleAction(e.detail.actionId)}
         on:executeSkill={(e) => handleExecuteSkill(e.detail.event, e.detail.action)}
         on:performReroll={(e) => handlePerformReroll(e.detail.event, e.detail.action)}
