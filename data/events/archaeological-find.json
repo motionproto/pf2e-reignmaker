@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major discovery",
+      "msg": "A major discovery brings wealth and fame.",
       "modifiers": [
         {
           "type": "dice",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Valuable find",
+      "msg": "Valuable artifacts are uncovered.",
       "modifiers": [
         {
           "type": "static",
@@ -55,7 +55,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor artifacts",
+      "msg": "Only minor artifacts are found.",
       "modifiers": [
         {
           "type": "choice-dropdown",
@@ -73,7 +73,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Dangerous site",
+      "msg": "The site awakens something dangerous.",
       "modifiers": [
         {
           "type": "static",

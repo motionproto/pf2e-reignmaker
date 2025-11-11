@@ -36,7 +36,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Widespread Support",
+      "description": "The people rally to your cause.",
       "modifiers": [
         {
           "type": "static",
@@ -47,7 +47,7 @@
       ]
     },
     "success": {
-      "description": "The People Listen",
+      "description": "The people listen.",
       "modifiers": [
         {
           "type": "static",
@@ -58,7 +58,7 @@
       ]
     },
     "failure": {
-      "description": "Can we just get along?",
+      "description": "Tensions ease slightly.",
       "modifiers": [
         {
           "type": "static",

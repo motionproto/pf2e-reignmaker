@@ -33,7 +33,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Village established and gain 1 free Tier 1 Structure of your choice",
+      "description": "The village is established quickly.",
       "modifiers": [
         {
           "type": "static",
@@ -67,7 +67,7 @@
       ]
     },
     "success": {
-      "description": "Village established",
+      "description": "The village is established.",
       "modifiers": [
         {
           "type": "static",
@@ -91,7 +91,7 @@
       "manualEffects": ["Place the new village on the hex map"]
     },
     "failure": {
-      "description": "Scouts, surveyors, and initial supplies are wasted",
+      "description": "Resources are wasted.",
       "modifiers": [
         {
           "type": "static",
@@ -114,7 +114,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Complete disaster - resources wasted, public embarrassment, confidence shaken",
+      "description": "The settlement attempt is a complete disaster.",
       "modifiers": [
         {
           "type": "static",

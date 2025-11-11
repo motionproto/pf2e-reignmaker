@@ -35,19 +35,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Learn about 2 hexes. Reveal the chosen hexes on the map.",
+      "description": "The scouts return with detailed information.",
       "modifiers": []
     },
     "success": {
-      "description": "Learn about 1 hex. Reveal the chosen hex on the map.",
+      "description": "The scouts return with information.",
       "modifiers": []
     },
     "failure": {
-      "description": "No report",
+      "description": "The scouts find nothing.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Scouts lost",
+      "description": "The scouts are lost.",
       "modifiers": [
         {
           "type": "static",

@@ -31,7 +31,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Settlement level increases by 1 at half the cost (rounded up)",
+      "description": "The settlement grows rapidly.",
       "modifiers": [
         {
           "type": "computed",
@@ -43,7 +43,7 @@
       ]
     },
     "success": {
-      "description": "Settlement level increases by 1",
+      "description": "The settlement grows.",
       "modifiers": [
         {
           "type": "computed",
@@ -55,7 +55,7 @@
       ]
     },
     "failure": {
-      "description": "Construction setbacks and delays waste resources and achieve nothing in the settlement.",
+      "description": "Construction setbacks waste resources.",
       "modifiers": [
         {
           "type": "computed",
@@ -67,7 +67,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Accidents and incompetance waste the full investment in the settlement achieving nothing.",
+      "description": "Accidents and incompetence waste the investment.",
       "modifiers": [
         {
           "type": "computed",

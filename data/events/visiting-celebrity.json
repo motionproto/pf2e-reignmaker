@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Spectacular visit",
+      "msg": "The visit is spectacular.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant visit",
+      "msg": "The visit is pleasant.",
       "modifiers": [
         {
           "type": "static",
@@ -49,12 +49,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Mediocre visit",
+      "msg": "The visit is mediocre.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Celebrity offended",
+      "msg": "The celebrity is offended.",
       "modifiers": [
         {
           "type": "static",

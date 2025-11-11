@@ -32,19 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Immediately gain 1 Resource of the appropriate type, the Worksite is established and produces next turn",
+      "description": "The worksite is established quickly.",
       "modifiers": []
     },
     "success": {
-      "description": "The Worksite is established and produces next turn",
+      "description": "The worksite is established.",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "The workers make no progress.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
+      "description": "The work is abandoned.",
       "modifiers": []
     }
   },

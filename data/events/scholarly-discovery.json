@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Revolutionary discovery",
+      "msg": "A revolutionary discovery is made.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Important findings",
+      "msg": "Important findings emerge.",
       "modifiers": [
         {
           "type": "static",
@@ -49,12 +49,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Research inconclusive",
+      "msg": "The research is inconclusive.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Academic scandal",
+      "msg": "An academic scandal erupts.",
       "modifiers": [
         {
           "type": "static",

@@ -20,7 +20,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Exceptional harvest! Choose a resource to gain.",
+      "description": "The harvest is exceptional.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -31,7 +31,7 @@
       ]
     },
     "success": {
-      "description": "Good harvest! Choose a resource to gain.",
+      "description": "The harvest is good.",
       "modifiers": [],
       "gameCommands": [
         {

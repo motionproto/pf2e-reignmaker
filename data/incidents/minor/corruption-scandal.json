@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Scandal contained, no effect",
+      "msg": "The scandal is contained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Lose gold (embezzlement/graft discovered)",
+      "msg": "Embezzlement and graft are discovered.",
       "modifiers": [
         {
           "type": "dice",
@@ -41,7 +41,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose gold and fame (major corruption exposed publicly)",
+      "msg": "Major corruption is exposed publicly.",
       "modifiers": [
         {
           "type": "dice",

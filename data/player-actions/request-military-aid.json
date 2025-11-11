@@ -24,19 +24,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Gain 2 allied troops or a powerful special detachment for 1 battle",
+      "description": "Your ally provides generous military support.",
       "modifiers": []
     },
     "success": {
-      "description": "Gain 1 allied troop for 1 battle",
+      "description": "Your ally provides military support.",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "Your ally cannot help.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Ally is offended",
+      "description": "Your ally is offended.",
       "modifiers": []
     }
   },

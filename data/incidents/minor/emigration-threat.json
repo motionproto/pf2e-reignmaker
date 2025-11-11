@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Population stays, no effect",
+      "msg": "The population stays.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Citizens abandon ongoing projects",
+      "msg": "Citizens abandon ongoing projects.",
       "modifiers": [],
       "manualEffects": [
         "Choose or roll for one random ongoing worksite. That worksite is destroyed (remove all progress)"
@@ -36,7 +36,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Mass emigration causes chaos and abandoned projects",
+      "msg": "Mass emigration causes chaos.",
       "modifiers": [
         {
           "type": "static",

@@ -28,7 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "A friend in need... gain 2d6 gold",
+      "description": "Your ally provides generous support.",
       "modifiers": [
         {
           "type": "dice",
@@ -39,7 +39,7 @@
       ]
     },
     "success": {
-      "description": "Ally provides support, Gain 1d4+1 gold",
+      "description": "Your ally provides support.",
       "modifiers": [
         {
           "type": "dice",
@@ -50,11 +50,11 @@
       ]
     },
     "failure": {
-      "description": "We can't help. No effect",
+      "description": "Your ally cannot help.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Ally is offended, -1 attitude level",
+      "description": "Your ally is offended.",
       "modifiers": [],
       "gameCommands": [
         {

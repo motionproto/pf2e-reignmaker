@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Trade bonanza",
+      "msg": "Trade flourishes throughout the kingdom.",
       "modifiers": [
         {
           "type": "dice",
@@ -31,7 +31,7 @@
       "endsEvent": false
     },
     "success": {
-      "msg": "Steady growth",
+      "msg": "The economy grows steadily.",
       "modifiers": [
         {
           "type": "static",
@@ -43,12 +43,12 @@
       "endsEvent": false
     },
     "failure": {
-      "msg": "Surge slows",
+      "msg": "The economic surge slows.",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Economic bubble bursts",
+      "msg": "The economic bubble bursts.",
       "modifiers": [
         {
           "type": "static",

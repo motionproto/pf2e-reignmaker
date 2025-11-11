@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Legendary treasure",
+      "msg": "A legendary treasure is discovered.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Valuable find",
+      "msg": "A valuable treasure is found.",
       "modifiers": [
         {
           "type": "dice",
@@ -49,7 +49,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Modest value",
+      "msg": "The treasure is of modest value.",
       "modifiers": [
         {
           "type": "static",
@@ -61,7 +61,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Treasure cursed or false",
+      "msg": "The treasure is cursed.",
       "modifiers": [
         {
           "type": "static",

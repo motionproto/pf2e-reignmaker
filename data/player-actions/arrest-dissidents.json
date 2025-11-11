@@ -28,17 +28,17 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Convert up to 8 Unrest to imprisoned Unrest",
+      "description": "The troublemakers are swiftly arrested.",
       "modifiers": [],
       "customResolution": true
     },
     "success": {
-      "description": "Convert up to 4 Unrest to imprisoned Unrest",
+      "description": "The troublemakers are arrested.",
       "modifiers": [],
       "customResolution": true
     },
     "failure": {
-      "description": "No effect",
+      "description": "The arrests fail.",
       "modifiers": [
         {
           "type": "static",
@@ -49,7 +49,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Botched arrests cause riots; gain 1 Unrest",
+      "description": "Botched arrests cause riots.",
       "modifiers": [
         {
           "type": "static",

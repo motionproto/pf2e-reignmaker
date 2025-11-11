@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Relations improve by one step",
+      "msg": "Relations with the neighboring kingdom improve greatly.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Relations improve by one step (max Friendly without diplomatic structures)",
+      "msg": "Relations with the neighboring kingdom improve.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -55,12 +55,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "No change in relations",
+      "msg": "The negotiations go nowhere.",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Relations worsen by one step",
+      "msg": "The negotiations turn sour.",
       "modifiers": [
         {
           "type": "static",

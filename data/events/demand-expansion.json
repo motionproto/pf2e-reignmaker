@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Citizens satisfied",
+      "msg": "The citizens are satisfied.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Citizens satisfied",
+      "msg": "The citizens are satisfied.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Citizens unhappy",
+      "msg": "The citizens remain unhappy.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major dissatisfaction",
+      "msg": "The dissatisfaction grows.",
       "modifiers": [
         {
           "type": "static",

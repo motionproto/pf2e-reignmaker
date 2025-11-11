@@ -24,7 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build a {structure} for half cost",
+      "description": "The {structure} is constructed efficiently.",
       "modifiers": []
     },
     "success": {
@@ -32,11 +32,11 @@
       "modifiers": []
     },
     "failure": {
-      "description": "No progress on building a {structure}",
+      "description": "Construction of the {structure} fails.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Accidents and disputes plauge the {structure} project.",
+      "description": "Accidents and disputes plague the {structure} project.",
       "modifiers": [
          {
           "type": "static",

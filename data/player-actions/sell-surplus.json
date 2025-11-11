@@ -28,19 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Use trade rate one tier higher than your commerce structure. Imperial Bank achieves legendary 1:3 rate!",
+      "description": "You secure exceptional trade rates.",
       "modifiers": []
     },
     "success": {
-      "description": "Use your current commerce structure's trade rate",
+      "description": "Resources are sold.",
       "modifiers": []
     },
     "failure": {
-      "description": "No buyers found this turn",
+      "description": "No buyers are found.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No buyers found this turn",
+      "description": "The market is closed.",
       "modifiers": []
     }
   }

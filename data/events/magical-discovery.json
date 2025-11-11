@@ -19,12 +19,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major magical boon",
+      "msg": "A major magical boon is revealed.",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Useful discovery",
+      "msg": "The discovery proves useful.",
       "modifiers": [
         {
           "type": "static",
@@ -36,7 +36,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Magic proves dangerous",
+      "msg": "The magic proves dangerous.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Magical disaster",
+      "msg": "A magical disaster erupts.",
       "modifiers": [
         {
           "type": "static",

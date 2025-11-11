@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Peacefully resolved",
+      "msg": "The situation is peacefully resolved.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Zealots dispersed",
+      "msg": "The zealots are dispersed.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Persecution spreads",
+      "msg": "The persecution spreads.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Violence erupts",
+      "msg": "Violence erupts.",
       "modifiers": [
         {
           "type": "static",

@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Great success",
+      "msg": "Your leaders are the stars of the festival.",
       "modifiers": [
         {
           "type": "static",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Pleasant visit",
+      "msg": "Your leaders enjoy a pleasant visit.",
       "modifiers": [
         {
           "type": "static",
@@ -49,12 +49,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Adequate visit",
+      "msg": "The visit is uneventful.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Diplomatic faux pas",
+      "msg": "Your leaders commit a diplomatic blunder.",
       "modifiers": [
         {
           "type": "static",

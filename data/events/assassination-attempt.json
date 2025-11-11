@@ -19,17 +19,17 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Assassin captured",
+      "msg": "The assassin is captured.",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Attempt foiled",
+      "msg": "The attempt is foiled.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Leader escapes",
+      "msg": "Your leader narrowly escapes.",
       "modifiers": [
         {
           "type": "static",
@@ -41,7 +41,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Leader wounded",
+      "msg": "Your leader is seriously wounded.",
       "modifiers": [
         {
           "type": "static",

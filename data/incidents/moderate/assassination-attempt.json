@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Assassination prevented, no effect",
+      "msg": "The assassination is prevented.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Leader escapes",
+      "msg": "The leader escapes.",
       "modifiers": [
         {
           "type": "static",
@@ -36,7 +36,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Leader wounded",
+      "msg": "The leader is wounded.",
       "modifiers": [
         {
           "type": "static",

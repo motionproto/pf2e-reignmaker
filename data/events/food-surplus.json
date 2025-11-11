@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Massive surplus",
+      "msg": "A massive surplus fills the granaries.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Good harvest",
+      "msg": "The harvest is bountiful.",
       "modifiers": [
         {
           "type": "dice",
@@ -49,7 +49,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor surplus",
+      "msg": "A modest surplus is gathered.",
       "modifiers": [
         {
           "type": "static",
@@ -61,7 +61,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Surplus spoils",
+      "msg": "Much of the surplus spoils.",
       "modifiers": [
         {
           "type": "static",

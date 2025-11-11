@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Exclusive deal",
+      "msg": "An exclusive trade deal is secured.",
       "modifiers": [
         {
           "type": "dice",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Standard agreement",
+      "msg": "A standard agreement is reached.",
       "modifiers": [
         {
           "type": "static",
@@ -43,12 +43,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Poor terms",
+      "msg": "The terms are poor.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Trade dispute",
+      "msg": "A trade dispute erupts.",
       "modifiers": [
         {
           "type": "static",

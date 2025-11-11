@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Independence movement quelled, no effect",
+      "msg": "The independence movement is quelled.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "A settlement revolts against your kingdom",
+      "msg": "A settlement revolts.",
       "modifiers": [
         {
           "type": "dice",
@@ -45,7 +45,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "A settlement successfully declares independence from your kingdom",
+      "msg": "A settlement declares independence.",
       "modifiers": [
         {
           "type": "static",

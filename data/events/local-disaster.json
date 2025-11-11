@@ -19,12 +19,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Disaster contained",
+      "msg": "The disaster is contained.",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Limited damage",
+      "msg": "Damage is limited.",
       "modifiers": [
         {
           "type": "static",
@@ -36,7 +36,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Major damage",
+      "msg": "Major damage occurs.",
       "modifiers": [
         {
           "type": "static",
@@ -54,7 +54,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Catastrophic",
+      "msg": "The disaster is catastrophic.",
       "modifiers": [
         {
           "type": "static",

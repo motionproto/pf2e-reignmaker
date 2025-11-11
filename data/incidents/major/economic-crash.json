@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Economy stabilized, no effect",
+      "msg": "The economy is stabilized.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Economic downturn causes significant losses",
+      "msg": "An economic downturn causes significant losses.",
       "modifiers": [
         {
           "type": "dice",
@@ -44,7 +44,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Economic collapse devastates your kingdom",
+      "msg": "Economic collapse devastates your kingdom.",
       "modifiers": [
         {
           "type": "dice",

@@ -64,7 +64,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Your forces get lost during travel and arrive at a random nearby hex, exhausted and demoralized.",
+      "description": "Your forces get lost and arrive exhausted.",
       "modifiers": [
         {
           "type": "static",

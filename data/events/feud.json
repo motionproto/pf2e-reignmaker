@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "You broker a lasting peace and the families become allies. The unity strengthens your kingdom.",
+      "msg": "The families become allies.",
       "endsEvent": true,
       "modifiers": [
         {
@@ -37,7 +37,7 @@
       ]
     },
     "success": {
-      "msg": "You successfully mediate the dispute and restore peace.",
+      "msg": "The feud is resolved.",
       "endsEvent": true,
       "modifiers": [
         {
@@ -49,7 +49,7 @@
       ]
     },
     "failure": {
-      "msg": "Your mediation fails. The feud escalates and spreads to their supporters.",
+      "msg": "The feud escalates.",
       "endsEvent": false,
       "modifiers": [
         {
@@ -61,7 +61,7 @@
       ]
     },
     "criticalFailure": {
-      "msg": "Your intervention makes things worse! Violence erupts in the streets.",
+      "msg": "Violence erupts in the streets.",
       "endsEvent": false,
       "modifiers": [
         {

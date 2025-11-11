@@ -32,7 +32,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "You are handsomly compensated! Gain <amount> gold.",
+      "description": "You are handsomely compensated.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -42,7 +42,7 @@
       ]
     },
     "success": {
-      "description": "Gain <amount> gold.",
+      "description": "You receive your stipend.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -52,7 +52,7 @@
       ]
     },
     "failure": {
-      "description": "Two things in life are certain. Gain <amount> gold.",
+      "description": "The treasury struggles to pay you.",
       "modifiers": [
         {
           "type": "static",
@@ -69,7 +69,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "You can't take blood from a stone!",
+      "description": "The treasury is empty.",
       "modifiers": [
         {
           "type": "dice",

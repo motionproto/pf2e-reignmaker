@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Raiders defeated",
+      "msg": "The raiders are defeated.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Successful raid",
+      "msg": "The raiders are repelled.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Event outcome",
+      "msg": "The raiders plunder your holdings.",
       "modifiers": [
         {
           "type": "dice",
@@ -62,7 +62,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major raid",
+      "msg": "A major raid devastates the area.",
       "modifiers": [
         {
           "type": "dice",

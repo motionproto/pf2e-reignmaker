@@ -32,19 +32,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Valuable intel",
+      "description": "Valuable intel is gathered.",
       "modifiers": []
     },
     "success": {
-      "description": "Broad intel",
+      "description": "Intel is gathered.",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "The mission fails.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Spies are captured",
+      "description": "Your spies are captured.",
       "modifiers": []
     }
   }

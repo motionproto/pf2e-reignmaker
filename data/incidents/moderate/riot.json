@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Riot quelled, no effect",
+      "msg": "The riot is quelled.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Riot damages property and increases unrest",
+      "msg": "The riot damages property.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Violent riot destroys property and increases unrest",
+      "msg": "A violent riot destroys property.",
       "modifiers": [
         {
           "type": "static",

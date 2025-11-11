@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Peaceful resolution, no effect",
+      "msg": "The protests are resolved peacefully.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Lose gold (property damage, lost productivity)",
+      "msg": "Property damage occurs.",
       "modifiers": [
         {
           "type": "dice",
@@ -41,7 +41,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose gold and fame",
+      "msg": "Widespread damage and disorder erupt.",
       "modifiers": [
         {
           "type": "dice",

@@ -16,19 +16,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Claim hexes based on your skill proficiency",
+      "description": "Your kingdom expands rapidly.",
       "modifiers": []
     },
     "success": {
-      "description": "Claim 1 hex",
+      "description": "Your kingdom expands.",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "The expansion fails.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No effect",
+      "description": "The expansion attempt backfires.",
       "modifiers": [
         {
           "type": "static",

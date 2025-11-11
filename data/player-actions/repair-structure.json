@@ -30,7 +30,7 @@
       ]
     },
     "success": {
-      "description": "you repair the {structure}. Choose to pay either tier × d4 gold OR half the original build cost.",
+      "description": "The {structure} is repaired.",
       "modifiers": [],
       "gameEffects": [
         {

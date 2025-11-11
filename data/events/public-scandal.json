@@ -19,12 +19,12 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Scandal deflected",
+      "msg": "The scandal is deflected.",
       "modifiers": [],
       "endsEvent": true
     },
     "success": {
-      "msg": "Damage controlled",
+      "msg": "The damage is controlled.",
       "modifiers": [
         {
           "type": "static",
@@ -36,7 +36,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Public outrage",
+      "msg": "Public outrage erupts.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Leader must lay low",
+      "msg": "Your leader must lay low.",
       "modifiers": [
         {
           "type": "static",

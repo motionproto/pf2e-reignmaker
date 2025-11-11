@@ -24,7 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "People welcome them home with honours!, -2 Unrest",
+      "description": "The people welcome them home with honor.",
       "modifiers": [
         {
           "type": "static",
@@ -41,7 +41,7 @@
       ]
     },
     "success": {
-      "description": "Army disbands, -1 Unrest",
+      "description": "The army is disbanded smoothly.",
       "modifiers": [
         {
           "type": "static",
@@ -58,7 +58,7 @@
       ]
     },
     "failure": {
-      "description": "Army disbands",
+      "description": "The army is disbanded.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -68,7 +68,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Army disbands, +1 Unrest",
+      "description": "The disbandment causes unrest.",
       "modifiers": [
         {
           "type": "static",

@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Crisis averted",
+      "msg": "The crisis is averted.",
       "modifiers": [
         {
           "type": "dice",
@@ -32,7 +32,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Shortage controlled",
+      "msg": "The shortage is controlled.",
       "modifiers": [
         {
           "type": "dice",
@@ -45,7 +45,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Severe shortage",
+      "msg": "A severe shortage develops.",
       "modifiers": [
         {
           "type": "dice",
@@ -64,7 +64,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Famine threatens",
+      "msg": "Famine threatens the kingdom.",
       "modifiers": [
         {
           "type": "dice",

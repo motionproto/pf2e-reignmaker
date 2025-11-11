@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Disease contained, no effect",
+      "msg": "The disease is contained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Lose food (feeding the sick) and gain unrest",
+      "msg": "The disease spreads through settlements.",
       "modifiers": [
         {
           "type": "dice",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose food and gain unrest",
+      "msg": "The disease devastates your kingdom.",
       "modifiers": [
         {
           "type": "dice",

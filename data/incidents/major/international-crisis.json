@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Crisis contained, no effect",
+      "msg": "The crisis is contained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Diplomatic relations severely damaged",
+      "msg": "Diplomatic relations are severely damaged.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -39,7 +39,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Multiple kingdoms turn against you",
+      "msg": "Multiple kingdoms turn against you.",
       "modifiers": [
         {
           "type": "static",

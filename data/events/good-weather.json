@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Weather holds perfectly",
+      "msg": "The perfect weather holds.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,7 +37,7 @@
       "endsEvent": false
     },
     "success": {
-      "msg": "Weather remains good",
+      "msg": "The good weather continues.",
       "modifiers": [
         {
           "type": "dice",
@@ -49,12 +49,12 @@
       "endsEvent": false
     },
     "failure": {
-      "msg": "Weather changes",
+      "msg": "The weather changes.",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Weather turns bad",
+      "msg": "The weather turns bad.",
       "modifiers": [
         {
           "type": "static",

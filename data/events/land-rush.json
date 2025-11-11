@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Settlers successfully expand the kingdom",
+      "msg": "Settlers expand the kingdom.",
       "modifiers": [
         {
           "type": "static",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Settlers expand the kingdom",
+      "msg": "Settlers claim new land.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Settlers disperse without helping",
+      "msg": "The settlers disperse.",
       "modifiers": [
         {
           "type": "static",
@@ -55,7 +55,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Violence erupts at border",
+      "msg": "Violence erupts at the border.",
       "modifiers": [
         {
           "type": "static",

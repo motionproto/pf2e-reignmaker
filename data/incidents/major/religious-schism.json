@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Schism averted, no effect",
+      "msg": "The schism is averted.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Religious divisions weaken your kingdom's faith institutions",
+      "msg": "Religious divisions weaken your kingdom.",
       "modifiers": [
         {
           "type": "dice",
@@ -44,7 +44,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "The church splits entirely, destroying religious unity",
+      "msg": "The church splits entirely.",
       "modifiers": [
         {
           "type": "dice",

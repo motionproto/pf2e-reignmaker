@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Minimal damage",
+      "msg": "Damage is minimal.",
       "modifiers": [
         {
           "type": "static",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Some damage",
+      "msg": "Some damage occurs.",
       "modifiers": [
         {
           "type": "choice-dropdown",
@@ -49,7 +49,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Major damage",
+      "msg": "Major damage occurs.",
       "modifiers": [
         {
           "type": "static",
@@ -61,7 +61,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Devastating losses. Any worksites are removed from the hex unrest",
+      "msg": "The disaster is devastating.",
       "modifiers": [
         {
           "type": "static",

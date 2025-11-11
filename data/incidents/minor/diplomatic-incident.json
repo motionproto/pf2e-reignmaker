@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Relations maintained, no effect",
+      "msg": "Relations are maintained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "One neighbouring kingdom's attitude worsens",
+      "msg": "A neighboring kingdom's attitude worsens.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -35,7 +35,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Multiple kingdoms turn against you",
+      "msg": "Multiple kingdoms turn against you.",
       "modifiers": [],
       "gameCommands": [
         {

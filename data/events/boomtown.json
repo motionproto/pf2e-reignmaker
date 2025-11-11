@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major growth",
+      "msg": "The settlement experiences major growth.",
       "modifiers": [
         {
           "type": "dice",
@@ -31,7 +31,7 @@
       "endsEvent": false
     },
     "success": {
-      "msg": "Steady expansion",
+      "msg": "The settlement expands steadily.",
       "modifiers": [
         {
           "type": "dice",
@@ -43,12 +43,12 @@
       "endsEvent": false
     },
     "failure": {
-      "msg": "Growth stalls",
+      "msg": "The growth stalls.",
       "modifiers": [],
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Boom goes bust",
+      "msg": "The boom goes bust.",
       "modifiers": [
         {
           "type": "static",

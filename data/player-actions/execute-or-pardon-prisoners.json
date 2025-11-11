@@ -39,7 +39,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Remove all imprisoned Unrest in the settlement and reduce Unrest by 1",
+      "description": "Justice is served perfectly.",
       "modifiers": [
         {
           "type": "static",
@@ -56,7 +56,7 @@
       ]
     },
     "success": {
-      "description": "Remove 1d4 imprisoned Unrest from the settlement",
+      "description": "Justice is served.",
       "modifiers": [
         {
           "type": "dice",
@@ -78,7 +78,7 @@
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Gain 1 Unrest from riot, scandal, or martyrdom)",
+      "description": "Your judgment causes outrage.",
       "modifiers": [
         {
           "type": "static",

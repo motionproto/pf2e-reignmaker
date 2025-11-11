@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Break prevented, no effect",
+      "msg": "The break is prevented.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Mass prison break releases many criminals and damages your justice system",
+      "msg": "A mass prison break releases many criminals.",
       "gameCommands": [
         { "type": "releaseImprisoned", "percentage": 0.5 },
         { "type": "damageStructure", "category": "justice", "targetTier": "highest" }
@@ -32,7 +32,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Complete prison break releases all criminals and destroys your justice system",
+      "msg": "A complete prison break releases all criminals.",
       "gameCommands": [
         { "type": "releaseImprisoned", "percentage": 1 },
         { "type": "destroyStructure", "category": "justice", "targetTier": "highest" }

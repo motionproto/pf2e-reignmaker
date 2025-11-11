@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major triumph",
+      "msg": "Justice triumphs.",
       "modifiers": [
         {
           "type": "static",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Justice served",
+      "msg": "Justice is served.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Justice with complications",
+      "msg": "Complications arise from the trial.",
       "modifiers": [
         {
           "type": "static",
@@ -55,7 +55,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Miscarriage of justice",
+      "msg": "Justice is miscarried.",
       "modifiers": [
         {
           "type": "static",

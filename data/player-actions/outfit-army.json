@@ -24,7 +24,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Outfit an army with truly exceptional gear, +2 bonus",
+      "description": "The army is outfitted with exceptional gear.",
       "cost": {
         "ore": 1,
         "gold": 2
@@ -38,7 +38,7 @@
       ]
     },
     "success": {
-      "description": "Outfit an army",
+      "description": "The army is outfitted.",
       "cost": {
         "ore": 1,
         "gold": 2
@@ -52,7 +52,7 @@
       ]
     },
     "failure": {
-      "description": "No gear, wasted effort",
+      "description": "The effort is wasted.",
       "cost": {},
       "modifiers": [],
       "gameCommands": [
@@ -63,7 +63,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Botched acquisition, suppliers take the gold",
+      "description": "The suppliers take the gold.",
       "cost": {
         "gold": 2
       },

@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Plague cured",
+      "msg": "The plague is cured.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Plague contained",
+      "msg": "The plague is contained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Plague spreads",
+      "msg": "The plague spreads.",
       "modifiers": [
         {
           "type": "static",
@@ -55,7 +55,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Devastating outbreak",
+      "msg": "A devastating outbreak occurs.",
       "modifiers": [
         {
           "type": "static",

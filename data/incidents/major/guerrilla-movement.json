@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Rebellion dispersed",
+      "msg": "The rebellion is dispersed.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Rebels seize territory in your kingdom",
+      "msg": "Rebels seize territory.",
       "modifiers": [],
       "manualEffects": [
         "Roll 1d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)"
@@ -36,7 +36,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Rebels establish a stronghold and raise an army against you",
+      "msg": "Rebels establish a stronghold.",
       "modifiers": [],
       "manualEffects": [
         "Roll 2d3 and mark that many hexes as rebel-controlled (cannot use these hexes until rebellion is resolved)",

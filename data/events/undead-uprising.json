@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Undead destroyed",
+      "msg": "The undead are destroyed.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Undead destroyed",
+      "msg": "The undead are put down.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Undead spread",
+      "msg": "The undead spread.",
       "modifiers": [
         {
           "type": "static",
@@ -54,7 +54,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major outbreak",
+      "msg": "A major outbreak occurs.",
       "modifiers": [
         {
           "type": "static",

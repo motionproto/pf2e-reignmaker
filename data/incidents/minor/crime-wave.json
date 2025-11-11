@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Crime suppressed, no effect",
+      "msg": "Crime is suppressed.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Crime wave hits",
+      "msg": "A crime wave hits.",
       "modifiers": [
         {
           "type": "dice",
@@ -41,7 +41,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Major crime wave",
+      "msg": "A major crime wave erupts.",
       "modifiers": [
         {
           "type": "dice",

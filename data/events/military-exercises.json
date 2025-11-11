@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Elite forces trained",
+      "msg": "The exercises forge elite forces.",
       "modifiers": [
         {
           "type": "static",
@@ -31,17 +31,17 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Event outcome",
+      "msg": "The training goes well.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Training is ineffective",
+      "msg": "The training is ineffective.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Training accident",
+      "msg": "A training accident occurs.",
       "modifiers": [
         {
           "type": "static",

@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Reputation maintained, no effect",
+      "msg": "Your reputation is maintained.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Your kingdom's reputation suffers, losing fame and gold",
+      "msg": "Your kingdom's reputation suffers.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Devastating scandal cripples your kingdom's standing",
+      "msg": "A devastating scandal destroys your kingdom's standing.",
       "modifiers": [
         {
           "type": "dice",

@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Troops remain loyal, no effect",
+      "msg": "The troops remain loyal.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Military morale crisis damages your forces",
+      "msg": "A military morale crisis damages your forces.",
       "modifiers": [],
       "manualEffects": [
         "Choose 1 army. That army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",
@@ -33,7 +33,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Widespread desertion devastates your military",
+      "msg": "Widespread desertion devastates your military.",
       "modifiers": [],
       "manualEffects": [
         "Choose 2 armies. Each army must make a morale check (DC = kingdom level + 5). On failure, the army disbands",

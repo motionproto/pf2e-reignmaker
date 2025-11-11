@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Conspiracy exposed and dealt with, no effect",
+      "msg": "The conspiracy is exposed.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "The conspiracy damages your kingdom's stability and reputation",
+      "msg": "The conspiracy undermines your kingdom.",
       "modifiers": [
         {
           "type": "dice",
@@ -47,7 +47,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "The conspiracy strikes a devastating blow to your kingdom",
+      "msg": "The conspiracy strikes a devastating blow.",
       "modifiers": [
         {
           "type": "dice",

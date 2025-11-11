@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Bandits deterred, no effect",
+      "msg": "The bandits are deterred.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Bandit raids",
+      "msg": "The bandits raid your holdings.",
       "modifiers": [
         {
           "type": "dice",
@@ -41,7 +41,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Major bandit raids",
+      "msg": "Major bandit raids devastate the area.",
       "modifiers": [
         {
           "type": "dice",

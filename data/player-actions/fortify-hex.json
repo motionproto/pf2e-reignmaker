@@ -89,7 +89,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build/upgrade fortification, reduce Unrest by 1",
+      "description": "The fortification is constructed swiftly.",
       "modifiers": [
         {
           "type": "static",
@@ -100,15 +100,15 @@
       ]
     },
     "success": {
-      "description": "Build/upgrade fortification",
+      "description": "The fortification is constructed.",
       "modifiers": []
     },
     "failure": {
-      "description": "Construction accidents delay progress",
+      "description": "Construction accidents delay progress.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Workers injured in construction mishap",
+      "description": "Workers are injured in a construction mishap.",
       "modifiers": [
         {
           "type": "static",

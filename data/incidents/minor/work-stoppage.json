@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Workers return, no effect",
+      "msg": "The workers return.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Work stoppage halts production",
+      "msg": "Work stoppage halts production.",
       "modifiers": [
         {
           "type": "choice-dropdown",
@@ -46,7 +46,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Widespread work stoppage causes chaos",
+      "msg": "Widespread work stoppage causes chaos.",
       "modifiers": [
         {
           "type": "static",

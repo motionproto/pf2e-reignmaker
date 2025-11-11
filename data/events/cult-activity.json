@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "You convert the cultists to a productive faith. They become valuable citizens.",
+      "msg": "The cultists are converted.",
       "modifiers": [
         {
           "type": "static",
@@ -37,7 +37,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "You successfully disband the cult and arrest its leaders.",
+      "msg": "The cult is disbanded.",
       "modifiers": [
         {
           "type": "static",
@@ -49,7 +49,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "The cult evades your forces and continues recruiting.",
+      "msg": "The cult evades your forces.",
       "modifiers": [
         {
           "type": "static",
@@ -61,7 +61,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "The cult's influence spreads! They gain powerful supporters.",
+      "msg": "The cult's influence spreads.",
       "modifiers": [
         {
           "type": "static",

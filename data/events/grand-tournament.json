@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Spectacular event",
+      "msg": "The tournament is a spectacular success.",
       "modifiers": [
         {
           "type": "dice",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Successful tournament",
+      "msg": "The tournament goes well.",
       "modifiers": [
         {
           "type": "static",
@@ -55,12 +55,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Disappointing turnout",
+      "msg": "The turnout is disappointing.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Accident or scandal",
+      "msg": "An accident mars the event.",
       "modifiers": [
         {
           "type": "static",

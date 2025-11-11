@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Settlement stabilized, no effect",
+      "msg": "The settlement is stabilized.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose how to handle the settlement crisis",
+      "msg": "The crisis threatens the settlement.",
       "modifiers": [],
       "choices": [
         {
@@ -50,7 +50,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "A settlement collapses under the crisis",
+      "msg": "A settlement collapses.",
       "modifiers": [
         {
           "type": "static",

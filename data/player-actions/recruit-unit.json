@@ -28,7 +28,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Recruit a troop equal to the party level and reduce unrest by 1 as patriotism spreads",
+      "description": "Patriotic fervor spreads.",
       "modifiers": [
         {
           "type": "static",
@@ -46,7 +46,7 @@
       ]
     },
     "success": {
-      "description": "Recruit a troop equal to the party level",
+      "description": "Troops are recruited.",
       "modifiers": [],
       "gameCommands": [
         {
@@ -57,12 +57,12 @@
       ]
     },
     "failure": {
-      "description": "No Recruits",
+      "description": "Recruitment fails.",
       "modifiers": [],
       "gameCommands": []
     },
     "criticalFailure": {
-      "description": "No Recruit; +1 Unrest",
+      "description": "The recruitment attempt angers the populace.",
       "modifiers": [
         {
           "type": "static",

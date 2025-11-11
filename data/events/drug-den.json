@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Drug ring destroyed",
+      "msg": "The drug ring is destroyed.",
       "modifiers": [
         {
           "type": "static",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Major arrests, convert 1 unrest to imprisoned unrest",
+      "msg": "Major arrests disrupt the drug trade.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Drug trade spreads",
+      "msg": "The drug trade spreads.",
       "modifiers": [
         {
           "type": "static",
@@ -61,7 +61,7 @@
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Major drug crisis and urban decay.",
+      "msg": "A major drug crisis erupts.",
       "modifiers": [
         {
           "type": "static",

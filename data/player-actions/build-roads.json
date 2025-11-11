@@ -27,19 +27,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Build road segments based on your skill proficiency",
+      "description": "Excellent roads are constructed.",
       "modifiers": []
     },
     "success": {
-      "description": "Build 1 road segment",
+      "description": "A road is constructed.",
       "modifiers": []
     },
     "failure": {
-      "description": "No effect",
+      "description": "Construction fails.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "Work crews are lost",
+      "description": "Work crews are lost.",
       "modifiers": [
         {
           "type": "static",

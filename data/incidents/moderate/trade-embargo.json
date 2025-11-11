@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Trade continues, no effect",
+      "msg": "Trade continues.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose one",
+      "msg": "A trade embargo disrupts your economy.",
       "modifiers": [
         {
           "type": "dice",
@@ -53,7 +53,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Lose gold AND resources, gain unrest",
+      "msg": "A complete trade embargo cripples your economy.",
       "modifiers": [
         {
           "type": "dice",

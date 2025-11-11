@@ -32,7 +32,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "The selected faction's attitude improves at reduced cost!",
+      "description": "The diplomatic mission is a resounding success.",
       "modifiers": [
         {
           "type": "static",
@@ -49,7 +49,7 @@
       ]
     },
     "success": {
-      "description": "The selected faction's attitude improves by one step.",
+      "description": "Relations improve.",
       "modifiers": [
         {
           "type": "static",
@@ -67,7 +67,7 @@
       ]
     },
     "failure": {
-      "description": "Your diplomatic mission yielded no results, but relations remain stable.",
+      "description": "The diplomatic mission fails.",
       "modifiers": [
         {
           "type": "static",
@@ -78,7 +78,7 @@
       ]
     },
     "criticalFailure": {
-      "description": "Your diplomats offended the selected faction! Their attitude worsens by one step.",
+      "description": "Your diplomats offend the faction.",
       "modifiers": [
         {
           "type": "static",

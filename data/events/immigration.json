@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major influx",
+      "msg": "A major influx of settlers arrives.",
       "modifiers": [
         {
           "type": "dice",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Steady immigration",
+      "msg": "Settlers arrive steadily.",
       "modifiers": [
         {
           "type": "static",
@@ -43,12 +43,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Few settlers stay",
+      "msg": "Few settlers decide to stay.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Integration problems",
+      "msg": "Integration problems arise.",
       "modifiers": [
         {
           "type": "static",

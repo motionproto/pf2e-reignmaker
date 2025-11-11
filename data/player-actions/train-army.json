@@ -24,7 +24,7 @@
   ],
   "effects": {
   "criticalSuccess": {
-    "description": "Your army trains to the current party level and gains the Heroism spell effect for their next combat.",
+    "description": "The troops train exceptionally well.",
     "modifiers": [],
     "gameCommands": [
       {
@@ -34,7 +34,7 @@
     ]
   },
   "success": {
-    "description": "Your army trains to the current party level.",
+    "description": "The troops train well.",
     "modifiers": [],
     "gameCommands": [
       {
@@ -54,7 +54,7 @@
     ]
   },
   "criticalFailure": {
-    "description": "Your army trains to the current party level but gains the Frightened condition with a 10-minute duration for their next combat.",
+    "description": "The training goes poorly.",
     "modifiers": [],
     "gameCommands": [
       {

@@ -1684,43 +1684,30 @@ export async function createGameCommandsResolver() {
               break;
             }
 
-            // Simple dropdown selection
+            // Use styled Svelte dialog
             const promptTitle = count > 1 
               ? `Select Faction ${i + 1}/${count} (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`
               : `Select Faction (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`;
 
-            const selectedId = await new Promise<string | null>((resolve) => {
-              const Dialog = (globalThis as any).Dialog;
-              new Dialog({
-                title: promptTitle,
-                content: `
-                  <form>
-                    <div class="form-group">
-                      <label>Choose Faction:</label>
-                      <select name="factionId" style="width: 100%;">
-                        ${eligibleFactions.map((f: any) => `<option value="${f.id}">${f.name} (${f.attitude})</option>`).join('')}
-                      </select>
-                    </div>
-                  </form>
-                `,
-                buttons: {
-                  ok: {
-                    label: 'Select',
-                    callback: (html: any) => {
-                      const factionId = html.find('[name="factionId"]').val();
-                      resolve(factionId);
-                    }
-                  },
-                  cancel: {
-                    label: 'Cancel',
-                    callback: () => resolve(null)
-                  }
-                },
-                default: 'ok'
-              }).render(true);
-            });
+            // Calculate remaining count to select
+            const remainingCount = count - results.length;
+            const selectTitle = remainingCount > 1 
+              ? `Select ${remainingCount} Factions (${steps > 0 ? 'Improve' : 'Worsen'} Relations)`
+              : promptTitle;
 
-            if (!selectedId) {
+            const { showSvelteDialog } = await import('../utils/SvelteDialogHelper');
+            const FactionPickerDialog = (await import('../ui/dialogs/FactionPickerDialog.svelte')).default;
+
+            const result = await showSvelteDialog<{ factionIds: string[]; factions: any[] }>(
+              FactionPickerDialog,
+              {
+                title: selectTitle,
+                eligibleFactions,
+                count: remainingCount
+              }
+            );
+
+            if (!result || !result.factionIds || result.factionIds.length === 0) {
               // User cancelled - return partial results if any
               if (results.length === 0) {
                 return { success: false, error: 'Faction selection cancelled' };
@@ -1728,42 +1715,48 @@ export async function createGameCommandsResolver() {
               break;
             }
 
-            targetFactionId = selectedId;
-          }
+            // Process all selected factions at once
+            for (const selectedId of result.factionIds) {
+              const faction = factionService.getFaction(selectedId);
+              if (!faction) {
+                logger.warn(`⚠️ [adjustFactionAttitude] Faction not found: ${selectedId}`);
+                continue;
+              }
+              
+              targetFactionName = faction.name;
 
-          const faction = factionService.getFaction(targetFactionId);
-          if (!faction) {
-            return { success: false, error: `Faction not found: ${targetFactionId}` };
-          }
-          targetFactionName = faction.name;
+              // Track selected faction
+              selectedFactionIds.add(selectedId);
 
-          // Track selected faction
-          selectedFactionIds.add(targetFactionId);
+              // Apply adjustment
+              const adjustResult = await factionService.adjustAttitude(
+                selectedId,
+                steps,
+                {
+                  maxLevel: effectiveMaxLevel as any,
+                  minLevel: options?.minLevel as any
+                }
+              );
 
-          // Apply adjustment
-          const result = await factionService.adjustAttitude(
-            targetFactionId,
-            steps,
-            {
-              maxLevel: effectiveMaxLevel as any,
-              minLevel: options?.minLevel as any
+              if (!adjustResult.success) {
+                // If adjustment failed, continue to next faction (don't abort entire operation)
+                logger.warn(`⚠️ [adjustFactionAttitude] Failed to adjust ${targetFactionName}: ${adjustResult.reason}`);
+                continue;
+              }
+
+              // Track result
+              results.push({
+                factionName: targetFactionName,
+                oldAttitude: adjustResult.oldAttitude || 'Unknown',
+                newAttitude: adjustResult.newAttitude || 'Unknown'
+              });
+
+              logger.info(`✅ [adjustFactionAttitude] ${targetFactionName}: ${adjustResult.oldAttitude} → ${adjustResult.newAttitude}`);
             }
-          );
 
-          if (!result.success) {
-            // If adjustment failed, continue to next faction (don't abort entire operation)
-            logger.warn(`⚠️ [adjustFactionAttitude] Failed to adjust ${targetFactionName}: ${result.reason}`);
-            continue;
+            // Exit the loop since we selected all factions at once
+            break;
           }
-
-          // Track result
-          results.push({
-            factionName: targetFactionName,
-            oldAttitude: result.oldAttitude || 'Unknown',
-            newAttitude: result.newAttitude || 'Unknown'
-          });
-
-          logger.info(`✅ [adjustFactionAttitude] ${targetFactionName}: ${result.oldAttitude} → ${result.newAttitude}`);
         }
 
         // Format aggregated message

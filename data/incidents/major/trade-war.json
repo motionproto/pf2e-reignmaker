@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Trade continues, no effect",
+      "msg": "Trade continues.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Choose how to absorb the economic shock",
+      "msg": "A trade war damages your economy.",
       "modifiers": [
         {
           "type": "dice",
@@ -53,7 +53,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Complete economic isolation devastates your kingdom",
+      "msg": "Economic isolation devastates your kingdom.",
       "modifiers": [
         {
           "type": "dice",

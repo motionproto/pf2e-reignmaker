@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Raiders repelled, no effect",
+      "msg": "The raiders are repelled.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Raiders pillage border territories, causing loss of gold and land",
+      "msg": "Raiders pillage border territories.",
       "modifiers": [
         {
           "type": "dice",
@@ -47,7 +47,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Raiders devastate border regions, causing massive losses",
+      "msg": "Raiders devastate border regions.",
       "modifiers": [
         {
           "type": "dice",

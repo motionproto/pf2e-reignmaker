@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Strike ends, no effect",
+      "msg": "The strike ends.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Strike causes resource losses",
+      "msg": "The strike causes resource losses.",
       "modifiers": [
         {
           "type": "choice-dropdown",
@@ -45,7 +45,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Prolonged strike devastates production",
+      "msg": "A prolonged strike devastates production.",
       "modifiers": [
         {
           "type": "choice-dropdown",

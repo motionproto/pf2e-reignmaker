@@ -23,12 +23,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Tensions ease, no effect",
+      "msg": "Tensions ease.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Gain unrest",
+      "msg": "Tensions escalate.",
       "modifiers": [
         {
           "type": "static",
@@ -40,7 +40,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Gain unrest",
+      "msg": "Tensions escalate dramatically.",
       "modifiers": [
         {
           "type": "static",

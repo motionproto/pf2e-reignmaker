@@ -19,12 +19,12 @@
   ],
   "effects": {
     "success": {
-      "msg": "Population remains, no effect",
+      "msg": "The population remains.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Citizens abandon projects and cause social unrest",
+      "msg": "Citizens abandon projects.",
       "modifiers": [
         {
           "type": "static",
@@ -39,7 +39,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Mass exodus damages your kingdom's reputation and stability",
+      "msg": "A mass exodus damages your kingdom.",
       "modifiers": [
         {
           "type": "static",

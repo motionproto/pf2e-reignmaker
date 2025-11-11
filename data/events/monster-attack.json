@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Monster defeated",
+      "msg": "The monster is defeated.",
       "modifiers": [
         {
           "type": "dice",
@@ -37,12 +37,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Monster driven away",
+      "msg": "The monster is driven away.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Monster causes damage",
+      "msg": "The monster causes damage.",
       "modifiers": [
         {
           "type": "static",
@@ -60,7 +60,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Monster rampages",
+      "msg": "The monster rampages.",
       "modifiers": [
         {
           "type": "static",

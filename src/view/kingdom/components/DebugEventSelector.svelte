@@ -7,6 +7,11 @@
    import type { EventData } from '../../../controllers/events/event-loader';
    import type { KingdomIncident } from '../../../types/incidents';
    
+   const logger = {
+      warn: (...args: any[]) => console.warn('[DebugEventSelector]', ...args),
+      error: (...args: any[]) => console.error('[DebugEventSelector]', ...args)
+   };
+   
    // Props
    export let type: 'event' | 'incident' = 'event';
    export let currentItemId: string | null = null;
@@ -117,7 +122,7 @@
                await checkInstanceService.clearInstance(instance.instanceId);
             }
             
-            // Clear turnState
+            // Clear turnState AND reset phase step (step 0 = event check)
             await updateKingdom(kingdom => {
                if (!kingdom.turnState) return;
                kingdom.turnState.eventsPhase.eventRolled = false;
@@ -125,6 +130,16 @@
                kingdom.turnState.eventsPhase.eventRoll = undefined;
                kingdom.turnState.eventsPhase.eventId = null;
                kingdom.turnState.eventsPhase.eventInstanceId = null;
+               
+               // Reset phase step 0 (event check) to allow retesting
+               if (kingdom.currentPhaseSteps && kingdom.currentPhaseSteps.length > 0) {
+                  kingdom.currentPhaseSteps[0].completed = 0;
+                  
+                  // Update phase completion status
+                  const totalSteps = kingdom.currentPhaseSteps.length;
+                  const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+                  kingdom.phaseComplete = totalSteps > 0 && completedCount === totalSteps;
+               }
             });
 
          }
@@ -167,12 +182,22 @@
                await checkInstanceService.clearInstance(instance.instanceId);
             }
             
-            // Clear turnState
+            // Clear turnState AND reset phase step (step 1 = incident check)
             await updateKingdom(kingdom => {
                if (!kingdom.turnState) return;
                kingdom.turnState.unrestPhase.incidentRolled = false;
                kingdom.turnState.unrestPhase.incidentTriggered = false;
                kingdom.turnState.unrestPhase.incidentRoll = undefined;
+               
+               // Reset phase step 1 (incident check) to allow retesting
+               if (kingdom.currentPhaseSteps && kingdom.currentPhaseSteps.length > 1) {
+                  kingdom.currentPhaseSteps[1].completed = 0;
+                  
+                  // Update phase completion status
+                  const totalSteps = kingdom.currentPhaseSteps.length;
+                  const completedCount = kingdom.currentPhaseSteps.filter(s => s.completed === 1).length;
+                  kingdom.phaseComplete = totalSteps > 0 && completedCount === totalSteps;
+               }
             });
 
          }

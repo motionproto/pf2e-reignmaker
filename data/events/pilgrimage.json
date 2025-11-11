@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Major pilgrimage",
+      "msg": "A major pilgrimage brings prosperity.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Peaceful passage",
+      "msg": "The pilgrims pass through peacefully.",
       "modifiers": [
         {
           "type": "static",
@@ -55,12 +55,12 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Minor disruption",
+      "msg": "Minor disruptions occur.",
       "modifiers": [],
       "endsEvent": false
     },
     "criticalFailure": {
-      "msg": "Religious tensions",
+      "msg": "Religious tensions arise.",
       "modifiers": [
         {
           "type": "static",

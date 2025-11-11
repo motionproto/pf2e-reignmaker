@@ -28,19 +28,19 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "description": "Troop recovers completely",
+      "description": "The troops recover completely.",
       "modifiers": []
     },
     "success": {
-      "description": "Troop recovers 1 segment",
+      "description": "The troops recover.",
       "modifiers": []
     },
     "failure": {
-      "description": "No recovery",
+      "description": "The troops fail to recover.",
       "modifiers": []
     },
     "criticalFailure": {
-      "description": "No recovery",
+      "description": "The recovery effort fails.",
       "modifiers": []
     }
   }

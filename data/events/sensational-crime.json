@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Criminal caught spectacularly",
+      "msg": "The criminal is caught spectacularly.",
       "modifiers": [
         {
           "type": "static",
@@ -31,12 +31,12 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Crime solved",
+      "msg": "The crime is solved.",
       "modifiers": [],
       "endsEvent": true
     },
     "failure": {
-      "msg": "Criminal escapes",
+      "msg": "The criminal escapes.",
       "modifiers": [
         {
           "type": "static",
@@ -48,7 +48,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Copycat crimes",
+      "msg": "Copycat crimes emerge.",
       "modifiers": [
         {
           "type": "static",

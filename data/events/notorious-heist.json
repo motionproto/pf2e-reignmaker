@@ -19,7 +19,7 @@
   ],
   "effects": {
     "criticalSuccess": {
-      "msg": "Thieves captured with stolen goods",
+      "msg": "The thieves are captured with the stolen goods.",
       "modifiers": [
         {
           "type": "static",
@@ -31,7 +31,7 @@
       "endsEvent": true
     },
     "success": {
-      "msg": "Thieves arrested",
+      "msg": "The thieves are arrested.",
       "modifiers": [
         {
           "type": "static",
@@ -43,7 +43,7 @@
       "endsEvent": true
     },
     "failure": {
-      "msg": "Thieves escape",
+      "msg": "The thieves escape.",
       "modifiers": [
         {
           "type": "dice",
@@ -62,7 +62,7 @@
       "endsEvent": true
     },
     "criticalFailure": {
-      "msg": "Crime syndicate exposed",
+      "msg": "A crime syndicate is exposed.",
       "modifiers": [
         {
           "type": "dice",
