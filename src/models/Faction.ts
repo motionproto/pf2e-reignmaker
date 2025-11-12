@@ -40,6 +40,7 @@ export interface Faction {
   quirks: string;         // Unique characteristics
   allies: string[];       // Array of ally names
   enemies: string[];      // Array of enemy names
+  provinces: string[];    // Array of province names controlled by this faction
 }
 
 /**
@@ -87,6 +88,7 @@ export function createDefaultFaction(
     assets: '',
     quirks: '',
     allies: [],
-    enemies: []
+    enemies: [],
+    provinces: []
   };
 }

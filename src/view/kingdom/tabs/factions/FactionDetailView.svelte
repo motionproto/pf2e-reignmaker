@@ -51,10 +51,11 @@
          assets: faction.assets || '',
          quirks: faction.quirks || '',
          // Migrate old string format to array format if needed
-         allies: Array.isArray(faction.allies) ? faction.allies : 
+         allies: Array.isArray(faction.allies) ? faction.allies :
                  (faction.allies ? (faction.allies as any).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
-         enemies: Array.isArray(faction.enemies) ? faction.enemies : 
-                  (faction.enemies ? (faction.enemies as any).split(',').map((s: string) => s.trim()).filter(Boolean) : [])
+         enemies: Array.isArray(faction.enemies) ? faction.enemies :
+                  (faction.enemies ? (faction.enemies as any).split(',').map((s: string) => s.trim()).filter(Boolean) : []),
+         provinces: faction.provinces || []
       };
    }
    
@@ -435,7 +436,14 @@
       editedFaction.enemies = newEnemies;
       editedFaction = { ...editedFaction };
    }
-   
+
+   // Handle provinces changes
+   function handleProvincesChange(newProvinces: string[]) {
+      if (!editedFaction) return;
+      editedFaction.provinces = newProvinces;
+      editedFaction = { ...editedFaction };
+   }
+
    // Convert HSL to Hex for color picker
    function hslToHex(hsl: string): string {
       // Parse HSL string: "hsl(0, 70%, 60%)"
@@ -827,14 +835,25 @@
             <!-- Territory Section (Simplified) -->
             <section class="detail-section">
                <h3><i class="fas fa-map-marked-alt"></i> Territory</h3>
-               <textarea 
+               <textarea
                   bind:value={editedFaction.territory.territory}
                   class="textarea-input"
                   placeholder="Territory information, holdings, regions controlled..."
                   rows="3"
                ></textarea>
             </section>
-            
+
+            <!-- Provinces Section -->
+            <section class="detail-section">
+               <h3><i class="fas fa-flag"></i> Provinces</h3>
+               <FactionTokenInput
+                  values={editedFaction.provinces}
+                  placeholder="Enter province name..."
+                  excludeValues={[]}
+                  onChange={handleProvincesChange}
+               />
+            </section>
+
             <!-- Assets Section -->
             <section class="detail-section">
                <h3><i class="fas fa-coins"></i> Assets</h3>
